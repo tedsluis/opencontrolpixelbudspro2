@@ -1,120 +1,274 @@
-# **Protocol Notes: Pixel Buds Pro 2 (libmaestro / libgfps)**
+# Protocol Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`)
 
 **Status:** Living document — single source of truth for reverse-engineered protocol
-
 knowledge, kept separate from implementation code so it can be versioned and corrected
-
 independently. Every entry below must carry a **confidence level** (§2.1) and, where
-
 possible, a reference to how it was verified (§6).
 
-## **0\. Document Metadata**
+---
+
+## 0. Document Metadata
 
 | Field | Value |
-| :---- | :---- |
-| Last verified against firmware | release\_5.203 |
-| Primary source | qzed/pbpctrl (Linux/Rust), commit/tag: *pin this* |
-| Secondary sources | Official App Screenshots (2026-07-30), community discussions, pbtk-extracted schemas |
-| Maintainer verification method | Android btsnoop\_hci.log comparison (§6) |
-| Last updated | 2026-07-30 |
+|---|---|
+| Last verified against firmware | `release_5.203` |
+| Primary source | `qzed/pbpctrl` (Linux/Rust), commit/tag: _pin this_ |
+| Secondary sources | Official App Screenshots (2026-07-30), Google Fast Pair Service (GFPS) specification (`developers.google.com/nearby/fast-pair`), community discussions, `pbtk`-extracted schemas |
+| Maintainer verification method | Android `btsnoop_hci.log` comparison (§6) |
+| Last updated | 2026-08-05 |
 
-**Rule:** any change to this document that comes from your own testing (not from pbpctrl) must be marked \[VERIFIED-LOCAL\] with a date, so it's clear which knowledge came from the upstream project versus your own empirical confirmation.
+**Rule:** any change to this document that comes from your own testing (not from
+`pbpctrl`) must be marked `[VERIFIED-LOCAL]` with a date, so it's clear which knowledge
+came from the upstream project versus your own empirical confirmation. Facts sourced from
+Google's own official Fast Pair specification are marked `[OFFICIAL-SPEC]` — these are
+authoritative about the *mechanism*, but not automatically proof that the Buds Pro 2 use
+that exact mechanism for a given feature until cross-checked against a real capture.
 
-## **1\. Overview**
+---
 
-This document is the single source of truth for the reverse-engineered libmaestro and libgfps protocols used by the Google Pixel Buds Pro 2\. Knowledge here is derived primarily from the qzed/pbpctrl project (Linux/Rust), community discussion, and our own empirical verification via Android's Bluetooth HCI snoop log — adapted for the Android Kotlin implementation described in ARCHITECTURE.md.
+## 1. Overview
 
-This document intentionally does **not** contain Android/Kotlin implementation details (those live in ARCHITECTURE.md §5) — it contains only protocol facts: what bytes mean, not how we structure the code that handles them.
+This document is the single source of truth for the reverse-engineered `libmaestro` and
+`libgfps` protocols used by the Google Pixel Buds Pro 2. Knowledge here is derived
+primarily from the `qzed/pbpctrl` project (Linux/Rust), community discussion, Google's own
+public **Fast Pair** specification (which the Buds implement as their pairing/discovery
+layer, and which turns out to document parts of the transport the Buds likely reuse), and
+our own empirical verification via Android's Bluetooth HCI snoop log — adapted for the
+Android Kotlin implementation described in `ARCHITECTURE.md`.
 
-## **2\. RFCOMM Envelope (Framing Structure)**
+This document intentionally does **not** contain Android/Kotlin implementation details
+(those live in `ARCHITECTURE.md` §5) — it contains only protocol facts: what bytes mean,
+not how we structure the code that handles them.
 
-All communication over the BluetoothSocket (RFCOMM/SPP) is encapsulated in a proprietary framing envelope. The raw byte stream must be parsed into discrete packets before the payload can be handed to the Protobuf deserializer.
+---
 
-### **General Frame Layout**
+## 2. RFCOMM Envelope (Framing Structure)
 
-\+------------+-----------------+------------------+---------------------+------------------+  
-| Magic (?B) | Payload Length  | Channel / Msg ID | Protobuf Payload    | Checksum (opt.)  |  
-\+------------+-----------------+------------------+---------------------+------------------+
+All communication over the `BluetoothSocket` (RFCOMM/SPP) is encapsulated in a framing
+envelope. The raw byte stream must be parsed into discrete packets before the payload can
+be handed to the Protobuf deserializer.
+
+### 2.0 ⚠️ New: a second, officially-documented framing candidate
+
+Google's Fast Pair specification publicly documents a generic RFCOMM message format
+called the **Message Stream**, used for provider→seeker/seeker→provider events (device
+info, actions like "ring", capability negotiation, ACK/NAK). `[OFFICIAL-SPEC]` structure:
+
+```
++-----------------+----------------+---------------------------+------------------+
+| Message Group   | Message Code   | Additional Data Length    | Additional Data  |
+| (1 byte)        | (1 byte)       | (2 bytes, big-endian)     | (variable)       |
++-----------------+----------------+---------------------------+------------------+
+```
+
+No magic byte, no checksum — integrity here relies on the reliable, ordered nature of
+RFCOMM itself rather than an application-level check. Confirmed example from the spec: an
+ACK for a "ring" action (group `0x04`, code `0x01`) is encoded as
+`0xFF 0x01 0x00 0x02 0x04 0x01` (event group `0xFF`=ACK, code `0x01`=ACK, length `0x0002`,
+data = the group/code being acknowledged). A NAK example is also given in the spec with an
+additional reason byte.
+
+**This does not replace the existing magic-byte/length/channel-ID/checksum hypothesis
+below — it sits alongside it as an open question:**
+
+- **Open question:** is `libmaestro`'s control channel (ANC/EQ commands) the *same* RFCOMM
+  channel as the Fast Pair Message Stream, just using a custom Message Group ID above
+  Google's reserved ones? Or is it a **separate** RFCOMM channel/PSM entirely, with its
+  own proprietary envelope (the magic-byte hypothesis from `pbpctrl`)?
+- Both are plausible: Google explicitly allows partners to extend Message Stream with
+  vendor-specific message groups, so it's architecturally reasonable for `libmaestro` to
+  be "Fast Pair Message Stream, with Google's own private message groups" rather than a
+  fully separate protocol. This would be a significant simplification if confirmed — it
+  would mean the framing question in the general layout below is largely already solved
+  for at least part of the traffic.
+- **How to resolve empirically:** in your next `btsnoop_hci.log` capture, check whether
+  ANC/EQ command frames on the RFCOMM data channel start with a plausible Message
+  Group/Code pair followed by a 2-byte big-endian length that matches the rest of the
+  frame — if so, that's strong evidence `libmaestro` rides on Message Stream framing
+  rather than the separate magic-byte envelope below.
+
+### General Frame Layout (original `pbpctrl`-derived hypothesis)
+
+```
++------------+-----------------+------------------+---------------------+------------------+
+| Magic (?B) | Payload Length  | Channel / Msg ID | Protobuf Payload    | Checksum (opt.)  |
++------------+-----------------+------------------+---------------------+------------------+
+```
 
 | Field | Size | Notes | Confidence |
-| :---- | :---- | :---- | :---- |
-| Magic Bytes | TBD (commonly 1B, e.g. 0x5A) | Marks start-of-frame; needed to resync a buffered stream after a partial/corrupt read | 🟡 Medium — confirm exact value(s) against pbpctrl source before implementing FrameDecoder |
+|---|---|---|---|
+| Magic Bytes | TBD (commonly 1B, e.g. `0x5A`) | Marks start-of-frame; needed to resync a buffered stream after a partial/corrupt read | 🟡 Medium — confirm exact value(s) against `pbpctrl` source before implementing `FrameDecoder`; also test against the Message Stream hypothesis above first |
 | Payload Length | 2 bytes (16-bit) | Size of the protobuf payload *only* — confirm whether it includes the Channel/Msg ID byte(s) or not | 🟡 Medium |
-| Channel / Message ID | TBD size | Selects which .proto message handler decodes the payload | 🟡 Medium |
-| Protobuf Payload | variable | Serialized libmaestro protobuf message | 🟢 High (protobuf itself is self-describing once you have the right .proto) |
-| Checksum/CRC | optional, TBD | Integrity check; algorithm (CRC16? XOR? none for some channels?) not yet confirmed | 🔴 Low — must verify empirically |
+| Channel / Message ID | TBD size | Selects which `.proto` message handler decodes the payload | 🟡 Medium |
+| Protobuf Payload | variable | Serialized `libmaestro` protobuf message | 🟢 High (protobuf itself is self-describing once you have the right `.proto`) |
+| Checksum/CRC | optional, TBD | Integrity check; algorithm (CRC16? XOR? none for some channels?) not yet confirmed | 🔴 Low — must verify empirically. **Note:** the Message Stream format above has *no* checksum field at all, which is a point against this hypothesis if the two turn out to be the same channel. |
 
-**Handling rule (unchanged from AGENTS.md/ARCHITECTURE.md):** any checksum mismatch, or any frame that fails to parse against the magic/length invariants, is dropped silently and surfaced internally as BudsError.MalformedFrame — never a crash, never a best-effort guess at the payload.
+**Handling rule (unchanged from AGENTS.md/ARCHITECTURE.md):** any checksum mismatch, or
+any frame that fails to parse against the magic/length invariants, is dropped silently and
+surfaced internally as `BudsError.MalformedFrame` — never a crash, never a best-effort
+guess at the payload.
 
-### **2.1 Confidence Level Legend**
+### 2.1 Confidence Level Legend
 
-Use this legend consistently across this document:
+- 🟢 **High** — directly confirmed in `pbpctrl` source code, directly stated in Google's
+  official Fast Pair specification as a generic mechanism, or `[VERIFIED-LOCAL]` against a
+  real device with an HCI snoop capture.
+- 🟡 **Medium** — inferred from `pbpctrl` documentation/behavior but not yet confirmed
+  against raw bytes ourselves, based on a related/older Pixel Buds generation, or an
+  official spec describing a *generic* mechanism not yet confirmed as what the Buds Pro 2
+  specifically use for a given feature.
+- 🔴 **Low** — community speculation, undocumented, or extrapolated from a different
+  device family. Treat as a hypothesis to test, not a fact to implement against blindly.
 
-* 🟢 **High** — directly confirmed in pbpctrl source code, or \[VERIFIED-LOCAL\] against a real device with an HCI snoop capture.  
-* 🟡 **Medium** — inferred from pbpctrl documentation/behavior but not yet confirmed against raw bytes ourselves, or based on a related/older Pixel Buds generation.  
-* 🔴 **Low** — community speculation, undocumented, or extrapolated from a different device family. Treat as a hypothesis to test, not a fact to implement against blindly.
+---
 
-## **3\. Protobuf (.proto) Definitions**
+## 3. Protobuf (`.proto`) Definitions
 
-The device communicates using serialized Protocol Buffers. Schemas are typically extracted from the official companion app APK using tools like pbtk.
+The device communicates using serialized Protocol Buffers. Schemas are typically extracted
+from the official companion app APK using tools like `pbtk`.
 
-### **3.1 Known Schema Files**
+### 3.1 Known Schema Files
 
 | File | Purpose | Confidence |
-| :---- | :---- | :---- |
-| maestro\_pw.proto | Core control messages, routing, generic request/response envelope | 🟢 High |
-| anc\_settings.proto | ANC / Transparency / Adaptive mode enum | 🟢 High |
-| eq\_settings.proto | 5-band equalizer definitions, presets | 🟢 High |
-| hardware\_status.proto | Battery / hardware telemetry query-response | 🟡 Medium |
+|---|---|---|
+| `maestro_pw.proto` | Core control messages, routing, generic request/response envelope | 🟢 High |
+| `anc_settings.proto` | ANC / Transparency / Adaptive mode enum | 🟢 High |
+| `eq_settings.proto` | 5-band equalizer definitions, presets | 🟢 High |
+| `hardware_status.proto` | Battery / hardware telemetry query-response | 🟡 Medium — see §4.3: this may turn out to be Fast Pair's generic Message Stream "Device Information" messages rather than a Buds-specific protobuf schema. Keep both possibilities open until verified. |
 
-## **4\. Feature Status & Commands**
+---
 
-### **4.1 Confirmed Working (per upstream pbpctrl & UI captures)**
+## 4. Feature Status & Commands
+
+### 4.1 Confirmed Working (per upstream `pbpctrl` & UI captures)
 
 | Feature | Detail | Confidence |
-| :---- | :---- | :---- |
-| ANC — Off |  | 🟢 High |
-| ANC — Active (Noise Cancelling) |  | 🟢 High |
-| ANC — Aware (Transparency) |  | 🟢 High |
-| ANC — Adaptive | Confirmed present in firmware release\_5.203 | 🟢 High |
+|---|---|---|
+| ANC — Off | | 🟢 High |
+| ANC — Active (Noise Cancelling) | | 🟢 High |
+| ANC — Aware (Transparency) | | 🟢 High |
+| ANC — Adaptive | Confirmed present in firmware `release_5.203` | 🟢 High |
 | EQ — 5-Band Custom | Bands: Low Bass, Bass, Mid, Treble, Upper Treble | 🟢 High |
 | EQ — Presets | Default, Heavy Bass, Light Bass, Balanced, Vocal Boost, Clarity, Last Saved | 🟢 High |
 
-**Command opcode table** *(Pending extraction from btsnoop\_hci.log)*:
+**Command opcode table** _(pending extraction from `btsnoop_hci.log`)_:
 
 | Command | Channel/Msg ID | Protobuf message | Direction | Confidence |
-| :---- | :---- | :---- | :---- | :---- |
-| Set ANC mode | TBD | AncCommand (name TBD) | App → Buds | 🔴 Low |
+|---|---|---|---|---|
+| Set ANC mode | TBD | `AncCommand` (name TBD) | App → Buds | 🔴 Low |
 | ANC state notification | TBD | TBD | Buds → App | 🔴 Low |
 | Set EQ band values | TBD | TBD | App → Buds | 🔴 Low |
+| **Ring / Find My Buds action** | Likely Message Stream group `0x04`, code `0x01` per `[OFFICIAL-SPEC]` generic Fast Pair "Action" group | N/A (not protobuf — plain Message Stream data if this hypothesis holds) | App → Buds | 🟡 Medium — **new**, see note below |
 
-### **4.2 Toggles & Secondary Features (Backlog)**
+**New note on "Ring" / Find My Buds:** the Fast Pair Message Stream spec's own
+worked ACK example explicitly references action group/code `0x04`/`0x01` for a **ring**
+action. Combined with the "Speel geluid af" / "Find My Buds" actions identified in
+`TESTPLAN.md` §1, this is a strong, concrete, low-risk first target to verify the Message
+Stream hypothesis from §2.0 empirically — capture a "Play sound on Left earbud" action and
+check whether the outbound frame matches `0x04 0x01 ...` framing.
 
-Based on official UI analysis (firmware release\_5.203), the following features exist and require protobuf mapping:
+### 4.2 Toggles & Secondary Features (Backlog)
 
-* Conversation Detection (Gespreksdetectie)  
-* Multipoint Bluetooth  
-* Touch & Hold customization (per bud: ANC cycle or Digital Assistant)  
-* In-ear detection (In-eardetectie)  
-* Volume EQ (Volume-equalizer)  
-* Volume Balance (L/R Balance slider)  
-* Case Sounds (Oordopjes terugplaatsen, Andere meldingen)  
-* Head Tracking (Hoofdbewegingen gebruiken)
+Based on official UI analysis (firmware `release_5.203`), the following features exist and
+require protobuf/message mapping:
 
-### **4.3 Experimental / Hardware-Dependent (Battery)**
+- Conversation Detection (Gespreksdetectie)
+- Multipoint Bluetooth
+- Touch & Hold customization (per bud: ANC cycle or Digital Assistant)
+- In-ear detection (In-eardetectie)
+- Volume EQ (Volume-equalizer)
+- Volume Balance (L/R Balance slider)
+- Case Sounds (Oordopjes terugplaatsen, Andere meldingen)
+- Head Tracking (Hoofdbewegingen gebruiken)
+- Loud Noise Protection (firmware 4.467+, likely on-device DSP only — see `TESTPLAN.md` §4)
+- Adaptive Audio dynamic adjustment (firmware 4.467+, likely on-device DSP only — see
+  `TESTPLAN.md` §4)
 
-**Detailed battery metrics (Left / Right / Case):** Official UI confirms the device sends independent telemetry for Left, Right, and Case. Android native ACTION\_BATTERY\_LEVEL\_CHANGED often merges this into one value. Therefore, libmaestro HardwareStatus query is the **primary** target for accurate battery data.
+### 4.3 Battery (Left / Right / Case) — **major update: officially specified mechanisms found**
 
-1. **libmaestro HardwareStatus query** — poll a specific protobuf request over the RFCOMM channel. Confidence: 🟡 Medium (UI proves data exists, opcode pending).  
-2. **HFP AT commands** (AT+IPHONEACCEV) — Fallback if protobuf fails. Confidence: 🟡 Medium.  
-3. **BLE Battery Service (0x180F)** — Standard GATT characteristic. Confidence: 🔴 Low.
+**Previous status:** treated as fully experimental/reverse-engineered, with the
+`libmaestro` `HardwareStatus` query as an unconfirmed 🟡 Medium hypothesis.
 
-## **5\. Firmware / Version Compatibility Matrix**
+**Updated status:** Google's official Fast Pair specification documents **two concrete,
+byte-level mechanisms** for exactly this kind of multi-component battery reporting. Since
+the Buds Pro 2 are a Fast Pair device, both are now the **primary** candidates — ahead of
+a Buds-specific proprietary schema.
+
+#### Option A — BLE Advertisement (Fast Pair "Battery Notification" extension) — 🟢 High (mechanism), 🟡 Medium (confirmed as what the Buds Pro 2 use)
+
+`[OFFICIAL-SPEC]`, from `developers.google.com/nearby/fast-pair/specifications/extensions/batterynotification`:
+
+```
+Octet   Field                         Encoding
+0       Flags                         0x00 (reserved)
+1..s    Account Key Data              —
+s+1     Battery level length & type   0bLLLLTTTT (L=3 values, T=0b0011 show / 0b0100 hide)
+s+2     Left bud battery              0bSVVVVVVV (S=charging bit, V=0-100%, 0x7F=unknown)
+s+3     Right bud battery             0bSVVVVVVV
+s+4     Case battery                  0bSVVVVVVV
+```
+
+- **Trigger:** update sent when RFCOMM connects, or when a battery value changes —
+  **event-driven, not periodic polling.** (Corrects the earlier unstated assumption of
+  polling.)
+- Shown for ≥8 seconds when using the "show" type; auto-hidden after 20s or via an
+  explicit "hide" type frame.
+- Optional to include when a single bud is inserted/removed from the case.
+- **Advantage for our purposes:** this is visible on a passive BLE scan — no active
+  connection required, useful for `ARCHITECTURE.md` §4 battery fallback logic even before
+  RFCOMM is up.
+
+#### Option B — RFCOMM via Fast Pair Message Stream "Device Information" — 🟢 High (mechanism exists), 🔴 Low (exact battery-specific message code not yet confirmed)
+
+`[OFFICIAL-SPEC]`: the Message Stream (§2.0) has a documented "Device Information" message
+group used for properties like firmware version (confirmed code `0x09` in the Find Hub
+Network extension doc — "device information code 0x09" for firmware version string,
+sent once per Message Stream establishment). Battery is highly likely to have its own code
+in the same group, following the same event-driven ("send once per connection, then on
+change") pattern as Option A, but the **specific code value for battery within this group
+is not yet confirmed** from public documentation — needs empirical capture to pin down.
+This is presumed to be the same channel as the `HardwareStatus` hypothesis in §3.1 — likely
+**not** a Buds-specific protobuf schema at all, but generic Fast Pair Message Stream
+traffic.
+
+#### Option C — HFP AT commands (`AT+IPHONEACCEV`) — 🟡 Medium
+
+Fallback if the above don't yield per-component data on a given Android/OEM combination.
+
+#### Option D — BLE Battery Service (`0x180F`) — 🔴 Low
+
+Standard GATT characteristic; likely only exposes a single aggregate value if present at
+all.
+
+**Revised priority order for implementation:** A (BLE advertisement, no connection
+required, officially specified, exact byte layout known) → B (RFCOMM Message Stream, needs
+one more capture to confirm the exact code) → C (HFP fallback) → D (GATT, last resort).
+This is a change from the previous ordering, which had the (still-unconfirmed) proprietary
+`libmaestro` query listed first.
+
+---
+
+## 5. Firmware / Version Compatibility Matrix
 
 | Firmware version | Known protocol differences | Source |
-| :---- | :---- | :---- |
-| release\_5.203 | ADAPTIVE ANC mode present; 5-band EQ; L/R/Case independent battery | \[VERIFIED-LOCAL\] (Screenshot UI Analysis, 2026-07-30) |
+|---|---|---|
+| `release_5.203` | `ADAPTIVE` ANC mode present; 5-band EQ; L/R/Case independent battery reporting (now understood to likely be Fast Pair Battery Notification, §4.3 Option A) | `[VERIFIED-LOCAL]` (Screenshot UI Analysis, 2026-07-30) |
 
-## **6\. Verification Methodology (HCI Snoop Log)**
+---
 
-*(See previous revisions for Wireshark procedure)*
+## 6. Verification Methodology (HCI Snoop Log)
+
+See `CAPTURE.md` for the full step-by-step capture procedure (Developer options setup,
+mandatory test capture, `adb bugreport` extraction, Wireshark filtering, truncation
+diagnostics).
+
+**New, specific verification targets arising from this update:**
+
+1. Confirm/refute the Message Stream framing hypothesis (§2.0) against a real ANC-toggle
+   frame.
+2. Confirm the "Ring" action group/code (`0x04`/`0x01` per spec) against a captured "Play
+   sound on Left earbud" action (§4.1).
+3. Identify the Device Information message code used for battery within the Message
+   Stream (§4.3 Option B) by capturing the frames sent immediately after RFCOMM connects.
+4. Passively capture a BLE scan (no connection) to confirm the Battery Notification
+   advertisement (§4.3 Option A) byte-for-byte against the spec table.
