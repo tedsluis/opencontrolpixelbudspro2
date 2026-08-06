@@ -114,7 +114,7 @@ wait ~5–10s → move to the next action.**
 
 ### 4.1 Pixel 7a (official app) — primary session
 
-**Source:** the action list below is the validated inventory from `TESTPLAN.md`
+**Source:** the action list below is the validated inventory from `TESTPLAN_EN.md`
 sections 1 (User Actions from the Pixel Buds App) and 3 (Automatic Actions Initiated by
 the App) — checked against your own app screenshots and official Google support
 documentation. It supersedes the older, shorter action list this section used to contain.
@@ -184,7 +184,7 @@ Change one band at a time by a clearly visible amount — not all bands in one g
 #### Group H — Audio & volume settings
 28. **Toggle 'Mono audio' on/off**. Wait. Note time.
 29. **Toggle 'Volume EQ' on/off**. Wait. Note time.
-30. **Shift the 'Volume balance' slider**. Wait. Note time. (Per `TESTPLAN.md` §1 this
+30. **Shift the 'Volume balance' slider**. Wait. Note time. (Per `TESTPLAN_EN.md` §1 this
     is stored locally on the earbuds themselves — a good candidate for a confirmable
     persistent write.)
 
@@ -208,7 +208,7 @@ Change one band at a time by a clearly visible amount — not all bands in one g
 
 #### Group L — Passive/automatic observation windows
 These aren't taps — they're deliberate waiting periods to catch background/automatic app
-traffic per `TESTPLAN.md` §3.
+traffic per `TESTPLAN_EN.md` §3.
 42. **Idle wait with the app open**, ~60s right after connecting, without touching
     anything — intended to catch the "battery status notification on every reconnect"
     behavior. Note the start time.
@@ -236,6 +236,70 @@ and passive behavior:
    validating `ARCHITECTURE.md` §6/§7 resilience assumptions).
 
 Pull the bugreport (§3) the same way.
+
+### 4.3 Hardware Actions (either phone)
+
+**Source:** `TESTPLAN_EN.md` sections 2 (User Actions via the Case & Buds) and 4
+(Automatic Actions Initiated by the Hardware). These actions are grouped separately from
+4.1/4.2 because they aren't tied to a specific phone — a tap on the bud, or the case
+button, behaves the same regardless of which device is connected. Run this group on
+**whichever phone you already have connected and logging** at the time; if you want to
+compare hardware behavior across both OSes for a specific action, repeat that one action
+on the other phone as its own short session rather than redoing the whole group.
+
+Same rhythm as before: **wait ~5s → note the exact time → perform the action → wait
+~5–10s → move to the next action.**
+
+#### Group M — Case & wear state
+1. **Open the charging case lid**. Wait. Note time.
+2. **Remove Left earbud from the case**. Wait. Note time.
+3. **Remove Right earbud from the case**. Wait. Note time.
+4. **Insert Left earbud into the ear**. Wait. Note time.
+5. **Insert Right earbud into the ear**. Wait. Note time.
+6. **Place buds back in the case and close the lid**. Wait. Note time. (Expected to
+   terminate the active Bluetooth Classic connection — good for validating
+   `ARCHITECTURE.md` §6/§7 disconnect handling.)
+
+#### Group N — Touch gestures
+7. **Tap once** on a bud. Wait. Note time.
+8. **Double-tap** on a bud. Wait. Note time.
+9. **Triple-tap** on a bud. Wait. Note time.
+10. **Swipe forward** on a bud (volume up). Wait. Note time.
+11. **Swipe backward** on a bud (volume down). Wait. Note time.
+12. **Press and hold** on a bud. Wait. Note time. (Behavior depends on the per-earbud
+    configuration set in §4.1 Group G — note which mode was active when you test this.)
+
+#### Group O — Head gestures
+Requires 'Head gestures' enabled (§4.1 Group F).
+13. **Nod** (simulating answering a call, or a text reply if 'Spoken notifications' is
+    on). Wait. Note time.
+14. **Shake** (simulating rejecting a call/dismissing a text reply). Wait. Note time.
+
+#### Group P — Voice & case button
+15. **Start speaking** with Conversation Detection on (§4.1 Group C), to trigger the
+    detection event. Wait. Note time.
+16. **Hold the case button for 30 seconds** (case open, buds inside, plugged into power)
+    — ⚠️ this is a confirmed **full factory reset**, not just pairing mode (per
+    `TESTPLAN_EN.md` §2). Do this deliberately, last, and only once you're ready to
+    re-pair from scratch — it will also reset the Find My Device link on the Pro 2.
+17. **(Open question, see `protocol-notes.md` §7)** Try a shorter/different press on the
+    case button to see if it triggers pairing mode without a full reset. No officially
+    confirmed duration exists for this — treat your own finding here as
+    `[VERIFIED-LOCAL]` material for `protocol-notes.md` once confirmed.
+
+#### Group Q — Automatic hardware behavior (observation, not action)
+These are waiting periods to catch spontaneous hardware-initiated traffic per
+`TESTPLAN_EN.md` §4 — nothing to tap, just capture while the condition holds.
+18. **Passive BLE scan while the case is closed and idle** — intended to catch the Fast
+    Pair Battery Notification advertisement (`protocol-notes.md` §4.3 Option A) without
+    any active RFCOMM connection. This doesn't require the buds to be connected to the
+    capturing phone at all — any nearby scan should do, per the spec.
+19. **Trigger a loud, sudden sound near the buds while worn** (e.g. clap sharply nearby)
+    to attempt to observe Loud Noise Protection engaging (`protocol-notes.md` §4.2/§7) —
+    note whether anything appears on the wire at all, since this may be purely on-device.
+20. **Move between distinctly different acoustic environments while worn** (e.g. quiet
+    room → street) to attempt to observe Adaptive Audio adjusting
+    (`protocol-notes.md` §4.2/§7) — same caveat as above.
 
 ---
 
