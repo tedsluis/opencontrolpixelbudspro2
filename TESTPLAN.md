@@ -1,9 +1,9 @@
 # Test Plan: Pixel Buds Pro 2 Bluetooth HCI Capture
 
-**Status:** sections 1 and 2 checked and expanded based on screenshots of the
-official web companion app (strongest source — straight from the app itself), and (b) the
-official Google support pages (`support.google.com/googlepixelbuds`). Sections 3 and 4 have
-now also been validated.
+**Status:** sections 1 and 2 checked and expanded based on:
+* (a) [screenshots](./SCREENSHOTS_PIXEL_BUDS_WEB_APP.md) of the official web companion app (`http://mypixelbuds.google.com/` , strongest source — straight from the app itself).
+* (b) [screenshots](./SCREENSHOTS_PIXEL_BUDS_APP.md) of the official Android app (`https://play.google.com/store/apps/details?id=com.google.android.apps.wearables.maestro.companion`).
+* (c) the official Google support pages (`support.google.com/googlepixelbuds`). Sections 3 and 4 have now also been validated.
 
 **Source legend:**
 - 🟢 **Screenshot** — seen directly in your own app screenshots
@@ -11,7 +11,6 @@ now also been validated.
 - 🟡 **Secondary** — confirmed via a reliable secondary source (e.g. 9to5Google, Android
   Authority), not directly from Google itself
 - 🔴 **Unconfirmed** — still needs empirical verification during your own capture
-
 
 ---
 
