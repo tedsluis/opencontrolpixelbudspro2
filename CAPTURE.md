@@ -114,25 +114,110 @@ wait ~5–10s → move to the next action.**
 
 ### 4.1 Pixel 7a (official app) — primary session
 
-Do this as one continuous `adb bugreport` session covering all of the following, each
-logged with its own timestamp:
+**Source:** the action list below is the validated inventory from `TESTPLAN.md`
+sections 1 (User Actions from the Pixel Buds App) and 3 (Automatic Actions Initiated by
+the App) — checked against your own app screenshots and official Google support
+documentation. It supersedes the older, shorter action list this section used to contain.
 
+This is a **comprehensive** list (~40 actions). You do not need to do it all in one
+sitting — per the FAQ in §7 ("Do I need to do a full capture session every time?"), you
+can pull a fresh bugreport for any subset at any time. Splitting this into 3–4 shorter
+sessions by group (below) is often more manageable than one long one, and keeps each
+`adb bugreport` capture focused (see the log rotation note in §6).
+
+Do each action as one continuous `adb bugreport` session per group, each action logged
+with its own timestamp, following the usual rhythm: **wait ~5s → note the exact time →
+perform the action → wait ~5–10s → move to the next action.**
+
+**⚠️ Priority tip:** protocol-notes.md §6 flags the "Play sound on Left earbud" action
+(group K below) as a specifically valuable, low-risk target — its frame can be directly
+compared against the Fast Pair Message Stream spec's own worked example
+(`0x04 0x01 ...` for a ring action) to confirm or refute the framing hypothesis in
+`protocol-notes.md` §2.0. If you only have time for a short session, prioritize group K.
+
+#### Group A — Connection baseline
 1. **Pairing** (if not already paired, or do a deliberate re-pair as its own isolated
    capture): open Bluetooth settings, pair the Buds, wait for the connection to settle.
-2. **ANC → Off**. Wait. Note time.
-3. **ANC → Active** (noise cancelling on). Wait. Note time.
-4. **ANC → Aware / Transparency**. Wait. Note time.
-5. **ANC → Adaptive** (if your firmware exposes it). Wait. Note time.
-6. **EQ — change one band** by a clearly visible amount (e.g. drag a single slider to a
-   distinctly different position). Wait. Note time. Repeat per band, one at a time, not
-   all bands in one gesture.
-7. **EQ — select a preset**, if the app exposes presets. Wait. Note time.
-8. **Open the battery view / trigger a refresh** in the app. Wait. Note time.
-9. **(Optional) Find My Buds** — trigger a "ring earbud" action if you want to explore
-   this low-priority feature. Wait. Note time.
 
-After finishing, pull the bugreport once (§3) — you don't need a separate bugreport per
-action, just clean timestamps to slice the single log into segments afterward.
+#### Group B — Active Noise Control
+2. **ANC → Off**. Wait. Note time.
+3. **ANC → Noise Cancellation** (active). Wait. Note time.
+4. **ANC → Adaptive** (if your firmware exposes it — confirmed present in `release_5.203`
+   per `protocol-notes.md` §4.1). Wait. Note time.
+5. **ANC → Transparency**. Wait. Note time.
+
+#### Group C — Conversation Detection & Multipoint
+6. **Toggle 'Conversation Detection' on/off**. Wait. Note time.
+7. **Toggle 'Multipoint' on/off**. Wait. Note time.
+
+#### Group D — Equalizer: presets
+8. **Select EQ preset: Standard**. Wait. Note time.
+9. **Select EQ preset: Bass Boost**. Wait. Note time.
+10. **Select EQ preset: Bass Reduction**. Wait. Note time.
+11. **Select EQ preset: Balanced**. Wait. Note time.
+12. **Select EQ preset: Vocal Boost**. Wait. Note time.
+13. **Select EQ preset: Clarity**. Wait. Note time.
+14. **Select EQ preset: Last saved**. Wait. Note time.
+15. **Save current EQ as a new preset** ('Save') — a distinct write action from preset
+    selection. Wait. Note time.
+
+#### Group E — Equalizer: individual sliders
+Change one band at a time by a clearly visible amount — not all bands in one gesture.
+16. **Adjust EQ slider: High treble**. Wait. Note time.
+17. **Adjust EQ slider: Treble**. Wait. Note time.
+18. **Adjust EQ slider: Mid**. Wait. Note time.
+19. **Adjust EQ slider: Bass**. Wait. Note time.
+20. **Adjust EQ slider: Low bass**. Wait. Note time.
+
+#### Group F — Touch & head gesture toggles
+21. **Toggle 'Touch controls' fully on/off**. Wait. Note time.
+22. **Toggle 'Head gestures' fully on/off**. Wait. Note time.
+
+#### Group G — Press-and-hold configuration
+23. **Set 'Press and hold' Left → Toggle ANC**. Wait. Note time.
+24. **Set 'Press and hold' Left → Digital assistant**. Wait. Note time.
+25. **Set 'Press and hold' Right → Toggle ANC**. Wait. Note time.
+26. **Set 'Press and hold' Right → Digital assistant**. Wait. Note time.
+27. **Check/uncheck one ANC mode in the press-and-hold rotation list** (e.g. remove
+    'Off' from the cycle). Wait. Note time.
+
+#### Group H — Audio & volume settings
+28. **Toggle 'Mono audio' on/off**. Wait. Note time.
+29. **Toggle 'Volume EQ' on/off**. Wait. Note time.
+30. **Shift the 'Volume balance' slider**. Wait. Note time. (Per `TESTPLAN.md` §1 this
+    is stored locally on the earbuds themselves — a good candidate for a confirmable
+    persistent write.)
+
+#### Group I — Firmware & device info
+31. **Tap the 'Firmware up to date' check** (manual). Wait. Note time.
+32. **Open 'More settings'** to view firmware version per component — may trigger a
+    status query. Wait. Note time.
+33. **View serial numbers per component** (same screen). Wait. Note time.
+34. **View connection status** ("Earbud status: Connected"). Wait. Note time.
+
+#### Group J — In-ear detection & case sounds
+35. **Toggle 'In-ear detection' on/off**. Wait. Note time.
+36. **Toggle case sound 'Earbuds replaced' on/off**. Wait. Note time.
+37. **Toggle case sound 'Other notifications' on/off**. Wait. Note time.
+
+#### Group K — Find My Buds (high-priority, see tip above)
+38. **Play sound on Left earbud**. Wait. Note time.
+39. **Play sound on Right earbud**. Wait. Note time.
+40. **Play sound on Case**. Wait. Note time.
+41. **Play sound on both earbuds simultaneously**. Wait. Note time.
+
+#### Group L — Passive/automatic observation windows
+These aren't taps — they're deliberate waiting periods to catch background/automatic app
+traffic per `TESTPLAN.md` §3.
+42. **Idle wait with the app open**, ~60s right after connecting, without touching
+    anything — intended to catch the "battery status notification on every reconnect"
+    behavior. Note the start time.
+43. **Force-close and reopen the app** — intended to catch any status query the app sends
+    on launch. Note the exact time of reopening.
+
+After finishing a group, pull the bugreport once (§3) — you don't need a separate
+bugreport per action, just clean timestamps to slice the single log into segments
+afterward.
 
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
@@ -269,7 +354,9 @@ Every capture session should end with at least one of these:
 
 - [ ] `protocol-notes.md` §2 — envelope structure fields confirmed/corrected.
 - [ ] `protocol-notes.md` §4.1 — opcode table rows filled in, confidence raised to 🟢.
-- [ ] `protocol-notes.md` §4.2 — battery approach confirmed or ruled out.
+- [ ] `protocol-notes.md` §4.3 — battery approach confirmed or ruled out (now split into
+      Option A: BLE advertisement, and Option B: RFCOMM Message Stream — see the current
+      version of that section).
 - [ ] `protocol-notes.md` §5 — firmware version and any version-specific differences
       logged.
 - [ ] `protocol-notes.md` §7 — open questions resolved, or new ones added if the capture

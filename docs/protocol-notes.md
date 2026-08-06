@@ -272,3 +272,83 @@ diagnostics).
    Stream (§4.3 Option B) by capturing the frames sent immediately after RFCOMM connects.
 4. Passively capture a BLE scan (no connection) to confirm the Battery Notification
    advertisement (§4.3 Option A) byte-for-byte against the spec table.
+
+---
+
+## 7. Open Questions
+
+Consolidated from inline notes scattered across this document. Check items off with a
+date and a one-line pointer to the evidence when resolved; add new items here rather than
+leaving them buried in a section's prose.
+
+### Framing
+- [ ] Is `libmaestro`'s ANC/EQ control channel the **same** RFCOMM channel as the Fast
+      Pair Message Stream (§2.0), using a custom/vendor Message Group ID — or a
+      **separate** RFCOMM channel/PSM with its own proprietary envelope (§2 general
+      layout)? This is the single highest-value open question right now; resolving it
+      determines which of the two framing hypotheses to implement `FrameDecoder` against.
+- [ ] If the magic-byte/length/checksum hypothesis (§2 general layout) is confirmed
+      instead: exact magic byte value(s) and length-field endianness.
+- [ ] Checksum algorithm for that hypothesis (CRC16? XOR? absent on some channels?) — note
+      the Message Stream format has no checksum at all, which is evidence against this
+      hypothesis if the two channels turn out to be the same.
+
+### Commands & Schemas
+- [ ] Real `.proto` file names/full contents, extracted via `pbtk` against the official
+      companion app APK (§3.1) — current names are best-guess placeholders.
+- [ ] Channel/Msg ID values for: Set ANC mode, ANC state notification, Set EQ band values
+      (§4.1 opcode table).
+- [ ] Confirm the "Ring" / Find My Buds action against the spec's worked example
+      (`0x04`/`0x01`) — see the priority tip in `CAPTURE.md` §4.1 Group K.
+- [ ] Whether `hardware_status.proto` (§3.1) exists as a genuine Buds-specific schema, or
+      whether battery is purely generic Fast Pair Message Stream traffic with no
+      Buds-specific protobuf involved at all (§4.3 Option B).
+- [ ] The exact Device Information message code for battery within the Message Stream
+      "Device Information" group (§4.3 Option B) — firmware version is confirmed as code
+      `0x09`; battery's code is not yet confirmed from public docs.
+- [ ] Protobuf/message mapping for the backlog toggle features listed in §4.2
+      (Conversation Detection, Multipoint, Touch & Hold customization, In-ear detection,
+      Volume EQ, Volume Balance, Case Sounds, Head Tracking) — none of these have a known
+      opcode or schema yet.
+
+### Behavior
+- [ ] Whether Loud Noise Protection and/or Adaptive Audio (§4.2) generate any Bluetooth
+      traffic toward the phone at all, or remain fully on-device DSP decisions with no
+      wire-visible signal.
+- [ ] Whether Adaptive Audio requires the official app to remain active/foregrounded to
+      keep functioning, or is a one-time write to the buds — relevant to our own
+      `ForegroundService` design (`ARCHITECTURE.md` §2/§6).
+- [ ] Confirmed press duration for triggering pairing mode via the case button, distinct
+      from the confirmed 30-second factory-reset hold (`TESTPLAN.md`/`TESTPLAN_EN.md` §2).
+- [ ] Whether captured RFCOMM payload bytes are ever link-layer encrypted in a way
+      Wireshark can't automatically decrypt (see `CAPTURE.md` §7 FAQ) — if so, this is a
+      separate problem from frame structure and needs its own resolution path.
+
+### Resolved
+- [x] Firmware version baseline for the test device — `release_5.203`, confirmed via
+      official app screenshot (§5), 2026-07-30.
+
+---
+
+## 8. Next Steps for Implementation
+
+1. Prioritize resolving the **framing open question** above (Message Stream vs. separate
+   proprietary envelope) before writing `FrameDecoder`/`FrameEncoder` — implementing
+   against the wrong hypothesis risks code that "works" by accident on some frames and
+   silently mishandles others.
+2. Once the real `.proto` files are extracted (§7), compile them into Kotlin Lite classes
+   via the Gradle Protobuf plugin (`build/generated/source/proto/...`, per
+   `ARCHITECTURE.md` §4/§11 — never commit generated code).
+3. Implement `FrameDecoder`/`FrameEncoder` in `:data` strictly against whichever framing
+   hypothesis reaches 🟢 confidence — not against placeholders.
+4. **New architectural consideration:** if the framing question resolves to "both
+   channels exist" (i.e. `libmaestro` control commands use a separate envelope from
+   generic Fast Pair Message Stream traffic like Ring/battery/device info), `:data` will
+   likely need **two separate codecs** rather than one shared `FrameDecoder` — flag this
+   for `ARCHITECTURE.md` §5 if/when confirmed, since it changes the Data layer's internal
+   structure (though not its external interface to `:domain`).
+5. Implement `BudsViewModel` (`:domain`) to map UI intents to the now-confirmed protobuf
+   messages, per the pipeline in `ARCHITECTURE.md` §3.
+6. Feed any behavioral open questions resolved during implementation (§7 "Behavior")
+   back into `ARCHITECTURE.md` where they affect design (e.g. `ForegroundService`
+   lifecycle, battery fallback ordering).
