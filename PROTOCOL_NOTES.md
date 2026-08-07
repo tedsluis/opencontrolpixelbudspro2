@@ -163,7 +163,7 @@ from the official companion app APK using tools like `pbtk`.
 **New note on "Ring" / Find My Buds:** the Fast Pair Message Stream spec's own
 worked ACK example explicitly references action group/code `0x04`/`0x01` for a **ring**
 action. Combined with the "Speel geluid af" / "Find My Buds" actions identified in
-`TESTPLAN.md` §1, this is a strong, concrete, low-risk first target to verify the Message
+`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1, this is a strong, concrete, low-risk first target to verify the Message
 Stream hypothesis from §2.0 empirically — capture a "Play sound on Left earbud" action and
 check whether the outbound frame matches `0x04 0x01 ...` framing.
 
@@ -180,9 +180,9 @@ require protobuf/message mapping:
 - Volume Balance (L/R Balance slider)
 - Case Sounds (Oordopjes terugplaatsen, Andere meldingen)
 - Head Tracking (Hoofdbewegingen gebruiken)
-- Loud Noise Protection (firmware 4.467+, likely on-device DSP only — see `TESTPLAN.md` §4)
+- Loud Noise Protection (firmware 4.467+, likely on-device DSP only — see `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §4)
 - Adaptive Audio dynamic adjustment (firmware 4.467+, likely on-device DSP only — see
-  `TESTPLAN.md` §4)
+  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §4)
 
 ### 4.3 Battery (Left / Right / Case) — **major update: officially specified mechanisms found**
 
@@ -258,7 +258,7 @@ This is a change from the previous ordering, which had the (still-unconfirmed) p
 
 ## 6. Verification Methodology (HCI Snoop Log)
 
-See `CAPTURE.md` for the full step-by-step capture procedure (Developer options setup,
+See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` for the full step-by-step capture procedure (Developer options setup,
 mandatory test capture, `adb bugreport` extraction, Wireshark filtering, truncation
 diagnostics).
 
@@ -299,7 +299,7 @@ leaving them buried in a section's prose.
 - [ ] Channel/Msg ID values for: Set ANC mode, ANC state notification, Set EQ band values
       (§4.1 opcode table).
 - [ ] Confirm the "Ring" / Find My Buds action against the spec's worked example
-      (`0x04`/`0x01`) — see the priority tip in `CAPTURE.md` §4.1 Group K.
+      (`0x04`/`0x01`) — see the priority tip in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group K.
 - [ ] Whether `hardware_status.proto` (§3.1) exists as a genuine Buds-specific schema, or
       whether battery is purely generic Fast Pair Message Stream traffic with no
       Buds-specific protobuf involved at all (§4.3 Option B).
@@ -319,9 +319,9 @@ leaving them buried in a section's prose.
       keep functioning, or is a one-time write to the buds — relevant to our own
       `ForegroundService` design (`ARCHITECTURE.md` §2/§6).
 - [ ] Confirmed press duration for triggering pairing mode via the case button, distinct
-      from the confirmed 30-second factory-reset hold (`TESTPLAN.md`/`TESTPLAN_EN.md` §2).
+      from the confirmed 30-second factory-reset hold (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2).
 - [ ] Whether captured RFCOMM payload bytes are ever link-layer encrypted in a way
-      Wireshark can't automatically decrypt (see `CAPTURE.md` §7 FAQ) — if so, this is a
+      Wireshark can't automatically decrypt (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §7 FAQ) — if so, this is a
       separate problem from frame structure and needs its own resolution path.
 
 ### Resolved

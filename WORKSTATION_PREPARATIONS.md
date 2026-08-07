@@ -1,5 +1,7 @@
 # Prepare Fedora 44 workstation
 
+Here we keep track of the tools needed for this project.
+
 ## packages
 
 ```bash
@@ -39,11 +41,11 @@ fedora ~/git/pixelbudspro2control [main L|✔] $ sudo chown -R $(whoami):$(whoam
 fedora ~/git/pixelbudspro2control [main L|✔] $ npm config set allow-scripts=@anthropic-ai/claude-code,@github/keytar,node-pty --location=user
 ```
 
-## Install Claude-code and Gemini CLI
+## Install Claude-code
 
 ```bash
-# Install Claude Code & Gemini CLI
-fedora ~/git/pixelbudspro2control [main L|✔] $ npm install -g @anthropic-ai/claude-code @google/gemini-cli
+# Install Claude Code
+fedora ~/git/pixelbudspro2control [main L|✔] $ npm install -g @anthropic-ai/claude-code
 
 added 5 packages, removed 36 packages, and changed 4 packages in 11s
 npm warn install-scripts 3 packages had install scripts blocked because they are not covered by allowScripts:
@@ -53,12 +55,34 @@ npm warn install-scripts   node-pty@1.0.0 (install: node-gyp rebuild; postinstal
 npm warn install-scripts
 changed 9 packages in 12s
 
-# Check Claude Code & Gemini CLI versions
+# Check Claude Code
 fedora ~/git/pixelbudspro2control [main L|✔] $ hash -r
 fedora ~/git/pixelbudspro2control [main L|✔] $ claude --version
 2.1.224 (Claude Code)
-fedora ~/git/pixelbudspro2control [main L|✔] $ gemini --version
-0.54.4
+```
+
+## Install Antigravity
+
+```bash
+# Add Antigravity repo
+fedora ~/git/pixelbudspro2control [main L|✔] sudo tee /etc/yum.repos.d/antigravity.repo << EOL
+[antigravity-rpm]
+name=Antigravity RPM Repository
+baseurl=https://us-central1-yum.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-rpm
+enabled=1
+gpgcheck=0
+EOL
+
+# Update the package cache
+fedora ~/git/pixelbudspro2control [main L|✔] sudo dnf makecache
+
+# Install the package
+fedora ~/git/pixelbudspro2control [main L|✔] sudo dnf install antigravity -y
+
+antigravity --version
+1.107.0
+15487b3041e65228cae24980a3f796c905ef582c
+x64
 ```
 
 ## Install Java 21 OpenJDK

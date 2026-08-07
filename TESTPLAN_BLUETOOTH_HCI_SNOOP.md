@@ -85,7 +85,7 @@ _Physical interactions with the device._
 | | User starts speaking (voice) | User (Hardware) | 🟢 | Triggers Conversation Detection (if on) — pauses media, switches to Transparency. |
 | | Place buds back in the case and close the lid | User (Hardware) | 🔵 | Terminates the active Bluetooth Classic connection. |
 | | Hold the case button for **30 seconds** (case open, buds inside, plugged into power) | User (Hardware) | 🔵 | **Correction vs. the original:** this is a **full factory reset**, not just pairing mode. Also explicitly resets the Find My Device link on the Pro 2. |
-| | Press the case button briefly/differently to force pairing mode | User (Hardware) | 🔴 | **Still to verify** — no officially confirmed press duration found for a shorter pairing trigger (separate from the 30s reset). Note as an open question in `protocol-notes.md` §7 and determine empirically during your capture. |
+| | Press the case button briefly/differently to force pairing mode | User (Hardware) | 🔴 | **Still to verify** — no officially confirmed press duration found for a shorter pairing trigger (separate from the 30s reset). Note as an open question in `PROTOCOL-NOTES.md` §7 and determine empirically during your capture. |
 
 ---
 
@@ -109,7 +109,7 @@ Key points, taken directly from the official spec:
 - **Alternative mechanism, also officially specified:** raw battery data can also be sent
   over RFCOMM once a connection exists, via the **Fast Pair "Message Stream: Device
   Information"** extension. This is presumably **the same mechanism** as the
-  `HardwareStatus` hypothesis in `protocol-notes.md` §4.2, option 1 — it deserves a higher
+  `HardwareStatus` hypothesis in `PROTOCOL-NOTES.md` §4.2, option 1 — it deserves a higher
   confidence rating than 🔴 now that we know an officially documented RFCOMM battery route
   exists, even though this is a generic Fast Pair mechanism rather than a Buds-specific
   `libmaestro` detail.
@@ -124,7 +124,7 @@ _Background processes, without a direct tap from the user._
 |---|---|---|---|---|
 | | App launches (after force close) → requests status | App (Auto) | 🔵🟡 | Likely via an RFCOMM connect, which per the Fast Pair spec itself is already the trigger for a battery update from the buds (see the call-out above) — so this is largely a section-4 event triggered by an app action. |
 | | **Notification with battery status on every reconnect** | App (Auto) | 🔵 | Confirmed: "Each time you connect... a notification will appear showing you where battery life stands." Missing from the original. |
-| | App running in the background (battery polling) | App (Auto) | 🔴 **Correction** | The original assumed periodic polling. The official Fast Pair spec instead suggests **event-driven** updates (on value change), not necessarily active polling from the app. Still to confirm whether the Pixel Buds app itself also actively polls on top of this mechanism — a good candidate for an open question in `protocol-notes.md` §7. |
+| | App running in the background (battery polling) | App (Auto) | 🔴 **Correction** | The original assumed periodic polling. The official Fast Pair spec instead suggests **event-driven** updates (on value change), not necessarily active polling from the app. Still to confirm whether the Pixel Buds app itself also actively polls on top of this mechanism — a good candidate for an open question in `PROTOCOL-NOTES.md` §7. |
 | | Background check/download for a firmware update | App/OS (Auto) | 🔵 | Confirmed: download happens automatically in the background once connected to Android 6.0+ (~10 min), installation happens when the buds are placed back in the case with sufficient charge (~10 min). |
 | | Adaptive Audio processing — does it require the app to be active? | App (Auto?) | 🟡 **Unconfirmed** | One source states: "toggles in the Pixel Buds app, which is required for the feature to work" — unclear whether this is purely a UI setting (written to the buds once) or whether the app needs to stay continuously active for this feature. Relevant to your own `ForegroundService` design (`ARCHITECTURE.md` §2/§6) — worth testing yourself: does Adaptive Audio still work if you fully close the official app? |
 
@@ -138,9 +138,9 @@ _Sensors and firmware behavior, without a direct action from the app._
 |---|---|---|---|---|
 | | Case broadcasts battery status via BLE advertisement | Buds/Case (Auto) | 🔵 **Now precisely specified** | Official Fast Pair Battery Notification extension: 3 bytes (L/R/Case), advertised when the case opens and/or on value change; visible for at least 8s, hidden after 20s or explicitly. Optional when a single bud is inserted/removed. |
 | | Buds update battery status while worn | Buds/Case (Auto) | 🔵 **Correction** | Spec says trigger = "when RFCOMM connects, or when the value changes" — **no fixed step size** (e.g. "every 1%") is officially specified; that detail from the original is therefore an assumption, not confirmed. |
-| | Battery data via RFCOMM after connecting (instead of BLE advertisement) | Buds/Case (Auto) | 🔵 | **New, important:** officially specified alternative channel — Fast Pair "Message Stream: Device Information". Strong candidate to match with `protocol-notes.md` §4.2 option 1 (the `HardwareStatus` hypothesis). |
+| | Battery data via RFCOMM after connecting (instead of BLE advertisement) | Buds/Case (Auto) | 🔵 | **New, important:** officially specified alternative channel — Fast Pair "Message Stream: Device Information". Strong candidate to match with `PROTOCOL-NOTES.md` §4.2 option 1 (the `HardwareStatus` hypothesis). |
 | | In-ear sensor reports 'removed' | Buds (Auto) | 🟢 | Confirmed via your own screenshot (In-ear detection: "pauses audio when not worn"). |
 | | 'Low battery' notification (case) | Buds/Case (Auto) | 🔵 | Confirmed specifically for Pro 2/2a: notification for both low case battery and fully charged case. |
 | | **Loud Noise Protection**: automatic volume reduction on a sudden loud sound | Buds (Auto) | 🔵 | **Completely missing from the original.** Added in firmware 4.467. Presumably a purely local DSP action on the buds themselves (no phone-side command needed) — interesting to check whether a notify frame is also sent to the phone when this triggers. Does not cover impulse sounds (gunshots, fireworks) per Google itself. |
-| | **Adaptive Audio**: dynamic adjustment of the ANC/Transparency balance based on environment | Buds (Auto) | 🔵🟡 | Works "on the fly" using the Tensor A1 chip in the buds. Unclear whether this generates BT traffic toward the phone (e.g. status sync for the UI) or stays entirely on-device — open question for `protocol-notes.md` §7. |
+| | **Adaptive Audio**: dynamic adjustment of the ANC/Transparency balance based on environment | Buds (Auto) | 🔵🟡 | Works "on the fly" using the Tensor A1 chip in the buds. Unclear whether this generates BT traffic toward the phone (e.g. status sync for the UI) or stays entirely on-device — open question for `PROTOCOL-NOTES.md` §7. |
 | | Firmware installation when placed back in the case (with sufficient charge) | Buds/Case (Auto) | 🔵 | See section 3 — installation timing is hardware-/case-bound, download timing is app-/OS-bound. |

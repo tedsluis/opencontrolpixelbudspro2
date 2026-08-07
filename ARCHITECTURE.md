@@ -92,7 +92,7 @@ Pixel Buds Pro 2 Control App — Architecture Blueprint+-----------+------------
     
 -   Any framing mismatch (bad magic, length overrun, checksum failure) yields a `BudsError.MalformedFrame` — logged locally and dropped, never surfaced as a crash.
     
--   Exact byte offsets/opcodes per command are tracked in `docs/protocol-notes.md` alongside a reference to the corresponding `pbpctrl` source file, so protocol knowledge stays auditable and versioned independently of this document.
+-   Exact byte offsets/opcodes per command are tracked in `PROTOCOL-NOTES.md` alongside a reference to the corresponding `pbpctrl` source file, so protocol knowledge stays auditable and versioned independently of this document.
     
 
 ## 6\. Bluetooth Resilience & GrapheneOS Degradation
@@ -127,7 +127,7 @@ Pixel Buds Pro 2 Control App — Architecture Blueprintsealed class BudsError {
 
 ## 8\. Firmware / Protocol Compatibility
 
-Because `libmaestro`'s wire format can change across Pixel Buds firmware revisions, each `.proto` file and each entry in `docs/protocol-notes.md` carries the firmware/library version it was verified against. `UnsupportedFirmware` (§7) is returned when an inbound frame doesn't match any known schema version, rather than attempting a best-effort parse that could misreport battery/ANC state.
+Because `libmaestro`'s wire format can change across Pixel Buds firmware revisions, each `.proto` file and each entry in `PROTOCOL-NOTES.md` carries the firmware/library version it was verified against. `UnsupportedFirmware` (§7) is returned when an inbound frame doesn't match any known schema version, rather than attempting a best-effort parse that could misreport battery/ANC state.
 
 ## 9\. Security & Permission Architecture
 
