@@ -78,7 +78,7 @@ humans and AI coding assistants working on it:
 | `EXPERIMENTS.md` | Experiment log (hypothesis → conclusion) |
 | `DECISIONS.md` | Architecture and design decisions (ADR-style) |
 | `CAPTURE_BLUETOOTH_HCI_SNOOP.md` | Bluetooth HCI capture procedure and log |
-| `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` | Test approach for app and protocol validation |
+| `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` | Action/behavior catalog (Test-IDs), linked to capture scenarios and protocol evidence |
 | `SCREENSHOTS_PIXEL_BUDS_APP.md` | Reference screenshots of the official Android app |
 | `SCREENSHOTS_PIXEL_BUDS_WEB_APP.md` | Reference screenshots of the official web companion app |
 | `WORKSTATION_PREPARATIONS.md` | Fedora development workstation setup |
