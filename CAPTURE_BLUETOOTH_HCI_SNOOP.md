@@ -77,10 +77,11 @@ so nothing rotates out before you extract it.
 ## 3. Extracting the Log (identical method for stock Android *and* GrapheneOS)
 
 Do **not** attempt `adb root` or a direct `adb pull` of
-`/data/misc/bluetooth/logs/btsnoop_hci.log` — on a production (non-rooted) build,
+`/data/misc/bluetooth/logs/btsnoop_hci.log` — on a normal production/non-rooted build,
 including stock Pixel firmware and GrapheneOS, this will fail with a permission error,
-since `adbd` cannot run as root on production builds. This is expected and not specific
-to GrapheneOS.
+since `adbd` cannot run as root on such a build. This is expected and not specific to
+GrapheneOS; it has nothing to do with whether the device is capable of being rooted,
+only with the fact that neither phone is rooted here.
 
 The supported, working method on both phones:
 
@@ -89,12 +90,28 @@ The supported, working method on both phones:
    adb bugreport buds_capture
    ```
    This produces `buds_capture.zip` (or a similarly named file/folder depending on
-   platform-tools version) in your current directory. No root required — this works on a
-   stock, non-rooted GrapheneOS production build as confirmed by GrapheneOS's own
-   community support.
+   platform-tools version) in your current directory. No root required. A GrapheneOS
+   community forum report documents `adb bugreport` producing a report containing the
+   BTSnoop log on a stock, non-rooted GrapheneOS build on Android 16 — this is a
+   community observation, not an official GrapheneOS platform guarantee, but it's
+   consistent with `adb bugreport` being the standard, documented AOSP mechanism (below)
+   rather than anything GrapheneOS-specific.
 2. Unzip the result.
-3. Locate the snoop log inside. The exact internal path varies by Android version —
-   check both of these first:
+3. **Extract the log — primary method, per current AOSP documentation:**
+   ```
+   # Get btsnooz.py from the AOSP source tree if you don't already have it:
+   # https://cs.android.com/android/platform/superproject/+/android-latest-release:packages/modules/Bluetooth/system/tools/scripts/btsnooz.py
+   btsnooz.py buds_capture.txt > buds_capture_btsnoop.log
+   ```
+   Run this against the **text** bugreport file (typically named like
+   `bugreport-<device>-<date>.txt` inside the unzipped archive), not the raw binary log.
+   This is the method Android's own source documentation recommends, and it doesn't
+   depend on guessing an internal zip path that has already moved between Android
+   releases (see the fallback below) — `btsnooz.py` extracts the BTSnoop data directly
+   from the bugreport's text dump, which is a more stable interface across versions.
+4. **Fallback — locate the raw log file directly, if you prefer or if `btsnooz.py` isn't
+   convenient to set up:** the exact internal path of the raw file varies by Android
+   version — check both of these first:
    - `FS/data/log/bt/btsnoop_hci.log`
    - `FS/data/misc/bluetooth/logs/btsnoop_hci.log`
 
@@ -102,10 +119,10 @@ The supported, working method on both phones:
    ```
    find . -iname "*btsnoop*"
    ```
-4. Copy/rename the file somewhere memorable, e.g.
+5. Copy/rename the resulting log somewhere memorable, e.g.
    `captures/2026-08-02_pixel7a_anc-toggle.log`, so repeated sessions don't overwrite
    each other.
-5. Once you've confirmed extraction worked, you can disable the HCI snoop toggle again
+6. Once you've confirmed extraction worked, you can disable the HCI snoop toggle again
    (§2 step 3) to avoid unnecessary background logging and disk usage between sessions.
 
 ---
@@ -334,7 +351,12 @@ These are waiting periods to catch spontaneous hardware-initiated traffic per
 
 1. Open the extracted `btsnoop_hci.log` file directly in Wireshark
    (File → Open, or drag-and-drop — no special import steps needed, Wireshark recognizes
-   the BTSnoop format natively).
+   the BTSnoop file format natively). This gets you HCI/L2CAP/RFCOMM/ATT-level framing
+   for free — it does **not** mean Wireshark understands the `libmaestro` payload itself.
+   There is no dissector for a proprietary, undocumented protocol, so the actual command
+   bytes inside an RFCOMM frame will show up as opaque raw data; decoding what they mean
+   is manual work you do against the hypotheses in `PROTOCOL-NOTES.md` §2 (see step 4
+   below) — that manual decoding is the actual point of this whole procedure.
 2. Useful filters to narrow the view:
    - `bthci_acl` — general ACL-level Bluetooth traffic.
    - `btrfcomm` — RFCOMM traffic specifically (this is where `libmaestro` frames live).
@@ -373,14 +395,17 @@ These are waiting periods to catch spontaneous hardware-initiated traffic per
 - **Log rotation:** the in-device snoop buffer is finite; very long or idle-heavy
   sessions can push earlier frames out before you extract them. Keep sessions focused
   (§2, §4).
-- **Bluetooth restart is not optional.** Skipping the restart step in §2 (step
-  5) is the single most common reason a capture ends up empty despite the
-  setting being "on" — reboot by default; a plain toggle only if you've
-  confirmed it works reliably on your specific phone.
+- **A Bluetooth restart is required** for the HCI snoop logging setting to take effect —
+  per Android's own source documentation, not just this guide's experience (this project
+  has no capture statistics of its own yet to say how common empty-log failures are).
+  Reboot by default (§2 step 5); a plain toggle only if you've confirmed it works
+  reliably on your specific phone.
 - **`adb root` will not work** on either phone for this purpose — both stock Pixel
-  firmware and GrapheneOS run production (non-rootable) builds. Don't waste time trying
-  to root a device just for this; `adb bugreport` is the supported path and is
-  sufficient.
+  firmware and GrapheneOS are, as set up for this project, normal production/non-rooted
+  builds, on which `adbd` cannot run as root. This is about the current, as-configured
+  state of these two phones, not a claim that Pixel hardware can't be rooted by other
+  means — don't waste time trying to root a device just for this; `adb bugreport` is the
+  supported path and is sufficient.
 - **Path differences across Android versions:** the internal bugreport path for the
   snoop log has moved between `FS/data/log/bt/` and `FS/data/misc/bluetooth/logs/` across
   Android releases — if your expected path is empty, search the archive by filename
@@ -407,7 +432,7 @@ commands each time.
 
 **Q: The zip from `adb bugreport` doesn't contain a Bluetooth folder at all — what now?**
 This has been reported when the HCI snoop toggle wasn't actually active during the
-session (see the "Bluetooth restart is not optional" note in §6) — re-check §2 step 5,
+session (see the "A Bluetooth restart is required" note in §6) — re-check §2 step 5,
 reboot the phone this time even if you used a plain toggle before, reproduce the action,
 and pull a fresh bugreport. If it still doesn't appear, search the whole archive by
 filename (`find . -iname "*btsnoop*"`) rather than assuming a fixed path.
@@ -429,11 +454,29 @@ it's slightly more roundabout than a direct file pull.
 
 **Q: My Pixel 7a capture shows encrypted-looking or unreadable payload bytes even inside
 the RFCOMM stream — is that expected?**
-Possibly — depending on the profile and pairing security level, some traffic may be
-link-layer encrypted at capture time in ways Wireshark can't automatically decrypt
-without additional key material. If this happens consistently, note it as an open
-question in `PROTOCOL-NOTES.md` §7 rather than assuming the envelope hypothesis in §2 is
-wrong — this is a separate problem from frame structure.
+Most likely, **not** actual encryption — a few distinct things get conflated under
+"looks encrypted," worth separating:
+- **HCI-boundary visibility:** an HCI snoop log is captured at the boundary between the
+  host (Android's Bluetooth stack) and the controller (the Bluetooth chip). On typical
+  implementations, Bluetooth link-layer encryption/decryption happens *in the
+  controller*, below this boundary — so ACL data crossing HCI toward the host is usually
+  already plaintext at the L2CAP/RFCOMM level, not still link-encrypted.
+- **What this means in practice:** raw, unfamiliar-looking bytes inside an RFCOMM frame
+  are, for this project, far more likely to just be serialized protobuf data you don't
+  recognize yet (protobuf's binary encoding often looks fairly random to the eye without
+  the schema) than genuine Bluetooth link-layer encryption. Don't assume "unreadable"
+  means "encrypted, therefore unusable" — it's probably exactly the payload you're
+  trying to reverse engineer.
+- **When it might genuinely be encryption:** if bytes are unreadable *consistently*,
+  across many otherwise-isolated captures, and never resolve into anything matching the
+  envelope hypothesis no matter how you slice the offsets, that's a better (though still
+  not certain) signal of something below Wireshark's visibility — e.g. a
+  higher-layer/application-level encryption scheme, rather than standard Bluetooth link
+  encryption, which per the point above shouldn't normally still be present at this
+  layer.
+- If this happens consistently, note it as an open question in `PROTOCOL-NOTES.md` §7 —
+  including which of the above you've ruled out — rather than assuming the envelope
+  hypothesis in §2 is simply wrong.
 
 **Q: Should I capture on the GrapheneOS phone first, since that's my actual target
 platform?**
