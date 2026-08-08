@@ -316,7 +316,11 @@ These are waiting periods to catch spontaneous hardware-initiated traffic per
 18. **Passive BLE scan while the case is closed and idle** — intended to catch the Fast
     Pair Battery Notification advertisement (`PROTOCOL-NOTES.md` §4.3 Option A) without
     any active RFCOMM connection. This doesn't require the buds to be connected to the
-    capturing phone at all — any nearby scan should do, per the spec.
+    capturing phone at all — any nearby scan should do, per the spec. **This is a
+    one-off, manual reverse-engineering capture, not a template for the app.** The
+    production app's own BLE scanning stays governed separately, and more narrowly, by
+    the bounded exception in `AGENTS.md` §7 / `DECISIONS.md` ADR-006 — this experiment
+    does not authorize a broader scanning implementation than that.
 19. **Trigger a loud, sudden sound near the buds while worn** (e.g. clap sharply nearby)
     to attempt to observe Loud Noise Protection engaging (`PROTOCOL-NOTES.md` §4.2/§7) —
     note whether anything appears on the wire at all, since this may be purely on-device.
@@ -335,6 +339,8 @@ These are waiting periods to catch spontaneous hardware-initiated traffic per
    - `bthci_acl` — general ACL-level Bluetooth traffic.
    - `btrfcomm` — RFCOMM traffic specifically (this is where `libmaestro` frames live).
    - `btatt` — GATT/ATT traffic (relevant for the BLE battery-service investigation).
+   - `btle` — BLE Link Layer traffic (advertising/scan reports) — this is where the Fast
+     Pair Battery Notification capture (Group Q #18) shows up, **not** `btrfcomm`.
    - `bluetooth.addr == <buds MAC>` — restrict to the Buds' Bluetooth address once you've
      identified it (visible in the pairing frames or in Wireshark's Bluetooth device
      list under View → Bluetooth Devices).
@@ -344,10 +350,18 @@ These are waiting periods to catch spontaneous hardware-initiated traffic per
    times, to avoid an offset mismatch.
 4. For each identified command frame:
    - Note the raw bytes (right-click → Copy → ...as Hex Stream is fastest).
-   - Compare the structure against the envelope hypothesis in `PROTOCOL-NOTES.md` §2
-     (magic byte, length field, channel/msg ID, payload, checksum).
-   - Record the confirmed values back into `PROTOCOL-NOTES.md` §4.1's opcode table, mark
-     the entry `[VERIFIED-LOCAL]` with today's date, and raise its confidence to 🟢.
+   - **If it's an RFCOMM frame** (`btrfcomm` — an app-triggered command, or the Find My
+     Buds/Ring action): compare the structure against the envelope hypothesis in
+     `PROTOCOL-NOTES.md` §2 (magic byte, length field, channel/msg ID, payload, checksum).
+   - **If it's a BLE advertisement** (`btle` — the Battery Notification, Group Q #18):
+     compare it against the Fast Pair Battery Notification structure in
+     `PROTOCOL-NOTES.md` §4.3 Option A (flags, account key data, battery-level-length/type
+     byte, then the 3 battery bytes) instead. This is a **different, unrelated** structure
+     — it is not RFCOMM traffic and was never expected to match the §2 envelope
+     hypothesis; don't force-fit it there or record a false "doesn't match" finding.
+   - Record the confirmed values back into `PROTOCOL-NOTES.md` §4.1's opcode table
+     (RFCOMM frames) or §4.3 (battery), mark the entry `[VERIFIED-LOCAL]` with today's
+     date, and raise its confidence to 🟢.
 5. If a frame doesn't match the expected envelope shape at all, don't force-fit it —
    note it as an open question (`PROTOCOL-NOTES.md` §7) rather than recording a guess as
    fact.
