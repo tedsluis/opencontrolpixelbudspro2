@@ -100,4 +100,4 @@ knowledge informs this Android-native implementation.
 
 ## License
 
-Not yet finalized — see `AGENTS.md` §12.
+GNU AGPL-3.0
