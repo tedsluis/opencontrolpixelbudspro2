@@ -125,9 +125,12 @@ can pull a fresh bugreport for any subset at any time. Splitting this into 3–4
 sessions by group (below) is often more manageable than one long one, and keeps each
 `adb bugreport` capture focused (see the log rotation note in §6).
 
-Do each action as one continuous `adb bugreport` session per group, each action logged
-with its own timestamp, following the usual rhythm: **wait ~5s → note the exact time →
-perform the action → wait ~5–10s → move to the next action.**
+Run one continuous **Bluetooth HCI snoop logging session** per group — the
+on-device logger you enabled in §2 keeps recording throughout, there's nothing
+you need to re-invoke to "keep it going" — and collect a single `adb bugreport`
+(§3) once, at the end of the group. Log each action with its own timestamp,
+following the usual rhythm: **wait ~5s → note the exact time → perform the
+action → wait ~5–10s → move to the next action.**
 
 **⚠️ Priority tip:** PROTOCOL-NOTES.md §6 flags the "Play sound on Left earbud" action
 (group K below) as a specifically valuable, low-risk target — its frame can be directly
@@ -135,9 +138,16 @@ compared against the Fast Pair Message Stream spec's own worked example
 (`0x04 0x01 ...` for a ring action) to confirm or refute the framing hypothesis in
 `PROTOCOL-NOTES.md` §2.0. If you only have time for a short session, prioritize group K.
 
-#### Group A — Connection baseline
-1. **Pairing** (if not already paired, or do a deliberate re-pair as its own isolated
-   capture): open Bluetooth settings, pair the Buds, wait for the connection to settle.
+#### Group A — Connection / bonding baseline
+1. **Pairing / bonding baseline** — capture this as its own isolated session,
+   ideally before the command groups below (B–P). If the Buds are already
+   paired, **"forget" the device on the phone side first** (Bluetooth
+   settings → the paired device → Forget), then re-pair through Bluetooth
+   settings — this captures a real bonding handshake instead of skipping it
+   because "it's already paired." This is a **lightweight, safely repeatable**
+   action: it does not touch the Buds' own memory or the Find My Device link,
+   unlike the full factory reset in Group P #16 below — do not confuse the
+   two. Wait for the connection to settle before moving on to Group B.
 
 #### Group B — Active Noise Control
 2. **ANC → Off**. Wait. Note time.
@@ -282,6 +292,12 @@ Requires 'Head gestures' enabled (§4.1 Group F).
     — ⚠️ this is a confirmed **full factory reset**, not just pairing mode (per
     `TESTPLAN_EN.md` §2). Do this deliberately, last, and only once you're ready to
     re-pair from scratch — it will also reset the Find My Device link on the Pro 2.
+    If you do trigger it, capture the subsequent re-pair as its own isolated session
+    right afterward (same rhythm as Group A #1) — this gives a second,
+    from-true-factory-state bonding capture to compare against Group A's lightweight
+    forget-and-re-pair baseline. It is optional and not a prerequisite for anything
+    else in this guide — Group A's lightweight baseline is sufficient on its own for
+    every other group.
 17. **(Open question, see `PROTOCOL-NOTES.md` §7)** Try a shorter/different press on the
     case button to see if it triggers pairing mode without a full reset. No officially
     confirmed duration exists for this — treat your own finding here as
@@ -429,3 +445,39 @@ Every capture session should end with at least one of these:
 Treat a capture session that doesn't result in at least one of the above as incomplete —
 either the action wasn't actually isolated/identifiable, or something in the setup (§2,
 §6) needs revisiting before the next attempt.
+
+---
+
+## 9. Capture Index
+
+Every capture session gets a row here, added at or immediately after extraction
+(§3) — this is the authoritative index that `PROTOCOL_NOTES.md` and
+`PROTOCOL.md` evidence entries reference back to, per `PROJECT_RULES.md`
+rule 3 (traceability) and rule 14 (capture metadata). A capture that never
+gets a row here is, for evidence purposes, effectively lost — don't skip this
+step, even for a quick one-action session.
+
+**ID format:** `CAP-NNN`, zero-padded, strictly incrementing, never reused —
+if a capture turns out to be unusable, mark it `discarded` in Status rather
+than deleting the row or reassigning its number to a later capture.
+
+| ID | Date | Phone | Android | Buds FW | App version | Group(s) | Purpose | Bugreport file | Extracted log | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `CAP-001` | | Pixel 7a | | | | A | Pairing/bonding baseline | | | captured |
+
+**Column notes:**
+
+- **Phone** — `Pixel 7a` (primary, official app) or `Pixel 9a` (secondary,
+  GrapheneOS), per the two-device setup described at the top of this
+  document.
+- **Group(s)** — the letter(s) from §4 (A–Q) covered in this session; one
+  bugreport pull can cover several groups if captured as one continuous
+  logging session (§4.1).
+- **Status** — one of: `captured` (extracted, not yet reviewed), `analyzed`
+  (reviewed in Wireshark per §5, findings recorded per §8), `promoted` (a
+  finding from this capture has been written into `PROTOCOL_NOTES.md` /
+  `PROTOCOL.md` with a `[VERIFIED-LOCAL]` tag), `discarded` (unusable —
+  note why, e.g. in an extra remarks column if needed).
+- Reference a capture from `PROTOCOL_NOTES.md` / `PROTOCOL.md` by its ID (e.g.
+  "confirmed in `CAP-001`, frame 214") rather than by date or description, so
+  the reference survives even if this row's description is later edited.
