@@ -23,8 +23,9 @@ Communication happens over two transports:
   case/charging state, where applicable (e.g. a standard Battery Service
   `0x180F`, per `PROTOCOL.md` §4.3 Option D).
 
-Target platform: Android 14+ (API 34), GrapheneOS as the primary reference OS,
-with compatibility maintained for stock AOSP-based ROMs.
+Compile/target SDK: API 34 (Android 14). Minimum supported Android API: **TBD** — see
+the open question in §15; do not treat "API 34" as if it already answered that. Primary
+reference OS: GrapheneOS, with compatibility maintained for stock AOSP-based ROMs.
 
 ```
 ┌──────────────────────────────────────────────────────┐
