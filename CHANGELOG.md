@@ -67,6 +67,14 @@ for the "definition of done" that will mark v1.
   `adb bugreport` is a one-time extraction, not a live logging mechanism; and
   added the missing §9 Capture Index (`CAP-NNN` table), which `TODO.md` and
   `PROJECT_RULES.md` rule 14 both already assumed existed.
+- Changed `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §2 step 5 to recommend a full
+  reboot by default (toggle Bluetooth off/on remains a documented, faster
+  alternative once verified reliable on a given phone). Checked this against
+  official AOSP documentation and GrapheneOS/Pixel community reports first —
+  found no confirmed evidence that the toggle is broadly unreliable on recent
+  Android versions, so the change is framed as cost-based insurance (an empty
+  capture costs a full re-session; a reboot costs about a minute) rather than
+  as a corrected reliability claim.
 
 ### Reverse engineering findings
 
