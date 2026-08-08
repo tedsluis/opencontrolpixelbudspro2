@@ -174,3 +174,47 @@ written today can be overtaken by another ADR being added first.
   device discovery) remains fully covered by the original ban in `AGENTS.md`
   §7 and would need its own, separate decision; it is not opened up by this
   ADR.
+
+## ADR-007 — `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Groups are capture scenarios, not tests; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the test/behavior catalog
+
+- **Date**: 2026-08-08
+- **Status**: Accepted
+- **Context**: `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Groups A–Q and
+  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s four action tables had grown to
+  describe largely the same ~66–70 Buds actions/behaviors, but with different
+  groupings, wording, and no ID linkage between them, and no structured place
+  to record per-action results (only a session-level Capture Index existed).
+  This risked the same finding being independently re-described in two
+  places, and gave "a Group" no clear relationship to "an official test."
+- **Options considered** (evaluated against three criteria: supporting live
+  execution, complete/clear recording, and ease of later analysis):
+  1. Two files, `CAPTURE` = procedure + testing, `TESTPLAN` = results only —
+     rejected: leaves the original duplication largely intact, since Groups
+     would still function as a de facto test catalog.
+  2. Three files/layers — a stable action catalog, a pure procedure document,
+     and a separate results/evidence log — cleanest separation, but adds a
+     third artifact and ID namespace before the project has completed even
+     one real capture; assessed as premature for the project's current
+     stage.
+  3. Two files, redefined roles: `CAPTURE`'s Groups become explicit **capture
+     scenarios** (how to run an efficient session), `TESTPLAN` becomes a
+     stable **action/behavior catalog** with permanent Test-IDs, existence
+     confidence, linked Group(s), and a thin evidence pointer into
+     `PROTOCOL_NOTES.md`/`PROTOCOL.md` (never a duplicate results table).
+- **Decision**: option 3. See `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §0 for the
+  full reasoning and the Test-ID convention, and `CAPTURE_BLUETOOTH_HCI_SNOOP.md`
+  §4's intro for the capture-scenario framing. Every numbered action in
+  `CAPTURE` is annotated with its Test-ID; the Capture Index (§9) gained a
+  Test(s) column, closing the chain: Test-ID → Group → `CAP-NNN` capture →
+  frame → `PROTOCOL_NOTES.md` finding.
+- **Consequences**: a Group can now legitimately bundle unrelated Test-IDs
+  for capture efficiency (e.g. Group C bundles `CONV-001` and `MULTI-001`)
+  without that being a modeling problem. Mapping the two documents onto each
+  other surfaced two genuine, previously-untracked gaps (no capture scenario
+  yet for `INEAR-004` and `GATT-001`), now recorded in `TESTPLAN`'s open-items
+  section rather than silently missing. Trade-off: two ID namespaces
+  (`CAP-NNN` sessions, `<AREA>-NNN` tests) instead of one, requiring the same
+  numbering discipline as `DECISIONS.md` ADRs (never reused, checked against
+  existing entries). If the project later needs option 2's three-layer
+  separation (e.g. once results volume grows), this ADR should be superseded
+  rather than silently reinterpreted.
