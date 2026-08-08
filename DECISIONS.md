@@ -37,8 +37,9 @@ written today can be overtaken by another ADR being added first.
   throughout the project as reverse engineering progresses.
 - **Options considered**: MVC, MVVM + Clean Architecture, MVI
 - **Decision**: Clean Architecture with MVVM in the UI layer and a Repository
-  pattern between the domain and data layers, split across four Gradle modules
-  (`:ui`, `:domain`, `:data`, `:hardware`) with enforced one-way dependency
+  pattern between the domain and data layers, split across five Gradle
+  modules (`:app`, `:ui`, `:domain`, `:data`, `:hardware`, with `:app` as the
+  composition/DI-wiring module) with enforced one-way dependency
   direction. See `ARCHITECTURE.md` §2.
 - **Consequences**: somewhat more boilerplate (module boundaries, sealed result
   types), but protocol changes stay isolated in the data/hardware layers and
