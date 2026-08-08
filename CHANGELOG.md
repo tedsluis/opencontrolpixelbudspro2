@@ -138,6 +138,20 @@ for the "definition of done" that will mark v1.
   (`:ui`, `:domain`, `:data`, `:hardware`) and omitting `:app` entirely;
   `ARCHITECTURE.md` §2 defines five modules including `:app` as the
   composition/DI-wiring module.
+- Adopted three methodology improvements from a reviewed prioritized capture
+  plan: added a Group Z pipeline-validation capture to
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 (verify the whole HCI-snoop →
+  bugreport → `btsnooz.py` → Wireshark chain on one trivial action before
+  spending the pairing baseline or Find My Buds on discovering a broken
+  pipeline); added an explicit cross-command framing check after Find My
+  Buds (Group K) so the framing hypothesis isn't promoted toward FACT off a
+  single frame that merely resembles the spec's worked example; and
+  reordered `TODO.md` Phase 1 to match (pipeline validation → pairing
+  baseline → Find My Buds → cross-check → independent battery experiment).
+  Declined the plan's suggestion to hardcode specific `CAP-NNN` numbers into
+  `TODO.md` — that would reintroduce the same numbering-drift risk already
+  fixed for `DECISIONS.md` ADRs; capture IDs are assigned in the Capture
+  Index (§9) as work actually happens, not pre-assigned in a task list.
 
 ### Reverse engineering findings
 
