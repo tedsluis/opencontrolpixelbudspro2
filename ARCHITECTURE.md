@@ -296,21 +296,16 @@ from an *already-bonded, known* device to get battery updates without an
 active RFCOMM connection.
 
 **Decided (see `DECISIONS.md` ADR-006):** this is permitted, but only as a
-narrow, bounded exception, not as general-purpose scanning:
+narrow, bounded exception, not as general-purpose scanning — filtered to the
+already-bonded device, triggered only by a user-visible event rather than a
+background timer, time-boxed to roughly the advertisement's own visibility
+window, and stopped as soon as the app leaves the foreground.
 
-- Scan filter restricted to the already-bonded device's own identifiers only
-  (never a generic/unfiltered scan).
-- Triggered only by a user-visible event (device screen opened, explicit
-  "refresh battery" action, or piggy-backed on a CDM-driven reconnection
-  already in progress) — never a periodic background timer.
-- Time-boxed to roughly the advertisement's own visibility window (~8–20s per
-  the Fast Pair spec) or until the expected advertisement arrives, whichever
-  is first.
-- Stopped immediately if the app leaves the foreground.
-
-The authoritative rule text agents must follow lives in `AGENTS.md` §7 — this
-section summarizes it for architectural context but is not a second source of
-truth for the exact wording (`PROJECT_RULES.md` §2).
+The authoritative rule text agents must follow — including the exact
+filtering, triggering, and timing bounds — lives in `AGENTS.md` §7. This
+section exists only to explain *why* the exception exists architecturally; it
+deliberately does not restate the specific bounds a second time, so there is
+nothing here that can drift out of sync with §7 (`PROJECT_RULES.md` §2).
 
 ## 10. Dependency Injection
 
