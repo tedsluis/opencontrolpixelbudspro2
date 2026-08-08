@@ -8,6 +8,12 @@ earlier decision is never silently overwritten: a new, conflicting decision
 explicitly references the number it replaces ("supersedes ADR-00X"), and the
 superseded ADR's status is updated accordingly rather than deleted.
 
+**Numbering:** ADRs are numbered sequentially and a number is never reused,
+even if an ADR is later rejected or superseded. Before adding a new ADR, check
+the highest existing number below and use the next one — do not guess or
+pre-assign a number in another document (e.g. `TODO.md`), since a task
+written today can be overtaken by another ADR being added first.
+
 ## Template
 
 ```
