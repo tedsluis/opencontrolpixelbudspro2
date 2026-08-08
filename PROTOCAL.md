@@ -157,7 +157,26 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
 
 ### 4.3 Battery status (Left / Right / Case)
 
-Four candidate mechanisms, in priority order for implementation:
+Five candidate mechanisms, in priority order for implementation:
+
+#### Option 0 — Generic OS battery broadcast (supplementary, cheapest to check)
+
+- **Status**: ⚪ ASSUMPTION — mechanism exists on Android (API 31+), not
+  confirmed whether it actually fires for this device.
+- `BroadcastReceiver` on `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED`
+  (API 31+) or the legacy `android.bluetooth.device.action.BATTERY_LEVEL_CHANGED`
+  intent — Android's own generic, profile-agnostic battery signal for a
+  connected Bluetooth device, independent of which underlying mechanism
+  (Options A–D below) the OS derived it from.
+- **Advantage**: costs nothing to implement — no scan permission, no RFCOMM
+  connection, just a receiver registration. If it reliably fires for the
+  Buds Pro 2, it can short-circuit needing to implement any of Options A–D
+  directly.
+- **Caveat**: whether the OS actually populates this for a Fast-Pair-based
+  device like the Buds Pro 2 is unconfirmed — treat as a supplement to,
+  never a replacement for, confirming at least one of Options A–D.
+- **Evidence**: none yet — cheap to test early in a capture/implementation
+  session precisely because confirming or ruling it out costs almost nothing.
 
 #### Option A — BLE advertisement (Fast Pair "Battery Notification" extension)
 
@@ -212,9 +231,10 @@ Four candidate mechanisms, in priority order for implementation:
 - **Status**: 🔴 low confidence — standard GATT characteristic; likely only
   exposes a single aggregate value if present at all.
 
-**Implementation priority**: A → B → C → D (see `ARCHITECTURE.md` §4; this
-order reflects official-spec confidence and connection-cost, not raw
-confidence alone since A requires no active connection).
+**Implementation priority**: 0 (cheap to rule in/out) → A → B → C → D (see
+`ARCHITECTURE.md` §4; A–D's order reflects official-spec confidence and
+connection-cost, not raw confidence alone since A requires no active
+connection).
 
 ### 4.4 Find My Buds / Ring action
 
