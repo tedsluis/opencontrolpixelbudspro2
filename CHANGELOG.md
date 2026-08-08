@@ -128,6 +128,16 @@ for the "definition of done" that will mark v1.
   the project's existing 🔴/🟡/🟢 confidence system instead of treating
   absence of captured traffic as automatic proof of on-device
   implementation.
+- Fixed a self-contradictory "Android 14+ (API 34)" phrasing in
+  `ARCHITECTURE.md` §1 and `README.md` — the "+" implied a minimum-supported
+  floor while `ARCHITECTURE.md` §15 already listed minimum supported API as
+  an open question. Both now separate the decided compile/target SDK (API
+  34) from the still-undecided minimum supported API, fixed in both files
+  together so correcting one didn't leave the other newly inconsistent.
+- Fixed `TODO.md` undercounting the project's Gradle modules as four
+  (`:ui`, `:domain`, `:data`, `:hardware`) and omitting `:app` entirely;
+  `ARCHITECTURE.md` §2 defines five modules including `:app` as the
+  composition/DI-wiring module.
 
 ### Reverse engineering findings
 
