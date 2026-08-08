@@ -152,6 +152,17 @@ for the "definition of done" that will mark v1.
   `TODO.md` — that would reintroduce the same numbering-drift risk already
   fixed for `DECISIONS.md` ADRs; capture IDs are assigned in the Capture
   Index (§9) as work actually happens, not pre-assigned in a task list.
+- Ran a full cross-file consistency pass over today's changes and found four
+  remaining gaps, now fixed: `CAPTURE_BLUETOOTH_HCI_SNOOP.md` referenced the
+  wrong filenames throughout (`PROTOCOL-NOTES.md` with a hyphen, 25
+  occurrences, and `TESTPLAN_EN.md`, 6 occurrences — both pre-existing, not
+  introduced today, but caught while checking overall consistency; every
+  other document already used the correct `PROTOCOL_NOTES.md` /
+  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`); `DECISIONS.md` ADR-001 still described
+  "four Gradle modules," missing `:app`, the same gap already fixed in
+  `TODO.md` but not mirrored here; and `ARCHITECTURE.md` §15's own open
+  question still contained the ambiguous "(Android 14+)" phrasing that §1
+  had already been corrected to remove.
 
 ### Reverse engineering findings
 
