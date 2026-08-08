@@ -120,19 +120,19 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
-## Open questions carried from other documents
+## Open questions
 
-This section is a pointer index, not a duplicate — update the source document
-first, then check items off here once resolved, per `PROJECT_RULES.md` §2.
+Open architectural and protocol questions are tracked **at their source only**
+— this file does not keep a second, synchronized checkbox list of them, since
+that duplication is exactly what caused this file to fall out of sync with
+`ARCHITECTURE.md` once already (see `CHANGELOG.md`). Each question has exactly
+one home:
 
-- [ ] RFCOMM framing hypothesis (Message Stream vs. proprietary envelope) —
-      `PROTOCOL.md` §2.3, §6
-- [x] Passive BLE scanning policy for Battery Notification — resolved,
-      `DECISIONS.md` ADR-006
-- [ ] Dependency injection choice (Hilt vs. manual) — `ARCHITECTURE.md` §10
-- [ ] Multi-device support for v1 — `ARCHITECTURE.md` §15, `PROJECT.md`
-- [ ] Minimum supported Android API level — `ARCHITECTURE.md` §15
-- [ ] Whether Loud Noise Protection / Adaptive Audio generate any Bluetooth
-      traffic at all — `PROTOCOL.md` §6 (Behavior)
-- [ ] Confirmed short-press-and-hold duration to trigger pairing mode via the
-      case button — `PROTOCOL.md` §6, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2
+- **Protocol-level open questions** (framing hypothesis, unconfirmed opcodes,
+  wire-visibility of on-device-only features, etc.) → `PROTOCOL.md` §6.
+- **Architecture-level open questions** (DI framework, minimum Android API
+  level, multi-device scope, etc.) → `ARCHITECTURE.md` §15.
+
+Check those sections directly when deciding what's still undecided; resolving
+one only requires updating it in that one place, plus a `DECISIONS.md` entry
+where the rule requires one (`PROJECT_RULES.md` §3).
