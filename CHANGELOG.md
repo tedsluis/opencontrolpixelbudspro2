@@ -44,6 +44,12 @@ for the "definition of done" that will mark v1.
   questions), after that duplication was identified as the reason the
   scanning-policy question above needed updates in four separate files to
   resolve.
+- Tightened the `ProtocolCodec` implementation gate: reaching 🟢 FACT
+  confidence on the RFCOMM framing question (`PROTOCOL.md` §2.3) now also
+  requires a `DECISIONS.md` ADR recording that determination before
+  `FrameEncoder`/`FrameDecoder` implementation may begin, coupled to the same
+  trigger already in `AGENTS.md` §6 rather than added as a separate,
+  independently-drifting rule (`ARCHITECTURE.md` §2.1).
 
 ### Reverse engineering findings
 
