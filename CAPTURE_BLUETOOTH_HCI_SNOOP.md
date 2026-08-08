@@ -2,8 +2,8 @@
 
 **Purpose:** step-by-step procedure to capture, extract, and analyze Bluetooth HCI traffic
 between a phone and the Pixel Buds Pro 2, in order to fill in the confidence-rated
-placeholders in `PROTOCOL-NOTES.md` (magic bytes, checksum, opcode table, battery
-approach). This document is the *how* — `PROTOCOL-NOTES.md` is the *what we found*.
+placeholders in `PROTOCOL_NOTES.md` (magic bytes, checksum, opcode table, battery
+approach). This document is the *how* — `PROTOCOL_NOTES.md` is the *what we found*.
 
 Two devices are used, for two different purposes:
 
@@ -152,7 +152,7 @@ phase, not the capture phase — see §5 step 3.
 
 ### 4.1 Pixel 7a (official app) — primary session
 
-**Source:** the action list below is the validated inventory from `TESTPLAN_EN.md`
+**Source:** the action list below is the validated inventory from `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
 sections 1 (User Actions from the Pixel Buds App) and 3 (Automatic Actions Initiated by
 the App) — checked against your own app screenshots and official Google support
 documentation. It supersedes the older, shorter action list this section used to contain.
@@ -170,11 +170,11 @@ you need to re-invoke to "keep it going" — and collect a single `adb bugreport
 following the usual rhythm: **wait ~5s → note the exact time → perform the
 action → wait ~5–10s → move to the next action.**
 
-**⚠️ Priority tip:** PROTOCOL-NOTES.md §6 flags the "Play sound on Left earbud" action
+**⚠️ Priority tip:** PROTOCOL_NOTES.md §6 flags the "Play sound on Left earbud" action
 (group K below) as a specifically valuable, low-risk target — its frame can be directly
 compared against the Fast Pair Message Stream spec's own worked example
 (`0x04 0x01 ...` for a ring action) to confirm or refute the framing hypothesis in
-`PROTOCOL-NOTES.md` §2.0. If you only have time for a short session, prioritize group K.
+`PROTOCOL_NOTES.md` §2.0. If you only have time for a short session, prioritize group K.
 **Caution when you get there:** a superficial resemblance to the worked example (e.g. a
 plausible-looking group/code byte pair) is not by itself confirmation — don't promote the
 framing hypothesis to FACT off one frame that merely looks compatible. See the
@@ -222,7 +222,7 @@ Buds, both of which are more valuable and, in the pairing case, mildly disruptiv
 2. **ANC → Off**. Wait. Note time.
 3. **ANC → Noise Cancellation** (active). Wait. Note time.
 4. **ANC → Adaptive** (if your firmware exposes it — confirmed present in `release_5.203`
-   per `PROTOCOL-NOTES.md` §4.1). Wait. Note time.
+   per `PROTOCOL_NOTES.md` §4.1). Wait. Note time.
 5. **ANC → Transparency**. Wait. Note time.
 
 #### Group C — Conversation Detection & Multipoint
@@ -263,7 +263,7 @@ Change one band at a time by a clearly visible amount — not all bands in one g
 #### Group H — Audio & volume settings
 28. **Toggle 'Mono audio' on/off**. Wait. Note time.
 29. **Toggle 'Volume EQ' on/off**. Wait. Note time.
-30. **Shift the 'Volume balance' slider**. Wait. Note time. (Per `TESTPLAN_EN.md` §1 this
+30. **Shift the 'Volume balance' slider**. Wait. Note time. (Per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1 this
     is stored locally on the earbuds themselves — a good candidate for a confirmable
     persistent write.)
 
@@ -299,7 +299,7 @@ FACT — not the Left-earbud frame resembling the spec's worked example on its o
 
 #### Group L — Passive/automatic observation windows
 These aren't taps — they're deliberate waiting periods to catch background/automatic app
-traffic per `TESTPLAN_EN.md` §3. **Log explicit boundaries for each window, not just a
+traffic per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §3. **Log explicit boundaries for each window, not just a
 single timestamp** — otherwise settling traffic from whatever you did right before the
 window starts is hard to distinguish from genuinely spontaneous traffic during it. For
 each item below, note: **observation start** (when you stopped touching anything),
@@ -345,7 +345,7 @@ Pull the bugreport (§3) the same way.
 
 ### 4.3 Hardware Actions (either phone)
 
-**Source:** `TESTPLAN_EN.md` sections 2 (User Actions via the Case & Buds) and 4
+**Source:** `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` sections 2 (User Actions via the Case & Buds) and 4
 (Automatic Actions Initiated by the Hardware). These actions are grouped separately from
 4.1/4.2 because they aren't tied to a specific phone — a tap on the bud, or the case
 button, behaves the same regardless of which device is connected. Run this group on
@@ -386,7 +386,7 @@ Requires 'Head gestures' enabled (§4.1 Group F).
     detection event. Wait. Note time.
 16. **Hold the case button for 30 seconds** (case open, buds inside, plugged into power)
     — ⚠️ this is a confirmed **full factory reset**, not just pairing mode (per
-    `TESTPLAN_EN.md` §2). Do this deliberately, last, and only once you're ready to
+    `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2). Do this deliberately, last, and only once you're ready to
     re-pair from scratch — it will also reset the Find My Device link on the Pro 2.
     If you do trigger it, capture the subsequent re-pair as its own isolated session
     right afterward (same rhythm as Group A #1) — this gives a second,
@@ -394,14 +394,14 @@ Requires 'Head gestures' enabled (§4.1 Group F).
     forget-and-re-pair baseline. It is optional and not a prerequisite for anything
     else in this guide — Group A's lightweight baseline is sufficient on its own for
     every other group.
-17. **(Open question, see `PROTOCOL-NOTES.md` §7)** Try a shorter/different press on the
+17. **(Open question, see `PROTOCOL_NOTES.md` §7)** Try a shorter/different press on the
     case button to see if it triggers pairing mode without a full reset. No officially
     confirmed duration exists for this — treat your own finding here as
-    `[VERIFIED-LOCAL]` material for `PROTOCOL-NOTES.md` once confirmed.
+    `[VERIFIED-LOCAL]` material for `PROTOCOL_NOTES.md` once confirmed.
 
 #### Group Q — Automatic hardware behavior (observation, not action)
 These are waiting periods to catch spontaneous hardware-initiated traffic per
-`TESTPLAN_EN.md` §4 — nothing to tap, just capture while the condition holds. As with
+`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §4 — nothing to tap, just capture while the condition holds. As with
 Group L, log explicit **observation start** and **observation end** boundaries, not just
 a single timestamp, so this traffic isn't confused with settling traffic from whatever
 preceded the window.
@@ -412,7 +412,7 @@ three actually happened, since they mean different things for protocol reconstru
   `[VERIFIED-LOCAL]` per the usual process (§5 step 4).
 - **Local behavior confirmed, but no Bluetooth traffic in the log despite a clean
   observation window** → this is itself a positive finding, not an absence of one — it's
-  evidence *for* a purely on-device implementation. Record it in `PROTOCOL-NOTES.md` as
+  evidence *for* a purely on-device implementation. Record it in `PROTOCOL_NOTES.md` as
   such (e.g. 🟢 FACT: "no wire-visible signal observed on trigger, N attempts"), don't
   just leave the row blank.
 - **Inconclusive** — you're not sure the local trigger actually fired (e.g. unclear
@@ -422,7 +422,7 @@ three actually happened, since they mean different things for protocol reconstru
   trigger before drawing any conclusion.
 
 18. **Passive BLE scan while the case is closed and idle** — intended to catch the Fast
-    Pair Battery Notification advertisement (`PROTOCOL-NOTES.md` §4.3 Option A) without
+    Pair Battery Notification advertisement (`PROTOCOL_NOTES.md` §4.3 Option A) without
     any active RFCOMM connection. This doesn't require the buds to be connected to the
     capturing phone at all — any nearby scan should do, per the spec. **This is a
     one-off, manual reverse-engineering capture, not a template for the app.** The
@@ -430,13 +430,13 @@ three actually happened, since they mean different things for protocol reconstru
     the bounded exception in `AGENTS.md` §7 / `DECISIONS.md` ADR-006 — this experiment
     does not authorize a broader scanning implementation than that.
 19. **Trigger a loud, sudden sound near the buds while worn** (e.g. clap sharply nearby)
-    to attempt to observe Loud Noise Protection engaging (`PROTOCOL-NOTES.md` §4.2/§7) —
+    to attempt to observe Loud Noise Protection engaging (`PROTOCOL_NOTES.md` §4.2/§7) —
     confirm you actually noticed the local effect (e.g. audible volume dip) before
     concluding anything about the Bluetooth traffic (or lack of it); see the three-way
     outcome guidance above.
 20. **Move between distinctly different acoustic environments while worn** (e.g. quiet
     room → street) to attempt to observe Adaptive Audio adjusting
-    (`PROTOCOL-NOTES.md` §4.2/§7) — same guidance as #19: confirm the local effect first,
+    (`PROTOCOL_NOTES.md` §4.2/§7) — same guidance as #19: confirm the local effect first,
     then classify the Bluetooth-traffic outcome using the three categories above.
 
 ---
@@ -449,7 +449,7 @@ three actually happened, since they mean different things for protocol reconstru
    for free — it does **not** mean Wireshark understands the `libmaestro` payload itself.
    There is no dissector for a proprietary, undocumented protocol, so the actual command
    bytes inside an RFCOMM frame will show up as opaque raw data; decoding what they mean
-   is manual work you do against the hypotheses in `PROTOCOL-NOTES.md` §2 (see step 4
+   is manual work you do against the hypotheses in `PROTOCOL_NOTES.md` §2 (see step 4
    below) — that manual decoding is the actual point of this whole procedure.
 2. Useful filters to narrow the view:
    - `bthci_acl` — general ACL-level Bluetooth traffic.
@@ -468,24 +468,24 @@ three actually happened, since they mean different things for protocol reconstru
    window for one action but before the next action's timestamp, treat it as a probable
    late response to the earlier action rather than automatically attributing it to
    whatever came next — check payload plausibility against both candidates before
-   deciding, and note the ambiguity in `PROTOCOL-NOTES.md` if it can't be resolved from
+   deciding, and note the ambiguity in `PROTOCOL_NOTES.md` if it can't be resolved from
    the log alone.
 4. For each identified command frame:
    - Note the raw bytes (right-click → Copy → ...as Hex Stream is fastest).
    - **If it's an RFCOMM frame** (`btrfcomm` — an app-triggered command, or the Find My
      Buds/Ring action): compare the structure against the envelope hypothesis in
-     `PROTOCOL-NOTES.md` §2 (magic byte, length field, channel/msg ID, payload, checksum).
+     `PROTOCOL_NOTES.md` §2 (magic byte, length field, channel/msg ID, payload, checksum).
    - **If it's a BLE advertisement** (`btle` — the Battery Notification, Group Q #18):
      compare it against the Fast Pair Battery Notification structure in
-     `PROTOCOL-NOTES.md` §4.3 Option A (flags, account key data, battery-level-length/type
+     `PROTOCOL_NOTES.md` §4.3 Option A (flags, account key data, battery-level-length/type
      byte, then the 3 battery bytes) instead. This is a **different, unrelated** structure
      — it is not RFCOMM traffic and was never expected to match the §2 envelope
      hypothesis; don't force-fit it there or record a false "doesn't match" finding.
-   - Record the confirmed values back into `PROTOCOL-NOTES.md` §4.1's opcode table
+   - Record the confirmed values back into `PROTOCOL_NOTES.md` §4.1's opcode table
      (RFCOMM frames) or §4.3 (battery), mark the entry `[VERIFIED-LOCAL]` with today's
      date, and raise its confidence to 🟢.
 5. If a frame doesn't match the expected envelope shape at all, don't force-fit it —
-   note it as an open question (`PROTOCOL-NOTES.md` §7) rather than recording a guess as
+   note it as an open question (`PROTOCOL_NOTES.md` §7) rather than recording a guess as
    fact.
 
 ---
@@ -516,7 +516,7 @@ three actually happened, since they mean different things for protocol reconstru
 - **Firmware version drift:** if automatic Buds firmware updates are still enabled (see
   the earlier discussion on checking/disabling them in the official app), a capture done
   today may not match one done next month. Always note the confirmed firmware version
-  (`PROTOCOL-NOTES.md` §0/§5) alongside any capture you take.
+  (`PROTOCOL_NOTES.md` §0/§5) alongside any capture you take.
 - **Two Buds, one identity:** the case, left bud, and right bud may all appear as
   distinct addresses/roles in some traffic (notably GATT). Don't assume all frames come
   from a single logical peer — check `bluetooth.addr` per frame when in doubt.
@@ -574,7 +574,7 @@ Most likely, **not** actual encryption — a few distinct things get conflated u
   higher-layer/application-level encryption scheme, rather than standard Bluetooth link
   encryption, which per the point above shouldn't normally still be present at this
   layer.
-- If this happens consistently, note it as an open question in `PROTOCOL-NOTES.md` §7 —
+- If this happens consistently, note it as an open question in `PROTOCOL_NOTES.md` §7 —
   including which of the above you've ruled out — rather than assuming the envelope
   hypothesis in §2 is simply wrong.
 
@@ -586,7 +586,7 @@ through the known, official UI. The GrapheneOS capture is for validating
 connection/pairing/passive behavior on the target OS, not for discovering new commands.
 
 **Q: How do I know when I've captured "enough" and can stop?**
-When every row in `PROTOCOL-NOTES.md` §4.1's opcode table and every open question in §7
+When every row in `PROTOCOL_NOTES.md` §4.1's opcode table and every open question in §7
 that's answerable via traffic analysis (as opposed to, say, firmware version lookup) has
 moved from 🔴/🟡 to 🟢 with a `[VERIFIED-LOCAL]` tag — or when you've made a deliberate,
 documented decision to leave a specific low-priority item (e.g. Find My Buds) unverified
@@ -598,14 +598,14 @@ for now.
 
 Every capture session should end with at least one of these:
 
-- [ ] `PROTOCOL-NOTES.md` §2 — envelope structure fields confirmed/corrected.
-- [ ] `PROTOCOL-NOTES.md` §4.1 — opcode table rows filled in, confidence raised to 🟢.
-- [ ] `PROTOCOL-NOTES.md` §4.3 — battery approach confirmed or ruled out (now split into
+- [ ] `PROTOCOL_NOTES.md` §2 — envelope structure fields confirmed/corrected.
+- [ ] `PROTOCOL_NOTES.md` §4.1 — opcode table rows filled in, confidence raised to 🟢.
+- [ ] `PROTOCOL_NOTES.md` §4.3 — battery approach confirmed or ruled out (now split into
       Option A: BLE advertisement, and Option B: RFCOMM Message Stream — see the current
       version of that section).
-- [ ] `PROTOCOL-NOTES.md` §5 — firmware version and any version-specific differences
+- [ ] `PROTOCOL_NOTES.md` §5 — firmware version and any version-specific differences
       logged.
-- [ ] `PROTOCOL-NOTES.md` §7 — open questions resolved, or new ones added if the capture
+- [ ] `PROTOCOL_NOTES.md` §7 — open questions resolved, or new ones added if the capture
       revealed something unexpected.
 
 Treat an capture session that doesn't result in at least one of the above as incomplete —
