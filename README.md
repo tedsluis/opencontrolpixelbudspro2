@@ -87,8 +87,9 @@ humans and AI coding assistants working on it:
 
 ## Target platform
 
-- Android 14+ (API 34)
-- GrapheneOS as the primary reference OS, with compatibility maintained for stock
+- Compile/target SDK: API 34 (Android 14)
+- Minimum supported Android API: **TBD** (see `ARCHITECTURE.md` §15)
+- Primary reference OS: GrapheneOS, with compatibility maintained for stock
   AOSP-based ROMs
 
 ## Attribution
@@ -100,4 +101,4 @@ knowledge informs this Android-native implementation.
 
 ## License
 
-GNU AGPL-3.0
+Not yet finalized — see `AGENTS.md` §12.
