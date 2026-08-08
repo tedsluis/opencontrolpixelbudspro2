@@ -110,6 +110,24 @@ for the "definition of done" that will mark v1.
   `/sdcard/btsnoop_hci.log` — was checked against the current official AOSP
   page and not found there (only in lower-quality/outdated third-party
   sources), so it was deliberately **not** added.
+- Fixed four experimental-design gaps in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`
+  §4, found during review: clarified that "one action per capture window"
+  means one user-triggered event, not one frame, since pairing legitimately
+  produces a multi-frame burst as its own automatic exchange (Group A #1,
+  Pixel 9a §4.2 #1); marked the ~5–10s post-action wait as a heuristic with
+  a known failure mode (a delayed response can get misattributed to the
+  next action) rather than a guarantee, with a matching mitigation added to
+  the Wireshark analysis step; added explicit observation-start/-end
+  boundary logging (plus connection and app foreground state) to the
+  passive windows in Group L and the Pixel 9a idle observation, so settling
+  traffic from a preceding action isn't mistaken for spontaneous traffic;
+  and replaced "note whether anything appears on the wire" for Loud Noise
+  Protection/Adaptive Audio (Group Q #19–20) with a proper three-way
+  outcome taxonomy (traffic observed / confirmed no traffic — itself a
+  positive finding for on-device-only behavior / inconclusive), fitted to
+  the project's existing 🔴/🟡/🟢 confidence system instead of treating
+  absence of captured traffic as automatic proof of on-device
+  implementation.
 
 ### Reverse engineering findings
 
