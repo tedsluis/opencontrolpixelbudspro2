@@ -169,14 +169,33 @@ order:
   app access to the device the user explicitly selected.
 - Do not persist or log the earbuds' MAC address in plaintext outside of the
   OS's own bonded-device store.
-- **Related, unresolved question:** the Fast Pair Battery Notification
-  mechanism (`PROTOCOL.md` §4.3 Option A) is observed via a BLE advertisement
-  from an already-bonded device, which is a different purpose from device
-  *discovery* but still involves some form of scanning. Do not implement
-  continuous observation of this advertisement on the assumption that "it's
-  not discovery, so the ban doesn't apply" — this is an open question tracked
-  in `ARCHITECTURE.md` §9.1 and must be resolved via a `DECISIONS.md` entry
-  before implementation.
+- **Safe, bounded exception — Fast Pair Battery Notification only (resolved,
+  see `DECISIONS.md` ADR-006):** the discovery-scanning ban above does not
+  cover passively observing the Fast Pair Battery Notification advertisement
+  (`PROTOCOL.md` §4.3 Option A) from a device the user has already bonded.
+  That is permitted, but strictly within these bounds — treat anything
+  outside them as a violation of this rule, not a gray area to judge case by
+  case:
+  - **Filtered, never generic.** The scan must use a `ScanFilter` matching
+    only the already-bonded device's own identifiers (e.g. its MAC address or
+    Fast Pair model/account data) — never an unfiltered scan that would also
+    observe nearby unrelated devices.
+  - **Foreground-triggered, never a background loop.** The scan starts only in
+    direct response to a user-visible trigger (the device screen is opened, an
+    explicit "refresh battery" action, or as a side effect of a CDM-driven
+    reconnection already in progress) — never a periodic timer running from a
+    `ForegroundService` or `WorkManager` job.
+  - **Time-boxed.** The scan stops itself after a short, fixed timeout on the
+    order of the advertisement's own visibility window (~8–20s per the Fast
+    Pair spec) or as soon as the expected advertisement is received, whichever
+    comes first — never left running indefinitely.
+  - **Tied to app visibility.** The scan stops immediately if the app leaves
+    the foreground before the timeout elapses.
+  - This exception covers *only* battery-notification observation of an
+    already-bonded device. It does **not** permit BLE scanning for device
+    *discovery* of new/unknown devices under any framing — that remains fully
+    banned; `CompanionDeviceManager` is the only sanctioned discovery path
+    (see above).
 
 ## 8. Error Handling Model
 
@@ -350,8 +369,12 @@ This section summarizes hard rules detailed above — it does not replace them.
   unavailable" instead (§5).
 - Never implement `FrameEncoder`/`FrameDecoder` against a framing hypothesis
   that hasn't reached 🟢 FACT in `PROTOCOL.md` (§6).
-- Never implement continuous BLE scanning — for discovery, or for the Fast
-  Pair Battery Notification — without an explicit `DECISIONS.md` entry (§7).
+- Never implement BLE scanning for device discovery of new/unknown devices —
+  `CompanionDeviceManager` is the only sanctioned discovery path (§7). For the
+  Fast Pair Battery Notification specifically, only the bounded exception in
+  §7 is permitted (filtered to the bonded device, foreground-triggered,
+  time-boxed, stopped on backgrounding, per `DECISIONS.md` ADR-006) — anything
+  broader needs a new `DECISIONS.md` entry superseding ADR-006.
 - Never log the device's MAC address at `INFO` level or above, or log raw
   payload bytes outside of the off-by-default debug mode (§9).
 - Never silently overwrite or contradict an entry in `DECISIONS.md` — flag the
