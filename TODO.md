@@ -92,8 +92,8 @@ tracking).
 
 ## Phase 4 — App development
 
-- [ ] Set up the Android Studio project per `ARCHITECTURE.md` (four-module
-      structure: `:ui`, `:domain`, `:data`, `:hardware`)
+- [ ] Set up the Android Studio project per `ARCHITECTURE.md` (five Gradle
+      modules: `:app`, `:ui`, `:domain`, `:data`, `:hardware`)
 - [ ] Decide dependency injection approach — Hilt vs. manual service locator —
       and record it in `DECISIONS.md` (currently open, see `ARCHITECTURE.md`
       §10/§15)
