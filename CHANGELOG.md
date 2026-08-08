@@ -88,6 +88,28 @@ for the "definition of done" that will mark v1.
   alongside the existing `btrfcomm`/`btatt` ones, so a battery capture isn't
   force-fit against the wrong structure or wrongly logged as an open
   question.
+- Applied a further round of technical review fixes to
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md`, verified individually before adopting:
+  made `btsnooz.py` (Android's own documented bugreport-extraction script,
+  confirmed against the current AOSP source docs) the primary log-extraction
+  method in §3, keeping the internal-path search as a fallback; softened the
+  unsubstantiated "single most common reason" claim about empty captures to
+  what's actually documented (a restart is required, full stop — this
+  project has no capture statistics yet to back a frequency claim); replaced
+  "non-rootable" with the technically accurate "non-rooted production
+  build," since Pixel hardware is in fact rootable by other means and only
+  the current, as-configured state of these two phones is relevant here;
+  downgraded "confirmed by GrapheneOS's own community support" to an
+  accurately-labeled community forum report rather than an implied official
+  guarantee; clarified that Wireshark recognizing the BTSnoop file format
+  does not mean it decodes the proprietary `libmaestro` payload; and
+  rewrote the FAQ's encryption entry to distinguish HCI-boundary visibility
+  from actual link-layer encryption, since unfamiliar-looking protobuf bytes
+  are far more likely than genuine encryption at this capture layer. One
+  suggested addition — a note that Android's documentation places the log at
+  `/sdcard/btsnoop_hci.log` — was checked against the current official AOSP
+  page and not found there (only in lower-quality/outdated third-party
+  sources), so it was deliberately **not** added.
 
 ### Reverse engineering findings
 
