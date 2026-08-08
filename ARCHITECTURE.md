@@ -378,8 +378,8 @@ versions) and recorded in `DECISIONS.md` before broad adoption.
 - [ ] Support for multiple paired Buds simultaneously (multi-device) — in or
       out of scope for v1? Not currently addressed anywhere in `PROJECT.md`'s
       v1 scope list.
-- [ ] Minimum supported Android API level: target/compile SDK is set at API 34
-      (Android 14+), but the minimum SDK for broader AOSP-ROM compatibility is
+- [ ] Minimum supported Android API level: compile/target SDK is set at API 34
+      (Android 14), but the minimum SDK for broader AOSP-ROM compatibility is
       not yet fixed — depends on which BLE/Bluetooth APIs (e.g.
       `CompanionDeviceManager` features, foreground service types) are
       actually required.
