@@ -30,7 +30,20 @@ for the "definition of done" that will mark v1.
 
 ### Changed
 
-- Nothing yet.
+- Resolved a documentation inconsistency between the absolute no-BLE-scanning
+  rule in `AGENTS.md` §7 and the Fast Pair Battery Notification mechanism in
+  `PROTOCOL.md` §4.3 Option A, which (read literally) could have caused an AI
+  agent to refuse implementing battery reporting entirely. Defined a narrow,
+  bounded scanning exception — filtered to the bonded device,
+  foreground-triggered, time-boxed, stopped on backgrounding — recorded in
+  `DECISIONS.md` ADR-006 and reflected in `AGENTS.md` §7 and
+  `ARCHITECTURE.md` §9.1.
+- Removed the duplicated, checkbox-synced "open questions" list from
+  `TODO.md` in favor of single-source pointers to `PROTOCOL.md` §6
+  (protocol-level questions) and `ARCHITECTURE.md` §15 (architecture-level
+  questions), after that duplication was identified as the reason the
+  scanning-policy question above needed updates in four separate files to
+  resolve.
 
 ### Reverse engineering findings
 
