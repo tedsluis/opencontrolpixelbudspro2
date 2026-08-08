@@ -58,6 +58,15 @@ for the "definition of done" that will mark v1.
   never reused, checked against existing entries rather than pre-guessed
   elsewhere) to prevent stale hardcoded ADR-number references from
   accumulating in other documents like `TODO.md`.
+- Fixed three issues in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` found during review:
+  clarified that the pairing/bonding baseline (Group A) is a lightweight
+  forget-and-re-pair action, distinct from the destructive, deliberately-last
+  factory reset (Group P #16) — `TODO.md` previously conflated the two by
+  describing the *first* capture as a factory-reset pairing; corrected the
+  conceptually wrong "one continuous `adb bugreport` session" phrasing, since
+  `adb bugreport` is a one-time extraction, not a live logging mechanism; and
+  added the missing §9 Capture Index (`CAP-NNN` table), which `TODO.md` and
+  `PROJECT_RULES.md` rule 14 both already assumed existed.
 
 ### Reverse engineering findings
 
