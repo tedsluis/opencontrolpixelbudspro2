@@ -146,13 +146,20 @@ order:
   Two competing framing hypotheses are under evaluation (`PROTOCOL.md` §2):
   (A) Fast Pair Message Stream framing (Message Group / Message Code / length
   / data, no checksum), or (B) a proprietary magic-byte/length/channel-ID
-  envelope with an optional checksum, derived from `pbpctrl`. `FrameEncoder`/
-  `FrameDecoder` must be implemented against whichever hypothesis has reached
-  🟢 FACT confidence in `PROTOCOL.md` — implementing against an unconfirmed
-  hypothesis risks code that appears to work on some frames and silently
-  mishandles others. Any deviation or provisional implementation must be
-  flagged with a `// TODO(verify):` comment and a link to the corresponding
-  `pbpctrl` source reference or `PROTOCOL.md` section.
+  envelope with an optional checksum, derived from `pbpctrl`. One event gates
+  two linked requirements — `PROTOCOL.md` §2's framing question reaching 🟢
+  FACT confidence: (1) only then may `FrameEncoder`/`FrameDecoder` be
+  implemented, against whichever hypothesis reached that status, and (2) that
+  same FACT determination must be recorded as a `DECISIONS.md` ADR before
+  implementation begins (see `ARCHITECTURE.md` §2.1) — this is the
+  single highest-impact design commitment in the data layer, and an explicit,
+  reviewed sign-off is cheap insurance against an AI agent (or a human)
+  mis-promoting a hypothesis to FACT under implementation pressure.
+  Implementing against an unconfirmed hypothesis risks code that appears to
+  work on some frames and silently mishandles others. Any deviation or
+  provisional implementation must be flagged with a `// TODO(verify):`
+  comment and a link to the corresponding `pbpctrl` source reference or
+  `PROTOCOL.md` section.
 - Do **not** write audio routing/codec code. This app exclusively sends
   control payloads (ANC, Transparency, EQ) and reads telemetry (battery). A2DP/
   LE Audio routing is left to the Android OS/BT stack.
