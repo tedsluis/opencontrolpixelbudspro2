@@ -608,7 +608,7 @@ Every capture session should end with at least one of these:
 - [ ] `PROTOCOL_NOTES.md` §7 — open questions resolved, or new ones added if the capture
       revealed something unexpected.
 
-Treat an capture session that doesn't result in at least one of the above as incomplete —
+Treat a capture session that doesn't result in at least one of the above as incomplete —
 either the action wasn't actually isolated/identifiable, or something in the setup (§2,
 §6) needs revisiting before the next attempt.
 
