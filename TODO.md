@@ -53,7 +53,10 @@ tracking).
       Message Stream framing hypothesis (`PROTOCOL.md` §2.3, §4.4)
 - [ ] Passively capture a BLE scan (no active connection) to confirm the
       Battery Notification advertisement byte-for-byte against the official
-      spec (`PROTOCOL.md` §4.3 Option A)
+      spec (`PROTOCOL.md` §4.3 Option A). This is a one-off research capture,
+      not a template for the app: the production app's own BLE scanning
+      stays governed by the narrower bounded exception in `AGENTS.md` §7 /
+      `DECISIONS.md` ADR-006 regardless of how broad this one-time capture is
 
 ## Phase 2 — APK reverse engineering
 
