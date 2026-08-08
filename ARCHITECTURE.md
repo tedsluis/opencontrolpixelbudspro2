@@ -32,7 +32,7 @@ with compatibility maintained for stock AOSP-based ROMs.
 │  - Screens, Composables                                │
 │  - ViewModels (MVVM)                                   │
 └──────────────────────┬─────────────────────────────────┘
-                       │ observes StateFlow<BudsUiState>
+                      │ observes StateFlow<BudsUiState>
 ┌──────────────────────▼─────────────────────────────────┐
 │  :domain                                               │
 │  - Use cases (ToggleAncUseCase, ReadBatteryUseCase,    │
@@ -148,9 +148,9 @@ this layer uses Android-native fallbacks, in priority order (aligned with
 
 1. **Primary — Fast Pair Battery Notification (BLE advertisement):** parse the
    officially specified 3-byte (L/R/Case) payload from the BLE advertisement.
-   No active connection required. See the open scanning-policy question in
-   §9.1 below before implementing continuous observation of this
-   advertisement.
+   No active connection required. Implement observation of this advertisement
+   per the bounded scanning policy in §9.1 — filtered, foreground-triggered,
+   time-boxed; never a continuous background scan.
 2. **Secondary — RFCOMM Fast Pair Message Stream "Device Information":** once
    connected, read battery via the Message Stream, if/once the exact battery
    message code is confirmed (`PROTOCOL.md` §4.3 Option B).
@@ -227,8 +227,8 @@ physical link as inherently unstable:
 - **Re-connection Strategy:** user-initiated reconnection only — no aggressive
   background polling/retry loops, both to respect battery and to avoid the
   fingerprintable scanning behavior GrapheneOS's threat model discourages (see
-  §7 of `AGENTS.md`, and the related open question in §9.1 below about passive
-  battery-advertisement observation).
+  §7 of `AGENTS.md`, and the bounded exception for passive battery-advertisement
+  observation in §9.1 below).
 
 ## 7. Error Handling Architecture
 
@@ -279,28 +279,30 @@ state.
   for device *discovery*), minimizes permissions, and keeps all diagnostic
   data local and opt-in.
 
-### 9.1 Open question: passive scanning for the Fast Pair Battery Notification
+### 9.1 Resolved: passive scanning policy for the Fast Pair Battery Notification
 
 `AGENTS.md` §7 bans continuous background BLE scanning for **device
 discovery**. The Fast Pair Battery Notification mechanism (§4, `PROTOCOL.md`
 §4.3 Option A) is a different purpose — passively observing an advertisement
 from an *already-bonded, known* device to get battery updates without an
-active RFCOMM connection — but it still requires some form of BLE scanning,
-which raises the same fingerprinting concerns in spirit.
+active RFCOMM connection.
 
-This tension is not yet resolved and must be decided in `DECISIONS.md` before
-Option A is implemented as the primary battery mechanism. Candidate approaches
-to evaluate:
+**Decided (see `DECISIONS.md` ADR-006):** this is permitted, but only as a
+narrow, bounded exception, not as general-purpose scanning:
 
-- Scan only for a short, bounded window right after the user opens the app or
-  explicitly requests a battery refresh (no continuous background scan).
-- Rely on RFCOMM-triggered battery updates (§4, secondary mechanism) as the
-  primary path, and treat the BLE advertisement as an opportunistic
-  enhancement only while a scan is already running for another reason (e.g.
-  during CDM-driven reconnection).
-- Scope any scan filter tightly to the bonded device's identifiers so it
-  cannot be used to fingerprint or track other devices, and document why this
-  differs from the discovery-scanning concern `AGENTS.md` §7 targets.
+- Scan filter restricted to the already-bonded device's own identifiers only
+  (never a generic/unfiltered scan).
+- Triggered only by a user-visible event (device screen opened, explicit
+  "refresh battery" action, or piggy-backed on a CDM-driven reconnection
+  already in progress) — never a periodic background timer.
+- Time-boxed to roughly the advertisement's own visibility window (~8–20s per
+  the Fast Pair spec) or until the expected advertisement arrives, whichever
+  is first.
+- Stopped immediately if the app leaves the foreground.
+
+The authoritative rule text agents must follow lives in `AGENTS.md` §7 — this
+section summarizes it for architectural context but is not a second source of
+truth for the exact wording (`PROJECT_RULES.md` §2).
 
 ## 10. Dependency Injection
 
@@ -369,8 +371,6 @@ versions) and recorded in `DECISIONS.md` before broad adoption.
 > Move to `DECISIONS.md` once decided, following the ADR template.
 
 - [ ] Hilt vs. manual DI (§10).
-- [ ] Passive BLE scanning policy for the Fast Pair Battery Notification,
-      given the no-continuous-discovery-scanning guardrail (§9.1).
 - [ ] Support for multiple paired Buds simultaneously (multi-device) — in or
       out of scope for v1? Not currently addressed anywhere in `PROJECT.md`'s
       v1 scope list.
@@ -382,7 +382,9 @@ versions) and recorded in `DECISIONS.md` before broad adoption.
 
 > Already decided, not open: persistent settings storage (encrypted AndroidX
 > DataStore — see §2 and `AGENTS.md` §10); state management approach
-> (`StateFlow`/`SharedFlow` only — see §11).
+> (`StateFlow`/`SharedFlow` only — see §11); passive BLE scanning policy for
+> the Fast Pair Battery Notification (bounded exception — see §9.1,
+> `DECISIONS.md` ADR-006).
 
 ## 16. Attribution
 

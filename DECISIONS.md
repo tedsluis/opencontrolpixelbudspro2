@@ -124,3 +124,46 @@ superseded ADR's status is updated accordingly rather than deleted.
   custom in-app scan screen, but the app never needs
   `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` or `BLUETOOTH_PRIVILEGED`,
   and only gains access to the specific device the user selects.
+
+## ADR-006 — Bounded exception to the no-BLE-scanning rule, for the Fast Pair Battery Notification only
+
+- **Date**: 2026-08-08
+- **Status**: Accepted
+- **Context**: `AGENTS.md` §7 (per ADR-005) bans continuous background BLE
+  scanning for device discovery, in line with GrapheneOS's threat model.
+  Separately, `PROTOCOL.md` §4.3 Option A identifies the officially documented
+  Fast Pair "Battery Notification" BLE advertisement as the lowest-cost
+  battery reporting mechanism (no active RFCOMM connection required). Read
+  literally, the discovery-scanning ban risked being interpreted as also
+  blocking this unrelated, already-bonded-device use case — since agents are
+  instructed to strictly follow `AGENTS.md`, a rule with no carve-out could
+  cause an agent to refuse to implement `PROTOCOL.md` §4.3 Option A entirely,
+  forcing battery status onto the connection-requiring RFCOMM path (Option B)
+  as the only available mechanism. This tension was flagged in
+  `ARCHITECTURE.md` §9.1 as an open question.
+- **Options considered**:
+  - Leave the discovery-scanning ban as an absolute, unqualified rule and
+    never use BLE scanning for battery reporting, relying only on the
+    RFCOMM-connected path (Option B).
+  - Treat the Battery Notification as fully exempt from the scanning rule
+    with no additional constraints, on the reasoning that it isn't
+    "discovery."
+  - Define a narrow, explicitly bounded exception: permitted, but only when
+    filtered to the bonded device, foreground-triggered, time-boxed, and
+    stopped on backgrounding.
+- **Decision**: the third option. The exact rule agents must follow is
+  recorded in `AGENTS.md` §7 (authoritative wording), summarized for
+  architectural context in `ARCHITECTURE.md` §9.1. In short: scanning for the
+  Battery Notification is permitted only when (a) filtered to the
+  already-bonded device's own identifiers, (b) triggered by a user-visible
+  event rather than a background timer, (c) time-boxed to roughly the
+  advertisement's own visibility window (~8–20s), and (d) stopped immediately
+  if the app leaves the foreground.
+- **Consequences**: the app can use the lowest-cost, connection-free battery
+  path as originally intended in `PROTOCOL.md` §4.3, without an AI agent
+  correctly-but-unhelpfully refusing to implement it as a false positive
+  against the discovery-scanning ban. The exception is deliberately narrow —
+  any future feature needing broader or continuous scanning (e.g. general
+  device discovery) remains fully covered by the original ban in `AGENTS.md`
+  §7 and would need its own, separate decision; it is not opened up by this
+  ADR.

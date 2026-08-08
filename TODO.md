@@ -86,9 +86,10 @@ tracking).
 - [ ] Decide dependency injection approach — Hilt vs. manual service locator —
       and record it in `DECISIONS.md` (currently open, see `ARCHITECTURE.md`
       §10/§15)
-- [ ] Decide the passive-scanning policy for the Fast Pair Battery
-      Notification and record it in `DECISIONS.md` (currently open, see
-      `ARCHITECTURE.md` §9.1)
+- [x] Decide the passive-scanning policy for the Fast Pair Battery
+      Notification — resolved as a bounded exception (filtered,
+      foreground-triggered, time-boxed); see `DECISIONS.md` ADR-006,
+      `AGENTS.md` §7, `ARCHITECTURE.md` §9.1
 - [ ] Implement `ProtocolCodec` (`FrameEncoder`/`FrameDecoder`) with unit tests
       for the first confirmed command(s), against fixed byte-array fixtures
       (`AGENTS.md` §11)
@@ -126,8 +127,8 @@ first, then check items off here once resolved, per `PROJECT_RULES.md` §2.
 
 - [ ] RFCOMM framing hypothesis (Message Stream vs. proprietary envelope) —
       `PROTOCOL.md` §2.3, §6
-- [ ] Passive BLE scanning policy for Battery Notification —
-      `ARCHITECTURE.md` §9.1
+- [x] Passive BLE scanning policy for Battery Notification — resolved,
+      `DECISIONS.md` ADR-006
 - [ ] Dependency injection choice (Hilt vs. manual) — `ARCHITECTURE.md` §10
 - [ ] Multi-device support for v1 — `ARCHITECTURE.md` §15, `PROJECT.md`
 - [ ] Minimum supported Android API level — `ARCHITECTURE.md` §15
