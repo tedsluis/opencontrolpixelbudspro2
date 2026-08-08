@@ -51,7 +51,7 @@ for the "definition of done" that will mark v1.
   trigger already in `AGENTS.md` §6 rather than added as a separate,
   independently-drifting rule (`ARCHITECTURE.md` §2.1).
 - Trimmed `ARCHITECTURE.md` §9.1's summary of the bounded scanning exception
-  down to a single clarifying sentence, removing the near-verbatim repeat of
+  down to a single duiding sentence, removing the near-verbatim repeat of
   `AGENTS.md` §7's exact bounds so there is nothing left in the summary that
   could drift out of sync with the authoritative rule.
 - Added an explicit ADR-numbering rule to `DECISIONS.md`'s intro (sequential,
@@ -179,6 +179,23 @@ for the "definition of done" that will mark v1.
   commands) shares the same RFCOMM channel as the Fast Pair Message Stream
   under a custom Message Group ID, or is a fully separate channel — still to
   be confirmed via capture.
+- Restructured the roles of `CAPTURE_BLUETOOTH_HCI_SNOOP.md` and
+  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` to remove the overlap between them
+  (Option 1 of the reviewed restructuring options): `CAPTURE`'s Groups A–Q/Z
+  are now explicitly framed as **capture scenarios** (how to run a session
+  efficiently), not the project's test record; `TESTPLAN` was rewritten into
+  a stable **action/behavior catalog** — 70 permanent Test-IDs (e.g.
+  `ANC-001`), each with its existence-confidence (kept as a distinct axis
+  from protocol confidence), its capture scenario(s), and a thin evidence
+  pointer to `PROTOCOL_NOTES.md`/`PROTOCOL.md` rather than a duplicate
+  results table. All 67 numbered actions across `CAPTURE`'s groups were
+  annotated with their Test-ID, and the Capture Index (§9) gained a Test(s)
+  column, closing the chain: Test-ID → Group → `CAP-NNN` capture → frame →
+  `PROTOCOL_NOTES.md` finding. Also identified two genuine catalog gaps
+  while mapping (`INEAR-004` — bud removed from ear without returning to the
+  case, and `GATT-001` — Bluetooth device-detail-triggered GATT discovery),
+  neither yet covered by a capture scenario; tracked in `TESTPLAN`'s new §9
+  rather than silently added to `CAPTURE`.
 
 ### Removed
 
