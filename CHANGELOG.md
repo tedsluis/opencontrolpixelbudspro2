@@ -196,6 +196,32 @@ for the "definition of done" that will mark v1.
   case, and `GATT-001` — Bluetooth device-detail-triggered GATT discovery),
   neither yet covered by a capture scenario; tracked in `TESTPLAN`'s new §9
   rather than silently added to `CAPTURE`.
+- Ran a full information-preservation audit comparing every heavily-edited
+  file against its original uploaded version (`AGENTS.md`, `ARCHITECTURE.md`,
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`),
+  row-by-row and sentence-by-sentence rather than by memory. Found and fixed
+  three genuine content losses, all restored:
+  - `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `ANC-002` row had lost its note
+    ("Sends a configuration command to the buds").
+  - `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `BATT-004` row had lost its specific
+    cross-reference to the named `HardwareStatus` hypothesis in
+    `PROTOCOL_NOTES.md` §3.1, in favor of a more generic `PROTOCOL.md`
+    pointer only.
+  - A whole battery-reporting mechanism —
+    `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED` (API 31+), Android's
+    generic OS-level battery broadcast — had been fully dropped from the
+    repository during an earlier battery-priority reordering. Restored as a
+    new, clearly-labeled supplementary "Option 0" (cheapest to check, not
+    yet confirmed to fire for this device) in `PROTOCOL.md` §4.3,
+    `ARCHITECTURE.md` §4, and `AGENTS.md` §5, without disturbing the
+    existing, well-justified Fast-Pair-first ordering of the confirmed
+    options.
+  Also confirmed via full-repository grep that no `PROTOCOL-NOTES.md` /
+  `TESTPLAN_EN.md` filename errors or stale "four Gradle modules" wording
+  remain outside of `CHANGELOG.md`'s own past-tense descriptions of earlier
+  fixes. Added `DECISIONS.md` ADR-007, documenting the `CAPTURE`/`TESTPLAN`
+  restructuring itself, which had no ADR despite being exactly the kind of
+  significant, option-compared decision `PROJECT_RULES.md` rule 8 calls for.
 
 ### Removed
 
