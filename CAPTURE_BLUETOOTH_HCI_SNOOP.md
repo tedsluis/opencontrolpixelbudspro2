@@ -51,10 +51,17 @@ Android, since HCI snoop logging is an AOSP-level feature.
 2. Go to **Settings → System → Developer options**.
 3. Enable **"Enable Bluetooth HCI snoop log"**.
 4. Enable **"USB debugging"**.
-5. **Restart Bluetooth** — toggle Bluetooth off, then on again (or reboot the phone).
-   This matters: logging is not always guaranteed to start cleanly against an
-   already-active Bluetooth stack; a fresh Bluetooth session after enabling the toggle
-   ensures the logger is actually running.
+5. **Restart Bluetooth — reboot the phone (recommended default).** A toggle
+   off/on (Settings → Bluetooth) is the officially documented way to make the
+   logger pick up the setting, and normally works. A reboot is recommended
+   here anyway, for a cost-based reason rather than a confirmed reliability
+   problem: on the rare occasion the toggle doesn't take, the failure is
+   silent — you only discover it after doing a full round of actions and
+   pulling an empty bugreport (see the FAQ in §7). A phone reboot costs about
+   a minute; redoing a capture session doesn't. If you've already verified on
+   your specific phone that a plain toggle reliably starts logging, that's a
+   fine, faster alternative — just confirm it once (§7 FAQ has the recovery
+   steps if a session comes back empty either way).
 6. Connect the phone to your computer via USB and **accept the "Allow USB debugging?"
    dialog** on the phone (approve your computer's RSA key fingerprint).
 7. Verify the connection: `adb devices` should list the phone as `device` (not
@@ -352,8 +359,10 @@ These are waiting periods to catch spontaneous hardware-initiated traffic per
 - **Log rotation:** the in-device snoop buffer is finite; very long or idle-heavy
   sessions can push earlier frames out before you extract them. Keep sessions focused
   (§2, §4).
-- **Bluetooth restart is not optional.** Skipping the toggle-off/toggle-on step in §2 is
-  the single most common reason a capture ends up empty despite the setting being "on."
+- **Bluetooth restart is not optional.** Skipping the restart step in §2 (step
+  5) is the single most common reason a capture ends up empty despite the
+  setting being "on" — reboot by default; a plain toggle only if you've
+  confirmed it works reliably on your specific phone.
 - **`adb root` will not work** on either phone for this purpose — both stock Pixel
   firmware and GrapheneOS run production (non-rootable) builds. Don't waste time trying
   to root a device just for this; `adb bugreport` is the supported path and is
@@ -385,9 +394,9 @@ commands each time.
 **Q: The zip from `adb bugreport` doesn't contain a Bluetooth folder at all — what now?**
 This has been reported when the HCI snoop toggle wasn't actually active during the
 session (see the "Bluetooth restart is not optional" note in §6) — re-check §2 step 5,
-redo the toggle-off/on, reproduce the action, and pull a fresh bugreport. If it still
-doesn't appear, search the whole archive by filename (`find . -iname "*btsnoop*"`) rather
-than assuming a fixed path.
+reboot the phone this time even if you used a plain toggle before, reproduce the action,
+and pull a fresh bugreport. If it still doesn't appear, search the whole archive by
+filename (`find . -iname "*btsnoop*"`) rather than assuming a fixed path.
 
 **Q: Can I use Wireshark's live capture (the "Android Bluetooth Btsnoop" USB interface)
 instead of pulling a bugreport each time?**
@@ -442,7 +451,7 @@ Every capture session should end with at least one of these:
 - [ ] `PROTOCOL-NOTES.md` §7 — open questions resolved, or new ones added if the capture
       revealed something unexpected.
 
-Treat a capture session that doesn't result in at least one of the above as incomplete —
+Treat an capture session that doesn't result in at least one of the above as incomplete —
 either the action wasn't actually isolated/identifiable, or something in the setup (§2,
 §6) needs revisiting before the next attempt.
 
