@@ -75,6 +75,19 @@ for the "definition of done" that will mark v1.
   Android versions, so the change is framed as cost-based insurance (an empty
   capture costs a full re-session; a reboot costs about a minute) rather than
   as a corrected reliability claim.
+- Clarified that the passive BLE scan used to capture the Fast Pair Battery
+  Notification (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group Q #18, `TODO.md`
+  Phase 1) is a one-off reverse-engineering technique and does not authorize
+  broader scanning in the production app, which stays governed by the
+  narrower bounded exception in `AGENTS.md` §7 / `DECISIONS.md` ADR-006.
+- Fixed `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5's frame-analysis instructions,
+  which generically told every captured frame to be checked against the
+  RFCOMM envelope hypothesis (§2). A captured BLE advertisement (the Battery
+  Notification) is not RFCOMM traffic and has an unrelated structure — the
+  step now branches by frame type, with a `btle` Wireshark filter added
+  alongside the existing `btrfcomm`/`btatt` ones, so a battery capture isn't
+  force-fit against the wrong structure or wrongly logged as an open
+  question.
 
 ### Reverse engineering findings
 
