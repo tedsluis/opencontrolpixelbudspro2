@@ -27,35 +27,35 @@ Target platform: Android 14+ (API 34), GrapheneOS as the primary reference OS,
 with compatibility maintained for stock AOSP-based ROMs.
 
 ```
-┌────────────────────────────────────────────────────────┐
-│  :ui  (Jetpack Compose, Material 3)                    │
-│  - Screens, Composables                                │
-│  - ViewModels (MVVM)                                   │
+┌──────────────────────────────────────────────────────┐
+│  :ui  (Jetpack Compose, Material 3)                   │
+│  - Screens, Composables                               │
+│  - ViewModels (MVVM)                                  │
 └──────────────────────┬─────────────────────────────────┘
-                      │ observes StateFlow<BudsUiState>
+                        │ observes StateFlow<BudsUiState>
 ┌──────────────────────▼─────────────────────────────────┐
-│  :domain                                               │
-│  - Use cases (ToggleAncUseCase, ReadBatteryUseCase,    │
-│    UpdateEqUseCase, ...)                               │
-│  - Domain models (ConnectionState, AncMode, ...)       │
+│  :domain                                              │
+│  - Use cases (ToggleAncUseCase, ReadBatteryUseCase,   │
+│    UpdateEqUseCase, ...)                              │
+│  - Domain models (ConnectionState, AncMode, ...)      │
 │  - BudsRepository interface                            │
 └──────────────────────┬─────────────────────────────────┘
-                       │ implementation
+                        │ implementation
 ┌──────────────────────▼─────────────────────────────────┐
-│  :data                                                 │
+│  :data                                                │
 │  - BudsRepositoryImpl                                  │
 │  - MaestroSerializer (protobuf), ProtocolCodec         │
 │    (FrameEncoder/FrameDecoder)                         │
-│  - Encrypted DataStore (EQ presets, last-known battery)│
+│  - Encrypted DataStore (EQ presets, last-known battery) │
 └──────────────────────┬─────────────────────────────────┘
-                       │ implementation
+                        │ implementation
 ┌──────────────────────▼─────────────────────────────────┐
-│  :hardware                                             │
-│  - BudsTransport (interface)                           │
-│  - RFCOMM socket manager, secondary GATT client        │
-│  - ConnectionStateMachine                              │
-│  - ForegroundService                                   │
-└────────────────────────────────────────────────────────┘
+│  :hardware                                            │
+│  - BudsTransport (interface)                            │
+│  - RFCOMM socket manager, secondary GATT client         │
+│  - ConnectionStateMachine                               │
+│  - ForegroundService                                     │
+└──────────────────────────────────────────────────────┘
 ```
 
 ## 2. Project Structure (MVVM & Clean Architecture)
@@ -112,13 +112,21 @@ These components are deliberately isolated from the rest of the app so that:
 | `ProtocolCodec` (`FrameEncoder` / `FrameDecoder`) | `:data` | Encodes/decodes commands and responses per `PROTOCOL.md` §2 (framing) and §3 (protobuf). Pure Kotlin, no Android dependencies — fully unit-testable against fixed byte-array fixtures, per `AGENTS.md` §11. Must be implemented against whichever framing hypothesis (`PROTOCOL.md` §2.1 vs §2.2) reaches 🟢 FACT confidence — not against placeholders (see `PROTOCOL_NOTES.md` §8). |
 | `BudsRepository` / `BudsRepositoryImpl` | interface in `:domain`, implementation in `:data` | Translates protocol-level events into domain models, exposed as `Flow`/`StateFlow` to the domain layer. |
 
-> **Open architectural note:** if `PROTOCOL.md` §2.3's framing question resolves
-> to "both channels exist" (i.e. `libmaestro` control commands use a separate
-> envelope from generic Fast Pair Message Stream traffic like Ring/battery/
-> device info), `ProtocolCodec` will likely need **two separate codecs** rather
-> than one shared implementation. This does not change the external interface
-> to `:domain`, only `:data`'s internal structure — flag for `DECISIONS.md` if
-> confirmed.
+> **Implementation gate for `ProtocolCodec` (coupled to `AGENTS.md` §6):** the
+> same event — `PROTOCOL.md` §2's framing question reaching 🟢 FACT confidence
+> — triggers two linked requirements, not two independent ones to satisfy
+> separately: (1) only then may `FrameEncoder`/`FrameDecoder` be implemented
+> (`AGENTS.md` §6), and (2) that same FACT determination must be recorded as a
+> `DECISIONS.md` ADR before implementation begins. If the ADR and
+> `PROTOCOL.md`'s status ever disagree, treat that disagreement itself as the
+> problem to fix — not a reason to add a third, independent check.
+>
+> If the resolved answer turns out to be "both channels exist" (i.e.
+> `libmaestro` control commands use a separate envelope from generic Fast Pair
+> Message Stream traffic like Ring/battery/device info), `ProtocolCodec` will
+> need **two separate codecs** rather than one shared implementation — the
+> same ADR should say so. This does not change the external interface to
+> `:domain`, only `:data`'s internal structure.
 
 ## 3. Dataflow (Command Pipeline)
 
