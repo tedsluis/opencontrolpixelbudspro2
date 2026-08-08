@@ -155,6 +155,15 @@ Android has no equivalent of Linux's BlueZ/UPower/AVRCP battery reporting, so
 this layer uses Android-native fallbacks, in priority order (aligned with
 `PROTOCOL.md` §4.3):
 
+0. **Worth checking first, cheapest — generic OS battery broadcast:**
+   register a `BroadcastReceiver` for `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED`
+   (API 31+) or the legacy `android.bluetooth.device.action.BATTERY_LEVEL_CHANGED`
+   intent. This costs nothing to implement (no scan permission, no RFCOMM
+   connection) and may already surface whatever the OS's own Bluetooth stack
+   derives from options 1–4 below — but whether it actually fires for this
+   device is unconfirmed (⚪ ASSUMPTION), so it supplements rather than
+   replaces the confirmed options that follow. If it works reliably in
+   testing, it can be promoted above option 1.
 1. **Primary — Fast Pair Battery Notification (BLE advertisement):** parse the
    officially specified 3-byte (L/R/Case) payload from the BLE advertisement.
    No active connection required. Implement observation of this advertisement
