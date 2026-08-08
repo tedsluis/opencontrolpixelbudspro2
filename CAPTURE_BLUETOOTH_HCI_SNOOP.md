@@ -129,6 +129,16 @@ The supported, working method on both phones:
 
 ## 4. Capture Procedure — Isolate Every Action
 
+**Groups A–Q (and Z) below are capture scenarios — efficient bundles of related actions
+to run in one session — not the project's official test record.** Each numbered item is
+annotated with its permanent Test-ID (e.g. `ANC-001`) from
+`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, which is where the actual catalog of investigated
+behaviors, their existence-confidence, and their evidence status live. A Group can bundle
+Test-IDs from more than one feature area for capture efficiency (e.g. Group C bundles
+`CONV-001` and `MULTI-001`, which are unrelated features) — the Group is about *how to
+run the session*, the Test-ID is *what's actually being investigated*. See
+`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §0.1 for the full reasoning.
+
 The single most important rule: **one user-level action per capture window, with a pause
 before and after.** A capture full of overlapping actions is very hard to attribute
 correctly in Wireshark; a capture of ten cleanly isolated actions is straightforward.
@@ -202,7 +212,7 @@ Buds, both of which are more valuable and, in the pairing case, mildly disruptiv
    keep a throwaway capture around, but it still counts as a real, worthwhile session.
 
 #### Group A — Connection / bonding baseline
-1. **Pairing / bonding baseline** — capture this as its own isolated session,
+1. **Pairing / bonding baseline** [`PAIR-001`] — capture this as its own isolated session,
    ideally before the command groups below (B–P). If the Buds are already
    paired, **"forget" the device on the phone side first** (Bluetooth
    settings → the paired device → Forget), then re-pair through Bluetooth
@@ -219,71 +229,71 @@ Buds, both of which are more valuable and, in the pairing case, mildly disruptiv
    moving on to Group B.
 
 #### Group B — Active Noise Control
-2. **ANC → Off**. Wait. Note time.
-3. **ANC → Noise Cancellation** (active). Wait. Note time.
-4. **ANC → Adaptive** (if your firmware exposes it — confirmed present in `release_5.203`
+2. **ANC → Off** [`ANC-001`]. Wait. Note time.
+3. **ANC → Noise Cancellation** (active) [`ANC-002`]. Wait. Note time.
+4. **ANC → Adaptive** [`ANC-003`] (if your firmware exposes it — confirmed present in `release_5.203`
    per `PROTOCOL_NOTES.md` §4.1). Wait. Note time.
-5. **ANC → Transparency**. Wait. Note time.
+5. **ANC → Transparency** [`ANC-004`]. Wait. Note time.
 
 #### Group C — Conversation Detection & Multipoint
-6. **Toggle 'Conversation Detection' on/off**. Wait. Note time.
-7. **Toggle 'Multipoint' on/off**. Wait. Note time.
+6. **Toggle 'Conversation Detection' on/off** [`CONV-001`]. Wait. Note time.
+7. **Toggle 'Multipoint' on/off** [`MULTI-001`]. Wait. Note time.
 
 #### Group D — Equalizer: presets
-8. **Select EQ preset: Standard**. Wait. Note time.
-9. **Select EQ preset: Bass Boost**. Wait. Note time.
-10. **Select EQ preset: Bass Reduction**. Wait. Note time.
-11. **Select EQ preset: Balanced**. Wait. Note time.
-12. **Select EQ preset: Vocal Boost**. Wait. Note time.
-13. **Select EQ preset: Clarity**. Wait. Note time.
-14. **Select EQ preset: Last saved**. Wait. Note time.
-15. **Save current EQ as a new preset** ('Save') — a distinct write action from preset
+8. **Select EQ preset: Standard** [`EQP-001`]. Wait. Note time.
+9. **Select EQ preset: Bass Boost** [`EQP-002`]. Wait. Note time.
+10. **Select EQ preset: Bass Reduction** [`EQP-003`]. Wait. Note time.
+11. **Select EQ preset: Balanced** [`EQP-004`]. Wait. Note time.
+12. **Select EQ preset: Vocal Boost** [`EQP-005`]. Wait. Note time.
+13. **Select EQ preset: Clarity** [`EQP-006`]. Wait. Note time.
+14. **Select EQ preset: Last saved** [`EQP-007`]. Wait. Note time.
+15. **Save current EQ as a new preset** ('Save') [`EQP-008`] — a distinct write action from preset
     selection. Wait. Note time.
 
 #### Group E — Equalizer: individual sliders
 Change one band at a time by a clearly visible amount — not all bands in one gesture.
-16. **Adjust EQ slider: High treble**. Wait. Note time.
-17. **Adjust EQ slider: Treble**. Wait. Note time.
-18. **Adjust EQ slider: Mid**. Wait. Note time.
-19. **Adjust EQ slider: Bass**. Wait. Note time.
-20. **Adjust EQ slider: Low bass**. Wait. Note time.
+16. **Adjust EQ slider: High treble** [`EQS-001`]. Wait. Note time.
+17. **Adjust EQ slider: Treble** [`EQS-002`]. Wait. Note time.
+18. **Adjust EQ slider: Mid** [`EQS-003`]. Wait. Note time.
+19. **Adjust EQ slider: Bass** [`EQS-004`]. Wait. Note time.
+20. **Adjust EQ slider: Low bass** [`EQS-005`]. Wait. Note time.
 
 #### Group F — Touch & head gesture toggles
-21. **Toggle 'Touch controls' fully on/off**. Wait. Note time.
-22. **Toggle 'Head gestures' fully on/off**. Wait. Note time.
+21. **Toggle 'Touch controls' fully on/off** [`TOUCH-001`]. Wait. Note time.
+22. **Toggle 'Head gestures' fully on/off** [`HEAD-001`]. Wait. Note time.
 
 #### Group G — Press-and-hold configuration
-23. **Set 'Press and hold' Left → Toggle ANC**. Wait. Note time.
-24. **Set 'Press and hold' Left → Digital assistant**. Wait. Note time.
-25. **Set 'Press and hold' Right → Toggle ANC**. Wait. Note time.
-26. **Set 'Press and hold' Right → Digital assistant**. Wait. Note time.
-27. **Check/uncheck one ANC mode in the press-and-hold rotation list** (e.g. remove
+23. **Set 'Press and hold' Left → Toggle ANC** [`HOLD-001`]. Wait. Note time.
+24. **Set 'Press and hold' Left → Digital assistant** [`HOLD-002`]. Wait. Note time.
+25. **Set 'Press and hold' Right → Toggle ANC** [`HOLD-003`]. Wait. Note time.
+26. **Set 'Press and hold' Right → Digital assistant** [`HOLD-004`]. Wait. Note time.
+27. **Check/uncheck one ANC mode in the press-and-hold rotation list** [`HOLD-005`] (e.g. remove
     'Off' from the cycle). Wait. Note time.
 
 #### Group H — Audio & volume settings
-28. **Toggle 'Mono audio' on/off**. Wait. Note time.
-29. **Toggle 'Volume EQ' on/off**. Wait. Note time.
-30. **Shift the 'Volume balance' slider**. Wait. Note time. (Per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1 this
+28. **Toggle 'Mono audio' on/off** [`AUDIO-001`]. Wait. Note time.
+29. **Toggle 'Volume EQ' on/off** [`AUDIO-002`]. Wait. Note time.
+30. **Shift the 'Volume balance' slider** [`AUDIO-003`]. Wait. Note time. (Per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1 this
     is stored locally on the earbuds themselves — a good candidate for a confirmable
     persistent write.)
 
 #### Group I — Firmware & device info
-31. **Tap the 'Firmware up to date' check** (manual). Wait. Note time.
-32. **Open 'More settings'** to view firmware version per component — may trigger a
+31. **Tap the 'Firmware up to date' check** (manual) [`FW-001`]. Wait. Note time.
+32. **Open 'More settings'** to view firmware version per component [`FW-002`] — may trigger a
     status query. Wait. Note time.
-33. **View serial numbers per component** (same screen). Wait. Note time.
-34. **View connection status** ("Earbud status: Connected"). Wait. Note time.
+33. **View serial numbers per component** (same screen) [`FW-003`]. Wait. Note time.
+34. **View connection status** ("Earbud status: Connected") [`FW-004`]. Wait. Note time.
 
 #### Group J — In-ear detection & case sounds
-35. **Toggle 'In-ear detection' on/off**. Wait. Note time.
-36. **Toggle case sound 'Earbuds replaced' on/off**. Wait. Note time.
-37. **Toggle case sound 'Other notifications' on/off**. Wait. Note time.
+35. **Toggle 'In-ear detection' on/off** [`INEAR-001`]. Wait. Note time.
+36. **Toggle case sound 'Earbuds replaced' on/off** [`CASE-001`]. Wait. Note time.
+37. **Toggle case sound 'Other notifications' on/off** [`CASE-002`]. Wait. Note time.
 
 #### Group K — Find My Buds (high-priority, see tip above)
-38. **Play sound on Left earbud**. Wait. Note time.
-39. **Play sound on Right earbud**. Wait. Note time.
-40. **Play sound on Case**. Wait. Note time.
-41. **Play sound on both earbuds simultaneously**. Wait. Note time.
+38. **Play sound on Left earbud** [`FIND-001`]. Wait. Note time.
+39. **Play sound on Right earbud** [`FIND-002`]. Wait. Note time.
+40. **Play sound on Case** [`FIND-003`]. Wait. Note time.
+41. **Play sound on both earbuds simultaneously** [`FIND-004`]. Wait. Note time.
 
 **Before treating the framing hypothesis as confirmed from #38 alone: cross-check
 against 2–3 semantically different commands** — e.g. an ANC mode change (Group B) and one
@@ -306,12 +316,12 @@ each item below, note: **observation start** (when you stopped touching anything
 **any event of interest during the window**, **observation end**, the **Bluetooth
 connection state** (connected/reconnecting/idle), and the **app's foreground/background
 state**.
-42. **Idle wait with the app open**, ~60s right after connecting, without touching
+42. **Idle wait with the app open** [`BATT-001`], ~60s right after connecting, without touching
     anything — intended to catch the "battery status notification on every reconnect"
     behavior. Note the start time, and leave a clean ~10s gap after the preceding
     connect action before this window starts, so reconnect-settling traffic doesn't
     bleed into what you're trying to observe as spontaneous.
-43. **Force-close and reopen the app** — intended to catch any status query the app sends
+43. **Force-close and reopen the app** [`OBS-001`] — intended to catch any status query the app sends
     on launch. Note the exact time of reopening as the window start, and note when you
     consider the window over (e.g. ~30–60s after reopening, or once traffic visibly
     settles).
@@ -325,19 +335,19 @@ afterward.
 No app-driven commands are possible here, so this session focuses on connection-level
 and passive behavior:
 
-1. **Pairing**, via system Bluetooth settings (Settings → Connected devices → Pair new
+1. **Pairing** [`PAIR-001`], via system Bluetooth settings (Settings → Connected devices → Pair new
    device). Note the start time precisely — this is the most information-dense part of
    this session (bonding handshake, initial service discovery), and like Group A #1 it's
    one user action producing a multi-frame burst, not something to isolate frame by frame.
-2. **Idle observation** — once connected, wait ~30–60 seconds without touching anything.
+2. **Idle observation** [`BATT-003`] — once connected, wait ~30–60 seconds without touching anything.
    This can reveal spontaneous status frames the Buds send unprompted. Note the
    **observation start** (once you stop touching anything, leaving a clean gap after the
    pairing burst settles), the **observation end**, and confirm the **connection state**
    stayed `connected` throughout — so this window isn't later confused with settling
    traffic from item 1.
-3. **Open the Bluetooth device detail screen** for the Buds in system settings (this can
+3. **Open the Bluetooth device detail screen** for the Buds in system settings [`GATT-001`] (this can
    trigger GATT service/characteristic discovery on some Android versions).
-4. **Disconnect and reconnect** once, as its own isolated pair of actions, to observe
+4. **Disconnect and reconnect** once, as its own isolated pair of actions [`PAIR-003`], to observe
    both a clean teardown and a reconnection to an already-bonded device (useful for
    validating `ARCHITECTURE.md` §6/§7 resilience assumptions).
 
@@ -357,34 +367,34 @@ Same rhythm as before: **wait ~5s → note the exact time → perform the action
 ~5–10s → move to the next action.**
 
 #### Group M — Case & wear state
-1. **Open the charging case lid**. Wait. Note time.
-2. **Remove Left earbud from the case**. Wait. Note time.
-3. **Remove Right earbud from the case**. Wait. Note time.
-4. **Insert Left earbud into the ear**. Wait. Note time.
-5. **Insert Right earbud into the ear**. Wait. Note time.
-6. **Place buds back in the case and close the lid**. Wait. Note time. (Expected to
+1. **Open the charging case lid** [`CASE-003`]. Wait. Note time.
+2. **Remove Left earbud from the case** [`CASE-004`]. Wait. Note time.
+3. **Remove Right earbud from the case** [`CASE-005`]. Wait. Note time.
+4. **Insert Left earbud into the ear** [`INEAR-002`]. Wait. Note time.
+5. **Insert Right earbud into the ear** [`INEAR-003`]. Wait. Note time.
+6. **Place buds back in the case and close the lid** [`CASE-006`]. Wait. Note time. (Expected to
    terminate the active Bluetooth Classic connection — good for validating
    `ARCHITECTURE.md` §6/§7 disconnect handling.)
 
 #### Group N — Touch gestures
-7. **Tap once** on a bud. Wait. Note time.
-8. **Double-tap** on a bud. Wait. Note time.
-9. **Triple-tap** on a bud. Wait. Note time.
-10. **Swipe forward** on a bud (volume up). Wait. Note time.
-11. **Swipe backward** on a bud (volume down). Wait. Note time.
-12. **Press and hold** on a bud. Wait. Note time. (Behavior depends on the per-earbud
+7. **Tap once** on a bud [`TOUCH-002`]. Wait. Note time.
+8. **Double-tap** on a bud [`TOUCH-003`]. Wait. Note time.
+9. **Triple-tap** on a bud [`TOUCH-004`]. Wait. Note time.
+10. **Swipe forward** on a bud (volume up) [`TOUCH-005`]. Wait. Note time.
+11. **Swipe backward** on a bud (volume down) [`TOUCH-006`]. Wait. Note time.
+12. **Press and hold** on a bud [`TOUCH-007`]. Wait. Note time. (Behavior depends on the per-earbud
     configuration set in §4.1 Group G — note which mode was active when you test this.)
 
 #### Group O — Head gestures
 Requires 'Head gestures' enabled (§4.1 Group F).
-13. **Nod** (simulating answering a call, or a text reply if 'Spoken notifications' is
+13. **Nod** [`HEAD-002`] (simulating answering a call, or a text reply if 'Spoken notifications' is
     on). Wait. Note time.
-14. **Shake** (simulating rejecting a call/dismissing a text reply). Wait. Note time.
+14. **Shake** [`HEAD-003`] (simulating rejecting a call/dismissing a text reply). Wait. Note time.
 
 #### Group P — Voice & case button
-15. **Start speaking** with Conversation Detection on (§4.1 Group C), to trigger the
+15. **Start speaking** with Conversation Detection on [`CONV-002`] (§4.1 Group C), to trigger the
     detection event. Wait. Note time.
-16. **Hold the case button for 30 seconds** (case open, buds inside, plugged into power)
+16. **Hold the case button for 30 seconds** [`CASE-007`] (case open, buds inside, plugged into power)
     — ⚠️ this is a confirmed **full factory reset**, not just pairing mode (per
     `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2). Do this deliberately, last, and only once you're ready to
     re-pair from scratch — it will also reset the Find My Device link on the Pro 2.
@@ -394,7 +404,7 @@ Requires 'Head gestures' enabled (§4.1 Group F).
     forget-and-re-pair baseline. It is optional and not a prerequisite for anything
     else in this guide — Group A's lightweight baseline is sufficient on its own for
     every other group.
-17. **(Open question, see `PROTOCOL_NOTES.md` §7)** Try a shorter/different press on the
+17. **(Open question, see `PROTOCOL_NOTES.md` §7)** Try a shorter/different press [`CASE-008`] on the
     case button to see if it triggers pairing mode without a full reset. No officially
     confirmed duration exists for this — treat your own finding here as
     `[VERIFIED-LOCAL]` material for `PROTOCOL_NOTES.md` once confirmed.
@@ -421,7 +431,7 @@ three actually happened, since they mean different things for protocol reconstru
   conclusion above; note it as 🔴 unconfirmed and, if practical, retry with a clearer
   trigger before drawing any conclusion.
 
-18. **Passive BLE scan while the case is closed and idle** — intended to catch the Fast
+18. **Passive BLE scan while the case is closed and idle** [`BATT-002`/`BATT-003`] — intended to catch the Fast
     Pair Battery Notification advertisement (`PROTOCOL_NOTES.md` §4.3 Option A) without
     any active RFCOMM connection. This doesn't require the buds to be connected to the
     capturing phone at all — any nearby scan should do, per the spec. **This is a
@@ -429,12 +439,12 @@ three actually happened, since they mean different things for protocol reconstru
     production app's own BLE scanning stays governed separately, and more narrowly, by
     the bounded exception in `AGENTS.md` §7 / `DECISIONS.md` ADR-006 — this experiment
     does not authorize a broader scanning implementation than that.
-19. **Trigger a loud, sudden sound near the buds while worn** (e.g. clap sharply nearby)
+19. **Trigger a loud, sudden sound near the buds while worn** [`LOUD-001`] (e.g. clap sharply nearby)
     to attempt to observe Loud Noise Protection engaging (`PROTOCOL_NOTES.md` §4.2/§7) —
     confirm you actually noticed the local effect (e.g. audible volume dip) before
     concluding anything about the Bluetooth traffic (or lack of it); see the three-way
     outcome guidance above.
-20. **Move between distinctly different acoustic environments while worn** (e.g. quiet
+20. **Move between distinctly different acoustic environments while worn** [`ADAPT-002`] (e.g. quiet
     room → street) to attempt to observe Adaptive Audio adjusting
     (`PROTOCOL_NOTES.md` §4.2/§7) — same guidance as #19: confirm the local effect first,
     then classify the Bluetooth-traffic outcome using the three categories above.
@@ -483,7 +493,11 @@ three actually happened, since they mean different things for protocol reconstru
      hypothesis; don't force-fit it there or record a false "doesn't match" finding.
    - Record the confirmed values back into `PROTOCOL_NOTES.md` §4.1's opcode table
      (RFCOMM frames) or §4.3 (battery), mark the entry `[VERIFIED-LOCAL]` with today's
-     date, and raise its confidence to 🟢.
+     date, and raise its confidence to 🟢. Include the Test-ID from
+     `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (e.g. `ANC-001`) and this session's `CAP-NNN` ID in
+     that note — this is what closes the evidence chain in
+     `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §0.1. Also add the Test-ID to this session's row in
+     the Capture Index (§9) Test(s) column if it isn't there yet.
 5. If a frame doesn't match the expected envelope shape at all, don't force-fit it —
    note it as an open question (`PROTOCOL_NOTES.md` §7) rather than recording a guess as
    fact.
@@ -608,7 +622,7 @@ Every capture session should end with at least one of these:
 - [ ] `PROTOCOL_NOTES.md` §7 — open questions resolved, or new ones added if the capture
       revealed something unexpected.
 
-Treat a capture session that doesn't result in at least one of the above as incomplete —
+Treat an capture session that doesn't result in at least one of the above as incomplete —
 either the action wasn't actually isolated/identifiable, or something in the setup (§2,
 §6) needs revisiting before the next attempt.
 
@@ -627,9 +641,9 @@ step, even for a quick one-action session.
 if a capture turns out to be unusable, mark it `discarded` in Status rather
 than deleting the row or reassigning its number to a later capture.
 
-| ID | Date | Phone | Android | Buds FW | App version | Group(s) | Purpose | Bugreport file | Extracted log | Status |
-|---|---|---|---|---|---|---|---|---|---|---|
-| `CAP-001` | | Pixel 7a | | | | A | Pairing/bonding baseline | | | captured |
+| ID | Date | Phone | Android | Buds FW | App version | Group(s) | Test(s) | Purpose | Bugreport file | Extracted log | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `CAP-001` | | Pixel 7a | | | | A | `PAIR-001` | Pairing/bonding baseline | | | captured |
 
 **Column notes:**
 
@@ -641,6 +655,12 @@ than deleting the row or reassigning its number to a later capture.
   after Q) covered in this session; one
   bugreport pull can cover several groups if captured as one continuous
   logging session (§4.1).
+- **Test(s)** — the `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` Test-ID(s) actually
+  exercised in this session (e.g. `ANC-001, ANC-002`) — this is what a
+  `PROTOCOL_NOTES.md` finding should ultimately trace back through: finding →
+  this row's capture ID + frame number → the Test-ID here → the catalog entry
+  in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`. Usually a subset of everything the
+  Group(s) column's scenario covers, since not every attempt succeeds cleanly.
 - **Status** — one of: `captured` (extracted, not yet reviewed), `analyzed`
   (reviewed in Wireshark per §5, findings recorded per §8), `promoted` (a
   finding from this capture has been written into `PROTOCOL_NOTES.md` /
