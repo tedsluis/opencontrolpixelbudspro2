@@ -104,7 +104,7 @@ _Make sure the buds are connected and active._
 | ID | Description | Initiator | Capture scenario(s) | Existence source | Note | Evidence |
 |---|---|---|---|---|---|---|
 | `ANC-001` | ANC → Off | User (App) | B | 🟢 | | — |
-| `ANC-002` | ANC → Noise Cancellation | User (App) | B | 🟢 | | — |
+| `ANC-002` | ANC → Noise Cancellation | User (App) | B | 🟢 | Sends a configuration command to the buds. | — |
 | `ANC-003` | ANC → Adaptive | User (App) | B | 🟢🔵 | Pro 2-specific; added in firmware 4.467 (Sept. 2025). Automatically adjusts volume to the environment. | — |
 | `ANC-004` | ANC → Transparency | User (App) | B | 🟢 | | — |
 | `CONV-001` | Toggle 'Conversation Detection' on/off | User (App) | C | 🟢 | Switches to Transparency and pauses media when you speak. | — |
@@ -215,7 +215,7 @@ _Sensors and firmware behavior, without a direct action from the app._
 |---|---|---|---|---|---|---|
 | `BATT-002` | Case broadcasts battery status via BLE advertisement | Buds/Case (Auto) | Q | 🔵 | Official Fast Pair Battery Notification extension: 3 bytes (L/R/Case), advertised when the case opens and/or on value change; visible ≥8s, hidden after 20s or explicitly. Optional when a single bud is inserted/removed. | — |
 | `BATT-003` | Buds update battery status while worn | Buds/Case (Auto) | Q | 🔵 | Trigger = "when RFCOMM connects, or when the value changes" — no fixed step size (e.g. "every 1%") is officially specified. | — |
-| `BATT-004` | Battery data via RFCOMM after connecting (instead of BLE advertisement) | Buds/Case (Auto) | A / Z | 🔵 | Officially specified alternative channel — Fast Pair "Message Stream: Device Information". See `PROTOCOL.md` §4.3 Option B. Piggybacks on any connect capture (Group A or Z) rather than needing its own scenario. | — |
+| `BATT-004` | Battery data via RFCOMM after connecting (instead of BLE advertisement) | Buds/Case (Auto) | A / Z | 🔵 | Officially specified alternative channel — Fast Pair "Message Stream: Device Information". Presumed to be the same channel as the `HardwareStatus` hypothesis in `PROTOCOL_NOTES.md` §3.1 — likely not a Buds-specific protobuf schema at all. See `PROTOCOL.md` §4.3 Option B. Piggybacks on any connect capture (Group A or Z) rather than needing its own scenario. | — |
 | `INEAR-004` | In-ear sensor reports 'removed' (bud taken out of ear, not placed back in case) | Buds (Auto) | — | 🟢 | Confirmed via screenshot (In-ear detection: "pauses audio when not worn"). **Gap noted during this restructuring:** no existing Group captures this specific transition — `INEAR-002`/`INEAR-003` cover insertion, and `CASE-006` covers full case return, but "worn → removed, still out of case" has no dedicated step yet. Candidate addition to a future Group M revision; see §9. | — |
 | `BATT-005` | 'Low battery' notification (case) | Buds/Case (Auto) | — | 🔵 | Confirmed specifically for Pro 2/2a: notification for both low case battery and fully charged case. Opportunistic only — no dedicated scenario, since it requires genuinely low battery; see §9. | — |
 | `LOUD-001` | Loud Noise Protection: automatic volume reduction on a sudden loud sound | Buds (Auto) | Q | 🔵 | Added in firmware 4.467. Presumably a purely local DSP action (no phone-side command needed) — worth checking whether a notify frame is also sent to the phone. Does not cover impulse sounds (gunshots, fireworks) per Google. | — |
