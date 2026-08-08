@@ -129,12 +129,26 @@ The supported, working method on both phones:
 
 ## 4. Capture Procedure — Isolate Every Action
 
-The single most important rule: **one action per capture window, with a pause before and
-after.** A capture full of overlapping actions is very hard to attribute correctly in
-Wireshark; a capture of ten cleanly isolated actions is straightforward.
+The single most important rule: **one user-level action per capture window, with a pause
+before and after.** A capture full of overlapping actions is very hard to attribute
+correctly in Wireshark; a capture of ten cleanly isolated actions is straightforward.
+Note that "one action" means one thing you deliberately triggered — not one frame. Some
+actions (pairing/bonding above all, see Group A below) legitimately produce a *burst* of
+related frames as their own multi-step protocol exchange runs to completion; that whole
+burst still counts as the result of a single isolated action, not as several actions to
+capture separately.
 
 Recommended rhythm per action: **wait ~5s → note the exact time → perform the action →
 wait ~5–10s → move to the next action.**
+
+**This timing is a practical heuristic, not a guarantee that every response arrives
+within it.** Since this guide deliberately avoids live capture (§7 FAQ — the live-capture
+port usually isn't available on modern Android, so you only see the traffic after
+extraction), there's no way to watch responses arrive in real time and wait until they
+settle; a fixed interval is the only thing that's actually practical to follow. The known
+failure mode: an occasional slow/delayed response can land after you've already moved on,
+and get misattributed to whatever the next action was. Mitigation is in the analysis
+phase, not the capture phase — see §5 step 3.
 
 ### 4.1 Pixel 7a (official app) — primary session
 
@@ -171,7 +185,13 @@ compared against the Fast Pair Message Stream spec's own worked example
    because "it's already paired." This is a **lightweight, safely repeatable**
    action: it does not touch the Buds' own memory or the Find My Device link,
    unlike the full factory reset in Group P #16 below — do not confuse the
-   two. Wait for the connection to settle before moving on to Group B.
+   two. **Expect a burst, not a single frame:** pairing is one user action
+   (tapping the device in the picker) that triggers an automatic multi-step
+   exchange (inquiry, authentication, link-key exchange, SDP, profile
+   connect) — this entire burst is the result of that one action, not
+   several actions to isolate individually; there is nothing to click
+   separately for each sub-step. Wait for the connection to settle before
+   moving on to Group B.
 
 #### Group B — Active Noise Control
 2. **ANC → Off**. Wait. Note time.
@@ -242,12 +262,22 @@ Change one band at a time by a clearly visible amount — not all bands in one g
 
 #### Group L — Passive/automatic observation windows
 These aren't taps — they're deliberate waiting periods to catch background/automatic app
-traffic per `TESTPLAN_EN.md` §3.
+traffic per `TESTPLAN_EN.md` §3. **Log explicit boundaries for each window, not just a
+single timestamp** — otherwise settling traffic from whatever you did right before the
+window starts is hard to distinguish from genuinely spontaneous traffic during it. For
+each item below, note: **observation start** (when you stopped touching anything),
+**any event of interest during the window**, **observation end**, the **Bluetooth
+connection state** (connected/reconnecting/idle), and the **app's foreground/background
+state**.
 42. **Idle wait with the app open**, ~60s right after connecting, without touching
     anything — intended to catch the "battery status notification on every reconnect"
-    behavior. Note the start time.
+    behavior. Note the start time, and leave a clean ~10s gap after the preceding
+    connect action before this window starts, so reconnect-settling traffic doesn't
+    bleed into what you're trying to observe as spontaneous.
 43. **Force-close and reopen the app** — intended to catch any status query the app sends
-    on launch. Note the exact time of reopening.
+    on launch. Note the exact time of reopening as the window start, and note when you
+    consider the window over (e.g. ~30–60s after reopening, or once traffic visibly
+    settles).
 
 After finishing a group, pull the bugreport once (§3) — you don't need a separate
 bugreport per action, just clean timestamps to slice the single log into segments
@@ -260,9 +290,14 @@ and passive behavior:
 
 1. **Pairing**, via system Bluetooth settings (Settings → Connected devices → Pair new
    device). Note the start time precisely — this is the most information-dense part of
-   this session (bonding handshake, initial service discovery).
+   this session (bonding handshake, initial service discovery), and like Group A #1 it's
+   one user action producing a multi-frame burst, not something to isolate frame by frame.
 2. **Idle observation** — once connected, wait ~30–60 seconds without touching anything.
-   This can reveal spontaneous status frames the Buds send unprompted.
+   This can reveal spontaneous status frames the Buds send unprompted. Note the
+   **observation start** (once you stop touching anything, leaving a clean gap after the
+   pairing burst settles), the **observation end**, and confirm the **connection state**
+   stayed `connected` throughout — so this window isn't later confused with settling
+   traffic from item 1.
 3. **Open the Bluetooth device detail screen** for the Buds in system settings (this can
    trigger GATT service/characteristic discovery on some Android versions).
 4. **Disconnect and reconnect** once, as its own isolated pair of actions, to observe
@@ -329,7 +364,26 @@ Requires 'Head gestures' enabled (§4.1 Group F).
 
 #### Group Q — Automatic hardware behavior (observation, not action)
 These are waiting periods to catch spontaneous hardware-initiated traffic per
-`TESTPLAN_EN.md` §4 — nothing to tap, just capture while the condition holds.
+`TESTPLAN_EN.md` §4 — nothing to tap, just capture while the condition holds. As with
+Group L, log explicit **observation start** and **observation end** boundaries, not just
+a single timestamp, so this traffic isn't confused with settling traffic from whatever
+preceded the window.
+
+For items 19–20 below, "nothing found" is not a single outcome — record which of these
+three actually happened, since they mean different things for protocol reconstruction:
+- **Local behavior confirmed + Bluetooth traffic observed** → record the frame(s) as
+  `[VERIFIED-LOCAL]` per the usual process (§5 step 4).
+- **Local behavior confirmed, but no Bluetooth traffic in the log despite a clean
+  observation window** → this is itself a positive finding, not an absence of one — it's
+  evidence *for* a purely on-device implementation. Record it in `PROTOCOL-NOTES.md` as
+  such (e.g. 🟢 FACT: "no wire-visible signal observed on trigger, N attempts"), don't
+  just leave the row blank.
+- **Inconclusive** — you're not sure the local trigger actually fired (e.g. unclear
+  whether the clap was loud enough, or the environment change was large enough), or the
+  observation window was contaminated by other traffic. This does **not** support either
+  conclusion above; note it as 🔴 unconfirmed and, if practical, retry with a clearer
+  trigger before drawing any conclusion.
+
 18. **Passive BLE scan while the case is closed and idle** — intended to catch the Fast
     Pair Battery Notification advertisement (`PROTOCOL-NOTES.md` §4.3 Option A) without
     any active RFCOMM connection. This doesn't require the buds to be connected to the
@@ -340,10 +394,13 @@ These are waiting periods to catch spontaneous hardware-initiated traffic per
     does not authorize a broader scanning implementation than that.
 19. **Trigger a loud, sudden sound near the buds while worn** (e.g. clap sharply nearby)
     to attempt to observe Loud Noise Protection engaging (`PROTOCOL-NOTES.md` §4.2/§7) —
-    note whether anything appears on the wire at all, since this may be purely on-device.
+    confirm you actually noticed the local effect (e.g. audible volume dip) before
+    concluding anything about the Bluetooth traffic (or lack of it); see the three-way
+    outcome guidance above.
 20. **Move between distinctly different acoustic environments while worn** (e.g. quiet
     room → street) to attempt to observe Adaptive Audio adjusting
-    (`PROTOCOL-NOTES.md` §4.2/§7) — same caveat as above.
+    (`PROTOCOL-NOTES.md` §4.2/§7) — same guidance as #19: confirm the local effect first,
+    then classify the Bluetooth-traffic outcome using the three categories above.
 
 ---
 
@@ -369,7 +426,13 @@ These are waiting periods to catch spontaneous hardware-initiated traffic per
 3. Use the **timestamp column** together with your own action log (§1.3, §4) to identify
    which frame(s) correspond to which action. Wireshark's relative or UTC time display
    (View → Time Display Format) should be set to whatever you used when noting action
-   times, to avoid an offset mismatch.
+   times, to avoid an offset mismatch. **Since the capture-side wait time (§4) is a
+   heuristic, not a guarantee:** if a frame appears just after your noted "wait ~5–10s"
+   window for one action but before the next action's timestamp, treat it as a probable
+   late response to the earlier action rather than automatically attributing it to
+   whatever came next — check payload plausibility against both candidates before
+   deciding, and note the ambiguity in `PROTOCOL-NOTES.md` if it can't be resolved from
+   the log alone.
 4. For each identified command frame:
    - Note the raw bytes (right-click → Copy → ...as Hex Stream is fastest).
    - **If it's an RFCOMM frame** (`btrfcomm` — an app-triggered command, or the Find My
