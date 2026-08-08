@@ -69,8 +69,9 @@ tracking).
       framing hypothesis is confirmed (`REVERSE_ENGINEERING.md` §Message
       Group/Code register)
 - [ ] Resolve the framing question — Message Stream vs. proprietary envelope
-      (`PROTOCOL.md` §2.3) — this blocks implementing `FrameEncoder`/
-      `FrameDecoder` (see `AGENTS.md` §6)
+      (`PROTOCOL.md` §2.3) and record the determination as a `DECISIONS.md`
+      ADR — this blocks implementing `FrameEncoder`/`FrameDecoder` (see
+      `AGENTS.md` §6, `ARCHITECTURE.md` §2.1)
 - [ ] Document the full connection lifecycle with real capture evidence
       (`PROTOCOL.md` §5, currently an ⚪ ASSUMPTION)
 - [ ] Bring the first command (e.g. battery status via the Fast Pair Battery
