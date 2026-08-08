@@ -110,7 +110,7 @@ Python 3.14.6
 ```bash
 fedora ~/git/pixelbudspro2control [main L|✔] $ git config --global init.defaultBranch main
 fedora ~/git/pixelbudspro2control [main L|✔] $ git config --global pull.rebase false
-fedora ~/git/pixelbudspro2control [main L|✔] $ git config --global core.editor "code --wait
+fedora ~/git/pixelbudspro2control [main L|✔] $ git config --global core.editor "code --wait"
 ```
 
 ## Install VSCode extentions
