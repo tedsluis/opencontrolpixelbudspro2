@@ -175,6 +175,31 @@ action → wait ~5–10s → move to the next action.**
 compared against the Fast Pair Message Stream spec's own worked example
 (`0x04 0x01 ...` for a ring action) to confirm or refute the framing hypothesis in
 `PROTOCOL-NOTES.md` §2.0. If you only have time for a short session, prioritize group K.
+**Caution when you get there:** a superficial resemblance to the worked example (e.g. a
+plausible-looking group/code byte pair) is not by itself confirmation — don't promote the
+framing hypothesis to FACT off one frame that merely looks compatible. See the
+cross-command check in Group K below.
+
+#### Group Z — Pipeline validation (do this first, before anything else)
+Before spending your pairing baseline (Group A) or any real reverse-engineering capture,
+confirm the whole tooling chain actually works end to end, using the cheapest, most
+trivial, already-connected action you have — this catches a broken pipeline (logging
+didn't start, bugreport came back empty, extraction script misconfigured, wrong
+Wireshark filters) on a throwaway capture instead of on your pairing baseline or Find My
+Buds, both of which are more valuable and, in the pairing case, mildly disruptive to redo.
+1. With the Buds already connected (any existing pairing is fine — this step doesn't
+   need a fresh bond), work through §2 (enable HCI snoop, restart Bluetooth) and confirm
+   `adb devices` lists the phone.
+2. Perform **one trivial, already-familiar action** — e.g. a single ANC mode toggle.
+   Note the timestamp.
+3. Pull a bugreport (§3), extract via `btsnooz.py`, and open the result in Wireshark.
+4. Confirm you can actually see, before doing any protocol interpretation: general HCI
+   traffic, an RFCOMM stream, frames addressed to/from the Buds' Bluetooth address, and
+   that your noted timestamp lines up with visible activity in the log.
+5. If any of the above is missing, fix the tooling (§2, §3, §6 Notes & Gotchas) and
+   repeat this step — don't move on to Group A until this passes. Log this as your first
+   entry in the Capture Index (§9); mark it `discarded` afterward if you'd rather not
+   keep a throwaway capture around, but it still counts as a real, worthwhile session.
 
 #### Group A — Connection / bonding baseline
 1. **Pairing / bonding baseline** — capture this as its own isolated session,
@@ -259,6 +284,18 @@ Change one band at a time by a clearly visible amount — not all bands in one g
 39. **Play sound on Right earbud**. Wait. Note time.
 40. **Play sound on Case**. Wait. Note time.
 41. **Play sound on both earbuds simultaneously**. Wait. Note time.
+
+**Before treating the framing hypothesis as confirmed from #38 alone: cross-check
+against 2–3 semantically different commands** — e.g. an ANC mode change (Group B) and one
+EQ preset or slider write (Group D/E). One matching frame is a promising HYPOTHESIS, not
+a FACT (`PROJECT_RULES.md` §1: FACT requires repeated confirmation, not a single
+observation). For each of these frames, check specifically whether the same structural
+elements line up across all of them: magic/group byte(s), length-field semantics,
+channel/message-ID position, where the protobuf payload boundary falls, whether a
+checksum is present, and whether a Message Group/Code reading (§2 Hypothesis A) explains
+the leading bytes as consistently as a magic-byte reading (§2 Hypothesis B) would. If all
+sampled commands share the same structure, that's what actually raises confidence toward
+FACT — not the Left-earbud frame resembling the spec's worked example on its own.
 
 #### Group L — Passive/automatic observation windows
 These aren't taps — they're deliberate waiting periods to catch background/automatic app
@@ -599,7 +636,9 @@ than deleting the row or reassigning its number to a later capture.
 - **Phone** — `Pixel 7a` (primary, official app) or `Pixel 9a` (secondary,
   GrapheneOS), per the two-device setup described at the top of this
   document.
-- **Group(s)** — the letter(s) from §4 (A–Q) covered in this session; one
+- **Group(s)** — the letter(s) from §4 (Z, A–Q — Z is the pipeline-validation
+  group and intentionally sorts before A in this document, not alphabetically
+  after Q) covered in this session; one
   bugreport pull can cover several groups if captured as one continuous
   logging session (§4.1).
 - **Status** — one of: `captured` (extracted, not yet reviewed), `analyzed`
