@@ -33,14 +33,21 @@ tracking).
 
 ## Phase 1 — Bluetooth analysis
 
-- [ ] Make the first `btsnoop_hci.log` capture (pairing from a factory-reset
-      state) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md`
+- [ ] Make the first `btsnoop_hci.log` capture: the pairing/bonding baseline —
+      forget-and-re-pair, **not** a full factory reset (see
+      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group A)
+- [ ] Optionally, as a deliberate one-time capture at the end of the first full
+      session (not before), trigger the factory-reset re-pair for comparison
+      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group P #16 — destructive, also
+      resets the Find My Device link, so this is a bonus capture, not a
+      prerequisite)
 - [ ] Validate the Wireshark Bluetooth/BLE dissector workflow (both RFCOMM/SPP
       and BLE dissectors — this project needs both, not BLE-only, per
       `AGENTS.md` §0/§5)
-- [ ] Maintain the capture index in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`, one entry
-      per session with a unique ID and metadata (firmware version, Android
-      version, app version, capture method — per `PROJECT_RULES.md` rule 11)
+- [ ] Log every capture session in the Capture Index
+      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9) with a unique `CAP-NNN` ID and
+      metadata (firmware version, Android version, app version, capture
+      method — per `PROJECT_RULES.md` rule 11 and rule 14)
 - [ ] Capture the "Play sound on Left earbud" (Find My Buds) action
       specifically, as the first target to confirm/refute the Fast Pair
       Message Stream framing hypothesis (`PROTOCOL.md` §2.3, §4.4)
