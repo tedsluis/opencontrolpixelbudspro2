@@ -33,30 +33,42 @@ tracking).
 
 ## Phase 1 — Bluetooth analysis
 
-- [ ] Make the first `btsnoop_hci.log` capture: the pairing/bonding baseline —
-      forget-and-re-pair, **not** a full factory reset (see
-      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group A)
+- [ ] **Do this first:** run the pipeline-validation capture
+      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group Z) on one trivial,
+      already-connected action — confirms the whole chain (HCI snoop →
+      bugreport → `btsnooz.py` extraction → Wireshark, including both
+      RFCOMM/SPP and BLE dissectors, not BLE-only per `AGENTS.md` §0/§5)
+      actually works before spending a capture that matters on a broken
+      pipeline. Log it as the first entry in the Capture Index (§9), even if
+      marked `discarded` afterward.
+- [ ] Log every capture session in the Capture Index
+      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9) with a unique `CAP-NNN` ID and
+      metadata (firmware version, Android version, app version, capture
+      method — per `PROJECT_RULES.md` rule 11 and rule 14)
+- [ ] Make the pairing/bonding baseline capture — forget-and-re-pair, **not**
+      a full factory reset (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group A)
 - [ ] Optionally, as a deliberate one-time capture at the end of the first full
       session (not before), trigger the factory-reset re-pair for comparison
       (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group P #16 — destructive, also
       resets the Find My Device link, so this is a bonus capture, not a
       prerequisite)
-- [ ] Validate the Wireshark Bluetooth/BLE dissector workflow (both RFCOMM/SPP
-      and BLE dissectors — this project needs both, not BLE-only, per
-      `AGENTS.md` §0/§5)
-- [ ] Log every capture session in the Capture Index
-      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9) with a unique `CAP-NNN` ID and
-      metadata (firmware version, Android version, app version, capture
-      method — per `PROJECT_RULES.md` rule 11 and rule 14)
-- [ ] Capture the "Play sound on Left earbud" (Find My Buds) action
-      specifically, as the first target to confirm/refute the Fast Pair
-      Message Stream framing hypothesis (`PROTOCOL.md` §2.3, §4.4)
+- [ ] Capture the "Play sound on Left earbud" (Find My Buds) action — the
+      highest-value first target to test the Fast Pair Message Stream
+      framing hypothesis (`PROTOCOL.md` §2.3, §4.4;
+      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group K)
+- [ ] Cross-check the framing hypothesis against 2–3 more, semantically
+      different commands (e.g. ANC Off/Transparency, one EQ write) before
+      treating it as confirmed — one matching frame is a HYPOTHESIS, not a
+      FACT (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group K follow-up,
+      `PROJECT_RULES.md` §1)
 - [ ] Passively capture a BLE scan (no active connection) to confirm the
       Battery Notification advertisement byte-for-byte against the official
-      spec (`PROTOCOL.md` §4.3 Option A). This is a one-off research capture,
-      not a template for the app: the production app's own BLE scanning
-      stays governed by the narrower bounded exception in `AGENTS.md` §7 /
-      `DECISIONS.md` ADR-006 regardless of how broad this one-time capture is
+      spec (`PROTOCOL.md` §4.3 Option A), as its own independent experiment
+      — don't combine this with RFCOMM framing analysis. This is a one-off
+      research capture, not a template for the app: the production app's
+      own BLE scanning stays governed by the narrower bounded exception in
+      `AGENTS.md` §7 / `DECISIONS.md` ADR-006 regardless of how broad this
+      one-time capture is
 
 ## Phase 2 — APK reverse engineering
 
