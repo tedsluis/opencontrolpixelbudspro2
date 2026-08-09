@@ -131,9 +131,11 @@ order:
   `PROTOCOL.md` §4.3 (generic `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED`
   broadcast as a cheap supplementary check → Fast Pair Battery Notification
   advertisement → Fast Pair Message Stream Device Information → HFP AT
-  commands → GATT Battery Service). Do not implement a fixed polling
-  interval — battery updates are event-driven per the official Fast Pair
-  specification (connect or on value change), not periodic.
+  commands, via `BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT`
+  parsing `AT+IPHONEACCEV` / `AT+XAPL` → GATT Battery Service). Do not
+  implement a fixed polling interval — battery updates are event-driven per
+  the official Fast Pair specification (connect or on value change), not
+  periodic.
   - If none of the documented mechanisms are available for a given
     Android/OEM combination, the UI must show "Battery unavailable" rather
     than a fabricated value. Never guess or interpolate a battery percentage.
