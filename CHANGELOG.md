@@ -222,6 +222,23 @@ for the "definition of done" that will mark v1.
   fixes. Added `DECISIONS.md` ADR-007, documenting the `CAPTURE`/`TESTPLAN`
   restructuring itself, which had no ADR despite being exactly the kind of
   significant, option-compared decision `PROJECT_RULES.md` rule 8 calls for.
+- Ran a second, stricter re-validation of the `CAPTURE`/`TESTPLAN`
+  restructuring (ADR-007) against the goals of the chosen option, using
+  clause-level bidirectional matching rather than line fingerprints. Found
+  and fixed: a dropped epistemic point in the Fast Pair battery callout box
+  (the reasoning for why the RFCOMM Message Stream finding raises confidence,
+  and the generic-mechanism-vs-Buds-specific caveat); two catalog rows
+  (`BATT-004`, `PAIR-002`) that had a capture scenario listed in
+  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` but no corresponding Test-ID annotation
+  anywhere in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` (both are legitimate
+  piggyback observations rather than discrete numbered actions, but lacked
+  the annotation that would make that clear rather than looking like an
+  oversight); and one formatting inconsistency (a `BATT-004` mention using
+  plain code-formatting instead of the `` [`ID`] `` bracket convention used
+  everywhere else). Verified after fixes: 74 catalog rows, 68 distinct
+  Test-IDs cross-referenced with zero orphans in either direction, all 18
+  Group letters matched bidirectionally, zero markdown table column-count
+  errors, and no duplicate `CAP`/Test-ID/ADR numbers.
 
 ### Removed
 
