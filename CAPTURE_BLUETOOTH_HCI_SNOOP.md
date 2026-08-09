@@ -213,7 +213,9 @@ Buds, both of which are more valuable and, in the pairing case, mildly disruptiv
 
 #### Group A — Connection / bonding baseline
 1. **Pairing / bonding baseline** [`PAIR-001`] — capture this as its own isolated session,
-   ideally before the command groups below (B–P). If the Buds are already
+   ideally before the command groups below (B–P). While connecting, this session also
+   incidentally covers [`BATT-004`] (battery via RFCOMM on connect) — no separate action
+   needed for that, just note it happened here if relevant. If the Buds are already
    paired, **"forget" the device on the phone side first** (Bluetooth
    settings → the paired device → Forget), then re-pair through Bluetooth
    settings — this captures a real bonding handshake instead of skipping it
@@ -399,7 +401,7 @@ Requires 'Head gestures' enabled (§4.1 Group F).
     `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2). Do this deliberately, last, and only once you're ready to
     re-pair from scratch — it will also reset the Find My Device link on the Pro 2.
     If you do trigger it, capture the subsequent re-pair as its own isolated session
-    right afterward (same rhythm as Group A #1) — this gives a second,
+    right afterward [`PAIR-002`] (same rhythm as Group A #1) — this gives a second,
     from-true-factory-state bonding capture to compare against Group A's lightweight
     forget-and-re-pair baseline. It is optional and not a prerequisite for anything
     else in this guide — Group A's lightweight baseline is sufficient on its own for
