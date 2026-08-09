@@ -39,6 +39,17 @@ Status legend:
 | Verification method | Android `btsnoop_hci.log` capture and analysis (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md`) |
 | Promoted from | `PROTOCOL_NOTES.md` (working notes) |
 
+### 0.1 Firmware / version compatibility matrix
+
+Extend this table as additional firmware versions are tested — per `AGENTS.md` §4 and
+`ARCHITECTURE.md` §8, protocol behavior is not assumed stable across firmware updates,
+so each row should be added on its own evidence, not by assuming continuity with the row
+above it.
+
+| Firmware version | Known protocol-relevant differences | Source |
+|---|---|---|
+| `release_5.203` | `ADAPTIVE` ANC mode present; 5-band EQ; L/R/Case independent battery reporting (now understood to likely be the Fast Pair Battery Notification, §4.3 Option A) | `[VERIFIED-LOCAL]` (Screenshot UI analysis, 2026-07-30) |
+
 ## 1. Transports overview
 
 | Transport | Used for | Status |
