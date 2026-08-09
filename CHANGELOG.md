@@ -51,7 +51,7 @@ for the "definition of done" that will mark v1.
   trigger already in `AGENTS.md` §6 rather than added as a separate,
   independently-drifting rule (`ARCHITECTURE.md` §2.1).
 - Trimmed `ARCHITECTURE.md` §9.1's summary of the bounded scanning exception
-  down to a single duiding sentence, removing the near-verbatim repeat of
+  down to a single explanatory sentence, removing the near-verbatim repeat of
   `AGENTS.md` §7's exact bounds so there is nothing left in the summary that
   could drift out of sync with the authoritative rule.
 - Added an explicit ADR-numbering rule to `DECISIONS.md`'s intro (sequential,
