@@ -189,7 +189,10 @@ Key points, taken directly from the official spec:
   automatically hidden after 20 seconds (or sooner, via an explicit "hide" flag).
 - **Alternative mechanism, also officially specified:** raw battery data can also be sent
   over RFCOMM once a connection exists, via the **Fast Pair "Message Stream: Device
-  Information"** extension — see `BATT-004` below and `PROTOCOL.md` §4.3 Option B.
+  Information"** extension — see `BATT-004` below and `PROTOCOL.md` §4.3 Option B. This
+  deserves a higher confidence rating than 🔴 now that an officially documented RFCOMM
+  battery route is known to exist, even though it's a generic Fast Pair mechanism rather
+  than a confirmed Buds-specific `libmaestro` detail.
 
 ---
 
