@@ -646,6 +646,7 @@ than deleting the row or reassigning its number to a later capture.
 | ID | Date | Phone | Android | Buds FW | App version | Group(s) | Test(s) | Purpose | Bugreport file | Extracted log | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | `CAP-001` | 2026-08-09 | Pixel 7a | TBD | TBD | TBD | Z, A, B, M | `PAIR-001`, `CASE-003`, `CASE-004`, `CASE-005`, `ANC-001`, `ANC-002`, `ANC-003`, `ANC-004`, `CASE-006` | Pipeline validation; scope grew beyond Z into full pairing baseline + all 4 ANC modes + case/bud handling | `captures/2026-08-09_08-51-00_08-52-20-Group_Z/btsnoop_hci.log` | same file (already `btsnooz`-extracted) | analyzed — see `FINDINGS.md` in that folder; ANC-opcode attribution inconclusive due to lack of action isolation |
+| `CAP-002` | 2026-08-09 | Pixel 7a | TBD | TBD | TBD | A | `PAIR-001`, `PAIR-002`, `CASE-001` | Fresh pairing/bonding baseline (deleted stored link key first) through the Pixel Buds app's first-run setup flow (Fast Pair save-to-account, CDM permission, Device details load) | `captures/2026-08-09_17-04-53_17-06-46-Group_A/btsnoop_hci.log` (sliced from a shared, non-restarted ~8h20m snoop log — see that folder's `EVENT-NOTES.md` process note) | same file | analyzed — see `FINDINGS.md` in that folder; Fast Pair Message Stream Device Information group tentatively identified (channel 2/DLCI 0x04); no RFCOMM traffic found during app setup/Device-details load; HFP channel opened but no AT-command traffic observed (contrast with `CAP-001`) |
 
 **Column notes:**
 
