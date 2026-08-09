@@ -239,6 +239,40 @@ for the "definition of done" that will mark v1.
   Test-IDs cross-referenced with zero orphans in either direction, all 18
   Group letters matched bidirectionally, zero markdown table column-count
   errors, and no duplicate `CAP`/Test-ID/ADR numbers.
+- Reviewed two externally-reported issues against the `CAPTURE`/`TESTPLAN`
+  restructuring: confirmed the `BATT-004` "missing from Group A" claim was
+  incorrect (the annotation was already present from a prior fix), but
+  found and fixed a real, smaller issue underneath it — `TESTPLAN`'s
+  `BATT-004` row listed "Group A / Z" as its capture scenario, but Group Z's
+  own text never claims to cover it (deliberately, since Z is a throwaway
+  pipeline check, not an evidence-gathering scenario) — narrowed the row to
+  "Group A" only. The second reported issue (`PAIR-003`'s §5/§9
+  cross-reference) was reviewed and found to be working as designed (§9 is
+  intentionally a thin index, not a duplicate) — no change made.
+- Ran a full formal audit (traceability matrix, technical-correctness check,
+  semantic-strength check for must/always/required-style softening) against
+  `AGENTS.md`, `ARCHITECTURE.md`, and `PROTOCOL.md` using the same
+  exhaustive, non-sampled method as the `CAPTURE`/`TESTPLAN` audit. Found
+  and fixed two further gaps: `AGENTS.md` §5's battery-mechanism list had
+  restored `ACTION_BATTERY_LEVEL_CHANGED`'s technical detail in an earlier
+  round but left the HFP fallback mechanism named only by category, not by
+  its specific Android API (`BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT`,
+  `AT+IPHONEACCEV`/`AT+XAPL`) as the original had — restored for
+  consistency; and `PROTOCOL.md` was missing the original's structured
+  "Firmware / Version Compatibility Matrix" table (only the bare firmware
+  string had survived) — restored as new §0.1, extensible for future
+  firmware versions. Zero semantic-strength softenings found in either
+  file (0 of 19 CAPTURE + 10 ARCHITECTURE strength-sentences weakened).
+  `DECISIONS.md`, `README.md`, and `TODO.md` have no prior "original" to
+  diff against (built from short example templates, not full source
+  documents); checked instead for internal consistency — every section
+  reference in both files resolves to a real heading. Surfaced one
+  repository-wide gap unrelated to the restructuring itself: `EXPERIMENTS.md`
+  is referenced as if it exists in seven different files (`AGENTS.md`,
+  `PROJECT.md`, `PROJECT_RULES.md`, `PROTOCOL.md`, `README.md`,
+  `REVERSE_ENGINEERING.md`, `TODO.md`) but was never actually created,
+  despite being listed in the project's original scope. Not created here —
+  flagged for a deliberate decision rather than an unrequested new file.
 
 ### Removed
 
