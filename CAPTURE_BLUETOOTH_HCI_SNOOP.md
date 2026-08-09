@@ -645,7 +645,7 @@ than deleting the row or reassigning its number to a later capture.
 
 | ID | Date | Phone | Android | Buds FW | App version | Group(s) | Test(s) | Purpose | Bugreport file | Extracted log | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| `CAP-001` | | Pixel 7a | | | | A | `PAIR-001` | Pairing/bonding baseline | | | captured |
+| `CAP-001` | 2026-08-09 | Pixel 7a | TBD | TBD | TBD | Z, A, B, M | `PAIR-001`, `CASE-003`, `CASE-004`, `CASE-005`, `ANC-001`, `ANC-002`, `ANC-003`, `ANC-004`, `CASE-006` | Pipeline validation; scope grew beyond Z into full pairing baseline + all 4 ANC modes + case/bud handling | `captures/2026-08-09_08-51-00_08-52_20-Group_Z/btsnoop_hci.log` | same file (already `btsnooz`-extracted) | analyzed — see `FINDINGS.md` in that folder; ANC-opcode attribution inconclusive due to lack of action isolation |
 
 **Column notes:**
 

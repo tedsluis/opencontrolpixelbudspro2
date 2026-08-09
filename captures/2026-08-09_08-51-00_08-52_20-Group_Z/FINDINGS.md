@@ -1,0 +1,180 @@
+# Findings: `CAP-001` (Group Z pipeline-validation capture)
+
+Standardized, evidence-based extraction from `btsnoop_hci.log` + `recording.mp4`, staged here
+for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every
+claim below carries a status per `PROJECT_RULES.md` §1:
+
+- 🟢 **FACT** — directly observed in this capture, with a frame number.
+- 🟡 **HYPOTHESIS** — plausible reading of the capture, not yet independently confirmed.
+- ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
+- 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
+
+**Capture ID:** `CAP-001` · **Date:** 2026-08-09 · **Phone:** Pixel 7a (official app) ·
+**Log file:** `btsnoop_hci.log` (233.9s, 2,663 packets, 2026-08-09 08:50:32.67–08:54:26.57
+local/+0200) · **Video:** `recording.mp4` (83.4s, 08:50:57–08:52:20 local, on-screen wall-clock
+overlay) · **Devices:** phone `Google_7e:ca:81` (Pixel 7a, BD_ADDR partially redacted per
+`AGENTS.md` §9), peer `Google_cf:6e:07` (the Buds/case, BD_ADDR partially redacted).
+
+**Scope note:** this session was run as the Group Z pipeline-validation capture
+(`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1) but in practice also exercised Group A (pairing
+baseline), Group B (all four ANC modes, several times over), and Group M (case/in-ear
+transitions) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index update. Actions were not
+isolated with clean pauses (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4's "one action per capture
+window" rule) — six ANC-mode changes happened within ~30 seconds alongside other activity. This
+materially limits how confidently individual RFCOMM frames can be attributed to a specific ANC
+click (see §5 below).
+
+---
+
+## 1. Connection lifecycle (🟢 FACT)
+
+Classic BR/EDR (RFCOMM) connection required **three** `Create Connection` attempts, not one:
+
+| # | Sent | Result | Frame(s) |
+|---|---|---|---|
+| 1 | 08:51:01.981 | **Page Timeout** (status `0x04`) — buds not yet reachable | 732 → 737 |
+| 2 | 08:51:07.325 | Succeeded (status `0x00`), then torn down ~0.24s later | 738 → 775 (connect), 831 (disconnect) |
+| 3 | 08:51:09.565 | Succeeded (status `0x00`), persists for the rest of the session | 832 → 855 |
+
+A BLE (LE) link to the same peer was already established earlier and independently, at
+08:50:36.27 (frame 290, `LE Enhanced Connection Complete`) — well before the case was opened on
+camera (~08:51:08) and before any classic-link attempt. This is consistent with the phone having
+an existing GATT-level association with a previously-bonded device that predates this session's
+visible "Forget" action (see §4 below — the app's own `Forget` button was tapped at 08:51:02–03
+per video, yet a BLE link already existed 26s *before* that).
+
+After connection 3 succeeds: `Link Key Request` → `Link Key Request Reply` → `Authentication
+Complete` → `Set Connection Encryption` → `Encryption Change` all complete by 08:51:12.208
+(frames 911–917), using a **stored link key** (no PIN/passkey exchange visible) — i.e. this was
+a reconnection to a device the phone still held bonding material for, not a from-scratch pairing,
+regardless of the on-screen "Forget" tap (see open question in §6).
+
+## 2. RFCOMM channel topology (🟢 FACT / 🟡 HYPOTHESIS per channel)
+
+Channel numbers below are the RFCOMM **server channel** number (not the DLCI); PSM 0x0003
+throughout, single L2CAP connection carrying the whole multiplexer session.
+
+| Channel | DLCI (phone→buds / buds→phone) | Opened (frame) | Content observed | Status |
+|---|---|---|---|---|
+| 0 | 0x00 | 984 (SABM) | RFCOMM multiplexer control (PN negotiation for all other channels) | 🟢 FACT |
+| 1 | 0x02 | 1334 (phone-init) | Repeating ~21–57 byte frames, each starting and ending with `0x7e` (HDLC-style flag byte), two alternating frame-header variants (`80a3`/`00a5` after the flag) | 🟡 HYPOTHESIS — structure suggests AVRCP (SDP confirms an AVRCP service exists, frames 1164–1231), but not confirmed byte-for-byte against the AVRCP spec here |
+| 2 | 0x04 | 990 (phone-init) | Short frames (6–24 bytes), several containing an `e8e8XX` byte pattern where `XX` varies between samples; also flow-control-shaped frames (`ff01...`, `08 13...`) | 🔴 OPEN QUESTION — variation in `XX` looked promising for an ANC-mode byte but samples do **not** show a stable mapping (see §5) |
+| 4 | 0x08 (phone-init) / 0x09 (buds-init, frame 1217) | 1035 / 1217 | **Two distinct payload types multiplexed under the same channel number**: (a) on 0x08 — periodic (~6–7s) frames containing the ASCII string `google-pixel-buds-pro-v1` and a separate protobuf-shaped blob containing ASCII `all`; one early frame (1673, 08:51:32.79) contains ASCII `Europe/Amsterdam`; (b) on 0x09 — plain-ASCII HFP AT commands, see §3 | 🟢 FACT (channel exists, is dual-directional, carries this content) |
+| 5 | 0x0a | 1068 | No data-carrying frames observed in this capture, only PN/SABM/DISC control traffic | 🔴 OPEN QUESTION — channel opened and closed repeatedly but never carried a payload here |
+
+**Protobuf framing evidence (🟢 FACT):** frame 1673's payload (channel 4, DLCI 0x08) is
+`09 03 00 00 03 01 00 1b 08 9f 03 10 de af a9 aa 0e 1a 10` + `"Europe/Amsterdam"` (16 ASCII
+bytes). The byte pair `1a 10` immediately preceding the 16-character string decodes as a
+protobuf tag (field 3, wire type 2 = length-delimited) + length prefix `0x10` = 16, which exactly
+matches the string length. This is concrete evidence that **at least this frame is
+protobuf-encoded**, consistent with `PROTOCOL.md` §3's `.proto` schema hypothesis, though this
+specific message (looks like a timezone-sync/device-info field) is not one of the
+already-hypothesized schemas (`maestro_pw`/`anc_settings`/`eq_settings`/`hardware_status`) —
+flagged as a new, unidentified message type.
+
+## 3. HFP (Hands-Free Profile) AT-command handshake (🟢 FACT)
+
+Channel 4 / DLCI 0x09 carries a full, literal-ASCII HFP AT-command handshake starting
+08:51:13.959 (frame 1236), immediately after the RFCOMM channels stabilize:
+
+```
+AT+BRSF=921          → +BRSF: 3951                (supported-features exchange)
+AT+BAC=1,2,3         → OK                          (available codecs)
+AT+CIND=?            → indicator list: call, callsetup, service, signal, roam, battchg, callheld
+AT+CIND?              → 0,0,0,0,0,3,0               (battchg = 3, i.e. 3/5 on the CIND scale)
+AT+CMER=3,0,0,1       → OK                          (enable indicator event reporting)
+AT+BIND=1,2 / AT+BIND=? / AT+BIND? → HF indicators 1 (enhanced safety) and 2 (battery level) both active
+AT+BIEV=1,1            → OK
+AT+VGM=7 / AT+VGS=8    → OK                          (mic/speaker gain)
+AT+NREC=0              → +CME ERROR: 4 (not supported)
+AT+COPS=3,0 / AT+CMEE=1 → OK
+AT+BIEV=2,100           → OK   ← repeats at 08:51:14.106, 20.070, 20.136, 34.392, 34.860,
+                                  41.410, 52.148(x2) — roughly every 6–7s
+```
+(Full frame list: 1236–1310, 1558–1574, 1949–1969, 2027–2028, 2245–2246, 2268–2269.)
+
+**Battery finding (🟢 FACT):** `AT+BIEV=2,100` reports HF Indicator #2 (Battery Level, per the
+Bluetooth HFP spec's assigned-number registry) = **100**, matching the app's displayed Left/Right
+= 100% at the time. This is the standard HFP "Bluetooth HF Indicators" mechanism —
+`PROTOCOL.md` §4.3 Option C — now confirmed **actually active** for this device/session, not
+just an assumed fallback.
+
+**Discrepancy worth flagging (🔴 OPEN QUESTION):** the older `AT+CIND?` `battchg` indicator
+reported `3` (on its native 0–5 scale, ≈60%) at the very start of the handshake (08:51:13.996),
+while `AT+BIEV=2,100` reports 100% throughout. Both are standard, simultaneously-active HFP
+mechanisms on this device, but they disagree — worth a dedicated follow-up capture bracketing a
+real battery-level change to see which one (if either) tracks it accurately, and whether
+`battchg` is a stale/init-time-only value.
+
+Neither HFP indicator distinguishes Left/Right/Case — both appear to report a single aggregate
+value. The BLE Fast Pair Battery Notification advertisement (`PROTOCOL.md` §4.3 Option A, which
+*does* have separate L/R/Case fields) was not captured in this RFCOMM-focused pass — no
+`btle`-filtered advertising data was extracted from this log in this session.
+
+## 4. Video-observed app behavior, correlated to the log (🟢 FACT)
+
+| Video (wall-clock) | On-screen event | Correlated log evidence |
+|---|---|---|
+| 08:51:02–03 | Tap **Forget** | No log-visible effect before 08:51:12 (see §6 — a BLE link and cached link key both still existed afterward) |
+| 08:51:06–11 | Case lid opened, buds visible with case LED lit | 1st `Create Connection` at 08:51:01.98 fails with Page Timeout (frame 733/737) — consistent with the case/buds not yet reachable until the lid was fully open |
+| 08:51:14–15 | App briefly shows **"Problem connecting. Turn device off & back on"** | Coincides with the successful-then-immediately-torn-down 2nd connection (frames 775 connect / 831 disconnect, 08:51:09.33–09.56) |
+| 08:51:12–15 | (not directly visible on screen) | RFCOMM channels 0, 2, 4, 5 opened (frames 984–1070); SDP queries for Audio Sink/AVRCP/HFP (frames 902–1231); HFP AT handshake (frames 1236–1310) |
+| 08:51:32 | Tap **Transparency** (1st) | See §5 — no confidently attributable command frame identified |
+| 08:51:39 | Tap **Off** | See §5 |
+| 08:51:43 | Tap **Adaptive** | See §5 |
+| 08:51:49 | Tap **Transparency** (2nd) | See §5 |
+| 08:51:54 | Tap **Noise Cancellation** | See §5 |
+| 08:52:00 | Tap **Off** (2nd) | See §5 |
+| 08:52:08–13 | Buds placed back in case, lid closed | `Disconnect Complete` at 08:52:08.343 (frame 2302) |
+
+## 5. ANC command attribution attempt — inconclusive (🔴 OPEN QUESTION)
+
+For each of the six ANC-mode taps above, the RFCOMM traffic in the surrounding ±3s window was
+inspected on every open channel. Findings:
+
+- Channel 4/DLCI 0x08 shows a recurring ~24-byte frame near several (not all) of the taps, with
+  a varying byte immediately after a fixed `e8e8` prefix (e.g. `...e8e840`, `...e8e880`,
+  `...e8e808`, `...e8e820`). This looked initially promising as a mode-ID byte, **but** the "Off"
+  action (tapped twice, at 08:51:39 and 08:52:00) produced two *different* trailing bytes (`40`
+  and `20`) rather than a repeatable value for the same mode — this contradicts a simple
+  "byte = ANC mode" hypothesis. It is more likely a rolling counter, timestamp fragment, or
+  flow-control sequence value unrelated to ANC state. **Not promoted past 🔴.**
+- The same window also contains the periodic HFP `AT+BIEV=2,100` battery report and the periodic
+  `google-pixel-buds-pro-v1`/capability-negotiation frames on channel 4/DLCI 0x08 — both fire on
+  their own ~6–7s cadence regardless of user action, at intervals close enough to the ANC-tap
+  spacing (5–7s, per the test procedure's own rhythm) that a naive "nearest frame in time" match
+  is unreliable.
+- Channel 1/DLCI 0x02's `0x7e`-delimited frames also cluster near several taps but with the same
+  ambiguity — their cadence looks driven by connection/AVRCP housekeeping, not clearly by the
+  ANC button.
+
+**Conclusion:** this capture does not yield a confident FACT or even a testable HYPOTHESIS for
+the ANC-mode command opcode/channel. This is a direct consequence of the scope note in the
+header — six mode changes were bundled into one continuous, unpaused session together with
+pairing and case/bud housekeeping, which is exactly the isolation failure
+`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4 warns against. **Recommendation:** a dedicated Group B
+capture with genuinely isolated actions (wait ~10s of silence, single ANC tap, wait ~10s of
+silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL_NOTES.md`.
+
+## 6. Other open questions raised by this capture
+
+- Why did a BLE link and a still-valid link key both exist *before* the on-screen "Forget" tap
+  (08:51:02–03) and *before* the case was reopened? Either the "Forget" tap didn't fully clear
+  bonding state, or the visible BLE link (08:50:36) belongs to a different logical association
+  than the classic-link bonding that was reused at 08:51:12. Needs a cleaner capture that starts
+  before any prior state exists.
+- Channel 1 (DLCI 0x02) and channel 2 (DLCI 0x04)'s exact protocol identity is still unconfirmed
+  — candidates are AVRCP and/or A2DP signaling (both present in SDP), but this was not verified
+  byte-for-byte against either spec in this pass.
+- Channel 5 (DLCI 0x0a) opened/closed repeatedly but never carried a payload in this session —
+  worth checking whether it's HFP's audio channel (SCO/eSCO, which wouldn't appear as RFCOMM
+  data) or simply unused here.
+
+## 7. Recommended next steps
+
+1. A properly isolated Group B capture (single ANC action per window, per
+   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4) to re-attempt ANC opcode attribution.
+2. A passive BLE scan (Group Q #18) to capture the Fast Pair Battery Notification advertisement
+   independently, to cross-check against the two conflicting HFP battery indicators found here.
+3. Correlate channel 1/2 traffic against the AVRCP/A2DP specs directly (byte-level) before
+   spending more capture time on them.
