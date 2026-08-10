@@ -231,10 +231,10 @@ _Sensors and firmware behavior, without a direct action from the app._
 
 | ID | Description | Initiator | Capture scenario(s) | Existence source | Note | Evidence |
 |---|---|---|---|---|---|---|
-| `PAIR-001` | Pairing / bonding handshake (forget-and-re-pair baseline) | User (Hardware) | A | 🔵 | Lightweight, safely repeatable — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group A #1 for the exact procedure (do not confuse with `CASE-007`'s factory reset). Also exercised on the Pixel 9a session (§4.2 #1). | — |
+| `PAIR-001` | Pairing / bonding handshake (forget-and-re-pair baseline) | User (Hardware) | A | 🔵 | Lightweight, safely repeatable — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group A #1 for the exact procedure (do not confuse with `CASE-007`'s factory reset). Also exercised on the Pixel 9a session (§4.2 #1), and incidentally on Group R (forced bond removal there also clears the classic bond). | — |
 | `PAIR-002` | Pairing / bonding handshake from a true factory-reset state | User (Hardware) | P (via `CASE-007`) | 🔵 | Optional, one-time, destructive comparison capture — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16. | — |
 | `PAIR-003` | Disconnect and reconnect to an already-bonded device | User (Hardware) | — | 🔵 | Distinct protocol state from `PAIR-001`/`PAIR-002` (no bonding handshake, per `PROTOCOL.md` §5) — captured on the Pixel 9a session (§4.2 #4) today; no dedicated Pixel 7a scenario yet, see §9. | — |
-| `GATT-001` | Open the Bluetooth device detail screen in system settings | User (Hardware) | — | 🔵 | May trigger GATT service/characteristic discovery on some Android versions — the secondary BLE/GATT transport (`ARCHITECTURE.md` §1), distinct from the RFCOMM `libmaestro` channel. Captured on the Pixel 9a session (§4.2 #3) today; identified during this catalog's restructuring, no dedicated Pixel 7a scenario yet, see §9. | — |
+| `GATT-001` | Full GATT service/characteristic discovery, forced (bond removed first) | User (Hardware) | R | 🔵 | The secondary BLE/GATT transport (`ARCHITECTURE.md` §1), distinct from the RFCOMM `libmaestro` channel. Also incidentally observed via the device-detail screen on the Pixel 9a session (§4.2 #3), but that trigger only *may* prompt discovery and doesn't force it — Group R's forced bond removal is the reliable trigger, and is the dedicated Pixel 7a scenario this row previously lacked. | — |
 
 ---
 
@@ -285,7 +285,3 @@ Consolidated list of catalog rows not yet covered by a Group in
       battery)
 - [ ] `PAIR-003` — disconnect/reconnect to an already-bonded device, on the Pixel 7a
       specifically (currently only exercised on the Pixel 9a session)
-- [ ] `GATT-001` — GATT service/characteristic discovery trigger, on the Pixel 7a
-      specifically (currently only exercised on the Pixel 9a session; the secondary
-      BLE/GATT transport per `ARCHITECTURE.md` §1 is otherwise untested on the primary
-      device)

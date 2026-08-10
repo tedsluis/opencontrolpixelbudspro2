@@ -96,26 +96,38 @@ The supported, working method on both phones:
    community observation, not an official GrapheneOS platform guarantee, but it's
    consistent with `adb bugreport` being the standard, documented AOSP mechanism (below)
    rather than anything GrapheneOS-specific.
-2. Unzip the result.
-3. **Extract the log — primary method, per current AOSP documentation:**
-   ```
-   # Get btsnooz.py from the AOSP source tree if you don't already have it:
-   # https://cs.android.com/android/platform/superproject/+/android-latest-release:packages/modules/Bluetooth/system/tools/scripts/btsnooz.py
-   btsnooz.py buds_capture.txt > buds_capture_btsnoop.log
-   ```
-   Run this against the **text** bugreport file (typically named like
-   `bugreport-<device>-<date>.txt` inside the unzipped archive), not the raw binary log.
-   This is the method Android's own source documentation recommends, and it doesn't
-   depend on guessing an internal zip path that has already moved between Android
-   releases (see the fallback below) — `btsnooz.py` extracts the BTSnoop data directly
-   from the bugreport's text dump, which is a more stable interface across versions.
-4. **Fallback — locate the raw log file directly, if you prefer or if `btsnooz.py` isn't
-   convenient to set up:** the exact internal path of the raw file varies by Android
-   version — check both of these first:
+2. Unzip the result. Depending on your unzip tool, this may spill its contents directly
+   into your current directory (an `FS/` folder, various `.txt`/`.zip` files, etc.)
+   rather than into a named subfolder — that's normal, not a sign anything went wrong.
+3. **Check the raw log path first — simplest, no tooling needed if it's there:** look
+   for either of these inside the unzipped `FS/` tree:
    - `FS/data/log/bt/btsnoop_hci.log`
    - `FS/data/misc/bluetooth/logs/btsnoop_hci.log`
 
-   If neither exists, search the extracted contents by filename:
+   If one of these exists, **you're done** — it's already a raw BTSnoop file, open it
+   directly in Wireshark (§5). No need to run `btsnooz.py` at all. The exact path varies
+   by Android version, which is why step 4 below exists as a version-resilient
+   alternative — but check here first, since it's usually simpler when present.
+4. **If neither raw path exists — extract via `btsnooz.py`, per current AOSP
+   documentation:**
+   ```
+   # Get btsnooz.py from the AOSP source tree if you don't already have it:
+   # https://cs.android.com/android/platform/superproject/+/android-latest-release:packages/modules/Bluetooth/system/tools/scripts/btsnooz.py
+
+   # Find the actual bugreport text file first — do NOT assume it's named after
+   # whatever you passed to `adb bugreport`. That name only applies to the .zip;
+   # the .txt inside always keeps Android's own generated name:
+   ls bugreport-*.txt
+   # e.g. bugreport-lynx-CP2A.260705.006-2026-08-09-08-52-28.txt
+
+   btsnooz.py bugreport-<device>-<build>-<timestamp>.txt > buds_capture_btsnoop.log
+   ```
+   This doesn't depend on guessing an internal zip path that has already moved between
+   Android releases (see step 3 above) — `btsnooz.py` extracts the BTSnoop data directly
+   from the bugreport's text dump, which is a more stable interface across versions, at
+   the cost of an extra tool to set up.
+   If neither the raw path (step 3) nor a `bugreport-*.txt` file is found at all, search
+   the extracted contents by filename:
    ```
    find . -iname "*btsnoop*"
    ```
@@ -331,6 +343,49 @@ state**.
 After finishing a group, pull the bugreport once (§3) — you don't need a separate
 bugreport per action, just clean timestamps to slice the single log into segments
 afterward.
+
+#### Group R — Forced GATT re-discovery (occasional, not part of the normal run-through)
+Android caches the GATT service/characteristic database per bonded device and does **not**
+rediscover it on a normal reconnect — every other group in this guide runs against an
+already-discovered device, so none of them exercise this. Run Group R only when you
+specifically need fresh GATT evidence: the first time, and again after any firmware update
+that might change the GATT layout (`PROTOCOL.md` §0.1). This is what resolves `GATT-001`
+in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` on the Pixel 7a specifically — that Test-ID previously
+had no dedicated Pixel 7a scenario.
+
+**Why not just reconnect normally:** there is no non-hacky way to force a GATT refresh from
+outside an app — the only programmatic option (`BluetoothGatt.refresh()`) is a hidden `@hide`
+API requiring reflection, which `AGENTS.md` §3 bans for this project's own code. Removing the
+bond is the reliable, non-hacky way to force it.
+
+1. **Remove the bond via system Bluetooth settings** — Settings → Connected devices → Pixel
+   Buds Pro 2 → Forget. Use the **system settings**, not the Pixel Buds app's own "Forget"
+   button — `CAP-001`'s `FINDINGS.md` §6 found the app-level Forget did not fully clear a BLE-level
+   association, so it isn't reliable for this purpose. Confirm the device no longer appears
+   in the paired-devices list.
+2. Work through §2 (enable HCI snoop, restart Bluetooth/reboot) as usual.
+3. **Reconnect using a generic BLE tool (e.g. nRF Connect), not the official Pixel Buds app**
+   [`GATT-001`] — install it on the Pixel 7a if not already present. This is a deliberate exception to
+   this guide's usual preference for the official app: here the goal is a human-readable
+   view of the discovered GATT structure on screen, not attributing a specific proprietary
+   command, so a generic scanner is more useful, not less rigorous. The HCI snoop log
+   captures everything at the system level regardless of which app initiates the connection.
+4. **Isolate the whole connect-and-discover sequence as one action window**: note the exact
+   time you tap Connect in the BLE tool, and the time the service/characteristic list
+   finishes populating on screen. Expect a full classic SSP pairing exchange to also appear
+   in this capture (removing the bond clears both classic and BLE state for a dual-mode
+   device) — this is a welcome bonus `PAIR-001`/`PAIR-002` data point, not a sign anything
+   went wrong; it just isn't the primary target of this Group.
+5. If the tool supports it, manually **read or subscribe to specific characteristics of
+   interest** once they're identified on screen (e.g. anything near handle `0x0f2a` or the
+   `0x0c0X` cluster flagged in `CAP-002`'s `FINDINGS.md` §4/§7) — each such action is its own
+   isolated event, noted with its own timestamp, the same way a UI tap is treated elsewhere
+   in this guide.
+6. Extract and analyze as usual (§3, §5). In Wireshark, filter specifically for the ATT
+   opcodes that perform GATT discovery: `btatt.opcode == 0x10` / `0x11` (Read By Group Type
+   Request/Response — primary service discovery) and `btatt.opcode == 0x08` / `0x09` (Read By
+   Type Request/Response — characteristic discovery). Their responses contain the
+   handle-to-UUID mapping this Group exists to capture.
 
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
@@ -653,9 +708,10 @@ than deleting the row or reassigning its number to a later capture.
 - **Phone** — `Pixel 7a` (primary, official app) or `Pixel 9a` (secondary,
   GrapheneOS), per the two-device setup described at the top of this
   document.
-- **Group(s)** — the letter(s) from §4 (Z, A–Q — Z is the pipeline-validation
-  group and intentionally sorts before A in this document, not alphabetically
-  after Q) covered in this session; one
+- **Group(s)** — the letter(s) from §4 (Z, A–Q, R — Z and R are special-purpose
+  groups that intentionally sort outside the A–Q run-through: Z is
+  pipeline-validation, always done first; R is the occasional forced-GATT-discovery
+  procedure, done only when needed) covered in this session; one
   bugreport pull can cover several groups if captured as one continuous
   logging session (§4.1).
 - **Test(s)** — the `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` Test-ID(s) actually

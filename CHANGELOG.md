@@ -273,6 +273,35 @@ for the "definition of done" that will mark v1.
   `REVERSE_ENGINEERING.md`, `TODO.md`) but was never actually created,
   despite being listed in the project's original scope. Not created here —
   flagged for a deliberate decision rather than an unrequested new file.
+- Fixed a real bug in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3's `btsnooz.py`
+  instructions, found via the project's actual first capture (`CAP-001`,
+  Group Z pipeline validation — exactly the failure mode Group Z exists to
+  catch before it derails a more valuable session). The example command
+  assumed the bugreport's internal text file would be named after whatever
+  name was passed to `adb bugreport` (e.g. `buds_capture.txt`); in reality,
+  that name only applies to the `.zip` — the `.txt` inside always keeps
+  Android's own generated name (`bugreport-<device>-<build>-<timestamp>.txt`).
+  Also reordered the guidance to check the raw `btsnoop_hci.log` path first
+  (simpler, no extra tooling) with `btsnooz.py` as the fallback when that
+  path isn't present, based on this real capture confirming the raw path is
+  often already there — previously framed the other way around, leaning on
+  AOSP's documented recommendation alone without field data to weigh it
+  against.
+- Formalized "Group R" (forced GATT re-discovery) as a real, documented capture
+  scenario in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1, following the same
+  special-purpose pattern as Group Z rather than the numbered A–Q run-through:
+  remove the bond via system settings (not the app's own "Forget," per
+  `CAP-001`'s `FINDINGS.md` §6 finding that it doesn't fully clear), reconnect
+  via a generic BLE tool instead of the official app, isolate the
+  connect-and-discover sequence, and filter on the ATT discovery opcodes
+  (`0x08`/`0x09`/`0x10`/`0x11`) during analysis. This gives `GATT-001` in
+  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` a real, dedicated Pixel 7a scenario for
+  the first time (previously only exercised on the Pixel 9a session, tracked
+  as an open item) — updated its row and removed it from §9's open-items
+  list accordingly, and noted `PAIR-001` as incidentally re-exercised by
+  Group R's bond removal. Added Group R to the Capture Index's group-letter
+  reference note alongside Z. This was written up from an actual capture the
+  maintainer had already performed, not designed speculatively.
 
 ### Removed
 
