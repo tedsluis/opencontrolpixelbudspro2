@@ -1,0 +1,221 @@
+# Findings: `CAP-003` (Group R forced-GATT-rediscovery capture)
+
+Standardized, evidence-based extraction from `btsnoop_hci.log` + `recording.mp4`, staged here
+for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
+on `captures/2026-08-09_08-51-00_08-52-20-Group_Z/FINDINGS.md` (`CAP-001`). Every claim below
+carries a status per `PROJECT_RULES.md` §1:
+
+- 🟢 **FACT** — directly observed in this capture, with a frame number.
+- 🟡 **HYPOTHESIS** — plausible reading of the capture, not yet independently confirmed.
+- ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
+- 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
+
+**Capture ID:** `CAP-003` · **Date:** 2026-08-10 · **Phone:** Pixel 7a — **nRF Connect** (generic
+BLE/GATT tool), with the official Pixel Buds app taking over partway through. **Log file:**
+`btsnoop_hci.log` (302.2s, 2,863 packets, 20:58:57.10–21:03:59.33 local/+0200 — a short,
+freshly-restarted log, not a shared multi-hour one). **Video:** `recording.mp4` (81.1s,
+20:59:16–21:00:37 local, on-screen wall-clock overlay). **Devices:** phone `Google_7e:ca:81`
+(Pixel 7a, same phone as `CAP-001`/`CAP-002`), peer `Google_cf:6e:07`
+(`04:00:6E:CF:6E:07`, the Buds/case — confirmed the same physical device as `CAP-001`/`CAP-002`
+via the classic-link BD_ADDR, frame 1689).
+
+**Stated goal of this session (per the maintainer):** map the GATT service/characteristic
+structure of the Buds/case by forcing a fresh discovery — pairing removed via system settings
+beforehand, connected via **nRF Connect** instead of the official app — specifically to resolve
+two UUID gaps left open by `CAP-002`'s `FINDINGS.md`: handle `0x0f2a` (already known to return
+the string `"Revision 6"` — the UUID around it, not the value, was the target) and the `0x0c0X`
+handle cluster (`CAP-002`'s Key-based-Pairing-shaped write/notify bursts). **§1 reports whether
+that goal was met — it was not, for a specific, evidenced reason.** A full classic pairing
+exchange is also documented (§2) as a bonus data point, per the session's design.
+
+---
+
+## 1. Primary goal not achieved: no GATT discovery traffic on the wire (🔴 OPEN QUESTION, with a concrete explanation)
+
+Despite the test design (remove pairing, connect fresh via a generic tool), **no GATT primary
+service discovery or characteristic discovery occurred on the wire in this capture.** This was
+checked exhaustively, not assumed:
+
+- Every ATT packet in the capture was filtered specifically for the two opcode pairs named in
+  the task: `0x10`/`0x11` (`Read By Group Type` — primary service discovery) and `0x08`/`0x09`
+  (`Read By Type` — characteristic discovery). **Zero** `Read By Group Type` packets exist
+  anywhere in the log. The only `Read By Type` traffic is a single **Database Hash** read/response
+  pair (frames 1649, 1657, 20:59:38.38–38.42) — not a characteristic-discovery query.
+- This was checked against the **entire log**, not just the video-covered window, in case
+  discovery happened outside the recorded portion — same result: zero discovery-opcode traffic
+  anywhere in the full 302s capture.
+- **Why:** the "Database Hash" mechanism (a standard BLE GATT Caching feature, Bluetooth Core
+  Spec 5.1+) lets a GATT client skip re-discovery entirely if it already holds a cached copy of
+  the server's database matching the advertised hash. Android's Bluetooth stack evidently still
+  held a cached GATT database for this specific device (keyed by its identity, independent of the
+  classic/BLE **bond**), even though the maintainer removed the pairing via system settings
+  beforehand. **Removing a device's pairing/bond does not necessarily clear Android's separate
+  GATT database cache** — this capture is direct evidence of that distinction, not previously
+  documented anywhere in this project's files.
+- nRF Connect's own UI *did* show a resolved service list (Generic Attribute, Generic Access,
+  Broadcast Audio Scan Service — `EVENT-NOTES.md`, 20:59:42) — but this comes from Android's
+  `BluetoothGatt` API serving nRF Connect its **cached** database, not from a live over-the-air
+  query. The UI evidence and the wire evidence are consistent with each other, not contradictory —
+  both point to the same cache being used instead of fresh discovery.
+
+**Consequence for `CAP-002`'s open questions:** neither handle `0x0f2a` nor the `0x0c0X` cluster
+could be resolved to real UUIDs by this capture. The two open questions from `CAP-002` §4/§7
+remain open. See §5 for what *could* still be extracted despite this, and §6 for a concrete
+recommendation on how to actually force rediscovery next time.
+
+## 2. Bonus data point: classic BR/EDR pairing lifecycle (🟢 FACT)
+
+As expected from clearing the pairing beforehand, a full fresh pairing sequence occurs, closely
+matching `CAP-002`'s pattern (also a fresh pair) but succeeding without any Page-Timeout retry:
+
+| Step | Time | Frame(s) | Detail |
+|---|---|---|---|
+| BLE (LE) connection established first | 20:59:38.320 | 1621 (`LE Enhanced Connection Complete`) | Precedes the classic connection by ~0.4s — consistent with Fast Pair's own design (BLE-first, classic pairing triggered from the BLE side) |
+| Delete stored link key | 20:59:38.730 | 1687–1688 | Confirms a deliberate fresh-pairing flow, same as `CAP-002` |
+| Create Connection | 20:59:38.731 | 1689 | |
+| Connect Complete | 20:59:39.090 (status `0x00`) | 1692 | Succeeds immediately, no Page Timeout (unlike `CAP-001`) |
+| Link Key Request → **Negative Reply** | 20:59:39.098 | 1708–1709 | No prior bonding material, as expected |
+| IO Capability Request/Reply/Response | 20:59:39.100–39.129 | 1711–1721 | Secure Simple Pairing (SSP) negotiation |
+| Simple Pairing Complete | 20:59:39.825 | 1750 | ~0.7s after IO Capability exchange — much faster than `CAP-002`'s ~6.4s gap, since no on-screen confirmation dialog with a permission toggle was in the way this time (nRF Connect doesn't show one) |
+| Link Key Notification (new key stored) → Authentication Complete → Set Connection Encryption → Encryption Change | 20:59:39.834–39.876 | 1751–1756 | |
+
+This is the **third** independent capture (`CAP-001` reconnect, `CAP-002` fresh pair, `CAP-003`
+fresh pair) showing the same overall pairing state-machine shape, reinforcing confidence in
+`PROTOCOL.md` §5's connection-lifecycle sketch for the classic-link portion specifically (the BLE
+and RFCOMM/profile portions still vary more, see §3).
+
+## 3. RFCOMM: further evidence that channel numbers are session-local, not profile-fixed (🟢 FACT)
+
+RFCOMM channels opened this session: **0** (multiplexer control), **4** (phone-init, frame 1943;
+also buds-init reopen, frame 2157), **5** (frame 1954), **2** (frame 2035, closed frame 2071,
+reopened frame 2265), **1** (frame 2348). HFP AT-command traffic (`AT+BRSF`, `AT+BAC`, `AT+CIND`,
+`AT+CMER`, `AT+BIND`, `AT+BIEV`, ...) appears on **channel 4** this time (frames 2178+) — matching
+`CAP-001`'s channel-4 HFP placement, *not* `CAP-002`'s channel-6 placement. This is a third data
+point (alongside `CAP-001`'s and `CAP-002`'s FINDINGS.md corrections) confirming the reusable
+methodological note already recorded in `CAP-001`'s `FINDINGS.md` §2: **RFCOMM server channel
+numbers are negotiated per-connection and must never be treated as a stable per-profile label**
+— only content/structure (and, within one session, the DLCI) reliably identifies a channel's
+role. This capture's own SDP records (Audio Sink, AVRCP, HFP AG/HS, PnP Information — frames
+1765–2164) match the same profile set seen in both earlier captures.
+
+## 4. GATT handle activity: reproducible across three sessions, still unidentified (🟡 HYPOTHESIS)
+
+Even without discovery traffic, the **same GATT handle numbers** used in `CAP-002` reappear here,
+carrying similarly-shaped data — itself informative:
+
+- **Handle `0x0f2a`** is read once (frame 1819 request → 1835 response, 20:59:40.33–40.39) and
+  returns the identical literal ASCII string **`"Revision 6"`** (`5265766973696f6e2036`) seen in
+  both `CAP-001` (via RFCOMM Message Stream) and `CAP-002` (via this same GATT handle). Three
+  independent sessions, two different transports, one consistent value — this is now about as
+  strong as evidence gets without an actual UUID. Still 🟡 for the *field's real-world meaning*
+  (per `CAP-002` §3's open question on whether "Revision 6" is firmware or a protocol/schema
+  revision), but 🟢 FACT for "this specific handle/value pairing is stable across sessions."
+- **A new handle not seen before: `0x0f28`, read repeatedly (🟢 FACT).** Read twice back-to-back
+  every ~60 seconds throughout the whole capture (frames 2506/2510 at 20:59:51, 2693/2697 at
+  21:00:51, 2791/2794 at 21:01:52, 2801/2804 at 21:02:52 — i.e. this polling **continues for
+  several minutes after the video ends**, well past the app-setup flow). Every read returns the
+  same single byte, `0x31` (frames 2508, 2512, 2695, 2699, 2793, 2796, 2803, 2806). Two candidate
+  readings, neither confirmed: (a) the raw value `49` (decimal), which doesn't obviously map to
+  anything already known about this device; (b) the byte as ASCII `'1'`, which — given handle
+  `0x0f28` sits two handles before `0x0f2a` (`"Revision 6"`), and the standard Device Information
+  Service lays out Hardware/Firmware/Software Revision String characteristics consecutively (per
+  `CAP-002` §3's spec research) — would make a plausible **Hardware Revision String** value of
+  `"1"`. Kept at 🟡 HYPOTHESIS: plausible by position and by matching the standard service's
+  layout pattern, but no UUID confirms it.
+- **The `0x0c0X` write/notify cluster reappears with the same handle numbers as `CAP-002`**
+  (`0x0c04`, `0x0c05`, `0x0c0a`, `0x0c0c`, `0x0c0d`, `0x0c13`, `0x0c14`), plus **two handles not
+  seen in `CAP-002`: `0x0c07`/`0x0c08`** (frames 1741–1747), following the identical
+  CCCD-enable-then-encrypted-write-then-notify shape already described in `CAP-002` §4. This
+  extends, but does not resolve, that open question — see §6.
+- **Handle numbers are stable across sessions in a way channel numbers are not (🟢 FACT,
+  methodological note):** contrast this with §3 — RFCOMM channel *numbers* differ session to
+  session for the same content, while GATT *handle* numbers for the same characteristics stayed
+  identical across `CAP-002` and `CAP-003` (`0x0f2a`, `0x0c04`, `0x0c05`, `0x0c0a`, `0x0c0c`,
+  `0x0c0d`, `0x0c13`, `0x0c14` all reappear unchanged). This is expected/standard BLE behavior
+  (a GATT server's attribute table is normally static across connections, unlike RFCOMM's
+  per-connection channel negotiation) but is worth stating explicitly as a rule for future capture
+  analysis: **GATT handles may be compared directly across sessions for the same device; RFCOMM
+  channel numbers may not.**
+
+## 5. Timing correlation: GATT bursts map to distinct phases of the Fast Pair procedure (🟡 HYPOTHESIS)
+
+The `0x0c0X` bursts and the `0x0f2a`/`0x0f28` reads line up with distinct moments in the
+connection sequence, suggesting a specific interleaving with Fast Pair's own protocol phases:
+
+| Burst | Time | Concurrent log/video context |
+|---|---|---|
+| `0x0c0d`→`0x0c05`→`0x0c04` write, `0x0c04`/`0x0c0c` notify | 20:59:38.45–38.67 | Right after the BLE connection completes (20:59:38.32), **before** the classic `Create Connection` is even sent (20:59:38.73) — this exchange happens purely over BLE, ahead of any classic activity |
+| `0x0c08`→`0x0c07` write, `0x0c07` notify | 20:59:39.50–39.61 | **During** the classic SSP window — IO Capability Response was received at 39.129, `Simple Pairing Complete` fires at 39.825, so this burst sits squarely inside that gap |
+| `0x0f2a` read, `0x0c0a` write | 20:59:40.33–40.45 | Right as SDP/RFCOMM channel setup is underway (SDP `Connection Request` at 39.845 through RFCOMM channels opening through 40.55) |
+| `0x0c13`/`0x0c14` read/write/notify | 20:59:40.46–40.69 | Continues immediately after, overlapping the tail of RFCOMM channel setup |
+
+The timing of the second burst — falling *inside* the classic SSP window, between IO Capability
+exchange and Simple Pairing Complete — is a new observation not present in `CAP-002`'s writeup
+(where SSP took ~6.4s due to an on-screen dialog, giving less precise burst-to-phase alignment).
+It is **consistent with, but does not prove,** the hypothesis that one of these BLE GATT
+characteristics is Fast Pair's documented **Passkey characteristic**, which the spec describes as
+used to let the Seeker and Provider silently cross-check the classic pairing's numeric-comparison
+value over BLE — which would also explain why no passkey digits are ever shown on screen in any
+of the three captures to date. Not claimed as FACT; requires UUID confirmation.
+
+## 6. Other observations
+
+- **Fast Pair "ownership transfer" flow observed for the first time (🟢 FACT, video evidence,
+  20:59:43–54):** the system dialog *"Pixel Buds Pro 2 is connected to someone else's account...
+  Ask owner to share device / Remove previous owner / Start using the device"* is new to this
+  project's documentation. It appeared because the device still carried an account association
+  from earlier test sessions (`CAP-001`/`CAP-002`) despite the local pairing having been removed —
+  i.e. **Fast Pair's account-key/ownership state is stored server-side (Google account), separate
+  from both the local classic bond and the local GATT cache discussed in §1.** Three independent
+  state layers are now evidenced across this project's captures: local classic bond, local GATT
+  database cache, and cloud-side Fast Pair account ownership — each cleared independently of the
+  others.
+- **The Pixel Buds app only takes over at the "Set up" tap (21:00:04) (🟢 FACT, video evidence):**
+  everything before that — discovery, connection, pairing, the ownership-transfer dialog, the
+  "Set up device" card — is Android system UI and/or nRF Connect, not the official app. This
+  matters for any future correlation: log activity before this point should not be attributed to
+  Pixel-Buds-app-specific logic.
+
+## 7. Recommended next steps
+
+1. **To actually resolve the `0x0f2a`/`0x0c0X` UUIDs, a stronger cache-busting method is needed
+   than removing the pairing.** Candidates to try: clearing the Bluetooth system app's storage/
+   cache directly (Android Settings → Apps → Bluetooth → Storage → Clear cache/storage, which
+   typically wipes the GATT database cache, not just the bond list); or performing the discovery
+   from a genuinely different phone that has never connected to this device before (e.g. the
+   project's GrapheneOS Pixel 9a, which per `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s two-device setup
+   has not run the official app and may not hold a cached database for this device at all).
+2. If a future capture does get real discovery traffic, prioritize resolving `0x0f28`,
+   `0x0f2a`, and the `0x0c0X` cluster specifically — the exact handles are now known and stable
+   (§4), only the UUIDs are missing.
+3. Attempt to decrypt or otherwise identify the `0x0c0X` write/notify bursts against Fast Pair's
+   Key-based Pairing / Passkey / Account Key GATT procedure spec, using the phase-alignment
+   evidence in §5 as a starting hypothesis for which burst maps to which named procedure step.
+4. This capture's classic-pairing bonus data (§2) is solid enough to fold into
+   `PROTOCOL.md` §5's connection-lifecycle section alongside `CAP-001`/`CAP-002`'s — three
+   consistent observations now support the classic-link portion of that sequence.
+
+## 8. Promotion readiness — what's ready for `PROTOCOL_NOTES.md`
+
+**Ready to promote now (🟢 FACT, cross-capture-verified):**
+- Classic BR/EDR fresh-pairing state machine (delete-key → create-connection →
+  negative-link-key-reply → IO-capability/SSP → simple-pairing-complete → new-link-key) — now
+  confirmed in two independent fresh-pairing sessions (`CAP-002`, `CAP-003`) — §2.
+- RFCOMM channel numbers are session-local, not profile-fixed — a third confirming data point
+  (HFP on channel 4 here, channel 6 in `CAP-002`, channel 4 in `CAP-001`) — §3.
+- GATT handle numbers, unlike RFCOMM channel numbers, are stable across sessions for the same
+  device — §4.
+- Handle `0x0f2a` reliably returns `"Revision 6"` across three sessions and two transports — §4
+  (the *meaning* of that string remains open, carried over from `CAP-002`).
+
+**Not ready yet:**
+- Any UUID for handle `0x0f2a`, `0x0f28`, or the `0x0c0X` cluster — **this session's stated goal,
+  still unresolved.** Needs the stronger cache-busting approach in §7 item 1.
+- The Passkey-characteristic hypothesis in §5 — timing-consistent, not UUID-confirmed.
+- The Fast Pair ownership-transfer flow (§6) — solid video evidence of the *behavior*, but not
+  yet correlated to any specific Bluetooth log traffic (a `PROTOCOL.md`-relevant gap: is this
+  purely a cloud/GMS-side check, or does it involve a local protocol exchange? Not established
+  here).
+- The `libmaestro`/ANC-EQ control channel identity — **still completely unaddressed by any of
+  `CAP-001`, `CAP-002`, or `CAP-003`**; all three captures so far cover pairing/setup/discovery,
+  not actual ANC/EQ commands under clean isolation.
