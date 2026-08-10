@@ -62,6 +62,33 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 | 4 | 0x08 (phone-init) / 0x09 (buds-init, frame 1217) | 1035 / 1217 | **Two distinct payload types multiplexed under the same channel number**: (a) on 0x08 — periodic (~6–7s) frames containing the ASCII string `google-pixel-buds-pro-v1` and a separate protobuf-shaped blob containing ASCII `all`; one early frame (1673, 08:51:32.79) contains ASCII `Europe/Amsterdam`; (b) on 0x09 — plain-ASCII HFP AT commands, see §3 | 🟢 FACT (channel exists, is dual-directional, carries this content) |
 | 5 | 0x0a | 1068 | No data-carrying frames observed in this capture, only PN/SABM/DISC control traffic | 🔴 OPEN QUESTION — channel opened and closed repeatedly but never carried a payload here |
 
+> **Correction (2026-08-10), source: `CAP-002`'s `FINDINGS.md` §2/§3.** The 🟡 HYPOTHESIS above
+> for channel 1/DLCI 0x02 — that its `0x7e`-delimited content "suggests AVRCP" — is **not
+> supported** by `CAP-002` (a separate, fresh-pairing session against the same physical device).
+> In `CAP-002`, the same-shaped `0x7e`-delimited traffic reappeared on channel 1 again (so that
+> part replicates), but the *channel-2* traffic in that session was independently identified —
+> and spec-verified against Google's actual Fast Pair Message Stream / Device Information
+> documentation — as the **Fast Pair Message Stream, Device Information group (`0x03`)**, not
+> AVRCP. This document's own §2 already correctly flagged channel 2/DLCI 0x04 here (this
+> session) as unresolved (🔴 OPEN QUESTION, not attributed to AVRCP) — the AVRCP speculation was
+> specifically about *channel 1*, which remains genuinely unresolved as of this correction; only
+> the *channel-2* content has since been identified, in the other capture. Per
+> `PROJECT_RULES.md` §3, this note supersedes the *channel 1 = possibly AVRCP* framing above
+> without deleting it, following the same non-destructive correction pattern `DECISIONS.md` uses
+> for superseded ADRs. See `CAP-002`'s `FINDINGS.md` §3 for the full spec-verified writeup, and
+> the reusable methodological note directly below.
+>
+> **Reusable note for all future capture analysis — RFCOMM channel numbers are not stable
+> per-profile labels.** RFCOMM server channel numbers are negotiated per-connection, not fixed
+> per Bluetooth profile. `CAP-001` and `CAP-002` — two independent sessions against the same
+> physical device — assigned *different* channel numbers to structurally similar traffic (this
+> capture put HFP-adjacent Device-Information-group traffic on what was locally numbered
+> "channel 2"; `CAP-002` also happened to land it on "channel 2", but `CAP-002`'s HFP itself came
+> up on "channel 6", not "channel 4" as here). Any future finding should be keyed off **payload
+> content/structure** (byte shape, known strings, spec-matched framing) and the **DLCI**, not the
+> channel number alone — a channel number is only ever valid as a label *within the one session*
+> it was observed in.
+
 **Protobuf framing evidence (🟢 FACT):** frame 1673's payload (channel 4, DLCI 0x08) is
 `09 03 00 00 03 01 00 1b 08 9f 03 10 de af a9 aa 0e 1a 10` + `"Europe/Amsterdam"` (16 ASCII
 bytes). The byte pair `1a 10` immediately preceding the 16-character string decodes as a

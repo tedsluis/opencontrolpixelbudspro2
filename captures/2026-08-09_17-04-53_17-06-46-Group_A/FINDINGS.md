@@ -64,7 +64,7 @@ session over PSM 0x0003, starting immediately after encryption completes.
 | 4 | 0x08 | 933 | Short frames (4–69 bytes) in the initial 17:05:34.5–34.8 burst only; not decoded in this pass | 🔴 OPEN QUESTION |
 | 5 | 0x0a | 978 | No data-carrying frames observed | 🔴 OPEN QUESTION (same as `CAP-001`) |
 | 1 | 0x02 | 1125 | `0x7e`-delimited HDLC-style frames, same shape as `CAP-001`'s channel-1 traffic | 🟡 HYPOTHESIS — still unconfirmed byte-for-byte, but the structural match to `CAP-001` across two independent sessions (one reconnect, one fresh pair) is itself evidence this is a stable, real protocol, not noise |
-| 2 | 0x04 | 1251, closed 17:05:42 (frame 1486), reopened 17:05:47 (frame 1541) | **Fast Pair Message Stream framing, now positively identified — see §3** | 🟡 HYPOTHESIS (upgraded from `CAP-001`'s 🔴, see §3) |
+| 2 | 0x04 | 1251, closed 17:05:42 (frame 1486), reopened 17:05:47 (frame 1541) | **Fast Pair Message Stream, Device Information group — spec-verified, see §3** | 🟢 FACT (framing + group + two field codes spec-verified 2026-08-10; upgraded from `CAP-001`'s 🔴) |
 
 **Correction to `CAP-001`'s write-up:** `CAP-001`'s `FINDINGS.md` §2 speculated channel 2/DLCI
 0x04's `0x7e`-delimited content might be AVRCP, based on an SDP record for AVRCP existing in that
@@ -75,12 +75,11 @@ negotiated per-connection, not fixed per profile. Future findings should key off
 *content/structure*, not channel number, and any reference to "channel N" should always be
 paired with the DLCI and a content description, not treated as a persistent label.
 
-## 3. Fast Pair Message Stream — Device Information group, confirmed (🟡 HYPOTHESIS, evidence-backed)
+## 3. Fast Pair Message Stream — Device Information group (🟢 FACT, spec-verified 2026-08-10)
 
 Channel 2 / DLCI 0x04 carries repeated frames of the exact byte shape
-`[Group: 1B] [Code: 1B] [Length: 2B big-endian] [Length bytes of value]` — which is precisely the
-**officially documented Fast Pair Message Stream framing** already recorded as Hypothesis A in
-`PROTOCOL.md` §2.1. Example (frame 1267, 17:05:36.516, 47 bytes total):
+`[Group: 1B] [Code: 1B] [Length: 2B big-endian] [Length bytes of value]`. Example (frame 1267,
+17:05:36.516, 47 bytes total):
 
 ```
 03 0a 00 08 <8 bytes, changes every occurrence — see below>
@@ -90,59 +89,119 @@ Channel 2 / DLCI 0x04 carries repeated frames of the exact byte shape
 07 10 00 00
 ```
 
-- **Group `0x03`, Code `0x09`, value `"Revision 6"` (🟡 HYPOTHESIS, moderately strong):** a
-  targeted web search of Google's own Fast Pair Message Stream / Device Information spec
-  confirms **code `0x09` is documented as the "Firmware version" property**, expected to carry a
-  string value. Here it carries the literal ASCII string `"Revision 6"`. This is a strong
-  structural match to the official spec (right code, right wire shape, right general
-  category — a version-like string), but "Revision 6" is unlikely to be a real Buds firmware
-  version (`PROTOCOL.md` §0.1 records `release_5.203` as the confirmed baseline) — it may be a
-  *protocol/schema* revision number for the Message Stream implementation itself, or a
-  companion-app-internal revision, not the firmware string shown in the app's "More settings"
-  screen. Needs a capture that also shows the app's own displayed firmware version at the same
-  moment to cross-check.
-- **This exact structure was already present in `CAP-001`** (a *reconnect*, not a fresh pair),
-  at essentially the same relative position in the connection sequence, including the literal
-  string `"Revision 6"` — reproducible across two independent sessions on two different pairing
-  types. Per `PROJECT_RULES.md` §1, repeated independent observation is what justifies raising
-  confidence, though a byte-for-byte spec citation (rather than a web-search summary) would be
-  needed before promoting this to 🟢 FACT.
-- **The 8-byte value under Code `0x0a` and the 6-byte value under Code `0x02` change on every
-  occurrence** (confirmed: two occurrences 11s apart within this same session, frames 1267 and
-  1554, both differ in these fields while Code `0x01`'s 3-byte value `da 2d b1` and Code `0x09`'s
-  `"Revision 6"` stay constant). This is consistent with a nonce, session identifier, or
-  challenge/response field — flagged as an open question, not attributed further here.
-- **Code `0x01`'s value `da 2d b1`** does not match Google's registered Bluetooth SIG company ID
-  bytes in an obvious way and was not identified in this pass — open question.
-- **A second, distinct sub-payload on the same channel** (frame 1578, 17:05:47.818, `Group 0x07
-  Code 0x41`) contains the literal ASCII string `"in-use"` — plausibly related to Fast Pair's
-  account-key-in-use concept from the official spec, but not confirmed against spec text in this
-  pass.
+**Spec verification performed 2026-08-10** by fetching Google's actual Fast Pair specification
+pages directly (not a search-summary), specifically
+`developers.google.com/nearby/fast-pair/specifications/extensions/messagestream` and
+`.../extensions/deviceinformation`:
 
-## 4. No RFCOMM traffic during app setup / CDM permission / Device-details load (🔴 OPEN QUESTION)
+- **Overall framing — 🟢 FACT.** The Message Stream spec page, fetched directly, states the wire
+  format verbatim as: *"Octet 0: uint8 Message group, Octet 1: uint8 Message code, Octet 2-3:
+  uint16 Additional data length, Octet 4-n: Additional data"*, big-endian — an exact match to
+  every frame observed on this channel in both `CAP-001` and `CAP-002`. `PROTOCOL.md` §2.1
+  Hypothesis A can be promoted from HYPOTHESIS to **FACT for the framing itself** (not yet for
+  every field's meaning — see below).
+- **Group `0x03` = "Device Information" — 🟢 FACT.** Confirmed as the documented group ID on the
+  `deviceinformation` spec page.
+- **Code `0x01` = "Model ID", value `da 2d b1` — 🟢 FACT.** The spec page gives a worked example
+  of exactly this shape — `0x03 0x01 0x00 0x03 <3-byte Model ID>` — and states the Model ID field
+  is 3 bytes. Our observed value is 3 bytes (`da 2d b1`) and stays **constant** across all
+  observed occurrences (frames 1267 and 1554, 11s apart) — consistent with a fixed, registered
+  Fast Pair Model ID for this device, not a rotating field. This resolves the "not identified"
+  open question from the previous version of this document.
+- **Code `0x02` = "BLE address updated", value 6 bytes — 🟢 FACT.** The spec page's worked
+  example is `0x03 0x02 0x00 0x06 <6-byte MAC>`, matching exactly. Our observed value **changes**
+  between occurrences (`640ccd9a6ae3` at 17:05:36.516 vs a different 6-byte value at 17:05:47.657)
+  — consistent with a rotating BLE (private/resolvable) address, exactly what a field named
+  "BLE address updated" would be expected to do. This resolves the "6-byte rotating field" open
+  question.
+- **Code `0x09` = "Firmware version" — 🟢 FACT for field identity; value itself still 🔴 open.**
+  The spec confirms code `0x09` carries *"the provider's firmware version as a string in utf-8
+  encoding"*. Our observed value is the literal ASCII string `"Revision 6"`, reproduced
+  identically in both `CAP-001` and `CAP-002`. The framing/field-identity match is now a FACT; the
+  content itself is still odd — `"Revision 6"` doesn't look like `PROTOCOL.md` §0.1's confirmed
+  firmware baseline (`release_5.203`), so it may be a protocol/schema revision rather than the
+  buds' actual firmware build. **Open question, unchanged:** cross-check against the app's own
+  displayed firmware version (visible under "More settings" in the app, not captured in this
+  session) in a future capture.
+- **Code `0x0a` (8-byte rotating value) — still 🔴 OPEN QUESTION, now spec-confirmed unassigned.**
+  The fetched `deviceinformation` page's code table runs `0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+  0x07 (deprecated), 0x08, 0x09, 0x0B` — **`0x0A` is not listed at all**. This isn't a gap in our
+  research; the code is genuinely absent from the documented table we retrieved. Either it's an
+  undocumented/reserved code, or our retrieved page excerpt is incomplete. The value itself
+  changes every occurrence, like Code `0x02`, so it's plausibly also address/session-related —
+  speculative, not claimed as fact.
+- **Group `0x07`, Code `0x41`, string `"in-use"` (frame 1578, 17:05:47.818) — upgraded from 🔴 to
+  🟡, still not FACT.** A targeted search of Google's Fast Pair GATT/Key-based-Pairing
+  specification surfaced the exact phrase **"Indicate in-use Account Key"** as a real, named Fast
+  Pair procedure — but on the *GATT* characteristic-level spec page, not the *Message Stream*
+  page. The English-phrase match is a meaningful coincidence worth recording, but this capture
+  cannot confirm whether Message Stream group `0x07` is actually the same concept restated over
+  this transport, or an unrelated use of the same word. Kept at HYPOTHESIS, not promoted further.
+
+**Sources consulted (2026-08-10):**
+- [Message Stream](https://developers.google.com/nearby/fast-pair/specifications/extensions/messagestream) — Google for Developers
+- [Device information](https://developers.google.com/nearby/fast-pair/specifications/extensions/deviceinformation) — Google for Developers
+- Fast Pair GATT/Key-based Pairing procedure spec (for the "Indicate in-use Account Key" phrase match)
+
+## 4. No RFCOMM traffic during app setup — resolved: it moves to BLE/GATT (🟢 FACT)
 
 All RFCOMM data-carrying frames in this entire ~150s capture window fall inside two short
 bursts: **17:05:34.56–17:05:38.92** (the post-pairing SDP/profile-probing burst) and
-**17:05:47.62–17:05:47.90** (channel 2's brief reopen). **Nothing at all** was found between
-17:05:48 and the end of the sliced window (17:07:05) — confirmed by also checking a wider
-17:06:46–17:09:00 tail slice of the full log (190 packets, zero RFCOMM frames) and by searching
-the entire 17:05:00–17:15:00 window for any `AT+BIEV`-shaped bytes (none found).
+**17:05:47.62–17:05:47.90** (channel 2's brief reopen). **Nothing at all** was found on RFCOMM
+between 17:05:48 and the end of the sliced window (17:07:05).
 
-This means the entire visible app flow after ~17:05:48 — the Fast Pair "Save device" dialog, the
-Pixel Buds app's own "Set up"/"Allow a connection"/CompanionDeviceManager permission dialog, and
-the "Device details" screen populating with Sound/Hearing wellness/ANC/EQ options and three
-audio-routing toggles — happens **without any new local Bluetooth (RFCOMM) traffic** in this
-capture. Plausible explanations, none confirmed here:
+**Update 2026-08-10 — explanation #2 from the previous version of this document is confirmed
+correct:** the app-setup activity has a clear local Bluetooth footprint, it is simply on the
+**secondary BLE/GATT transport** (`ARCHITECTURE.md` §1), not RFCOMM. Analyzing the 48 ATT packets
+in this same window shows:
 
-1. The Device Information already exchanged in §3 (name/revision/etc.) is enough for the initial
-   UI to render without a live query.
-2. Any further per-feature state (ANC mode, EQ, battery) is read over the **secondary BLE/GATT
-   transport** (`ARCHITECTURE.md` §1), which this pass did not extract (only RFCOMM was
-   analyzed — see Recommended next steps).
-3. The Fast Pair "Save device"/GFPS account-linking step is genuinely cloud/GMS-side and has no
-   local Bluetooth footprint, which would explain the silence specifically during 17:05:51–17:06:04.
-4. The CDM permission flow (17:06:11–17:06:31) is a pure Android OS/app-framework interaction and
-   was never expected to produce Bluetooth traffic.
+- **A fresh BLE (LE) connection is established at 17:05:40.830** (`LE Enhanced Connection
+  Complete`, frame 1390) — separate from, and later than, the classic BR/EDR pairing (which
+  completed at 17:05:33.7). MTU exchange (517 bytes) and a Device Name / Database Hash read
+  follow immediately (frames 1411–1427). The **Database Hash** read (not a full
+  Read-By-Group-Type service discovery) indicates Android is checking a *cached* GATT database
+  against this device rather than re-discovering services from scratch — consistent with the
+  phone having already seen this device's GATT layout during Fast-Pair BLE scanning before
+  pairing even began.
+- **A direct, plaintext GATT characteristic read returns `"Revision 6"` again — 🟢 FACT (frame
+  1441, handle `0x0f2a`, Read Response, value `5265766973696f6e2036` = ASCII `"Revision 6"`).**
+  This is the **same string** found via the RFCOMM Message Stream in §3, now confirmed via a
+  completely independent transport and encoding (a raw GATT string read, no TLV framing needed).
+  Two independent transports agreeing on the same value is strong corroboration that
+  `"Revision 6"` is a real, stable property of this device (still not confirmed *which* real-world
+  property — see §3's open question on whether it's firmware or a protocol/schema revision).
+  Handle `0x0f2a` could not be resolved to a UUID in this capture (no service-discovery response
+  visible — see the handle-mapping caveat below), but its behavior (plain UTF-8 string, no
+  encryption) is consistent with a standard **Device Information Service (`0x180A`)**
+  characteristic such as Firmware Revision String (`0x2A26`) or Software Revision String
+  (`0x2A28`) — 🟡 HYPOTHESIS, not confirmed by UUID in this pass.
+- **Four bursts of encrypted-looking GATT writes/notifications on handles `0x0c04`, `0x0c05`,
+  `0x0c0a`, `0x0c0c`, `0x0c0d`, `0x0c13`, `0x0c14` (16–40 byte opaque values) at 17:05:41.2–41.9,
+  17:05:42.7–42.9, 17:05:53.27–53.39, and 17:06:03.79–04.0 — 🟡 HYPOTHESIS.** Each burst follows
+  the same shape: a 2-byte write to a `+1`-offset handle (`0x0c05` after `0x0c04`, value `01 00`,
+  the standard CCCD "enable notifications" value) immediately followed by a write of an
+  opaque 16-or-32-byte value to the base handle, then (in three of the four bursts) a
+  Handle Value Notification of a similarly opaque value coming back. This structural
+  pattern — CCCD-enable, encrypted request write, encrypted response notification — matches the
+  general *shape* of Fast Pair's Key-based Pairing / Account Key GATT procedure as described in
+  Google's spec, but this pass did not decrypt or byte-match the values against the spec, so it
+  is **not** claimed as confirmed identification, only a structural resemblance.
+- **Timing correlation with the video (🟢 FACT):** the 3rd burst (17:05:53.27–53.39) lands within
+  the same second the app showed **"Pixel Buds Pro 2 van Ted connected"** (17:05:53 in
+  `EVENT-NOTES.md`). The 4th burst (17:06:03.79–04.0) lands within the same second as the **Save**
+  tap (17:06:04). This is a tight enough correlation to treat as causal, not coincidental,
+  pending further verification. The Fast Pair "Save device" / GFPS step (explanation #3 from the
+  previous version of this section) is therefore **not** purely cloud-side as speculated — at
+  least some of it involves a local BLE/GATT exchange with the device itself, likely alongside
+  whatever cloud/account-linking call also occurs.
+- **UUID/handle mapping limitation:** no `Read By Group Type` (primary service discovery) response
+  appears anywhere in this session's ATT traffic, so none of the above handles could be resolved
+  to their actual 128-bit or 16-bit UUIDs from this capture alone — see §8 (new) for why, and why
+  a same-device discovery capture is now the top recommended next step.
+
+Explanation #4 (CDM permission flow being a pure OS/app-framework interaction with no Bluetooth
+traffic) remains unconfirmed either way — none of the four ATT bursts fall inside the
+17:06:11–17:06:31 CDM-dialog window specifically.
 
 ## 5. HFP channel opened but no AT-command traffic observed (🔴 OPEN QUESTION)
 
@@ -182,21 +241,82 @@ in a future pass.
   evidence in this RFCOMM-focused pass, but is relevant context for `AGENTS.md` §9 (privacy
   posture) if this project's own app ever needs to request the equivalent permission.
 
-## 7. Recommended next steps
+## 7. Extended log tail check, 17:06:46–17:10:58 (🟢 FACT — checked before planning a new capture)
 
-1. Extract and analyze the **BLE/GATT (ATT) traffic** from this same window (48 ATT packets were
-   present per the protocol-count summary but not examined in this pass) — likely where any live
-   query behind the "Device details" screen actually happens, per §4's open question.
-2. A capture spanning further past the visible "Device details" screen (this one ends at
-   17:06:46 with the log confirming zero RFCOMM activity through 17:09:00) to see whether HFP
+Per the recommendation to check for already-useful traffic before spending a new capture session,
+the untrimmed tail of the shared log (17:06:46, where the video ends, through 17:10:58, the end
+of the whole 8h20m log) was checked directly, without slicing to this device.
+
+- 637 packets total in that window (245 ATT, 41 L2CAP, remainder HCI). At first glance this
+  looked promising — it includes a **full GATT primary service discovery** (`Read By Group Type`
+  requests/responses) starting 17:09:56, which is exactly the kind of traffic missing from §4's
+  analysis and would have resolved the handle→UUID mapping gap.
+- **However, this traffic belongs to a different device.** The discovery response's `Source
+  Device Name` field reads **"Charge 6"** (a Fitbit Charge 6) at BD_ADDR `78:f8:1b:d6:6b:0a` —
+  confirmed by filtering the tail explicitly for the Buds' own address
+  (`04:00:6e:cf:6e:07`), which returns **zero packets** anywhere in this 17:06:46–17:10:58 window.
+  This is unrelated background Bluetooth activity from another of the maintainer's devices,
+  accumulated in the same long-running, non-restarted snoop log (see the header's scope note) —
+  it must **not** be used as Buds evidence, and is recorded here only to document that it was
+  checked and correctly excluded, not silently missed.
+- **Conclusion: no additional, usable Buds-specific traffic exists anywhere in this log past
+  17:06:46.** A new, dedicated capture — with Bluetooth restarted first, per
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §2 step 5 — is genuinely necessary to get a real primary
+  service discovery against the Buds themselves and resolve the §4 handle/UUID gap, rather than
+  something recoverable from this session's existing log.
+
+## 8. Recommended next steps
+
+1. **Highest priority:** a capture that includes a **full GATT service discovery** against the
+   Buds (not a cached-database-hash reconnect) — e.g. by having Android forget and re-discover
+   the device, or by using a generic BLE scanner tool — to resolve handle `0x0f2a` and the
+   `0x0c0X` handle cluster from §4 to real UUIDs. §7 confirms this cannot be recovered from
+   existing logs and needs a fresh, targeted capture.
+2. A capture spanning further past the visible "Device details" screen to see whether HFP
    AT-command SLC setup (§5) or any `libmaestro`-shaped RFCOMM traffic eventually occurs once the
-   user actually interacts with an ANC/EQ control from this fresh-paired state.
-3. Byte-for-byte verification of the Fast Pair Message Stream Device Information group/code
-   values (§3) against the actual published spec document (not just a web-search summary), and
-   an attempt to identify the `da 2d b1` constant and the two rotating fields.
-4. Revisit `CAP-001`'s `FINDINGS.md` §2 in light of §2's correction here — its channel
-   1/AVRCP-vs-channel-2 attribution should be re-checked against this capture's cleaner picture
-   once a maintainer decision is made on whether/how to amend already-published capture findings.
+   user actually interacts with an ANC/EQ control from a fresh-paired state.
+3. ~~Byte-for-byte verification of the Fast Pair Message Stream Device Information group/code
+   values against the actual published spec~~ — **done, see §3** (2026-08-10).
+4. ~~Revisit `CAP-001`'s `FINDINGS.md` §2~~ — **done**, see `CAP-001`'s `FINDINGS.md` correction
+   note dated 2026-08-10, added per the same pattern `DECISIONS.md` uses for superseding ADRs
+   (the original text is kept, not silently rewritten).
 5. Restart Bluetooth (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §2 step 5) before the next capture — the
    shared, non-restarted 8+ hour snoop log made this session's analysis start with an unnecessary
-   slicing step (see `EVENT-NOTES.md`'s process note).
+   slicing step, and item §7 shows it also accumulates unrelated devices' traffic.
+6. Attempt to decrypt or otherwise identify the four GATT write/notify bursts from §4 against
+   Fast Pair's Key-based Pairing / Account Key procedure spec, now that item 1 above would supply
+   the missing UUIDs needed to even attempt that.
+
+## 9. Promotion readiness — what's ready for `PROTOCOL_NOTES.md`
+
+Per `PROJECT_RULES.md` §2, new protocol knowledge is recorded first in `PROTOCOL_NOTES.md`
+before being promoted to `PROTOCOL.md`. Assessment of what in this document already clears that
+bar:
+
+**Ready to promote now (🟢 FACT, spec- and/or cross-capture-verified):**
+- The Fast Pair Message Stream framing itself (`[Group][Code][Length:2B-BE][Data]`) — §3 —
+  promotes `PROTOCOL.md` §2.1 Hypothesis A's *framing* from HYPOTHESIS to FACT (the framing, not
+  yet every message's meaning).
+- Group `0x03` = Device Information, Code `0x01` = Model ID (value `da 2d b1`, constant), Code
+  `0x02` = BLE address updated (6-byte, rotating) — §3.
+- Group `0x03` Code `0x09` = Firmware version *field identity* (still open what the value
+  `"Revision 6"` actually represents) — §3.
+- The pairing/bonding lifecycle sequence for a fresh pair (delete-key → create-connection →
+  negative-link-key-reply → IO-capability/SSP → simple-pairing-complete → new-link-key) — §1.
+- CompanionDeviceManager is used by the official app (video-confirmed) — §6, corroborating
+  `DECISIONS.md` ADR-005.
+
+**Not ready yet (needs more evidence before promotion):**
+- Code `0x0a`'s meaning (§3) — genuinely undocumented in the spec page retrieved; needs either a
+  more complete spec source or its own targeted investigation.
+- The `0x0c0X` GATT handle cluster's identity and the Key-based-Pairing structural resemblance
+  (§4) — needs the UUID-resolving capture from §8 item 1 before any claim beyond "structurally
+  resembles".
+- Group `0x07` Code `0x41` = `"in-use"` (§3) — phrase-match only, not a confirmed protocol-level
+  identification.
+- Any HFP AT-command behavior claim specific to fresh pairing (§5) — this capture shows *absence*
+  of AT traffic, which is itself not strong enough evidence to assert HFP behaves differently on
+  first pairing vs. reconnect; needs the wider-window capture from §8 item 2.
+- The `libmaestro`/ANC-EQ control channel identity — **still completely unaddressed by either
+  `CAP-001` or `CAP-002`**; both captures only cover pairing/setup, not actual ANC/EQ commands
+  under clean isolation (see `CAP-001`'s own §5 and §7 for that separate, still-open thread).
