@@ -143,6 +143,34 @@ pages directly (not a search-summary), specifically
 - [Device information](https://developers.google.com/nearby/fast-pair/specifications/extensions/deviceinformation) — Google for Developers
 - Fast Pair GATT/Key-based Pairing procedure spec (for the "Indicate in-use Account Key" phrase match)
 
+> **Correction (2026-08-11), source: `CAP-004`'s `FINDINGS.md` §4.** This section treated the
+> channel-2/DLCI-0x04 TLV content above as one finding, implicitly alongside the *separate*
+> channel-4/DLCI-0x08 content documented in `CAP-001`'s `FINDINGS.md` §2 (`google-pixel-buds-
+> pro-v1`, `Europe/Amsterdam`, protobuf-tag-framed, not the `[Group][Code][Length][Value]` TLV
+> shape described here). `CAP-004` (Group S — Google Play Services disabled, Pixel Buds app
+> uninstalled) shows these two are **not the same mechanism, and do not share the same
+> dependency on Google Play Services**:
+>
+> - The *channel-2/DLCI-0x04* content described in this section — Group `0x03` Code `0x01`
+>   (Model ID `da 2d b1`), Code `0x02` (BLE address updated), Code `0x09` (`"Revision 6"`) — is
+>   **absent** in `CAP-004`: channel 2 is never even opened when GMS is disabled. This is
+>   evidence the mechanism documented in *this* section is **GMS/Nearby-driven**, not
+>   Buds-initiated as originally left open in §7 item 4 of `CAP-001`'s `FINDINGS.md`.
+> - The *channel-4/DLCI-0x08* content from `CAP-001` reappears in `CAP-004` **unchanged**, GMS
+>   disabled or not — that content is Buds-initiated, independent of GMS.
+>
+> **Broader lesson, applicable beyond this specific finding:** what this section originally
+> treated as a single "device info exchange" is actually **two independent mechanisms**, on two
+> different channels, with two different framings (protobuf-tag vs. Message-Stream TLV), and —
+> now shown — two different real-world dependencies (GMS-driven vs. Buds-native). A shared
+> theme ("device info sent around connection time") is not evidence of a shared mechanism;
+> each channel/DLCI's content needs its own independent verification, per the same
+> content-over-channel-number discipline already established for RFCOMM channel numbers
+> (`CAP-001` `FINDINGS.md` §2's reusable note). Per `PROJECT_RULES.md` §3, this note supersedes
+> the implicit "one finding" framing above without deleting it. See `CAP-004`'s `FINDINGS.md`
+> §4 for the full byte-level evidence and `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GFPS-001` row for
+> the test-catalog-level status (🟡, mixed outcome).
+
 ## 4. No RFCOMM traffic during app setup — resolved: it moves to BLE/GATT (🟢 FACT)
 
 All RFCOMM data-carrying frames in this entire ~150s capture window fall inside two short
