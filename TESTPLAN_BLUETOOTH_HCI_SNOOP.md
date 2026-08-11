@@ -94,6 +94,8 @@ first axis; the **Evidence** column is a pointer to the second, never a restatem
 | `BATT` | Battery reporting mechanisms |
 | `LOUD` | Loud Noise Protection |
 | `ADAPT` | Adaptive Audio |
+| `GATT` | Secondary BLE/GATT transport (service/characteristic discovery) |
+| `GFPS` | Google Fast Pair Service phone-side behavior (vs. Buds-initiated) |
 
 ---
 
@@ -235,6 +237,7 @@ _Sensors and firmware behavior, without a direct action from the app._
 | `PAIR-002` | Pairing / bonding handshake from a true factory-reset state | User (Hardware) | P (via `CASE-007`) | 🔵 | Optional, one-time, destructive comparison capture — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16. | — |
 | `PAIR-003` | Disconnect and reconnect to an already-bonded device | User (Hardware) | — | 🔵 | Distinct protocol state from `PAIR-001`/`PAIR-002` (no bonding handshake, per `PROTOCOL.md` §5) — captured on the Pixel 9a session (§4.2 #4) today; no dedicated Pixel 7a scenario yet, see §9. | — |
 | `GATT-001` | Full GATT service/characteristic discovery, forced (bond removed first) | User (Hardware) | R | 🔵 | The secondary BLE/GATT transport (`ARCHITECTURE.md` §1), distinct from the RFCOMM `libmaestro` channel. Also incidentally observed via the device-detail screen on the Pixel 9a session (§4.2 #3), but that trigger only *may* prompt discovery and doesn't force it — Group R's forced bond removal is the reliable trigger, and is the dedicated Pixel 7a scenario this row previously lacked. | — |
+| `GFPS-001` | Fast Pair Message Stream traffic (the `[Group][Code][Length][Value]`-framed channel identified in `CAP-002` `FINDINGS.md` §3) present or absent with the Pixel Buds app uninstalled and Google Play Services disabled | User (Hardware) | S | 🔴 | Not yet captured/analyzed. Purpose: isolate whether this traffic is Buds-initiated (would still appear identically) or driven by GMS/Nearby's phone-side Fast Pair logic (would disappear or change) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group S. Directly relevant to this project's Zero-GMS goal (`AGENTS.md` §1, `PROJECT.md`). Setup itself confirmed manually (with GMS disabled + app uninstalled, pairing succeeds via system settings but the Fast Pair "Connect" half-sheet does not appear) — that's a UI-level observation only, not yet evidence about the RFCOMM traffic this row asks about. | — |
 
 ---
 

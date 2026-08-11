@@ -302,6 +302,20 @@ for the "definition of done" that will mark v1.
   Group R's bond removal. Added Group R to the Capture Index's group-letter
   reference note alongside Z. This was written up from an actual capture the
   maintainer had already performed, not designed speculatively.
+- Formalized "Group S" (Google Play Services disabled, no Pixel Buds app) as
+  a real, documented capture scenario in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`
+  §4.1, alongside a new `GFPS-001` Test-ID in
+  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (and the missing `GATT`/`GFPS` prefix
+  rows in §0.4, since `GATT-001` was already in use without one). Purpose:
+  isolate whether the Fast Pair Message Stream traffic identified in
+  `CAP-002` (`FINDINGS.md` §3) is Buds-initiated or driven by Google Play
+  Services' phone-side Fast Pair/Nearby logic — directly relevant to this
+  project's Zero-GMS goal. The maintainer had already manually confirmed
+  that, with the app uninstalled and GMS disabled, pairing still succeeds
+  via system settings but the Fast Pair "Connect" half-sheet does not
+  appear; `GFPS-001` is recorded as 🔴 not yet captured/analyzed, since that
+  UI-level observation doesn't by itself say anything about the RFCOMM
+  traffic the Test-ID actually asks about.
 
 ### Removed
 

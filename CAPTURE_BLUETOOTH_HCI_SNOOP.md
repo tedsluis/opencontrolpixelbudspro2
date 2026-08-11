@@ -387,6 +387,43 @@ bond is the reliable, non-hacky way to force it.
    Type Request/Response — characteristic discovery). Their responses contain the
    handle-to-UUID mapping this Group exists to capture.
 
+#### Group S — Google Play Services disabled, no Pixel Buds app (occasional, not part of the normal run-through)
+**Purpose:** isolate whether the Fast Pair Message Stream traffic identified in `CAP-002`
+(`FINDINGS.md` §3 — the `[Group][Code][Length][Value]`-framed channel carrying, among other
+things, the `"Revision 6"` string) is **Buds-initiated** (would still appear identically) or
+**driven by Google Play Services' phone-side Fast Pair/Nearby logic** (would disappear or
+change). This is directly relevant to this project's Zero-GMS goal (`AGENTS.md` §1,
+`PROJECT.md`): if the Buds only send this data because GMS asks for it in a specific way,
+this project's own app will need to replicate that GMS-side behavior, not just listen
+passively.
+
+**Setup (validated manually before capturing, per the maintainer's own testing):** with the
+Pixel Buds app uninstalled and Google Play Services disabled (Settings → Apps → see all
+apps → Google Play Services → Disable; `adb shell pm disable-user --user 0 com.google.android.gms`
+is the scriptable equivalent), pairing the Buds via system Bluetooth settings still succeeds,
+but the Fast Pair "Connect" half-sheet (the purple dialog with the Buds product image,
+normally shown when GMS is enabled) does **not** appear — confirming the half-sheet itself is
+GMS-driven UI, not app- or Buds-driven. Whether the underlying RFCOMM Message Stream traffic
+is also GMS-driven, or independent of it, is what this capture is for — it is **not**
+assumed by the setup validation above.
+
+1. Confirm the Pixel Buds app is uninstalled and Google Play Services is disabled, per the
+   setup note above.
+2. Work through §2 (enable HCI snoop, restart Bluetooth/reboot) as usual.
+3. **Pair via system Bluetooth settings** [`GFPS-001`] — there is no app and no Fast Pair
+   half-sheet to use here, so this is the only pairing path available. Note whether the
+   device was already unpaired (e.g. left over from a prior Group R session) or whether this
+   capture also includes a fresh bonding handshake — record this explicitly in this session's
+   `EVENT-NOTES.md`, since it changes what else can be read from the same capture (see Group
+   R step 4 for the equivalent bonus-`PAIR-001`/`PAIR-002` note).
+4. **Isolate the whole pair-and-settle sequence as one action window**: note the exact
+   connect-tap time and when the connection visibly settles.
+5. Extract and analyze as usual (§3, §5). Specifically check whether a channel/DLCI carrying
+   the same `[Group][Code][Length][Value]` framing as `CAP-002` §3 appears at all, and if so,
+   whether the same fields (e.g. Code `0x09`'s value) match. **Do not assume an outcome before
+   analyzing** — either result (present or absent) is a real, useful finding for the open
+   question above, not a "pass" or "fail" of this Group.
+
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
 No app-driven commands are possible here, so this session focuses on connection-level
@@ -709,12 +746,13 @@ than deleting the row or reassigning its number to a later capture.
 - **Phone** — `Pixel 7a` (primary, official app) or `Pixel 9a` (secondary,
   GrapheneOS), per the two-device setup described at the top of this
   document.
-- **Group(s)** — the letter(s) from §4 (Z, A–Q, R — Z and R are special-purpose
-  groups that intentionally sort outside the A–Q run-through: Z is
-  pipeline-validation, always done first; R is the occasional forced-GATT-discovery
-  procedure, done only when needed) covered in this session; one
-  bugreport pull can cover several groups if captured as one continuous
-  logging session (§4.1).
+- **Group(s)** — the letter(s) from §4 (Z, A–Q, R, S — Z, R, and S are
+  special-purpose groups that intentionally sort outside the A–Q run-through:
+  Z is pipeline-validation, always done first; R is the occasional
+  forced-GATT-discovery procedure; S is the occasional GMS-disabled/no-app
+  procedure — both R and S are done only when needed) covered in this
+  session; one bugreport pull can cover several groups if captured as one
+  continuous logging session (§4.1).
 - **Test(s)** — the `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` Test-ID(s) actually
   exercised in this session (e.g. `ANC-001, ANC-002`) — this is what a
   `PROTOCOL_NOTES.md` finding should ultimately trace back through: finding →
