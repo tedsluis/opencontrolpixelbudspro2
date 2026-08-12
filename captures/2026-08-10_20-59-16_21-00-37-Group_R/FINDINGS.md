@@ -137,6 +137,69 @@ carrying similarly-shaped data — itself informative:
   analysis: **GATT handles may be compared directly across sessions for the same device; RFCOMM
   channel numbers may not.**
 
+> **Task 12 (2026-08-12): are `0x0f2a`/`0x0f28` part of a densely-read, contiguous Device
+> Information block? Checked, and the answer is a clean negative — neighboring handles are never
+> read at all, in any of the three captures that touch this range.** Filtered every GATT Read
+> Request/Response (`btatt.opcode in {0x0a,0x0b}`) with `0x0f20 <= handle <= 0x0f30` across
+> `CAP-002`, `CAP-003`, and `CAP-004`'s full logs:
+> ```
+> tshark -r btsnoop_hci.log -Y "btatt.opcode in {0x0a,0x0b} and btatt.handle >= 0x0f20 and btatt.handle <= 0x0f30" \
+>   -T fields -e frame.number -e frame.time -e btatt.opcode -e btatt.handle -e btatt.value
+> ```
+> `CAP-002`: only `0x0f2a` (frames 49423→49425, value `"Revision 6"`). `CAP-003` (this file): only
+> `0x0f2a` (1819→1835) and `0x0f28` (eight reads total, four request/response pairs, each pair
+> itself two-back-to-back as already noted above — 2506/2508, 2510/2512, 2693/2695, 2697/2699,
+> 2791/2793, 2794/2796, 2801/2803, 2804/2806). `CAP-004`: **zero** reads in this range at all
+> (expected — no Pixel Buds app ever ran there, so "More settings"/Device details, the screen that
+> triggers these reads, was never opened). **`0x0f26`, `0x0f27`, and `0x0f29` are never read in any
+> of the three captures.** This does not disprove the Device Information Service hypothesis
+> (`0x0f28`'s hypothesis (b) above) — an app is free to read only the specific characteristics it
+> needs rather than every one a service exposes — but it means the "contiguous DIS block" reading
+> cannot be positively confirmed from read-pattern evidence either; it remains exactly as
+> hypothesis-strength as before, now on a checked rather than assumed basis. Resolving it still
+> requires the live-discovery capture recommended in §7 item 1 below.
+>
+> **Task 5 (2026-08-12): the `0x0c0X` cluster's byte lengths and flow precisely match the official
+> Fast Pair Key-based Pairing / Passkey characteristic shapes — upgraded from "structurally
+> resembles" to a much stronger, cross-capture-confirmed match on FORM (identity/UUID still
+> unconfirmed).** Extracted every write/notify (`btatt.opcode in {0x12,0x13,0x1b,0x52}`) on handles
+> `0x0c04`/`0x0c05` (this capture and `CAP-002`) and `0x0c07`/`0x0c08` (this capture only) with
+> exact byte lengths:
+> ```
+> CAP-002  0x0c05 write  "0100"                       2 bytes   -- CCCD enable (standard: 0x0001 LE)
+> CAP-002  0x0c04 write  (first, frame 49418)         80 bytes  -- = 16 x 5
+> CAP-002  0x0c04 notify (frame 49420)                16 bytes
+> CAP-002  0x0c04 write  (frame 49483, 49614, 49665)  16 bytes  each
+> CAP-002  0x0c04 notify (frame 49667)                16 bytes
+> CAP-003  0x0c05 write  "0100"                       2 bytes   -- CCCD enable
+> CAP-003  0x0c04 write  (first, frame 1670)          80 bytes  -- = 16 x 5, same size as CAP-002's first write
+> CAP-003  0x0c04 notify (frame 1684)                 16 bytes
+> CAP-003  0x0c08 write  "0100"                       2 bytes   -- CCCD enable
+> CAP-003  0x0c07 write  (frame 1744)                 16 bytes
+> CAP-003  0x0c07 notify (frame 1746)                 16 bytes
+> ```
+> Every write/notify **after** the first one on `0x0c04` is exactly **16 bytes** — an AES-128 block
+> size — and `0x0c07`'s write/notify are also exactly 16 bytes each: byte-for-byte the shape the
+> official Fast Pair Key-based Pairing Request/Response and Passkey characteristics are documented
+> to use. The CCCD writes are exactly 2 bytes, value `0x0001` little-endian — the standard
+> "notifications enabled" value, on both characteristic pairs. The flow (CCCD-enable write → 16-byte
+> encrypted write → 16-byte encrypted notify) is identical on both `0x0c04`/`0x0c05` and
+> `0x0c07`/`0x0c08`, and identical between `CAP-002` and `CAP-003` (two independent sessions) for
+> `0x0c04`/`0x0c05` specifically, including the **same unusual 80-byte (`16×5`) first write on
+> `0x0c04`** in both sessions — too specific a match to be coincidental. Per this project's
+> promotion rule (cross-capture structural match, or spec byte-match, ⇒ 🟢 FACT), **the FORM of this
+> exchange — byte lengths and CCCD-gated write/notify flow — is promoted to 🟢 FACT as matching the
+> official Fast Pair Key-based Pairing/Passkey characteristic shape.** What remains 🟡/🔴, unchanged
+> by this pass: the actual UUIDs (no live discovery ever resolved them — see the 2026-08-12 update
+> in `CAP-004` `FINDINGS.md` §6, confirming this gap persists in all three captures with this goal),
+> and therefore whether `0x0c04`/`0x0c05` specifically is Key-based Pairing and `0x0c07`/`0x0c08`
+> specifically is Passkey (plausible, and consistent with §5 below's timing correlation — `0x0c07`'s
+> burst falls inside the classic SSP window, exactly where Passkey's silent numeric-comparison
+> cross-check would be expected — but not UUID-confirmed). The meaning of the first 80-byte write is
+> also still open — 80 = 5×16 is consistent with a bulk transfer of several concatenated 16-byte
+> blocks (e.g. an Account Key sync) rather than a single Key-based Pairing Action Request, but this
+> is not confirmed against the spec's exact procedure names.
+
 ## 5. Timing correlation: GATT bursts map to distinct phases of the Fast Pair procedure (🟡 HYPOTHESIS)
 
 The `0x0c0X` bursts and the `0x0f2a`/`0x0f28` reads line up with distinct moments in the
@@ -207,11 +270,24 @@ of the three captures to date. Not claimed as FACT; requires UUID confirmation.
   device — §4.
 - Handle `0x0f2a` reliably returns `"Revision 6"` across three sessions and two transports — §4
   (the *meaning* of that string remains open, carried over from `CAP-002`).
+- **The `0x0c04`/`0x0c05` and `0x0c07`/`0x0c08` write/notify FORM (byte lengths, CCCD-gated flow)
+  matches the official Fast Pair Key-based Pairing/Passkey characteristic shape exactly, confirmed
+  across `CAP-002` and `CAP-003` independently, including the specific 80-byte (`16×5`) first write
+  on `0x0c04` in both** (2026-08-12, §4 Task-5 addendum). UUID identity is the only piece still
+  missing before this can be a full protocol-level identification.
 
 **Not ready yet:**
 - Any UUID for handle `0x0f2a`, `0x0f28`, or the `0x0c0X` cluster — **this session's stated goal,
-  still unresolved.** Needs the stronger cache-busting approach in §7 item 1.
-- The Passkey-characteristic hypothesis in §5 — timing-consistent, not UUID-confirmed.
+  still unresolved.** Needs the stronger cache-busting approach in §7 item 1. **Re-confirmed
+  2026-08-12: `CAP-004` (a fourth, later session) also failed to trigger live discovery for the
+  Buds — see `CAP-004` `FINDINGS.md` §6's 2026-08-12 update — so this is now a four-for-four
+  negative result, not specific to this session's method.**
+- The Passkey-characteristic hypothesis in §5 — **strengthened 2026-08-12 (§4 Task-5 addendum) to
+  a precise byte-length/flow match against the spec**, but still not UUID-confirmed.
+- Neighboring handles `0x0f26`/`0x0f27`/`0x0f29` around the `0x0f28`/`0x0f2a` pair — **checked
+  2026-08-12 (§4 Task-12 addendum): never read in any of the three captures with reads in this
+  range, so the "contiguous Device Information block" hypothesis is neither confirmed nor
+  disproved by read-pattern evidence** — same live-discovery capture needed.
 - The Fast Pair ownership-transfer flow (§6) — solid video evidence of the *behavior*, but not
   yet correlated to any specific Bluetooth log traffic (a `PROTOCOL.md`-relevant gap: is this
   purely a cloud/GMS-side check, or does it involve a local protocol exchange? Not established

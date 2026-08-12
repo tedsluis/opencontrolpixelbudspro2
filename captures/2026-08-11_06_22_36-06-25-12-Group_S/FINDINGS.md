@@ -226,6 +226,181 @@ open question ("does `'Revision 6'` or something else represent the real firmwar
 remains open: `"release_5.203"` is now a documented, on-the-wire-confirmed candidate, but the
 framing that would explain *which* field it officially belongs to is not yet established.
 
+## 5a. 2026-08-12 follow-up: fragmentation re-check, frame 2305 resolved, groups 0x04/0x05/0x09 not actually new to this capture
+
+Deskresearch pass (Python + `tshark -T fields`/`data.data`, no Wireshark UI) re-analyzing this
+capture's `btsnoop_hci.log` plus `btsnoop_hci_1.log`/`btsnoop_hci_2.log` for cross-validation.
+Scripts used are reproduced at the end of this addendum.
+
+**Reassembly note first, since it changes how everything below must be read:** a single-frame
+`parse_tlvs()` pass under-counts fragmentation. A stream-level reassembler (buffers bytes per
+DLCI in time order, parses `[Group][Code][Len:2B-BE][Value]` messages as soon as enough bytes are
+available, and attributes each message to every frame whose bytes it spans) finds **three**
+cross-frame splits in this session's DLCI 0x08 burst, not the one already documented in §5 above:
+frames **[2272, 2274]** (Group `0x03` Code `0x01`, already known), plus **[2360, 2361]** and
+**[2365, 2366]** (both Group `0x02` Code `0x05`, 2-byte value each) — none of these two new ones
+were caught by the original per-frame reading. All three involve a 4-byte header arriving in one
+RFCOMM write and the value in the very next one, ~1 ms later; in every case `bthci_acl.pb_flag`
+shows no `continuation_to`/`reassembled_in` on either frame — i.e. **not** L2CAP/ACL-level
+segmentation, but a message genuinely split across two complete, independent RFCOMM I-frames on
+the same DLCI. Confirms and extends this file's own §5 finding: any parser for this channel must
+reassemble across RFCOMM frame boundaries, and this is not a one-off.
+
+**Task 1 (also covering `CAP-002` §3 and this file's §4b) — byte-offset/fragmentation check, both
+directions answered explicitly:**
+
+- `CAP-002` §3's TLV content (Model ID `da 2d b1`, BLE-address-updated, `"Revision 6"`) — **NOT
+  fragmented, in either of the two occurrences found in this session's own log lineage.** Searching
+  `CAP-002`'s underlying `btsnoop_hci.log` (which — per that file's own header note — is the same
+  shared, non-restarted buffer used since `CAP-001`, 50,468 packets over ~8h20m, not just the
+  documented ~150s slice) for the Model ID byte string `da:2d:b1` returns **seven** occurrences
+  across the whole day (frames 1004, 1826, 17610, 18895, 21195, 49251, 49538 in that file's own
+  numbering — frame 49251 is the one `CAP-002` §3 calls "frame 1267" under the sliced-file
+  numbering it used for analysis). Every single occurrence is a single, complete, 47-byte RFCOMM
+  UIH frame carrying all five TLV messages in the burst together (`03 0a 00 08 <8B>` + `03 01 00 03
+  <3B>` + `03 02 00 06 <6B>` + `03 09 00 0a "Revision 6"` + `07 10 00 00` = 12+7+10+14+4 = 47,
+  matching `btrfcomm.len` exactly). `bthci_acl.pb_flag` for frame 49251's underlying ACL packet is
+  `2` (complete PDU) with no `continuation_to`/`reassembled_in` — confirmed via
+  `tshark -r btsnoop_hci.log -Y "frame.number==49251" -e bthci_acl.pb_flag -e bthci_acl.continuation_to -e bthci_acl.reassembled_in`.
+  **Negative result, itself a finding per the project's evidence rules:** this specific burst does
+  not fragment across packets in any of the 7 independent occurrences checked.
+- This file's own §4b content (`google-pixel-buds-pro-v1`, `Europe/Amsterdam`, on channel
+  4/DLCI 0x08) — **mixed.** The `google-pixel-buds-pro-v1` + capability-negotiation (`"all"`)
+  messages are never fragmented in any capture checked (`CAP-001`, `CAP-002`, `CAP-003`, `CAP-004`
+  all carry them as single complete frames). The `Europe/Amsterdam` message specifically **is**
+  fragmented in this capture (frames 2272+2274, per §5 above) but is **not** fragmented in either
+  of its two occurrences in `CAP-001`'s own log (frame 1113: single 31-byte frame containing header
+  `03 01 00 1b` + the full 27-byte value together; frame 1673: single 35-byte frame containing an
+  empty `09 03 00 00` message immediately followed by the same header+value, again packed whole) —
+  confirmed via `tshark -r btsnoop_hci.log -Y 'data.data contains "Europe/Amsterdam"' -e bthci_acl.pb_flag -e bthci_acl.continuation_to`
+  against `CAP-001`'s log, no continuation flags set on either frame. **So this exact
+  logical message is demonstrably NOT always packet-sized in a fixed way — it is sometimes sent as
+  one write (`CAP-001`, twice) and sometimes split header/value across two writes (`CAP-004`,
+  once)** — real, non-deterministic fragmentation behavior a `FrameDecoder` must handle, not an
+  artifact of one capture's read.
+
+**Task 2 — frame 2305 is a genuine TLV header, not coincidental protobuf bytes, but it belongs to
+a *different, private* Group/Code namespace than `CAP-002` §3's:**
+
+The hypothesis in this file's §5 ("frame 2305's `03 02 00 3f` might not be a Message Stream header
+at all") does not survive a precise check, for two independent reasons:
+
+1. **A pure-protobuf reading of byte 0 fails.** `0x03 = 0b00000011` as a protobuf tag decodes to
+   field number `0` (`0x03 >> 3`), wire type 3 (deprecated `START_GROUP`) — field number 0 is
+   illegal in protobuf (field numbers start at 1), so frame 2305 cannot be read as a raw protobuf
+   stream starting at byte 0. The TLV reading (`Group=0x03, Code=0x02, Len=0x3f=63`) is the only
+   one under which the frame parses cleanly at all, and `4 + 63 = 67` matches the frame's actual
+   length exactly.
+2. **The exact same 67-byte frame — header and all 63 value bytes, byte-for-byte — reappears in
+   `CAP-002`'s log**, at frame 49028 (17:05:34.599755, well *before* frame 49251's Group-0x03-TLV
+   burst above, and on the *same* DLCI 0x08 that carries `CAP-001`'s `google-pixel-buds-pro-v1`
+   content, not `CAP-002`'s own DLCI-0x04 channel):
+   ```
+   CAP-004 frame 2305: 0302003f08061001220d72656c656173655f352e3230332a0030e60138004a0737313366383535500060b1dbe80670027801a80101b00101ba01020102c00101c80101
+   CAP-002 frame 49028: 0302003f08061001220d72656c656173655f352e3230332a0030e60138004a0737313366383535500060b1dbe80670027801a80101b00101ba01020102c00101c80101
+   ```
+   Identical, across two independent capture sessions taken two days apart (2026-08-09 vs.
+   2026-08-11), one with GMS enabled and one with GMS disabled. A coincidental protobuf-byte
+   collision cannot reproduce this; a real, stable envelope can. Per this project's own promotion
+   rule (structural match across ≥2 independent captures ⇒ 🟢 FACT), **frame 2305's leading 4 bytes
+   are a genuine `[Group][Code][Len]` header — 🟢 FACT** — and its value decodes as a well-formed
+   protobuf message: `field1=6, field2=1, field4="release_5.203", field6=230, field9="713f855",
+   field12=14298545, field14=2, field15=1, field21=1, field22=1, field23=[01 02], field24=1,
+   field25=1` (fields 5/7/10 empty/zero).
+
+   **What this means for the open question it raised:** Group `0x03` Code `0x02` on **DLCI 0x08**
+   is *not* the same message as Group `0x03` Code `0x02` on **DLCI 0x04** (`CAP-002` §3's
+   spec-verified "BLE address updated", a fixed 6-byte MAC). DLCI 0x08 runs its **own private
+   Group/Code/Length envelope** — structurally identical in shape to the official Fast Pair
+   Message Stream (matching `PROTOCOL.md` §2.1 Hypothesis A's general form), reusing the same
+   numeric Group/Code labels as the GMS-driven official channel purely coincidentally (or by lazy
+   convention — e.g. both start numbering their "device info" group at `0x03`) — not because
+   they're the same logical message. This is now well evidenced (below) as a *whole private
+   protocol on DLCI 0x08*, not a one-off anomaly in frame 2305 specifically. `CAP-002` §3's
+   original open question ("is `'Revision 6'` the real firmware version, or is `'release_5.203'`
+   from this frame?") is now understood to be comparing two unrelated protocols' fields, not two
+   candidate readings of the same field — both strings are real, on-the-wire values, from two
+   different channels/mechanisms.
+
+**Task 9/10 (also resolves `CAP-002` FINDINGS.md §2's own 🔴 "not decoded in this pass" for its
+channel-4/DLCI-0x08 burst) — full decode of the DLCI 0x08 private envelope, and correction of the
+"new in `CAP-004`" framing:**
+
+`CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index describes Message Stream groups `0x04`, `0x05`,
+`0x09` as newly discovered *in `CAP-004`*. A full-session, reassembling decode of DLCI 0x08 in
+**all three** captures that have this channel (`CAP-001`, `CAP-002`, `CAP-004` — `CAP-003` also has
+it, 87 messages) shows this framing is **not new to `CAP-004` at all** — it is present,
+byte-for-byte structurally identical, from the very first capture (`CAP-001`, 2026-08-09 08:51) —
+simply never decoded before because both `CAP-001` §2 and `CAP-002` §2 explicitly deferred this
+channel as "not decoded in this pass." Corrected finding: **groups `0x01`, `0x02`, `0x03`, `0x04`,
+`0x05`, `0x09`, `0x0e` all appear on DLCI 0x08 in `CAP-001`, `CAP-002`, and `CAP-004` alike** (`0x01`
+and `0x02` additionally only surface in `CAP-002`'s richer, genuinely-fresh-pairing session — see
+below).
+
+Unique Code/Value shapes for groups `0x04`/`0x05`/`0x09` (this file's `btsnoop_hci.log`, reassembled):
+
+| Group | Code | Len | Value | Notes |
+|---|---|---|---|---|
+| `0x04` | `0x02`,`0x04`,`0x11`,`0x13`,`0x15` | 0 | — | empty "ping"-shaped messages |
+| `0x04` | `0x03` | 4 | `10 05 18 64` (pb: field2=5, field3=100) | |
+| `0x04` | `0x05` | 2 | `08 03` (pb: field1=3) | also seen as `08 04`/`08 05`/`08 06` in `CAP-001`/`CAP-002` |
+| `0x04` | `0x12` | 4 | `08 02 10 01` / `08 03 10 01` (pb: field1∈{2,3}, field2=1) | **recurs every few seconds for the rest of the session** (frames 2352, 2443, 2454, 2468, 2483, 2533, ... alternating field1 2↔3) — looks like a periodic 2-state heartbeat/status ping, not a one-time handshake value |
+| `0x04` | `0x14` | 2 | `08 01` | |
+| `0x04` | `0x16` | 2 | `08 02` | |
+| `0x05` | `0x0a` | 13 | `0a 07 "713f855" 10 40 18 00` (pb string = build ID) | only readable ASCII string among these three groups |
+| `0x05` | `0x0b` | 34–35 | mostly zero varints + 2 larger fields (`CAP-001`/`CAP-002` only, not seen in this file's window) | |
+| `0x05` | `0x0c` | 0 | — | |
+| `0x09` | `0x02` | 2 | `08 00` | |
+| `0x09` | `0x03` | 0 | — | |
+
+No spec page defines groups `0x05`/`0x09` as freestanding (this file's original §5 finding stands
+— search results keep redirecting to Device Information's own `0x05`/`0x06`/`0x09` *codes*, not a
+same-numbered *group*). **Answering this task's literal question:** with the sole exception of Code
+`0x0a`'s embedded build-ID string, none of groups `0x04`/`0x05`/`0x09`'s values are ASCII —
+they're small, fixed-length (0/2/4/13 bytes) varint-encoded protobuf fragments, consistent with a
+capability/feature-flag negotiation rather than data transfer. Combined with (a) every one of these
+groups' *first* occurrence landing within ~1 second of DLCI 0x08 opening in all three captures, and
+(b) Group `0x04` Code `0x12` being the only code that keeps recurring afterward — this reads as a
+**one-time capability/setup handshake for whatever runs on DLCI 0x08** (plausibly `libmaestro`
+itself, or a lower-level companion-device negotiation independent of Fast Pair — it survives GMS
+being disabled per this file's own §4b), followed by a low-rate periodic status ping (Group `0x04`
+Code `0x12`) for the rest of the connection. Group identity itself (what "0x04"/"0x05"/"0x09" *mean*
+as private groups on this DLCI) remains 🔴 open — no spec covers a private/vendor numbering here,
+consistent with `PROTOCOL.md` §2.1's own note that Google permits vendor-private Message Stream
+groups.
+
+**Reproduction — Python (stream reassembler + generic protobuf-varint decoder), run against
+`data.data`-exported `tshark` fields:**
+```python
+def parse_tlvs_stream(rows, target_dlci):
+    """rows: list of (frame_no, time, dlci, payload_bytes), time-ordered.
+    Buffers bytes per DLCI so a [Group][Code][Len:2B-BE][Value] message split
+    across consecutive RFCOMM frames is still parsed as one logical message,
+    attributed to every frame number whose bytes it spans."""
+    buf = bytearray(); spans = []; base = 0; out = []
+    for fno, t, dlci, data in rows:
+        if dlci != target_dlci: continue
+        start = base + len(buf); buf += data
+        spans.append((start, start + len(data), fno, t))
+        i = 0
+        while i + 4 <= len(buf):
+            group, code = buf[i], buf[i+1]
+            length = (buf[i+2] << 8) | buf[i+3]
+            if i + 4 + length > len(buf): break
+            value = bytes(buf[i+4:i+4+length])
+            lo, hi = base + i, base + i + 4 + length
+            frames = sorted({s[2] for s in spans if not (s[1] <= lo or s[0] >= hi)})
+            out.append((group, code, length, value, frames))
+            i += 4 + length
+        if i: del buf[:i]; base += i
+    return out
+```
+Extraction command used for the raw per-frame input:
+```
+tshark -r btsnoop_hci.log -Y "btrfcomm.len > 0" -T fields -E separator='|' \
+  -e frame.number -e frame.time_epoch -e btrfcomm.dlci -e data.data
+```
+
 ## 6. GATT service list from nRF Connect's UI — cross-checked against `CAP-002`/`CAP-003`'s open UUID questions (🟡 HYPOTHESIS, UI-sourced not wire-confirmed)
 
 As established in §1's method and `CAP-003`'s own findings, nRF Connect's displayed service list
@@ -264,6 +439,32 @@ None of this is a confirmed handle→UUID mapping (still requires the live-disco
 `CAP-003` §7 already recommended) — it is a plausible, multi-source-consistent HYPOTHESIS,
 recorded so the eventual discovery capture has concrete predictions to check itself against.
 
+**Update 2026-08-12 (deskresearch task): confirmed this capture's own wire traffic still cannot
+resolve any handle→UUID mapping either — same negative result as `CAP-003`, now checked
+exhaustively rather than assumed.** Filtered this file's `btsnoop_hci.log` for every ATT `Read By
+Group Type Response` (`btatt.opcode==0x11`) and `Read By Type Response` (`btatt.opcode==0x09`):
+
+```
+tshark -r btsnoop_hci.log -Y "btatt.opcode==0x11" -T fields -e frame.number -e bthci_acl.src.bd_addr -e bthci_acl.dst.bd_addr -e btatt.uuid128 -e btatt.uuid16
+```
+
+All 8 `Read By Group Type Response` frames in this log (229, 234, 239, 244, 249, 254, 259, 264)
+involve BD_ADDR `62:6f:64:e2:1b:4a` — the maintainer's Fitbit Charge 6, already flagged and
+excluded as unrelated background traffic in §1 above, **not** the Buds. Filtering explicitly to
+frames involving the Buds' own address (`04:00:6e:cf:6e:07`) returns **zero** `Read By Group Type`
+frames and only four `Read By Type Response` frames, all resolving low, standard GAP/GATT-service
+handles (`0x0002`–`0x0009`: `0x2a00` Device Name, `0x2a05` Service Changed, `0x2b29` Client
+Supported Features, `0x2b2a` Database Hash, `0x2b3a` Server Supported Features) — nowhere near the
+`0x0f2a`/`0x0f28`/`0x0c0X` range this task asked about. **Cross-checked against `CAP-002`'s own
+full, non-restarted 8h20m log for the same opcode/address combination — also zero results, across
+the entire day, not just the ~150s slice `CAP-002`'s own §7 already checked.** Combined with
+`CAP-003` §1's identical finding, this makes it **three for three**: no capture taken so far has
+ever triggered a live GATT primary-service discovery against the Buds — Android's cached GATT
+database has survived every bond-removal/reconnect attempted to date. §6's handle→UUID hypotheses
+above remain HYPOTHESIS only; `CAP-003` §7 item 1's stronger cache-busting recommendation (clear
+the Bluetooth system app's storage/cache directly, or discover from a phone that has genuinely
+never connected to this device) is the only path left untried.
+
 ## 7. Other observations
 
 - **The "Enable Google Play services" notification persists for the entire session (🟢 FACT,
@@ -281,17 +482,17 @@ recorded so the eventual discovery capture has concrete predictions to check its
 
 ## 8. Recommended next steps
 
-1. Determine the meaning of Message Stream Groups `0x04`, `0x05`, and `0x09` (§5) — search
-   further into Google's Fast Pair spec pages (the ones already found for Group `0x03` link to
-   sibling pages in the same documentation set) or a dedicated capture bracketing specific
-   actions to correlate against these codes' timing.
-2. Add a non-destructive correction note to `CAP-002`'s `FINDINGS.md` §3 (per §4's conclusion
-   above) distinguishing the channel-2/DLCI-0x04 GMS-dependent TLV content from the
-   channel-4/DLCI-0x08 content already documented in `CAP-001`, which is not GMS-dependent —
-   not done in this pass, left for a maintainer decision per `CAP-002`'s own §7 item 4 precedent.
+1. ~~Determine the meaning of Message Stream Groups `0x04`, `0x05`, and `0x09` (§5)~~ — **partially
+   done 2026-08-12, see §5a:** the *group identity* (which private protocol these belong to) is
+   still 🔴 open, but their framing is now fully decoded, cross-capture-confirmed, and shown to
+   predate this capture (already present in `CAP-001`/`CAP-002`, just undecoded until now).
+2. ~~Add a non-destructive correction note to `CAP-002`'s `FINDINGS.md` §3~~ — **done 2026-08-12**,
+   see `CAP-002` `FINDINGS.md` §3's own 2026-08-12 addendum.
 3. The live-GATT-discovery capture already recommended in `CAP-003`'s `FINDINGS.md` §7 item 1
-   remains the only way to confirm §6's handle→UUID hypotheses; this capture adds concrete named
-   candidates (Fast Pair Service, Accessory Non-Owner Service, Device Information) worth
+   remains the only way to confirm §6's handle→UUID hypotheses — **re-confirmed still necessary,
+   2026-08-12: this capture's own wire traffic was checked exhaustively (§6 update) and, like
+   `CAP-002`/`CAP-003`, never contains a live discovery response.** This capture adds concrete
+   named candidates (Fast Pair Service, Accessory Non-Owner Service, Device Information) worth
    checking against once that capture exists.
 4. A repeat of this same GMS-disabled test *without* nRF Connect in the mix (pure system-settings
    pairing, per the original Group S design) would cleanly isolate whether nRF Connect's presence
@@ -341,20 +542,40 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
 - Fragmentation behavior discovered: a single Message Stream message can split its header and
   value across two consecutive RFCOMM packets (§5's frame 2272+2274 correction) — a
   methodological finding relevant to how *all* prior and future captures' RFCOMM data should be
-  reassembled before TLV-parsing, not specific to this capture's content.
+  reassembled before TLV-parsing, not specific to this capture's content. **Extended 2026-08-12
+  (§5a): two more, previously-uncaught instances of the same fragmentation pattern found via a
+  full-session automated reassembler (frames [2360,2361] and [2365,2366]) — this is a recurring
+  behavior, not a single anomaly, and `CAP-001`'s two occurrences of the same logical message were
+  each sent whole (not fragmented) — i.e. fragmentation for a given message type is
+  non-deterministic and any decoder must handle both cases.**
+- **2026-08-12: DLCI 0x08's private Group/Code/Length envelope (groups `0x01`,`0x02`,`0x03`,
+  `0x04`,`0x05`,`0x09`,`0x0e`) is confirmed present, byte-for-byte structurally identical, in
+  `CAP-001` and `CAP-002` as well as this capture — not new to `CAP-004`** (§5a). Frame 2305
+  (Group `0x03` Code `0x02`, 63-byte protobuf value containing `"release_5.203"`) reproduces
+  byte-for-byte in `CAP-002` at frame 49028, ruling out a coincidental/non-TLV reading and
+  confirming this is a real, stable, private envelope distinct from `CAP-002` §3's official-spec
+  DLCI-0x04 channel.
 
 **Not ready yet:**
 - Groups `0x05`/`0x09`'s identity (§5) — search results kept redirecting to Device Information
-  (Group `0x03`) codes `0x05`/`0x06`/`0x09` instead of confirming standalone groups; may be a
-  reassembly artifact rather than genuine separate groups.
-- Frame 2305's precise field mapping (§5) — `"release_5.203"` is confirmed on the wire inside a
-  protobuf-shaped value nominally under Group `0x03` Code `0x02`, but that code is
-  spec-documented as "BLE address updated" (6-byte MAC), incompatible with this 63-byte
-  structure — the header may not be a genuine Message Stream header at all. `CAP-002` §3's open
-  question (which field is the *real* firmware version — `"Revision 6"` or something else)
-  remains open; `"release_5.203"` is now a documented candidate, not a resolved answer.
-- Individual codes within Group `0x04` beyond Ring (§5).
-- Any handle→UUID mapping (§6) — hypotheses only, still needs a real discovery capture.
+  (Group `0x03`) codes `0x05`/`0x06`/`0x09` instead of confirming standalone groups; **not a
+  reassembly artifact (ruled out 2026-08-12, §5a — reassembly is confirmed correct and stable
+  across three independent captures)** — these are genuinely undocumented private group numbers.
+- ~~Frame 2305's precise field mapping (§5)~~ — **resolved 2026-08-12, see §5a: not a genuine
+  Message Stream header collision.** The header IS a real `[Group][Code][Len]` TLV envelope
+  (ruled out pure-protobuf byte-0 reading; confirmed byte-for-byte identical to `CAP-002` frame
+  49028), but it belongs to DLCI 0x08's own private Group/Code namespace, not DLCI 0x04's
+  official-spec namespace `CAP-002` §3 verified — the two `Group 0x03 Code 0x02`s are unrelated
+  messages that happen to share numeric labels. `CAP-002` §3's open question about `"Revision 6"`
+  vs. `"release_5.203"` is now understood as comparing two different channels' fields, not two
+  readings of one field — no longer an unresolved ambiguity, just two independently real values.
+- Individual codes within Group `0x04` beyond Ring (§5) — codes `0x02`–`0x16` now byte-decoded
+  (§5a), several fixed-shape and one (`0x12`) confirmed as a recurring periodic ping, but their
+  semantic *meaning* remains open.
+- Any handle→UUID mapping (§6) — hypotheses only, still needs a real discovery capture;
+  **re-confirmed 2026-08-12 that this capture's own wire traffic cannot supply it either (§6
+  update) — three independent captures (`CAP-002`, `CAP-003`, `CAP-004`) have now all failed to
+  trigger live discovery.**
 - Whether nRF Connect's presence (vs. a pure system-settings flow) influenced any result here
   (§8 item 4).
 - The `libmaestro`/ANC-EQ control channel identity — **still completely unaddressed by any of

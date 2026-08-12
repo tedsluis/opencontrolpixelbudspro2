@@ -89,6 +89,52 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 > channel number alone — a channel number is only ever valid as a label *within the one session*
 > it was observed in.
 
+> **Follow-up (2026-08-12), deskresearch task — channel 1/DLCI 0x02's `0x7e`-delimited content
+> characterized further; still not AVRCP, and not a match to any other known encapsulation
+> either.** Extracted and split every RFCOMM payload on this DLCI (this capture and `CAP-002`'s,
+> which — since it's the same shared buffer — includes this capture's own frames plus many more
+> hours) on the `0x7e` delimiter byte. Every one of the resulting sub-frames starts with a
+> consistent 3-byte micro-header: **byte 0 ∈ {`0x00`, `0x80`}, byte 1 ∈ {`0x3b`, `0x4b`, `0xa5`,
+> `0xa3`}, byte 2 = `0x03` always** (854 sub-frames checked across both files' full logs, zero
+> exceptions to byte 2 being `0x03`). `{00,3b}`/`{00,4b}` only ever appear in "Sent" (phone→Buds)
+> frames; `{00,a5}`/`{80,a3}` only ever appear in "Rcvd" (Buds→phone) frames — direction-correlated,
+> not random. Two payload shapes follow this header:
+> - **Sent** frames: header + a 1-byte length (observed `0x10`=16) + exactly that many opaque
+>   bytes, e.g. frame 1348: `00 4b 03 10 <16 opaque bytes>` — structurally identical to a
+>   length-prefixed AES-128 block.
+> - **Rcvd** frames: header + a rich, cleanly-decodable **protobuf** structure — e.g. frame 1346
+>   contains three repeated 27-byte sub-blocks, each holding a 10-digit device serial number
+>   (`"1779298694"`) paired with the firmware string `"release_5.203"` (`PROTOCOL.md` §0.1's
+>   confirmed baseline) — i.e. this channel independently carries the same firmware string found
+>   elsewhere on DLCI 0x08 (`CAP-002` `FINDINGS.md` §2a), on a *third*, structurally distinct
+>   channel/framing.
+>
+> **Byte-length hypothesis ruled out (negative result):** interpreting byte 1 as an RFCOMM-style
+> EA-extended length byte (`byte1 >> 1`) does **not** match the actual remaining payload length in
+> any sampled frame — byte 1 is a message-type/opcode-like value, not a length field. **CRC/FCS
+> hypothesis inconclusive, not confirmed:** the two trailing bytes before each closing `0x7e` do
+> not match CRC-16/X.25 or CRC-16/CCITT-FALSE computed over the preceding bytes (checked for 3
+> sample frames) — either a different CRC variant is in use, or (more likely, since the payload
+> itself looks like opaque/encrypted data) there is no separate trailer at all and these are simply
+> the value's own final bytes.
+>
+> **Answering this task directly:** this is **not** a byte-for-byte match to any standard, known
+> Bluetooth L2CAP/RFCOMM sub-encapsulation — no such profile uses a bare `0x7e` flag byte with this
+> exact 3-byte micro-header, and it is structurally distinct from both the official Fast Pair
+> Message Stream framing (§2.0/§2.1, which has no `0x7e` flags or fixed 0x03 byte at all) and from
+> DLCI 0x08's private `[Group][Code][Length]` envelope characterized elsewhere in this file and in
+> `CAP-002`/`CAP-004`. It **is** consistent with a proprietary, HDLC/PPP-*style* framing
+> (flag-delimited, no explicit length field, relying on the flag byte for frame boundaries) whose
+> fixed third byte (`0x03`) sits in the exact position — and has the exact value — PPP's own
+> Control field convention uses (RFC 1662, "Unnumbered Information"), though the preceding
+> address-like byte pair does not follow PPP's fixed `0xFF`-address convention (it varies
+> systematically by message kind instead) — so this reads as **a proprietary protocol borrowing the
+> HDLC/PPP flag-and-control-byte idea, not a standards-compliant PPP or L2CAP/RFCOMM sub-channel**.
+> Given its opaque 16-byte "Sent" payloads and rich protobuf "Rcvd" payloads carrying device
+> identity/firmware data, this channel is a plausible candidate for part of `libmaestro` itself or
+> a related proprietary companion-device channel — not confirmed, and out of scope to resolve
+> further in this pass.
+
 **Protobuf framing evidence (🟢 FACT):** frame 1673's payload (channel 4, DLCI 0x08) is
 `09 03 00 00 03 01 00 1b 08 9f 03 10 de af a9 aa 0e 1a 10` + `"Europe/Amsterdam"` (16 ASCII
 bytes). The byte pair `1a 10` immediately preceding the 16-character string decodes as a
@@ -183,6 +229,41 @@ pairing and case/bud housekeeping, which is exactly the isolation failure
 capture with genuinely isolated actions (wait ~10s of silence, single ANC tap, wait ~10s of
 silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL_NOTES.md`.
 
+> **Resolution (2026-08-12), deskresearch task — the `e8e8XX` open question closes to a 🟢 FACT
+> characterization, but NOT as an ANC opcode.** First, a channel-label correction: this bullet
+> says "Channel 4/DLCI 0x08" for the `e8e8` pattern, but §2's own table above (and this capture's
+> raw frames) place it on **Channel 2/DLCI 0x04** — §2's table was correct, this bullet's channel
+> label was not; flagged here rather than silently fixed. Second, and substantively: `CAP-002`'s
+> `btsnoop_hci.log` is the same shared, non-restarted buffer as this capture's (see that file's own
+> header), so it contains many more hours of the same traffic. Filtering the *whole* shared log for
+> the exact byte pattern `e8 e8` (`tshark -r btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "e8:e8"'`)
+> returns 26 frames spanning 08:51:29–08:52:02 (this session's own window, same frames this bullet
+> already found) — no further occurrences later in the ~8h20m buffer, so the exchange itself is
+> tied to this session's activity window, not a background heartbeat that runs all day. Precisely
+> decoded, every frame in this exchange fits the confirmed `[Group][Code][Length:2B-BE][Value]`
+> Message Stream envelope (`PROTOCOL.md` §2.1), on a **previously undocumented Group `0x08`**:
+> ```
+> Rcvd  08 13 00 04  01 e8 e8 XX                                   Group=0x08 Code=0x13 Len=4  (periodic notify)
+> Sent  08 12 00 14  01 e8 e8 XX <16 opaque bytes>                 Group=0x08 Code=0x12 Len=20  (phone's write, echoing the same XX)
+> Rcvd  ff 01 00 06  08 12 01 e8 e8 XX                             Group=0xff Code=0x01 Len=6   (ACK, echoing "08 12 01 e8e8XX" back)
+> ```
+> The `ff 01 00 06 08 12 01 e8 e8 XX` line is a **textbook match to `PROTOCOL.md` §2.1's own
+> documented ACK shape** (`0xFF 0x01 <len> <acked group/code/data>`), applied here to a new group
+> (`0x08`) this project had not previously identified — i.e. this *is* a real, working Message
+> Stream request/notify/ACK cycle, not noise. Across all 26 frames, `XX` takes only **four distinct
+> values: `0x08`, `0x20`, `0x40`, `0x80`** — each a **single set bit** (bit 3, 5, 6, 7 respectively).
+> This is a clean, structural finding that resolves the specific hypotheses this bullet raised:
+> **🟢 FACT — not a modulo-256 (or any) incrementing counter** (a counter would not stay confined to
+> four one-hot values over 26 samples); **not confirmed as a raw timer value either** (a
+> free-running timer would not cluster into exactly four one-hot bit positions). The evidence best
+> fits **a one-hot state/mode flag byte** signaling one of (at least) four mutually-exclusive
+> states via Group `0x08` — plausible candidates include a connection-quality/RSSI tier, a
+> charge-state flag, or an "active component" indicator, **none confirmed**; the *specific*
+> semantic meaning of the bitmask remains 🔴 OPEN QUESTION, narrower and better-defined than the
+> original "ANC-mode byte?" framing this bullet started from. This capture's own six ANC taps
+> happened not to correlate with distinct `e8e8XX` values in any consistent way, which is now
+> understood as expected — this bitmask answers a different question than ANC state entirely.
+
 ## 6. Other open questions raised by this capture
 
 - Why did a BLE link and a still-valid link key both exist *before* the on-screen "Forget" tap
@@ -204,4 +285,10 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL_NO
 2. A passive BLE scan (Group Q #18) to capture the Fast Pair Battery Notification advertisement
    independently, to cross-check against the two conflicting HFP battery indicators found here.
 3. Correlate channel 1/2 traffic against the AVRCP/A2DP specs directly (byte-level) before
-   spending more capture time on them.
+   spending more capture time on them. ~~Partially done 2026-08-12~~ — see the "Follow-up
+   (2026-08-12)" note under §2's table: channel 1/DLCI 0x02 is now characterized in detail
+   (HDLC/PPP-*style* flag-delimited framing, not AVRCP, not standard PPP either) but its exact
+   protocol identity is still unconfirmed; channel 2/DLCI 0x04's `e8e8XX` traffic is now resolved
+   to a Group `0x08` Message-Stream request/notify/ACK cycle with a one-hot state byte (§5's
+   "Resolution (2026-08-12)" note) — neither is AVRCP/A2DP, so this item's original premise (they
+   might be AVRCP/A2DP signaling) is superseded rather than completed as originally framed.
