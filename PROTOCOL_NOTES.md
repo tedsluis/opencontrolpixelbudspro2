@@ -155,10 +155,24 @@ from the official companion app APK using tools like `pbtk`.
 
 | Command | Channel/Msg ID | Protobuf message | Direction | Confidence |
 |---|---|---|---|---|
-| Set ANC mode | TBD | `AncCommand` (name TBD) | App → Buds | 🔴 Low |
-| ANC state notification | TBD | TBD | Buds → App | 🔴 Low |
-| Set EQ band values | TBD | TBD | App → Buds | 🔴 Low |
+| **Set ANC mode** | Fast Pair Message Stream Group `0x08` ("Hearable Controls" `[OFFICIAL-SPEC]`), Code `0x12` "Set ANC state", on DLCI 0x04 (**not** `libmaestro`) | N/A — not protobuf; fixed layout `[Group][Code][Len][Ver][Settable][Enabled][NewMode][16B reserved]` | App → Buds | 🟢 High — **resolved 2026-08-12**, byte-for-byte spec match + 4/4 content+timing correlation against `CAP-001`'s own recorded ANC taps. See `PROTOCOL.md` §4.1, `CAP-001-FINDINGS.md` §5. |
+| **ANC state notification** | Same Group `0x08`, Code `0x13` "Notify ANC state" | N/A — same layout, no "New mode"/reserved fields | Buds → App | 🟢 High — see above |
+| Set EQ band values | TBD — no matching official Fast Pair extension found yet (2026-08-12 spec sweep covered Device Information/Action/Change-Capability/SASS/Hearable-Controls/Acknowledgement/Personalized-Name); `libmaestro` (DLCI 0x02, Pigweed `pw_hdlc`) remains the leading untested candidate | TBD | App → Buds | 🔴 Low |
 | **Ring / Find My Buds action** | Likely Message Stream group `0x04`, code `0x01` per `[OFFICIAL-SPEC]` generic Fast Pair "Action" group | N/A (not protobuf — plain Message Stream data if this hypothesis holds) | App → Buds | 🟡 Medium — **new**, see note below |
+
+**New note on ANC (2026-08-12):** Google's official
+[Hearable Controls](https://developers.google.com/nearby/fast-pair/specifications/extensions/hearablecontrols)
+extension page documents Message Group `0x08` (Get/Set/Notify ANC state, codes `0x11`/`0x12`/`0x13`)
+with a one-hot ANC-mode bitmask (`0x80`=Transparent, `0x40`=Adaptive, `0x20`=Off, `0x08`=ANC) that
+matches `CAP-001-btsnoop_hci.log` byte-for-byte, including a 4/4 content+timing match against that
+capture's own six recorded ANC taps (frames 2039/2132/2159/2193, each followed by the documented
+ACK). This is the project's first fully-resolved control-channel command — full write-up in
+`PROTOCOL.md` §4.1 and `CAP-001-FINDINGS.md` §5's "Full resolution" block. Separately, DLCI 0x02
+(channel 1) was confirmed the same day to be Pigweed `pw_hdlc` framing (flag `0x7E` + `0x7D`-escape
+byte-stuffing + LEB128 address + control byte + CRC-32 FCS, 640/640 sub-frames verified across
+`CAP-001`/`CAP-002`/`CAP-003`) — matching `qzed/pbpctrl`'s own notes that Maestro wraps its pw_rpc
+messages in HDLC U-frames. This is the strongest candidate channel for EQ/other non-ANC settings,
+but its payload content (a pw_rpc/protobuf service) is not yet decoded. See `PROTOCOL.md` §2.2a.
 
 **New note on "Ring" / Find My Buds:** the Fast Pair Message Stream spec's own
 worked ACK example explicitly references action group/code `0x04`/`0x01` for a **ring**
@@ -282,22 +296,26 @@ date and a one-line pointer to the evidence when resolved; add new items here ra
 leaving them buried in a section's prose.
 
 ### Framing
-- [ ] Is `libmaestro`'s ANC/EQ control channel the **same** RFCOMM channel as the Fast
-      Pair Message Stream (§2.0), using a custom/vendor Message Group ID — or a
-      **separate** RFCOMM channel/PSM with its own proprietary envelope (§2 general
-      layout)? This is the single highest-value open question right now; resolving it
-      determines which of the two framing hypotheses to implement `FrameDecoder` against.
-- [ ] If the magic-byte/length/checksum hypothesis (§2 general layout) is confirmed
-      instead: exact magic byte value(s) and length-field endianness.
-- [ ] Checksum algorithm for that hypothesis (CRC16? XOR? absent on some channels?) — note
-      the Message Stream format has no checksum at all, which is evidence against this
-      hypothesis if the two channels turn out to be the same.
+- [ ] **Narrowed 2026-08-12:** is `libmaestro`'s ANC/EQ control channel the **same** RFCOMM
+      channel as the Fast Pair Message Stream (§2.0), using a custom/vendor Message Group
+      ID — or a **separate** RFCOMM channel/PSM with its own proprietary envelope (§2
+      general layout)? For **ANC specifically**, resolved: it's neither — it's the
+      *official* Message Stream's own "Hearable Controls" extension (Group `0x08`), see
+      §4.1. Still open for EQ/other settings and for `libmaestro`'s own channel identity —
+      see `PROTOCOL.md` §2.3's three-channel table for the current picture.
+- [x] **If the magic-byte/length/checksum hypothesis (§2 general layout) is confirmed
+      instead: exact magic byte value(s) and length-field endianness — resolved 2026-08-12
+      for DLCI 0x02 (`PROTOCOL.md` §2.2a):** no magic byte (standard HDLC `0x7E` flag
+      instead); no length field (flag-delimited).
+- [x] **Checksum algorithm for that hypothesis — resolved 2026-08-12 for DLCI 0x02
+      (`PROTOCOL.md` §2.2a):** CRC-32 (IEEE 802.3/zlib, little-endian), matching Pigweed
+      `pw_checksum` exactly; 640/640 sub-frames verified across 3 captures.
 
 ### Commands & Schemas
 - [ ] Real `.proto` file names/full contents, extracted via `pbtk` against the official
       companion app APK (§3.1) — current names are best-guess placeholders.
-- [ ] Channel/Msg ID values for: Set ANC mode, ANC state notification, Set EQ band values
-      (§4.1 opcode table).
+- [x] **Channel/Msg ID values for: Set ANC mode, ANC state notification — resolved
+      2026-08-12**, see §4.1 above and `PROTOCOL.md` §4.1. Set EQ band values remains open.
 - [ ] Confirm the "Ring" / Find My Buds action against the spec's worked example
       (`0x04`/`0x01`) — see the priority tip in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group K.
 - [ ] Whether `hardware_status.proto` (§3.1) exists as a genuine Buds-specific schema, or

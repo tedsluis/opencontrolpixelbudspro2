@@ -105,10 +105,10 @@ _Make sure the buds are connected and active._
 
 | ID | Description | Initiator | Capture scenario(s) | Existence source | Note | Evidence |
 |---|---|---|---|---|---|---|
-| `ANC-001` | ANC → Off | User (App) | B | 🟢 | | — |
-| `ANC-002` | ANC → Noise Cancellation | User (App) | B | 🟢 | Sends a configuration command to the buds. | — |
-| `ANC-003` | ANC → Adaptive | User (App) | B | 🟢🔵 | Pro 2-specific; added in firmware 4.467 (Sept. 2025). Automatically adjusts volume to the environment. | — |
-| `ANC-004` | ANC → Transparency | User (App) | B | 🟢 | | — |
+| `ANC-001` | ANC → Off | User (App) | B | 🟢 | | `PROTOCOL.md` §4.1 |
+| `ANC-002` | ANC → Noise Cancellation | User (App) | B | 🟢 | Sends a configuration command to the buds. | `PROTOCOL.md` §4.1 |
+| `ANC-003` | ANC → Adaptive | User (App) | B | 🟢🔵 | Pro 2-specific; added in firmware 4.467 (Sept. 2025). Automatically adjusts volume to the environment. | `PROTOCOL.md` §4.1 |
+| `ANC-004` | ANC → Transparency | User (App) | B | 🟢 | | `PROTOCOL.md` §4.1 |
 | `CONV-001` | Toggle 'Conversation Detection' on/off | User (App) | C | 🟢 | Switches to Transparency and pauses media when you speak. | — |
 | `MULTI-001` | Toggle 'Multipoint' on/off | User (App) | C | 🟢 | Connects to 2 Bluetooth devices simultaneously; may trigger an SDP/connection update. | — |
 | `EQP-001` | EQ preset: Standard | User (App) | D | 🟢 | Full, fixed preset list from screenshots — each preset is a separate value to capture. | — |

@@ -355,7 +355,62 @@ Unique Code/Value shapes for groups `0x04`/`0x05`/`0x09` (this file's `CAP-004-b
 
 No spec page defines groups `0x05`/`0x09` as freestanding (this file's original §5 finding stands
 — search results keep redirecting to Device Information's own `0x05`/`0x06`/`0x09` *codes*, not a
-same-numbered *group*). **Answering this task's literal question:** with the sole exception of Code
+same-numbered *group*).
+
+> **Task 3 (2026-08-12): are Groups `0x05`/`0x09` genuine standalone groups, or is the group byte
+> actually part of the preceding message (an alternative packing this section already flagged as
+> possible)? Tested directly — genuine standalone groups, confirmed, not a reassembly artifact.**
+> The stream-reassembling parser from §5a (below) was run over DLCI 0x08's **entire** byte stream —
+> not just the initial burst — for all four captures. Result: **every single one of 99 (`CAP-001`),
+> 273 (`CAP-002`), 27 (`CAP-003`), and 66 (`CAP-004`) reassembled TLV messages parses cleanly, with
+> exactly 0 leftover/unaccounted bytes at the end of each session's stream, and zero parse errors
+> (no `INCOMPLETE`, no invalid-protobuf-field-0 markers) anywhere.** Groups `0x05` and `0x09`
+> specifically occur 5–13 and 6–13 times respectively across the four sessions, every occurrence
+> cleanly bounded and, where non-empty, decoding as well-formed protobuf (e.g. Group `0x05` Code
+> `0x0a`'s value consistently decodes to the same build-ID string shape, `field1="713f855"`,
+> across all four captures). **This rules out the "group byte belongs to the previous message"
+> alternative decisively, not just weakly:** if the true message boundaries were different from
+> what a naive `[Group][Code][Len][Value]` read produces, the parser would desync somewhere across
+> hundreds of independently-timed messages spanning four separate capture sessions (one of them,
+> `CAP-002`, effectively covering many hours) — it never does, not once. **Conclusion: Groups
+> `0x05` and `0x09` are genuine, self-contained, standalone Message-Stream-shaped groups on DLCI
+> 0x08's private envelope — confirmed 🟢 FACT for "these are real groups, not a parsing artifact."**
+> Their *semantic identity* (what a private Group `0x05`/`0x09` on this specific, non-Fast-Pair-spec
+> channel actually represents) remains 🔴 OPEN QUESTION, unchanged — this task only closes the
+> structural question, not the meaning.
+
+> **Task 5 (2026-08-12): correlating Group `0x04`'s individual codes (`0x02`–`0x16`) against each
+> capture's own `CAP-00n-EVENT-NOTES.md` timeline.** Two clearly different behavior classes emerge:
+>
+> - **Codes `0x02`, `0x04`, `0x05`, `0x11`, `0x13`, `0x14`, `0x15`, `0x16`** — in **every** capture
+>   that opens DLCI 0x08 (`CAP-001`, `CAP-002`, `CAP-003`, `CAP-004`), every occurrence of these
+>   codes falls within ~1 second of the channel opening, before any subsequent user/hardware event
+>   in that session's own timeline. **Correlation: 100% with "DLCI 0x08 has just opened" (connection
+>   setup), 0% with any later, discrete hardware/app event** — consistent with, and reinforcing,
+>   this section's existing "one-time setup handshake" characterization. No further event-level
+>   meaning is extractable from existing captures; these codes never recur, so there is nothing
+>   later to correlate against.
+> - **Code `0x12`** — the sole recurring code, already flagged as a "periodic ping." Precise timing
+>   across all occurrences (this capture and `CAP-002`, the two sessions with enough post-setup
+>   duration to check) shows the *interval* is **not fixed** (gaps of 4–30s, no consistent period),
+>   but the *value* alternates near-perfectly between `field1=2` and `field1=3` on almost every
+>   occurrence (23 consecutive toggles in this capture's own tail, one exception where two
+>   consecutive `field1=3` reads land 79ms apart — frames 2766/2770). An irregular-interval,
+>   strictly-alternating pattern is a better fit for a **toggling liveness/sequence-parity bit**
+>   (marking successive keep-alive pings) than for a real physical state (which would not toggle
+>   with such regularity independent of what's actually happening physically) — 🟡 HYPOTHESIS, not
+>   claimed as FACT.
+>
+> **Per this task's own instruction, flagged for Fase 2 Taak 8 (needs a new, isolated capture, not
+> resolvable from existing data):** Code `0x12`'s exact trigger. A capture that brackets a specific,
+> known physical event (bud removed from ear, case closed, a deliberate multi-minute idle wait)
+> while recording this code's occurrences would show whether the toggle sequence ever *breaks* or
+> *skips* at that moment (supporting an event-driven reading) or continues its regular alternation
+> unperturbed (supporting a free-running liveness counter). None of the codes in the first bullet
+> above need a new capture to resolve further — they are fully explained as connection-setup
+> handshake content by the data already in hand.
+
+**Answering this task's literal question:** with the sole exception of Code
 `0x0a`'s embedded build-ID string, none of groups `0x04`/`0x05`/`0x09`'s values are ASCII —
 they're small, fixed-length (0/2/4/13 bytes) varint-encoded protobuf fragments, consistent with a
 capability/feature-flag negotiation rather than data transfer. Combined with (a) every one of these

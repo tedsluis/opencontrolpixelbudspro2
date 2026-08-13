@@ -98,7 +98,13 @@ tracking).
       (`PROTOCOL.md` §5, currently an ⚪ ASSUMPTION)
 - [ ] Bring the first command (e.g. battery status via the Fast Pair Battery
       Notification, `PROTOCOL.md` §4.3 Option A) to full 🟢 FACT status
-- [ ] Bring ANC mode switching to full 🟢 FACT status (`PROTOCOL.md` §4.1)
+- [x] Bring ANC mode switching to full 🟢 FACT status (`PROTOCOL.md` §4.1) —
+      **done 2026-08-12** via deskresearch correlation against the official
+      Fast Pair "Hearable Controls" spec + `CAP-001`'s existing capture (not a
+      fresh, purpose-built experiment — a properly isolated Group B capture,
+      per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4, is still recommended before
+      implementation to remove the last residual uncertainty; see
+      `PROTOCOL.md` §4.1's own "Verified with experiment" note)
 - [ ] Log every hypothesis test in `EXPERIMENTS.md` before promoting a finding
       from HYPOTHESIS to FACT (`PROJECT_RULES.md` §4)
 

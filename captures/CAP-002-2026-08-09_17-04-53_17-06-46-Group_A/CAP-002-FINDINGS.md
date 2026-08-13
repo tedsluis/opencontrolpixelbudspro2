@@ -63,7 +63,7 @@ session over PSM 0x0003, starting immediately after encryption completes.
 | 6 | 0x0c | 930, labeled **"Hands-Free"** directly by Wireshark's SDP-driven heuristic | 937 | **No plaintext AT-command byte stream was found on this channel in this capture** — differs from `CAP-001`, where a full HFP AT handshake (`AT+BRSF`, `AT+CIND`, `AT+BIEV=2,100`, etc.) was clearly visible. See §5 open question. | 🔴 OPEN QUESTION |
 | 4 | 0x08 | 933 | Short frames (4–69 bytes) in the initial 17:05:34.5–34.8 burst only; not decoded in this pass | 🔴 OPEN QUESTION |
 | 5 | 0x0a | 978 | No data-carrying frames observed | 🔴 OPEN QUESTION (same as `CAP-001`) |
-| 1 | 0x02 | 1125 | `0x7e`-delimited HDLC-style frames, same shape as `CAP-001`'s channel-1 traffic | 🟡 HYPOTHESIS — still unconfirmed byte-for-byte, but the structural match to `CAP-001` across two independent sessions (one reconnect, one fresh pair) is itself evidence this is a stable, real protocol, not noise |
+| 1 | 0x02 | 1125 | `0x7e`-delimited HDLC-style frames, same shape as `CAP-001`'s channel-1 traffic | 🟢 FACT (2026-08-12) — confirmed as Pigweed `pw_hdlc` framing (CRC-32 FCS verified 100% match, including this session's own 371 frames); see `CAP-001-FINDINGS.md` §2 "Upgrade (2026-08-12)" and `PROTOCOL.md` §2.2a for the full evidence |
 | 2 | 0x04 | 1251, closed 17:05:42 (frame 1486), reopened 17:05:47 (frame 1541) | **Fast Pair Message Stream, Device Information group — spec-verified, see §3** | 🟢 FACT (framing + group + two field codes spec-verified 2026-08-10; upgraded from `CAP-001`'s 🔴) |
 
 **Correction to `CAP-001`'s write-up:** `CAP-001`'s `CAP-001-FINDINGS.md` §2 speculated channel 2/DLCI
@@ -88,40 +88,44 @@ content) — **this session's burst is markedly richer** (39 messages vs. `CAP-0
 exchange. Full burst, 17:05:34.509–34.601 (frames 48917–49030 in this file's own numbering):
 
 ```
-frame 48981  Group=0x05 Code=0x0c Len=0
-frame 48983  Group=0x04 Code=0x02 Len=0
-frame 48985  Group=0x04 Code=0x04 Len=0
-frame 48986  Group=0x04 Code=0x11 Len=0
-frame 48988  Group=0x04 Code=0x13 Len=0
-frame 48991  Group=0x04 Code=0x15 Len=0
-frame 48993  Group=0x0e Code=0x04 Len=0
-frame 48999  Group=0x05 Code=0x0a Len=13  value: pb field1="713f855" field2=64 field3=0
-frame 49001  Group=0x03 Code=0x01 Len=27  value: pb field1=415 field2=3876506722 field3="Europe/Amsterdam"
+frame 48981  050c0000                                                              Group=0x05 Code=0x0c Len=0
+frame 48983  04020000                                                              Group=0x04 Code=0x02 Len=0
+frame 48985  04040000                                                              Group=0x04 Code=0x04 Len=0
+frame 48986  04110000                                                              Group=0x04 Code=0x11 Len=0
+frame 48988  04130000                                                              Group=0x04 Code=0x13 Len=0
+frame 48991  04150000                                                              Group=0x04 Code=0x15 Len=0
+frame 48993  0e040000                                                              Group=0x0e Code=0x04 Len=0
+frame 48999  050a000d0a073731336638353510401800                                    Group=0x05 Code=0x0a Len=13  pb: field1="713f855" field2=64 field3=0
+frame 49001  0301001b089f0310e298bbb80e1a104575726f70652f416d7374657264616d09030000
+             Group=0x03 Code=0x01 Len=27  pb: field1=415 field2=3876506722 field3="Europe/Amsterdam"
              + Group=0x09 Code=0x03 Len=0   (both packed in one 35-byte write, unlike CAP-004's fragmented instance)
-frame 49002  Group=0x04 Code=0x03 Len=4   value: pb field2=5 field3=100
-frame 49004  Group=0x04 Code=0x05 Len=2   value: pb field1=3
-frame 49007  Group=0x04 Code=0x12 Len=4   value: pb field1=2 field2=1
-frame 49009  Group=0x04 Code=0x14 Len=2   value: pb field1=1
-frame 49014  Group=0x04 Code=0x16 Len=2   value: pb field1=2
-frame 49020  Group=0x0e Code=0x02 Len=26  value: pb field1="google-pixel-buds-pro-v1"
-frame 49024  Group=0x0e Code=0x01 Len=35  value: pb field1="all" + nested field2 x3 (varint triples)
-frame 49028  Group=0x03 Code=0x02 Len=63  value: pb — byte-for-byte identical to CAP-004 frame 2305
+frame 49002  0403000410051864                                                      Group=0x04 Code=0x03 Len=4   pb: field2=5 field3=100
+frame 49004  040500020803                                                          Group=0x04 Code=0x05 Len=2   pb: field1=3
+frame 49007  0412000408021001                                                      Group=0x04 Code=0x12 Len=4   pb: field1=2 field2=1
+frame 49009  041400020801                                                          Group=0x04 Code=0x14 Len=2   pb: field1=1
+frame 49014  041600020802                                                          Group=0x04 Code=0x16 Len=2   pb: field1=2
+frame 49020  0e02001a0a18676f6f676c652d706978656c2d627564732d70726f2d7631         Group=0x0e Code=0x02 Len=26  pb: field1="google-pixel-buds-pro-v1"
+frame 49024  0e0100230a210a03616c6c121a0a060864100118010a060864100118020a060839100118032001
+             Group=0x0e Code=0x01 Len=35  pb: field1="all" + nested field2 x3 (varint triples)
+frame 49028  0302003f08061001220d72656c656173655f352e3230332a0030e60138004a0737313366383535500060b1dbe80670027801a80101b00101ba01020102c00101c80101
+             Group=0x03 Code=0x02 Len=63  pb — byte-for-byte identical to CAP-004 frame 2305
              (field4="release_5.203", field9="713f855", see CAP-004 CAP-004-FINDINGS.md §5a Task 2)
-frame 49030  Group=0x09 Code=0x02 Len=2   value: pb field1=0
+frame 49030  090200020800                                                          Group=0x09 Code=0x02 Len=2   pb: field1=0
 ```
 
 Immediately followed, still within the same burst window (frames 49052–49089), by content **not
 seen in `CAP-001` or `CAP-004`'s captured windows at all** — new groups `0x01` and `0x02`:
 
 ```
-frame 49066  Group=0x01 Code=0x07 Len=14  value: pb field1=16000 field2=24 field3=1200 field4=2 field5=0 field6=1
-frame 49081  Group=0x02 Code=0x05 Len=2   value: pb field1=0
-frame 49083  Group=0x02 Code=0x04 Len=23  value: pb field1=1 field3=0 field4=0 field5="release_5.203" field7=3
-frame 49084  Group=0x02 Code=0x05 Len=2   value: pb field1=1
-frame 49086  Group=0x02 Code=0x04 Len=65  value: pb field1=1 field3=0 field4=1 field5="release_5.203" field7=4
+frame 49066  0107000e08807d101818b009200228003001                                 Group=0x01 Code=0x07 Len=14  pb: field1=16000 field2=24 field3=1200 field4=2 field5=0 field6=1
+frame 49081  020500020800                                                          Group=0x02 Code=0x05 Len=2   pb: field1=0
+frame 49083  020400170801180020002a0d72656c656173655f352e3230333803               Group=0x02 Code=0x04 Len=23  pb: field1=1 field3=0 field4=0 field5="release_5.203" field7=3
+frame 49084  020500020801                                                          Group=0x02 Code=0x05 Len=2   pb: field1=1
+frame 49086  020400410801180020012a0d72656c656173655f352e323033380442093637373536323631374a0863617065325f736d5a133530306d0a3530306e0a3530306f0a35303070
+             Group=0x02 Code=0x04 Len=65  pb: field1=1 field3=0 field4=1 field5="release_5.203" field7=4
              field8="677562617" field9="cape2_sm" field11="500m\n500n\n500o\n500p" (raw bytes, contains \n)
-frame 49087  Group=0x02 Code=0x0b Len=8   value: pb field1=1 field2="500p"
-frame 49089  Group=0x02 Code=0x06 Len=4   value: pb field1=11 field2=1
+frame 49087  020b00080801120435303070                                             Group=0x02 Code=0x0b Len=8   pb: field1=1 field2="500p"
+frame 49089  02060004080b1001                                                     Group=0x02 Code=0x06 Len=4   pb: field1=11 field2=1
 ```
 
 Group `0x02` Code `0x04`'s value is the richest single field found on this DLCI across all four
@@ -143,6 +147,43 @@ from 🔴 OPEN QUESTION to 🟢 FACT for "this is a decodable, cross-capture-con
 Group/Code/Length envelope, not raw undecoded noise" — the *identity/purpose* of the private
 protocol itself (is this `libmaestro`'s own setup handshake, or a lower-level Nearby/CDM companion
 negotiation independent of Fast Pair?) remains 🔴 open, unchanged.
+
+> **Task 2 (2026-08-12): spec research on Groups `0x01`/`0x02` — negative result, and why that's
+> the expected outcome, not a research gap.** Targeted lookups against every Fast Pair Message
+> Stream extension page found so far — Device Information (`0x03`), Device Action (`0x04`), Change
+> Capability (`0x06`), SASS (`0x07`), Hearable Controls (`0x08`), Acknowledgement (`0xFF`),
+> Personalized Name (uses a different, GATT-based framing, no Message Stream group at all) — find
+> **no page documenting a standalone Message Group `0x01` or `0x02`.** Unlike Code `0x0a` (§3's
+> Task 4/6 addenda), which sits on DLCI 0x04, the *official* Message Stream channel, Groups `0x01`
+> and `0x02` here sit on **DLCI 0x08** — the private, non-Fast-Pair-spec envelope already
+> established (§2a above, `CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md` §5a) to reuse Group
+> numbers `0x03`/`0x04`/`0x05`/`0x09`/`0x0e` for content unrelated to their official DLCI-0x04
+> meanings. A negative search result for `0x01`/`0x02` is therefore the **expected**, consistent
+> outcome, not a gap — there is no reason to expect DLCI 0x08's private numbering to intersect
+> Google's official group IDs at all, and it doesn't. Left as 🔴 OPEN QUESTION for identity (same as
+> Groups `0x05`/`0x09`, see `CAP-004-FINDINGS.md` §5a/Task 3 below), explicitly **not** attempted to
+> resolve via generic "Fast Pair spec" search, per this task's own instruction to search narrowly.
+>
+> **Numeric-value comparison against audio-codec parameters, as requested — one plausible,
+> unconfirmed match, rest inconclusive.** Group `0x01` Code `0x07`'s value (`field1=16000, field2=24,
+> field3=1200, field4=2, field5=0, field6=1`, frame 49066): `16000` is a **recognizable, common
+> audio sample rate** (16 kHz — "wideband"/"super-wideband" speech, used by e.g. the Bluetooth HFP
+> mSBC codec and several LE Audio profiles) — a plausible, not confirmed, reading for `field1`.
+> `24` does not cleanly match a common bit-depth (16/24/32-bit PCM would usually appear as `16` or
+> `24` for depth specifically, so this is *possible* as bit-depth, but equally could be a channel
+> count, gain, or unrelated index — no way to disambiguate from one value alone). `1200` does not
+> match any standard Bluetooth audio bitrate/latency convention checked (typical SBC/AAC bitrates
+> run in the tens-to-hundreds-of-kbps range, not 1200; 1200 ms would be an unusually long latency
+> figure for an audio pipeline) — no plausible unit identified. **Group `0x02` Code `0x04`'s
+> numeric fields** (`field1∈{0,1}`, `field7∈{3,4}`) are small enough to be simple flags/counters,
+> not codec parameters. **Conclusion, stated as a negative result per this task's own instruction:**
+> beyond the single plausible 16000 Hz sample-rate reading, no confirmed or even strongly
+> suggestive codec-capability-negotiation match was found — the surrounding fields (hardware
+> codename `"cape2_sm"`, build ID `"677562617"`/`"713f855"`, config variants `"500m"`–`"500p"`,
+> firmware string `"release_5.203"`) point more toward a general **device/build-identity dump**
+> than an audio-codec negotiation specifically, which better fits this whole burst's already-
+> established character as a one-time capability/setup handshake (§2a) than a per-call codec
+> negotiation would.
 
 ## 3. Fast Pair Message Stream — Device Information group (🟢 FACT, spec-verified 2026-08-10)
 
@@ -301,6 +342,25 @@ pages directly (not a search-summary), specifically
 > completely both times, ruling out any static function of the address alone. Consistent with a
 > per-message nonce or salt; actual purpose remains 🔴 OPEN QUESTION — Google's own spec table for
 > this Message Group (fetched 2026-08-10, above) does not list code `0x0a` at all.
+>
+> **Task 4 (2026-08-12): searched every other known Fast Pair extension page for code `0x0a` under
+> a different group — negative result, documented explicitly rather than left unchecked.** Checked:
+> [Find Hub Network / FMDN](https://developers.google.com/nearby/fast-pair/specifications/extensions/fmdn)
+> (code `0x0A` exists there, but as a "Ranging Capability Request/Response" **Data ID** in the
+> unrelated Precision Finding operation table — a different framing entirely from the Message
+> Stream `[Group][Code][Length][Value]` structure this section is about, so not a match, despite
+> the numeric coincidence); [SASS](https://developers.google.com/nearby/fast-pair/specifications/extensions/sass)
+> (full 14-entry code table checked, `0x0a` absent); [Device Action](https://developers.google.com/nearby/fast-pair/specifications/extensions/deviceaction)
+> and [Hearable Controls](https://developers.google.com/nearby/fast-pair/specifications/extensions/hearablecontrols)
+> (codes documented there — `0x01`/`0x11`-`0x16` and `0x11`-`0x13` respectively — do not include
+> `0x0a` either). **No group-independent or shared "code `0x0a`" convention was found anywhere.**
+> Combined with the Device Information page's own code table deliberately running `...0x08, 0x09,
+> 0x0B` (skipping `0x0A` outright, not merely omitting it from an incomplete excerpt, per the
+> original 2026-08-10 research), this strengthens rather than resolves the open question: `0x0A`
+> looks like a genuinely reserved or deliberately-unpublished code specifically within the Device
+> Information group, not a documented cross-group convention — consistent with, but not proof of,
+> it being an intentionally undocumented/private field Google chose not to publish. Left at 🔴 OPEN
+> QUESTION, now on a more thoroughly checked basis.
 
 ## 4. No RFCOMM traffic during app setup — resolved: it moves to BLE/GATT (🟢 FACT)
 
@@ -494,6 +554,9 @@ bar:
 - The Group-0x03 Device Information TLV burst documented in §3 does **not** fragment across RFCOMM
   packets, confirmed across all 7 occurrences found in this file's full 8h20m log (2026-08-12,
   §3 addendum) — a negative result worth recording per `PROJECT_RULES.md` rule 12.
+- **Channel 1/DLCI 0x02's framing is Pigweed `pw_hdlc` (CRC-32 FCS verified, 100% match)** —
+  §2's table updated 2026-08-12; see `PROTOCOL.md` §2.2a and `CAP-001-FINDINGS.md` §2 for the
+  full evidence. Promotes `PROTOCOL.md` §2.2's framing placeholder to FACT for this channel.
 
 **Not ready yet (needs more evidence before promotion):**
 - Code `0x0a`'s meaning (§3) — genuinely undocumented in the spec page retrieved; the 2026-08-12

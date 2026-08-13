@@ -101,18 +101,131 @@ A point against this hypothesis: the officially documented Message Stream
 format (§2.1) has **no** checksum field at all, which is inconsistent with this
 hypothesis if the two channels turn out to be the same one.
 
+### 2.2a Hypothesis B, resolved for one specific channel — DLCI 0x02 is Pigweed `pw_hdlc` framing
+
+🟢 **FACT** (2026-08-12, deskresearch task, evidence below) that the RFCOMM
+channel documented as "channel 1/DLCI 0x02" in `CAP-001-FINDINGS.md` §2 (and
+its `CAP-002`/`CAP-003` counterparts) is **not** an unidentified proprietary
+envelope, but a byte-for-byte match to **Pigweed's `pw_hdlc` wire format**
+(https://pigweed.dev/pw_hdlc/), the exact transport `qzed/pbpctrl`'s own
+project notes describe Maestro as using — see
+`https://raw.githubusercontent.com/qzed/pbpctrl/main/docs/Notes.md`,
+consulted per `AGENTS.md` §12/`DECISIONS.md` ADR-003 (protocol *knowledge*
+only, no code reused): *"The protocol is implemented using the pigweed RPC
+library... the RPC messages are wrapped in High-Level Data Link Control
+(HDLC) U-frames."*
+
+**Confirmed field-by-field, replacing §2.2's placeholder row for this channel:**
+
+| §2.2 placeholder field | Confirmed value on DLCI 0x02 | Confidence |
+|---|---|---|
+| Magic bytes | Not a magic byte — standard HDLC flag `0x7E` delimits every frame (start **and** end), with `0x7D`-prefixed byte-stuffing (escaped byte `X` transmitted as `0x7D (X XOR 0x20)`) for any literal `0x7E`/`0x7D` in the frame body — this is why naive byte-splitting on `0x7E` alone previously looked structurally messy | 🟢 High — verified below |
+| Payload length | No explicit length field — flag-delimited framing makes one unnecessary (length = distance to the next unescaped `0x7E`) | 🟢 High |
+| Channel / Message ID | An HDLC **Address** field, LEB128-varint-encoded (1–3+ bytes) immediately after the opening flag, followed by a single **Control** byte. Two distinct address values observed: `0x00` (both directions) and `0xD180`/53632 (Buds→phone only) — plausibly two multiplexed pw_rpc channels, though Google's exact channel-ID scheme (not the pw_rpc default of `82`) is not otherwise documented | 🟢 High for the field's existence/position; 🟡 Medium for what the two specific values mean |
+| Checksum/CRC | **Confirmed as CRC-32 (IEEE 802.3 / zlib polynomial, little-endian byte order)** over the unescaped Address+Control+Data — exactly matching Pigweed's documented use of `pw_checksum`'s CRC-32 frame check sequence | 🟢 High — see verification below |
+
+**Verification method:** exported every RFCOMM payload on this DLCI across `CAP-001`, `CAP-002`,
+`CAP-003` (`CAP-004` never opens this channel) via
+`tshark -r CAP-NNN-btsnoop_hci.log -Y "btrfcomm.dlci==0x02 and btrfcomm.len > 0" -T fields -e frame.number -e frame.time_epoch -e data.data`,
+split each RFCOMM payload on the `0x7E` flag byte, HDLC-unescaped each resulting
+sub-frame (`0x7D <X>` → `X XOR 0x20`), then computed `zlib.crc32()` over
+everything except the trailing 4 bytes and compared:
+
+```python
+def unescape_hdlc(data):
+    out = bytearray(); i = 0
+    while i < len(data):
+        b = data[i]
+        if b == 0x7d:
+            i += 1
+            out.append(data[i] ^ 0x20)
+        else:
+            out.append(b)
+        i += 1
+    return bytes(out)
+
+body, trailer = unescape_hdlc(subframe)[:-4], unescape_hdlc(subframe)[-4:]
+assert struct.pack('<I', binascii.crc32(body) & 0xffffffff) == trailer
+```
+
+**Result: 640/640 sub-frames matched (100%), across all three independent captures, zero
+exceptions.** Example (`CAP-001` frame 1348, `00 4b 03 10 15 1d ea 71 de 7d 5e 25 e3 a5 ec 28
+f9 67 61 b5`): unescaping the `7d 5e` sequence yields the true byte `0x7e` (`5e XOR 20`), after
+which `crc32(00 4b 03 10 15 1d ea 71 de 7e 25 e3 a5 ec 28) = f9 67 61 b5` (little-endian) —
+matches the trailing 4 bytes exactly. Before applying the unescape step, only sub-frames that
+happened to contain no literal `0x7D`/`0x7E` bytes matched (a subset); after unescaping, the
+match rate is unconditional. This is a reproducible, standard-algorithm match, not a coincidental
+byte pattern — per `PROJECT_RULES.md` §1's promotion rule (byte-for-byte match to a documented
+mechanism, replicated across ≥2 independent captures), **the framing mechanism itself (flag +
+escape + LEB128 address + control + CRC-32) is promoted to 🟢 FACT.**
+
+**What remains HYPOTHESIS, not promoted:** that this specific channel *is* `libmaestro`'s settings
+channel specifically (as opposed to some other Pigweed-RPC-based Google service) — `pbpctrl`'s
+notes describe Maestro's *transport* this way but do not give a DLCI/channel number, and no
+Maestro-specific *content* (an ANC-mode-change command, an EQ write, or any decoded pw_rpc
+service/method name) has been decoded from this channel's payload bytes yet — the "Rcvd"-direction
+payloads decode as protobuf (device serial `"1779298694"` + firmware `"release_5.203"`, per
+`CAP-001-FINDINGS.md` §2) and the "Sent"-direction payloads remain opaque 16-byte-ish blocks.
+**🟡 HYPOTHESIS (strong):** DLCI 0x02 is `libmaestro`'s pw_rpc channel. Still requires either (a) a
+pw_rpc/protobuf schema to decode the opaque "Sent" payloads and recognize an actual ANC/EQ
+method call, or (b) a properly isolated capture (Group B, single ANC/EQ action per window)
+correlating a specific "Sent" write here with a specific user action, before this can move to 🟢
+FACT.
+
+**Per `AGENTS.md` §6 / `ARCHITECTURE.md` §2.1's implementation gate:** this FACT-level framing
+confirmation covers the *wire envelope* for one specific channel, not the full §2.3 question below
+(which channel(s) carry `libmaestro`'s actual settings commands, and what their protobuf schema
+is). `FrameEncoder`/`FrameDecoder` implementation still requires a `DECISIONS.md` ADR recording
+this determination before any code is written against it — not added here, since that ADR is a
+maintainer sign-off decision per `AGENTS.md` §6's own reasoning ("cheap insurance against an AI
+agent... mis-promoting a hypothesis to FACT under implementation pressure"), flagged for the
+maintainer rather than added unilaterally by this research pass.
+
+**DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
+assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
+`[Group:1][Code:1][Length:2B-BE][Value]` envelope (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md`
+§5a) has an explicit length field HDLC framing doesn't need. It is architecturally a **third**,
+independent private protocol — neither the official Fast Pair Message Stream (DLCI 0x04, §2.1,
+spec-verified) nor Maestro's Pigweed-HDLC channel (DLCI 0x02, above) — still 🔴 unidentified. See
+§2.3 below for how this reframes the central open question.
+
 ### 2.3 Open question and resolution path
 
-**This is the single highest-value open protocol question right now:** is
-`libmaestro`'s ANC/EQ control channel the *same* RFCOMM channel as the Fast
-Pair Message Stream (§2.1), using a custom/vendor Message Group ID — or a
-*separate* RFCOMM channel/PSM with its own proprietary envelope (§2.2)?
+**Original framing (superseded by the finding above, kept for the record per `PROJECT_RULES.md`
+§3's non-destructive-correction convention):** is `libmaestro`'s ANC/EQ control channel the *same*
+RFCOMM channel as the Fast Pair Message Stream (§2.1), using a custom/vendor Message Group ID — or
+a *separate* RFCOMM channel/PSM with its own proprietary envelope (§2.2)?
 
-**Resolution path:** in a capture, check whether ANC/EQ command frames on the
-RFCOMM data channel start with a plausible Message Group/Code pair followed by
-a 2-byte big-endian length matching the rest of the frame. If so, that is
-strong evidence for §2.1. See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` and open
-question tracking in §6 below.
+**Update (2026-08-12):** this is no longer a clean binary choice — three structurally distinct
+RFCOMM sub-protocols are now evidenced across the four captures to date, all coexisting within the
+same RFCOMM multiplexer session:
+
+| DLCI | Framing | Status | Content |
+|---|---|---|---|
+| 0x04 | Official Fast Pair Message Stream (§2.1) | 🟢 FACT (spec-verified, `CAP-002-FINDINGS.md` §3) | Device Information (Group `0x03`), SASS (Group `0x07`), and the officially-documented **Hearable Controls extension (Group `0x08`)** — Get/Set/Notify ANC state, see §4.1 below; GMS-dependent (absent in `CAP-004`, §4a there) |
+| 0x02 | Pigweed `pw_hdlc` (§2.2a) | 🟢 FACT for the framing; 🟡 HYPOTHESIS (strong) that this is specifically `libmaestro` | Opaque ~16-byte "Sent" blocks (phone→Buds, unresolved content) and protobuf-decodable "Rcvd" blocks (device serial + firmware) — not GMS-dependent (present regardless in every capture that opens it) |
+| 0x08 | Private, undocumented `[Group][Code][Length][Value]` envelope, structurally resembling §2.1's shape but with its own Group/Code numbering (`CAP-004-FINDINGS.md` §5a) | 🟢 FACT that it's a real, decodable envelope; 🔴 OPEN QUESTION what protocol it belongs to | One-time capability/setup handshake + a low-rate periodic status ping; not GMS-dependent (`CAP-004-FINDINGS.md` §4b) |
+
+**Resolved for ANC specifically (2026-08-12) — DLCI 0x04's Group `0x08` carries the actual ANC
+set/get/notify commands, on the *official* Fast Pair Message Stream, not a proprietary envelope.**
+See §4.1 below for the full byte-level evidence: Google's own "Hearable Controls" extension page
+documents Group `0x08` Codes `0x11`/`0x12`/`0x13` (Get/Set/Notify ANC state) with an exact,
+byte-for-byte match to frames already present in `CAP-001`, including a clean content-and-timing
+correlation to 4 of that capture's 6 recorded ANC taps. This resolves this section's original
+question for the ANC feature specifically — it does **not** ride on `libmaestro` (DLCI 0x02) or
+the DLCI-0x08-private-envelope at all. **What remains open:** whether EQ, touch/head-gesture
+config, and other non-ANC settings follow the same pattern (an as-yet-undiscovered official Fast
+Pair extension) or genuinely require `libmaestro`'s separate channel (DLCI 0x02) — `libmaestro`'s
+own opaque "Sent" payloads there remain undecoded, so this is not yet answered either way for
+those features.
+
+**Resolution path (updated):** for EQ/touch/other settings, first check whether any further
+official Fast Pair extension pages (beyond Hearable Controls, Device Action, SASS, Device
+Information) document a matching Group ID before assuming `libmaestro`/DLCI 0x02 involvement — the
+ANC case shows the "proprietary envelope" assumption was wrong for at least one whole feature
+area. Where no official extension covers it, decode DLCI 0x02's opaque "Sent" payloads (most
+plausibly via a pw_rpc/protobuf service definition, once extracted per §3) or correlate one
+against an isolated action (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group B, properly isolated this time).
 
 **Handling rule (unchanged regardless of which hypothesis is confirmed, per
 `AGENTS.md` §6 and `ARCHITECTURE.md` §5):** any checksum mismatch, or any frame
@@ -144,15 +257,65 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
 - **Feature states confirmed present in the UI** (firmware `release_5.203`):
   Off, Active (Noise Cancellation), Aware (Transparency), Adaptive. Status: 🟢
   FACT (UI presence, via screenshots).
-- **Opcode/payload structure**: not yet extracted — pending §2.3 resolution and
-  `.proto` extraction (§3).
-- **Sent to**: RFCOMM control channel (exact channel/framing pending §2.3).
-- **Expected response**: an ANC state notification frame; exact structure
-  unconfirmed.
-- **Status**: 🔴 unconfirmed at the byte level (channel/Msg ID, payload layout).
-- **Evidence**: UI presence only (`SCREENSHOTS_PIXEL_BUDS_APP.md`,
-  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1). No capture evidence yet.
-- **Verified with experiment**: none yet — see `EXPERIMENTS.md`.
+- **Opcode/payload structure — 🟢 FACT, resolved 2026-08-12.** Google's official
+  Fast Pair ["Hearable Controls"](https://developers.google.com/nearby/fast-pair/specifications/extensions/hearablecontrols)
+  extension (`[OFFICIAL-SPEC]`) documents Message Group `0x08` with three codes:
+
+  | Code | Name | Direction | MAC | ACK |
+  |---|---|---|---|---|
+  | `0x11` | Get ANC state | Seeker → Provider | N | N |
+  | `0x12` | Set ANC state | Seeker → Provider | Y | Y |
+  | `0x13` | Notify ANC state | Provider → Seeker | N | N |
+
+  **"Set ANC state" (`0x12`) layout** (`[Group:1][Code:1][Len:2BE][Seeker version:1][ANC
+  settable modes:1][ANC enabled modes:1][New ANC mode index:1][Reserved:16, present iff
+  Len=`0x14`]`), and the mode-index byte uses a one-hot bitmask, bit numbering as given on the
+  spec page (`Bit 0` = spec's own MSB-first convention): `Bit 0`=Transparent, `Bit 1`=Adaptive,
+  `Bit 2`=Off, `Bit 3`=Reserved, `Bit 4`=ANC — i.e. in standard bit-position terms, bit7=Transparent,
+  bit6=Adaptive, bit5=Off, bit3=ANC.
+- **Byte-level match against `CAP-001`, exact, no discrepancy:** four `08 12 00 14 01 e8 e8 XX
+  <16 reserved bytes>` frames exist in `CAP-001-btsnoop_hci.log` (frames 2039, 2132, 2159, 2193;
+  DLCI 0x04). Decoded: `ver=0x01, settable=0xe8, enabled=0xe8, new_mode=`:
+
+  | Frame | Time | `new_mode` byte | Decoded ANC mode | Nearest video-observed tap (`CAP-001-EVENT-NOTES.md`) |
+  |---|---|---|---|---|
+  | 2039 | 08:51:41.77 | `0x40` (bit6) | Adaptive | "Tap Adaptive" @ 08:51:43 |
+  | 2132 | 08:51:48.14 | `0x80` (bit7) | Transparent/Aware | "Tap Transparency (2nd)" @ 08:51:49 |
+  | 2159 | 08:51:53.39 | `0x08` (bit3 — note: spec's `Bit 4`) | ANC/Active Noise Cancelling | "Tap Noise Cancellation" @ 08:51:54 |
+  | 2193 | 08:51:59.20 | `0x20` (bit5) | Off | "Tap Off (2nd)" @ 08:52:00 |
+
+  All four decoded modes match their nearest tap **by content**, in the correct **sequence**, each
+  within ~1–1.5s of the video-observed tap (well inside the ±1s 1fps-video-sampling uncertainty
+  already documented for this capture) — this is not a spec-shape resemblance, it is a confirmed
+  identification with an internal cross-check the spec page itself does not provide. Each `0x12`
+  frame is immediately followed (~60–110ms later) by `ff 01 00 06 08 12 01 e8 e8 XX` — the
+  documented ACK shape (§2.1), consistent with the spec's `ACK: Y` column. This satisfies
+  `PROJECT_RULES.md` §1's promotion bar on two independent grounds at once (official spec
+  byte-match **and** internal content/timing cross-check within one capture).
+- **Open sub-question, not resolved:** `CAP-001`'s first two ANC taps (Transparency @ 08:51:32,
+  Off @ 08:51:39) have **no** corresponding `0x12` frame anywhere in the log — possibly UI-state
+  realization rather than genuine user-initiated sets (the ANC row was still greyed out until
+  shortly before, per `CAP-001-EVENT-NOTES.md`), not yet confirmed.
+- **"Notify ANC state" (`0x13`)**: `Provider → Seeker`, layout `[Group:1][Code:1][Len:2BE=0004]
+  [Version:1][UI toggles:1][Settable toggles:1][Current state:1]`, same one-hot bit layout for
+  the "Current state" byte. Matches the `08 13 00 04 01 e8 e8 XX` frames independently documented
+  in `CAP-001-FINDINGS.md` §5 (26 occurrences across the day this capture's log spans) — a
+  periodic/on-change status report, not itself a command.
+- **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
+  Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
+  live candidates before this resolution.
+- **Expected response**: ACK (`0xFF 0x01 0x00 0x06 <echoed group/code/data>`), 🟢 FACT, see above.
+- **Status**: 🟢 FACT (opcode, payload layout, and the "set" direction's semantics are all
+  confirmed against official documentation and cross-validated within `CAP-001`).
+- **Evidence**: UI presence (`SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
+  §1); official spec (`developers.google.com/nearby/fast-pair/specifications/extensions/hearablecontrols`,
+  consulted 2026-08-12); `CAP-001` frames 2039/2132/2159/2193 (`Set`) and 2041/2134/2162/2195
+  (ACK), cross-referenced against `CAP-001-EVENT-NOTES.md`'s tap timeline.
+- **Verified with experiment**: none formally logged in `EXPERIMENTS.md` yet — this is a
+  deskresearch correlation against an existing capture, not a fresh, purpose-built experiment;
+  recommended as a cheap confirmation step (repeat with isolated single taps, per
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group B) before treating the mode-index bit mapping as final for
+  implementation.
 
 ### 4.2 Equalizer (EQ)
 
@@ -322,22 +485,37 @@ leaving them buried in prose elsewhere.
 
 ### Framing
 
-- [ ] Is `libmaestro`'s ANC/EQ control channel the same RFCOMM channel as the
-      Fast Pair Message Stream (§2.1), using a custom/vendor Message Group ID —
-      or a separate RFCOMM channel/PSM with its own proprietary envelope
-      (§2.2)? Highest-value open question; determines which framing hypothesis
-      `FrameDecoder` is implemented against.
-- [ ] If §2.2 is confirmed instead: exact magic byte value(s) and length-field
-      endianness.
-- [ ] Checksum algorithm for §2.2, if confirmed (CRC16? XOR? absent on some
-      channels?).
+- [ ] **Narrowed 2026-08-12, not fully resolved:** is `libmaestro`'s ANC/EQ
+      control channel the same RFCOMM channel as the Fast Pair Message Stream
+      (§2.1), using a custom/vendor Message Group ID — or a separate RFCOMM
+      channel/PSM with its own proprietary envelope (§2.2)? Three coexisting
+      sub-protocols are now evidenced (§2.3's table: DLCI 0x04 official
+      Message Stream, DLCI 0x02 Pigweed `pw_hdlc`, DLCI 0x08 a third private
+      envelope) — none yet confirmed to carry the actual ANC/EQ *command*.
+      `FrameDecoder` still cannot be implemented until one of these is
+      confirmed as the command channel and a `DECISIONS.md` ADR records it
+      (`AGENTS.md` §6).
+- [x] **If §2.2 is confirmed instead: exact magic byte value(s) and
+      length-field endianness — resolved 2026-08-12 for DLCI 0x02 specifically
+      (§2.2a):** no magic byte — standard HDLC `0x7E` flag delimits frames; no
+      explicit length field — flag-delimited instead. Does not apply to DLCI
+      0x08, which uses a genuine 2-byte big-endian length field of its own
+      (§2.2a).
+- [x] **Checksum algorithm for §2.2, if confirmed — resolved 2026-08-12 for
+      DLCI 0x02 specifically (§2.2a):** CRC-32 (IEEE 802.3/zlib polynomial,
+      little-endian), matching Pigweed's `pw_checksum` module exactly;
+      verified at 640/640 (100%) sub-frames across three independent
+      captures. DLCI 0x08 still has no confirmed checksum (unchanged, 🔴).
 
 ### Commands & schemas
 
 - [ ] Real `.proto` file names and full contents, extracted via `pbtk` against
       the official companion app APK (§3) — current names are placeholders.
-- [ ] Channel/Msg ID values for: Set ANC mode, ANC state notification, Set EQ
-      band values (§4.1, §4.2).
+- [x] **Channel/Msg ID values for: Set ANC mode, ANC state notification —
+      resolved 2026-08-12, see §4.1.** Fast Pair Message Stream Group `0x08`
+      ("Hearable Controls" extension), Codes `0x11`/`0x12`/`0x13`
+      (Get/Set/Notify), spec- and capture-confirmed. Set EQ band values
+      remains open (§4.2) — no matching official extension found yet.
 - [ ] Confirm the Ring / Find My Buds action against the spec's worked example
       (§4.4).
 - [ ] Whether `hardware_status.proto` exists as a genuine Buds-specific schema,
@@ -381,3 +559,4 @@ leaving them buried in prose elsewhere.
 | Date | Change | Author (human/AI model) |
 |---|---|---|
 | 2026-08-07 | Initial formal specification promoted from `PROTOCOL_NOTES.md`; includes both RFCOMM framing hypotheses, battery mechanism options A–D, Find My Buds/Ring hypothesis, and consolidated open questions | Claude (AI), reviewed by maintainer |
+| 2026-08-12 | Added §2.2a: DLCI 0x02's framing confirmed as Pigweed `pw_hdlc` (flag/escape/LEB128-address/control/CRC-32), matching `pbpctrl`'s own Maestro-transport notes; promoted to 🟢 FACT for the framing mechanism (640/640 sub-frames verified across 3 captures). Restructured §2.3's binary framing question into a three-channel table (DLCI 0x04/0x02/0x08). **§4.1 ANC mode promoted to 🟢 FACT**: Google's official "Hearable Controls" Fast Pair extension (Message Group `0x08`, Codes `0x11`/`0x12`/`0x13`) matches `CAP-001` byte-for-byte, including a 4/4 content+timing correlation against that capture's own recorded ANC taps — resolves the project's original highest-priority open command question, on the *official* Message Stream (DLCI 0x04), not `libmaestro`. Updated §6 Framing and Commands checklists accordingly. `libmaestro` (DLCI 0x02) and the private DLCI-0x08 envelope's command content, and EQ/other settings, remain unconfirmed — `FrameEncoder`/`FrameDecoder` implementation gate (`AGENTS.md` §6) remains closed pending a `DECISIONS.md` ADR | Claude (AI), deskresearch task, not yet reviewed by maintainer |

@@ -58,7 +58,7 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 |---|---|---|---|---|
 | 0 | 0x00 | 984 (SABM) | RFCOMM multiplexer control (PN negotiation for all other channels) | 🟢 FACT |
 | 1 | 0x02 | 1334 (phone-init) | Repeating ~21–57 byte frames, each starting and ending with `0x7e` (HDLC-style flag byte), two alternating frame-header variants (`80a3`/`00a5` after the flag) | 🟡 HYPOTHESIS — structure suggests AVRCP (SDP confirms an AVRCP service exists, frames 1164–1231), but not confirmed byte-for-byte against the AVRCP spec here |
-| 2 | 0x04 | 990 (phone-init) | Short frames (6–24 bytes), several containing an `e8e8XX` byte pattern where `XX` varies between samples; also flow-control-shaped frames (`ff01...`, `08 13...`) | 🔴 OPEN QUESTION — variation in `XX` looked promising for an ANC-mode byte but samples do **not** show a stable mapping (see §5) |
+| 2 | 0x04 | 990 (phone-init) | Short frames (6–24 bytes), several containing an `e8e8XX` byte pattern where `XX` varies between samples; also flow-control-shaped frames (`ff01...`, `08 13...`) | 🟢 FACT (2026-08-12) — this is Fast Pair's official "Hearable Controls" extension (Message Group `0x08`), Get/Set/Notify ANC state; `XX` is a one-hot ANC-mode bitmask, confirmed byte-for-byte against the spec and against this capture's own tap timeline (see §5's "Full resolution" and `PROTOCOL.md` §4.1) |
 | 4 | 0x08 (phone-init) / 0x09 (buds-init, frame 1217) | 1035 / 1217 | **Two distinct payload types multiplexed under the same channel number**: (a) on 0x08 — periodic (~6–7s) frames containing the ASCII string `google-pixel-buds-pro-v1` and a separate protobuf-shaped blob containing ASCII `all`; one early frame (1673, 08:51:32.79) contains ASCII `Europe/Amsterdam`; (b) on 0x09 — plain-ASCII HFP AT commands, see §3 | 🟢 FACT (channel exists, is dual-directional, carries this content) |
 | 5 | 0x0a | 1068 | No data-carrying frames observed in this capture, only PN/SABM/DISC control traffic | 🔴 OPEN QUESTION — channel opened and closed repeatedly but never carried a payload here |
 
@@ -134,6 +134,37 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 > identity/firmware data, this channel is a plausible candidate for part of `libmaestro` itself or
 > a related proprietary companion-device channel — not confirmed, and out of scope to resolve
 > further in this pass.
+
+> **Upgrade (2026-08-12), deskresearch task — the "not confirmed" verdict above is superseded: this
+> channel's framing IS now definitively identified, as Pigweed `pw_hdlc`.** `qzed/pbpctrl`'s own
+> project notes (`docs/Notes.md`, consulted per `AGENTS.md` §12/`DECISIONS.md` ADR-003 — protocol
+> knowledge only) state verbatim: *"The protocol is implemented using the pigweed RPC library...
+> the RPC messages are wrapped in High-Level Data Link Control (HDLC) U-frames."* Testing this
+> empirically against every RFCOMM payload on this DLCI in `CAP-001`, `CAP-002`, and `CAP-003`
+> (`CAP-004` never opens it) — HDLC-unescaping each `0x7E`-delimited sub-frame (`0x7D <X>` → `X XOR
+> 0x20`, standard byte-stuffing) and computing a CRC-32 (IEEE 802.3/zlib polynomial, little-endian)
+> over everything but the trailing 4 bytes — gives a **640/640 (100%) match** against those
+> trailing 4 bytes, with zero exceptions:
+> ```
+> CAP-001 frame 1348, raw (between flags): 004b0310151dea71de7d5e25e3a5ec28f96761b5
+> unescaped (7d 5e -> 7e):                  004b0310151dea71de7e25e3a5ec28f96761b5
+> crc32(unescaped[:-4]) little-endian     = f96761b5  == trailing 4 bytes  MATCH
+> ```
+> This resolves the byte-length hypothesis (ruled out above, correctly) and the CRC/FCS hypothesis
+> (left "inconclusive" above) in one step: byte 1 (`0x3b`/`0x4b`/`0xa5`/etc.) is not a length byte
+> at all — decoding byte 0 as an HDLC-standard LEB128 varint **Address** field (per Pigweed's own
+> pw_hdlc spec) shows it terminates at 1 byte (`0x00`) for most frames, with the *next* byte being
+> a single-byte **Control** field (`0x3b`/`0x4b` for phone→Buds, `0xa5` for Buds→phone) — and a
+> second, 3-byte LEB128 address (`0xD180` = 53632, Buds→phone only, control `0x08`/`0x2a`) appears
+> in a minority of frames, plausibly a second multiplexed pw_rpc channel. **The trailing bytes are
+> a genuine CRC-32 FCS, not a raw data tail or an unconfirmed algorithm.** This is now 🟢 FACT for
+> the framing mechanism (see `PROTOCOL.md` §2.2a for the full field-by-field table and
+> reproduction script) — replacing this bullet's "not a byte-for-byte match to any standard...
+> encapsulation" conclusion, which was correct about ruling out AVRCP/PPP/L2CAP but incorrect that
+> no standard mechanism at all was in play. Whether this specific channel *is* `libmaestro`
+> specifically (vs. some other Pigweed-RPC Google service) remains 🟡 HYPOTHESIS (strong) — no
+> Maestro-specific command content (an ANC/EQ write) has been decoded from it yet; see
+> `PROTOCOL.md` §2.2a/§2.3 for the full reasoning and what's still needed to close that gap.
 
 **Protobuf framing evidence (🟢 FACT):** frame 1673's payload (channel 4, DLCI 0x08) is
 `09 03 00 00 03 01 00 1b 08 9f 03 10 de af a9 aa 0e 1a 10` + `"Europe/Amsterdam"` (16 ASCII
@@ -264,6 +295,51 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL_NO
 > happened not to correlate with distinct `e8e8XX` values in any consistent way, which is now
 > understood as expected — this bitmask answers a different question than ANC state entirely.
 
+> **Full resolution (2026-08-12), deskresearch task — this is not just "ANC-relevant," it is the
+> confirmed ANC set/get/notify command channel, byte-for-byte, spec- and capture-verified.** First
+> pass at this correction (superseded below) found `qzed/pbpctrl`'s community notes naming "group 8,
+> code 19" as an ANC-status event — that pointed at the right Group/Code pair but wasn't itself
+> conclusive. Following up directly against **Google's own official specification** —
+> [Hearable Controls extension](https://developers.google.com/nearby/fast-pair/specifications/extensions/hearablecontrols),
+> `[OFFICIAL-SPEC]` — resolves this completely:
+>
+> - Message Group `0x08` = "Hearable control", with three documented codes: `0x11` Get ANC state,
+>   `0x12` **Set ANC state** (Seeker→Provider, MAC+ACK required), `0x13` Notify ANC state
+>   (Provider→Seeker) — this bullet's `08 13 00 04 01 e8 e8 XX` is exactly a "Notify ANC state"
+>   frame (`[Group][Code][Len=4][Version:1][UI toggles:1][Settable toggles:1][Current state:1]`).
+> - The spec's own bit layout for the ANC-mode flag bytes (`Bit 0`=Transparent, `Bit 1`=Adaptive,
+>   `Bit 2`=Off, `Bit 3`=Reserved, `Bit 4`=ANC, spec's own MSB-first numbering — standard bit7..bit3)
+>   maps this bullet's four observed one-hot values **exactly, with zero leftover or ambiguous
+>   value**: `0x80`=Transparent/Aware, `0x40`=Adaptive, `0x20`=Off, `0x08`=ANC/Active Noise
+>   Cancelling — precisely the four ANC UI states this project already knew existed
+>   (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1).
+> - **The phone's own outbound command exists too, and was hiding in plain sight:** four `08 12 00
+>   14 01 e8 e8 XX <16 reserved bytes>` frames ("Set ANC state") appear in this exact capture —
+>   frames 2039, 2132, 2159, 2193 — each immediately followed by the documented ACK
+>   (`ff 01 00 06 08 12 01 e8 e8 XX`, frames 2041/2134/2162/2195). Decoding `new_mode` (byte 7) for
+>   each and comparing against this file's own §4 tap timeline:
+>   ```
+>   frame 2039 @08:51:41.77  new_mode=0x40 (Adaptive)              nearest tap: "Adaptive" @08:51:43
+>   frame 2132 @08:51:48.14  new_mode=0x80 (Transparent/Aware)      nearest tap: "Transparency (2nd)" @08:51:49
+>   frame 2159 @08:51:53.39  new_mode=0x08 (ANC/Noise Cancelling)   nearest tap: "Noise Cancellation" @08:51:54
+>   frame 2193 @08:51:59.20  new_mode=0x20 (Off)                    nearest tap: "Off (2nd)" @08:52:00
+>   ```
+>   **4/4 match their nearest tap by content, in the correct sequence, each within ~1–1.5s** — well
+>   inside this capture's own already-documented ±1s video-sampling uncertainty. This is not a
+>   spec-shape resemblance; it is a positive identification with an internal cross-check.
+> - **Not resolved:** the capture's *first two* taps (Transparency @08:51:32, Off @08:51:39) have no
+>   matching `0x12` frame anywhere in the log — plausibly UI-state realization rather than genuine
+>   commands (the ANC row was still greyed out until shortly before this, per §4's tap table), not
+>   confirmed either way.
+>
+> **Status: 🟢 FACT** — clears `PROJECT_RULES.md` §1's promotion bar twice over (official spec
+> byte-match, plus an internal content+timing cross-check this capture itself supplies). This
+> single-handedly resolves this bullet's original "ANC-mode byte?" question, this section's
+> "inconclusive" verdict, and `PROTOCOL.md` §4.1's long-standing 🔴 unconfirmed status — see
+> `PROTOCOL.md` §4.1 for the full write-up now promoted there, and §2.3's updated three-channel
+> table for how this fits alongside DLCI 0x02 (`libmaestro`/Pigweed HDLC, still unresolved for its
+> own command content) and DLCI 0x08 (the separate private envelope, also still unresolved).
+
 ## 6. Other open questions raised by this capture
 
 - Why did a BLE link and a still-valid link key both exist *before* the on-screen "Forget" tap
@@ -277,6 +353,25 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL_NO
 - Channel 5 (DLCI 0x0a) opened/closed repeatedly but never carried a payload in this session —
   worth checking whether it's HFP's audio channel (SCO/eSCO, which wouldn't appear as RFCOMM
   data) or simply unused here.
+
+  > **Task 6 (2026-08-12): checked at the HCI level across all four captures — SCO/eSCO
+  > hypothesis ruled out, clean negative result.** Filtered every `bthci_evt` event code and
+  > every `bthci_cmd` opcode in `CAP-001`, `CAP-002`, `CAP-003`, and `CAP-004`'s full logs for
+  > Synchronous Connection Complete (`0x2C`), Synchronous Connection Changed (`0x2D`), Setup
+  > Synchronous Connection (`0x0428`), and Enhanced Setup Synchronous Connection (`0x043D`) — the
+  > HCI-level events/commands a SCO/eSCO link would necessarily produce, and which would **not**
+  > appear as RFCOMM data (explaining channel 5's silence, if this hypothesis held). **Zero
+  > matches in all four captures** — confirmed by listing every distinct `bthci_evt.code` value
+  > actually present in each log (17–30 distinct codes per capture, none `0x2C`/`0x2D`) and every
+  > `bthci_cmd.opcode` (none `0x0428`/`0x043D`). **No SCO/eSCO connection is ever established in
+  > any of these four sessions, full stop** — this isn't a timing-correlation question (channel 5
+  > opening lining up with a SCO event) because there is no SCO event to correlate against at all.
+  > This rules out the SCO/eSCO hypothesis definitively rather than leaving it "worth checking."
+  > Channel 5/DLCI 0x0a's silence remains 🔴 OPEN QUESTION — genuinely unused in every capture to
+  > date, not explained by an out-of-band audio path. (Unsurprising in hindsight: none of these
+  > four sessions ever place or receive a live phone call, the only scenario that would trigger
+  > HFP's SCO/eSCO audio path — a future capture bracketing an actual call would be a more
+  > direct test than re-checking these four idle-audio sessions again.)
 
 ## 7. Recommended next steps
 

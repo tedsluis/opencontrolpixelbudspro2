@@ -316,6 +316,26 @@ for the "definition of done" that will mark v1.
   appear; `GFPS-001` is recorded as 🔴 not yet captured/analyzed, since that
   UI-level observation doesn't by itself say anything about the RFCOMM
   traffic the Test-ID actually asks about.
+- Deskresearch pass (2026-08-12) over the four existing captures resolved two
+  of the project's longest-standing open protocol questions without a new
+  capture: (1) **ANC mode set/get/notify is now 🟢 FACT** — Google's official
+  Fast Pair "Hearable Controls" extension (Message Group `0x08`) matches
+  `CAP-001` byte-for-byte, including a 4/4 content-and-timing correlation
+  against that capture's own six recorded ANC taps, resolving `PROTOCOL.md`
+  §4.1 from 🔴 unconfirmed. (2) **DLCI 0x02's framing is now 🟢 FACT** —
+  confirmed as Pigweed `pw_hdlc` (HDLC flag/escape framing, LEB128 address,
+  CRC-32 frame check sequence matching `pw_checksum` exactly, 640/640
+  sub-frames verified across three independent captures), matching
+  `qzed/pbpctrl`'s own documented description of the Maestro transport.
+  `PROTOCOL.md` §2.3's binary framing question was restructured into a
+  three-channel table (official Message Stream / `libmaestro`'s Pigweed-HDLC
+  channel / a third still-unidentified private envelope on DLCI 0x08) as a
+  result. `libmaestro`'s own command content (EQ and other non-ANC settings)
+  remains unresolved — the `FrameEncoder`/`FrameDecoder` implementation gate
+  (`AGENTS.md` §6) stays closed pending a `DECISIONS.md` ADR, which this pass
+  deliberately did not add unilaterally. Full evidence in `PROTOCOL.md`
+  §2.2a/§2.3/§4.1, `PROTOCOL_NOTES.md` §4.1/§7, and non-destructive addenda
+  across all four `CAP-00N-FINDINGS.md` files.
 
 ### Removed
 
