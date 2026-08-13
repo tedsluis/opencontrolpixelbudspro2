@@ -281,7 +281,7 @@ order:
 1. First describe the **user action** that was performed during the capture
    (e.g. "enabled ANC via the official app") — record this in
    `CAPTURE_BLUETOOTH_HCI_SNOOP.md`.
-2. Search the `.pcapng`/`btsnoop_hci.log` around that timestamp:
+2. Search the `.pcapng`/`CAP-*-btsnoop_hci.log` around that timestamp:
    - for **BLE/GATT** traffic: writes/notifications on a characteristic UUID;
    - for **RFCOMM** traffic (the primary transport for `libmaestro`, see §5):
      outbound/inbound data on the SPP channel — there is no UUID here, look at

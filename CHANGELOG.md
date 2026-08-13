@@ -291,8 +291,8 @@ for the "definition of done" that will mark v1.
   scenario in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1, following the same
   special-purpose pattern as Group Z rather than the numbered A–Q run-through:
   remove the bond via system settings (not the app's own "Forget," per
-  `CAP-001`'s `FINDINGS.md` §6 finding that it doesn't fully clear), reconnect
-  via a generic BLE tool instead of the official app, isolate the
+  `CAP-001`'s `CAP-001-FINDINGS.md` §6 finding that it doesn't fully clear),
+  reconnect via a generic BLE tool instead of the official app, isolate the
   connect-and-discover sequence, and filter on the ATT discovery opcodes
   (`0x08`/`0x09`/`0x10`/`0x11`) during analysis. This gives `GATT-001` in
   `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` a real, dedicated Pixel 7a scenario for
@@ -308,7 +308,7 @@ for the "definition of done" that will mark v1.
   `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (and the missing `GATT`/`GFPS` prefix
   rows in §0.4, since `GATT-001` was already in use without one). Purpose:
   isolate whether the Fast Pair Message Stream traffic identified in
-  `CAP-002` (`FINDINGS.md` §3) is Buds-initiated or driven by Google Play
+  `CAP-002` (`CAP-002-FINDINGS.md` §3) is Buds-initiated or driven by Google Play
   Services' phone-side Fast Pair/Nearby logic — directly relevant to this
   project's Zero-GMS goal. The maintainer had already manually confirmed
   that, with the app uninstalled and GMS disabled, pairing still succeeds

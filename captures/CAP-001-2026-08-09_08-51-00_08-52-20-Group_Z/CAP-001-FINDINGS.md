@@ -1,6 +1,6 @@
 # Findings: `CAP-001` (Group Z pipeline-validation capture)
 
-Standardized, evidence-based extraction from `btsnoop_hci.log` + `recording.mp4`, staged here
+Standardized, evidence-based extraction from `CAP-001-btsnoop_hci.log` + `CAP-001-recording.mp4`, staged here
 for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every
 claim below carries a status per `PROJECT_RULES.md` §1:
 
@@ -10,8 +10,8 @@ claim below carries a status per `PROJECT_RULES.md` §1:
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-001` · **Date:** 2026-08-09 · **Phone:** Pixel 7a (official app) ·
-**Log file:** `btsnoop_hci.log` (233.9s, 2,663 packets, 2026-08-09 08:50:32.67–08:54:26.57
-local/+0200) · **Video:** `recording.mp4` (83.4s, 08:50:57–08:52:20 local, on-screen wall-clock
+**Log file:** `CAP-001-btsnoop_hci.log` (233.9s, 2,663 packets, 2026-08-09 08:50:32.67–08:54:26.57
+local/+0200) · **Video:** `CAP-001-recording.mp4` (83.4s, 08:50:57–08:52:20 local, on-screen wall-clock
 overlay) · **Devices:** phone `Google_7e:ca:81` (Pixel 7a, BD_ADDR partially redacted per
 `AGENTS.md` §9), peer `Google_cf:6e:07` (the Buds/case, BD_ADDR partially redacted).
 
@@ -62,7 +62,7 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 | 4 | 0x08 (phone-init) / 0x09 (buds-init, frame 1217) | 1035 / 1217 | **Two distinct payload types multiplexed under the same channel number**: (a) on 0x08 — periodic (~6–7s) frames containing the ASCII string `google-pixel-buds-pro-v1` and a separate protobuf-shaped blob containing ASCII `all`; one early frame (1673, 08:51:32.79) contains ASCII `Europe/Amsterdam`; (b) on 0x09 — plain-ASCII HFP AT commands, see §3 | 🟢 FACT (channel exists, is dual-directional, carries this content) |
 | 5 | 0x0a | 1068 | No data-carrying frames observed in this capture, only PN/SABM/DISC control traffic | 🔴 OPEN QUESTION — channel opened and closed repeatedly but never carried a payload here |
 
-> **Correction (2026-08-10), source: `CAP-002`'s `FINDINGS.md` §2/§3.** The 🟡 HYPOTHESIS above
+> **Correction (2026-08-10), source: `CAP-002`'s `CAP-002-FINDINGS.md` §2/§3.** The 🟡 HYPOTHESIS above
 > for channel 1/DLCI 0x02 — that its `0x7e`-delimited content "suggests AVRCP" — is **not
 > supported** by `CAP-002` (a separate, fresh-pairing session against the same physical device).
 > In `CAP-002`, the same-shaped `0x7e`-delimited traffic reappeared on channel 1 again (so that
@@ -75,12 +75,12 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 > the *channel-2* content has since been identified, in the other capture. Per
 > `PROJECT_RULES.md` §3, this note supersedes the *channel 1 = possibly AVRCP* framing above
 > without deleting it, following the same non-destructive correction pattern `DECISIONS.md` uses
-> for superseded ADRs. See `CAP-002`'s `FINDINGS.md` §3 for the full spec-verified writeup, and
+> for superseded ADRs. See `CAP-002`'s `CAP-002-FINDINGS.md` §3 for the full spec-verified writeup, and
 > the reusable methodological note directly below.
 >
 > **Reusable note for all future capture analysis — RFCOMM channel numbers are not stable
 > per-profile labels.** RFCOMM server channel numbers are negotiated per-connection, not fixed
-> per Bluetooth profile. `CAP-001` and `CAP-002` — two independent sessions against the same
+> per Bluetooth profile. `CAP-001` and `CAP-002-CAP-002` — two independent sessions against the same
 > physical device — assigned *different* channel numbers to structurally similar traffic (this
 > capture put HFP-adjacent Device-Information-group traffic on what was locally numbered
 > "channel 2"; `CAP-002` also happened to land it on "channel 2", but `CAP-002`'s HFP itself came
@@ -106,7 +106,7 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 >   contains three repeated 27-byte sub-blocks, each holding a 10-digit device serial number
 >   (`"1779298694"`) paired with the firmware string `"release_5.203"` (`PROTOCOL.md` §0.1's
 >   confirmed baseline) — i.e. this channel independently carries the same firmware string found
->   elsewhere on DLCI 0x08 (`CAP-002` `FINDINGS.md` §2a), on a *third*, structurally distinct
+>   elsewhere on DLCI 0x08 (`CAP-002` `CAP-002-FINDINGS.md` §2a), on a *third*, structurally distinct
 >   channel/framing.
 >
 > **Byte-length hypothesis ruled out (negative result):** interpreting byte 1 as an RFCOMM-style
@@ -234,9 +234,9 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL_NO
 > says "Channel 4/DLCI 0x08" for the `e8e8` pattern, but §2's own table above (and this capture's
 > raw frames) place it on **Channel 2/DLCI 0x04** — §2's table was correct, this bullet's channel
 > label was not; flagged here rather than silently fixed. Second, and substantively: `CAP-002`'s
-> `btsnoop_hci.log` is the same shared, non-restarted buffer as this capture's (see that file's own
+> `CAP-002-btsnoop_hci.log` is the same shared, non-restarted buffer as this capture's (see that file's own
 > header), so it contains many more hours of the same traffic. Filtering the *whole* shared log for
-> the exact byte pattern `e8 e8` (`tshark -r btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "e8:e8"'`)
+> the exact byte pattern `e8 e8` (`tshark -r CAP-CAP-001-btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "e8:e8"'`)
 > returns 26 frames spanning 08:51:29–08:52:02 (this session's own window, same frames this bullet
 > already found) — no further occurrences later in the ~8h20m buffer, so the exchange itself is
 > tied to this session's activity window, not a background heartbeat that runs all day. Precisely

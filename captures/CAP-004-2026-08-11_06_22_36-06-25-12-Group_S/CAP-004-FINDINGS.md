@@ -1,8 +1,8 @@
 # Findings: `CAP-004` (Group S — GMS disabled / no Pixel Buds app)
 
-Standardized, evidence-based extraction from `btsnoop_hci.log` + `recording.mp4`, staged here
+Standardized, evidence-based extraction from `CAP-004-btsnoop_hci.log` + `CAP-004-recording.mp4`, staged here
 for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
-on `captures/2026-08-09_08-51-00_08-52-20-Group_Z/FINDINGS.md` (`CAP-001`). Every claim below
+on `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-FINDINGS.md` (`CAP-001`). Every claim below
 carries a status per `PROJECT_RULES.md` §1:
 
 - 🟢 **FACT** — directly observed in this capture, with a frame number.
@@ -13,13 +13,13 @@ carries a status per `PROJECT_RULES.md` §1:
 **Capture ID:** `CAP-004` · **Date:** 2026-08-11 · **Phone:** Pixel 7a, **Google Play Services
 disabled, Pixel Buds app uninstalled**; connected via nRF Connect then paired via system
 Bluetooth settings — no Pixel-Buds-specific app involved at any point. **Log file:**
-`btsnoop_hci.log` (342.3s, 2,921 packets, 06:22:04.23–06:27:46.48 local/+0200). **Video:**
-`recording.mp4` (155.4s, 06:22:36–06:25:12 local, on-screen wall-clock overlay). **Devices:**
+`CAP-004-btsnoop_hci.log` (342.3s, 2,921 packets, 06:22:04.23–06:27:46.48 local/+0200). **Video:**
+`CAP-004-recording.mp4` (155.4s, 06:22:36–06:25:12 local, on-screen wall-clock overlay). **Devices:**
 phone `Google_7e:ca:81` (Pixel 7a, same phone as `CAP-001`–`CAP-003`), peer `Google_cf:6e:07`
 (`04:00:6E:CF:6E:07`, the Buds/case — confirmed same physical device via frame 1891's BD_ADDR).
 
 **Stated goal of this session:** determine whether the Fast Pair Message Stream traffic
-identified in `CAP-002`'s `FINDINGS.md` §3 (the `[Group][Code][Length:2B][Value]`-framed
+identified in `CAP-002`'s `CAP-002-FINDINGS.md` §3 (the `[Group][Code][Length:2B][Value]`-framed
 channel/DLCI carrying, among other fields, Group `0x03` Code `0x09` = `"Revision 6"`, Code
 `0x01` = `da 2d b1`, and Group `0x07` Code `0x41` = `"in-use"`) is **Buds-initiated** (would
 reappear identically) or **GMS/Nearby-driven** (would disappear or change) once Google Play
@@ -36,7 +36,7 @@ Before analyzing anything else: the log's very first GATT activity (frames 216�
 `GAP`/`GATT`/`Device Information`/**`Heart Rate`**) does **not** belong to the Buds. Checked
 directly: frame 229's connection context shows `Source BD_ADDR: 62:6f:64:e2:1b:4a`, `Source
 Device Name: Charge 6` — the maintainer's Fitbit, reconnecting in the background on the same
-phone, same as the unrelated traffic already flagged and excluded in `CAP-002`'s `FINDINGS.md`
+phone, same as the unrelated traffic already flagged and excluded in `CAP-002`'s `CAP-002-FINDINGS.md`
 §7. This is recorded here so it isn't mistaken for Buds discovery traffic by a future reader —
 all findings below are scoped to traffic confirmed against `Google_cf:6e:07`.
 
@@ -102,7 +102,7 @@ condition this session didn't happen to hit), but a real, checked absence.
 
 ### 4b. A related-but-distinct protobuf-shaped blob (channel 4/DLCI 0x08) — **PRESENT, essentially unchanged** (outcome 1: supports Buds-initiated)
 
-`CAP-001`'s `FINDINGS.md` §2 separately documented a **different** piece of content — on
+`CAP-001`'s `CAP-001-FINDINGS.md` §2 separately documented a **different** piece of content — on
 channel 4/DLCI 0x08, *not* channel 2 — containing the ASCII strings `google-pixel-buds-pro-v1`
 and `Europe/Amsterdam`, protobuf-tag-framed (not the Group/Code/Length TLV shape). **This
 content reappears in this capture, on the same channel-4/DLCI-0x08 pattern, essentially
@@ -127,7 +127,7 @@ stack, independent of GMS) send this regardless.
 finding. This capture shows that framing was too coarse: there are **at least two distinct
 device-info-flavored exchanges** happening over RFCOMM at connection time, on different
 channels, with different framing, and — now shown here — **different dependencies on GMS**.
-Recommend `CAP-002`'s `FINDINGS.md` §3 be given a similar non-destructive correction note (per
+Recommend `CAP-002`'s `CAP-002-FINDINGS.md` §3 be given a similar non-destructive correction note (per
 the pattern already used there for the channel-1/AVRCP correction) clarifying that its content
 is GMS-dependent, distinct from the channel-4/DLCI-0x08 content documented in `CAP-001`, which
 is not.
@@ -171,7 +171,7 @@ fetched excerpt — group identity confirmed, individual code meanings within it
 found Google's [SASS (Smart Audio Source Switching)](https://developers.google.com/nearby/fast-pair/specifications/extensions/sass)
 extension page, which states it uses **Message Group `0x07`** and lists a full code table
 including **`0x41` = "Indicate in use account key."** This is an exact match to `CAP-002`
-`FINDINGS.md` §3's Group `0x07` Code `0x41` `"in-use"` finding — previously 🟡 on the strength of
+`CAP-002-FINDINGS.md` §3's Group `0x07` Code `0x41` `"in-use"` finding — previously 🟡 on the strength of
 an *English-phrase* match against a different (GATT-level) spec page. This SASS page gives the
 *same transport* (Message Stream) and the *exact* group/code pair, which is materially stronger
 evidence. Recommend `CAP-002` §3 be updated to 🟢 FACT for that specific bullet (not done in this
@@ -229,7 +229,7 @@ framing that would explain *which* field it officially belongs to is not yet est
 ## 5a. 2026-08-12 follow-up: fragmentation re-check, frame 2305 resolved, groups 0x04/0x05/0x09 not actually new to this capture
 
 Deskresearch pass (Python + `tshark -T fields`/`data.data`, no Wireshark UI) re-analyzing this
-capture's `btsnoop_hci.log` plus `btsnoop_hci_1.log`/`btsnoop_hci_2.log` for cross-validation.
+capture's `CAP-002-btsnoop_hci.log` plus `CAP-003-btsnoop_hci.log`/`CAP-004-btsnoop_hci.log` for cross-validation.
 Scripts used are reproduced at the end of this addendum.
 
 **Reassembly note first, since it changes how everything below must be read:** a single-frame
@@ -251,7 +251,7 @@ directions answered explicitly:**
 
 - `CAP-002` §3's TLV content (Model ID `da 2d b1`, BLE-address-updated, `"Revision 6"`) — **NOT
   fragmented, in either of the two occurrences found in this session's own log lineage.** Searching
-  `CAP-002`'s underlying `btsnoop_hci.log` (which — per that file's own header note — is the same
+  `CAP-002`'s underlying `CAP-002-btsnoop_hci.log` (which — per that file's own header note — is the same
   shared, non-restarted buffer used since `CAP-001`, 50,468 packets over ~8h20m, not just the
   documented ~150s slice) for the Model ID byte string `da:2d:b1` returns **seven** occurrences
   across the whole day (frames 1004, 1826, 17610, 18895, 21195, 49251, 49538 in that file's own
@@ -261,7 +261,7 @@ directions answered explicitly:**
   <3B>` + `03 02 00 06 <6B>` + `03 09 00 0a "Revision 6"` + `07 10 00 00` = 12+7+10+14+4 = 47,
   matching `btrfcomm.len` exactly). `bthci_acl.pb_flag` for frame 49251's underlying ACL packet is
   `2` (complete PDU) with no `continuation_to`/`reassembled_in` — confirmed via
-  `tshark -r btsnoop_hci.log -Y "frame.number==49251" -e bthci_acl.pb_flag -e bthci_acl.continuation_to -e bthci_acl.reassembled_in`.
+  `tshark -r CAP-004-btsnoop_hci.log -Y "frame.number==49251" -e bthci_acl.pb_flag -e bthci_acl.continuation_to -e bthci_acl.reassembled_in`.
   **Negative result, itself a finding per the project's evidence rules:** this specific burst does
   not fragment across packets in any of the 7 independent occurrences checked.
 - This file's own §4b content (`google-pixel-buds-pro-v1`, `Europe/Amsterdam`, on channel
@@ -272,7 +272,7 @@ directions answered explicitly:**
   of its two occurrences in `CAP-001`'s own log (frame 1113: single 31-byte frame containing header
   `03 01 00 1b` + the full 27-byte value together; frame 1673: single 35-byte frame containing an
   empty `09 03 00 00` message immediately followed by the same header+value, again packed whole) —
-  confirmed via `tshark -r btsnoop_hci.log -Y 'data.data contains "Europe/Amsterdam"' -e bthci_acl.pb_flag -e bthci_acl.continuation_to`
+  confirmed via `tshark -r CAP-004-btsnoop_hci.log -Y 'data.data contains "Europe/Amsterdam"' -e bthci_acl.pb_flag -e bthci_acl.continuation_to`
   against `CAP-001`'s log, no continuation flags set on either frame. **So this exact
   logical message is demonstrably NOT always packet-sized in a fixed way — it is sometimes sent as
   one write (`CAP-001`, twice) and sometimes split header/value across two writes (`CAP-004`,
@@ -322,7 +322,7 @@ at all") does not survive a precise check, for two independent reasons:
    candidate readings of the same field — both strings are real, on-the-wire values, from two
    different channels/mechanisms.
 
-**Task 9/10 (also resolves `CAP-002` FINDINGS.md §2's own 🔴 "not decoded in this pass" for its
+**Task 9/10 (also resolves `CAP-002` CAP-002-FINDINGS.md §2's own 🔴 "not decoded in this pass" for its
 channel-4/DLCI-0x08 burst) — full decode of the DLCI 0x08 private envelope, and correction of the
 "new in `CAP-004`" framing:**
 
@@ -337,7 +337,7 @@ channel as "not decoded in this pass." Corrected finding: **groups `0x01`, `0x02
 and `0x02` additionally only surface in `CAP-002`'s richer, genuinely-fresh-pairing session — see
 below).
 
-Unique Code/Value shapes for groups `0x04`/`0x05`/`0x09` (this file's `btsnoop_hci.log`, reassembled):
+Unique Code/Value shapes for groups `0x04`/`0x05`/`0x09` (this file's `CAP-004-btsnoop_hci.log`, reassembled):
 
 | Group | Code | Len | Value | Notes |
 |---|---|---|---|---|
@@ -397,7 +397,7 @@ def parse_tlvs_stream(rows, target_dlci):
 ```
 Extraction command used for the raw per-frame input:
 ```
-tshark -r btsnoop_hci.log -Y "btrfcomm.len > 0" -T fields -E separator='|' \
+tshark -r CAP-004-btsnoop_hci.log -Y "btrfcomm.len > 0" -T fields -E separator='|' \
   -e frame.number -e frame.time_epoch -e btrfcomm.dlci -e data.data
 ```
 
@@ -407,7 +407,7 @@ As established in §1's method and `CAP-003`'s own findings, nRF Connect's displ
 comes from Android's **cached** GATT database (confirmed here too — the only GATT traffic at
 connect time, frame 1524, is a `Database Hash` check, not live discovery). The list itself is
 still genuine, real data (Android didn't fabricate it), just not re-verifiable against wire
-traffic in this specific session. Full list observed on screen (`EVENT-NOTES.md`):
+traffic in this specific session. Full list observed on screen (`CAP-004-EVENT-NOTES.md`):
 
 `Generic Attribute (0x1801)`, `Generic Access (0x1800)`, `Broadcast Audio Scan Service (0x184F)`,
 `Audio Stream Control Service (0x184E)`, `Published Audio Capabilities Service (0x1850)`,
@@ -441,11 +441,11 @@ recorded so the eventual discovery capture has concrete predictions to check its
 
 **Update 2026-08-12 (deskresearch task): confirmed this capture's own wire traffic still cannot
 resolve any handle→UUID mapping either — same negative result as `CAP-003`, now checked
-exhaustively rather than assumed.** Filtered this file's `btsnoop_hci.log` for every ATT `Read By
+exhaustively rather than assumed.** Filtered this file's `CAP-004-btsnoop_hci.log` for every ATT `Read By
 Group Type Response` (`btatt.opcode==0x11`) and `Read By Type Response` (`btatt.opcode==0x09`):
 
 ```
-tshark -r btsnoop_hci.log -Y "btatt.opcode==0x11" -T fields -e frame.number -e bthci_acl.src.bd_addr -e bthci_acl.dst.bd_addr -e btatt.uuid128 -e btatt.uuid16
+tshark -r CAP-004-btsnoop_hci.log -Y "btatt.opcode==0x11" -T fields -e frame.number -e bthci_acl.src.bd_addr -e bthci_acl.dst.bd_addr -e btatt.uuid128 -e btatt.uuid16
 ```
 
 All 8 `Read By Group Type Response` frames in this log (229, 234, 239, 244, 249, 254, 259, 264)
@@ -486,9 +486,9 @@ never connected to this device) is the only path left untried.
    done 2026-08-12, see §5a:** the *group identity* (which private protocol these belong to) is
    still 🔴 open, but their framing is now fully decoded, cross-capture-confirmed, and shown to
    predate this capture (already present in `CAP-001`/`CAP-002`, just undecoded until now).
-2. ~~Add a non-destructive correction note to `CAP-002`'s `FINDINGS.md` §3~~ — **done 2026-08-12**,
-   see `CAP-002` `FINDINGS.md` §3's own 2026-08-12 addendum.
-3. The live-GATT-discovery capture already recommended in `CAP-003`'s `FINDINGS.md` §7 item 1
+2. ~~Add a non-destructive correction note to `CAP-002`'s `CAP-002-FINDINGS.md` §3~~ — **done 2026-08-12**,
+   see `CAP-002` `CAP-002-FINDINGS.md` §3's own 2026-08-12 addendum.
+3. The live-GATT-discovery capture already recommended in `CAP-003`'s `CAP-003-FINDINGS.md` §7 item 1
    remains the only way to confirm §6's handle→UUID hypotheses — **re-confirmed still necessary,
    2026-08-12: this capture's own wire traffic was checked exhaustively (§6 update) and, like
    `CAP-002`/`CAP-003`, never contains a live discovery response.** This capture adds concrete
@@ -523,12 +523,12 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
   material.
 - The channel-2/DLCI-0x04 TLV content from `CAP-002` §3 does not appear when GMS is disabled
   and no Pixel Buds app is present, in a session that otherwise fully connects and bonds (§4a) —
-  now also cross-referenced as a non-destructive correction in `CAP-002`'s `FINDINGS.md` §3.
+  now also cross-referenced as a non-destructive correction in `CAP-002`'s `CAP-002-FINDINGS.md` §3.
 - The channel-4/DLCI-0x08 content from `CAP-001` (`google-pixel-buds-pro-v1`, `Europe/
   Amsterdam`, capability blob) reappears unchanged under the same GMS-disabled conditions (§4b).
 - RFCOMM channel numbers continue to vary session-to-session (channels 1/2 never opened this
   time at all) — a fourth confirming data point for the reusable note in `CAP-001`'s
-  `FINDINGS.md` §2.
+  `CAP-001-FINDINGS.md` §2.
 - **Message Stream Group `0x04` = "Device action"**, spec-confirmed directly against Google's
   own `deviceaction` page (§5) — corroborates `PROTOCOL.md` §4.4's existing Ring/Find-My-Buds
   hypothesis (code `0x01` = Ring) with an authoritative source, and gives the group itself a

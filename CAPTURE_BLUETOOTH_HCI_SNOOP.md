@@ -360,9 +360,9 @@ bond is the reliable, non-hacky way to force it.
 
 1. **Remove the bond via system Bluetooth settings** — Settings → Connected devices → Pixel
    Buds Pro 2 → Forget. Use the **system settings**, not the Pixel Buds app's own "Forget"
-   button — `CAP-001`'s `FINDINGS.md` §6 found the app-level Forget did not fully clear a BLE-level
-   association, so it isn't reliable for this purpose. Confirm the device no longer appears
-   in the paired-devices list.
+   button — `CAP-001`'s `CAP-001-FINDINGS.md` §6 found the app-level Forget did not fully
+   clear a BLE-level association, so it isn't reliable for this purpose. Confirm the device no
+   longer appears in the paired-devices list.
 2. Work through §2 (enable HCI snoop, restart Bluetooth/reboot) as usual.
 3. **Reconnect using a generic BLE tool (e.g. nRF Connect), not the official Pixel Buds app**
    [`GATT-001`] — install it on the Pixel 7a if not already present. This is a deliberate exception to
@@ -378,9 +378,9 @@ bond is the reliable, non-hacky way to force it.
    went wrong; it just isn't the primary target of this Group.
 5. If the tool supports it, manually **read or subscribe to specific characteristics of
    interest** once they're identified on screen (e.g. anything near handle `0x0f2a` or the
-   `0x0c0X` cluster flagged in `CAP-002`'s `FINDINGS.md` §4/§7) — each such action is its own
-   isolated event, noted with its own timestamp, the same way a UI tap is treated elsewhere
-   in this guide.
+   `0x0c0X` cluster flagged in `CAP-002`'s `CAP-002-FINDINGS.md` §4/§7) — each such action
+   is its own isolated event, noted with its own timestamp, the same way a UI tap is treated
+   elsewhere in this guide.
 6. Extract and analyze as usual (§3, §5). In Wireshark, filter specifically for the ATT
    opcodes that perform GATT discovery: `btatt.opcode == 0x10` / `0x11` (Read By Group Type
    Request/Response — primary service discovery) and `btatt.opcode == 0x08` / `0x09` (Read By
@@ -389,7 +389,7 @@ bond is the reliable, non-hacky way to force it.
 
 #### Group S — Google Play Services disabled, no Pixel Buds app (occasional, not part of the normal run-through)
 **Purpose:** isolate whether the Fast Pair Message Stream traffic identified in `CAP-002`
-(`FINDINGS.md` §3 — the `[Group][Code][Length][Value]`-framed channel carrying, among other
+(`CAP-002-FINDINGS.md` §3 — the `[Group][Code][Length][Value]`-framed channel carrying, among other
 things, the `"Revision 6"` string) is **Buds-initiated** (would still appear identically) or
 **driven by Google Play Services' phone-side Fast Pair/Nearby logic** (would disappear or
 change). This is directly relevant to this project's Zero-GMS goal (`AGENTS.md` §1,
@@ -414,7 +414,7 @@ assumed by the setup validation above.
    half-sheet to use here, so this is the only pairing path available. Note whether the
    device was already unpaired (e.g. left over from a prior Group R session) or whether this
    capture also includes a fresh bonding handshake — record this explicitly in this session's
-   `EVENT-NOTES.md`, since it changes what else can be read from the same capture (see Group
+   `CAP-004-EVENT-NOTES.md`, since it changes what else can be read from the same capture (see Group
    R step 4 for the equivalent bonus-`PAIR-001`/`PAIR-002` note).
 4. **Isolate the whole pair-and-settle sequence as one action window**: note the exact
    connect-tap time and when the connection visibly settles.
@@ -547,7 +547,7 @@ three actually happened, since they mean different things for protocol reconstru
 
 ## 5. Analyzing in Wireshark
 
-1. Open the extracted `btsnoop_hci.log` file directly in Wireshark
+1. Open the extracted `CAP-*-btsnoop_hci.log` file directly in Wireshark
    (File → Open, or drag-and-drop — no special import steps needed, Wireshark recognizes
    the BTSnoop file format natively). This gets you HCI/L2CAP/RFCOMM/ATT-level framing
    for free — it does **not** mean Wireshark understands the `libmaestro` payload itself.
@@ -737,10 +737,10 @@ than deleting the row or reassigning its number to a later capture.
 
 | ID | Date | Phone | Android | Buds FW | App version | Group(s) | Test(s) | Purpose | Bugreport file | Extracted log | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| `CAP-001` | 2026-08-09 | Pixel 7a | TBD | TBD | TBD | Z, A, B, M | `PAIR-001`, `CASE-003`, `CASE-004`, `CASE-005`, `ANC-001`, `ANC-002`, `ANC-003`, `ANC-004`, `CASE-006` | Pipeline validation; scope grew beyond Z into full pairing baseline + all 4 ANC modes + case/bud handling | `captures/2026-08-09_08-51-00_08-52-20-Group_Z/btsnoop_hci.log` | same file (already `btsnooz`-extracted) | analyzed — see `FINDINGS.md` in that folder; ANC-opcode attribution inconclusive due to lack of action isolation |
-| `CAP-002` | 2026-08-09 | Pixel 7a | TBD | TBD | TBD | A | `PAIR-001`, `PAIR-002`, `CASE-001` | Fresh pairing/bonding baseline (deleted stored link key first) through the Pixel Buds app's first-run setup flow (Fast Pair save-to-account, CDM permission, Device details load) | `captures/2026-08-09_17-04-53_17-06-46-Group_A/btsnoop_hci.log` (sliced from a shared, non-restarted ~8h20m snoop log — see that folder's `EVENT-NOTES.md` process note) | same file | analyzed — see `FINDINGS.md` in that folder; Fast Pair Message Stream Device Information group tentatively identified (channel 2/DLCI 0x04); no RFCOMM traffic found during app setup/Device-details load; HFP channel opened but no AT-command traffic observed (contrast with `CAP-001`) |
-| `CAP-003` | 2026-08-10 | Pixel 7a | TBD | TBD | nRF Connect (generic BLE tool), official app took over partway | R | `PAIR-001`, `PAIR-002` | Forced GATT rediscovery attempt (pairing removed via system settings, connected via nRF Connect instead of the official app) to resolve `CAP-002`'s open `0x0f2a`/`0x0c0X` handle UUIDs; classic pairing captured as a bonus data point | `captures/2026-08-10_20-59-16_21-00-37-Group_R/btsnoop_hci.log` (short, freshly-restarted log, no slicing needed) | same file | analyzed — see `FINDINGS.md` in that folder; **primary goal not achieved** — Android's GATT database cache survived the pairing removal, so zero `Read By Group Type`/characteristic-discovery traffic occurred; `0x0f2a`/`0x0c0X` UUIDs still unresolved; new handle `0x0f28` found (polled every ~60s, value `0x31`); reinforces that RFCOMM channel numbers are session-local while GATT handles are stable across sessions |
-| `CAP-004` | 2026-08-11 | Pixel 7a | TBD | TBD | nRF Connect (BLE phase), then system Bluetooth settings (no Pixel Buds app at any point) | S | `PAIR-001`, `PAIR-002`, `CASE-003` | `GFPS-001` — Google Play Services disabled + Pixel Buds app uninstalled, to isolate whether `CAP-002`'s Fast Pair Message Stream traffic is Buds-initiated or GMS-driven; bonus classic pairing captured (procedure deviated from Group S's system-settings-only description — nRF Connect was used first) | `captures/2026-08-11_06_22_36-06-25-12-Group_S/btsnoop_hci.log` (contains unrelated background Fitbit Charge 6 traffic, excluded — see `FINDINGS.md` §1) | same file | analyzed — see `FINDINGS.md` in that folder; **mixed `GFPS-001` result**: `CAP-002` §3's channel-2/DLCI-0x04 TLV content (Model ID, "Revision 6", etc.) is absent (channel 2 never opens) — GMS-dependent; but `CAP-001`'s channel-4/DLCI-0x08 content (`google-pixel-buds-pro-v1`, `Europe/Amsterdam`) reappears unchanged — not GMS-dependent; classic bonding used Cross-Transport Key Derivation (LE Secure Connections → classic key), not classic SSP as in `CAP-002`/`CAP-003`; new, unidentified Message Stream Groups `0x04`/`0x05`/`0x09` found; nRF Connect's cached GATT service list gives named candidate services (Google Fast Pair Service `0xFE2C`, Accessory Non-Owner Service, Device Information) for the still-open `0x0f2a`/`0x0c0X` handle questions |
+| `CAP-001` | 2026-08-09 | Pixel 7a | TBD | TBD | TBD | Z, A, B, M | `PAIR-001`, `CASE-003`, `CASE-004`, `CASE-005`, `ANC-001`, `ANC-002`, `ANC-003`, `ANC-004`, `CASE-006` | Pipeline validation; scope grew beyond Z into full pairing baseline + all 4 ANC modes + case/bud handling | `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-btsnoop_hci.log` | same file (already `btsnooz`-extracted) | analyzed — see `CAP-001-FINDINGS.md` in that folder; ANC-opcode attribution inconclusive due to lack of action isolation |
+| `CAP-002` | 2026-08-09 | Pixel 7a | TBD | TBD | TBD | A | `PAIR-001`, `PAIR-002`, `CASE-001` | Fresh pairing/bonding baseline (deleted stored link key first) through the Pixel Buds app's first-run setup flow (Fast Pair save-to-account, CDM permission, Device details load) | `captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-btsnoop_hci.log` (sliced from a shared, non-restarted ~8h20m snoop log — see that folder's `CAP-002-EVENT-NOTES.md` process note) | same file | analyzed — see `CAP-002-FINDINGS.md` in that folder; Fast Pair Message Stream Device Information group tentatively identified (channel 2/DLCI 0x04); no RFCOMM traffic found during app setup/Device-details load; HFP channel opened but no AT-command traffic observed (contrast with `CAP-001`) |
+| `CAP-003` | 2026-08-10 | Pixel 7a | TBD | TBD | nRF Connect (generic BLE tool), official app took over partway | R | `PAIR-001`, `PAIR-002` | Forced GATT rediscovery attempt (pairing removed via system settings, connected via nRF Connect instead of the official app) to resolve `CAP-002`'s open `0x0f2a`/`0x0c0X` handle UUIDs; classic pairing captured as a bonus data point | `captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-btsnoop_hci.log` (short, freshly-restarted log, no slicing needed) | same file | analyzed — see `CAP-003-FINDINGS.md` in that folder; **primary goal not achieved** — Android's GATT database cache survived the pairing removal, so zero `Read By Group Type`/characteristic-discovery traffic occurred; `0x0f2a`/`0x0c0X` UUIDs still unresolved; new handle `0x0f28` found (polled every ~60s, value `0x31`); reinforces that RFCOMM channel numbers are session-local while GATT handles are stable across sessions |
+| `CAP-004` | 2026-08-11 | Pixel 7a | TBD | TBD | nRF Connect (BLE phase), then system Bluetooth settings (no Pixel Buds app at any point) | S | `PAIR-001`, `PAIR-002`, `CASE-003` | `GFPS-001` — Google Play Services disabled + Pixel Buds app uninstalled, to isolate whether `CAP-002`'s Fast Pair Message Stream traffic is Buds-initiated or GMS-driven; bonus classic pairing captured (procedure deviated from Group S's system-settings-only description — nRF Connect was used first) | `captures/CAP-004-2026-08-11_06_22_36-06-25-12-Group_S/CAP-004-btsnoop_hci.log` (contains unrelated background Fitbit Charge 6 traffic, excluded — see `CAP-004-FINDINGS.md` §1) | same file | analyzed — see `CAP-004-FINDINGS.md` in that folder; **mixed `GFPS-001` result**: `CAP-002` §3's channel-2/DLCI-0x04 TLV content (Model ID, "Revision 6", etc.) is absent (channel 2 never opens) — GMS-dependent; but `CAP-001`'s channel-4/DLCI-0x08 content (`google-pixel-buds-pro-v1`, `Europe/Amsterdam`) reappears unchanged — not GMS-dependent; classic bonding used Cross-Transport Key Derivation (LE Secure Connections → classic key), not classic SSP as in `CAP-002`/`CAP-003`; new, unidentified Message Stream Groups `0x04`/`0x05`/`0x09` found; nRF Connect's cached GATT service list gives named candidate services (Google Fast Pair Service `0xFE2C`, Accessory Non-Owner Service, Device Information) for the still-open `0x0f2a`/`0x0c0X` handle questions |
 
 **Column notes:**
 

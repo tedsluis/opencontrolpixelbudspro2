@@ -1,8 +1,8 @@
 # Findings: `CAP-002` (Group A fresh-pairing capture)
 
-Standardized, evidence-based extraction from `btsnoop_hci.log` + `recording.mp4`, staged here
+Standardized, evidence-based extraction from `CAP-002-btsnoop_hci.log` + `CAP-002-recording.mp4`, staged here
 for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
-on `captures/2026-08-09_08-51-00_08-52-20-Group_Z/FINDINGS.md` (`CAP-001`). Every claim below
+on `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-FINDINGS.md` (`CAP-001`). Every claim below
 carries a status per `PROJECT_RULES.md` §1:
 
 - 🟢 **FACT** — directly observed in this capture, with a frame number.
@@ -11,10 +11,10 @@ carries a status per `PROJECT_RULES.md` §1:
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-002` · **Date:** 2026-08-09 · **Phone:** Pixel 7a (official app) ·
-**Log file:** `btsnoop_hci.log` — a long-running, non-restarted snoop log spanning
+**Log file:** `CAP-002-btsnoop_hci.log` — a long-running, non-restarted snoop log spanning
 08:50:32–17:10:58 (~8h20m, 50,468 packets total, shared with `CAP-001`); this capture's actual
 window is the ~150s slice **17:04:35–17:07:05** (1,877 packets after slicing with
-`editcap -A/-B`). **Video:** `recording.mp4` (114.2s, 17:04:53–17:06:46 local, on-screen
+`editcap -A/-B`). **Video:** `CAP-002-recording.mp4` (114.2s, 17:04:53–17:06:46 local, on-screen
 wall-clock overlay). **Devices:** phone `Google_7e:ca:81` (Pixel 7a, `E8:D5:2B:7E:CA:81`,
 BD_ADDR partially visible on-screen in this capture — same phone as `CAP-001`), peer
 `Google_cf:6e:07` (`04:00:6E:CF:6E:07`, the Buds/case — confirmed the **same physical device** as
@@ -25,7 +25,7 @@ the log).
 first-time pairing** — the app deletes any stored link key before connecting and a full Secure
 Simple Pairing (SSP) exchange occurs. It also captures the complete first-run flow through the
 Pixel Buds app's own CompanionDeviceManager (CDM) permission screen and its "Device details"
-screen loading for the first time. See `EVENT-NOTES.md` in this folder for the full event-by-event
+screen loading for the first time. See `CAP-002-EVENT-NOTES.md` in this folder for the full event-by-event
 correlation this document is built on.
 
 ---
@@ -66,7 +66,7 @@ session over PSM 0x0003, starting immediately after encryption completes.
 | 1 | 0x02 | 1125 | `0x7e`-delimited HDLC-style frames, same shape as `CAP-001`'s channel-1 traffic | 🟡 HYPOTHESIS — still unconfirmed byte-for-byte, but the structural match to `CAP-001` across two independent sessions (one reconnect, one fresh pair) is itself evidence this is a stable, real protocol, not noise |
 | 2 | 0x04 | 1251, closed 17:05:42 (frame 1486), reopened 17:05:47 (frame 1541) | **Fast Pair Message Stream, Device Information group — spec-verified, see §3** | 🟢 FACT (framing + group + two field codes spec-verified 2026-08-10; upgraded from `CAP-001`'s 🔴) |
 
-**Correction to `CAP-001`'s write-up:** `CAP-001`'s `FINDINGS.md` §2 speculated channel 2/DLCI
+**Correction to `CAP-001`'s write-up:** `CAP-001`'s `CAP-001-FINDINGS.md` §2 speculated channel 2/DLCI
 0x04's `0x7e`-delimited content might be AVRCP, based on an SDP record for AVRCP existing in that
 session. In *this* capture, the `0x7e`-delimited content instead appears on **channel 1**, while
 **channel 2** carries a clearly different, TLV-structured payload (§3). Channel *numbers* are
@@ -80,9 +80,9 @@ paired with the DLCI and a content description, not treated as a persistent labe
 §2's table above marks Channel 4/DLCI 0x08 🔴 OPEN QUESTION: "Short frames (4–69 bytes) in the
 initial 17:05:34.5–34.8 burst only; not decoded in this pass." A deskresearch pass (Python,
 `tshark -T fields`/`data.data`, stream-reassembling `[Group][Code][Len:2B-BE][Value]` parser — see
-`CAP-004` `FINDINGS.md` §5a for the reproducible script and the same method applied there) decodes
+`CAP-004` `CAP-004-FINDINGS.md` §5a for the reproducible script and the same method applied there) decodes
 this burst completely. It uses the identical private Group/Code/Length envelope already documented
-on this same DLCI in `CAP-001` `FINDINGS.md` §2 (the `google-pixel-buds-pro-v1`/`Europe/Amsterdam`
+on this same DLCI in `CAP-001` `CAP-001-FINDINGS.md` §2 (the `google-pixel-buds-pro-v1`/`Europe/Amsterdam`
 content) — **this session's burst is markedly richer** (39 messages vs. `CAP-001`'s and `CAP-004`'s
 ~20–30), because this is a genuine first-time pairing with a longer capability-negotiation
 exchange. Full burst, 17:05:34.509–34.601 (frames 48917–49030 in this file's own numbering):
@@ -106,7 +106,7 @@ frame 49014  Group=0x04 Code=0x16 Len=2   value: pb field1=2
 frame 49020  Group=0x0e Code=0x02 Len=26  value: pb field1="google-pixel-buds-pro-v1"
 frame 49024  Group=0x0e Code=0x01 Len=35  value: pb field1="all" + nested field2 x3 (varint triples)
 frame 49028  Group=0x03 Code=0x02 Len=63  value: pb — byte-for-byte identical to CAP-004 frame 2305
-             (field4="release_5.203", field9="713f855", see CAP-004 FINDINGS.md §5a Task 2)
+             (field4="release_5.203", field9="713f855", see CAP-004 CAP-004-FINDINGS.md §5a Task 2)
 frame 49030  Group=0x09 Code=0x02 Len=2   value: pb field1=0
 ```
 
@@ -138,7 +138,7 @@ Hypothesis A's *shape*, just on a private/vendor Group namespace rather than the
 yes to "one-time setup handshake" — every group/code pair in this table occurs **only within the
 first ~1 second after DLCI 0x08 opens**, in all four captures, with the sole exception of Group
 `0x04` Code `0x12`, which recurs every few seconds for the rest of the session (see `CAP-004`
-`FINDINGS.md` §5a) as an apparent periodic status ping. §2's table row above is updated in status
+`CAP-004-FINDINGS.md` §5a) as an apparent periodic status ping. §2's table row above is updated in status
 from 🔴 OPEN QUESTION to 🟢 FACT for "this is a decodable, cross-capture-consistent private
 Group/Code/Length envelope, not raw undecoded noise" — the *identity/purpose* of the private
 protocol itself (is this `libmaestro`'s own setup handshake, or a lower-level Nearby/CDM companion
@@ -212,9 +212,9 @@ pages directly (not a search-summary), specifically
 - [Device information](https://developers.google.com/nearby/fast-pair/specifications/extensions/deviceinformation) — Google for Developers
 - Fast Pair GATT/Key-based Pairing procedure spec (for the "Indicate in-use Account Key" phrase match)
 
-> **Correction (2026-08-11), source: `CAP-004`'s `FINDINGS.md` §4.** This section treated the
+> **Correction (2026-08-11), source: `CAP-004`'s `CAP-004-FINDINGS.md` §4.** This section treated the
 > channel-2/DLCI-0x04 TLV content above as one finding, implicitly alongside the *separate*
-> channel-4/DLCI-0x08 content documented in `CAP-001`'s `FINDINGS.md` §2 (`google-pixel-buds-
+> channel-4/DLCI-0x08 content documented in `CAP-001`'s `CAP-001-FINDINGS.md` §2 (`google-pixel-buds-
 > pro-v1`, `Europe/Amsterdam`, protobuf-tag-framed, not the `[Group][Code][Length][Value]` TLV
 > shape described here). `CAP-004` (Group S — Google Play Services disabled, Pixel Buds app
 > uninstalled) shows these two are **not the same mechanism, and do not share the same
@@ -224,7 +224,7 @@ pages directly (not a search-summary), specifically
 >   (Model ID `da 2d b1`), Code `0x02` (BLE address updated), Code `0x09` (`"Revision 6"`) — is
 >   **absent** in `CAP-004`: channel 2 is never even opened when GMS is disabled. This is
 >   evidence the mechanism documented in *this* section is **GMS/Nearby-driven**, not
->   Buds-initiated as originally left open in §7 item 4 of `CAP-001`'s `FINDINGS.md`.
+>   Buds-initiated as originally left open in §7 item 4 of `CAP-001`'s `CAP-001-FINDINGS.md`.
 > - The *channel-4/DLCI-0x08* content from `CAP-001` reappears in `CAP-004` **unchanged**, GMS
 >   disabled or not — that content is Buds-initiated, independent of GMS.
 >
@@ -235,12 +235,12 @@ pages directly (not a search-summary), specifically
 > theme ("device info sent around connection time") is not evidence of a shared mechanism;
 > each channel/DLCI's content needs its own independent verification, per the same
 > content-over-channel-number discipline already established for RFCOMM channel numbers
-> (`CAP-001` `FINDINGS.md` §2's reusable note). Per `PROJECT_RULES.md` §3, this note supersedes
-> the implicit "one finding" framing above without deleting it. See `CAP-004`'s `FINDINGS.md`
+> (`CAP-001` `CAP-001-FINDINGS.md` §2's reusable note). Per `PROJECT_RULES.md` §3, this note supersedes
+> the implicit "one finding" framing above without deleting it. See `CAP-004`'s `CAP-004-FINDINGS.md`
 > §4 for the full byte-level evidence and `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GFPS-001` row for
 > the test-catalog-level status (🟡, mixed outcome).
 
-> **Follow-up (2026-08-12), source: `CAP-004`'s `FINDINGS.md` §5a.** The correction directly above
+> **Follow-up (2026-08-12), source: `CAP-004`'s `CAP-004-FINDINGS.md` §5a.** The correction directly above
 > already separates this section's DLCI-0x04 content from `CAP-001`'s DLCI-0x08 content. `CAP-004`'s
 > 2026-08-12 addendum sharpens this further: `CAP-004` frame 2305 and this file's own frame 49028
 > (§2a below) are byte-for-byte identical 67-byte messages, both on DLCI 0x08, both reading
@@ -253,12 +253,12 @@ pages directly (not a search-summary), specifically
 > question directly above ("is `libmaestro`... a custom Message Group ID... or a separate channel")
 > for this specific pair of channels: DLCI 0x04 and DLCI 0x08 are confirmed as two independent
 > Group/Code namespaces that happen to share numeric labels, not one shared namespace split across
-> two channels.** See `CAP-004` `FINDINGS.md` §5a (Task 2) for the full byte-level argument, and §2a
+> two channels.** See `CAP-004` `CAP-004-FINDINGS.md` §5a (Task 2) for the full byte-level argument, and §2a
 > below for this file's own copy of the byte-identical frame.
 >
 > **Task 3 (2026-08-12): Group `0x07` Code `0x41` = `"in-use"` — upgraded from 🟡 HYPOTHESIS to 🟢
 > FACT.** §3's bullet above (line ~205) found the phrase "Indicate in-use Account Key" on a
-> *GATT-level* Fast Pair spec page (phrase-match only, kept at 🟡). `CAP-004` `FINDINGS.md` §5
+> *GATT-level* Fast Pair spec page (phrase-match only, kept at 🟡). `CAP-004` `CAP-004-FINDINGS.md` §5
 > subsequently found Google's [SASS (Smart Audio Source Switching)](https://developers.google.com/nearby/fast-pair/specifications/extensions/sass)
 > extension page, which states explicitly that it uses **Message Group `0x07`** and gives a code
 > table including **`0x41` = "Indicate in use account key."** — an exact group **and** code match,
@@ -277,7 +277,7 @@ pages directly (not a search-summary), specifically
 > UIH frame carrying all five TLV messages (`03 0a 00 08`+8B, `03 01 00 03`+3B, `03 02 00 06`+6B,
 > `03 09 00 0a`+`"Revision 6"`, `07 10 00 00`) packed together — byte offsets sum exactly to 47 in
 > every case, and `bthci_acl.pb_flag`/`continuation_to`/`reassembled_in` confirm no L2CAP/ACL-level
-> segmentation on any of them (`tshark -r btsnoop_hci.log -Y "frame.number==<N>" -e bthci_acl.pb_flag -e bthci_acl.continuation_to -e bthci_acl.reassembled_in`).
+> segmentation on any of them (`tshark -r CAP-002-btsnoop_hci.log -Y "frame.number==<N>" -e bthci_acl.pb_flag -e bthci_acl.continuation_to -e bthci_acl.reassembled_in`).
 > Reported per this project's "negative results are findings too" rule: fragmentation risk for this
 > specific burst is ruled out, not merely unconfirmed.
 >
@@ -347,7 +347,7 @@ in this same window shows:
   is **not** claimed as confirmed identification, only a structural resemblance.
 - **Timing correlation with the video (🟢 FACT):** the 3rd burst (17:05:53.27–53.39) lands within
   the same second the app showed **"Pixel Buds Pro 2 van Ted connected"** (17:05:53 in
-  `EVENT-NOTES.md`). The 4th burst (17:06:03.79–04.0) lands within the same second as the **Save**
+  `CAP-002-EVENT-NOTES.md`). The 4th burst (17:06:03.79–04.0) lands within the same second as the **Save**
   tap (17:06:04). This is a tight enough correlation to treat as causal, not coincidental,
   pending further verification. The Fast Pair "Save device" / GFPS step (explanation #3 from the
   previous version of this section) is therefore **not** purely cloud-side as speculated — at
@@ -380,12 +380,12 @@ in a future pass.
 
 > **Update (2026-08-12) — the "wider time slice" check above is now done, and settles this
 > question with a clean negative, not a slice-boundary artifact.** This file's underlying
-> `btsnoop_hci.log` is not actually a pre-sliced ~150s file — it is the full, shared, non-restarted
+> `CAP-002-btsnoop_hci.log` is not actually a pre-sliced ~150s file — it is the full, shared, non-restarted
 > ~8h20m buffer (50,468 packets, 08:50:32–17:10:58) already documented in this file's own header
 > and in `CAP-002`'s Capture Index row. Searching the **entire** file for the ASCII byte pattern
-> `AT+` (`tshark -r btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "AT+"'`) returns
+> `AT+` (`tshark -r CAP-002-btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "AT+"'`) returns
 > exactly **23 matches, all falling within 08:51:13.958–08:51:34.860** — i.e. all 23 belong to
-> `CAP-001`'s own, already-documented HFP handshake (its `FINDINGS.md` §3), captured on DLCI 0x09
+> `CAP-001`'s own, already-documented HFP handshake (its `CAP-001-FINDINGS.md` §3), captured on DLCI 0x09
 > in this same shared buffer. **Zero `AT+` matches exist anywhere else in the full 8+ hour log** —
 > not during this session's own pairing/setup window (17:04–17:07), not during any of the other
 > reconnect events visible in this buffer (e.g. 11:32, 12:05 — see §2a above), and not in the ~7
@@ -457,9 +457,9 @@ of the whole 8h20m log) was checked directly, without slicing to this device.
    user actually interacts with an ANC/EQ control from a fresh-paired state.
 3. ~~Byte-for-byte verification of the Fast Pair Message Stream Device Information group/code
    values against the actual published spec~~ — **done, see §3** (2026-08-10).
-4. ~~Revisit `CAP-001`'s `FINDINGS.md` §2~~ — **done**, see `CAP-001`'s `FINDINGS.md` correction
-   note dated 2026-08-10, added per the same pattern `DECISIONS.md` uses for superseding ADRs
-   (the original text is kept, not silently rewritten).
+4. ~~Revisit `CAP-001`'s `CAP-001-FINDINGS.md` §2~~ — **done**, see `CAP-001`'s `CAP-001-FINDINGS.md`
+   correction note dated 2026-08-10, added per the same pattern `DECISIONS.md` uses for superseding
+   ADRs (the original text is kept, not silently rewritten).
 5. Restart Bluetooth (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §2 step 5) before the next capture — the
    shared, non-restarted 8+ hour snoop log made this session's analysis start with an unnecessary
    slicing step, and item §7 shows it also accumulates unrelated devices' traffic.
@@ -502,7 +502,7 @@ bar:
   spec source or its own targeted investigation.
 - The `0x0c0X` GATT handle cluster's identity — needs the UUID-resolving capture from §8 item 1
   before any claim beyond "structurally resembles"; **the structural resemblance itself was
-  substantially strengthened 2026-08-12** — see `CAP-003` `FINDINGS.md` §4's own 2026-08-12
+  substantially strengthened 2026-08-12** — see `CAP-003` `CAP-003-FINDINGS.md` §4's own 2026-08-12
   addendum for exact byte-length validation against the official Key-based Pairing/Passkey spec
   (16-byte AES blocks, CCCD-gated flow, cross-confirmed in `CAP-002` and `CAP-003`).
 - Any HFP AT-command behavior claim specific to fresh pairing (§5) — **the "wider time slice"

@@ -1,10 +1,10 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group A Capture (`CAP-002`)
 
-**Status:** Reviewed against `recording.mp4` frame-by-frame (1s resolution, using the video's
-burned-in wall-clock overlay) and cross-checked against `btsnoop_hci.log` via `tshark`/Wireshark.
-Corrects and extends the original draft. See `FINDINGS.md` in this same folder for the
+**Status:** Reviewed against `CAP-002-recording.mp4` frame-by-frame (1s resolution, using the video's
+burned-in wall-clock overlay) and cross-checked against `CAP-002-btsnoop_hci.log` via `tshark`/Wireshark.
+Corrects and extends the original draft. See `CAP-002-FINDINGS.md` in this same folder for the
 standardized, evidence-graded protocol findings extracted from this correlation — this file is
-the *event timeline*, `FINDINGS.md` is *what it means for the protocol*.
+the *event timeline*, `CAP-002-FINDINGS.md` is *what it means for the protocol*.
 
 ## Log Metadata
 
@@ -15,8 +15,8 @@ the *event timeline*, `FINDINGS.md` is *what it means for the protocol*.
 |       Date       |                  2026-08-09                  |
 | Firmware version | unknown — not visible in this capture, TBD |
 |   Test device    | Pixel 7a (Official Pixel Buds Companion App) |
-| Video file       | `recording.mp4` — 114.2s, starts 08:04:53(=17:04:53 local), ends 17:06:46 (wall clock, +0200) |
-| Log file         | `btsnoop_hci.log` — **note: this is a long-running, non-restarted snoop log spanning 08:50:32–17:10:58 (~8h20m), the same buffer used since `CAP-001`.** 50,468 packets total; this capture's actual window is only the ~150s slice 17:04:35–17:07:05 (1,877 packets), everything else is unrelated background Bluetooth activity accumulated over the day. |
+| Video file       | `CAP-002-recording.mp4` — 114.2s, starts 08:04:53(=17:04:53 local), ends 17:06:46 (wall clock, +0200) |
+| Log file         | `CAP-002-btsnoop_hci.log` — **note: this is a long-running, non-restarted snoop log spanning 08:50:32–17:10:58 (~8h20m), the same buffer used since `CAP-001`.** 50,468 packets total; this capture's actual window is only the ~150s slice 17:04:35–17:07:05 (1,877 packets), everything else is unrelated background Bluetooth activity accumulated over the day. |
 
 **Scope note:** unlike `CAP-001` (a reconnection to an already-bonded device), this session is a
 **genuine first-time pairing** — the app explicitly deletes any stored link key before
@@ -37,7 +37,7 @@ Timestamps are the video's own on-screen wall-clock overlay (1fps sampling, refi
 sub-second precision around each tap by extracting additional frames at the exact second); the
 log uses the same wall clock (+0200), directly comparable.
 
-| Time | Action / Event | Initiator | Test-ID | Evidence in `btsnoop_hci.log` |
+| Time | Action / Event | Initiator | Test-ID | Evidence in `CAP-002-btsnoop_hci.log` |
 |---|---|---|---|---|
 | 17:04:53 | Start video recording. "Pair new device" screen already open, phone's own address shown (`E8:D5:2B:7E:CA:81`); list shows unrelated nearby devices (TV, DoorLocker) | User (App) | — | Ongoing `Extended Inquiry Result` events from before this window (inquiry already running) |
 | 17:05:02 | Case opened, LED lit; more nearby devices appear in list over time (laptop, vuart:ktunnel) but not the Buds yet | User (Hardware) | `CASE-001` | — |
@@ -59,7 +59,7 @@ log uses the same wall clock (+0200), directly comparable.
 | 17:06:24 | Green checkmark appears between the app/device icons | App (Auto) | — | — |
 | 17:06:25–31 | System dialog: **"Allow the app Pixel Buds to access Pixel Buds Pro 2 van Ted?"** (CompanionDeviceManager association permission — confirms CDM is genuinely used, per `DECISIONS.md` ADR-005) | App (Auto) | — | — |
 | 17:06:31 | Tap **Allow** | User (App) | — | — |
-| 17:06:33–46 | **"Device details"** screen loaded: Sound, Hearing wellness, More settings, Audio switch, Phone calls/Media audio/**Input device** toggles (all on), device address shown (`04:00:6E:CF:6E:07`) | App (Auto) | — | **No RFCOMM data frames observed anywhere in this window** (17:05:48 through the end of the capture at 17:07:05) — see `FINDINGS.md` §4 |
+| 17:06:33–46 | **"Device details"** screen loaded: Sound, Hearing wellness, More settings, Audio switch, Phone calls/Media audio/**Input device** toggles (all on), device address shown (`04:00:6E:CF:6E:07`) | App (Auto) | — | **No RFCOMM data frames observed anywhere in this window** (17:05:48 through the end of the capture at 17:07:05) — see `CAP-002-FINDINGS.md` §4 |
 | 17:06:46 | End video recording | — | — | — |
 
 ## Corrections vs. the original draft of this file
@@ -83,4 +83,4 @@ log uses the same wall clock (+0200), directly comparable.
   showed no activity during it.
 - Flagged that **no RFCOMM data traffic occurs anywhere after ~17:05:48**, including during the
   entire app setup / CDM permission / "Device details" loading sequence (17:06:04–17:06:46) — see
-  `FINDINGS.md` §4 for what this means and possible explanations.
+  `CAP-002-FINDINGS.md` §4 for what this means and possible explanations.

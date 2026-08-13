@@ -1,8 +1,8 @@
 # Findings: `CAP-003` (Group R forced-GATT-rediscovery capture)
 
-Standardized, evidence-based extraction from `btsnoop_hci.log` + `recording.mp4`, staged here
+Standardized, evidence-based extraction from `CAP-003-btsnoop_hci.log` + `CAP-003-recording.mp4`, staged here
 for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
-on `captures/2026-08-09_08-51-00_08-52-20-Group_Z/FINDINGS.md` (`CAP-001`). Every claim below
+on `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-FINDINGS.md` (`CAP-001`). Every claim below
 carries a status per `PROJECT_RULES.md` §1:
 
 - 🟢 **FACT** — directly observed in this capture, with a frame number.
@@ -12,8 +12,8 @@ carries a status per `PROJECT_RULES.md` §1:
 
 **Capture ID:** `CAP-003` · **Date:** 2026-08-10 · **Phone:** Pixel 7a — **nRF Connect** (generic
 BLE/GATT tool), with the official Pixel Buds app taking over partway through. **Log file:**
-`btsnoop_hci.log` (302.2s, 2,863 packets, 20:58:57.10–21:03:59.33 local/+0200 — a short,
-freshly-restarted log, not a shared multi-hour one). **Video:** `recording.mp4` (81.1s,
+`CAP-003-btsnoop_hci.log` (302.2s, 2,863 packets, 20:58:57.10–21:03:59.33 local/+0200 — a short,
+freshly-restarted log, not a shared multi-hour one). **Video:** `CAP-003-recording.mp4` (81.1s,
 20:59:16–21:00:37 local, on-screen wall-clock overlay). **Devices:** phone `Google_7e:ca:81`
 (Pixel 7a, same phone as `CAP-001`/`CAP-002`), peer `Google_cf:6e:07`
 (`04:00:6E:CF:6E:07`, the Buds/case — confirmed the same physical device as `CAP-001`/`CAP-002`
@@ -22,7 +22,7 @@ via the classic-link BD_ADDR, frame 1689).
 **Stated goal of this session (per the maintainer):** map the GATT service/characteristic
 structure of the Buds/case by forcing a fresh discovery — pairing removed via system settings
 beforehand, connected via **nRF Connect** instead of the official app — specifically to resolve
-two UUID gaps left open by `CAP-002`'s `FINDINGS.md`: handle `0x0f2a` (already known to return
+two UUID gaps left open by `CAP-002`'s `CAP-002-FINDINGS.md`: handle `0x0f2a` (already known to return
 the string `"Revision 6"` — the UUID around it, not the value, was the target) and the `0x0c0X`
 handle cluster (`CAP-002`'s Key-based-Pairing-shaped write/notify bursts). **§1 reports whether
 that goal was met — it was not, for a specific, evidenced reason.** A full classic pairing
@@ -53,7 +53,7 @@ checked exhaustively, not assumed:
   GATT database cache** — this capture is direct evidence of that distinction, not previously
   documented anywhere in this project's files.
 - nRF Connect's own UI *did* show a resolved service list (Generic Attribute, Generic Access,
-  Broadcast Audio Scan Service — `EVENT-NOTES.md`, 20:59:42) — but this comes from Android's
+  Broadcast Audio Scan Service — `CAP-003-EVENT-NOTES.md`, 20:59:42) — but this comes from Android's
   `BluetoothGatt` API serving nRF Connect its **cached** database, not from a live over-the-air
   query. The UI evidence and the wire evidence are consistent with each other, not contradictory —
   both point to the same cache being used instead of fresh discovery.
@@ -91,8 +91,8 @@ also buds-init reopen, frame 2157), **5** (frame 1954), **2** (frame 2035, close
 reopened frame 2265), **1** (frame 2348). HFP AT-command traffic (`AT+BRSF`, `AT+BAC`, `AT+CIND`,
 `AT+CMER`, `AT+BIND`, `AT+BIEV`, ...) appears on **channel 4** this time (frames 2178+) — matching
 `CAP-001`'s channel-4 HFP placement, *not* `CAP-002`'s channel-6 placement. This is a third data
-point (alongside `CAP-001`'s and `CAP-002`'s FINDINGS.md corrections) confirming the reusable
-methodological note already recorded in `CAP-001`'s `FINDINGS.md` §2: **RFCOMM server channel
+point (alongside `CAP-001`'s and `CAP-002`'s CAP-002-FINDINGS.md corrections) confirming the reusable
+methodological note already recorded in `CAP-001`'s `CAP-001-FINDINGS.md` §2: **RFCOMM server channel
 numbers are negotiated per-connection and must never be treated as a stable per-profile label**
 — only content/structure (and, within one session, the DLCI) reliably identifies a channel's
 role. This capture's own SDP records (Audio Sink, AVRCP, HFP AG/HS, PnP Information — frames
@@ -143,7 +143,7 @@ carrying similarly-shaped data — itself informative:
 > Request/Response (`btatt.opcode in {0x0a,0x0b}`) with `0x0f20 <= handle <= 0x0f30` across
 > `CAP-002`, `CAP-003`, and `CAP-004`'s full logs:
 > ```
-> tshark -r btsnoop_hci.log -Y "btatt.opcode in {0x0a,0x0b} and btatt.handle >= 0x0f20 and btatt.handle <= 0x0f30" \
+> tshark -r CAP-003-btsnoop_hci.log -Y "btatt.opcode in {0x0a,0x0b} and btatt.handle >= 0x0f20 and btatt.handle <= 0x0f30" \
 >   -T fields -e frame.number -e frame.time -e btatt.opcode -e btatt.handle -e btatt.value
 > ```
 > `CAP-002`: only `0x0f2a` (frames 49423→49425, value `"Revision 6"`). `CAP-003` (this file): only
@@ -191,7 +191,7 @@ carrying similarly-shaped data — itself informative:
 > exchange — byte lengths and CCCD-gated write/notify flow — is promoted to 🟢 FACT as matching the
 > official Fast Pair Key-based Pairing/Passkey characteristic shape.** What remains 🟡/🔴, unchanged
 > by this pass: the actual UUIDs (no live discovery ever resolved them — see the 2026-08-12 update
-> in `CAP-004` `FINDINGS.md` §6, confirming this gap persists in all three captures with this goal),
+> in `CAP-004` `CAP-004-FINDINGS.md` §6, confirming this gap persists in all three captures with this goal),
 > and therefore whether `0x0c04`/`0x0c05` specifically is Key-based Pairing and `0x0c07`/`0x0c08`
 > specifically is Passkey (plausible, and consistent with §5 below's timing correlation — `0x0c07`'s
 > burst falls inside the classic SSP window, exactly where Passkey's silent numeric-comparison
@@ -280,7 +280,7 @@ of the three captures to date. Not claimed as FACT; requires UUID confirmation.
 - Any UUID for handle `0x0f2a`, `0x0f28`, or the `0x0c0X` cluster — **this session's stated goal,
   still unresolved.** Needs the stronger cache-busting approach in §7 item 1. **Re-confirmed
   2026-08-12: `CAP-004` (a fourth, later session) also failed to trigger live discovery for the
-  Buds — see `CAP-004` `FINDINGS.md` §6's 2026-08-12 update — so this is now a four-for-four
+  Buds — see `CAP-004` `CAP-004-FINDINGS.md` §6's 2026-08-12 update — so this is now a four-for-four
   negative result, not specific to this session's method.**
 - The Passkey-characteristic hypothesis in §5 — **strengthened 2026-08-12 (§4 Task-5 addendum) to
   a precise byte-length/flow match against the spec**, but still not UUID-confirmed.

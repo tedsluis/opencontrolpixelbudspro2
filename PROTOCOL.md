@@ -36,7 +36,7 @@ Status legend:
 | Last verified against firmware | `release_5.203` |
 | Primary source | [`qzed/pbpctrl`](https://github.com/qzed/pbpctrl) (Linux/Rust) — protocol *knowledge* only, no code reused (see `AGENTS.md` §12) |
 | Secondary sources | Official app/web screenshots (`SCREENSHOTS_PIXEL_BUDS_APP.md`, `SCREENSHOTS_PIXEL_BUDS_WEB_APP.md`), Google Fast Pair Service (GFPS) specification (`developers.google.com/nearby/fast-pair`), `pbtk`-extracted schemas |
-| Verification method | Android `btsnoop_hci.log` capture and analysis (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md`) |
+| Verification method | Android `CAP-nnn-btsnoop_hci.log` capture and analysis (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md`) |
 | Promoted from | `PROTOCOL_NOTES.md` (working notes) |
 
 ### 0.1 Firmware / version compatibility matrix
