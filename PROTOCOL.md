@@ -50,6 +50,32 @@ above it.
 |---|---|---|
 | `release_5.203` | `ADAPTIVE` ANC mode present; 5-band EQ; L/R/Case independent battery reporting (now understood to likely be the Fast Pair Battery Notification, §4.3 Option A) | `[VERIFIED-LOCAL]` (Screenshot UI analysis, 2026-07-30) |
 
+> **Note (2026-08-14) — four different version-like strings are now documented across captures;
+> not yet reconciled into a single confirmed firmware version.** Listed here explicitly, each with
+> its source channel, pending a capture that also records the app's own "More settings" firmware
+> display (never captured to date) to resolve which (if any) is the actual, user-visible firmware
+> version:
+> - **`"release_5.203"`** — this table's current baseline, `[VERIFIED-LOCAL]` 2026-07-30 (screenshot
+>   UI). Also found on-the-wire, independently, in three sessions on **DLCI 0x08**'s private
+>   envelope (Group `0x03` Code `0x02`, `CAP-004-FINDINGS.md` §5a Task 2; byte-for-byte identical
+>   to `CAP-002` frame 49028) and in **DLCI 0x08**'s Group `0x02` Code `0x04` value
+>   (`CAP-002-FINDINGS.md` §2a, a *third* independent sighting on the same DLCI).
+> - **`"Revision 6"`** — found on **DLCI 0x04**, the official Fast Pair Message Stream's Device
+>   Information group, Code `0x09` (spec-confirmed field identity = "Firmware version" string,
+>   `CAP-002-FINDINGS.md` §3), and independently corroborated via a direct GATT characteristic read
+>   (handle `0x0f2a`, `CAP-002-FINDINGS.md` §4). GMS-dependent — absent in `CAP-004`
+>   (`CAP-004-FINDINGS.md` §4a), unlike the DLCI-0x08 strings above.
+> - **`"cape2_sm"`** (hardware/board codename) and **`"500m"`–`"500p"`** (config-variant
+>   identifiers) — found alongside a third `"release_5.203"` sighting on DLCI 0x08's Group `0x02`
+>   Code `0x04` (`CAP-002-FINDINGS.md` §2a) — plausibly per-preset/per-profile identifiers, not
+>   mapped to any user-visible feature.
+>
+> These are not competing readings of one field — they are on-the-wire values from at least two
+> structurally independent channels/mechanisms (§2.3's table), and `"Revision 6"` specifically
+> looks more like a protocol/schema revision number than a firmware build string (`CAP-002-FINDINGS.md`
+> §3). Left as 🔴 OPEN QUESTION which (if any) is what the app itself would call "the firmware
+> version" until a capture also records that app screen.
+
 ## 1. Transports overview
 
 | Transport | Used for | Status |
@@ -227,6 +253,51 @@ area. Where no official extension covers it, decode DLCI 0x02's opaque "Sent" pa
 plausibly via a pw_rpc/protobuf service definition, once extracted per §3) or correlate one
 against an isolated action (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group B, properly isolated this time).
 
+**Addendum (2026-08-14), deskresearch task — DLCI 0x08 and DLCI 0x02 evaluated explicitly, side
+by side, as `libmaestro` candidates against `pbpctrl`'s own transport description (not the
+`pbpctrl` code — only its published protocol *knowledge*, per `AGENTS.md` §12/`DECISIONS.md`
+ADR-003).** `pbpctrl`'s own project notes
+(`https://raw.githubusercontent.com/qzed/pbpctrl/main/docs/Notes.md`, re-fetched and checked
+specifically for transport/framing detail) state, verbatim: *"The protocol is implemented using
+the pigweed RPC library... the RPC messages are wrapped in High-Level Data Link Control (HDLC)
+U-frames."* The document gives **no** magic-byte, length-field, or channel-ID detail beyond that
+(confirmed by a targeted re-read — those fields are simply not documented upstream), and the
+project's own README gives no RFCOMM channel/UUID specifics either. This means the *only* concrete
+transport signature `pbpctrl` actually publishes for Maestro is **"HDLC U-frames wrapping pw_rpc
+protobuf messages"** — nothing else in `PROTOCOL.md` §2.2's placeholder field list (magic byte,
+explicit length field, checksum) is independently confirmed by the upstream source; §2.2a already
+derived the length/checksum mechanics empirically from the capture bytes themselves, not from
+`pbpctrl`'s docs.
+
+Checked against that one confirmed signature, the two candidates diverge sharply:
+
+| Field (per §2.2's Hypothesis B placeholder / `pbpctrl`'s stated mechanism) | DLCI 0x02 (§2.2a) | DLCI 0x08 (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md` §5a) |
+|---|---|---|
+| Framing mechanism vs. `pbpctrl`'s stated "HDLC U-frames" | **Match** — `0x7E`-flag-delimited, `0x7D`-escaped, exactly HDLC framing | **No match** — no `0x7E` flag bytes anywhere, no escaping; framed instead by an explicit `[Group:1][Code:1][Length:2B-BE][Value]` header, structurally the *Message Stream* shape (§2.1), not HDLC |
+| "Magic bytes" (Hypothesis B placeholder) | No fixed magic value — the HDLC flag `0x7E` itself is shared start/end framing, not a distinguishing sync byte | No magic byte either — but for a different reason: framing is length-delimited (TLV), which doesn't need one, same as the official Message Stream |
+| "Payload length" field | Not explicit — implicit via flag-delimiting (HDLC's own mechanism, matching `pbpctrl`'s description) | Explicit 2-byte big-endian length — this is *not* what `pbpctrl` describes for Maestro at all; it is exactly Message Stream §2.1's "Additional Data Length" field shape |
+| "Channel / Message ID" | HDLC Address (LEB128 varint) + Control byte — consistent with pw_rpc's own channel/service addressing scheme | Group (1B) + Code (1B) — consistent with Message Stream's Group/Code addressing, not pw_rpc's |
+| Checksum | CRC-32 (IEEE 802.3/zlib), confirmed 640/640 — matches Pigweed's own documented `pw_checksum` FCS convention exactly | None found (`CAP-004-FINDINGS.md` §5a's reassembling parser closes cleanly on every session with 0 leftover bytes and no checksum-shaped trailer ever isolated) |
+
+**Conclusion, stated per `PROJECT_RULES.md` §1's promotion rules:** DLCI 0x02 is now a
+**direct, mechanism-level match** to the one concrete thing `pbpctrl` actually documents about
+Maestro's transport (HDLC U-frames) — this was already known (§2.2a) but had not previously been
+stated as a comparison *against a rejected alternative*. DLCI 0x08, by contrast, structurally
+matches the *official* Fast Pair Message Stream's TLV shape (§2.1) applied to a private Group
+namespace — it does not use HDLC framing at all, and therefore **does not match `pbpctrl`'s own
+description of Maestro's transport mechanism**. This is a genuine negative result for DLCI 0x08
+as a `libmaestro` candidate specifically, not merely "still unresolved" — recorded here as such
+rather than left ambiguous. **Status, per the evidence rules:** DLCI 0x02 = `libmaestro` remains
+🟡 HYPOTHESIS (strong) — unchanged in strength from §2.2a, since no Maestro-specific *content*
+(an ANC/EQ method call) is decoded yet, so this cannot cross to 🟢 FACT on framing-mechanism
+match alone. DLCI 0x08's *identity* remains 🔴 OPEN QUESTION as before, but is now narrowed by a
+checked negative: **not** `libmaestro` (mechanism mismatch against the one concrete signature
+`pbpctrl` publishes), leaving "a lower-level Nearby/CDM companion-device negotiation independent
+of both Fast Pair and Maestro" (`CAP-004-FINDINGS.md` §5a's existing framing) as the leading
+remaining candidate for it. §2.3's three-channel table above is not restructured into a binary
+choice — it already correctly shows three coexisting channels; this addendum only sharpens which
+one the *libmaestro* hypothesis should now concentrate on.
+
 **Handling rule (unchanged regardless of which hypothesis is confirmed, per
 `AGENTS.md` §6 and `ARCHITECTURE.md` §5):** any checksum mismatch, or any frame
 that fails to parse against the relevant invariants, is dropped silently and
@@ -269,10 +340,16 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
 
   **"Set ANC state" (`0x12`) layout** (`[Group:1][Code:1][Len:2BE][Seeker version:1][ANC
   settable modes:1][ANC enabled modes:1][New ANC mode index:1][Reserved:16, present iff
-  Len=`0x14`]`), and the mode-index byte uses a one-hot bitmask, bit numbering as given on the
-  spec page (`Bit 0` = spec's own MSB-first convention): `Bit 0`=Transparent, `Bit 1`=Adaptive,
-  `Bit 2`=Off, `Bit 3`=Reserved, `Bit 4`=ANC — i.e. in standard bit-position terms, bit7=Transparent,
-  bit6=Adaptive, bit5=Off, bit3=ANC.
+  Len=`0x14`]`), and the mode-index byte uses a one-hot bitmask. **Bit-mapping table (rewritten
+  2026-08-14 for clarity — same underlying mapping as before, no conclusion changed):**
+
+  | Spec's own bit name (`hearablecontrols` page, MSB-first numbering) | Standard bit position | Observed hex value | ANC mode |
+  |---|---|---|---|
+  | `Bit 0` | bit 7 (MSB) | `0x80` | Transparent / Aware |
+  | `Bit 1` | bit 6 | `0x40` | Adaptive |
+  | `Bit 2` | bit 5 | `0x20` | Off |
+  | `Bit 3` | bit 4 | — (not observed) | Reserved |
+  | `Bit 4` | bit 3 | `0x08` | ANC / Active Noise Cancelling |
 - **Byte-level match against `CAP-001`, exact, no discrepancy:** four `08 12 00 14 01 e8 e8 XX
   <16 reserved bytes>` frames exist in `CAP-001-btsnoop_hci.log` (frames 2039, 2132, 2159, 2193;
   DLCI 0x04). Decoded: `ver=0x01, settable=0xe8, enabled=0xe8, new_mode=`:
@@ -506,6 +583,12 @@ leaving them buried in prose elsewhere.
       little-endian), matching Pigweed's `pw_checksum` module exactly;
       verified at 640/640 (100%) sub-frames across three independent
       captures. DLCI 0x08 still has no confirmed checksum (unchanged, 🔴).
+- [x] **Added 2026-08-14:** DLCI 0x08 checked directly against `pbpctrl`'s
+      published Maestro transport description (HDLC U-frames) and found to
+      *not* match (no `0x7E` flag framing at all) — a checked negative
+      result narrowing, not resolving, its identity. See §2.3's 2026-08-14
+      addendum. DLCI 0x02 remains the sole candidate that matches
+      `pbpctrl`'s stated mechanism.
 
 ### Commands & schemas
 
@@ -525,6 +608,21 @@ leaving them buried in prose elsewhere.
       Stream group (§4.3 Option B) — firmware version is confirmed as code
       `0x09`; battery's code is not yet confirmed.
 - [ ] Protobuf/message mapping for all features listed in §4.5.
+- [ ] Added 2026-08-14: Groups `0x01`/`0x02`/`0x05`/`0x09` on DLCI 0x08's private envelope are
+      structurally confirmed as genuine, self-contained, standalone Message-Stream-shaped groups
+      (not a reassembly artifact — `CAP-004-FINDINGS.md` §5a Task 3, checked across all four
+      captures' full DLCI-0x08 byte streams with zero parse errors/leftover bytes). Their
+      *semantic* meaning remains 🔴 open — no official Fast Pair extension page documents these
+      group numbers under DLCI 0x08's private numbering (`CAP-002-FINDINGS.md` §2a Task 2).
+- [ ] Added 2026-08-14: DLCI 0x08's own purpose/ownership as a whole channel is still 🔴 open.
+      Ruled out as `libmaestro` specifically (§2.3's 2026-08-14 addendum — no HDLC framing, unlike
+      the one concrete transport signature `pbpctrl` documents for Maestro). Leading remaining
+      candidate: a lower-level Nearby/CDM companion-device negotiation, independent of both Fast
+      Pair (DLCI 0x04) and `libmaestro` (DLCI 0x02) — not confirmed.
+- [ ] Added 2026-08-14: EQ's opcode/channel is explicitly **not** assumed to sit alongside ANC's
+      (DLCI 0x04 Group `0x08`) — that assumption held only while ANC's own channel was unresolved.
+      See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T (new top-priority capture target) and §4.2
+      above.
 
 ### Behavior
 
@@ -538,6 +636,22 @@ leaving them buried in prose elsewhere.
       button, distinct from the confirmed 30-second factory-reset hold.
 - [ ] Whether captured RFCOMM payload bytes are ever link-layer encrypted in a
       way that requires extra Wireshark configuration to decode.
+- [ ] Added 2026-08-14: why HFP AT-command traffic never recurs after `CAP-001`'s own handshake —
+      confirmed as a genuine negative (zero `AT+` traffic anywhere else across a full 8+ hour
+      shared log spanning multiple reconnects, `CAP-002-FINDINGS.md` §5), but the underlying
+      *reason* (per-pairing SLC setup once only? requires an actual call to re-trigger?) is still
+      open. `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group V (new) targets this directly.
+- [ ] Added 2026-08-14: DLCI 0x08 Group `0x04` Code `0x12`'s alternating value — event-driven
+      (breaks/skips on a real physical event) or a free-running liveness/sequence-parity counter?
+      🟡 HYPOTHESIS (free-running) per `CAP-004-FINDINGS.md` §5a Task 5's irregular-interval,
+      near-perfect-alternation observation; not yet tested against a bracketed physical event.
+      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group U (new) targets this directly.
+- [ ] Added 2026-08-14: live GATT primary-service discovery requires stronger cache-busting than
+      bond removal — confirmed as a genuine requirement, not an assumption: three independent
+      captures (`CAP-002`, `CAP-003`, `CAP-004`) all failed to trigger a live `Read By Group Type`
+      response against the Buds despite bond removal beforehand in two of them
+      (`CAP-003-FINDINGS.md` §1, `CAP-004-FINDINGS.md` §6). `CAPTURE_BLUETOOTH_HCI_SNOOP.md`
+      Group W (new) proposes two untried, stronger candidates.
 
 ### Resolved
 

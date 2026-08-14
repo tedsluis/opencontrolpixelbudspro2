@@ -178,6 +178,26 @@ carrying similarly-shaped data — itself informative:
 > CAP-003  0x0c07 write  (frame 1744)                 16 bytes
 > CAP-003  0x0c07 notify (frame 1746)                 16 bytes
 > ```
+> **Hex-dump completeness check (2026-08-14), deskresearch task — raw bytes added for this table's
+> byte-length-only claims, per `PROJECT_RULES.md` §1's traceability rule.** Re-extracted directly
+> via `tshark -r CAP-003-btsnoop_hci.log -Y "frame.number==<N>" -T fields -e btatt.value`:
+> ```
+> CAP-003 frame 1670 (0x0c04 write, 80B):  5d5d38fdf3274918966c031d7f310982c0795d4942576c26726ce22
+>                                           784288e5f7c628d6cf264f16cc45b7e64c1b1c97ad556da51904984
+>                                           1745891a948a2ac0c0def2bde46300b9be931614739064eb89
+> CAP-003 frame 1684 (0x0c04 notify, 16B): 84d83dad08b766db4565cbc61ac65bfb
+> CAP-003 frame 1744 (0x0c07 write, 16B):  a06dddde67d139fa4485a9149845664d
+> CAP-003 frame 1746 (0x0c07 notify, 16B): 699a3d82a737a20b9668fd4931455f00
+> CAP-002 frame 49418 (0x0c04 write, 80B, full-log numbering): f741fcec7fb76ddcf7e59d8ad932ca7b
+>                                           1895f4f4bb122a325be0917b89912d05a243f03ade548b09fa58606
+>                                           bcda5a750fc23bcbdd4443aac128a232e07fe89a42f61d71a9a8d23
+>                                           13605185ab3e230d36
+> CAP-002 frame 49420 (0x0c04 notify, 16B): db561ec89f958a2f4e1e1ff34eaef953
+> ```
+> All values are high-entropy/opaque, consistent with the already-stated AES-128-block-ciphertext
+> reading — no new structure visible, this addendum only supplies the underlying bytes so the
+> byte-length claims above are directly traceable rather than described only by length.
+>
 > Every write/notify **after** the first one on `0x0c04` is exactly **16 bytes** — an AES-128 block
 > size — and `0x0c07`'s write/notify are also exactly 16 bytes each: byte-for-byte the shape the
 > official Fast Pair Key-based Pairing Request/Response and Passkey characteristics are documented

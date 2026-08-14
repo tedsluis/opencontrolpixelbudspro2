@@ -96,6 +96,7 @@ first axis; the **Evidence** column is a pointer to the second, never a restatem
 | `ADAPT` | Adaptive Audio |
 | `GATT` | Secondary BLE/GATT transport (service/characteristic discovery) |
 | `GFPS` | Google Fast Pair Service phone-side behavior (vs. Buds-initiated) |
+| `CALL` | In-call HFP/SCO audio behavior (added 2026-08-14) |
 
 ---
 
@@ -112,7 +113,7 @@ _Make sure the buds are connected and active._
 | `CONV-001` | Toggle 'Conversation Detection' on/off | User (App) | C | 🟢 | Switches to Transparency and pauses media when you speak. | — |
 | `MULTI-001` | Toggle 'Multipoint' on/off | User (App) | C | 🟢 | Connects to 2 Bluetooth devices simultaneously; may trigger an SDP/connection update. | — |
 | `EQP-001` | EQ preset: Standard | User (App) | D | 🟢 | Full, fixed preset list from screenshots — each preset is a separate value to capture. | — |
-| `EQP-002` | EQ preset: Bass Boost | User (App) | D | 🟢 | | — |
+| `EQP-002` | EQ preset: Bass Boost | User (App) | D, T | 🟢 | **T (added 2026-08-14):** top-priority isolated capture target now that EQ is known not to share ANC's channel — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. | — |
 | `EQP-003` | EQ preset: Bass Reduction | User (App) | D | 🟢 | | — |
 | `EQP-004` | EQ preset: Balanced | User (App) | D | 🟢 | | — |
 | `EQP-005` | EQ preset: Vocal Boost | User (App) | D | 🟢 | | — |
@@ -122,7 +123,7 @@ _Make sure the buds are connected and active._
 | `EQS-001` | EQ slider: High treble | User (App) | E | 🟢 | 5-band EQ; each band is a separate, potentially distinct protocol field. | — |
 | `EQS-002` | EQ slider: Treble | User (App) | E | 🟢 | | — |
 | `EQS-003` | EQ slider: Mid | User (App) | E | 🟢 | | — |
-| `EQS-004` | EQ slider: Bass | User (App) | E | 🟢 | | — |
+| `EQS-004` | EQ slider: Bass | User (App) | E, T | 🟢 | **T (added 2026-08-14):** second, structurally different isolated action for Group T's cross-command check — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. | — |
 | `EQS-005` | EQ slider: Low bass | User (App) | E | 🟢 | | — |
 | `TOUCH-001` | Toggle 'Touch controls' fully on/off | User (App) | F | 🟢🔵 | Enables/disables the touch sensors on the buds. | — |
 | `HEAD-001` | Toggle 'Head gestures' fully on/off | User (App) | F | 🟢🔵 | Pixel Buds Pro 2-exclusive. | — |
@@ -221,13 +222,23 @@ _Sensors and firmware behavior, without a direct action from the app._
 | `BATT-002` | Case broadcasts battery status via BLE advertisement | Buds/Case (Auto) | Q | 🔵 | Official Fast Pair Battery Notification extension: 3 bytes (L/R/Case), advertised when the case opens and/or on value change; visible ≥8s, hidden after 20s or explicitly. Optional when a single bud is inserted/removed. | — |
 | `BATT-003` | Buds update battery status while worn | Buds/Case (Auto) | Q | 🔵 | Trigger = "when RFCOMM connects, or when the value changes" — no fixed step size (e.g. "every 1%") is officially specified. | — |
 | `BATT-004` | Battery data via RFCOMM after connecting (instead of BLE advertisement) | Buds/Case (Auto) | A | 🔵 | Officially specified alternative channel — Fast Pair "Message Stream: Device Information". Presumed to be the same channel as the `HardwareStatus` hypothesis in `PROTOCOL_NOTES.md` §3.1 — likely not a Buds-specific protobuf schema at all. See `PROTOCOL.md` §4.3 Option B. Piggybacks on the Group A connect capture rather than needing its own scenario (not Group Z — that scenario is a throwaway pipeline check, not a genuine evidence-gathering opportunity). | — |
-| `INEAR-004` | In-ear sensor reports 'removed' (bud taken out of ear, not placed back in case) | Buds (Auto) | — | 🟢 | Confirmed via screenshot (In-ear detection: "pauses audio when not worn"). **Gap noted during this restructuring:** no existing Group captures this specific transition — `INEAR-002`/`INEAR-003` cover insertion, and `CASE-006` covers full case return, but "worn → removed, still out of case" has no dedicated step yet. Candidate addition to a future Group M revision; see §9. | — |
+| `INEAR-004` | In-ear sensor reports 'removed' (bud taken out of ear, not placed back in case) | Buds (Auto) | U | 🟢 | Confirmed via screenshot (In-ear detection: "pauses audio when not worn"). **Gap closed 2026-08-14:** `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group U now brackets this specific transition, added to test whether DLCI 0x08 Group `0x04` Code `0x12`'s alternating value is event-driven (`CAP-004-FINDINGS.md` §5a Task 5). | — |
 | `BATT-005` | 'Low battery' notification (case) | Buds/Case (Auto) | — | 🔵 | Confirmed specifically for Pro 2/2a: notification for both low case battery and fully charged case. Opportunistic only — no dedicated scenario, since it requires genuinely low battery; see §9. | — |
+| `BATT-006` | Battery-level change bracketing: `AT+CIND`/`battchg` vs. `AT+BIEV` cross-check over a natural battery decline | Buds/Case (Auto) | X | 🔴 | Added 2026-08-14. `CAP-001-FINDINGS.md` §3 found `battchg=3` (≈60%) and `AT+BIEV=2,100` (100%) disagreeing at the same moment — unresolved whether either indicator tracks a real level change. See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group X. | — |
 | `LOUD-001` | Loud Noise Protection: automatic volume reduction on a sudden loud sound | Buds (Auto) | Q | 🔵 | Added in firmware 4.467. Presumably a purely local DSP action (no phone-side command needed) — worth checking whether a notify frame is also sent to the phone. Does not cover impulse sounds (gunshots, fireworks) per Google. | — |
 | `ADAPT-002` | Adaptive Audio: dynamic adjustment of the ANC/Transparency balance based on environment | Buds (Auto) | Q | 🔵🟡 | Works "on the fly" using the Tensor A1 chip in the buds. Unclear whether this generates BT traffic toward the phone (e.g. status sync for the UI) or stays entirely on-device. | — |
 | `FWUPD-002` | Firmware installation when placed back in the case (with sufficient charge) | Buds/Case (Auto) | — | 🔵 | Installation timing is hardware-/case-bound (see `FWUPD-001` for download timing, which is app-/OS-bound); no dedicated scenario yet — long-duration; see §9. | — |
 
 ---
+
+## 4a. Catalog — In-call audio behavior (added 2026-08-14)
+
+_None of `CAP-001`–`CAP-004` ever contains an actual phone call — the one scenario that would
+exercise HFP's Service Level Connection setup and channel 5/DLCI 0x0a's audio path._
+
+| ID | Description | Initiator | Capture scenario(s) | Existence source | Note | Evidence |
+|---|---|---|---|---|---|---|
+| `CALL-001` | Phone call during an active Buds connection (HFP SLC setup, SCO/eSCO pairing) | User (Phone) | V | 🔵 | Standard HFP behavior per the Bluetooth spec; not yet observed in this project's own captures — `CAP-002-FINDINGS.md` §5 found zero `AT+` traffic anywhere outside `CAP-001`'s own pairing-time handshake across a full day, and `CAP-001-FINDINGS.md` §6 Task 6 ruled out any SCO/eSCO HCI event in all four captures to date. | — |
 
 ## 5. `PAIR` / secondary-transport area (cross-referenced from Group A / Pixel 9a §4.2, not duplicated)
 
@@ -236,8 +247,9 @@ _Sensors and firmware behavior, without a direct action from the app._
 | `PAIR-001` | Pairing / bonding handshake (forget-and-re-pair baseline) | User (Hardware) | A | 🔵 | Lightweight, safely repeatable — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group A #1 for the exact procedure (do not confuse with `CASE-007`'s factory reset). Also exercised on the Pixel 9a session (§4.2 #1), and incidentally on Group R (forced bond removal there also clears the classic bond). | — |
 | `PAIR-002` | Pairing / bonding handshake from a true factory-reset state | User (Hardware) | P (via `CASE-007`) | 🔵 | Optional, one-time, destructive comparison capture — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16. | — |
 | `PAIR-003` | Disconnect and reconnect to an already-bonded device | User (Hardware) | — | 🔵 | Distinct protocol state from `PAIR-001`/`PAIR-002` (no bonding handshake, per `PROTOCOL.md` §5) — captured on the Pixel 9a session (§4.2 #4) today; no dedicated Pixel 7a scenario yet, see §9. | — |
-| `GATT-001` | Full GATT service/characteristic discovery, forced (bond removed first) | User (Hardware) | R | 🔵 | The secondary BLE/GATT transport (`ARCHITECTURE.md` §1), distinct from the RFCOMM `libmaestro` channel. Also incidentally observed via the device-detail screen on the Pixel 9a session (§4.2 #3), but that trigger only *may* prompt discovery and doesn't force it — Group R's forced bond removal is the reliable trigger, and is the dedicated Pixel 7a scenario this row previously lacked. | — |
-| `GFPS-001` | Fast Pair Message Stream traffic (the `[Group][Code][Length][Value]`-framed channel identified in `CAP-002` `CAP-002-FINDINGS.md` §3) present or absent with the Pixel Buds app uninstalled and Google Play Services disabled | User (Hardware) | S | 🟡 | Captured and analyzed in `CAP-004` (`CAP-004-FINDINGS.md` §4) — result is a **mixed outcome**, not a clean present/absent: `CAP-002` §3's specific channel-2/DLCI-0x04 TLV content (Model ID, `"Revision 6"`, etc.) is **absent** with GMS disabled (channel 2 never opens) — GMS-dependent. But a related, structurally distinct piece of content on channel 4/DLCI 0x08, already documented in `CAP-001` (`google-pixel-buds-pro-v1`, `Europe/Amsterdam`), reappears **unchanged** — not GMS-dependent. `CAP-002` had treated these as one finding; they are now known to be two separate mechanisms with different GMS dependencies, which is why this is 🟡 rather than a clean 🟢/🔴 — see `CAP-004` `CAP-004-FINDINGS.md` §4/§9 for the full reasoning and remaining open sub-question (new, unidentified Message Stream Groups `0x04`/`0x05`/`0x09` also surfaced by this capture). | `CAP-004` |
+| `PAIR-004` | 'Forget' clears a pre-existing BLE association/link-key completely, even one not established via the Pixel Buds app | User (Hardware) | A (repeat) | 🔴 | Added 2026-08-14. `CAP-001-FINDINGS.md` §6 found a BLE link and a still-valid link key both existing *before* the on-screen "Forget" tap and before the case reopened — distinct claim from `PAIR-001`'s "fresh pairing procedure." See `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Group-A repeat note. | — |
+| `GATT-001` | Full GATT service/characteristic discovery, forced (bond removed first) | User (Hardware) | R, W | 🔵 | The secondary BLE/GATT transport (`ARCHITECTURE.md` §1), distinct from the RFCOMM `libmaestro` channel. Also incidentally observed via the device-detail screen on the Pixel 9a session (§4.2 #3), but that trigger only *may* prompt discovery and doesn't force it. ~~Group R's forced bond removal is the reliable trigger~~ — **correction, 2026-08-14: this is factually wrong.** `CAP-003-FINDINGS.md` §1 found Android's GATT database cache survives bond removal (zero live discovery traffic), and `CAP-004-FINDINGS.md` §6 reconfirmed the same negative result — three for three captures with this goal. **`W` (added 2026-08-14, `CAPTURE_BLUETOOTH_HCI_SNOOP.md`)** is the untried, stronger cache-busting candidate: `pm clear com.android.bluetooth`, or discovery from a phone that has never connected to this device before. | — |
+| `GFPS-001` | Fast Pair Message Stream traffic (the `[Group][Code][Length][Value]`-framed channel identified in `CAP-002` `CAP-002-FINDINGS.md` §3) present or absent with the Pixel Buds app uninstalled and Google Play Services disabled | User (Hardware) | S | 🟡 | Captured and analyzed in `CAP-004` (`CAP-004-FINDINGS.md` §4) — result is a **mixed outcome**, not a clean present/absent: `CAP-002` §3's specific channel-2/DLCI-0x04 TLV content (Model ID, `"Revision 6"`, etc.) is **absent** with GMS disabled (channel 2 never opens) — GMS-dependent. But a related, structurally distinct piece of content on channel 4/DLCI 0x08, already documented in `CAP-001` (`google-pixel-buds-pro-v1`, `Europe/Amsterdam`), reappears **unchanged** — not GMS-dependent. `CAP-002` had treated these as one finding; they are now known to be two separate mechanisms with different GMS dependencies, which is why this is 🟡 rather than a clean 🟢/🔴 — see `CAP-004` `CAP-004-FINDINGS.md` §4/§9 for the full reasoning and remaining open sub-question (new, unidentified Message Stream Groups `0x04`/`0x05`/`0x09` also surfaced by this capture). **Note added 2026-08-14:** `CAP-004-FINDINGS.md` §8 item 4 flags that this session's §2 finding (Cross-Transport Key Derivation bonding, not classic SSP) might be an artifact of nRF Connect's early BLE connection rather than of GMS being disabled — `CAP-004` deviated from Group S's system-settings-only procedure. A clean repeat of Group S (system settings only, no BLE tool) would isolate this; the `GFPS-001` result itself is not expected to change. | `CAP-004` |
 
 ---
 
@@ -281,9 +293,8 @@ Consolidated list of catalog rows not yet covered by a Group in
 - [ ] `OBS-002` — background battery polling (ambient, long-duration)
 - [ ] `FWUPD-001` / `FWUPD-002` — background firmware download/install (long-duration,
       low priority for early captures)
-- [ ] `INEAR-004` — bud removed from ear without returning to case (genuine gap, no
-      existing Group step covers this specific transition — candidate for a Group M
-      addition)
+- [x] `INEAR-004` — bud removed from ear without returning to case — **closed 2026-08-14**,
+      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group U now brackets this transition (see §4's row above).
 - [ ] `BATT-005` — low battery notification (opportunistic only, needs genuinely low
       battery)
 - [ ] `PAIR-003` — disconnect/reconnect to an already-bonded device, on the Pixel 7a

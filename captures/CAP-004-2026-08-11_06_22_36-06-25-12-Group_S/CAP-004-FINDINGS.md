@@ -149,7 +149,7 @@ two; frame 2305 is a single, complete 67-byte frame. The corrected per-frame dec
 | 2256, 2258, 2259, 2261, 2263 | `0x04` | `0x02`, `0x04`, `0x11`, `0x13`, `0x15` | 0 each | — |
 | 2264 | `0x05` | `0x0a` | 13 | `0a 07 "713f855" 10 40 18 00` (protobuf-shaped) |
 | 2272+2274 (one message) | `0x03` | `0x01` | 27 | `08 9f 03 10 <4 bytes> 0e 1a 10 "Europe/Amsterdam"` |
-| 2275 | `0x04` | `0x03` | 4 | `00 10 05 18 64` (truncated in source dump — see raw hex) |
+| 2275 | `0x04` | `0x03` | 4 | `10 05 18 64` (pb: field2=5, field3=100) |
 | 2277 | `0x09` | `0x03` | 0 | — |
 | 2280 | `0x04` | `0x05` | 2 | `08 03` |
 | 2289 | `0x04` | `0x12` | 4 | `08 02 10 01` |
@@ -188,6 +188,16 @@ possibility not resolved in this pass: frames 2246/2264 (`Group 0x05`) and 2277/
 **fragments of a still-larger multi-message frame this analysis hasn't fully reassembled** (per
 the fragmentation behavior just discovered above) — or they are genuinely undocumented groups.
 Left as 🔴 OPEN QUESTION rather than guessed at.
+
+> **Hex-dump completeness check (2026-08-14), deskresearch task — resolves the "truncated in
+> source dump" flag on frame 2275.** Re-extracted directly via
+> `tshark -r CAP-004-btsnoop_hci.log -Y "frame.number==2275" -T fields -e btrfcomm.dlci -e data.data`:
+> raw RFCOMM payload is `04 03 00 04 10 05 18 64` (8 bytes total) — `Group=0x04 Code=0x03
+> Len=0x0004` followed by exactly 4 value bytes `10 05 18 64`, not the previously-listed 5-byte
+> `00 10 05 18 64`. The leading `00` in the original table row was a transcription artifact, not a
+> real byte on the wire — corrected in the table above, non-destructively (this note documents the
+> correction per `PROJECT_RULES.md` §3's non-destructive-correction pattern). The corrected value
+> matches the already-stated decode (`pb: field2=5, field3=100`) exactly, with no leftover bytes.
 
 **Frame 2305 decoded — a `Group 0x03`/`Code 0x02` message containing the project's real,
 confirmed firmware string, precisely re-parsed (not the "12-character string" originally

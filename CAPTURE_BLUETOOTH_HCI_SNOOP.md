@@ -192,9 +192,20 @@ you need to re-invoke to "keep it going" — and collect a single `adb bugreport
 following the usual rhythm: **wait ~5s → note the exact time → perform the
 action → wait ~5–10s → move to the next action.**
 
-**⚠️ Priority tip:** PROTOCOL_NOTES.md §6 flags the "Play sound on Left earbud" action
-(group K below) as a specifically valuable, low-risk target — its frame can be directly
-compared against the Fast Pair Message Stream spec's own worked example
+**⚠️ Priority tip (superseded 2026-08-14 — original text kept below, not deleted, per
+`PROJECT_RULES.md` §3):** the original advice below was to prioritize Group K to confirm/refute
+the RFCOMM framing hypothesis. That hypothesis question is now resolved for ANC specifically
+(`PROTOCOL.md` §4.1 — the official Fast Pair Message Stream, Group `0x08`, byte- and
+timing-verified against `CAP-001`), which is what Group K's own frame would have helped confirm.
+**The new top priority is Group T (EQ command isolation, below)** — EQ's command channel is the
+one major control feature this project still needs to attribute, now that the earlier assumption
+"EQ probably shares ANC's channel" no longer holds (`PROTOCOL.md` §2.3's 2026-08-14 addendum). The
+same caution applies to Group T's result as applied here to Group K: a superficial byte-pattern
+match on a single capture is a HYPOTHESIS, not a FACT — see Group T's own cross-command check.
+
+**Original tip (2026-08-08 or earlier, kept for the record):** `PROTOCOL_NOTES.md` §6 flags the
+"Play sound on Left earbud" action (group K below) as a specifically valuable, low-risk target —
+its frame can be directly compared against the Fast Pair Message Stream spec's own worked example
 (`0x04 0x01 ...` for a ring action) to confirm or refute the framing hypothesis in
 `PROTOCOL_NOTES.md` §2.0. If you only have time for a short session, prioritize group K.
 **Caution when you get there:** a superficial resemblance to the worked example (e.g. a
@@ -248,6 +259,17 @@ Buds, both of which are more valuable and, in the pairing case, mildly disruptiv
 4. **ANC → Adaptive** [`ANC-003`] (if your firmware exposes it — confirmed present in `release_5.203`
    per `PROTOCOL_NOTES.md` §4.1). Wait. Note time.
 5. **ANC → Transparency** [`ANC-004`]. Wait. Note time.
+
+> **Repeat recommendation (2026-08-14), lower priority than Group T:** despite ANC's opcode
+> reaching 🟢 FACT, one sub-question stays open — `CAP-001`'s *first two* taps (Transparency,
+> Off) have no corresponding `0x12` "Set ANC state" frame anywhere in that log
+> (`PROTOCOL.md` §4.1, `CAP-001-FINDINGS.md` §5), possibly because the ANC row was still visibly
+> greyed out (UI-state realization, not a genuine command) rather than a missed capture. A clean
+> repeat of this Group with the same isolation requirements as before — but starting only once the
+> ANC row is already fully active/enabled on screen, and doing a genuine **single** tap per
+> window rather than the six-in-a-row `CAP-001` did — would confirm whether every real tap
+> produces a `0x12` frame, and re-confirm the bit-mapping (`PROTOCOL.md` §4.1's table) on a clean,
+> single-tap capture before it's relied on for implementation.
 
 #### Group C — Conversation Detection & Multipoint
 6. **Toggle 'Conversation Detection' on/off** [`CONV-001`]. Wait. Note time.
@@ -423,6 +445,122 @@ assumed by the setup validation above.
    whether the same fields (e.g. Code `0x09`'s value) match. **Do not assume an outcome before
    analyzing** — either result (present or absent) is a real, useful finding for the open
    question above, not a "pass" or "fail" of this Group.
+
+#### Group T — EQ command isolation (occasional, not part of the normal run-through; **current top priority**, added 2026-08-14)
+**Why this replaces the earlier ANC-first priority tip:** ANC's command channel is now confirmed
+(`PROTOCOL.md` §4.1 — the official Fast Pair Message Stream, Group `0x08`, DLCI 0x04), which also
+retires the earlier assumption that EQ "probably shares ANC's channel." EQ's command channel is
+therefore still completely open, and is now the single highest-priority capture target for this
+project's original implementation goal (see the corrected note at the end of §4.1's intro, below
+Group S).
+1. **Change EQ preset: Bass Boost** [`EQP-002`], as a single isolated action — same rhythm as
+   Group D (≥10s silence before, ≥10s after) — but run **alone** this time, not bundled with the
+   other seven preset taps back-to-back the way Group D does it, so the capture has only one
+   candidate command frame to attribute.
+2. After the window settles, run a second, independent, isolated window with a **structurally
+   different** EQ action — **Adjust EQ slider: Bass** [`EQS-004`] — before drawing any conclusion,
+   matching Group K's own "don't promote off one matching frame" discipline.
+
+**Analysis instructions for this Group specifically:**
+1. First check whether any official Fast Pair extension page not yet checked (beyond Hearable
+   Controls, Device Action, SASS, Device Information — see `PROTOCOL.md` §2.3/§4.1) documents an
+   EQ-shaped message group — the same kind of check that resolved ANC.
+2. If no official page covers it, inspect **every** open channel's traffic in a tight window
+   around the tap: DLCI 0x04 (Message Stream, watch for any Group not already accounted for),
+   DLCI 0x02 (`libmaestro`'s confirmed Pigweed-HDLC framing, `PROTOCOL.md` §2.2a — decode the
+   Address/Control fields of every "Sent" sub-frame near the tap and check whether one appears
+   specifically at that moment, distinct from its otherwise-undecoded baseline traffic), and
+   DLCI 0x08 (the private `[Group][Code][Length][Value]` envelope, `CAP-004-FINDINGS.md` §5a).
+3. Apply Group K's cross-command check: a single matching frame from step 1's two actions is a
+   HYPOTHESIS, not a FACT — the two actions exist specifically so there's a second, structurally
+   different sample to check against.
+
+#### Group U — DLCI 0x08 Group `0x04` Code `0x12` liveness/event bracket (occasional, added 2026-08-14)
+**Purpose:** `CAP-004-FINDINGS.md` §5a's Task 5 found Code `0x12` alternates its value on an
+irregular interval — 🟡 HYPOTHESIS of a free-running liveness/sequence-parity bit, not yet tested
+against a real physical event. This Group also closes `INEAR-004`'s existing gap (no capture
+scenario exists yet for "bud removed from ear, not placed back in case" — flagged in
+`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §9).
+1. **Remove one worn earbud and hold it in hand (not placing it back in the case)** [`INEAR-004`],
+   with the connection otherwise idle. Note the exact time. Keep logging Code `0x12` occurrences
+   on DLCI 0x08 for at least 60s before and 60s after this moment.
+2. **Close the case lid while the connection is still active** (buds elsewhere, e.g. still worn or
+   in hand — not the normal "buds back in case" `CASE-006` sequence) [`OBS-003`]. Note the exact
+   time.
+3. **A deliberate, multi-minute idle wait** (≥3 minutes, connection active, nothing touched)
+   [`OBS-003`]. Note the start and end time.
+
+**Analysis:** for each bracketed moment, check whether the Code `0x12` `field1` 2↔3 alternation
+breaks, skips, or pauses at that moment (supports event-driven) or continues unperturbed on its
+own irregular cadence (supports a free-running counter) — per `CAP-004-FINDINGS.md` §5a's own
+framing of this open question.
+
+#### Group V — In-call HFP/SCO audio behavior (occasional, added 2026-08-14)
+**Purpose:** `CAP-002-FINDINGS.md` §5 found zero `AT+` traffic anywhere outside `CAP-001`'s own
+pairing-time handshake across a full 8+ hour log, and `CAP-001-FINDINGS.md` §6 Task 6 ruled out
+any SCO/eSCO HCI event in all four captures to date — both findings converge on the same missing
+scenario: **none of the four captures so far ever contains an actual phone call**, the one trigger
+that would exercise HFP's Service Level Connection setup and channel 5/DLCI 0x0a's audio path.
+1. **Place or receive an actual phone call** while connected to the Buds [`CALL-001`]. Note the
+   exact start and end time of the call.
+2. Optionally, during the call, trigger a deliberate audio-routing action (e.g. switch the audio
+   output device) as a bonus data point — note its time separately.
+
+**Analysis:** check whether a full HFP AT-command SLC handshake reappears (matching `CAP-001`'s
+shape) and whether channel 5/DLCI 0x0a carries any payload this time, or whether an HCI-level
+`Setup Synchronous Connection` (`0x0428`) / `Enhanced Setup Synchronous Connection` (`0x043D`) /
+`Synchronous Connection Complete` (`0x2C`) event appears at all (none has, in any capture to date
+— `CAP-001-FINDINGS.md` §6 Task 6).
+
+#### Group W — Stronger GATT cache-busting for live service discovery (occasional, added 2026-08-14)
+**Purpose:** `CAP-002`, `CAP-003`, and `CAP-004` all failed to trigger a live `Read By Group Type`
+GATT discovery against the Buds — Android's cached GATT database survived bond removal in every
+attempt so far (`CAP-003-FINDINGS.md` §1, re-confirmed in `CAP-004-FINDINGS.md` §6). Group R's
+"remove the bond" method is **not** a reliable trigger, contrary to what this document and
+`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row previously stated (corrected here and there —
+see the 2026-08-14 note on `GATT-001` below and in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §5).
+1. **Option (a) — clear the Bluetooth system app's cache directly:**
+   `adb shell pm clear com.android.bluetooth` [`GATT-001`]. **Risk, note before running:** this
+   clears **all** of the phone's Bluetooth pairings and state, not just the Buds' — expect to
+   have to re-pair every other Bluetooth device on that phone afterward. Confirm this is
+   acceptable before running it.
+2. **Option (b) — discover from a phone that has never connected to this device before:** run the
+   discovery from the Pixel 9a (GrapheneOS), which has not previously run any app or tool against
+   this specific Buds unit [`GATT-001`].
+3. Isolate the connect-and-discover sequence as its own window, same as Group R step 4.
+
+#### Group X — Battery-level discrepancy bracket (occasional, added 2026-08-14)
+**Purpose:** `CAP-001-FINDINGS.md` §3 found `AT+CIND?`'s `battchg=3` (≈60%) and `AT+BIEV=2,100`
+(100%) disagreeing at the same moment — unresolved whether either indicator actually tracks a
+real battery-level change over time.
+1. Start logging well before an expected, natural battery-level decline (e.g. at the start of a
+   normal day of use), keeping the connection active/idle rather than disconnecting between
+   checks.
+2. Periodically (e.g. every 15–30 minutes) note the wall-clock time — no action needed, both
+   indicators are expected to update on their own per their respective triggers.
+3. End the session after a natural, visible battery-percentage drop has occurred on screen.
+   **Can be combined with Group V's session** if a phone call happens to occur naturally within
+   the same window — no need to force this, note it if it happens.
+
+**Analysis:** extract every `AT+CIND?` (`battchg`) and `AT+BIEV=2,...` value across the session
+with its timestamp, and compare both trends against the on-screen battery percentage over the
+same window.
+
+> **Note on Group S's repeatability (added 2026-08-14):** `CAP-004-FINDINGS.md` §8 item 4 flags
+> that Group S's Cross-Transport-Key-Derivation bonding result (§2 there) might be an artifact of
+> nRF Connect's early BLE connection rather than of GMS being disabled — `CAP-004` used nRF
+> Connect first, deviating from this Group's own system-settings-only procedure (see the
+> "⚠️ Procedure deviation" note in `CAP-004-EVENT-NOTES.md`). A repeat of Group S **exactly as
+> described above** (system Bluetooth settings only, no BLE tool at any point) would isolate this
+> confound. The core `GFPS-001` result (§4a/§4b there) is not expected to change, only the §2
+> CTKD-vs-classic-SSP bonding-mechanism finding.
+
+> **Note on Group A's repeatability, optional (added 2026-08-14):** `CAP-001-FINDINGS.md` §6 found
+> a BLE link and a still-valid link key both existing *before* the on-screen "Forget" tap and
+> before the case was reopened — unresolved whether "Forget" fully clears prior association state.
+> A repeat of Group A that starts HCI snoop logging **before** any association with the device
+> exists at all (e.g. immediately after a phone restart, before ever opening the case or any Buds
+> app) would isolate this — optional, lower priority than Groups T/U/V/W/X above.
 
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
@@ -741,6 +879,15 @@ than deleting the row or reassigning its number to a later capture.
 | `CAP-002` | 2026-08-09 | Pixel 7a | TBD | TBD | TBD | A | `PAIR-001`, `PAIR-002`, `CASE-001` | Fresh pairing/bonding baseline (deleted stored link key first) through the Pixel Buds app's first-run setup flow (Fast Pair save-to-account, CDM permission, Device details load) | `captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-btsnoop_hci.log` (sliced from a shared, non-restarted ~8h20m snoop log — see that folder's `CAP-002-EVENT-NOTES.md` process note) | same file | analyzed — see `CAP-002-FINDINGS.md` in that folder; Fast Pair Message Stream Device Information group tentatively identified (channel 2/DLCI 0x04); no RFCOMM traffic found during app setup/Device-details load; HFP channel opened but no AT-command traffic observed (contrast with `CAP-001`) |
 | `CAP-003` | 2026-08-10 | Pixel 7a | TBD | TBD | nRF Connect (generic BLE tool), official app took over partway | R | `PAIR-001`, `PAIR-002` | Forced GATT rediscovery attempt (pairing removed via system settings, connected via nRF Connect instead of the official app) to resolve `CAP-002`'s open `0x0f2a`/`0x0c0X` handle UUIDs; classic pairing captured as a bonus data point | `captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-btsnoop_hci.log` (short, freshly-restarted log, no slicing needed) | same file | analyzed — see `CAP-003-FINDINGS.md` in that folder; **primary goal not achieved** — Android's GATT database cache survived the pairing removal, so zero `Read By Group Type`/characteristic-discovery traffic occurred; `0x0f2a`/`0x0c0X` UUIDs still unresolved; new handle `0x0f28` found (polled every ~60s, value `0x31`); reinforces that RFCOMM channel numbers are session-local while GATT handles are stable across sessions |
 | `CAP-004` | 2026-08-11 | Pixel 7a | TBD | TBD | nRF Connect (BLE phase), then system Bluetooth settings (no Pixel Buds app at any point) | S | `PAIR-001`, `PAIR-002`, `CASE-003` | `GFPS-001` — Google Play Services disabled + Pixel Buds app uninstalled, to isolate whether `CAP-002`'s Fast Pair Message Stream traffic is Buds-initiated or GMS-driven; bonus classic pairing captured (procedure deviated from Group S's system-settings-only description — nRF Connect was used first) | `captures/CAP-004-2026-08-11_06_22_36-06-25-12-Group_S/CAP-004-btsnoop_hci.log` (contains unrelated background Fitbit Charge 6 traffic, excluded — see `CAP-004-FINDINGS.md` §1) | same file | analyzed — see `CAP-004-FINDINGS.md` in that folder; **mixed `GFPS-001` result**: `CAP-002` §3's channel-2/DLCI-0x04 TLV content (Model ID, "Revision 6", etc.) is absent (channel 2 never opens) — GMS-dependent; but `CAP-001`'s channel-4/DLCI-0x08 content (`google-pixel-buds-pro-v1`, `Europe/Amsterdam`) reappears unchanged — not GMS-dependent; classic bonding used Cross-Transport Key Derivation (LE Secure Connections → classic key), not classic SSP as in `CAP-002`/`CAP-003`; new, unidentified Message Stream Groups `0x04`/`0x05`/`0x09` found; nRF Connect's cached GATT service list gives named candidate services (Google Fast Pair Service `0xFE2C`, Accessory Non-Owner Service, Device Information) for the still-open `0x0f2a`/`0x0c0X` handle questions |
+| `CAP-005` | *planned* | Pixel 7a | TBD | TBD | TBD | T | `EQP-002`, `EQS-004` | **Highest priority.** EQ command isolation — single isolated EQ preset change, then a second isolated EQ slider change, to find EQ's command channel now that it's known not to share ANC's (`PROTOCOL.md` §4.1/§2.3) | — | — | planned |
+| `CAP-006` | *planned* | Pixel 7a | TBD | TBD | TBD | B (repeat) | `ANC-001`..`ANC-004` | Clean, single-tap-per-window repeat of Group B to resolve `CAP-001`'s first-two-taps-have-no-`0x12`-frame open sub-question and re-confirm the ANC bit-mapping before implementation | — | — | planned |
+| `CAP-007` | *planned* | Pixel 7a | TBD | TBD | TBD | U | `INEAR-004`, `OBS-003` | DLCI 0x08 Group `0x04` Code `0x12` liveness/event bracket — bud-out-of-ear, case-closed-while-active, and multi-minute idle brackets, to test whether the alternating value is event-driven or a free-running counter (`CAP-004-FINDINGS.md` §5a Task 5) | — | — | planned |
+| `CAP-008` | *planned* | Pixel 7a | TBD | TBD | TBD | V | `CALL-001` | First capture of an actual phone call — resolves whether HFP AT-command SLC setup reoccurs (`CAP-002-FINDINGS.md` §5) and whether channel 5/DLCI 0x0a carries any payload or SCO/eSCO HCI event (`CAP-001-FINDINGS.md` §6 Task 6) | — | — | planned |
+| `CAP-009` | *planned* | Pixel 7a | TBD | TBD | TBD | X | `BATT-006` | Battery-level discrepancy bracket — cross-check `AT+CIND`/`battchg` against `AT+BIEV` over a natural battery decline (`CAP-001-FINDINGS.md` §3); combinable with `CAP-008`'s session if timing allows | — | — | planned |
+| `CAP-010` | *planned* | Pixel 7a and/or Pixel 9a | TBD | TBD | TBD | W | `GATT-001` | Stronger GATT cache-busting (`pm clear com.android.bluetooth`, or discovery from a phone that has never connected to this device) — resolves the `0x0f2a`/`0x0c0X` handle→UUID gap that Groups R and the Pixel 9a session (§4.2 #3) both failed to resolve (`CAP-003-FINDINGS.md` §1, `CAP-004-FINDINGS.md` §6) | — | — | planned |
+| `CAP-011` | *planned* | either phone | TBD | TBD | TBD | Q (#18) | `BATT-002` | Passive BLE scan, case closed and idle, to capture the Fast Pair Battery Notification advertisement independently of RFCOMM (`PROTOCOL.md` §4.3 Option A) — not yet captured in any of `CAP-001`–`CAP-004` | — | — | planned |
+| `CAP-012` | *planned* | Pixel 7a | TBD | TBD | uninstalled (GMS disabled) | S (repeat) | `GFPS-001` | Repeat of Group S following its original system-settings-only procedure exactly (no nRF Connect), to isolate whether `CAP-004`'s Cross-Transport-Key-Derivation bonding result was an artifact of nRF Connect's early BLE connection (`CAP-004-FINDINGS.md` §8 item 4) | — | — | planned |
+| `CAP-013` | *planned, optional* | Pixel 7a | TBD | TBD | TBD | A (repeat) | `PAIR-004` | HCI snoop logging started before any prior association with the device exists (e.g. immediately after a phone restart) — resolves whether "Forget" fully clears prior bonding/BLE-association state (`CAP-001-FINDINGS.md` §6) | — | — | planned |
 
 **Column notes:**
 
@@ -760,11 +907,14 @@ than deleting the row or reassigning its number to a later capture.
   this row's capture ID + frame number → the Test-ID here → the catalog entry
   in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`. Usually a subset of everything the
   Group(s) column's scenario covers, since not every attempt succeeds cleanly.
-- **Status** — one of: `captured` (extracted, not yet reviewed), `analyzed`
-  (reviewed in Wireshark per §5, findings recorded per §8), `promoted` (a
-  finding from this capture has been written into `PROTOCOL_NOTES.md` /
-  `PROTOCOL.md` with a `[VERIFIED-LOCAL]` tag), `discarded` (unusable —
-  note why, e.g. in an extra remarks column if needed).
+- **Status** — one of: `planned` (added 2026-08-14 — a specified but not yet
+  run session, per its own capture-scenario paragraph in §4; every other
+  column stays `TBD`/`—` until the session actually happens), `captured`
+  (extracted, not yet reviewed), `analyzed` (reviewed in Wireshark per §5,
+  findings recorded per §8), `promoted` (a finding from this capture has been
+  written into `PROTOCOL_NOTES.md` / `PROTOCOL.md` with a `[VERIFIED-LOCAL]`
+  tag), `discarded` (unusable — note why, e.g. in an extra remarks column if
+  needed).
 - Reference a capture from `PROTOCOL_NOTES.md` / `PROTOCOL.md` by its ID (e.g.
   "confirmed in `CAP-001`, frame 214") rather than by date or description, so
   the reference survives even if this row's description is later edited.

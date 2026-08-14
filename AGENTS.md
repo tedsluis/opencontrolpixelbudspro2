@@ -146,23 +146,29 @@ order:
   present in the workspace (per §4). Do not attempt to brute-force or guess
   undocumented opcodes.
 - **Framing is not yet settled — do not implement against a placeholder.**
-  Two competing framing hypotheses are under evaluation (`PROTOCOL.md` §2):
-  (A) Fast Pair Message Stream framing (Message Group / Message Code / length
-  / data, no checksum), or (B) a proprietary magic-byte/length/channel-ID
-  envelope with an optional checksum, derived from `pbpctrl`. One event gates
-  two linked requirements — `PROTOCOL.md` §2's framing question reaching 🟢
-  FACT confidence: (1) only then may `FrameEncoder`/`FrameDecoder` be
-  implemented, against whichever hypothesis reached that status, and (2) that
-  same FACT determination must be recorded as a `DECISIONS.md` ADR before
-  implementation begins (see `ARCHITECTURE.md` §2.1) — this is the
-  single highest-impact design commitment in the data layer, and an explicit,
-  reviewed sign-off is cheap insurance against an AI agent (or a human)
-  mis-promoting a hypothesis to FACT under implementation pressure.
-  Implementing against an unconfirmed hypothesis risks code that appears to
-  work on some frames and silently mishandles others. Any deviation or
-  provisional implementation must be flagged with a `// TODO(verify):`
-  comment and a link to the corresponding `pbpctrl` source reference or
-  `PROTOCOL.md` section.
+  **Updated 2026-08-14 — no longer a binary two-hypothesis choice.** Three coexisting RFCOMM
+  sub-protocols are now evidenced (`PROTOCOL.md` §2.2a/§2.3's table): the official Fast Pair
+  Message Stream (DLCI 0x04, 🟢 FACT for the framing), `libmaestro`'s Pigweed `pw_hdlc` channel
+  (DLCI 0x02, 🟢 FACT for the framing mechanism, 🟡 strong HYPOTHESIS that this specific channel
+  is `libmaestro`), and a third, still-unidentified private `[Group][Code][Length][Value]`
+  envelope (DLCI 0x08, 🔴 open identity). Do not treat this as "the framing question is solved" —
+  it is solved **per channel**, not globally, and most features still need their own channel
+  attributed to them.
+  **The gate is per channel/feature, not a single global switch:** ANC's opcode reaching 🟢 FACT
+  (DLCI 0x04, Message Stream Group `0x08`, `PROTOCOL.md` §4.1) does **not** by itself open the
+  `FrameEncoder`/`FrameDecoder` gate for any other feature on any other channel — EQ, touch/head
+  gestures, and `libmaestro`'s own DLCI-0x02 content remain ungated until each reaches the same
+  bar independently. The rule is unchanged in substance from before this update: for **each**
+  channel/feature pairing, only once `PROTOCOL.md`'s corresponding entry reaches 🟢 FACT
+  confidence does that pairing's (1) code implementation become permitted, and (2) that same FACT
+  determination must be recorded as a `DECISIONS.md` ADR before implementation begins (see
+  `ARCHITECTURE.md` §2.1) — this remains the single highest-impact design commitment in the data
+  layer, and an explicit, reviewed sign-off per channel/feature is cheap insurance against an AI
+  agent (or a human) mis-promoting a hypothesis to FACT under implementation pressure, or
+  over-generalizing one channel's resolution to another. Implementing against an unconfirmed
+  hypothesis risks code that appears to work on some frames and silently mishandles others. Any
+  deviation or provisional implementation must be flagged with a `// TODO(verify):` comment and a
+  link to the corresponding `pbpctrl` source reference or `PROTOCOL.md` section.
 - Do **not** write audio routing/codec code. This app exclusively sends
   control payloads (ANC, Transparency, EQ) and reads telemetry (battery). A2DP/
   LE Audio routing is left to the Android OS/BT stack.

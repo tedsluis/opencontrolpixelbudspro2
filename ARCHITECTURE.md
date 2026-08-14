@@ -22,6 +22,12 @@ Communication happens over two transports:
   **secondary** transport for BLE characteristics exposed by the earbuds'
   case/charging state, where applicable (e.g. a standard Battery Service
   `0x180F`, per `PROTOCOL.md` §4.3 Option D).
+- **Bluetooth HID** — 🟡 HYPOTHESIS, added 2026-08-14, not yet functionally investigated.
+  `CAP-002-FINDINGS.md` §6 observed HID-Control and HID-Interrupt L2CAP channels opened during
+  SDP (frames 837–869), alongside an "Input device" toggle in the official app's Device details
+  screen. Plausible role: touch/head gestures surfaced as generic HID reports rather than
+  proprietary RFCOMM traffic — not confirmed, no HID report content has been captured or decoded.
+  Not treated as a confirmed transport for this app's own use until decoded.
 
 Compile/target SDK: API 34 (Android 14). Minimum supported Android API: **TBD** — see
 the open question in §15; do not treat "API 34" as if it already answered that. Primary
@@ -392,6 +398,11 @@ versions) and recorded in `DECISIONS.md` before broad adoption.
       not yet fixed — depends on which BLE/Bluetooth APIs (e.g.
       `CompanionDeviceManager` features, foreground service types) are
       actually required.
+- [ ] Added 2026-08-14: is the observed Bluetooth HID surface (§1) architecturally relevant to
+      `:hardware`/`BudsTransport` — i.e. does any control feature this app needs actually route
+      through HID reports rather than RFCOMM/GATT — or is it exclusively used by parts of the
+      official app/OS this project doesn't need to replicate? Unresolved; no HID report content
+      has been captured yet.
 
 > Already decided, not open: persistent settings storage (encrypted AndroidX
 > DataStore — see §2 and `AGENTS.md` §10); state management approach
