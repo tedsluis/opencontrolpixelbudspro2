@@ -95,10 +95,20 @@ A direct byte-string search for `"Revision 6"` (`5265766973696f6e2036`), the Mod
 returns **zero matches**. Consistent with that: **channel 2/DLCI 0x04 — the specific channel
 `CAP-002` found this content on — is never opened in this session at all** (§3). This is a
 clean, unambiguous absence for this specific sub-mechanism: the Model-ID/Firmware-version/
-BLE-address-updated TLV exchange that `CAP-002` documented does not occur when GMS is disabled
-and no Pixel Buds app is installed. **This supports the GMS/Nearby-driven hypothesis** for that
-specific content — not proof (a negative result from one capture can't rule out a triggering
-condition this session didn't happen to hit), but a real, checked absence.
+BLE-address-updated TLV exchange that `CAP-002` documented does not occur under this session's
+combined GMS-disabled-and-app-uninstalled condition.
+
+**Cannot isolate GMS specifically as the cause — this is a two-variable confound, not
+established as GMS-dependent exclusively.** This session's `GFPS-001` procedure (see
+`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group S) disabled Google Play Services **and** uninstalled the
+Pixel Buds app together, in the same session. The absence observed here is equally consistent
+with an **app-dependent** explanation (the official app itself opens/drives this channel,
+independent of GMS) as with a GMS-dependent one — nothing in this capture distinguishes the two.
+**This supports a "GMS-and/or-app-driven" hypothesis**, not a GMS-specific one — not proof either
+way (a negative result from one capture can't rule out a triggering condition this session
+didn't happen to hit), but a real, checked absence under the *combined* condition. Isolating
+which variable actually matters needs a capture with only one of the two changed (e.g. GMS
+disabled, official app still installed, or vice versa) — not yet captured.
 
 ### 4b. A related-but-distinct protobuf-shaped blob (channel 4/DLCI 0x08) — **PRESENT, essentially unchanged** (outcome 1: supports Buds-initiated)
 
@@ -126,10 +136,12 @@ stack, independent of GMS) send this regardless.
 `CAP-002` §3 treated the channel-2 TLV content and general "device info exchange" as one
 finding. This capture shows that framing was too coarse: there are **at least two distinct
 device-info-flavored exchanges** happening over RFCOMM at connection time, on different
-channels, with different framing, and — now shown here — **different dependencies on GMS**.
-Recommend `CAP-002`'s `CAP-002-FINDINGS.md` §3 be given a similar non-destructive correction note (per
-the pattern already used there for the channel-1/AVRCP correction) clarifying that its content
-is GMS-dependent, distinct from the channel-4/DLCI-0x08 content documented in `CAP-001`, which
+channels, with different framing, and — now shown here — **different dependencies on the
+combined GMS-disabled/app-uninstalled condition** (§4a's confound applies here too — this is
+not yet narrowed to GMS specifically). Recommend `CAP-002`'s `CAP-002-FINDINGS.md` §3 be given a
+similar non-destructive correction note (per the pattern already used there for the channel-1/AVRCP
+correction) clarifying that its content is GMS-and/or-app-dependent (unresolved which), distinct
+from the channel-4/DLCI-0x08 content documented in `CAP-001`, which
 is not.
 
 ## 5. Spec research on Groups `0x04`/`0x05`/`0x09`, and a re-decode of frame 2305 (updated 2026-08-11)
@@ -564,6 +576,12 @@ never connected to this device) is the only path left untried.
    affected any of this session's results (e.g. the CTKD pairing mechanism in §2 might be an
    artifact of nRF Connect's early BLE connection, not of GMS being disabled) — worth doing once,
    even though this capture's core `GFPS-001` answer (§4) is not expected to change.
+5. **Added 2026-08-15:** §4a's absence result is confounded — GMS was disabled *and* the Pixel
+   Buds app was uninstalled together, so "GMS-dependent" is not yet isolated from "app-dependent."
+   A capture with only one variable changed (GMS disabled, app still installed; or app
+   uninstalled, GMS still enabled) would resolve which one actually drives the channel-2 TLV
+   content. Not yet scheduled as its own `CAP-NNN` — worth folding into whichever future capture
+   most naturally allows it.
 
 ## 9. `GFPS-001` outcome and `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` status
 
@@ -583,12 +601,11 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
 ## 10. Promotion readiness — what's ready for `PROTOCOL.md` (updated 2026-08-11)
 
 **Ready to promote now (🟢 FACT):**
-- Cross-Transport Key Derivation as an alternate classic-bonding path when an LE Secure
-  Connections link already exists (§2) — new addition to `PROTOCOL.md` §5's connection-lifecycle
-  material.
-- The channel-2/DLCI-0x04 TLV content from `CAP-002` §3 does not appear when GMS is disabled
-  and no Pixel Buds app is present, in a session that otherwise fully connects and bonds (§4a) —
-  now also cross-referenced as a non-destructive correction in `CAP-002`'s `CAP-002-FINDINGS.md` §3.
+- The channel-2/DLCI-0x04 TLV content from `CAP-002` §3 does not appear under this session's
+  combined GMS-disabled-and-app-uninstalled condition, in a session that otherwise fully connects
+  and bonds (§4a) — now also cross-referenced as a non-destructive correction in `CAP-002`'s
+  `CAP-002-FINDINGS.md` §3. **Promotable as "absent under this combined condition," not as
+  "GMS-dependent"** — see §4a, the two variables are not yet isolated.
 - The channel-4/DLCI-0x08 content from `CAP-001` (`google-pixel-buds-pro-v1`, `Europe/
   Amsterdam`, capability blob) reappears unchanged under the same GMS-disabled conditions (§4b).
 - RFCOMM channel numbers continue to vary session-to-session (channels 1/2 never opened this
@@ -622,6 +639,16 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
   DLCI-0x04 channel.
 
 **Not ready yet:**
+- **Demoted 2026-08-15 (was listed above as 🟢 FACT, in violation of `PROJECT_RULES.md` §1's
+  promotion bar):** Cross-Transport Key Derivation as *the* alternate classic-bonding path used
+  when an LE Secure Connections link already exists (§2). The wire evidence for what happened
+  *in this specific session* is solid (frame-by-frame, §2) — that part stays 🟢 FACT for this
+  capture. But generalizing it into `PROTOCOL.md` §5's connection-lifecycle material as an
+  established mechanism is premature: it rests on a **single capture**, and that capture had
+  **nRF Connect** (a third-party generic BLE tool, not the official app) actively holding the
+  early BLE connection — item 4 in §8 already flags this as a possible confound. Demoted to
+  🟡 HYPOTHESIS pending either a repeat with the official app, or a clean repeat of Group S
+  without nRF Connect (§8 item 4).
 - Groups `0x05`/`0x09`'s identity (§5) — search results kept redirecting to Device Information
   (Group `0x03`) codes `0x05`/`0x06`/`0x09` instead of confirming standalone groups; **not a
   reassembly artifact (ruled out 2026-08-12, §5a — reassembly is confirmed correct and stable

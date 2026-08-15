@@ -131,10 +131,16 @@ order:
   broadcast as a cheap supplementary check → Fast Pair Battery Notification
   advertisement → Fast Pair Message Stream Device Information → HFP AT
   commands, via `BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT`
-  parsing `AT+IPHONEACCEV` / `AT+XAPL` → GATT Battery Service). Do not
-  implement a fixed polling interval — battery updates are event-driven per
-  the official Fast Pair specification (connect or on value change), not
-  periodic.
+  parsing the standard `AT+BIEV`/`AT+CIND` HF indicators (not Apple's
+  `AT+IPHONEACCEV`/`AT+XAPL`) → GATT Battery Service). **Do not implement your
+  own fixed-interval polling timer for any of these** — but the mechanisms
+  themselves don't all behave the same: the Fast Pair mechanisms (advertisement,
+  Message Stream) are event-driven per the official spec (connect or on value
+  change), while HFP's `AT+BIEV` is confirmed to push periodically on its own
+  (~6–7s, `CAP-001-FINDINGS.md` §3, `PROTOCOL.md` §4.3) regardless of whether
+  the value changed. Code consuming HFP battery events should expect a steady
+  stream, not just change notifications — this is the *peer's* periodic
+  behavior being observed reactively, not an app-side poll loop.
   - If none of the documented mechanisms are available for a given
     Android/OEM combination, the UI must show "Battery unavailable" rather
     than a fabricated value. Never guess or interpolate a battery percentage.
@@ -352,6 +358,16 @@ order:
    byte's meaning isn't derivable from evidence already in hand, the correct
    output is an explicit open question (`PROTOCOL.md` §6), not an invented
    interpretation.
+7. **Traceability check, when writing or reviewing a `CAP-NNN-EVENT-NOTES.md`:**
+   cross-reference `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` for every Test-ID this
+   capture's Group(s) are supposed to exercise (per the Test-ID↔Group linkage
+   in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §0.3/§4+ and the Group(s) column in
+   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index), and confirm each one
+   is actually referenced in the event timeline — not silently missing. A
+   Test-ID that was supposed to be exercised but has no corresponding entry
+   in `CAP-NNN-EVENT-NOTES.md` is a gap to flag explicitly (e.g. "expected
+   but not observed" or "action attempted but not clearly isolated in the
+   log"), not something to leave for a future session to notice on its own.
 
 ### Reverse engineering the APK
 

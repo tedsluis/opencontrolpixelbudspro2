@@ -196,9 +196,14 @@ this layer uses Android-native fallbacks, in priority order (aligned with
 2. **Secondary — RFCOMM Fast Pair Message Stream "Device Information":** once
    connected, read battery via the Message Stream, if/once the exact battery
    message code is confirmed (`PROTOCOL.md` §4.3 Option B).
-3. **Tertiary — HFP AT commands:** `BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT`,
-   parsing `AT+IPHONEACCEV` / `AT+XAPL` vendor events surfaced by the HFP
-   profile proxy.
+3. **Tertiary — HFP AT commands (confirmed active, `PROTOCOL.md` §4.3 Option
+   C):** `BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT`, parsing the
+   standard `AT+BIEV` HF Indicator #2 (Battery Level) and/or `AT+CIND`
+   `battchg` events surfaced by the HFP profile proxy — **not** Apple's
+   `AT+IPHONEACCEV`/`AT+XAPL` (an earlier, incorrect assumption; those are
+   iPhone-vendor-specific commands the Buds Pro 2 do not use). Unlike Options
+   0/A/B, this mechanism **pushes periodically** (~6–7s) rather than only on
+   change — see `PROTOCOL.md` §4.3 for the event-driven-vs-periodic split.
 4. **Last resort — GATT:** if the earbuds expose a standard `Battery Service
    (0x180F)` GATT characteristic for the case, read it directly via
    `BluetoothGatt.readCharacteristic()`.

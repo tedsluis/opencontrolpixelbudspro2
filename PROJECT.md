@@ -61,13 +61,23 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
   paired Pixel Buds Pro 2 at a time (see `ARCHITECTURE.md` §15).
 - No cloud functionality that requires a Google account — this is by definition
   out of scope for a project whose goal is independence from Google Play
-  Services.
+  Services. Explicitly includes Fast Pair **Account Linking**, **Ownership
+  Transfer**, and the **Accessory Non-Owner Service** — investigating or
+  implementing these is out of scope (see `DECISIONS.md` ADR-008).
 - No distribution of the original Google APK or any part of it.
 - No telemetry, analytics, or crash reporting of any kind, and no `INTERNET`
   permission in the app (see `AGENTS.md` §1).
 - No audio routing or codec implementation — this app sends control payloads
   (ANC, Transparency, EQ) and reads telemetry only; A2DP/LE Audio routing stays
-  with the Android OS/Bluetooth stack (see `ARCHITECTURE.md` §6).
+  with the Android OS/Bluetooth stack (see `ARCHITECTURE.md` §6). This extends
+  to the reverse-engineering effort itself: identifying precise audio codec
+  parameters (sample rates, bit-depths, bitrates) in captured values is out of
+  scope research — the app never needs this information regardless of what
+  those values turn out to mean, since the OS/Bluetooth stack owns codec
+  negotiation. Where such values appear incidentally in a capture (e.g.
+  `CAP-002-FINDINGS.md` §2a's numeric-field comparison), note them as
+  out-of-scope-to-pursue-further rather than continuing to narrow their
+  meaning.
 
 ## Target platform
 

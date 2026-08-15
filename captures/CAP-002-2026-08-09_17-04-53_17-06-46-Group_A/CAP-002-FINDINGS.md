@@ -184,6 +184,11 @@ negotiation independent of Fast Pair?) remains 🔴 open, unchanged.
 > than an audio-codec negotiation specifically, which better fits this whole burst's already-
 > established character as a one-time capability/setup handshake (§2a) than a per-call codec
 > negotiation would.
+>
+> **Out of scope, added 2026-08-15 (`PROJECT.md` non-goals):** this line of investigation is
+> closed, not just inconclusive — even a confirmed codec-parameter reading would not be actionable
+> for this app (audio/codec handling stays with the OS/Bluetooth stack, `ARCHITECTURE.md` §6).
+> Recorded here so this specific hypothesis isn't re-opened from scratch in a future session.
 
 ## 3. Fast Pair Message Stream — Device Information group (🟢 FACT, spec-verified 2026-08-10)
 

@@ -65,8 +65,10 @@ above it.
 > - **`"Revision 6"`** — found on **DLCI 0x04**, the official Fast Pair Message Stream's Device
 >   Information group, Code `0x09` (spec-confirmed field identity = "Firmware version" string,
 >   `CAP-002-FINDINGS.md` §3), and independently corroborated via a direct GATT characteristic read
->   (handle `0x0f2a`, `CAP-002-FINDINGS.md` §4). GMS-dependent — absent in `CAP-004`
->   (`CAP-004-FINDINGS.md` §4a), unlike the DLCI-0x08 strings above.
+>   (handle `0x0f2a`, `CAP-002-FINDINGS.md` §4). GMS-and/or-app-dependent (unresolved which) —
+>   absent in `CAP-004` (`CAP-004-FINDINGS.md` §4a, where GMS was disabled **and** the official
+>   app was uninstalled together — a confound not yet isolated), unlike the DLCI-0x08 strings
+>   above.
 > - **`"cape2_sm"`** (hardware/board codename) and **`"500m"`–`"500p"`** (config-variant
 >   identifiers) — found alongside a third `"release_5.203"` sighting on DLCI 0x08's Group `0x02`
 >   Code `0x04` (`CAP-002-FINDINGS.md` §2a) — plausibly per-preset/per-profile identifiers, not
@@ -230,7 +232,7 @@ same RFCOMM multiplexer session:
 
 | DLCI | Framing | Status | Content |
 |---|---|---|---|
-| 0x04 | Official Fast Pair Message Stream (§2.1) | 🟢 FACT (spec-verified, `CAP-002-FINDINGS.md` §3) | Device Information (Group `0x03`), SASS (Group `0x07`), and the officially-documented **Hearable Controls extension (Group `0x08`)** — Get/Set/Notify ANC state, see §4.1 below; GMS-dependent (absent in `CAP-004`, §4a there) |
+| 0x04 | Official Fast Pair Message Stream (§2.1) | 🟢 FACT (spec-verified, `CAP-002-FINDINGS.md` §3) | Device Information (Group `0x03`), SASS (Group `0x07`), and the officially-documented **Hearable Controls extension (Group `0x08`)** — Get/Set/Notify ANC state, see §4.1 below; GMS-and/or-app-dependent, unresolved which (absent in `CAP-004`, §4a there — GMS disabled and the app uninstalled together, a confound) |
 | 0x02 | Pigweed `pw_hdlc` (§2.2a) | 🟢 FACT for the framing; 🟡 HYPOTHESIS (strong) that this is specifically `libmaestro` | Opaque ~16-byte "Sent" blocks (phone→Buds, unresolved content) and protobuf-decodable "Rcvd" blocks (device serial + firmware) — not GMS-dependent (present regardless in every capture that opens it) |
 | 0x08 | Private, undocumented `[Group][Code][Length][Value]` envelope, structurally resembling §2.1's shape but with its own Group/Code numbering (`CAP-004-FINDINGS.md` §5a) | 🟢 FACT that it's a real, decodable envelope; 🔴 OPEN QUESTION what protocol it belongs to | One-time capability/setup handshake + a low-rate periodic status ping; not GMS-dependent (`CAP-004-FINDINGS.md` §4b) |
 
@@ -410,7 +412,18 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
 
 ### 4.3 Battery status (Left / Right / Case)
 
-Five candidate mechanisms, in priority order for implementation:
+Five candidate mechanisms, in priority order for implementation. **These do
+not all share one update model** — Options A/B (the Fast Pair mechanisms, on
+the official Message Stream, DLCI 0x04) are event-driven (sent on connect or
+on value change, per the official spec); Option C (HFP, on DLCI 0x09) instead
+**pushes periodically** regardless of whether the value changed —
+`CAP-001-FINDINGS.md` §3 observed `AT+BIEV=2,100` repeating on a roughly
+6–7 second cadence throughout the session, not just on change. An
+implementation that treats all four mechanisms as equally event-driven would
+either miss HFP's periodic updates (if it only listens for state transitions)
+or busy-poll unnecessarily on the Fast Pair mechanisms (if it treats their
+event-driven pushes as periodic) — see `ARCHITECTURE.md` §6 on
+event-observation coroutines.
 
 #### Option 0 — Generic OS battery broadcast (supplementary, cheapest to check)
 
@@ -474,10 +487,23 @@ Five candidate mechanisms, in priority order for implementation:
 - **Evidence**: official Fast Pair Message Stream / Find Hub Network extension
   docs. Battery-specific code not yet captured.
 
-#### Option C — HFP AT commands (`AT+IPHONEACCEV` / `AT+XAPL`)
+#### Option C — HFP AT commands (`AT+BIEV` HF Indicator #2, `AT+CIND` `battchg`)
 
-- **Status**: ⚪ ASSUMPTION — documented Android-side fallback mechanism (see
-  `ARCHITECTURE.md` §4), not yet confirmed as active for this device.
+- **Status**: 🟢 FACT — confirmed active for this device (`CAP-001-FINDINGS.md`
+  §3), on channel 4 / **DLCI 0x09**. Two simultaneously-active HFP mechanisms
+  observed: `AT+BIEV=2,<0-100>` (HF Indicator #2, Bluetooth-spec-assigned as
+  Battery Level) and the older `AT+CIND?` `battchg` indicator (0–5 scale) —
+  these **disagreed** in `CAP-001` (`battchg=3` ≈60% vs. `AT+BIEV=2,100` =
+  100%, at the same moment) and it's still 🔴 open which one (if either)
+  tracks real changes accurately (`PROTOCOL.md` §6, `BATT-006`).
+- **Update model — periodic, not event-driven**: `AT+BIEV=2,100` repeated on
+  a roughly 6–7 second cadence throughout `CAP-001`'s session regardless of
+  whether the value changed (frames 1236–2269, timestamps 08:51:14.106
+  through 08:51:52.148) — unlike Options A/B above, this is not a
+  connect-or-on-change push. An app relying on this mechanism should expect
+  (and can rely on) a steady stream of updates, not just change notifications.
+- Neither HFP indicator distinguishes Left/Right/Case — both report a single
+  aggregate value, unlike Option A's separate L/R/Case fields.
 
 #### Option D — BLE Battery Service (`0x180F`)
 
@@ -591,6 +617,21 @@ leaving them buried in prose elsewhere.
       result narrowing, not resolving, its identity. See §2.3's 2026-08-14
       addendum. DLCI 0x02 remains the sole candidate that matches
       `pbpctrl`'s stated mechanism.
+- [ ] **Added 2026-08-15: wire-baseline firmware version, distinct from the
+      confirmed UI-baseline.** §0.1 documents `release_5.203` as the
+      `[VERIFIED-LOCAL]` UI-baseline (official app screenshot, 2026-07-30),
+      but four different version-like strings exist on the wire and are not
+      yet reconciled: `"release_5.203"` itself (found on DLCI 0x08's
+      still-unidentified private envelope — its semantic meaning there isn't
+      confirmed, only the string match), `"Revision 6"` (DLCI 0x04's
+      *official, spec-confirmed* "Firmware version" field — a completely
+      different string format), and `"cape2_sm"`/`"500m"`–`"500p"`
+      (board codename / config variant, not version candidates). **Do not
+      treat `release_5.203` as confirmed on the wire in the same sense it's
+      confirmed in the UI** — see §0.1 for the full breakdown. Needs a
+      capture that also records the app's firmware-display screen at the
+      same moment as the capture to resolve which wire value (if any)
+      corresponds to it.
 
 ### Commands & schemas
 
@@ -625,6 +666,19 @@ leaving them buried in prose elsewhere.
       (DLCI 0x04 Group `0x08`) — that assumption held only while ANC's own channel was unresolved.
       See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T (new top-priority capture target) and §4.2
       above.
+- [ ] **Added 2026-08-15: possible application-layer AES-128 encryption of DLCI 0x02's opaque
+      "Sent" blocks.** §2.2a describes the phone→Buds "Sent" blocks on this channel as
+      "opaque ~16-byte blocks, unresolved content" — 16 bytes is exactly the AES block size, and
+      Fast Pair's own Key-based Pairing procedure already uses AES-128 (ECB) elsewhere in the
+      broader Fast Pair ecosystem, making an AES-128-encrypted application-layer payload here a
+      plausible explanation for why these blocks have resisted structural decoding (encrypted
+      data is indistinguishable from opaque/random bytes). **Not established either way** — this
+      is distinct from Bluetooth link-layer encryption, which per
+      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §7's FAQ is unlikely to still be present at the HCI-snoop
+      capture boundary; an application-layer scheme on top of the already-plaintext HCI capture
+      is a different, live possibility. If confirmed, this would materially affect
+      `FrameDecoder`'s design for this channel (decryption step required before payload parsing)
+      — see `ARCHITECTURE.md` §5.
 
 ### Behavior
 
@@ -657,8 +711,11 @@ leaving them buried in prose elsewhere.
 
 ### Resolved
 
-- [x] Firmware version baseline for the test device — `release_5.203`,
-      confirmed via official app screenshot, 2026-07-30.
+- [x] **UI-baseline firmware version** for the test device — `release_5.203`,
+      confirmed via official app screenshot, 2026-07-30. This is what the
+      app's About/settings screen displays — **not** the same thing as
+      confirming what appears on the wire (see the "wire-baseline" item under
+      Framing, added 2026-08-15).
 
 ## 7. Error handling / edge cases
 

@@ -369,18 +369,30 @@ bugreport per action, just clean timestamps to slice the single log into segment
 afterward.
 
 #### Group R — Forced GATT re-discovery (occasional, not part of the normal run-through)
+
+> **Correction, 2026-08-14 (does not invalidate running this Group, but changes what to expect):**
+> removing the bond does **not** reliably clear Android's cached GATT service/characteristic
+> database. `CAP-003-FINDINGS.md` §1 found the cache survived bond removal (zero live
+> `Read By Group Type` discovery traffic), and `CAP-004-FINDINGS.md` §6 independently reconfirmed
+> the same negative result — two for two attempts using this method. **Group W below is the only
+> method that has an untried, stronger chance of working** (`pm clear com.android.bluetooth`, or
+> discovery from a phone that has never connected to this device before) — see also
+> `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row. Group R is kept in this guide because it is
+> still useful for its **bonus data** (a fresh classic pairing exchange, step 4 below) even though
+> it is no longer expected to force live GATT discovery on its own; if your goal is specifically
+> the GATT handle→UUID mapping, run Group W instead, not this Group.
+
 Android caches the GATT service/characteristic database per bonded device and does **not**
 rediscover it on a normal reconnect — every other group in this guide runs against an
-already-discovered device, so none of them exercise this. Run Group R only when you
-specifically need fresh GATT evidence: the first time, and again after any firmware update
-that might change the GATT layout (`PROTOCOL.md` §0.1). This is what resolves `GATT-001`
-in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` on the Pixel 7a specifically — that Test-ID previously
-had no dedicated Pixel 7a scenario.
+already-discovered device, so none of them exercise this. `GATT-001`
+in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` needs Group W, not this Group, for its Pixel-7a-specific
+resolution (see the correction above).
 
 **Why not just reconnect normally:** there is no non-hacky way to force a GATT refresh from
 outside an app — the only programmatic option (`BluetoothGatt.refresh()`) is a hidden `@hide`
 API requiring reflection, which `AGENTS.md` §3 bans for this project's own code. Removing the
-bond is the reliable, non-hacky way to force it.
+bond was the first thing tried to force it, but per the correction above, it is **not** reliable
+for that purpose — it remains useful only as described above.
 
 1. **Remove the bond via system Bluetooth settings** — Settings → Connected devices → Pixel
    Buds Pro 2 → Forget. Use the **system settings**, not the Pixel Buds app's own "Forget"
@@ -388,18 +400,22 @@ bond is the reliable, non-hacky way to force it.
    clear a BLE-level association, so it isn't reliable for this purpose. Confirm the device no
    longer appears in the paired-devices list.
 2. Work through §2 (enable HCI snoop, restart Bluetooth/reboot) as usual.
-3. **Reconnect using a generic BLE tool (e.g. nRF Connect), not the official Pixel Buds app**
-   [`GATT-001`] — install it on the Pixel 7a if not already present. This is a deliberate exception to
+3. **Reconnect using a generic BLE tool (e.g. nRF Connect), not the official Pixel Buds app** —
+   install it on the Pixel 7a if not already present. This is a deliberate exception to
    this guide's usual preference for the official app: here the goal is a human-readable
    view of the discovered GATT structure on screen, not attributing a specific proprietary
    command, so a generic scanner is more useful, not less rigorous. The HCI snoop log
    captures everything at the system level regardless of which app initiates the connection.
+   **Do not expect this to actually trigger live discovery** (see the correction above) — treat
+   any live discovery traffic that does appear as a bonus, not the expected outcome.
 4. **Isolate the whole connect-and-discover sequence as one action window**: note the exact
    time you tap Connect in the BLE tool, and the time the service/characteristic list
-   finishes populating on screen. Expect a full classic SSP pairing exchange to also appear
-   in this capture (removing the bond clears both classic and BLE state for a dual-mode
-   device) — this is a welcome bonus `PAIR-001`/`PAIR-002` data point, not a sign anything
-   went wrong; it just isn't the primary target of this Group.
+   finishes populating on screen (nRF Connect's UI may still show a service list here even
+   without live discovery traffic — it can be serving its own cached view; do not assume an
+   on-screen list means fresh wire traffic occurred, check the log). Expect a full classic SSP
+   pairing exchange to also appear in this capture (removing the bond clears both classic and
+   BLE state for a dual-mode device) — this **is** this Group's actual, reliable bonus data
+   point, per the correction above: a `PAIR-001`/`PAIR-002` capture, not a `GATT-001` one.
 5. If the tool supports it, manually **read or subscribe to specific characteristics of
    interest** once they're identified on screen (e.g. anything near handle `0x0f2a` or the
    `0x0c0X` cluster flagged in `CAP-002`'s `CAP-002-FINDINGS.md` §4/§7) — each such action
@@ -525,10 +541,22 @@ see the 2026-08-14 note on `GATT-001` below and in `TESTPLAN_BLUETOOTH_HCI_SNOOP
    `adb shell pm clear com.android.bluetooth` [`GATT-001`]. **Risk, note before running:** this
    clears **all** of the phone's Bluetooth pairings and state, not just the Buds' — expect to
    have to re-pair every other Bluetooth device on that phone afterward. Confirm this is
-   acceptable before running it.
+   acceptable before running it. **Also clear nRF Connect's own app cache/data**
+   (`adb shell pm clear no.nordicsemi.android.mcp` — check the actual package name installed;
+   Settings → Apps → nRF Connect → Storage → Clear storage/cache works too) **if using it to
+   reconnect** — `CAP-004-FINDINGS.md` §6 found nRF Connect's on-screen service list may be
+   served from the app's own cached data rather than fresh wire discovery, which would make the
+   UI *look* like discovery succeeded even when the Android Bluetooth stack itself never emitted
+   a live `Read By Group Type` exchange. Clearing only `com.android.bluetooth` without also
+   clearing nRF Connect's own cache risks a false-positive "it worked" read from the UI that the
+   HCI snoop log won't actually back up — always confirm against the log (§5), never the tool's
+   UI alone.
 2. **Option (b) — discover from a phone that has never connected to this device before:** run the
    discovery from the Pixel 9a (GrapheneOS), which has not previously run any app or tool against
-   this specific Buds unit [`GATT-001`].
+   this specific Buds unit [`GATT-001`]. If using nRF Connect (or any BLE scanner) on this phone
+   too, use a fresh install or clear its cache first, same reasoning as option (a) — "never
+   connected before" should mean the *tool's* cache is clean, not just the *device's* pairing
+   state.
 3. Isolate the connect-and-discover sequence as its own window, same as Group R step 4.
 
 #### Group X — Battery-level discrepancy bracket (occasional, added 2026-08-14)
@@ -856,8 +884,19 @@ session's `CAP-NNN-FINDINGS.md` and then promoted directly into `PROTOCOL.md`
       version of that section).
 - [ ] `PROTOCOL.md` §0.1 — firmware version and any version-specific differences
       logged.
-- [ ] `PROTOCOL.md` §6 — open questions resolved, or new ones added if the capture
-      revealed something unexpected.
+- [ ] `PROTOCOL.md` §6 — open questions resolved where this capture resolves them.
+
+**Mandatory, not optional:** every new 🔴 OPEN QUESTION recorded in a
+`CAP-NNN-FINDINGS.md` (or `DESKRESEARCH_FINDINGS.md`) MUST also be copied into
+`PROTOCOL.md` §6, in the matching Framing/Commands & schemas/Behavior
+subsection, even if it doesn't get resolved this session. An open question
+that stays only in the findings doc is effectively invisible to future
+sessions, since §6 is the consolidated list agents are expected to check
+(`AGENTS.md` §0.1) — it must not depend on someone remembering to go re-read
+every individual findings file. (Example of this rule being applied: the
+UI-baseline-vs-wire-baseline firmware distinction, first noted in §0.1's
+2026-08-14 addendum but not copied into §6 until 2026-08-15 — don't repeat
+that gap for new open questions going forward.)
 
 Treat an capture session that doesn't result in at least one of the above as incomplete —
 either the action wasn't actually isolated/identifiable, or something in the setup (§2,
@@ -889,7 +928,7 @@ than deleting the row or reassigning its number to a later capture.
 | `CAP-007` | *planned* | Pixel 7a | TBD | TBD | TBD | U | `INEAR-004`, `OBS-003` | DLCI 0x08 Group `0x04` Code `0x12` liveness/event bracket — bud-out-of-ear, case-closed-while-active, and multi-minute idle brackets, to test whether the alternating value is event-driven or a free-running counter (`CAP-004-FINDINGS.md` §5a Task 5) | — | — | planned |
 | `CAP-008` | *planned* | Pixel 7a | TBD | TBD | TBD | V | `CALL-001` | First capture of an actual phone call — resolves whether HFP AT-command SLC setup reoccurs (`CAP-002-FINDINGS.md` §5) and whether channel 5/DLCI 0x0a carries any payload or SCO/eSCO HCI event (`CAP-001-FINDINGS.md` §6 Task 6) | — | — | planned |
 | `CAP-009` | *planned* | Pixel 7a | TBD | TBD | TBD | X | `BATT-006` | Battery-level discrepancy bracket — cross-check `AT+CIND`/`battchg` against `AT+BIEV` over a natural battery decline (`CAP-001-FINDINGS.md` §3); combinable with `CAP-008`'s session if timing allows | — | — | planned |
-| `CAP-010` | *planned* | Pixel 7a and/or Pixel 9a | TBD | TBD | TBD | W | `GATT-001` | Stronger GATT cache-busting (`pm clear com.android.bluetooth`, or discovery from a phone that has never connected to this device) — resolves the `0x0f2a`/`0x0c0X` handle→UUID gap that Groups R and the Pixel 9a session (§4.2 #3) both failed to resolve (`CAP-003-FINDINGS.md` §1, `CAP-004-FINDINGS.md` §6) | — | — | planned |
+| `CAP-010` | *planned* | Pixel 7a and/or Pixel 9a | TBD | TBD | TBD | W | `GATT-001` | Stronger GATT cache-busting (`pm clear com.android.bluetooth` **and** clearing the BLE tool's own app cache, e.g. nRF Connect — added 2026-08-15, see Group W step 1 — or discovery from a phone that has never connected to this device) — resolves the `0x0f2a`/`0x0c0X` handle→UUID gap that Groups R and the Pixel 9a session (§4.2 #3) both failed to resolve (`CAP-003-FINDINGS.md` §1, `CAP-004-FINDINGS.md` §6) | — | — | planned |
 | `CAP-011` | *planned* | either phone | TBD | TBD | TBD | Q (#18) | `BATT-002` | Passive BLE scan, case closed and idle, to capture the Fast Pair Battery Notification advertisement independently of RFCOMM (`PROTOCOL.md` §4.3 Option A) — not yet captured in any of `CAP-001`–`CAP-004` | — | — | planned |
 | `CAP-012` | *planned* | Pixel 7a | TBD | TBD | uninstalled (GMS disabled) | S (repeat) | `GFPS-001` | Repeat of Group S following its original system-settings-only procedure exactly (no nRF Connect), to isolate whether `CAP-004`'s Cross-Transport-Key-Derivation bonding result was an artifact of nRF Connect's early BLE connection (`CAP-004-FINDINGS.md` §8 item 4) | — | — | planned |
 | `CAP-013` | *planned, optional* | Pixel 7a | TBD | TBD | TBD | A (repeat) | `PAIR-004` | HCI snoop logging started before any prior association with the device exists (e.g. immediately after a phone restart) — resolves whether "Forget" fully clears prior bonding/BLE-association state (`CAP-001-FINDINGS.md` §6) | — | — | planned |

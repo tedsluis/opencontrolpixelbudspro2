@@ -230,3 +230,46 @@ written today can be overtaken by another ADR being added first.
   existing entries). If the project later needs option 2's three-layer
   separation (e.g. once results volume grows), this ADR should be superseded
   rather than silently reinterpreted.
+
+## ADR-008 — Fast Pair Account Linking, Ownership Transfer, and the Accessory Non-Owner Service are out of scope
+
+- **Date**: 2026-08-15
+- **Status**: Accepted
+- **Context**: nRF Connect's cached GATT service list (`CAP-004-FINDINGS.md`
+  §6) surfaced a named "Accessory Non-Owner Service" candidate alongside the
+  Google Fast Pair Service, and the official Fast Pair spec separately
+  defines Account Key-based **Account Linking** (associating a device with a
+  Google account) and **Ownership Transfer** (re-linking a device to a new
+  owner's account) as part of the broader Fast Pair ecosystem. None of these
+  have been targeted by any capture or test plan so far, but nothing had
+  explicitly ruled them out either — leaving room for a future session to
+  drift into investigating them without a scope check.
+- **Options considered**:
+  - **In scope, investigate opportunistically** — rejected: these mechanisms
+    exist specifically to manage a device's relationship with a *Google
+    account*, which is exactly the GMS/cloud dependency this project exists
+    to route around (`PROJECT.md` non-goals, `AGENTS.md` §1's Zero-GMS rule).
+    Reverse-engineering them would not serve the app's actual feature set
+    (ANC, EQ, touch controls, battery, case sounds — `PROJECT.md`'s v1 scope
+    list) and risks scope creep into account-security-adjacent territory this
+    project has no reason to touch.
+  - **Out of scope, explicit** — adds one line of friction (checking this ADR
+    before starting related work) in exchange for closing off a
+    plausible-looking but unproductive research direction before any time is
+    sunk into it.
+- **Decision**: Fast Pair **Account Linking**, **Ownership Transfer**, and the
+  **Accessory Non-Owner Service** (and any other Fast Pair mechanism whose
+  purpose is managing the device's relationship to a Google account rather
+  than device control) are explicitly **out of scope** for this project. This
+  is a scope boundary, not a protocol finding — no capture time should be
+  spent decoding these mechanisms' wire behavior. If a future capture
+  incidentally surfaces traffic belonging to one of these mechanisms (as
+  `CAP-004` already has, via the GATT service list), it should be
+  labeled/skipped as out-of-scope rather than investigated further, and this
+  ADR updated only if the maintainer explicitly decides to bring one of these
+  in scope later.
+- **Consequences**: `PROJECT.md`'s non-goals should reference this ADR (kept
+  in sync there); any AI agent encountering Account-Linking/Ownership-Transfer/
+  Non-Owner-Service traffic declines to pursue it and points to this entry
+  instead of silently expanding scope (`AGENTS.md` §15's "never silently
+  expand scope" rule).

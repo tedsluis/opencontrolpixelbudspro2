@@ -293,8 +293,6 @@ Consolidated list of catalog rows not yet covered by a Group in
 - [ ] `OBS-002` — background battery polling (ambient, long-duration)
 - [ ] `FWUPD-001` / `FWUPD-002` — background firmware download/install (long-duration,
       low priority for early captures)
-- [x] `INEAR-004` — bud removed from ear without returning to case — **closed 2026-08-14**,
-      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group U now brackets this transition (see §4's row above).
 - [ ] `BATT-005` — low battery notification (opportunistic only, needs genuinely low
       battery)
 - [ ] `PAIR-003` — disconnect/reconnect to an already-bonded device, on the Pixel 7a
