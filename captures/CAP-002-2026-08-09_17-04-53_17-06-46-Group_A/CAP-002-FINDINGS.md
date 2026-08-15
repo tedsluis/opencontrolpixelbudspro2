@@ -10,7 +10,8 @@ carries a status per `PROJECT_RULES.md` §1:
 - ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
-**Capture ID:** `CAP-002` · **Date:** 2026-08-09 · **Phone:** Pixel 7a (official app) ·
+**Capture ID:** `CAP-002` · **Date:** 2026-08-09 · **Firmware:** `release_5.203` ·
+**Phone:** Pixel 7a, Android 17 (official app v1.0.955078536) ·
 **Log file:** `CAP-002-btsnoop_hci.log` — a long-running, non-restarted snoop log spanning
 08:50:32–17:10:58 (~8h20m, 50,468 packets total, shared with `CAP-001`); this capture's actual
 window is the ~150s slice **17:04:35–17:07:05** (1,877 packets after slicing with

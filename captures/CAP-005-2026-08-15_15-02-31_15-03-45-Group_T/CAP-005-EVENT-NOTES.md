@@ -14,7 +14,7 @@ the *event timeline*, `CAP-005-FINDINGS.md` is *what it means for the protocol*.
 |      Group(s)    |               T (EQ command isolation)             |
 |       Date       |                     2026-08-15                     |
 | Firmware version |                   release_5.203                    |
-|   Test device    |    Pixel 7a, Android 17 (Official Pixel Buds Companion App) |
+|   Test device    |    Pixel 7a, Android 17 (Official Pixel Buds Companion App v1.0.955078536) |
 | Video file       | `CAP-005-recoding.mp4` (sic — filename as recorded on disk) — 74.8s, starts 15:02:31, ends ~15:03:45 (wall clock, +0200) |
 | Log file         | `CAP-005-btsnoop_hci.log` — 270.1s, 15:02:24.56–15:06:54.63 (wall clock, +0200), 2,533 packets |
 

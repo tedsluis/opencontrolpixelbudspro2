@@ -14,7 +14,7 @@ staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. M
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-005` · **Date:** 2026-08-15 · **Firmware:** `release_5.203` · **Phone:** Pixel
-7a, Android 17. **Log file:** `CAP-005-btsnoop_hci.log` (2,533 frames). **Video:**
+7a, Android 17 (official app v1.0.955078536). **Log file:** `CAP-005-btsnoop_hci.log` (2,533 frames). **Video:**
 `CAP-005-recoding.mp4` (74.77s, H.264 720x1280, burned-in wall-clock overlay, CEST/+0200).
 **Device:** Buds `04:00:6e:cf:6e:07` (matches `CAP-001`–`CAP-004`'s `Google_cf:6e:07`), phone
 `e8:d5:2b:7e:ca:81`, single classic ACL connection, handle `0x0002` — confirmed via

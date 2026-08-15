@@ -10,9 +10,11 @@ carries a status per `PROJECT_RULES.md` §1:
 - ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
-**Capture ID:** `CAP-004` · **Date:** 2026-08-11 · **Phone:** Pixel 7a, **Google Play Services
+**Capture ID:** `CAP-004` · **Date:** 2026-08-11 · **Firmware:** `release_5.203` ·
+**Phone:** Pixel 7a, Android 17, **Google Play Services
 disabled, Pixel Buds app uninstalled**; connected via nRF Connect then paired via system
-Bluetooth settings — no Pixel-Buds-specific app involved at any point. **Log file:**
+Bluetooth settings — no Pixel-Buds-specific app involved at any point (app version: not
+applicable, uninstalled this session). **Log file:**
 `CAP-004-btsnoop_hci.log` (342.3s, 2,921 packets, 06:22:04.23–06:27:46.48 local/+0200). **Video:**
 `CAP-004-recording.mp4` (155.4s, 06:22:36–06:25:12 local, on-screen wall-clock overlay). **Devices:**
 phone `Google_7e:ca:81` (Pixel 7a, same phone as `CAP-001`–`CAP-003`), peer `Google_cf:6e:07`

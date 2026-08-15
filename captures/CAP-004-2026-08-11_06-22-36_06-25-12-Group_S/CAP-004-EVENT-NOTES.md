@@ -23,8 +23,8 @@ should be read.
 |    Capture ID    |                   `CAP-004`                   |
 |      Group(s)    | S (`GFPS-001` — GMS disabled, no Pixel Buds app) + bonus classic pairing |
 |       Date       |                  2026-08-11                  |
-| Firmware version | unknown — not visible in this capture, TBD |
-|   Test device    | Pixel 7a — **nRF Connect** (generic BLE tool) for the first phase, then Android system Bluetooth settings (no Pixel Buds app at any point) |
+| Firmware version | release_5.203 |
+|   Test device    | Pixel 7a, Android 17 — **nRF Connect** (generic BLE tool) for the first phase, then Android system Bluetooth settings (no Pixel Buds app at any point — app version not applicable, uninstalled) |
 | Video file       | `CAP-004-recording.mp4` — 155.4s, starts 06:22:36, ends 06:25:12 (wall clock, +0200) |
 | Log file         | `CAP-004-btsnoop_hci.log` — 342.3s, 06:22:04.23–06:27:46.48 (wall clock, +0200), 2,921 packets. Contains a mix of Buds traffic and **unrelated background traffic from a Fitbit Charge 6** (a different device on the same phone) — see the correction note in `CAP-004-FINDINGS.md` §1. |
 

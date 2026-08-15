@@ -13,8 +13,8 @@ the *event timeline*, `CAP-003-FINDINGS.md` is *what it means for the protocol*.
 |    Capture ID    |                   `CAP-003`                   |
 |      Group(s)    | R (forced GATT rediscovery, via nRF Connect) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group R |
 |       Date       |                  2026-08-10                  |
-| Firmware version | unknown — not visible in this capture, TBD |
-|   Test device    | Pixel 7a — **nRF Connect** (generic BLE scanner/GATT browser app), with the official Pixel Buds app taking over partway through, not the primary tool this time |
+| Firmware version | release_5.203 |
+|   Test device    | Pixel 7a, Android 17 — **nRF Connect** (generic BLE scanner/GATT browser app), with the official Pixel Buds app (v1.0.955078536) taking over partway through, not the primary tool this time |
 | Video file       | `CAP-003-recording.mp4` — 81.1s, starts 20:59:16, ends 21:00:37 (wall clock, +0200) |
 | Log file         | `CAP-003-btsnoop_hci.log` — 302.2s, 20:58:57.10–21:03:59.33 (wall clock, +0200), 2,863 packets — a short, freshly-restarted log (unlike `CAP-002`'s shared 8h20m log), so no slicing-out-unrelated-devices problem this time |
 

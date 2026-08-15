@@ -13,8 +13,8 @@ the *event timeline*, `CAP-001-FINDINGS.md` is *what it means for the protocol*.
 |    Capture ID    |                      `CAP-001`                     |
 |      Group(s)    | Z (pipeline validation) + A (pairing) + B (all 4 ANC modes) + M (case/in-ear) — see note below |
 |       Date       |                     2026-08-09                     |
-| Firmware version |                   unknown — not visible in this capture, TBD |
-|   Test device    |    Pixel 7a (Official Pixel Buds Companion App)    |
+| Firmware version |                   release_5.203 |
+|   Test device    |    Pixel 7a, Android 17 (Official Pixel Buds Companion App v1.0.955078536)    |
 | Video file       | `CAP-001-recording.mp4` — 83.4s, starts 08:50:57, ends 08:52:20 (wall clock, +0200) |
 | Log file         | `CAP-001-btsnoop_hci.log` — 233.9s, 08:50:32.67–08:54:26.57 (wall clock, +0200), 2,663 packets |
 

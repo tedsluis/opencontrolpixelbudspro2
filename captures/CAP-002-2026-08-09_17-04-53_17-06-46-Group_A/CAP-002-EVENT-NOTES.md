@@ -13,8 +13,8 @@ the *event timeline*, `CAP-002-FINDINGS.md` is *what it means for the protocol*.
 |    Capture ID    |                   `CAP-002`                   |
 |      Group(s)    |      A (fresh pairing/bonding baseline) + first Pixel Buds app setup |
 |       Date       |                  2026-08-09                  |
-| Firmware version | unknown — not visible in this capture, TBD |
-|   Test device    | Pixel 7a (Official Pixel Buds Companion App) |
+| Firmware version | release_5.203 |
+|   Test device    | Pixel 7a, Android 17 (Official Pixel Buds Companion App v1.0.955078536) |
 | Video file       | `CAP-002-recording.mp4` — 114.2s, starts 08:04:53(=17:04:53 local), ends 17:06:46 (wall clock, +0200) |
 | Log file         | `CAP-002-btsnoop_hci.log` — **note: this is a long-running, non-restarted snoop log spanning 08:50:32–17:10:58 (~8h20m), the same buffer used since `CAP-001`.** 50,468 packets total; this capture's actual window is only the ~150s slice 17:04:35–17:07:05 (1,877 packets), everything else is unrelated background Bluetooth activity accumulated over the day. |
 

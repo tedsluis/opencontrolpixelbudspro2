@@ -9,7 +9,8 @@ claim below carries a status per `PROJECT_RULES.md` §1:
 - ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
-**Capture ID:** `CAP-001` · **Date:** 2026-08-09 · **Phone:** Pixel 7a (official app) ·
+**Capture ID:** `CAP-001` · **Date:** 2026-08-09 · **Firmware:** `release_5.203` ·
+**Phone:** Pixel 7a, Android 17 (official app v1.0.955078536) ·
 **Log file:** `CAP-001-btsnoop_hci.log` (233.9s, 2,663 packets, 2026-08-09 08:50:32.67–08:54:26.57
 local/+0200) · **Video:** `CAP-001-recording.mp4` (83.4s, 08:50:57–08:52:20 local, on-screen wall-clock
 overlay) · **Devices:** phone `Google_7e:ca:81` (Pixel 7a, BD_ADDR partially redacted per

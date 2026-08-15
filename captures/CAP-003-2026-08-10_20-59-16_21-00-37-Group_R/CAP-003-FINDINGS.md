@@ -10,8 +10,9 @@ carries a status per `PROJECT_RULES.md` §1:
 - ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
-**Capture ID:** `CAP-003` · **Date:** 2026-08-10 · **Phone:** Pixel 7a — **nRF Connect** (generic
-BLE/GATT tool), with the official Pixel Buds app taking over partway through. **Log file:**
+**Capture ID:** `CAP-003` · **Date:** 2026-08-10 · **Firmware:** `release_5.203` ·
+**Phone:** Pixel 7a, Android 17 — **nRF Connect** (generic
+BLE/GATT tool), with the official Pixel Buds app (v1.0.955078536) taking over partway through. **Log file:**
 `CAP-003-btsnoop_hci.log` (302.2s, 2,863 packets, 20:58:57.10–21:03:59.33 local/+0200 — a short,
 freshly-restarted log, not a shared multi-hour one). **Video:** `CAP-003-recording.mp4` (81.1s,
 20:59:16–21:00:37 local, on-screen wall-clock overlay). **Devices:** phone `Google_7e:ca:81`
