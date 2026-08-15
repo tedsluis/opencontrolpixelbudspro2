@@ -15,9 +15,11 @@ native Android Bluetooth stack (Fluoride/Babel).
 Communication happens over two transports:
 
 - **Bluetooth RFCOMM** (`BluetoothSocket`, classic SPP-style channel) — the
-  **primary** transport, carrying the `libmaestro` control protocol and,
-  possibly, Fast Pair Message Stream traffic (framing question still open, see
-  `PROTOCOL.md` §2.3).
+  **primary** transport. Three DLCIs coexist on it, each with independent
+  framing (`PROTOCOL.md` §2.3, `CodecRouter` in §5 below): DLCI 0x04 (official
+  Fast Pair Message Stream, 🟢 FACT), DLCI 0x02 (Pigweed `pw_hdlc`, 🟡
+  HYPOTHESIS that this is specifically `libmaestro`), and DLCI 0x08 (a private
+  envelope whose protocol identity is 🔴 still open).
 - **Bluetooth GATT** (`BluetoothGatt` / `BluetoothGattCallback`) — a
   **secondary** transport for BLE characteristics exposed by the earbuds'
   case/charging state, where applicable (e.g. a standard Battery Service
@@ -51,14 +53,14 @@ reference OS: GrapheneOS, with compatibility maintained for stock AOSP-based ROM
 ┌──────────────────────▼─────────────────────────────────┐
 │  :data                                                │
 │  - BudsRepositoryImpl                                  │
-│  - MaestroSerializer (protobuf), ProtocolCodec         │
-│    (FrameEncoder/FrameDecoder)                         │
+│  - MaestroSerializer (protobuf), CodecRouter           │
+│    (per-DLCI FrameEncoder/FrameDecoder: 0x02/0x04/0x08) │
 │  - Encrypted DataStore (EQ presets, last-known battery) │
 └──────────────────────┬─────────────────────────────────┘
-                        │ implementation
+                        │ consumes BudsTransport(channelId)
 ┌──────────────────────▼─────────────────────────────────┐
 │  :hardware                                            │
-│  - BudsTransport (interface)                            │
+│  - BudsTransport (interface, channelId-aware)           │
 │  - RFCOMM socket manager, secondary GATT client         │
 │  - ConnectionStateMachine                               │
 │  - ForegroundService                                     │
@@ -67,9 +69,11 @@ reference OS: GrapheneOS, with compatibility maintained for stock AOSP-based ROM
 
 ## 2. Project Structure (MVVM & Clean Architecture)
 
-Strict unidirectional data flow across four layers, each its own Gradle module
-so dependency direction is enforced by the build graph, not just by
-convention:
+`:domain` is the isolated center of the module graph, per Clean Architecture's
+dependency-inversion principle: it has no dependency on `:ui`, `:data`, or
+`:hardware`, and defines the interfaces (`BudsRepository`) that outer layers
+implement or consume. Each layer is its own Gradle module so this direction is
+enforced by the build graph, not just by convention:
 
 ```
 :app            -> wires everything together, hosts MainActivity, DI graph
@@ -90,8 +94,8 @@ convention:
   see §2.2). Has no Android framework dependency beyond
   `StateFlow`/Coroutines, making it independently unit-testable.
 - **Data Layer** (`:data`): Builds/parses `.proto`-defined messages via
-  `protobuf-kotlin-lite`, and wraps them in the `libmaestro` byte envelope
-  (see §5) via `ProtocolCodec`. Implements `BudsRepositoryImpl`, translating
+  `protobuf-kotlin-lite`, and wraps them in the appropriate per-DLCI byte
+  envelope (see §5) via `CodecRouter`. Implements `BudsRepositoryImpl`, translating
   transport-level events from `:hardware` into domain models. Also owns local
   persistence (EQ presets, last-known battery) via encrypted AndroidX
   DataStore (decided; see `AGENTS.md` §10 — no open question here).
@@ -101,7 +105,13 @@ convention:
   layers never touch Android BT APIs directly. Contains the
   `ConnectionStateMachine` (§2.1).
 
-Dependency direction: `:ui → :domain → :data → :hardware`. No reverse imports.
+Dependency direction: `:ui → :domain ← :data → :hardware`. `:ui` depends on
+`:domain` to observe state and invoke use cases. `:data` depends on `:domain`
+(to implement `BudsRepository`) and on `:hardware` (to consume `BudsTransport`
+— see §2.1). `:domain` imports nothing from the other three; no module
+imports "backwards" against these arrows. `:app` is the composition root: it
+depends on all four and wires concrete implementations to interfaces via DI
+(§10).
 
 ### 2.1 Core transport & protocol components
 
@@ -114,26 +124,10 @@ These components are deliberately isolated from the rest of the app so that:
 
 | Component | Layer | Responsibility |
 |---|---|---|
-| `BudsTransport` | `:hardware` (interface consumed by `:data`) | Abstracts the underlying RFCOMM `BluetoothSocket` (primary) and, where applicable, `BluetoothGatt` (secondary — case/charging characteristics). Upper layers see only `send(frame: ByteArray)` / an inbound `Flow<ByteArray>`, never raw Android BT types. |
+| `BudsTransport` | `:hardware` (interface consumed by `:data`) | Abstracts the underlying RFCOMM `BluetoothSocket` (primary) and, where applicable, `BluetoothGatt` (secondary — case/charging characteristics). Upper layers see only `send(channelId: Int, frame: ByteArray)` / an inbound `Flow<Pair<channelId: Int, frame: ByteArray>>`, never raw Android BT types. `channelId` addresses one of the three coexisting RFCOMM DLCIs (`PROTOCOL.md` §2.3) — it is not optional, since the three channels have independent framing and cannot share one send/receive path. |
 | `ConnectionStateMachine` | `:hardware` | Explicit state machine (`Disconnected → Connecting → Discovering → Ready → ...`) driving `ConnectionState`. States and transitions must match what's actually observed in captures — see the connection lifecycle in `PROTOCOL.md` §5, which is still an ⚪ ASSUMPTION pending a full end-to-end capture. |
-| `ProtocolCodec` (`FrameEncoder` / `FrameDecoder`) | `:data` | Encodes/decodes commands and responses per `PROTOCOL.md` §2 (framing) and §3 (protobuf). Pure Kotlin, no Android dependencies — fully unit-testable against fixed byte-array fixtures, per `AGENTS.md` §11. Must be implemented against whichever framing hypothesis (`PROTOCOL.md` §2.1 vs §2.2) reaches 🟢 FACT confidence — not against placeholders (see `PROTOCOL_NOTES.md` §8). |
+| `CodecRouter` (per-DLCI `FrameEncoder` / `FrameDecoder`) | `:data` | Routes each inbound `(channelId, bytes)` pair from `BudsTransport` to the codec for that DLCI, and routes each outbound command to the codec for whichever DLCI it belongs on. See §5 for the three channels and their framing. Pure Kotlin, no Android dependencies — fully unit-testable against fixed byte-array fixtures, per `AGENTS.md` §11. Each per-DLCI codec is implemented independently, gated on that DLCI's own framing reaching 🟢 FACT confidence (see §5's implementation gate) — one DLCI's codec is never blocked on another's. |
 | `BudsRepository` / `BudsRepositoryImpl` | interface in `:domain`, implementation in `:data` | Translates protocol-level events into domain models, exposed as `Flow`/`StateFlow` to the domain layer. |
-
-> **Implementation gate for `ProtocolCodec` (coupled to `AGENTS.md` §6):** the
-> same event — `PROTOCOL.md` §2's framing question reaching 🟢 FACT confidence
-> — triggers two linked requirements, not two independent ones to satisfy
-> separately: (1) only then may `FrameEncoder`/`FrameDecoder` be implemented
-> (`AGENTS.md` §6), and (2) that same FACT determination must be recorded as a
-> `DECISIONS.md` ADR before implementation begins. If the ADR and
-> `PROTOCOL.md`'s status ever disagree, treat that disagreement itself as the
-> problem to fix — not a reason to add a third, independent check.
->
-> If the resolved answer turns out to be "both channels exist" (i.e.
-> `libmaestro` control commands use a separate envelope from generic Fast Pair
-> Message Stream traffic like Ring/battery/device info), `ProtocolCodec` will
-> need **two separate codecs** rather than one shared implementation — the
-> same ADR should say so. This does not change the external interface to
-> `:domain`, only `:data`'s internal structure.
 
 ## 3. Dataflow (Command Pipeline)
 
@@ -144,16 +138,40 @@ Example: **"Activate Transparency Mode"**
    invokes `ToggleAncUseCase`, which calls `BudsRepository`.
 3. **Serialization** — `:data`'s `MaestroSerializer` builds
    `Maestro.AncCommand.newBuilder().setMode(TRANSPARENCY).build().toByteArray()`.
-4. **Framing** — `ProtocolCodec`/`FrameEncoder` wraps the protobuf bytes in the
-   `libmaestro` envelope (magic bytes + length + channel ID + optional
-   checksum, or Message Stream framing — see §5).
-5. **Transmission** — `:hardware`'s `BudsTransport.send(frame: ByteArray)`
-   writes to the `BluetoothSocket` `OutputStream` on `Dispatchers.IO`.
+4. **Framing** — `CodecRouter` picks the `FrameEncoder` for the DLCI this
+   command belongs on (per `PROTOCOL.md` §2.3 — see §5) and wraps the
+   protobuf bytes in that channel's envelope.
+5. **Transmission** — `:hardware`'s `BudsTransport.send(channelId: Int, frame:
+   ByteArray)` writes to the `BluetoothSocket` `OutputStream` on
+   `Dispatchers.IO`.
 6. **Acknowledgement / State Update** — an inbound frame (or timeout) resolves
    a pending coroutine `Deferred`; on success, `MutableStateFlow<AncMode>` is
    updated via `BudsRepositoryImpl`, which Compose observes and recomposes
    automatically. On failure, a `BudsError` propagates up (§7) and the UI shows
    a retry affordance instead of silently failing.
+
+### 3.1 State Reconciliation (Hardware Is the Source of Truth)
+
+Local `StateFlow` values (`AncMode`, `EqProfile`, connection-scoped state) are
+a **cache of the hardware's last-known state, never the authority on it.**
+This matters because the app is not the only writer: the official Pixel Buds
+app, another paired host, or the hardware's own buttons/touch controls can
+change state while this app is disconnected or backgrounded.
+
+- **On every (re)connection**, before trusting or displaying any locally
+  cached value, the app queries the actual current state from the hardware
+  (ANC mode, battery, EQ, touch-control config) rather than assuming the
+  last-known `StateFlow` value still holds. This follows the Startup Handshake
+  (§8) — the state query happens only after firmware verification succeeds.
+- Locally cached values are marked provisional/stale (§4's "last known: N min
+  ago" pattern) until reconciled against a fresh read.
+- If a fresh read disagrees with the cached value, the fresh read wins
+  unconditionally — the app never keeps showing (or acting on) its own stale
+  assumption once the hardware has answered.
+- A user-initiated write (e.g. toggling ANC) optimistically updates local
+  state for responsiveness, but that optimistic update is provisional until
+  the acknowledgement in step 6 above confirms it — same rule, applied to the
+  single-command case.
 
 ## 4. Battery Status Logic (Android Fallback)
 
@@ -194,46 +212,71 @@ are visually marked ("last known: 3 min ago").
 > for the reasoning (the Fast Pair mechanisms are officially specified and, for
 > the BLE advertisement option, require no active connection at all).
 
-## 5. Protocol Framing & `libmaestro` Envelope (Data Layer Detail)
+## 5. Protocol Framing & the Three-DLCI Reality (`CodecRouter`, Data Layer Detail)
 
-Producing the protobuf byte array is only step one. Per the `qzed/pbpctrl`
-reverse-engineering findings and the official Fast Pair specification, two
-competing framing hypotheses are under evaluation — see `PROTOCOL.md` §2 for
-the full byte-level detail of each:
+Producing the protobuf byte array is only step one. Framing is no longer a
+binary either/or choice between two competing hypotheses — `PROTOCOL.md` §2.3
+establishes that **three RFCOMM DLCIs coexist**, each with its own framing,
+and `CodecRouter` dispatches to the right one by `channelId`:
 
 ```
-Hypothesis A — Fast Pair Message Stream framing (official, generic):
+DLCI 0x04 — official Fast Pair Message Stream framing (🟢 FACT, spec-verified):
 +-----------------+----------------+----------------------------+------------------+
 | Message Group    | Message Code   | Additional Data Length     | Additional Data  |
 | (1B)             | (1B)           | (2B, big-endian)           | (variable)       |
 +-----------------+----------------+----------------------------+------------------+
+Carries Device Information, SASS, and the Hearable Controls extension
+(Get/Set/Notify ANC state) — see `PROTOCOL.md` §4.1.
 
-Hypothesis B — proprietary envelope (pbpctrl-derived):
-+-----------+--------------+------------+-------------------+-----------------+
-| Magic (2B)| Length (2B)  | Channel ID | Protobuf Payload   | Checksum (opt.) |
-+-----------+--------------+------------+-------------------+-----------------+
+DLCI 0x02 — Pigweed `pw_hdlc` framing (🟢 FACT for the framing itself; 🟡
+HYPOTHESIS that this is specifically `libmaestro`):
++------+-------------------------+---------+-------------------+------+
+| Flag | Address (LEB128 varint) | Control | Payload (protobuf)| Flag |
++------+-------------------------+---------+-------------------+------+
+Two multiplexed addresses observed (`0x00`, `0xD180`); payload content only
+partly decoded (device serial + firmware on the Rcvd side) — see
+`PROTOCOL.md` §2.2a.
+
+DLCI 0x08 — private `[Group][Code][Length][Value]` envelope (🟢 FACT that
+it's a real, decodable envelope; 🔴 OPEN QUESTION what protocol it belongs to):
++-----------+----------------+--------------+-------------------+
+| Group (1B)| Code (1B)      | Length (2B)  | Value (variable)  |
++-----------+----------------+--------------+-------------------+
+Structurally decodable, but Group/Code meanings are largely unmapped — see
+`PROTOCOL.md` §2.3.
 ```
 
-- **Framing (outbound):** `FrameEncoder` builds the frame per whichever
-  hypothesis is confirmed, appends a checksum only if that hypothesis requires
-  one, and hands the resulting bytes to `BudsTransport`.
-- **Parsing (inbound):** `FrameDecoder` buffers incoming bytes (RFCOMM streams
-  are not message-delimited at the socket level), detects the frame boundary
-  per the confirmed hypothesis, extracts exactly the declared payload bytes,
-  verifies a checksum if present, and only then hands the inner protobuf bytes
-  to the deserializer.
+- **Routing (outbound):** for each command, `CodecRouter` selects the
+  `FrameEncoder` for the DLCI that command's protocol entry (`PROTOCOL.md`)
+  specifies, builds the frame per that DLCI's envelope, appends a checksum
+  only if that envelope requires one, and hands the resulting bytes to
+  `BudsTransport.send(channelId, frame)`.
+- **Routing (inbound):** each DLCI's `FrameDecoder` buffers incoming bytes for
+  that channel (RFCOMM streams are not message-delimited at the socket
+  level), detects the frame boundary per that channel's envelope, extracts
+  exactly the declared payload bytes, verifies a checksum if present, and
+  hands the inner bytes to the matching deserializer.
 - Any framing mismatch (bad magic/group, length overrun, checksum failure)
   yields a `BudsError.MalformedFrame` — logged locally and dropped, never
-  surfaced as a crash.
+  surfaced as a crash. This is distinct from a **structurally valid** frame
+  whose Group/Code isn't recognized (most of DLCI 0x08 today): that case does
+  not fail to parse, it fails to be *understood* — see §7's
+  `UnidentifiedFrame`, which is routed to a Debug UI instead of being dropped
+  silently, since silently dropping unclassified wire data would work against
+  this project's evidence-based reverse-engineering goal (`AGENTS.md` §6).
 - Exact byte offsets/opcodes per command are tracked in `PROTOCOL.md` /
   `PROTOCOL_NOTES.md` alongside a reference to the corresponding `pbpctrl`
-  source file, so protocol knowledge stays auditable and versioned
-  independently of this document.
+  source file where applicable, so protocol knowledge stays auditable and
+  versioned independently of this document.
 
-**Implementation gate:** `FrameDecoder`/`FrameEncoder` must not be implemented
-against a placeholder framing — see `PROTOCOL.md` §2.3 for the resolution path
-for the open framing question, and `PROTOCOL_NOTES.md` §8 for the
-implementation ordering this depends on.
+**Implementation gate, per DLCI:** a given DLCI's `FrameEncoder`/`FrameDecoder`
+may only be implemented once that DLCI's own framing (not the other two's)
+reaches 🟢 FACT confidence in `PROTOCOL.md` §2.3, and that FACT determination
+is recorded as a `DECISIONS.md` ADR before implementation begins (coupled to
+`AGENTS.md` §6). As of this writing: DLCI 0x04 and DLCI 0x02 framing are 🟢
+FACT and implementable; DLCI 0x08's envelope shape is 🟢 FACT and its codec is
+implementable, but *acting on* payloads whose Group/Code is unmapped is not —
+those surface as `UnidentifiedFrame` instead (§7).
 
 ## 6. Bluetooth Resilience & GrapheneOS Degradation
 
@@ -246,13 +289,38 @@ physical link as inherently unstable:
   treated as a normal transition.
 - **Graceful Degradation:** an `IOException` from the socket (OS-triggered
   teardown, range loss, peer disconnect) is caught, `ConnectionState` moves to
-  `DISCONNECTED`, and all in-flight ViewModel polling coroutines are
-  cancelled to avoid leaks or crash loops.
+  `DISCONNECTED`, and all in-flight ViewModel event-observation coroutines
+  (see below) are cancelled to avoid leaks or crash loops.
 - **Re-connection Strategy:** user-initiated reconnection only — no aggressive
-  background polling/retry loops, both to respect battery and to avoid the
+  background retry loops, both to respect battery and to avoid the
   fingerprintable scanning behavior GrapheneOS's threat model discourages (see
   §7 of `AGENTS.md`, and the bounded exception for passive battery-advertisement
   observation in §9.1 below).
+- **Event-observation, not polling:** all inbound state (ANC mode, battery,
+  connection status) is obtained by observing a `Flow` fed by inbound frames
+  or OS broadcasts (`ACTION_STATE_CHANGED`, the battery broadcast in §4
+  option 0, GATT notifications) — coroutines suspend until an event arrives.
+  Nothing in this app runs a fixed-interval timer loop that re-reads state on
+  a schedule; the only place anything resembling a schedule appears is the
+  bounded, foreground-triggered advertisement window in §9.1, which is
+  time-boxed by design, not a recurring poll.
+
+### 6.1 Resource Budget (Wakelocks)
+
+- The `ForegroundService` (§1) holds a wakelock only while a command is
+  in-flight or an event-observation coroutine actively needs the CPU awake to
+  process an inbound frame — never for the lifetime of the connection.
+- No wakelock is acquired merely to keep the RFCOMM socket open; the socket
+  itself does not require the CPU to stay awake, only active
+  transmission/reception does.
+- Any wakelock acquired must have a bounded timeout as a backstop (in case a
+  release path is missed due to an unexpected exception), in addition to being
+  released explicitly on the normal completion path.
+- This budget exists because GrapheneOS's aggressive battery policy (this
+  section's heading) will fight an app that holds wakelocks liberally, and
+  because unnecessary wakelocks are themselves a fingerprintable/battery-drain
+  concern independent of the scanning concern §7 of `AGENTS.md` already
+  covers.
 
 ## 7. Error Handling Architecture
 
@@ -275,6 +343,30 @@ exposes `StateFlow<BudsUiState>` where `BudsUiState` includes an optional
 `BudsError` so the Compose layer can render a specific, actionable message per
 failure mode rather than a generic error banner.
 
+**`UnidentifiedFrame` is deliberately not part of `BudsError`.** A frame with
+an unrecognized Group/Code (typically on DLCI 0x08, §5) parsed successfully —
+nothing failed — so treating it as an error would misrepresent it to the user
+as a problem, and routing it through the error-banner path would bury data
+useful to reverse engineering. Instead:
+
+```kotlin
+data class UnidentifiedFrame(
+    val channelId: Int,
+    val group: Int?,
+    val code: Int?,
+    val raw: ByteArray,
+    val timestamp: Instant,
+)
+```
+
+`CodecRouter` (§5) emits these on a separate `Flow<UnidentifiedFrame>` exposed
+by `BudsRepository`, independent of the normal command/state pipeline. A
+Debug UI screen (gated behind the same "Debug mode" setting as raw frame
+logging, §12) subscribes to this flow so unclassified wire data is visible
+and inspectable rather than silently dropped — consistent with the
+evidence-based reverse-engineering principle in `AGENTS.md` §6/`PROJECT_RULES.md`
+§1.
+
 ## 8. Firmware / Protocol Compatibility
 
 Because `libmaestro`'s wire format can change across Pixel Buds firmware
@@ -283,6 +375,30 @@ firmware/library version it was verified against. `UnsupportedFirmware` (§7)
 is returned when an inbound frame doesn't match any known schema version,
 rather than attempting a best-effort parse that could misreport battery/ANC
 state.
+
+### 8.1 Startup Handshake
+
+Before sending any state-changing command on a new connection, the app reads
+the firmware version string first (via DLCI 0x02's Rcvd block or DLCI 0x04's
+Device Information, whichever is confirmed to carry it for a given
+device/firmware — see `PROTOCOL.md` §2.2a/§4.1) and checks it against the set
+of firmware versions this app has been verified against.
+
+- **Verified firmware:** proceed normally — Startup Handshake feeds directly
+  into the state query described in §3.1.
+- **Unrecognized/unverified firmware:** fall back to **Read-Only / Safe
+  Mode** — the app displays whatever state it can read (battery, current ANC
+  mode if obtainable) but sends no write/control command. An unknown firmware
+  revision may have changed command semantics in a way this app cannot detect
+  in advance, and sending a command built against the wrong schema risks
+  putting the hardware into an unexpected or unrecoverable state. This is a
+  deliberate, conservative default to avoid bricking — see `README.md`'s
+  bricking disclaimer and `WORKSTATION_PREPARATIONS.md`'s disaster-recovery
+  procedure.
+- Safe Mode is surfaced to the user explicitly (not a silent limitation) so
+  they understand why controls are unavailable, and the detected firmware
+  string is logged (subject to §12's logging rules) to make it easy to report
+  and later add support for.
 
 ## 9. Security & Permission Architecture
 
@@ -362,8 +478,8 @@ versions) and recorded in `DECISIONS.md` before broad adoption.
 
 ## 13. Testing Strategy
 
-- **Unit tests** (`:data`): `ProtocolCodec` (protobuf (de)serialization and
-  frame envelope encode/decode) and domain-layer use cases, using fixed
+- **Unit tests** (`:data`): `CodecRouter` (protobuf (de)serialization and
+  per-DLCI frame envelope encode/decode) and domain-layer use cases, using fixed
   byte-array fixtures — no real hardware required, no Android dependencies
   needed (pure Kotlin + JUnit5/Kotest, per `AGENTS.md` §11).
 - **Unit tests** (`:domain`): ViewModels/use-cases tested against a fake
@@ -390,25 +506,35 @@ versions) and recorded in `DECISIONS.md` before broad adoption.
 > Move to `DECISIONS.md` once decided, following the ADR template.
 
 - [ ] Hilt vs. manual DI (§10).
-- [ ] Support for multiple paired Buds simultaneously (multi-device) — in or
-      out of scope for v1? Not currently addressed anywhere in `PROJECT.md`'s
-      v1 scope list.
 - [ ] Minimum supported Android API level: compile/target SDK is set at API 34
       (Android 14), but the minimum SDK for broader AOSP-ROM compatibility is
-      not yet fixed — depends on which BLE/Bluetooth APIs (e.g.
-      `CompanionDeviceManager` features, foreground service types) are
-      actually required.
+      not yet fixed. This is not blocked on a single API, so "TBD" here does
+      not mean unplanned: the generic battery broadcast (§4 option 0,
+      `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED`) requires **API 31+**,
+      but §4's options 1–4 (Fast Pair advertisement, Message Stream, HFP,
+      GATT) are the confirmed primary paths and do not depend on API 31 — so a
+      lower min API (e.g. API 26 for `CompanionDeviceManager`, ADR-005) is not
+      blocked by option 0's availability, which simply degrades gracefully to
+      "unavailable on this API level, other options still work." The exact
+      floor still depends on which other BLE/Bluetooth APIs (foreground
+      service types, etc.) turn out to be required.
 - [ ] Added 2026-08-14: is the observed Bluetooth HID surface (§1) architecturally relevant to
       `:hardware`/`BudsTransport` — i.e. does any control feature this app needs actually route
       through HID reports rather than RFCOMM/GATT — or is it exclusively used by parts of the
       official app/OS this project doesn't need to replicate? Unresolved; no HID report content
-      has been captured yet.
+      has been captured yet. **If confirmed**, `BudsTransport` (§2.1) needs a third input path
+      alongside RFCOMM and GATT (an `InputManager`/HID report listener), and `CodecRouter` (§5)
+      would need an equivalent HID report decoder — this is a real, not cosmetic, change to both
+      components, which is why this item stays open rather than being assumed away.
 
 > Already decided, not open: persistent settings storage (encrypted AndroidX
 > DataStore — see §2 and `AGENTS.md` §10); state management approach
 > (`StateFlow`/`SharedFlow` only — see §11); passive BLE scanning policy for
 > the Fast Pair Battery Notification (bounded exception — see §9.1,
-> `DECISIONS.md` ADR-006).
+> `DECISIONS.md` ADR-006); **single-device support only for v1** — the app
+> targets exactly one paired Pixel Buds Pro 2 at a time (matches `PROJECT.md`'s
+> "Definition of done"); simultaneous multi-device support is explicitly out
+> of scope until separately proposed and recorded in `DECISIONS.md`.
 
 ## 16. Attribution
 

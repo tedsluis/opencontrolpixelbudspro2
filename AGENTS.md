@@ -1,4 +1,4 @@
-## AI Agent Directives & Guardrails — Pixel Buds Pro 2 Control App
+## AI Agent Directives & Guardrails — OpenControl for Pixel Buds Pro 2
 
 **CRITICAL INSTRUCTION:** Any AI assisting with this project (Claude Code,
 Google Antigravity, Gemini, ChatGPT, or any other model; code generation,
@@ -268,15 +268,25 @@ order:
 
 ## 12. Licensing & Attribution
 
-- This project is a clean-room Kotlin/Android implementation informed by the
-  public reverse-engineering findings of `qzed/pbpctrl` (Linux/Rust,
-  MIT-licensed). No code is copy-pasted from that project; only protocol
-  *knowledge* (frame structure, opcodes) is reused, with attribution in
-  `ARCHITECTURE.md` and relevant source comments.
+- This project is an **independent implementation**, not a clean-room one:
+  reverse engineering here includes JADX/apktool decompilation of the
+  official Pixel Buds APK, so the "clean-room" claim (which requires a team
+  that never saw the original implementation) does not apply and must not be
+  used. What *is* upheld is the narrower, actually-true guarantee: no code is
+  copy-pasted from the official APK, from `qzed/pbpctrl` (Linux/Rust,
+  MIT-licensed), or from any other reverse-engineered source — only the
+  observed *behavior* (protocol frame structure, opcodes) is reconstructed,
+  with attribution in `ARCHITECTURE.md` and relevant source comments. See
+  `PROJECT_RULES.md` §8 for the scope guardrail this implements.
+- Every generated Kotlin source file MUST include the standard AGPL-3.0 file
+  header (SPDX identifier `AGPL-3.0-or-later` plus the standard FSF copyright/
+  warranty notice block) at the top of the file.
 - **Project license: GNU AGPL-3.0** (decided; see `LICENSE` and
-  `DECISIONS.md` ADR-002). This is settled — do not propose or embed a
-  different `LICENSE` file, and do not suggest relicensing, without an
-  explicit new `DECISIONS.md` entry that supersedes ADR-002.
+  `DECISIONS.md` ADR-002 — reaffirmed after the clean-room claim was removed,
+  since the license choice is independent of that claim). This is settled —
+  do not propose or embed a different `LICENSE` file, and do not suggest
+  relicensing, without an explicit new `DECISIONS.md` entry that supersedes
+  ADR-002.
 - Do not include any Google-owned assets, icons, trademarks ("Pixel Buds"
   wordmark/logo) in app resources; use generic iconography only.
 

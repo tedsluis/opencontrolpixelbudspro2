@@ -1,5 +1,7 @@
 # PROJECT.md
 
+**Project name:** OpenControl for Pixel Buds Pro 2 — see `README.md`.
+
 ## Goal
 
 Develop an open-source, self-contained Android app that lets users fully manage
@@ -54,6 +56,8 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
   "Pixel Buds" wordmark/logo) in the app itself.
 - No support for other Pixel Buds models unless the protocol is demonstrably
   identical — this must be separately verified, never assumed.
+- No simultaneous multi-device support in v1 — the app targets exactly one
+  paired Pixel Buds Pro 2 at a time (see `ARCHITECTURE.md` §15).
 - No cloud functionality that requires a Google account — this is by definition
   out of scope for a project whose goal is independence from Google Play
   Services.

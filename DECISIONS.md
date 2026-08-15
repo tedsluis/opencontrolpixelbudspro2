@@ -75,6 +75,18 @@ written today can be overtaken by another ADR being added first.
   otherwise consider a permissive license — considered acceptable given the
   project's privacy/openness goals. Contributors should be aware of the AGPL's
   network-use clause when integrating third-party code.
+- **Update (2026-08-15):** reaffirmed after `AGENTS.md` §12 and `README.md`
+  dropped the "clean-room" framing in favor of "independent implementation
+  based on reverse-engineering" (the earlier phrase was legally imprecise,
+  since a true clean-room process requires a second team that never examined
+  the original implementation, whereas this project's own reverse engineering
+  includes JADX/apktool decompilation of the official APK). That relabeling
+  does not change this decision: AGPL-3.0 vs. GPL-3.0 is a question about
+  redistribution terms for *this project's own code*, not about how that code
+  was derived, and the SaaS-loophole rationale above is unaffected either way.
+  GPL-3.0 was re-examined and rejected again for the same reason as
+  originally: it does not require sharing modifications made to a version
+  deployed only as a network service. AGPL-3.0 stands.
 
 ## ADR-003 — Reverse engineering method: capture + APK analysis, no binary reverse engineering of protocol internals by the AI
 

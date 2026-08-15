@@ -1,4 +1,4 @@
-# Pixel Buds Libre
+# OpenControl for Pixel Buds Pro 2
 
 An independent, open-source Android app to fully control the **Google Pixel Buds
 Pro 2** without the official Pixel Buds app or Google Play Services.
@@ -55,11 +55,16 @@ to design, implement, test, and document a native Android app.
 - **Evidence-based reverse engineering:** every protocol claim is backed by a
   capture, a code reference, or an experiment, and is explicitly labeled as fact,
   assumption, or hypothesis — never silently guessed.
-- **Clean-room implementation:** informed by the public reverse-engineering
-  findings of [`qzed/pbpctrl`](https://github.com/qzed/pbpctrl) (Linux/Rust,
-  MIT-licensed) for protocol *knowledge* only — no code is copied from that
-  project, and no code from BlueZ/D-Bus/UPower is applicable, since this app
-  talks directly to Android's native Bluetooth stack (Fluoride/Babel) instead.
+- **Independent implementation:** built from reverse-engineering of the
+  official Pixel Buds app — the maintainer's own Bluetooth captures plus
+  JADX/apktool analysis of the APK the maintainer has installed — and informed
+  by the public reverse-engineering findings of
+  [`qzed/pbpctrl`](https://github.com/qzed/pbpctrl) (Linux/Rust, MIT-licensed)
+  for protocol *knowledge* only. No code is copied from either source; only
+  the observed *behavior* (the protocol) is reconstructed, never the
+  implementation. No code from BlueZ/D-Bus/UPower is applicable, since this
+  app talks directly to Android's native Bluetooth stack (Fluoride/Babel)
+  instead.
 
 ## Project documentation
 
@@ -101,4 +106,5 @@ knowledge informs this Android-native implementation.
 
 ## License
 
-Not yet finalized — see `AGENTS.md` §12.
+GNU Affero General Public License v3.0 (AGPL-3.0) — see [`LICENSE`](./LICENSE)
+and `DECISIONS.md` ADR-002.
