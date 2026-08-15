@@ -561,9 +561,12 @@ unconfirmed at the protocol level):
 
 ## 5. Connection lifecycle
 
-Full step-by-step sequence not yet captured end-to-end. Expected shape, pending
-confirmation (advertising → scan/CDM pairing → RFCOMM connect → Message
-Stream/`libmaestro` handshake → first battery notification → first
+Full step-by-step sequence not yet captured end-to-end for the RFCOMM
+profile/Message-Stream/battery/command portions (steps 3–6 below remain ⚪
+ASSUMPTION). The classic BR/EDR link establishment portion (steps 1–2's
+link-layer mechanics), however, is now 🟢 FACT — see §5.1. Expected overall
+shape, pending confirmation (advertising → scan/CDM pairing → RFCOMM connect →
+Message Stream/`libmaestro` handshake → first battery notification → first
 writes/reads):
 
 ```
@@ -580,11 +583,73 @@ writes/reads):
    (ANC mode, EQ) as triggered by the user
 ```
 
-**Status**: ⚪ ASSUMPTION for the overall shape; 🟢 FACT for step 5's
-behavioral outcome (battery notification on reconnect), per
-`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §3.
-**Evidence**: to be filled in with capture-ID + frame range once a full
-connection sequence is captured (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md`).
+### 5.1 Classic BR/EDR link establishment — 🟢 FACT, promoted 2026-08-15
+
+Three independent captures now agree on this state machine's shape —
+`CAP-001` (reconnect to an already-bonded device, stored link key), `CAP-002`
+(fresh pairing via the official app, first attempt succeeds), `CAP-003`
+(fresh pairing via nRF Connect, first attempt succeeds). Two converging paths
+depending on whether a stored link key exists:
+
+**Fresh pairing (no stored key) — `CAP-002`/`CAP-003`:**
+
+```
+Delete stored link key (if any) → Create Connection → Connect Complete
+  (status 0x00) → Link Key Request → Negative Reply (no prior bonding
+  material) → IO Capability Request/Reply/Response (SSP negotiation) →
+  Simple Pairing Complete → Link Key Notification (new key stored) →
+  Authentication Complete → Set Connection Encryption → Encryption Change
+```
+
+- **`CAP-002`** (official app): frames 653–734, 17:05:26.717–33.721. The
+  ~6.4s gap between IO Capability Response and Simple Pairing Complete
+  matches the on-screen permission dialog being shown/confirmed, not a
+  passkey step — no passkey digits are ever shown to the user; SSP here is a
+  silent cryptographic exchange behind a permission-confirmation UI.
+- **`CAP-003`** (nRF Connect): frames 1621, 1687–1756, 20:59:38.320–39.876.
+  Same shape, but only a ~0.7s IO-Capability-to-Complete gap instead of
+  `CAP-002`'s ~6.4s, since nRF Connect shows no confirmation dialog to wait
+  on — this cross-check confirms the 6.4s gap above is UI dwell time, not
+  part of the protocol's own timing. `CAP-003` also shows the BLE (LE) link
+  established ~0.4s *before* the classic connection attempt, consistent with
+  Fast Pair's BLE-first design (classic pairing triggered from the BLE side).
+
+**Reconnect (stored key exists) — `CAP-001`:**
+
+```
+Create Connection (may require multiple attempts — CAP-001 needed 3; attempt
+  1 failed with Page Timeout before the case was fully open on camera) →
+  Connect Complete (status 0x00) → Link Key Request → Link Key Request Reply
+  (stored key, no SSP negotiation) → Authentication Complete → Set Connection
+  Encryption → Encryption Change
+```
+
+- **`CAP-001`**: frames 732–917, 08:51:01.981–12.208. No IO Capability/SSP
+  exchange at all — the stored key from a prior pairing is reused directly.
+  A BLE (LE) link to the same peer was independently already established
+  earlier (frame 290, 08:50:36.27), before the case was even open on camera
+  — see `CAP-001-FINDINGS.md` §6 for the still-open question this raises
+  about exactly when that BLE association was formed relative to the
+  on-screen "Forget" tap (tracked as planned capture `CAP-013`).
+
+**Common tail, both paths:** `Authentication Complete` → `Set Connection
+Encryption` → `Encryption Change`, converging to the same encrypted classic
+link regardless of which path reached it.
+
+**Not covered by this promotion — still ⚪ ASSUMPTION:** the RFCOMM
+channel-opening sequence, the Message Stream/`libmaestro` handshake ordering,
+and exactly when the first battery notification/app command arrives relative
+to the classic link completing (steps 3–6 in the diagram above). Only the
+classic BR/EDR link-establishment mechanics (steps 1–2) are promoted here.
+
+**Status**: 🟢 FACT for classic BR/EDR link establishment (§5.1, three
+independent captures); ⚪ ASSUMPTION for the RFCOMM/Message-Stream/battery/
+command portions (steps 3–6); 🟢 FACT for step 5's specific behavioral outcome
+(battery notification on reconnect), per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §3.
+**Evidence**: §5.1 above for the classic-link portion (`CAP-001` frames
+732–917, `CAP-002` frames 653–734, `CAP-003` frames 1621/1687–1756); steps 3–6
+still need a full connection sequence captured end-to-end (see
+`CAPTURE_BLUETOOTH_HCI_SNOOP.md`).
 
 ## 6. Open questions
 

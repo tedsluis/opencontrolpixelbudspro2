@@ -264,20 +264,27 @@ pages directly (not a search-summary), specifically
 > pro-v1`, `Europe/Amsterdam`, protobuf-tag-framed, not the `[Group][Code][Length][Value]` TLV
 > shape described here). `CAP-004` (Group S — Google Play Services disabled, Pixel Buds app
 > uninstalled) shows these two are **not the same mechanism, and do not share the same
-> dependency on Google Play Services**:
+> dependency profile**:
 >
 > - The *channel-2/DLCI-0x04* content described in this section — Group `0x03` Code `0x01`
 >   (Model ID `da 2d b1`), Code `0x02` (BLE address updated), Code `0x09` (`"Revision 6"`) — is
->   **absent** in `CAP-004`: channel 2 is never even opened when GMS is disabled. This is
->   evidence the mechanism documented in *this* section is **GMS/Nearby-driven**, not
+>   **absent** in `CAP-004`: channel 2 is never even opened under `CAP-004`'s combined
+>   GMS-disabled-and-app-uninstalled condition. **Correction (2026-08-15):** this is *not*
+>   established as GMS-specific — `CAP-004` disabled GMS **and** uninstalled the official app
+>   together, a two-variable confound not yet isolated (see `CAP-004-FINDINGS.md` §4a). The
+>   mechanism documented in *this* section is best described as **GMS-and/or-app-driven,
+>   unresolved which** — not confirmed as either exclusively, and not confirmed as
 >   Buds-initiated as originally left open in §7 item 4 of `CAP-001`'s `CAP-001-FINDINGS.md`.
-> - The *channel-4/DLCI-0x08* content from `CAP-001` reappears in `CAP-004` **unchanged**, GMS
->   disabled or not — that content is Buds-initiated, independent of GMS.
+> - The *channel-4/DLCI-0x08* content from `CAP-001` reappears in `CAP-004` **unchanged**, both
+>   GMS disabled and the app uninstalled — that content is Buds-initiated, independent of both
+>   (this one isn't confounded, since surviving both removed at once is a clean presence result,
+>   unlike the absence result above).
 >
 > **Broader lesson, applicable beyond this specific finding:** what this section originally
 > treated as a single "device info exchange" is actually **two independent mechanisms**, on two
 > different channels, with two different framings (protobuf-tag vs. Message-Stream TLV), and —
-> now shown — two different real-world dependencies (GMS-driven vs. Buds-native). A shared
+> now shown — two different dependency profiles (one GMS-and/or-app-driven with the specific
+> variable still unresolved, one Buds-native independent of both). A shared
 > theme ("device info sent around connection time") is not evidence of a shared mechanism;
 > each channel/DLCI's content needs its own independent verification, per the same
 > content-over-channel-number discipline already established for RFCOMM channel numbers

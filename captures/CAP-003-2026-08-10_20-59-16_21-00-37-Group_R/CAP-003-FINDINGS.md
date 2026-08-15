@@ -274,16 +274,20 @@ of the three captures to date. Not claimed as FACT; requires UUID confirmation.
 3. Attempt to decrypt or otherwise identify the `0x0c0X` write/notify bursts against Fast Pair's
    Key-based Pairing / Passkey / Account Key GATT procedure spec, using the phase-alignment
    evidence in §5 as a starting hypothesis for which burst maps to which named procedure step.
-4. This capture's classic-pairing bonus data (§2) is solid enough to fold into
+4. ~~This capture's classic-pairing bonus data (§2) is solid enough to fold into
    `PROTOCOL.md` §5's connection-lifecycle section alongside `CAP-001`/`CAP-002`'s — three
-   consistent observations now support the classic-link portion of that sequence.
+   consistent observations now support the classic-link portion of that sequence.~~ **Done
+   2026-08-15** — see `PROTOCOL.md` §5.1, promoted to 🟢 FACT citing all three captures'
+   frame numbers.
 
 ## 8. Promotion readiness — what's ready for `PROTOCOL.md`
 
 **Ready to promote now (🟢 FACT, cross-capture-verified):**
-- Classic BR/EDR fresh-pairing state machine (delete-key → create-connection →
+- ~~Classic BR/EDR fresh-pairing state machine (delete-key → create-connection →
   negative-link-key-reply → IO-capability/SSP → simple-pairing-complete → new-link-key) — now
-  confirmed in two independent fresh-pairing sessions (`CAP-002`, `CAP-003`) — §2.
+  confirmed in two independent fresh-pairing sessions (`CAP-002`, `CAP-003`) — §2.~~ **Promoted
+  2026-08-15**, `PROTOCOL.md` §5.1 — includes `CAP-001`'s reconnect (stored-key) path alongside
+  these two fresh-pairing sessions, so both branches of the state machine are now documented.
 - RFCOMM channel numbers are session-local, not profile-fixed — a third confirming data point
   (HFP on channel 4 here, channel 6 in `CAP-002`, channel 4 in `CAP-001`) — §3.
 - GATT handle numbers, unlike RFCOMM channel numbers, are stable across sessions for the same
