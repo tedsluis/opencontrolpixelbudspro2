@@ -65,11 +65,12 @@ lower priority than finishing ANC/Battery/EQ):**
       completely unattributed and is this project's original, still-unmet
       implementation goal alongside ANC and Battery
       (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T, `PROTOCOL.md` §4.2).
-- [ ] **`CAP-006` (Group B repeat) — ANC reliability confirmation.** Blocks
-      `FrameEncoder` implementation for the ANC command per `DECISIONS.md`
-      ADR-009 — `CAP-001`'s only evidence has 2 of 6 taps producing no command
-      frame, not yet resolved as UI-state-realization vs. a real reliability
-      gap.
+- [x] **`CAP-006` (Group B repeat) — ANC reliability confirmation.** **Done
+      2026-08-15** — isolated single-tap repeat of all four ANC modes;
+      exactly 4 `0x12` "Set ANC state" frames in the whole log, one per tap,
+      zero misses (`CAP-006-FINDINGS.md` §3). `CAP-001`'s 2/6 gap does not
+      reproduce under isolated conditions. `DECISIONS.md` ADR-009 updated,
+      `FrameEncoder` implementation block for the ANC command **lifted**.
 - [ ] **`CAP-010` (Group W) — stronger GATT cache-busting for live service
       discovery.** Three captures (`CAP-002`–`CAP-004`) have all failed to
       trigger live GATT discovery via bond removal; Group W is the untried,
@@ -123,11 +124,13 @@ lower priority than finishing ANC/Battery/EQ):**
       Notification, `PROTOCOL.md` §4.3 Option A) to full 🟢 FACT status
 - [x] Bring ANC mode switching to full 🟢 FACT status (`PROTOCOL.md` §4.1) —
       **done 2026-08-12** via deskresearch correlation against the official
-      Fast Pair "Hearable Controls" spec + `CAP-001`'s existing capture. **Not
-      the same as implementation-ready:** `DECISIONS.md` ADR-009 (added
-      2026-08-15) explicitly blocks `FrameEncoder` for this command pending
-      `CAP-006` — 2 of `CAP-001`'s 6 ANC taps produced no command frame, a gap
-      not yet explained. See `CAP-006` under Phase 1's top-priority list above.
+      Fast Pair "Hearable Controls" spec + `CAP-001`'s existing capture.
+      `DECISIONS.md` ADR-009 (added 2026-08-15) blocked `FrameEncoder` for
+      this command pending `CAP-006`, since 2 of `CAP-001`'s 6 ANC taps
+      produced no command frame. **`CAP-006` (2026-08-15) resolved this — 4/4
+      isolated taps produced a matching frame, zero misses — and ADR-009 was
+      updated to lift the block.** `FrameEncoder`/`FrameDecoder` for the ANC
+      command is now implementation-ready per `AGENTS.md` §6.
 - [ ] Log every hypothesis test in the relevant capture's `CAP-NNN-FINDINGS.md` before promoting a finding
       from HYPOTHESIS to FACT (`PROJECT_RULES.md` §4)
 

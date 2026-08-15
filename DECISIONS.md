@@ -327,3 +327,24 @@ written today can be overtaken by another ADR being added first.
   block as lifted, with a pointer to that capture's evidence. If `CAP-006`
   reproduces misses, that is a new, higher-priority open question for
   `PROTOCOL.md` §6, not a reason to proceed with implementation regardless.
+- **Update (2026-08-15): `CAP-006` confirms 100% reliability — the block is
+  lifted.** `CAP-006` (`CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index) ran
+  the exact repeat this ADR called for: Bluetooth enabled and the connection
+  allowed to settle, the ANC row confirmed fully active (not greyed out)
+  before any tap, then each of the four ANC modes tapped exactly once in
+  isolation. Result (`CAP-006-FINDINGS.md` §3): filtering the **entire**
+  233s log for Group `0x08` Code `0x12` returns exactly four frames — one per
+  tap, in tap order, zero extras, zero misses — each within ~1.3s of its
+  video-observed tap (frames 1393/1627/1731/1862, modes
+  `0x08`/`0x20`/`0x40`/`0x80` matching Noise Cancellation/Off/Adaptive/
+  Transparency respectively). This is a clean 4/4, contrasting with `CAP-001`'s
+  4/6 under bundled, unpaused conditions — the leading explanation from this
+  ADR's "What this ADR does NOT clear" section (first-tap UI-state
+  realization while the row was still greyed out, not a genuine command) is
+  now the explanation best supported by the evidence, not merely plausible.
+  **The `FrameEncoder`/`FrameDecoder` implementation block for the ANC
+  command is lifted.** The underlying framing/opcode finding (`PROTOCOL.md`
+  §4.1) is unchanged by this update, per this ADR's own note above that a
+  confirming result would not require superseding it. This update does not
+  extend to any other channel or command — per `AGENTS.md` §6, the
+  implementation gate remains per channel/feature.
