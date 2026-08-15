@@ -408,11 +408,18 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
   Upper Treble) and presets (Standard/Default, Bass Boost/Heavy Bass, Bass
   Reduction/Light Bass, Balanced, Vocal Boost, Clarity, Last Saved). Status: 🟢
   FACT (UI presence).
-- **Opcode/payload structure**: not yet extracted.
+- **Opcode/payload structure**: not yet extracted from an official spec, but **Added 2026-08-15**:
+  `CAP-005-FINDINGS.md` (Group T, isolated `EQP-002`/`EQS-004` capture) proposes a first candidate
+  wire format on DLCI 0x02 (`libmaestro`'s Pigweed `pw_hdlc` channel, §2.2a) — an HDLC frame whose
+  payload nests down to a 5×`float32` band-gain quintet, with only the touched band's value
+  changing between a preset tap and a slider drag. **🟡 HYPOTHESIS only** (single capture, field-
+  to-band mapping inferred from one changed field) — see that file's §5–§6 for the full decode and
+  open questions, also tracked in §6 below.
 - **Sent to / expected response**: same open questions as §4.1.
-- **Status**: 🔴 unconfirmed at the byte level.
-- **Evidence**: `SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1.
-- **Verified with experiment**: none yet.
+- **Status**: 🔴 unconfirmed at the byte level (candidate 🟡 HYPOTHESIS now exists, not yet FACT).
+- **Evidence**: `SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1,
+  `captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS.md`.
+- **Verified with experiment**: `CAP-005` (Group T) — see `CAP-005-FINDINGS.md`.
 
 ### 4.3 Battery status (Left / Right / Case)
 
@@ -748,6 +755,27 @@ leaving them buried in prose elsewhere.
       is a different, live possibility. If confirmed, this would materially affect
       `FrameDecoder`'s design for this channel (decryption step required before payload parsing)
       — see `ARCHITECTURE.md` §5.
+- [ ] **Added 2026-08-15, from `CAP-005-FINDINGS.md` (Group T, EQ isolation) §6 — carried over per
+      this session's task instructions.** A properly isolated capture (`EQP-002` preset tap,
+      `EQS-004` Bass slider drag, ≥10s gaps) found DLCI 0x02's `Sent` direction is silent all
+      session except for exactly three 45-byte payloads landing precisely at the two EQ actions
+      (plus a later `Save`-button tap) — the first EQ-attributable, structurally-decoded content on
+      any channel (`CAP-005-FINDINGS.md` §5, all 🟡 HYPOTHESIS, not promoted to FACT). Distinct from
+      the "~16-byte opaque Sent blocks" the AES-128 item above describes — this is a separate,
+      larger (45-byte), now partially-structured payload from the connection-setup handshake
+      blocks, not a resolution of that item either way. Specific open items this raised, not yet
+      resolved:
+      - Which of the 5 decoded `float32` fields maps to which of the 5 UI sliders is inferred from
+        only one slider (Bass) having been moved this session — needs a capture isolating a
+        *different* single slider to confirm.
+      - Whether the outer field number (`16` during preset-tap/drag, `18` at the `Save` tap) means
+        "preview" vs. "save", or something else — needs a capture that drags a slider and
+        deliberately never taps `Save`.
+      - ~13 bytes of apparent `call_id`/correlation data (payload offset 1–12, echoed back
+        verbatim by the Buds) are present but undecoded.
+      - Whether DLCI 0x02's field-16/18 pair is EQ-specific or a general-purpose
+        `libmaestro` "apply/save" pair also used by ANC/other settings — needs a differently
+        isolated capture (e.g. ANC-only) to check.
 
 ### Behavior
 

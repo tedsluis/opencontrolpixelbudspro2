@@ -113,7 +113,7 @@ _Make sure the buds are connected and active._
 | `CONV-001` | Toggle 'Conversation Detection' on/off | User (App) | C | 🟢 | Switches to Transparency and pauses media when you speak. | — |
 | `MULTI-001` | Toggle 'Multipoint' on/off | User (App) | C | 🟢 | Connects to 2 Bluetooth devices simultaneously; may trigger an SDP/connection update. | — |
 | `EQP-001` | EQ preset: Standard | User (App) | D | 🟢 | Full, fixed preset list from screenshots — each preset is a separate value to capture. | — |
-| `EQP-002` | EQ preset: Bass Boost | User (App) | D, T | 🟢 | **T (added 2026-08-14):** top-priority isolated capture target now that EQ is known not to share ANC's channel — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. | — |
+| `EQP-002` | EQ preset: Bass Boost | User (App) | D, T | 🟢 | **T (added 2026-08-14):** top-priority isolated capture target now that EQ is known not to share ANC's channel — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. **Captured 2026-08-15 (`CAP-005`, on-screen preset label "Heavy bass").** | `CAP-005-FINDINGS.md` §3/§5 (🟡 HYPOTHESIS), `PROTOCOL.md` §4.2 |
 | `EQP-003` | EQ preset: Bass Reduction | User (App) | D | 🟢 | | — |
 | `EQP-004` | EQ preset: Balanced | User (App) | D | 🟢 | | — |
 | `EQP-005` | EQ preset: Vocal Boost | User (App) | D | 🟢 | | — |
@@ -123,7 +123,7 @@ _Make sure the buds are connected and active._
 | `EQS-001` | EQ slider: High treble | User (App) | E | 🟢 | 5-band EQ; each band is a separate, potentially distinct protocol field. | — |
 | `EQS-002` | EQ slider: Treble | User (App) | E | 🟢 | | — |
 | `EQS-003` | EQ slider: Mid | User (App) | E | 🟢 | | — |
-| `EQS-004` | EQ slider: Bass | User (App) | E, T | 🟢 | **T (added 2026-08-14):** second, structurally different isolated action for Group T's cross-command check — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. | — |
+| `EQS-004` | EQ slider: Bass | User (App) | E, T | 🟢 | **T (added 2026-08-14):** second, structurally different isolated action for Group T's cross-command check — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. **Captured 2026-08-15 (`CAP-005`) — also revealed an additional, distinct "Save"-tap wire burst not anticipated by the original test design.** | `CAP-005-FINDINGS.md` §4/§5 (🟡 HYPOTHESIS), `PROTOCOL.md` §4.2 |
 | `EQS-005` | EQ slider: Low bass | User (App) | E | 🟢 | | — |
 | `TOUCH-001` | Toggle 'Touch controls' fully on/off | User (App) | F | 🟢🔵 | Enables/disables the touch sensors on the buds. | — |
 | `HEAD-001` | Toggle 'Head gestures' fully on/off | User (App) | F | 🟢🔵 | Pixel Buds Pro 2-exclusive. | — |
