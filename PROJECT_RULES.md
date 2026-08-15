@@ -78,11 +78,11 @@ document wins, unless the project owner explicitly and knowingly deviates from i
     place; the history of *how* it changed belongs in git history and
     `CHANGELOG.md`, not in the findings document's prose.
 
-## 4. Hypothesis tests (formerly "Experiments" / `EXPERIMENTS.md`)
+## 4. Hypothesis tests
 
-There is no separate `EXPERIMENTS.md` — hypothesis testing is logged directly
-in the relevant capture's `CAP-NNN-FINDINGS.md`, next to the evidence it
-tests, rather than in a document disconnected from the capture it belongs to.
+Hypothesis testing is logged directly in the relevant capture's
+`CAP-NNN-FINDINGS.md`, next to the evidence it tests, rather than in a
+document disconnected from the capture it belongs to.
 
 10. Before a conclusion is drawn from a hypothesis test, it is recorded in
     that capture's `CAP-NNN-FINDINGS.md` using a fixed template (hypothesis,
