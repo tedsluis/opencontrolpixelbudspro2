@@ -149,3 +149,18 @@ tests, rather than in a document disconnected from the capture it belongs to.
     dependency on Google Play Services is out of scope by definition (see
     `AGENTS.md` §1 and `PROJECT.md` non-goals) and must be declined or
     redirected to a local-only alternative, not silently implemented.
+22. **Hardcoded-strings exception:** literal string values extracted directly
+    from the wire protocol (e.g. `"google-pixel-buds-pro-v1"`, a capability
+    identifier confirmed on-the-wire across `CAP-001`/`CAP-002`/`CAP-004`) may
+    be hardcoded in the app's source, exclusively where required for protocol
+    interoperability. These are not "magic strings" in the usual code-quality
+    sense — they are fixed values the peer device expects byte-for-byte, not
+    configuration or content that should be externalized, localized, or made
+    editable. Do not "clean up" such a literal into a config file, resource
+    string, or injected constant unless there's a reason beyond general style
+    preference; do not invent or guess a value in this category — every such
+    literal must trace back to a specific capture/frame (`PROJECT_RULES.md`
+    §1's evidence rule still applies in full). This exception covers wire
+    protocol values only — it does not extend to Google-owned trademarks,
+    assets, or branding, which stay banned regardless (`AGENTS.md` §12,
+    `PROJECT.md` non-goals).

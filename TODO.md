@@ -33,42 +33,65 @@ tracking).
 
 ## Phase 1 — Bluetooth analysis
 
-- [ ] **Do this first:** run the pipeline-validation capture
-      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group Z) on one trivial,
-      already-connected action — confirms the whole chain (HCI snoop →
-      bugreport → `btsnooz.py` extraction → Wireshark, including both
-      RFCOMM/SPP and BLE dissectors, not BLE-only per `AGENTS.md` §0/§5)
-      actually works before spending a capture that matters on a broken
-      pipeline. Log it as the first entry in the Capture Index (§9), even if
-      marked `discarded` afterward.
+- [x] **Pipeline validation** — the HCI snoop → bugreport → `btsnooz.py`
+      extraction → Wireshark chain (RFCOMM/SPP + BLE dissectors) confirmed
+      working via `CAP-001` (Group Z), 2026-08-09. Logged in the Capture
+      Index (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9).
+- [x] **Pairing/bonding baseline** — forget-and-re-pair captured via `CAP-002`
+      (Group A), 2026-08-09; a second, independent baseline via `CAP-003`
+      (Group R) and a third via `CAP-004` (Group S). Logged in the Capture
+      Index.
 - [ ] Log every capture session in the Capture Index
       (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9) with a unique `CAP-NNN` ID and
       metadata (firmware version, Android version, app version, capture
-      method — per `PROJECT_RULES.md` rule 11 and rule 14)
-- [ ] Make the pairing/bonding baseline capture — forget-and-re-pair, **not**
-      a full factory reset (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group A)
-- [ ] Optionally, as a deliberate one-time capture at the end of the first full
-      session (not before), trigger the factory-reset re-pair for comparison
-      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group P #16 — destructive, also
-      resets the Find My Device link, so this is a bonus capture, not a
-      prerequisite)
-- [ ] Capture the "Play sound on Left earbud" (Find My Buds) action — the
-      highest-value first target to test the Fast Pair Message Stream
-      framing hypothesis (`PROTOCOL.md` §2.3, §4.4;
-      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group K)
-- [ ] Cross-check the framing hypothesis against 2–3 more, semantically
-      different commands (e.g. ANC Off/Transparency, one EQ write) before
-      treating it as confirmed — one matching frame is a HYPOTHESIS, not a
-      FACT (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group K follow-up,
-      `PROJECT_RULES.md` §1)
+      method — per `PROJECT_RULES.md` rule 11 and rule 14) — ongoing practice,
+      not a one-time task; kept unchecked deliberately.
+- [ ] Optionally, as a deliberate one-time capture (not before), trigger the
+      factory-reset re-pair for comparison (`CAPTURE_BLUETOOTH_HCI_SNOOP.md`
+      §4.1 Group P #16 — destructive, also resets the Find My Device link, so
+      this is a bonus capture, not a prerequisite). See also
+      `WORKSTATION_PREPARATIONS.md`'s Disaster Recovery section — this is the
+      same procedure, deliberately triggered as an experiment rather than as
+      an emergency recovery step.
+
+**Top priority (updated 2026-08-15) — these two block implementation-readiness
+for the app's core v1 features and outrank everything else below, including
+the still-open edge-case protocol questions (DLCI 0x08's identity, Groups
+0x04/0x05/0x09's semantics, the CTKD generalization, HFP `battchg` vs.
+`AT+BIEV` discrepancy, etc. — those stay valuable research but are explicitly
+lower priority than finishing ANC/Battery/EQ):**
+
+- [ ] **`CAP-005` (Group T) — EQ command isolation.** EQ's command channel is
+      completely unattributed and is this project's original, still-unmet
+      implementation goal alongside ANC and Battery
+      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T, `PROTOCOL.md` §4.2).
+- [ ] **`CAP-006` (Group B repeat) — ANC reliability confirmation.** Blocks
+      `FrameEncoder` implementation for the ANC command per `DECISIONS.md`
+      ADR-009 — `CAP-001`'s only evidence has 2 of 6 taps producing no command
+      frame, not yet resolved as UI-state-realization vs. a real reliability
+      gap.
+- [ ] **`CAP-010` (Group W) — stronger GATT cache-busting for live service
+      discovery.** Three captures (`CAP-002`–`CAP-004`) have all failed to
+      trigger live GATT discovery via bond removal; Group W is the untried,
+      stronger candidate (`pm clear com.android.bluetooth` + BLE-tool cache
+      clear, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group W). Needed to resolve
+      the `0x0f2a`/`0x0c0X` handle→UUID gap.
+
+**Next, still important but behind the above:**
+
+- [ ] Capture the "Play sound on Left earbud" (Find My Buds) action
+      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group K) — no longer the top
+      framing-verification priority now that ANC's channel is independently
+      confirmed (`PROTOCOL.md` §4.1), but still an unattributed command worth
+      capturing.
 - [ ] Passively capture a BLE scan (no active connection) to confirm the
       Battery Notification advertisement byte-for-byte against the official
-      spec (`PROTOCOL.md` §4.3 Option A), as its own independent experiment
-      — don't combine this with RFCOMM framing analysis. This is a one-off
-      research capture, not a template for the app: the production app's
-      own BLE scanning stays governed by the narrower bounded exception in
+      spec (`PROTOCOL.md` §4.3 Option A, planned as `CAP-011`) — don't
+      combine this with RFCOMM framing analysis. This is a one-off research
+      capture, not a template for the app: the production app's own BLE
+      scanning stays governed by the narrower bounded exception in
       `AGENTS.md` §7 / `DECISIONS.md` ADR-006 regardless of how broad this
-      one-time capture is
+      one-time capture is.
 
 ## Phase 2 — APK reverse engineering
 
@@ -100,11 +123,11 @@ tracking).
       Notification, `PROTOCOL.md` §4.3 Option A) to full 🟢 FACT status
 - [x] Bring ANC mode switching to full 🟢 FACT status (`PROTOCOL.md` §4.1) —
       **done 2026-08-12** via deskresearch correlation against the official
-      Fast Pair "Hearable Controls" spec + `CAP-001`'s existing capture (not a
-      fresh, purpose-built experiment — a properly isolated Group B capture,
-      per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4, is still recommended before
-      implementation to remove the last residual uncertainty; see
-      `PROTOCOL.md` §4.1's own "Verified with experiment" note)
+      Fast Pair "Hearable Controls" spec + `CAP-001`'s existing capture. **Not
+      the same as implementation-ready:** `DECISIONS.md` ADR-009 (added
+      2026-08-15) explicitly blocks `FrameEncoder` for this command pending
+      `CAP-006` — 2 of `CAP-001`'s 6 ANC taps produced no command frame, a gap
+      not yet explained. See `CAP-006` under Phase 1's top-priority list above.
 - [ ] Log every hypothesis test in the relevant capture's `CAP-NNN-FINDINGS.md` before promoting a finding
       from HYPOTHESIS to FACT (`PROJECT_RULES.md` §4)
 

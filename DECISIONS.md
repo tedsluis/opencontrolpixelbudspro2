@@ -273,3 +273,57 @@ written today can be overtaken by another ADR being added first.
   Non-Owner-Service traffic declines to pursue it and points to this entry
   instead of silently expanding scope (`AGENTS.md` §15's "never silently
   expand scope" rule).
+
+## ADR-009 — ANC command channel confirmed as Fast Pair Message Stream (DLCI 0x04); `FrameEncoder` implementation blocked pending `CAP-006`
+
+- **Date**: 2026-08-15
+- **Status**: Accepted
+- **Context**: `ARCHITECTURE.md` §5's implementation gate requires that a
+  DLCI's framing/command identification reach 🟢 FACT in `PROTOCOL.md` **and**
+  be recorded as a `DECISIONS.md` ADR before that channel's
+  `FrameEncoder`/`FrameDecoder` may be implemented. The ANC Set/Get/Notify
+  command was promoted to 🟢 FACT in `PROTOCOL.md` §4.1 on 2026-08-12
+  (`CAP-001-FINDINGS.md` §5's "Full resolution") but never got the
+  corresponding ADR — this entry closes that gap, per `AGENTS.md` §6's
+  requirement that the same FACT determination trigger both the code-gate and
+  the ADR together, not one without the other.
+- **Finding being recorded**: ANC mode is controlled via Google's official
+  Fast Pair **Hearable Controls** extension (`[OFFICIAL-SPEC]`), Message Group
+  `0x08`, over the official Fast Pair Message Stream on **DLCI 0x04** — not
+  `libmaestro`'s Pigweed-HDLC channel (DLCI 0x02) and not the private DLCI-0x08
+  envelope, both of which were live candidates before this resolution. Codes:
+  `0x11` Get, `0x12` Set (Seeker→Provider, MAC+ACK), `0x13` Notify
+  (Provider→Seeker); one-hot mode bitmask `0x80`=Transparent, `0x40`=Adaptive,
+  `0x20`=Off, `0x08`=ANC. Evidence: official spec byte-match plus an internal
+  content+timing cross-check within `CAP-001` (4 of 4 decoded `Set` frames
+  matched their nearest observed UI tap, in sequence, within ~1.5s) — see
+  `PROTOCOL.md` §4.1 for the full write-up.
+- **What this ADR does NOT clear, and why `FrameEncoder` stays blocked:** the
+  FACT status above covers what a `0x12` frame *means* when one appears — it
+  does not establish that every user-initiated ANC change reliably produces
+  one. `CAP-001` is the *only* capture with this evidence, and in that single
+  capture, **2 of the 6 physical ANC taps produced no matching `0x12` frame at
+  all** (`CAP-001-FINDINGS.md` §5's "Not resolved" note and 2026-08-15 risk
+  flag). The leading explanation — first-tap UI-state realization while the
+  ANC row was still greyed out — is plausible but unconfirmed; the
+  alternative (real taps can silently fail to produce a command under some
+  condition) would be a functional defect risk in the app being built, not
+  just a documentation gap, if implemented on this evidence alone.
+- **Decision**: the ANC channel/opcode/framing determination is accepted as 🟢
+  FACT for documentation purposes (`PROTOCOL.md` §4.1 stands). **The Kotlin
+  `FrameEncoder`/`FrameDecoder` implementation for this specific command is
+  explicitly BLOCKED** until `CAP-006` (`CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s
+  Capture Index — a clean, single-tap-per-window repeat of Group B) confirms
+  that isolated, individually-triggered ANC taps reliably produce a `0x12`
+  frame every time, closing the 2/6 gap. This is a narrower, command-specific
+  block layered on top of `ARCHITECTURE.md` §5's general per-DLCI gate — DLCI
+  0x04's framing being FACT does not by itself clear every command that rides
+  on it for implementation; each command's own reliability evidence matters
+  too.
+- **Consequences**: implementation of the ANC control feature in `:data`
+  waits on `CAP-006`, which should be prioritized accordingly in `TODO.md`.
+  If `CAP-006` confirms 100% reliability, this ADR should be updated (not
+  superseded — the underlying framing finding doesn't change) to record the
+  block as lifted, with a pointer to that capture's evidence. If `CAP-006`
+  reproduces misses, that is a new, higher-priority open question for
+  `PROTOCOL.md` §6, not a reason to proceed with implementation regardless.

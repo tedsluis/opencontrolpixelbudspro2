@@ -339,6 +339,19 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
 > `PROTOCOL.md` §4.1 for the full write-up now promoted there, and §2.3's updated three-channel
 > table for how this fits alongside DLCI 0x02 (`libmaestro`/Pigweed HDLC, still unresolved for its
 > own command content) and DLCI 0x08 (the separate private envelope, also still unresolved).
+>
+> **Risk flag, added 2026-08-15 (`DECISIONS.md` ADR-009):** the 🟢 FACT status above covers the
+> *framing/opcode identification* — what a `0x12` frame means when one appears. It does **not**
+> mean every ANC tap is confirmed to reliably produce one: **2 of this capture's 6 physical ANC
+> taps (Transparency @08:51:32, Off @08:51:39) have no matching `0x12` frame anywhere in the
+> log** (see "Not resolved" above). That's a 1/3 miss rate in the only capture that exists for
+> this command so far. The leading explanation (first-tap UI-state realization while the row was
+> still greyed out, not a genuine user-initiated set) is plausible but **not confirmed** — the
+> alternative, that real user taps can silently fail to produce a wire command under some
+> condition not yet understood, would be a functional risk for the app being built, not just a
+> documentation gap. This is why `FrameEncoder` implementation for this command is explicitly
+> blocked on `CAP-006` (a clean, single-tap-per-window repeat) rather than proceeding on this
+> capture's evidence alone — see ADR-009.
 
 ## 6. Other open questions raised by this capture
 

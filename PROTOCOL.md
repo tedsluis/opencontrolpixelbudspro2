@@ -387,7 +387,11 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
   live candidates before this resolution.
 - **Expected response**: ACK (`0xFF 0x01 0x00 0x06 <echoed group/code/data>`), 🟢 FACT, see above.
 - **Status**: 🟢 FACT (opcode, payload layout, and the "set" direction's semantics are all
-  confirmed against official documentation and cross-validated within `CAP-001`).
+  confirmed against official documentation and cross-validated within `CAP-001`); recorded in
+  `DECISIONS.md` ADR-009. **`FrameEncoder` implementation for this command is blocked pending
+  `CAP-006`** (ADR-009) — the FACT status above does not by itself establish that every ANC tap
+  reliably produces a command frame; see the open sub-question below and `CAP-001-FINDINGS.md`
+  §5's risk flag.
 - **Evidence**: UI presence (`SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
   §1); official spec (`developers.google.com/nearby/fast-pair/specifications/extensions/hearablecontrols`,
   consulted 2026-08-12); `CAP-001` frames 2039/2132/2159/2193 (`Set`) and 2041/2134/2162/2195

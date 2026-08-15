@@ -206,3 +206,38 @@ else
   log "JADX al installed in $JADX_DIR, skipped."
 fi
 ```
+
+## Disaster Recovery
+
+See `README.md`'s bricking disclaimer — this project sends undocumented
+commands to real hardware, and a malformed or unexpected one could leave the
+Buds/case in a bad state (e.g. unresponsive to normal pairing, stuck in an
+unexpected mode). Know this procedure **before** running any experimental
+write command against real hardware, not after something goes wrong.
+
+**Hardware factory reset (confirmed, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
+`CASE-007`):**
+
+1. Place both buds in the case.
+2. Open the case lid, and keep the case connected to power (plugged in).
+3. Press and hold the case button for **30 seconds**.
+4. This performs a **full factory reset** — confirmed via official support
+   documentation and reproduced on-the-wire in `CAP-001`/`CAP-002`
+   (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16). It also resets the Find My
+   Device link on the Pro 2.
+
+**What this does and doesn't recover from:**
+
+- Recovers from: a bad pairing/bonding state, a stuck connection, the Buds
+  not responding to the phone in a way normal reconnect doesn't fix — this
+  is the standard, Google-documented "starting over" mechanism.
+- Does **not** guarantee recovery from a genuinely corrupted firmware state
+  or a malformed command that put the hardware into an undocumented failure
+  mode — there is no lower-level recovery mechanism known to this project
+  (no documented DFU/recovery-mode procedure). If a 30-second reset doesn't
+  restore normal behavior, treat the hardware as potentially bricked and stop
+  sending further experimental commands to it.
+- This is destructive: it clears pairing state and Find My Device linkage.
+  Don't use it casually — it's the last resort referenced by `README.md`'s
+  disclaimer and `ARCHITECTURE.md` §8.1's Safe Mode design, not a routine
+  troubleshooting step.

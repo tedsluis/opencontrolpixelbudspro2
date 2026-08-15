@@ -6,6 +6,22 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > **Status:** reverse-engineering phase. There is no working app yet. See `TODO.md`
 > for the current state.
 
+> ## ⚠️ Disclaimer: hardware risk
+>
+> This project sends undocumented, reverse-engineered commands to real Pixel Buds
+> Pro 2 hardware over an unofficial channel. **This carries a real risk of putting
+> your earbuds or case into a bad, potentially unrecoverable state** ("bricking")
+> — malformed or unexpected commands are not something Google tests against or
+> supports. Use this project's findings and any future app build **at your own
+> risk**, against hardware you're prepared to lose.
+>
+> Mitigations this project takes seriously (see `ARCHITECTURE.md` §8.1's Startup
+> Handshake / Safe Mode fallback for the app-level design, and
+> `AGENTS.md`/`PROJECT_RULES.md` for the evidence-before-implementation
+> discipline) reduce but do **not** eliminate this risk. If something does go
+> wrong, see `WORKSTATION_PREPARATIONS.md`'s Disaster Recovery section for the
+> hardware-level factory-reset procedure.
+
 ## Why
 
 The official Pixel Buds app requires Google Play Services. This project
