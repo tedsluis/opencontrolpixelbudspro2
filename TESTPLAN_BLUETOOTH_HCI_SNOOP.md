@@ -7,9 +7,9 @@ it yet?"*
 
 This document does **not** describe how to run a capture session (see
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md` for that), and it does **not** hold the actual
-protocol findings (see `PROTOCOL_NOTES.md` / `PROTOCOL.md` for those). It only points at
-them. See `AGENTS.md` §0.1 and `PROJECT_RULES.md` §2 for why findings live in exactly one
-place.
+protocol findings (see the relevant `CAP-NNN-FINDINGS.md` and `PROTOCOL.md` for
+those). It only points at them. See `AGENTS.md` §0.1 and `PROJECT_RULES.md` §2
+for why findings live in exactly one place.
 
 **Status:** sections 1 and 2 checked and expanded based on:
 * (a) [screenshots](./SCREENSHOTS_PIXEL_BUDS_WEB_APP.md) of the official web companion app (`http://mypixelbuds.google.com/`, strongest source — straight from the app itself).
@@ -37,7 +37,7 @@ The chain this produces, matching the project's evidence rules
 (`PROJECT_RULES.md` §1, §3):
 
 ```
-Test-ID (this doc)  →  Capture scenario / Group  →  Capture session (Capture Index, CAPTURE §9)  →  frame(s)  →  finding (PROTOCOL_NOTES.md / PROTOCOL.md)
+Test-ID (this doc)  →  Capture scenario / Group  →  Capture session (Capture Index, CAPTURE §9)  →  frame(s)  →  finding (CAP-NNN-FINDINGS.md / PROTOCOL.md)
 ```
 
 ### 0.2 Two unrelated confidence axes — don't conflate them
@@ -45,7 +45,7 @@ Test-ID (this doc)  →  Capture scenario / Group  →  Capture session (Capture
 - **Existence source** (this document's 🟢🔵🟡🔴 icons): *does this action/behavior exist
   at all*, per official screenshots/support docs/secondary sources. This is about the
   product, not the protocol.
-- **Protocol confidence** (`PROTOCOL_NOTES.md` / `PROTOCOL.md`'s own 🔴🟡🟢⚪ /
+- **Protocol confidence** (`PROTOCOL.md`'s own 🔴🟡🟢⚪ /
   FACT-HYPOTHESIS-ASSUMPTION labels): *is the wire-level behavior confirmed*.
 
 A row here can be 🟢-confirmed-to-exist while its protocol evidence is still completely
@@ -62,7 +62,7 @@ first axis; the **Evidence** column is a pointer to the second, never a restatem
 | **Capture scenario(s)** | The Group letter(s) in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 where this is captured, or "—" if none exists yet (see §9). |
 | **Existence source** | 🟢 Screenshot / 🔵 Official / 🟡 Secondary / 🔴 Unconfirmed — see legend below. |
 | **Note** | Background/context, carried over from the original research. |
-| **Evidence** | Pointer only, e.g. `PROTOCOL_NOTES.md §4.1`, added once a finding exists. Blank (`—`) until then — never fill this with the finding itself. |
+| **Evidence** | Pointer only, e.g. `PROTOCOL.md §4.1`, added once a finding exists. Blank (`—`) until then — never fill this with the finding itself. |
 
 **Existence-source legend:**
 - 🟢 **Screenshot** — seen directly in the project's own app screenshots
@@ -171,7 +171,7 @@ _Physical interactions with the device._
 | `CONV-002` | User starts speaking (voice), triggering Conversation Detection | User (Hardware) | P | 🟢 | Triggers Conversation Detection (if on) — pauses media, switches to Transparency. | — |
 | `CASE-006` | Place buds back in the case and close the lid | User (Hardware) | M | 🔵 | Terminates the active Bluetooth Classic connection. | — |
 | `CASE-007` | Hold the case button for 30 seconds (case open, buds inside, plugged into power) | User (Hardware) | P | 🔵 | This is a **full factory reset**, not just pairing mode. Also resets the Find My Device link on the Pro 2 — destructive, do this deliberately and last (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16). | — |
-| `CASE-008` | Press the case button briefly/differently to force pairing mode | User (Hardware) | P | 🔴 | **Still to verify** — no officially confirmed press duration found for a shorter pairing trigger, separate from the 30s reset. Open question, see §9 below and `PROTOCOL_NOTES.md` §7. | — |
+| `CASE-008` | Press the case button briefly/differently to force pairing mode | User (Hardware) | P | 🔴 | **Still to verify** — no officially confirmed press duration found for a shorter pairing trigger, separate from the 30s reset. Open question, see §9 below and `PROTOCOL.md` §6. | — |
 
 ---
 
@@ -221,7 +221,7 @@ _Sensors and firmware behavior, without a direct action from the app._
 |---|---|---|---|---|---|---|
 | `BATT-002` | Case broadcasts battery status via BLE advertisement | Buds/Case (Auto) | Q | 🔵 | Official Fast Pair Battery Notification extension: 3 bytes (L/R/Case), advertised when the case opens and/or on value change; visible ≥8s, hidden after 20s or explicitly. Optional when a single bud is inserted/removed. | — |
 | `BATT-003` | Buds update battery status while worn | Buds/Case (Auto) | Q | 🔵 | Trigger = "when RFCOMM connects, or when the value changes" — no fixed step size (e.g. "every 1%") is officially specified. | — |
-| `BATT-004` | Battery data via RFCOMM after connecting (instead of BLE advertisement) | Buds/Case (Auto) | A | 🔵 | Officially specified alternative channel — Fast Pair "Message Stream: Device Information". Presumed to be the same channel as the `HardwareStatus` hypothesis in `PROTOCOL_NOTES.md` §3.1 — likely not a Buds-specific protobuf schema at all. See `PROTOCOL.md` §4.3 Option B. Piggybacks on the Group A connect capture rather than needing its own scenario (not Group Z — that scenario is a throwaway pipeline check, not a genuine evidence-gathering opportunity). | — |
+| `BATT-004` | Battery data via RFCOMM after connecting (instead of BLE advertisement) | Buds/Case (Auto) | A | 🔵 | Officially specified alternative channel — Fast Pair "Message Stream: Device Information". Presumed to be the same channel as the `HardwareStatus` hypothesis in `PROTOCOL.md` §3 — likely not a Buds-specific protobuf schema at all. See `PROTOCOL.md` §4.3 Option B. Piggybacks on the Group A connect capture rather than needing its own scenario (not Group Z — that scenario is a throwaway pipeline check, not a genuine evidence-gathering opportunity). | — |
 | `INEAR-004` | In-ear sensor reports 'removed' (bud taken out of ear, not placed back in case) | Buds (Auto) | U | 🟢 | Confirmed via screenshot (In-ear detection: "pauses audio when not worn"). **Gap closed 2026-08-14:** `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group U now brackets this specific transition, added to test whether DLCI 0x08 Group `0x04` Code `0x12`'s alternating value is event-driven (`CAP-004-FINDINGS.md` §5a Task 5). | — |
 | `BATT-005` | 'Low battery' notification (case) | Buds/Case (Auto) | — | 🔵 | Confirmed specifically for Pro 2/2a: notification for both low case battery and fully charged case. Opportunistic only — no dedicated scenario, since it requires genuinely low battery; see §9. | — |
 | `BATT-006` | Battery-level change bracketing: `AT+CIND`/`battchg` vs. `AT+BIEV` cross-check over a natural battery decline | Buds/Case (Auto) | X | 🔴 | Added 2026-08-14. `CAP-001-FINDINGS.md` §3 found `battchg=3` (≈60%) and `AT+BIEV=2,100` (100%) disagreeing at the same moment — unresolved whether either indicator tracks a real level change. See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group X. | — |
@@ -265,17 +265,17 @@ entries:
 
 ---
 
-## 7. Relationship to `PROTOCOL_NOTES.md` / `PROTOCOL.md`
+## 7. Relationship to `PROTOCOL.md`
 
 Once a capture provides evidence for a Test-ID:
 
-1. Record the finding in `PROTOCOL_NOTES.md` (working notes) first, per
+1. Record the finding in that capture's `CAP-NNN-FINDINGS.md` first, per
    `PROJECT_RULES.md` §2 — include the Test-ID and the `CAP-NNN` capture ID it came from.
 2. Once promoted to `PROTOCOL.md`, update this row's **Evidence** column to point at the
    relevant section (e.g. `PROTOCOL.md §4.1`) — a pointer only, not a restated finding.
 3. Never leave a Test-ID's Evidence column with anything more than a pointer. If you find
    yourself writing more than a section reference in this column, that content belongs in
-   `PROTOCOL_NOTES.md` instead.
+   the capture's `CAP-NNN-FINDINGS.md` instead.
 
 ## 8. Relationship to the Capture Index
 

@@ -1,7 +1,7 @@
 # Findings: `CAP-002` (Group A fresh-pairing capture)
 
 Standardized, evidence-based extraction from `CAP-002-btsnoop_hci.log` + `CAP-002-recording.mp4`, staged here
-for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
+for later promotion directly into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
 on `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-FINDINGS.md` (`CAP-001`). Every claim below
 carries a status per `PROJECT_RULES.md` §1:
 
@@ -527,11 +527,11 @@ of the whole 8h20m log) was checked directly, without slicing to this device.
    Fast Pair's Key-based Pairing / Account Key procedure spec, now that item 1 above would supply
    the missing UUIDs needed to even attempt that.
 
-## 9. Promotion readiness — what's ready for `PROTOCOL_NOTES.md`
+## 9. Promotion readiness — what's ready for `PROTOCOL.md`
 
-Per `PROJECT_RULES.md` §2, new protocol knowledge is recorded first in `PROTOCOL_NOTES.md`
-before being promoted to `PROTOCOL.md`. Assessment of what in this document already clears that
-bar:
+Per `PROJECT_RULES.md` §2, new protocol knowledge is recorded first here, in this capture's
+`CAP-NNN-FINDINGS.md`, before being promoted directly to `PROTOCOL.md`. Assessment of what in
+this document already clears that bar:
 
 **Ready to promote now (🟢 FACT, spec- and/or cross-capture-verified):**
 - The Fast Pair Message Stream framing itself (`[Group][Code][Length:2B-BE][Data]`) — §3 —

@@ -29,15 +29,27 @@ document wins, unless the project owner explicitly and knowingly deviates from i
    - a capture file in `captures/` (with frame number or timestamp),
    - a code fragment in `REVERSE_ENGINEERING.md` / the reverse-engineering
      workspace (with file + line reference),
-   - an experiment in `EXPERIMENTS.md` (with an experiment ID).
-4. Confidence levels (see `PROTOCOL_NOTES.md` §2.1) must be kept up to date as
-   new evidence arrives — a claim that starts as 🔴 Unconfirmed or 🟡 Secondary
-   must be re-labeled once it is confirmed or contradicted, not left stale.
+   - a hypothesis test recorded in the relevant `captures/CAP-NNN-.../CAP-NNN-FINDINGS.md`
+     (with a task/section reference within that file).
+4. Confidence levels (see the status legend at the top of `PROTOCOL.md`) must
+   be kept up to date as new evidence arrives — a claim that starts as
+   🔴 Unconfirmed or 🟡 Secondary must be re-labeled once it is confirmed or
+   contradicted, not left stale.
+4a. **Hex & script rule:** every decoding of a burst/packet (in `PROTOCOL.md`,
+    a `CAP-NNN-FINDINGS.md`, `DESKRESEARCH_FINDINGS.md`, or elsewhere) MUST
+    include both (a) the specific terminal/`tshark`/Python command used to
+    extract or decode it, and (b) the raw hex bytes it operated on — not just
+    the resulting interpretation. This lets anyone re-run the same command
+    against the same bytes and independently verify the conclusion, rather
+    than having to trust a stated result on faith.
 
 ## 2. Document before implementing
 
-5. New protocol knowledge is recorded first in `PROTOCOL_NOTES.md`, and only
-   **afterwards** promoted into `PROTOCOL.md` and implemented in code.
+5. New protocol knowledge is recorded first in the relevant capture's
+   `CAP-NNN-FINDINGS.md`, and only **afterwards** promoted directly into
+   `PROTOCOL.md` and implemented in code. There is no intermediate working-notes
+   buffer (`PROTOCOL_NOTES.md` was retired 2026-08-15) — agents work straight
+   from `CAP-NNN-FINDINGS.md` to `PROTOCOL.md`.
 6. Before a BLE/RFCOMM command is implemented in the app, a corresponding,
    evidenced protocol entry must already exist — no command is implemented
    "ahead of" the documented evidence.
@@ -52,24 +64,42 @@ document wins, unless the project owner explicitly and knowingly deviates from i
 9. Do not change an existing, documented design decision without explicitly
    naming that change and adding a new entry in `DECISIONS.md` that
    "supersedes" the old decision, with a stated reason.
+9a. **Scope of the non-destructive-update convention:** this "keep the old
+    entry, add a dated `Update`/superseding entry" convention applies
+    **strictly to `DECISIONS.md` and `PROTOCOL.md`** — documents whose value
+    includes showing how understanding evolved over time. It does **not**
+    apply to `CAP-NNN-FINDINGS.md` documents: those must be aggressively
+    refactored and rewritten to state only the current truth. A
+    `CAP-NNN-FINDINGS.md` file is a reference for "what do we currently know
+    from this capture," not a changelog — an accumulating trail of
+    "Update/Follow-up" addendums defeats that purpose by forcing every reader
+    to reconstruct the current state from a stack of corrections. When new
+    analysis changes a finding in one of these files, rewrite the finding in
+    place; the history of *how* it changed belongs in git history and
+    `CHANGELOG.md`, not in the findings document's prose.
 
-## 4. Experiments
+## 4. Hypothesis tests (formerly "Experiments" / `EXPERIMENTS.md`)
 
-10. Before a conclusion is drawn from an experiment, the experiment is recorded
-    in `EXPERIMENTS.md` using the fixed template (hypothesis, setup, expected
-    outcome, actual outcome, conclusion).
-11. Experiments must be as reproducible as possible: record the Buds' firmware
-    version, Android version, official app version (if used), and capture
-    method.
-12. A failed or inconclusive experiment is still recorded — it is evidence too,
-    and prevents the same hypothesis from being re-tested from scratch later.
+There is no separate `EXPERIMENTS.md` — hypothesis testing is logged directly
+in the relevant capture's `CAP-NNN-FINDINGS.md`, next to the evidence it
+tests, rather than in a document disconnected from the capture it belongs to.
+
+10. Before a conclusion is drawn from a hypothesis test, it is recorded in
+    that capture's `CAP-NNN-FINDINGS.md` using a fixed template (hypothesis,
+    setup, expected outcome, actual outcome, conclusion).
+11. Hypothesis tests must be as reproducible as possible: record the Buds'
+    firmware version, Android version, official app version (if used), and
+    capture method.
+12. A failed or inconclusive hypothesis test is still recorded — it is
+    evidence too, and prevents the same hypothesis from being re-tested from
+    scratch later.
 
 ## 5. AI behavior within this project
 
 13. An AI model working on this project:
     - reads `AGENTS.md`, `PROJECT_RULES.md`, `ARCHITECTURE.md`, and the relevant
-      sections of `PROTOCOL.md` / `PROTOCOL_NOTES.md` at the start of a session
-      (or whenever context has been reset).
+      sections of `PROTOCOL.md` at the start of a session (or whenever context
+      has been reset).
     - explicitly distinguishes FACT / HYPOTHESIS / ASSUMPTION in every answer
       that concerns the protocol or the reverse-engineered code.
     - proposes a verifying experiment when in doubt, rather than guessing.
@@ -81,8 +111,7 @@ document wins, unless the project owner explicitly and knowingly deviates from i
     - adheres to the guardrails in `AGENTS.md` (Zero-GMS, GrapheneOS
       compatibility, coding standards, etc.) at all times, and flags any
       request that would conflict with them instead of silently complying.
-    - uses consistent terminology as defined in `PROTOCOL.md` /
-      `PROTOCOL_NOTES.md`.
+    - uses consistent terminology as defined in `PROTOCOL.md`.
 
 ## 6. Reproducibility and technical debt
 

@@ -8,10 +8,12 @@ the app's implementation — see `ARCHITECTURE.md` §5 for how the app's code
 consumes it.
 
 This document intentionally contains only protocol *facts, hypotheses, and
-assumptions* — not implementation details (those live in `ARCHITECTURE.md`) and
-not day-to-day working notes (those live in `PROTOCOL_NOTES.md`, which is the
-rawer, living document this specification is periodically promoted from — see
-`PROJECT_RULES.md` §2).
+assumptions* — not implementation details (those live in `ARCHITECTURE.md`).
+There is no separate working-notes buffer: new protocol knowledge is recorded
+directly in the relevant capture's `CAP-NNN-FINDINGS.md` and promoted straight
+into this document once confirmed (`PROJECT_RULES.md` §2) — `PROTOCOL_NOTES.md`
+has been retired; its content was consolidated into this document (see §6,
+§8's changelog).
 
 **Rule:** every entry below carries a status. Nothing is implemented on the
 basis of an ASSUMPTION without explicitly accepting that as a risk, recorded in
@@ -37,7 +39,7 @@ Status legend:
 | Primary source | [`qzed/pbpctrl`](https://github.com/qzed/pbpctrl) (Linux/Rust) — protocol *knowledge* only, no code reused (see `AGENTS.md` §12) |
 | Secondary sources | Official app/web screenshots (`SCREENSHOTS_PIXEL_BUDS_APP.md`, `SCREENSHOTS_PIXEL_BUDS_WEB_APP.md`), Google Fast Pair Service (GFPS) specification (`developers.google.com/nearby/fast-pair`), `pbtk`-extracted schemas |
 | Verification method | Android `CAP-nnn-btsnoop_hci.log` capture and analysis (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md`) |
-| Promoted from | `PROTOCOL_NOTES.md` (working notes) |
+| Promoted from | capture `CAP-NNN-FINDINGS.md` files directly (formerly via `PROTOCOL_NOTES.md`, retired 2026-08-15) |
 
 ### 0.1 Firmware / version compatibility matrix
 
@@ -388,7 +390,7 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
   §1); official spec (`developers.google.com/nearby/fast-pair/specifications/extensions/hearablecontrols`,
   consulted 2026-08-12); `CAP-001` frames 2039/2132/2159/2193 (`Set`) and 2041/2134/2162/2195
   (ACK), cross-referenced against `CAP-001-EVENT-NOTES.md`'s tap timeline.
-- **Verified with experiment**: none formally logged in `EXPERIMENTS.md` yet — this is a
+- **Verified with experiment**: none formally logged in a `CAP-NNN-FINDINGS.md` yet — this is a
   deskresearch correlation against an existing capture, not a fresh, purpose-built experiment;
   recommended as a cheap confirmation step (repeat with isolated single taps, per
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group B) before treating the mode-index bit mapping as final for

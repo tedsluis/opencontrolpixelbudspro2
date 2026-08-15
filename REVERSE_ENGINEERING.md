@@ -15,8 +15,8 @@ analysis covers software the maintainer has legally installed themselves,
 performed solely for interoperability with hardware the maintainer personally
 owns. No code from the official app is reused in this project's own codebase —
 only the *behavior* it reveals (protocol structure, UUIDs, opcodes) is
-reconstructed. Findings correlated with Bluetooth captures are promoted into
-`PROTOCOL_NOTES.md` / `PROTOCOL.md`, per `PROJECT_RULES.md` §2.
+reconstructed. Findings correlated with Bluetooth captures are promoted
+directly into `PROTOCOL.md`, per `PROJECT_RULES.md` §2.
 
 Status legend (consistent with `PROTOCOL.md` §0):
 
@@ -40,7 +40,7 @@ Status legend (consistent with `PROTOCOL.md` §0):
 | Min/target/compile SDK | _(fill in — from `AndroidManifest.xml`)_ |
 | Obfuscation present? | _(yes/no — R8/ProGuard indicators: short/renamed classes, `-keep` residue in strings, etc.)_ |
 | Native libraries present? | _(yes/no — which `.so` files under `lib/`, see §Native libraries below)_ |
-| Firmware/library versions referenced in-app | _(cross-reference against `PROTOCOL_NOTES.md` §0 firmware baseline, `release_5.203`)_ |
+| Firmware/library versions referenced in-app | _(cross-reference against `PROTOCOL.md` §0.1 firmware baseline, `release_5.203`)_ |
 
 ## Method
 
@@ -54,7 +54,7 @@ Status legend (consistent with `PROTOCOL.md` §0):
      transport per `ARCHITECTURE.md` §1 — don't assume GATT-only)
    - `UUID.fromString`
    - `MessageStream`, `AccountKey`, `FastPair` (Fast Pair SDK usage, relevant to
-     `PROTOCOL_NOTES.md` §2.1/§4.3)
+     `PROTOCOL.md` §2.1/§4.3)
    - Package/class names containing `ble`, `bluetooth`, `buds`, `wearable`,
      `headset`, `maestro`, `gfps`
    - `.proto`-generated classes (look for `GeneratedMessageLite`,
@@ -67,8 +67,8 @@ Status legend (consistent with `PROTOCOL.md` §0):
 5. Document every relevant class below, even if its name is obfuscated —
    record the obfuscated name plus a readable alias you assign for reference.
 6. Cross-check any candidate opcode, UUID, or message code against a real
-   capture before promoting it from 🟡/⚪ to 🟢 in `PROTOCOL_NOTES.md` /
-   `PROTOCOL.md` — static analysis alone does not confirm runtime behavior.
+   capture before promoting it from 🟡/⚪ to 🟢 in `PROTOCOL.md` — static
+   analysis alone does not confirm runtime behavior.
 
 ## Identified relevant classes
 
@@ -84,7 +84,7 @@ Status legend (consistent with `PROTOCOL.md` §0):
   capture")_
 - **Relevant UUIDs found**: _(list, cross-reference §UUID register)_
 - **Relevant message groups/codes found** (if Fast Pair Message Stream-related,
-  cross-reference `PROTOCOL_NOTES.md` §2.1): _(list)_
+  cross-reference `PROTOCOL.md` §2.1): _(list)_
 - **Relevant methods**:
   - `methodName(...)` — _(what this method does, and why you think so)_
 - **Open questions**: _(what is still unclear)_
@@ -102,9 +102,9 @@ via a capture, update its status here **and** promote it into `PROTOCOL.md`.
 
 ## Message Group / Code register (Fast Pair Message Stream)
 
-If the Message Stream framing hypothesis (`PROTOCOL_NOTES.md` §2.1) is
-confirmed, use this table for vendor-specific Message Group/Code values found
-in the APK, in addition to the officially documented ones.
+If the Message Stream framing hypothesis (`PROTOCOL.md` §2.1) is confirmed,
+use this table for vendor-specific Message Group/Code values found in the
+APK, in addition to the officially documented ones.
 
 | Group | Code | Found in (file:line) | Suspected function | Status |
 |---|---|---|---|---|
@@ -131,13 +131,13 @@ work outward.
   -> ...
 ```
 
-## Correlation status with PROTOCOL_NOTES.md
+## Correlation status with PROTOCOL.md
 
 Track which findings here have been cross-checked against a capture and
 promoted into the protocol documentation, to avoid the same finding being
 "rediscovered" independently in both documents.
 
-| Finding (this doc) | Promoted to `PROTOCOL_NOTES.md` section | Date | Capture/Experiment ID |
+| Finding (this doc) | Promoted to `PROTOCOL.md` section | Date | Capture/Finding ID |
 |---|---|---|---|
 | | | | |
 
@@ -146,8 +146,8 @@ promoted into the protocol documentation, to avoid the same finding being
 - JADX can misdecompile some optimized/obfuscated constructs — when in doubt,
   check against the smali output from `apktool`.
 - Reflection-based code can remain hidden from static analysis — dynamic
-  analysis (Frida) may be needed here; log any such experiment in
-  `EXPERIMENTS.md` first, per `PROJECT_RULES.md` §4.
+  analysis (Frida) may be needed here; log any such experiment in the
+  relevant capture's `CAP-NNN-FINDINGS.md` first, per `PROJECT_RULES.md` §4.
 - Protobuf field *names* recovered from JADX (via getter/setter naming) are
   not proof of the actual wire field *numbers* — field numbers, not names,
   determine binary compatibility, and must be confirmed via `pbtk` extraction

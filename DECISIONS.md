@@ -212,13 +212,13 @@ written today can be overtaken by another ADR being added first.
      scenarios** (how to run an efficient session), `TESTPLAN` becomes a
      stable **action/behavior catalog** with permanent Test-IDs, existence
      confidence, linked Group(s), and a thin evidence pointer into
-     `PROTOCOL_NOTES.md`/`PROTOCOL.md` (never a duplicate results table).
+     `PROTOCOL.md` (never a duplicate results table).
 - **Decision**: option 3. See `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §0 for the
   full reasoning and the Test-ID convention, and `CAPTURE_BLUETOOTH_HCI_SNOOP.md`
   §4's intro for the capture-scenario framing. Every numbered action in
   `CAPTURE` is annotated with its Test-ID; the Capture Index (§9) gained a
   Test(s) column, closing the chain: Test-ID → Group → `CAP-NNN` capture →
-  frame → `PROTOCOL_NOTES.md` finding.
+  frame → `PROTOCOL.md` finding.
 - **Consequences**: a Group can now legitimately bundle unrelated Test-IDs
   for capture efficiency (e.g. Group C bundles `CONV-001` and `MULTI-001`)
   without that being a modeling problem. Mapping the two documents onto each

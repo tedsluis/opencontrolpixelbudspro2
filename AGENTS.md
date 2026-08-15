@@ -31,8 +31,7 @@ order:
 3. `PROJECT.md` — goal, scope, non-goals.
 4. `ARCHITECTURE.md` — current architecture and chosen patterns, including any
    open architecture questions (§13/§15 of that document).
-5. `PROTOCOL_NOTES.md` / `PROTOCOL.md` — current state of knowledge about the
-   protocol.
+5. `PROTOCOL.md` — current state of knowledge about the protocol.
 6. `DECISIONS.md` — review **all** recorded ADR entries (not just the most
    recent ones) so nothing already decided is contradicted.
 7. `TODO.md` — open tasks and known technical debt.
@@ -172,8 +171,22 @@ order:
 - Do **not** write audio routing/codec code. This app exclusively sends
   control payloads (ANC, Transparency, EQ) and reads telemetry (battery). A2DP/
   LE Audio routing is left to the Android OS/BT stack.
-- Unknown or unrecognized incoming frames must be logged (locally, see §9) and
-  discarded — never crash on an unexpected frame.
+- Unknown or unrecognized incoming frames must never crash on an unexpected
+  frame. A frame that fails to parse structurally (`ARCHITECTURE.md` §5) is
+  logged locally (§9) and dropped (`BudsError.MalformedFrame`). A frame that
+  parses structurally but has no recognized meaning is **not** silently
+  discarded — it is surfaced as `UnidentifiedFrame` (`ARCHITECTURE.md` §7) to
+  a Debug UI, since silently dropping unclassified wire data works against
+  this project's evidence-based reverse-engineering goal.
+- **AI agents must never independently promote a finding to 🟢 FACT in
+  `PROTOCOL.md`, and must never write a new `DECISIONS.md` ADR (including one
+  that supersedes an existing entry), without explicit human/maintainer
+  approval.** An agent may propose a promotion or draft an ADR — clearly
+  labeled as a proposal awaiting sign-off — but must not commit it as settled.
+  This applies even when the agent's own confidence is high and even when a
+  cross-validation pass (`WORKSTATION_PREPARATIONS.md`) shows agreement
+  between two models: model agreement raises confidence, it does not
+  constitute the human review this rule requires.
 
 ## 7. Device Discovery & MAC Randomization
 
@@ -265,6 +278,16 @@ order:
 - Any bug fix tied to a specific malformed/unexpected frame should add a
   regression test with that exact byte sequence (redact any real device
   identifiers first).
+- **Fuzz testing:** `CodecRouter`'s per-DLCI `FrameDecoder`s (`ARCHITECTURE.md`
+  §5) must have a fuzz/property-based test (random and mutated byte
+  sequences, truncated frames, oversized length fields, invalid checksums)
+  asserting the decoder never throws an unhandled exception and never crashes
+  the app — an inbound frame is attacker/environment-controlled data (a
+  nearby device or a corrupted transmission), not a trusted input, so it must
+  degrade to `BudsError.MalformedFrame` or `UnidentifiedFrame`
+  (`ARCHITECTURE.md` §7) for any input, not just the well-formed ones covered
+  by the regression tests above. See `SECURITY.md` for the broader threat
+  model this supports.
 
 ## 12. Licensing & Attribution
 
@@ -297,20 +320,38 @@ order:
 1. First describe the **user action** that was performed during the capture
    (e.g. "enabled ANC via the official app") — record this in
    `CAPTURE_BLUETOOTH_HCI_SNOOP.md`.
+   - **CLI hygiene:** before any `tshark`/Wireshark filtering or scripted
+     extraction, always pre-filter the log by the Buds' address —
+     `tshark -r CAP-NNN-btsnoop_hci.log -Y "bluetooth.addr == <MAC>"` (or the
+     equivalent Wireshark display filter) — before layering on
+     protocol-specific filters (`btrfcomm.dlci==...`, `btle`, etc.). A shared,
+     non-restarted snoop log can contain unrelated device traffic (see e.g.
+     `CAP-004`'s incidental Fitbit traffic); filtering by address first avoids
+     misattributing another device's frames to the Buds.
 2. Search the `.pcapng`/`CAP-*-btsnoop_hci.log` around that timestamp:
    - for **BLE/GATT** traffic: writes/notifications on a characteristic UUID;
    - for **RFCOMM** traffic (the primary transport for `libmaestro`, see §5):
      outbound/inbound data on the SPP channel — there is no UUID here, look at
-     channel number and, depending on which framing hypothesis is being
-     tested, either magic bytes/length/channel-ID (§6, Hypothesis B) or
-     Message Group/Message Code (§6, Hypothesis A).
+     the DLCI (`PROTOCOL.md` §2.3's three-channel table) and, depending on
+     which channel it's on, either magic bytes/length/channel-ID
+     (`PROTOCOL.md` §2.2, Hypothesis B) or Message Group/Message Code
+     (`PROTOCOL.md` §2.1, Hypothesis A).
 3. Correlate what was found (UUID + opcode + payload, or Message Group/Code +
    payload) with what the APK (JADX output) reveals about that identifier —
    see `REVERSE_ENGINEERING.md`.
-4. Document the finding in `PROTOCOL_NOTES.md` as FACT (with a frame number)
-   or HYPOTHESIS (with a proposed verification experiment).
+4. Document the finding in the relevant capture's `CAP-NNN-FINDINGS.md` as
+   FACT (with a frame number) or HYPOTHESIS (with a proposed verification
+   experiment).
 5. **Never** propose a payload interpretation without at least one concrete
    frame number as evidence.
+6. **Operate with zero creativity when parsing hex dumps. Be strictly
+   deterministic.** Byte offsets, field boundaries, and value interpretations
+   come from the actual bytes, the confirmed envelope structure
+   (`PROTOCOL.md` §2), and/or a documented spec/APK reference — never from a
+   plausible-sounding guess filled in to make an entry look complete. If a
+   byte's meaning isn't derivable from evidence already in hand, the correct
+   output is an explicit open question (`PROTOCOL.md` §6), not an invented
+   interpretation.
 
 ### Reverse engineering the APK
 
@@ -354,22 +395,7 @@ order:
    different Android versions/devices. Follow the gating rules in §9: state
    transitions are always safe to log, raw payload bytes are not, by default.
 
-## 14. Cross-validation between AI models
-
-When a protocol hypothesis is significant enough to implement against:
-
-1. Have one model summarize the hypothesis and its evidence.
-2. Give the same evidence (without the conclusion) to a second model, or to a
-   fresh session of the same model.
-3. Compare the two independent interpretations.
-4. On agreement: raise confidence, but still mark the finding as HYPOTHESIS
-   until a physical experiment (see `EXPERIMENTS.md`) confirms it — agreement
-   between two AI readings of the same bytes is not itself proof.
-5. On disagreement: do **not** resolve this automatically — present both
-   interpretations and the discrepancy to the maintainer, with a proposal for
-   a distinguishing experiment.
-
-## 15. Role division between AI tools (informational)
+## 14. Role division between AI tools (informational)
 
 This project's maintainer may use more than one AI tool across a session or
 across the project. This division is informational context, not a constraint
@@ -379,14 +405,14 @@ on any single session:
 |---|---|---|
 | Reverse-engineering analysis & large-codebase navigation | Claude Code (terminal/IDE) | Searching JADX output, reading smali, formulating protocol-behavior hypotheses, refactors, multi-file changes, writing tests |
 | Quick lookups, second opinion, one-off scripts | Google Antigravity or another assistant | Quick standalone questions, an alternative reading of a capture, a second opinion on a hypothesis, small Python scripts for capture parsing |
-| Protocol-analysis validation | Two tools, combined | See §14, Cross-validation |
+| Protocol-analysis validation | Two tools, combined | See `WORKSTATION_PREPARATIONS.md`'s "Cross-validation between AI models" — a maintainer-executed strategy, not a single-session AI directive |
 
 No single model is treated as an authority — every model can misread a binary
 protocol. The capture or the experiment is the source of truth, not any AI's
 output (see `PROJECT.md` / the project description's "AI effectief gebruiken"
 competency).
 
-## 16. What an agent must never do (summary)
+## 15. What an agent must never do (summary)
 
 This section summarizes hard rules detailed above — it does not replace them.
 
@@ -408,8 +434,11 @@ This section summarizes hard rules detailed above — it does not replace them.
 - Never copy or reproduce code from the official Google app in this codebase —
   only protocol *behavior* (the "what") is reconstructed, never Google's
   implementation (the "how") (§12).
-- Never write a conclusion in `PROTOCOL.md` or `PROTOCOL_NOTES.md` without a
-  FACT/HYPOTHESIS/ASSUMPTION label (`PROJECT_RULES.md` §1).
+- Never write a conclusion in `PROTOCOL.md` or a `CAP-NNN-FINDINGS.md` without
+  a FACT/HYPOTHESIS/ASSUMPTION label (`PROJECT_RULES.md` §1).
+- Never independently promote a finding to 🟢 FACT in `PROTOCOL.md`, or write
+  a `DECISIONS.md` ADR (including a superseding one), without explicit
+  human/maintainer approval (§6) — propose and label it as a proposal instead.
 - Never silently expand scope beyond what `PROJECT.md` defines.
 - Never propose or embed a different license file than the one already
   decided (AGPL-3.0, §12) without an explicit superseding `DECISIONS.md`

@@ -17,17 +17,18 @@ Buds app or Google Play Services.
    official Pixel Buds app to identify BLE logic, UUIDs, and protocol
    implementation. Findings are recorded in `REVERSE_ENGINEERING.md`.
 3. **Correlation & protocol reconstruction** — combine captures and code
-   analysis into an evidence-based protocol specification in `PROTOCOL.md`,
-   with working notes kept in `PROTOCOL_NOTES.md`.
+   analysis into an evidence-based protocol specification directly in
+   `PROTOCOL.md`, with per-capture working notes kept in each capture's
+   `CAP-NNN-FINDINGS.md`.
 4. **Design** — record the architecture of the app itself in `ARCHITECTURE.md`.
 5. **Implementation** — build the Android app in Kotlin, based on the protocol
    specification, following the guardrails in `AGENTS.md` and `PROJECT_RULES.md`.
 6. **Test & validation** — functional testing against real hardware, preventing
    regressions; see `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`.
 7. **Documentation** — keep every conclusion traceable and reproducible for
-   future contributors, using `EXPERIMENTS.md` (hypothesis → conclusion),
-   `DECISIONS.md` (ADR-style design decisions), and `CHANGELOG.md` (changes per
-   release).
+   future contributors, using each capture's `CAP-NNN-FINDINGS.md` (hypothesis
+   → conclusion, next to the evidence it tests), `DECISIONS.md` (ADR-style
+   design decisions), and `CHANGELOG.md` (changes per release).
 
 ## Functional scope (v1 — to be adjusted as protocol knowledge grows)
 

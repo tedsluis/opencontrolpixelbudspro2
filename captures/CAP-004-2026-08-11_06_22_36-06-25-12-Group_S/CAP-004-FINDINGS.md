@@ -1,7 +1,7 @@
 # Findings: `CAP-004` (Group S — GMS disabled / no Pixel Buds app)
 
 Standardized, evidence-based extraction from `CAP-004-btsnoop_hci.log` + `CAP-004-recording.mp4`, staged here
-for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
+for later promotion directly into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
 on `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-FINDINGS.md` (`CAP-001`). Every claim below
 carries a status per `PROJECT_RULES.md` §1:
 
@@ -580,7 +580,7 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
 - The newly-found Group `0x04`/`0x05`/`0x09` content (§5) is a genuine unknown this test
   surfaced, not resolved by it.
 
-## 10. Promotion readiness — what's ready for `PROTOCOL_NOTES.md` (updated 2026-08-11)
+## 10. Promotion readiness — what's ready for `PROTOCOL.md` (updated 2026-08-11)
 
 **Ready to promote now (🟢 FACT):**
 - Cross-Transport Key Derivation as an alternate classic-bonding path when an LE Secure

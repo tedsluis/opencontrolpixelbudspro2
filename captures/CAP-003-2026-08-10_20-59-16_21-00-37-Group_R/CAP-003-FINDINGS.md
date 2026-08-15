@@ -1,7 +1,7 @@
 # Findings: `CAP-003` (Group R forced-GATT-rediscovery capture)
 
 Standardized, evidence-based extraction from `CAP-003-btsnoop_hci.log` + `CAP-003-recording.mp4`, staged here
-for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
+for later promotion directly into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
 on `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-FINDINGS.md` (`CAP-001`). Every claim below
 carries a status per `PROJECT_RULES.md` §1:
 
@@ -278,7 +278,7 @@ of the three captures to date. Not claimed as FACT; requires UUID confirmation.
    `PROTOCOL.md` §5's connection-lifecycle section alongside `CAP-001`/`CAP-002`'s — three
    consistent observations now support the classic-link portion of that sequence.
 
-## 8. Promotion readiness — what's ready for `PROTOCOL_NOTES.md`
+## 8. Promotion readiness — what's ready for `PROTOCOL.md`
 
 **Ready to promote now (🟢 FACT, cross-capture-verified):**
 - Classic BR/EDR fresh-pairing state machine (delete-key → create-connection →

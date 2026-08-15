@@ -35,9 +35,9 @@ to design, implement, test, and document a native Android app.
 2. **Reverse engineer** — analyze the official Pixel Buds APK (JADX, apktool) to
    understand the internal Bluetooth logic and protocol implementation.
 3. **Correlate** — match APK findings against capture data to reconstruct the
-   `libmaestro` / `libgfps` wire protocol, documented in
-   [`PROTOCOL_NOTES.md`](./PROTOCOL_NOTES.md) (working notes) and `PROTOCOL.md`
-   (the resulting specification).
+   `libmaestro` / `libgfps` wire protocol, with per-capture working notes kept
+   in each capture's `CAP-NNN-FINDINGS.md` and the resulting specification in
+   `PROTOCOL.md`.
 4. **Design & implement** — build a native Android app (Kotlin, Jetpack Compose,
    MVVM/Clean Architecture) around that protocol knowledge, targeting GrapheneOS
    as the primary reference OS with compatibility for stock AOSP-based ROMs. See
@@ -79,11 +79,13 @@ humans and AI coding assistants working on it:
 | `ARCHITECTURE.md` | Software architecture of the Android app |
 | `REVERSE_ENGINEERING.md` | Findings from APK analysis |
 | `PROTOCOL.md` | Reconstructed protocol specification |
-| `PROTOCOL_NOTES.md` | Working notes on the reconstructed `libmaestro`/`libgfps` protocol |
-| `EXPERIMENTS.md` | Experiment log (hypothesis → conclusion) |
+| `DESKRESEARCH_FINDINGS.md` | Offline, script-based pattern analyses across existing captures (no new capture involved) |
 | `DECISIONS.md` | Architecture and design decisions (ADR-style) |
+| `SECURITY.md` | Security scope and vulnerability reporting |
+| `CONTRIBUTING.md` | Guidelines for third-party contributors |
 | `CAPTURE_BLUETOOTH_HCI_SNOOP.md` | Bluetooth HCI capture procedure and log |
 | `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` | Action/behavior catalog (Test-IDs), linked to capture scenarios and protocol evidence |
+| `captures/CAP-NNN-.../CAP-NNN-FINDINGS.md` | Per-capture findings and hypothesis tests (hypothesis → conclusion), promoted directly into `PROTOCOL.md` when confirmed |
 | `SCREENSHOTS_PIXEL_BUDS_APP.md` | Reference screenshots of the official Android app |
 | `SCREENSHOTS_PIXEL_BUDS_WEB_APP.md` | Reference screenshots of the official web companion app |
 | `WORKSTATION_PREPARATIONS.md` | Fedora development workstation setup |

@@ -1,7 +1,7 @@
 # Findings: `CAP-001` (Group Z pipeline-validation capture)
 
 Standardized, evidence-based extraction from `CAP-001-btsnoop_hci.log` + `CAP-001-recording.mp4`, staged here
-for later promotion into `PROTOCOL_NOTES.md` / `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every
+for later promotion directly into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every
 claim below carries a status per `PROJECT_RULES.md` §1:
 
 - 🟢 **FACT** — directly observed in this capture, with a frame number.
@@ -258,7 +258,7 @@ header — six mode changes were bundled into one continuous, unpaused session t
 pairing and case/bud housekeeping, which is exactly the isolation failure
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4 warns against. **Recommendation:** a dedicated Group B
 capture with genuinely isolated actions (wait ~10s of silence, single ANC tap, wait ~10s of
-silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL_NOTES.md`.
+silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md`.
 
 > **Resolution (2026-08-12), deskresearch task — the `e8e8XX` open question closes to a 🟢 FACT
 > characterization, but NOT as an ANC opcode.** First, a channel-label correction: this bullet

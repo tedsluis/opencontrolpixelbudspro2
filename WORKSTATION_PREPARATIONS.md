@@ -163,6 +163,30 @@ sdk install kotlin || warn "Kotlin install using sdkman was skipped or failed."
 set -u
 ```
 
+## Cross-validation between AI models (maintainer strategy)
+
+This is a **maintainer-executed** workflow, not something a single AI agent
+session can do to itself — it requires orchestrating two independent model
+sessions/tools and comparing their output, which is why it lives here rather
+than as a directive in `AGENTS.md` (moved from that document's former §14,
+2026-08-15). Two installed tools are available for this: Claude Code and
+Antigravity (see above).
+
+When a protocol hypothesis is significant enough to implement against:
+
+1. Have one model/session summarize the hypothesis and its evidence.
+2. Give the same evidence (without the conclusion) to a second model, or to a
+   fresh session of the same model — e.g. Claude Code vs. Antigravity, or two
+   independent Claude Code sessions with cleared context.
+3. Compare the two independent interpretations yourself.
+4. On agreement: raise confidence, but still mark the finding as HYPOTHESIS
+   until a physical experiment (logged in the relevant `CAP-NNN-FINDINGS.md`)
+   confirms it — agreement between two AI readings of the same bytes is not
+   itself proof, since both may share the same training-data blind spot.
+5. On disagreement: do not have either model "resolve" it automatically —
+   treat the discrepancy itself as a signal that more evidence (a distinguishing
+   capture/experiment) is needed before promoting anything.
+
 ## Reverse engineering tools: JADX, apktool
 
 ```bash

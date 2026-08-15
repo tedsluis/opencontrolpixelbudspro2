@@ -24,7 +24,7 @@ tracking).
   - [x] `AGENTS.md` — reviewed and revised (stale license section, BLE-only
         framing assumption, and duplicate heading artifacts fixed)
   - [ ] `PROJECT_RULES.md`, `PROJECT.md`, `DECISIONS.md`, `PROTOCOL.md`,
-        `PROTOCOL_NOTES.md`, `REVERSE_ENGINEERING.md`, `README.md`,
+        `REVERSE_ENGINEERING.md`, `README.md`,
         `CHANGELOG.md`, `CAPTURE_BLUETOOTH_HCI_SNOOP.md`,
         `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`,
         `WORKSTATION_PREPARATIONS.md` — not yet given a dedicated
@@ -105,7 +105,7 @@ tracking).
       per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4, is still recommended before
       implementation to remove the last residual uncertainty; see
       `PROTOCOL.md` §4.1's own "Verified with experiment" note)
-- [ ] Log every hypothesis test in `EXPERIMENTS.md` before promoting a finding
+- [ ] Log every hypothesis test in the relevant capture's `CAP-NNN-FINDINGS.md` before promoting a finding
       from HYPOTHESIS to FACT (`PROJECT_RULES.md` §4)
 
 ## Phase 4 — App development

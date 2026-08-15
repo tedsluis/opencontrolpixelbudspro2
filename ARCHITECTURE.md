@@ -118,7 +118,7 @@ depends on all four and wires concrete implementations to interfaces via DI
 These components are deliberately isolated from the rest of the app so that:
 
 - protocol knowledge lives in one place and is easy to update as reverse
-  engineering progresses (see `PROTOCOL.md`, `PROTOCOL_NOTES.md`);
+  engineering progresses (see `PROTOCOL.md`);
 - this layer is independently unit-testable (with a fake/scripted transport)
   without real hardware, per `AGENTS.md` §11.
 
@@ -208,7 +208,7 @@ app never fabricates or carries over a stale percentage silently; stale values
 are visually marked ("last known: 3 min ago").
 
 > Note: this priority order changed from an earlier assumption of a
-> proprietary `libmaestro` query being primary — see `PROTOCOL_NOTES.md` §4.3
+> proprietary `libmaestro` query being primary — see `PROTOCOL.md` §4.3
 > for the reasoning (the Fast Pair mechanisms are officially specified and, for
 > the BLE advertisement option, require no active connection at all).
 
@@ -264,10 +264,10 @@ Structurally decodable, but Group/Code meanings are largely unmapped — see
   `UnidentifiedFrame`, which is routed to a Debug UI instead of being dropped
   silently, since silently dropping unclassified wire data would work against
   this project's evidence-based reverse-engineering goal (`AGENTS.md` §6).
-- Exact byte offsets/opcodes per command are tracked in `PROTOCOL.md` /
-  `PROTOCOL_NOTES.md` alongside a reference to the corresponding `pbpctrl`
-  source file where applicable, so protocol knowledge stays auditable and
-  versioned independently of this document.
+- Exact byte offsets/opcodes per command are tracked in `PROTOCOL.md`
+  alongside a reference to the corresponding `pbpctrl` source file where
+  applicable, so protocol knowledge stays auditable and versioned
+  independently of this document.
 
 **Implementation gate, per DLCI:** a given DLCI's `FrameEncoder`/`FrameDecoder`
 may only be implemented once that DLCI's own framing (not the other two's)
@@ -370,7 +370,7 @@ evidence-based reverse-engineering principle in `AGENTS.md` §6/`PROJECT_RULES.m
 ## 8. Firmware / Protocol Compatibility
 
 Because `libmaestro`'s wire format can change across Pixel Buds firmware
-revisions, each `.proto` file and each entry in `PROTOCOL_NOTES.md` carries the
+revisions, each `.proto` file and each entry in `PROTOCOL.md` carries the
 firmware/library version it was verified against. `UnsupportedFirmware` (§7)
 is returned when an inbound frame doesn't match any known schema version,
 rather than attempting a best-effort parse that could misreport battery/ANC

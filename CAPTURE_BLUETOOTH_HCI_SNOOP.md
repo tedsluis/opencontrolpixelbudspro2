@@ -2,8 +2,9 @@
 
 **Purpose:** step-by-step procedure to capture, extract, and analyze Bluetooth HCI traffic
 between a phone and the Pixel Buds Pro 2, in order to fill in the confidence-rated
-placeholders in `PROTOCOL_NOTES.md` (magic bytes, checksum, opcode table, battery
-approach). This document is the *how* — `PROTOCOL_NOTES.md` is the *what we found*.
+placeholders in `PROTOCOL.md` (magic bytes, checksum, opcode table, battery
+approach). This document is the *how* — the relevant `CAP-NNN-FINDINGS.md` and
+`PROTOCOL.md` are the *what we found*.
 
 Two devices are used, for two different purposes:
 
@@ -203,11 +204,12 @@ one major control feature this project still needs to attribute, now that the ea
 same caution applies to Group T's result as applied here to Group K: a superficial byte-pattern
 match on a single capture is a HYPOTHESIS, not a FACT — see Group T's own cross-command check.
 
-**Original tip (2026-08-08 or earlier, kept for the record):** `PROTOCOL_NOTES.md` §6 flags the
-"Play sound on Left earbud" action (group K below) as a specifically valuable, low-risk target —
-its frame can be directly compared against the Fast Pair Message Stream spec's own worked example
-(`0x04 0x01 ...` for a ring action) to confirm or refute the framing hypothesis in
-`PROTOCOL_NOTES.md` §2.0. If you only have time for a short session, prioritize group K.
+**Original tip (2026-08-08 or earlier, kept for the record):** this document's own verification
+methodology flags the "Play sound on Left earbud" action (group K below) as a specifically
+valuable, low-risk target — its frame can be directly compared against the Fast Pair Message
+Stream spec's own worked example (`0x04 0x01 ...` for a ring action) to confirm or refute the
+framing hypothesis in `PROTOCOL.md` §2.1. If you only have time for a short session, prioritize
+group K.
 **Caution when you get there:** a superficial resemblance to the worked example (e.g. a
 plausible-looking group/code byte pair) is not by itself confirmation — don't promote the
 framing hypothesis to FACT off one frame that merely looks compatible. See the
@@ -257,7 +259,7 @@ Buds, both of which are more valuable and, in the pairing case, mildly disruptiv
 2. **ANC → Off** [`ANC-001`]. Wait. Note time.
 3. **ANC → Noise Cancellation** (active) [`ANC-002`]. Wait. Note time.
 4. **ANC → Adaptive** [`ANC-003`] (if your firmware exposes it — confirmed present in `release_5.203`
-   per `PROTOCOL_NOTES.md` §4.1). Wait. Note time.
+   per `PROTOCOL.md` §4.1). Wait. Note time.
 5. **ANC → Transparency** [`ANC-004`]. Wait. Note time.
 
 > **Repeat recommendation (2026-08-14), lower priority than Group T:** despite ANC's opcode
@@ -636,10 +638,10 @@ Requires 'Head gestures' enabled (§4.1 Group F).
     forget-and-re-pair baseline. It is optional and not a prerequisite for anything
     else in this guide — Group A's lightweight baseline is sufficient on its own for
     every other group.
-17. **(Open question, see `PROTOCOL_NOTES.md` §7)** Try a shorter/different press [`CASE-008`] on the
+17. **(Open question, see `PROTOCOL.md` §6)** Try a shorter/different press [`CASE-008`] on the
     case button to see if it triggers pairing mode without a full reset. No officially
     confirmed duration exists for this — treat your own finding here as
-    `[VERIFIED-LOCAL]` material for `PROTOCOL_NOTES.md` once confirmed.
+    `[VERIFIED-LOCAL]` material for the relevant `CAP-NNN-FINDINGS.md` once confirmed.
 
 #### Group Q — Automatic hardware behavior (observation, not action)
 These are waiting periods to catch spontaneous hardware-initiated traffic per
@@ -654,9 +656,9 @@ three actually happened, since they mean different things for protocol reconstru
   `[VERIFIED-LOCAL]` per the usual process (§5 step 4).
 - **Local behavior confirmed, but no Bluetooth traffic in the log despite a clean
   observation window** → this is itself a positive finding, not an absence of one — it's
-  evidence *for* a purely on-device implementation. Record it in `PROTOCOL_NOTES.md` as
-  such (e.g. 🟢 FACT: "no wire-visible signal observed on trigger, N attempts"), don't
-  just leave the row blank.
+  evidence *for* a purely on-device implementation. Record it in the relevant
+  `CAP-NNN-FINDINGS.md` as such (e.g. 🟢 FACT: "no wire-visible signal observed on
+  trigger, N attempts"), don't just leave the row blank.
 - **Inconclusive** — you're not sure the local trigger actually fired (e.g. unclear
   whether the clap was loud enough, or the environment change was large enough), or the
   observation window was contaminated by other traffic. This does **not** support either
@@ -664,7 +666,7 @@ three actually happened, since they mean different things for protocol reconstru
   trigger before drawing any conclusion.
 
 18. **Passive BLE scan while the case is closed and idle** [`BATT-002`/`BATT-003`] — intended to catch the Fast
-    Pair Battery Notification advertisement (`PROTOCOL_NOTES.md` §4.3 Option A) without
+    Pair Battery Notification advertisement (`PROTOCOL.md` §4.3 Option A) without
     any active RFCOMM connection. This doesn't require the buds to be connected to the
     capturing phone at all — any nearby scan should do, per the spec. **This is a
     one-off, manual reverse-engineering capture, not a template for the app.** The
@@ -672,13 +674,13 @@ three actually happened, since they mean different things for protocol reconstru
     the bounded exception in `AGENTS.md` §7 / `DECISIONS.md` ADR-006 — this experiment
     does not authorize a broader scanning implementation than that.
 19. **Trigger a loud, sudden sound near the buds while worn** [`LOUD-001`] (e.g. clap sharply nearby)
-    to attempt to observe Loud Noise Protection engaging (`PROTOCOL_NOTES.md` §4.2/§7) —
+    to attempt to observe Loud Noise Protection engaging (`PROTOCOL.md` §4.5/§6) —
     confirm you actually noticed the local effect (e.g. audible volume dip) before
     concluding anything about the Bluetooth traffic (or lack of it); see the three-way
     outcome guidance above.
 20. **Move between distinctly different acoustic environments while worn** [`ADAPT-002`] (e.g. quiet
     room → street) to attempt to observe Adaptive Audio adjusting
-    (`PROTOCOL_NOTES.md` §4.2/§7) — same guidance as #19: confirm the local effect first,
+    (`PROTOCOL.md` §4.5/§6) — same guidance as #19: confirm the local effect first,
     then classify the Bluetooth-traffic outcome using the three categories above.
 
 ---
@@ -691,7 +693,7 @@ three actually happened, since they mean different things for protocol reconstru
    for free — it does **not** mean Wireshark understands the `libmaestro` payload itself.
    There is no dissector for a proprietary, undocumented protocol, so the actual command
    bytes inside an RFCOMM frame will show up as opaque raw data; decoding what they mean
-   is manual work you do against the hypotheses in `PROTOCOL_NOTES.md` §2 (see step 4
+   is manual work you do against the hypotheses in `PROTOCOL.md` §2 (see step 4
    below) — that manual decoding is the actual point of this whole procedure.
 2. Useful filters to narrow the view:
    - `bthci_acl` — general ACL-level Bluetooth traffic.
@@ -710,28 +712,29 @@ three actually happened, since they mean different things for protocol reconstru
    window for one action but before the next action's timestamp, treat it as a probable
    late response to the earlier action rather than automatically attributing it to
    whatever came next — check payload plausibility against both candidates before
-   deciding, and note the ambiguity in `PROTOCOL_NOTES.md` if it can't be resolved from
-   the log alone.
+   deciding, and note the ambiguity in this session's `CAP-NNN-FINDINGS.md` if it can't
+   be resolved from the log alone.
 4. For each identified command frame:
    - Note the raw bytes (right-click → Copy → ...as Hex Stream is fastest).
    - **If it's an RFCOMM frame** (`btrfcomm` — an app-triggered command, or the Find My
      Buds/Ring action): compare the structure against the envelope hypothesis in
-     `PROTOCOL_NOTES.md` §2 (magic byte, length field, channel/msg ID, payload, checksum).
+     `PROTOCOL.md` §2 (magic byte, length field, channel/msg ID, payload, checksum).
    - **If it's a BLE advertisement** (`btle` — the Battery Notification, Group Q #18):
      compare it against the Fast Pair Battery Notification structure in
-     `PROTOCOL_NOTES.md` §4.3 Option A (flags, account key data, battery-level-length/type
+     `PROTOCOL.md` §4.3 Option A (flags, account key data, battery-level-length/type
      byte, then the 3 battery bytes) instead. This is a **different, unrelated** structure
      — it is not RFCOMM traffic and was never expected to match the §2 envelope
      hypothesis; don't force-fit it there or record a false "doesn't match" finding.
-   - Record the confirmed values back into `PROTOCOL_NOTES.md` §4.1's opcode table
-     (RFCOMM frames) or §4.3 (battery), mark the entry `[VERIFIED-LOCAL]` with today's
+   - Record the confirmed values in this session's `CAP-NNN-FINDINGS.md` first, then
+     promote them into `PROTOCOL.md` §4.1's opcode table (RFCOMM frames) or §4.3
+     (battery), mark the entry `[VERIFIED-LOCAL]` with today's
      date, and raise its confidence to 🟢. Include the Test-ID from
      `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (e.g. `ANC-001`) and this session's `CAP-NNN` ID in
      that note — this is what closes the evidence chain in
      `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §0.1. Also add the Test-ID to this session's row in
      the Capture Index (§9) Test(s) column if it isn't there yet.
 5. If a frame doesn't match the expected envelope shape at all, don't force-fit it —
-   note it as an open question (`PROTOCOL_NOTES.md` §7) rather than recording a guess as
+   note it as an open question (`PROTOCOL.md` §6) rather than recording a guess as
    fact.
 
 ---
@@ -762,7 +765,7 @@ three actually happened, since they mean different things for protocol reconstru
 - **Firmware version drift:** if automatic Buds firmware updates are still enabled (see
   the earlier discussion on checking/disabling them in the official app), a capture done
   today may not match one done next month. Always note the confirmed firmware version
-  (`PROTOCOL_NOTES.md` §0/§5) alongside any capture you take.
+  (`PROTOCOL.md` §0/§0.1) alongside any capture you take.
 - **Two Buds, one identity:** the case, left bud, and right bud may all appear as
   distinct addresses/roles in some traffic (notably GATT). Don't assume all frames come
   from a single logical peer — check `bluetooth.addr` per frame when in doubt.
@@ -820,7 +823,7 @@ Most likely, **not** actual encryption — a few distinct things get conflated u
   higher-layer/application-level encryption scheme, rather than standard Bluetooth link
   encryption, which per the point above shouldn't normally still be present at this
   layer.
-- If this happens consistently, note it as an open question in `PROTOCOL_NOTES.md` §7 —
+- If this happens consistently, note it as an open question in `PROTOCOL.md` §6 —
   including which of the above you've ruled out — rather than assuming the envelope
   hypothesis in §2 is simply wrong.
 
@@ -832,7 +835,7 @@ through the known, official UI. The GrapheneOS capture is for validating
 connection/pairing/passive behavior on the target OS, not for discovering new commands.
 
 **Q: How do I know when I've captured "enough" and can stop?**
-When every row in `PROTOCOL_NOTES.md` §4.1's opcode table and every open question in §7
+When every row in `PROTOCOL.md` §4.1's opcode table and every open question in §6
 that's answerable via traffic analysis (as opposed to, say, firmware version lookup) has
 moved from 🔴/🟡 to 🟢 with a `[VERIFIED-LOCAL]` tag — or when you've made a deliberate,
 documented decision to leave a specific low-priority item (e.g. Find My Buds) unverified
@@ -842,16 +845,18 @@ for now.
 
 ## 8. After Capturing: What to Update
 
-Every capture session should end with at least one of these:
+Every capture session should end with at least one of these, recorded first in that
+session's `CAP-NNN-FINDINGS.md` and then promoted directly into `PROTOCOL.md`
+(`PROTOCOL_NOTES.md` has been retired — there is no intermediate buffer):
 
-- [ ] `PROTOCOL_NOTES.md` §2 — envelope structure fields confirmed/corrected.
-- [ ] `PROTOCOL_NOTES.md` §4.1 — opcode table rows filled in, confidence raised to 🟢.
-- [ ] `PROTOCOL_NOTES.md` §4.3 — battery approach confirmed or ruled out (now split into
+- [ ] `PROTOCOL.md` §2 — envelope structure fields confirmed/corrected.
+- [ ] `PROTOCOL.md` §4.1 — opcode table rows filled in, confidence raised to 🟢.
+- [ ] `PROTOCOL.md` §4.3 — battery approach confirmed or ruled out (now split into
       Option A: BLE advertisement, and Option B: RFCOMM Message Stream — see the current
       version of that section).
-- [ ] `PROTOCOL_NOTES.md` §5 — firmware version and any version-specific differences
+- [ ] `PROTOCOL.md` §0.1 — firmware version and any version-specific differences
       logged.
-- [ ] `PROTOCOL_NOTES.md` §7 — open questions resolved, or new ones added if the capture
+- [ ] `PROTOCOL.md` §6 — open questions resolved, or new ones added if the capture
       revealed something unexpected.
 
 Treat an capture session that doesn't result in at least one of the above as incomplete —
@@ -863,7 +868,7 @@ either the action wasn't actually isolated/identifiable, or something in the set
 ## 9. Capture Index
 
 Every capture session gets a row here, added at or immediately after extraction
-(§3) — this is the authoritative index that `PROTOCOL_NOTES.md` and
+(§3) — this is the authoritative index that `CAP-NNN-FINDINGS.md` and
 `PROTOCOL.md` evidence entries reference back to, per `PROJECT_RULES.md`
 rule 3 (traceability) and rule 14 (capture metadata). A capture that never
 gets a row here is, for evidence purposes, effectively lost — don't skip this
@@ -903,7 +908,7 @@ than deleting the row or reassigning its number to a later capture.
   continuous logging session (§4.1).
 - **Test(s)** — the `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` Test-ID(s) actually
   exercised in this session (e.g. `ANC-001, ANC-002`) — this is what a
-  `PROTOCOL_NOTES.md` finding should ultimately trace back through: finding →
+  `CAP-NNN-FINDINGS.md` finding should ultimately trace back through: finding →
   this row's capture ID + frame number → the Test-ID here → the catalog entry
   in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`. Usually a subset of everything the
   Group(s) column's scenario covers, since not every attempt succeeds cleanly.
@@ -912,9 +917,9 @@ than deleting the row or reassigning its number to a later capture.
   column stays `TBD`/`—` until the session actually happens), `captured`
   (extracted, not yet reviewed), `analyzed` (reviewed in Wireshark per §5,
   findings recorded per §8), `promoted` (a finding from this capture has been
-  written into `PROTOCOL_NOTES.md` / `PROTOCOL.md` with a `[VERIFIED-LOCAL]`
+  written into `PROTOCOL.md` with a `[VERIFIED-LOCAL]`
   tag), `discarded` (unusable — note why, e.g. in an extra remarks column if
   needed).
-- Reference a capture from `PROTOCOL_NOTES.md` / `PROTOCOL.md` by its ID (e.g.
+- Reference a capture from `PROTOCOL.md` by its ID (e.g.
   "confirmed in `CAP-001`, frame 214") rather than by date or description, so
   the reference survives even if this row's description is later edited.
