@@ -249,6 +249,44 @@ capture's handle list at all — a sixth handle to add to this project's known c
 handles. This session traded the cluster's *application-level* activity for this *structural*
 confirmation instead — a different, complementary kind of evidence.
 
+## 4b. Verification pass: can the handle↔UUID gap be closed from this capture? (🟢 FACT — no)
+
+A dedicated re-review was done specifically to check whether §3/§4's open handle↔UUID mapping could
+be resolved from material already in hand (video frames not previously extracted, or an in-app log
+view independent of the truncated btsnoop capture), before concluding a recapture is required.
+
+**Method:** the full video was sampled at 5s resolution (84 frames, 18:30:12–18:37:12) via
+```
+ffmpeg -i CAP-010-recording.mp4 -vf "select='lt(t\,210)*not(mod(floor(t/5)\,1))',fps=1/5,scale=160:284,tile=6x7" -frames:v 1 sheetA.jpg
+ffmpeg -ss 210 -i CAP-010-recording.mp4 -vf "fps=1/5,scale=160:284,tile=6x7" -frames:v 1 sheetB.jpg
+```
+and reviewed as two contact sheets, with full-resolution re-extracts of every visually distinct
+screen for close reading.
+
+**Findings:**
+- The device screen in this nRF Connect build exposes only **`CLIENT` / `SERVER`** tabs once
+  connected (confirmed at 18:31:43 and 18:31:55, full-res) — there is no `LOG` tab or raw-ATT-hex
+  view in this UI that could substitute for the truncated btsnoop capture.
+- The `CLIENT` tab's service list (§3's 15 entries) stays a **flat, unexpanded list** —
+  service name / UUID / PRIMARY-or-SECONDARY only — for the entirety of both windows it's on
+  screen (18:31:41–53, 18:33:22–29). No tap-to-expand into any service's characteristics is visible
+  anywhere in the 420s recording.
+- The screen visible 18:34:30–18:36:52 (previously identified as the Bonded/Advertiser entry) is
+  confirmed, on full-resolution re-extraction (18:34:30 and 18:34:40), to be the **`HISTORY`** tab
+  of the advertiser detail view — an RSSI-vs-time scatter plot plus a scrollable log of individual
+  advertising packets (color-coded per packet, which is what made it look list-like at thumbnail
+  resolution) — not a GATT characteristic tree. It does reconfirm `Service Data: UUID: 0x1853` and
+  `0x184E`/`0x184F` from the advertising payload itself, consistent with §3, but carries no handle
+  information.
+- No other frame in the 84-frame sample shows a `Handle:`/`Properties:` style characteristic
+  detail view.
+
+**Conclusion:** the handle↔UUID mapping is not recoverable from this session's existing artifacts —
+not the log (truncated, §2) and not the video (no drill-down ever happened on screen, confirmed
+above). This is not a gap in this analysis pass; it's a gap in what was captured. Closing it
+requires a new capture (see §5's recommended next step, which already specified this before this
+verification pass and remains unchanged).
+
 ## 5. Conclusions & next steps
 
 - **`GATT-001`'s core goal — trigger genuine live discovery — is achieved for the first time in
@@ -284,7 +322,9 @@ confirmation instead — a different, complementary kind of evidence.
 
 ## 6. Open Questions
 
-- 🔴 Handle ranges for all 15 services in §3 — genuinely unresolved by this capture (see §5).
+- 🔴 Handle ranges for all 15 services in §3 — genuinely unresolved by this capture; confirmed
+  unrecoverable from either the log or the video by a dedicated verification pass (§4b), not just
+  unresolved by omission. A recapture per §5 is required.
 - 🔴 Whether `109b862f-50e3-45cc-8ea1-ac62de4846d1` ("Unknown Service") is the container for the
   `0x0c0X` cluster already characterized by byte-shape in `CAP-002`/`CAP-003`/11:42-`CAP-010` — 🟡
   plausible given it's the one 128-bit UUID nRF's own database can't name, but not tested here.
