@@ -33,7 +33,7 @@ the *event timeline*, `CAP-010-FINDINGS.md` is *what it means for the protocol*.
 | 11:43:34 | User selects 'pair'  |  | — | — |
 | 11:43:41 | new popup request to save Pixel Buds Pro 2 device to connect more quickly. |  | — | — |
 | 11:43:46 | notification appears: Pixel Buds Pro 2: Lef 100%, Case 47% Right 100% |  | — | — |
-| 11:43:55 |User selects save (device). |  | — | — |
+| 11:43:55 | User selects save (device). |  | — | — |
 | 11:43:56 | popup request to 'set up' device. |  | — | — |
 | 11:44:07 | User selects 'set up' |  | — | — |
 | 11:44:24 | user select continue. |  | — | — |
