@@ -151,7 +151,7 @@ library... the RPC messages are wrapped in High-Level Data Link Control
 |---|---|---|
 | Magic bytes | Not a magic byte — standard HDLC flag `0x7E` delimits every frame (start **and** end), with `0x7D`-prefixed byte-stuffing (escaped byte `X` transmitted as `0x7D (X XOR 0x20)`) for any literal `0x7E`/`0x7D` in the frame body — this is why naive byte-splitting on `0x7E` alone previously looked structurally messy | 🟢 High — verified below |
 | Payload length | No explicit length field — flag-delimited framing makes one unnecessary (length = distance to the next unescaped `0x7E`) | 🟢 High |
-| Channel / Message ID | An HDLC **Address** field, LEB128-varint-encoded (1–3+ bytes) immediately after the opening flag, followed by a single **Control** byte. Two distinct address values observed: `0x00` (both directions) and `0xD180`/53632 (Buds→phone only) — plausibly two multiplexed pw_rpc channels, though Google's exact channel-ID scheme (not the pw_rpc default of `82`) is not otherwise documented | 🟢 High for the field's existence/position; 🟡 Medium for what the two specific values mean |
+| Channel / Message ID | An HDLC **Address** field, LEB128-varint-encoded (1–3+ bytes) immediately after the opening flag, followed by a single **Control** byte. In `CAP-001`–`CAP-003`/`CAP-006`/the 11:42 `CAP-010` session, exactly two distinct address values are observed: `0x00` (both directions) and `0xD180`/53632 (Buds→phone only). **Not a fixed/exhaustive set, per a 2026-08-17 deskresearch pass (§6, `DESKRESEARCH_FINDINGS.md`):** `CAP-005`/`CAP-007` additionally show `0x1e80`/`0x2680` (Sent) answered by `0xe980` (Rcvd), appearing specifically around connection-(re)open events and carrying the same content as the `0x00`/`0xD180` pair — HYPOTHESIS that this field is a per-connection-negotiated pw_rpc handle, not a small fixed set | 🟢 High for the field's existence/position; 🟡 Medium for what any specific value means, and now also for whether the address *set itself* is fixed |
 | Checksum/CRC | **Confirmed as CRC-32 (IEEE 802.3 / zlib polynomial, little-endian byte order)** over the unescaped Address+Control+Data — exactly matching Pigweed's documented use of `pw_checksum`'s CRC-32 frame check sequence | 🟢 High — see verification below |
 
 **Verification method:** exported every RFCOMM payload on this DLCI across `CAP-001`, `CAP-002`,
@@ -518,8 +518,21 @@ event-observation coroutines.
 
 #### Option D — BLE Battery Service (`0x180F`)
 
-- **Status**: 🔴 low confidence — standard GATT characteristic; likely only
-  exposes a single aggregate value if present at all.
+- **Status**: 🟡 HYPOTHESIS — the service's *existence* is now confirmed
+  (`CAP-010`, 18:30 session — live GATT discovery via a fresh nRF Connect
+  client, `[VERIFIED-LOCAL]` 2026-08-16, see
+  `captures/CAP-010-2026-08-16_18-30-12_18-37-12-Group_W/CAP-010-FINDINGS.md`
+  §3, service #14 of 15 in the recovered profile). **Not yet confirmed:**
+  the characteristic's actual value, whether it reports a single aggregate
+  figure or per-component (L/R/Case), and whether it is actually read by
+  either the official app or any capture to date — no `Read`/`Notify`
+  traffic against this service's handles has been observed in any capture
+  (the handle range itself is still unresolved, same open question as the
+  `0x0c0X`/`0x0f2X` cluster in §2.3). Raised from 🔴 (service presence was
+  previously unconfirmed) to 🟡 (presence confirmed, use/content still
+  open) — not promoted further, since existence alone does not establish
+  this is how the app or this project's own implementation should read
+  battery.
 
 **Implementation priority**: 0 (cheap to rule in/out) → A → B → C → D (see
 `ARCHITECTURE.md` §4; A–D's order reflects official-spec confidence and
@@ -773,9 +786,36 @@ leaving them buried in prose elsewhere.
         deliberately never taps `Save`.
       - ~13 bytes of apparent `call_id`/correlation data (payload offset 1–12, echoed back
         verbatim by the Buds) are present but undecoded.
-      - Whether DLCI 0x02's field-16/18 pair is EQ-specific or a general-purpose
-        `libmaestro` "apply/save" pair also used by ANC/other settings — needs a differently
-        isolated capture (e.g. ANC-only) to check.
+      - **Checked 2026-08-17 (deskresearch pass, `DESKRESEARCH_FINDINGS.md`): whether DLCI 0x02's
+        field-16/18 pair is EQ-specific or a general-purpose `libmaestro` "apply/save" pair also
+        used by ANC/other settings.** CAP-005's own exact structural check (three independent
+        nested-length self-consistency assertions) was re-run against every Sent-direction DLCI
+        0x02 payload in `CAP-001`, `CAP-002`, `CAP-003`, `CAP-006`, `CAP-007`, and the 11:42
+        `CAP-010` session — including `CAP-006`'s four cleanly isolated single ANC taps, the best
+        available test case for this exact question. **Clean negative result:** zero matches
+        anywhere outside `CAP-005`'s own three already-known frames — no ANC tap, in any capture,
+        produces a payload matching this envelope shape on DLCI 0x02, under any outer field
+        number. 🟡 HYPOTHESIS (strengthened, not yet 🟢 FACT — still only one capture ever produced
+        this shape at all): the field-16/18 envelope is EQ-specific, not a general-purpose
+        settings-apply/save pair. See `DESKRESEARCH_FINDINGS.md`'s 2026-08-17 entry for the full
+        method and per-frame results.
+- [ ] **Added 2026-08-17, deskresearch pass (`DESKRESEARCH_FINDINGS.md`):** DLCI 0x02's HDLC
+      **Address** field appears to be renegotiated per connection/reconnect, not a small fixed set
+      of protocol-level constants as `PROTOCOL.md` §2.2a's "two multiplexed pw_rpc channels"
+      framing implied. Two new address pairs — `0x1e80`/`0x2680` (Sent, phone→Buds) answered by
+      `0xe980` (Rcvd, Buds→phone) — appear in `CAP-005` and `CAP-007`, always in a burst
+      immediately following a connection/channel-reopen event (not the *first* connection
+      handshake), and carry the **same** "device serial + firmware string, repeated 3×" content
+      already documented on the `0x0000`→`0xD180` pair since `CAP-001` — including in `CAP-007`,
+      which never used the official app at all (system Bluetooth Settings only), yet still
+      produced this exact response, on the new address pair instead of the original one. 🟡
+      HYPOTHESIS: the Address field is a per-connection-negotiated pw_rpc client/channel handle
+      rather than a fixed value, extending the already-established "RFCOMM server channel numbers
+      are session-local, not profile-fixed" methodological note (`CAP-001-FINDINGS.md` §2) one
+      layer deeper, into DLCI 0x02's own internal addressing. Not confirmed: why the request is
+      apparently duplicated on two addresses at once (`0x18` vs. `0x1a` as an inner field-2 value,
+      correlating 1:1 with which address carries it) — genuinely unresolved, not guessed at. See
+      `DESKRESEARCH_FINDINGS.md`'s 2026-08-17 entry.
 
 ### Behavior
 
@@ -830,3 +870,5 @@ leaving them buried in prose elsewhere.
 |---|---|---|
 | 2026-08-07 | Initial formal specification promoted from `PROTOCOL_NOTES.md`; includes both RFCOMM framing hypotheses, battery mechanism options A–D, Find My Buds/Ring hypothesis, and consolidated open questions | Claude (AI), reviewed by maintainer |
 | 2026-08-12 | Added §2.2a: DLCI 0x02's framing confirmed as Pigweed `pw_hdlc` (flag/escape/LEB128-address/control/CRC-32), matching `pbpctrl`'s own Maestro-transport notes; promoted to 🟢 FACT for the framing mechanism (640/640 sub-frames verified across 3 captures). Restructured §2.3's binary framing question into a three-channel table (DLCI 0x04/0x02/0x08). **§4.1 ANC mode promoted to 🟢 FACT**: Google's official "Hearable Controls" Fast Pair extension (Message Group `0x08`, Codes `0x11`/`0x12`/`0x13`) matches `CAP-001` byte-for-byte, including a 4/4 content+timing correlation against that capture's own recorded ANC taps — resolves the project's original highest-priority open command question, on the *official* Message Stream (DLCI 0x04), not `libmaestro`. Updated §6 Framing and Commands checklists accordingly. `libmaestro` (DLCI 0x02) and the private DLCI-0x08 envelope's command content, and EQ/other settings, remain unconfirmed — `FrameEncoder`/`FrameDecoder` implementation gate (`AGENTS.md` §6) remains closed pending a `DECISIONS.md` ADR | Claude (AI), deskresearch task, not yet reviewed by maintainer |
+| 2026-08-17 | §4.3 Option D (BLE Battery Service `0x180F`) raised from 🔴 to 🟡 HYPOTHESIS: service *existence* confirmed via `CAP-010`'s second (18:30) session's live GATT discovery (`CAP-010-FINDINGS.md` §3) — content/usage still unconfirmed, handle range still unresolved. Cross-check pass across all 9 capture sessions' documents; also updated `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to include this session (it previously only referenced the earlier, unsuccessful 11:42 `CAP-010` attempt) | Claude (AI), deskresearch task, not yet reviewed by maintainer |
+| 2026-08-17 | §6 Commands & schemas: DLCI 0x02 deskresearch pass across all captures with DLCI-0x02 traffic (`CAP-001`–`CAP-003`, `CAP-006`, `CAP-007`, 11:42 `CAP-010`). Answered the "is field-16/18 EQ-specific?" open item with a clean negative result (zero matches outside `CAP-005`, including `CAP-006`'s clean isolated ANC taps). Surfaced a new open item: two previously-undocumented HDLC addresses (`0x1e80`/`0x2680` Sent, `0xe980` Rcvd) recur at connection-reopen events in `CAP-005`/`CAP-007`, carrying the same already-documented serial+firmware content as the `0x0000`/`0xD180` pair — HYPOTHESIS that DLCI 0x02's Address field is per-connection-negotiated, not fixed. Full method in `DESKRESEARCH_FINDINGS.md` | Claude (AI), deskresearch task, not yet reviewed by maintainer |

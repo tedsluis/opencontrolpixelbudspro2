@@ -287,6 +287,73 @@ above). This is not a gap in this analysis pass; it's a gap in what was captured
 requires a new capture (see §5's recommended next step, which already specified this before this
 verification pass and remains unchanged).
 
+## 4c. New evidence (2026-08-17): nRF Connect text log + screenshots — still no handle data (🟢 FACT)
+
+Two new artifacts were supplied and reviewed in full: `CAP-010-nRF.txt` (nRF Connect's own
+"share log" plain-text export) and six screenshots (`Screenshot_20260817-062353.png` through
+`Screenshot_20260817-062541.png`).
+
+**Provenance note, checked against the files' own timestamps:** these are **not** contemporaneous
+with the 18:30–18:37 session on 2026-08-16. The screenshots' on-screen clock and filenames read
+`06:23`–`06:25` on **2026-08-17** (the following morning), and `CAP-010-nRF.txt` is a single
+running app-log file that covers three separate connections — `18:31:39`–`18:33:39` on 08-16 (the
+session this findings doc otherwise covers), `19:15:48`–20:50 on 08-16, and `22:10:28` on 08-16
+through `00:30:34` on 08-17 — with the screenshots' `06:2x` timestamps not matching any
+`[Broadcast] ... ACL_CONNECTED`/service-discovery line in the log at all (the log's last entry is
+`00:30:34`). So this material documents a **later, separate reconnection** to the same physical
+device/bond, not new detail recovered from the original 18:30 session. This doesn't invalidate it
+as evidence about the Buds' GATT layout (see below), but it should not be cited as "the 18:30
+session's drill-down."
+
+**What this evidence does contain (🟢 FACT):** a full characteristic-level listing — including
+per-characteristic `Properties:` (READ/WRITE/NOTIFY/INDICATE/WRITE NO RESPONSE) and CCCD presence —
+for all 15 services, independently corroborating §3's video-derived service list byte-for-byte on
+every UUID, and adding detail the video pass couldn't capture (nRF Connect's summary screen used in
+§3 doesn't show per-characteristic properties). Notably this includes the first full characteristic
+breakdown of the two 128-bit services:
+- **Accessory Non-Owner Service** (`15190001-…`): one characteristic, **Accessory Non-Owner
+  Characteristic** (`8e0c0001-1d68-fb92-bf61-48377421680e`), properties `INDICATE, WRITE, WRITE NO
+  RESPONSE`, with a CCCD.
+- **Unknown Service** (`109b862f-…`): three characteristics — `8584cbb5-2d58-45a3-ab9d-583e0958b067`
+  (`READ, WRITE`), `b4eb9919-a910-46a2-a9dd-fec2525196fd` (`READ`), and
+  `e66dd173-b2ae-4f5a-ae16-0162af8038ae` (`NOTIFY, READ`, with a CCCD).
+- The log's three independent "Services discovered" events (18:31, 19:15, 22:10) all enumerate an
+  **identical** service/characteristic tree — the GATT profile is stable across reconnects, not
+  just within one session.
+
+**What this evidence does NOT contain, checked exhaustively (🟢 FACT):**
+```
+grep -in "handle" CAP-010-nRF.txt   →  0 matches
+grep -in "0x0c0\|0x0f2" CAP-010-nRF.txt  →  0 matches
+```
+Every one of the six screenshots was read in full; every entry shows only `<Name>` / `UUID:` /
+`Properties:` / `Descriptors:` — never a handle field, for any service, characteristic, or
+descriptor. This is a property of nRF Connect for Mobile's `CLIENT` tab and its text-log export in
+this build: **it does not expose ATT handle numbers anywhere in its UI or its exported log**, only
+the logical service/characteristic/descriptor hierarchy and UUIDs. This is the same limitation
+already identified from the video in §4b — this new material comes from the identical UI, so it was
+always going to hit the same wall, regardless of which specific screens or session it was captured
+from.
+
+**Could handles be inferred indirectly, e.g. from ordinal position in the list?** No — not without
+guessing, which `PROJECT_RULES.md` §1 and this task's own "Zero Creativity" instruction rule out.
+The target cluster's handles (`0x0c04`…`0x0c14`, `0x0f28`/`0x0f2a` — decimal 3076–3892) are far
+higher than a contiguous count of this profile's ~90 total attributes (15 services × ~6
+characteristics/descriptors average) starting from handle `0x0001` would produce. That gap implies
+large reserved/unused handle blocks between services (a common real-firmware pattern, e.g. a fixed
+per-service handle range reserved for future characteristics) — but the *size* of those gaps is not
+observable from an ordinal list, so any handle number assigned to a named UUID this way would be
+fabricated, not derived. **This path is rejected, not attempted.**
+
+**Conclusion of this pass: the handle↔UUID mapping remains 🔴 OPEN.** This new evidence usefully
+upgrades §3's service list with full characteristic-level properties and cross-session stability
+confirmation, but — like the video in §4b — it structurally cannot answer the one question it was
+supplied to resolve, because the tool used to capture it doesn't surface ATT handles at all. Closing
+this gap still requires either (a) a wire capture with a working (non-truncated) snaplen so the raw
+`Read By Group Type`/`Read By Type` response bytes can be parsed directly (§2), or (b) an nRF
+Connect build/version or alternate tool (e.g. `gatttool`, a custom `BluetoothGatt` script, or
+Wireshark's BLE handle-aware dissector against an untruncated capture) that does expose handles.
+
 ## 5. Conclusions & next steps
 
 - **`GATT-001`'s core goal — trigger genuine live discovery — is achieved for the first time in
@@ -308,14 +375,16 @@ verification pass and remains unchanged).
   wire log is truncated below the level needed to read `Read By Group Type` handle-range data, and
   (b) nRF Connect's summary list doesn't display handles, and no characteristic-level drill-down
   happened on screen this session.
-- **Recommended immediate next step (highest value, lowest effort):** re-run this exact
-  nRF-Connect-against-the-Buds procedure once more, this time (1) fixing whatever produced the
-  ~15-byte ACL snaplen so the wire capture can actually carry full discovery-response payloads —
-  check the export path/tool used to produce `CAP-010-btsnoop_hci.log` against the one used for
-  earlier captures (`CAP-001`–`CAP-004`, which were **not** truncated this way), and (2) tapping
-  into "Accessory Non-Owner Service" and especially "Unknown Service" in nRF Connect's CLIENT tab
-  to read their characteristics and handles on screen — this alone would very likely resolve the
-  `0x0c0X`/`0x0f2X` cluster's UUID identity that four prior captures have failed to obtain.
+- **Recommended immediate next step (revised after §4c):** tapping into "Accessory Non-Owner
+  Service"/"Unknown Service" in nRF Connect's `CLIENT` tab was tried (§4c, via the 2026-08-17
+  screenshots + text-log export) and does **not** show handles — this UI/export path is now a dead
+  end for this specific question, not just untried. The remaining viable path is fixing the wire
+  capture itself: whatever produced the ~15-byte ACL snaplen in `CAP-010-btsnoop_hci.log` needs to
+  be identified (check the export path/tool against `CAP-001`–`CAP-004`, which were **not**
+  truncated this way) and corrected, so a repeat capture's `Read By Group Type`/`Read By Type`
+  response bytes can be parsed directly for handle-range + UUID data (§2). A tool that does expose
+  handles on-screen (e.g. `gatttool`, `bluetoothctl`, or a raw `BluetoothGatt` script) would also
+  work and doesn't require fixing the snaplen.
 - Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index with this second `CAP-010` session
   (folder `captures/CAP-010-2026-08-16_18-30-12_18-37-12-Group_W/`) — the existing `CAP-010` row
   currently only describes the 11:42 attempt.
@@ -323,11 +392,15 @@ verification pass and remains unchanged).
 ## 6. Open Questions
 
 - 🔴 Handle ranges for all 15 services in §3 — genuinely unresolved by this capture; confirmed
-  unrecoverable from either the log or the video by a dedicated verification pass (§4b), not just
-  unresolved by omission. A recapture per §5 is required.
+  unrecoverable from the log, the video (§4b), **and** a same-app text-log export plus manual
+  screenshots from a later reconnect (§4c) — three independent artifacts from this session/device
+  now checked, none expose ATT handles. A recapture with a fixed snaplen or a handle-aware tool
+  (§5) is required; this is not a gap that more nRF-Connect screenshots will close.
 - 🔴 Whether `109b862f-50e3-45cc-8ea1-ac62de4846d1` ("Unknown Service") is the container for the
   `0x0c0X` cluster already characterized by byte-shape in `CAP-002`/`CAP-003`/11:42-`CAP-010` — 🟡
-  plausible given it's the one 128-bit UUID nRF's own database can't name, but not tested here.
+  plausible given it's the one 128-bit UUID nRF's own database can't name, and now (§4c) known to
+  hold exactly 3 characteristics, a plausible fit for the cluster's observed handle count, but
+  still not handle-confirmed.
 - 🔴 What `0x0f32` (value `0x64`) represents, and why it and its CCCD `0x0f33` appear only in this
   session, never in any capture driven by the official app.
 - 🔴 Whether the short-ACL-snaplen issue in `CAP-010-btsnoop_hci.log` is specific to this one

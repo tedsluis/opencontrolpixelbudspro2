@@ -379,11 +379,13 @@ tshark -r CAP-005-btsnoop_hci.log \
 - 🔴 **The HDLC `Control` byte's three observed values (`0x3b` Sent, `0x2a`/`0x08` Rcvd) are recorded
   but not interpreted** — `PROTOCOL.md` §2.2a documents the Address/Control fields' existence but
   not Control's specific bit meaning; out of scope for this EQ-focused pass.
-- 🔴 **This capture only ever isolates DLCI 0x02 activity to these three frames — but does not rule
-  out DLCI 0x02 also carrying ANC or other non-EQ `libmaestro` commands under a *different* outer
-  field number**, which would need a differently-isolated capture (e.g. Group with only an ANC tap)
-  cross-checked against this same field-16/18 numbering to confirm EQ-specificity vs. a
-  general-purpose "apply/save settings" pair reused across features.
+- ✅ **Checked 2026-08-17 (deskresearch pass, `DESKRESEARCH_FINDINGS.md`): this capture's own
+  field-16/18 envelope shape does not appear anywhere in `CAP-001`, `CAP-002`, `CAP-003`, `CAP-006`
+  (four cleanly isolated single ANC taps — the exact "differently-isolated ANC-only capture" this
+  item called for, already on disk), `CAP-007`, or the 11:42 `CAP-010` session — a clean negative
+  result across every capture with DLCI 0x02 traffic. 🟡 HYPOTHESIS (strengthened): the field-16/18
+  pair is EQ-specific, not a general-purpose settings-apply/save pair shared with ANC. See
+  `DESKRESEARCH_FINDINGS.md`'s 2026-08-17 entry for the full method and per-capture results.
 
 (Per this session's task instructions, these are also being copied into `PROTOCOL.md` §6 — see that
 file's own changelog for the corresponding addition.)
