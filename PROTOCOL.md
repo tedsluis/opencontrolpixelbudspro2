@@ -408,18 +408,67 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
   Upper Treble) and presets (Standard/Default, Bass Boost/Heavy Bass, Bass
   Reduction/Light Bass, Balanced, Vocal Boost, Clarity, Last Saved). Status: 🟢
   FACT (UI presence).
-- **Opcode/payload structure**: not yet extracted from an official spec, but **Added 2026-08-15**:
-  `CAP-005-FINDINGS.md` (Group T, isolated `EQP-002`/`EQS-004` capture) proposes a first candidate
-  wire format on DLCI 0x02 (`libmaestro`'s Pigweed `pw_hdlc` channel, §2.2a) — an HDLC frame whose
-  payload nests down to a 5×`float32` band-gain quintet, with only the touched band's value
-  changing between a preset tap and a slider drag. **🟡 HYPOTHESIS only** (single capture, field-
-  to-band mapping inferred from one changed field) — see that file's §5–§6 for the full decode and
-  open questions, also tracked in §6 below.
+- **Opcode/payload structure**: not yet extracted from an official spec, but **Added 2026-08-15,
+  refined 2026-08-18**: `CAP-005-FINDINGS.md` (Group T, isolated `EQP-002`/`EQS-004` capture)
+  identified the wire format on DLCI 0x02 (`libmaestro`'s Pigweed `pw_hdlc` channel, §2.2a) — an
+  HDLC frame whose payload nests down to a 5×`float32` band-gain quintet, one `Sent` frame per
+  changed value. 🟢 **FACT** for the envelope/quintet shape itself (byte-for-byte reproducible,
+  cross-capture replicated — see below); 🟡 HYPOTHESIS (strong) that this is specifically
+  `libmaestro`'s channel, unchanged from §2.2a's own caveat.
+- **Field-to-band mapping — 🟢 FACT, promoted 2026-08-18** (was 🟡 HYPOTHESIS as of 2026-08-15,
+  inferred from only one slider ever having moved in that first capture). The 2026-08-18 session
+  (`captures/CAP-005-2026-08-18_06-11-06_06-17-40-Group_T/CAP-005-FINDINGS.md` §5) drags **all
+  five** sliders individually, three passes each, and directly video-confirms 4 of the 5 fields via
+  finger-on-slider position (plus an on-screen `-6.0` tooltip for one); the 5th is confirmed by
+  elimination against a perfectly repeating field-change order across all three passes. The mapping
+  matches the earlier (2026-08-15) capture's single-band inference exactly, five days apart,
+  independently:
+
+  | Quintet field (wire order) | 1 (first) | 2 | 3 | 4 | 5 (last) |
+  |---|---|---|---|---|---|
+  | On-screen band | Low bass | Bass | Mid | Treble | Upper treble |
+
+  **Note:** wire field order is the *reverse* of the on-screen top-to-bottom slider order (UI shows
+  Upper treble first/top; the wire quintet puts it last/field 5) — `FrameEncoder`/`FrameDecoder`
+  must not assume the two orders match without an explicit re-index.
+- **Band-gain range — 🟢 FACT (2026-08-18)**: every slider, dragged to its physical UI extreme,
+  clamps at **±6.0** (`CAP-005-FINDINGS.md` [2026-08-18] §4 — 8 of 10 extreme-drag samples land at
+  exactly `±6.0`, the remaining 2 at `5.8`/`5.9`, consistent with the drag gesture not quite
+  reaching the slider's physical edge before release, not a different clamp value). 🔴 units not
+  independently confirmed (plausibly dB, not tested against any external reference).
+- **Confirmed preset quintets — 🟢 FACT (2026-08-18), `[Low bass, Bass, Mid, Treble, Upper treble]`**:
+
+  | Preset | Quintet |
+  |---|---|
+  | `Last saved` (this session's baseline) | `[0.0, 0.0, 0.0, 0.0, 0.0]` |
+  | Heavy bass | `[5.0, 3.0, 0.0, 0.0, 0.0]` — byte-for-byte identical to the independent 2026-08-15 capture's decode |
+  | Light bass | `[-5.0, -1.5, 0.0, 0.0, 0.0]` |
+  | Balanced | `[-3.5, 0.5, 1.0, -1.0, 2.5]` |
+  | Vocal boost | `[-1.0, 0.0, 4.0, 2.0, 0.0]` |
+  | Clarity | `[-2.0, 0.0, 2.0, 3.0, 5.0]` |
+
+  `Last saved`'s quintet is per-account/session state, not a fixed constant — the value above is
+  this specific session's starting point, not a universal default.
+- **Outer field 16 vs. 18 ("preview" vs. "save") — still 🟡 HYPOTHESIS, reading revised
+  2026-08-18.** The 2026-08-15 capture guessed field 18 = an explicit `Save`-button tap, ~5s after
+  the matching field-16 write. The 2026-08-18 capture's 15 field-18 frames each fire only
+  0.05–1.9s after the preceding field-16 write, with no video-visible `Save`-button tap in between
+  for any of them — **revised hypothesis: field 18 fires on slider-release (finger lift), not on a
+  separate `Save`-button tap**; the visible `Save` button may instead persist the whole profile as
+  the account's `Last saved` preset, a separate/higher-level action. Neither reading is confirmed;
+  would need a capture that drags-and-releases without ever tapping `Save`.
 - **Sent to / expected response**: same open questions as §4.1.
-- **Status**: 🔴 unconfirmed at the byte level (candidate 🟡 HYPOTHESIS now exists, not yet FACT).
+- **Status**: 🟢 FACT for the wire envelope, the field-to-band mapping, and the ±6.0 range; 🟡
+  HYPOTHESIS (strong) that DLCI 0x02 is specifically `libmaestro`; 🟡 HYPOTHESIS for the
+  preview/save field semantics; 🔴 unconfirmed for the gain units, the Control byte, and the
+  ~13-byte correlation-ID region (§6).
 - **Evidence**: `SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1,
-  `captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS.md`.
-- **Verified with experiment**: `CAP-005` (Group T) — see `CAP-005-FINDINGS.md`.
+  `captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS.md` (first candidate
+  format, single-band sample), `captures/CAP-005-2026-08-18_06-11-06_06-17-40-Group_T/CAP-005-FINDINGS.md`
+  (all-5-bands confirmation, range, preset table).
+- **Verified with experiment**: `CAP-005` (Group T), two independent sessions — 2026-08-15
+  (single Bass slider) and 2026-08-18 (5 presets + all 5 sliders, 3 passes each) — see both
+  `CAP-005-FINDINGS.md` files above.
 
 ### 4.3 Battery status (Left / Right / Case)
 
@@ -778,12 +827,20 @@ leaving them buried in prose elsewhere.
       larger (45-byte), now partially-structured payload from the connection-setup handshake
       blocks, not a resolution of that item either way. Specific open items this raised, not yet
       resolved:
-      - Which of the 5 decoded `float32` fields maps to which of the 5 UI sliders is inferred from
-        only one slider (Bass) having been moved this session — needs a capture isolating a
-        *different* single slider to confirm.
+      - ~~Which of the 5 decoded `float32` fields maps to which of the 5 UI sliders is inferred
+        from only one slider (Bass) having been moved this session — needs a capture isolating a
+        *different* single slider to confirm.~~ **Resolved 2026-08-18**, per a fresh, separate
+        `CAP-005` session (`captures/CAP-005-2026-08-18_06-11-06_06-17-40-Group_T/CAP-005-FINDINGS.md`
+        §5) that drags all 5 sliders individually, 3 passes each — field 1↔Low bass, 2↔Bass,
+        3↔Mid, 4↔Treble, 5↔Upper treble (wire order reversed from the on-screen top-to-bottom
+        order), matching this capture's own single-band inference exactly. Promoted to 🟢 FACT,
+        `PROTOCOL.md` §4.2.
       - Whether the outer field number (`16` during preset-tap/drag, `18` at the `Save` tap) means
         "preview" vs. "save", or something else — needs a capture that drags a slider and
-        deliberately never taps `Save`.
+        deliberately never taps `Save`. **Still open** as of 2026-08-18 — that capture's 15
+        field-18 frames all fire within ~2s of the preceding field-16 write with no video-visible
+        `Save`-button tap in between, revising (not confirming) the reading to "field 18 = slider
+        release" — see `PROTOCOL.md` §4.2 and that capture's own §6.
       - ~13 bytes of apparent `call_id`/correlation data (payload offset 1–12, echoed back
         verbatim by the Buds) are present but undecoded.
       - **Checked 2026-08-17 (deskresearch pass, `DESKRESEARCH_FINDINGS.md`): whether DLCI 0x02's
@@ -872,3 +929,4 @@ leaving them buried in prose elsewhere.
 | 2026-08-12 | Added §2.2a: DLCI 0x02's framing confirmed as Pigweed `pw_hdlc` (flag/escape/LEB128-address/control/CRC-32), matching `pbpctrl`'s own Maestro-transport notes; promoted to 🟢 FACT for the framing mechanism (640/640 sub-frames verified across 3 captures). Restructured §2.3's binary framing question into a three-channel table (DLCI 0x04/0x02/0x08). **§4.1 ANC mode promoted to 🟢 FACT**: Google's official "Hearable Controls" Fast Pair extension (Message Group `0x08`, Codes `0x11`/`0x12`/`0x13`) matches `CAP-001` byte-for-byte, including a 4/4 content+timing correlation against that capture's own recorded ANC taps — resolves the project's original highest-priority open command question, on the *official* Message Stream (DLCI 0x04), not `libmaestro`. Updated §6 Framing and Commands checklists accordingly. `libmaestro` (DLCI 0x02) and the private DLCI-0x08 envelope's command content, and EQ/other settings, remain unconfirmed — `FrameEncoder`/`FrameDecoder` implementation gate (`AGENTS.md` §6) remains closed pending a `DECISIONS.md` ADR | Claude (AI), deskresearch task, not yet reviewed by maintainer |
 | 2026-08-17 | §4.3 Option D (BLE Battery Service `0x180F`) raised from 🔴 to 🟡 HYPOTHESIS: service *existence* confirmed via `CAP-010`'s second (18:30) session's live GATT discovery (`CAP-010-FINDINGS.md` §3) — content/usage still unconfirmed, handle range still unresolved. Cross-check pass across all 9 capture sessions' documents; also updated `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to include this session (it previously only referenced the earlier, unsuccessful 11:42 `CAP-010` attempt) | Claude (AI), deskresearch task, not yet reviewed by maintainer |
 | 2026-08-17 | §6 Commands & schemas: DLCI 0x02 deskresearch pass across all captures with DLCI-0x02 traffic (`CAP-001`–`CAP-003`, `CAP-006`, `CAP-007`, 11:42 `CAP-010`). Answered the "is field-16/18 EQ-specific?" open item with a clean negative result (zero matches outside `CAP-005`, including `CAP-006`'s clean isolated ANC taps). Surfaced a new open item: two previously-undocumented HDLC addresses (`0x1e80`/`0x2680` Sent, `0xe980` Rcvd) recur at connection-reopen events in `CAP-005`/`CAP-007`, carrying the same already-documented serial+firmware content as the `0x0000`/`0xD180` pair — HYPOTHESIS that DLCI 0x02's Address field is per-connection-negotiated, not fixed. Full method in `DESKRESEARCH_FINDINGS.md` | Claude (AI), deskresearch task, not yet reviewed by maintainer |
+| 2026-08-18 | §4.2 EQ updated from a fresh, independent `CAP-005` session (`captures/CAP-005-2026-08-18_06-11-06_06-17-40-Group_T/CAP-005-FINDINGS.md`) that drags all 5 EQ sliders individually (3 passes each) and taps 5 presets, resolving the 2026-08-15 capture's field-to-band open question: **field-to-band mapping promoted to 🟢 FACT** (field 1↔Low bass, 2↔Bass, 3↔Mid, 4↔Treble, 5↔Upper treble, wire order reversed from on-screen order), matching the earlier single-band inference exactly. Also added: the ±6.0 band-gain clamp (🟢 FACT, units unconfirmed), a confirmed preset-quintet reference table, and a revised (still 🟡) reading of outer field 16/18 as preview/slider-release rather than preview/explicit-Save-tap. Updated the corresponding §6 open-question entry non-destructively | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
