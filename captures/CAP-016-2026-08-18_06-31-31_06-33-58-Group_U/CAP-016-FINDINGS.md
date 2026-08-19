@@ -280,3 +280,97 @@ encodes** — still 🔴 open, per `CAP-007`(old) §6.
   (`CAP-016-EVENT-NOTES.md` §timeline)? Confirmed to never establish any Bluetooth session in this
   log — purely a camera-frame question, not a protocol one, but flagged so a future viewer of the
   raw video is not misled into thinking it is a second Buds unit under test.
+
+## 10. Bluetooth HID traffic: `AndroidHeadTracker` accessory Feature report (🟡 HYPOTHESIS)
+
+`ARCHITECTURE.md` §1/§15 has an open item since 2026-08-14: HID-Control/HID-Interrupt L2CAP
+channels are opened every session (first observed `CAP-002-FINDINGS.md` §6), but no HID report
+content had ever been captured or decoded. This session's HID-Control traffic (PSM `0x0011`,
+classic ACL handle `0x0001`) does carry decodable content:
+
+```
+tshark -r CAP-016-btsnoop_hci.log -Y "btl2cap.psm==0x0011" -T fields -e frame.number -e frame.time_relative -e frame.p2p_dir
+```
+→ 5 frames total this session: 1943 (`Connection Request`, opens CID `0x004d`), 1980 (`Rcvd
+GET_REPORT`, Report Type Feature, Report Id `0x01`), 1983 (`Sent`, `DATA`/Feature response to
+`0x01`), 1984 (`Rcvd GET_REPORT`, Report Type Feature, Report Id `0x02`), 1991 (`Sent`, `DATA`/
+Feature response to `0x02`).
+
+**🟢 FACT — the byte-decode of frame 1991 itself** (direct, reproducible hex read, not an
+inference):
+
+```
+tshark -r CAP-016-btsnoop_hci.log -Y "frame.number==1991" -x
+```
+```
+0000  02 01 20 2d 00 29 00 4d 00 a3 02 23 41 6e 64 72   .. -.).M...#Andr
+0010  6f 69 64 48 65 61 64 54 72 61 63 6b 65 72 23 31   oidHeadTracker#1
+0020  2e 30 00 00 00 00 00 00 00 00 42 54 04 00 6e cf   .0........BT..n.
+0030  6e 07                                             n.
+```
+After the HCI ACL (`02 01 20 2d 00`) and L2CAP (`29 00 4d 00`) headers, the HID payload is `a3 02`
+(Transaction Type `DATA`, Report Type `Feature`, Report Id `0x02`) followed by 45 bytes that decode
+byte-for-byte as: ASCII `#AndroidHeadTracker#1.0` (24 bytes) + **exactly 8** `0x00` zero-padding
+bytes + ASCII `BT` (2 bytes) + `04 00 6e cf 6e 07` — the Buds' own classic BD_ADDR, in the same byte
+order the `bthci_acl` dissector reports it elsewhere in this log (`[Source BD_ADDR: Google_cf:6e:07
+(04:00:6e:cf:6e:07)]`). Wireshark's own HID dissector misparses the leading bytes of this frame as
+generic mouse-report fields (`Button 6/Right/Left`, `X/Y Displacement`) — an artifact of the
+dissector defaulting to a HID mouse template for an unrecognized Report Id, not a property of the
+actual payload; the raw hex above is what was actually decoded, not the dissector's mislabeled
+field names.
+
+**🟡 HYPOTHESIS (single-occurrence, not cross-validated) — the interpretation:** this Feature
+report identifies the Buds as exposing an `AndroidHeadTracker` accessory (protocol version `1.0`)
+over classic HID, tagged `BT` (vs. a hypothetical `BLE` variant) and self-identifying by BD_ADDR —
+consistent with a spatial-audio head-tracking capability, narrowing `ARCHITECTURE.md` §1/§15's open
+"is the HID surface architecturally relevant, and if so to what" question toward "yes, and it looks
+like head-tracking," specifically. **Not promoted to `ARCHITECTURE.md`** (`AGENTS.md` §6 — this is a
+single sample from one capture, no independent replication, and no functional behavior — e.g. what
+triggers a `SET_REPORT`, whether any Buds firmware feature is gated on this — has been observed to
+confirm the capability is actually *used*, only that it is *advertised*).
+
+**🔴 Report Id `0x01`'s response — flagged as not decoded, not guessed:**
+
+```
+tshark -r CAP-016-btsnoop_hci.log -Y "frame.number==1983" -x
+```
+```
+0000  02 01 20 07 00 03 00 4d 00 a3 00 00               .. ....M....
+```
+Only 3 bytes follow the L2CAP header: `a3 00 00` (`DATA`/Feature, then two `0x00` bytes) — far too
+short to carry any string content comparable to Report Id `0x02`'s response, and with no Report Id
+byte distinguishable from padding. This is reported exactly as observed (a short/near-empty
+response) — **no content is inferred or guessed for what Report Id `0x01` represents.**
+
+## 11. Handle `0x0044` notification burst containing an `0xfea9` marker (🔴 OPEN QUESTION)
+
+```
+tshark -r CAP-016-btsnoop_hci.log -Y "btatt.handle==0x0044 and btatt.opcode==0x1b" -T fields -e frame.number -e frame.time -e bthci_acl.chandle
+```
+73 `Handle Value Notification` frames on ATT handle `0x0044`, all on connection handle `0x0002`
+(the BLE link opened at 06:31:40.983, §2) — frames 1032–2082, spanning **06:31:43.468–06:32:12.689**
+only (verified: no frame on this handle appears outside that ~29s window anywhere else in the
+785s log). 23 of the 73 contain the byte sequence `a9 fe` (`0xfea9` little-endian) somewhere in
+their payload:
+
+```
+tshark -r CAP-016-btsnoop_hci.log -Y "btatt.handle==0x0044 and btatt.opcode==0x1b and btatt.value contains a9:fe" -T fields -e frame.number
+```
+
+**Not decoded further here** — the payloads are long, multi-segment, and do not obviously match
+this project's already-documented envelope shapes (RFCOMM `libmaestro`/Fast-Pair/private-envelope
+framing, `PROTOCOL.md` §2.3), so no structural claim is made about them beyond their existence,
+handle, and the recurring `0xfea9` byte pair.
+
+**What this burst correlates with, checked against both candidate events in this session:** the
+burst's own timing (06:31:43–06:32:12) sits immediately after the BLE connection completes
+(06:31:40.983, §2) and entirely **before** the classic connection even forms (06:32:02.749, §1) —
+i.e. it overlaps the BLE-link startup window, not the classic RFCOMM channel-open burst. It does
+**not** overlap the RFCOMM multiplexer channel bounce at 06:33:15.94–06:33:19.615 (§3) — that event
+starts roughly **63 seconds after** this burst's last frame (2082, 06:32:12.689), with no handle-
+`0x0044` traffic anywhere in between. So of the two events this project might guess this burst is
+tied to, the timing evidence supports only the BLE-connect correlation — the channel-bounce
+correlation is **not supported by this capture's timestamps** and is not asserted. **Still 🔴 open:**
+what handle `0x0044` is (no `Read By Group Type`/`Find Information` response resolving its UUID
+was captured for it this session — the earlier discovery burst, §2, targets a different handle
+range), and what the recurring `0xfea9` marker specifically encodes.
