@@ -1,6 +1,6 @@
-# Findings: `CAP-005` (Group T — EQ command isolation), 2026-08-18 capture
+# Findings: `CAP-015` (Group T — EQ command isolation), 2026-08-18 capture
 
-Standardized, evidence-based extraction from `CAP-005-btsnoop_hci.log` + `CAP-005-recording.mp4`
+Standardized, evidence-based extraction from `CAP-015-btsnoop_hci.log` + `CAP-015-recording.mp4`
 (the `06-11-06` folder — **not** the earlier, incomplete `2026-08-15_15-02-31` `CAP-005` folder,
 which is a separate, superseded capture and was not used as input here), staged here for later
 promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled on
@@ -13,15 +13,15 @@ carries a status per `PROJECT_RULES.md` §1:
 - ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
-**Capture ID:** `CAP-005` (2026-08-18 session) · **Date:** 2026-08-18 · **Firmware:** `release_5.203`
+**Capture ID:** `CAP-015` (2026-08-18 session) · **Date:** 2026-08-18 · **Firmware:** `release_5.203`
 · **Phone:** Pixel 7a, Android 17 (official app v1.0.955078536). **Log file:**
-`CAP-005-btsnoop_hci.log` (3,728 frames, 641.5s). **Video:** `CAP-005-recording.mp4` (394.3s,
+`CAP-015-btsnoop_hci.log` (3,728 frames, 641.5s). **Video:** `CAP-015-recording.mp4` (394.3s,
 H.264 720×1280, burned-in wall-clock overlay, CEST/+0200, 06:11:06–06:17:40).
 **Device:** Buds `04:00:6e:cf:6e:07` (matches `CAP-001`–`CAP-004`'s `Google_cf:6e:07`), single
 classic ACL connection, handle `0x0004` — confirmed via `bthci_evt.code==0x03` (frame 1402,
 status `0x00`, after an earlier Page Timeout at frame 1395).
 
-**Stated goal of this session** (`CAP-005-EVENT-NOTES.md`): isolate EQ preset taps (`EQP-002`
+**Stated goal of this session** (`CAP-015-EVENT-NOTES.md`): isolate EQ preset taps (`EQP-002`
 family) and EQ slider drags (`EQS-004` family) to determine the wire format and, specifically, the
 open question the earlier (2026-08-15) `CAP-005` capture left unresolved — **which protobuf field
 in the 5-float quintet corresponds to which on-screen EQ band.** **Answer, per the evidence below:
@@ -40,11 +40,11 @@ overlay (bottom-right corner, `DD mmm YYYY HH:MM:SS`). `t=0` reads `18 aug 2026 
 confirming `EVENT-NOTES.md`'s stated start time with a direct `t → wall-clock` offset of `+06:11:06`.
 
 ```
-ffprobe -v quiet -print_format json -show_format -show_streams CAP-005-recording.mp4
-ffmpeg -y -ss <t> -i CAP-005-recording.mp4 -frames:v 1 -q:v 3 "t<t>.jpg" -loglevel error
+ffprobe -v quiet -print_format json -show_format -show_streams CAP-015-recording.mp4
+ffmpeg -y -ss <t> -i CAP-015-recording.mp4 -frames:v 1 -q:v 3 "t<t>.jpg" -loglevel error
 ```
 
-Full frame-by-frame review is in `CAP-005-EVENT-NOTES.md`'s Event Timeline. Key confirmations for
+Full frame-by-frame review is in `CAP-015-EVENT-NOTES.md`'s Event Timeline. Key confirmations for
 this findings file specifically:
 
 | Video `t` (wall clock) | Observation | Confirms |
@@ -67,7 +67,7 @@ Connect Complete (frame 1402) resolves handle `0x0004` to `04:00:6e:cf:6e:07`. A
 below are filtered by `bthci_acl.chandle==0x0004`.
 
 ```
-tshark -r CAP-005-btsnoop_hci.log -Y "bthci_evt.code==0x03" \
+tshark -r CAP-015-btsnoop_hci.log -Y "bthci_evt.code==0x03" \
   -T fields -e frame.number -e bthci_evt.status -e bthci_evt.bd_addr -e bthci_evt.connection_handle
 # 1395  0x04 (Page Timeout)  04:00:6e:cf:6e:07  0x0004
 # 1402  0x00 (Success)       04:00:6e:cf:6e:07  0x0004
@@ -76,7 +76,7 @@ tshark -r CAP-005-btsnoop_hci.log -Y "bthci_evt.code==0x03" \
 **Protocol hierarchy overview:**
 
 ```
-tshark -r CAP-005-btsnoop_hci.log -q -z io,phs
+tshark -r CAP-015-btsnoop_hci.log -q -z io,phs
 ```
 
 `btrfcomm` DLCIs seen this session: `0x00` (mux control), `0x02` (`libmaestro`'s Pigweed `pw_hdlc`
@@ -91,7 +91,7 @@ individual EQ taps. **All EQ-attributable content in this capture is on DLCI 0x0
 **Extraction command used for everything below:**
 
 ```
-tshark -r CAP-005-btsnoop_hci.log \
+tshark -r CAP-015-btsnoop_hci.log \
   -Y "bthci_acl.chandle==0x0004 and btrfcomm.dlci==0x02 and btrfcomm.len>5" \
   -T fields -E separator='|' -e frame.number -e frame.time_epoch -e frame.p2p_dir -e data.data
 ```
@@ -110,7 +110,7 @@ frame — excluded here as out of scope for the EQ analysis, not counted as a CR
 
 Six presets tapped in sequence, dropdown-list order (Default/`Last saved` baseline first, then
 Heavy bass → Light bass → Balanced → Vocal boost → Clarity), each an isolated action with the app
-settling before the next tap (`CAP-005-EVENT-NOTES.md`'s timeline). All six are `Sent`, HDLC
+settling before the next tap (`CAP-015-EVENT-NOTES.md`'s timeline). All six are `Sent`, HDLC
 address `0x0000`, control `0x3b`, outer field 16 (see §4 for what that field means):
 
 | Frame | Time | On-screen preset | Decoded quintet `[Low bass, Bass, Mid, Treble, Upper treble]` |

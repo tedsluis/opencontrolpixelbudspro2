@@ -1,8 +1,8 @@
-# Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group U Capture (`CAP-007`, 2026-08-18 re-run)
+# Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group U Capture (`CAP-016`, 2026-08-18 re-run)
 
-**Status:** Reviewed frame-by-frame against `CAP-007-recording.mp4`'s burned-in wall-clock overlay
+**Status:** Reviewed frame-by-frame against `CAP-016-recording.mp4`'s burned-in wall-clock overlay
 (1s resolution throughout; sub-second resolution via extra frame extractions around every
-transition of interest) and cross-checked against `CAP-007-btsnoop_hci.log` via `tshark`. This
+transition of interest) and cross-checked against `CAP-016-btsnoop_hci.log` via `tshark`. This
 supersedes the placeholder draft that previously occupied this file (it contained only the video's
 start/end lines).
 
@@ -19,7 +19,7 @@ sequence). This session's actual on-camera content is broader and more general-p
 Bluetooth-on → both-buds-removed → case-close/reopen (empty) → both-buds-docked → disconnect
 → case-close cycle. It exercises `CASE-004`/`CASE-005` (bud removed from case) cleanly and
 `CASE-006` (buds docked, lid closed) cleanly, and it does re-confirm the DLCI 0x08 Code `0x12`
-liveness behavior opportunistically (see `CAP-007-FINDINGS.md` §4). **It does not exercise
+liveness behavior opportunistically (see `CAP-016-FINDINGS.md` §4). **It does not exercise
 `INEAR-002`/`INEAR-003`/`INEAR-004`** — no earbud is ever shown being inserted into or removed
 from an ear on camera; both earbuds go straight from the case to the user's hand/off-camera and
 back, never past frame into an ear. This is flagged explicitly rather than left for a reader to
@@ -29,13 +29,13 @@ assume otherwise.
 
 |      Field       |                       Value                        |
 |------------------|----------------------------------------------------|
-|    Capture ID    |                      `CAP-007`                     |
+|    Capture ID    |                      `CAP-016`                     |
 |      Group(s)    | U (case/bud-removal focus — see scope note above)  |
 |       Date       |                     2026-08-18                     |
 | Firmware version | `release_5.203` — confirmed on-wire this session (frames 1544/1584/1590, ASCII `release_5.203`) |
 |   Test device    | Pixel 7a, Android 17 (build `CP2A.260705.006`, visible on-screen at 06:31:45) — Android's own system Bluetooth "Device details" page, not the dedicated Pixel Buds companion app (never shown on camera) |
-| Video file       | `CAP-007-recording.mp4` — 147.39s, 720x1280, 30fps; starts 06:31:31, ends 06:33:58 (wall clock, +0200, burned-in on-screen overlay, whole-second resolution) |
-| Log file         | `CAP-007-btsnoop_hci.log` — 785.31s, 3,404 packets, 2026-08-18 06:23:12.4636–06:36:17.7734 (wall clock, +0200). `capinfos CAP-007-btsnoop_hci.log`. **The log is a shared, non-restarted buffer starting ~8m19s before the video and ending ~2m20s after it** — `tshark`'s own `frame.time` field is in local wall-clock (+0200) and is directly comparable to the video's on-screen overlay with no offset arithmetic needed. |
+| Video file       | `CAP-016-recording.mp4` — 147.39s, 720x1280, 30fps; starts 06:31:31, ends 06:33:58 (wall clock, +0200, burned-in on-screen overlay, whole-second resolution) |
+| Log file         | `CAP-016-btsnoop_hci.log` — 785.31s, 3,404 packets, 2026-08-18 06:23:12.4636–06:36:17.7734 (wall clock, +0200). `capinfos CAP-016-btsnoop_hci.log`. **The log is a shared, non-restarted buffer starting ~8m19s before the video and ending ~2m20s after it** — `tshark`'s own `frame.time` field is in local wall-clock (+0200) and is directly comparable to the video's on-screen overlay with no offset arithmetic needed. |
 |    Devices       | Phone `e8:d5:2b:7e:ca:81` (`Google_7e:ca:81`, Pixel 7a — same as `CAP-001`–`CAP-007`(old)); peer/Buds classic BD_ADDR `04:00:6e:cf:6e:07` (`Google_cf:6e:07`, same physical device); a **second**, distinct BLE address `4f:25:00:85:9a:b1` also appears (see §1) |
 
 ## Method
@@ -47,11 +47,11 @@ recovered from the `Connect Complete`/`LE Enhanced Connection Complete` events (
 which is the equivalent per-link filter for this log:
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "bthci_acl.chandle==0x0001"   # classic link to cf:6e:07
-tshark -r CAP-007-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002"   # BLE link to 4f:25:00:85:9a:b1
+tshark -r CAP-016-btsnoop_hci.log -Y "bthci_acl.chandle==0x0001"   # classic link to cf:6e:07
+tshark -r CAP-016-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002"   # BLE link to 4f:25:00:85:9a:b1
 ```
 
-Only these two connection handles exist anywhere in the 785s log (`tshark -r CAP-007-btsnoop_hci.log -T fields -e bthci_acl.chandle | sort -u`) — i.e. no third device (see §5's unrelated earbud) ever
+Only these two connection handles exist anywhere in the 785s log (`tshark -r CAP-016-btsnoop_hci.log -T fields -e bthci_acl.chandle | sort -u`) — i.e. no third device (see §5's unrelated earbud) ever
 establishes a Bluetooth session with the phone in this log.
 
 ## Event Timeline
@@ -60,7 +60,7 @@ Times are the video's own on-screen wall-clock overlay (±1s; sub-second bracket
 extra `ffmpeg -vf fps=5`/`fps=10` passes are noted explicitly where used). `frame.time` values from
 `tshark` are quoted directly (already in local +0200 wall clock) wherever log evidence is cited.
 
-| Time | Action / Event | Initiator | Test-ID | Evidence in `CAP-007-btsnoop_hci.log` |
+| Time | Action / Event | Initiator | Test-ID | Evidence in `CAP-016-btsnoop_hci.log` |
 |---|---|---|---|---|
 | 06:31:31 | Start video recording. Screen: system **Bluetooth** settings sheet, "Bluetooth is off", `Use Bluetooth` toggled off. Case sits atop the phone, **lid already open**, both earbuds visible inside — case was opened before recording started (off-camera; not captured) | — | — | — |
 | 06:31:35 | Tap **Use Bluetooth** toggle | User (App) | — | — |
@@ -76,7 +76,7 @@ extra `ffmpeg -vf fps=5`/`fps=10` passes are noted explicitly where used). `fram
 | 06:32:44–51 | Hand closes the (**empty**) case lid; connection remains Active throughout (both buds are elsewhere, not in the case) | User (Hardware) | `OBS-003` (step 2) | Only the same routine periodic traffic continues through this window (e.g. frames ~2505–2544, `google-pixel-buds-pro-v1` device-info re-announce + `AT+BIEV`-shaped HFP heartbeat) — **zero dedicated wire signal tied to the lid closing** |
 | 06:33:02–04 | Case lid **reopened** (still empty) | User (Hardware) | `OBS-003` (step 2, reverse) | Same — no dedicated signal found in this window either |
 | 06:33:15.94–06:33:21.87 | (no camera-visible physical action — case sits open+empty, no hands near case/phone in frame) | — | — | Full RFCOMM multiplexer channel bounce: DLCI `0x02`/`0x04`/`0x08`/`0x0a` all `DISC`+reopened in sequence (frames 2770–3044, first `DISC` at **06:33:15.941**, last reopen `UA` at **06:33:19.615**) — ACL link itself undisturbed (no `Disconnect Complete`/`Connect Complete` near this window). ANC re-announced mid-bounce: still `...e8e880` (Transparency) at frame 2768 (06:33:15.940) and frame 3012 (06:33:22.359), then reverts to `...e800 20` (settable=`0x00`, Off) at frame 3054 (**06:33:23.456**) |
-| ≈06:33:16 | App UI: ANC row **loses its Transparency highlight**, all 4 buttons revert to unselected | App (Auto) | — | Coincides with the channel-bounce's start (06:33:15.94) — see `CAP-007-FINDINGS.md` §3 for discussion; **no physical trigger identified in the video for this bounce** |
+| ≈06:33:16 | App UI: ANC row **loses its Transparency highlight**, all 4 buttons revert to unselected | App (Auto) | — | Coincides with the channel-bounce's start (06:33:15.94) — see `CAP-016-FINDINGS.md` §3 for discussion; **no physical trigger identified in the video for this bounce** |
 | 06:33:16–45 | An earbud/case that is **visibly a different product** from the white Pixel Buds Pro 2 (black body, gray oval capacitive touch pad) becomes visible near the case and is briefly handled by hand; it is **never placed into the Pixel Buds case** and never appears connected in the log | — | — | No third Bluetooth session of any kind exists anywhere in the 785s log (only handles `0x0001`/`0x0002`, both already accounted for) — **camera-only incidental object, zero wire correlation**; flagged explicitly so a future pass does not mistake it for a Buds action |
 | 06:33:38–40 | First Pixel Bud placed back into an empty case slot (its icon shows the charging-bolt afterward) | User (Hardware) | `CASE-006` (part) | No RFCOMM data frame or control-frame burst found in this window; only unrelated `LE Extended Advertising Report` noise from other nearby BLE devices, plus one `Mode Change` baseband event at **06:33:41.680** — 🔴 not attributable, same caveat as `CAP-007-FINDINGS.md`(old) §3.5 (no documented mechanism ties a baseband mode change to app-level UI/case state directly) |
 | 06:33:44–45 | **Second** Pixel Bud placed into the remaining case slot — both slots now filled | User (Hardware) | `CASE-006` (part) | Routine periodic HFP-battery-shaped frame at **06:33:45.072** (frames 3230/3231, `03 03 00 03 e4 64 ff`) immediately precedes the disconnect below — no distinct "docked" signal |

@@ -63,6 +63,21 @@ for the "definition of done" that will mark v1.
   assigned in the Capture Index as work happens.
 - Fixed stale filename references (`PROTOCOL-NOTES.md`, `TESTPLAN_EN.md`)
   found during a cross-file consistency pass.
+- `fix:` renumbered three second-attempt capture sessions that had been
+  reusing their first attempt's `CAP-NNN` ID with only their folder's
+  date/time suffix distinguishing them — a violation of `DECISIONS.md`
+  ADR-007's "never reused" ID-format rule, and the direct cause of the
+  2026-08-18 Group T session (`CAP-005`) never getting a row of its own in
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index. Reused `CAP-005`
+  (2026-08-18, Group T) → `CAP-015`; reused `CAP-007` (2026-08-18, Group U) →
+  `CAP-016`; reused `CAP-010` (2026-08-16 18:30, Group W) → `CAP-017`. The
+  original, first-attempt sessions (`CAP-005` 2026-08-15, `CAP-007` 09:14-10
+  2026-08-16, `CAP-010` 11:42 2026-08-16) keep their original IDs unchanged.
+  Renamed the affected folders/files (`git mv`, preserving history) and
+  updated every current-state cross-reference across `PROTOCOL.md`,
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, and
+  `DESKRESEARCH_FINDINGS.md` to the new IDs; earlier entries in this
+  changelog that mention the old IDs are left as-is (historical record).
 
 ### Reverse engineering findings
 

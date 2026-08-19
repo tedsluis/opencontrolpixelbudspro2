@@ -60,7 +60,7 @@ Status legend (consistent with `PROTOCOL.md` §0):
   self-consistency assertions `payload[14]==len(payload)-15`, `payload[16]==len(payload)-17`,
   `payload[19]==len(payload)-20` that identify the EQ envelope's specific shape) against **every**
   DLCI 0x02 Sent-direction payload in `CAP-001`, `CAP-002`, `CAP-003`, `CAP-006`, `CAP-007`, and the
-  11:42 `CAP-010` session (`CAP-004` and the 18:30 `CAP-010` session never open DLCI 0x02 at all —
+  11:42 `CAP-010` session (`CAP-004` and the 18:30 `CAP-017` session never open DLCI 0x02 at all —
   confirmed via `tshark -r <log> -Y "btrfcomm.dlci==0x02 and btrfcomm.len>0"`, 0 rows for both).
 
   Extraction per log:
@@ -80,7 +80,7 @@ Status legend (consistent with `PROTOCOL.md` §0):
   7 logs — itself a re-confirmation, at larger scale, of `PROTOCOL.md` §2.2a's CRC-32 finding.
 
 - **Captures examined:** `CAP-001`, `CAP-002`, `CAP-003`, `CAP-006`, `CAP-007`, `CAP-010` (11:42
-  session). `CAP-004` and `CAP-010` (18:30 session) confirmed to never open DLCI 0x02.
+  session). `CAP-004` and `CAP-017` (18:30 session) confirmed to never open DLCI 0x02.
 
 - **Result — Part 1, the triggering question (🟡 HYPOTHESIS, strengthened by a clean negative):**
   the exact structural shape identified in `CAP-005` (all three nested-length checks passing)

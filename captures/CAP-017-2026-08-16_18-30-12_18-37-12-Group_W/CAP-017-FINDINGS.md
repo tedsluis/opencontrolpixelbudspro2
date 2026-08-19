@@ -1,8 +1,8 @@
-# Findings: `CAP-010` (Group W retry, 18:30 — GATT discovery via nRF Connect)
+# Findings: `CAP-017` (Group W retry, 18:30 — GATT discovery via nRF Connect)
 
-Standardized, evidence-based extraction from `CAP-010-btsnoop_hci.log` + `CAP-010-recording.mp4`,
+Standardized, evidence-based extraction from `CAP-017-btsnoop_hci.log` + `CAP-017-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. This is a **second,
-independent `CAP-010` capture**, distinct from
+independent `CAP-017` capture**, distinct from
 `captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-FINDINGS.md` (the 11:42 attempt).
 Every claim below carries a status per `PROJECT_RULES.md` §1:
 
@@ -11,12 +11,12 @@ Every claim below carries a status per `PROJECT_RULES.md` §1:
 - ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
-**Capture ID:** `CAP-010` (18:30 session) · **Date:** 2026-08-16 · **Firmware:** `release_5.203`
+**Capture ID:** `CAP-017` (18:30 session) · **Date:** 2026-08-16 · **Firmware:** `release_5.203`
 (not re-confirmed on-the-wire this session — see §4) · **Phone:** Pixel 7a, Android 17 — same
 physical phone as `CAP-001`–`CAP-007`/the 11:42 `CAP-010`. **GATT client: nRF Connect for Mobile
 (Nordic Semiconductor)**, not the official Pixel Buds Companion App. **Peer device:** `04:00:6E:CF:6E:07`
-("Pixel Buds Pro 2 van Ted", classic EIR name match). **Log file:** `CAP-010-btsnoop_hci.log`
-(559.2s, 1,747 packets, 18:31:32.72–18:40:51.93 local/+0200). **Video:** `CAP-010-recording.mp4`
+("Pixel Buds Pro 2 van Ted", classic EIR name match). **Log file:** `CAP-017-btsnoop_hci.log`
+(559.2s, 1,747 packets, 18:31:32.72–18:40:51.93 local/+0200). **Video:** `CAP-017-recording.mp4`
 (419.6s, 18:30:12–18:37:12 local, on-screen wall-clock overlay).
 
 **Stated goal of this session** (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group W /
@@ -56,7 +56,7 @@ defined around (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` `GATT-001` row; `CAPTURE_BLUET
 
 Reproduction of the connection event:
 ```
-tshark -r CAP-010-btsnoop_hci.log -Y "bthci_evt.le_meta_subevent==0x0a" \
+tshark -r CAP-017-btsnoop_hci.log -Y "bthci_evt.le_meta_subevent==0x0a" \
   -T fields -e frame.number -e frame.time -e bthci_evt.bd_addr -e bthci_evt.status -e bthci_evt.connection_handle
 ```
 → `652	2026-08-16T18:31:39.512655+0200	04:00:6e:cf:6e:07	0x00	0x0002` — matches the video's
@@ -68,7 +68,7 @@ Unlike every prior `CAP-010`/`CAP-002`/`CAP-003`/`CAP-004` attempt, this log **d
 discovery traffic:
 
 ```
-tshark -r CAP-010-btsnoop_hci.log -Y "btatt.opcode in {0x04,0x05,0x08,0x09,0x10,0x11}" \
+tshark -r CAP-017-btsnoop_hci.log -Y "btatt.opcode in {0x04,0x05,0x08,0x09,0x10,0x11}" \
   -T fields -e frame.number -e btatt.opcode | wc -l
 ```
 → **137 matches** (vs. zero in the 11:42 `CAP-010`, `CAP-002`, `CAP-003`). This alone is a real,
@@ -76,12 +76,12 @@ positive result: a live `Read By Group Type`/`Read By Type`/`Find Information` w
 `0x0001–0xffff` handle range did happen on the wire, twice (once right after the BLE connection at
 18:31:39, once again right after classic pairing completes at 18:32:58).
 
-**But the log cannot be used to read the actual discovered UUIDs.** `CAP-010-btsnoop_hci.log` was
+**But the log cannot be used to read the actual discovered UUIDs.** `CAP-017-btsnoop_hci.log` was
 recorded with a very short per-packet snapshot length — most ACL frames carrying ATT discovery
 responses are truncated to their first ~15 captured bytes regardless of true length:
 
 ```
-tshark -r CAP-010-btsnoop_hci.log -Y "frame.number==680" -V
+tshark -r CAP-017-btsnoop_hci.log -Y "frame.number==680" -V
 ```
 Relevant excerpt:
 ```
@@ -107,7 +107,7 @@ more bytes of handle-range/UUID data). Every one of this session's `Read By Grou
 same way:
 
 ```
-tshark -r CAP-010-btsnoop_hci.log -Y "btatt.opcode==0x11 or btatt.opcode==0x09" \
+tshark -r CAP-017-btsnoop_hci.log -Y "btatt.opcode==0x11 or btatt.opcode==0x09" \
   -T fields -e frame.number -e frame.cap_len -e frame.len | awk -F'\t' '$2!=$3' | wc -l
 ```
 → 24 of 26 truncated. **Zero-Creativity rule applied: no UUID is reconstructed from these
@@ -150,7 +150,7 @@ separate extracted frames.
 
 Extraction method (reproducible against the raw video file):
 ```
-ffmpeg -ss <t> -i CAP-010-recording.mp4 -frames:v 1 -vf "crop=540:640:170:590,scale=1080:1280" -q:v 1 out.jpg
+ffmpeg -ss <t> -i CAP-017-recording.mp4 -frames:v 1 -vf "crop=540:640:170:590,scale=1080:1280" -q:v 1 out.jpg
 ```
 at `t=189.0`, `189.6`, `190.0`, `190.5` (18:33:21–18:33:23), which agree byte-for-byte on both
 128-bit UUIDs; entries 1–8 (unscrolled) confirmed independently at `t=87..115` (18:31:39–18:32:11)
@@ -180,7 +180,7 @@ A handful of ATT operations are short enough (single known handle, ≤~10-byte p
 inside the ~15-byte snapshot limit and were captured intact:
 
 ```
-tshark -r CAP-010-btsnoop_hci.log -Y "btatt.opcode in {0x0a,0x0b,0x12,0x13} and frame.cap_len==frame.len" \
+tshark -r CAP-017-btsnoop_hci.log -Y "btatt.opcode in {0x0a,0x0b,0x12,0x13} and frame.cap_len==frame.len" \
   -T fields -e frame.number -e frame.time -e btatt.opcode -e btatt.handle -e btatt.value
 ```
 
@@ -193,7 +193,7 @@ tshark -r CAP-010-btsnoop_hci.log -Y "btatt.opcode in {0x0a,0x0b,0x12,0x13} and 
 | 1043→1072 | 18:32:58.478→58.538 | `0x0005` | Write Req/Resp | `07` | Fires immediately after classic `Connect Complete` (frame 994) |
 | 1088→1090 | 18:32:58.660→58.719 | — / `0x0003` | Find Info Req/Resp | — | Resolves handle `0x0003` to UUID `0x2A05` (**Service Changed**) — confirms the `0x0005` write above is the Service-Changed-indication CCCD being (re-)enabled after a fresh classic bond, standard GATT-caching housekeeping (`CAP-003-FINDINGS.md` §1) |
 
-Raw bytes for the two writes, reproducible via `tshark -r CAP-010-btsnoop_hci.log -Y "frame.number==1605" -x`:
+Raw bytes for the two writes, reproducible via `tshark -r CAP-017-btsnoop_hci.log -Y "frame.number==1605" -x`:
 ```
 0000  02 02 00 09 00 05 00 04 00 12 33 0f 01 00      (Write Req: opcode 12, handle 0x0f33 LE, value 0001)
 ```
@@ -217,7 +217,7 @@ nRF Connect's client behavior, not new facts about the Buds' own GATT server lay
 **No application-level read/write/notify traffic on the `0x0c0X` cluster this session** — expected,
 since that activity is driven by the official Companion App's Fast Pair Key-based-Pairing flow
 (`CAP-002`/`CAP-003`/11:42-`CAP-010`), which never ran here (no DLCI 0x08 Message-Stream handshake
-either — confirmed: `tshark -r CAP-010-btsnoop_hci.log -Y 'frame contains "release_5.203"'` → 0
+either — confirmed: `tshark -r CAP-017-btsnoop_hci.log -Y 'frame contains "release_5.203"'` → 0
 matches, vs. 5 confirming sessions previously).
 
 **However, the discovery walk itself did pass directly through this cluster's handle range, and
@@ -225,7 +225,7 @@ this is the first time any capture has independently confirmed part of its struc
 discovery rather than write-pattern inference (🟢 FACT, upgraded from 🟡):**
 
 ```
-tshark -r CAP-010-btsnoop_hci.log -Y "btatt.handle >= 0x0c00 and btatt.handle <= 0x0c20 and btatt.opcode==0x05" \
+tshark -r CAP-017-btsnoop_hci.log -Y "btatt.handle >= 0x0c00 and btatt.handle <= 0x0c20 and btatt.opcode==0x05" \
   -T fields -e frame.number -e frame.time -e btatt.handle -e btatt.uuid16 -e frame.cap_len -e frame.len
 ```
 
@@ -257,8 +257,8 @@ view independent of the truncated btsnoop capture), before concluding a recaptur
 
 **Method:** the full video was sampled at 5s resolution (84 frames, 18:30:12–18:37:12) via
 ```
-ffmpeg -i CAP-010-recording.mp4 -vf "select='lt(t\,210)*not(mod(floor(t/5)\,1))',fps=1/5,scale=160:284,tile=6x7" -frames:v 1 sheetA.jpg
-ffmpeg -ss 210 -i CAP-010-recording.mp4 -vf "fps=1/5,scale=160:284,tile=6x7" -frames:v 1 sheetB.jpg
+ffmpeg -i CAP-017-recording.mp4 -vf "select='lt(t\,210)*not(mod(floor(t/5)\,1))',fps=1/5,scale=160:284,tile=6x7" -frames:v 1 sheetA.jpg
+ffmpeg -ss 210 -i CAP-017-recording.mp4 -vf "fps=1/5,scale=160:284,tile=6x7" -frames:v 1 sheetB.jpg
 ```
 and reviewed as two contact sheets, with full-resolution re-extracts of every visually distinct
 screen for close reading.
@@ -289,13 +289,13 @@ verification pass and remains unchanged).
 
 ## 4c. New evidence (2026-08-17): nRF Connect text log + screenshots — still no handle data (🟢 FACT)
 
-Two new artifacts were supplied and reviewed in full: `CAP-010-nRF.txt` (nRF Connect's own
+Two new artifacts were supplied and reviewed in full: `CAP-017-nRF.txt` (nRF Connect's own
 "share log" plain-text export) and six screenshots (`Screenshot_20260817-062353.png` through
 `Screenshot_20260817-062541.png`).
 
 **Provenance note, checked against the files' own timestamps:** these are **not** contemporaneous
 with the 18:30–18:37 session on 2026-08-16. The screenshots' on-screen clock and filenames read
-`06:23`–`06:25` on **2026-08-17** (the following morning), and `CAP-010-nRF.txt` is a single
+`06:23`–`06:25` on **2026-08-17** (the following morning), and `CAP-017-nRF.txt` is a single
 running app-log file that covers three separate connections — `18:31:39`–`18:33:39` on 08-16 (the
 session this findings doc otherwise covers), `19:15:48`–20:50 on 08-16, and `22:10:28` on 08-16
 through `00:30:34` on 08-17 — with the screenshots' `06:2x` timestamps not matching any
@@ -323,8 +323,8 @@ breakdown of the two 128-bit services:
 
 **What this evidence does NOT contain, checked exhaustively (🟢 FACT):**
 ```
-grep -in "handle" CAP-010-nRF.txt   →  0 matches
-grep -in "0x0c0\|0x0f2" CAP-010-nRF.txt  →  0 matches
+grep -in "handle" CAP-017-nRF.txt   →  0 matches
+grep -in "0x0c0\|0x0f2" CAP-017-nRF.txt  →  0 matches
 ```
 Every one of the six screenshots was read in full; every entry shows only `<Name>` / `UUID:` /
 `Properties:` / `Descriptors:` — never a handle field, for any service, characteristic, or
@@ -379,14 +379,14 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   Service"/"Unknown Service" in nRF Connect's `CLIENT` tab was tried (§4c, via the 2026-08-17
   screenshots + text-log export) and does **not** show handles — this UI/export path is now a dead
   end for this specific question, not just untried. The remaining viable path is fixing the wire
-  capture itself: whatever produced the ~15-byte ACL snaplen in `CAP-010-btsnoop_hci.log` needs to
+  capture itself: whatever produced the ~15-byte ACL snaplen in `CAP-017-btsnoop_hci.log` needs to
   be identified (check the export path/tool against `CAP-001`–`CAP-004`, which were **not**
   truncated this way) and corrected, so a repeat capture's `Read By Group Type`/`Read By Type`
   response bytes can be parsed directly for handle-range + UUID data (§2). A tool that does expose
   handles on-screen (e.g. `gatttool`, `bluetoothctl`, or a raw `BluetoothGatt` script) would also
   work and doesn't require fixing the snaplen.
-- Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index with this second `CAP-010` session
-  (folder `captures/CAP-010-2026-08-16_18-30-12_18-37-12-Group_W/`) — the existing `CAP-010` row
+- Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index with this second `CAP-017` session
+  (folder `captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/`) — the existing `CAP-010` row
   currently only describes the 11:42 attempt.
 
 ## 6. Open Questions
@@ -403,7 +403,7 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   still not handle-confirmed.
 - 🔴 What `0x0f32` (value `0x64`) represents, and why it and its CCCD `0x0f33` appear only in this
   session, never in any capture driven by the official app.
-- 🔴 Whether the short-ACL-snaplen issue in `CAP-010-btsnoop_hci.log` is specific to this one
+- 🔴 Whether the short-ACL-snaplen issue in `CAP-017-btsnoop_hci.log` is specific to this one
   export or affects the btsnoop-capture procedure going forward — needs checking before the next
   capture is trusted to carry full discovery payloads.
 - 🔴 Whether `0x0f2a` ("Revision 6") is genuinely absent from nRF Connect's own read pattern, or

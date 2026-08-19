@@ -417,7 +417,7 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
   `libmaestro`'s channel, unchanged from §2.2a's own caveat.
 - **Field-to-band mapping — 🟢 FACT, promoted 2026-08-18** (was 🟡 HYPOTHESIS as of 2026-08-15,
   inferred from only one slider ever having moved in that first capture). The 2026-08-18 session
-  (`captures/CAP-005-2026-08-18_06-11-06_06-17-40-Group_T/CAP-005-FINDINGS.md` §5) drags **all
+  (`captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md` §5) drags **all
   five** sliders individually, three passes each, and directly video-confirms 4 of the 5 fields via
   finger-on-slider position (plus an on-screen `-6.0` tooltip for one); the 5th is confirmed by
   elimination against a perfectly repeating field-change order across all three passes. The mapping
@@ -432,7 +432,7 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
   Upper treble first/top; the wire quintet puts it last/field 5) — `FrameEncoder`/`FrameDecoder`
   must not assume the two orders match without an explicit re-index.
 - **Band-gain range — 🟢 FACT (2026-08-18)**: every slider, dragged to its physical UI extreme,
-  clamps at **±6.0** (`CAP-005-FINDINGS.md` [2026-08-18] §4 — 8 of 10 extreme-drag samples land at
+  clamps at **±6.0** (`CAP-015-FINDINGS.md` [2026-08-18] §4 — 8 of 10 extreme-drag samples land at
   exactly `±6.0`, the remaining 2 at `5.8`/`5.9`, consistent with the drag gesture not quite
   reaching the slider's physical edge before release, not a different clamp value). 🔴 units not
   independently confirmed (plausibly dB, not tested against any external reference).
@@ -464,11 +464,11 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
   ~13-byte correlation-ID region (§6).
 - **Evidence**: `SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1,
   `captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS.md` (first candidate
-  format, single-band sample), `captures/CAP-005-2026-08-18_06-11-06_06-17-40-Group_T/CAP-005-FINDINGS.md`
+  format, single-band sample), `captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`
   (all-5-bands confirmation, range, preset table).
-- **Verified with experiment**: `CAP-005` (Group T), two independent sessions — 2026-08-15
-  (single Bass slider) and 2026-08-18 (5 presets + all 5 sliders, 3 passes each) — see both
-  `CAP-005-FINDINGS.md` files above.
+- **Verified with experiment**: Group T, two independent sessions — `CAP-005` (2026-08-15,
+  single Bass slider) and `CAP-015` (2026-08-18, 5 presets + all 5 sliders, 3 passes each) — see
+  both FINDINGS.md files above.
 
 ### 4.3 Battery status (Left / Right / Case)
 
@@ -568,9 +568,9 @@ event-observation coroutines.
 #### Option D — BLE Battery Service (`0x180F`)
 
 - **Status**: 🟡 HYPOTHESIS — the service's *existence* is now confirmed
-  (`CAP-010`, 18:30 session — live GATT discovery via a fresh nRF Connect
+  (`CAP-017`, 18:30 session — live GATT discovery via a fresh nRF Connect
   client, `[VERIFIED-LOCAL]` 2026-08-16, see
-  `captures/CAP-010-2026-08-16_18-30-12_18-37-12-Group_W/CAP-010-FINDINGS.md`
+  `captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-FINDINGS.md`
   §3, service #14 of 15 in the recovered profile). **Not yet confirmed:**
   the characteristic's actual value, whether it reports a single aggregate
   figure or per-component (L/R/Case), and whether it is actually read by
@@ -830,7 +830,7 @@ leaving them buried in prose elsewhere.
       - ~~Which of the 5 decoded `float32` fields maps to which of the 5 UI sliders is inferred
         from only one slider (Bass) having been moved this session — needs a capture isolating a
         *different* single slider to confirm.~~ **Resolved 2026-08-18**, per a fresh, separate
-        `CAP-005` session (`captures/CAP-005-2026-08-18_06-11-06_06-17-40-Group_T/CAP-005-FINDINGS.md`
+        `CAP-015` session (`captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`
         §5) that drags all 5 sliders individually, 3 passes each — field 1↔Low bass, 2↔Bass,
         3↔Mid, 4↔Treble, 5↔Upper treble (wire order reversed from the on-screen top-to-bottom
         order), matching this capture's own single-band inference exactly. Promoted to 🟢 FACT,
@@ -927,6 +927,6 @@ leaving them buried in prose elsewhere.
 |---|---|---|
 | 2026-08-07 | Initial formal specification promoted from `PROTOCOL_NOTES.md`; includes both RFCOMM framing hypotheses, battery mechanism options A–D, Find My Buds/Ring hypothesis, and consolidated open questions | Claude (AI), reviewed by maintainer |
 | 2026-08-12 | Added §2.2a: DLCI 0x02's framing confirmed as Pigweed `pw_hdlc` (flag/escape/LEB128-address/control/CRC-32), matching `pbpctrl`'s own Maestro-transport notes; promoted to 🟢 FACT for the framing mechanism (640/640 sub-frames verified across 3 captures). Restructured §2.3's binary framing question into a three-channel table (DLCI 0x04/0x02/0x08). **§4.1 ANC mode promoted to 🟢 FACT**: Google's official "Hearable Controls" Fast Pair extension (Message Group `0x08`, Codes `0x11`/`0x12`/`0x13`) matches `CAP-001` byte-for-byte, including a 4/4 content+timing correlation against that capture's own recorded ANC taps — resolves the project's original highest-priority open command question, on the *official* Message Stream (DLCI 0x04), not `libmaestro`. Updated §6 Framing and Commands checklists accordingly. `libmaestro` (DLCI 0x02) and the private DLCI-0x08 envelope's command content, and EQ/other settings, remain unconfirmed — `FrameEncoder`/`FrameDecoder` implementation gate (`AGENTS.md` §6) remains closed pending a `DECISIONS.md` ADR | Claude (AI), deskresearch task, not yet reviewed by maintainer |
-| 2026-08-17 | §4.3 Option D (BLE Battery Service `0x180F`) raised from 🔴 to 🟡 HYPOTHESIS: service *existence* confirmed via `CAP-010`'s second (18:30) session's live GATT discovery (`CAP-010-FINDINGS.md` §3) — content/usage still unconfirmed, handle range still unresolved. Cross-check pass across all 9 capture sessions' documents; also updated `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to include this session (it previously only referenced the earlier, unsuccessful 11:42 `CAP-010` attempt) | Claude (AI), deskresearch task, not yet reviewed by maintainer |
+| 2026-08-17 | §4.3 Option D (BLE Battery Service `0x180F`) raised from 🔴 to 🟡 HYPOTHESIS: service *existence* confirmed via `CAP-017`'s (18:30) session's live GATT discovery (`CAP-017-FINDINGS.md` §3) — content/usage still unconfirmed, handle range still unresolved. Cross-check pass across all 9 capture sessions' documents; also updated `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to include this session (it previously only referenced the earlier, unsuccessful 11:42 `CAP-010` attempt) | Claude (AI), deskresearch task, not yet reviewed by maintainer |
 | 2026-08-17 | §6 Commands & schemas: DLCI 0x02 deskresearch pass across all captures with DLCI-0x02 traffic (`CAP-001`–`CAP-003`, `CAP-006`, `CAP-007`, 11:42 `CAP-010`). Answered the "is field-16/18 EQ-specific?" open item with a clean negative result (zero matches outside `CAP-005`, including `CAP-006`'s clean isolated ANC taps). Surfaced a new open item: two previously-undocumented HDLC addresses (`0x1e80`/`0x2680` Sent, `0xe980` Rcvd) recur at connection-reopen events in `CAP-005`/`CAP-007`, carrying the same already-documented serial+firmware content as the `0x0000`/`0xD180` pair — HYPOTHESIS that DLCI 0x02's Address field is per-connection-negotiated, not fixed. Full method in `DESKRESEARCH_FINDINGS.md` | Claude (AI), deskresearch task, not yet reviewed by maintainer |
-| 2026-08-18 | §4.2 EQ updated from a fresh, independent `CAP-005` session (`captures/CAP-005-2026-08-18_06-11-06_06-17-40-Group_T/CAP-005-FINDINGS.md`) that drags all 5 EQ sliders individually (3 passes each) and taps 5 presets, resolving the 2026-08-15 capture's field-to-band open question: **field-to-band mapping promoted to 🟢 FACT** (field 1↔Low bass, 2↔Bass, 3↔Mid, 4↔Treble, 5↔Upper treble, wire order reversed from on-screen order), matching the earlier single-band inference exactly. Also added: the ±6.0 band-gain clamp (🟢 FACT, units unconfirmed), a confirmed preset-quintet reference table, and a revised (still 🟡) reading of outer field 16/18 as preview/slider-release rather than preview/explicit-Save-tap. Updated the corresponding §6 open-question entry non-destructively | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
+| 2026-08-18 | §4.2 EQ updated from a fresh, independent `CAP-015` session (`captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`) that drags all 5 EQ sliders individually (3 passes each) and taps 5 presets, resolving the 2026-08-15 capture's field-to-band open question: **field-to-band mapping promoted to 🟢 FACT** (field 1↔Low bass, 2↔Bass, 3↔Mid, 4↔Treble, 5↔Upper treble, wire order reversed from on-screen order), matching the earlier single-band inference exactly. Also added: the ±6.0 band-gain clamp (🟢 FACT, units unconfirmed), a confirmed preset-quintet reference table, and a revised (still 🟡) reading of outer field 16/18 as preview/slider-release rather than preview/explicit-Save-tap. Updated the corresponding §6 open-question entry non-destructively | Claude (AI), capture-analysis task, not yet reviewed by maintainer |

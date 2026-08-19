@@ -1,6 +1,6 @@
-# Findings: `CAP-007` (2026-08-18 re-run, Group U — case/bud-removal hardware events)
+# Findings: `CAP-016` (2026-08-18 re-run, Group U — case/bud-removal hardware events)
 
-Standardized, evidence-based extraction from `CAP-007-btsnoop_hci.log` + `CAP-007-recording.mp4`
+Standardized, evidence-based extraction from `CAP-016-btsnoop_hci.log` + `CAP-016-recording.mp4`
 (the `06-31-31` folder), following the same template as `CAP-001-FINDINGS.md`. Every claim below
 carries a status per `PROJECT_RULES.md` §1:
 
@@ -9,15 +9,15 @@ carries a status per `PROJECT_RULES.md` §1:
 - ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
-**Capture ID:** `CAP-007` (this is the **2026-08-18 06:31:31 session** — do not confuse with the
+**Capture ID:** `CAP-016` (this is the **2026-08-18 06:31:31 session** — do not confuse with the
 older, separate `CAP-007-2026-08-16_09-14-10_09-17-57-Group_U/` capture, which has its own
 independent findings document) · **Date:** 2026-08-18 · **Firmware:** `release_5.203` (confirmed
 on-wire, frames 1544/1584/1590) · **Phone:** Pixel 7a, Android 17 (build `CP2A.260705.006`),
-system Bluetooth "Device details" page · **Log file:** `CAP-007-btsnoop_hci.log` (785.31s, 3,404
+system Bluetooth "Device details" page · **Log file:** `CAP-016-btsnoop_hci.log` (785.31s, 3,404
 packets, 2026-08-18 06:23:12.4636–06:36:17.7734 local/+0200) · **Video:**
-`CAP-007-recording.mp4` (147.39s, 06:31:31–06:33:58 local, on-screen wall-clock overlay) ·
+`CAP-016-recording.mp4` (147.39s, 06:31:31–06:33:58 local, on-screen wall-clock overlay) ·
 **Devices:** phone `Google_7e:ca:81`, peer/Buds classic `Google_cf:6e:07` (handle `0x0001`) —
-same physical devices as `CAP-001`–`CAP-007`(old). See `CAP-007-EVENT-NOTES.md` in this folder for
+same physical devices as `CAP-001`–`CAP-007`(old). See `CAP-016-EVENT-NOTES.md` in this folder for
 the full video-to-log correlated timeline this document is built from.
 
 **Scope note:** unlike `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Group U write-up (a narrow DLCI 0x08
@@ -25,7 +25,7 @@ liveness-bracket procedure), this session's on-camera content is a general hardw
 sequence: Bluetooth-on → both-buds-removed-from-case → case-close/reopen (empty) →
 both-buds-docked → disconnect → case-close. It exercises `CASE-004`/`CASE-005` and `CASE-006`
 cleanly but **does not** exercise `INEAR-002`/`INEAR-003`/`INEAR-004` — no earbud is ever shown
-inserted into or removed from an ear on camera (see `CAP-007-EVENT-NOTES.md`'s header note).
+inserted into or removed from an ear on camera (see `CAP-016-EVENT-NOTES.md`'s header note).
 
 ---
 
@@ -35,7 +35,7 @@ Unlike `CAP-001`'s three phone-initiated `Create Connection` attempts (`CAP-001-
 this session's classic BR/EDR connection is established in a **single, Buds-initiated** page:
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "frame.time_relative>=529.5 && frame.time_relative<=531.5" \
+tshark -r CAP-016-btsnoop_hci.log -Y "frame.time_relative>=529.5 && frame.time_relative<=531.5" \
   -T fields -e frame.number -e frame.time -e _ws.col.Info
 ```
 
@@ -46,7 +46,7 @@ tshark -r CAP-007-btsnoop_hci.log -Y "frame.time_relative>=529.5 && frame.time_r
 | `Rcvd Connect Complete` (handle `0x0001`, `04:00:6e:cf:6e:07`, status `0x00`) | 1217 | 06:32:02.749 |
 
 This lands **within 0.5s of the on-camera earbud removal** (hand lifts the first earbud out of the
-case ≈06:32:00–02, per `CAP-007-EVENT-NOTES.md`) — the Buds themselves initiate the classic-profile
+case ≈06:32:00–02, per `CAP-016-EVENT-NOTES.md`) — the Buds themselves initiate the classic-profile
 reconnection once removed from the case, rather than the phone polling/paging them. `Link Key
 Request`/`Authentication`/`Set Connection Encryption` were **not** observed as a separate visible
 step in this window — a full HCI event dump (frames 1213–1260) shows `Read Remote Version
@@ -59,7 +59,7 @@ re-verified against the HCI encryption-state bit in this pass.
 **Disconnection is equally clean and immediate, 🟢 FACT:**
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "bthci_evt.code==0x05" \
+tshark -r CAP-016-btsnoop_hci.log -Y "bthci_evt.code==0x05" \
   -T fields -e frame.number -e frame.time -e bthci_evt.connection_handle -e bthci_evt.reason
 # → 3235  2026-08-18T06:33:45.152102+0200  0x0001  0x13
 ```
@@ -73,14 +73,14 @@ the routine ~6–7s periodic heartbeat (frame 3230/3231, `03 03 00 03 e4 64 ff`,
 
 **Reproduction:**
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "bthci_acl.chandle" -T fields -e bthci_acl.chandle | sort -u
+tshark -r CAP-016-btsnoop_hci.log -Y "bthci_acl.chandle" -T fields -e bthci_acl.chandle | sort -u
 # → 0x0001, 0x0002 (only two connection handles in the entire log)
 ```
 
 ## 2. A second, distinct BLE link appears when Bluetooth is turned on (🟡 HYPOTHESIS)
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "bthci_evt.le_meta_subevent==0x0a" \
+tshark -r CAP-016-btsnoop_hci.log -Y "bthci_evt.le_meta_subevent==0x0a" \
   -T fields -e frame.number -e frame.time -e bthci_evt.bd_addr -e bthci_evt.connection_handle
 # → 691  2026-08-18T06:31:40.982971+0200  4f:25:00:85:9a:b1  0x0002
 ```
@@ -105,7 +105,7 @@ data point: **a structurally identical channel bounce occurs here too, but with 
 any other camera-visible action) anywhere near it:**
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "btrfcomm && frame.time_relative>=596.0 && frame.time_relative<=610.5 && (btrfcomm.frame_type==0x2f or btrfcomm.frame_type==0x63 or btrfcomm.frame_type==0x43)" \
+tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm && frame.time_relative>=596.0 && frame.time_relative<=610.5 && (btrfcomm.frame_type==0x2f or btrfcomm.frame_type==0x63 or btrfcomm.frame_type==0x43)" \
   -T fields -e frame.number -e frame.time_relative -e btrfcomm.dlci -e btrfcomm.frame_type
 ```
 
@@ -129,7 +129,7 @@ reading `CAP-007`(old) §5 already favored for the related DLCI 0x08 Code `0x12`
 re-announced mid-bounce, but with an inconsistent value across the three samples surrounding it:
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "btrfcomm.dlci==0x04 && btrfcomm.len>0" \
+tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm.dlci==0x04 && btrfcomm.len>0" \
   -T fields -e frame.number -e frame.time -e data.data | grep '^0813\|\t0813'
 ```
 
@@ -142,7 +142,7 @@ tshark -r CAP-007-btsnoop_hci.log -Y "btrfcomm.dlci==0x04 && btrfcomm.len>0" \
 The value flips from "Transparency, fully settable" back to "Off, settable-toggles=0x00" *after*
 two re-announcements of the unchanged Transparency state — i.e. it does not simply revert once and
 stay reverted. 🔴 **Not explained by this capture**: no physical action, ANC tap, or bud
-insertion/removal is visible in the video at 06:33:23. Video evidence (`CAP-007-EVENT-NOTES.md`)
+insertion/removal is visible in the video at 06:33:23. Video evidence (`CAP-016-EVENT-NOTES.md`)
 shows the app's ANC row itself loses its highlighted selection at ≈06:33:16, i.e. at the *start* of
 the bounce, and — per the video — never regains a highlighted selection for the remainder of the
 capture (buds are re-docked at 06:33:44–45 and the connection drops nine seconds after frame 3054),
@@ -156,7 +156,7 @@ but every sample in `CAP-001` carried the same `0xe8` settable-toggles byte, so 
 never exercised. This capture is the first to observe it change value:
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "btrfcomm.dlci==0x04 && btrfcomm.len>0" \
+tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm.dlci==0x04 && btrfcomm.len>0" \
   -T fields -e frame.number -e frame.time -e data.data | grep '0813'
 ```
 
@@ -192,7 +192,7 @@ Two separate lid actions this session, both with **both buds already removed** (
 connection already `Active`:
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "btrfcomm.len>0 && frame.time_relative>=570.0 && frame.time_relative<=594.0" \
+tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm.len>0 && frame.time_relative>=570.0 && frame.time_relative<=594.0" \
   -T fields -e frame.number -e frame.time_relative -e btrfcomm.dlci -e data.data
 ```
 
@@ -212,7 +212,7 @@ report it to the phone over DLCI `0x02`/`0x04`/`0x08`/`0x0a` while no bud is doc
 ## 6. Docking a bud produces no distinct "docked" wire event either (🔴 OPEN QUESTION, new)
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "frame.time_relative>=624.0 && frame.time_relative<=630.0" \
+tshark -r CAP-016-btsnoop_hci.log -Y "frame.time_relative>=624.0 && frame.time_relative<=630.0" \
   -T fields -e frame.number -e frame.time_relative -e _ws.col.Info
 ```
 
@@ -234,7 +234,7 @@ eventual `Disconnection Complete` once *both* are back.
 Opportunistic re-check, same envelope/extraction as `CAP-007`(old) §3.2:
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "btrfcomm.dlci==0x08 && btrfcomm.len>0" \
+tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm.dlci==0x08 && btrfcomm.len>0" \
   -T fields -e frame.number -e frame.time -e data.data | grep '^0412000[48]'
 ```
 
@@ -277,6 +277,6 @@ encodes** — still 🔴 open, per `CAP-007`(old) §6.
   physical Buds unit as classic peer `04:00:6e:cf:6e:07`? Time-coincident but not content-verified
   in this pass — a GATT-level read of that handle's advertised service data would settle it.
 - 🔴 What is the black, non-Pixel-Buds earbud/case visible in frame from ≈06:33:16–45
-  (`CAP-007-EVENT-NOTES.md` §timeline)? Confirmed to never establish any Bluetooth session in this
+  (`CAP-016-EVENT-NOTES.md` §timeline)? Confirmed to never establish any Bluetooth session in this
   log — purely a camera-frame question, not a protocol one, but flagged so a future viewer of the
   raw video is not misled into thinking it is a second Buds unit under test.
