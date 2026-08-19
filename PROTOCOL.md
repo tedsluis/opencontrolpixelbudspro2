@@ -88,7 +88,7 @@ above it.
 | BLE advertisement | Fast Pair "Battery Notification" extension — passive battery status broadcast, no active connection required | 🟢 FACT (mechanism, official spec); 🟡 HYPOTHESIS (confirmed as what the Buds Pro 2 send) |
 | BLE GATT | Possible standard Battery Service (`0x180F`) for the case; otherwise not confirmed to be used for control | ⚪ ASSUMPTION |
 
-## 2. RFCOMM framing (two competing hypotheses)
+## 2. RFCOMM framing (three structurally distinct sub-protocols: DLCI 0x02 / 0x04 / 0x08)
 
 All application data over `BluetoothSocket` must be parsed into discrete frames
 before being handed to the protobuf deserializer, since RFCOMM is a byte stream
@@ -701,6 +701,15 @@ Create Connection (may require multiple attempts — CAP-001 needed 3; attempt
   about exactly when that BLE association was formed relative to the
   on-screen "Forget" tap (tracked as planned capture `CAP-013`).
 
+**Reconnect, Buds-initiated variant — 🟢 FACT, added 2026-08-18 (`CAP-016-FINDINGS.md` §1):**
+where `CAP-001`'s reconnect is a phone-side `Create Connection` (needing 3 attempts), `CAP-016`
+shows the *Buds* paging the phone instead — a single `Rcvd Connect Request` → `Sent Accept
+Connection Request` → `Rcvd Connect Complete` sequence, landing within 0.5s of the on-camera
+earbud removal from the case (frames 1213–1217, 06:32:02.531–749). Same stored-key tail as
+`CAP-001`'s path (no IO Capability/SSP exchange visible in this window). Not yet reconciled with
+*why* one session pages and the other is paged — plausibly which side (phone vs. Buds) detects
+the case-open/bud-removal event first, not yet tested directly.
+
 **Common tail, both paths:** `Authentication Complete` → `Set Connection
 Encryption` → `Encryption Change`, converging to the same encrypted classic
 link regardless of which path reached it.
@@ -711,12 +720,13 @@ and exactly when the first battery notification/app command arrives relative
 to the classic link completing (steps 3–6 in the diagram above). Only the
 classic BR/EDR link-establishment mechanics (steps 1–2) are promoted here.
 
-**Status**: 🟢 FACT for classic BR/EDR link establishment (§5.1, three
+**Status**: 🟢 FACT for classic BR/EDR link establishment (§5.1, four
 independent captures); ⚪ ASSUMPTION for the RFCOMM/Message-Stream/battery/
 command portions (steps 3–6); 🟢 FACT for step 5's specific behavioral outcome
 (battery notification on reconnect), per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §3.
 **Evidence**: §5.1 above for the classic-link portion (`CAP-001` frames
-732–917, `CAP-002` frames 653–734, `CAP-003` frames 1621/1687–1756); steps 3–6
+732–917, `CAP-002` frames 653–734, `CAP-003` frames 1621/1687–1756, `CAP-016`
+frames 1213–1217); steps 3–6
 still need a full connection sequence captured end-to-end (see
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md`).
 
@@ -873,6 +883,28 @@ leaving them buried in prose elsewhere.
       apparently duplicated on two addresses at once (`0x18` vs. `0x1a` as an inner field-2 value,
       correlating 1:1 with which address carries it) — genuinely unresolved, not guessed at. See
       `DESKRESEARCH_FINDINGS.md`'s 2026-08-17 entry.
+- [ ] **Added 2026-08-18, from `CAP-010-FINDINGS.md` §3 (11:42 session) — byte-level detail for two
+      GATT handles already known to be part of the `0x0c0X` Key-based-Pairing-shaped cluster
+      (§4.3 Option D context), not yet spec-identified.** 🟡 HYPOTHESIS, tracked as open — **not**
+      promoted as resolved facts:
+      - `0x0c0c`: `Notification`, 40 bytes (frame 2020) — handle already known to be in the
+        cluster (`CAP-003-FINDINGS.md` §4), payload length not previously characterized.
+      - `0x0c13`/`0x0c14`: `0x0c13` carries 9-byte (`Read`), 10-byte (`Write`), and 32-byte
+        (`Notification`) payloads; `0x0c14` carries 2-byte CCCD enable/disable writes. These
+        lengths do **not** cleanly fit the 16-byte AES-block pattern seen on `0x0c04`/`0x0c05`/
+        `0x0c0a` — possibly a structurally distinct characteristic from the Key-based-Pairing
+        pair (a leading `0x01` byte precedes the payload on all three `0x0c13` values, not
+        decoded further). Not independently confirmed against any spec.
+- [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §11:** a 73-frame `Handle Value Notification`
+      burst on BLE ATT handle `0x0044` (connection handle `0x0002`), confined to a ~29s window
+      right after the BLE link forms and before the classic link exists; 23 of the 73 contain a
+      recurring `0xfea9` byte-pair marker. Not decoded — payloads don't obviously match any
+      already-documented envelope shape, and the handle's own UUID was not resolved this session.
+- [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §10:** Bluetooth HID (PSM `0x0011`) Feature Report
+      Id `0x01`'s response (frame 1983) is only 3 bytes (`a3 00 00`) — too short to carry any
+      content comparable to Report Id `0x02`'s decoded `AndroidHeadTracker` string (same section,
+      🟡 HYPOTHESIS, not yet promoted here); reported as short/near-empty, not decoded further, no
+      content guessed.
 
 ### Behavior
 
@@ -891,17 +923,31 @@ leaving them buried in prose elsewhere.
       shared log spanning multiple reconnects, `CAP-002-FINDINGS.md` §5), but the underlying
       *reason* (per-pairing SLC setup once only? requires an actual call to re-trigger?) is still
       open. `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group V (new) targets this directly.
-- [ ] Added 2026-08-14: DLCI 0x08 Group `0x04` Code `0x12`'s alternating value — event-driven
-      (breaks/skips on a real physical event) or a free-running liveness/sequence-parity counter?
-      🟡 HYPOTHESIS (free-running) per `CAP-004-FINDINGS.md` §5a Task 5's irregular-interval,
-      near-perfect-alternation observation; not yet tested against a bracketed physical event.
-      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group U (new) targets this directly.
 - [ ] Added 2026-08-14: live GATT primary-service discovery requires stronger cache-busting than
       bond removal — confirmed as a genuine requirement, not an assumption: three independent
       captures (`CAP-002`, `CAP-003`, `CAP-004`) all failed to trigger a live `Read By Group Type`
       response against the Buds despite bond removal beforehand in two of them
       (`CAP-003-FINDINGS.md` §1, `CAP-004-FINDINGS.md` §6). `CAPTURE_BLUETOOTH_HCI_SNOOP.md`
       Group W (new) proposes two untried, stronger candidates.
+- [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §3/§9:** what triggers the RFCOMM multiplexer
+      channel-bounce class (all 4 DLCIs `DISC`+reopened in sequence, ACL link itself undisturbed)?
+      Confirmed **not** solely tied to bud removal — `CAP-016` reproduces the same bounce shape
+      with no camera-visible cause anywhere nearby, while `CAP-007`(old) shows one coincident with
+      a bud removal. No positive mechanism identified in either capture.
+- [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §3/§9:** why does the ANC Notify's
+      settable-toggles byte revert from `0xe8` to `0x00` a second time (frame 3054, 06:33:23.456),
+      after already having re-announced `0xe8`/Transparency twice during the same channel bounce
+      (frames 2768, 3012)? Not resolved by any video-visible action in that capture.
+- [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §6:** docking a bud produces no distinct "docked"
+      wire event either — the ±3s window around each of the two bud-redocking actions this
+      session shows only routine periodic traffic (or unrelated background BLE scan noise), no
+      RFCOMM data frame, ANC re-notify, or DLCI 0x08 Code `0x12` push tied to the docking action
+      itself; only the eventual `Disconnection Complete` once *both* buds are back (§5's promoted
+      FACT).
+- [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §2/§9:** does the second, distinct BLE address
+      (`4f:25:00:85:9a:b1`, connected 06:31:40.983) actually belong to the same physical Buds unit
+      as classic peer `04:00:6e:cf:6e:07`? Time-coincident only — not content-verified in that
+      pass; a GATT-level read of that handle's advertised service data would settle it.
 
 ### Resolved
 
@@ -910,6 +956,18 @@ leaving them buried in prose elsewhere.
       app's About/settings screen displays — **not** the same thing as
       confirming what appears on the wire (see the "wire-baseline" item under
       Framing, added 2026-08-15).
+- [x] **DLCI 0x08 Group `0x04` Code `0x12`'s alternating value — resolved 2026-08-18, 🟢 FACT:**
+      neither purely reactive nor purely free-running — it fires in step with DLCI-0x08
+      channel-(re)open events, **and** continues firing autonomously during otherwise-idle
+      stretches after a gap with no channel churn. First characterized this way in
+      `CAP-004-FINDINGS.md` §5a Task 5 (irregular-interval, near-perfect alternation) and
+      `CAP-007-FINDINGS.md`(old) §3.2/§5 (fires with channel-(re)opens, and independently during
+      idle periods); independently reconfirmed by a second, distinct session,
+      `CAP-016-FINDINGS.md` §7 (8 pushes, cycling `0x02`/`0x03`, 2 in step with channel-(re)opens,
+      4 during idle stretches with no churn) — same characterization holds across two independent
+      captures, clearing `PROJECT_RULES.md` §1's promotion bar for the *behavior* (event-driven
+      **and** autonomous). **What the value itself encodes remains 🔴 open** — not resolved by
+      either capture.
 
 ## 7. Error handling / edge cases
 
@@ -918,7 +976,8 @@ leaving them buried in prose elsewhere.
 | Malformed/unparseable frame (bad magic/length, checksum failure) | Dropped silently, surfaced internally as `BudsError.MalformedFrame`, never a crash | Design rule (not yet capture-verified) | `AGENTS.md` §6, `ARCHITECTURE.md` §5/§7 |
 | Connection lost during write | `ConnectionState` moves to `DISCONNECTED`; in-flight polling coroutines cancelled | Design rule (not yet capture-verified) | `ARCHITECTURE.md` §6 |
 | Buds out of range | Expected: `IOException` → `ConnectionLost`, per architecture | ⚪ ASSUMPTION | — |
-| Case closed during connection | Terminates the active Bluetooth Classic connection | 🔵 confirmed via official support documentation (not yet capture-verified) | `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2 |
+| Case closed during connection | Terminates the active Bluetooth Classic connection — capture-verified 2026-08-18: the trigger is specifically **both buds being docked** (ACL `Disconnection Complete` fires the instant the second bud is placed in the case, reason `0x13`, Buds-initiated), not the lid closing itself — closing/reopening the lid alone, with no bud docked, is wire-silent (see row below) | 🟢 FACT | `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2, `CAP-016-FINDINGS.md` §1 |
+| Case lid opened/closed while both buds remain outside the case | No wire-visible signal on any RFCOMM channel (`0x02`/`0x04`/`0x08`/`0x0a`) — whatever senses the lid position, if anything, does not report it to the phone while no bud is docked | 🟢 FACT — 2 independent captures | `CAP-007-FINDINGS.md` §3.4, `CAP-016-FINDINGS.md` §5 |
 | Inbound frame matching no known schema version | Returns `UnsupportedFirmware` rather than a best-effort parse | Design rule (not yet capture-verified) | `ARCHITECTURE.md` §8 |
 
 ## 8. Changelog of this specification
