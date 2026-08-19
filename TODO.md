@@ -11,7 +11,8 @@ tracking).
 - [x] GitHub repository created + first commit
 - [x] License chosen — AGPL-3.0 (see `DECISIONS.md` ADR-002, `LICENSE`)
 - [x] Core project documentation drafted: `AGENTS.md`, `PROJECT.md`,
-      `PROJECT_RULES.md`, `ARCHITECTURE.md`, `PROTOCOL.md`, `PROTOCOL_NOTES.md`,
+      `PROJECT_RULES.md`, `ARCHITECTURE.md`, `PROTOCOL.md`, `PROTOCOL_NOTES.md`
+      (retired 2026-08-15, see `CHANGELOG.md`),
       `REVERSE_ENGINEERING.md`, `DECISIONS.md`, `CHANGELOG.md`, `README.md`,
       `CAPTURE_BLUETOOTH_HCI_SNOOP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`,
       `SCREENSHOTS_PIXEL_BUDS_APP.md`, `SCREENSHOTS_PIXEL_BUDS_WEB_APP.md`
@@ -54,29 +55,49 @@ tracking).
       same procedure, deliberately triggered as an experiment rather than as
       an emergency recovery step.
 
-**Top priority (updated 2026-08-15) — these two block implementation-readiness
+**Top priority (updated 2026-08-18) — these block implementation-readiness
 for the app's core v1 features and outrank everything else below, including
 the still-open edge-case protocol questions (DLCI 0x08's identity, Groups
 0x04/0x05/0x09's semantics, the CTKD generalization, HFP `battchg` vs.
 `AT+BIEV` discrepancy, etc. — those stay valuable research but are explicitly
 lower priority than finishing ANC/Battery/EQ):**
 
-- [ ] **`CAP-005` (Group T) — EQ command isolation.** EQ's command channel is
-      completely unattributed and is this project's original, still-unmet
-      implementation goal alongside ANC and Battery
-      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T, `PROTOCOL.md` §4.2).
+- [x] **`CAP-005`/`CAP-015` (Group T) — EQ command isolation.** **Done
+      2026-08-18** via `CAP-015`, a second, independent Group T session:
+      field-to-band mapping promoted to 🟢 FACT (all 5 sliders individually
+      isolated, 3 passes each), plus the ±6.0 band-gain clamp and a confirmed
+      preset-quintet reference table (`CAP-015-FINDINGS.md`, `PROTOCOL.md`
+      §4.2).
 - [x] **`CAP-006` (Group B repeat) — ANC reliability confirmation.** **Done
       2026-08-15** — isolated single-tap repeat of all four ANC modes;
       exactly 4 `0x12` "Set ANC state" frames in the whole log, one per tap,
       zero misses (`CAP-006-FINDINGS.md` §3). `CAP-001`'s 2/6 gap does not
       reproduce under isolated conditions. `DECISIONS.md` ADR-009 updated,
       `FrameEncoder` implementation block for the ANC command **lifted**.
-- [ ] **`CAP-010` (Group W) — stronger GATT cache-busting for live service
-      discovery.** Three captures (`CAP-002`–`CAP-004`) have all failed to
-      trigger live GATT discovery via bond removal; Group W is the untried,
-      stronger candidate (`pm clear com.android.bluetooth` + BLE-tool cache
-      clear, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group W). Needed to resolve
-      the `0x0f2a`/`0x0c0X` handle→UUID gap.
+- [x] **`CAP-010`/`CAP-017` (Group W) — stronger GATT cache-busting for live
+      service discovery.** **Discovery goal achieved 2026-08-16** via
+      `CAP-017`, a fresh-GATT-client-app path not originally in this row's
+      scope (`pm clear`/Pixel-9a remain untried alternates, now lower
+      priority) — 137 live discovery frames, full 15-service GATT profile
+      recovered. **Not fully closed:** that session's wire log is
+      snaplen-truncated, so the `0x0f2a`/`0x0c0X` handle→UUID mapping is
+      still open — a snaplen fix + on-screen characteristic drill-down is
+      `CAP-014` (planned, `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9).
+- [x] **`CAP-016` (Group U re-run) — case/bud-removal hardware events.**
+      **Synced into `PROTOCOL.md` 2026-08-18** — promotes 3 🟢 FACTs (§5/§7):
+      Buds-initiated reconnect on bud removal, ACL disconnect the instant
+      both buds are re-docked, and case-lid open/close producing zero wire
+      signal (now 2-capture-confirmed). New open items (RFCOMM channel-bounce
+      trigger, ANC settable-toggles byte, a `0x0044` BLE notification burst,
+      an `AndroidHeadTracker` HID Feature report) tracked in `PROTOCOL.md` §6
+      and `CAP-016-FINDINGS.md`.
+- [ ] **`CAP-008` (Group V, planned) — first real phone call.** Resolves
+      whether HFP AT-command SLC setup reoccurs and whether channel 5/DLCI
+      0x0a carries any payload — genuinely open, not yet captured.
+- [ ] **`CAP-009` (Group X, planned) — battery-level discrepancy bracket.**
+      Cross-check `AT+CIND`/`battchg` against `AT+BIEV` over a natural
+      battery decline — genuinely open, not yet captured; combinable with
+      `CAP-008`'s session if timing allows.
 
 **Next, still important but behind the above:**
 

@@ -10,7 +10,7 @@ Two devices are used, for two different purposes:
 
 | Device | Role | Why |
 |---|---|---|
-| Pixel 7a, Android 16 (with Google Play Services), official Pixel Buds app | **Primary capture** | Only source of actual `libmaestro` command frames (ANC toggle, EQ write) triggered on demand |
+| Pixel 7a, Android 17 (with Google Play Services), official Pixel Buds app | **Primary capture** | Only source of actual `libmaestro` command frames (ANC toggle, EQ write) triggered on demand |
 | Pixel 9a, GrapheneOS, no Pixel Buds app | **Secondary / validation capture** | Confirms pairing/bonding behavior, GATT service discovery, and any spontaneous/OS-level traffic on the actual target OS, without app-driven commands |
 
 Do the Pixel 7a capture first — it's the one that produces frames you can actually match
