@@ -92,6 +92,9 @@ def all_markdown_files() -> list[Path]:
     ]
 
 
+PLANNED_CAPTURE_PLACEHOLDER = "yyyy-MM-dd_HH-mm-ss_HH-mm-ss"
+
+
 def resolve_filename(name: str, referencing_file: Path) -> bool:
     """True if `name` resolves to a real file somewhere sensible in the repo."""
     if name.startswith("/") or name.startswith("FS/"):
@@ -102,6 +105,12 @@ def resolve_filename(name: str, referencing_file: Path) -> bool:
         return True
     if (referencing_file.parent / name).exists():
         return True
+    if PLANNED_CAPTURE_PLACEHOLDER in str(referencing_file.parent):
+        # A not-yet-captured session's EVENT-NOTES.md skeleton — its own
+        # sibling log/video/FINDINGS.md are expected not to exist yet.
+        cap_id = referencing_file.parent.name.split("-", 2)[0:2]
+        if len(cap_id) == 2 and name.startswith("-".join(cap_id) + "-"):
+            return True
     # A bare `CAP-NNN-*` filename referenced from a *different* doc (or from
     # a different capture's own folder) still resolves if that capture's own
     # folder has it — captures/CAP-NNN-<date>-Group_X/<name>.
