@@ -592,6 +592,32 @@ same window.
 > exists at all (e.g. immediately after a phone restart, before ever opening the case or any Buds
 > app) would isolate this — optional, lower priority than Groups T/U/V/W/X above.
 
+#### Group Y — BLE-only connection isolation for the `0x0044` notification burst (occasional, added 2026-08-20)
+**Purpose:** `CAP-016-FINDINGS.md` §11 found a 73-frame `Handle Value Notification` burst on BLE
+ATT handle `0x0044` (connection handle `0x0002`, 23 of the 73 frames containing a recurring
+`0xfea9` byte-pair marker), confined to a ~29s window right after the BLE link forms and before
+the classic link exists. Not yet isolated from a physical trigger: every capture that shows this
+burst to date also has a bud removal/insertion happening nearby in the same session, so it's
+unconfirmed whether the burst is caused by the BLE link forming at all, or by the bud/case action
+that happened to coincide with it in those captures.
+1. **Enable Bluetooth and let the phone's BLE link to the already-paired Buds form on its own**
+   [`GATT-002`] — do **not** touch the buds or the case at any point before, during, or for at
+   least 60s after the link forms. The buds/case stay exactly wherever they already are (worn, in
+   hand, or already sitting open/closed) — this is the opposite of Group M's procedure, which
+   deliberately triggers bud/case events; here the goal is a clean BLE-connect with *zero*
+   physical events nearby to correlate against. Note the exact time Bluetooth was (re-)enabled or
+   the BLE link began forming.
+2. Keep the observation window open and logging for at least 60s past that point, per the usual
+   observation-window discipline (§4.1 Group L's boundary-logging convention: note observation
+   start, any event of interest, and observation end explicitly).
+
+**Analysis:** filter the resulting log for `btatt.opcode==0x1b and btatt.handle==0x0044`. If the
+burst still appears despite no bud/case action anywhere in or near the window, that's a clean
+positive result narrowing `0x0044`'s trigger to "BLE link establishment alone" (`PROTOCOL.md` §6).
+If it does not appear, that's an equally useful negative result, pointing back toward a bud/case
+physical action as the real trigger after all — either outcome closes this open question, per the
+three-way outcome guidance already used for Group Q's items 19–20.
+
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
 No app-driven commands are possible here, so this session focuses on connection-level
