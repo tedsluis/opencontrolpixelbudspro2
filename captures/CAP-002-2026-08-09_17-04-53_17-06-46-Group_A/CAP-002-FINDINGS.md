@@ -76,6 +76,23 @@ negotiated per-connection, not fixed per profile. Future findings should key off
 *content/structure*, not channel number, and any reference to "channel N" should always be
 paired with the DLCI and a content description, not treated as a persistent label.
 
+**DLCI 0x03/0x05, checked and ruled out as unrelated to the Buds (added 2026-08-20):** the full,
+shared, non-restarted log also contains DLCI 0x03 (162 frames) and DLCI 0x05 (44 frames) traffic
+— neither appears in the table above because neither falls inside this session's actual window.
+Per `AGENTS.md` §13's CLI-hygiene rule (always pre-filter by the target device before drawing a
+conclusion), checked the ACL handle carrying this traffic:
+```
+tshark -r CAP-002-btsnoop_hci.log -Y "(btrfcomm.dlci==0x03 or btrfcomm.dlci==0x05) and btrfcomm.len>0" -T fields -e bthci_acl.chandle
+# -> 0x0001 (every frame)
+tshark -r CAP-002-btsnoop_hci.log -Y 'bthci_evt.code==0x03 and frame.time>="2026-08-09 17:04:00" and frame.time<="2026-08-09 17:07:00"' -T fields -e frame.number -e bthci_evt.bd_addr -e bthci_evt.connection_handle
+# -> 48642  04:00:6e:cf:6e:07  0x000b   (the Buds' actual handle this session)
+```
+🟢 **FACT:** DLCI 0x03/0x05's traffic (timestamped ~11:32, hours outside this session's
+17:04:35–17:07:05 window) rides on ACL handle `0x0001`, not the Buds' `0x000b` — it belongs to a
+**different, unattributed device** incidentally present in this shared buffer, the same class of
+artifact as `CAP-004`'s incidental Fitbit traffic (`CAP-004-FINDINGS.md` §1). Not a gap in this
+capture's DLCI coverage — closed, not left open.
+
 ## 2a. 2026-08-12 follow-up: channel-4/DLCI-0x08 burst fully decoded (resolves §2's 🔴 OPEN QUESTION row)
 
 §2's table above marks Channel 4/DLCI 0x08 🔴 OPEN QUESTION: "Short frames (4–69 bytes) in the

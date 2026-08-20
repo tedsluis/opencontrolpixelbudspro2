@@ -48,7 +48,7 @@ third-party app UI at all — confirming the Pixel Buds app truly never appears 
 | 06:24:01 | Open Android Bluetooth settings from the notification shade | User (App) | — | — |
 | 06:24:06 | System settings → **"Pair new device"**, classic inquiry starts | User (App) | — | — |
 | ~06:24:07 | "Pixel Buds Pro 2 van Ted" appears in the classic device list | App (Auto) | — | — |
-| 06:24:24 | Tap **"Pixel Buds Pro 2 van Ted"** in the list | User (App) | `PAIR-002` | `Delete Stored Link Key` (frame 1854, 06:24:24.668) → SMP `Pairing Request` (frame 1856, 06:24:24.672, LE Secure Connections, requesting `Linkkey` key distribution — Cross-Transport Key Derivation) — see `CAP-004-FINDINGS.md` §2 |
+| 06:24:24 | Tap **"Pixel Buds Pro 2 van Ted"** in the list | User (App) | `PAIR-001` | `Delete Stored Link Key` (frame 1854, 06:24:24.668) → SMP `Pairing Request` (frame 1856, 06:24:24.672, LE Secure Connections, requesting `Linkkey` key distribution — Cross-Transport Key Derivation) — see `CAP-004-FINDINGS.md` §2 |
 | 06:24:25 | System **"Pair with Pixel Buds Pro 2 van Ted?"** dialog appears | App (Auto) | — | Coincides with the SMP Public-Key/Confirm/Random exchange (frames 1869–1879) |
 | 06:24:29 | Tap **Pair** | User (App) | — | SMP `DHKey Check` completes (frames 1880/1882) immediately before; classic `Create Connection` sent at 06:24:29.878 (frame 1891) |
 | 06:24:30 | Switch back to nRF Connect | User (App) | — | Classic `Connect Complete` (frame 1933), `Link Key Request` → **`Reply`** (not Negative — frames 1969–1977, using the CTKD-derived key), `Authentication Complete`, `Encryption Change` (frame 2037) — RFCOMM channels 0/6/4/5 open through 06:24:31.04 |

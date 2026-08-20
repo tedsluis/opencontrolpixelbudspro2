@@ -1,6 +1,6 @@
 # Findings: `CAP-005` (Group T — EQ command isolation)
 
-Standardized, evidence-based extraction from `CAP-005-btsnoop_hci.log` + `CAP-005-recoding.mp4`,
+Standardized, evidence-based extraction from `CAP-005-btsnoop_hci.log` + `CAP-005-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled on
 `captures/CAP-004-2026-08-11_06-22-36_06-25-12-Group_S/CAP-004-FINDINGS.md`. Every claim below carries a status per
 `PROJECT_RULES.md` §1:
@@ -15,7 +15,7 @@ staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. M
 
 **Capture ID:** `CAP-005` · **Date:** 2026-08-15 · **Firmware:** `release_5.203` · **Phone:** Pixel
 7a, Android 17 (official app v1.0.955078536). **Log file:** `CAP-005-btsnoop_hci.log` (2,533 frames). **Video:**
-`CAP-005-recoding.mp4` (74.77s, H.264 720x1280, burned-in wall-clock overlay, CEST/+0200).
+`CAP-005-recording.mp4` (74.77s, H.264 720x1280, burned-in wall-clock overlay, CEST/+0200).
 **Device:** Buds `04:00:6e:cf:6e:07` (matches `CAP-001`–`CAP-004`'s `Google_cf:6e:07`), phone
 `e8:d5:2b:7e:ca:81`, single classic ACL connection, handle `0x0002` — confirmed via
 `bthci_evt.code==0x03` (Connect Complete, frame 389).
@@ -33,13 +33,13 @@ only in the outer field number and the one changed EQ-band value (§5).**
 **Method:** `ffprobe` for container metadata, then `ffmpeg -ss <t> -frames:v 1` frame extraction at
 1-second resolution around both claimed event times, reading the video's own burned-in wall-clock
 overlay (bottom-right corner, `DD mmm YYYY HH:MM:SS`, updates once per second). Video-relative time
-`t=0` reads `15 aug 2026 15:02:31`, confirming `EVENT-NOTES.md`'s stated start time and giving a
+`t=0` reads `15 aug 2026 15:02:31`, confirming `CAP-005-EVENT-NOTES.md`'s stated start time and giving a
 direct `t → wall-clock` offset of `+15:02:31`.
 
 ```
-ffprobe -v quiet -print_format json -show_format -show_streams CAP-005-recoding.mp4
+ffprobe -v quiet -print_format json -show_format -show_streams CAP-005-recording.mp4
 for t in 0 40 41 42 43 44 51 52 53 54 55 56 57 58 73; do
-  ffmpeg -y -ss $t -i CAP-005-recoding.mp4 -frames:v 1 -q:v 2 "t${t}.jpg" -loglevel error
+  ffmpeg -y -ss $t -i CAP-005-recording.mp4 -frames:v 1 -q:v 2 "t${t}.jpg" -loglevel error
 done
 ```
 
@@ -50,21 +50,20 @@ done
 | 42 | 15:03:13 | Preset now applied — dropdown reads **`Heavy bass`**, Bass/Low-bass sliders shifted right of center | Matches `EQP-002`'s claimed 15:03:13 exactly |
 | 51 | 15:03:22 | Finger on/near the Bass slider, handle still at its post-preset position | |
 | 52 | 15:03:23 | Bass slider handle has moved **left** (reduced) — drag already registered on-screen | |
-| 53 | 15:03:24 | `Save` button switches from greyed-out to enabled (purple) — this is the moment `EVENT-NOTES.md` records as `EQS-004` | |
+| 53 | 15:03:24 | `Save` button switches from greyed-out to enabled (purple) — this is the moment `CAP-005-EVENT-NOTES.md` records as `EQS-004` | |
 | 55–57 | 15:03:26–28 | Finger moves to and taps `Save` | |
 | 58 | 15:03:29 | `"EQ saved"` toast appears, preset label reverts to `Last saved` | |
 
-**Correction to `CAP-005-EVENT-NOTES.md` §"Event Timeline" (non-destructive, per `PROJECT_RULES.md`
-§3a — that file's own timeline stays as-is, this is an addendum here):** the video shows **three**
-distinct, wire-relevant moments in the `EQS-004` action, not one — (a) the slider drag completing,
-on-screen between `t=51` and `t=52` (15:03:22–15:03:23), (b) the `Save` button becoming enabled at
-15:03:24 (the timestamp `EVENT-NOTES.md` recorded), and (c) the user actually tapping `Save` at
-approximately 15:03:27–28, confirmed saved at 15:03:29. **§3/§5 below show these correspond to two
-separate wire bursts, not one** — a finding this capture surfaces that the original event note
-timeline did not anticipate.
+The video shows **three** distinct, wire-relevant moments in the `EQS-004` action, not one — (a)
+the slider drag completing, on-screen between `t=51` and `t=52` (15:03:22–15:03:23), (b) the
+`Save` button becoming enabled at 15:03:24, and (c) the user actually tapping `Save` at
+approximately 15:03:27–28, confirmed saved at 15:03:29. **§3/§5 below show (a) and (c) correspond
+to two separate wire bursts** — (b) is a pure UI-state change with no new wire traffic at that
+exact moment. `CAP-005-EVENT-NOTES.md`'s own Event Timeline (and its "Corrections" section) already
+reflects this three-moment breakdown directly.
 
 **Not a discrepancy (checked and ruled out):** the on-screen preset name **`Heavy bass`** differs
-textually from `EVENT-NOTES.md`'s `EQP-002` label `'Bass Boost'`, but `PROTOCOL.md` §4.2 already
+textually from `CAP-005-EVENT-NOTES.md`'s `EQP-002` label `'Bass Boost'`, but `PROTOCOL.md` §4.2 already
 lists `Bass Boost/Heavy Bass` as a known synonym pair for the same preset — so this is a naming
 variant already on record, not a new correction.
 

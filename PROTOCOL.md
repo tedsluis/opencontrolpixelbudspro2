@@ -19,7 +19,10 @@ has been retired; its content was consolidated into this document (see §6,
 basis of an ASSUMPTION without explicitly accepting that as a risk, recorded in
 `DECISIONS.md`.
 
-Status legend:
+Status legend (this is the project-wide canonical legend — every other document's
+legend, e.g. `PROJECT_RULES.md` §1 rule 1, `REVERSE_ENGINEERING.md`,
+`DESKRESEARCH_FINDINGS.md`, and every `CAP-NNN-FINDINGS.md`, must be consistent
+with this one, not the reverse):
 
 - 🟢 **FACT** — observed and repeatedly confirmed (multiple captures/experiments,
   or directly stated in Google's official Fast Pair specification as the
@@ -28,6 +31,13 @@ Status legend:
   against our own capture.
 - ⚪ **ASSUMPTION** — not yet tested, assumed based on comparable/official
   protocols or an older Pixel Buds generation.
+- 🔴 **OPEN QUESTION** — genuinely unresolved: no specific hypothesis or working
+  assumption exists yet, only an identified gap. **Formally documented
+  2026-08-20** — this tier was already in heavy, load-bearing use throughout
+  this document's body (16 occurrences) and in every `CAP-NNN-FINDINGS.md`
+  file's own legend before it was added here; this entry reconciles the
+  written rule with the practice that already existed, per `PROJECT_RULES.md`
+  §1 rule 1's matching update.
 
 ---
 
@@ -84,7 +94,7 @@ above it.
 
 | Transport | Used for | Status |
 |---|---|---|
-| Bluetooth Classic RFCOMM (`BluetoothSocket`, SPP-style) | `libmaestro` control channel (ANC, EQ, touch/head-gesture config) and, possibly, Fast Pair Message Stream events (see §2) | 🟡 HYPOTHESIS that these two use the *same* RFCOMM channel — see §2 and §6 open questions |
+| Bluetooth Classic RFCOMM (`BluetoothSocket`, SPP-style) | Three coexisting, independently-framed DLCIs (see §2.3's table): the official Fast Pair Message Stream (DLCI 0x04, 🟢 FACT, carries the confirmed ANC command), `libmaestro`'s candidate Pigweed `pw_hdlc` channel (DLCI 0x02, 🟡 HYPOTHESIS that this is specifically `libmaestro`), and a third, still-unidentified private envelope (DLCI 0x08, 🔴 open identity) | 🟢 FACT that these are three separate channels, not one shared channel — see §2.3 |
 | BLE advertisement | Fast Pair "Battery Notification" extension — passive battery status broadcast, no active connection required | 🟢 FACT (mechanism, official spec); 🟡 HYPOTHESIS (confirmed as what the Buds Pro 2 send) |
 | BLE GATT | Possible standard Battery Service (`0x180F`) for the case; otherwise not confirmed to be used for control | ⚪ ASSUMPTION |
 
@@ -989,3 +999,4 @@ leaving them buried in prose elsewhere.
 | 2026-08-17 | §4.3 Option D (BLE Battery Service `0x180F`) raised from 🔴 to 🟡 HYPOTHESIS: service *existence* confirmed via `CAP-017`'s (18:30) session's live GATT discovery (`CAP-017-FINDINGS.md` §3) — content/usage still unconfirmed, handle range still unresolved. Cross-check pass across all 9 capture sessions' documents; also updated `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to include this session (it previously only referenced the earlier, unsuccessful 11:42 `CAP-010` attempt) | Claude (AI), deskresearch task, not yet reviewed by maintainer |
 | 2026-08-17 | §6 Commands & schemas: DLCI 0x02 deskresearch pass across all captures with DLCI-0x02 traffic (`CAP-001`–`CAP-003`, `CAP-006`, `CAP-007`, 11:42 `CAP-010`). Answered the "is field-16/18 EQ-specific?" open item with a clean negative result (zero matches outside `CAP-005`, including `CAP-006`'s clean isolated ANC taps). Surfaced a new open item: two previously-undocumented HDLC addresses (`0x1e80`/`0x2680` Sent, `0xe980` Rcvd) recur at connection-reopen events in `CAP-005`/`CAP-007`, carrying the same already-documented serial+firmware content as the `0x0000`/`0xD180` pair — HYPOTHESIS that DLCI 0x02's Address field is per-connection-negotiated, not fixed. Full method in `DESKRESEARCH_FINDINGS.md` | Claude (AI), deskresearch task, not yet reviewed by maintainer |
 | 2026-08-18 | §4.2 EQ updated from a fresh, independent `CAP-015` session (`captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`) that drags all 5 EQ sliders individually (3 passes each) and taps 5 presets, resolving the 2026-08-15 capture's field-to-band open question: **field-to-band mapping promoted to 🟢 FACT** (field 1↔Low bass, 2↔Bass, 3↔Mid, 4↔Treble, 5↔Upper treble, wire order reversed from on-screen order), matching the earlier single-band inference exactly. Also added: the ±6.0 band-gain clamp (🟢 FACT, units unconfirmed), a confirmed preset-quintet reference table, and a revised (still 🟡) reading of outer field 16/18 as preview/slider-release rather than preview/explicit-Save-tap. Updated the corresponding §6 open-question entry non-destructively | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
+| 2026-08-18 | Synced with `CAP-016` (Group U re-run, `captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS.md`): §5.1 added the Buds-initiated reconnect-on-removal variant (🟢 FACT, frames 1213–1217); §7 added the case-lid-closed/re-docked disconnect row (🟢 FACT, `Disconnection Complete` reason `0x13` fires the instant the second bud is docked, not on lid-close alone) and the case-lid-open/close-while-buds-are-out zero-signal row (🟢 FACT, 2-capture-confirmed with `CAP-007`); §6 "Resolved" added the DLCI 0x08 Group `0x04` Code `0x12` behavior characterization (🟢 FACT for the event-driven-and-autonomous behavior, value's meaning still 🔴 open) and several new open items (RFCOMM channel-bounce trigger, ANC settable-toggles byte, the `0x0044` BLE notification burst, the `AndroidHeadTracker` HID Feature report) | Claude (AI), capture-analysis task, not yet reviewed by maintainer |

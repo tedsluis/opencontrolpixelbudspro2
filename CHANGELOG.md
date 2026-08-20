@@ -149,6 +149,58 @@ for the "definition of done" that will mark v1.
     (Group T, EQ)/`CAP-006` (ANC)/`CAP-010` (Group W) as top priority over
     edge-case protocol research; trimmed this changelog's own verbosity.
 
+- **2026-08-20: comprehensive documentation audit and remediation**, an 8-phase
+  review (inventory, structural/cross-reference integrity, traceability,
+  FACT/HYPOTHESIS/ASSUMPTION labeling, rule compliance, raw wire-data
+  re-verification, editorial review, gap analysis) covering every core doc,
+  the full Capture Index, and all `CAP-NNN-FINDINGS.md`/`CAP-NNN-EVENT-NOTES.md` files.
+  **Headline: zero 🔴 Critical findings** — independent `tshark` re-derivation
+  of every checkable Phase-5 claim (connection lifecycles, ANC frame counts,
+  EQ quintets, GATT discovery counts, the DLCI-0x02 CRC-32 pipeline) matched
+  the documentation exactly, with no factual discrepancy found. Findings
+  resolved, in order of impact:
+  - **Status-taxonomy unification**: 🔴 OPEN QUESTION formally added as a
+    fourth confidence tier in `PROJECT_RULES.md` §1 rule 1 and `PROTOCOL.md`
+    §0 (also `REVERSE_ENGINEERING.md`/`DESKRESEARCH_FINDINGS.md`'s legends) —
+    reconciling the written rule with practice already unanimous across every
+    `CAP-NNN-FINDINGS.md` file and 16 uses in `PROTOCOL.md`'s own body.
+    `PROJECT_RULES.md` rule 4's stale "🟡 Secondary" citation fixed to match.
+  - **`PROJECT_RULES.md` rule 9a**: added a grandfather clause (findings dated
+    before the rule's own 2026-08-15 introduction aren't retroactively
+    required to be cleaned up) and a worked before/after example. Fixed the
+    two residual post-rule violations found (`CAP-004-FINDINGS.md` §10,
+    `CAP-005-FINDINGS.md` §1) by rewriting them in place.
+  - Test-ID `PAIR-002` corrected to `PAIR-001` on `CAP-002`/`CAP-003`/`CAP-004`
+    (no factory reset was performed in any of the three; `PAIR-002` is
+    reserved for that per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s own definition).
+  - `ARCHITECTURE.md`'s title (predated the project rename) and its §5 DLCI
+    0x02 description (predated the 2026-08-17 address-instability finding)
+    both brought current; `PROTOCOL.md` §1's transport-overview table and §8's
+    changelog table (missing several 2026-08-18 entries) likewise updated.
+  - Filename/timestamp corrections: a doubled-prefix typo in a `CAP-001`
+    example command; two imprecise timestamps in `DESKRESEARCH_FINDINGS.md`;
+    `CAP-005-recoding.mp4` renamed to `CAP-005-recording.mp4` (`git mv`,
+    preserving history).
+  - Added a `.gitignore` (none existed, despite `PROJECT_RULES.md` rule 19
+    referencing one).
+  - **New tooling**: `id_registry.csv` (machine-readable `CAP-NNN`/`ADR-NNN`/
+    Test-ID registry) and `scripts/lint_docs.py` (dead-filename, unregistered-ID,
+    and stale-project-name checks) — running the lint script against the
+    as-audited repo immediately surfaced four Test-IDs already in live use
+    with no catalog row (`OBS-003`, `APP-001`, `APP-002`, `GFPS-002`), now
+    added to `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (plus a new `APP` ID prefix).
+  - Two Phase-7 gap-analysis items closed: `CAP-002`'s DLCI 0x03/0x05 traffic
+    checked and confirmed to belong to an unrelated device sharing the same
+    long, non-restarted log buffer (not the Buds — same class of artifact as
+    `CAP-004`'s incidental Fitbit traffic), not a real DLCI-coverage gap;
+    `CAP-006`'s DLCI 0x0c traffic noted as in-scope-elsewhere, out-of-scope
+    for that ANC-focused session.
+  - Added `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §9 open item and
+    `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Y (`GATT-002`) for isolating
+    whether the `CAP-016`-discovered `0x0044` BLE notification burst is
+    triggered by BLE connection alone — a second-review suggestion adopted
+    after independent verification confirmed the reviewer's own re-derivation.
+
 ### Removed
 
 - `PROTOCOL_NOTES.md`, `EXPERIMENTS.md` (retired 2026-08-15, see above).

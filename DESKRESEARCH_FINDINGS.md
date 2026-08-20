@@ -23,6 +23,9 @@ Status legend (consistent with `PROTOCOL.md` §0):
 - 🟡 **HYPOTHESIS** — observed or plausible, not yet independently confirmed.
 - ⚪ **ASSUMPTION** — not yet tested, assumed based on comparable/official
   protocols or an older Pixel Buds generation.
+- 🔴 **OPEN QUESTION** — genuinely unresolved: no specific hypothesis or working
+  assumption exists yet, only an identified gap (e.g. this document's own
+  2026-08-17 entry flags the `0x18`/`0x1a` inner-field-2 correlation this way).
 
 ---
 
@@ -111,9 +114,9 @@ Status legend (consistent with `PROTOCOL.md` §0):
     connection-setup burst (~15:02:39–42).
   - `CAP-007`: three bursts — frames 788–989 (**09:14:18.1–09:14:21.2**, immediately after DLCI
     0x02 first opens per `CAP-007-EVENT-NOTES.md`'s own timeline), frames 1489–1604
-    (**09:15:41.4–09:15:44.4**, i.e. within the exact ~1s window of `CAP-007-FINDINGS.md` §3.3's
+    (**09:15:41.994–09:15:45.052**, i.e. within the exact ~1s window of `CAP-007-FINDINGS.md` §3.3's
     already-documented 09:15:38 bud-removal RFCOMM channel bounce), and frames 2057–2241
-    (**09:18:43.4–09:19:something**, i.e. within `CAP-007-FINDINGS.md` §3.2's already-documented
+    (**09:18:43.392–09:18:56.004**, i.e. within `CAP-007-FINDINGS.md` §3.2's already-documented
     idle-silence-ends-and-DLCI-0x08-resumes moment at 09:18:43). **All three bursts land inside a
     connection-(re)open/channel-bounce window this project has already independently established
     from other channels' evidence** — this is a new data point *for* that existing

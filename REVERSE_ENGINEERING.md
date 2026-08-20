@@ -25,6 +25,8 @@ Status legend (consistent with `PROTOCOL.md` §0):
   cross-checked against a capture.
 - ⚪ **ASSUMPTION** — inferred from naming conventions, structure, or comparison
   to a similar/known library, not directly confirmed.
+- 🔴 **OPEN QUESTION** — genuinely unresolved: no specific hypothesis or working
+  assumption exists yet, only an identified gap.
 
 ---
 

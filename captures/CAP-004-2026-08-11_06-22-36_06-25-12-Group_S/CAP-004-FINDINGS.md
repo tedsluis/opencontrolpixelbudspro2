@@ -641,16 +641,15 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
   DLCI-0x04 channel.
 
 **Not ready yet:**
-- **Demoted 2026-08-15 (was listed above as 🟢 FACT, in violation of `PROJECT_RULES.md` §1's
-  promotion bar):** Cross-Transport Key Derivation as *the* alternate classic-bonding path used
-  when an LE Secure Connections link already exists (§2). The wire evidence for what happened
-  *in this specific session* is solid (frame-by-frame, §2) — that part stays 🟢 FACT for this
-  capture. But generalizing it into `PROTOCOL.md` §5's connection-lifecycle material as an
-  established mechanism is premature: it rests on a **single capture**, and that capture had
-  **nRF Connect** (a third-party generic BLE tool, not the official app) actively holding the
-  early BLE connection — item 4 in §8 already flags this as a possible confound. Demoted to
-  🟡 HYPOTHESIS pending either a repeat with the official app, or a clean repeat of Group S
-  without nRF Connect (§8 item 4).
+- **🟡 HYPOTHESIS: Cross-Transport Key Derivation as *the* alternate classic-bonding path used
+  when an LE Secure Connections link already exists** (not yet a `PROTOCOL.md` §5
+  connection-lifecycle mechanism). The wire evidence for what happened *in this specific
+  session* is solid (frame-by-frame, §2, stays 🟢 FACT for this capture). Generalizing it into
+  an established mechanism across sessions is premature: it rests on a **single capture**, and
+  that capture had **nRF Connect** (a third-party generic BLE tool, not the official app)
+  actively holding the early BLE connection — item 4 in §8 already flags this as a possible
+  confound. Stays 🟡 HYPOTHESIS pending either a repeat with the official app, or a clean repeat
+  of Group S without nRF Connect (§8 item 4, `CAP-012` planned).
 - Groups `0x05`/`0x09`'s identity (§5) — search results kept redirecting to Device Information
   (Group `0x03`) codes `0x05`/`0x06`/`0x09` instead of confirming standalone groups; **not a
   reassembly artifact (ruled out 2026-08-12, §5a — reassembly is confirmed correct and stable

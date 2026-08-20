@@ -1,0 +1,110 @@
+id,type,status_or_date,description,source_of_truth
+ADR-001,adr,accepted,"Architecture style: Clean Architecture + MVVM + Repository pattern",DECISIONS.md
+ADR-002,adr,accepted,"License: GNU AGPL-3.0",DECISIONS.md
+ADR-003,adr,accepted,"Reverse engineering method: capture + APK analysis, no binary reverse engineering of protocol internals by the AI",DECISIONS.md
+ADR-004,adr,accepted,"No dependency on Google Play Services or any network permission",DECISIONS.md
+ADR-005,adr,accepted,"Device discovery via CompanionDeviceManager, no continuous BLE scanning",DECISIONS.md
+ADR-006,adr,accepted,"Bounded exception to the no-BLE-scanning rule, for the Fast Pair Battery Notification only",DECISIONS.md
+ADR-007,adr,accepted,"`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Groups are capture scenarios, not tests; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the test/behavior catalog",DECISIONS.md
+ADR-008,adr,accepted,"Fast Pair Account Linking, Ownership Transfer, and the Accessory Non-Owner Service are out of scope",DECISIONS.md
+ADR-009,adr,accepted,"ANC command channel confirmed as Fast Pair Message Stream (DLCI 0x04); `FrameEncoder` implementation blocked pending `CAP-006`",DECISIONS.md
+CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-004,capture,captured,"session date/status: 2026-08-11",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-005,capture,captured,"session date/status: 2026-08-15",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-006,capture,captured,"session date/status: 2026-08-15",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-007,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-008,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-009,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-010,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-011,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-012,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-013,capture,planned,"session date/status: *planned",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-014,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-015,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-016,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-017,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+ANC-004,test,catalogued,"ANC → Transparency",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CONV-001,test,catalogued,"Toggle 'Conversation Detection' on/off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+MULTI-001,test,catalogued,"Toggle 'Multipoint' on/off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQP-001,test,catalogued,"EQ preset: Standard",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQP-002,test,catalogued,"EQ preset: Bass Boost",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQP-003,test,catalogued,"EQ preset: Bass Reduction",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQP-004,test,catalogued,"EQ preset: Balanced",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQP-005,test,catalogued,"EQ preset: Vocal Boost",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQP-006,test,catalogued,"EQ preset: Clarity",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQP-007,test,catalogued,"EQ preset: Last saved",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQP-008,test,catalogued,"Save current EQ as a new preset ('Save')",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQS-001,test,catalogued,"EQ slider: High treble",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQS-002,test,catalogued,"EQ slider: Treble",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQS-003,test,catalogued,"EQ slider: Mid",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQS-004,test,catalogued,"EQ slider: Bass",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+EQS-005,test,catalogued,"EQ slider: Low bass",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+TOUCH-001,test,catalogued,"Toggle 'Touch controls' fully on/off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+HEAD-001,test,catalogued,"Toggle 'Head gestures' fully on/off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+HOLD-001,test,catalogued,"Press-and-hold Left → Toggle ANC",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+HOLD-002,test,catalogued,"Press-and-hold Left → Digital assistant",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+HOLD-003,test,catalogued,"Press-and-hold Right → Toggle ANC",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+HOLD-004,test,catalogued,"Press-and-hold Right → Digital assistant",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+HOLD-005,test,catalogued,"Check/uncheck a specific ANC mode in the press-and-hold rotation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+AUDIO-001,test,catalogued,"Toggle 'Mono audio' on/off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+AUDIO-002,test,catalogued,"Toggle 'Volume EQ' on/off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+AUDIO-003,test,catalogued,"Shift the 'Volume balance' (Left/Right)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FW-001,test,catalogued,"Tap the 'Firmware up to date' check",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FW-002,test,catalogued,"View firmware version per component (L/R/Case)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FW-003,test,catalogued,"View serial numbers per component",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FW-004,test,catalogued,"View connection status (""Earbud status: Connected"")",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+INEAR-001,test,catalogued,"Toggle 'In-ear detection' on/off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CASE-001,test,catalogued,"Toggle case sound 'Earbuds replaced' on/off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CASE-002,test,catalogued,"Toggle case sound 'Other notifications' on/off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FIND-001,test,catalogued,"Play sound on Left earbud ('Find My Buds')",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FIND-002,test,catalogued,"Play sound on Right earbud",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FIND-003,test,catalogued,"Play sound on Case",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FIND-004,test,catalogued,"Play sound on both earbuds simultaneously",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CASE-003,test,catalogued,"Open the charging case lid",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CASE-004,test,catalogued,"Remove Left earbud from the case",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CASE-005,test,catalogued,"Remove Right earbud from the case",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+INEAR-002,test,catalogued,"Insert Left earbud into the ear",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+INEAR-003,test,catalogued,"Insert Right earbud into the ear",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+TOUCH-002,test,catalogued,"Tap once on a bud",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+TOUCH-003,test,catalogued,"Double-tap on a bud",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+TOUCH-004,test,catalogued,"Triple-tap on a bud",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+TOUCH-005,test,catalogued,"Swipe forward on a bud",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+TOUCH-006,test,catalogued,"Swipe backward on a bud",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+TOUCH-007,test,catalogued,"Press and hold on a bud",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+HEAD-002,test,catalogued,"Head gesture: Nod",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+HEAD-003,test,catalogued,"Head gesture: Shake",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CONV-002,test,catalogued,"User starts speaking (voice), triggering Conversation Detection",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CASE-006,test,catalogued,"Place buds back in the case and close the lid",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CASE-007,test,catalogued,"Hold the case button for 30 seconds (case open, buds inside, plugged into power)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CASE-008,test,catalogued,"Press the case button briefly/differently to force pairing mode",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+OBS-001,test,catalogued,"App launches (after force close) → requests status",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+BATT-001,test,catalogued,"Notification with battery status on every reconnect",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+OBS-002,test,catalogued,"App running in the background (battery polling)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FWUPD-001,test,catalogued,"Background check/download for a firmware update",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+ADAPT-001,test,catalogued,"Adaptive Audio processing — does it require the app to be active?",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+BATT-002,test,catalogued,"Case broadcasts battery status via BLE advertisement",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+BATT-003,test,catalogued,"Buds update battery status while worn",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+BATT-004,test,catalogued,"Battery data via RFCOMM after connecting (instead of BLE advertisement)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+INEAR-004,test,catalogued,"In-ear sensor reports 'removed' (bud taken out of ear, not placed back in case)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+BATT-005,test,catalogued,"'Low battery' notification (case)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+BATT-006,test,catalogued,"Battery-level change bracketing: `AT+CIND`/`battchg` vs. `AT+BIEV` cross-check over a natural battery decline",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+LOUD-001,test,catalogued,"Loud Noise Protection: automatic volume reduction on a sudden loud sound",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+ADAPT-002,test,catalogued,"Adaptive Audio: dynamic adjustment of the ANC/Transparency balance based on environment",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+FWUPD-002,test,catalogued,"Firmware installation when placed back in the case (with sufficient charge)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+OBS-003,test,catalogued,"Passive observation window covering two distinct sub-brackets used together in Group U: (1) closing the case lid while the connection stays active and both buds are elsewhere (not the normal `CASE-006` buds-back-in-case sequence), and (2) a deliberate ≥3-minute idle wait with nothing touched",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CALL-001,test,catalogued,"Phone call during an active Buds connection (HFP SLC setup, SCO/eSCO pairing)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+PAIR-001,test,catalogued,"Pairing / bonding handshake (forget-and-re-pair baseline)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+PAIR-002,test,catalogued,"Pairing / bonding handshake from a true factory-reset state",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+PAIR-003,test,catalogued,"Disconnect and reconnect to an already-bonded device",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+PAIR-004,test,catalogued,"'Forget' clears a pre-existing BLE association/link-key completely, even one not established via the Pixel Buds app",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+APP-001,test,catalogued,"Tap 'Set up' — hands off from the pairing UI (system settings or a generic BLE tool) to the official Pixel Buds app's first-run onboarding screen",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+APP-002,test,catalogued,"Tap 'Continue' on the app's ""Allow a connection to your Pixel Buds"" nearby-device permission screen",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+GATT-001,test,catalogued,"Full GATT service/characteristic discovery, forced (bond removed first)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+GATT-002,test,catalogued,"Added 2026-08-20. Whether the `0x0044` BLE `Handle Value Notification` burst (`CAP-016-FINDINGS.md` §11 — 73 frames, 23 with a recurring `0xfea9` marker, right after the BLE link forms) is triggered by the BLE connection forming alone, independent of any bud/case action",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+GFPS-001,test,catalogued,"Fast Pair Message Stream traffic (the `[Group][Code][Length][Value]`-framed channel identified in `CAP-002` `CAP-002-FINDINGS.md` §3) present or absent with the Pixel Buds app uninstalled and Google Play Services disabled",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+GFPS-002,test,catalogued,"Tap 'Save' in the Fast Pair ""Save device to \<account\>"" dialog (account-linking confirmation)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md

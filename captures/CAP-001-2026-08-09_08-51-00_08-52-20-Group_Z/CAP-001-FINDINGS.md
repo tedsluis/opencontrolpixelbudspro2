@@ -268,7 +268,7 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
 > label was not; flagged here rather than silently fixed. Second, and substantively: `CAP-002`'s
 > `CAP-002-btsnoop_hci.log` is the same shared, non-restarted buffer as this capture's (see that file's own
 > header), so it contains many more hours of the same traffic. Filtering the *whole* shared log for
-> the exact byte pattern `e8 e8` (`tshark -r CAP-CAP-001-btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "e8:e8"'`)
+> the exact byte pattern `e8 e8` (`tshark -r CAP-001-btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "e8:e8"'`)
 > returns 26 frames spanning 08:51:29–08:52:02 (this session's own window, same frames this bullet
 > already found) — no further occurrences later in the ~8h20m buffer, so the exchange itself is
 > tied to this session's activity window, not a background heartbeat that runs all day. Precisely

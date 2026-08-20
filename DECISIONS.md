@@ -12,7 +12,13 @@ superseded ADR's status is updated accordingly rather than deleted.
 even if an ADR is later rejected or superseded. Before adding a new ADR, check
 the highest existing number below and use the next one — do not guess or
 pre-assign a number in another document (e.g. `TODO.md`), since a task
-written today can be overtaken by another ADR being added first.
+written today can be overtaken by another ADR being added first. Register
+every new ADR in `id_registry.csv` (repo root) alongside adding it here —
+`scripts/lint_docs.py` checks every `ADR-NNN` reference against that registry
+and flags anything unregistered, catching a reused/mistyped number
+mechanically instead of relying on a human noticing (see `CHANGELOG.md`'s
+`fix:` entry on the `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident that
+motivated this).
 
 ## Template
 

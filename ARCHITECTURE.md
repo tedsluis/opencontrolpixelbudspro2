@@ -1,4 +1,4 @@
-## Pixel Buds Pro 2 Control App — Architecture Blueprint
+## OpenControl for Pixel Buds Pro 2 — Architecture Blueprint
 
 This document describes the chosen architecture of the Android app. Changes to
 it are first discussed and recorded in `DECISIONS.md` before being implemented
@@ -238,9 +238,15 @@ HYPOTHESIS that this is specifically `libmaestro`):
 +------+-------------------------+---------+-------------------+------+
 | Flag | Address (LEB128 varint) | Control | Payload (protobuf)| Flag |
 +------+-------------------------+---------+-------------------+------+
-Two multiplexed addresses observed (`0x00`, `0xD180`); payload content only
-partly decoded (device serial + firmware on the Rcvd side) — see
-`PROTOCOL.md` §2.2a.
+**Address field is per-connection-negotiated, not a small fixed set — do not
+hardcode it.** `0x00`/`0xD180` were the first two addresses observed, but a
+2026-08-17 cross-capture pass (`DESKRESEARCH_FINDINGS.md`, `PROTOCOL.md` §2.2a/§6)
+found two more pairs (`0x1e80`/`0x2680` Sent, answered by `0xe980` Rcvd)
+appearing at connection-(re)open/channel-bounce events and carrying the same
+content as the original pair. `FrameDecoder` for this DLCI must treat the
+Address field as dynamically assigned per connection/reconnect, not match
+against a fixed allowlist of known values. Payload content only partly decoded
+(device serial + firmware on the Rcvd side) — see `PROTOCOL.md` §2.2a.
 
 DLCI 0x08 — private `[Group][Code][Length][Value]` envelope (🟢 FACT that
 it's a real, decodable envelope; 🔴 OPEN QUESTION what protocol it belongs to):

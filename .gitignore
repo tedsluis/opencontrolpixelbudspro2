@@ -1,0 +1,24 @@
+# Local AI-agent tool state — never part of the project's own history
+.claude/
+**/.claude/
+
+# Android / Gradle build output (once app development starts — see ARCHITECTURE.md §14)
+build/
+.gradle/
+local.properties
+*.iml
+.idea/
+
+# Reverse-engineering workspace: generated/decompiled output and the APK itself are
+# never committed — see AGENTS.md §4 ("Generated code is build-time only ... must
+# never be committed to version control") and PROJECT.md's non-goals ("No distribution
+# of the original Google APK or any part of it").
+reverse-engineering/apk/jadx-output/
+reverse-engineering/apk/apktool-output/
+*.apk
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~

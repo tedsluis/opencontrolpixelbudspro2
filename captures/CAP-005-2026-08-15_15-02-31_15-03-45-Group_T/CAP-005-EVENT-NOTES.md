@@ -1,6 +1,6 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group T Capture (`CAP-005`)
 
-**Status:** Reviewed against `CAP-005-recoding.mp4` frame-by-frame (1s resolution, using the video's
+**Status:** Reviewed against `CAP-005-recording.mp4` frame-by-frame (1s resolution, using the video's
 burned-in wall-clock overlay) and cross-checked against `CAP-005-btsnoop_hci.log` via `tshark`/Wireshark.
 Corrects and extends the original draft. See `CAP-005-FINDINGS.md` in this same folder for the
 standardized, evidence-graded protocol findings extracted from this correlation — this file is
@@ -15,7 +15,7 @@ the *event timeline*, `CAP-005-FINDINGS.md` is *what it means for the protocol*.
 |       Date       |                     2026-08-15                     |
 | Firmware version |                   release_5.203                    |
 |   Test device    |    Pixel 7a, Android 17 (Official Pixel Buds Companion App v1.0.955078536) |
-| Video file       | `CAP-005-recoding.mp4` (sic — filename as recorded on disk) — 74.8s, starts 15:02:31, ends ~15:03:45 (wall clock, +0200) |
+| Video file       | `CAP-005-recording.mp4` — 74.8s, starts 15:02:31, ends ~15:03:45 (wall clock, +0200) |
 | Log file         | `CAP-005-btsnoop_hci.log` — 270.1s, 15:02:24.56–15:06:54.63 (wall clock, +0200), 2,533 packets |
 
 **Scope note (per the maintainer's test design):** this capture isolates EQ commands to determine
@@ -56,9 +56,6 @@ frame timestamps without offset correction.
   *before* that, and the actual save tap ~3–4s *after* it. This is the main correction this pass
   makes, in the same spirit as `CAP-001-EVENT-NOTES.md`'s "not a single clean action" correction for
   its own pairing sequence.
-- **Video file name:** the on-disk file is `CAP-005-recoding.mp4` (missing the "r" in "recording")
-  — referenced above exactly as it exists on disk rather than silently "corrected", so the filename
-  in this document stays reproducible against the actual asset.
 - **Log predates the video by ~7s and already shows Bluetooth-adjacent radio activity** (LE
   advertising reports, vendor commands) while the video's first frame still shows the
   system "Bluetooth is off" sheet — the log was evidently already running (or the chip already

@@ -37,7 +37,7 @@ capture called for.
 **Method:** `ffprobe` for container metadata, then `ffmpeg -ss <t> -frames:v 1` frame extraction
 (1s resolution, refined to sub-second where needed) reading the video's own burned-in wall-clock
 overlay (bottom-right corner, `DD mmm YYYY HH:MM:SS`). `t=0` reads `18 aug 2026 06:11:06`,
-confirming `EVENT-NOTES.md`'s stated start time with a direct `t → wall-clock` offset of `+06:11:06`.
+confirming `CAP-015-EVENT-NOTES.md`'s stated start time with a direct `t → wall-clock` offset of `+06:11:06`.
 
 ```
 ffprobe -v quiet -print_format json -show_format -show_streams CAP-015-recording.mp4

@@ -107,6 +107,8 @@ humans and AI coding assistants working on it:
 | `WORKSTATION_PREPARATIONS.md` | Fedora development workstation setup |
 | `TODO.md` | Open tasks and current project status |
 | `CHANGELOG.md` | Changes per release |
+| `id_registry.csv` | Machine-readable registry of every `CAP-NNN`/`ADR-NNN`/Test-ID — check before assigning a new one |
+| `scripts/lint_docs.py` | Grep-based doc lint (dead filenames, unregistered IDs, stale project name) — run before committing a doc change |
 
 ## Target platform
 

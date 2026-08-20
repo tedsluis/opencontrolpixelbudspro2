@@ -16,15 +16,23 @@ document wins, unless the project owner explicitly and knowingly deviates from i
 1. **Never speculate without explicitly saying so.**
    Every claim about the Bluetooth protocol, the APK, or the Pixel Buds' behavior
    is one of:
-   - **FACT** — directly observed in a capture, the APK, or an experiment.
+   - **FACT** (🟢) — directly observed in a capture, the APK, or an experiment.
      Reference the evidence (file + line/frame/offset).
-   - **HYPOTHESIS** — an assumption that has not yet been verified. Explicitly
+   - **HYPOTHESIS** (🟡) — an assumption that has not yet been verified. Explicitly
      mark it as `HYPOTHESIS` and describe how it can be tested.
-   - **ASSUMPTION** — something treated as true without verification, because
+   - **ASSUMPTION** (⚪) — something treated as true without verification, because
      verification is not (yet) practical. Explicitly mark it as `ASSUMPTION` and
      explain why.
-2. Never present a HYPOTHESIS as a FACT, not even implicitly through word choice
-   or confident phrasing.
+   - **OPEN QUESTION** (🔴) — genuinely unresolved: neither a specific hypothesis
+     nor a working assumption exists yet, only an identified gap in knowledge.
+     Explicitly mark it as `OPEN QUESTION` rather than forcing it into one of the
+     other three labels. **Formally added 2026-08-20** to match established,
+     unanimous practice: every `CAP-NNN-FINDINGS.md` file already used this
+     fourth tier, and `PROTOCOL.md`'s own body already used 🔴 sixteen times,
+     before this rule caught up to that practice — see `PROTOCOL.md` §0 for the
+     canonical legend and `CHANGELOG.md` for the record of this reconciliation.
+2. Never present a HYPOTHESIS (or an OPEN QUESTION) as a FACT, not even
+   implicitly through word choice or confident phrasing.
 3. Every conclusion in `PROTOCOL.md` must be traceable to at least one of:
    - a capture file in `captures/` (with frame number or timestamp),
    - a code fragment in `REVERSE_ENGINEERING.md` / the reverse-engineering
@@ -33,7 +41,7 @@ document wins, unless the project owner explicitly and knowingly deviates from i
      (with a task/section reference within that file).
 4. Confidence levels (see the status legend at the top of `PROTOCOL.md`) must
    be kept up to date as new evidence arrives — a claim that starts as
-   🔴 Unconfirmed or 🟡 Secondary must be re-labeled once it is confirmed or
+   🔴 OPEN QUESTION or 🟡 HYPOTHESIS must be re-labeled once it is confirmed or
    contradicted, not left stale.
 4a. **Hex & script rule:** every decoding of a burst/packet (in `PROTOCOL.md`,
     a `CAP-NNN-FINDINGS.md`, `DESKRESEARCH_FINDINGS.md`, or elsewhere) MUST
@@ -77,6 +85,39 @@ document wins, unless the project owner explicitly and knowingly deviates from i
     analysis changes a finding in one of these files, rewrite the finding in
     place; the history of *how* it changed belongs in git history and
     `CHANGELOG.md`, not in the findings document's prose.
+
+    **Grandfather clause, added 2026-08-20:** this rule took effect 2026-08-15
+    (see `CHANGELOG.md`). Findings dated before that are not retroactively
+    required to be cleaned up unless independently revised for another reason
+    — treat them as known, accepted legacy debt rather than a live violation.
+    A finding dated on or after 2026-08-15 that still accumulates corrections
+    inline is a live violation and should be rewritten in place.
+
+    **Worked example, added 2026-08-20:**
+
+    - ❌ **Non-compliant** (the pattern this rule prohibits): a bullet's
+      original text is left standing, and a later analysis is appended
+      directly below it as a dated blockquote that reverses or supersedes the
+      original claim — e.g. `> **Correction (2026-08-10):** the above is
+      wrong, actually X` followed later by `> **Full resolution (2026-08-12):**
+      the correction above is *also* incomplete, actually Y`. A reader has to
+      read all three layers and manually work out which one is still true.
+    - ✅ **Compliant, option A — rewrite in place:** the bullet is edited
+      directly to state Y (the current, correct understanding) with its
+      evidence, as if it had always said that. Nothing in the document itself
+      shows that it used to say X or X-then-corrected-to-something-else; that
+      history lives in `git log`/`git blame` and, for anything significant,
+      a `CHANGELOG.md` entry.
+    - ✅ **Compliant, option B — sequential, self-contained sub-investigations:**
+      where a question genuinely needed several distinct capture-analysis
+      passes over time (not just a correction to one existing claim), each
+      pass gets its own numbered subsection (e.g. `§4`, `§4b`, `§4c`), and
+      **each subsection states its own clean, current conclusion** rather than
+      assuming the reader has read the previous one — the *reasoning*
+      accumulates across subsections (that's fine, it's genuinely new
+      analysis each time), but the *conclusion* of the latest subsection is
+      never something the reader must reconstruct by comparing it against an
+      earlier one.
 
 ## 4. Hypothesis tests
 

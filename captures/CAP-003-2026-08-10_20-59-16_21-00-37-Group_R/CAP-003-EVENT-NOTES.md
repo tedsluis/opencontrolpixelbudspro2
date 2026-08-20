@@ -27,7 +27,9 @@ the `0x0c0X` handle cluster (the Key-based-Pairing-shaped write/notify bursts). 
 goal was actually achieved is a `CAP-003-FINDINGS.md` question, not an event-log question — see
 `CAP-003-FINDINGS.md` §1 for the result.** A full classic Secure Simple Pairing exchange was expected as
 a side effect of clearing the pairing (both the classic and BLE bond were removed) and is treated
-as a welcome bonus `PAIR-001`/`PAIR-002` data point, not the main subject of this session.
+as a welcome bonus `PAIR-001` data point (bond removal via system settings only — no factory
+reset happens in this Group, so this is never genuine `PAIR-002` data), not the main subject of
+this session.
 
 ## Event Timeline
 
@@ -46,7 +48,7 @@ flow is triggered.
 | ~20:59:24 | Charging case opened (per original draft note; buds visible with case LED lit in later frames) | User (Hardware) | `CASE-003` | — |
 | 20:59:29 | System-level **Fast Pair "half-sheet" card** appears over nRF Connect's scanner list: **"Pixel Buds Pro 2 will appear on devices linked with ted.sluis@gmail.com"**, with `Close`/`Connect` buttons — this is Android's own Fast Pair UI, not part of nRF Connect | App (Auto) | — | A BLE `LE Extended Create Connection` follows shortly after (20:59:38.31, frame 1612) — the ~9s gap between the card appearing and the BLE connect is consistent with the user reading the card before acting (exact tap moment not captured in 1fps sampling) |
 | 20:59:38 | (log-only) Fresh BLE connection + classic pairing sequence begins | — | `PAIR-001` | See `CAP-003-FINDINGS.md` §1 for the full pairing sequence |
-| 20:59:42 | nRF Connect now shows the device as **`CONNECTED` / `BONDED`**, GATT `CLIENT` tab listing `Generic Attribute (0x1801)`, `Generic Access (0x1800)`, `Broadcast Audio Scan Service (0x184F)` as primary services (only 3 visible on screen, not scrolled further) | App (Auto) | `PAIR-002` | RFCOMM/SDP/ATT activity in progress — see `CAP-003-FINDINGS.md` §2 |
+| 20:59:42 | nRF Connect now shows the device as **`CONNECTED` / `BONDED`**, GATT `CLIENT` tab listing `Generic Attribute (0x1801)`, `Generic Access (0x1800)`, `Broadcast Audio Scan Service (0x184F)` as primary services (only 3 visible on screen, not scrolled further) | App (Auto) | `PAIR-001` | RFCOMM/SDP/ATT activity in progress — see `CAP-003-FINDINGS.md` §2 |
 | 20:59:43–54 | System dialog **"Ready to use — Pixel Buds Pro 2 is connected to someone else's account. That person can locate it in Find Hub..."** with options `Ask owner to share device` / `Remove previous owner` / `Start using the device` | App (Auto) | — | Fast-Pair ownership-transfer flow — the device was previously linked to a Google account from earlier test sessions; this is expected, not a new finding |
 | 20:59:45 | Notification banner: **"Pixel Buds Pro 2 — Left 100% Case 38% Right 100%"** appears on top of the "Ready to use" dialog | App (Auto) | — | — |
 | ~20:59:54 | User taps **"Start using the device"** | User (App) | — | — |
