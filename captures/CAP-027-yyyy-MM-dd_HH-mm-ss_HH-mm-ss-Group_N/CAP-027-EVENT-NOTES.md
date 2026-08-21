@@ -1,0 +1,66 @@
+# Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group N, Touch gestures (`CAP-027`)
+
+**Status:** 🔲 **Not yet captured — skeleton only.** Fill in every `TBD` below after recording,
+per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), and
+`PROJECT_RULES.md` rule 11/14 (reproducibility metadata). Once reviewed, rename this folder from
+the placeholder `CAP-027-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_N` to the actual session
+date/start-time/end-time, e.g. `CAP-027-2026-09-01_10-20-00_10-26-00-Group_N`.
+
+**Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group N):** main run-through group, never yet
+captured — physical touch gestures on the bud hardware itself (distinct from Group F's app-side
+on/off toggles). **`TOUCH-007`'s behavior depends on the per-earbud press-and-hold configuration
+set in Group G (`CAP-021`)** — note which mode (Toggle ANC vs. Digital assistant) was active for
+whichever earbud is tested here.
+
+## Log Metadata
+
+|      Field       |                       Value                        |
+|------------------|-----------------------------------------------------|
+|    Capture ID    |                      `CAP-027`                     |
+|      Group(s)    |                         N                          |
+|       Date       |                        TBD                         |
+| Firmware version |                        TBD                         |
+|   Test device    | TBD (Pixel 7a, Android version, official app version) |
+| Video file       |               TBD — `CAP-027-recording.mp4`        |
+| Log file         |             TBD — `CAP-027-btsnoop_hci.log`        |
+| Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
+
+## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group N — physical actions on the bud, either
+phone)
+
+7. **Tap once** on a bud [`TOUCH-002`]. Wait. Note time.
+8. **Double-tap** on a bud [`TOUCH-003`]. Wait. Note time.
+9. **Triple-tap** on a bud [`TOUCH-004`]. Wait. Note time.
+10. **Swipe forward** on a bud (volume up) [`TOUCH-005`]. Wait. Note time.
+11. **Swipe backward** on a bud (volume down) [`TOUCH-006`]. Wait. Note time.
+12. **Press and hold** on a bud [`TOUCH-007`]. Wait. Note time. **Record which per-earbud
+    press-and-hold mode was active** (from Group G, `CAP-021`).
+
+## Event Timeline
+
+| Time | Action | Initiator | Test-ID | Wire evidence / Notes |
+|---|---|---|---|---|
+| TBD | Tap once on a bud | User (Hardware) | `TOUCH-002` | TBD |
+| TBD | Double-tap on a bud | User (Hardware) | `TOUCH-003` | TBD |
+| TBD | Triple-tap on a bud | User (Hardware) | `TOUCH-004` | TBD |
+| TBD | Swipe forward on a bud | User (Hardware) | `TOUCH-005` | TBD |
+| TBD | Swipe backward on a bud | User (Hardware) | `TOUCH-006` | TBD |
+| TBD | Press and hold on a bud (mode: TBD) | User (Hardware) | `TOUCH-007` | TBD |
+
+## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5)
+
+- [ ] These are hardware-initiated gestures — check whether they generate any RFCOMM/GATT traffic
+      at all, or are purely on-device (media-key-style local reactions with no wire signal).
+- [ ] If traffic is found, identify which DLCI/channel carries it.
+- [ ] Compare structure against `PROTOCOL.md` §2's envelope hypotheses per the usual process.
+
+## Next steps after filling this in
+
+- [ ] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13's
+      traceability check) — confirm `TOUCH-002`–`TOUCH-007` are clearly referenced above.
+- [ ] Write `CAP-027-FINDINGS.md` per `PROJECT_RULES.md` §2, using this file's timeline as the
+      evidence source, following the hex & script rule (§1 rule 4a).
+- [ ] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
+      from `planned` to `analyzed`, fill in Android/firmware/app-version columns and the log path.
+- [ ] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
+      actual session date/start-time/end-time.

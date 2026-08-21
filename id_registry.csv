@@ -26,6 +26,18 @@ CAP-015,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI
 CAP-016,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-017,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-018,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-019,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-020,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-021,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-022,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-023,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-024,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-025,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-026,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-027,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-028,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-029,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-030,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
