@@ -37,6 +37,28 @@ $ tshark -r CAP-019-btsnoop_hci.log -Y "btrfcomm.len>0 and frame.time_epoch>X an
 DLCI distribution for this session (`btrfcomm.dlci`, all frames): `0x00`×32, `0x02`×252, `0x04`×90,
 `0x08`×76, `0x0a`×2, `0x0c`×47 — same DLCI set as `CAP-020`.
 
+**🟢 FACT — DLCI 0x0c is the standard Hands-Free Profile (HFP) SLC setup, not custom app traffic.**
+Hex-dumping this DLCI's frames:
+
+```
+$ tshark -r CAP-019-btsnoop_hci.log -Y "btrfcomm.dlci==0x0c" -x
+...
+0000  02 02 20 15 00 11 00 43 00 31 ff 19 03 41 54 2b   .. ....C.1...AT+
+0010  42 52 53 46 3d 39 32 31 0d 89                     BRSF=921..
+...
+0000  02 02 20 16 00 12 00 43 00 31 ff 1b 02 41 54 2b   .. ....C.1...AT+
+0010  42 41 43 3d 31 2c 32 2c 33 0d 89                  BAC=1,2,3..
+...
+0000  02 02 20 13 00 0f 00 43 00 31 ff 15 01 41 54 2b   .. ....C.1...AT+
+0010  43 49 4e 44 3d 3f 0d 89                           CIND=?..
+```
+
+confirms standard ASCII AT commands (`AT+BRSF=921`, `AT+BAC=1,2,3`, `AT+CIND=?`, followed later by
+`AT+CIND?`/`AT+CMER=3,0,0,1`/`AT+BIND=1,2`/`AT+BIND=?` and their `OK`/`+CIND:`/`+BIND:` responses,
+not reproduced in full here) — this is HFP's standard Service Level Connection handshake, not a
+custom settings-toggle channel. Rules this DLCI out as carrying app-specific behavior; not
+investigated further.
+
 ## 3. Analysis: `CONV-001` (Conversation detection OFF→ON)
 
 **Location correction against the planned-row assumption:** Conversation detection is not a

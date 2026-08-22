@@ -149,6 +149,71 @@ screens, but which specific frames belong to which earbud's list cannot be deter
 payload alone. A future capture that isolates a single checkbox toggle on **one** earbud's screen
 only (no Left/Right switch mid-burst) would resolve this.
 
+## 4a. DLCI 0x0a payload burst (new finding, not one of Group G's Test-IDs)
+
+**🟢 FACT:** this session is the **first capture in the project to observe any payload on DLCI
+0x0a (RFCOMM channel 5)**. Every other capture that has checked this DLCI — `CAP-001`, `CAP-002`,
+`CAP-005`, `CAP-006`, `CAP-007`, `CAP-016` (pre-batch) and `CAP-011`/`CAP-019`/`CAP-020`/`CAP-022`–
+`CAP-025` (this batch) — shows only the 2 channel-control frames (open/close) and zero data. This
+session alone carries a sustained burst:
+
+```
+$ tshark -r CAP-021-btsnoop_hci.log -Y "btrfcomm" -T fields -e btrfcomm.dlci | sort | uniq -c
+   1687 0x0a
+    312 0x02
+    151 0x08
+     64 0x04
+     43 0x0c
+     32 0x00
+
+$ tshark -r CAP-021-btsnoop_hci.log -Y "btrfcomm.dlci==0x0a and btrfcomm.len>0" -T fields -e frame.number -e frame.time_relative -e btrfcomm.len | wc -l
+1123
+```
+
+1123 of the 1687 DLCI-0x0a frames carry a nonzero-length payload, spanning **frame 2093 to frame
+4926**, log-relative time **179.019580s–276.657232s** (wall clock ≈08:02:29.5–08:04:07.1, per this
+session's `07:59:30.485` log start). Payload length is overwhelmingly fixed: 1026 of 1123 frames
+are exactly 215 bytes, with the remainder at 319/267/58/32/6/475/163/430/110 bytes.
+
+Raw hex, frame 2097 (`tshark -r CAP-021-btsnoop_hci.log -Y "frame.number==2097" -x`):
+
+```
+0000  02 02 20 e0 00 dc 00 42 00 29 ef ae 01 01 04 00   .. ....B.)......
+0010  d3 0a d0 01 00 00 00 00 6d b6 db 6d b6 db 6d b6   ........m..m..m.
+0020  db 6d b6 db 6d b6 db 6d b6 db 6d b6 db 6d b6 db   .m..m..m..m..m..
+...(repeating `00 00 00 00` / `6d b6 db` runs through the remainder of the 215-byte frame)...
+00b0  62 22 11 00 7e ee ed 7e ee ed 7e ee ed 7e ee ed
+00c0  83 0e cd 86 73 09 a9 a6 2a b4 ee 91 b3 4a ed b8
+00d0  ec e9 b7 0c 41 b6 af 10 c1 2b da bd 69 89 c4 50
+00e0  c8 c5 2d 71 6a
+```
+
+The RFCOMM UIH payload (from byte `01 04 00 d3 0a d0 01 ...`) opens with what mechanically decodes
+as a protobuf tag `0x0a` = field 1, wiretype 2 (length-delimited), followed by varint length
+`d0 01` = 208. This structural shape (tag+varint-length) is the extent of what is confirmed —
+**the content is not decoded further here.** The bulk of the 215-byte frame is a highly repetitive
+`00 00 00 00` / `6d b6 db` byte run, distinct in character from the tail ~20 bytes, which look
+higher-entropy.
+
+**🔴 OPEN QUESTION — not resolved by this session:**
+- What this stream represents. The burst window (08:02:29.5–08:04:07.1) does not cleanly bound
+  any single Group G Test-ID's tap time: `HOLD-002` (08:01:23.784) finishes well before the burst
+  starts, `HOLD-004` (08:03:16.151) and `HOLD-001` (08:03:49.667) fall inside it, and `HOLD-003`
+  (08:04:09.920) falls just after it ends — so the burst is not obviously attributable to any one
+  settings write, and looks more like a sustained background stream than a per-action payload.
+- **An interpretation of this stream as Spatial Audio/IMU head-tracking telemetry is explicitly
+  NOT adopted here.** Group G's actual subject is per-earbud press-and-hold configuration, not
+  head gestures (see this file's own Purpose/§1, and `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Group G
+  description) — there is no session context tying this burst to head-tracking, and no field-level
+  decode was performed to support any specific payload semantics. Per `AGENTS.md` §13's
+  zero-creativity rule, this is left as an open question rather than a guessed interpretation.
+- Whether this recurs in any other capture, or is specific to whatever incidental
+  app/OS/connection state was active in this one session (e.g. the earlier `TOUCH-001`-shaped
+  re-send noted in `CAP-021-EVENT-NOTES.md` around 08:00:10, or some other incidental state) is
+  unknown — no other capture in this batch shows any DLCI 0x0a payload to compare against.
+- `TODO.md`'s `CAP-008` item already earmarks DLCI 0x0a for a phone-call capture; this finding
+  shows the channel is not exclusively call-related, since nothing here involved a call.
+
 ## 5. Cross-command structural comparison
 
 Extends `CAP-019-FINDINGS.md` §5's table — `HOLD-001`–`HOLD-004` are the first settings observed to
@@ -167,6 +232,9 @@ earbud, before the value itself.
   official spec).
 - **Recommended next step:** an isolated single-checkbox-toggle-on-one-earbud-only capture would
   resolve `HOLD-005`'s open Left/Right attribution question.
+- **New, unattributed finding (§4a):** this session is the first to record any payload on DLCI
+  0x0a — a 1123-frame burst, frames 2093–4926, ~179–277s into the log. Not tied to any Group G
+  Test-ID; flagged for follow-up, not investigated further this session.
 
 ## 7. Open Questions
 
@@ -174,3 +242,5 @@ earbud, before the value itself.
   settings beyond press-and-hold? → copied to `PROTOCOL.md` §6.
 - 🔴 Which of `HOLD-005`'s 16 frames belong to Left's rotation list vs. Right's — the payload
   carries no earbud-distinguishing field for this particular write. → copied to `PROTOCOL.md` §6.
+- 🔴 What does DLCI 0x0a's 1123-frame payload burst (§4a) represent, and why does it appear only
+  in this session? → copied to `PROTOCOL.md` §6.

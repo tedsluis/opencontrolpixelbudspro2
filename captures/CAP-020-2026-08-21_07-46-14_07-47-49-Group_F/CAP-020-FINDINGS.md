@@ -180,6 +180,10 @@ this coincidence.
   exercised OFF→ON for both) would (a) confirm whether `field 4`/`field 29`'s value flips to `0`
   for "off" (supporting a simple enable-flag reading) or whether an entirely different field
   appears, and (b) give a second independent sample before this crosses to 🟢 FACT.
+- **State left behind:** this session leaves Head gestures enabled (ON), which is a required
+  prerequisite for the planned Group O captures (`HEAD-002`/`HEAD-003`) — already tracked in
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index row for `CAP-020`, noted here too since a
+  reader of this file alone wouldn't otherwise see it.
 
 ## 7. Open Questions
 

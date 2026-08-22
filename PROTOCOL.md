@@ -1108,6 +1108,18 @@ leaving them buried in prose elsewhere.
 - [ ] **Added 2026-08-21, `CAP-025-FINDINGS.md` §7:** what does the Ring action's second ACK
       variant's extra byte represent (`0xFF 0x01 0x00 0x03 0x04 0x01 0x00` — one byte beyond the
       spec's worked example `0xFF 0x01 0x00 0x02 0x04 0x01`)?
+- [ ] **Added 2026-08-21, `CAP-022-FINDINGS.md` §8:** does Volume balance (`field 17`) actually
+      persist locally on the earbuds across a disconnect/reconnect, as
+      `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1's `AUDIO-003` row claims from the app's own on-screen
+      text? Not tested — `CAP-022` only captured the write itself, no reconnect cycle.
+- [ ] **Added 2026-08-21, `CAP-021-FINDINGS.md` §4a:** DLCI 0x0a (RFCOMM channel 5) — silent
+      (channel-control frames only, zero payload) in every capture that has checked it before or
+      since (`CAP-001`/`CAP-002`/`CAP-005`/`CAP-006`/`CAP-007`/`CAP-016`,
+      `CAP-011`/`CAP-019`/`CAP-020`/`CAP-022`–`CAP-025`) — carried a 1123-frame payload burst in
+      `CAP-021` alone (frames 2093–4926, ~179–277s into that session's log, dominant frame size 215
+      bytes). Structurally protobuf-tag-shaped (`0a d0 01` = field 1, length 208) but not decoded
+      further, and not attributable to any single Group G Test-ID's tap time. What triggers this,
+      and why it appears in exactly one session out of fourteen checked, is unresolved.
 - [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §11:** a 73-frame `Handle Value Notification`
       burst on BLE ATT handle `0x0044` (connection handle `0x0002`), confined to a ~29s window
       right after the BLE link forms and before the classic link exists; 23 of the 73 contain a

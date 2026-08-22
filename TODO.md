@@ -92,8 +92,11 @@ lower priority than finishing ANC/Battery/EQ):**
       an `AndroidHeadTracker` HID Feature report) tracked in `PROTOCOL.md` §6
       and `CAP-016-FINDINGS.md`.
 - [ ] **`CAP-008` (Group V, planned) — first real phone call.** Resolves
-      whether HFP AT-command SLC setup reoccurs and whether channel 5/DLCI
-      0x0a carries any payload — genuinely open, not yet captured.
+      whether HFP AT-command SLC setup reoccurs. Channel 5/DLCI 0x0a is no
+      longer known to be universally silent — `CAP-021` (2026-08-21, Group G)
+      recorded a 1123-frame payload burst on it, unrelated to any call
+      (`CAP-021-FINDINGS.md` §4a, `PROTOCOL.md` §6) — but what triggers that
+      burst, and whether a call also produces one, remains open.
 - [ ] **`CAP-009` (Group X, planned) — battery-level discrepancy bracket.**
       Cross-check `AT+CIND`/`battchg` against `AT+BIEV` over a natural
       battery decline — genuinely open, not yet captured; combinable with
