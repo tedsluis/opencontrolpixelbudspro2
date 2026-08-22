@@ -89,6 +89,21 @@ above it.
 > looks more like a protocol/schema revision number than a firmware build string (`CAP-002-FINDINGS.md`
 > §3). Left as 🔴 OPEN QUESTION which (if any) is what the app itself would call "the firmware
 > version" until a capture also records that app screen.
+>
+> **Update (2026-08-21), `CAP-023` — the capture this note asked for now exists.** Device details →
+> More settings → Firmware update shows **"Device firmware version": Left earbud `release_5.203`,
+> Right earbud `release_5.203`, Case `release_5.203`** — video-confirmed on-screen, same session,
+> at 08:24:17. The DLCI 0x08 private-envelope string documented above (Group `0x03` Code `0x02`)
+> was independently present in this same session's connection-time handshake (frame 849,
+> 08:23:46.038, **before** the screen was even opened) with the byte-identical value
+> `"release_5.203"`. This is the first same-session, on-screen-confirmed match this project has
+> recorded — 🟡 HYPOTHESIS (strong, proposed for 🟢 FACT pending maintainer sign-off per
+> `AGENTS.md` §6): `"release_5.203"` is what the app calls "the firmware version," and
+> `"Revision 6"` is not surfaced anywhere in the app's own UI. **Still open:** what `"Revision 6"`
+> itself represents, if not the user-facing firmware version. Also established as a **clean
+> negative finding**: tapping the manual "Up to date" check and opening this screen produce **zero**
+> RFCOMM traffic — the display is read from already-cached connection-time data, not queried live.
+> See `CAP-023-FINDINGS.md` §3–§4.
 
 ## 1. Transports overview
 
@@ -537,8 +552,21 @@ event-observation coroutines.
   explicit "hide" type frame. Optional when a single bud is inserted/removed.
 - **Advantage**: visible on a passive BLE scan — no active connection required,
   useful for the battery fallback logic in `ARCHITECTURE.md` §4.
-- **Evidence**: official Fast Pair spec. Not yet `[VERIFIED-LOCAL]` against a
-  real capture.
+- **Attempted 2026-08-21, `CAP-011` — inconclusive, not `[VERIFIED-LOCAL]`.** A dedicated capture
+  found the Fast Pair Service (`0xFE2C`) BLE advertisement 🟢 FACT present (634 frames, 5 rotating
+  addresses, strong/close-range RSSI), but the sampled service-data payloads do **not** structurally
+  match this section's documented layout — no sampled byte equals the expected Length&Type marker
+  (`0x33` show / `0x34` hide) at any offset. **Two un-isolated confounds, not resolved either way:**
+  (1) the capture's own procedure deviated from a clean passive scan — an active classic RFCOMM
+  connection was present throughout (the official app was left open on "Device details"), a
+  confound this section's guidance doesn't yet cover; (2) the observed payloads structurally
+  resemble a plain Account Key Filter/rotating-salt advertisement rather than the Battery
+  Notification extension specifically. See `CAP-011-FINDINGS.md` §4 for the full byte-level check.
+  **Not force-fit, per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5's explicit instruction** — recorded as
+  inconclusive rather than a false negative or false positive. A clean repeat (Bluetooth scanning
+  only, no app open, no active connection) is still needed.
+- **Evidence**: official Fast Pair spec; `CAP-011-FINDINGS.md` (2026-08-21, inconclusive result,
+  not a confirmation).
 
 #### Option B — RFCOMM via Fast Pair Message Stream "Device Information"
 
@@ -600,43 +628,194 @@ connection).
 
 ### 4.4 Find My Buds / Ring action
 
-- **Status**: 🟡 HYPOTHESIS — concrete and testable.
-- **Hypothesis**: this maps to the Fast Pair Message Stream's documented
-  Action group (`0x04`), Ring code (`0x01`), per the spec's own worked ACK
-  example (`0xFF 0x01 0x00 0x02 0x04 0x01`).
-- **Sent to**: RFCOMM Message Stream channel, per §2.1.
-- **Expected response**: an ACK frame (`0xFF 0x01 ...`) per the spec's worked
-  example, or a NAK with a reason byte on failure.
-- **Evidence**: official Fast Pair Message Stream spec worked example;
-  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1 confirms the "Play sound on Left/Right
-  earbud/Case" actions exist in the official app UI.
-- **Verified with experiment**: none yet — this is the recommended **first**
-  capture target to empirically confirm/refute the Message Stream framing
-  hypothesis (§2.3), since the expected byte pattern is fully specified and
-  low-risk to trigger repeatedly.
+- **Status**: 🟡 **HYPOTHESIS (strong), for Left/Right specifically — tested 2026-08-21,
+  `CAP-025`.** Confirmed video-correlated, cross-validated against ANC's already-🟢-FACT command on
+  the same channel (§4.1) per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1's Group K discipline — proposed
+  for promotion to 🟢 FACT, **pending explicit maintainer sign-off** (`AGENTS.md` §6 — an agent may
+  not commit this promotion unilaterally). Case/"both simultaneously" are a **separate, unresolved
+  mechanism** — see below.
+- **Confirmed opcode/payload** (`[Group:1][Code:1][Len:2BE][Value:1]`, `PROTOCOL.md` §2.1's Message
+  Stream envelope): `Group=0x04` (Action), `Code=0x01` (Ring) — exact match to the spec's own
+  worked example. `Value` byte: `0x01` = start ringing **Right**, `0x02` = start ringing **Left**,
+  `0x00` = stop/mute (shared, not per-earbud). Every `Sent` frame is retransmitted once
+  (byte-identical), and answered by two ACK variants: `0xFF 0x01 0x00 0x02 0x04 0x01` (byte-for-byte
+  match to the spec's worked example) and `0xFF 0x01 0x00 0x03 0x04 0x01 0x00` (one extra trailing
+  byte beyond the spec's worked example, not decoded — possibly a status/result code).
+- **Sent to**: RFCOMM Message Stream channel, DLCI 0x04, per §2.1.
+- **Expected response**: confirmed — see the two ACK variants above.
+- **Major structural finding — Case/"both" use a different mechanism entirely**: the official app
+  splits this feature across two screens. "Device details → Find device" has only **"Ring
+  Left"/"Ring Right"** buttons (the mechanism above). Case and "both simultaneously" are only
+  reachable via "Find device → Most recent location", which opens a **Find Hub / Find My Device
+  map view** with its own "Play sound" flow — video-confirmed showing a "Connecting…" state and the
+  on-screen copy *"If you have another device linked with your Google Account, it may try to play
+  sound on Pixel Buds Pro 2."* Across a ~2.5-minute window with this flow active, **zero**
+  `Group 0x04 Code 0x01` frames appear on the wire — 🟢 FACT (checked explicitly, not assumed) that
+  Case/"both" do **not** use the confirmed local Ring mechanism. 🟡 HYPOTHESIS: this instead routes
+  through Google's Find My Device Network (account/cloud-mediated) — **potentially a hard
+  Zero-GMS limit** (`AGENTS.md` §1) on offline Case-ring support, not just an open research
+  question; flagged for maintainer awareness.
+- **Evidence**: official Fast Pair Message Stream spec worked example; `CAP-025-FINDINGS.md` §3–§7
+  (`[VERIFIED-LOCAL]`, 2026-08-21) — video-confirmed taps, 4 action/response pairs (2 starts, 2
+  stops), cross-validated against ANC's confirmed envelope.
+- **Verified with experiment**: `CAP-025` (2026-08-21) — see `captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-FINDINGS.md`.
+  Recommended follow-up: none required for Left/Right; a targeted capture of the Find Hub network
+  path (if in-scope at all, per the Zero-GMS question above) would be needed for Case/"both".
 
-### 4.5 Other toggles and secondary features (not yet mapped)
+### 4.5 Other toggles and secondary features
 
-The following features are confirmed present in the official app UI (🟢 FACT
-for UI presence) but have no known opcode, channel, or schema yet (🔴
-unconfirmed at the protocol level):
+**General-purpose settings-write envelope, discovered 2026-08-21 (`CAP-019`–`CAP-024`) — shared
+infrastructure underlying every subsection below.** All the settings confirmed in this section ride
+DLCI 0x02 (`libmaestro`'s Pigweed `pw_hdlc` channel, §2.2a), inside a common two-level outer
+wrapper: `field 5 { field 4 { <setting-specific content> } }` (standard protobuf wire-format tags,
+`field=tag>>3`, `wiretype=tag&7`). Payload offsets 0–12, preceding this wrapper, are a constant,
+**cross-session-stable** prefix (`03 10 XX 1d ea 71 de 7e 25 1d 9a 8c 9e` or a closely related
+variant — confirmed identical across `CAP-005`, `CAP-019`, `CAP-020`, `CAP-021` on different days),
+consistent with `CAP-005-FINDINGS.md` §5a's "request/response correlation ID" reading, now
+confirmed stable across sessions, not just within one. Each individual setting supplies its own
+inner field number (and, for the per-earbud settings in §4.5.3, a further `field 7{field1|2{...}}`
+sub-wrapper to select Left/Right) — 🟡 **HYPOTHESIS (strong, not yet 🟢 FACT)**: this is a
+general-purpose `libmaestro` settings-apply envelope, evidenced by 9+ distinct settings across 6
+independent captures all sharing the identical outer nesting with no counter-example found. See
+`CAP-020-FINDINGS.md` §5 for the envelope's first identification.
 
-- Conversation Detection
-- Multipoint Bluetooth
-- Touch & Hold customization (per bud: ANC cycle or Digital Assistant)
-- In-ear detection
-- Volume EQ
-- Volume Balance (L/R slider)
-- Case sounds (earbuds replaced, other notifications)
-- Head gestures (nod/shake)
-- Loud Noise Protection (firmware 4.467+; likely on-device DSP only, no
-  wire-visible command expected — see §6)
-- Adaptive Audio dynamic adjustment (firmware 4.467+; likely on-device DSP
-  only — see §6)
+#### 4.5.1 Conversation Detection
 
-> Duplicate §4.1–§4.4's structure per command once each is captured and
-> confirmed (opcode/payload structure, target channel, expected response,
-> status, evidence, verifying experiment).
+- **Feature confirmed present**: toggle at Device details → Sound → Audio intelligence →
+  Conversation detection. 🟢 FACT (UI presence).
+- **Opcode/payload**: `field5(len5){ field4(len3){ field22 = 0|1 } }` (varint). 🟡 HYPOTHESIS —
+  `field 22` = Conversation Detection, ON (`1`) confirmed video-correlated; OFF direction not
+  captured this session.
+- **Sent to**: DLCI 0x02 (`libmaestro`, §2.2a).
+- **Expected response**: `Rcvd`-direction echo of the same field/prefix shape (no distinct ACK
+  opcode observed).
+- **Status**: 🟡 HYPOTHESIS.
+- **Evidence**: `CAP-019-FINDINGS.md` §3 (`[VERIFIED-LOCAL]`, 2026-08-21, frame 1808).
+- **Verified with experiment**: `CAP-019` (2026-08-21), single OFF→ON sample.
+
+#### 4.5.2 Multipoint Bluetooth
+
+- **Feature confirmed present**: toggle at Device details → More settings → Multipoint. 🟢 FACT.
+- **Opcode/payload**: `field5(len4){ field4(len2){ field11 = 0|1 } }`. 🟡 HYPOTHESIS — `field 11` =
+  Multipoint, ON confirmed video-correlated.
+- **Additional finding**: enabling Multipoint also triggers a **Fast Pair Message Stream SASS
+  burst** on DLCI 0x04, Group `0x07` (Codes `0x11`/`0x21`/`0x34`/`0x40`/`0x41`/`0x42`, the last
+  containing the ASCII string `"in-use"`) — the first time this project has correlated SASS content
+  (§2.3's table) with a specific triggering action. Directly confirms
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group C's own hint that Multipoint "may trigger an
+  SDP/connection update, not just an RFCOMM command."
+- **Sent to**: DLCI 0x02 (setting write) **and** DLCI 0x04 Group `0x07` (SASS negotiation).
+- **Status**: 🟡 HYPOTHESIS (both the DLCI 0x02 write and the SASS correlation).
+- **Evidence**: `CAP-019-FINDINGS.md` §4 (`[VERIFIED-LOCAL]`, 2026-08-21, frame 2293 + frames
+  2296–2319).
+- **Verified with experiment**: `CAP-019` (2026-08-21), single OFF→ON sample.
+
+#### 4.5.3 Touch & Hold customization
+
+- **Feature confirmed present**: "Use touch controls" top-level toggle (Device details → Controls
+  and gestures), plus per-earbud "Press and hold" assignment (Toggle ANC / Digital assistant) and
+  an ANC-mode rotation checklist. 🟢 FACT.
+- **Top-level toggle opcode**: `field5(len4){ field4(len2){ field4 = 1 } }` (`CAP-020`, `[VERIFIED-LOCAL]`
+  2026-08-21, frame 1741). 🟡 HYPOTHESIS.
+- **Press-and-hold action selection opcode** (`HOLD-001`–`HOLD-004`, `CAP-021`,
+  `[VERIFIED-LOCAL]` 2026-08-21): `field5(len10){ field4(len8){ field7(len6){ field1|field2(len4){
+  field4 = 5|6 } } } }` — `field 1` = Left, `field 2` = Right (inside the `field 7` sub-wrapper);
+  `field 4`'s value: `5` = Active noise control, `6` = Digital assistant. 🟡 HYPOTHESIS (strong) —
+  all 4 combinations (Left/Right × ANC/Assistant) exercised, each producing exactly the predicted
+  field/value pair with no exceptions; frame 1903 (Rcvd echo) independently contains both the new
+  and a second value in one message.
+- **ANC-mode rotation checklist opcode** (`HOLD-005`, `CAP-021`): `field5(len12){ field4(len10){
+  field12(len8){ field1..4 = 0|1 } } }` — four boolean flags, 🟡 HYPOTHESIS field order = on-screen
+  top-to-bottom order (Noise cancellation / Off / Adaptive / Transparency). **Not resolved**: this
+  envelope carries no Left/Right-distinguishing field, so which frames belong to which earbud's
+  list is unconfirmed (§6).
+- **Sent to**: DLCI 0x02 for all three sub-features.
+- **Status**: 🟡 HYPOTHESIS throughout.
+- **Evidence**: `CAP-020-FINDINGS.md` §3, `CAP-021-FINDINGS.md` §3–§4.
+- **Verified with experiment**: `CAP-020` (top-level toggle), `CAP-021` (press-and-hold + checklist),
+  both 2026-08-21.
+
+#### 4.5.4 Head gestures
+
+- **Feature confirmed present**: "Use head gestures" toggle (Device details → Controls and
+  gestures), gated behind the touch-controls screen; tapping it the first time also shows a
+  one-time "Optimize head gestures" explainer dialog (client-side only, no separate wire event tied
+  to its dismissal). 🟢 FACT.
+- **Opcode/payload**: `field5(len5){ field4(len3){ field29 = 2 } }`. 🟡 HYPOTHESIS — `field 29` =
+  Head gestures; the wire write fires on the tap itself, ~1s before the explainer dialog even
+  renders.
+- **Sent to**: DLCI 0x02.
+- **Status**: 🟡 HYPOTHESIS.
+- **Evidence**: `CAP-020-FINDINGS.md` §4 (`[VERIFIED-LOCAL]`, 2026-08-21, frame 1935).
+- **Verified with experiment**: `CAP-020` (2026-08-21), single OFF→ON sample.
+
+#### 4.5.5 In-ear detection
+
+- **Feature confirmed present**: toggle at Device details → More settings → In-ear detection.
+  🟢 FACT.
+- **Opcode/payload**: `field5(len4){ field4(len2){ field2 = 0|1 } }`. 🟡 HYPOTHESIS — `field 2` =
+  In-ear detection, both ON and OFF video-confirmed.
+- **Sent to**: DLCI 0x02.
+- **Status**: 🟡 HYPOTHESIS.
+- **Evidence**: `CAP-024-FINDINGS.md` §3 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1850/1912).
+- **Verified with experiment**: `CAP-024` (2026-08-21), both directions sampled.
+
+#### 4.5.6 Volume EQ
+
+- **Feature confirmed present**: toggle at the bottom of Device details → Sound → Equalizer (not
+  the top-level Sound page). 🟢 FACT.
+- **Opcode/payload**: `field5(len4){ field4(len2){ field15 = 0|1 } }`. 🟡 HYPOTHESIS — `field 15` =
+  Volume EQ, both directions video-confirmed.
+- **Sent to**: DLCI 0x02.
+- **Status**: 🟡 HYPOTHESIS.
+- **Evidence**: `CAP-022-FINDINGS.md` §4 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1871/1895).
+- **Verified with experiment**: `CAP-022` (2026-08-21), both directions sampled.
+
+#### 4.5.7 Volume Balance (L/R slider)
+
+- **Feature confirmed present**: "Balance" slider at Device details → Sound. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
+  §1 claims this is stored locally on the earbuds (persistent, works across devices) — **not tested
+  this batch** (no disconnect/reconnect cycle captured after setting it).
+- **Opcode/payload**: `field5{ field4{ field17 = N } }`, `N` observed in the range 10–200 across a
+  single continuous drag gesture (7 wire updates). 🟡 HYPOTHESIS — `field 17` = Volume balance,
+  based on exclusive timing overlap with the drag (matches the EQ band-slider's own
+  live-position-streaming behavior, §4.2). 🔴 **Not confirmed**: the value's scale/range or which
+  direction (L/R) it represents — 1fps video sampling was insufficient to map specific values to
+  specific slider positions.
+- **Sent to**: DLCI 0x02.
+- **Status**: 🟡 HYPOTHESIS for the field identity; 🔴 open for scale/direction/persistence.
+- **Evidence**: `CAP-022-FINDINGS.md` §5 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1922–2099).
+- **Verified with experiment**: `CAP-022` (2026-08-21) — a single continuous drag, not isolated
+  extreme-position samples.
+
+#### 4.5.8 Case sounds
+
+- **Feature confirmed present**: Device details → More settings → Case sounds, with two toggles
+  labeled **"Bud return"** (app's own settings-list wording: "Earbuds replaced") and **"Other
+  alerts"** ("Other notifications"). 🟢 FACT.
+- **Opcode/payload**: `"Bud return"` = `field5(len5){ field4(len3){ field28 = 0|1 } }`; `"Other
+  alerts"` = `field5(len5){ field4(len3){ field27 = 0|1 } }`. 🟡 HYPOTHESIS. No case-specific vs.
+  bud-specific channel/address distinction was found — both use the same shared DLCI 0x02
+  envelope as every bud-targeted setting.
+- **Sent to**: DLCI 0x02.
+- **Status**: 🟡 HYPOTHESIS. The `"Bud return"` OFF sample (frame 1988) is not cleanly
+  disambiguated between a genuine tap and a screen-open state sync — the ON sample and both
+  `"Other alerts"` samples are unambiguous.
+- **Evidence**: `CAP-024-FINDINGS.md` §4–§5 (`[VERIFIED-LOCAL]`, 2026-08-21).
+- **Verified with experiment**: `CAP-024` (2026-08-21), both toggles, both directions.
+
+#### 4.5.9 Not yet mapped
+
+The following remain 🔴 unconfirmed at the protocol level — no capture has targeted them yet:
+
+- Loud Noise Protection (firmware 4.467+; likely on-device DSP only, no wire-visible command
+  expected — see §6).
+- Adaptive Audio dynamic adjustment (firmware 4.467+; likely on-device DSP only — see §6).
+
+> Duplicate §4.1–§4.4's structure per command once each is captured and confirmed (opcode/payload
+> structure, target channel, expected response, status, evidence, verifying experiment) — this is
+> now done for every setting captured through `CAP-024`; extend §4.5.1–§4.5.8 or add a new
+> subsection as further settings are confirmed, rather than reverting to a bare bullet list.
 
 ## 5. Connection lifecycle
 
@@ -775,21 +954,15 @@ leaving them buried in prose elsewhere.
       result narrowing, not resolving, its identity. See §2.3's 2026-08-14
       addendum. DLCI 0x02 remains the sole candidate that matches
       `pbpctrl`'s stated mechanism.
-- [ ] **Added 2026-08-15: wire-baseline firmware version, distinct from the
-      confirmed UI-baseline.** §0.1 documents `release_5.203` as the
-      `[VERIFIED-LOCAL]` UI-baseline (official app screenshot, 2026-07-30),
-      but four different version-like strings exist on the wire and are not
-      yet reconciled: `"release_5.203"` itself (found on DLCI 0x08's
-      still-unidentified private envelope — its semantic meaning there isn't
-      confirmed, only the string match), `"Revision 6"` (DLCI 0x04's
-      *official, spec-confirmed* "Firmware version" field — a completely
-      different string format), and `"cape2_sm"`/`"500m"`–`"500p"`
-      (board codename / config variant, not version candidates). **Do not
-      treat `release_5.203` as confirmed on the wire in the same sense it's
-      confirmed in the UI** — see §0.1 for the full breakdown. Needs a
-      capture that also records the app's firmware-display screen at the
-      same moment as the capture to resolve which wire value (if any)
-      corresponds to it.
+- [x] **Added 2026-08-15, resolved 2026-08-21 (`CAP-023`): wire-baseline firmware version, distinct
+      from the confirmed UI-baseline.** §0.1 documents `release_5.203` as the `[VERIFIED-LOCAL]`
+      UI-baseline (official app screenshot, 2026-07-30); the requested capture that also records
+      the app's firmware-display screen now exists (`CAP-023`, 2026-08-21) — the on-screen
+      "Device firmware version" (Left/Right/Case, all `release_5.203`) matches DLCI 0x08's private
+      envelope string byte-for-byte, same session. 🟡 HYPOTHESIS (strong, proposed for 🟢 FACT
+      pending maintainer sign-off): `"release_5.203"` is what the app calls "the firmware version."
+      `"Revision 6"` (DLCI 0x04's official field) and `"cape2_sm"`/`"500m"`–`"500p"` remain
+      un-surfaced by the app's own UI — see §0.1's 2026-08-21 update for the full detail.
 
 ### Commands & schemas
 
@@ -905,6 +1078,36 @@ leaving them buried in prose elsewhere.
         `0x0c0a` — possibly a structurally distinct characteristic from the Key-based-Pairing
         pair (a leading `0x01` byte precedes the payload on all three `0x0c13` values, not
         decoded further). Not independently confirmed against any spec.
+- [ ] **Added 2026-08-21, `CAP-019`–`CAP-024`:** what do DLCI 0x02's confirmed inner field numbers
+      (§4.5's `field4`=touch controls, `field11`=Multipoint, `field15`=Volume EQ, `field17`=Volume
+      balance, `field19`=Mono audio, `field22`=Conversation Detection, `field27`/`field28`=Case
+      sounds, `field29`=Head gestures, plus §4.5.3's `field7{field1|2{field4=5|6}}` for
+      press-and-hold) actually represent — stable per-setting/per-field schema IDs from a real
+      `.proto` definition, or something else? No official spec or extracted schema confirms this;
+      inferred purely from timing correlation across 9+ settings in 6 captures.
+- [ ] **Added 2026-08-21:** does DLCI 0x02's general-purpose `field5{field4{...}}` settings-write
+      envelope (§4.5's shared preamble) generalize to *every* remaining `libmaestro` setting, or
+      only to the ones captured so far? Does the `field7{field1|field2{...}}` Left/Right selector
+      (§4.5.3) generalize to other per-earbud settings beyond press-and-hold?
+- [ ] **Added 2026-08-21, `CAP-021-FINDINGS.md` §4:** which of `HOLD-005`'s 16 ANC-mode-rotation
+      checklist frames belong to Left's list vs. Right's — the envelope carries no
+      earbud-distinguishing field for this specific write, unlike `HOLD-001`–`HOLD-004`.
+- [ ] **Added 2026-08-21, `CAP-022-FINDINGS.md` §5:** `field 17`'s (Volume balance) numeric
+      scale/range and which direction (L/R) increasing values represent — a single continuous drag
+      gesture (7 wire values) wasn't enough to resolve this at 1fps video-sampling resolution.
+- [ ] **Added 2026-08-21, `CAP-019-FINDINGS.md` §4:** what do Fast Pair SASS (DLCI 0x04 Group
+      `0x07`) Codes `0x11`/`0x21`/`0x40`/`0x42` encode beyond their raw bytes? Is Code `0x34`
+      (which also fires with no Multipoint action nearby) a periodic/keepalive SASS code unrelated
+      to Multipoint specifically?
+- [ ] **Added 2026-08-21, `CAP-011-FINDINGS.md` §4:** why do the Fast Pair Service (`0xFE2C`) BLE
+      advertisement payloads sampled in `CAP-011` not match `PROTOCOL.md` §4.3 Option A's
+      documented Battery Notification byte layout (no sampled byte equals the expected `0x33`/`0x34`
+      Length&Type marker at any offset)? Do the 5 rotating BLE addresses observed in that capture
+      all belong to the same physical Buds/Case unit (RSSI proximity is supporting, not conclusive,
+      evidence)?
+- [ ] **Added 2026-08-21, `CAP-025-FINDINGS.md` §7:** what does the Ring action's second ACK
+      variant's extra byte represent (`0xFF 0x01 0x00 0x03 0x04 0x01 0x00` — one byte beyond the
+      spec's worked example `0xFF 0x01 0x00 0x02 0x04 0x01`)?
 - [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §11:** a 73-frame `Handle Value Notification`
       burst on BLE ATT handle `0x0044` (connection handle `0x0002`), confined to a ~29s window
       right after the BLE link forms and before the classic link exists; 23 of the 73 contain a
@@ -918,6 +1121,25 @@ leaving them buried in prose elsewhere.
 
 ### Behavior
 
+- [ ] **Added 2026-08-21, `CAP-025-FINDINGS.md` §7/§8 — directly relevant to this project's
+      Zero-GMS goal (`AGENTS.md` §1).** Does "Find My Buds" for the Case and "both simultaneously"
+      (`FIND-003`/`FIND-004`) genuinely require Google's Find My Device Network (an
+      account/cloud-mediated path, video-confirmed showing a "Connecting…" state and copy
+      referencing "another device linked with your Google Account"), with **no local-only
+      fallback**? If so, this may be a hard limit on offline Case-ring support for this project's
+      own implementation, not just an open research question — flagged for maintainer awareness.
+      Related: what triggers the three repeated classic-RFCOMM-connection-reopen bursts
+      (~40s apart) observed while this Find Hub flow was active in `CAP-025`?
+- [ ] **Added 2026-08-21, `CAP-011-FINDINGS.md` §4/§5:** does an active classic RFCOMM connection
+      suppress or alter the Buds' Fast Pair Battery Notification BLE advertisement? `CAP-011`'s own
+      attempted passive-scan capture had an active connection present throughout (a procedure
+      deviation, not the intended design), leaving this un-isolated from the capture's other
+      finding (the sampled payload not matching the documented Battery Notification byte layout at
+      all — see the Commands & schemas entry above).
+- [ ] **Added 2026-08-21, `CAP-024-FINDINGS.md` §4:** does Case sounds' `"Bud return"` setting
+      (`CASE-001`) require an explicit tap to register a write even when the value doesn't change,
+      or does opening the "Case sounds" screen itself trigger a state-sync write on DLCI 0x02?
+      One sampled frame (1988) isn't disambiguated between these two readings from video alone.
 - [ ] Whether Loud Noise Protection and/or Adaptive Audio generate any
       Bluetooth traffic toward the phone at all, or remain fully on-device DSP
       decisions with no wire-visible signal.
@@ -1000,3 +1222,4 @@ leaving them buried in prose elsewhere.
 | 2026-08-17 | §6 Commands & schemas: DLCI 0x02 deskresearch pass across all captures with DLCI-0x02 traffic (`CAP-001`–`CAP-003`, `CAP-006`, `CAP-007`, 11:42 `CAP-010`). Answered the "is field-16/18 EQ-specific?" open item with a clean negative result (zero matches outside `CAP-005`, including `CAP-006`'s clean isolated ANC taps). Surfaced a new open item: two previously-undocumented HDLC addresses (`0x1e80`/`0x2680` Sent, `0xe980` Rcvd) recur at connection-reopen events in `CAP-005`/`CAP-007`, carrying the same already-documented serial+firmware content as the `0x0000`/`0xD180` pair — HYPOTHESIS that DLCI 0x02's Address field is per-connection-negotiated, not fixed. Full method in `DESKRESEARCH_FINDINGS.md` | Claude (AI), deskresearch task, not yet reviewed by maintainer |
 | 2026-08-18 | §4.2 EQ updated from a fresh, independent `CAP-015` session (`captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`) that drags all 5 EQ sliders individually (3 passes each) and taps 5 presets, resolving the 2026-08-15 capture's field-to-band open question: **field-to-band mapping promoted to 🟢 FACT** (field 1↔Low bass, 2↔Bass, 3↔Mid, 4↔Treble, 5↔Upper treble, wire order reversed from on-screen order), matching the earlier single-band inference exactly. Also added: the ±6.0 band-gain clamp (🟢 FACT, units unconfirmed), a confirmed preset-quintet reference table, and a revised (still 🟡) reading of outer field 16/18 as preview/slider-release rather than preview/explicit-Save-tap. Updated the corresponding §6 open-question entry non-destructively | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-08-18 | Synced with `CAP-016` (Group U re-run, `captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS.md`): §5.1 added the Buds-initiated reconnect-on-removal variant (🟢 FACT, frames 1213–1217); §7 added the case-lid-closed/re-docked disconnect row (🟢 FACT, `Disconnection Complete` reason `0x13` fires the instant the second bud is docked, not on lid-close alone) and the case-lid-open/close-while-buds-are-out zero-signal row (🟢 FACT, 2-capture-confirmed with `CAP-007`); §6 "Resolved" added the DLCI 0x08 Group `0x04` Code `0x12` behavior characterization (🟢 FACT for the event-driven-and-autonomous behavior, value's meaning still 🔴 open) and several new open items (RFCOMM channel-bounce trigger, ANC settable-toggles byte, the `0x0044` BLE notification burst, the `AndroidHeadTracker` HID Feature report) | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
+| 2026-08-21 | Synced with 8 new captures (`CAP-011`, `CAP-019`–`CAP-025`): **§4.4 Find My Buds/Ring** — Left/Right confirmed 🟡 HYPOTHESIS (strong), video-correlated, proposed for 🟢 FACT pending maintainer sign-off (`CAP-025`); Case/"both" found to route through a separate, likely GMS-mediated Find Hub mechanism producing no local wire command — flagged as a possible Zero-GMS hard limit. **§4.5 rewritten** from a bare unmapped-feature bullet list into per-command subsections (§4.5.1–§4.5.8), each with a confirmed DLCI 0x02 opcode, following §4.1–§4.4's structure, plus a new shared preamble describing the general-purpose `field5{field4{...}}` settings-write envelope discovered this batch (9+ settings, 6 captures, no counter-example). **§4.3 Option A** — `CAP-011` attempted a passive BLE scan; result recorded as inconclusive (Fast Pair Service traffic present but not structurally matching the documented Battery Notification layout), not force-fit; procedure deviation (active connection present) flagged. **§0.1** — wire-baseline-vs-UI-baseline firmware version resolved (`CAP-023`): on-screen `release_5.203` matches DLCI 0x08's already-documented string, same session. §6 updated with ~10 new open items across Commands & schemas and Behavior, including a newly-raised Zero-GMS-relevant question about Find Hub's Case/"both" ring mechanism | Claude (AI), capture-analysis task, not yet reviewed by maintainer |

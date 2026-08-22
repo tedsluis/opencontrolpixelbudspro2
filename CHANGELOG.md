@@ -200,6 +200,27 @@ for the "definition of done" that will mark v1.
     whether the `CAP-016`-discovered `0x0044` BLE notification burst is
     triggered by BLE connection alone — a second-review suggestion adopted
     after independent verification confirmed the reviewer's own re-derivation.
+- **2026-08-21: 8 new captures analyzed** (`CAP-011`, `CAP-019`–`CAP-025`, Groups Q/C/F/G/H/I/J/K),
+  closing out most of the app's remaining main-run-through command coverage. **Headline finding**:
+  a general-purpose DLCI 0x02 settings-write envelope (`field5{field4{...}}`) identified and
+  confirmed across 9+ distinct settings — Conversation Detection, Multipoint (`CAP-019`), Touch
+  controls, Head gestures (`CAP-020`), per-earbud press-and-hold + ANC-mode rotation (`CAP-021`),
+  Mono audio, Volume EQ, Volume balance (`CAP-022`), In-ear detection, and both Case-sound settings
+  (`CAP-024`) — each now has its own `PROTOCOL.md` §4.5 subsection (§4.5.1–§4.5.8) in place of the
+  previous bare unmapped-feature bullet list. `PROTOCOL.md` §4.4 (Find My Buds) confirmed for
+  Left/Right (`CAP-025`, video-correlated, proposed for 🟢 FACT pending maintainer sign-off), with a
+  notable new finding that Case/"both simultaneously" route through a separate, likely
+  GMS/account-mediated Find Hub mechanism rather than the local Ring command — flagged as a possible
+  Zero-GMS hard limit. `CAP-023` resolved `PROTOCOL.md` §0.1's long-open wire-baseline-vs-UI-baseline
+  firmware-version question (on-screen `release_5.203` matches the already-documented DLCI 0x08
+  string, same session) and found the firmware-check UI is cached, not live-queried (clean negative
+  finding). `CAP-011`'s passive-BLE-scan attempt for the Battery Notification advertisement was
+  inconclusive — a procedure deviation (active connection present throughout) and a structural
+  non-match against the documented byte layout, recorded honestly rather than force-fit; a clean
+  repeat is still needed. Two gaps explicitly flagged rather than silently left blank: `CAP-023`
+  never visited the "About" (serial numbers/connection status) screen (`FW-003`/`FW-004`), and
+  `HOLD-005`'s 16-frame ANC-rotation-checklist burst can't be split between Left's and Right's lists
+  from wire content alone. ~10 new open questions added to `PROTOCOL.md` §6.
 
 ### Removed
 

@@ -111,8 +111,8 @@ _Make sure the buds are connected and active._
 | `ANC-002` | ANC → Noise Cancellation | User (App) | B | 🟢 | Sends a configuration command to the buds. | `PROTOCOL.md` §4.1 |
 | `ANC-003` | ANC → Adaptive | User (App) | B | 🟢🔵 | Pro 2-specific; added in firmware 4.467 (Sept. 2025). Automatically adjusts volume to the environment. | `PROTOCOL.md` §4.1 |
 | `ANC-004` | ANC → Transparency | User (App) | B | 🟢 | | `PROTOCOL.md` §4.1 |
-| `CONV-001` | Toggle 'Conversation Detection' on/off | User (App) | C | 🟢 | Switches to Transparency and pauses media when you speak. | — |
-| `MULTI-001` | Toggle 'Multipoint' on/off | User (App) | C | 🟢 | Connects to 2 Bluetooth devices simultaneously; may trigger an SDP/connection update. | — |
+| `CONV-001` | Toggle 'Conversation Detection' on/off | User (App) | C | 🟢 | Switches to Transparency and pauses media when you speak. | `PROTOCOL.md` §4.5.1 |
+| `MULTI-001` | Toggle 'Multipoint' on/off | User (App) | C | 🟢 | Connects to 2 Bluetooth devices simultaneously; may trigger an SDP/connection update. | `PROTOCOL.md` §4.5.2 |
 | `EQP-001` | EQ preset: Standard | User (App) | D | 🟢 | Full, fixed preset list from screenshots — each preset is a separate value to capture. | — |
 | `EQP-002` | EQ preset: Bass Boost | User (App) | D, T | 🟢 | **T (added 2026-08-14):** top-priority isolated capture target now that EQ is known not to share ANC's channel — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. **Captured 2026-08-15 (`CAP-005`, on-screen preset label "Heavy bass").** | `PROTOCOL.md` §4.2 |
 | `EQP-003` | EQ preset: Bass Reduction | User (App) | D | 🟢 | | — |
@@ -126,27 +126,27 @@ _Make sure the buds are connected and active._
 | `EQS-003` | EQ slider: Mid | User (App) | E | 🟢 | | — |
 | `EQS-004` | EQ slider: Bass | User (App) | E, T | 🟢 | **T (added 2026-08-14):** second, structurally different isolated action for Group T's cross-command check — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. **Captured 2026-08-15 (`CAP-005`) — also revealed an additional, distinct "Save"-tap wire burst not anticipated by the original test design.** | `PROTOCOL.md` §4.2 |
 | `EQS-005` | EQ slider: Low bass | User (App) | E | 🟢 | | — |
-| `TOUCH-001` | Toggle 'Touch controls' fully on/off | User (App) | F | 🟢🔵 | Enables/disables the touch sensors on the buds. | — |
-| `HEAD-001` | Toggle 'Head gestures' fully on/off | User (App) | F | 🟢🔵 | Pixel Buds Pro 2-exclusive. | — |
-| `HOLD-001` | Press-and-hold Left → Toggle ANC | User (App) | G | 🟢 | Binary choice per earbud. | — |
-| `HOLD-002` | Press-and-hold Left → Digital assistant | User (App) | G | 🟢🔵 | Per screenshot: "Works on Android only." | — |
-| `HOLD-003` | Press-and-hold Right → Toggle ANC | User (App) | G | 🟢 | | — |
-| `HOLD-004` | Press-and-hold Right → Digital assistant | User (App) | G | 🟢🔵 | | — |
-| `HOLD-005` | Check/uncheck a specific ANC mode in the press-and-hold rotation | User (App) | G | 🟢 | Checkbox list: Noise Cancellation, Off, Adaptive, Transparency — determines which modes the buds locally remember for the touch cycle. | — |
-| `AUDIO-001` | Toggle 'Mono audio' on/off | User (App) | H | 🟢 | | — |
-| `AUDIO-002` | Toggle 'Volume EQ' on/off | User (App) | H | 🟢 | Boosts bass/treble at lower volume. | — |
-| `AUDIO-003` | Shift the 'Volume balance' (Left/Right) | User (App) | H | 🟢 | **Note:** stored locally on the earbuds themselves (persistent write, works across devices) — explicitly stated in the app's own screenshot. | — |
-| `FW-001` | Tap the 'Firmware up to date' check | User (App) | I | 🟢 | Forces a manual update check. | — |
-| `FW-002` | View firmware version per component (L/R/Case) | User (App, view) | I | 🟢 | Possibly triggers a status query when 'More settings' is opened. | — |
-| `FW-003` | View serial numbers per component | User (App, view) | I | 🟢 | Same as above. | — |
-| `FW-004` | View connection status ("Earbud status: Connected") | User (App, view) | I | 🟢 | | — |
-| `INEAR-001` | Toggle 'In-ear detection' on/off | User (App) | J | 🟢 | Automatically plays/pauses audio when worn/not worn. | — |
-| `CASE-001` | Toggle case sound 'Earbuds replaced' on/off | User (App) | J | 🟢 | Setting stored on the chip inside the case. | — |
-| `CASE-002` | Toggle case sound 'Other notifications' on/off | User (App) | J | 🟢 | Covers: charging started, low battery, pairing successful, errors. | — |
-| `FIND-001` | Play sound on Left earbud ('Find My Buds') | User (App) | K | 🔵🟡 | Via Find Device/Find Hub integration in the app; individually addressable per component. | — |
-| `FIND-002` | Play sound on Right earbud | User (App) | K | 🔵🟡 | | — |
-| `FIND-003` | Play sound on Case | User (App) | K | 🔵🟡 | | — |
-| `FIND-004` | Play sound on both earbuds simultaneously | User (App) | K | 🟡 | | — |
+| `TOUCH-001` | Toggle 'Touch controls' fully on/off | User (App) | F | 🟢🔵 | Enables/disables the touch sensors on the buds. | `PROTOCOL.md` §4.5.3 |
+| `HEAD-001` | Toggle 'Head gestures' fully on/off | User (App) | F | 🟢🔵 | Pixel Buds Pro 2-exclusive. | `PROTOCOL.md` §4.5.4 |
+| `HOLD-001` | Press-and-hold Left → Toggle ANC | User (App) | G | 🟢 | Binary choice per earbud. | `PROTOCOL.md` §4.5.3 |
+| `HOLD-002` | Press-and-hold Left → Digital assistant | User (App) | G | 🟢🔵 | Per screenshot: "Works on Android only." | `PROTOCOL.md` §4.5.3 |
+| `HOLD-003` | Press-and-hold Right → Toggle ANC | User (App) | G | 🟢 | | `PROTOCOL.md` §4.5.3 |
+| `HOLD-004` | Press-and-hold Right → Digital assistant | User (App) | G | 🟢🔵 | | `PROTOCOL.md` §4.5.3 |
+| `HOLD-005` | Check/uncheck a specific ANC mode in the press-and-hold rotation | User (App) | G | 🟢 | Checkbox list: Noise Cancellation, Off, Adaptive, Transparency — determines which modes the buds locally remember for the touch cycle. | `PROTOCOL.md` §4.5.3 |
+| `AUDIO-001` | Toggle 'Mono audio' on/off | User (App) | H | 🟢 | | `PROTOCOL.md` §4.5.6 |
+| `AUDIO-002` | Toggle 'Volume EQ' on/off | User (App) | H | 🟢 | Boosts bass/treble at lower volume. | `PROTOCOL.md` §4.5.6 |
+| `AUDIO-003` | Shift the 'Volume balance' (Left/Right) | User (App) | H | 🟢 | **Note:** stored locally on the earbuds themselves (persistent write, works across devices) — explicitly stated in the app's own screenshot. | `PROTOCOL.md` §4.5.7 |
+| `FW-001` | Tap the 'Firmware up to date' check | User (App) | I | 🟢 | Forces a manual update check. | `CAP-023-FINDINGS.md` §4 (cached, not live-queried) |
+| `FW-002` | View firmware version per component (L/R/Case) | User (App, view) | I | 🟢 | Possibly triggers a status query when 'More settings' is opened. | `PROTOCOL.md` §0.1, `CAP-023-FINDINGS.md` §3 |
+| `FW-003` | View serial numbers per component | User (App, view) | I | 🟢 | Same as above. | — (not exercised, `CAP-023-EVENT-NOTES.md` §6 gap) |
+| `FW-004` | View connection status ("Earbud status: Connected") | User (App, view) | I | 🟢 | | — (not exercised, `CAP-023-EVENT-NOTES.md` §6 gap) |
+| `INEAR-001` | Toggle 'In-ear detection' on/off | User (App) | J | 🟢 | Automatically plays/pauses audio when worn/not worn. | `PROTOCOL.md` §4.5.5 |
+| `CASE-001` | Toggle case sound 'Earbuds replaced' on/off | User (App) | J | 🟢 | Setting stored on the chip inside the case. | `PROTOCOL.md` §4.5.8 |
+| `CASE-002` | Toggle case sound 'Other notifications' on/off | User (App) | J | 🟢 | Covers: charging started, low battery, pairing successful, errors. | `PROTOCOL.md` §4.5.8 |
+| `FIND-001` | Play sound on Left earbud ('Find My Buds') | User (App) | K | 🔵🟡 | Via Find Device/Find Hub integration in the app; individually addressable per component. | `PROTOCOL.md` §4.4 |
+| `FIND-002` | Play sound on Right earbud | User (App) | K | 🔵🟡 | | `PROTOCOL.md` §4.4 |
+| `FIND-003` | Play sound on Case | User (App) | K | 🔵🟡 | | `PROTOCOL.md` §4.4 (found to require Find Hub network path, not the local Ring command) |
+| `FIND-004` | Play sound on both earbuds simultaneously | User (App) | K | 🟡 | | `PROTOCOL.md` §4.4 (same as `FIND-003`) |
 
 ---
 
@@ -220,8 +220,8 @@ _Sensors and firmware behavior, without a direct action from the app._
 
 | ID | Description | Initiator | Capture scenario(s) | Existence source | Note | Evidence |
 |---|---|---|---|---|---|---|
-| `BATT-002` | Case broadcasts battery status via BLE advertisement | Buds/Case (Auto) | Q | 🔵 | Official Fast Pair Battery Notification extension: 3 bytes (L/R/Case), advertised when the case opens and/or on value change; visible ≥8s, hidden after 20s or explicitly. Optional when a single bud is inserted/removed. | — |
-| `BATT-003` | Buds update battery status while worn | Buds/Case (Auto) | Q | 🔵 | Trigger = "when RFCOMM connects, or when the value changes" — no fixed step size (e.g. "every 1%") is officially specified. | — |
+| `BATT-002` | Case broadcasts battery status via BLE advertisement | Buds/Case (Auto) | Q | 🔵 | Official Fast Pair Battery Notification extension: 3 bytes (L/R/Case), advertised when the case opens and/or on value change; visible ≥8s, hidden after 20s or explicitly. Optional when a single bud is inserted/removed. | `PROTOCOL.md` §4.3 Option A (`CAP-011`: inconclusive — Fast Pair Service traffic present, but not structurally matching this layout; procedure deviation, see `CAP-011-FINDINGS.md`) |
+| `BATT-003` | Buds update battery status while worn | Buds/Case (Auto) | Q | 🔵 | Trigger = "when RFCOMM connects, or when the value changes" — no fixed step size (e.g. "every 1%") is officially specified. | `PROTOCOL.md` §4.3 Option A (`CAP-011`: inconclusive, same as `BATT-002`) |
 | `BATT-004` | Battery data via RFCOMM after connecting (instead of BLE advertisement) | Buds/Case (Auto) | A | 🔵 | Officially specified alternative channel — Fast Pair "Message Stream: Device Information". Presumed to be the same channel as the `HardwareStatus` hypothesis in `PROTOCOL.md` §3 — likely not a Buds-specific protobuf schema at all. See `PROTOCOL.md` §4.3 Option B. Piggybacks on the Group A connect capture rather than needing its own scenario (not Group Z — that scenario is a throwaway pipeline check, not a genuine evidence-gathering opportunity). | — |
 | `INEAR-004` | In-ear sensor reports 'removed' (bud taken out of ear, not placed back in case) | Buds (Auto) | U | 🟢 | Confirmed via screenshot (In-ear detection: "pauses audio when not worn"). **Gap closed 2026-08-14:** `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group U now brackets this specific transition, added to test whether DLCI 0x08 Group `0x04` Code `0x12`'s alternating value is event-driven (`CAP-004-FINDINGS.md` §5a Task 5). | — |
 | `BATT-005` | 'Low battery' notification (case) | Buds/Case (Auto) | — | 🔵 | Confirmed specifically for Pro 2/2a: notification for both low case battery and fully charged case. Opportunistic only — no dedicated scenario, since it requires genuinely low battery; see §9. | — |

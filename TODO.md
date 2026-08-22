@@ -101,19 +101,22 @@ lower priority than finishing ANC/Battery/EQ):**
 
 **Next, still important but behind the above:**
 
-- [ ] Capture the "Play sound on Left earbud" (Find My Buds) action
-      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 Group K) — no longer the top
-      framing-verification priority now that ANC's channel is independently
-      confirmed (`PROTOCOL.md` §4.1), but still an unattributed command worth
-      capturing.
-- [ ] Passively capture a BLE scan (no active connection) to confirm the
-      Battery Notification advertisement byte-for-byte against the official
-      spec (`PROTOCOL.md` §4.3 Option A, planned as `CAP-011`) — don't
-      combine this with RFCOMM framing analysis. This is a one-off research
-      capture, not a template for the app: the production app's own BLE
-      scanning stays governed by the narrower bounded exception in
-      `AGENTS.md` §7 / `DECISIONS.md` ADR-006 regardless of how broad this
-      one-time capture is.
+- [x] **Capture the "Play sound on Left/Right earbud" (Find My Buds) action —
+      done, `CAP-025` (2026-08-21).** Left/Right confirmed 🟡 HYPOTHESIS
+      (strong), video-correlated, proposed for `PROTOCOL.md` §4.4 promotion
+      to 🟢 FACT pending maintainer sign-off. **New finding:** Case/"both"
+      route through a separate Find Hub/Find-My-Device-Network mechanism
+      with no local wire command — possibly a Zero-GMS hard limit, flagged
+      to the maintainer in `PROTOCOL.md` §6 (Behavior) and
+      `CAP-025-FINDINGS.md` §7/§8.
+- [x] **Passively capture a BLE scan to confirm the Battery Notification
+      advertisement — attempted, `CAP-011` (2026-08-21), inconclusive.**
+      Fast Pair Service (`0xFE2C`) traffic confirmed present, but the
+      procedure deviated (an active RFCOMM connection was present
+      throughout, not the intended connection-free scan) and the sampled
+      payloads don't structurally match the documented byte layout — see
+      `PROTOCOL.md` §4.3 Option A and `CAP-011-FINDINGS.md`. **Still open:**
+      a genuinely clean, connection-free repeat is needed.
 
 ## Phase 2 — APK reverse engineering
 
