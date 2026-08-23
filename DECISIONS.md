@@ -567,3 +567,57 @@ motivated this).
   trigger/cadence is still unconfirmed and one observed session showed a stale field. Does not
   itself unblock `FrameEncoder`/`FrameDecoder` work on DLCI 0x08 more broadly — that channel's
   other Groups (`0x01`/`0x02`/`0x05`/`0x09`) remain unidentified, unaffected by this ADR.
+
+## ADR-015 — `BATT-006` resolved: `AT+CIND` `battchg` confirmed a stale single snapshot; `AT+BIEV` confirmed per-earbud (Right), not a fixed-aggregate/fixed-cadence indicator
+
+- **Date**: 2026-08-2x
+- **Status**: Accepted
+- **Context**: `BATT-006` (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, added 2026-08-14) asked whether
+  `AT+CIND?`'s `battchg` or `AT+BIEV=2`'s HF Indicator #2 (or neither) tracks a real battery-level
+  change over time, following `CAP-001-FINDINGS.md` §3's single-snapshot disagreement between the
+  two. `CAP-009` (2026-08-23) ran a dedicated, purpose-built 101-minute natural-discharge bracket
+  for this question, then an independent repeat pass re-derived the same conclusions from a fresh
+  video timeline and a full (not spot-checked) re-scan of the wire log. The maintainer reviewed
+  `CAP-009-FINDINGS.md` §1–§5 directly and gave explicit sign-off to promote/record the findings
+  below, per `AGENTS.md` §6.
+- **Finding being recorded**:
+  1. **`AT+CIND?`'s `battchg` is a single, non-repeating snapshot** — queried exactly once, at HFP
+     Service Level Connection setup, and never refreshed again for the rest of the session,
+     regardless of real battery-level changes on the peer. Evidence: 101 minutes, one query
+     (frame 884), zero repeats, including after a full reconnect later in the same log; the peer's
+     Right earbud genuinely changed by ~13 percentage points in that window with no `battchg`
+     update at all.
+  2. **`AT+BIEV=2` tracks a real, individual earbud's percentage — specifically Right in this
+     session — not a fixed aggregate of Left/Right/Case.** All 5 of its distinct values across the
+     session matched the Right earbud's on-screen percentage at every transition; none of Left's
+     or Case's on-screen values ever appeared in the `AT+BIEV` sequence. This revises the project's
+     earlier working assumption (`PROTOCOL.md` §4.3 Option C, pre-`CAP-009`) that both HFP
+     indicators report one aggregate value.
+  3. **`AT+BIEV`'s push cadence is not a fixed ~6–7s rate for the life of the connection.** The
+     ~6–7s spacing `CAP-001` observed is a connection-settling burst — `CAP-009` shows gaps
+     widening to a median of ~20s and as much as ~14.6 minutes once the session goes idle.
+  See `PROTOCOL.md` §4.3 Option C and `CAP-009-FINDINGS.md` §1–§5 for the full write-up.
+- **What this ADR does NOT clear:**
+  - **Whether `AT+BIEV` always reports physical-Right, or whichever earbud is currently
+    HFP-primary** — R happened to be primary in this one session; a session with confirmed-L
+    primary is needed to distinguish these. Recorded as 🟡 HYPOTHESIS in `PROTOCOL.md`, not FACT.
+  - **Whether `AT+CIND?`'s `battchg` is itself aggregate or per-earbud** — it was only ever
+    observed once per session (here and in `CAP-001`), so this remains untested either way.
+  - **What exactly triggers an `AT+BIEV` push once the connection has settled** — `CAP-009` cannot
+    distinguish "push-on-change, with the change itself this infrequent" from "a poll that simply
+    slows down while idle." Recorded as 🟡 HYPOTHESIS.
+  - **Two further `CAP-009` findings are explicitly *not* covered by this ADR** — proposed
+    separately, at HYPOTHESIS level, and not requiring FACT-level sign-off: DLCI `0x04`'s
+    `Group 0x03 Code 0x03` as a candidate for `PROTOCOL.md` §4.3 Option B's still-open battery
+    code, and a BLE Fast Pair scan as a candidate explanation for post-reconnect on-screen updates
+    (`PROTOCOL.md` §4.3 Option A). Both remain 🟡 HYPOTHESIS pending further verification.
+- **Decision**: `battchg`'s single-snapshot behavior, and `AT+BIEV`'s per-earbud (not aggregate)
+  tracking of Right in `CAP-009`, are accepted as 🟢 FACT. `AT+BIEV`'s non-fixed push cadence is
+  accepted as 🟢 FACT for the specific claim "not a sustained ~6–7s rate"; the precise trigger
+  mechanism remains 🟡 HYPOTHESIS.
+- **Consequences**: `BATT-006` is closed as a Test-ID (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`). Any
+  future battery-UI implementation relying on HFP (`AGENTS.md` §5) must not treat `AT+CIND` as a
+  live source, must not assume `AT+BIEV` represents a combined/aggregate value, and must not use a
+  missed ~6–7s beat as a liveness signal — `AGENTS.md` §5 updated accordingly. Does not resolve
+  DLCI `0x04`/BLE-scan HYPOTHESES noted above; those need their own follow-up before any further
+  promotion.

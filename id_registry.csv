@@ -13,6 +13,7 @@ ADR-011,adr,accepted,"Find My Buds Left/Right confirmed as Fast Pair Message Str
 ADR-012,adr,accepted,"Wire-baseline firmware version confirmed as release_5.203 (DLCI 0x08, Group 0x03, Code 0x02)",DECISIONS.md
 ADR-013,adr,accepted,"DLCI 0x02 general-purpose settings-write envelope shape confirmed; individual field semantics remain HYPOTHESIS",DECISIONS.md
 ADR-014,adr,accepted,"DLCI 0x08 Group 0x0e Code 0x01 confirmed as per-earbud+case battery push (index=1/2/3 -> Left/Right/Case)",DECISIONS.md
+ADR-015,adr,accepted,"BATT-006 resolved: AT+CIND battchg is a stale single snapshot; AT+BIEV is per-earbud (Right), not fixed-aggregate/fixed-cadence",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

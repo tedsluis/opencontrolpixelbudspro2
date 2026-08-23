@@ -136,11 +136,19 @@ order:
   own fixed-interval polling timer for any of these** — but the mechanisms
   themselves don't all behave the same: the Fast Pair mechanisms (advertisement,
   Message Stream) are event-driven per the official spec (connect or on value
-  change), while HFP's `AT+BIEV` is confirmed to push periodically on its own
-  (~6–7s, `CAP-001-FINDINGS.md` §3, `PROTOCOL.md` §4.3) regardless of whether
-  the value changed. Code consuming HFP battery events should expect a steady
-  stream, not just change notifications — this is the *peer's* periodic
-  behavior being observed reactively, not an app-side poll loop.
+  change), while HFP's `AT+BIEV` pushes on its own, **but not at a fixed
+  cadence for the life of the connection**. `CAP-001-FINDINGS.md` §3 first
+  observed a tight ~6–7s spacing, but only across a ~40s window immediately
+  after connection setup; `CAP-009-FINDINGS.md` §2 (a 101-minute
+  natural-discharge session, `PROTOCOL.md` §4.3 Option C) confirmed that tight
+  spacing is a **connection-settling burst, not a sustained rate** — gaps
+  widen to a median of ~20s and as much as ~14.6 minutes once the session is
+  idle. Code consuming HFP battery events should expect a push shortly after
+  connecting and further pushes whenever the value changes, but **must not**
+  assume a steady drip throughout an idle session (e.g. do not use a missed
+  ~6–7s beat as a liveness/disconnect signal) — this is still the *peer's*
+  own push behavior being observed reactively, not an app-side poll loop, but
+  its rate is not constant.
   - If none of the documented mechanisms are available for a given
     Android/OEM combination, the UI must show "Battery unavailable" rather
     than a fabricated value. Never guess or interpolate a battery percentage.

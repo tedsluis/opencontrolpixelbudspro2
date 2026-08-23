@@ -577,13 +577,29 @@ event-observation coroutines.
   **Not force-fit, per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5's explicit instruction** — recorded as
   inconclusive rather than a false negative or false positive. A clean repeat (Bluetooth scanning
   only, no app open, no active connection) is still needed.
-- **Evidence**: official Fast Pair spec; `CAP-011-FINDINGS.md` (2026-08-21, inconclusive result,
-  not a confirmation).
+- **Timing correlation, 🟡 HYPOTHESIS (`CAP-009`, 2026-08-23, maintainer-approved for recording
+  here per `AGENTS.md` §6) — a candidate trigger for on-screen updates when HFP/Option E are
+  both closed.** After `CAP-009`'s case+USB reconnect (20:02:27.21), the on-screen Right-earbud
+  percentage updates (20:02:28.68–29.01) with **no** HFP or DLCI-0x08 traffic present at all
+  (both channels stay closed post-reconnect, `CAP-009-FINDINGS.md` §4) — so neither Option C nor
+  Option E can explain it. Immediately after the reconnect, a `LE Set Extended Scan Enable`
+  command (20:02:27.683) is followed by a stream of `LE Extended Advertising Report` events
+  (starting 20:02:27.742, continuing through and past the on-screen update), one of which
+  (frame 29174) decodes to a Fast Pair Service (`0xFE2C`) advertisement — matching the
+  foreground/reconnect-triggered, time-boxed scan pattern `AGENTS.md` §7's bounded exception
+  describes. **Not confirmed**: the advertising `BD_ADDR` (`17:6e:d1:d9:e3:dd`, a random/rotating
+  address) was not traced back to this specific Buds unit (no Account Key Filter decode
+  attempted), so this is a timing correlation, not a payload-level confirmation — it neither
+  proves nor disproves whether the payload itself matches this section's documented layout (still
+  open per the `CAP-011` result above). Proposed verifying experiment: capture the BLE side at
+  full detail and decode the Account Key Filter to confirm device attribution.
+- **Evidence**: official Fast Pair spec; `CAP-011-FINDINGS.md` (2026-08-21, inconclusive
+  payload-layout result); `CAP-009-FINDINGS.md` §4 (2026-08-23, timing-only correlation).
 
 #### Option B — RFCOMM via Fast Pair Message Stream "Device Information"
 
-- **Status**: 🟢 FACT (mechanism exists) / 🔴 unconfirmed (exact battery
-  message code).
+- **Status**: 🟢 FACT (mechanism exists) / 🟡 HYPOTHESIS (candidate battery
+  message code identified, `CAP-009`, 2026-08-23 — not yet a confirmed match).
 - The Message Stream (§2.1) has a documented "Device Information" message
   group. Firmware version is confirmed at code `0x09` (per the Find Hub
   Network extension doc), sent once per Message Stream establishment. Battery
@@ -594,8 +610,23 @@ event-observation coroutines.
   `hardware_status.proto` hypothesis in §3 — i.e. likely **not** a
   Buds-specific protobuf schema at all, but generic Fast Pair Message Stream
   traffic.
+- **Candidate battery code, 🟡 HYPOTHESIS (`CAP-009-FINDINGS.md` §7, maintainer-approved
+  2026-08-2x for recording here per `AGENTS.md` §6):** DLCI `0x04`'s `Group 0x03 Code 0x03`
+  message (`03 03 00 03 <b1> <b2> ff`) is a strong structural and behavioral candidate. Across
+  208 occurrences in a 101-minute natural-discharge session, `b2` matched the Right earbud's
+  percentage at all 7 of its transitions, and `b1` matched Left's percentage at both of its
+  transitions **while not charging** — both fields updating within single-digit milliseconds of
+  the already-established `AT+BIEV` (Option C) and DLCI-0x08 Option E pushes for the same
+  underlying change. Once the Left earbud starts charging, `b1` stops behaving like a percentage
+  (jumps to 221 and climbs ~1/sample instead of following L's known 93→100 charging curve) —
+  read as a regime change (the field switches to reporting something else while charging, not yet
+  identified) rather than a counter-example against the mapping while discharging. **Not yet
+  confirmed**: whether this `Group`/`Code` numbering is stable across sessions the way DLCI `0x08`'s
+  Option E numbering has proven to be, or is itself session-dynamic; the charging-state field
+  switch is unexplained. Proposed verifying experiment: reproduce in an independent session and
+  check the `Group 0x03 Code 0x03` numbering holds.
 - **Evidence**: official Fast Pair Message Stream / Find Hub Network extension
-  docs. Battery-specific code not yet captured.
+  docs (mechanism). `CAP-009-FINDINGS.md` §7, `[VERIFIED-LOCAL]` 2026-08-23 (candidate code).
 
 #### Option C — HFP AT commands (`AT+BIEV` HF Indicator #2, `AT+CIND` `battchg`)
 
@@ -611,16 +642,36 @@ event-observation coroutines.
   observed: `AT+BIEV=2,<0-100>` (HF Indicator #2, Bluetooth-spec-assigned as
   Battery Level) and the older `AT+CIND?` `battchg` indicator (0–5 scale) —
   these **disagreed** in `CAP-001` (`battchg=3` ≈60% vs. `AT+BIEV=2,100` =
-  100%, at the same moment) and it's still 🔴 open which one (if either)
-  tracks real changes accurately (`PROTOCOL.md` §6, `BATT-006`).
-- **Update model — periodic, not event-driven**: `AT+BIEV=2,100` repeated on
-  a roughly 6–7 second cadence throughout `CAP-001`'s session regardless of
-  whether the value changed (frames 1236–2269, timestamps 08:51:14.106
-  through 08:51:52.148) — unlike Options A/B above, this is not a
-  connect-or-on-change push. An app relying on this mechanism should expect
-  (and can rely on) a steady stream of updates, not just change notifications.
-- Neither HFP indicator distinguishes Left/Right/Case — both report a single
-  aggregate value, unlike Option A's separate L/R/Case fields.
+  100%, at the same moment).
+- **`BATT-006` resolved 2026-08-23 (`CAP-009`, `ADR-015`, maintainer sign-off obtained):**
+  `AT+CIND?`'s `battchg` is 🟢 **FACT** a single, non-repeating snapshot queried once at HFP
+  Service Level Connection setup and never refreshed again — confirmed across a 101-minute,
+  natural-discharge session (`CAP-009-FINDINGS.md` §1) where the peer's Right earbud genuinely
+  changed by ~13 percentage points while `battchg` stayed silent the whole time. `AT+BIEV=2` does
+  track real changes — but **per-earbud, not as a single aggregate** (this project's earlier
+  working assumption — see the next bullet).
+- **Update model — periodic, but not a fixed cadence.** `AT+BIEV=2,100` repeated on
+  a roughly 6–7 second cadence immediately after SLC setup in both `CAP-001` (frames 1236–2269,
+  08:51:14.106–08:51:52.148) and `CAP-009` — but `CAP-009`'s much longer session (101 minutes vs.
+  `CAP-001`'s ~80 seconds) shows this tight spacing is a **settling-burst behavior right after
+  connection, not a sustained fixed cadence**: gaps widen to a median of 20.5s and as much as
+  ~14.6 minutes during idle stretches later in the same session (69 pushes over 86 minutes,
+  `CAP-009-FINDINGS.md` §2, 🟡 HYPOTHESIS — `CAP-009` cannot distinguish "less frequent
+  push-on-change" from "polling that only slows down while idle"). **Revises** the previous
+  "regardless of whether the value changed... expect a steady stream" guidance below, which held
+  for `CAP-001`'s short, connection-adjacent window but does not describe extended idle behavior.
+  An app relying on this mechanism should expect a push shortly after connecting, plus further
+  pushes whenever the value changes — but **not** a steady drip throughout an idle session.
+- **Per-earbud tracking, not a single aggregate (revises this project's earlier working
+  assumption that both HFP indicators report one aggregate value) — 🟢 FACT for `CAP-009`,
+  🟡 HYPOTHESIS as a general rule.** `CAP-009`'s 101-minute session shows `AT+BIEV=2`
+  tracking the **Right** earbud specifically: all 5 of its distinct values (93→92→90→89→88) match
+  R's on-screen percentage and only R's, at every transition, while Left (96→95→94→100) and Case
+  (72→71→68→75) never appear in the `AT+BIEV` sequence at all (`CAP-009-FINDINGS.md` §3). Whether
+  `AT+BIEV` always reports physical-Right, or whichever earbud is currently HFP-primary (R
+  happened to be primary this session), is not yet distinguished — a session with a confirmed-L
+  primary earbud would resolve this. `AT+CIND?`'s `battchg` was only ever observed once per
+  session (see above), so whether *it* is aggregate or per-earbud remains untested either way.
 
 #### Option D — BLE Battery Service (`0x180F`, Battery Level characteristic `0x2A19`)
 
@@ -687,11 +738,36 @@ event-observation coroutines.
 - **Evidence**: `CAP-011-FINDINGS.md` §7 (`[VERIFIED-LOCAL]`, 2026-08-23) — full command + raw hex
   for all 4 occurrences of both message types in `CAP-011`, the frame-by-frame video re-derivation
   of the exact UI-change timestamp, and the `CAP-001`/`CAP-002` cross-check frames (§7c).
-- **Verified with experiment**: none purpose-built — this is a deskresearch-style correlation
-  against existing captures (`CAP-001`, `CAP-002`, `CAP-011`), not a fresh, isolated
-  battery-tracking capture. A dedicated repeat (e.g. combining this with the still-planned
-  `CAP-009` battery-discrepancy bracket, `TODO.md` Phase 1) would add a fully purpose-built
-  confirmation on top of the existing 3-session cross-check.
+- **Verified with experiment**: `CAP-009` (2026-08-23) delivered the "dedicated repeat" this entry
+  called for — a fresh, purpose-built, 101-minute natural-discharge bracket, not a deskresearch
+  correlation against a capture recorded for another purpose. It is now the **4th independent
+  confirming session** (after `CAP-001`/`CAP-002`/`CAP-011`) and by far the longest/densest: 75
+  occurrences of `Group 0x0e Code 0x01`, Left and Right matching the on-screen value at every one
+  of 14 transitions across the whole session (`CAP-009-FINDINGS.md` §6).
+- **Two addenda, maintainer-approved 2026-08-2x (`AGENTS.md` §6) — `CAP-009-FINDINGS.md` §6:**
+  - **A live charge cycle, observed for the first time on this mechanism.** After the Left earbud
+    is placed in the case (~19:52:15), its `Group 0x0e Code 0x01` value climbs monotonically
+    93→94→95→96→97→98→100 over the following ~6 minutes — the first confirming session to capture
+    charging rather than only discharging.
+  - **The Case field's "unknown" placeholder has two distinct wire encodings, not one.** For the
+    ~78 minutes before any bud touches the case, every occurrence's Case entry is the shorter,
+    **no-`flag`-field** form (`08 ff 01 18 03`, matching `CAP-011`'s stale-reading encoding).
+    Right as a bud is about to make contact (3 occurrences, ~1.3s before a real value arrives),
+    the Case entry briefly switches to a **longer form that does carry `flag=1`** despite still
+    reporting the same "unknown" (255) value (`08 ff 01 10 01 18 03`). 🟡 **HYPOTHESIS:** this is
+    the first direct evidence for the mechanism `CAP-011-FINDINGS.md` §7c could only speculate
+    about (that capture never observed an empty→populated case transition) — the case's reading
+    needs the case closed/holding a bud to be considered fresh; the no-`flag` form is a long-lived
+    cached placeholder, while the `flag=1` form marks an actively-attempted-but-not-yet-successful
+    fresh read, immediately before a real value lands. Not confirmed beyond this one transition.
+  - **The Case field itself dips sharply right as charging begins, then declines further, more
+    slowly.** 71%→69% in ~21 seconds (far faster than this session's other observed discharge
+    rates), holds ~6 minutes, then 69%→68%. 🟡 **HYPOTHESIS:** may reflect an
+    instantaneous/voltage-based reading that dips under a sudden charging-current load rather than
+    a smoothed charge-level percentage — the on-screen UI only shows 68% by ~20:00:01, later than
+    either wire step, consistent with the UI smoothing or delaying this relative to the raw value.
+    Not verified further; proposed as a concrete follow-up (a case-insertion bracket with tighter
+    video sampling).
 
 **Implementation priority**: 0 (cheap to rule in/out) → A → B → C → D (see
 `ARCHITECTURE.md` §4; A–D's order reflects official-spec confidence and
@@ -1373,3 +1449,4 @@ leaving them buried in prose elsewhere.
 | 2026-08-23 | Remediation from an external audit pass (maintainer-approved fixes, see `CHANGELOG.md`'s 2026-08-22/23 entry for the full report summary): **§2.1/§4.4 corrected** — the cited "spec worked ACK example" for the Ring action did not match Google's actual Fast Pair acknowledgement spec (verified by direct fetch); corrected via non-destructive dated notes per `PROJECT_RULES.md` §3, and the "byte-for-byte match to spec" claim for one observed ACK variant retracted (neither observed variant actually matches the corrected spec example). **§6 reopened** the Ring ACK extra-byte open item against the corrected spec tail, and added a refined characterization (timing/direction/entropy profile) of `CAP-021`'s still-unexplained DLCI 0x0a burst. **§4.3 Option C** annotated to explain DLCI 0x08 vs. 0x09 both being called "channel 4" (same RFCOMM multiplexer session, disambiguated by direction bit — not a numbering error). **§4.3 Option D** added the Battery Level characteristic UUID (`0x2A19`) alongside the already-documented service UUID (`0x180F`) | Claude (AI), audit-remediation task, maintainer-directed |
 | 2026-08-23 | **Three pending FACT promotions reviewed and explicitly approved by the maintainer** (`AGENTS.md` §6), each recorded with its own `DECISIONS.md` ADR: **§4.4 Find My Buds Left/Right** promoted to 🟢 FACT (`ADR-011`) — Case/"both" remains a separate, unresolved mechanism, not covered. **§0.1 wire-baseline firmware version** (`"release_5.203"` on DLCI 0x08) promoted to 🟢 FACT (`ADR-012`) — `"Revision 6"`'s meaning remains open, not covered. **§4.5's shared preamble, general-purpose DLCI 0x02 settings-write envelope shape** promoted to 🟢 FACT (`ADR-013`) — narrower than it may look: only the outer `field5{field4{...}}}` wrapper's existence/shape is FACT; every individual setting's specific field-number mapping in §4.5.1–§4.5.8 remains its own, separately-labeled 🟡 HYPOTHESIS, per the maintainer's explicit decision not to blanket-promote | Claude (AI), maintainer-directed sign-off session |
 | 2026-08-23 | **§4.3 Option E added** — re-analysis of `CAP-011` (prompted by the maintainer spotting a 1% battery drop in the recording) pinpointed the exact UI-change timestamp (09:52:25.8, correcting an initial ~09:45:47 estimate) and found a DLCI 0x08 message (`Group 0x0e Code 0x01`) whose entries track on-screen battery values. **Cross-capture check same day found a clean 3-for-3 match (Left/Right/Case) in 2 further independent sessions (`CAP-001`, `CAP-002`, both 2026-08-09)** — upgrading this from a single-session (`CAP-011`, 4 internal recurrences) finding to a 3-session, 12-day-spanning one; `CAP-011`'s Case entry specifically reads stale/non-matching, flagged as its own open item, not treated as contradicting the mapping. 🟡 HYPOTHESIS (strong), proposed for FACT pending maintainer sign-off — not yet reviewed. Refines an already-known-but-undecoded message shape from `CAP-002-FINDINGS.md` §2a (2026-08-12), not a newly-found packet type. §6's item on the message's 3rd entry resolved (index=3=Case); a new item added for `CAP-011`'s specific staleness anomaly; the burst's irregular, BLE-churn-uncorrelated trigger interval remains open; one pre-existing item partially advanced (`Group 0x0e`, previously outside its listed group set) | Claude (AI), maintainer-requested capture re-analysis |
+| 2026-08-2x | **`CAP-009` (`BATT-006`), independently re-analyzed, then 5 findings reviewed and explicitly approved by the maintainer** (`AGENTS.md` §6): **§4.3 Option C** — `battchg` confirmed 🟢 FACT a stale single snapshot; `AT+BIEV` confirmed 🟢 FACT per-earbud (Right, this session) rather than a fixed aggregate, revising the project's earlier aggregate assumption; push cadence corrected from "fixed ~6–7s" to "settling burst, then irregular" (also updates `AGENTS.md` §5's implementation guidance) — all recorded in `ADR-015`; `BATT-006` closed. **§4.3 Option E** — two addenda added at 🟡 HYPOTHESIS (a live charge-cycle observation; the Case field's two distinct "unknown"-placeholder wire encodings) as part of the "fully purpose-built confirmation" Option E's own entry had called for. **§4.3 Option B** — DLCI `0x04`'s `Group 0x03 Code 0x03` added as a 🟡 HYPOTHESIS candidate for the still-unconfirmed battery code (208 occurrences, Left/Right in near-lockstep with `AT+BIEV`/Option E outside the charging period). **§4.3 Option A** — a BLE Fast Pair scan added as a 🟡 HYPOTHESIS timing correlation for on-screen updates after HFP/Option E both close post-reconnect; device attribution not yet confirmed. See `CAP-009-FINDINGS.md` and `CAP-009-EVENT-NOTES.md` for the full independent re-analysis (its own video timeline, MAC re-derivation, filter-sanity/DLCI-inventory checks) behind all of the above | Claude (AI), maintainer-directed sign-off session |
