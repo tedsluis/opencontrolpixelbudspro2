@@ -146,9 +146,10 @@ echo above.
 | Inner wire type | varint | varint | length-delimited (nested submessage) |
 | Inner value | `1` | `2` | 25-byte 5×`float32` quintet |
 
-**🟡 HYPOTHESIS (new this session):** the `field 5{ field 4{ ... } }` outer wrapper on DLCI 0x02
-is a **general-purpose `libmaestro` settings-write envelope**, not EQ-specific as `PROTOCOL.md` §6
-(the 2026-08-17 deskresearch item) left it — that item's own negative result was scoped to the
+**🟢 FACT, promoted 2026-08-23** (`DECISIONS.md` ADR-013, after cross-capture confirmation across
+6 independent sessions with no counter-example): the `field 5{ field 4{ ... } }` outer wrapper on
+DLCI 0x02 is a **general-purpose `libmaestro` settings-write envelope**, not EQ-specific as
+`PROTOCOL.md` §6 (the 2026-08-17 deskresearch item) left it — that item's own negative result was scoped to the
 *inner* `field 16`/`field 18` shape specifically ("zero matches... under any outer field number" for
 that exact envelope), which this capture doesn't contradict: `TOUCH-001`/`HEAD-001` use a
 **different** inner field (a single varint, not a nested submessage). What's new here is that the
@@ -174,8 +175,10 @@ this coincidence.
   <1s of the video-confirmed action, with a verified CRC-32 and a consistent structural envelope —
   🟡 HYPOTHESIS level, matching this project's usual bar for a first single-capture attribution.
 - New structural finding: the DLCI 0x02 outer `field 5{ field 4{...} }` wrapper is shared across at
-  least 3 different settings (EQ, touch controls, head gestures) — worth promoting to `PROTOCOL.md`
-  §2.2a as a named, general-purpose envelope shape, distinct from any one setting's inner content.
+  least 3 different settings (EQ, touch controls, head gestures), distinct from any one setting's
+  inner content. **Promoted 2026-08-23** (`PROTOCOL.md` §4.5's shared preamble, `DECISIONS.md`
+  ADR-013) to 🟢 FACT as a named, general-purpose envelope shape, after the pattern held across
+  6 independent captures with no counter-example.
 - **Recommended next step:** a repeat capture toggling each setting back OFF (this session only
   exercised OFF→ON for both) would (a) confirm whether `field 4`/`field 29`'s value flips to `0`
   for "off" (supporting a simple enable-flag reading) or whether an entirely different field

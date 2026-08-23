@@ -117,8 +117,11 @@ Extends the running table (`CAP-022-FINDINGS.md` §6):
 No case-specific vs. bud-specific channel/address distinction was found — case sounds use the
 same DLCI 0x02 envelope as every bud-targeted setting in this batch, just their own field numbers.
 Now 9 distinct settings across `CAP-019`–`CAP-024`, each with its own distinct inner field number
-inside the shared `field5{field4{...}}` wrapper — the general-purpose-envelope hypothesis
-(`CAP-020-FINDINGS.md` §5) continues to hold with no counter-examples.
+inside the shared `field5{field4{...}}` wrapper — the general-purpose-envelope finding
+(`CAP-020-FINDINGS.md` §5) held with no counter-examples across this whole batch and was
+**promoted to 🟢 FACT 2026-08-23** (`DECISIONS.md` ADR-013) for the outer wrapper shape; the
+individual field numbers documented in this capture (`field2`=In-ear detection, `field27`/`field28`=
+Case sounds) remain their own, separately-labeled 🟡 HYPOTHESIS.
 
 ## 7. Conclusions & Next Steps
 

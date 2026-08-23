@@ -643,10 +643,66 @@ event-observation coroutines.
   service UUID `0x180F` alone only identifies that the service exists, not which characteristic
   handle to read/subscribe to.
 
+#### Option E — DLCI 0x08 private envelope, per-earbud+case push (`Group 0x0e Code 0x01` / `Group 0x04 Code 0x03`)
+
+- **Status**: 🟢 **FACT, promoted 2026-08-23** (maintainer sign-off obtained per `AGENTS.md` §6;
+  see `DECISIONS.md` ADR-014) for the **index=1/2/3 → Left/Right/Case mapping**, based on the
+  3-independent-session cross-check below. `CAP-011`'s own stale idx=3 reading and the burst's
+  trigger stay open, unaffected by this promotion (see below).
+- **Discovered while re-analyzing `CAP-011`** for an unrelated request (locating the exact moment a
+  1%-battery UI change occurred): a message on DLCI 0x08 (the still-🔴-unidentified private
+  envelope, §2.3), `Group 0x0e Code 0x01`, decodes to a nested structure carrying **3 repeated
+  entries** `[value, flag, index]` plus 2 trailing scalars.
+- **Cross-capture confirmation (2026-08-23): entries index=1/2/3 = Left/Right/Case, confirmed in 3
+  independent sessions spanning 12 days.** `CAP-011` (2026-08-21) alone: entries idx=1/idx=2 match
+  the on-screen Left/Right percentages across **4** independent occurrences in one ~17.5-minute
+  log, including a video-confirmed UI *change* (92/87, ~0.86s before the screen visibly updates)
+  and two further off-camera recurrences where Right keeps declining (88→87→86) — not a
+  coincidence. Extending the same check to `CAP-001` and `CAP-002` (2026-08-09, both `Group 0x0e
+  Code 0x01` frames picked near an independently-recorded on-screen notification) found a clean
+  **3-for-3 match, including idx=3=Case**: `CAP-001` frame 1114 = `[100,100,62]` against on-screen
+  "Left 100% Case 62% Right 100%"; `CAP-002` frame 49024 = `[100,100,57]` against on-screen "Left
+  100% Case 57% Right 100%". An independent, single-value message on the same DLCI (`Group 0x04
+  Code 0x03`) cross-confirms the Right value at all 4 of `CAP-011`'s occurrences.
+- **Not a new packet type — a new semantic decode of an already-known shape:** this exact
+  `field1="all"` + "3 varint-triple entries" structure was already documented, structurally only,
+  in `CAP-002-FINDINGS.md` §2a (2026-08-12) — that pass did not attempt to interpret the numbers.
+  This entry is the first to propose (and cross-check) what they mean.
+- **One specific, unresolved anomaly — not glossed over:** in `CAP-011` alone, entry idx=3 (Case)
+  reads a **stale, non-matching** value (92) against the on-screen Case reading (89%, constant
+  throughout that session), unlike `CAP-001`/`CAP-002` where it matched live. `CAP-011`'s idx=3
+  also lacks the `flag` field (`field2`) that every other confirmed-fresh entry carries (present
+  and `=1` in all of `CAP-001`/`CAP-002`'s entries and `CAP-011`'s idx=1/2) — plausibly, not
+  confirmed, a "fresh/valid" bit, absent specifically when a value is stale. A plausible (not
+  confirmed) explanation for the staleness itself: `CAP-011`'s case sat open and empty for the
+  whole session (a documented procedure deviation, §4.3's intro to this capture) — if the case's
+  own reporting requires it closed/holding a bud to refresh, idx=3 could be carrying a
+  last-known value predating this session's log.
+- **Also unresolved:** the burst's own trigger — it recurs at irregular intervals in `CAP-011`
+  (4:02, 2:56, 8:21 apart), and checking it against that session's near-continuous BLE reconnect
+  churn found no correlation (the churn is far more frequent than this burst, ruling that out as
+  the trigger).
+- **Sent to**: DLCI 0x08's private envelope (§2.3) — not DLCI 0x04's official Message Stream, not
+  DLCI 0x02.
+- **Evidence**: `CAP-011-FINDINGS.md` §7 (`[VERIFIED-LOCAL]`, 2026-08-23) — full command + raw hex
+  for all 4 occurrences of both message types in `CAP-011`, the frame-by-frame video re-derivation
+  of the exact UI-change timestamp, and the `CAP-001`/`CAP-002` cross-check frames (§7c).
+- **Verified with experiment**: none purpose-built — this is a deskresearch-style correlation
+  against existing captures (`CAP-001`, `CAP-002`, `CAP-011`), not a fresh, isolated
+  battery-tracking capture. A dedicated repeat (e.g. combining this with the still-planned
+  `CAP-009` battery-discrepancy bracket, `TODO.md` Phase 1) would add a fully purpose-built
+  confirmation on top of the existing 3-session cross-check.
+
 **Implementation priority**: 0 (cheap to rule in/out) → A → B → C → D (see
 `ARCHITECTURE.md` §4; A–D's order reflects official-spec confidence and
 connection-cost, not raw confidence alone since A requires no active
-connection).
+connection). **Option E is not placed in this ordering**, even though promoted to FACT
+2026-08-23 (`ADR-014`) — unlike A–D it is not an officially-documented Fast Pair mechanism at all
+(it's DLCI 0x08's still-unidentified private envelope), so it doesn't fit the "official-spec
+confidence" ranking rationale above. Practically: its own trigger is unconfirmed and irregular
+(observed gaps of several minutes), and one session (`CAP-011`) showed its Case field reading
+stale — not yet a reliable enough *update cadence* to slot ahead of the already-periodic HFP
+option (C), even though its per-earbud content is now FACT-confirmed.
 
 ### 4.4 Find My Buds / Ring action
 
@@ -1030,6 +1086,25 @@ leaving them buried in prose elsewhere.
       captures' full DLCI-0x08 byte streams with zero parse errors/leftover bytes). Their
       *semantic* meaning remains 🔴 open — no official Fast Pair extension page documents these
       group numbers under DLCI 0x08's private numbering (`CAP-002-FINDINGS.md` §2a Task 2).
+      **Partially advanced 2026-08-23 for a related, previously-unlisted group:** `Group 0x0e`
+      (also on DLCI 0x08, structurally known since `CAP-002-FINDINGS.md` §2a but not in this
+      item's original group list) — `Code 0x01`'s "3 varint-triple entries" shape now has a
+      proposed semantic reading (per-earbud battery, §4.3 Option E), 🟡 HYPOTHESIS pending
+      sign-off; `Code 0x02`'s value was already known (`"google-pixel-buds-pro-v1"`). Groups
+      `0x01`/`0x02`/`0x05`/`0x09` themselves remain fully open, unaffected by this.
+- [x] **Added 2026-08-23, resolved same day (`CAP-011-FINDINGS.md` §7c):** DLCI 0x08's
+      `Group 0x0e Code 0x01` battery message's 3rd entry (index=3) is **Case** — confirmed via a
+      clean 3-for-3 match (Left/Right/Case) against on-screen values in 2 independent captures
+      (`CAP-001` frame 1114, `CAP-002` frame 49024). **Not fully closed:** in `CAP-011` specifically,
+      idx=3 reads a stale, non-matching value (92 vs. on-screen 89%) and lacks the `flag` field
+      every fresh entry carries elsewhere — a plausible but unconfirmed explanation (that session's
+      case sat open/empty, possibly preventing a fresh case-battery read) is offered in
+      `PROTOCOL.md` §4.3 Option E, not resolved further.
+- [ ] **Added 2026-08-23, `CAP-011-FINDINGS.md` §7:** what triggers DLCI 0x08's `Group 0x0e`/
+      `Group 0x04 Code 0x03` battery-push burst? Recurs at irregular intervals (4:02, 2:56, 8:21
+      apart in one session) — checked against that session's own near-continuous BLE
+      connect/disconnect churn and found no correlation (the churn is far more frequent than this
+      burst). Not yet checked against any other candidate trigger.
 - [ ] Added 2026-08-14: DLCI 0x08's own purpose/ownership as a whole channel is still 🔴 open.
       Ruled out as `libmaestro` specifically (§2.3's 2026-08-14 addendum — no HDLC framing, unlike
       the one concrete transport signature `pbpctrl` documents for Maestro). Leading remaining
@@ -1297,3 +1372,4 @@ leaving them buried in prose elsewhere.
 | 2026-08-21 | Synced with 8 new captures (`CAP-011`, `CAP-019`–`CAP-025`): **§4.4 Find My Buds/Ring** — Left/Right confirmed 🟡 HYPOTHESIS (strong), video-correlated, proposed for 🟢 FACT pending maintainer sign-off (`CAP-025`); Case/"both" found to route through a separate, likely GMS-mediated Find Hub mechanism producing no local wire command — flagged as a possible Zero-GMS hard limit. **§4.5 rewritten** from a bare unmapped-feature bullet list into per-command subsections (§4.5.1–§4.5.8), each with a confirmed DLCI 0x02 opcode, following §4.1–§4.4's structure, plus a new shared preamble describing the general-purpose `field5{field4{...}}` settings-write envelope discovered this batch (9+ settings, 6 captures, no counter-example). **§4.3 Option A** — `CAP-011` attempted a passive BLE scan; result recorded as inconclusive (Fast Pair Service traffic present but not structurally matching the documented Battery Notification layout), not force-fit; procedure deviation (active connection present) flagged. **§0.1** — wire-baseline-vs-UI-baseline firmware version resolved (`CAP-023`): on-screen `release_5.203` matches DLCI 0x08's already-documented string, same session. §6 updated with ~10 new open items across Commands & schemas and Behavior, including a newly-raised Zero-GMS-relevant question about Find Hub's Case/"both" ring mechanism | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-08-23 | Remediation from an external audit pass (maintainer-approved fixes, see `CHANGELOG.md`'s 2026-08-22/23 entry for the full report summary): **§2.1/§4.4 corrected** — the cited "spec worked ACK example" for the Ring action did not match Google's actual Fast Pair acknowledgement spec (verified by direct fetch); corrected via non-destructive dated notes per `PROJECT_RULES.md` §3, and the "byte-for-byte match to spec" claim for one observed ACK variant retracted (neither observed variant actually matches the corrected spec example). **§6 reopened** the Ring ACK extra-byte open item against the corrected spec tail, and added a refined characterization (timing/direction/entropy profile) of `CAP-021`'s still-unexplained DLCI 0x0a burst. **§4.3 Option C** annotated to explain DLCI 0x08 vs. 0x09 both being called "channel 4" (same RFCOMM multiplexer session, disambiguated by direction bit — not a numbering error). **§4.3 Option D** added the Battery Level characteristic UUID (`0x2A19`) alongside the already-documented service UUID (`0x180F`) | Claude (AI), audit-remediation task, maintainer-directed |
 | 2026-08-23 | **Three pending FACT promotions reviewed and explicitly approved by the maintainer** (`AGENTS.md` §6), each recorded with its own `DECISIONS.md` ADR: **§4.4 Find My Buds Left/Right** promoted to 🟢 FACT (`ADR-011`) — Case/"both" remains a separate, unresolved mechanism, not covered. **§0.1 wire-baseline firmware version** (`"release_5.203"` on DLCI 0x08) promoted to 🟢 FACT (`ADR-012`) — `"Revision 6"`'s meaning remains open, not covered. **§4.5's shared preamble, general-purpose DLCI 0x02 settings-write envelope shape** promoted to 🟢 FACT (`ADR-013`) — narrower than it may look: only the outer `field5{field4{...}}}` wrapper's existence/shape is FACT; every individual setting's specific field-number mapping in §4.5.1–§4.5.8 remains its own, separately-labeled 🟡 HYPOTHESIS, per the maintainer's explicit decision not to blanket-promote | Claude (AI), maintainer-directed sign-off session |
+| 2026-08-23 | **§4.3 Option E added** — re-analysis of `CAP-011` (prompted by the maintainer spotting a 1% battery drop in the recording) pinpointed the exact UI-change timestamp (09:52:25.8, correcting an initial ~09:45:47 estimate) and found a DLCI 0x08 message (`Group 0x0e Code 0x01`) whose entries track on-screen battery values. **Cross-capture check same day found a clean 3-for-3 match (Left/Right/Case) in 2 further independent sessions (`CAP-001`, `CAP-002`, both 2026-08-09)** — upgrading this from a single-session (`CAP-011`, 4 internal recurrences) finding to a 3-session, 12-day-spanning one; `CAP-011`'s Case entry specifically reads stale/non-matching, flagged as its own open item, not treated as contradicting the mapping. 🟡 HYPOTHESIS (strong), proposed for FACT pending maintainer sign-off — not yet reviewed. Refines an already-known-but-undecoded message shape from `CAP-002-FINDINGS.md` §2a (2026-08-12), not a newly-found packet type. §6's item on the message's 3rd entry resolved (index=3=Case); a new item added for `CAP-011`'s specific staleness anomaly; the burst's irregular, BLE-churn-uncorrelated trigger interval remains open; one pre-existing item partially advanced (`Group 0x0e`, previously outside its listed group set) | Claude (AI), maintainer-requested capture re-analysis |

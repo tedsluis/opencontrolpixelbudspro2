@@ -142,8 +142,11 @@ Extends the running table (`CAP-021-FINDINGS.md` §5):
 All seven settings share the same two-level `field5{field4{...}}` outer wrapper (or the
 per-earbud-extended `field5{field4{field7{...}}}` variant for `HOLD-001`–`HOLD-004`,
 `CAP-021-FINDINGS.md` §3), each with its own distinct inner field number — now 7 confirmed
-distinct field numbers across 7 different settings, strengthening the "general-purpose settings
-envelope" hypothesis first raised in `CAP-020-FINDINGS.md` §5.
+distinct field numbers across 7 different settings. The "general-purpose settings envelope"
+finding first raised in `CAP-020-FINDINGS.md` §5 was **promoted to 🟢 FACT 2026-08-23**
+(`DECISIONS.md` ADR-013) for the outer wrapper shape itself — this capture's 7 field numbers are
+part of the cross-capture evidence base for that promotion; each individual field's own meaning
+stays 🟡 HYPOTHESIS, unaffected.
 
 ## 7. Conclusions & Next Steps
 

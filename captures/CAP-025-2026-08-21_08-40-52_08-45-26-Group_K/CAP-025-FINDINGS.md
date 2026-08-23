@@ -68,9 +68,9 @@ Decoded per `PROTOCOL.md` §2.1's Message Stream envelope (`[Group:1][Code:1][Le
 `Group=0x04` (Action), `Code=0x01` (Ring) — exact match to the spec-quoted worked example's
 Group/Code. `Value=0x01` = start-ring-Right; `Value=0x00` = stop.
 
-**Status:** 🟢 near-**FACT**-strength evidence (video-confirmed tap, exact timing match, two
-independent samples — start and stop — both matching the predicted envelope) — proposed for
-maintainer sign-off to promote per `AGENTS.md` §6, not committed unilaterally.
+**Status:** 🟢 **FACT, promoted 2026-08-23** (`DECISIONS.md` ADR-011) — video-confirmed tap, exact
+timing match, two independent samples (start and stop) both matching the predicted envelope;
+maintainer sign-off obtained per `AGENTS.md` §6.
 
 ## 4. Analysis: `FIND-001` (Ring Left)
 
@@ -87,7 +87,7 @@ Stop  (frame 2180, 08:41:58.882): 04 01 00 01 00
 Same envelope as `FIND-002`. `Value=0x02` = start-ring-**Left** (distinct from Right's `0x01`);
 `Value=0x00` = stop (same code as Right's stop — a single shared "stop" value, not per-earbud).
 
-**Status:** 🟢 near-**FACT**-strength evidence, same basis as §3.
+**Status:** 🟢 **FACT, promoted 2026-08-23** (`DECISIONS.md` ADR-011), same basis as §3.
 
 ## 5. Value byte — resolved table (this capture's central contribution)
 
@@ -136,10 +136,10 @@ resolved to the same level as, `FIND-001`/`FIND-002`'s confirmed local mechanism
 
 ## 8. Conclusions & Status
 
-- **`FIND-001`/`FIND-002` (Ring Left/Right) are now strongly confirmed**, video-correlated,
-  including the previously-unresolvable start/stop value mapping. Proposed for `PROTOCOL.md` §4.4
-  promotion to 🟢 FACT for the Left/Right Ring mechanism specifically — maintainer sign-off
-  required per `AGENTS.md` §6, not committed here.
+- **`FIND-001`/`FIND-002` (Ring Left/Right) are confirmed**, video-correlated, including the
+  previously-unresolvable start/stop value mapping. Promoted in `PROTOCOL.md` §4.4 to 🟢 FACT for
+  the Left/Right Ring mechanism specifically, 2026-08-23 (`DECISIONS.md` ADR-011, maintainer
+  sign-off obtained per `AGENTS.md` §6).
 - **`FIND-003`/`FIND-004` are structurally different** — not a gap in this capture's coverage, but
   a genuine architectural finding: Case/combined ringing goes through Find Hub's network-mediated
   path, not the direct local Message Stream command. This should be recorded as its own open

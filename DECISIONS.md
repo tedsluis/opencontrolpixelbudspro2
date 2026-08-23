@@ -520,3 +520,50 @@ motivated this).
   encode/decode logic now, against fixed byte-array fixtures, ahead of any specific setting being
   wired up — but no UI control for an individual setting (Conversation Detection, Multipoint, etc.)
   should ship against this ADR alone.
+
+## ADR-014 — DLCI 0x08 `Group 0x0e Code 0x01` confirmed as a per-earbud+case battery push (index=1/2/3 → Left/Right/Case)
+
+- **Date**: 2026-08-23
+- **Status**: Accepted
+- **Context**: while re-analyzing `CAP-011` for an unrelated, maintainer-requested task (locating
+  the exact video timestamp of a 1%-battery UI change), a message on DLCI 0x08 — the private
+  envelope whose overall identity remains 🔴 OPEN QUESTION (§2.3) — was found to decode to 3
+  repeated `[value, flag, index]` entries. Within `CAP-011` alone, entries index=1/2 tracked the
+  on-screen Left/Right percentages across 4 occurrences in one session, including a video-confirmed
+  live change. To check whether this held beyond one session, the same decode was run against
+  `Group 0x0e Code 0x01` frames in `CAP-001` and `CAP-002` (both 2026-08-09, 12 days before
+  `CAP-011`), picked near each session's own independently-recorded on-screen battery notification.
+  The maintainer reviewed this cross-capture result directly (session of 2026-08-23) and gave
+  explicit sign-off to promote it, per `AGENTS.md` §6.
+- **Finding being recorded**: `Group 0x0e Code 0x01`'s three repeated entries correspond to Left
+  (index=1), Right (index=2), and Case (index=3) battery percentages. Evidence: a clean 3-for-3
+  match against on-screen values in both `CAP-001` (frame 1114: `[100,100,62]` vs. on-screen "Left
+  100% Case 62% Right 100%") and `CAP-002` (frame 49024: `[100,100,57]` vs. on-screen "Left 100%
+  Case 57% Right 100%"), plus `CAP-011`'s own 4-occurrence, video-correlated Left/Right tracking
+  (including a live 93→92/88→87 transition matched ~0.86s before the UI itself updated) and an
+  independent cross-check via a second message (`Group 0x04 Code 0x03`) at the same 4 moments. This
+  is a **semantic decode of an already-structurally-known message**, not a newly-found packet type
+  — `CAP-002-FINDINGS.md` §2a documented the same shape back on 2026-08-12 without interpreting it.
+  See `PROTOCOL.md` §4.3 Option E and `CAP-011-FINDINGS.md` §7 for the full write-up.
+- **What this ADR does NOT clear:**
+  - **`CAP-011`'s own Case (index=3) reading is stale**, not live — it reads 92 throughout that
+    session against an on-screen Case value that stayed at 89%, unlike `CAP-001`/`CAP-002` where
+    index=3 matched live. The index→component mapping is accepted as FACT; this session-specific
+    staleness is a separate, still-open behavioral question (plausibly tied to that session's own
+    documented procedure deviation — the case sat open and empty throughout — not confirmed).
+  - **The `flag` field (`field2`)'s meaning** — observed as `1` on every fresh reading and absent
+    on `CAP-011`'s one stale reading, plausibly a "fresh/valid" bit, not confirmed as such.
+  - **The burst's trigger** — recurs at irregular intervals in `CAP-011` (4:02, 2:56, 8:21 apart);
+    checked against that session's own near-continuous BLE reconnect churn and found no
+    correlation. Genuinely unresolved.
+  - **DLCI 0x08's own identity/ownership** as a channel — unaffected by this ADR, still 🔴 OPEN
+    QUESTION (§2.3); this ADR resolves one message's meaning on that channel, not what the channel
+    itself is or belongs to.
+- **Decision**: the index=1/2/3 → Left/Right/Case mapping for DLCI 0x08's `Group 0x0e Code 0x01`
+  message is accepted as 🟢 FACT.
+- **Consequences**: this becomes a fifth candidate battery-reporting mechanism (`PROTOCOL.md` §4.3
+  Option E), usable as a secondary/cross-validation signal alongside the already-FACT HFP option
+  (C) if implemented — but not yet placed in the implementation-priority ordering, since its
+  trigger/cadence is still unconfirmed and one observed session showed a stale field. Does not
+  itself unblock `FrameEncoder`/`FrameDecoder` work on DLCI 0x08 more broadly — that channel's
+  other Groups (`0x01`/`0x02`/`0x05`/`0x09`) remain unidentified, unaffected by this ADR.

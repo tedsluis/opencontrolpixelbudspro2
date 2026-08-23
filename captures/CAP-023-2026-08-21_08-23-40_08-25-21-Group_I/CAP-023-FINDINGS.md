@@ -61,11 +61,10 @@ different capture sessions. `"Revision 6"` (DLCI 0x04's official Message Stream 
 field, `CAP-002-FINDINGS.md` §3) does not appear anywhere in this screen or session — the app does
 not surface that string to the user as "the firmware version."
 
-**Status:** 🟡 **HYPOTHESIS**, but strong — same-session on-screen + on-wire match is direct
-evidence, not an inference; per `AGENTS.md` §6, promoting this to 🟢 FACT and updating
-`PROTOCOL.md` §0.1's firmware-version framing is proposed here for maintainer sign-off, not done
-unilaterally. **Not resolved:** what `"Revision 6"` itself represents, if not "the firmware
-version" as the user sees it.
+**Status:** 🟢 **FACT, promoted 2026-08-23** (`DECISIONS.md` ADR-012) — same-session on-screen +
+on-wire match is direct evidence, not an inference; maintainer sign-off obtained per `AGENTS.md`
+§6, and `PROTOCOL.md` §0.1's firmware-version framing updated accordingly. **Not resolved:** what
+`"Revision 6"` itself represents, if not "the firmware version" as the user sees it.
 
 ## 4. Analysis: `FW-001` (manual firmware check) — cached, not live-queried
 

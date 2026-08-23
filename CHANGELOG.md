@@ -275,6 +275,22 @@ for the "definition of done" that will mark v1.
     only. The maintainer explicitly declined to blanket-promote the 9+ individual field mappings
     at the same time; each stays its own, separately-labeled 🟡 HYPOTHESIS, graded by actual
     evidence strength per setting (§4.5.1–§4.5.8 unchanged).
+- **2026-08-23: `CAP-011` re-analyzed** after the maintainer spotted a 1% battery drop for both
+  earbuds in the session recording. A frame-by-frame video re-derivation corrected the timestamp
+  from an initial "~09:45:47" estimate (actually just the screen's first-opened values) to the
+  actual change at 09:52:25.8. Wire analysis around that moment found a DLCI 0x08 private-envelope
+  message (`Group 0x0e Code 0x01`) whose first two entries track the on-screen Left/Right
+  percentages across all 4 occurrences in the log (including a further decline, 88%→87%→86%, in
+  two off-camera recurrences), cross-confirmed by a second message (`Group 0x04 Code 0x03`).
+  **Cross-checked same day against `CAP-001`/`CAP-002` (both 2026-08-09) and found a clean 3-for-3
+  match — the message's 3rd entry is Case, not just Left/Right** — upgrading this from a
+  single-session to a 3-session, 12-day-spanning finding (`CAP-011`'s own Case entry reads stale in
+  that one session, flagged as its own anomaly, not treated as contradicting the mapping). Refines
+  an already-known-but-undecoded message shape first seen in `CAP-002-FINDINGS.md` §2a
+  (2026-08-12), not a newly-discovered packet type. **Reviewed and approved by the maintainer the
+  same day** — promoted to 🟢 FACT (`DECISIONS.md` ADR-014) for the index→Left/Right/Case mapping
+  specifically; `CAP-011`'s stale Case reading, the `flag` field's meaning, and the burst's
+  trigger stay open, unaffected by the promotion.
 
 ### Removed
 
