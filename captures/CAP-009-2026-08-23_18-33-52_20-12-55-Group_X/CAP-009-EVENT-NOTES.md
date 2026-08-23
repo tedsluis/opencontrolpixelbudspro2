@@ -21,7 +21,7 @@ within this window — no need to force it, just note it if it happens.
 |       Date       |                        TBD                         |
 | Firmware version |                        TBD                         |
 |   Test device    | TBD (Pixel 7a/9a, Android version, official app version if used) |
-| Video file       |          TBD — n/a for this Group (long-duration, no continuous recording expected — see note below) |
+| Video files       |          TBD — n/a for this Group (long-duration, no continuous recording expected — see note below) |
 | Log file         |             TBD — `CAP-009-btsnoop_hci.log`        |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
 
@@ -41,12 +41,19 @@ on-screen battery percentage manually at each periodic check instead (see timeli
 ## Event Timeline
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
-|---|---|---|---|---|
-| TBD | Session start, on-screen battery % noted | — | `BATT-006` | TBD |
-| TBD | Periodic check #1, on-screen battery % noted | — | `BATT-006` | TBD |
-| TBD | Periodic check #2, on-screen battery % noted | — | `BATT-006` | TBD |
-| ... | (add rows as needed, one per periodic check) | — | `BATT-006` | TBD |
-| TBD | Session end — visible battery-percentage drop confirmed on screen | — | `BATT-006` | TBD |
+|----------|---|---|---|---|
+| 18:33:52 | Session start,  | — | - | - |
+| 18:34:14 | Left ear bud 96%, case 72%, right ear bud 93%. | — | - | - |
+| 19:02:49 | Case decrease 72% -> 71%, right ear bud 93% -> 90%. | — | - | - |
+| 19:26:30 | left ear bud 96% -> 95%. | — | - | - |
+| 19:29:22 | right ear bud 90% -> 89%. | — | - | - |
+| 19:50:30 | left ear bud 95% -> 94%. | — | - | - |
+| 19:52:30 | left ear bud in case. | — | - | - |
+| 20:00:01 | right ear bud in case, left bud increase 94% -> 100%, case decrease 71% -> 68%, right bud decrease 89 -> 88%. | — | - | - |
+| 20:02:25 | insert usb power into case. | — | - | - |
+| 20:02:29 | right ear bud increase 88% -> 90%. | — | - | - |
+| 20:11:07 | case increase 68% -> 75%, right ear bud increase to 88% -> 100%. | — | - | - |
+| 20:12:55 | Session end — visible battery-percentage drop confirmed on screen | — | - | - |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group X)
 

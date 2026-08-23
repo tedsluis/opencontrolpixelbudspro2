@@ -22,3 +22,6 @@ reverse-engineering/apk/apktool-output/
 Thumbs.db
 *.swp
 *~
+
+# to big
+CAP-009-recording1.mp4
