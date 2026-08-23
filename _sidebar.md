@@ -52,6 +52,7 @@
     - [CAP-008-EVENT-NOTES.md](captures/CAP-008-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_V/CAP-008-EVENT-NOTES.md)
   - **CAP-009 (Group X)**
     - [CAP-009-EVENT-NOTES.md](captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-EVENT-NOTES.md)
+    - [CAP-009-FINDINGS.md](captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-FINDINGS.md)
   - **CAP-010 (Group W)**
     - [CAP-010-EVENT-NOTES.md](captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-EVENT-NOTES.md)
     - [CAP-010-FINDINGS.md](captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-FINDINGS.md)
