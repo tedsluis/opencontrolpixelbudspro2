@@ -205,13 +205,13 @@ lower priority than finishing ANC/Battery/EQ):**
       command is now implementation-ready per `AGENTS.md` §6.
 - [ ] Log every hypothesis test in the relevant capture's `CAP-NNN-FINDINGS.md` before promoting a finding
       from HYPOTHESIS to FACT (`PROJECT_RULES.md` §4)
-- [ ] **Added 2026-08-23 — maintainer sign-off session on pending FACT promotions.** Per
-      `AGENTS.md` §6 an agent may propose but never commit these; all evidence is already
-      gathered and just needs review: Find My Buds Left/Right (`PROTOCOL.md` §4.4, `CAP-025`),
-      the wire-baseline firmware version `"release_5.203"` (`PROTOCOL.md` §0.1, `CAP-023`), and
-      the general-purpose DLCI 0x02 settings-write envelope plus its 9+ individual field mappings
-      (`PROTOCOL.md` §4.5, `CAP-019`–`CAP-024`). See `TODO.md`'s priority-order section above —
-      this is the cheapest, highest-leverage next step (no new capture needed).
+- [x] **Added 2026-08-23 — maintainer sign-off session on pending FACT promotions. Done
+      2026-08-23.** Per `AGENTS.md` §6 an agent may propose but never commit these; the maintainer
+      reviewed all three and approved: Find My Buds Left/Right → 🟢 FACT (`PROTOCOL.md` §4.4,
+      `DECISIONS.md` ADR-011); the wire-baseline firmware version `"release_5.203"` → 🟢 FACT
+      (`PROTOCOL.md` §0.1, ADR-012); the general-purpose DLCI 0x02 settings-write envelope
+      **shape** → 🟢 FACT, but explicitly **not** its 9+ individual field mappings, which stay 🟡
+      HYPOTHESIS per the maintainer's own narrower decision (`PROTOCOL.md` §4.5, ADR-013).
 
 ## Phase 4 — App development
 

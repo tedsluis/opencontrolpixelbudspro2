@@ -263,6 +263,18 @@ for the "definition of done" that will mark v1.
   - Tooling: `scripts/lint_docs.py` gained a check for Markdown image-syntax references (it
     previously only checked backtick-quoted filenames, missing how the `SCREENSHOTS_*.md` files
     reference `images/`), and `.github/workflows/lint-docs.yml` added so it actually runs in CI.
+- **2026-08-23: maintainer sign-off session — three pending FACT promotions reviewed and
+  approved**, each recorded with its own `DECISIONS.md` ADR per `AGENTS.md` §6:
+  - **Find My Buds Left/Right** (`PROTOCOL.md` §4.4) → 🟢 FACT (`ADR-011`). Case/"both
+    simultaneously" remains a separate, unresolved (likely Find-Hub-mediated) mechanism, not
+    covered by this promotion.
+  - **Wire-baseline firmware version `"release_5.203"`** (`PROTOCOL.md` §0.1, `CAP-023`) → 🟢
+    FACT (`ADR-012`). `"Revision 6"`'s meaning stays open, unaffected.
+  - **DLCI 0x02's general-purpose settings-write envelope shape** (`PROTOCOL.md` §4.5's shared
+    preamble) → 🟢 FACT (`ADR-013`) — narrowly scoped to the outer `field5{field4{...}}}` wrapper
+    only. The maintainer explicitly declined to blanket-promote the 9+ individual field mappings
+    at the same time; each stays its own, separately-labeled 🟡 HYPOTHESIS, graded by actual
+    evidence strength per setting (§4.5.1–§4.5.8 unchanged).
 
 ### Removed
 

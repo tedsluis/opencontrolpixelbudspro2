@@ -97,8 +97,8 @@ above it.
 > was independently present in this same session's connection-time handshake (frame 849,
 > 08:23:46.038, **before** the screen was even opened) with the byte-identical value
 > `"release_5.203"`. This is the first same-session, on-screen-confirmed match this project has
-> recorded — 🟡 HYPOTHESIS (strong, proposed for 🟢 FACT pending maintainer sign-off per
-> `AGENTS.md` §6): `"release_5.203"` is what the app calls "the firmware version," and
+> recorded — 🟢 **FACT, promoted 2026-08-23** (maintainer sign-off obtained per `AGENTS.md` §6;
+> see `DECISIONS.md` ADR-012): `"release_5.203"` is what the app calls "the firmware version," and
 > `"Revision 6"` is not surfaced anywhere in the app's own UI. **Still open:** what `"Revision 6"`
 > itself represents, if not the user-facing firmware version. Also established as a **clean
 > negative finding**: tapping the manual "Up to date" check and opening this screen produce **zero**
@@ -650,12 +650,11 @@ connection).
 
 ### 4.4 Find My Buds / Ring action
 
-- **Status**: 🟡 **HYPOTHESIS (strong), for Left/Right specifically — tested 2026-08-21,
-  `CAP-025`.** Confirmed video-correlated, cross-validated against ANC's already-🟢-FACT command on
-  the same channel (§4.1) per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1's Group K discipline — proposed
-  for promotion to 🟢 FACT, **pending explicit maintainer sign-off** (`AGENTS.md` §6 — an agent may
-  not commit this promotion unilaterally). Case/"both simultaneously" are a **separate, unresolved
-  mechanism** — see below.
+- **Status**: 🟢 **FACT, for Left/Right specifically — promoted 2026-08-23 (maintainer sign-off
+  obtained per `AGENTS.md` §6; see `DECISIONS.md` ADR-011).** Tested 2026-08-21, `CAP-025`:
+  video-correlated, cross-validated against ANC's already-🟢-FACT command on the same channel
+  (§4.1) per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1's Group K discipline. Case/"both simultaneously"
+  are a **separate, unresolved mechanism** — see below; not covered by this promotion.
 - **Confirmed opcode/payload** (`[Group:1][Code:1][Len:2BE][Value:1]`, `PROTOCOL.md` §2.1's Message
   Stream envelope): `Group=0x04` (Action), `Code=0x01` (Ring) — exact match to the spec's own
   worked example. `Value` byte: `0x01` = start ringing **Right**, `0x02` = start ringing **Left**,
@@ -703,10 +702,23 @@ variant — confirmed identical across `CAP-005`, `CAP-019`, `CAP-020`, `CAP-021
 consistent with `CAP-005-FINDINGS.md` §5a's "request/response correlation ID" reading, now
 confirmed stable across sessions, not just within one. Each individual setting supplies its own
 inner field number (and, for the per-earbud settings in §4.5.3, a further `field 7{field1|2{...}}`
-sub-wrapper to select Left/Right) — 🟡 **HYPOTHESIS (strong, not yet 🟢 FACT)**: this is a
-general-purpose `libmaestro` settings-apply envelope, evidenced by 9+ distinct settings across 6
-independent captures all sharing the identical outer nesting with no counter-example found. See
+sub-wrapper to select Left/Right). **The outer envelope shape/pattern itself is 🟢 FACT, promoted
+2026-08-23** (maintainer sign-off obtained, `DECISIONS.md` ADR-013): a general-purpose
+`libmaestro` settings-apply envelope, evidenced by 9+ distinct settings across 6 independent
+captures all sharing the identical outer nesting with no counter-example found — comparable
+cross-capture replication to how DLCI 0x02's own HDLC framing was promoted in §2.2a. See
 `CAP-020-FINDINGS.md` §5 for the envelope's first identification.
+
+**Scope of this promotion — narrower than it might look:** only the *outer wrapper's existence and
+shape* is FACT. Each subsection's *specific* field-number-to-setting mapping below remains its own,
+separately-labeled 🟡 HYPOTHESIS (strong for the ones with 2+ independent samples — In-ear
+detection, Volume EQ, press-and-hold's 4/4 combinations; weaker for the single-sample ones —
+Conversation Detection, Multipoint, the top-level Touch/Head-gesture toggles, Case sounds) — none
+of those individual mappings are promoted by this entry, per the maintainer's explicit 2026-08-23
+decision to promote the envelope pattern only, not blanket-promote every field. `FrameEncoder`
+implementation of the *generic write path* (building the two-level wrapper itself) is unblocked;
+implementing what any specific field number *means* is not, per `ARCHITECTURE.md` §5's per-command
+implementation gate.
 
 #### 4.5.1 Conversation Detection
 
@@ -988,8 +1000,9 @@ leaving them buried in prose elsewhere.
       UI-baseline (official app screenshot, 2026-07-30); the requested capture that also records
       the app's firmware-display screen now exists (`CAP-023`, 2026-08-21) — the on-screen
       "Device firmware version" (Left/Right/Case, all `release_5.203`) matches DLCI 0x08's private
-      envelope string byte-for-byte, same session. 🟡 HYPOTHESIS (strong, proposed for 🟢 FACT
-      pending maintainer sign-off): `"release_5.203"` is what the app calls "the firmware version."
+      envelope string byte-for-byte, same session. 🟢 **FACT, promoted 2026-08-23** (maintainer
+      sign-off obtained, `DECISIONS.md` ADR-012): `"release_5.203"` is what the app calls "the
+      firmware version."
       `"Revision 6"` (DLCI 0x04's official field) and `"cape2_sm"`/`"500m"`–`"500p"` remain
       un-surfaced by the app's own UI — see §0.1's 2026-08-21 update for the full detail.
 
@@ -1283,3 +1296,4 @@ leaving them buried in prose elsewhere.
 | 2026-08-18 | Synced with `CAP-016` (Group U re-run, `captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS.md`): §5.1 added the Buds-initiated reconnect-on-removal variant (🟢 FACT, frames 1213–1217); §7 added the case-lid-closed/re-docked disconnect row (🟢 FACT, `Disconnection Complete` reason `0x13` fires the instant the second bud is docked, not on lid-close alone) and the case-lid-open/close-while-buds-are-out zero-signal row (🟢 FACT, 2-capture-confirmed with `CAP-007`); §6 "Resolved" added the DLCI 0x08 Group `0x04` Code `0x12` behavior characterization (🟢 FACT for the event-driven-and-autonomous behavior, value's meaning still 🔴 open) and several new open items (RFCOMM channel-bounce trigger, ANC settable-toggles byte, the `0x0044` BLE notification burst, the `AndroidHeadTracker` HID Feature report) | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-08-21 | Synced with 8 new captures (`CAP-011`, `CAP-019`–`CAP-025`): **§4.4 Find My Buds/Ring** — Left/Right confirmed 🟡 HYPOTHESIS (strong), video-correlated, proposed for 🟢 FACT pending maintainer sign-off (`CAP-025`); Case/"both" found to route through a separate, likely GMS-mediated Find Hub mechanism producing no local wire command — flagged as a possible Zero-GMS hard limit. **§4.5 rewritten** from a bare unmapped-feature bullet list into per-command subsections (§4.5.1–§4.5.8), each with a confirmed DLCI 0x02 opcode, following §4.1–§4.4's structure, plus a new shared preamble describing the general-purpose `field5{field4{...}}` settings-write envelope discovered this batch (9+ settings, 6 captures, no counter-example). **§4.3 Option A** — `CAP-011` attempted a passive BLE scan; result recorded as inconclusive (Fast Pair Service traffic present but not structurally matching the documented Battery Notification layout), not force-fit; procedure deviation (active connection present) flagged. **§0.1** — wire-baseline-vs-UI-baseline firmware version resolved (`CAP-023`): on-screen `release_5.203` matches DLCI 0x08's already-documented string, same session. §6 updated with ~10 new open items across Commands & schemas and Behavior, including a newly-raised Zero-GMS-relevant question about Find Hub's Case/"both" ring mechanism | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-08-23 | Remediation from an external audit pass (maintainer-approved fixes, see `CHANGELOG.md`'s 2026-08-22/23 entry for the full report summary): **§2.1/§4.4 corrected** — the cited "spec worked ACK example" for the Ring action did not match Google's actual Fast Pair acknowledgement spec (verified by direct fetch); corrected via non-destructive dated notes per `PROJECT_RULES.md` §3, and the "byte-for-byte match to spec" claim for one observed ACK variant retracted (neither observed variant actually matches the corrected spec example). **§6 reopened** the Ring ACK extra-byte open item against the corrected spec tail, and added a refined characterization (timing/direction/entropy profile) of `CAP-021`'s still-unexplained DLCI 0x0a burst. **§4.3 Option C** annotated to explain DLCI 0x08 vs. 0x09 both being called "channel 4" (same RFCOMM multiplexer session, disambiguated by direction bit — not a numbering error). **§4.3 Option D** added the Battery Level characteristic UUID (`0x2A19`) alongside the already-documented service UUID (`0x180F`) | Claude (AI), audit-remediation task, maintainer-directed |
+| 2026-08-23 | **Three pending FACT promotions reviewed and explicitly approved by the maintainer** (`AGENTS.md` §6), each recorded with its own `DECISIONS.md` ADR: **§4.4 Find My Buds Left/Right** promoted to 🟢 FACT (`ADR-011`) — Case/"both" remains a separate, unresolved mechanism, not covered. **§0.1 wire-baseline firmware version** (`"release_5.203"` on DLCI 0x08) promoted to 🟢 FACT (`ADR-012`) — `"Revision 6"`'s meaning remains open, not covered. **§4.5's shared preamble, general-purpose DLCI 0x02 settings-write envelope shape** promoted to 🟢 FACT (`ADR-013`) — narrower than it may look: only the outer `field5{field4{...}}}` wrapper's existence/shape is FACT; every individual setting's specific field-number mapping in §4.5.1–§4.5.8 remains its own, separately-labeled 🟡 HYPOTHESIS, per the maintainer's explicit decision not to blanket-promote | Claude (AI), maintainer-directed sign-off session |

@@ -407,3 +407,116 @@ motivated this).
   Does not affect the separate, unrelated logging rules for the *app's own runtime code*
   (`AGENTS.md` §7/§9 — never log the paired device's MAC address at `INFO` level or above), which
   govern the shipped app's behavior, not this repo's committed research data.
+
+## ADR-011 — Find My Buds Left/Right confirmed as Fast Pair Message Stream Action (DLCI 0x04, Group `0x04`, Code `0x01`); `FrameEncoder` implementation unblocked
+
+- **Date**: 2026-08-23
+- **Status**: Accepted
+- **Context**: `PROTOCOL.md` §4.4 carried a 🟡 HYPOTHESIS (strong) finding from `CAP-025`
+  (2026-08-21): Ring commands for the Left/Right earbuds ride the same Fast Pair Message Stream
+  channel (DLCI 0x04) already established as 🟢 FACT for ANC (`ADR-009`), using Group `0x04`
+  (Action), Code `0x01` (Ring). The maintainer reviewed this finding directly (session of
+  2026-08-23) and gave explicit sign-off to promote it, per `AGENTS.md` §6's requirement that an
+  agent may propose but never unilaterally commit a FACT promotion.
+- **Finding being recorded**: `Group=0x04`/`Code=0x01` on DLCI 0x04, `Value` byte `0x01` = start
+  ringing Right, `0x02` = start ringing Left, `0x00` = stop/mute (shared, not per-earbud). Evidence:
+  4 action/response pairs (2 starts, 2 stops) in `CAP-025`, each individually video-correlated to a
+  specific tap under Group K's one-action-per-window discipline, riding the same envelope
+  mechanism already confirmed for ANC — not merely a surface resemblance to the spec's own worked
+  example. See `PROTOCOL.md` §4.4 for the full write-up.
+- **What this ADR does NOT clear**: Case and "both simultaneously" are a **separate, unresolved
+  mechanism** (`PROTOCOL.md` §4.4's "Major structural finding") — video-confirmed to route through
+  a different, likely GMS/Find-Hub-mediated path with **zero** local `Group 0x04 Code 0x01` traffic
+  across a ~2.5-minute observation window. This ADR covers Left/Right only; Case/"both" stays
+  🔴 OPEN QUESTION, flagged separately as a possible Zero-GMS scope limit.
+  Also unresolved: the exact content of the second ACK variant's extra byte(s) — an audit pass on
+  2026-08-23 found the previously-cited "spec worked example" for the ACK itself was miscited
+  (`PROTOCOL.md` §2.1's correction); this affects the ACK-byte interpretation only, not the
+  Group/Code/Value command mapping this ADR records.
+- **Decision**: the Ring command's channel/opcode/value-mapping determination is accepted as 🟢
+  FACT for Left/Right specifically. `FrameEncoder`/`FrameDecoder` implementation for this command
+  is unblocked, per `ARCHITECTURE.md` §5's per-command implementation gate — no further capture is
+  required before implementation begins, unlike ANC's `ADR-009` (which needed `CAP-006`'s isolated
+  repeat to close a reliability gap; `CAP-025` already used the same isolated, single-tap-per-window
+  methodology from the start).
+- **Consequences**: Left/Right Find My Buds can be implemented in `:data` immediately. Case/"both"
+  stays out of scope for implementation until the separate Find Hub question is resolved (see
+  `PROTOCOL.md` §6, Behavior).
+
+## ADR-012 — Wire-baseline firmware version confirmed as `"release_5.203"` (DLCI 0x08, Group `0x03`, Code `0x02`)
+
+- **Date**: 2026-08-23
+- **Status**: Accepted
+- **Context**: `PROTOCOL.md` §0.1 had tracked, since 2026-08-14, an open question distinguishing
+  the UI-baseline firmware version (`"release_5.203"`, confirmed via official app screenshot) from
+  whichever value(s) the same string might correspond to on the wire, given four different
+  version-like strings were independently documented across multiple channels
+  (`"release_5.203"`, `"Revision 6"`, `"cape2_sm"`, `"500m"`–`"500p"`). `CAP-023` (2026-08-21)
+  captured, for the first time, a session that recorded both the app's own firmware-display screen
+  *and* the wire traffic. The maintainer reviewed this finding directly (session of 2026-08-23) and
+  gave explicit sign-off to promote it.
+- **Finding being recorded**: in `CAP-023`, the on-screen "Device firmware version" (Left/Right/Case,
+  all `release_5.203`, video-confirmed at 08:24:17) is byte-for-byte identical to the string
+  independently present on DLCI 0x08's private envelope (Group `0x03` Code `0x02`) in the *same
+  session's* connection-time handshake (frame 849, 08:23:46.038) — critically, **before** the
+  firmware screen was even opened, ruling out the screen-open action itself as the source of the
+  wire value. This is the first same-session match between an on-screen value and a wire value this
+  project has recorded for this question.
+- **What this ADR does NOT clear**: what `"Revision 6"` (DLCI 0x04's official Fast Pair Device
+  Information field, Code `0x09`) represents, if not the user-facing firmware version, stays
+  🔴 OPEN QUESTION — this ADR resolves which string the app calls "the firmware version," not what
+  every other version-like string on the wire means. `"cape2_sm"`/`"500m"`–`"500p"` likewise remain
+  unresolved, unchanged by this ADR.
+- **Decision**: `"release_5.203"`, as carried on DLCI 0x08's private envelope (Group `0x03` Code
+  `0x02`), is accepted as 🟢 FACT to be what the official app displays as the Buds' firmware
+  version.
+- **Consequences**: any future Startup Handshake / firmware-compatibility check
+  (`ARCHITECTURE.md` §8.1) implemented against DLCI 0x08's Group `0x03` Code `0x02` value can treat
+  it as the authoritative firmware-version string, not merely a plausible candidate. Does not by
+  itself unblock any `FrameEncoder`/`FrameDecoder` work — this is a data-field identification, not a
+  command channel.
+
+## ADR-013 — DLCI 0x02 general-purpose settings-write envelope shape confirmed (`field5{field4{...}}}` outer wrapper); generic write-path implementation unblocked, individual field semantics remain HYPOTHESIS
+
+- **Date**: 2026-08-23
+- **Status**: Accepted
+- **Context**: `PROTOCOL.md` §4.5's shared preamble documented a 🟡 HYPOTHESIS (strong) finding
+  from the 2026-08-21 capture batch (`CAP-019`–`CAP-024`): every one of 9+ distinct settings
+  (Conversation Detection, Multipoint, Touch controls, Head gestures, press-and-hold ×4, ANC-mode
+  rotation, Mono audio, Volume EQ, Volume balance, In-ear detection, 2 Case-sound toggles) writes
+  through DLCI 0x02 inside an identical two-level outer wrapper, `field 5 { field 4 { ... } }`,
+  across 6 independent capture sessions with zero counter-examples. The maintainer reviewed this
+  finding directly (session of 2026-08-23) and gave explicit sign-off to promote *the envelope
+  pattern itself* — explicitly declining to blanket-promote every individual field mapping at the
+  same time, since those vary widely in evidence strength (see below).
+- **Finding being recorded**: the outer `field5{field4{...}}}` wrapper (standard protobuf
+  wire-format tags), preceded by a constant, cross-session-stable 13-byte prefix, is a genuine,
+  general-purpose `libmaestro` settings-apply envelope — not a coincidental per-setting shape. This
+  cross-capture, no-counter-example replication (9+ settings, 6 sessions, multiple days) is
+  comparable in kind to how DLCI 0x02's own HDLC framing mechanism was promoted to FACT in
+  `PROTOCOL.md` §2.2a.
+- **What this ADR explicitly does NOT clear — narrower than it may look:** only the outer
+  wrapper's existence and shape is FACT. Each subsection's *specific* field-number-to-setting
+  mapping in `PROTOCOL.md` §4.5.1–§4.5.8 remains individually 🟡 HYPOTHESIS, unchanged by this ADR,
+  reflecting genuinely different evidence strength per setting:
+  - Better-evidenced (2+ independent samples within their capture): In-ear detection (both
+    directions), Volume EQ (both directions), press-and-hold (4/4 Left/Right × ANC/Assistant
+    combinations).
+  - Single-sample, one direction only: Conversation Detection, Multipoint, the Touch-controls and
+    Head-gestures top-level toggles, and one of the two Case-sound toggles ("Bud return," whose one
+    sample isn't even cleanly disambiguated from a screen-open state-sync).
+  - Volume Balance: field identity plausible, but scale/direction is explicitly still 🔴 open —
+    unaffected by this ADR.
+  No individual field mapping is promoted by this ADR. A future ADR (or a batch of them) would be
+  needed before promoting any specific field's meaning, following the same per-item sign-off
+  process used here.
+- **Decision**: the envelope shape/pattern is accepted as 🟢 FACT. Per `ARCHITECTURE.md` §5's
+  per-command implementation gate, this unblocks implementing the **generic** write path — the
+  `FrameEncoder` logic that builds the two-level wrapper and the constant prefix — but does **not**
+  unblock implementing what any specific field number *means*; a `FrameEncoder` call site that
+  writes a real setting still requires its own field's HYPOTHESIS to be independently strengthened
+  and separately promoted first.
+- **Consequences**: `:data`'s `CodecRouter` can implement and unit-test the shared envelope
+  encode/decode logic now, against fixed byte-array fixtures, ahead of any specific setting being
+  wired up — but no UI control for an individual setting (Conversation Detection, Multipoint, etc.)
+  should ship against this ADR alone.
