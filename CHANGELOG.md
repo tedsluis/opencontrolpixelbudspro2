@@ -221,8 +221,11 @@ for the "definition of done" that will mark v1.
   never visited the "About" (serial numbers/connection status) screen (`FW-003`/`FW-004`), and
   `HOLD-005`'s 16-frame ANC-rotation-checklist burst can't be split between Left's and Right's lists
   from wire content alone. ~10 new open questions added to `PROTOCOL.md` §6.
-- **2026-08-22/23: external audit and maintainer-directed remediation** (`AUDIT_REPORT_2026-08-22.md`).
-  Independent re-derivation of three wire-level claims (DLCI 0x02 CRC-32, `CAP-006`'s ANC frame
+- **2026-08-22/23: external audit and maintainer-directed remediation.** A full-repository audit
+  (all governance/protocol docs, all 19 real captures, external spec validation) produced a
+  report (`AUDIT_REPORT_2026-08-22.md`, a working artifact — not committed alongside this batch,
+  its findings are captured here and in the specific entries below it made). Independent
+  re-derivation of three wire-level claims (DLCI 0x02 CRC-32, `CAP-006`'s ANC frame
   count, a `CAP-015` EQ quintet) against raw captures found no discrepancies; external
   verification of 13 technical claims against the Bluetooth Core Spec, Google's Fast Pair spec,
   Pigweed source, and Android/AOSP docs confirmed 11 outright, clarified one

@@ -4,6 +4,37 @@ Open tasks, grouped by phase. Check items off and move completed major items
 to `CHANGELOG.md` (see `PROJECT_RULES.md` §6, rule 13, on technical debt
 tracking).
 
+## Recommended priority order (added 2026-08-23)
+
+A cross-phase execution order, distinct from the phase grouping below (which organizes tasks by
+*kind*, not by *when to do them*). This section is a sequencing layer only — each item's full
+description still lives in its own phase/section below (or in `PROTOCOL.md`/`ARCHITECTURE.md` for
+protocol/architecture open questions, per this file's own "Open questions" section at the bottom);
+nothing here is a second copy of that detail, only a pointer plus the reasoning for the ordering.
+
+1. **Decisions & sign-offs (no new data needed — cheapest, unlocks the most):**
+   - Maintainer sign-off on pending 🟢 FACT promotions — see the new Phase 3 item below for the
+     current list. Per `AGENTS.md` §6 this step can only be done by the maintainer, not an agent.
+   - DI approach (Hilt vs. manual) — Phase 4.
+   - Minimum Android API level — Phase 5.
+2. **Start Phase 4 app development, ANC-first:** ANC is the only command that is fully 🟢 FACT
+   *and* implementation-unblocked (`DECISIONS.md` ADR-009) — building it end-to-end (transport →
+   framing → UI) is the cheapest way to prove the whole architecture works. Battery via HFP
+   (`PROTOCOL.md` §4.3 Option C, also already 🟢 FACT) is the natural second target — together
+   they cover most of `PROJECT.md`'s "Definition of done (v1)".
+3. **Start Phase 2 (APK reverse engineering) — currently 0% done.** Can run independently of new
+   captures and is likely to cheaply resolve several open `.proto`-field-number and HID-relevance
+   questions that captures alone can't (see `REVERSE_ENGINEERING.md`, updated 2026-08-23 with
+   HID-related keywords).
+4. **Remaining planned captures**, in the order given under Phase 1 below — `CAP-008`/`CAP-009`
+   first (combinable in one session), then a clean connection-free repeat of the Battery
+   Notification BLE scan (`CAP-011` was inconclusive), then `CAP-018`, `CAP-014`, `CAP-013`, and
+   the still-uncaptured main-run-through remainder (`CAP-026`–`CAP-030`).
+5. **Targeted research follow-ups**, lowest priority, tracked at their source per this file's
+   "Open questions" section: the `CAP-021` DLCI 0x0a burst trigger and the DLCI 0x02 AES-128
+   hypothesis (`PROTOCOL.md` §6) — the latter is only really testable once Phase 2 above provides
+   a pw_rpc/protobuf schema to check against.
+
 ## Setup
 
 - [x] Set up the Fedora development workstation (`WORKSTATION_PREPARATIONS.md`)
@@ -123,6 +154,17 @@ lower priority than finishing ANC/Battery/EQ):**
       payloads don't structurally match the documented byte layout — see
       `PROTOCOL.md` §4.3 Option A and `CAP-011-FINDINGS.md`. **Still open:**
       a genuinely clean, connection-free repeat is needed.
+- [ ] **Added 2026-08-23 — remaining planned captures not yet individually tracked here** (each
+      already has its own row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index; listed here
+      only so this file's priority ordering covers them too, not as a duplicate description):
+      `CAP-018` (Group Y, `0x0044` BLE-notification-burst isolation), `CAP-013` (Group A repeat,
+      whether "Forget" fully clears prior BLE association), and the still-uncaptured main
+      run-through remainder — `CAP-026` (Group L, passive observation), `CAP-027` (Group N, touch
+      gestures), `CAP-028` (Group O, head gestures, needs `CAP-020`'s Head-gestures toggle left
+      on), `CAP-029` (Group P, Conversation Detection voice trigger + the optional, destructive
+      factory-reset comparison + the still-open shorter-press pairing-mode question), and
+      `CAP-030` (Group Q items #19–20, Loud Noise Protection/Adaptive Audio, needs firmware
+      ≥4.467). Lower priority than `CAP-008`/`CAP-009`/a clean `CAP-011` repeat above.
 
 ## Phase 2 — APK reverse engineering
 
@@ -163,6 +205,13 @@ lower priority than finishing ANC/Battery/EQ):**
       command is now implementation-ready per `AGENTS.md` §6.
 - [ ] Log every hypothesis test in the relevant capture's `CAP-NNN-FINDINGS.md` before promoting a finding
       from HYPOTHESIS to FACT (`PROJECT_RULES.md` §4)
+- [ ] **Added 2026-08-23 — maintainer sign-off session on pending FACT promotions.** Per
+      `AGENTS.md` §6 an agent may propose but never commit these; all evidence is already
+      gathered and just needs review: Find My Buds Left/Right (`PROTOCOL.md` §4.4, `CAP-025`),
+      the wire-baseline firmware version `"release_5.203"` (`PROTOCOL.md` §0.1, `CAP-023`), and
+      the general-purpose DLCI 0x02 settings-write envelope plus its 9+ individual field mappings
+      (`PROTOCOL.md` §4.5, `CAP-019`–`CAP-024`). See `TODO.md`'s priority-order section above —
+      this is the cheapest, highest-leverage next step (no new capture needed).
 
 ## Phase 4 — App development
 
@@ -177,13 +226,20 @@ lower priority than finishing ANC/Battery/EQ):**
       `AGENTS.md` §7, `ARCHITECTURE.md` §9.1
 - [ ] Implement `ProtocolCodec` (`FrameEncoder`/`FrameDecoder`) with unit tests
       for the first confirmed command(s), against fixed byte-array fixtures
-      (`AGENTS.md` §11)
+      (`AGENTS.md` §11). **Recommended first target (added 2026-08-23): ANC**
+      (DLCI 0x04 Group `0x08`) — the only command that is both 🟢 FACT and
+      implementation-unblocked today (`DECISIONS.md` ADR-009); cheapest way to
+      prove the transport/framing/UI pipeline end-to-end.
 - [ ] Implement `BudsTransport` (RFCOMM primary, secondary GATT for
       case/charging characteristics) and `ConnectionStateMachine`
       (`ARCHITECTURE.md` §2.1)
 - [ ] Implement `BudsRepository` / `BudsRepositoryImpl` wiring `:data` to
       `:domain` (`ARCHITECTURE.md` §2.1, `DECISIONS.md` ADR-001)
-- [ ] First working end-to-end connection + battery status shown in the UI
+- [ ] First working end-to-end connection + battery status shown in the UI.
+      **Recommended mechanism (added 2026-08-23): HFP** (`PROTOCOL.md` §4.3
+      Option C) — already 🟢 FACT and not blocked, unlike Option A (still
+      inconclusive, see Phase 1) or Option B (battery message code
+      unconfirmed).
 
 ## Phase 5 — Testing & documentation
 

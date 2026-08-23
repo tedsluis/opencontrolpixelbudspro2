@@ -50,6 +50,9 @@ KNOWN_HISTORICAL_REFERENCES = {
     "CAP-005-recoding.mp4",  # renamed 2026-08-20; CHANGELOG.md documents the rename by name
     "docs/Notes.md",  # qzed/pbpctrl's own doc, referenced by name only
     "captures/2026-08-02_pixel7a_anc-toggle.log",  # illustrative example name
+    "AUDIT_REPORT_2026-08-22.md",  # transient audit-report artifact, never committed (2026-08-23);
+                                    # its findings live on in the docs/CHANGELOG.md entries that
+                                    # cite it by name, same lifecycle as AUDIT_REPORT_2026-08-20.md
 }
 
 # Only lint cross-references to the project's own capture/doc artifacts —
