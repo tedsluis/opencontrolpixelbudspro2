@@ -135,6 +135,18 @@ No magic byte, no checksum — integrity relies on RFCOMM's own reliable, ordere
 delivery. Confirmed worked example from the spec: an ACK for a "ring" action
 (group `0x04`, code `0x01`) is encoded as `0xFF 0x01 0x00 0x02 0x04 0x01`.
 
+> **Correction (2026-08-23):** the byte sequence above does **not** match the official spec's
+> own worked example — caught during an external audit pass that fetched
+> `developers.google.com/nearby/fast-pair/specifications/extensions/acknowledgement` directly
+> rather than relying on this document's prior (miscited) restatement. The spec's actual worked
+> example for acknowledging a received ring action (`0x04010002013C`) is an ACK of
+> **`0xFF 0x01 0x00 0x04 0x04 0x01 0x01 0x3C`** — length `0x0004`, **four** data bytes (echoed
+> group `0x04`, echoed code `0x01`, plus two additional bytes `0x01 0x3C`), not the six-byte,
+> two-data-byte value stated above. The framing structure itself (Group/Code/Length/Data) is
+> unaffected — only this specific worked-example citation was wrong. See §4.4 below and
+> `AUDIT_REPORT_2026-08-22.md` for the full correction and its effect on the Find My Buds
+> ACK-variant comparison.
+
 Google's Fast Pair specification explicitly allows partners to extend the
 Message Stream with vendor-specific message groups — so it is architecturally
 plausible that `libmaestro` is "Message Stream, with Google's own private
@@ -588,7 +600,14 @@ event-observation coroutines.
 #### Option C — HFP AT commands (`AT+BIEV` HF Indicator #2, `AT+CIND` `battchg`)
 
 - **Status**: 🟢 FACT — confirmed active for this device (`CAP-001-FINDINGS.md`
-  §3), on channel 4 / **DLCI 0x09**. Two simultaneously-active HFP mechanisms
+  §3), on channel 4 / **DLCI 0x09**. **Note (2026-08-23):** this "channel 4" is a *different*
+  logical channel from DLCI 0x08's "channel 4" (the private envelope, §2.3) — both DLCIs share
+  one RFCOMM multiplexer session (same ACL handle/L2CAP CID, independently confirmed via
+  `tshark`), but each side of the connection independently assigned its own service to server
+  channel 4, disambiguated by RFCOMM's direction bit (phone-initiated → DLCI 0x08, Buds-initiated
+  → DLCI 0x09). This is standard, spec-correct RFCOMM behavior, not a numbering conflict — see
+  `CAP-001-FINDINGS.md` §2 for the full phone-init/Buds-init disambiguation. Two
+  simultaneously-active HFP mechanisms
   observed: `AT+BIEV=2,<0-100>` (HF Indicator #2, Bluetooth-spec-assigned as
   Battery Level) and the older `AT+CIND?` `battchg` indicator (0–5 scale) —
   these **disagreed** in `CAP-001` (`battchg=3` ≈60% vs. `AT+BIEV=2,100` =
@@ -603,7 +622,7 @@ event-observation coroutines.
 - Neither HFP indicator distinguishes Left/Right/Case — both report a single
   aggregate value, unlike Option A's separate L/R/Case fields.
 
-#### Option D — BLE Battery Service (`0x180F`)
+#### Option D — BLE Battery Service (`0x180F`, Battery Level characteristic `0x2A19`)
 
 - **Status**: 🟡 HYPOTHESIS — the service's *existence* is now confirmed
   (`CAP-017`, 18:30 session — live GATT discovery via a fresh nRF Connect
@@ -619,7 +638,10 @@ event-observation coroutines.
   previously unconfirmed) to 🟡 (presence confirmed, use/content still
   open) — not promoted further, since existence alone does not establish
   this is how the app or this project's own implementation should read
-  battery.
+  battery. If pursued, the value itself would be read from the standard Battery Level
+  characteristic, `0x2A19` (Bluetooth SIG-assigned, externally confirmed 2026-08-23) — the
+  service UUID `0x180F` alone only identifies that the service exists, not which characteristic
+  handle to read/subscribe to.
 
 **Implementation priority**: 0 (cheap to rule in/out) → A → B → C → D (see
 `ARCHITECTURE.md` §4; A–D's order reflects official-spec confidence and
@@ -638,9 +660,16 @@ connection).
   Stream envelope): `Group=0x04` (Action), `Code=0x01` (Ring) — exact match to the spec's own
   worked example. `Value` byte: `0x01` = start ringing **Right**, `0x02` = start ringing **Left**,
   `0x00` = stop/mute (shared, not per-earbud). Every `Sent` frame is retransmitted once
-  (byte-identical), and answered by two ACK variants: `0xFF 0x01 0x00 0x02 0x04 0x01` (byte-for-byte
-  match to the spec's worked example) and `0xFF 0x01 0x00 0x03 0x04 0x01 0x00` (one extra trailing
-  byte beyond the spec's worked example, not decoded — possibly a status/result code).
+  (byte-identical), and answered by two ACK variants: `0xFF 0x01 0x00 0x02 0x04 0x01` and
+  `0xFF 0x01 0x00 0x03 0x04 0x01 0x00` (one byte longer).
+
+  > **Correction (2026-08-23):** the first variant was previously described as a "byte-for-byte
+  > match to the spec's worked example." It is not — per §2.1's 2026-08-23 correction, the spec's
+  > real worked ACK example is `0xFF 0x01 0x00 0x04 0x04 0x01 0x01 0x3C` (4 data bytes), which
+  > matches **neither** of the two variants actually observed on the wire (2 and 3 data bytes
+  > respectively). Both remain genuine, confirmed wire observations from `CAP-025` — that part is
+  > unaffected — but neither can be described as matching the spec's own example. See §6's open
+  > item on the second variant's extra byte, reopened against the corrected 4-byte spec tail.
 - **Sent to**: RFCOMM Message Stream channel, DLCI 0x04, per §2.1.
 - **Expected response**: confirmed — see the two ACK variants above.
 - **Major structural finding — Case/"both" use a different mechanism entirely**: the official app
@@ -1105,9 +1134,13 @@ leaving them buried in prose elsewhere.
       Length&Type marker at any offset)? Do the 5 rotating BLE addresses observed in that capture
       all belong to the same physical Buds/Case unit (RSSI proximity is supporting, not conclusive,
       evidence)?
-- [ ] **Added 2026-08-21, `CAP-025-FINDINGS.md` §7:** what does the Ring action's second ACK
-      variant's extra byte represent (`0xFF 0x01 0x00 0x03 0x04 0x01 0x00` — one byte beyond the
-      spec's worked example `0xFF 0x01 0x00 0x02 0x04 0x01`)?
+- [ ] **Added 2026-08-21, `CAP-025-FINDINGS.md` §7; reopened 2026-08-23 against a corrected spec
+      citation (§2.1's 2026-08-23 correction):** what do the Ring action's two observed ACK
+      variants (`0xFF 0x01 0x00 0x02 0x04 0x01` and `0xFF 0x01 0x00 0x03 0x04 0x01 0x00`)
+      represent, now that neither matches the spec's *actual* worked example
+      (`0xFF 0x01 0x00 0x04 0x04 0x01 0x01 0x3C`, 4 data bytes)? The spec's own extra two bytes
+      (`01 3C`) are a plausible status/result-code candidate for what the shorter observed
+      variants are missing or encoding differently — not yet checked against a fresh capture.
 - [ ] **Added 2026-08-21, `CAP-022-FINDINGS.md` §8:** does Volume balance (`field 17`) actually
       persist locally on the earbuds across a disconnect/reconnect, as
       `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1's `AUDIO-003` row claims from the app's own on-screen
@@ -1120,6 +1153,20 @@ leaving them buried in prose elsewhere.
       bytes). Structurally protobuf-tag-shaped (`0a d0 01` = field 1, length 208) but not decoded
       further, and not attributable to any single Group G Test-ID's tap time. What triggers this,
       and why it appears in exactly one session out of fourteen checked, is unresolved.
+      **Refined characterization, added 2026-08-23 (external audit pass, independent re-analysis
+      of all 1123 frames — offered as a research direction, not a conclusion):** the burst is
+      **100% Rcvd-direction** (Buds→phone only; the phone never requests it) and arrives in ~5–6
+      discrete bursty waves separated by multi-second gaps (8.4s/28.5s/22.5s between waves, vs.
+      1–100ms within a wave) rather than as continuous streaming; the payload body is a long run
+      of a repeating 3-byte pattern (`6d b6 db`) with a different repeating pattern (`7e ee ed`)
+      near each frame's tail and ~20 bytes of higher-entropy data before that. This timing/entropy
+      profile is more consistent with a **segmented bulk-data or capability/diagnostic dump**
+      than continuous real-time sensor/audio telemetry, but this is weaker evidence than a spec
+      match or cross-capture replication and stays 🔴 OPEN QUESTION — explicitly **not** promoted
+      to a firmer hypothesis, consistent with this project's 2026-08-22 decision to decline a
+      prior, less-supported "IMU/telemetry" guess about this same burst. A capture bracketing
+      whatever background condition preceded ~08:02:29 in that session (app backgrounded?
+      scheduled sync? battery/charge-state change?) would be needed to attribute a trigger.
 - [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §11:** a 73-frame `Handle Value Notification`
       burst on BLE ATT handle `0x0044` (connection handle `0x0002`), confined to a ~29s window
       right after the BLE link forms and before the classic link exists; 23 of the 73 contain a
@@ -1235,3 +1282,4 @@ leaving them buried in prose elsewhere.
 | 2026-08-18 | §4.2 EQ updated from a fresh, independent `CAP-015` session (`captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`) that drags all 5 EQ sliders individually (3 passes each) and taps 5 presets, resolving the 2026-08-15 capture's field-to-band open question: **field-to-band mapping promoted to 🟢 FACT** (field 1↔Low bass, 2↔Bass, 3↔Mid, 4↔Treble, 5↔Upper treble, wire order reversed from on-screen order), matching the earlier single-band inference exactly. Also added: the ±6.0 band-gain clamp (🟢 FACT, units unconfirmed), a confirmed preset-quintet reference table, and a revised (still 🟡) reading of outer field 16/18 as preview/slider-release rather than preview/explicit-Save-tap. Updated the corresponding §6 open-question entry non-destructively | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-08-18 | Synced with `CAP-016` (Group U re-run, `captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS.md`): §5.1 added the Buds-initiated reconnect-on-removal variant (🟢 FACT, frames 1213–1217); §7 added the case-lid-closed/re-docked disconnect row (🟢 FACT, `Disconnection Complete` reason `0x13` fires the instant the second bud is docked, not on lid-close alone) and the case-lid-open/close-while-buds-are-out zero-signal row (🟢 FACT, 2-capture-confirmed with `CAP-007`); §6 "Resolved" added the DLCI 0x08 Group `0x04` Code `0x12` behavior characterization (🟢 FACT for the event-driven-and-autonomous behavior, value's meaning still 🔴 open) and several new open items (RFCOMM channel-bounce trigger, ANC settable-toggles byte, the `0x0044` BLE notification burst, the `AndroidHeadTracker` HID Feature report) | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-08-21 | Synced with 8 new captures (`CAP-011`, `CAP-019`–`CAP-025`): **§4.4 Find My Buds/Ring** — Left/Right confirmed 🟡 HYPOTHESIS (strong), video-correlated, proposed for 🟢 FACT pending maintainer sign-off (`CAP-025`); Case/"both" found to route through a separate, likely GMS-mediated Find Hub mechanism producing no local wire command — flagged as a possible Zero-GMS hard limit. **§4.5 rewritten** from a bare unmapped-feature bullet list into per-command subsections (§4.5.1–§4.5.8), each with a confirmed DLCI 0x02 opcode, following §4.1–§4.4's structure, plus a new shared preamble describing the general-purpose `field5{field4{...}}` settings-write envelope discovered this batch (9+ settings, 6 captures, no counter-example). **§4.3 Option A** — `CAP-011` attempted a passive BLE scan; result recorded as inconclusive (Fast Pair Service traffic present but not structurally matching the documented Battery Notification layout), not force-fit; procedure deviation (active connection present) flagged. **§0.1** — wire-baseline-vs-UI-baseline firmware version resolved (`CAP-023`): on-screen `release_5.203` matches DLCI 0x08's already-documented string, same session. §6 updated with ~10 new open items across Commands & schemas and Behavior, including a newly-raised Zero-GMS-relevant question about Find Hub's Case/"both" ring mechanism | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
+| 2026-08-23 | Remediation from `AUDIT_REPORT_2026-08-22.md` (external audit, maintainer-approved fixes): **§2.1/§4.4 corrected** — the cited "spec worked ACK example" for the Ring action did not match Google's actual Fast Pair acknowledgement spec (verified by direct fetch); corrected via non-destructive dated notes per `PROJECT_RULES.md` §3, and the "byte-for-byte match to spec" claim for one observed ACK variant retracted (neither observed variant actually matches the corrected spec example). **§6 reopened** the Ring ACK extra-byte open item against the corrected spec tail, and added a refined characterization (timing/direction/entropy profile) of `CAP-021`'s still-unexplained DLCI 0x0a burst. **§4.3 Option C** annotated to explain DLCI 0x08 vs. 0x09 both being called "channel 4" (same RFCOMM multiplexer session, disambiguated by direction bit — not a numbering error). **§4.3 Option D** added the Battery Level characteristic UUID (`0x2A19`) alongside the already-documented service UUID (`0x180F`) | Claude (AI), audit-remediation task, maintainer-directed |

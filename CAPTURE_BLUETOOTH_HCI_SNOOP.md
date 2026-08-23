@@ -142,8 +142,10 @@ The supported, working method on both phones:
 
 ## 4. Capture Procedure — Isolate Every Action
 
-**Groups A–Q (and Z) below are capture scenarios — efficient bundles of related actions
-to run in one session — not the project's official test record.** Each numbered item is
+**Groups A–Q below are the main run-through capture scenarios — efficient bundles of related
+actions to run in one session — not the project's official test record; Z, R, S, T, U, V, W, X,
+and Y are additional special-purpose groups added later (pipeline validation, occasional/targeted
+follow-ups), each documented in its own subsection below.** Each numbered item is
 annotated with its permanent Test-ID (e.g. `ANC-001`) from
 `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, which is where the actual catalog of investigated
 behaviors, their existence-confidence, and their evidence status live. A Group can bundle

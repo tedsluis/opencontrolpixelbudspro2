@@ -113,19 +113,19 @@ _Make sure the buds are connected and active._
 | `ANC-004` | ANC → Transparency | User (App) | B | 🟢 | | `PROTOCOL.md` §4.1 |
 | `CONV-001` | Toggle 'Conversation Detection' on/off | User (App) | C | 🟢 | Switches to Transparency and pauses media when you speak. | `PROTOCOL.md` §4.5.1 |
 | `MULTI-001` | Toggle 'Multipoint' on/off | User (App) | C | 🟢 | Connects to 2 Bluetooth devices simultaneously; may trigger an SDP/connection update. | `PROTOCOL.md` §4.5.2 |
-| `EQP-001` | EQ preset: Standard | User (App) | D | 🟢 | Full, fixed preset list from screenshots — each preset is a separate value to capture. | — |
+| `EQP-001` | EQ preset: Standard | User (App) | D | 🟢 | Full, fixed preset list from screenshots — each preset is a separate value to capture. On-screen preset-dropdown label is actually **"Default"**, not "Standard" (screenshot-confirmed 2026-08-23, `images/pixel_buds_app_equalizer_2.png`); not itself exercised in `CAP-015`'s 5-preset run, so still unconfirmed on the wire. | — |
 | `EQP-002` | EQ preset: Bass Boost | User (App) | D, T | 🟢 | **T (added 2026-08-14):** top-priority isolated capture target now that EQ is known not to share ANC's channel — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. **Captured 2026-08-15 (`CAP-005`, on-screen preset label "Heavy bass").** | `PROTOCOL.md` §4.2 |
-| `EQP-003` | EQ preset: Bass Reduction | User (App) | D | 🟢 | | — |
-| `EQP-004` | EQ preset: Balanced | User (App) | D | 🟢 | | — |
-| `EQP-005` | EQ preset: Vocal Boost | User (App) | D | 🟢 | | — |
-| `EQP-006` | EQ preset: Clarity | User (App) | D | 🟢 | | — |
-| `EQP-007` | EQ preset: Last saved | User (App) | D | 🟢 | Restores a previously saved custom profile. | — |
-| `EQP-008` | Save current EQ as a new preset ('Save') | User (App) | D | 🟢 | A distinct write action compared to preset selection — possibly a different protocol command (write vs. select). | — |
-| `EQS-001` | EQ slider: High treble | User (App) | E | 🟢 | 5-band EQ; each band is a separate, potentially distinct protocol field. | — |
-| `EQS-002` | EQ slider: Treble | User (App) | E | 🟢 | | — |
-| `EQS-003` | EQ slider: Mid | User (App) | E | 🟢 | | — |
+| `EQP-003` | EQ preset: Bass Reduction | User (App) | D | 🟢 | On-screen preset label "Light bass" (screenshot-confirmed 2026-08-23). **Captured 2026-08-18 (`CAP-015`).** | `PROTOCOL.md` §4.2 |
+| `EQP-004` | EQ preset: Balanced | User (App) | D | 🟢 | **Captured 2026-08-18 (`CAP-015`).** | `PROTOCOL.md` §4.2 |
+| `EQP-005` | EQ preset: Vocal Boost | User (App) | D | 🟢 | On-screen preset label "Vocal boost". **Captured 2026-08-18 (`CAP-015`).** | `PROTOCOL.md` §4.2 |
+| `EQP-006` | EQ preset: Clarity | User (App) | D | 🟢 | **Captured 2026-08-18 (`CAP-015`).** | `PROTOCOL.md` §4.2 |
+| `EQP-007` | EQ preset: Last saved | User (App) | D | 🟢 | Restores a previously saved custom profile. **Captured 2026-08-18 (`CAP-015`) as that session's baseline quintet.** | `PROTOCOL.md` §4.2 |
+| `EQP-008` | Save current EQ as a new preset ('Save') | User (App) | D | 🟢 | A distinct write action compared to preset selection — possibly a different protocol command (write vs. select). Preview-vs-save wire semantics still unresolved, see `PROTOCOL.md` §4.2/§6. | — |
+| `EQS-001` | EQ slider: Upper treble | User (App) | E | 🟢 | 5-band EQ; each band is a separate, potentially distinct protocol field. On-screen label is "Upper treble" (screenshot-confirmed 2026-08-23, `images/pixel_buds_app_equalizer_1.png` — corrects this row's earlier "High treble" label to match `PROTOCOL.md` §4.2's usage). **Captured 2026-08-18 (`CAP-015`).** | `PROTOCOL.md` §4.2 |
+| `EQS-002` | EQ slider: Treble | User (App) | E | 🟢 | **Captured 2026-08-18 (`CAP-015`).** | `PROTOCOL.md` §4.2 |
+| `EQS-003` | EQ slider: Mid | User (App) | E | 🟢 | **Captured 2026-08-18 (`CAP-015`).** | `PROTOCOL.md` §4.2 |
 | `EQS-004` | EQ slider: Bass | User (App) | E, T | 🟢 | **T (added 2026-08-14):** second, structurally different isolated action for Group T's cross-command check — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T. **Captured 2026-08-15 (`CAP-005`) — also revealed an additional, distinct "Save"-tap wire burst not anticipated by the original test design.** | `PROTOCOL.md` §4.2 |
-| `EQS-005` | EQ slider: Low bass | User (App) | E | 🟢 | | — |
+| `EQS-005` | EQ slider: Low bass | User (App) | E | 🟢 | **Captured 2026-08-18 (`CAP-015`).** | `PROTOCOL.md` §4.2 |
 | `TOUCH-001` | Toggle 'Touch controls' fully on/off | User (App) | F | 🟢🔵 | Enables/disables the touch sensors on the buds. | `PROTOCOL.md` §4.5.3 |
 | `HEAD-001` | Toggle 'Head gestures' fully on/off | User (App) | F | 🟢🔵 | Pixel Buds Pro 2-exclusive. | `PROTOCOL.md` §4.5.4 |
 | `HOLD-001` | Press-and-hold Left → Toggle ANC | User (App) | G | 🟢 | Binary choice per earbud. | `PROTOCOL.md` §4.5.3 |

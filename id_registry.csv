@@ -8,6 +8,7 @@ ADR-006,adr,accepted,"Bounded exception to the no-BLE-scanning rule, for the Fas
 ADR-007,adr,accepted,"`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Groups are capture scenarios, not tests; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the test/behavior catalog",DECISIONS.md
 ADR-008,adr,accepted,"Fast Pair Account Linking, Ownership Transfer, and the Accessory Non-Owner Service are out of scope",DECISIONS.md
 ADR-009,adr,accepted,"ANC command channel confirmed as Fast Pair Message Stream (DLCI 0x04); `FrameEncoder` implementation blocked pending `CAP-006`",DECISIONS.md
+ADR-010,adr,accepted,"PROJECT_RULES.md rule 19 does not apply to the maintainer's own captures under captures/",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

@@ -50,6 +50,14 @@ document wins, unless the project owner explicitly and knowingly deviates from i
     the resulting interpretation. This lets anyone re-run the same command
     against the same bytes and independently verify the conclusion, rather
     than having to trust a stated result on faith.
+    **Clarification (2026-08-23, closing an ambiguity `AUDIT_REPORT_2026-08-22.md`
+    flagged):** when `PROTOCOL.md` restates a finding that already originates
+    from a compliant `CAP-NNN-FINDINGS.md` (command + hex present there), a
+    frame-number-and-file pointer in `PROTOCOL.md`'s own text satisfies this
+    rule for that restatement — `PROTOCOL.md` does not need to duplicate the
+    hex/command inline as long as the source file it points to actually has
+    them. This rule is not satisfied, in either location, by a conclusion with
+    no command/hex anywhere in the chain.
 
 ## 2. Document before implementing
 
@@ -173,8 +181,14 @@ document disconnected from the capture it belongs to.
 18. Captures and large binary files go through Git LFS, never directly into the
     main repository (see `.gitattributes`).
 19. Sensitive or personal data (e.g. MAC addresses of your own devices, account
-    details) is anonymized or excluded via `.gitignore` before committing —
-    consistent with the MAC-address handling rules in `AGENTS.md` §7 and §9.
+    details) is anonymized or excluded before committing — consistent with the
+    MAC-address handling rules in `AGENTS.md` §7 and §9 (which govern the
+    *shipped app's own runtime logging*, not this repo's research data).
+    **Exception, `DECISIONS.md` ADR-010:** this rule does not apply to the
+    maintainer's own Bluetooth captures under `captures/CAP-NNN-*/`, which
+    intentionally retain real identifiers by informed consent — see
+    `CONTRIBUTING.md`'s PII-exception section for the rationale and the
+    third-party-contributor rule (which *is* held to this rule in full).
 
 ## 8. Scope guardrails
 

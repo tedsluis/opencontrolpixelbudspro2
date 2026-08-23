@@ -1,0 +1,32 @@
+name: Lint docs
+
+# Runs scripts/lint_docs.py (dead filename references, unregistered
+# CAP-NNN/ADR-NNN/Test-ID references, stale pre-rename project name) on any
+# change to a Markdown file or to the registry/lint script itself. See that
+# script's own docstring for what it checks and why (AUDIT_REPORT_2026-08-22.md
+# recommendation: the tool already existed and worked, but nothing was
+# actually running it in CI).
+
+on:
+  pull_request:
+    paths:
+      - "**/*.md"
+      - "id_registry.csv"
+      - "scripts/lint_docs.py"
+  push:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - "id_registry.csv"
+      - "scripts/lint_docs.py"
+
+jobs:
+  lint-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Run lint_docs.py
+        run: python3 scripts/lint_docs.py

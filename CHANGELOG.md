@@ -221,6 +221,45 @@ for the "definition of done" that will mark v1.
   never visited the "About" (serial numbers/connection status) screen (`FW-003`/`FW-004`), and
   `HOLD-005`'s 16-frame ANC-rotation-checklist burst can't be split between Left's and Right's lists
   from wire content alone. ~10 new open questions added to `PROTOCOL.md` §6.
+- **2026-08-22/23: external audit and maintainer-directed remediation** (`AUDIT_REPORT_2026-08-22.md`).
+  Independent re-derivation of three wire-level claims (DLCI 0x02 CRC-32, `CAP-006`'s ANC frame
+  count, a `CAP-015` EQ quintet) against raw captures found no discrepancies; external
+  verification of 13 technical claims against the Bluetooth Core Spec, Google's Fast Pair spec,
+  Pigweed source, and Android/AOSP docs confirmed 11 outright, clarified one
+  (`BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED` is `@SystemApi`-gated, though the literal
+  broadcast string remains usable by third-party apps), and found one genuine error: `PROTOCOL.md`
+  §2.1/§4.4's cited "spec worked ACK example" for the Ring/Find My Buds command did not match
+  Google's actual specification — corrected via dated notes (neither observed `CAP-025` ACK
+  variant actually matches the real spec example either; §6's open item on the extra byte was
+  reopened against the corrected 4-byte tail). Maintainer reviewed the report and directed all
+  recommendations be carried out:
+  - `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`: 9 stale EQ-row Evidence columns (`EQP-003`–`EQP-007`,
+    `EQS-001`/`002`/`003`/`005`) updated to point at `PROTOCOL.md` §4.2, which had confirmed them
+    since `CAP-015` (2026-08-18) without the catalog being updated to match; EQ band/preset naming
+    reconciled against the actual on-screen labels (screenshot-verified: "Upper treble" not "High
+    treble", "Default" not "Standard", "Light bass" for Bass Reduction).
+  - `DECISIONS.md` ADR-010 added (`PROJECT_RULES.md` rule 19 does not apply to the maintainer's
+    own `captures/` data — a real conflict with `CONTRIBUTING.md`'s existing, already-practiced
+    policy that had never been formally recorded as the ADR `PROJECT_RULES.md` itself requires for
+    a knowing deviation); rule 19's text cross-linked to it and its stale `.gitignore` reference
+    corrected.
+  - `PROTOCOL.md` §4.3 Option C annotated to explain why DLCI 0x08 and DLCI 0x09 are both
+    legitimately called "channel 4" (one RFCOMM multiplexer session, disambiguated by direction
+    bit — confirmed via `tshark`, not a numbering error); Option D gained the Battery Level
+    characteristic UUID (`0x2A19`) alongside the already-documented service UUID (`0x180F`); §6
+    gained a refined, still-HYPOTHESIS-level characterization of `CAP-021`'s unexplained DLCI 0x0a
+    burst (timing/direction/entropy profile suggesting a segmented bulk-data transfer).
+  - `TODO.md`'s stale "not yet reviewed" checklist item closed (the work it was waiting on
+    completed 2026-08-20, but the checkbox was never updated).
+  - `REVERSE_ENGINEERING.md`'s APK keyword list gained HID-related classes, matching the project's
+    already-live HID hypothesis; `README.md` and `CAPTURE_BLUETOOTH_HCI_SNOOP.md` gained minor
+    completeness/staleness fixes (non-standard per-capture artifacts, the full Group A–Z range).
+  - `PROJECT_RULES.md` rule 4a clarified: a `PROTOCOL.md` restatement pointing at an
+    already-compliant `CAP-NNN-FINDINGS.md` satisfies the hex-and-script rule without duplicating
+    the hex inline.
+  - Tooling: `scripts/lint_docs.py` gained a check for Markdown image-syntax references (it
+    previously only checked backtick-quoted filenames, missing how the `SCREENSHOTS_*.md` files
+    reference `images/`), and `.github/workflows/lint-docs.yml` added so it actually runs in CI.
 
 ### Removed
 

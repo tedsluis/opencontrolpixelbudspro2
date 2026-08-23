@@ -59,6 +59,14 @@ FILENAME_RE = re.compile(
     r"`([A-Za-z0-9_.\-/]+\.(?:md|log|mp4|png|txt|csv|yaml|yml|json))`"
 )
 
+# Markdown image syntax, e.g. `![alt text](images/foo.png)` — used by
+# SCREENSHOTS_PIXEL_BUDS_APP.md/SCREENSHOTS_PIXEL_BUDS_WEB_APP.md, which
+# FILENAME_RE's backtick-only pattern above does not see at all
+# (AUDIT_REPORT_2026-08-22.md finding: this was a real blind spot in the
+# dead-filename check, even though no reference was actually broken at the
+# time it was found).
+IMAGE_RE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)\)")
+
 # Test-ID area prefixes, per TESTPLAN_BLUETOOTH_HCI_SNOOP.md §0.4 — update
 # this list if that section's prefix table changes.
 TEST_ID_PREFIXES = (
@@ -132,6 +140,14 @@ def check_filenames(files: list[Path]) -> list[str]:
                 continue
             if not resolve_filename(name, path):
                 errors.append(f"{path.relative_to(REPO_ROOT)}: dead filename reference `{name}`")
+        for match in IMAGE_RE.finditer(text):
+            name = match.group(1)
+            if name.startswith(("http://", "https://")):
+                continue  # remote image, not a repo-relative path
+            if PLACEHOLDER_FILENAME_RE.search(name) or name in KNOWN_HISTORICAL_REFERENCES:
+                continue
+            if not resolve_filename(name, path):
+                errors.append(f"{path.relative_to(REPO_ROOT)}: dead image reference `{name}`")
     return errors
 
 

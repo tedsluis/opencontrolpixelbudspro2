@@ -57,8 +57,16 @@ Status legend (consistent with `PROTOCOL.md` §0):
    - `UUID.fromString`
    - `MessageStream`, `AccountKey`, `FastPair` (Fast Pair SDK usage, relevant to
      `PROTOCOL.md` §2.1/§4.3)
+   - `BluetoothHidDevice`, `HidDeviceProfile`, `HidDeviceAppSdpSettings` (added
+     2026-08-23 — the project has a live, evidenced Bluetooth HID hypothesis:
+     HID-Control/HID-Interrupt L2CAP channels observed during SDP in `CAP-002`,
+     and an `AndroidHeadTracker` HID Feature report decoded in `CAP-016`; see
+     `ARCHITECTURE.md` §1/§15. Significant enough that missing it on the first
+     APK pass would be a real gap, not a cosmetic one — check for it explicitly
+     rather than relying on the generic `ble`/`bluetooth` keywords below to
+     surface it.)
    - Package/class names containing `ble`, `bluetooth`, `buds`, `wearable`,
-     `headset`, `maestro`, `gfps`
+     `headset`, `maestro`, `gfps`, `hid`
    - `.proto`-generated classes (look for `GeneratedMessageLite`,
      `builder()`, field names matching known UI strings like `anc_mode`,
      `eq_band`)

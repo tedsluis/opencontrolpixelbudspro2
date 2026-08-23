@@ -354,3 +354,56 @@ motivated this).
   confirming result would not require superseding it. This update does not
   extend to any other channel or command — per `AGENTS.md` §6, the
   implementation gate remains per channel/feature.
+
+## ADR-010 — `PROJECT_RULES.md` rule 19 does not apply to the maintainer's own captures under `captures/`
+
+- **Date**: 2026-08-23
+- **Status**: Accepted
+- **Note on process**: this ADR was drafted by an AI agent, but per `AGENTS.md` §6's requirement
+  for explicit human/maintainer sign-off before an agent commits a new `DECISIONS.md` ADR as
+  settled: the maintainer directly reviewed `AUDIT_REPORT_2026-08-22.md`'s finding below and
+  explicitly instructed that its recommendations, including this ADR, be carried out (session of
+  2026-08-23). That instruction is the explicit approval this rule requires — recorded here so
+  the provenance is auditable, not assumed.
+- **Context**: `AUDIT_REPORT_2026-08-22.md` found a direct textual conflict between two binding
+  project documents. `PROJECT_RULES.md` rule 19 states: *"Sensitive or personal data (e.g. MAC
+  addresses of your own devices, account details) is anonymized or excluded via `.gitignore`
+  before committing."* `CONTRIBUTING.md`'s "Protocol/capture contributions" section separately
+  and explicitly states the opposite for the maintainer's own captures: *"The maintainer's own
+  existing and future Bluetooth captures... intentionally retain real data — MAC addresses,
+  timestamps, device identifiers... That is a decision only the maintainer can make about their
+  own data, and it is not revisited by this document."* This is a real, intentional, long-standing
+  practice (every `captures/CAP-NNN-*/` session committed to date retains real identifiers), but
+  the deviation from rule 19's literal text had never been recorded as a `DECISIONS.md` ADR, as
+  `PROJECT_RULES.md`'s own preamble requires for any knowing deviation from its rules. A reader
+  encountering rule 19 in isolation would reasonably (and incorrectly) conclude the repo's own
+  capture data is non-compliant with its own rules.
+- **Options considered**:
+  - Anonymize all existing and future captures to satisfy rule 19 literally — rejected: this data
+    is the evidentiary backbone of the entire reverse-engineering effort; the maintainer has
+    already made an informed decision (`CONTRIBUTING.md`) to publish their own captures
+    unredacted, and redoing that retroactively would provide no privacy benefit to a third party
+    (it is the maintainer's own hardware/accounts) while destroying reproducibility for anyone
+    trying to correlate a `CAP-NNN` finding back to its exact source bytes.
+  - Leave the conflict as-is — rejected: `PROJECT_RULES.md`'s own conflict-resolution clause
+    specifically anticipates and requires recording exactly this kind of deviation; leaving it
+    unrecorded is itself the gap being fixed.
+  - Record the existing, already-practiced exception as a formal ADR, scoped narrowly to
+    `captures/CAP-NNN-*` and to the maintainer's own data specifically — chosen.
+- **Decision**: `PROJECT_RULES.md` rule 19's anonymize-or-exclude requirement does **not** apply
+  to the maintainer's own Bluetooth captures under `captures/CAP-NNN-*/` (raw logs, event notes,
+  findings, recordings, and any other artifact type present there) — this is a deliberate,
+  informed, maintainer-only exception, not a general relaxation of rule 19. Rule 19 continues to
+  apply in full to everything else (e.g. account details, credentials, any data outside
+  `captures/`) and, per `CONTRIBUTING.md`'s existing PII-exception section, continues to apply in
+  full to any **third-party** contributor's capture data, which must still be redacted before
+  submission. `CONTRIBUTING.md`'s existing explanation of *why* the maintainer's own data is
+  exempt is unchanged and remains the canonical rationale; this ADR is the formal record of the
+  deviation that `PROJECT_RULES.md` itself requires.
+- **Consequences**: closes the textual conflict between `PROJECT_RULES.md` and `CONTRIBUTING.md`
+  without changing actual practice (which was already consistent with `CONTRIBUTING.md`, not
+  rule 19's literal text). Future agents/contributors reading rule 19 should cross-reference this
+  ADR and `CONTRIBUTING.md` rather than concluding the repo's own captures are non-compliant.
+  Does not affect the separate, unrelated logging rules for the *app's own runtime code*
+  (`AGENTS.md` §7/§9 — never log the paired device's MAC address at `INFO` level or above), which
+  govern the shipped app's behavior, not this repo's committed research data.

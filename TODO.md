@@ -24,13 +24,16 @@ tracking).
         added)
   - [x] `AGENTS.md` — reviewed and revised (stale license section, BLE-only
         framing assumption, and duplicate heading artifacts fixed)
-  - [ ] `PROJECT_RULES.md`, `PROJECT.md`, `DECISIONS.md`, `PROTOCOL.md`,
+  - [x] `PROJECT_RULES.md`, `PROJECT.md`, `DECISIONS.md`, `PROTOCOL.md`,
         `REVERSE_ENGINEERING.md`, `README.md`,
         `CHANGELOG.md`, `CAPTURE_BLUETOOTH_HCI_SNOOP.md`,
         `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`,
-        `WORKSTATION_PREPARATIONS.md` — not yet given a dedicated
-        cross-consistency pass; lower risk since most were authored after the
-        others, but still pending explicit review.
+        `WORKSTATION_PREPARATIONS.md` — given a dedicated cross-consistency
+        pass via the 2026-08-20 comprehensive documentation audit (see
+        `CHANGELOG.md`) and a further external audit on 2026-08-22/23 (see
+        `AUDIT_REPORT_2026-08-22.md` and `CHANGELOG.md`'s matching entry).
+        This checklist item was left unchecked after that work already
+        completed it — closed here to fix the staleness itself.
 
 ## Phase 1 — Bluetooth analysis
 
