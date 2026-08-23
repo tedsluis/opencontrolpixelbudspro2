@@ -6,10 +6,10 @@ Here we keep track of the tools needed for this project.
 
 ```bash
 # Development tools group install
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo dnf group install -y "Development Tools" "C Development Tools and Libraries" || true
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo dnf group install -y "Development Tools" "C Development Tools and Libraries" || true
 
 # CLI-tools install
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo dnf install -y \
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo dnf install -y \
   git git-lfs gh \
   curl wget \
   jq ripgrep fd-find tree htop tmux \
@@ -23,29 +23,29 @@ fedora ~/git/pixelbudspro2control [main L|✔] $ sudo dnf install -y \
 
 ```bash
 # Install packages
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo dnf install nodejs npm
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo dnf install nodejs npm
 
 # Install NPM latest
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo npm install -g npm@latest
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo npm install -g npm@latest
 added 1 package in 4s
 15 packages are looking for funding
   run npm fund for details
 
 # Get NMP installation path
-fedora ~/git/pixelbudspro2control [main L|✔] $ npm config get prefix 
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ npm config get prefix 
 /usr/local
 # Fix permissions to install NPM Gobal without sudo
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo chown -R $(whoami):$(whoami) /usr/local/lib/node_modules /usr/local/bin /usr/local/share
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo chown -R $(whoami):$(whoami) /usr/local/lib/node_modules /usr/local/bin /usr/local/share
 
 # Permit Global installs
-fedora ~/git/pixelbudspro2control [main L|✔] $ npm config set allow-scripts=@anthropic-ai/claude-code,@github/keytar,node-pty --location=user
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ npm config set allow-scripts=@anthropic-ai/claude-code,@github/keytar,node-pty --location=user
 ```
 
 ## Install Claude-code
 
 ```bash
 # Install Claude Code
-fedora ~/git/pixelbudspro2control [main L|✔] $ npm install -g @anthropic-ai/claude-code
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ npm install -g @anthropic-ai/claude-code
 
 added 5 packages, removed 36 packages, and changed 4 packages in 11s
 npm warn install-scripts 3 packages had install scripts blocked because they are not covered by allowScripts:
@@ -56,8 +56,8 @@ npm warn install-scripts
 changed 9 packages in 12s
 
 # Check Claude Code
-fedora ~/git/pixelbudspro2control [main L|✔] $ hash -r
-fedora ~/git/pixelbudspro2control [main L|✔] $ claude --version
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ hash -r
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ claude --version
 2.1.224 (Claude Code)
 ```
 
@@ -65,7 +65,7 @@ fedora ~/git/pixelbudspro2control [main L|✔] $ claude --version
 
 ```bash
 # Add Antigravity repo
-fedora ~/git/pixelbudspro2control [main L|✔] sudo tee /etc/yum.repos.d/antigravity.repo << EOL
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] sudo tee /etc/yum.repos.d/antigravity.repo << EOL
 [antigravity-rpm]
 name=Antigravity RPM Repository
 baseurl=https://us-central1-yum.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-rpm
@@ -74,10 +74,10 @@ gpgcheck=0
 EOL
 
 # Update the package cache
-fedora ~/git/pixelbudspro2control [main L|✔] sudo dnf makecache
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] sudo dnf makecache
 
 # Install the package
-fedora ~/git/pixelbudspro2control [main L|✔] sudo dnf install antigravity -y
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] sudo dnf install antigravity -y
 
 antigravity --version
 1.107.0
@@ -88,10 +88,10 @@ x64
 ## Install Java 21 OpenJDK
 
 ```bash
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo dnf install -y java-21-openjdk java-21-openjdk-devel
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo alternatives --config java || true
-fedora ~/git/pixelbudspro2control [main L|✔] $ echo 'export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))' >> "$HOME/.bashrc"
-fedora ~/git/pixelbudspro2control [main L|✔] $ java --version
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo dnf install -y java-21-openjdk java-21-openjdk-devel
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo alternatives --config java || true
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ echo 'export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))' >> "$HOME/.bashrc"
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ java --version
 openjdk 21.0.4 2024-07-16 LTS
 OpenJDK Runtime Environment Temurin-21.0.4+7 (build 21.0.4+7-LTS)
 OpenJDK 64-Bit Server VM Temurin-21.0.4+7 (build 21.0.4+7-LTS, mixed mode, sharing)
@@ -108,9 +108,9 @@ Python 3.14.6
 ## Git settings
 
 ```bash
-fedora ~/git/pixelbudspro2control [main L|✔] $ git config --global init.defaultBranch main
-fedora ~/git/pixelbudspro2control [main L|✔] $ git config --global pull.rebase false
-fedora ~/git/pixelbudspro2control [main L|✔] $ git config --global core.editor "code --wait"
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ git config --global init.defaultBranch main
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ git config --global pull.rebase false
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ git config --global core.editor "code --wait"
 ```
 
 ## Install VSCode extentions
@@ -128,7 +128,7 @@ VSCODE_EXTENSIONS=(
   ms-python.vscode-pylance
   redhat.vscode-xml
 )
-fedora ~/git/pixelbudspro2control [main L|✔] $ for ext in "${VSCODE_EXTENSIONS[@]}"; do
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ for ext in "${VSCODE_EXTENSIONS[@]}"; do
   code-insiders --install-extension "$ext" || warn "Can not install extention $ext"
 done
 ```
@@ -136,19 +136,19 @@ done
 ## Install Wireshark
 
 ```bash
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo dnf install -y wireshark wireshark-cli
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo groupadd -f wireshark
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo usermod -aG wireshark,dialout "$USER"
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo dnf install -y wireshark wireshark-cli
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo groupadd -f wireshark
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo usermod -aG wireshark,dialout "$USER"
 ```
 
 ## Install Android SDK / adb / logcat
 
 ```bash
 # Android tools
-fedora ~/git/pixelbudspro2control [main L|✔] $ sudo dnf install -y android-tools
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo dnf install -y android-tools
 
 # Android Studion
-fedora ~/git/pixelbudspro2control [main L|✔] $ flatpak install -y flathub com.google.AndroidStudio 
+fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ flatpak install -y flathub com.google.AndroidStudio 
 ```
 
 ## Install Kotlin using SDKMAN
