@@ -1,0 +1,19 @@
+name: Update docs sidebar
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'captures/**'
+      - '*.md'
+jobs:
+  regenerate-sidebar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./generate_sidebar.sh
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet _sidebar.md || (git add _sidebar.md && git commit -m "docs: auto-regenerate sidebar [skip ci]" && git push)
