@@ -275,3 +275,6 @@ capture as a confirming citation):**
   on-screen event, cause unknown.
 - The `libmaestro`/ANC-EQ control channel identity — still completely unaddressed by any capture
   to date, including this one (no ANC/EQ action was performed in this session).
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-FINDINGS

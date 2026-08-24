@@ -112,3 +112,6 @@ traceability check, not silently left blank.
   version? → already tracked in `PROTOCOL.md` §0.1/§6, unchanged by this capture.
 - 🔴 `FW-003` (serial numbers) and `FW-004` (connection status) remain unattributed — no capture
   has visited the "About" page yet. → copied to `PROTOCOL.md` §6.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-023-2026-08-21_08-23-40_08-25-21-Group_I/CAP-023-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-023-2026-08-21_08-23-40_08-25-21-Group_I/CAP-023-FINDINGS

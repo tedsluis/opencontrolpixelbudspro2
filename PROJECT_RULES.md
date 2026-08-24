@@ -219,3 +219,6 @@ document disconnected from the capture it belongs to.
     protocol values only — it does not extend to Google-owned trademarks,
     assets, or branding, which stay banned regardless (`AGENTS.md` §12,
     `PROJECT.md` non-goals).
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT_RULES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/PROJECT_RULES

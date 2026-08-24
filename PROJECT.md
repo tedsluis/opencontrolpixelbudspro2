@@ -94,3 +94,6 @@ Without Google Play Services installed, the app can:
 3. Remain stable across multiple connect/disconnect cycles.
 4. Be documented and reproducible for other contributors, with every protocol
    claim traceable to a capture, a code reference, or a logged experiment.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/PROJECT

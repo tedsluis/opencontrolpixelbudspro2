@@ -206,3 +206,6 @@ four settings yet.
   raw bytes — no official spec page consulted this session? → copied to `PROTOCOL.md` §6.
 - 🔴 Is Group `0x07` Code `0x34` a periodic/keepalive SASS code unrelated to Multipoint, or does it
   have its own trigger not yet identified? → copied to `PROTOCOL.md` §6.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-019-2026-08-21_07-35-50_07-39-30-Group_C/CAP-019-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-019-2026-08-21_07-35-50_07-39-30-Group_C/CAP-019-FINDINGS

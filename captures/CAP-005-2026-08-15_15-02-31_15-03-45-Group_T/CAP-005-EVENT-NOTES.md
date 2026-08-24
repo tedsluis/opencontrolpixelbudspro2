@@ -71,3 +71,6 @@ frame timestamps without offset correction.
   `PROTOCOL.md` §4.2 already documents these as the same preset under two names, not a discrepancy.
 - Added explicit `CAP-005-btsnoop_hci.log` frame references for every event with log-side evidence,
   per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5's correlation workflow (the original draft had none).
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-EVENT-NOTES

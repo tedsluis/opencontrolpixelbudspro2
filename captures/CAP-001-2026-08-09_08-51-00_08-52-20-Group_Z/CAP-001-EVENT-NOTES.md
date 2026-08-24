@@ -73,3 +73,6 @@ comparable to log frame timestamps without offset correction.
   per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5's correlation workflow.
 - The six ANC-mode taps' *exact click times* were re-verified against 1s-resolution video frames
   and match the original draft closely (all within ±1s) — those were already accurate.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-EVENT-NOTES

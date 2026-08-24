@@ -199,3 +199,6 @@ for this capture's purpose).
   from other captures as the `0x0c0X` Key-based-Pairing-shaped cluster (`CAP-002-FINDINGS.md` §4/§7,
   `CAP-004-FINDINGS.md` §6, `CAP-010-FINDINGS.md` §3) — this note exists only so a future reader
   can tell "not analyzed" from "nothing there" without re-deriving it.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-FINDINGS

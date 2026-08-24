@@ -114,3 +114,6 @@ already-cached connection-time data (the DLCI 0x08 handshake above), not fetched
       `PROJECT_RULES.md` rule 9a).
 - [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index.
 - [x] Rename this capture's folder to the actual session date/start-time/end-time.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-023-2026-08-21_08-23-40_08-25-21-Group_I/CAP-023-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-023-2026-08-21_08-23-40_08-25-21-Group_I/CAP-023-EVENT-NOTES

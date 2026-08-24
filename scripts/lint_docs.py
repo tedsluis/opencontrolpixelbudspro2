@@ -17,6 +17,9 @@ Checks:
   (c) the pre-2026-08-14/15-rename project name ("Pixel Buds Pro 2 Control")
       does not reappear outside `CHANGELOG.md` and this audit report (both of
       which reference it deliberately, as history).
+  (d) every doc page ends with the standard cross-link footer (GitHub blob URL
+      + Docsify site URL, see `expected_footer()` below) — run
+      `scripts/ensure_footers.py` to add/repair it rather than hand-editing.
 
 Exit code is non-zero if any check fails, so this is CI/pre-commit-friendly.
 """
@@ -82,6 +85,35 @@ ID_RE = re.compile(
 
 OLD_PROJECT_NAME = "Pixel Buds Pro 2 Control"
 OLD_NAME_ALLOWED_IN = {"CHANGELOG.md"}  # audit reports are excluded by glob below
+
+# Standard per-page footer: a GitHub blob link (so the source is reachable from
+# whatever renders the raw file, e.g. GitHub's own viewer) plus the matching
+# Docsify site link (`index.html`'s hash-routed URL for the same page). Kept
+# here as the single source of truth; `ensure_footers.py` imports it so the
+# lint check and the repair tool can never drift apart.
+GITHUB_BLOB_BASE = "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main"
+DOCSIFY_BASE = "https://tedsluis.github.io/opencontrolpixelbudspro2/#"
+
+# Not real content pages — _sidebar.md is Docsify's own nav config (not linked
+# from itself) and CLAUDE.md is a one-line `@AGENTS.md` include for Claude
+# Code, not a site page.
+FOOTER_EXCLUDED_FILES = {"_sidebar.md", "CLAUDE.md"}
+
+
+def docsify_route(rel_path: str) -> str:
+    """Docsify hash-route for a repo-relative `.md` path (extension stripped)."""
+    return rel_path[:-3] if rel_path.endswith(".md") else rel_path
+
+
+def expected_footer(rel_path: str) -> str:
+    """The exact footer block (including leading '---' rule) for `rel_path`."""
+    github_url = f"{GITHUB_BLOB_BASE}/{rel_path}"
+    docsify_url = f"{DOCSIFY_BASE}/{docsify_route(rel_path)}"
+    return f"---\n{github_url} - {docsify_url}\n"
+
+
+def footer_files() -> list[Path]:
+    return [p for p in all_markdown_files() if p.name not in FOOTER_EXCLUDED_FILES]
 
 
 def load_registry() -> set[str]:
@@ -183,6 +215,19 @@ def check_old_project_name(files: list[Path]) -> list[str]:
     return errors
 
 
+def check_footers(files: list[Path]) -> list[str]:
+    errors = []
+    for path in files:
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        text = path.read_text(encoding="utf-8", errors="replace")
+        expected = expected_footer(rel).rstrip("\n")
+        if not text.rstrip("\n").endswith(expected):
+            errors.append(
+                f"{rel}: missing or incorrect footer (run scripts/ensure_footers.py)"
+            )
+    return errors
+
+
 def main() -> int:
     known_ids = load_registry()
     files = all_markdown_files()
@@ -190,6 +235,7 @@ def main() -> int:
     filename_errors = check_filenames(files)
     id_warnings = check_ids(files, known_ids)
     name_errors = check_old_project_name(files)
+    footer_errors = check_footers(footer_files())
 
     if filename_errors:
         print("=== Dead filename references ===")
@@ -200,14 +246,18 @@ def main() -> int:
     if name_errors:
         print("\n=== Pre-rename project name regressions ===")
         print("\n".join(sorted(name_errors)))
+    if footer_errors:
+        print("\n=== Missing/incorrect page footers ===")
+        print("\n".join(sorted(footer_errors)))
 
-    total_errors = len(filename_errors) + len(name_errors)
-    if not (filename_errors or id_warnings or name_errors):
-        print("lint_docs: clean — no dead filenames, no unregistered IDs, no stale project name.")
+    total_errors = len(filename_errors) + len(name_errors) + len(footer_errors)
+    if not (filename_errors or id_warnings or name_errors or footer_errors):
+        print("lint_docs: clean — no dead filenames, no unregistered IDs, no stale project name, "
+              "no missing footers.")
 
     # ID warnings are informational (a brand-new, not-yet-registered ID is
-    # normal mid-session) — only dead filenames and the project-name check
-    # fail the build.
+    # normal mid-session) — only dead filenames, the project-name check, and
+    # the footer check fail the build.
     return 1 if total_errors else 0
 
 

@@ -126,3 +126,6 @@ here rather than silently treated as two equally-confident samples.
 - [x] Write `CAP-024-FINDINGS.md` per `PROJECT_RULES.md` §2.
 - [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index.
 - [x] Rename this capture's folder to the actual session date/start-time/end-time.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-024-2026-08-21_08-31-27_08-33-24-Group_J/CAP-024-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-024-2026-08-21_08-31-27_08-33-24-Group_J/CAP-024-EVENT-NOTES

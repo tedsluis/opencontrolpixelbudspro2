@@ -295,3 +295,6 @@ for the "definition of done" that will mark v1.
 ### Removed
 
 - `PROTOCOL_NOTES.md`, `EXPERIMENTS.md` (retired 2026-08-15, see above).
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/CHANGELOG.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/CHANGELOG

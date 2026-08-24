@@ -553,3 +553,6 @@ Protocol structure knowledge is derived from the public reverse-engineering
 work of the `qzed/pbpctrl` project (Linux/Rust). No source code from that
 project is reused directly; only documented protocol/frame knowledge informs
 this Android-native implementation.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ARCHITECTURE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/ARCHITECTURE

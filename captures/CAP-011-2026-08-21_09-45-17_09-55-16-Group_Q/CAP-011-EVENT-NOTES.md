@@ -134,3 +134,6 @@ devices.
 - [ ] **Recommended follow-up:** a genuine repeat of this Group's procedure — Bluetooth scanning
       only, case closed, **no app open, no active RFCOMM connection** — is still needed to cleanly
       test the Battery Notification hypothesis without this session's confounds.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-EVENT-NOTES

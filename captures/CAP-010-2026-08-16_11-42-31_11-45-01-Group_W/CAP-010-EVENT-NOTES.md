@@ -90,3 +90,6 @@ comparable to log frame timestamps without offset correction.
 - Added the BLE GATT exchange (`GATT-001`, 11:43:40–44) and the post-video log activity
   (11:43:49 disconnect, 11:46:58–11:47:04 reconnect cycle) — neither appeared in the original
   draft at all, despite being the entire stated purpose of a Group W capture.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-EVENT-NOTES

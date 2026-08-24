@@ -379,3 +379,6 @@ session's stated scope):**
 
 **Not ready:** the exact meaning of the Control byte, the untraced baseline-jump anomaly (§6), and
 frame 2456's distinct payload shape — all still 🔴.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS

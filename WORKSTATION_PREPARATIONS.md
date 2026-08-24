@@ -241,3 +241,6 @@ write command against real hardware, not after something goes wrong.
   Don't use it casually — it's the last resort referenced by `README.md`'s
   disclaimer and `ARCHITECTURE.md` §8.1's Safe Mode design, not a routine
   troubleshooting step.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/WORKSTATION_PREPARATIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/WORKSTATION_PREPARATIONS

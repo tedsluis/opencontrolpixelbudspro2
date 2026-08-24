@@ -278,3 +278,6 @@ decoding what the three numbers mean.
 **Recorded in `PROTOCOL.md` §4.3** as Option E, promoted to 🟢 FACT 2026-08-23 (`DECISIONS.md`
 ADR-014) for the index→Left/Right/Case mapping, per the maintainer sign-off obtained under
 `AGENTS.md` §6.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-FINDINGS

@@ -308,3 +308,6 @@ _(`GATT-002`, added 2026-08-20 for the `0x0044` BLE notification-burst isolation
 _**not** listed here — it now has both a Test-ID (§5) and a capture scenario_
 _(`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Y), so it doesn't belong in this "no Group yet" list,_
 _matching how `INEAR-004`/`GATT-001` came off this list once Groups U/R/W existed for them.)_
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/TESTPLAN_BLUETOOTH_HCI_SNOOP.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/TESTPLAN_BLUETOOTH_HCI_SNOOP

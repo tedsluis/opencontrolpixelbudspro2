@@ -39,7 +39,26 @@ git push
 either. New root-level docs still need the one-line addition to the script by hand, since the
 script can't guess which sidebar section a new doc belongs in.
 
+## Every page needs the standard footer
+
+Every doc page (except `_sidebar.md` and `CLAUDE.md`) ends with a footer linking to its own GitHub
+blob view and its own Docsify site view — see the bottom of this file for an example. It's added
+and kept correct mechanically, not by hand:
+
+- `scripts/ensure_footers.py` adds/repairs the footer on every tracked `.md` file (safe to
+  re-run — it's a no-op once footers are already correct, and self-heals after a file/folder
+  rename since the URLs are derived from the current path each time).
+- `scripts/lint_docs.py` (wired into `.github/workflows/lint-docs.yml`, runs on every PR/push
+  touching a `.md` file) fails CI if a page's footer is missing or stale — this is what keeps the
+  footer in place even if a future edit (human or AI) accidentally strips it.
+
+If you add a brand-new page, run `./scripts/ensure_footers.py` once (same as the sidebar-generation
+step above) rather than typing the footer by hand.
+
 ## Checking it worked
 
 `https://tedsluis.github.io/opencontrolpixelbudspro2/` — GitHub Pages builds typically go live
 within a minute of the push.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/MAINTAINING_DOCS_SITE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/MAINTAINING_DOCS_SITE

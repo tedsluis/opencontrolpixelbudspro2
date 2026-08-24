@@ -158,3 +158,6 @@ resolved to the same level as, `FIND-001`/`FIND-002`'s confirmed local mechanism
   `PROTOCOL.md` §6.
 - 🔴 What triggers the repeated classic-connection reopen bursts during the Find Hub flow (three
   times, ~40s apart)? → copied to `PROTOCOL.md` §6.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-FINDINGS

@@ -166,3 +166,6 @@ promoted into the protocol documentation, to avoid the same finding being
   exercised by the specific user actions listed in
   `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` — treat static findings as 🟡 HYPOTHESIS
   until correlated with a capture showing the corresponding traffic.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/REVERSE_ENGINEERING.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/REVERSE_ENGINEERING

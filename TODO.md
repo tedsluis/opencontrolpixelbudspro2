@@ -277,3 +277,6 @@ one home:
 Check those sections directly when deciding what's still undecided; resolving
 one only requires updating it in that one place, plus a `DECISIONS.md` entry
 where the rule requires one (`PROJECT_RULES.md` §3).
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/TODO.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/TODO

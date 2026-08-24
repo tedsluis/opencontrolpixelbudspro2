@@ -89,3 +89,6 @@ are directly comparable to log frame timestamps without offset correction.
 - Added the post-Transparency RFCOMM channel renegotiation window (~17:24:56–17:25:02), which the
   original draft did not mention at all — flagged as not independently attributable to an on-screen
   action since the video decode is truncated in that exact window.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-EVENT-NOTES

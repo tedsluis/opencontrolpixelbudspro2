@@ -621,3 +621,6 @@ motivated this).
   missed ~6–7s beat as a liveness signal — `AGENTS.md` §5 updated accordingly. Does not resolve
   DLCI `0x04`/BLE-scan HYPOTHESES noted above; those need their own follow-up before any further
   promotion.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/DECISIONS

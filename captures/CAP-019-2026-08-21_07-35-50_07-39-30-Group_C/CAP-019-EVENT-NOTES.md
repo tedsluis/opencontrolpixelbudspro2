@@ -156,3 +156,6 @@ is the already-documented periodic/on-change "Notify ANC state" report (`PROTOCO
 - [x] Write `CAP-019-FINDINGS.md` per `PROJECT_RULES.md` §2.
 - [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index.
 - [x] Rename this capture's folder to the actual session date/start-time/end-time.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-019-2026-08-21_07-35-50_07-39-30-Group_C/CAP-019-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-019-2026-08-21_07-35-50_07-39-30-Group_C/CAP-019-EVENT-NOTES

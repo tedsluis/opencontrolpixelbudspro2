@@ -320,3 +320,6 @@ of the three captures to date. Not claimed as FACT; requires UUID confirmation.
 - The `libmaestro`/ANC-EQ control channel identity — **still completely unaddressed by any of
   `CAP-001`, `CAP-002`, or `CAP-003`**; all three captures so far cover pairing/setup/discovery,
   not actual ANC/EQ commands under clean isolation.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-FINDINGS

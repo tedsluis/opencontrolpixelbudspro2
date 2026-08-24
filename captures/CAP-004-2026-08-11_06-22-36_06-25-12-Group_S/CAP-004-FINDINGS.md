@@ -673,3 +673,6 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
   (§8 item 4).
 - The `libmaestro`/ANC-EQ control channel identity — **still completely unaddressed by any of
   the four captures to date.**
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-004-2026-08-11_06-22-36_06-25-12-Group_S/CAP-004-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-004-2026-08-11_06-22-36_06-25-12-Group_S/CAP-004-FINDINGS

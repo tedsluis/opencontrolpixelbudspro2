@@ -85,3 +85,6 @@ to video overlay times without offset correction (video's `t=0` = wall 09:14:10,
   numbers, the two unexplained hand-near-frame moments (09:14:42, 09:15:17), the ANC-row
   grey-out/re-enable pair bracketing the Left-bud removal (09:15:38/09:15:52–53), and the
   post-video log tail (09:18:43–09:19:45) — none of which existed in the previous draft.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-007-2026-08-16_09-14-10_09-17-57-Group_U/CAP-007-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-007-2026-08-16_09-14-10_09-17-57-Group_U/CAP-007-EVENT-NOTES

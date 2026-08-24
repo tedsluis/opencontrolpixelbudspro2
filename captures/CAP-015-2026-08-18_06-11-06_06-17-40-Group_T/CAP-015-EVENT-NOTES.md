@@ -98,3 +98,6 @@ the full resolution.
 - The connection sequence needed **two** `Create Connection` attempts (first: Page Timeout, second:
   success), the same general pattern documented for `CAP-001`/other reconnect sessions — not
   visible from the placeholder draft, added here from the log.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-EVENT-NOTES

@@ -75,3 +75,6 @@ Same rules as everywhere else in this project (`PROJECT_RULES.md` §1):
 ## Reporting a security issue
 
 See `SECURITY.md` — do not open a public issue for a suspected vulnerability.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/CONTRIBUTING.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/CONTRIBUTING

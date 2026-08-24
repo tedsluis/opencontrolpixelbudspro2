@@ -128,3 +128,6 @@ correlate with, but are not proven to be caused by, the Find Hub flow's own conn
       maintainer sign-off required per `AGENTS.md` §6.
 - [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index.
 - [x] Rename this capture's folder to the actual session date/start-time/end-time (video-derived).
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-EVENT-NOTES

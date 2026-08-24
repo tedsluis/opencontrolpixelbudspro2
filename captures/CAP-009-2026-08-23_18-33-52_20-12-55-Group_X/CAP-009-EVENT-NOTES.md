@@ -266,3 +266,6 @@ numbering happens to match several prior sessions', but that is not guaranteed i
       re-analysis (independent video timeline, corrected video-boundary note, DLCI `0x04` finding).
 - [ ] Maintainer to confirm/correct firmware, Android version, and app version (⚪ ASSUMPTIONs
       carried over from `CAP-023`/`CAP-025`, not independently confirmed this session) — still open.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-EVENT-NOTES

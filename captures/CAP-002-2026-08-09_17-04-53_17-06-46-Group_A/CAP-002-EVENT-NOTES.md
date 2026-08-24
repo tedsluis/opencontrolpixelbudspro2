@@ -84,3 +84,6 @@ log uses the same wall clock (+0200), directly comparable.
 - Flagged that **no RFCOMM data traffic occurs anywhere after ~17:05:48**, including during the
   entire app setup / CDM permission / "Device details" loading sequence (17:06:04–17:06:46) — see
   `CAP-002-FINDINGS.md` §4 for what this means and possible explanations.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES

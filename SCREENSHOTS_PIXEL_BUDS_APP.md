@@ -26,3 +26,6 @@ Original screenshot pixel buds pro 2 app (`https://play.google.com/store/apps/de
 ![image21](images/pixel_buds_app_multipoint_1.png)
 ![image22](images/pixel_buds_app_sound_1.png)
 ![image23](images/pixel_buds_app_touch_controls_1.png)
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/SCREENSHOTS_PIXEL_BUDS_APP.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/SCREENSHOTS_PIXEL_BUDS_APP

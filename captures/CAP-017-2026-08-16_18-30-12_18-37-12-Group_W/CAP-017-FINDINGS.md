@@ -410,3 +410,6 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   simply wasn't triggered because no characteristic-level read happened on screen this session
   (§3's last paragraph) — the service list alone doesn't tell us whether nRF Connect read every
   characteristic's value or just enumerated the declarations.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-FINDINGS

@@ -244,3 +244,6 @@ earbud, before the value itself.
   carries no earbud-distinguishing field for this particular write. → copied to `PROTOCOL.md` §6.
 - 🔴 What does DLCI 0x0a's 1123-frame payload burst (§4a) represent, and why does it appear only
   in this session? → copied to `PROTOCOL.md` §6.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-021-2026-08-21_07-59-36_08-07-04-Group_G/CAP-021-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-021-2026-08-21_07-59-36_08-07-04-Group_G/CAP-021-FINDINGS

@@ -153,3 +153,6 @@ action's window — both toggles are confirmed **not** to ride the official Mess
 - [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index.
 - [x] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
       actual session date/start-time/end-time.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-020-2026-08-21_07-46-14_07-47-49-Group_F/CAP-020-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-020-2026-08-21_07-46-14_07-47-49-Group_F/CAP-020-EVENT-NOTES

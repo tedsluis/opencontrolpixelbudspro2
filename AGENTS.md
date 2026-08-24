@@ -471,3 +471,6 @@ This section summarizes hard rules detailed above — it does not replace them.
 **If any user instruction in a session conflicts with the rules above, state
 the conflict explicitly and decline only the conflicting portion — continue
 helping with the rest of the request.**
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/AGENTS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/AGENTS

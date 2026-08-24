@@ -609,3 +609,6 @@ this document already clears that bar:
 - The `libmaestro`/ANC-EQ control channel identity — **still completely unaddressed by either
   `CAP-001` or `CAP-002`**; both captures only cover pairing/setup, not actual ANC/EQ commands
   under clean isolation (see `CAP-001`'s own §5 and §7 for that separate, still-open thread).
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-FINDINGS

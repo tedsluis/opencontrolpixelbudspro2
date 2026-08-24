@@ -36,3 +36,6 @@ Please include:
 This app is a hobbyist reverse-engineering project (see `PROJECT.md`), not a
 hardened production system with a dedicated security team or an SLA. Best
 effort, no guaranteed response time.
+
+---
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/SECURITY.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/SECURITY
