@@ -21,7 +21,7 @@ promoted.
 ## 0. Capture Metadata & Methodology
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Capture ID | `CAP-009` |
 | Purpose | `BATT-006` — cross-check `AT+CIND?`'s `battchg` against `AT+BIEV=2,...` over a natural, multi-hour battery discharge, following up `CAP-001-FINDINGS.md` §3's single-snapshot disagreement (`battchg=3`≈60% vs. `AT+BIEV=2,100`=100% at the same instant) |
 | Date | 2026-08-23 |
@@ -106,9 +106,9 @@ Value-transition frames only (raw hex for each, `AT+BIEV=2,<value>\r` — ASCII,
 RFCOMM/HFP):
 
 | Frame | Time | Value | Hex |
-|---|---|---|---|
-| 972   | 18:34:02.036 | 93 | `41 54 2b 42 49 45 56 3d 32 2c 39 33 0d` |
-| 5556  | 18:40:36.313 | 92 | `41 54 2b 42 49 45 56 3d 32 2c 39 32 0d` |
+| --- | --- | --- | --- |
+| 972 | 18:34:02.036 | 93 | `41 54 2b 42 49 45 56 3d 32 2c 39 33 0d` |
+| 5556 | 18:40:36.313 | 92 | `41 54 2b 42 49 45 56 3d 32 2c 39 32 0d` |
 | 14612 | 19:02:47.245 | 90 | `41 54 2b 42 49 45 56 3d 32 2c 39 30 0d` |
 | 20632 | 19:26:28.135 | 89 | `41 54 2b 42 49 45 56 3d 32 2c 38 39 0d` |
 | 26459 | 19:50:29.368 | 88 | `41 54 2b 42 49 45 56 3d 32 2c 38 38 0d` |
@@ -134,7 +134,7 @@ Comparing the `AT+BIEV` value sequence (`93→92→90→89→88`) against the ma
 timeline (`CAP-009-EVENT-NOTES.md`):
 
 | Component | On-screen sequence (independently re-timed to sub-2s precision, see `CAP-009-EVENT-NOTES.md`) | Matches `AT+BIEV`? |
-|---|---|---|
+| --- | --- | --- |
 | Right earbud | 93 → 90 (19:02:47.35–48.02) → 89 (19:29:20.01–28.01) → 88 (20:00:01.68–02.01, bundled w/ case-insert) | **Yes** — same values, same order |
 | Left earbud | 96 → 95 (19:26:28.02–29.02) → 94 (19:50:29.02–30.02) → 100 (20:00:01.68–02.01, placed in case) | No — none of 96/95/94/100 appear in the `AT+BIEV` sequence |
 | Case | 72 → 71 (19:02:47.35–48.02) → 68 (20:00:01.68–02.01) → 75 (20:11:02.03–05.70) | No — none of 72/71/68/75 appear in the `AT+BIEV` sequence |
@@ -146,7 +146,7 @@ confirming the on-screen UI does not repaint on every individual wire push, but 
 coarser trigger (see the case-jump timing in §4 for the clearest example of this):
 
 | Value push (wire) | On-screen change (independent video timing) | Δt (screen − wire) |
-|---|---|---|
+| --- | --- | --- |
 | `AT+BIEV` R 92→90 @ 19:02:47.245 (frame 14612) | R 90 visible @ 19:02:47.35–48.02 | **~0.1–0.8s** |
 | `AT+BIEV` R 90→89 @ 19:26:28.135 (frame 20632) | R 89 visible @ 19:29:20.01–28.01 | ~2min 52s–3min |
 | `AT+BIEV` R 89→88 @ 19:50:29.368 (frame 26459) | R 88 visible @ 20:00:01.68–02.01 (bundled with case-insert) | ~9min 32s |
@@ -267,7 +267,7 @@ recorded in `PROTOCOL.md` §4.3 Option A at this same HYPOTHESIS level (`AGENTS.
 ## 5. Answer to `BATT-006`
 
 | Question | Answer |
-|---|---|
+| --- | --- |
 | Does `AT+CIND?`'s `battchg` track a real battery-level change over time? | 🟢 **No** — it is queried exactly once, at SLC setup, and never refreshes again, even across ~13 percentage points of real, confirmed change on the peer's Right earbud during the same HFP session. |
 | Does `AT+BIEV=2` track a real battery-level change over time? | 🟢 **Yes, for the Right earbud specifically**, in this session — 5 distinct values over 86 minutes, each matching R's on-screen value, each landing at or before the corresponding on-screen check. |
 | Is either indicator a case- or Left-earbud-aware aggregate? | 🟢 **No** — neither indicator's value ever matches Left or Case at any point in this 101-minute session (§3). |
@@ -373,9 +373,9 @@ Decoding each as `03 03 00 03 <b1> <b2> ff` and printing only the frames where `
 from the previous one gives **14 transitions across the whole session**:
 
 | Frame | Time | b1 | b2 | Note |
-|---|---|---|---|---|
-| 1044  | 18:34:02.127 | 96 | 93 | first frame |
-| 5551  | 18:40:36.297 | 96 | 92 | b2 changes |
+| --- | --- | --- | --- | --- |
+| 1044 | 18:34:02.127 | 96 | 93 | first frame |
+| 5551 | 18:40:36.297 | 96 | 92 | b2 changes |
 | 14609 | 19:02:47.243 | 96 | 90 | b2 changes |
 | 18031 | 19:17:26.107 | **95** | 90 | b1 changes |
 | 20627 | 19:26:28.126 | 95 | **89** | b2 changes |

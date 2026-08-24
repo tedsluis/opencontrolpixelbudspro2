@@ -22,17 +22,17 @@ pushes).
 
 ## Log & Video Metadata
 
-|      Field       |                       Value                        |
-|------------------|-----------------------------------------------------|
-|    Capture ID    |                      `CAP-009`                     |
-|      Group(s)    |                         X                          |
-|       Date       |                     2026-08-23                     |
-| Firmware version | not queried this session (⚪ ASSUMPTION `release_5.203`, same physical device as `CAP-023`/`CAP-025`) |
-|   Test device    | Pixel 7a, Android 17 (⚪ ASSUMPTION, consistent with `CAP-023`/`CAP-025`), official app not confirmed this session |
-| Video file 1     | `CAP-009-recording1.mp4` — burned-in wall-clock overlay confirms it runs **18:33:52 → ~20:01:14** (`ffprobe` duration 5241.9s), **not** 18:33:52–20:00:27 as originally assumed — see "Video-boundary correction" below |
-| Video file 2     | `CAP-009-recording2.mp4` — burned-in overlay confirms it runs **~20:01:16 → ~20:12:51+** (`ffprobe` duration 699.7s) |
-| Log file         | `CAP-009-btsnoop_hci.log` — 2026-08-23 18:33:47.20–20:15:00.73 (wall clock, +0200), 30,234 packets |
-| Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` — **independently re-derived**, see "MAC verification" below |
+| Field                                      | Value                                                                                                                         |
+|-------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| Capture ID                                 | `CAP-009`                                                                                                                     |
+| Group(s)                                   | X                                                                                                                             |
+| Date                                       | 2026-08-23                                                                                                                    |
+| Firmware version                           | not queried this session (⚪ ASSUMPTION `release_5.203`, same physical device as `CAP-023`/`CAP-025`)                       |
+| Test device                                | Pixel 7a, Android 17 (⚪ ASSUMPTION, consistent with `CAP-023`/`CAP-025`), official app not confirmed this session          |
+| Video file 1                               | `CAP-009-recording1.mp4` — burned-in wall-clock overlay confirms it runs **18:33:52 → ~20:01:14** (`ffprobe` duration 5241.9s), **not** 18:33:52–20:00:27 as originally assumed — see "Video-boundary correction" below |
+| Video file 2                               | `CAP-009-recording2.mp4` — burned-in overlay confirms it runs **~20:01:16 → ~20:12:51+** (`ffprobe` duration 699.7s)    |
+| Log file                                   | `CAP-009-btsnoop_hci.log` — 2026-08-23 18:33:47.20–20:15:00.73 (wall clock, +0200), 30,234 packets                     |
+| Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` — **independently re-derived**, see "MAC verification" below                                            |
 
 ### Video-boundary correction (independent finding)
 
@@ -65,12 +65,14 @@ ways before filtering on it:
    already documented since `CAP-001`, per `AGENTS.md` §15's hardcoded-string exception) occurs
    **75 times** in the raw log file, always as part of DLCI `0x08` traffic on the same connection
    handle as (1):
-   ```
+
+   ```bash
    $ python3 -c "
    data = open('CAP-009-btsnoop_hci.log','rb').read()
    print(data.count(b'google-pixel-buds-pro-v1'))"
    75
    ```
+
    (Note: `tshark -Y 'frame contains "google-pixel-buds-pro-v1"'` returned 0 matches for reasons
    not fully diagnosed — likely a display-filter string-escaping quirk with the embedded hyphens —
    so this check was done as a raw byte search instead; the hex is directly visible in every
@@ -95,7 +97,7 @@ percentage row, tiled into contact sheets with the relative playback time burned
 ≈594 frames**, covering both files end-to-end. This surfaced every visible percentage change
 without presupposing where they were.
 
-```
+```bash
 $ ffmpeg -ss <chunk_start> -t 600 -i CAP-009-recording1.mp4 \
     -vf "crop=420:80:150:670,drawtext=fontfile=<mono.ttf>:text='%{pts\:hms}':x=5:y=2:fontsize=14:fontcolor=yellow:box=1:boxcolor=black@0.7,select='not(mod(n\,300))',tile=6x10" \
     -frames:v 1 -vsync 0 out.png
@@ -131,7 +133,7 @@ not battery values at all (a deliberate finger-tap on the Right battery icon, an
 notification banner/dismissal) — see the table below.
 
 | # | Maintainer's note | Independent finding (video, sub-2s precision unless noted) | Verdict |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | A | 18:34:14: L96/Case72/R93 | Matches; first stable reading from ~18:34:11 | ✅ confirmed |
 | B | 19:02:49: Case72→71, R93→90 | **19:02:47.35–48.02** | ✅ confirmed (2–5s earlier) |
 | C | 19:26:30: L96→95 | **19:26:28.02–29.02** | ✅ confirmed (~2s earlier) |
@@ -193,9 +195,9 @@ indiscriminately regardless of which device the researcher cares about. Verified
 assumed:
 
 ```
-$ tshark -r CAP-009-btsnoop_hci.log 2>/dev/null | wc -l                                    # 30234
-$ tshark -r CAP-009-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002" 2>/dev/null | wc -l     # 2503
-$ tshark -r CAP-009-btsnoop_hci.log -Y "bthci_acl.chandle==0x0001" 2>/dev/null | wc -l     # 21
+tshark -r CAP-009-btsnoop_hci.log 2>/dev/null | wc -l                                    # 30234
+tshark -r CAP-009-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002" 2>/dev/null | wc -l     # 2503
+tshark -r CAP-009-btsnoop_hci.log -Y "bthci_acl.chandle==0x0001" 2>/dev/null | wc -l     # 21
 ```
 
 **DLCI inventory, whole log, exhaustive (not limited to already-expected channels):**
@@ -219,7 +221,7 @@ numbering happens to match several prior sessions', but that is not guaranteed i
 ## Event Timeline
 
 | Time (bracket) | Action | Initiator | Test-ID | Wire evidence |
-|----------|---|---|---|---|
+| ---------- | --- | --- | --- | --- |
 | 18:33:47.20–18:34:01.51 | Session/log start; Bluetooth off → connecting | — | — | Log opens 18:33:47.20 (frame 1); classic ACL `Connection Complete` 18:34:01.51 (frame 674, handle `0x0002`) |
 | 18:34:14 | L96%/Case72%/R93% first stable on screen | — | `BATT-006` | `AT+CIND?` queried once, 18:34:01.90 (frame 884) → `battchg=4` (≈80%, matches none of L/Case/R). First `AT+BIEV=2,93` 18:34:02.04 (frame 972) — matches R exactly. |
 | (18:40:36, not on-screen-checked) | wire-only transient | — | `BATT-006` | `AT+BIEV=2,92` 18:40:36.31 (frame 5556) |
