@@ -10,7 +10,9 @@ Checks:
   (a) every backtick-quoted filename referenced in a `.md` file resolves to a
       real path (relative to the repo root, or to the referencing file's own
       directory — most `CAP-NNN-FINDINGS.md` files reference their sibling
-      log/video by bare filename).
+      log/video by bare filename), OR is a bare filename listed literally in
+      `.gitignore` (e.g. a too-large-for-git/LFS recording the maintainer
+      keeps locally but never commits — see `load_gitignored_filenames()`).
   (b) every `CAP-NNN` / `ADR-NNN` / Test-ID token referenced anywhere resolves
       to a known entry in `id_registry.csv` (append-only source of truth —
       see that file's own header).
@@ -140,6 +142,28 @@ def all_markdown_files() -> list[Path]:
 PLANNED_CAPTURE_PLACEHOLDER = "yyyy-MM-dd_HH-mm-ss_HH-mm-ss"
 
 
+def load_gitignored_filenames() -> set[str]:
+    """Bare filenames listed literally in .gitignore (not glob/directory
+    patterns) — e.g. CAP-009-recording1.mp4, excluded as "# to big" for git/LFS.
+    A doc reference to one of these isn't a dead link: the file genuinely
+    exists on the maintainer's machine and is intentionally never committed,
+    the same tradeoff .gitignore itself already documents. A fresh clone
+    won't have it either, by design — that's accepted, not a lint failure.
+    """
+    gitignore_path = REPO_ROOT / ".gitignore"
+    if not gitignore_path.exists():
+        return set()
+    names = set()
+    for line in gitignore_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if any(ch in line for ch in "*?[]!/"):
+            continue  # a glob pattern or directory rule, not a bare filename
+        names.add(line)
+    return names
+
+
 def resolve_filename(name: str, referencing_file: Path) -> bool:
     """True if `name` resolves to a real file somewhere sensible in the repo."""
     if name.startswith("/") or name.startswith("FS/"):
@@ -169,11 +193,16 @@ def resolve_filename(name: str, referencing_file: Path) -> bool:
 
 def check_filenames(files: list[Path]) -> list[str]:
     errors = []
+    gitignored = load_gitignored_filenames()
     for path in files:
         text = path.read_text(encoding="utf-8", errors="replace")
         for match in FILENAME_RE.finditer(text):
             name = match.group(1)
-            if PLACEHOLDER_FILENAME_RE.search(name) or name in KNOWN_HISTORICAL_REFERENCES:
+            if (
+                PLACEHOLDER_FILENAME_RE.search(name)
+                or name in KNOWN_HISTORICAL_REFERENCES
+                or Path(name).name in gitignored
+            ):
                 continue
             if not resolve_filename(name, path):
                 errors.append(f"{path.relative_to(REPO_ROOT)}: dead filename reference `{name}`")
@@ -181,7 +210,11 @@ def check_filenames(files: list[Path]) -> list[str]:
             name = match.group(1)
             if name.startswith(("http://", "https://")):
                 continue  # remote image, not a repo-relative path
-            if PLACEHOLDER_FILENAME_RE.search(name) or name in KNOWN_HISTORICAL_REFERENCES:
+            if (
+                PLACEHOLDER_FILENAME_RE.search(name)
+                or name in KNOWN_HISTORICAL_REFERENCES
+                or Path(name).name in gitignored
+            ):
                 continue
             if not resolve_filename(name, path):
                 errors.append(f"{path.relative_to(REPO_ROOT)}: dead image reference `{name}`")
