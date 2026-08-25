@@ -26,10 +26,13 @@
       name: 'OpenControl for Pixel Buds Pro 2',
       repo: 'https://github.com/tedsluis/opencontrolpixelbudspro2',
       homepage: 'README.md',
-      // An explicit absolute path, not `true` — see the alias-attempts
-      // history below this block for why `true`'s default computation
-      // doesn't work here.
-      loadSidebar: '/opencontrolpixelbudspro2/_sidebar.md',
+      // A bare relative filename (no leading slash) — `true`, an alias, and
+      // an explicit absolute path were all tried and failed live (see the
+      // comment below); this tries routing the sidebar fetch through the
+      // same relativePath-aware resolution that regular page content
+      // (confirmed working) already uses, instead of Docsify's separate
+      // basePath-based path-joining for loadSidebar specifically.
+      loadSidebar: '_sidebar.md',
       loadNavbar: false,
       subMaxLevel: 3,
       auto2top: true,
@@ -54,15 +57,13 @@
       },
       alias: {
         '/README': '/README.md'
-        // Two alias-based fixes for _sidebar.md were tried live here and
-        // both failed to change the request at all: under routerMode
-        // 'history', loadSidebar's own default fetch always requests
+        // Two alias-based fixes for _sidebar.md, and an explicit absolute
+        // loadSidebar path, were all tried live here and none changed the
+        // request at all: under routerMode 'history', it kept fetching
         // /_sidebar.md literally (domain root, no /opencontrolpixelbudspro2/
-        // prefix — unlike regular page content, which gets that prefix
-        // automatically), and Docsify's alias table turned out not to
-        // intercept this particular fetch despite Docsify's own docs
-        // suggesting an alias here. Fixed instead by giving `loadSidebar`
-        // (above) an explicit absolute path.
+        // prefix) — unlike regular page content, which gets that prefix
+        // automatically via window.location.pathname. Current attempt: a
+        // bare relative loadSidebar value (see above) instead.
       }
     }
   </script>
