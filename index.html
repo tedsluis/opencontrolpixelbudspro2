@@ -21,7 +21,10 @@
       name: 'OpenControl for Pixel Buds Pro 2',
       repo: 'https://github.com/tedsluis/opencontrolpixelbudspro2',
       homepage: 'README.md',
-      loadSidebar: true,
+      // An explicit absolute path, not `true` — see the alias-attempts
+      // history below this block for why `true`'s default computation
+      // doesn't work here.
+      loadSidebar: '/opencontrolpixelbudspro2/_sidebar.md',
       loadNavbar: false,
       subMaxLevel: 3,
       auto2top: true,
@@ -45,17 +48,16 @@
         placeholder: 'Search docs...',
       },
       alias: {
-        '/README': '/README.md',
-        // Verified live: under routerMode 'history', loadSidebar's own
-        // _sidebar.md fetch always requests /_sidebar.md literally (domain
-        // root, no /opencontrolpixelbudspro2/ prefix — unlike regular page
-        // content, which does get that prefix automatically), on every
-        // route, not just nested ones. An alias target is used as a literal
-        // absolute-from-origin path (NOT auto-prefixed the way normal
-        // content fetches are — confirmed by an earlier, wrong attempt at
-        // this alias that used a bare '/_sidebar.md' target and 404'd for
-        // the same reason), so the prefix has to be hardcoded into it here.
-        '/(.*/)?_sidebar.md': '/opencontrolpixelbudspro2/_sidebar.md'
+        '/README': '/README.md'
+        // Two alias-based fixes for _sidebar.md were tried live here and
+        // both failed to change the request at all: under routerMode
+        // 'history', loadSidebar's own default fetch always requests
+        // /_sidebar.md literally (domain root, no /opencontrolpixelbudspro2/
+        // prefix — unlike regular page content, which gets that prefix
+        // automatically), and Docsify's alias table turned out not to
+        // intercept this particular fetch despite Docsify's own docs
+        // suggesting an alias here. Fixed instead by giving `loadSidebar`
+        // (above) an explicit absolute path.
       }
     }
   </script>
