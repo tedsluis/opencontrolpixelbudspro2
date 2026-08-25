@@ -50,15 +50,17 @@
         placeholder: 'Search docs...',
       },
       alias: {
-        '/README': '/README.md'
-        // Docsify's own docs suggest a regex alias here
-        // ('/.*/_sidebar.md': '/_sidebar.md') for history mode in a
-        // subdirectory, but tested live it broke worse: the alias target
-        // doesn't get the /opencontrolpixelbudspro2/ prefix Docsify applies
-        // to normal (non-aliased) content fetches, so it 404s at the domain
-        // root instead. Verified without it — see git log for this file —
-        // that _sidebar.md loads fine on both the root page and a nested
-        // captures/CAP-NNN-.../ page without any alias.
+        '/README': '/README.md',
+        // Verified live: under routerMode 'history', loadSidebar's own
+        // _sidebar.md fetch always requests /_sidebar.md literally (domain
+        // root, no /opencontrolpixelbudspro2/ prefix — unlike regular page
+        // content, which does get that prefix automatically), on every
+        // route, not just nested ones. An alias target is used as a literal
+        // absolute-from-origin path (NOT auto-prefixed the way normal
+        // content fetches are — confirmed by an earlier, wrong attempt at
+        // this alias that used a bare '/_sidebar.md' target and 404'd for
+        // the same reason), so the prefix has to be hardcoded into it here.
+        '/(.*/)?_sidebar.md': '/opencontrolpixelbudspro2/_sidebar.md'
       }
     }
   </script>
