@@ -3,45 +3,51 @@
 # Run from the repo root: ./generate_sidebar.sh
 # Re-run any time captures/ changes (new capture, folder renamed after processing, etc.)
 #
-# All generated links start with a leading `/`. index.html sets relativePath: true
-# (required so same-folder links inside CAP-NNN-FINDINGS.md, e.g. `./CAP-006-EVENT-NOTES.md`,
-# resolve against that file's own directory) — but Docsify applies that same relative
-# resolution to sidebar links too. Without the leading `/`, once the user is on a page inside
-# captures/CAP-NNN-.../, every other sidebar link resolves against that folder instead of the
-# site root, breaking navigation. A leading `/` forces root-relative resolution regardless of
-# the current page.
+# Every generated link is absolute, with the site's own GitHub Pages subdirectory prefix
+# baked in (e.g. /opencontrolpixelbudspro2/PROJECT.md), not just a leading `/`. Verified
+# live: under routerMode: 'history' (index.html), Docsify's router uses a leading-`/`-only
+# href as absolute-from-*domain*-root — https://tedsluis.github.io/PROJECT.md — dropping the
+# /opencontrolpixelbudspro2/ subdirectory entirely and 404ing. Regular page content doesn't
+# have this problem (it resolves via window.location.pathname, which already contains the
+# subdirectory), but Docsify's sidebar-link handling apparently doesn't go through that same
+# resolution — so the prefix has to be hardcoded into every link here instead. A bare relative
+# link (no leading `/`) isn't an option either: that resolves against the *current* page's own
+# directory (via relativePath: true, needed for CAP-NNN-FINDINGS.md's own `./sibling.md`
+# links), breaking navigation from any page inside captures/CAP-NNN-.../ back to a root-level
+# doc — the original bug this whole leading-`/` convention was added to fix, back in hash mode.
 set -euo pipefail
 
+BASE_PATH="/opencontrolpixelbudspro2"
 OUT="_sidebar.md"
 
-cat > "$OUT" <<'EOF'
-- [Home](/README.md)
+cat > "$OUT" <<EOF
+- [Home](${BASE_PATH}/README.md)
 
 - **Project**
-  - [PROJECT.md](/PROJECT.md)
-  - [ARCHITECTURE.md](/ARCHITECTURE.md)
-  - [PROTOCOL.md](/PROTOCOL.md)
-  - [DECISIONS.md](/DECISIONS.md)
-  - [REVERSE_ENGINEERING.md](/REVERSE_ENGINEERING.md)
-  - [DESKRESEARCH_FINDINGS.md](/DESKRESEARCH_FINDINGS.md)
+  - [PROJECT.md](${BASE_PATH}/PROJECT.md)
+  - [ARCHITECTURE.md](${BASE_PATH}/ARCHITECTURE.md)
+  - [PROTOCOL.md](${BASE_PATH}/PROTOCOL.md)
+  - [DECISIONS.md](${BASE_PATH}/DECISIONS.md)
+  - [REVERSE_ENGINEERING.md](${BASE_PATH}/REVERSE_ENGINEERING.md)
+  - [DESKRESEARCH_FINDINGS.md](${BASE_PATH}/DESKRESEARCH_FINDINGS.md)
 
 - **Process & rules**
-  - [AGENTS.md](/AGENTS.md)
-  - [PROJECT_RULES.md](/PROJECT_RULES.md)
-  - [TODO.md](/TODO.md)
-  - [CHANGELOG.md](/CHANGELOG.md)
-  - [SECURITY.md](/SECURITY.md)
-  - [CONTRIBUTING.md](/CONTRIBUTING.md)
-  - [MAINTAINING_DOCS_SITE.md](/MAINTAINING_DOCS_SITE.md)
+  - [AGENTS.md](${BASE_PATH}/AGENTS.md)
+  - [PROJECT_RULES.md](${BASE_PATH}/PROJECT_RULES.md)
+  - [TODO.md](${BASE_PATH}/TODO.md)
+  - [CHANGELOG.md](${BASE_PATH}/CHANGELOG.md)
+  - [SECURITY.md](${BASE_PATH}/SECURITY.md)
+  - [CONTRIBUTING.md](${BASE_PATH}/CONTRIBUTING.md)
+  - [MAINTAINING_DOCS_SITE.md](${BASE_PATH}/MAINTAINING_DOCS_SITE.md)
 
 - **Capture procedure**
-  - [CAPTURE_BLUETOOTH_HCI_SNOOP.md](/CAPTURE_BLUETOOTH_HCI_SNOOP.md)
-  - [TESTPLAN_BLUETOOTH_HCI_SNOOP.md](/TESTPLAN_BLUETOOTH_HCI_SNOOP.md)
-  - [WORKSTATION_PREPARATIONS.md](/WORKSTATION_PREPARATIONS.md)
+  - [CAPTURE_BLUETOOTH_HCI_SNOOP.md](${BASE_PATH}/CAPTURE_BLUETOOTH_HCI_SNOOP.md)
+  - [TESTPLAN_BLUETOOTH_HCI_SNOOP.md](${BASE_PATH}/TESTPLAN_BLUETOOTH_HCI_SNOOP.md)
+  - [WORKSTATION_PREPARATIONS.md](${BASE_PATH}/WORKSTATION_PREPARATIONS.md)
 
 - **Reference screenshots**
-  - [SCREENSHOTS_PIXEL_BUDS_APP.md](/SCREENSHOTS_PIXEL_BUDS_APP.md)
-  - [SCREENSHOTS_PIXEL_BUDS_WEB_APP.md](/SCREENSHOTS_PIXEL_BUDS_WEB_APP.md)
+  - [SCREENSHOTS_PIXEL_BUDS_APP.md](${BASE_PATH}/SCREENSHOTS_PIXEL_BUDS_APP.md)
+  - [SCREENSHOTS_PIXEL_BUDS_WEB_APP.md](${BASE_PATH}/SCREENSHOTS_PIXEL_BUDS_WEB_APP.md)
 
 - **Captures**
 EOF
@@ -61,7 +67,7 @@ if [ -d captures ]; then
         for f in "$dir/${cap_id}-EVENT-NOTES.md" "$dir/${cap_id}-FINDINGS.md"; do
           if [ -f "$f" ]; then
             label="$(basename "$f")"
-            echo "    - [${label}](/${f})" >> "$OUT"
+            echo "    - [${label}](${BASE_PATH}/${f})" >> "$OUT"
           fi
         done
       done
