@@ -473,4 +473,4 @@ the conflict explicitly and decline only the conflicting portion — continue
 helping with the rest of the request.**
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/AGENTS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/AGENTS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/AGENTS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/AGENTS

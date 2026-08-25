@@ -96,4 +96,4 @@ Without Google Play Services installed, the app can:
    claim traceable to a capture, a code reference, or a logged experiment.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/PROJECT
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROJECT

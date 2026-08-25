@@ -82,4 +82,4 @@ failure mode this repeat exists to avoid. Note here exactly how this was confirm
       actual session date/start-time/end-time.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-014-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_W/CAP-014-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-014-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_W/CAP-014-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-014-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_W/CAP-014-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-014-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_W/CAP-014-EVENT-NOTES

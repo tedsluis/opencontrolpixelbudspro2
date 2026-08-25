@@ -128,4 +128,4 @@ here rather than silently treated as two equally-confident samples.
 - [x] Rename this capture's folder to the actual session date/start-time/end-time.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-024-2026-08-21_08-31-27_08-33-24-Group_J/CAP-024-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-024-2026-08-21_08-31-27_08-33-24-Group_J/CAP-024-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-024-2026-08-21_08-31-27_08-33-24-Group_J/CAP-024-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-024-2026-08-21_08-31-27_08-33-24-Group_J/CAP-024-EVENT-NOTES

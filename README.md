@@ -134,4 +134,4 @@ GNU Affero General Public License v3.0 (AGPL-3.0) — see [`LICENSE`](./LICENSE)
 and `DECISIONS.md` ADR-002.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/README.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/README
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/README.md - https://tedsluis.github.io/opencontrolpixelbudspro2/README

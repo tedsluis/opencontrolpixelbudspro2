@@ -165,4 +165,4 @@ stays 🟡 HYPOTHESIS, unaffected.
   `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1 claims? Not tested this session. → copied to `PROTOCOL.md` §6.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-FINDINGS

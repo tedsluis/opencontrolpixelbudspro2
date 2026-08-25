@@ -104,4 +104,4 @@ read directly.
 - [x] Rename this capture's folder to the actual session date/start-time/end-time.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-EVENT-NOTES

@@ -268,4 +268,4 @@ numbering happens to match several prior sessions', but that is not guaranteed i
       carried over from `CAP-023`/`CAP-025`, not independently confirmed this session) — still open.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-EVENT-NOTES

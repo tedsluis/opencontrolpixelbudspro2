@@ -198,4 +198,4 @@ this coincidence.
   (§4.5's whole remaining list), or only to some? → copied to `PROTOCOL.md` §6.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-020-2026-08-21_07-46-14_07-47-49-Group_F/CAP-020-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-020-2026-08-21_07-46-14_07-47-49-Group_F/CAP-020-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-020-2026-08-21_07-46-14_07-47-49-Group_F/CAP-020-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-020-2026-08-21_07-46-14_07-47-49-Group_F/CAP-020-FINDINGS

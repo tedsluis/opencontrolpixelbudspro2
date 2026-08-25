@@ -88,11 +88,13 @@ OLD_NAME_ALLOWED_IN = {"CHANGELOG.md"}  # audit reports are excluded by glob bel
 
 # Standard per-page footer: a GitHub blob link (so the source is reachable from
 # whatever renders the raw file, e.g. GitHub's own viewer) plus the matching
-# Docsify site link (`index.html`'s hash-routed URL for the same page). Kept
-# here as the single source of truth; `ensure_footers.py` imports it so the
-# lint check and the repair tool can never drift apart.
+# Docsify site link (`index.html` uses routerMode: 'history', so this is a
+# real path-based URL, no `#`). Kept here as the single source of truth;
+# `ensure_footers.py` and `generate_sitemap.py` both import from this module
+# so the lint check, the footer repair tool, and the sitemap can never drift
+# apart.
 GITHUB_BLOB_BASE = "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main"
-DOCSIFY_BASE = "https://tedsluis.github.io/opencontrolpixelbudspro2/#"
+DOCSIFY_BASE = "https://tedsluis.github.io/opencontrolpixelbudspro2"
 
 # Not real content pages — _sidebar.md is Docsify's own nav config (not linked
 # from itself) and CLAUDE.md is a one-line `@AGENTS.md` include for Claude

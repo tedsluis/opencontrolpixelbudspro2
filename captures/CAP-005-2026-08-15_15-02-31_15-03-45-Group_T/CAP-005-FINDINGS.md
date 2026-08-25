@@ -410,4 +410,4 @@ generalization to ANC or other `libmaestro` commands — all explicitly flagged 
 further isolated captures before any promotion to FACT.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS

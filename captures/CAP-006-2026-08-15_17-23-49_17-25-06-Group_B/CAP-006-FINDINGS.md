@@ -201,4 +201,4 @@ for this capture's purpose).
   can tell "not analyzed" from "nothing there" without re-deriving it.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-FINDINGS

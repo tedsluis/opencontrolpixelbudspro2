@@ -1016,4 +1016,4 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
   the reference survives even if this row's description is later edited.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/CAPTURE_BLUETOOTH_HCI_SNOOP.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/CAPTURE_BLUETOOTH_HCI_SNOOP
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/CAPTURE_BLUETOOTH_HCI_SNOOP.md - https://tedsluis.github.io/opencontrolpixelbudspro2/CAPTURE_BLUETOOTH_HCI_SNOOP

@@ -310,4 +310,4 @@ _(`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Y), so it doesn't belong in this "no Gr
 _matching how `INEAR-004`/`GATT-001` came off this list once Groups U/R/W existed for them.)_
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/TESTPLAN_BLUETOOTH_HCI_SNOOP.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/TESTPLAN_BLUETOOTH_HCI_SNOOP
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/TESTPLAN_BLUETOOTH_HCI_SNOOP.md - https://tedsluis.github.io/opencontrolpixelbudspro2/TESTPLAN_BLUETOOTH_HCI_SNOOP

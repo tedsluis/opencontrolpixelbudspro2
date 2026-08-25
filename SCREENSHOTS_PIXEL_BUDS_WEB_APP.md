@@ -9,4 +9,4 @@ Original screenshot pixel buds pro 2 web app (`http://mypixelbuds.google.com/`).
 ![image28](images/pixel_buds_web_app_5.png)
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/SCREENSHOTS_PIXEL_BUDS_WEB_APP.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/SCREENSHOTS_PIXEL_BUDS_WEB_APP
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/SCREENSHOTS_PIXEL_BUDS_WEB_APP.md - https://tedsluis.github.io/opencontrolpixelbudspro2/SCREENSHOTS_PIXEL_BUDS_WEB_APP

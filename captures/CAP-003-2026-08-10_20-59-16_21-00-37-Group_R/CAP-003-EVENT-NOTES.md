@@ -78,4 +78,4 @@ flow is triggered.
 - The draft's timestamps were otherwise accurate to within 1–2s of the refined values above.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-EVENT-NOTES

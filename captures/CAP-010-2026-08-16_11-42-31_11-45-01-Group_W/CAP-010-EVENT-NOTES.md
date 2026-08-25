@@ -92,4 +92,4 @@ comparable to log frame timestamps without offset correction.
   draft at all, despite being the entire stated purpose of a Group W capture.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-EVENT-NOTES

@@ -163,4 +163,4 @@ Status legend (consistent with `PROTOCOL.md` §0):
   updates, 2026-08-17.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/DESKRESEARCH_FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

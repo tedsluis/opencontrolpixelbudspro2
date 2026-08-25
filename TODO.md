@@ -279,4 +279,4 @@ one only requires updating it in that one place, plus a `DECISIONS.md` entry
 where the rule requires one (`PROJECT_RULES.md` §3).
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/TODO.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/TODO
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/TODO.md - https://tedsluis.github.io/opencontrolpixelbudspro2/TODO

@@ -78,4 +78,4 @@ start** and **observation end** boundaries, not just a single timestamp.
       actual session date/start-time/end-time.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-030-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Q/CAP-030-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-030-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Q/CAP-030-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-030-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Q/CAP-030-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-030-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Q/CAP-030-EVENT-NOTES

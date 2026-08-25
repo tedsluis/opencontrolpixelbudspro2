@@ -555,4 +555,4 @@ project is reused directly; only documented protocol/frame knowledge informs
 this Android-native implementation.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ARCHITECTURE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/ARCHITECTURE
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ARCHITECTURE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ARCHITECTURE

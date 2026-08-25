@@ -75,4 +75,4 @@ third-party app UI at all — confirming the Pixel Buds app truly never appears 
 - The draft's timestamps were otherwise accurate to within 1–2s of the refined values above.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-004-2026-08-11_06-22-36_06-25-12-Group_S/CAP-004-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-004-2026-08-11_06-22-36_06-25-12-Group_S/CAP-004-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-004-2026-08-11_06-22-36_06-25-12-Group_S/CAP-004-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-004-2026-08-11_06-22-36_06-25-12-Group_S/CAP-004-EVENT-NOTES

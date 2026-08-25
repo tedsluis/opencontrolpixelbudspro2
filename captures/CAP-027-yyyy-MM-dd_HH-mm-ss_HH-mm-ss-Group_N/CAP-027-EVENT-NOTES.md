@@ -66,4 +66,4 @@ phone)
       actual session date/start-time/end-time.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-027-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_N/CAP-027-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-027-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_N/CAP-027-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-027-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_N/CAP-027-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-027-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_N/CAP-027-EVENT-NOTES

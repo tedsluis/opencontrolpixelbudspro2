@@ -168,4 +168,4 @@ promoted into the protocol documentation, to avoid the same finding being
   until correlated with a capture showing the corresponding traffic.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/REVERSE_ENGINEERING.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/REVERSE_ENGINEERING
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/REVERSE_ENGINEERING.md - https://tedsluis.github.io/opencontrolpixelbudspro2/REVERSE_ENGINEERING

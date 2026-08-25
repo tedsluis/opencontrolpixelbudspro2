@@ -76,4 +76,4 @@ repeat, so any deviation must be noted here, not silently glossed over.
       actual session date/start-time/end-time.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-012-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_S/CAP-012-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-012-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_S/CAP-012-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-012-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_S/CAP-012-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-012-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_S/CAP-012-EVENT-NOTES

@@ -208,4 +208,4 @@ four settings yet.
   have its own trigger not yet identified? → copied to `PROTOCOL.md` §6.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-019-2026-08-21_07-35-50_07-39-30-Group_C/CAP-019-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-019-2026-08-21_07-35-50_07-39-30-Group_C/CAP-019-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-019-2026-08-21_07-35-50_07-39-30-Group_C/CAP-019-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-019-2026-08-21_07-35-50_07-39-30-Group_C/CAP-019-FINDINGS

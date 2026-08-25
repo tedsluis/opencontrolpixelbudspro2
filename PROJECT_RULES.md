@@ -221,4 +221,4 @@ document disconnected from the capture it belongs to.
     `PROJECT.md` non-goals).
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT_RULES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/PROJECT_RULES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT_RULES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROJECT_RULES

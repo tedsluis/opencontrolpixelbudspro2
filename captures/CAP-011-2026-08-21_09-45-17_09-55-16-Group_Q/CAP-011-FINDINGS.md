@@ -280,4 +280,4 @@ ADR-014) for the index→Left/Right/Case mapping, per the maintainer sign-off ob
 `AGENTS.md` §6.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-FINDINGS

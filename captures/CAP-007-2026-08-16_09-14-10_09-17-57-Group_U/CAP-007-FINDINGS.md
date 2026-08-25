@@ -322,4 +322,4 @@ matched against a *known* physical state rather than inferred after the fact.
   capture's single-earbud design cannot answer it either way.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-007-2026-08-16_09-14-10_09-17-57-Group_U/CAP-007-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-007-2026-08-16_09-14-10_09-17-57-Group_U/CAP-007-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-007-2026-08-16_09-14-10_09-17-57-Group_U/CAP-007-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-007-2026-08-16_09-14-10_09-17-57-Group_U/CAP-007-FINDINGS

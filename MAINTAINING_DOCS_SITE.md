@@ -61,4 +61,4 @@ step above) rather than typing the footer by hand.
 within a minute of the push.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/MAINTAINING_DOCS_SITE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/MAINTAINING_DOCS_SITE
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/MAINTAINING_DOCS_SITE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/MAINTAINING_DOCS_SITE

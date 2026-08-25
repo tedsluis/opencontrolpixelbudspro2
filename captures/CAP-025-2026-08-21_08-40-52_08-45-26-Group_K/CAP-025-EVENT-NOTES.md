@@ -130,4 +130,4 @@ correlate with, but are not proven to be caused by, the Find Hub flow's own conn
 - [x] Rename this capture's folder to the actual session date/start-time/end-time (video-derived).
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-EVENT-NOTES

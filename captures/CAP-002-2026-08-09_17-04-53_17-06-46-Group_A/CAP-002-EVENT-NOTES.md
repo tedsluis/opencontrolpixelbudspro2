@@ -86,4 +86,4 @@ log uses the same wall clock (+0200), directly comparable.
   `CAP-002-FINDINGS.md` §4 for what this means and possible explanations.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES

@@ -61,4 +61,4 @@ Connection setup and channel 5/DLCI 0x0a's audio path.
       actual session date/start-time/end-time.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-008-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_V/CAP-008-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-008-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_V/CAP-008-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-008-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_V/CAP-008-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-008-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_V/CAP-008-EVENT-NOTES

@@ -85,4 +85,4 @@ matched to a video-visible action.
   opcodes and timing) but not *what was discovered*. See the capture-integrity note above.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-EVENT-NOTES

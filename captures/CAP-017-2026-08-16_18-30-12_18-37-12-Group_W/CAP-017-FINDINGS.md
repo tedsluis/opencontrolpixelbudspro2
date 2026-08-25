@@ -412,4 +412,4 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   characteristic's value or just enumerated the declarations.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-FINDINGS

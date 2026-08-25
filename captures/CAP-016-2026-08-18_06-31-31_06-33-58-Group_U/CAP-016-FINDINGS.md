@@ -376,4 +376,4 @@ was captured for it this session — the earlier discovery burst, §2, targets a
 range), and what the recurring `0xfea9` marker specifically encodes.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS

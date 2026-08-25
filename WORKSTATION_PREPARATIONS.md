@@ -243,4 +243,4 @@ write command against real hardware, not after something goes wrong.
   troubleshooting step.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/WORKSTATION_PREPARATIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/WORKSTATION_PREPARATIONS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/WORKSTATION_PREPARATIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/WORKSTATION_PREPARATIONS

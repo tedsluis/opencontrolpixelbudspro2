@@ -99,4 +99,4 @@ by physical position only, per `PROJECT_RULES.md` §1's "no invented interpretat
   independently re-derived from the video and log.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-EVENT-NOTES

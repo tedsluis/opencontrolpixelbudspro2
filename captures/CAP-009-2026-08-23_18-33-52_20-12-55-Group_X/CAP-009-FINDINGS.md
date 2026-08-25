@@ -437,4 +437,4 @@ $ tshark -r CAP-009-btsnoop_hci.log -Y 'bthci_acl.chandle==0x0002 and btrfcomm.d
 ```
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/#/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-FINDINGS
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-009-2026-08-23_18-33-52_20-12-55-Group_X/CAP-009-FINDINGS
