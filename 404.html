@@ -50,12 +50,15 @@
         placeholder: 'Search docs...',
       },
       alias: {
-        '/README': '/README.md',
-        // Per Docsify's own history-mode + subdirectory-deployment guidance:
-        // without this, a nested route (e.g. a captures/CAP-NNN-.../ page)
-        // can try to load its own local _sidebar.md instead of the site's
-        // one at the root.
-        '/.*/_sidebar.md': '/_sidebar.md'
+        '/README': '/README.md'
+        // Docsify's own docs suggest a regex alias here
+        // ('/.*/_sidebar.md': '/_sidebar.md') for history mode in a
+        // subdirectory, but tested live it broke worse: the alias target
+        // doesn't get the /opencontrolpixelbudspro2/ prefix Docsify applies
+        // to normal (non-aliased) content fetches, so it 404s at the domain
+        // root instead. Verified without it — see git log for this file —
+        // that _sidebar.md loads fine on both the root page and a nested
+        // captures/CAP-NNN-.../ page without any alias.
       }
     }
   </script>
