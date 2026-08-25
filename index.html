@@ -28,22 +28,29 @@
       relativePath: true,
       // History mode gives real, indexable path-based URLs instead of
       // hash-fragment ones (fragments are invisible to HTTP/search-engine
-      // indexing regardless of client-side rendering). basePath is required
-      // because this is a GitHub Pages *project* page — served from
-      // /opencontrolpixelbudspro2/, not domain root — so Docsify needs to
-      // know that prefix to resolve routes/links correctly. GitHub Pages has
-      // no server-side rewrite support, so 404.html (a copy of this file)
-      // is what makes a direct/deep-linked/refreshed URL still load the app
-      // instead of a bare GitHub 404 page — see MAINTAINING_DOCS_SITE.md.
+      // indexing regardless of client-side rendering). No basePath: Docsify
+      // resolves content paths from window.location.pathname, which already
+      // contains /opencontrolpixelbudspro2/ (that's where GitHub Pages
+      // serves this project page from) — setting basePath to the same
+      // prefix double-applies it (content fetches 404 on
+      // /opencontrolpixelbudspro2/opencontrolpixelbudspro2/*). GitHub Pages
+      // has no server-side rewrite support, so 404.html (a copy of this
+      // file) is what makes a direct/deep-linked/refreshed URL still load
+      // the app instead of a bare GitHub 404 page — see
+      // MAINTAINING_DOCS_SITE.md.
       routerMode: 'history',
-      basePath: '/opencontrolpixelbudspro2/',
       search: {
         maxAge: 86400000,
         paths: 'auto',
         placeholder: 'Search docs...',
       },
       alias: {
-        '/README': '/README.md'
+        '/README': '/README.md',
+        // Per Docsify's own history-mode + subdirectory-deployment guidance:
+        // without this, a nested route (e.g. a captures/CAP-NNN-.../ page)
+        // can try to load its own local _sidebar.md instead of the site's
+        // one at the root.
+        '/.*/_sidebar.md': '/_sidebar.md'
       }
     }
   </script>
