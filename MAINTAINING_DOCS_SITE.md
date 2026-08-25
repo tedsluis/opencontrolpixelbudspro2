@@ -55,6 +55,27 @@ and kept correct mechanically, not by hand:
 If you add a brand-new page, run `./scripts/ensure_footers.py` once (same as the sidebar-generation
 step above) rather than typing the footer by hand.
 
+## sitemap.xml lists the site root only, on purpose
+
+`scripts/generate_sitemap.py` (run automatically by
+`.github/workflows/update-sitemap.yml` on every push touching a `.md` file) generates
+`sitemap.xml` with exactly one `<url>` entry — the site root — not one per page.
+
+This isn't an oversight. `index.html` uses `routerMode: 'history'`, and GitHub Pages has no
+server-side rewrite support, so every URL except the bare root is served via the `404.html`
+fallback trick — with a genuine HTTP 404 status, even though the page renders correctly once
+Docsify's JS boots. Google's own documentation is explicit that a 4xx status is a hard stop for
+indexing regardless of rendered content (see
+[HTTP status codes and network/DNS errors](https://developers.google.com/search/docs/crawling-indexing/http-network-errors)).
+Listing all pages would just be dozens of confirmed-dead entries in Search Console's coverage
+report — decided 2026-08-25 to keep the sitemap to the one URL that's actually indexable as
+things stand, rather than that.
+
+If a future change gives individual pages a real HTTP 200 (e.g. a build step that pre-renders
+each route to a static file, discussed but not implemented as of this decision — see
+`scripts/generate_sitemap.py`'s own docstring), `generate_sitemap.py`'s scope should expand back
+to all pages.
+
 ## Checking it worked
 
 `https://tedsluis.github.io/opencontrolpixelbudspro2/` — GitHub Pages builds typically go live
