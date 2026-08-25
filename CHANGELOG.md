@@ -78,6 +78,11 @@ for the "definition of done" that will mark v1.
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, and
   `DESKRESEARCH_FINDINGS.md` to the new IDs; earlier entries in this
   changelog that mention the old IDs are left as-is (historical record).
+- `ci:` bumped `actions/checkout@v4` → `@v5` and `actions/setup-python@v5` →
+  `@v6` across the three docs-site workflows (`lint-docs.yml`,
+  `update-docs-sidebar.yml`, `update-sitemap.yml`) to clear GitHub's Node 20
+  deprecation warning — both actions now declare `using: node24` natively
+  instead of being force-run on it.
 
 ### Reverse engineering findings
 
