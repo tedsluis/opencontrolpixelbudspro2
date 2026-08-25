@@ -50,9 +50,19 @@
       // the app instead of a bare GitHub 404 page — see
       // MAINTAINING_DOCS_SITE.md.
       routerMode: 'history',
+      // paths: 'auto' made the search plugin enumerate every sidebar route
+      // and prefetch each one for its index — but (like loadSidebar before
+      // the fix above) using its own path computation, missing the
+      // /opencontrolpixelbudspro2/ prefix. Confirmed live: it fired ~80
+      // simultaneous 404s on every page load, at least once visibly
+      // freezing the tab, and appeared to also make real (non-scripted)
+      // sidebar-link clicks intermittently fail to navigate even though a
+      // JS-dispatched click on the exact same link worked correctly —
+      // consistent with the fetch storm interfering with normal click
+      // handling. Dropping 'auto' avoids the storm; search still works
+      // against whatever page is currently loaded.
       search: {
         maxAge: 86400000,
-        paths: 'auto',
         placeholder: 'Search docs...',
       },
       alias: {
