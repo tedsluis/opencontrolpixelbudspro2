@@ -672,6 +672,21 @@ event-observation coroutines.
   happened to be primary this session), is not yet distinguished — a session with a confirmed-L
   primary earbud would resolve this. `AT+CIND?`'s `battchg` was only ever observed once per
   session (see above), so whether *it* is aggregate or per-earbud remains untested either way.
+- **Second data point, added 2026-08-26 (`CAP-008`, Group V — proposal awaiting sign-off):**
+  `CAP-008`'s `AT+BIEV=2` tracked the **Left** earbud instead — its one value transition
+  (98%→97%) matches only the on-screen Left percentage (cross-checked against 3 separate video
+  frames), while Right (100%) and Case (43%) stayed constant throughout
+  (`CAP-008-FINDINGS.md` §8). Two independent sessions now each track a *different* physical
+  earbud (`CAP-009`: Right; `CAP-008`: Left) — evidence in favor of the "whichever earbud is
+  HFP-primary" reading over a fixed-Right rule, still 🟡 HYPOTHESIS since neither session
+  deliberately swapped the primary earbud mid-session to confirm the mechanism directly.
+- **New open question, added 2026-08-26 (`CAP-008-FINDINGS.md` §9):** `CAP-008` observed a
+  single unsolicited `+CIEV: 6,<battchg>` push (index 6 = `BATTCHG`) mid-session, not tied to any
+  video-visible action — the first time this project has seen the `battchg` *indicator* itself
+  update outside the initial SLC-setup snapshot, even though the `AT+CIND?` *query* remains
+  observed only once per session in every capture to date (consistent with `ADR-015`, not a
+  contradiction of it). 🔴 OPEN QUESTION: is this a general mechanism (battchg can push on
+  change, just rarely) or a one-off artifact? A single occurrence is not enough to resolve this.
 
 #### Option D — BLE Battery Service (`0x180F`, Battery Level characteristic `0x2A19`)
 
@@ -1312,11 +1327,17 @@ leaving them buried in prose elsewhere.
 - [ ] **Added 2026-08-21, `CAP-021-FINDINGS.md` §4a:** DLCI 0x0a (RFCOMM channel 5) — silent
       (channel-control frames only, zero payload) in every capture that has checked it before or
       since (`CAP-001`/`CAP-002`/`CAP-005`/`CAP-006`/`CAP-007`/`CAP-016`,
-      `CAP-011`/`CAP-019`/`CAP-020`/`CAP-022`–`CAP-025`) — carried a 1123-frame payload burst in
-      `CAP-021` alone (frames 2093–4926, ~179–277s into that session's log, dominant frame size 215
-      bytes). Structurally protobuf-tag-shaped (`0a d0 01` = field 1, length 208) but not decoded
-      further, and not attributable to any single Group G Test-ID's tap time. What triggers this,
-      and why it appears in exactly one session out of fourteen checked, is unresolved.
+      `CAP-011`/`CAP-019`/`CAP-020`/`CAP-022`–`CAP-025`, and now `CAP-008`) — carried a 1123-frame
+      payload burst in `CAP-021` alone (frames 2093–4926, ~179–277s into that session's log,
+      dominant frame size 215 bytes). Structurally protobuf-tag-shaped (`0a d0 01` = field 1,
+      length 208) but not decoded further, and not attributable to any single Group G Test-ID's
+      tap time. What triggers this, and why it appears in exactly one session out of fifteen
+      checked, is unresolved. **`CAP-008` (Group V, a real phone call — proposal awaiting
+      sign-off) specifically tests and rules out one candidate: this is not the call's SCO/eSCO
+      audio path** — `CAP-008-FINDINGS.md` §5/§6 shows the actual audio connection is a separate
+      HCI-level synchronous connection (its own connection handle) that never touches RFCOMM/L2CAP
+      framing at all, while DLCI 0x0a stayed open-but-empty through two full calls in that same
+      session.
       **Refined characterization, added 2026-08-23 (external audit pass, independent re-analysis
       of all 1123 frames — offered as a research direction, not a conclusion):** the burst is
       **100% Rcvd-direction** (Buds→phone only; the phone never requests it) and arrives in ~5–6
@@ -1373,11 +1394,18 @@ leaving them buried in prose elsewhere.
       button, distinct from the confirmed 30-second factory-reset hold.
 - [ ] Whether captured RFCOMM payload bytes are ever link-layer encrypted in a
       way that requires extra Wireshark configuration to decode.
-- [ ] Added 2026-08-14: why HFP AT-command traffic never recurs after `CAP-001`'s own handshake —
-      confirmed as a genuine negative (zero `AT+` traffic anywhere else across a full 8+ hour
-      shared log spanning multiple reconnects, `CAP-002-FINDINGS.md` §5), but the underlying
-      *reason* (per-pairing SLC setup once only? requires an actual call to re-trigger?) is still
-      open. `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group V (new) targets this directly.
+- [ ] **Added 2026-08-14; narrowed 2026-08-26 (`CAP-008-FINDINGS.md` §3, Group V, proposal awaiting
+      sign-off):** why HFP AT-command traffic never recurs after `CAP-001`'s own handshake —
+      confirmed as a genuine negative in `CAP-002` (zero `AT+` traffic anywhere else across a full
+      8+ hour shared log spanning multiple reconnects, `CAP-002-FINDINGS.md` §5). `CAP-008`
+      (Bluetooth radio switched off then back on, a fresh classic-link connection) shows the full
+      SLC handshake **does** reoccur on that kind of reconnect, structurally identical to
+      `CAP-001`'s — narrowing the question to "which reconnections retrigger it," not "does it ever
+      recur." Still open: whether a reconnect that does *not* involve a full radio power-cycle
+      (e.g. `PAIR-003`, disconnect/reconnect to an already-bonded device without toggling
+      Bluetooth off) also retriggers it, or whether `CAP-002`'s negative result specifically
+      reflects that its ACL connection was simply never torn down within that log's window — not
+      tested by either capture to date.
 - [ ] Added 2026-08-14: live GATT primary-service discovery requires stronger cache-busting than
       bond removal — confirmed as a genuine requirement, not an assumption: three independent
       captures (`CAP-002`, `CAP-003`, `CAP-004`) all failed to trigger a live `Read By Group Type`
