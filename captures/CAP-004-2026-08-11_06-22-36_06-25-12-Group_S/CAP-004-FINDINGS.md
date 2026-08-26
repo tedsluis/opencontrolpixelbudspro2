@@ -578,6 +578,13 @@ never connected to this device) is the only path left untried.
    affected any of this session's results (e.g. the CTKD pairing mechanism in §2 might be an
    artifact of nRF Connect's early BLE connection, not of GMS being disabled) — worth doing once,
    even though this capture's core `GFPS-001` answer (§4) is not expected to change.
+
+   **Done, 2026-08-26 (`CAP-012`):** confirmed — classic SSP, not CTKD, in the no-BLE-tool repeat;
+   this session's own CTKD result is specifically attributable to nRF Connect's early BLE
+   connection, not to the GMS-disabled/no-app condition. See `CAP-012-FINDINGS.md` §2/§10. The
+   `GFPS-001` channel-topology result (§4 above) reproduced as expected, but `CAP-012`'s log was
+   severely ACL-truncated, so its payload-content result is inconclusive rather than a second
+   confirming data point for §4a/§4b specifically.
 5. **Added 2026-08-15:** §4a's absence result is confounded — GMS was disabled *and* the Pixel
    Buds app was uninstalled together, so "GMS-dependent" is not yet isolated from "app-dependent."
    A capture with only one variable changed (GMS disabled, app still installed; or app
@@ -650,6 +657,11 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
   actively holding the early BLE connection — item 4 in §8 already flags this as a possible
   confound. Stays 🟡 HYPOTHESIS pending either a repeat with the official app, or a clean repeat
   of Group S without nRF Connect (§8 item 4, `CAP-012` planned).
+
+  **Update 2026-08-26 (`CAP-012`):** the clean repeat happened — see §8 item 4's own update above.
+  Result confirms the hypothesis (classic SSP without an early BLE link, CTKD with one), but per
+  `AGENTS.md` §6 this is recorded in `PROTOCOL.md` §5.1 as a VOORSTEL awaiting maintainer sign-off
+  for promotion to 🟢 FACT, not committed as settled by either capture's findings file alone.
 - Groups `0x05`/`0x09`'s identity (§5) — search results kept redirecting to Device Information
   (Group `0x03`) codes `0x05`/`0x06`/`0x09` instead of confirming standalone groups; **not a
   reassembly artifact (ruled out 2026-08-12, §5a — reassembly is confirmed correct and stable

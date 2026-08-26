@@ -1091,6 +1091,28 @@ the case-open/bud-removal event first, not yet tested directly.
 Encryption` → `Encryption Change`, converging to the same encrypted classic
 link regardless of which path reached it.
 
+**Third path — Cross-Transport Key Derivation (CTKD), gated on a pre-existing LE link — 🟡
+HYPOTHESIS (strengthened 2026-08-26), VOORSTEL awaiting maintainer sign-off for promotion to 🟢
+FACT.** `CAP-004-FINDINGS.md` §2 first observed a third bonding path when a BLE (LE Secure
+Connections) link to the Buds already existed before classic pairing began (nRF Connect,
+`CAP-004`): `Delete Stored Link Key` → SMP `Pairing Request` (requesting `Linkkey` key
+distribution) → Public Key/Confirm/Random → `DHKey Check` → classic `Create Connection` →
+`Link Key Request Reply` (not Negative) — i.e. the classic link key is derived from the LE pairing
+rather than negotiated via classic SSP. `CAP-004-FINDINGS.md` §10 explicitly withheld this from
+promotion, since it rested on one capture with a specific confound: nRF Connect's early BLE
+connection might itself be *why* CTKD occurred, not the GMS-disabled/no-app condition that
+session was actually testing. **`CAP-012` (2026-08-26) directly tested this as a controlled
+hypothesis test** (`CAP-012-FINDINGS.md` §2/§10): repeating the same GMS-disabled/no-app
+condition with no BLE tool at any point, and independently confirming zero BLE connection to the
+Buds anywhere in that session's log, produced classic SSP instead — not CTKD. Combined with
+`CAP-002`/`CAP-003` (classic SSP, official app / nRF Connect but classic-only pairing path — no
+early BLE link either), the pattern across all captures to date is a clean split: **classic SSP in
+every session with no pre-existing LE link to the Buds (`CAP-002`, `CAP-003`, `CAP-012`); CTKD in
+the one session that had one (`CAP-004`).** This is a direct causal isolation from a purpose-built
+repeat, not merely a repeated negative — but per `AGENTS.md` §6, promoting "an LE Secure
+Connections link already existing gates CTKD vs. classic SSP" into this section's own 🟢 FACT
+connection-lifecycle diagram is left to the maintainer rather than done unilaterally here.
+
 **Not covered by this promotion — still ⚪ ASSUMPTION:** the RFCOMM
 channel-opening sequence, the Message Stream/`libmaestro` handshake ordering,
 and exactly when the first battery notification/app command arrives relative
@@ -1406,6 +1428,17 @@ leaving them buried in prose elsewhere.
       Bluetooth off) also retriggers it, or whether `CAP-002`'s negative result specifically
       reflects that its ACL connection was simply never torn down within that log's window — not
       tested by either capture to date.
+      **Further narrowed 2026-08-26 (`CAP-012-FINDINGS.md` §6, Group S repeat, incidental —
+      proposal awaiting sign-off):** this exact untested case now has a data point. A manual
+      disconnect + reconnect via system Bluetooth settings (no radio toggle — `PAIR-003`,
+      `CAP-012`'s Sequence 2) **does** retrigger the full HFP AT-command SLC handshake on DLCI
+      0x0c, the same shape as `CAP-008`'s radio-power-cycle case. Two independently-triggered
+      reconnect types now both show recurrence and none show `CAP-002`'s original silence —
+      `CAP-002`'s negative result increasingly looks attributable to "that session's ACL
+      connection was simply never torn down" rather than to which reconnect mechanism is used,
+      but this is two data points, not yet a settled rule. (`CAP-012`'s own log was severely
+      ACL-truncated, so only the handshake's *recurrence*, not its exact AT-command content, is
+      confirmed here.)
 - [ ] Added 2026-08-14: live GATT primary-service discovery requires stronger cache-busting than
       bond removal — confirmed as a genuine requirement, not an assumption: three independent
       captures (`CAP-002`, `CAP-003`, `CAP-004`) all failed to trigger a live `Read By Group Type`
