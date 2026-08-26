@@ -22,7 +22,7 @@ Connection setup and channel 5/DLCI 0x0a's audio path.
 |       Date       |                        TBD                         |
 | Firmware version |                        TBD                         |
 |   Test device    | TBD (Pixel 7a/9a, Android version, official app version if used) |
-| Video file       |               TBD — `CAP-008-recording.mp4`        |
+| Video file       |               TBD — `CAP-008-recording1.mp4`, `CAP-008-recording2.mp4`, `CAP-008-recording3.mp4` and `CAP-008-recording4.mp4`        |
 | Log file         |             TBD — `CAP-008-btsnoop_hci.log`        |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
 
@@ -36,10 +36,24 @@ Connection setup and channel 5/DLCI 0x0a's audio path.
 ## Event Timeline
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
-|---|---|---|---|---|
-| TBD | Call start (placed/received) | User (Phone) | `CALL-001` | TBD |
-| TBD | (Optional) audio-routing switch | User (Phone) | — | TBD |
-| TBD | Call end | User (Phone) | `CALL-001` | TBD |
+|----------|---|---|---|---|
+| 09:38:44 | start of video CAP-008-recording1.mp4. | - | - |
+| 09:38:49 | user turns on bluetooth. | - | - |
+| 09:38:52 | connected to pixel buds pro 2. | - | - |
+| 09:38:59 | user pressed play in spotify (podcast started playing). | - | - |
+| 09:39:08 | user start pixel buds app. | - | - |
+| 09:39:19 | end of video CAP-008-recording1.mp4. | - | - |
+| 09:39:29 | start of video CAP-008-recording2.mp4, incomming call. | - | - |
+| 09:39:34 | user pressed 'answer' incomming call, (podcast paused playing). | - | - |
+| 09:39:51 | user ends incomming call, (podcast resumed playing). | - | - |
+| 09:39:59 | end of video CAP-008-recording2.mp4. | - | - |
+| 09:40:02 | start of video CAP-008-recording3.mp4. | - | - |
+| 09:40:14 | user pressed pause in spotify (podcast stopped playing). | - | - |
+| 09:40:22 | end of video CAP-008-recording3.mp4. | - | - |
+| 09:40:56 | start of video CAP-008-recording4.mp4, incomming call. | - | - |
+| 09:41:00 | user pressed 'answer' incomming call. | - | - |
+| 09:41:18 | user ends incomming call. | - | - |
+| 09:41:36 | end of video CAP-008-recording4.mp4. | - | - |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group V)
 
