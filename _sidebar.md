@@ -60,8 +60,9 @@
   - **CAP-011 (Group Q)**
     - [CAP-011-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-EVENT-NOTES.md)
     - [CAP-011-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-011-2026-08-21_09-45-17_09-55-16-Group_Q/CAP-011-FINDINGS.md)
-  - **CAP-012 (Group S)** _(planned)_
-    - [CAP-012-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-012-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_S/CAP-012-EVENT-NOTES.md)
+  - **CAP-012 (Group S)**
+    - [CAP-012-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-012-2026-08-26_15-30-19_15-32-28-Group_S/CAP-012-EVENT-NOTES.md)
+    - [CAP-012-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-012-2026-08-26_15-30-19_15-32-28-Group_S/CAP-012-FINDINGS.md)
   - **CAP-013 (Group A)** _(planned)_
     - [CAP-013-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-013-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_A/CAP-013-EVENT-NOTES.md)
   - **CAP-014 (Group W)** _(planned)_
