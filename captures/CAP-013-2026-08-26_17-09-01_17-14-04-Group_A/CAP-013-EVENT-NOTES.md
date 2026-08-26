@@ -44,12 +44,27 @@ pre-condition above)
 ## Event Timeline
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
-|---|---|---|---|---|
-| TBD | Phone restart confirmed, before any Bluetooth/Buds-app activity | — | — | TBD |
-| TBD | HCI snoop enabled, Bluetooth restarted | — | — | TBD |
-| TBD | Case opened for the first time this session | User (Hardware) | `PAIR-001` | TBD |
-| TBD | "Forget" tapped (if device shows as already paired) | User (App) | `PAIR-004` | TBD |
-| TBD | Pairing/bonding burst (tap device in picker → settle) | User (Hardware) | `PAIR-001` | TBD |
+|----------|---|---|---|---|
+| 17:09:01 | start of video CAP-012-recording.mp4. | - | - | - |
+| 17:09:24 | user performed a "reset bluetooth & wifi" (reset options). | - | - | - |
+| 17:09:24 | user performed a "reset bluetooth & wifi" (reset options). | - | - | - |
+| 17:10:43 | user enabled bluetooth. | - | - | - |
+| 17:10:53 | user opened buds case. | - | - | - |
+| 17:11:14 | user presses the pair button on the buds case.. | - | - | - |
+| 17:11:25 | user selects 'pair new device'. | - | - | - |
+| 17:11:26 | pair new device: phone's bluetooth address E8:D5::2B:7E:CA:81 is displayed. | - | - | - |
+| 17:11:27 | "pixel Buds Pro 2 van Ted" shows up in 'Available devices' list. | - | - | - |
+| 17:11:31 | Pop-up appears: "pixel Buds Pro 2". | - | - | - |
+| 17:11:45 | user selects "connect" from pop-up "Pair with Pixel Buds Pro 2". | - | - | - |
+| 17:11:53 | "ready to use" pop-up appears. | - | - | - |
+| 17:12:09 | user selects "start using the device", Pixel buds pro 2 are paired. | - | - | - |
+| 17:12:10 | "set up device" pop-up appears. | - | - | - |
+| 17:12:31 | user selects "set up", "allow a connection to your pixel buds" appears. | - | - | - |
+| 17:12:45 | user selects continue. "Allow your pixel to find" pop-up  appears. | - | - | - |
+| 17:12:52 | user selects allow, "allow the pixel buds app to access the Pixel Buds pro 2 Bud van Ted" pop-up appears. | - | - | - |
+| 17:13:02 | user selects allow.. | - | - | - |
+| 17:13:27 | firmware release_5.203 was show. | - | - | - |
+| 17:14:04 | end of video CAP-012-recording.mp4. | - | - | - |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group A repeat note)
 
