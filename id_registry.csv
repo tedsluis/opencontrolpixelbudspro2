@@ -26,7 +26,7 @@ CAP-009,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_S
 CAP-010,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-011,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-012,capture,analyzed,"session date/status: 2026-08-26",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-013,capture,planned,"session date/status: *planned",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-013,capture,analyzed,"session date/status: 2026-08-26 — partial: pre-clearing-action window not captured",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-014,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-015,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-016,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
@@ -44,6 +44,7 @@ CAP-027,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_S
 CAP-028,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-029,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-030,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-031,capture,planned,"session date/status: *planned* — VOORSTEL — wacht op goedkeuring maintainer; genuine repeat of CAP-013's original intent (logging started before the clearing action itself, not just before the pairing tap)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md

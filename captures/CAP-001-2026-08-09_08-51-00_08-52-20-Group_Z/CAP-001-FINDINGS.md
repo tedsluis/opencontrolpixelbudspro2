@@ -361,6 +361,19 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
   bonding state, or the visible BLE link (08:50:36) belongs to a different logical association
   than the classic-link bonding that was reused at 08:51:12. Needs a cleaner capture that starts
   before any prior state exists.
+
+  > **Update (2026-08-26):** `CAP-013` attempted exactly the "cleaner capture that starts before
+  > any prior state exists" called for above, but did not achieve it — HCI snoop logging in that
+  > session only began 2m21s *after* its own clearing action ("Reset Bluetooth & Wi-Fi", not a
+  > single-device "Forget") and after the subsequent case-open/pair-button/device-selection
+  > sequence too, leaving the question above still fully 🔴 OPEN (`CAP-013-FINDINGS.md` §0,
+  > `PROTOCOL.md` §6's "Behavior" section). `CAP-013` did resolve a related but distinct secondary
+  > question (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `PAIR-004`) — the re-pairing that followed its
+  > own clearing action used a fresh SSP handshake, not a reused key, for whatever bonding state
+  > was active when its logging window began (`CAP-013-FINDINGS.md` §2/§7). A further repeat, with
+  > logging verified to start before the clearing action itself, is still needed to answer this
+  > section's original question — proposed as a new capture (next free ID `CAP-031`, not yet
+  > assigned) in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Group-A-repeat note.
 - Channel 1 (DLCI 0x02) and channel 2 (DLCI 0x04)'s exact protocol identity is still unconfirmed
   — candidates are AVRCP and/or A2DP signaling (both present in SDP), but this was not verified
   byte-for-byte against either spec in this pass.

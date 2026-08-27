@@ -1059,6 +1059,11 @@ Delete stored link key (if any) → Create Connection → Connect Complete
   part of the protocol's own timing. `CAP-003` also shows the BLE (LE) link
   established ~0.4s *before* the classic connection attempt, consistent with
   Fast Pair's BLE-first design (classic pairing triggered from the BLE side).
+- **`CAP-013`** (2026-08-26, official app, following a phone-wide "Reset Bluetooth & Wi-Fi"):
+  frames 117–270, 17:11:46.737–48.843. Same shape again, a ~1.2s IO-Capability-to-Complete gap. A
+  fifth independent confirming instance of this path — see `CAP-013-FINDINGS.md` §2/§7 for the
+  full frame table (this capture's own purpose was `PAIR-004`, not this path itself, which was
+  already 🟢 FACT before this session).
 
 **Reconnect (stored key exists) — `CAP-001`:**
 
@@ -1119,13 +1124,13 @@ and exactly when the first battery notification/app command arrives relative
 to the classic link completing (steps 3–6 in the diagram above). Only the
 classic BR/EDR link-establishment mechanics (steps 1–2) are promoted here.
 
-**Status**: 🟢 FACT for classic BR/EDR link establishment (§5.1, four
+**Status**: 🟢 FACT for classic BR/EDR link establishment (§5.1, five
 independent captures); ⚪ ASSUMPTION for the RFCOMM/Message-Stream/battery/
 command portions (steps 3–6); 🟢 FACT for step 5's specific behavioral outcome
 (battery notification on reconnect), per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §3.
 **Evidence**: §5.1 above for the classic-link portion (`CAP-001` frames
 732–917, `CAP-002` frames 653–734, `CAP-003` frames 1621/1687–1756, `CAP-016`
-frames 1213–1217); steps 3–6
+frames 1213–1217, `CAP-013` frames 117–270); steps 3–6
 still need a full connection sequence captured end-to-end (see
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md`).
 
@@ -1464,6 +1469,27 @@ leaving them buried in prose elsewhere.
       (`4f:25:00:85:9a:b1`, connected 06:31:40.983) actually belong to the same physical Buds unit
       as classic peer `04:00:6e:cf:6e:07`? Time-coincident only — not content-verified in that
       pass; a GATT-level read of that handle's advertised service data would settle it.
+      **Second occurrence, 2026-08-26 (`CAP-013-FINDINGS.md` §6):** a further second BLE link,
+      to yet another random/resolvable address (`43:8a:82:03:4b:f2`), forms shortly after classic
+      pairing/RFCOMM-channel-open in that session — same open question (not content-verified as the
+      Buds' own address), not yet the same address as `CAP-016`'s either, so this doesn't confirm a
+      stable secondary identity, only that the pattern (an unattributed second BLE link appearing
+      around connection time) recurs.
+- [ ] **Re-raised 2026-08-26, still unresolved from `CAP-001-FINDINGS.md` §6 (primary question
+      `CAP-013` was meant to answer, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `PAIR-004`):** did a BLE
+      link and/or a still-valid classic link key already exist for this peer *before* the on-screen
+      clearing action (`CAP-001`'s "Forget" tap at 08:51:02–03, pre-dated by a BLE link at
+      08:50:36)? `CAP-013` (2026-08-26) attempted the planned repeat — start HCI snoop logging
+      before any association exists at all — but logging in that session did not actually begin
+      until 2m21s *after* its own clearing action ("Reset Bluetooth & Wi-Fi", not a single-device
+      "Forget") and after the entire subsequent case-open/pair-button/device-selection sequence
+      (`CAP-013-FINDINGS.md` §0). **Still 🔴 OPEN QUESTION, not narrowed by `CAP-013`** — a genuine
+      repeat, with logging verified to start before the clearing action itself, is still needed
+      (proposed as a new capture, next free ID `CAP-031` per `id_registry.csv`, not yet assigned).
+      What `CAP-013` *did* confirm: the classic-link re-pairing that followed its own clearing
+      action used a fresh SSP handshake, not a reused key (`CAP-013-FINDINGS.md` §2/§7) — another
+      instance of `PROTOCOL.md` §5.1's already-FACT "fresh pairing" path, not a new finding in
+      itself.
 
 ### Resolved
 
