@@ -115,3 +115,4 @@
     - [CAP-031-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-031-2026-08-27_06-04-48_06-08-10-Group_A/CAP-031-FINDINGS.md)
   - **CAP-032 (Group A)**
     - [CAP-032-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-032-2026-08-27_18-30-15_18-32-33-Group_A/CAP-032-EVENT-NOTES.md)
+    - [CAP-032-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-032-2026-08-27_18-30-15_18-32-33-Group_A/CAP-032-FINDINGS.md)
