@@ -618,6 +618,22 @@ same window.
 > verifiably started before the clearing action itself (e.g. enable HCI snoop logging immediately
 > after a phone restart, before touching Bluetooth settings at all) — proposed as `CAP-031` (next
 > free ID per `id_registry.csv`, not yet assigned/registered).
+>
+> **Update (2026-08-27), `CAP-031`, VOORSTEL — wacht op goedkeuring maintainer: second consecutive
+> attempt, still did not achieve it — primary question still open.** This session used a genuine
+> narrow, per-device "Forget" (screenshot-confirmed, unlike `CAP-013`'s broader reset) and added a
+> live snoop-log file-size-polling check during recording specifically to catch `CAP-013`'s
+> failure mode — but the log's first frame (06:06:37.16) still lands 66s *after* the on-screen
+> Forget tap (06:05:31), and after the case-open/pair-button/first-scan-attempt sequence too
+> (`CAP-031-FINDINGS.md` §0). The primary question remains 🔴 OPEN, untested a third time.
+> `CAP-031` did reconfirm the secondary `PAIR-004` question (fresh SSP, no key reuse — a sixth
+> confirming instance) and, as bonus negative results, found that neither of `CAP-013`'s two other
+> anomalies (DLCI 0x02's ~61s-delayed open, the unattributed second BLE link) reproduce this
+> session (`CAP-031-FINDINGS.md` §5/§6) — both look like single-session artifacts, not recurring
+> behavior. **A fourth attempt is still needed** for the primary question, this time verifying the
+> snoop log's own *content* freshness (last-frame timestamp against a live wall clock) immediately
+> before the Forget tap, not just the log file's size (`CAP-031-FINDINGS.md` §8's proposed root
+> cause and method).
 
 #### Group Y — BLE-only connection isolation for the `0x0044` notification burst (occasional, added 2026-08-20)
 **Purpose:** `CAP-016-FINDINGS.md` §11 found a 73-frame `Handle Value Notification` burst on BLE
@@ -1015,6 +1031,7 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-028` | *planned* | either phone | TBD | TBD | TBD | O | `HEAD-002`, `HEAD-003` | Main run-through group, never yet captured — physical head gestures; requires Head gestures enabled first via `CAP-020` (Group F) | — | — | planned |
 | `CAP-029` | *planned* | either phone | TBD | TBD | TBD | P | `CONV-002`, `CASE-007`(optional/destructive), `CASE-008`, `PAIR-002`(if `CASE-007` run) | Main run-through group, never yet captured — Conversation Detection voice trigger, optional factory reset (`CASE-007`, resets Find My Device link — see `WORKSTATION_PREPARATIONS.md` Disaster Recovery), and the still-open shorter-press pairing-mode question (`CASE-008`) | — | — | planned |
 | `CAP-030` | *planned* | either phone | TBD | TBD | TBD | Q (items #19–20) | `LOUD-001`, `ADAPT-002` | Group Q's two remaining items (item #18 already planned separately as `CAP-011`) — attempt to observe Loud Noise Protection and Adaptive Audio engaging; requires firmware ≥4.467 | — | — | planned |
+| `CAP-031` | 2026-08-27 | Pixel 7a | 17 (⚪ assumed, not screen-confirmed) | release_5.203 | official Pixel Buds Companion App (version not visible on screen) | A (repeat, 3rd attempt) | `PAIR-001`, `PAIR-004`, incidental `BATT-004` | Third attempt at `CAP-001-FINDINGS.md` §6's original goal — HCI snoop logging started before any prior association with the device exists, this time with a live in-recording file-size-polling check added specifically to avoid `CAP-013`'s failure mode. **VOORSTEL — wacht op goedkeuring maintainer:** status/row text below proposed, not yet maintainer-approved. | `captures/CAP-031-2026-08-27_06-04-48_06-08-10-Group_A/CAP-031-btsnooz_hci.log` (**`btsnooz`-format, inferred 15–126-byte captured length per packet, same truncation issue as `CAP-012`/`CAP-013`; see `CAP-031-FINDINGS.md` §1**) | same file | analyzed — **partial: pre-clearing-action window not captured, a second consecutive failure of this method** — see `CAP-031-FINDINGS.md`/`CAP-031-EVENT-NOTES.md` in that folder. This session used a genuine narrow, per-device "Forget" (screenshot-confirmed, unlike `CAP-013`'s broader reset) and a live snoop-log file-size-polling check during recording, but the log's first frame (06:06:37.16) still starts **66s after** the on-screen Forget tap (06:05:31) — also after case-open, pair-button-press, and the entire first "Pair new device" scan attempt, none of which are logged. **Primary question (`CAP-001-FINDINGS.md` §6) remains 🔴 OPEN, not answered, untested a third time.** **Secondary question (`PAIR-004`) is reconfirmed: 🟢 CONFIRMED fresh classic SSP handshake** (frames 598–689, a sixth confirming instance) — no key-reuse path observed. Bonus, both negative results: `CAP-013`'s DLCI 0x02 ~61s-delay does **not** reproduce (opens 1.64s after DLCI 0x00, within the initial burst) and `CAP-013`'s unattributed second BLE link does **not** reproduce (exactly one LE link this session, to the Buds' own public address) — both now look like single-session artifacts. A fourth attempt is still needed, this time verifying snoop-log *content* freshness (not just file size) before the Forget tap. |
 
 **Column notes:**
 

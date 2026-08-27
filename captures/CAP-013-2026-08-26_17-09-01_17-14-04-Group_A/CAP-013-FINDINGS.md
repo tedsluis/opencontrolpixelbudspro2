@@ -166,6 +166,13 @@ earlier captures. This is a new, previously unrecorded observation — flagged h
 to test directly (e.g. repeat Group A and note precisely when each permission screen is dismissed
 relative to DLCI 0x02's `SABM`), not treated as confirmed from one occurrence.
 
+**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §5), VOORSTEL — wacht op goedkeuring
+maintainer:** `CAP-031` measured the same timing directly and found DLCI `0x02` opening only 1.64s
+after DLCI `0x00`, within the initial multiplexer burst and ~20s before that session's first
+app-permission "Allow" tap. This session's own 61s delay does not reproduce — best read as a
+single-session artifact (e.g. a transient scheduling/negotiation delay on this specific run) rather
+than a companion-app-permission-gated behavior. Not promoted either way.
+
 ## 6. Second BLE link to an unrelated random address (🔴 OPEN QUESTION, not attributed)
 
 At 17:11:52.463 (frame 851), a second, independent `LE Enhanced Connection Complete` is observed — to
@@ -176,6 +183,13 @@ address-resolution event, no correlated content) — recorded as 🔴 OPEN QUEST
 be a Buds-side private address, per this session's zero-creativity rule. Plausible candidates (Buds'
 own GATT-side private address per Fast Pair's typical design; an unrelated nearby device) are not
 distinguished by the evidence in hand.
+
+**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §6), VOORSTEL — wacht op goedkeuring
+maintainer:** `CAP-031` scanned its full log for any `LE Enhanced Connection Complete` beyond the
+main Buds link and found exactly one, resolving cleanly to the Buds' own public address — zero
+occurrences of this session's `43:8a:82:03:4b:f2` (or `CAP-016`'s `4f:25:00:85:9a:b1`). One clean
+negative data point against a *recurring* pattern, but this address's own identity remains 🔴 OPEN —
+not resolved by another session's absence of the phenomenon.
 
 ## 7. Hypothesis test record (`PROJECT_RULES.md` §4, rule 10/11 template)
 
@@ -211,8 +225,13 @@ distinguished by the evidence in hand.
   Pairing/Bonding event, if one appears later in the log beyond this capture's own end, or a dedicated
   capture correlating this address against a known Buds BLE MAC from another tool).
 - A genuine repeat of this capture's original intent (logging started **before** the clearing action,
-  not just before the pairing tap) is still needed — see the proposal in
-  `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Group-A-repeat note (updated alongside this findings file).
+  not just before the pairing tap) is still needed. **`CAP-031` (2026-08-27) attempted exactly this
+  repeat — with a genuine narrow per-device "Forget" (unlike this capture's broader "Reset
+  Bluetooth & Wi-Fi") and a live snoop-log file-size-polling check — but still did not achieve it:
+  its log's first frame lands 66s after its own Forget tap** (`CAP-031-FINDINGS.md` §0). The primary
+  question remains 🔴 OPEN after three attempts; a fourth is proposed in
+  `CAP-031-FINDINGS.md` §8 (verify snoop-log *content* freshness, not just file size, immediately
+  before the clearing action) — VOORSTEL, wacht op goedkeuring maintainer.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-013-2026-08-26_17-09-01_17-14-04-Group_A/CAP-013-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-013-2026-08-26_17-09-01_17-14-04-Group_A/CAP-013-FINDINGS

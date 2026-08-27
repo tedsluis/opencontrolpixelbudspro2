@@ -374,6 +374,19 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
   > logging verified to start before the clearing action itself, is still needed to answer this
   > section's original question — proposed as a new capture (next free ID `CAP-031`, not yet
   > assigned) in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Group-A-repeat note.
+  >
+  > **Second update (2026-08-27), VOORSTEL — wacht op goedkeuring maintainer:** `CAP-031` attempted
+  > this same repeat a third time, with a genuine narrow per-device "Forget" (unlike `CAP-013`'s
+  > broader reset) and a live snoop-log file-size-polling check added specifically to avoid
+  > `CAP-013`'s failure — **still did not achieve it**: the log's first frame lands 66s after the
+  > Forget tap, and after the case-open/pair-button/first-scan-attempt sequence too
+  > (`CAP-031-FINDINGS.md` §0). This section's original question **remains 🔴 OPEN**, untested a
+  > third time. `CAP-031` did reconfirm the fresh-SSP secondary result (a sixth instance,
+  > `CAP-031-FINDINGS.md` §2/§7) and found that neither of `CAP-013`'s two bonus anomalies (DLCI
+  > 0x02's delayed open, the unattributed second BLE link) reproduce a second time
+  > (`CAP-031-FINDINGS.md` §5/§6). A fourth attempt is still needed, this time verifying the snoop
+  > log's own *content* freshness (not just file size) immediately before the clearing action
+  > (`CAP-031-FINDINGS.md` §8).
 - Channel 1 (DLCI 0x02) and channel 2 (DLCI 0x04)'s exact protocol identity is still unconfirmed
   — candidates are AVRCP and/or A2DP signaling (both present in SDP), but this was not verified
   byte-for-byte against either spec in this pass.
