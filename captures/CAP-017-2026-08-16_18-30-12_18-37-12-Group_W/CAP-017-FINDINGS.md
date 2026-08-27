@@ -402,14 +402,35 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   hold exactly 3 characteristics, a plausible fit for the cluster's observed handle count, but
   still not handle-confirmed.
 - 🔴 What `0x0f32` (value `0x64`) represents, and why it and its CCCD `0x0f33` appear only in this
-  session, never in any capture driven by the official app.
+  session, never in any capture driven by the official app. **Update 2026-08-27 (`CAP-014`,
+  PROPOSAL pending maintainer approval):** reproduces byte-for-byte (same handles, same value
+  `0x64`) in an independent nRF-Connect session 11 days later — not a one-off artifact of this
+  session specifically. Still unresolved to a UUID or meaning; the "never in an official-app
+  capture" half still stands, since both confirming sessions use nRF Connect. See
+  `CAP-014-FINDINGS.md` §6.
 - 🔴 Whether the short-ACL-snaplen issue in `CAP-017-btsnoop_hci.log` is specific to this one
   export or affects the btsnoop-capture procedure going forward — needs checking before the next
   capture is trusted to carry full discovery payloads.
 - 🔴 Whether `0x0f2a` ("Revision 6") is genuinely absent from nRF Connect's own read pattern, or
   simply wasn't triggered because no characteristic-level read happened on screen this session
   (§3's last paragraph) — the service list alone doesn't tell us whether nRF Connect read every
-  characteristic's value or just enumerated the declarations.
+  characteristic's value or just enumerated the declarations. **Resolved 2026-08-27 (`CAP-014`,
+  PROPOSAL pending maintainer approval):** nRF Connect does read `0x0f2a` when given the chance —
+  `CAP-014`'s session issued a direct `Read Request` against it and got `"Revision 6"` back
+  (byte-identical to `CAP-002`). This session's (`CAP-017`'s) absence was specific to this
+  session's own screen activity (no characteristic-level read happened on camera), not a general
+  property of the tool. See `CAP-014-FINDINGS.md` §6.
+
+- **Note added 2026-08-27, cross-referenced from `CAP-014-FINDINGS.md`:** this file's §5's
+  "recommended immediate next step" (and the identical wording in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s
+  Capture Index) instructed a future session to drill into **both** "Accessory Non-Owner Service"
+  and "Unknown Service." `CAP-014` correctly declined the Accessory-Non-Owner half — it conflicts
+  with `DECISIONS.md` **ADR-008** (`PROJECT.md`'s non-goals place that service out of scope
+  entirely, not just its account-linking content). That instruction has been corrected at its
+  source (`CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Group W section and Capture Index) so it does not
+  reappear in a future session's template. Naming the service's UUID in a full discovery-dump
+  inventory (as §4c above does) remains fine, per the already-accepted precedent in
+  `CAP-004-FINDINGS.md` §6 — only an active read/write/tap is out of scope.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/CAP-017-FINDINGS

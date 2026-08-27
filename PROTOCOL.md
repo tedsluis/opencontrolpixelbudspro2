@@ -708,6 +708,13 @@ event-observation coroutines.
   characteristic, `0x2A19` (Bluetooth SIG-assigned, externally confirmed 2026-08-23) — the
   service UUID `0x180F` alone only identifies that the service exists, not which characteristic
   handle to read/subscribe to.
+  **PROPOSAL, pending maintainer approval (2026-08-27, `CAP-014`):** the Battery Service/Battery
+  Level pairing is independently reconfirmed a second time via nRF Connect's on-screen
+  characteristic list (`Properties: NOTIFY, READ`, `CAP-014-FINDINGS.md` §3) — still no value ever
+  read in any capture to date, status unchanged at 🟡. That capture's own attempt to close the
+  handle-range question (see the `0x0c0X`/`0x0f2X` open item below) did not succeed, for a newly
+  identified reason (a cached GATT client on an already-bonded phone, not a snaplen problem this
+  time).
 
 #### Option E — DLCI 0x08 private envelope, per-earbud+case push (`Group 0x0e Code 0x01` / `Group 0x04 Code 0x03`)
 
@@ -1322,6 +1329,21 @@ leaving them buried in prose elsewhere.
         `0x0c0a` — possibly a structurally distinct characteristic from the Key-based-Pairing
         pair (a leading `0x01` byte precedes the payload on all three `0x0c13` values, not
         decoded further). Not independently confirmed against any spec.
+      **PROPOSAL, pending maintainer approval, added 2026-08-27 from `CAP-014-FINDINGS.md` §4c —
+      all of the above byte-length/leading-byte characterizations reproduce exactly a 3rd/4th time**
+      (`0x0c0c` 41B notify, `0x0c13` 9B-Read/10B-Write/32B-Notify each with a leading `0x01`,
+      `0x0c14` 2B CCCD) in an independent session 11 days later, on the same physical device —
+      strengthens confidence these are stable characteristic shapes, not session artifacts, but
+      does **not** change their status: still 🟡 HYPOTHESIS, still not resolved to real UUIDs. The
+      **handle↔UUID mapping question itself remains 🔴 OPEN QUESTION** after this 3rd Group-W
+      attempt (`CAP-010`, `CAP-017`, now `CAP-014`) — `CAP-014` confirmed its own wire log is not
+      truncated (unlike `CAP-017`), but found a **different** blocking cause: the session reused an
+      already-bonded phone with a cached GATT client, so Android served this cluster from its
+      cached database instead of re-declaring it live on the wire (only the GATT service itself,
+      handles `0x0001`–`0x0009`, was genuinely re-discovered). Neither of Group W's own candidate
+      cache-busting methods (`pm clear com.android.bluetooth`, or a phone that has never connected
+      to this Buds unit before) has been tried in any of the 3 sessions to date — see
+      `CAP-014-FINDINGS.md` §8 for the precise recommended next capture.
 - [ ] **Added 2026-08-21, `CAP-019`–`CAP-024`:** what do DLCI 0x02's confirmed inner field numbers
       (§4.5's `field4`=touch controls, `field11`=Multipoint, `field15`=Volume EQ, `field17`=Volume
       balance, `field19`=Mono audio, `field22`=Conversation Detection, `field27`/`field28`=Case
@@ -1585,6 +1607,7 @@ leaving them buried in prose elsewhere.
 | 2026-08-23 | **Three pending FACT promotions reviewed and explicitly approved by the maintainer** (`AGENTS.md` §6), each recorded with its own `DECISIONS.md` ADR: **§4.4 Find My Buds Left/Right** promoted to 🟢 FACT (`ADR-011`) — Case/"both" remains a separate, unresolved mechanism, not covered. **§0.1 wire-baseline firmware version** (`"release_5.203"` on DLCI 0x08) promoted to 🟢 FACT (`ADR-012`) — `"Revision 6"`'s meaning remains open, not covered. **§4.5's shared preamble, general-purpose DLCI 0x02 settings-write envelope shape** promoted to 🟢 FACT (`ADR-013`) — narrower than it may look: only the outer `field5{field4{...}}}` wrapper's existence/shape is FACT; every individual setting's specific field-number mapping in §4.5.1–§4.5.8 remains its own, separately-labeled 🟡 HYPOTHESIS, per the maintainer's explicit decision not to blanket-promote | Claude (AI), maintainer-directed sign-off session |
 | 2026-08-23 | **§4.3 Option E added** — re-analysis of `CAP-011` (prompted by the maintainer spotting a 1% battery drop in the recording) pinpointed the exact UI-change timestamp (09:52:25.8, correcting an initial ~09:45:47 estimate) and found a DLCI 0x08 message (`Group 0x0e Code 0x01`) whose entries track on-screen battery values. **Cross-capture check same day found a clean 3-for-3 match (Left/Right/Case) in 2 further independent sessions (`CAP-001`, `CAP-002`, both 2026-08-09)** — upgrading this from a single-session (`CAP-011`, 4 internal recurrences) finding to a 3-session, 12-day-spanning one; `CAP-011`'s Case entry specifically reads stale/non-matching, flagged as its own open item, not treated as contradicting the mapping. 🟡 HYPOTHESIS (strong), proposed for FACT pending maintainer sign-off — not yet reviewed. Refines an already-known-but-undecoded message shape from `CAP-002-FINDINGS.md` §2a (2026-08-12), not a newly-found packet type. §6's item on the message's 3rd entry resolved (index=3=Case); a new item added for `CAP-011`'s specific staleness anomaly; the burst's irregular, BLE-churn-uncorrelated trigger interval remains open; one pre-existing item partially advanced (`Group 0x0e`, previously outside its listed group set) | Claude (AI), maintainer-requested capture re-analysis |
 | 2026-08-2x | **`CAP-009` (`BATT-006`), independently re-analyzed, then 5 findings reviewed and explicitly approved by the maintainer** (`AGENTS.md` §6): **§4.3 Option C** — `battchg` confirmed 🟢 FACT a stale single snapshot; `AT+BIEV` confirmed 🟢 FACT per-earbud (Right, this session) rather than a fixed aggregate, revising the project's earlier aggregate assumption; push cadence corrected from "fixed ~6–7s" to "settling burst, then irregular" (also updates `AGENTS.md` §5's implementation guidance) — all recorded in `ADR-015`; `BATT-006` closed. **§4.3 Option E** — two addenda added at 🟡 HYPOTHESIS (a live charge-cycle observation; the Case field's two distinct "unknown"-placeholder wire encodings) as part of the "fully purpose-built confirmation" Option E's own entry had called for. **§4.3 Option B** — DLCI `0x04`'s `Group 0x03 Code 0x03` added as a 🟡 HYPOTHESIS candidate for the still-unconfirmed battery code (208 occurrences, Left/Right in near-lockstep with `AT+BIEV`/Option E outside the charging period). **§4.3 Option A** — a BLE Fast Pair scan added as a 🟡 HYPOTHESIS timing correlation for on-screen updates after HFP/Option E both close post-reconnect; device attribution not yet confirmed. See `CAP-009-FINDINGS.md` and `CAP-009-EVENT-NOTES.md` for the full independent re-analysis (its own video timeline, MAC re-derivation, filter-sanity/DLCI-inventory checks) behind all of the above | Claude (AI), maintainer-directed sign-off session |
+| 2026-08-27 | **PROPOSAL, pending maintainer approval.** `CAP-014` (Group W repeat, snaplen-fixed) analyzed: **§4.3 Option D and the `0x0c0X`/`0x0f2X` open item annotated, no status change** — the handle↔UUID mapping remains 🔴 OPEN after a 3rd Group-W-labeled attempt, but the blocking cause is now precisely identified as GATT-cache reuse on an already-bonded phone (not a snaplen issue this time, which this session's own check confirmed fixed) — see `CAP-014-FINDINGS.md` §4/§8 for the full analysis and the recommended next capture (genuinely combining a fixed snaplen with one of Group W's own untried cache-busting methods, `pm clear com.android.bluetooth` or the Pixel 9a). Byte-length/leading-byte shapes for `0x0c0c`/`0x0c13`/`0x0c14` and content for `0x0f2a` ("Revision 6")/`0x0f32` (`0x64`) reproduce exactly across independent sessions, strengthening confidence without changing any status | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

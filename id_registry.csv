@@ -27,7 +27,7 @@ CAP-010,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI
 CAP-011,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-012,capture,analyzed,"session date/status: 2026-08-26",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-013,capture,analyzed,"session date/status: 2026-08-26 — partial: pre-clearing-action window not captured",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-014,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-014,capture,analyzed,"session date/status: 2026-08-27 — handle↔UUID mapping still open, see CAP-014-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-015,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-016,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-017,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
