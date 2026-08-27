@@ -110,3 +110,6 @@
     - [CAP-029-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-029-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_P/CAP-029-EVENT-NOTES.md)
   - **CAP-030 (Group Q)** _(planned)_
     - [CAP-030-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-030-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Q/CAP-030-EVENT-NOTES.md)
+  - **CAP-031 (Group A)**
+    - [CAP-031-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-031-2026-08-27_06-04-48_06-08-10-Group_A/CAP-031-EVENT-NOTES.md)
+    - [CAP-031-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-031-2026-08-27_06-04-48_06-08-10-Group_A/CAP-031-FINDINGS.md)
