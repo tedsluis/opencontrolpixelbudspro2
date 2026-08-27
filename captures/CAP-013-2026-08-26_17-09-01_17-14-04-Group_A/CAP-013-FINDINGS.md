@@ -166,8 +166,7 @@ earlier captures. This is a new, previously unrecorded observation — flagged h
 to test directly (e.g. repeat Group A and note precisely when each permission screen is dismissed
 relative to DLCI 0x02's `SABM`), not treated as confirmed from one occurrence.
 
-**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §5), VOORSTEL — wacht op goedkeuring
-maintainer:** `CAP-031` measured the same timing directly and found DLCI `0x02` opening only 1.64s
+**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §5), PROPOSAL — pending maintainer approval:** `CAP-031` measured the same timing directly and found DLCI `0x02` opening only 1.64s
 after DLCI `0x00`, within the initial multiplexer burst and ~20s before that session's first
 app-permission "Allow" tap. This session's own 61s delay does not reproduce — best read as a
 single-session artifact (e.g. a transient scheduling/negotiation delay on this specific run) rather
@@ -184,8 +183,7 @@ be a Buds-side private address, per this session's zero-creativity rule. Plausib
 own GATT-side private address per Fast Pair's typical design; an unrelated nearby device) are not
 distinguished by the evidence in hand.
 
-**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §6), VOORSTEL — wacht op goedkeuring
-maintainer:** `CAP-031` scanned its full log for any `LE Enhanced Connection Complete` beyond the
+**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §6), PROPOSAL — pending maintainer approval:** `CAP-031` scanned its full log for any `LE Enhanced Connection Complete` beyond the
 main Buds link and found exactly one, resolving cleanly to the Buds' own public address — zero
 occurrences of this session's `43:8a:82:03:4b:f2` (or `CAP-016`'s `4f:25:00:85:9a:b1`). One clean
 negative data point against a *recurring* pattern, but this address's own identity remains 🔴 OPEN —
@@ -231,7 +229,19 @@ not resolved by another session's absence of the phenomenon.
   its log's first frame lands 66s after its own Forget tap** (`CAP-031-FINDINGS.md` §0). The primary
   question remains 🔴 OPEN after three attempts; a fourth is proposed in
   `CAP-031-FINDINGS.md` §8 (verify snoop-log *content* freshness, not just file size, immediately
-  before the clearing action) — VOORSTEL, wacht op goedkeuring maintainer.
+  before the clearing action) — PROPOSAL, pending maintainer approval.
+
+  > **Update (2026-08-27), PROPOSAL — pending maintainer approval:** the fourth attempt,
+  > `CAP-032`, succeeded — extracted via the raw BTSnoop file path (not the `btsnooz.py` fallback
+  > this capture and `CAP-031` used), its log genuinely covers the pre-Forget window (first frame
+  > ~58s before the Forget tap). For that session, no BLE link or valid classic link key existed for
+  > the Buds before the Forget tap — the opposite of what `CAP-001` originally found, a clean
+  > counter-example rather than a resolution of `CAP-001`'s own puzzle. See `CAP-032-FINDINGS.md`
+  > §0 for the full account and `CAP-001-FINDINGS.md` §6 for the updated cross-reference chain.
+  > This capture's own truncation limitation (§1 above) is also now understood as a likely
+  > consequence of the `btsnooz.py` extraction path specifically, not an incidental property of this
+  > session — see `CAP-032-FINDINGS.md` §0.1/§7 Test C and the proposed
+  > `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 addendum.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-013-2026-08-26_17-09-01_17-14-04-Group_A/CAP-013-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-013-2026-08-26_17-09-01_17-14-04-Group_A/CAP-013-FINDINGS

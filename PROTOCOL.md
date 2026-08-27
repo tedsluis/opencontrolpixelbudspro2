@@ -1068,6 +1068,11 @@ Delete stored link key (if any) → Create Connection → Connect Complete
   598–689, 06:07:15.111–16.451. Same shape again, a ~0.4s IO-Capability-to-Complete gap. A sixth
   independent confirming instance of this path — see `CAP-031-FINDINGS.md` §2/§7 (again, this
   capture's own purpose was `PAIR-004`'s still-open primary question, not this path itself).
+- **`CAP-032`** (2026-08-27, official app, following a genuine narrow per-device "Forget"): frames
+  1090–1153, 18:31:26.776–28.019. Same shape again, a ~0.6s IO-Capability-to-Complete gap. A
+  seventh independent confirming instance of this path — see `CAP-032-FINDINGS.md` §2/§7 (this
+  capture's own purpose was, for the first time, actually resolving `PAIR-004`'s primary question —
+  see §6's "Behavior" entry below).
 
 **Reconnect (stored key exists) — `CAP-001`:**
 
@@ -1101,7 +1106,7 @@ Encryption` → `Encryption Change`, converging to the same encrypted classic
 link regardless of which path reached it.
 
 **Third path — Cross-Transport Key Derivation (CTKD), gated on a pre-existing LE link — 🟡
-HYPOTHESIS (strengthened 2026-08-26), VOORSTEL awaiting maintainer sign-off for promotion to 🟢
+HYPOTHESIS (strengthened 2026-08-26), PROPOSAL awaiting maintainer sign-off for promotion to 🟢
 FACT.** `CAP-004-FINDINGS.md` §2 first observed a third bonding path when a BLE (LE Secure
 Connections) link to the Buds already existed before classic pairing began (nRF Connect,
 `CAP-004`): `Delete Stored Link Key` → SMP `Pairing Request` (requesting `Linkkey` key
@@ -1128,15 +1133,15 @@ and exactly when the first battery notification/app command arrives relative
 to the classic link completing (steps 3–6 in the diagram above). Only the
 classic BR/EDR link-establishment mechanics (steps 1–2) are promoted here.
 
-**Status**: 🟢 FACT for classic BR/EDR link establishment (§5.1, six
+**Status**: 🟢 FACT for classic BR/EDR link establishment (§5.1, seven
 independent captures); ⚪ ASSUMPTION for the RFCOMM/Message-Stream/battery/
 command portions (steps 3–6); 🟢 FACT for step 5's specific behavioral outcome
 (battery notification on reconnect), per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §3.
 **Evidence**: §5.1 above for the classic-link portion (`CAP-001` frames
 732–917, `CAP-002` frames 653–734, `CAP-003` frames 1621/1687–1756, `CAP-016`
-frames 1213–1217, `CAP-013` frames 117–270, `CAP-031` frames 598–689); steps
-3–6 still need a full connection sequence captured end-to-end (see
-`CAPTURE_BLUETOOTH_HCI_SNOOP.md`).
+frames 1213–1217, `CAP-013` frames 117–270, `CAP-031` frames 598–689, `CAP-032`
+frames 1090–1153); steps 3–6 still need a full connection sequence captured
+end-to-end (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md`).
 
 ## 6. Open questions
 
@@ -1479,8 +1484,7 @@ leaving them buried in prose elsewhere.
       Buds' own address), not yet the same address as `CAP-016`'s either, so this doesn't confirm a
       stable secondary identity, only that the pattern (an unattributed second BLE link appearing
       around connection time) recurs.
-      **Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §6), VOORSTEL — wacht op
-      goedkeuring maintainer:** a third capture (`CAP-031`) checked its full log for any
+      **Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §6), PROPOSAL — pending maintainer approval:** a third capture (`CAP-031`) checked its full log for any
       `LE Enhanced Connection Complete` beyond the Buds' own link — found exactly one, resolving to
       the Buds' own public address (`04:00:6e:cf:6e:07`), with zero occurrences of either
       `43:8a:82:03:4b:f2` or `4f:25:00:85:9a:b1`. This is a clean negative data point (the
@@ -1501,8 +1505,7 @@ leaving them buried in prose elsewhere.
       action used a fresh SSP handshake, not a reused key (`CAP-013-FINDINGS.md` §2/§7) — another
       instance of `PROTOCOL.md` §5.1's already-FACT "fresh pairing" path, not a new finding in
       itself.
-      **Second attempt, 2026-08-27 (`CAP-031-FINDINGS.md` §0), VOORSTEL — wacht op goedkeuring
-      maintainer:** `CAP-031` retried the same repeat, this time with a genuine narrow per-device
+      **Second attempt, 2026-08-27 (`CAP-031-FINDINGS.md` §0), PROPOSAL — pending maintainer approval:** `CAP-031` retried the same repeat, this time with a genuine narrow per-device
       "Forget" (screenshot-confirmed, unlike `CAP-013`'s broader reset) and a live snoop-log
       file-size-polling check during recording specifically meant to avoid `CAP-013`'s failure —
       but the log's first frame still starts 66s *after* the Forget tap, and after the
@@ -1514,6 +1517,27 @@ leaving them buried in prose elsewhere.
       own bonus findings — DLCI 0x02's ~61s-delayed open and the unattributed second BLE link both
       failed to reproduce this session (`CAP-031-FINDINGS.md` §5/§6), suggesting those were
       single-session artifacts rather than recurring behavior.
+      **Third/fourth attempt, 2026-08-27 (`CAP-032-FINDINGS.md` §0), PROPOSAL — pending maintainer approval — succeeded.** Extracted via the raw BTSnoop file path instead of the `btsnooz.py`
+      fallback `CAP-012`/`CAP-013`/`CAP-031` all used — the resulting log is genuinely untruncated
+      and its first frame (18:29:45.72) lands ~58s *before* the on-screen Forget tap (18:30:42), and
+      ~30s before the video itself starts, finally covering the pre-clearing-action window. Across
+      that entire covered window: zero classic BR/EDR connection events of any kind, exactly one LE
+      connection (resolving to an unrelated random-address device exposing a Heart Rate GATT
+      service, not the Buds), and the `Delete Stored Link Key` command issued at the Forget tap's
+      own moment reports `Num_Keys_Deleted = 0` (`CAP-032-FINDINGS.md` §0.3/§1, byte-level HCI
+      evidence). **For this session specifically: no BLE link and no valid classic link key existed
+      for the Buds anywhere before the Forget tap.** This is a clean counter-example to `CAP-001`'s
+      original finding, not a reproduction or a refutation of it — `CAP-001`'s own session-specific
+      puzzle (why *that* session had a BLE link and a valid key present before its clearing action)
+      remains independently 🔴 OPEN, and this section's status is left as OPEN QUESTION rather than
+      moved to "Resolved" below, pending maintainer review of whether a single clean session settles
+      the general claim or only demonstrates it is non-universal. `CAP-032` also reconfirmed the
+      fresh-SSP path a seventh time (`CAP-032-FINDINGS.md` §2/§7 Test B) and, as a genuinely new
+      finding not previously documented, found a vendor-specific HCI command (`0xFD57`/`0x0157`,
+      frame 91, 105ms into the log) whose payload embeds the Buds' address as part of an apparent
+      bulk bonded-device-list provisioning at Bluetooth-stack bring-up — recorded 🔴 OPEN QUESTION on
+      its own terms (unconfirmed vendor semantics), not bearing on this section's primary question
+      (`CAP-032-FINDINGS.md` §5).
 
 ### Resolved
 

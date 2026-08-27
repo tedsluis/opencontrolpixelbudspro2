@@ -302,5 +302,19 @@ capture simply didn't reproduce the phenomenon a third time.
 - DLCI `0x0c` (HFP) content was not decoded in detail this session — out of this task's scope, but
   available in the log for a future battery-tracking pass if needed.
 
+> **Update (2026-08-27), PROPOSAL — pending maintainer approval:** the fourth attempt proposed
+> above, `CAP-032`, succeeded — extracted via the raw BTSnoop file path (§1's proposed root-cause
+> guess, "extraction path vs. session-specific," is now supported: `CAP-032`'s raw-path log is
+> genuinely untruncated). Its log's first frame lands ~58s *before* the on-screen Forget tap,
+> finally covering the pre-clearing-action window. For that session: no BLE link and no valid
+> classic link key existed for the Buds before the Forget tap — the opposite of `CAP-001`'s original
+> finding, read as a clean counter-example rather than a resolution of `CAP-001`'s own puzzle. See
+> `CAP-032-FINDINGS.md` §0 for the full account and `CAP-001-FINDINGS.md` §6/`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s
+> `PAIR-004` row for the updated cross-reference chain. This capture's own root-cause guess in §8
+> above (live-recording file-size-polling not guaranteeing content freshness) is superseded by the
+> simpler, better-supported explanation that this capture used the `btsnooz.py` fallback extraction
+> path at all, independent of the polling check's own correctness — `CAP-032-FINDINGS.md` §0.1/§7
+> Test C.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-031-2026-08-27_06-04-48_06-08-10-Group_A/CAP-031-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-031-2026-08-27_06-04-48_06-08-10-Group_A/CAP-031-FINDINGS

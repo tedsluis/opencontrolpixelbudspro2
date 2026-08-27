@@ -660,7 +660,7 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
 
   **Update 2026-08-26 (`CAP-012`):** the clean repeat happened — see §8 item 4's own update above.
   Result confirms the hypothesis (classic SSP without an early BLE link, CTKD with one), but per
-  `AGENTS.md` §6 this is recorded in `PROTOCOL.md` §5.1 as a VOORSTEL awaiting maintainer sign-off
+  `AGENTS.md` §6 this is recorded in `PROTOCOL.md` §5.1 as a PROPOSAL awaiting maintainer sign-off
   for promotion to 🟢 FACT, not committed as settled by either capture's findings file alone.
 - Groups `0x05`/`0x09`'s identity (§5) — search results kept redirecting to Device Information
   (Group `0x03`) codes `0x05`/`0x06`/`0x09` instead of confirming standalone groups; **not a

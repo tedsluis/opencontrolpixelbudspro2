@@ -375,7 +375,7 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
   > section's original question — proposed as a new capture (next free ID `CAP-031`, not yet
   > assigned) in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Group-A-repeat note.
   >
-  > **Second update (2026-08-27), VOORSTEL — wacht op goedkeuring maintainer:** `CAP-031` attempted
+  > **Second update (2026-08-27), PROPOSAL — pending maintainer approval:** `CAP-031` attempted
   > this same repeat a third time, with a genuine narrow per-device "Forget" (unlike `CAP-013`'s
   > broader reset) and a live snoop-log file-size-polling check added specifically to avoid
   > `CAP-013`'s failure — **still did not achieve it**: the log's first frame lands 66s after the
@@ -387,6 +387,27 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
   > (`CAP-031-FINDINGS.md` §5/§6). A fourth attempt is still needed, this time verifying the snoop
   > log's own *content* freshness (not just file size) immediately before the clearing action
   > (`CAP-031-FINDINGS.md` §8).
+  >
+  > **Third update (2026-08-27), PROPOSAL — pending maintainer approval:** `CAP-032` attempted
+  > this repeat a fourth time, this time extracted via the raw BTSnoop file path instead of the
+  > `btsnooz.py` fallback the three prior attempts used — **and succeeded**: the log's first frame
+  > (18:29:45.72) lands ~58s *before* the on-screen Forget tap (18:30:42), the first genuine
+  > coverage of this window in four attempts (`CAP-032-FINDINGS.md` §0). Across that entire covered
+  > window: zero classic BR/EDR connection events of any kind, exactly one LE connection (resolving
+  > to an unrelated random-address device with a Heart Rate GATT service, not the Buds), and the
+  > `Delete Stored Link Key` command issued at the Forget tap's own moment reports
+  > `Num_Keys_Deleted = 0` (`CAP-032-FINDINGS.md` §0.3/§1). **For that session, no BLE link and no
+  > valid classic link key existed for the Buds before the clearing action** — the direct opposite
+  > of what this section originally found. Read as a clean counter-example demonstrating the
+  > phenomenon is not universal, not as a reproduction or a refutation of this section's own result:
+  > this capture's original puzzle (why *this* session had a BLE link and a valid key present before
+  > the Forget tap and before the case reopened) is not addressed by `CAP-032`'s evidence and
+  > remains 🔴 OPEN QUESTION in its own right. `CAP-032` also reconfirmed the fresh-SSP secondary
+  > result a seventh time and found a previously-undocumented vendor-specific HCI command
+  > (`0xFD57`/`0x0157`) referencing the Buds' address 105ms into its log, structurally consistent
+  > with bulk bonded-device-list provisioning at Bluetooth-stack bring-up rather than a connection
+  > or key operation (`CAP-032-FINDINGS.md` §5) — flagged 🔴 OPEN QUESTION on its own terms, not
+  > bearing on this section's question.
 - Channel 1 (DLCI 0x02) and channel 2 (DLCI 0x04)'s exact protocol identity is still unconfirmed
   — candidates are AVRCP and/or A2DP signaling (both present in SDP), but this was not verified
   byte-for-byte against either spec in this pass.
