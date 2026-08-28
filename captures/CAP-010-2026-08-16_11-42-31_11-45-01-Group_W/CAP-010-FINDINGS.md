@@ -241,8 +241,9 @@ This is a **fourth** independent capture (`CAP-001` reconnect, `CAP-002`/`CAP-00
 2. If/when live discovery succeeds, prioritize resolving the now-4-session-stable handle set
    (`0x0f28`, `0x0f2a`, `0x0c04`, `0x0c05`, `0x0c0a`, `0x0c0c`, `0x0c0d`, `0x0c13`, `0x0c14`)
    against real UUIDs — `CAP-004-FINDINGS.md` §6's named candidate services (`Google Fast Pair
-   Service 0xFE2C`, `Accessory Non-Owner Service`, `Device Information 0x180A`) remain the leading
-   hypotheses to check the resolved handles against.
+   Service 0xFE2C`, `Device Information 0x180A`) remain the leading hypotheses to check the
+   resolved handles against. (`Accessory Non-Owner Service` is explicitly **not** a candidate to
+   check against — investigating it is out of scope per `DECISIONS.md` ADR-008.)
 3. Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index row for `CAP-010` (currently
    `*planned*`/`TBD`) and `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to record this
    attempt and its actual outcome, so a future session doesn't re-attempt the same

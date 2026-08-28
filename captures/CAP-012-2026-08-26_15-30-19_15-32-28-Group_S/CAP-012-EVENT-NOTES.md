@@ -87,9 +87,10 @@ Timestamps are the video's own on-screen wall-clock overlay; the log uses the sa
       bonus `CASE-003`/`PAIR-003` also exercised, no gap found).
 - [x] Write `CAP-012-FINDINGS.md` per `PROJECT_RULES.md` §2, using this file's timeline as the
       evidence source, following the hex & script rule (§1 rule 4a).
-- [ ] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
-      from `planned` to `analyzed`, fill in Android/firmware/app-version columns and the log path
-      (proposed, see chat summary — awaiting maintainer confirmation of the exact Android build).
+- [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
+      from `planned` to `analyzed`, fill in Android/firmware/app-version columns and the log path.
+      Done — the row is filled in (Android build still ⚪ assumed, not screen-confirmed this
+      session, per that row's own text).
 - [x] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
       actual session date/start-time/end-time (already done — this folder is
       `CAP-012-2026-08-26_15-30-19_15-32-28-Group_S`).

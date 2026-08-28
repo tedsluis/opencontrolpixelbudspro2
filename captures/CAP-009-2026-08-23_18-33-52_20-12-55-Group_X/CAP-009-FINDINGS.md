@@ -353,13 +353,12 @@ far finer granularity than the maintainer's periodic manual checks could capture
 
 ## 7. DLCI `0x04` `Group 0x03 Code 0x03` — a candidate resolution to `PROTOCOL.md` §4.3 Option B's open battery code (🟡 HYPOTHESIS, revised this pass)
 
-**A previous pass over this same data looked at 2 example frames of this message, found one
-apparent counter-example, and wrote the whole pattern off as unreliable ("does not hold
-consistently ... zero creativity bar not met").** Re-run this pass as a full, systematic decode of
-every occurrence rather than a couple of samples — per this session's mandate to redo the analysis
-independently rather than re-confirm a prior pass's spot-checks — and the picture is different:
-the pattern is highly consistent, with one clean, explicable regime change, not a scattering of
-anomalies.
+A full, systematic decode of every occurrence of this message (not a couple of spot-checked
+samples) shows a highly consistent pattern, with one clean, explicable regime change, not a
+scattering of anomalies — the full decode below is the current, current-truth read of this data.
+(An earlier, narrower pass over the same two example frames had judged the pattern unreliable
+based on one apparent counter-example; that read did not hold up under the full decode and is
+superseded by the analysis below.)
 
 **Extraction — every `Group 0x03 Code 0x03` frame on DLCI `0x04`, whole log:**
 

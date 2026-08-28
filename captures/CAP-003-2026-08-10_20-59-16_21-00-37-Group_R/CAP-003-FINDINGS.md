@@ -254,6 +254,16 @@ of the three captures to date. Not claimed as FACT; requires UUID confirmation.
   state layers are now evidenced across this project's captures: local classic bond, local GATT
   database cache, and cloud-side Fast Pair account ownership — each cleared independently of the
   others.
+
+  > **Scope note, added 2026-08-28 (`DECISIONS.md` ADR-008):** this bullet predates ADR-008
+  > (2026-08-15) by five days and was never retroactively scope-checked against it. Fast Pair
+  > **Ownership Transfer** is explicitly out of scope for this project (`PROJECT.md` non-goals,
+  > `ADR-008`) — the observation above is retained as historical record of what was seen on screen
+  > (the user tapped "Start using the device," not "Remove previous owner"; no wire bytes for this
+  > exchange were decoded), but the "three independent state layers" architectural reading should
+  > not be treated as an invitation to further investigate the Ownership Transfer mechanism itself.
+  > No further capture time should be spent decoding this flow's wire behavior, per ADR-008's own
+  > decision.
 - **The Pixel Buds app only takes over at the "Set up" tap (21:00:04) (🟢 FACT, video evidence):**
   everything before that — discovery, connection, pairing, the ownership-transfer dialog, the
   "Set up device" card — is Android system UI and/or nRF Connect, not the official app. This

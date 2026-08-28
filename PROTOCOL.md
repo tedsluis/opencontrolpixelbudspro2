@@ -105,6 +105,18 @@ above it.
 > RFCOMM traffic — the display is read from already-cached connection-time data, not queried live.
 > See `CAP-023-FINDINGS.md` §3–§4.
 
+> **Note (2026-08-28), `AUDIT_REPORT_2026-08-28.md` finding `XC-03` — an unrelated version
+> identifier has never been reconciled against the baseline above.** `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
+> §6 states that `ANC-003` (Adaptive)/`HEAD-*`/`LOUD-001` were "added in firmware 4.467," using a
+> different-looking version scheme from this project's own confirmed `"release_5.203"` baseline
+> above. ⚪ **ASSUMPTION, not yet checked either way:** whether `release_5.203` numerically
+> satisfies a `4.467` threshold, or whether the two are even comparable version schemes at all — no
+> capture or external source consulted by this project states the relationship. **Not currently
+> blocking anything**: all three gated features are confirmed present and working on this
+> project's test device regardless (`ANC-003`/Adaptive since `CAP-001`; `HEAD-*` since `CAP-020`) —
+> this is a latent documentation gap, flagged so a future firmware-compatibility check
+> (`ARCHITECTURE.md` §8) doesn't silently assume a relationship that was never verified.
+
 ## 1. Transports overview
 
 | Transport | Used for | Status |
@@ -452,7 +464,8 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
   changed value. 🟢 **FACT** for the envelope/quintet shape itself (byte-for-byte reproducible,
   cross-capture replicated — see below); 🟡 HYPOTHESIS (strong) that this is specifically
   `libmaestro`'s channel, unchanged from §2.2a's own caveat.
-- **Field-to-band mapping — 🟢 FACT, promoted 2026-08-18** (was 🟡 HYPOTHESIS as of 2026-08-15,
+- **Field-to-band mapping — 🟢 FACT, promoted 2026-08-18, maintainer sign-off obtained 2026-08-28
+  (`DECISIONS.md` ADR-016)** (was 🟡 HYPOTHESIS as of 2026-08-15,
   inferred from only one slider ever having moved in that first capture). The 2026-08-18 session
   (`captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md` §5) drags **all
   five** sliders individually, three passes each, and directly video-confirms 4 of the 5 fields via
@@ -468,12 +481,14 @@ AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
   **Note:** wire field order is the *reverse* of the on-screen top-to-bottom slider order (UI shows
   Upper treble first/top; the wire quintet puts it last/field 5) — `FrameEncoder`/`FrameDecoder`
   must not assume the two orders match without an explicit re-index.
-- **Band-gain range — 🟢 FACT (2026-08-18)**: every slider, dragged to its physical UI extreme,
+- **Band-gain range — 🟢 FACT (2026-08-18, maintainer sign-off obtained 2026-08-28, `DECISIONS.md`
+  ADR-016)**: every slider, dragged to its physical UI extreme,
   clamps at **±6.0** (`CAP-015-FINDINGS.md` [2026-08-18] §4 — 8 of 10 extreme-drag samples land at
   exactly `±6.0`, the remaining 2 at `5.8`/`5.9`, consistent with the drag gesture not quite
   reaching the slider's physical edge before release, not a different clamp value). 🔴 units not
   independently confirmed (plausibly dB, not tested against any external reference).
-- **Confirmed preset quintets — 🟢 FACT (2026-08-18), `[Low bass, Bass, Mid, Treble, Upper treble]`**:
+- **Confirmed preset quintets — 🟢 FACT (2026-08-18, maintainer sign-off obtained 2026-08-28,
+  `DECISIONS.md` ADR-016), `[Low bass, Bass, Mid, Treble, Upper treble]`**:
 
   | Preset | Quintet |
   |---|---|
@@ -604,8 +619,15 @@ event-observation coroutines.
   group. Firmware version is confirmed at code `0x09` (per the Find Hub
   Network extension doc), sent once per Message Stream establishment. Battery
   is expected to have its own code in the same group, following the same
-  event-driven pattern, but the **specific code value is not yet confirmed**
-  from public documentation.
+  event-driven pattern; **PROPOSAL, added 2026-08-28 (`AUDIT_REPORT_2026-08-28.md` finding
+  `EXT-01`), pending maintainer review — the specific code value now has external spec support:**
+  Google's official Fast Pair Device Information extension spec
+  (`developers.google.com/nearby/fast-pair/specifications/extensions/deviceinformation`, fetched
+  2026-08-28) documents Message Group `0x03` Code `0x03` = **"Battery updated"** — an exact match
+  to the candidate below, independently derived from `CAP-009`'s own wire behavior. This
+  strengthens, but does not by itself promote, the HYPOTHESIS below (`AGENTS.md` §6 still requires
+  explicit maintainer sign-off, and ideally the fresh independent-session reproduction already
+  proposed there, before promotion).
 - This is presumed to be the same underlying channel as the
   `hardware_status.proto` hypothesis in §3 — i.e. likely **not** a
   Buds-specific protobuf schema at all, but generic Fast Pair Message Stream
@@ -1099,7 +1121,8 @@ Create Connection (may require multiple attempts — CAP-001 needed 3; attempt
   about exactly when that BLE association was formed relative to the
   on-screen "Forget" tap (tracked as planned capture `CAP-013`).
 
-**Reconnect, Buds-initiated variant — 🟢 FACT, added 2026-08-18 (`CAP-016-FINDINGS.md` §1):**
+**Reconnect, Buds-initiated variant — 🟢 FACT, added 2026-08-18, maintainer sign-off obtained
+2026-08-28 (`DECISIONS.md` ADR-016) (`CAP-016-FINDINGS.md` §1):**
 where `CAP-001`'s reconnect is a phone-side `Create Connection` (needing 3 attempts), `CAP-016`
 shows the *Buds* paging the phone instead — a single `Rcvd Connect Request` → `Sent Accept
 Connection Request` → `Rcvd Connect Complete` sequence, landing within 0.5s of the on-camera
@@ -1129,9 +1152,12 @@ Buds anywhere in that session's log, produced classic SSP instead — not CTKD. 
 `CAP-002`/`CAP-003` (classic SSP, official app / nRF Connect but classic-only pairing path — no
 early BLE link either), the pattern across all captures to date is a clean split: **classic SSP in
 every session with no pre-existing LE link to the Buds (`CAP-002`, `CAP-003`, `CAP-012`); CTKD in
-the one session that had one (`CAP-004`).** This is a direct causal isolation from a purpose-built
-repeat, not merely a repeated negative — but per `AGENTS.md` §6, promoting "an LE Secure
-Connections link already existing gates CTKD vs. classic SSP" into this section's own 🟢 FACT
+every session that had one (`CAP-004`, and now `CAP-014` — 2026-08-27, `CAP-014-FINDINGS.md` §5 — a
+second, independently confirming CTKD instance: SMP `Pairing Request` with `Linkkey` distribution →
+Public Key/Confirm/DHKey Check → classic `Create Connection` → `Link Key Request Reply`, again
+initiated by a BLE tool, nRF Connect, connecting first).** This is a direct causal isolation from a
+purpose-built repeat, not merely a repeated negative — but per `AGENTS.md` §6, promoting "an LE
+Secure Connections link already existing gates CTKD vs. classic SSP" into this section's own 🟢 FACT
 connection-lifecycle diagram is left to the maintainer rather than done unilaterally here.
 
 **Not covered by this promotion — still ⚪ ASSUMPTION:** the RFCOMM
@@ -1568,7 +1594,8 @@ leaving them buried in prose elsewhere.
       app's About/settings screen displays — **not** the same thing as
       confirming what appears on the wire (see the "wire-baseline" item under
       Framing, added 2026-08-15).
-- [x] **DLCI 0x08 Group `0x04` Code `0x12`'s alternating value — resolved 2026-08-18, 🟢 FACT:**
+- [x] **DLCI 0x08 Group `0x04` Code `0x12`'s alternating value — resolved 2026-08-18, 🟢 FACT,
+      maintainer sign-off obtained 2026-08-28 (`DECISIONS.md` ADR-016):**
       neither purely reactive nor purely free-running — it fires in step with DLCI-0x08
       channel-(re)open events, **and** continues firing autonomously during otherwise-idle
       stretches after a gap with no channel churn. First characterized this way in
@@ -1588,8 +1615,8 @@ leaving them buried in prose elsewhere.
 | Malformed/unparseable frame (bad magic/length, checksum failure) | Dropped silently, surfaced internally as `BudsError.MalformedFrame`, never a crash | Design rule (not yet capture-verified) | `AGENTS.md` §6, `ARCHITECTURE.md` §5/§7 |
 | Connection lost during write | `ConnectionState` moves to `DISCONNECTED`; in-flight polling coroutines cancelled | Design rule (not yet capture-verified) | `ARCHITECTURE.md` §6 |
 | Buds out of range | Expected: `IOException` → `ConnectionLost`, per architecture | ⚪ ASSUMPTION | — |
-| Case closed during connection | Terminates the active Bluetooth Classic connection — capture-verified 2026-08-18: the trigger is specifically **both buds being docked** (ACL `Disconnection Complete` fires the instant the second bud is placed in the case, reason `0x13`, Buds-initiated), not the lid closing itself — closing/reopening the lid alone, with no bud docked, is wire-silent (see row below) | 🟢 FACT | `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2, `CAP-016-FINDINGS.md` §1 |
-| Case lid opened/closed while both buds remain outside the case | No wire-visible signal on any RFCOMM channel (`0x02`/`0x04`/`0x08`/`0x0a`) — whatever senses the lid position, if anything, does not report it to the phone while no bud is docked | 🟢 FACT — 2 independent captures | `CAP-007-FINDINGS.md` §3.4, `CAP-016-FINDINGS.md` §5 |
+| Case closed during connection | Terminates the active Bluetooth Classic connection — capture-verified 2026-08-18: the trigger is specifically **both buds being docked** (ACL `Disconnection Complete` fires the instant the second bud is placed in the case, reason `0x13`, Buds-initiated), not the lid closing itself — closing/reopening the lid alone, with no bud docked, is wire-silent (see row below) | 🟢 FACT (maintainer sign-off 2026-08-28, `DECISIONS.md` ADR-016) | `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2, `CAP-016-FINDINGS.md` §1 |
+| Case lid opened/closed while both buds remain outside the case | No wire-visible signal on any RFCOMM channel (`0x02`/`0x04`/`0x08`/`0x0a`) — whatever senses the lid position, if anything, does not report it to the phone while no bud is docked | 🟢 FACT — 2 independent captures (maintainer sign-off 2026-08-28, `DECISIONS.md` ADR-016) | `CAP-007-FINDINGS.md` §3.4, `CAP-016-FINDINGS.md` §5 |
 | Inbound frame matching no known schema version | Returns `UnsupportedFirmware` rather than a best-effort parse | Design rule (not yet capture-verified) | `ARCHITECTURE.md` §8 |
 
 ## 8. Changelog of this specification
@@ -1598,10 +1625,10 @@ leaving them buried in prose elsewhere.
 |---|---|---|
 | 2026-08-07 | Initial formal specification promoted from `PROTOCOL_NOTES.md`; includes both RFCOMM framing hypotheses, battery mechanism options A–D, Find My Buds/Ring hypothesis, and consolidated open questions | Claude (AI), reviewed by maintainer |
 | 2026-08-12 | Added §2.2a: DLCI 0x02's framing confirmed as Pigweed `pw_hdlc` (flag/escape/LEB128-address/control/CRC-32), matching `pbpctrl`'s own Maestro-transport notes; promoted to 🟢 FACT for the framing mechanism (640/640 sub-frames verified across 3 captures). Restructured §2.3's binary framing question into a three-channel table (DLCI 0x04/0x02/0x08). **§4.1 ANC mode promoted to 🟢 FACT**: Google's official "Hearable Controls" Fast Pair extension (Message Group `0x08`, Codes `0x11`/`0x12`/`0x13`) matches `CAP-001` byte-for-byte, including a 4/4 content+timing correlation against that capture's own recorded ANC taps — resolves the project's original highest-priority open command question, on the *official* Message Stream (DLCI 0x04), not `libmaestro`. Updated §6 Framing and Commands checklists accordingly. `libmaestro` (DLCI 0x02) and the private DLCI-0x08 envelope's command content, and EQ/other settings, remain unconfirmed — `FrameEncoder`/`FrameDecoder` implementation gate (`AGENTS.md` §6) remains closed pending a `DECISIONS.md` ADR | Claude (AI), deskresearch task, not yet reviewed by maintainer |
-| 2026-08-17 | §4.3 Option D (BLE Battery Service `0x180F`) raised from 🔴 to 🟡 HYPOTHESIS: service *existence* confirmed via `CAP-017`'s (18:30) session's live GATT discovery (`CAP-017-FINDINGS.md` §3) — content/usage still unconfirmed, handle range still unresolved. Cross-check pass across all 9 capture sessions' documents; also updated `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to include this session (it previously only referenced the earlier, unsuccessful 11:42 `CAP-010` attempt) | Claude (AI), deskresearch task, not yet reviewed by maintainer |
-| 2026-08-17 | §6 Commands & schemas: DLCI 0x02 deskresearch pass across all captures with DLCI-0x02 traffic (`CAP-001`–`CAP-003`, `CAP-006`, `CAP-007`, 11:42 `CAP-010`). Answered the "is field-16/18 EQ-specific?" open item with a clean negative result (zero matches outside `CAP-005`, including `CAP-006`'s clean isolated ANC taps). Surfaced a new open item: two previously-undocumented HDLC addresses (`0x1e80`/`0x2680` Sent, `0xe980` Rcvd) recur at connection-reopen events in `CAP-005`/`CAP-007`, carrying the same already-documented serial+firmware content as the `0x0000`/`0xD180` pair — HYPOTHESIS that DLCI 0x02's Address field is per-connection-negotiated, not fixed. Full method in `DESKRESEARCH_FINDINGS.md` | Claude (AI), deskresearch task, not yet reviewed by maintainer |
-| 2026-08-18 | §4.2 EQ updated from a fresh, independent `CAP-015` session (`captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`) that drags all 5 EQ sliders individually (3 passes each) and taps 5 presets, resolving the 2026-08-15 capture's field-to-band open question: **field-to-band mapping promoted to 🟢 FACT** (field 1↔Low bass, 2↔Bass, 3↔Mid, 4↔Treble, 5↔Upper treble, wire order reversed from on-screen order), matching the earlier single-band inference exactly. Also added: the ±6.0 band-gain clamp (🟢 FACT, units unconfirmed), a confirmed preset-quintet reference table, and a revised (still 🟡) reading of outer field 16/18 as preview/slider-release rather than preview/explicit-Save-tap. Updated the corresponding §6 open-question entry non-destructively | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
-| 2026-08-18 | Synced with `CAP-016` (Group U re-run, `captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS.md`): §5.1 added the Buds-initiated reconnect-on-removal variant (🟢 FACT, frames 1213–1217); §7 added the case-lid-closed/re-docked disconnect row (🟢 FACT, `Disconnection Complete` reason `0x13` fires the instant the second bud is docked, not on lid-close alone) and the case-lid-open/close-while-buds-are-out zero-signal row (🟢 FACT, 2-capture-confirmed with `CAP-007`); §6 "Resolved" added the DLCI 0x08 Group `0x04` Code `0x12` behavior characterization (🟢 FACT for the event-driven-and-autonomous behavior, value's meaning still 🔴 open) and several new open items (RFCOMM channel-bounce trigger, ANC settable-toggles byte, the `0x0044` BLE notification burst, the `AndroidHeadTracker` HID Feature report) | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
+| 2026-08-17 | §4.3 Option D (BLE Battery Service `0x180F`) raised from 🔴 to 🟡 HYPOTHESIS: service *existence* confirmed via `CAP-017`'s (18:30) session's live GATT discovery (`CAP-017-FINDINGS.md` §3) — content/usage still unconfirmed, handle range still unresolved. Cross-check pass across all 9 capture sessions' documents; also updated `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to include this session (it previously only referenced the earlier, unsuccessful 11:42 `CAP-010` attempt) | Claude (AI), deskresearch task (HYPOTHESIS-level only — no FACT promotion, no sign-off needed) |
+| 2026-08-17 | §6 Commands & schemas: DLCI 0x02 deskresearch pass across all captures with DLCI-0x02 traffic (`CAP-001`–`CAP-003`, `CAP-006`, `CAP-007`, 11:42 `CAP-010`). Answered the "is field-16/18 EQ-specific?" open item with a clean negative result (zero matches outside `CAP-005`, including `CAP-006`'s clean isolated ANC taps). Surfaced a new open item: two previously-undocumented HDLC addresses (`0x1e80`/`0x2680` Sent, `0xe980` Rcvd) recur at connection-reopen events in `CAP-005`/`CAP-007`, carrying the same already-documented serial+firmware content as the `0x0000`/`0xD180` pair — HYPOTHESIS that DLCI 0x02's Address field is per-connection-negotiated, not fixed. Full method in `DESKRESEARCH_FINDINGS.md` | Claude (AI), deskresearch task (HYPOTHESIS-level only — no FACT promotion, no sign-off needed) |
+| 2026-08-18 | §4.2 EQ updated from a fresh, independent `CAP-015` session (`captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`) that drags all 5 EQ sliders individually (3 passes each) and taps 5 presets, resolving the 2026-08-15 capture's field-to-band open question: **field-to-band mapping promoted to 🟢 FACT** (field 1↔Low bass, 2↔Bass, 3↔Mid, 4↔Treble, 5↔Upper treble, wire order reversed from on-screen order), matching the earlier single-band inference exactly. Also added: the ±6.0 band-gain clamp (🟢 FACT, units unconfirmed), a confirmed preset-quintet reference table, and a revised (still 🟡) reading of outer field 16/18 as preview/slider-release rather than preview/explicit-Save-tap. Updated the corresponding §6 open-question entry non-destructively | Claude (AI), capture-analysis task; retroactive maintainer sign-off obtained 2026-08-28, `DECISIONS.md` ADR-016 |
+| 2026-08-18 | Synced with `CAP-016` (Group U re-run, `captures/CAP-016-2026-08-18_06-31-31_06-33-58-Group_U/CAP-016-FINDINGS.md`): §5.1 added the Buds-initiated reconnect-on-removal variant (🟢 FACT, frames 1213–1217); §7 added the case-lid-closed/re-docked disconnect row (🟢 FACT, `Disconnection Complete` reason `0x13` fires the instant the second bud is docked, not on lid-close alone) and the case-lid-open/close-while-buds-are-out zero-signal row (🟢 FACT, 2-capture-confirmed with `CAP-007`); §6 "Resolved" added the DLCI 0x08 Group `0x04` Code `0x12` behavior characterization (🟢 FACT for the event-driven-and-autonomous behavior, value's meaning still 🔴 open) and several new open items (RFCOMM channel-bounce trigger, ANC settable-toggles byte, the `0x0044` BLE notification burst, the `AndroidHeadTracker` HID Feature report) | Claude (AI), capture-analysis task; retroactive maintainer sign-off obtained 2026-08-28, `DECISIONS.md` ADR-016 |
 | 2026-08-21 | Synced with 8 new captures (`CAP-011`, `CAP-019`–`CAP-025`): **§4.4 Find My Buds/Ring** — Left/Right confirmed 🟡 HYPOTHESIS (strong), video-correlated, proposed for 🟢 FACT pending maintainer sign-off (`CAP-025`); Case/"both" found to route through a separate, likely GMS-mediated Find Hub mechanism producing no local wire command — flagged as a possible Zero-GMS hard limit. **§4.5 rewritten** from a bare unmapped-feature bullet list into per-command subsections (§4.5.1–§4.5.8), each with a confirmed DLCI 0x02 opcode, following §4.1–§4.4's structure, plus a new shared preamble describing the general-purpose `field5{field4{...}}` settings-write envelope discovered this batch (9+ settings, 6 captures, no counter-example). **§4.3 Option A** — `CAP-011` attempted a passive BLE scan; result recorded as inconclusive (Fast Pair Service traffic present but not structurally matching the documented Battery Notification layout), not force-fit; procedure deviation (active connection present) flagged. **§0.1** — wire-baseline-vs-UI-baseline firmware version resolved (`CAP-023`): on-screen `release_5.203` matches DLCI 0x08's already-documented string, same session. §6 updated with ~10 new open items across Commands & schemas and Behavior, including a newly-raised Zero-GMS-relevant question about Find Hub's Case/"both" ring mechanism | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-08-23 | Remediation from an external audit pass (maintainer-approved fixes, see `CHANGELOG.md`'s 2026-08-22/23 entry for the full report summary): **§2.1/§4.4 corrected** — the cited "spec worked ACK example" for the Ring action did not match Google's actual Fast Pair acknowledgement spec (verified by direct fetch); corrected via non-destructive dated notes per `PROJECT_RULES.md` §3, and the "byte-for-byte match to spec" claim for one observed ACK variant retracted (neither observed variant actually matches the corrected spec example). **§6 reopened** the Ring ACK extra-byte open item against the corrected spec tail, and added a refined characterization (timing/direction/entropy profile) of `CAP-021`'s still-unexplained DLCI 0x0a burst. **§4.3 Option C** annotated to explain DLCI 0x08 vs. 0x09 both being called "channel 4" (same RFCOMM multiplexer session, disambiguated by direction bit — not a numbering error). **§4.3 Option D** added the Battery Level characteristic UUID (`0x2A19`) alongside the already-documented service UUID (`0x180F`) | Claude (AI), audit-remediation task, maintainer-directed |
 | 2026-08-23 | **Three pending FACT promotions reviewed and explicitly approved by the maintainer** (`AGENTS.md` §6), each recorded with its own `DECISIONS.md` ADR: **§4.4 Find My Buds Left/Right** promoted to 🟢 FACT (`ADR-011`) — Case/"both" remains a separate, unresolved mechanism, not covered. **§0.1 wire-baseline firmware version** (`"release_5.203"` on DLCI 0x08) promoted to 🟢 FACT (`ADR-012`) — `"Revision 6"`'s meaning remains open, not covered. **§4.5's shared preamble, general-purpose DLCI 0x02 settings-write envelope shape** promoted to 🟢 FACT (`ADR-013`) — narrower than it may look: only the outer `field5{field4{...}}}` wrapper's existence/shape is FACT; every individual setting's specific field-number mapping in §4.5.1–§4.5.8 remains its own, separately-labeled 🟡 HYPOTHESIS, per the maintainer's explicit decision not to blanket-promote | Claude (AI), maintainer-directed sign-off session |

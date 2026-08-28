@@ -23,7 +23,7 @@ legend per `PROJECT_RULES.md` §1:
 | Log file | [`CAP-025-btsnoop_hci.log`](./CAP-025-btsnoop_hci.log) — 384.4s, 2026-08-21 08:40:49.737–08:47:14.185 (+0200) |
 | Notes file | [`CAP-025-EVENT-NOTES.md`](./CAP-025-EVENT-NOTES.md) |
 | Video file | [`CAP-025-recording.mp4`](./CAP-025-recording.mp4) — 273.7s, 08:40:52–08:45:26 local time |
-| Buds MAC (partial, per `AGENTS.md` §7/§9) | Not independently confirmed this session |
+| Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` (confirmed via `bthci_evt.bd_addr` on the wire; DLCI-based filtering was used for the analysis below regardless) |
 
 ## 2. Methodology & a key structural finding
 

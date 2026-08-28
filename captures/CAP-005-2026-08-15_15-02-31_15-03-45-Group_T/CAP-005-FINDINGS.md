@@ -367,10 +367,16 @@ tshark -r CAP-005-btsnoop_hci.log \
 - 🔴 **Field-to-band mapping (§5b) is inferred from a single changed field, not confirmed.** Needs a
   follow-up capture isolating one *different* single slider (e.g. Treble or Upper treble alone) to
   confirm field 3/4/5's assignment, and ideally one isolating Low bass alone to confirm field 1.
+  **Resolved 2026-08-18**, superseded by `CAP-015` — see `CAP-015-FINDINGS.md` §5 and `PROTOCOL.md`
+  §4.2, which drags all five sliders individually and promotes the full mapping to 🟢 FACT, matching
+  this capture's single-band inference exactly.
 - 🔴 **Outer field 16 vs. 18 (§5a) as "preview" vs. "save" is a plausible but unconfirmed
   interpretation.** An isolated capture of a slider drag *without* ever tapping Save (drag, wait
   >10s, navigate away without saving) would show whether field 16 alone appears with no field-18
-  follow-up, supporting this hypothesis directly.
+  follow-up, supporting this hypothesis directly. **Partially revised 2026-08-18** by `CAP-015` —
+  see `PROTOCOL.md` §4.2: its 15 field-18 frames all fire within ~2s of the preceding field-16
+  write with no video-visible `Save`-button tap, revising (not confirming) the reading toward
+  "field 18 fires on slider-release." Still not fully confirmed either way.
 - 🔴 **Payload offset 1–12 (the apparent `call_id`/correlation bytes, §5b) not decoded** — constant
   in this capture (only one "session" of RPC calls observed), so nothing here distinguishes a fixed
   session identifier from a per-call sequence number that simply hadn't incremented yet within this

@@ -359,55 +359,19 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
 - Why did a BLE link and a still-valid link key both exist *before* the on-screen "Forget" tap
   (08:51:02–03) and *before* the case was reopened? Either the "Forget" tap didn't fully clear
   bonding state, or the visible BLE link (08:50:36) belongs to a different logical association
-  than the classic-link bonding that was reused at 08:51:12. Needs a cleaner capture that starts
-  before any prior state exists.
-
-  > **Update (2026-08-26):** `CAP-013` attempted exactly the "cleaner capture that starts before
-  > any prior state exists" called for above, but did not achieve it — HCI snoop logging in that
-  > session only began 2m21s *after* its own clearing action ("Reset Bluetooth & Wi-Fi", not a
-  > single-device "Forget") and after the subsequent case-open/pair-button/device-selection
-  > sequence too, leaving the question above still fully 🔴 OPEN (`CAP-013-FINDINGS.md` §0,
-  > `PROTOCOL.md` §6's "Behavior" section). `CAP-013` did resolve a related but distinct secondary
-  > question (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `PAIR-004`) — the re-pairing that followed its
-  > own clearing action used a fresh SSP handshake, not a reused key, for whatever bonding state
-  > was active when its logging window began (`CAP-013-FINDINGS.md` §2/§7). A further repeat, with
-  > logging verified to start before the clearing action itself, is still needed to answer this
-  > section's original question — proposed as a new capture (next free ID `CAP-031`, not yet
-  > assigned) in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Group-A-repeat note.
-  >
-  > **Second update (2026-08-27), PROPOSAL — pending maintainer approval:** `CAP-031` attempted
-  > this same repeat a third time, with a genuine narrow per-device "Forget" (unlike `CAP-013`'s
-  > broader reset) and a live snoop-log file-size-polling check added specifically to avoid
-  > `CAP-013`'s failure — **still did not achieve it**: the log's first frame lands 66s after the
-  > Forget tap, and after the case-open/pair-button/first-scan-attempt sequence too
-  > (`CAP-031-FINDINGS.md` §0). This section's original question **remains 🔴 OPEN**, untested a
-  > third time. `CAP-031` did reconfirm the fresh-SSP secondary result (a sixth instance,
-  > `CAP-031-FINDINGS.md` §2/§7) and found that neither of `CAP-013`'s two bonus anomalies (DLCI
-  > 0x02's delayed open, the unattributed second BLE link) reproduce a second time
-  > (`CAP-031-FINDINGS.md` §5/§6). A fourth attempt is still needed, this time verifying the snoop
-  > log's own *content* freshness (not just file size) immediately before the clearing action
-  > (`CAP-031-FINDINGS.md` §8).
-  >
-  > **Third update (2026-08-27), PROPOSAL — pending maintainer approval:** `CAP-032` attempted
-  > this repeat a fourth time, this time extracted via the raw BTSnoop file path instead of the
-  > `btsnooz.py` fallback the three prior attempts used — **and succeeded**: the log's first frame
-  > (18:29:45.72) lands ~58s *before* the on-screen Forget tap (18:30:42), the first genuine
-  > coverage of this window in four attempts (`CAP-032-FINDINGS.md` §0). Across that entire covered
-  > window: zero classic BR/EDR connection events of any kind, exactly one LE connection (resolving
-  > to an unrelated random-address device with a Heart Rate GATT service, not the Buds), and the
-  > `Delete Stored Link Key` command issued at the Forget tap's own moment reports
-  > `Num_Keys_Deleted = 0` (`CAP-032-FINDINGS.md` §0.3/§1). **For that session, no BLE link and no
-  > valid classic link key existed for the Buds before the clearing action** — the direct opposite
-  > of what this section originally found. Read as a clean counter-example demonstrating the
-  > phenomenon is not universal, not as a reproduction or a refutation of this section's own result:
-  > this capture's original puzzle (why *this* session had a BLE link and a valid key present before
-  > the Forget tap and before the case reopened) is not addressed by `CAP-032`'s evidence and
-  > remains 🔴 OPEN QUESTION in its own right. `CAP-032` also reconfirmed the fresh-SSP secondary
-  > result a seventh time and found a previously-undocumented vendor-specific HCI command
-  > (`0xFD57`/`0x0157`) referencing the Buds' address 105ms into its log, structurally consistent
-  > with bulk bonded-device-list provisioning at Bluetooth-stack bring-up rather than a connection
-  > or key operation (`CAP-032-FINDINGS.md` §5) — flagged 🔴 OPEN QUESTION on its own terms, not
-  > bearing on this section's question.
+  than the classic-link bonding that was reused at 08:51:12. **Status: still 🔴 OPEN QUESTION,
+  specific to this session.** Three subsequent attempts at a cleaner "logging starts before any
+  prior state exists" capture are on record: `CAP-013` and `CAP-031` both failed to start logging
+  before their own clearing action (2m21s and 66s late respectively), leaving this untested;
+  `CAP-032` succeeded at capturing a genuine pre-clearing-action window, but for a *different*
+  session, and found the opposite result there — no prior BLE link or valid classic link key
+  (`Num_Keys_Deleted = 0` at the Forget tap itself). That is a clean counter-example showing the
+  phenomenon isn't universal, not a resolution of *this* capture's own puzzle, which remains
+  independently open. All three repeat attempts did reconfirm a related secondary question
+  (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `PAIR-004`: re-pairing after a clearing action uses a fresh
+  SSP handshake, not a reused key) across a combined seven confirming instances. Full evidence
+  chain: `CAP-013-FINDINGS.md` §0, `CAP-031-FINDINGS.md` §0/§2/§7/§8, `CAP-032-FINDINGS.md`
+  §0.3/§1/§2/§5/§7, and `PROTOCOL.md` §6's "Behavior" section.
 - Channel 1 (DLCI 0x02) and channel 2 (DLCI 0x04)'s exact protocol identity is still unconfirmed
   — candidates are AVRCP and/or A2DP signaling (both present in SDP), but this was not verified
   byte-for-byte against either spec in this pass.

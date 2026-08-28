@@ -162,5 +162,50 @@ Status legend (consistent with `PROTOCOL.md` §0):
 - **Promoted to:** `PROTOCOL.md` §6 (Commands & schemas) — both results added as dated open-item
   updates, 2026-08-17.
 
+### 2026-08-28 — Extraction-path (`btsnoop` vs. `btsnooz`) truncation pattern across all captures
+
+- **Trigger:** `AUDIT_REPORT_2026-08-28.md`'s `XC-01` finding — the extraction-path pattern
+  (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3's own inline PROPOSAL note, first raised from `CAP-032`'s
+  single comparison against three prior sessions) is exactly the kind of "check this byte pattern
+  across all existing logs" correlation this document exists for, but had never been consolidated
+  here — only as scattered per-capture notes and one inline blockquote.
+
+- **Method:** for every `CAP-NNN`'s extracted log, checked (a) the filename suffix
+  (`-btsnoop_hci.log` = raw path, `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 3; `-btsnooz_hci.log` =
+  `btsnooz.py`-from-bugreport fallback, §3 step 4) and (b) whether `frame.cap_len == frame.len` for
+  every frame:
+  ```
+  capinfos <CAP-NNN-btsnoop(z)_hci.log>
+  tshark -r <CAP-NNN-btsnoop(z)_hci.log> -T fields -e frame.number -e frame.cap_len -e frame.len \
+    | awk '$2!=$3 {c++} END{print "mismatches:", c+0}'
+  ```
+
+- **Captures examined:** every capture whose own `FINDINGS.md` already documented an extraction
+  path or truncation result — `CAP-012`, `CAP-013`, `CAP-017`, `CAP-031` (all `btsnooz`-extracted),
+  `CAP-032` (raw-extracted). (`AUDIT_REPORT_2026-08-28.md`'s own re-verification pass additionally
+  confirmed all other real captures — `CAP-001`–`CAP-011` excl. `012`/`013`, `CAP-014`–`CAP-016`,
+  `CAP-019`–`CAP-025` — are untruncated, either raw-extracted or from a freshly-restarted log; not
+  repeated here since none of those used the `btsnooz` fallback.)
+
+- **Result (🟡 HYPOTHESIS — one data point per session, not a controlled test):**
+
+  | Capture | Extraction path | `capinfos` inferred cap | Mismatched frames |
+  |---|---|---|---|
+  | `CAP-012` | `btsnooz` fallback | 15–126 bytes (range) | 254 / 1,436 |
+  | `CAP-013` | `btsnooz` fallback | 15 bytes (flat) | 320 / 1,747 |
+  | `CAP-017` | `btsnooz` fallback | ~15 bytes | 268 / 1,747 |
+  | `CAP-031` | `btsnooz` fallback | 15–126 bytes (range) | 259 / 1,747 |
+  | `CAP-032` | raw `btsnoop_hci.log` | none (uncapped) | 0 / 2,455 |
+
+  4 of 4 `btsnooz`-extracted sessions came out severely ACL-truncated; the 1 raw-extracted session
+  came out fully untruncated. This is consistent enough across 5 independent sessions to treat as
+  a reliable *practical* rule — **always check `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 3 (the raw
+  file) first and prefer it whenever present** — but it remains 🟡 HYPOTHESIS, not 🟢 FACT: no
+  single session has been extracted both ways for a direct controlled comparison, so this is 5
+  data points agreeing, not an isolated causal test.
+
+- **Promoted to:** `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3's existing PROPOSAL note (trimmed to point
+  here, 2026-08-28), `TODO.md`'s "Known technical debt" section (2026-08-28).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

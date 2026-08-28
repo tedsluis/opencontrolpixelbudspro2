@@ -492,9 +492,18 @@ traffic in this specific session. Full list observed on screen (`CAP-004-EVENT-N
 `Audio Stream Control Service (0x184E)`, `Published Audio Capabilities Service (0x1850)`,
 `Volume Control (0x1844)`, `Microphone Control (0x184D)`, `Audio Input Control (0x1843)`,
 `Common Audio Service (0x1853)`, `Telephony and Media Audio Service (0x1855)`, **`Google Fast
-Pair Service (0xFE2C)`**, **`Accessory Non-Owner Service (13190001-12f4-c226-88ed-
+Pair Service (0xFE2C)`**, **`Accessory Non-Owner Service (15190001-12f4-c226-88ed-
 2ac5579f2a85)`**, `Device Information (0x180A)`, `Battery Service (0x180F)`, and an unnamed
 **`Unknown Service (109b8b21-50e3-45cc-8ea1-ac62de4846d1)`**.
+
+> **Correction, added 2026-08-28 (audit follow-up):** this UUID was originally transcribed as
+> `13190001-…`. `CAP-014-FINDINGS.md` §2 and `CAP-017-FINDINGS.md` §4c independently agree on
+> `15190001-…`, read from nRF Connect's own machine-generated text-log export rather than a video
+> screenshot transcription. Re-checked against this session's own video frame-by-frame
+> (06:23:55–56, 30fps): the relevant scroll is a fast swipe with no legible frame showing this
+> UUID at all, so the original digit could not be independently re-verified from its own source
+> material. Corrected to `15190001-…` on the strength of the two independently-agreeing,
+> more-reliably-sourced captures — not a re-confirmed read of this capture's own evidence.
 
 This is the first time this project has a candidate **named** service list for the Buds at all.
 Combined with `CAP-002`/`CAP-003`'s handle numbers, a structural hypothesis (not wire-confirmed):
@@ -508,7 +517,7 @@ Combined with `CAP-002`/`CAP-003`'s handle numbers, a structural hypothesis (not
   in a **lower-middle** handle range — a plausible fit for **`Google Fast Pair Service
   (0xFE2C)`**, whose documented Key-based Pairing / Passkey / Account Key characteristics are
   specified to use exactly this encrypted-write/notify shape.
-- **`Accessory Non-Owner Service (13190001-12f4-c226-88ed-2ac5579f2a85)`** is a non-standard
+- **`Accessory Non-Owner Service (15190001-12f4-c226-88ed-2ac5579f2a85)`** is a non-standard
   128-bit UUID (not a Bluetooth SIG base UUID) — the name and structure strongly suggest this is
   Google's **Find My Device Network (FMDN)** accessory service already referenced in
   `PROTOCOL.md`/`DECISIONS.md` in the Fast Pair context, not yet linked to a concrete UUID

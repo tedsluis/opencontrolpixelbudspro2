@@ -8,7 +8,7 @@
 |------------------|-----------------------------------------------------|
 |    Capture ID    |                      `CAP-031`                     |
 |      Group(s)    |                    A (repeat)                      |
-|       Date       |                     2026-08-26                     |
+|       Date       |                     2026-08-27                     |
 | Firmware version | release_5.203 (screen-confirmed, see timeline) |
 |   Test device    | Pixel 7a, Android 17 (⚪ assumed — build number not screen-confirmed this session), system Bluetooth settings + Pixel Buds companion app for setup steps only |
 | Video file       | `CAP-031-recording.mp4` —  |

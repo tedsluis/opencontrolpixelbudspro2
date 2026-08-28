@@ -622,5 +622,70 @@ motivated this).
   DLCI `0x04`/BLE-scan HYPOTHESES noted above; those need their own follow-up before any further
   promotion.
 
+## ADR-016 — Retroactive sign-off: EQ field-to-band mapping/gain-clamp/preset quintets, and four `CAP-016` hardware-behavior FACTs
+
+- **Date**: 2026-08-28
+- **Status**: Accepted
+- **Note on process**: this ADR was drafted by an AI agent, but per `AGENTS.md` §6's requirement
+  for explicit human/maintainer sign-off before an agent commits a new `DECISIONS.md` ADR as
+  settled: the maintainer directly reviewed `AUDIT_REPORT_2026-08-28.md`'s `GOV-01` finding and
+  explicitly approved consolidating sign-off for all findings below into one ADR (session of
+  2026-08-28). That instruction is the explicit approval this rule requires — recorded here so the
+  provenance is auditable, not assumed.
+- **Context**: on 2026-08-18, `PROTOCOL.md` was updated directly from two independent capture
+  sessions — `CAP-015` (EQ, completing/superseding `CAP-005`'s partial attempt) and `CAP-016`
+  (Group U re-run) — promoting seven distinct claims to 🟢 FACT. Unlike every FACT promotion from
+  2026-08-21 onward (`ADR-011`–`ADR-015`), these seven were never given a corresponding
+  `DECISIONS.md` ADR or an explicit "maintainer sign-off obtained" citation; `PROTOCOL.md`'s
+  changelog table still marked both 2026-08-18 entries "not yet reviewed by maintainer" as of
+  `AUDIT_REPORT_2026-08-28.md`'s `GOV-01` finding. This ADR closes that gap.
+- **Findings being recorded**:
+  1. **EQ field-to-band mapping** (`PROTOCOL.md` §4.2): quintet field 1↔Low bass, 2↔Bass, 3↔Mid,
+     4↔Treble, 5↔Upper treble (wire order is the reverse of the on-screen top-to-bottom order).
+     Evidence: `CAP-015-FINDINGS.md` §5 — all 5 sliders dragged individually, 3 passes each; 4 of 5
+     fields video-confirmed by finger-on-slider position, the 5th by elimination against a
+     perfectly repeating field-change order across all 3 passes; matches `CAP-005`'s earlier
+     single-band inference exactly, 5 days apart, independently.
+  2. **Band-gain range, ±6.0 clamp** (`PROTOCOL.md` §4.2). Evidence: `CAP-015-FINDINGS.md` §4 — 8
+     of 10 extreme-drag samples land at exactly ±6.0, the remaining 2 at 5.8/5.9 (consistent with
+     the drag gesture not quite reaching the slider's physical edge before release, not a different
+     clamp value). Units not independently confirmed (plausibly dB), unaffected by this promotion.
+  3. **Confirmed preset quintets** (`PROTOCOL.md` §4.2): `Last saved`/Heavy bass/Light bass/
+     Balanced/Vocal boost/Clarity, each a `[Low bass, Bass, Mid, Treble, Upper treble]` 5-tuple.
+     Evidence: `CAP-015-FINDINGS.md` §5 — Heavy bass's quintet independently matches the
+     2026-08-15 capture's own decode byte-for-byte.
+  4. **Reconnect, Buds-initiated variant** (`PROTOCOL.md` §5.1): a single `Rcvd Connect Request` →
+     `Sent Accept Connection Request` → `Rcvd Connect Complete` sequence, landing within 0.5s of
+     on-camera earbud removal from the case. Evidence: `CAP-016-FINDINGS.md` §1, frames 1213–1217.
+  5. **Disconnect-on-redock** (`PROTOCOL.md` §7): ACL `Disconnection Complete` (reason `0x13`,
+     Buds-initiated) fires the instant the *second* bud is placed in the case, not on lid-close
+     alone. Evidence: `CAP-016-FINDINGS.md` §1.
+  6. **Case-lid zero-signal** (`PROTOCOL.md` §7): opening/closing the case lid while both buds
+     remain outside the case produces no wire-visible signal on any RFCOMM channel. Evidence:
+     `CAP-016-FINDINGS.md` §5, independently reproducing `CAP-007-FINDINGS.md`(old) §3.4 —
+     2-capture-confirmed.
+  7. **DLCI 0x08 `Group 0x04 Code 0x12`'s alternating value is event-driven *and* autonomous**
+     (`PROTOCOL.md` §6 Resolved): fires in step with DLCI-0x08 channel-(re)open events, and also
+     continues firing during otherwise-idle stretches with no channel churn — neither purely
+     reactive nor purely free-running. Evidence: first characterized this way in
+     `CAP-004-FINDINGS.md` §5a Task 5 and `CAP-007-FINDINGS.md`(old) §3.2/§5, independently
+     reconfirmed by `CAP-016-FINDINGS.md` §7 (8 pushes, cycling `0x02`/`0x03`, 2 in step with
+     channel-(re)opens, 4 during idle stretches with no churn).
+- **What this ADR does NOT clear**:
+  - EQ's outer field 16 vs. 18 ("preview" vs. "fires on slider-release") reading remains 🟡
+    HYPOTHESIS, unaffected — `PROTOCOL.md` §4.2 already states this explicitly; not promoted here.
+  - DLCI 0x08 Code `0x12`'s value's actual *meaning* (what `0x02`/`0x03`/`0x04` represents) remains
+    🔴 OPEN — this ADR covers only the event-driven-and-autonomous *behavior* characterization, not
+    the value's semantics.
+  - `CAP-016`'s other findings, already explicitly marked "not promoted"/"awaiting maintainer
+    sign-off" in its own §8 (the ANC settable-toggles-byte refinement, the `AndroidHeadTracker` HID
+    decode), are **not** covered by this ADR — they remain open, as already correctly tracked.
+  - Band-gain units (dB or otherwise) remain unconfirmed.
+- **Decision**: all seven findings above are accepted as 🟢 FACT.
+- **Consequences**: `PROTOCOL.md`'s changelog rows for 2026-08-18 updated to cite this ADR instead
+  of "not yet reviewed by maintainer"; the corresponding body sections (§4.2, §5.1, §7 ×2, §6
+  Resolved) gain an explicit `ADR-016` citation, matching the citation style already used for
+  `ADR-011`–`ADR-015`.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

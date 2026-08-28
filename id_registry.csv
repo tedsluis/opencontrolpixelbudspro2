@@ -14,6 +14,7 @@ ADR-012,adr,accepted,"Wire-baseline firmware version confirmed as release_5.203 
 ADR-013,adr,accepted,"DLCI 0x02 general-purpose settings-write envelope shape confirmed; individual field semantics remain HYPOTHESIS",DECISIONS.md
 ADR-014,adr,accepted,"DLCI 0x08 Group 0x0e Code 0x01 confirmed as per-earbud+case battery push (index=1/2/3 -> Left/Right/Case)",DECISIONS.md
 ADR-015,adr,accepted,"BATT-006 resolved: AT+CIND battchg is a stale single snapshot; AT+BIEV is per-earbud (Right), not fixed-aggregate/fixed-cadence",DECISIONS.md
+ADR-016,adr,accepted,"Retroactive sign-off: EQ field-to-band mapping/gain-clamp/preset quintets, and four CAP-016 hardware-behavior FACTs",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
@@ -22,7 +23,7 @@ CAP-005,capture,captured,"session date/status: 2026-08-15",CAPTURE_BLUETOOTH_HCI
 CAP-006,capture,captured,"session date/status: 2026-08-15",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-007,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-008,capture,captured,"session date/status: 2026-08-26",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-009,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-009,capture,analyzed,"session date/status: 2026-08-23 — BATT-006 resolved, see ADR-015",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-010,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-011,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-012,capture,analyzed,"session date/status: 2026-08-26",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

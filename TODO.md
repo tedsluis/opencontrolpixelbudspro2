@@ -26,14 +26,30 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    captures and is likely to cheaply resolve several open `.proto`-field-number and HID-relevance
    questions that captures alone can't (see `REVERSE_ENGINEERING.md`, updated 2026-08-23 with
    HID-related keywords).
-4. **Remaining planned captures**, in the order given under Phase 1 below — `CAP-008`/`CAP-009`
-   first (combinable in one session), then a clean connection-free repeat of the Battery
-   Notification BLE scan (`CAP-011` was inconclusive), then `CAP-018`, `CAP-014`, `CAP-013`, and
-   the still-uncaptured main-run-through remainder (`CAP-026`–`CAP-030`).
+4. **Remaining planned captures** (updated 2026-08-28 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`
+   are done, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9): a clean connection-free repeat of the Battery
+   Notification BLE scan (`CAP-011` was inconclusive), a genuine attempt at Group W's own untried
+   cache-busting methods (`pm clear com.android.bluetooth` or the Pixel 9a — `CAP-010`/`CAP-017`/
+   `CAP-014` all failed to try either), then `CAP-018` and the still-uncaptured main-run-through
+   remainder (`CAP-026`–`CAP-030`) — `CAP-027`/`CAP-028` (physical touch/head gestures) are the
+   highest-value of these, being core v1 features with zero capture coverage so far.
 5. **Targeted research follow-ups**, lowest priority, tracked at their source per this file's
    "Open questions" section: the `CAP-021` DLCI 0x0a burst trigger and the DLCI 0x02 AES-128
    hypothesis (`PROTOCOL.md` §6) — the latter is only really testable once Phase 2 above provides
-   a pw_rpc/protobuf schema to check against.
+   a pw_rpc/protobuf schema to check against. **Added 2026-08-28
+   (`AUDIT_REPORT_2026-08-28.md` Phase 5), three specific new-capture ideas, none yet designed
+   in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`:**
+   - `HOLD-005`'s Left/Right ANC-rotation-checklist split (`PROTOCOL.md` §6) — a purpose-built
+     capture isolating one earbud's rotation list at a time (the envelope carries no
+     Left/Right-distinguishing field for this specific write, unlike `HOLD-001`–`HOLD-004`).
+   - Volume balance (`field 17`) scale/direction (`CAP-022-FINDINGS.md` §5, `PROTOCOL.md` §4.5.7/§6)
+     — a capture with isolated extreme-position samples (not a continuous drag) plus tighter video
+     correlation.
+   - The `CAP-021` DLCI 0x0a burst trigger, more precisely: a purpose-built hypothesis test
+     (`PROJECT_RULES.md` §4's fixed template — hypothesis, setup, expected outcome, actual outcome,
+     conclusion) bracketing candidate triggers one at a time (app backgrounded/foregrounded, a
+     scheduled sync window, a charge-state change) — the burst recurred in exactly 1 of 16 sessions
+     checked so far, so passively waiting for it to reappear is not expected to work.
 
 ## Setup
 
@@ -108,15 +124,16 @@ lower priority than finishing ANC/Battery/EQ):**
       zero misses (`CAP-006-FINDINGS.md` §3). `CAP-001`'s 2/6 gap does not
       reproduce under isolated conditions. `DECISIONS.md` ADR-009 updated,
       `FrameEncoder` implementation block for the ANC command **lifted**.
-- [x] **`CAP-010`/`CAP-017` (Group W) — stronger GATT cache-busting for live
+- [x] **`CAP-010`/`CAP-017`/`CAP-014` (Group W) — stronger GATT cache-busting for live
       service discovery.** **Discovery goal achieved 2026-08-16** via
       `CAP-017`, a fresh-GATT-client-app path not originally in this row's
-      scope (`pm clear`/Pixel-9a remain untried alternates, now lower
-      priority) — 137 live discovery frames, full 15-service GATT profile
-      recovered. **Not fully closed:** that session's wire log is
-      snaplen-truncated, so the `0x0f2a`/`0x0c0X` handle→UUID mapping is
-      still open — a snaplen fix + on-screen characteristic drill-down is
-      `CAP-014` (planned, `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9).
+      scope — 137 live discovery frames, full 15-service GATT profile
+      recovered. **`CAP-014` (2026-08-27) fixed that session's snaplen truncation but still
+      did not close the mapping** — the `0x0f2a`/`0x0c0X` handle→UUID mapping remains open
+      (`CAP-014-FINDINGS.md` §4/§8): 3 attempts now, and `pm clear com.android.bluetooth`/the
+      Pixel 9a — Group W's own actual candidate methods — remain untried in all of them. That
+      combination (proven snaplen fix + an actually-untried cache-busting method) is the clear
+      next step.
 - [x] **`CAP-016` (Group U re-run) — case/bud-removal hardware events.**
       **Synced into `PROTOCOL.md` 2026-08-18** — promotes 3 🟢 FACTs (§5/§7):
       Buds-initiated reconnect on bud removal, ACL disconnect the instant
@@ -125,16 +142,16 @@ lower priority than finishing ANC/Battery/EQ):**
       trigger, ANC settable-toggles byte, a `0x0044` BLE notification burst,
       an `AndroidHeadTracker` HID Feature report) tracked in `PROTOCOL.md` §6
       and `CAP-016-FINDINGS.md`.
-- [ ] **`CAP-008` (Group V, planned) — first real phone call.** Resolves
-      whether HFP AT-command SLC setup reoccurs. Channel 5/DLCI 0x0a is no
-      longer known to be universally silent — `CAP-021` (2026-08-21, Group G)
-      recorded a 1123-frame payload burst on it, unrelated to any call
-      (`CAP-021-FINDINGS.md` §4a, `PROTOCOL.md` §6) — but what triggers that
-      burst, and whether a call also produces one, remains open.
-- [ ] **`CAP-009` (Group X, planned) — battery-level discrepancy bracket.**
-      Cross-check `AT+CIND`/`battchg` against `AT+BIEV` over a natural
-      battery decline — genuinely open, not yet captured; combinable with
-      `CAP-008`'s session if timing allows.
+- [x] **`CAP-008` (Group V) — first real phone call.** **Done 2026-08-26.** Both open
+      questions resolved: the full HFP AT-command SLC handshake reoccurs on a fresh classic-link
+      connection, and two clean SCO/eSCO pairs appear, one per call. DLCI 0x0a stayed silent
+      through both calls, ruling it out as the call's audio path (`CAP-021`'s later, unrelated
+      1123-frame burst on that same DLCI remains a separate, still-open question — `PROTOCOL.md`
+      §6). See `CAP-008-FINDINGS.md`.
+- [x] **`CAP-009` (Group X) — battery-level discrepancy bracket.** **Done 2026-08-23.**
+      `AT+CIND`/`battchg` confirmed a stale single snapshot; `AT+BIEV` confirmed per-earbud
+      (Right, this session), not a fixed aggregate, and non-fixed-cadence — `BATT-006` closed,
+      maintainer-approved (`DECISIONS.md` ADR-015). See `CAP-009-FINDINGS.md`.
 
 **Next, still important but behind the above:**
 
@@ -154,17 +171,27 @@ lower priority than finishing ANC/Battery/EQ):**
       payloads don't structurally match the documented byte layout — see
       `PROTOCOL.md` §4.3 Option A and `CAP-011-FINDINGS.md`. **Still open:**
       a genuinely clean, connection-free repeat is needed.
-- [ ] **Added 2026-08-23 — remaining planned captures not yet individually tracked here** (each
+- [x] **`CAP-013`/`CAP-031`/`CAP-032` (Group A repeat) — whether "Forget" fully clears prior BLE
+      association.** **Done 2026-08-27**, on the fourth attempt (`CAP-032`) — the first three
+      (`CAP-001`'s original session, `CAP-013`, `CAP-031`) all either predate the question or
+      failed to capture the pre-clearing-action window; `CAP-032`, extracted via the raw path
+      instead of the lossy `btsnooz` fallback, finally captured it and found a clean
+      counter-example (no prior BLE link/valid key for that session) — `CAP-001`'s own
+      session-specific puzzle (why *that* session had residual state) remains independently open,
+      see `PROTOCOL.md` §6 (Behavior). See `CAP-032-FINDINGS.md`.
+- [ ] **Updated 2026-08-28 — remaining planned captures not yet individually tracked here** (each
       already has its own row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index; listed here
       only so this file's priority ordering covers them too, not as a duplicate description):
-      `CAP-018` (Group Y, `0x0044` BLE-notification-burst isolation), `CAP-013` (Group A repeat,
-      whether "Forget" fully clears prior BLE association), and the still-uncaptured main
+      `CAP-018` (Group Y, `0x0044` BLE-notification-burst isolation), and the still-uncaptured main
       run-through remainder — `CAP-026` (Group L, passive observation), `CAP-027` (Group N, touch
-      gestures), `CAP-028` (Group O, head gestures, needs `CAP-020`'s Head-gestures toggle left
-      on), `CAP-029` (Group P, Conversation Detection voice trigger + the optional, destructive
-      factory-reset comparison + the still-open shorter-press pairing-mode question), and
-      `CAP-030` (Group Q items #19–20, Loud Noise Protection/Adaptive Audio, needs firmware
-      ≥4.467). Lower priority than `CAP-008`/`CAP-009`/a clean `CAP-011` repeat above.
+      gestures — never attempted, a core v1 feature area with zero capture coverage so far),
+      `CAP-028` (Group O, head gestures, needs `CAP-020`'s Head-gestures toggle left on — also
+      never attempted), `CAP-029` (Group P, Conversation Detection voice trigger + the optional,
+      destructive factory-reset comparison + the still-open shorter-press pairing-mode question),
+      and `CAP-030` (Group Q items #19–20, Loud Noise Protection/Adaptive Audio, needs firmware
+      ≥4.467 — worth double-checking this against the project's `release_5.203` baseline first,
+      since the two version identifiers have never been explicitly reconciled, `PROTOCOL.md` §0.1).
+      Lower priority than a clean `CAP-011` repeat and a properly-done Group W attempt above.
 
 ## Phase 2 — APK reverse engineering
 
@@ -260,6 +287,13 @@ lower priority than finishing ANC/Battery/EQ):**
 _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
+
+- **Capture extraction path matters, added 2026-08-28.** Four captures (`CAP-012`, `CAP-013`,
+  `CAP-017`, `CAP-031`) lost significant byte-level payload content to severe ACL truncation from
+  the `btsnooz.py`-from-bugreport fallback path (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 4); the
+  one session extracted via the raw `btsnoop_hci.log` path instead (`CAP-032`) came out fully
+  untruncated. Always check §3 step 3 (the raw file) first and prefer it whenever present — see
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3's own PROPOSAL note for the full detail.
 
 ## Open questions
 

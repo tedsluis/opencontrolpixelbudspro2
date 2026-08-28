@@ -375,10 +375,11 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   wire log is truncated below the level needed to read `Read By Group Type` handle-range data, and
   (b) nRF Connect's summary list doesn't display handles, and no characteristic-level drill-down
   happened on screen this session.
-- **Recommended immediate next step (revised after §4c):** tapping into "Accessory Non-Owner
-  Service"/"Unknown Service" in nRF Connect's `CLIENT` tab was tried (§4c, via the 2026-08-17
-  screenshots + text-log export) and does **not** show handles — this UI/export path is now a dead
-  end for this specific question, not just untried. The remaining viable path is fixing the wire
+- **Recommended immediate next step (revised after §4c):** tapping into "Unknown Service" in nRF
+  Connect's `CLIENT` tab was tried (§4c, via the 2026-08-17 screenshots + text-log export) and does
+  **not** show handles — this UI/export path is now a dead end for this specific question, not just
+  untried. (Only "Unknown Service" was tried — "Accessory Non-Owner Service" was never tapped and
+  is out of scope for any drill-down per `DECISIONS.md` ADR-008, see §6's note below.) The remaining viable path is fixing the wire
   capture itself: whatever produced the ~15-byte ACL snaplen in `CAP-017-btsnoop_hci.log` needs to
   be identified (check the export path/tool against `CAP-001`–`CAP-004`, which were **not**
   truncated this way) and corrected, so a repeat capture's `Read By Group Type`/`Read By Type`

@@ -195,7 +195,11 @@ as a protobuf tag `0x0a` = field 1, wiretype 2 (length-delimited), followed by v
 `00 00 00 00` / `6d b6 db` byte run, distinct in character from the tail ~20 bytes, which look
 higher-entropy.
 
-**🔴 OPEN QUESTION — not resolved by this session:**
+**🔴 OPEN QUESTION — not resolved by this session.** A fuller byte-level characterization (100%
+Rcvd-direction, ~5–6 discrete bursty waves, a `7e ee ed` tail pattern near each frame's end, an
+entropy profile suggesting segmented bulk-data transfer rather than continuous telemetry) was later
+added from a 2026-08-23 external-audit re-analysis of all 1,123 frames — see `PROTOCOL.md` §6
+(Commands & schemas) for that fuller read; not repeated here, still 🔴 OPEN QUESTION either way.
 - What this stream represents. The burst window (08:02:29.5–08:04:07.1) does not cleanly bound
   any single Group G Test-ID's tap time: `HOLD-002` (08:01:23.784) finishes well before the burst
   starts, `HOLD-004` (08:03:16.151) and `HOLD-001` (08:03:49.667) fall inside it, and `HOLD-003`

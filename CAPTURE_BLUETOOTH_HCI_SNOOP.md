@@ -138,19 +138,14 @@ The supported, working method on both phones:
 6. Once you've confirmed extraction worked, you can disable the HCI snoop toggle again
    (§2 step 3) to avoid unnecessary background logging and disk usage between sessions.
 
-> **PROPOSAL — pending maintainer approval (added 2026-08-27, `CAP-032-FINDINGS.md` §0.1/§7 Test
-> C):** step 3 (raw file) and step 4 (`btsnooz.py` fallback) are not interchangeable in practice —
-> across the four `Group A`-repeat captures to date, every session extracted via step 4
-> (`CAP-012`, `CAP-013`, `CAP-031`) came out severely ACL-truncated (`capinfos`-inferred ~15–126-byte
-> per-packet cap — RFCOMM data payloads beyond that are lost), while the one session extracted via
-> step 3 (`CAP-032`) came out fully untruncated (`frame.cap_len == frame.len` throughout). This is
-> one data point on the "raw" side against three on the "btsnooz" side, not a controlled test (no
-> single session has been extracted both ways for direct comparison) — but it's consistent enough
-> that **always check step 3 first and prefer it whenever the raw file is present**, and **always
-> record which path a given capture actually used** in that capture's own `CAP-NNN-FINDINGS.md`
-> (per `PROJECT_RULES.md` rule 11's reproducibility requirement) — a capture's usability for
-> anything beyond short control-frame sequencing may depend on this choice, not just on what
-> happened during the session itself.
+> **PROPOSAL — pending maintainer approval:** step 3 (raw file) and step 4 (`btsnooz.py` fallback)
+> are not interchangeable in practice — **always check step 3 first and prefer it whenever the raw
+> file is present**, and **always record which path a given capture actually used** in that
+> capture's own `CAP-NNN-FINDINGS.md` (per `PROJECT_RULES.md` rule 11's reproducibility
+> requirement) — a capture's usability for anything beyond short control-frame sequencing may
+> depend on this choice, not just on what happened during the session itself. See
+> `DESKRESEARCH_FINDINGS.md`'s 2026-08-28 entry for the full 5-session comparison and evidence
+> (still 🟡 HYPOTHESIS, not a controlled test).
 
 ---
 
