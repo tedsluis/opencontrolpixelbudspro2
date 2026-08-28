@@ -39,6 +39,19 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # files or IDs — e.g. `CAP-NNN-FINDINGS.md` used as a doc-writing convention.
 PLACEHOLDER_FILENAME_RE = re.compile(r"CAP-(NNN|nnn|00n|CAP-\d+)", re.IGNORECASE)
 
+# Generic, un-prefixed mentions of the two btsnoop-log naming conventions
+# themselves (raw `btsnoop_hci.log` vs. the `btsnooz.py`-fallback
+# `btsnooz_hci.log`, each with or without a leading dash for the
+# `CAP-NNN-` prefix they'd normally carry) — prose *about* the naming
+# pattern (e.g. "extracted via the raw `btsnoop_hci.log` path"), not a
+# reference to any specific file. A real per-capture reference always
+# carries its own `CAP-NNN-` prefix and is checked normally; this only
+# exempts the bare/dash-only generic form. Found repeatedly false-flagging
+# across `CAPTURE_BLUETOOTH_HCI_SNOOP.md`, `DESKRESEARCH_FINDINGS.md`,
+# `TODO.md`, and several `CAP-NNN-FINDINGS.md`/`EVENT-NOTES.md` files
+# discussing the `CAP-012`/`013`/`017`/`031`/`032` extraction-path finding.
+GENERIC_LOG_FILENAME_RE = re.compile(r"^-?btsnoo[pz]_hci\.log$")
+
 # Deliberate historical references this project keeps on purpose (retired
 # docs, a corrected typo kept as a "sic"/before-value in a Corrections note,
 # an illustrative example filename, an external repo's path quoted for
@@ -58,6 +71,10 @@ KNOWN_HISTORICAL_REFERENCES = {
     "AUDIT_REPORT_2026-08-22.md",  # transient audit-report artifact, never committed (2026-08-23);
                                     # its findings live on in the docs/CHANGELOG.md entries that
                                     # cite it by name, same lifecycle as AUDIT_REPORT_2026-08-20.md
+    "CAP-032-btsnooz_hci.log",  # CAP-032-EVENT-NOTES.md's own "Corrections" section quotes this as
+                                # the pre-fix (wrong) value of its Log Metadata table's Log file
+                                # field, kept as a "sic"/before-value — same pattern as the
+                                # CAP-005-recoding.mp4 entry above, not a live reference.
 }
 
 # Only lint cross-references to the project's own capture/doc artifacts —
@@ -200,6 +217,7 @@ def check_filenames(files: list[Path]) -> list[str]:
             name = match.group(1)
             if (
                 PLACEHOLDER_FILENAME_RE.search(name)
+                or GENERIC_LOG_FILENAME_RE.match(name)
                 or name in KNOWN_HISTORICAL_REFERENCES
                 or Path(name).name in gitignored
             ):
@@ -212,6 +230,7 @@ def check_filenames(files: list[Path]) -> list[str]:
                 continue  # remote image, not a repo-relative path
             if (
                 PLACEHOLDER_FILENAME_RE.search(name)
+                or GENERIC_LOG_FILENAME_RE.match(name)
                 or name in KNOWN_HISTORICAL_REFERENCES
                 or Path(name).name in gitignored
             ):

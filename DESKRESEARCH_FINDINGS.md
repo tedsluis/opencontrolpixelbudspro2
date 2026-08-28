@@ -180,7 +180,7 @@ Status legend (consistent with `PROTOCOL.md` §0):
     | awk '$2!=$3 {c++} END{print "mismatches:", c+0}'
   ```
 
-- **Captures examined:** every capture whose own `FINDINGS.md` already documented an extraction
+- **Captures examined:** every capture whose own `CAP-NNN-FINDINGS.md` already documented an extraction
   path or truncation result — `CAP-012`, `CAP-013`, `CAP-017`, `CAP-031` (all `btsnooz`-extracted),
   `CAP-032` (raw-extracted). (The 2026-08-28 project-wide audit's own re-verification pass additionally
   confirmed all other real captures — `CAP-001`–`CAP-011` excl. `012`/`013`, `CAP-014`–`CAP-016`,
