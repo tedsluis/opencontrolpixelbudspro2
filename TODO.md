@@ -37,7 +37,7 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    "Open questions" section: the `CAP-021` DLCI 0x0a burst trigger and the DLCI 0x02 AES-128
    hypothesis (`PROTOCOL.md` §6) — the latter is only really testable once Phase 2 above provides
    a pw_rpc/protobuf schema to check against. **Added 2026-08-28
-   (`AUDIT_REPORT_2026-08-28.md` Phase 5), three specific new-capture ideas, none yet designed
+   (2026-08-28 project-wide audit, Phase 5), three specific new-capture ideas, none yet designed
    in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`:**
    - `HOLD-005`'s Left/Right ANC-rotation-checklist split (`PROTOCOL.md` §6) — a purpose-built
      capture isolating one earbud's rotation list at a time (the envelope carries no

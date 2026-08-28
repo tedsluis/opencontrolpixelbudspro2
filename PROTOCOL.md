@@ -105,7 +105,7 @@ above it.
 > RFCOMM traffic — the display is read from already-cached connection-time data, not queried live.
 > See `CAP-023-FINDINGS.md` §3–§4.
 
-> **Note (2026-08-28), `AUDIT_REPORT_2026-08-28.md` finding `XC-03` — an unrelated version
+> **Note (2026-08-28), 2026-08-28 project-wide audit finding `XC-03` — an unrelated version
 > identifier has never been reconciled against the baseline above.** `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
 > §6 states that `ANC-003` (Adaptive)/`HEAD-*`/`LOUD-001` were "added in firmware 4.467," using a
 > different-looking version scheme from this project's own confirmed `"release_5.203"` baseline
@@ -619,7 +619,7 @@ event-observation coroutines.
   group. Firmware version is confirmed at code `0x09` (per the Find Hub
   Network extension doc), sent once per Message Stream establishment. Battery
   is expected to have its own code in the same group, following the same
-  event-driven pattern; **PROPOSAL, added 2026-08-28 (`AUDIT_REPORT_2026-08-28.md` finding
+  event-driven pattern; **PROPOSAL, added 2026-08-28 (2026-08-28 project-wide audit finding
   `EXT-01`), pending maintainer review — the specific code value now has external spec support:**
   Google's official Fast Pair Device Information extension spec
   (`developers.google.com/nearby/fast-pair/specifications/extensions/deviceinformation`, fetched

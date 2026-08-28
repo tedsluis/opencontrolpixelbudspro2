@@ -628,8 +628,8 @@ motivated this).
 - **Status**: Accepted
 - **Note on process**: this ADR was drafted by an AI agent, but per `AGENTS.md` §6's requirement
   for explicit human/maintainer sign-off before an agent commits a new `DECISIONS.md` ADR as
-  settled: the maintainer directly reviewed `AUDIT_REPORT_2026-08-28.md`'s `GOV-01` finding and
-  explicitly approved consolidating sign-off for all findings below into one ADR (session of
+  settled: the maintainer directly reviewed the 2026-08-28 project-wide audit's `GOV-01` finding
+  and explicitly approved consolidating sign-off for all findings below into one ADR (session of
   2026-08-28). That instruction is the explicit approval this rule requires — recorded here so the
   provenance is auditable, not assumed.
 - **Context**: on 2026-08-18, `PROTOCOL.md` was updated directly from two independent capture
@@ -637,8 +637,8 @@ motivated this).
   (Group U re-run) — promoting seven distinct claims to 🟢 FACT. Unlike every FACT promotion from
   2026-08-21 onward (`ADR-011`–`ADR-015`), these seven were never given a corresponding
   `DECISIONS.md` ADR or an explicit "maintainer sign-off obtained" citation; `PROTOCOL.md`'s
-  changelog table still marked both 2026-08-18 entries "not yet reviewed by maintainer" as of
-  `AUDIT_REPORT_2026-08-28.md`'s `GOV-01` finding. This ADR closes that gap.
+  changelog table still marked both 2026-08-18 entries "not yet reviewed by maintainer" as of the
+  2026-08-28 project-wide audit's `GOV-01` finding. This ADR closes that gap.
 - **Findings being recorded**:
   1. **EQ field-to-band mapping** (`PROTOCOL.md` §4.2): quintet field 1↔Low bass, 2↔Bass, 3↔Mid,
      4↔Treble, 5↔Upper treble (wire order is the reverse of the on-screen top-to-bottom order).
