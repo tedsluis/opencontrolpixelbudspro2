@@ -315,6 +315,11 @@ call per `AGENTS.md` §6/§15.
 > (`InternalRfcommConnection`, entry above), which `DECISIONS.md` ADR-018 already confirms wraps
 > **DLCI 0x02** (the companion app's own "pigweed"/Maestro internal socket), not DLCI 0x04 at all.
 > Nothing below concerns DLCI 0x04.
+>
+> **Second occurrence (2026-08-30, same day):** an independently-submitted cross-validation report
+> (Antigravity/Gemini 3.1 Pro), reviewed the same day as the write-up above, reproduced this
+> identical conflation over the identical file set, plus an additional, likewise-unsupported
+> "battery handler" framing for `gba`/`gaa` — see the dated update at the end of this entry.
 
 - **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/fua.java`
   (class declaration; methods `l()`/`m()`/`o()`)
@@ -371,6 +376,35 @@ call per `AGENTS.md` §6/§15.
   not supported by this alone and should not be repeated without a dedicated scope read.
 - **Open questions**: what Group(s), if any, actually route to this class via `fua`'s router; full
   relevance read not done this pass.
+
+- **Update (2026-08-30, second cross-validation pass, independent full-tree re-check on `gba`/`gaa`/
+  `hjy`):** the same external report referenced in this entry's header note named `gba.java` (Group
+  `130`) and `gaa.java` (Group `135`) as "the battery handlers" and concluded, from those two files
+  plus `hjy.java`, that no battery-polling loop exists in this cluster. Re-checked this pass,
+  independently:
+  - **The "battery handler" premise itself is unsupported.** `gba.java`'s only method body remains
+    undecompiled (see its own entry above — no claim about its content is possible either way).
+    `gaa.java` has **zero** `battery`/`Battery` string references anywhere in its 1068 lines
+    (`grep -n "battery\|Battery" gaa.java` → no hits), and its own independently-documented role (see
+    the `qhx`/`qjn`/`qjt` entry below) is a **settings-response notification dispatcher** (OOBE mode,
+    the "presto"-labeled possibly-different-product settings groups) — nothing ties it to battery
+    telemetry.
+  - **Full-tree grep (`jadx-output/sources/`, not a sample) for the two Android battery
+    intent/action strings the external report cited**: `ACTION_BATTERY_LEVEL_CHANGED` → 0 matches
+    project-wide; `ACTION_VENDOR_SPECIFIC_HEADSET_EVENT` → 0 matches project-wide. This specific
+    narrow claim is confirmed true, independently of the unsupported "battery handler" framing
+    around it.
+  - **`hjy.java`'s scope reconfirmed as OTA-only, not general battery telemetry**: its
+    `ScheduledExecutorService`-driven timeout (`hjy.java:30`, 10000ms) and its logic (`hjy.java:33-
+    65`) reference `"Attempt manual OTA"`, `OTA_ERROR_BATTERY_LOW`, `OTA_ERROR_NOT_DOCKED`,
+    `OTA_SUCCESS` — "battery low" appears only as one *OTA precondition failure reason*, not as a
+    battery-telemetry channel.
+  - **This project's own already-🟢-FACT battery-push mechanism (`PROTOCOL.md` §4.3 Option E, DLCI
+    0x08's private envelope, `Group 0x0e Code 0x01`/`Group 0x04 Code 0x03`) is a different channel
+    entirely from this DLCI-0x02 `fua`/`gbd` cluster** — so even where the report's high-level claim
+    ("battery updates are event-driven, not app-polled") happens to be directionally consistent with
+    what this project has independently confirmed by capture, it is not actually supported by the
+    APK evidence the report presents.
 
 - **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/fxm.java:10`
 - **Readable alias**: MaestroSoftwareInfoAndHidUuidCheck
@@ -1856,6 +1890,38 @@ above; not reproduced here in full to keep this document focused — available o
 these were traced to a specific `maestro_pw.*` (or other) service/method this pass; that would be the
 natural next step for whoever picks this up (search for `X.class` and `X.a` reference sites the way
 `qjc`/`qjb` were traced back to `fux.java`/`fxk.java` above).
+
+---
+
+### Full-tree GATT/BLE reference sweep (2026-08-30, cross-validation follow-up)
+
+- **Path**: exhaustive `grep -r` across
+  `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/` (not a sample — the whole
+  decompiled tree).
+- **Readable alias**: n/a (a search result, not a class).
+- **Role**: 🟢 FACT: this APK version's decompiled source contains **zero** references to
+  `BluetoothGatt` and **zero** references to `BluetoothGattCallback`, anywhere. It also contains
+  **zero** references to the Fast Pair GATT service UUID `0xFE2C` (`grep -rli "fe2c"`, no hits). A
+  separate check for the two long-standing open GATT handle numbers from `CAP-014`/`PROTOCOL.md`
+  §4.3's `0x0c0X`/`0x0f2X` cluster (`grep -ril "0x0c0c|0c0c|0x0f2a|0f2a"`) found exactly one file,
+  `com/google/android/apps/wearables/maestro/companion/R.java`, and both hits there
+  (`settingslib_neutral_variant96 = 0x7f060c0c`, `Widget_Material3Expressive_Toolbar_Surface =
+  0x7f150c0c`) are unrelated Android resource-ID integer constants that merely contain the substring
+  `0c0c` — not a GATT handle in any Fast-Pair-UUID-adjacent context. This is a genuine negative
+  result, not a coincidental near-miss.
+- **Relevant UUIDs found**: none (that is the finding).
+- **Assessment**: corroborates, from the companion app's own source rather than from capture-based
+  reasoning, this project's existing methodology choice (`CAP-004`/`CAP-014`) of using nRF Connect
+  rather than the official app for all GATT-related captures — the companion app itself performs no
+  direct `BluetoothGatt` connection management at all, consistent with GATT access (Fast Pair Account
+  Key exchange, the Battery Service pairing, etc.) being delegated entirely to Google Play Services/
+  Nearby out-of-process. It also rules out the companion APK's own source as the place where
+  `PROTOCOL.md` §4.3's still-open `0x0c0X`/`0x0f2X` handle↔UUID mapping question could be resolved —
+  that open question remains exactly as open as before, just with one plausible lead (checking the
+  companion app's own source) now closed off.
+- **Open questions**: none — this is a completed, reproducible, exhaustive search. The underlying
+  `0x0c0X`/`0x0f2X` handle↔UUID mapping question itself (`PROTOCOL.md` §6) remains unresolved and is
+  unaffected by this entry.
 
 ---
 
