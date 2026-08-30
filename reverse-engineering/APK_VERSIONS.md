@@ -28,12 +28,16 @@ the same version subfolder — record each file's own SHA-256 in the table below
 
 | Version dir | File(s) | SHA-256 | versionName | versionCode | Pull date | Source device | Provenance | JADX ver. | apktool ver. | pbtk ver. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| _(e.g. `v3.5.212-30500212/`)_ | _(e.g. `base.apk`)_ | _(`sha256sum <file>`)_ | _(from `pm dump <package>` or `aapt dump badging`)_ | _(same)_ | _(YYYY-MM-DD)_ | _(e.g. "Pixel 7a, maintainer's own device/account")_ | _(how obtained — e.g. "Play Store, maintainer's own Google account, installed on maintainer's own device")_ | _(e.g. `1.5.1`)_ | _(e.g. `2.9.3`)_ | _(e.g. `pbtk 2026.x`, `pipx list` output)_ |
+| `v1.0.955078536-10253511/` | `base.apk` | `b12d75d07f7743b83ed0d507a9d6b7b2abf61d8f1e7c3e63aadc442c097d6c86` | `1.0.955078536` | `10253511` | 2026-08-30 | Pixel 7a (`lynx`, serial `38021JEHN07835`), maintainer's own device | Play Store, maintainer's own Google account, installed on the maintainer's own device | `1.5.1` | `3.0.3` | `pbtk 1.1.3` (pipx) |
+| `v1.0.955078536-10253511/` | `split_config.arm64_v8a.apk` | `ae63526672528d4fbed3086c2cd8280966bdd9ce9e764d2f00456f5b7698f3ba` | `1.0.955078536` | `10253511` | 2026-08-30 | Pixel 7a (`lynx`, serial `38021JEHN07835`), maintainer's own device | Play Store, maintainer's own Google account, installed on the maintainer's own device | `1.5.1` | `3.0.3` | `pbtk 1.1.3` (pipx) |
+| `v1.0.955078536-10253511/` | `split_config.xxhdpi.apk` | `a759ef5bdf17aa431fa58f64c27ea5e2801b114b7436ca785834012126286c46` | `1.0.955078536` | `10253511` | 2026-08-30 | Pixel 7a (`lynx`, serial `38021JEHN07835`), maintainer's own device | Play Store, maintainer's own Google account, installed on the maintainer's own device | `1.5.1` | `3.0.3` | `pbtk 1.1.3` (pipx) |
 
-No version has been pulled or analyzed yet — `TODO.md` Phase 2 (APK static analysis) is at the
-tooling/process stage, not the analysis stage. Populate a row here, and create the matching
-`reverse-engineering/apk/v<versionName>-<versionCode>/` folder locally, the first time an APK is
-actually pulled — see `APK_REVERSE_ENGINEERING_PROCEDURE.md`.
+minSdk=32, targetSdk=36 (from `dumpsys package`, recorded here for reference; not part of the
+table's own columns).
+
+The first APK version has now been pulled and stored locally under
+`reverse-engineering/apk/v1.0.955078536-10253511/` (gitignored, not committed) — decompiling
+(§3 of `APK_REVERSE_ENGINEERING_PROCEDURE.md`) has not started yet.
 
 ## Why provenance matters here
 

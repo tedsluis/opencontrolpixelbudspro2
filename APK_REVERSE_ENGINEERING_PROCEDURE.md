@@ -18,23 +18,30 @@ those remain the maintainer's calls at every step marked **[Maintainer decision]
 ## 1. Prerequisites
 
 ### 1.1 On your computer
-- [ ] **JADX**, **apktool**, and **pbtk** installed (`WORKSTATION_PREPARATIONS.md`'s "Reverse
+- [x] **JADX**, **apktool**, and **pbtk** installed (`WORKSTATION_PREPARATIONS.md`'s "Reverse
       engineering tools: JADX, apktool, pbtk" section) — pbtk's own dependencies (Python ≥ 3.10,
       PySide6, python-protobuf, and `jad`/`dex2jar` for some extractor scripts) confirmed there too.
-- [ ] **Android platform-tools** (`adb`) installed and on your `PATH` (already required by
-      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §1.1).
-- [ ] `sha256sum` (standard on Fedora).
+      Verified 2026-08-30: `apktool --version` → `3.0.3`, `jadx --version` → `1.5.1`, `pipx list` →
+      `pbtk 1.1.3` with `pbtk-jar-extract`/`pbtk-from-binary` on `PATH`.
+- [x] **Android platform-tools** (`adb`) installed and on your `PATH` (already required by
+      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §1.1). Verified 2026-08-30: `adb --version` →
+      `1.0.41` / `37.0.0-android-tools`.
+- [x] `sha256sum` (standard on Fedora). Verified 2026-08-30: GNU coreutils 9.10.
 
 ### 1.2 On the phone
-- [ ] The official Pixel Buds companion app installed under the maintainer's own Google account,
+- [x] The official Pixel Buds companion app installed under the maintainer's own Google account,
       on the maintainer's own device — this is the provenance basis `PROJECT_RULES.md` §8 rule 20
-      requires; see `reverse-engineering/APK_VERSIONS.md`'s provenance column.
-- [ ] USB debugging enabled (same as `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §1.2).
+      requires; see `reverse-engineering/APK_VERSIONS.md`'s provenance column. Confirmed by
+      maintainer 2026-08-30: Play Store, maintainer's own Google account, installed on the
+      maintainer's own Pixel 7a.
+- [x] USB debugging enabled (same as `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §1.2). Confirmed 2026-08-30:
+      `adb devices -l` shows the Pixel 7a (`38021JEHN07835`, model `lynx`) authorized, and
+      `adb pull` succeeded against it.
 
 ### 1.3 Reading this session should already have done
-- [ ] `AGENTS.md` §4/§6 (proto-schema extraction rules, sign-off requirement).
-- [ ] `DECISIONS.md` ADR-017 (the current AI-assistance boundary — supersedes the older ADR-003).
-- [ ] `REVERSE_ENGINEERING.md`'s own template and status legend.
+- [x] `AGENTS.md` §4/§6 (proto-schema extraction rules, sign-off requirement).
+- [x] `DECISIONS.md` ADR-017 (the current AI-assistance boundary — supersedes the older ADR-003).
+- [x] `REVERSE_ENGINEERING.md`'s own template and status legend.
 
 ---
 
