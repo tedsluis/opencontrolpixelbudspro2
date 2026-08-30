@@ -44,13 +44,13 @@ CAP-023,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI
 CAP-024,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-025,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-026,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-027,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-027,capture,2026-08-30,"session date/status: 2026-08-30 — Group N, touch gestures (TOUCH-002-TOUCH-007), analyzed",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-028,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-029,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-030,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-031,capture,captured,"session date/status: 2026-08-27 — analyzed, PROPOSAL — pending maintainer approval; third attempt at CAP-013's original intent (logging started before the clearing action itself), still did not achieve it — see CAP-031-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-032,capture,captured,"session date/status: 2026-08-27 — analyzed, PROPOSAL — pending maintainer approval; fourth attempt at CAP-013/CAP-031's original intent, succeeded (raw-path extraction, no truncation) — primary CAP-001-FINDINGS.md §6 question answered for this session (no pre-Forget BLE link/valid link key found) — see CAP-032-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-033,capture,planned,"session date/status: planned — Group AA, SDP UUID branch isolation for gbm.a()'s 'default internal rfcomm socket' path (SDP-001/SDP-002)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-033,capture,2026-08-30,"session date/status: 2026-08-30 — Group AA, SDP UUID branch isolation (SDP-001/SDP-002), analyzed, isolation not fully clean",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
