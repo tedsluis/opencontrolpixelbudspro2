@@ -361,6 +361,19 @@ an explicit re-index.
 - ✅ **Resolved 2026-08-18 (this capture):** the earlier `CAP-005-FINDINGS.md` §6's top open item —
   "field-to-band mapping is inferred from a single changed field, not confirmed" — is now closed,
   see §5 above.
+- ✅ **Checked 2026-08-30 (APK static-analysis correlation, `REVERSE_ENGINEERING.md`'s `qjw` entry):**
+  the app's own EQ-write code (`fyp.java`) names field 16 "user eq" (`f(qjw)`, called whenever the
+  current curve object changes — matching *both* preset taps and every intermediate slider position)
+  and field 18 "last saved user eq" (`d(gdy)`, which additionally persists the value to a local
+  `key_user_custom_eq` `SharedPreferences` entry). This capture's own 56-frame sequence matches this
+  reading exactly: **zero** of the 6 preset taps produce a field-18 frame (consistent with presets
+  routing through `f()`/field-16 only, via `fyp.c(int)`→`f(qjw)`), while every one of the 15
+  slider-drag-cycles produces a run of field-16 frames followed by exactly one field-18 frame with
+  the same final value — consistent with `d()` persisting the drag's end-state, not computing a new
+  one. **Does not resolve** which specific UI event calls `d(gdy)` (this section's own still-open
+  "slider-release vs. `Save` button" question above) — no call site for `fyd.d`/`fyd.e` was traced.
+  The "live"/"persisted" code-level split and this file's own "fires on release" wire-level revision
+  are mutually consistent, not mutually confirming.
 
 ## 7. Promotion readiness
 

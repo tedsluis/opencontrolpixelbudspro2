@@ -840,5 +840,86 @@ motivated this).
   Neither DLCI 0x08's still-🔴 open identity question nor the "default internal rfcomm socket"
   UUID's unexplained absence from every capture searched so far is affected by this decision.
 
+## ADR-019 — `qhr`'s oneof structure confirmed inside DLCI 0x02's `field5{field4{...}}` wrapper (2 sampled fields); `qhr` fields 4 and 7 promoted to FACT; `qhr` field 12's field-number identity (not its name) promoted to FACT
+
+- **Date**: 2026-08-30
+- **Status**: Accepted
+- **Context**: a 2026-08-30 session combined (a) a Tier 0 re-decode of existing captures against a
+  same-day APK static-analysis pass that recovered `libmaestro`'s real `WriteSetting` request schema
+  (`REVERSE_ENGINEERING.md`'s `qjc`/`qja`/`qhr`/`qjo`/`qju`/`qjg`/`qht` entries), and (b) a Tier 2
+  static-analysis pass tracing `qhr`'s remaining write/read call sites. `ADR-013` had promoted only
+  DLCI 0x02's *outer* `field5{field4{...}}` wrapper shape to FACT, explicitly leaving the "..." itself
+  undecoded; `ADR-018` (Option 2) separately promoted the *channel*'s ownership to FACT while leaving
+  its payload *content* at 🟡 HYPOTHESIS (strong). This session's findings were presented to the
+  maintainer as four discrete candidate promotions (session of 2026-08-30); the maintainer reviewed
+  each individually and approved all four, three as proposed and the fourth in its narrower form
+  (field-number identity only, not the semantic name), per `AGENTS.md` §6's requirement that an agent
+  may propose but never unilaterally commit a FACT promotion.
+- **Findings being recorded**:
+  1. **DLCI 0x02's `field5{field4{...}}` wrapper's inner content, for the two fields sampled, is
+     `qhr`'s own protobuf oneof, addressed via standard wire-format tags — not merely "plausible" per
+     `ADR-013`'s own note.** Two existing `CAP-020` Sent frames already identified as
+     `field5{field4{...}}` (`CAP-020-FINDINGS.md` §3/§4, frames 1741/1935 — `TOUCH-001`/`HEAD-001`)
+     were re-pulled directly from the raw log, HDLC-unescaped/CRC-verified, and decomposed one level
+     further than that file's own original decode. Frame 1741's inner bytes decode to `qhr` field
+     **4**, value `1`; frame 1935's to `qhr` field **29**, value `2` — an exact, byte-for-byte match to
+     the independently-derived (APK code, not wire) `qhr` schema, on both sampled fields, no
+     counter-example. This is two independent evidence paths (real wire bytes vs. compiled app code)
+     converging on the same structure, not one path repeated.
+  2. **`qhr` field 4 = the "Use touch controls" master enable toggle** (`PROTOCOL.md` §4.5.3's
+     top-level toggle). Evidence: `CAP-020` frame 1741 (wire+video correlation, `TOUCH-001`, already
+     🟡 HYPOTHESIS) **and**, independently, the app's own code — write site `fyo.java:124-144`, read
+     site `fxb.java` case 4 logging `"Log Gestures Enable setting"` (self-describing, not a naming
+     inference).
+  3. **`qhr` field 7 = `qju` = the Left/Right press-and-hold gesture-*action* customization**
+     (ANC / Digital assistant / None), matching `PROTOCOL.md` §4.5.3's already-strong press-and-hold
+     HYPOTHESIS. Evidence: `CAP-021` frames 1895/3619/4315/4976 (`HOLD-001`–`HOLD-004`, all 4 of the
+     2×2 Left/Right × ANC/Assistant combinations, wire+video correlated) **and**, independently, the
+     app's own code — write site `fyo.java:300-374` (`t(gdx)`), read site `fxb.java` case 7 logging
+     **`"Log Gestures Customization for touch and hold setting, left: %s, right: %s"`** — a literally
+     self-describing match, not an inference from shape or position. Re-decoding the 4 wire frames
+     also surfaced a nesting level finer than `CAP-021-FINDINGS.md`'s original notation: the value
+     sits inside a `qju.field{1|2}` → `qik` → `qho` chain, not a bare varint directly under
+     `field1`/`field2` — recorded as a correction to that file's own decode, not a new claim.
+  4. **`qhr` field 12 = `qht` — the field-*number* identity only.** Evidence: `CAP-021` frames
+     5237/5247/5255 (`HOLD-005`) decode to `qhr` field 12 with exactly 4 boolean sub-fields, matching
+     `qht`'s independently-confirmed shape (APK code: `qhr`'s field-12 alternative, write site
+     `hgj.java:216-331`, read site `fxb.java` case 12 logging `"Log ANC gesture loop to Clearcut"`).
+     **Not promoted**: whether the app's own internal name for this field, "ANC gesture loop," is the
+     *same* UI feature as `PROTOCOL.md` §4.5.3's existing "ANC-mode rotation checklist" (`HOLD-005`)
+     HYPOTHESIS — the two could describe the same setting seen from two angles, or two different
+     settings that happen to share a 4-boolean shape; this has not been reconciled, and the maintainer
+     explicitly declined to promote that equivalence at this time.
+- **What this ADR does NOT clear**:
+  - The nesting-structure finding (1) is sampled on exactly 2 fields (4 and 29) in one capture
+    session — it establishes that the "..." *is* `qhr`'s oneof for those two instances, not that every
+    one of `qhr`'s 38 fields has been wire-confirmed to decode this way. It does not by itself resolve
+    `ADR-018`'s own remaining HYPOTHESIS (that DLCI 0x02's Sent-direction content specifically carries
+    `libmaestro`'s settings-write commands in general) — it substantially strengthens that HYPOTHESIS
+    for the specific fields tested, but `ADR-018`'s broader claim is not re-litigated or promoted by
+    this entry.
+  - Finding (2)'s field 4 is one-direction (OFF→ON) only, one session.
+  - Finding (3)'s 4/4 combination coverage is strong, but still one capture session for the wire half;
+    the code half (the self-describing log message) is a separate, independent confirmation type, not
+    a second capture.
+  - Finding (4) explicitly does **not** promote `qht`'s app-internal name or its equivalence to the
+    rotation-checklist HYPOTHESIS — only that wire field 12 = code's `qht` (a field-number/shape match).
+  - `qhr` field 29 (Head gestures, `PROTOCOL.md` §4.5.4) was also re-confirmed at the wire level this
+    session (frame 1935) but is **not** part of this ADR — no self-describing code-side name was found
+    for field 29 (its write call site was not located by the static pass), so only one evidence path
+    exists for it; it remains 🟡 HYPOTHESIS, unchanged.
+- **Decision**: findings 1, 2, and 3 above are accepted as 🟢 FACT in full. Finding 4 is accepted as
+  🟢 FACT for the field-number identity (`qhr` field 12 = `qht`) only; the "ANC gesture loop" /
+  "ANC-mode rotation checklist" naming equivalence remains 🟡 HYPOTHESIS.
+- **Consequences**: `PROTOCOL.md` §4.5.3 updated — the top-level toggle and press-and-hold-action
+  opcodes move from 🟡 HYPOTHESIS to 🟢 FACT; the rotation-checklist opcode gains a FACT-confirmed
+  field number but keeps its HYPOTHESIS status for what the field represents. `PROTOCOL.md` §2.2a/§2.3
+  and §6's "what do DLCI 0x02's confirmed inner field numbers actually represent" open item are
+  updated to record that, for the 3 fields tested, the answer is "real `qhr` protobuf field numbers
+  from the app's own recovered schema," narrowing (not fully closing, per the scope note above) that
+  question. Does not unblock `ARCHITECTURE.md` §2.1's `FrameEncoder`/`FrameDecoder` implementation gate
+  for DLCI 0x02 generally — that still requires the broader payload-content HYPOTHESIS in `ADR-018` to
+  reach FACT, which this ADR narrows but does not itself complete.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

@@ -63,6 +63,13 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 | 4 | 0x08 (phone-init) / 0x09 (buds-init, frame 1217) | 1035 / 1217 | **Two distinct payload types multiplexed under the same channel number**: (a) on 0x08 — periodic (~6–7s) frames containing the ASCII string `google-pixel-buds-pro-v1` and a separate protobuf-shaped blob containing ASCII `all`; one early frame (1673, 08:51:32.79) contains ASCII `Europe/Amsterdam`; (b) on 0x09 — plain-ASCII HFP AT commands, see §3 | 🟢 FACT (channel exists, is dual-directional, carries this content) |
 | 5 | 0x0a | 1068 | No data-carrying frames observed in this capture, only PN/SABM/DISC control traffic | 🔴 OPEN QUESTION — channel opened and closed repeatedly but never carried a payload here |
 
+> **Addendum (2026-08-30):** DLCI 0x08's `[Group][Code][Length:2B][Value]` envelope's Length byte
+> order (referenced throughout this file and `PROTOCOL.md` §2.1/§2.3 as "2B-BE") is now empirically
+> confirmed big-endian, checked against 9 of this capture's own frames plus 5 from `CAP-004` (14/14
+> match BE, 0/14 match LE) — see `CAP-004-FINDINGS.md` §5b for the full frame table, extraction
+> commands, and reproduction script (added there, not duplicated here, since that file is this
+> project's existing authority for this envelope's decode).
+
 > **Correction (2026-08-10), source: `CAP-002`'s `CAP-002-FINDINGS.md` §2/§3.** The 🟡 HYPOTHESIS above
 > for channel 1/DLCI 0x02 — that its `0x7e`-delimited content "suggests AVRCP" — is **not
 > supported** by `CAP-002` (a separate, fresh-pairing session against the same physical device).

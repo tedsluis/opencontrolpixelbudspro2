@@ -249,5 +249,99 @@ earbud, before the value itself.
 - 🔴 What does DLCI 0x0a's 1123-frame payload burst (§4a) represent, and why does it appear only
   in this session? → copied to `PROTOCOL.md` §6.
 
+## 8. Addendum (2026-08-30) — `field 7` and `HOLD-005`'s inner field independently confirmed as
+`qhr`'s own fields 7 (`qju`) and 12 (`qht`), plus a nesting detail finer than §3's original decode
+
+A 2026-08-30 APK static-analysis pass (`REVERSE_ENGINEERING.md`'s `qhr`/`qjo`/`qju` entries) traced
+`qhr`'s field-7 write call site (`fyo.java:300-374`, method `t(gdx)`) and confirmed, from the app's own
+code, that it is the Left/Right press-and-hold gesture-*action* customization — matching this file's
+own §3 wire-derived reading by name, not just by shape. Re-decoding this session's own `HOLD-001`–
+`HOLD-005` frames one level further than §3/§4 originally did (same raw hex, re-pulled fresh from
+`CAP-021-btsnoop_hci.log` to confirm no transcription drift):
+
+```python
+import struct, binascii
+
+def unescape_hdlc(data):
+    out = bytearray(); i = 0
+    while i < len(data):
+        b = data[i]
+        if b == 0x7d:
+            i += 1; out.append(data[i] ^ 0x20)
+        else:
+            out.append(b)
+        i += 1
+    return bytes(out)
+
+def leb128(data, i=0):
+    val = 0; shift = 0
+    while True:
+        b = data[i]; val |= (b & 0x7f) << shift; i += 1
+        if not (b & 0x80): break
+        shift += 7
+    return val, i
+
+def read_tag(data, i):
+    val, j = leb128(data, i)
+    return val >> 3, val & 7, j
+
+def parse_ld(data, i=0):
+    f, wt, j = read_tag(data, i)
+    ln, j = leb128(data, j)
+    return f, data[j:j+ln], j+ln
+
+def unwrap(hx):
+    raw = bytes.fromhex(hx)
+    un = unescape_hdlc(raw[1:-1])
+    body, trailer = un[:-4], un[-4:]
+    assert struct.pack('<I', binascii.crc32(body) & 0xffffffff) == trailer
+    addr, i = leb128(body, 0); i += 1  # skip control byte
+    return body[i:][13:]  # strip the 13-byte constant prefix
+
+# HOLD-002 (frame 1895), re-pulled: tshark -r CAP-021-btsnoop_hci.log
+#   -Y "btrfcomm.dlci==0x02 and frame.number==1895" -T fields -e data.data
+rest = unwrap("7e003b0310131dea71de7d5e251d9a8c9e2a0a22083a060a0422020806bcae58b07e")
+f_outer, body_outer, _ = parse_ld(rest)             # outer field 5
+f_qjc4, body_qhr, _ = parse_ld(body_outer)          # qjc's own field 4 (constant) -> body is qhr's content
+f_qhr, body_qju, _ = parse_ld(body_qhr)             # qhr's OWN oneof field number
+f_side, body_side, _ = parse_ld(body_qju)           # qju.field1(Left)/field2(Right) = qik
+f_qik, body_qik, _ = parse_ld(body_side)            # qik.field4 -> body is qho's content
+f_qho, wt, m = read_tag(body_qik, 0)
+val, _ = leb128(body_qik, m)
+print(f_qhr, f_side, f_qik, f_qho, val)
+# -> 7 1 4 1 6   i.e. qhr field 7 (qju), Left (field1), qik field 4, qho field 1, value 6
+```
+
+**Result — CONFIRMED, 4/4 `HOLD-001`–`HOLD-004` frames, plus a nesting refinement:** all four frames
+(1895/3619/4315/4976) decompose to `qhr` field **7** (`qju`), exactly matching the write-site
+identification above. The Left/Right selector (`qju.field1`/`field2`) and the ANC/Assistant value
+(`5`/`6`) both match this file's §3 table exactly — **but** the value is not a bare varint under
+`field1`/`field2` as §3's simplified notation suggested; it is one level deeper: `qju.field1(Left)` →
+`qik` (length-delimited) → `qik.field4` → `qho` (length-delimited) → `qho.field1` = the raw integer.
+This matches `REVERSE_ENGINEERING.md`'s own `qju`/`qik`/`qho` shape description exactly (`qik` wraps a
+`qho` value, `qho` carries the actual int) — §3's "`field4=varint(5|6)`" phrasing was a correct
+*value* but an imprecise *shape* description; corrected here rather than in §3 itself, per
+`PROJECT_RULES.md` §3's convention for `CAP-NNN-FINDINGS.md` files (rewrite findings, keep the
+history in git). The three `HOLD-005` frames sampled (5237/5247/5255) all decompose to `qhr` field
+**12** (`qht`) with exactly 4 boolean sub-fields (tags `0x08`/`0x10`/`0x18`/`0x20`), matching `qht`'s
+already-documented 4×`BOOL` shape with no further nesting (unlike `qju`, `qht`'s fields are plain
+booleans).
+
+**Bonus, not part of this file's original scope but directly relevant to §7's Left/Right question**:
+the same 2026-08-30 static pass separately confirmed (`REVERSE_ENGINEERING.md`'s `qjt` entry) that
+`qhr`'s Group-4 schema is not the only one containing a 4-field envelope shaped like `qht`'s — but no
+code-level Left/Right marker was found for `HOLD-005`'s specific envelope either; §7's own open
+question about which frames belong to which earbud remains unresolved by this addendum.
+
+See `REVERSE_ENGINEERING.md`'s `qhr` entry (2026-08-30 update) and `qjo`/`qju` entry (2026-08-30
+update) for the full code-side derivation.
+
+**Promoted 2026-08-30, maintainer sign-off (`DECISIONS.md` ADR-019):** `PROTOCOL.md` §4.5.3 now
+records `HOLD-001`–`HOLD-004`/field 7/`qju` as 🟢 FACT in full (including the `qik`→`qho` nesting
+correction above), and `HOLD-005`/field 12/`qht` as 🟢 FACT for its field-number identity only — the
+maintainer explicitly declined to promote `qht`'s "ANC gesture loop" name as the same feature as this
+file's own "ANC-mode rotation checklist" reading; §7's Left/Right-attribution question above remains
+open regardless.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-021-2026-08-21_07-59-36_08-07-04-Group_G/CAP-021-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-021-2026-08-21_07-59-36_08-07-04-Group_G/CAP-021-FINDINGS

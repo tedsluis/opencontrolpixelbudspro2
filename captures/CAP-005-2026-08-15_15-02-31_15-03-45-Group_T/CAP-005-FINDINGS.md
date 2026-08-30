@@ -391,6 +391,20 @@ tshark -r CAP-005-btsnoop_hci.log \
   result across every capture with DLCI 0x02 traffic. 🟡 HYPOTHESIS (strengthened): the field-16/18
   pair is EQ-specific, not a general-purpose settings-apply/save pair shared with ANC. See
   `DESKRESEARCH_FINDINGS.md`'s 2026-08-17 entry for the full method and per-capture results.
+- ✅ **Checked 2026-08-30 (APK static-analysis correlation, `REVERSE_ENGINEERING.md`'s `qjw` entry):
+  field 16/18's "preview"/"save" naming reframed as "live"/"persisted" at the code level, and checked
+  against this capture's own three frames.** The app's own EQ-write code (`fyp.java`) shows field 16
+  = `f(qjw)`, called whenever the current EQ curve object changes (both slider drags and preset taps);
+  field 18 = `d(gdy)`, which additionally persists the value to a local `key_user_custom_eq`
+  `SharedPreferences` entry. This capture's own two actions match exactly: `EQP-002`'s preset tap
+  (frame 1245) is field 16 only; `EQS-004`'s slider drag produces one field-16 write mid-drag (frame
+  1321) followed by one field-18 write at the `Save` tap (frame 1338), both carrying the identical
+  band value — consistent with `d()` persisting whatever `f()` last set, not computing anything new.
+  Does not resolve whether `d()` is called specifically by the `Save` button (this capture's own
+  original reading) or by slider-release (`CAP-015`'s later, revised reading) — the code path calling
+  `fyd.d`/`fyd.e` was not traced. See `REVERSE_ENGINEERING.md`'s `qjw` entry (2026-08-30 update) for
+  the full correlation, including why the "field 18 fires 0.05–1.9s after field 16, no video-visible
+  Save tap" reading `CAP-015-FINDINGS.md` §6 found is *also* compatible with this code-level reading.
 
 (Per this session's task instructions, these are also being copied into `PROTOCOL.md` §6 — see that
 file's own changelog for the corresponding addition.)

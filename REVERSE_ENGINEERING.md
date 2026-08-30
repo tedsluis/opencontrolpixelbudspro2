@@ -257,6 +257,25 @@ call per `AGENTS.md` §6/§15.
     (mirroring exactly the methodology this entry's own Hypothesis test already used to confirm the
     "pigweed" UUID → DLCI 0x02, above) — a positive match would be strong, direct wire-level
     confirmation of this pass's code-level reading.
+  - **Update (2026-08-30, Tier 0 re-decode task) — a narrower, cheaper hypothesis test than the SDP-UUID
+    one above run and confirmed: the `[Length:2B]` field's byte order is empirically big-endian, not
+    just "consistent with `gbd`'s `DataInputStream`/`DataOutputStream` usage" as this entry stated
+    structurally.** 🟢 FACT (empirical, re-extracted from the raw logs, not merely re-read from a prior
+    finding): every non-zero-length DLCI 0x08 frame in `CAP-001-btsnoop_hci.log` (9 frames,
+    `tshark -r CAP-001-btsnoop_hci.log -Y "btrfcomm.dlci==0x08 and btrfcomm.len>0" -T fields -e
+    frame.number -e data.data`) and `CAP-004-btsnoop_hci.log` (5 complete, non-fragmented frames, same
+    filter) was checked by comparing the 2-byte Length field interpreted as big-endian vs.
+    little-endian against the frame's own actual trailing byte count. **14/14 matched big-endian
+    exactly; 0/14 matched little-endian** (e.g. `CAP-001` frame 1089, `05 0a 00 0d <13 bytes>`: BE
+    reading of `00 0d` = 13 = the actual value length; LE reading = 3328, nowhere close). This is a
+    direct, cross-capture (2 independent sessions) empirical confirmation of the byte-order half of
+    this entry's own structural claim (`gbd.c()`/`d()` using `DataInputStream.readShort()`/
+    `DataOutputStream.writeShort()`, which are big-endian per the Java Language Specification) — it
+    does **not** by itself confirm the SDP-UUID attribution (the Hypothesis test immediately above,
+    which remains untested), only the framing-mechanism-level match already asserted. See
+    `CAP-004-FINDINGS.md`'s 2026-08-30 addendum for the full per-frame table and reproduction script
+    (added there rather than here, since that file is this project's existing authority for DLCI
+    0x08's envelope decode).
 
 ### `defpackage.gau` (switch arm `case 3` only) — RfcommUuidNormalizer
 
@@ -543,6 +562,34 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     Sent frame's raw hex against this 3-level structure) is unchanged and still the needed next step
     for a capture-level confirmation; this update only removes the "no `pw_rpc.RpcPacket`-shaped class
     has been located" caveat that previously blocked even attempting that redecode.
+- **Hypothesis test — result (2026-08-30, Tier 0 re-decode task, byte-level, capture-correlated):**
+  🟢 FACT (mechanical byte decode against the confirmed structures above, independently re-extracted
+  from the raw `.log` files, not merely re-read from a prior `CAP-NNN-FINDINGS.md`): two existing
+  DLCI 0x02 Sent frames already identified as `field5{field4{...}}` in `CAP-020-FINDINGS.md` §3/§4
+  (`CAP-020`, `TOUCH-001`/`HEAD-001`) were re-pulled directly from `CAP-020-btsnoop_hci.log` via
+  `tshark -r CAP-020-btsnoop_hci.log -Y "btrfcomm.dlci==0x02 and frame.number==1741" -T fields -e
+  data.data` (frame 1741: `7e004b0310151dea71de7d5e251d9a8c9e2a0422022001c5a08a3c7e`; frame 1935:
+  `7e004b0310151dea71de7d5e251d9a8c9e2a052203e801020641623b7e` — byte-identical to the file's own
+  citation), HDLC-unescaped/CRC-verified per `PROTOCOL.md` §2.2a, and the inner "..." bytes (after
+  the 13-byte prefix, `field5`, `field4`) decomposed one level further as standard protobuf wire-format
+  tags. **Frame 1741** (`TOUCH-001`): inner bytes `20 01` decode to tag `0x20` = field **4**, wiretype
+  0 (varint), value `1` — an exact match, at the tag-byte level, to `qhr`'s own field 4 (BOOL,
+  "Head/touch gestures master enable toggle" per this document's own `qhr` field-register table,
+  write site `fyo.java:124-144`). **Frame 1935** (`HEAD-001`): inner bytes `e8 01 02` decode to a
+  2-byte LEB128 tag `0xe8 0x01` = `232` = field **29**, wiretype 0 (varint), value `2` — matching
+  `PROTOCOL.md` §4.5.4's existing wire-derived HYPOTHESIS ("field 29 = Head gestures") and confirming,
+  for the first time at the byte level, that this document's own `qhr` field-register table's "field
+  29 | ENUM | not found [write site]" entry was a gap in the mechanical call-site search, not a sign
+  the field is unwritten — a real `Sent` frame does populate it, with a plain 1-byte varint value (`2`)
+  consistent with a small-ordinal `ENUM`. This is a direct confirmation of the reconciliation this
+  entry's Open Questions section proposed: the wire's "..." decomposes exactly as `qhr`'s own oneof
+  tag structure, field-number-for-field-number, not merely "plausible." Reproducible directly from the
+  hex above plus `PROTOCOL.md` §2.2a's published unescape/CRC method and standard protobuf wire-format
+  tag decoding (`field = tag>>3`, `wiretype = tag&7`) — no APK-derived script needed. See
+  `CAP-020-FINDINGS.md`'s 2026-08-30 addendum for the full capture-side write-up, including the
+  reproduction script. **Promoted to `PROTOCOL.md` §2.2a as 🟢 FACT, 2026-08-30, maintainer sign-off
+  (`DECISIONS.md` ADR-019)** — scoped exactly as stated above (2 sampled fields, not full-schema
+  coverage).
 
 ### `defpackage.nqx` / `defpackage.npy` / `defpackage.nqo` / `defpackage.npw` / `defpackage.nqm` — Pigweed `pw_rpc` wire-packet & client plumbing (`nqx` = `RpcPacket`)
 
@@ -804,6 +851,26 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     9/10 should never appear as the populated oneof case, since no code path writes them. A capture
     showing 9 or 10 populated would contradict this static analysis and should be flagged as either a
     different app version/client, or a write call site this search missed.
+  - **Update (2026-08-30, Tier 0 re-decode task) — fields 4, 7, 12, and 29 (a distinct set from the
+    9/10/13 question above) independently byte-confirmed against existing captures; field 13 itself
+    not yet re-tested this pass (no isolated-ANC-tap-plus-gesture capture exists yet — this remains
+    the still-open hypothesis test above).** 🟢 FACT (mechanical byte decode, re-extracted from the
+    raw logs): `CAP-020` frames 1741/1935 decompose exactly to `qhr` field 4 (value `1`) and field 29
+    (value `2`) respectively — see the `qjc`/`qja` entry's own 2026-08-30 update for the full byte
+    trace. `CAP-021` frames 1895/3619/4315/4976 (`HOLD-001`–`HOLD-004`) all decompose to `qhr` field
+    **7**, and frames 5237/5247/5255 (`HOLD-005`) to `qhr` field **12** — see the updated `qjo`/`qju`
+    entry below for the full trace, including a previously-undocumented extra nesting level (`qik`→
+    `qho`) inside field 7's own body. All four of these field numbers match this table's own
+    write-call-site register exactly (field 4 = touch/head-gestures toggle per `fyo.java:124-144`,
+    field 7 = `qju`, field 12 = `qht`, field 29 = head gestures) — a second, independent (wire-level)
+    confirmation path for entries this pass had previously only established via static call-site
+    tracing. **Promoted to `PROTOCOL.md` §4.5.3 as 🟢 FACT, 2026-08-30, maintainer sign-off
+    (`DECISIONS.md` ADR-019)**: field 4 (full identity) and field 7/`qju` (full identity, plus the
+    `qik`→`qho` nesting correction) in full; field 12/`qht` for its **field-number identity only** —
+    the maintainer reviewed and explicitly declined to promote `qht`'s "ANC gesture loop" name as
+    equivalent to `PROTOCOL.md` §4.5.3's separate "ANC-mode rotation checklist" HYPOTHESIS. Field 29
+    was **not** included in this promotion (no self-describing code-side name exists for it, only the
+    wire-level match) — it remains 🟡 HYPOTHESIS, unchanged.
 
 - **Bonus finding — comprehensive `qhr` field-number → UI-action register (this pass), beyond the
   original 9/10/13 question.** Tracing every `qhr.a.k()` builder call site (write direction) and
@@ -853,6 +920,23 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
   above); why fields 9/10 exist in the schema at all, given they are confirmed write-silent/read-inert
   in this app version (see the 2026-08-30 update above — this replaces the original phrasing of this
   question, which asked only "why 3 field numbers", now narrowed to "why 2 apparently-unused ones").
+- **Update (2026-08-30, Tier 2 follow-up pass) — fields 24/26/29's delegate chain traced one level
+  further; a dead end, not a resolution.** 🟢 FACT (code reading, `qgx.java` in full + `a.java`'s
+  `aO`/`aI` methods): `qgx.n`/`qgx.r`/`qgx.s` (the three delegate instances this entry's fields
+  24/26/29 route through, per the original pass) are `qgx`'s own indices 13, 17, and 18 respectively
+  — and **all three call the exact same underlying method**, `a.aO(int)` (`a.java:487-489`:
+  `return aI(i) != 0;`), which itself delegates to `a.aI(int)` (`a.java:431-439`: a 3-value remap,
+  `{0→1, 1→2, 2→3, else→0}`). This is the same generic 3-valued validity/remap helper already seen
+  elsewhere in this document's `qjn`/`qjt` write-side entry (`fyw.java`'s `qjg`-field boolean-to-tri-
+  state conversion, e.g. `i21 = ((qjgVar.b & 1)==0||!qjgVar.c) ? 2 : 3`) — i.e. **`qgx.n`/`r`/`s` are
+  not per-field-type enum validators; they are three call sites of one shared, generic "is this a
+  valid 3-state ordinal" helper**, reused across unrelated proto enum types by R8 (matching the
+  already-documented pattern for `a.at`/`a.as` elsewhere in this codebase). Tracing this delegate
+  chain one level deeper does **not** reveal fields 24/26/29's actual backing enum type or semantic
+  meaning — it confirms they share a *shape* (a 3-valued enum, structurally like a tri-state
+  boolean) but nothing more. This is a genuine dead end via this specific path, not merely "not
+  attempted" — recorded as such rather than left ambiguous, per this document's own zero-creativity
+  standard. Fields 24/26/29 remain unnamed.
 
 ### `defpackage.qjn` / `defpackage.qjt` / `defpackage.qhx` / `defpackage.qjv` — `qjc`/`qja`'s other 4 oneof-group alternatives
 
@@ -882,6 +966,141 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
   all 5 groups (61 total top-level fields: 1+12+10+38+3 = 64, minus `qjt`'s 4 unused numbers = 60
   actually-present) would be a natural next step, but was not attempted here to avoid guessing field
   semantics from count/position alone.
+
+- **Update (2026-08-30, Tier 2 follow-up pass) — a structural reframing, not just more field names:
+  `qhx`/`qjn`/`qjt` are very likely each an alternate, per-product-variant settings schema, not 3 of
+  5 "categories" within one product's own settings.** 🟢 FACT (code existence/structure and call-graph
+  tracing across the write-side classes): every write call site for `qhr`'s fields is in
+  `defpackage/fyo.java`, a class that `implements fya` **directly**. Every write call site for `qjn`
+  (this Group 2) and `qhx`'s field is in `defpackage/fyw.java`, which `extends fxz implements fya` — a
+  **different, sibling** class. Every write call site for `qjt` (this Group 3) is in
+  `defpackage/fyx.java`, which **also** `extends fxz`. `fyo`, `fyw`, and `fyx` are the **only three**
+  classes in this APK that implement the `fya` interface (`grep -rln "implements fya\|extends fxz" .`
+  → `fxz.java`, `fyo.java`, `fyw.java`, `fyx.java` — 4 files, one of which, `fxz`, is only ever a base
+  class, never instantiated directly by any DI-provider site found this pass), and each is constructed
+  from a **distinct** dependency-injection provider case: `frg.java:244` (`new fyo(...)`, feeding
+  `qhr`'s writes) vs. `fub.java:52`/`:54` (`new fyw(...)`/`new fyx(...)`, feeding `qjn`'s/`qjt`'s
+  writes respectively) — three separate construction sites, not one class picking a branch at
+  runtime. **Crucially, `fyo` and `fyw`/`fyx` implement almost entirely disjoint subsets of `fya`'s
+  methods**, each stubbing the other's methods as empty no-ops inherited from `fxz`'s or their own
+  synthetic overrides (e.g. `fyo.c`/`.g`/`.i`/`.k`/`.p`/`.q`/`.v`/`.w` are all empty stubs in
+  `fyo.java:402-432`, while `fyw` gives every one of those a real `qjn`/`qjg`-writing body). This is
+  the standard shape of "one interface, N alternate implementations selected per hardware/product
+  variant at DI-wiring time," not "one implementation handling 5 sub-categories of the same product's
+  settings." **Reading this project's own already-confirmed context onto it**: `qhr` (Group 4,
+  reached via `fyo`) is independently confirmed, by this project's own wire-capture evidence
+  (`PROTOCOL.md` §4.1/§4.2/§4.5, all captured against the maintainer's actual Pixel Buds Pro 2 unit),
+  to be the schema the Buds Pro 2 actually uses. `qhx`/`qjn`/`qjt` (reached via `fyw`/`fyx`) are
+  therefore a strong 🟡 **HYPOTHESIS (structural, not wire-confirmed)**: alternate settings schemas
+  for **other** Google earbud products sharing this same companion app and `WriteSetting` RPC method
+  — plausibly an older/different Pixel Buds generation, or another "Presto"-family device (see the
+  literal internal codename found below) — not the hardware this project targets. If correct, most of
+  the field names recovered below describe a *different device's* settings, not gaps in the Buds Pro
+  2's own feature set; per `PROJECT.md`'s non-goal ("no support for other Pixel Buds models unless the
+  protocol is demonstrably identical"), this narrows rather than expands this project's own remaining
+  work, but is flagged prominently since it changes how every finding below should be read. **Not
+  independently confirmed**: no capture evidence (this project has none targeting a different earbud
+  model) checks which of `qhx`/`qjn`/`qjt` a *different* physical device would actually select — this
+  reading rests entirely on the DI/method-overlap structure, not a wire observation.
+
+- **`qhx` (Group 1) resolved — OOBE (out-of-box-experience) mode toggle, both directions.** 🟡
+  HYPOTHESIS (strong — code-level, both write and read sides self-describing): the only call sites
+  referencing `qhx` outside its own oneof-schema declarations are `defpackage/fxz.java` (write) and
+  `defpackage/gaa.java` (read). **Write** — `fxz.m(boolean z)` (`fxz.java:20-44`, the base class's own
+  override, inherited by every `fya` implementor that doesn't override `m()` itself — `fyw`/`fyx` both
+  inherit it unchanged): logs `"Change oobe mode state to %s"` (`fxz.java:23`), builds `qhx` field 1 =
+  the boolean, wraps it as `qjc` field 1 (`qhx`'s own oneof case), and sends it via the standard
+  `WriteSetting` path — **and additionally, in the same call, sends a second, separate write**
+  (`qix` with `qixVar.c=1`, method id 8) alongside it, a detail not decoded further here (out of this
+  pass's scope). **Read** — `defpackage/gaa.java`, method `b(int i, mxr mxrVar)` (a large notification
+  dispatcher distinct from the already-documented `fxb.java`, which handles `qhr`/Group 4 specifically
+  — `gaa.b` handles `i==10`, decoding a `qja` response and switching on its own oneof case): case 1
+  (`qhx`) logs **`"Oobe mode is on"`** (`gaa.java:405`) when the boolean is true, and falls through to
+  an `ACTION_TYPE_UNKNOWN` gesture dispatch otherwise (`gaa.java:407`) — i.e. OOBE mode being on
+  appears to gate/suppress normal gesture-action dispatch, consistent with an out-of-box-experience
+  flow wanting to intercept gestures. This class-level identification (OOBE mode) matches, by *label*
+  and by *shared code pattern* (a single boolean field, no distinguishing suffix), several other
+  "OOBE"-named fields found in `qjn`/`qjt` below (field 8, "oobe finished state") — these are
+  plausibly related but are **distinct fields in distinct oneof groups**, not the same field seen
+  twice; no evidence this pass ties them together beyond the shared word "oobe" in their respective
+  log messages.
+
+- **`qjn` (Group 2) — resolved field-by-field for 8 of its 12 fields, both write and read sides
+  largely self-describing; the class's own internal name is literally "presto."** 🟡 HYPOTHESIS
+  (strong — code-level; not capture-correlated, since no capture in this project's possession
+  exercises a different-product Buds unit): `defpackage/gaa.java`'s read-side dispatcher (same method
+  as `qhx` above) logs, for this oneof case specifically, `"Value field of presto setting not set"`
+  (`gaa.java`, default branch of the Group-2 switch) — **"presto" is this app's own internal codename
+  for whatever product `qjn` belongs to** (not this project's own prior "presto"/"MaestroSettingGroup2"
+  alias, which was a project-invented placeholder — this is the app's own string). Write side
+  (`defpackage/fyw.java`, all methods overriding the shared `fya` interface):
+
+  | Field | Type | Write call site (`fyw.java`) | Read case (`gaa.java`) / log message | Plausible role |
+  |---|---|---|---|---|
+  | 1 | BOOL | `l()`, `:163-175`, `"Change OHD state to %s"` | case `i15==1`, no distinct log | **"OHD state"** — plausibly On-Head-Detection; note `qhr` field 2 (this app's *other*, Buds-Pro-2 schema) is independently wire-confirmed as In-ear detection (`PROTOCOL.md` §4.5.5) and is also reached via the *same shared interface method* `l()` in `fyo.java:169-188` — i.e. `l()` is this app's own "wear-detection toggle" slot across both schemas, under two different internal names (see `PROTOCOL.md` cross-reference note below) |
+  | 4 | MESSAGE→`qjo` | `t(gdx)`, `:227-350`, `"Touch control has no value to set"` (guard message when empty) | case `i15==4`, builds a `gdx` and calls `geaVar2.ad(...)` | **Left/Right "touch control" gesture-action pair** — see the updated `qjo`/`qju` entry below; structurally and functionally parallel to `qju`/`qhr` field 7 (also reached via the same shared interface method `t(gdx)`, in `fyo.java`, for the Buds-Pro-2 schema) |
+  | 5 | BOOL | `k()`, `:148-160`, `"Change noise detection state to %s"` | case `i15==5`, no distinct log | **"noise detection state"** |
+  | 6 | BOOL | `p()`, `:193-205`, `"Change shared mode state to %s"` | case `i15==6`, no distinct log | **"shared mode state"** — plausibly an audio-sharing/multi-listener feature; not this project's own already-confirmed Multipoint (`PROTOCOL.md` §4.5.2, which is `qhr` field 11, a different oneof group entirely) |
+  | 8 | BOOL | `n()`, `:178-190`, `"Change oobe finished state to %s"` | case `i15==8`, no distinct log | **"oobe finished state"** |
+  | 9 | MESSAGE→`qjg` | `c()`/`g()`/`q()`/`y()` (4 separate one-flag-at-a-time setters, `:82-99`,`:116-133`,`:207-224`,`:370-380`) | case `i15==9` | **"Attention alert"** (4-boolean group) — see the updated `qjg`/`qht` entry below |
+  | 10 | BOOL | `f()`, `:101-114`, `"Change diagnostics state to %s"` | case `i15==10`, no distinct log | **"diagnostics state"** |
+  | 11 | BOOL | `h()`, `:135-145`, no distinct log either side | case `i15==11`, no distinct log | not independently named |
+  | 12 | ENUM (`qic`, via `qgx.o`) | `w(gdc)`, `:352-368`, `"Change Eq Setting state to %s"` | case `i15==12`, routes through `geaVar3.S(str3, fms.D(i2))` | **"Eq Setting"** — an enum-valued EQ setting (plausibly a preset selector), structurally distinct from `qhr`'s own EQ representation (`qjw`, a 5×`float` custom-curve quintet, fields 16/18) — consistent with `qjn` belonging to a different, likely simpler product that only supports EQ presets, not a 5-band custom curve. `qic`'s own 3 constants (`qic.a`/`.b`/`.c` = 1/2/3) are themselves unnamed integers, not self-describing like `qhs`'s `ANC_STATE_*` — which specific preset/value each represents is not resolved. |
+
+  Fields 2, 3, 7 were not traced to a call site this pass (no `fyw.java` method maps to them in the
+  file as read); field 12's `qgx.o` delegate (index 14, `case 14: return qic.a(i2) != 0;`) is the same
+  delegate `qjt` field 12 uses below (already noted in the original pass) — now additionally confirmed
+  to route, on both sides, through the exact same `fms.D(qic)`/`gea.S(...)` conversion and setter,
+  reinforcing (not merely coincidentally) that `qjn` field 12 and `qjt` field 12 represent the *same*
+  underlying "Eq Setting" concept for their respective product/schema.
+
+- **`qjt` (Group 3) — resolved for 6 of its 10 fields by direct cross-reference against `qjn`'s newly-
+  named fields, via the same shared `fya` interface methods; `qjt`'s own write class (`fyx.java`)
+  carries no distinct log messages of its own.** 🟡 HYPOTHESIS (strong for the *field-number*
+  identification, since it's a direct code cross-reference; slightly weaker for the *semantic name*
+  itself, since `qjt`'s own code path never logs it — the name is inherited from `qjn`'s sibling
+  method, not independently stated): `defpackage/fyx.java` (`extends fxz implements fya`, the same
+  sibling relationship as `fyw`) implements the *same* interface method names as `fyw`, writing to
+  `qjt` instead of `qjn`:
+
+  | Field | Type | Write call site (`fyx.java`) | Shared `fya` method | Name inherited from `qjn`'s same method |
+  |---|---|---|---|---|
+  | 1 | BOOL | `l()`, `:117-127` | `l(boolean)` | **"OHD state"** (matches `qjn` field 1) |
+  | 5 | BOOL | `k()`, `:105-115` | `k(boolean)` | **"noise detection state"** (matches `qjn` field 5) |
+  | 8 | BOOL | `n()`, `:129-139` | `n(boolean)` | **"oobe finished state"** (matches `qjn` field 8) |
+  | 10 | BOOL | `f()`, `:69-79` | `f(boolean)` | **"diagnostics state"** (matches `qjn` field 10) |
+  | 11 | BOOL | `h()`, `:81-91` | `h(boolean)` | not independently named (matches `qjn` field 11, also unnamed) |
+  | 12 | ENUM (same `qgx.o`/`qic` as `qjn` field 12) | `w(gdc)`, `:153-168` | `w(gdc)` | **"Eq Setting"** (matches `qjn` field 12 exactly — same delegate) |
+  | 13 | BOOL | `i()`, `:93-103` | `i(boolean)` | not independently named — `qjn` has no field using `i()` (`fyw` does not override it; inherited empty stub from `fxz`), so there is no sibling name to borrow |
+  | 14 | INT32 | `v(int)`, `:141-151` | `v(int)` | not independently named — same situation as field 13, `qjn` has no field using `v()` |
+
+  This cross-reference method (matching two sibling classes' *shared interface method names*, not
+  their field numbers or log text directly) is a new technique introduced this pass — it works here
+  specifically because `fyw`/`fyx` are structurally parallel siblings of the same base class (`fxz`)
+  and interface (`fya`), and is a genuine confirmation (not a guess) for the 6 fields with a `qjn`-side
+  log message to borrow, but is explicitly **not** claimed for fields 13/14, where no sibling name
+  exists to cross-reference and no name is invented. `qjt`'s own fields 3 and 7 (present per the
+  original pass's sparse-numbering list) were not traced to a call site this pass — `fyx.java` has no
+  method setting `qjtVar.b` to 3 or 7.
+
+- **`qjv` (Group 5) confirmed fully unused in this app version — both write-silent and read-inert,
+  for the entire group, not just some fields within it.** 🟢 FACT (exhaustive whole-tree text search,
+  not merely "no call site found in the files searched" as the original pass's phrasing put it):
+  `grep -rn "qjv\b" .` across every `.java` file in `jadx-output/sources/` returns exactly 5 hits —
+  `qjv.java` itself, `qjc.java`/`qja.java` (the two oneof-schema declarations, already documented),
+  `qix.java:28` (an unrelated oneof's own info-string, which separately references the `qjv` class as
+  one of *its own* nested types — a coincidental reuse of the class, not a `qjc`/`qja`-oneof write
+  path), and `defpackage/fyv.java:68` — the **central** outbound-write dispatch/deduplication method
+  (`fyv.c(qjc)`, the function every `fya` implementor's write path funnels through) has a defensive
+  `case` for `qjc.b==5` (computing a dispatch-map key from `((qjv) qjcVar.c).b`), but this is dead
+  code from a construction standpoint: **no site anywhere in the decompiled tree ever builds a `qjc`
+  with case 5 set** (unlike cases 1/2/3/4, each of which has a real, traced builder call site above).
+  On the read side, `gaa.java`'s response dispatcher (documented above) explicitly `return`s without
+  any action for oneof case 5, the same as case 4 (`qhr`, correctly — that one's handled by the
+  *separate* `fxb.java` class instead) — but unlike case 4, no other class anywhere handles case 5
+  either. **Conclusion**: `qjv` (and by extension its own field 1/`qit` and field 3/`qjd` trivial
+  marker types) is present in the schema but entirely inert in this app version — a group-level
+  parallel to `qhr`'s individual fields 9/10, but total rather than partial.
 
 ### `defpackage.qjw` — 5×`FLOAT` message, referenced twice inside `qhr` (fields 16 **and** 18)
 
@@ -937,6 +1156,39 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     preview-vs-commit timing question `PROTOCOL.md` §4.2 asks remains open; this only replaces "field
     16 and 18 are structurally identical, role unknown" with "field 16 and 18 have distinct, named
     roles (live vs. persisted), whose relationship to slider-drag-vs-release timing is still untraced."
+- **Update (2026-08-30, Tier 0 re-decode task) — the "live"/"persisted" reading checked against
+  `CAP-005`'s and `CAP-015`'s existing captured sequences; consistent with, and sharpens, the
+  wire-observed pattern, without fully resolving the drag-vs-release timing question.** 🟡 HYPOTHESIS
+  (strengthened by correlation, not independently capture-verified from scratch — this re-reads
+  already-published decodes from `CAP-005-FINDINGS.md` §5a and `CAP-015-FINDINGS.md` §4, cross-checked
+  against `fyp.java`'s code, not a fresh re-extraction from the raw logs):
+  - **Preset selection (`fyp.c(int)` → `f(qjw)` = field 16 only, per `fyp.java:264-268`/`:301-322`)
+    predicts presets should *only* ever produce field-16 writes, never field 18. `CAP-015`'s own
+    6-preset sequence (frames 2111/2165/2227/2303/2351/2400, `CAP-015-FINDINGS.md` §4's table) matches
+    this exactly — every preset tap in that capture is field 16, zero field-18 frames appear anywhere
+    near a preset tap.** This is a clean, exact match between the code-derived call graph (presets
+    route through `f()`/field-16 only) and the wire-observed pattern (presets are field-16-only in
+    both captures that exercise them, `CAP-005` and `CAP-015`).
+  - **Slider drags predict continuous field-16 writes (from `e(gdy)`→`f(qjw)`, called "whenever the
+    curve object changes") plus a separate field-18 write from `d(gdy)` at some other trigger.**
+    `CAP-015`'s 50 slider-related frames match this shape exactly: for every one of the 15 drag-cycles,
+    a run of field-16 frames (one per intermediate value) is followed by exactly one field-18 frame,
+    always carrying the identical final value to the immediately-preceding field-16 frame — consistent
+    with `d(gdy)`/field-18 firing once per gesture, not continuously, and never introducing a new value
+    of its own (matching `fyp.java`'s own description of `d()`'s side effect: persisting the *current*
+    value locally, not computing a different one).
+  - **Does not resolve which specific UI event calls `d(gdy)`.** `CAP-015-FINDINGS.md` §6 already
+    found field 18 fires 0.05–1.9s after the last field-16 write in every cycle, with no video-visible
+    `Save`-button tap in between, and revised its own hypothesis to "field 18 fires on slider-release"
+    — this pass's code reading is compatible with that (a `SeekBar.OnStopTrackingTouch`-style listener
+    plausibly calling both `e()`→`f()` during the drag and `d()` once at release), but no call site for
+    `fyd.d`/`fyd.e` (the interface methods `fyp` implements) was traced this pass to confirm it — the
+    same gap this document's own original `qjw` entry already flagged. **Net effect of this
+    correlation**: the "field 16 = live, field 18 = persisted-locally" code-level reading and the
+    "field 18 fires on release, not on Save" wire-level reading are mutually consistent and reinforce
+    each other, but neither independently confirms the other's specific causal claim (what code calls
+    `d()`, vs. what UI gesture the wire's timing implies) — both remain 🟡 HYPOTHESIS, now on two
+    convergent evidence paths instead of one.
 
 ### `defpackage.qjg` / `defpackage.qht` — 4×`BOOL` messages (press-and-hold ×4 shape candidates)
 
@@ -974,6 +1226,29 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
 - **Open questions**: which (if either) of `qjg`/`qht` is `ADR-013`'s press-and-hold finding — `qht`
   now has its own, better-evidenced "ANC gesture loop" identity (above), which may or may not be the
   same thing `ADR-013` observed on the wire; what `qjg` is remains fully open.
+- **Update (2026-08-30, Tier 2 follow-up pass) — `qjg` resolved: "Attention alert," both directions.**
+  🟡 HYPOTHESIS (strong — code-level, self-describing on the read side): `qjg` is the `qjn` (Group 2,
+  see that entry's 2026-08-30 update above) field-9 alternative, **not** a `qhr` field — a correction
+  to this entry's own original framing, which listed `qjg`/`qht` side-by-side as if both were
+  `qhr`-reachable; only `qht` is (`qhr` field 12). **Write** — `defpackage/fyw.java` implements 4
+  separate `fya` interface methods, each toggling exactly one of `qjg`'s 4 booleans and sending the
+  result: `c(z)` sets field `c` (bit 1), `g(z)` sets field `e` (bit 4), `q(z)` sets field `f` (bit 8),
+  `y()` sets field `c=false` unconditionally (bit 1, no parameter — an explicit "turn off" action
+  distinct from `c(z)`'s general setter). **Read** — `defpackage/gaa.java`'s same Group-2 response
+  dispatcher (see `qjn`'s entry above), case 8 (`i15==9`): unpacks all 4 booleans into a `gcs` object,
+  calls `this.b.J(this.e, gcsVar5)` (a device-repository setter), then separately checks whether all 4
+  fields now read a specific "all off" pattern (`a.aI(...)` tri-state remap, `==2` for each — see the
+  qhr-fields-24/26/29 update above for what `a.aI` does) and, if so, logs **`"Turn off attention
+  alert"`** and fires an app-internal event (`((fyc) this.c.a()).i(new fmp(16)).p()`). **This is the
+  first unobfuscated, self-describing name for `qjg`**: a 4-flag "Attention alert" feature, distinct
+  in both shape *and* now-confirmed identity from `qht`'s "ANC gesture loop" (also 4 booleans, but a
+  different `qjn`-sibling schema's field, `qhr` field 12, with its own separate "Log ANC gesture loop
+  to Clearcut" read-side name) — the two are **not** the same feature despite the shared 4-bool shape,
+  resolving this entry's own "shape alone does not distinguish which (if either)" caveat for `qjg`
+  specifically (it does still apply to any *other* untraced 4-bool message this project might
+  encounter later). Not capture-correlated — `qjg` belongs to the `qjn`/"presto" schema, which per the
+  `qjn` entry's structural finding is very likely a different product than this project's own Buds
+  Pro 2, so no capture in this project's possession is expected to exercise it at all.
 
 ### `defpackage.qjo` / `defpackage.qju` — 2×`MESSAGE` wrapper messages (possible Left/Right or two-part containers)
 
@@ -1006,6 +1281,57 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
 - **Open questions**: what `qjo`'s own two nested message types are — `qju`'s Left/Right
   press-and-hold-gesture-action reading is no longer speculative (see update above), but nothing
   established this pass carries over to `qjo`, a structurally similar but functionally untraced type.
+- **Update (2026-08-30, Tier 2 follow-up pass) — `qjo` resolved: Left/Right "touch control"
+  gesture-action pair, structurally and functionally parallel to `qju`, for the `qjn`/"presto" schema
+  instead of `qhr`.** 🟡 HYPOTHESIS (strong — code-level, both write and read sides traced): `qjo` is
+  the `qjn` (Group 2) field-4 alternative (see that entry's own 2026-08-30 update). **Write** —
+  `defpackage/fyw.java`, method `t(gdx gdxVar)` (`:227-350`) — the **same interface method name and
+  same `gdx` domain-object parameter type** as `fyo.java`'s already-documented `t(gdx)` for `qju`/`qhr`
+  field 7. Logs `"Touch control has no value to set"` (`fyw.java:230`) as a guard when the incoming
+  `gdx` has neither Left nor Right set, then builds a `qjk` (not `qik` — `qjo`'s own nested type is
+  spelled differently from `qju`'s `qik`, confirmed by direct read of both files, not a typo) with two
+  fields (`c`=Left, `d`=Right per the `(gdxVar.b & 1)`/`(gdxVar.b & 2)` bit checks matching `fyo`'s
+  identical pattern for `qik`), each itself wrapping a `qho` value via the same `fzw.b(int)`/`fzw.a
+  (qho)` helper pair `qju` uses, and wraps the result as `qjn` field 4. **Read** — `defpackage/gaa.java`
+  (same Group-2 dispatcher as `qjn`'s other fields), case 4 (`i15==4`): unpacks `qjoVar.c`/`.d`
+  (`qjk`'s own two `qho`-wrapped values, via `fzw.a`) into a `gde`/`gdx` pair — **the exact same domain
+  types (`gde`, `gdx`) `fxb.java` builds for `qju`'s read side** — and calls `geaVar2.ad(str2, (gdx)
+  k.q())`. **What this establishes**: `qjo` is `qjn`'s own Left/Right press-and-hold-style gesture-
+  action container — the write-side log's literal wording, **"touch control"**, is the closest this
+  pass found to a UI-facing name (contrast `qju`'s own read-side log, `"Log Gestures Customization for
+  touch and hold setting, left: %s, right: %s"` — both describe the same broad feature area, touch/
+  hold gesture-action assignment, under each schema's own wording). Per the `qjn` entry's structural
+  finding, this is very likely the *other* product's equivalent of the Buds Pro 2's own press-and-hold
+  feature (`qju`), not a second, additional feature on the Buds Pro 2 itself — not capture-correlated,
+  for the same reason given there. `qjo`'s inner type is named `qjk` (not `qik`) — this document's
+  original framing of `qjo`/`qju` as sharing an identical, unnamed nested-type shape is confirmed
+  structurally (both wrap 2 `qho`-typed values) but the concrete class names differ per schema, now
+  recorded rather than left implicit.
+- **Update (2026-08-30, Tier 0 re-decode task) — byte-level capture confirmation of `qju`'s (not
+  `qjo`'s — no capture exercises the `qjn`/"presto" schema) own nested structure, and a nesting detail
+  finer than this document's original shape description.** 🟢 FACT (mechanical byte decode,
+  re-extracted from `CAP-021-btsnoop_hci.log`, cross-checked against `CAP-021-FINDINGS.md` §3's own
+  citation and found byte-identical): frames 1895/3619/4315/4976 (`HOLD-002`/`HOLD-004`/`HOLD-001`/
+  `HOLD-003`) all decompose, after the standard `field5{field4{...}}` outer wrapper, to `qhr` field
+  **7** (`qju`) — matching this entry's own write-site identification (`fyo.java:300-374`) exactly.
+  **One level finer than `CAP-021-FINDINGS.md`'s own published decode** ("`field7(len6){ field1|
+  field2(len4){ field4=varint(5|6) } }`" — a simplification that treats the inner `field4` as a
+  direct varint): the actual bytes show `field4` is wiretype **2** (length-delimited), not a bare
+  varint — e.g. frame 1895's `qju.field1` (Left) body `22 02 08 06` decomposes as tag `0x22` = field 4,
+  wiretype 2, length 2, containing `08 06` = tag `0x08` = field 1, wiretype 0, value `6`. This matches
+  this document's own already-established `qju` shape exactly: `qju.field1(Left)` → `qik` (a
+  length-delimited submessage, not a scalar) → `qik.field4` → `qho` (itself length-delimited) →
+  `qho.field1` = the raw integer (`5`=Active noise control / `6`=Digital assistant). All 4 `HOLD-001`–
+  `HOLD-004` frames decode cleanly through this 3-level nesting (`qju`→`qik`→`qho`) with the predicted
+  Left/Right selector (`field1`/`field2`) and value (`5`/`6`) matching `CAP-021-FINDINGS.md` §3's own
+  table exactly. Separately, frames 5237/5247/5255 (`HOLD-005`) decompose to `qhr` field **12** (`qht`)
+  with exactly 4 boolean sub-fields (tags `0x08`/`0x10`/`0x18`/`0x20`, one varint each) — matching
+  `qht`'s already-documented 4×`BOOL` shape exactly, no further nesting (unlike `qju`, `qht`'s own
+  fields are plain booleans, not `qik`/`qho`-wrapped). See `CAP-021-FINDINGS.md`'s 2026-08-30 addendum
+  for the full byte trace and reproduction script. **Promoted to `PROTOCOL.md` §4.5.3 as 🟢 FACT,
+  2026-08-30, maintainer sign-off (`DECISIONS.md` ADR-019)**: `qju`/field 7 in full, including the
+  `qik`→`qho` nesting correction; `qht`/field 12 for its field-number identity only, not its "ANC
+  gesture loop" name's equivalence to the separate rotation-checklist HYPOTHESIS.
 
 ### `defpackage.qhq` / `defpackage.qiq` / `defpackage.qjf` / `defpackage.qis` / `defpackage.qit` / `defpackage.qjd` — trivial 0-field marker types (action-trigger candidates)
 

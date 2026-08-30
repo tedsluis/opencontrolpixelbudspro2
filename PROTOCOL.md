@@ -280,6 +280,20 @@ implementation for the *settings-command content* still requires its own `DECISI
 recording that determination before any code is written against it — ADR-018 only settles channel
 ownership, not payload semantics, per that ADR's own explicit scope note.
 
+**Update (2026-08-30) — the protobuf schema question above is now answered, for the specific fields
+tested: it is `libmaestro`'s own `WriteSetting` request type (Java class `qhr`), recovered by APK
+static analysis and byte-confirmed against 2 sampled wire fields.** 🟢 **FACT, promoted 2026-08-30**
+(maintainer sign-off, `DECISIONS.md` ADR-019): re-decoding `CAP-020` frames 1741/1935 (already
+identified as `field5{field4{...}}` per `ADR-013`) one level deeper than originally notated shows the
+"..." is exactly `qhr`'s own protobuf oneof, addressed via standard wire-format tags — confirmed for
+`qhr` field 4 (frame 1741, value 1) and field 29 (frame 1935, value 2), both matching the
+independently-recovered app schema with no discrepancy. See §4.5.3 below for two further fields
+(7 and 12) confirmed the same way. **Scope, precisely**: this closes path (a) above (a pw_rpc/protobuf
+schema to decode the opaque payloads) for the specific fields sampled — it does not itself claim every
+one of `qhr`'s 38 fields has been wire-verified, and does not by itself promote the broader "Sent"
+HYPOTHESIS above to FACT for fields not yet sampled; it substantially strengthens that HYPOTHESIS
+without fully closing it. See `DECISIONS.md` ADR-019 for the complete scope note.
+
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
 `[Group:1][Code:1][Length:2B-BE][Value]` envelope (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md`
@@ -960,23 +974,47 @@ implementation gate.
 - **Feature confirmed present**: "Use touch controls" top-level toggle (Device details → Controls
   and gestures), plus per-earbud "Press and hold" assignment (Toggle ANC / Digital assistant) and
   an ANC-mode rotation checklist. 🟢 FACT.
-- **Top-level toggle opcode**: `field5(len4){ field4(len2){ field4 = 1 } }` (`CAP-020`, `[VERIFIED-LOCAL]`
-  2026-08-21, frame 1741). 🟡 HYPOTHESIS.
-- **Press-and-hold action selection opcode** (`HOLD-001`–`HOLD-004`, `CAP-021`,
-  `[VERIFIED-LOCAL]` 2026-08-21): `field5(len10){ field4(len8){ field7(len6){ field1|field2(len4){
-  field4 = 5|6 } } } }` — `field 1` = Left, `field 2` = Right (inside the `field 7` sub-wrapper);
-  `field 4`'s value: `5` = Active noise control, `6` = Digital assistant. 🟡 HYPOTHESIS (strong) —
-  all 4 combinations (Left/Right × ANC/Assistant) exercised, each producing exactly the predicted
-  field/value pair with no exceptions; frame 1903 (Rcvd echo) independently contains both the new
-  and a second value in one message.
+- **Top-level toggle opcode — 🟢 FACT, promoted 2026-08-30 (maintainer sign-off, `DECISIONS.md`
+  ADR-019)**: `field5(len4){ field4(len2){ field4 = 1 } }` (`CAP-020`, `[VERIFIED-LOCAL]`
+  2026-08-21, frame 1741) — the inner `field 4` is `libmaestro`'s own `WriteSetting` schema field
+  4 (Java class `qhr`), independently confirmed by a 2026-08-30 APK static-analysis pass: write site
+  `fyo.java:124-144`, read side logging `"Log Gestures Enable setting"` — a self-describing app-code
+  match, not a naming inference, cross-validated against this wire evidence by the maintainer. 🔴 Not
+  yet tested in the OFF direction, one session only.
+- **Press-and-hold action selection opcode — 🟢 FACT, promoted 2026-08-30 (maintainer sign-off,
+  `DECISIONS.md` ADR-019)** (`HOLD-001`–`HOLD-004`, `CAP-021`, `[VERIFIED-LOCAL]` 2026-08-21):
+  `field5(len10){ field4(len8){ field7(len6){ field1|field2(len4){ field4(len2){ field1 = 5|6 } } } } }`
+  — `field 1` (inside the `field 7` sub-wrapper) = Left, `field 2` = Right; the value sits one level
+  deeper than originally notated (a `qik`→`qho` nested pair, not a bare varint directly under
+  `field1`/`field2` — corrected 2026-08-30, see `CAP-021-FINDINGS.md`'s addendum): `5` = Active noise
+  control, `6` = Digital assistant. All 4 combinations (Left/Right × ANC/Assistant) exercised, each
+  producing exactly the predicted field/value pair with no exceptions; frame 1903 (Rcvd echo)
+  independently contains both the new and a second value in one message. The wire-level field 7 is
+  independently confirmed as `libmaestro`'s own `qju` schema type by the same 2026-08-30 static pass:
+  write site `fyo.java:300-374` (`t(gdx)`), read side logging the self-describing
+  `"Log Gestures Customization for touch and hold setting, left: %s, right: %s"` — naming this exact
+  feature by name, not merely matching its shape.
 - **ANC-mode rotation checklist opcode** (`HOLD-005`, `CAP-021`): `field5(len12){ field4(len10){
   field12(len8){ field1..4 = 0|1 } } }` — four boolean flags, 🟡 HYPOTHESIS field order = on-screen
   top-to-bottom order (Noise cancellation / Off / Adaptive / Transparency). **Not resolved**: this
   envelope carries no Left/Right-distinguishing field, so which frames belong to which earbud's
-  list is unconfirmed (§6).
+  list is unconfirmed (§6). **Field-number identity only — 🟢 FACT, promoted 2026-08-30 (`DECISIONS.md`
+  ADR-019)**: wire field 12 is confirmed to be `libmaestro`'s own `qht` schema type (a 4-boolean
+  message, write site `hgj.java:216-331`, read side logging `"Log ANC gesture loop to Clearcut"`).
+  **Explicitly not promoted**: whether the app's own internal name for this field, "ANC gesture
+  loop," is the *same* feature as this bullet's "ANC-mode rotation checklist" reading — the two could
+  describe the same setting from two angles, or two different settings sharing a 4-boolean shape;
+  the maintainer reviewed this specifically and declined to promote that equivalence — it remains 🟡
+  HYPOTHESIS.
 - **Sent to**: DLCI 0x02 for all three sub-features.
-- **Status**: 🟡 HYPOTHESIS throughout.
-- **Evidence**: `CAP-020-FINDINGS.md` §3, `CAP-021-FINDINGS.md` §3–§4.
+- **Status**: 🟢 FACT for the top-level toggle and press-and-hold-action opcodes (field numbers,
+  values, and — independently — the app's own schema/field identity for both); 🟢 FACT for the
+  rotation-checklist's field-number identity only; 🟡 HYPOTHESIS for the rotation-checklist's own
+  field-order/on-screen-mapping reading and for whether it's the same feature as `qht`'s "ANC gesture
+  loop."
+- **Evidence**: `CAP-020-FINDINGS.md` §3, §8 (2026-08-30 addendum); `CAP-021-FINDINGS.md` §3–§4, §8
+  (2026-08-30 addendum); `REVERSE_ENGINEERING.md`'s `qhr`/`qjo`/`qju`/`qjg`/`qht` entries (2026-08-30
+  updates); `DECISIONS.md` ADR-019.
 - **Verified with experiment**: `CAP-020` (top-level toggle), `CAP-021` (press-and-hold + checklist),
   both 2026-08-21.
 
@@ -1405,6 +1443,16 @@ leaving them buried in prose elsewhere.
       press-and-hold) actually represent — stable per-setting/per-field schema IDs from a real
       `.proto` definition, or something else? No official spec or extracted schema confirms this;
       inferred purely from timing correlation across 9+ settings in 6 captures.
+      **Partially resolved 2026-08-30, maintainer sign-off (`DECISIONS.md` ADR-019):** for `field 4`,
+      `field 7`, and `field 12` specifically, the answer is now known — a 2026-08-30 APK
+      static-analysis pass recovered `libmaestro`'s real `WriteSetting` request schema (Java class
+      `qhr`) field-for-field, and re-decoding existing `CAP-020`/`CAP-021` frames confirmed these 3
+      field numbers (plus, at wire-level only, field 29) match that recovered schema exactly, with two
+      of them (7 and 12) additionally matching a self-describing log message in the app's own code.
+      **Still open**: whether the *remaining* confirmed field numbers listed above (11, 15, 17, 19, 22,
+      27, 28) also correspond 1:1 to this same recovered `qhr` schema's own field numbers — plausible
+      given the pattern, but not individually checked against the recovered schema yet. See
+      `PROTOCOL.md` §2.2a's 2026-08-30 update and `REVERSE_ENGINEERING.md`'s `qhr` entry.
 - [ ] **Added 2026-08-21:** does DLCI 0x02's general-purpose `field5{field4{...}}` settings-write
       envelope (§4.5's shared preamble) generalize to *every* remaining `libmaestro` setting, or
       only to the ones captured so far? Does the `field7{field1|field2{...}}` Left/Right selector
@@ -1663,6 +1711,7 @@ leaving them buried in prose elsewhere.
 | 2026-08-23 | **§4.3 Option E added** — re-analysis of `CAP-011` (prompted by the maintainer spotting a 1% battery drop in the recording) pinpointed the exact UI-change timestamp (09:52:25.8, correcting an initial ~09:45:47 estimate) and found a DLCI 0x08 message (`Group 0x0e Code 0x01`) whose entries track on-screen battery values. **Cross-capture check same day found a clean 3-for-3 match (Left/Right/Case) in 2 further independent sessions (`CAP-001`, `CAP-002`, both 2026-08-09)** — upgrading this from a single-session (`CAP-011`, 4 internal recurrences) finding to a 3-session, 12-day-spanning one; `CAP-011`'s Case entry specifically reads stale/non-matching, flagged as its own open item, not treated as contradicting the mapping. 🟡 HYPOTHESIS (strong), proposed for FACT pending maintainer sign-off — not yet reviewed. Refines an already-known-but-undecoded message shape from `CAP-002-FINDINGS.md` §2a (2026-08-12), not a newly-found packet type. §6's item on the message's 3rd entry resolved (index=3=Case); a new item added for `CAP-011`'s specific staleness anomaly; the burst's irregular, BLE-churn-uncorrelated trigger interval remains open; one pre-existing item partially advanced (`Group 0x0e`, previously outside its listed group set) | Claude (AI), maintainer-requested capture re-analysis |
 | 2026-08-2x | **`CAP-009` (`BATT-006`), independently re-analyzed, then 5 findings reviewed and explicitly approved by the maintainer** (`AGENTS.md` §6): **§4.3 Option C** — `battchg` confirmed 🟢 FACT a stale single snapshot; `AT+BIEV` confirmed 🟢 FACT per-earbud (Right, this session) rather than a fixed aggregate, revising the project's earlier aggregate assumption; push cadence corrected from "fixed ~6–7s" to "settling burst, then irregular" (also updates `AGENTS.md` §5's implementation guidance) — all recorded in `ADR-015`; `BATT-006` closed. **§4.3 Option E** — two addenda added at 🟡 HYPOTHESIS (a live charge-cycle observation; the Case field's two distinct "unknown"-placeholder wire encodings) as part of the "fully purpose-built confirmation" Option E's own entry had called for. **§4.3 Option B** — DLCI `0x04`'s `Group 0x03 Code 0x03` added as a 🟡 HYPOTHESIS candidate for the still-unconfirmed battery code (208 occurrences, Left/Right in near-lockstep with `AT+BIEV`/Option E outside the charging period). **§4.3 Option A** — a BLE Fast Pair scan added as a 🟡 HYPOTHESIS timing correlation for on-screen updates after HFP/Option E both close post-reconnect; device attribution not yet confirmed. See `CAP-009-FINDINGS.md` and `CAP-009-EVENT-NOTES.md` for the full independent re-analysis (its own video timeline, MAC re-derivation, filter-sanity/DLCI-inventory checks) behind all of the above | Claude (AI), maintainer-directed sign-off session |
 | 2026-08-27 | **PROPOSAL, pending maintainer approval.** `CAP-014` (Group W repeat, snaplen-fixed) analyzed: **§4.3 Option D and the `0x0c0X`/`0x0f2X` open item annotated, no status change** — the handle↔UUID mapping remains 🔴 OPEN after a 3rd Group-W-labeled attempt, but the blocking cause is now precisely identified as GATT-cache reuse on an already-bonded phone (not a snaplen issue this time, which this session's own check confirmed fixed) — see `CAP-014-FINDINGS.md` §4/§8 for the full analysis and the recommended next capture (genuinely combining a fixed snaplen with one of Group W's own untried cache-busting methods, `pm clear com.android.bluetooth` or the Pixel 9a). Byte-length/leading-byte shapes for `0x0c0c`/`0x0c13`/`0x0c14` and content for `0x0f2a` ("Revision 6")/`0x0f32` (`0x64`) reproduce exactly across independent sessions, strengthening confidence without changing any status | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
+| 2026-08-30 | **Four pending FACT promotions from a combined Tier 0 (capture re-decode) / Tier 2 (APK static-analysis) session reviewed and explicitly approved by the maintainer, per-point** (`AGENTS.md` §6), recorded in `DECISIONS.md` ADR-019: **§2.2a** — the "..." inside DLCI 0x02's `field5{field4{...}}` wrapper confirmed 🟢 FACT to be `libmaestro`'s own recovered `WriteSetting` schema (`qhr`), for 2 sampled fields (4, 29), via independent APK static analysis. **§4.5.3** — the top-level "Use touch controls" toggle opcode (`field 4`) and the press-and-hold action-selection opcode (`field 7`/`qju`, plus a corrected, one-level-deeper `qik`→`qho` nesting) both promoted to 🟢 FACT, each now backed by both wire+video correlation and a self-describing log message in the app's own code. The ANC-mode rotation-checklist opcode's **field number** (`field 12`/`qht`) promoted to 🟢 FACT; its equivalence to the app's own "ANC gesture loop" name explicitly **not** promoted — the maintainer reviewed this specific point and kept it at 🟡 HYPOTHESIS. See `REVERSE_ENGINEERING.md`'s `qjc`/`qja`/`qhr`/`qjo`/`qju`/`qjg`/`qht` entries (2026-08-30 updates) and `CAP-020-FINDINGS.md`/`CAP-021-FINDINGS.md`'s 2026-08-30 addenda for the full byte-level and code-level evidence | Claude (AI), maintainer-directed per-point sign-off session |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

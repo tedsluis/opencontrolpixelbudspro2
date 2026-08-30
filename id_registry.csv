@@ -17,6 +17,7 @@ ADR-015,adr,accepted,"BATT-006 resolved: AT+CIND battchg is a stale single snaps
 ADR-016,adr,accepted,"Retroactive sign-off: EQ field-to-band mapping/gain-clamp/preset quintets, and four CAP-016 hardware-behavior FACTs",DECISIONS.md
 ADR-017,adr,accepted,"Supersedes ADR-003: AI-assisted mechanical decompilation and proto-schema extraction, within a maintainer-decides-relevance boundary; native .so disassembly assistance now in scope",DECISIONS.md
 ADR-018,adr,accepted,"DLCI 0x02 confirmed as the companion app's own internal RFCOMM channel (SDP UUID + APK-code correlation, CAP-001/CAP-002/CAP-032); channel ownership FACT, Sent-payload content remains HYPOTHESIS (Option 2)",DECISIONS.md
+ADR-019,adr,accepted,"qhr's oneof structure confirmed inside DLCI 0x02's field5{field4{...}} wrapper (2 sampled fields); qhr fields 4 and 7 promoted to FACT; qhr field 12's field-number identity (not its name) promoted to FACT",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

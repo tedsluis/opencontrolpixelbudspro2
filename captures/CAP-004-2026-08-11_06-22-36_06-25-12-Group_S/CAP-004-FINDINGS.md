@@ -480,6 +480,68 @@ tshark -r CAP-004-btsnoop_hci.log -Y "btrfcomm.len > 0" -T fields -E separator='
   -e frame.number -e frame.time_epoch -e btrfcomm.dlci -e data.data
 ```
 
+## 5b. Addendum (2026-08-30) — DLCI 0x08's `[Length:2B]` field's byte order made explicit: big-endian, confirmed empirically across two sessions
+
+§5a's own reassembler (above) already computes `length = (buf[i+2] << 8) | buf[i+3]` — i.e. it has
+always *assumed* big-endian, and every byte-count check throughout this file (e.g. "`4 + 63 = 67`
+matches the frame's actual length exactly," Task 2 above) has been an implicit confirmation of that
+assumption succeeding. This addendum makes the check explicit and exhaustive rather than incidental,
+prompted by a 2026-08-30 APK static-analysis pass (`REVERSE_ENGINEERING.md`'s `gbm` entry) finding
+that the app's own "default internal rfcomm socket" candidate for this channel is built from a plain
+`gbd` object using stock `java.io.DataInputStream`/`DataOutputStream` — whose `readShort()`/
+`writeShort()` are big-endian by the Java Language Specification, a structural (code-level) match to
+this section's already-assumed byte order, not yet checked byte-by-byte against the wire.
+
+**Method:** every non-zero-length, non-fragmented DLCI 0x08 frame in this capture and in `CAP-001`
+was re-pulled directly from the raw logs and its 2-byte Length field compared, both ways, against the
+frame's own actual trailing byte count:
+
+```python
+frames_cap001 = {
+    1089: "050a000d0a073731336638353510401800", 1092: "0403000410051864",
+    1093: "040500020803", 1099: "0412000408021001", 1100: "041400020801",
+    1104: "041600020802", 1112: "0e02001a0a18676f6f676c652d706978656c2d627564732d70726f2d7631",
+    1114: "0e0100230a210a03616c6c121a0a060864100118010a060864100118020a06083e100118032001",
+    1118: "0302003f08061001220d72656c656173655f352e3230332a0030e60138004a0737313366383535"
+          "500060b1dbe80670027801a80101b00101ba01020102c00101c80101",
+}
+frames_cap004 = {
+    2264: "050a000d0a073731336638353510401800", 2275: "0403000410051864",
+    2280: "040500020803", 2289: "0412000408021001", 2292: "041400020801",
+}
+for name, frames in (("CAP-001", frames_cap001), ("CAP-004", frames_cap004)):
+    for fn, hx in frames.items():
+        b = bytes.fromhex(hx)
+        length_be = int.from_bytes(b[2:4], 'big')
+        length_le = int.from_bytes(b[2:4], 'little')
+        actual = len(b) - 4
+        print(name, fn, "BE_match" if length_be == actual else "BE_MISMATCH",
+              "LE_match" if length_le == actual else "LE_mismatch")
+```
+
+Extraction commands used (`CAP-001` shown; `CAP-004` identical with its own log file):
+
+```
+tshark -r CAP-001-btsnoop_hci.log -Y "btrfcomm.dlci==0x08 and btrfcomm.len>0" \
+  -T fields -e frame.number -e data.data
+```
+
+**Result: 14/14 sampled frames (9 from `CAP-001`, 5 complete/non-fragmented from `CAP-004`) match
+big-endian exactly; 0/14 match little-endian.** E.g. frame 1089 (`CAP-001`): Length bytes `00 0d`,
+BE reading = 13 = the actual 13-byte value that follows; LE reading = 3328, nowhere close. Frame 1118
+(`CAP-001`, the same 67-byte "software info" message independently cross-checked in Task 2 above):
+Length bytes `00 3f`, BE = 63 = actual value length; LE = 16128. No sampled frame's LE reading ever
+matched.
+
+**Conclusion**: 🟢 **FACT** (empirical, cross-session) — the byte order of DLCI 0x08's `[Length:2B]`
+field is big-endian, matching both this file's own long-standing implicit assumption (§5a's
+reassembler) and the code-level structural prediction from `gbd`'s `DataInputStream`/
+`DataOutputStream` usage (`REVERSE_ENGINEERING.md`'s `gbm` entry, 2026-08-30 update). This test does
+**not** establish that `gbd`'s "default internal rfcomm socket" branch is *the* code behind DLCI
+0x08 specifically — that remains a separate, untested hypothesis (the SDP-UUID correlation that same
+`gbm` entry proposes as the next, stronger test) — it only confirms the byte-order half of the
+structural match, empirically, across two independent sessions.
+
 ## 6. GATT service list from nRF Connect's UI — cross-checked against `CAP-002`/`CAP-003`'s open UUID questions (🟡 HYPOTHESIS, UI-sourced not wire-confirmed)
 
 As established in §1's method and `CAP-003`'s own findings, nRF Connect's displayed service list

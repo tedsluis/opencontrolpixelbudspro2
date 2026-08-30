@@ -197,5 +197,96 @@ this coincidence.
 - 🔴 Does the same `field 5{ field 4{...} }` wrapper generalize to *every* `libmaestro` setting
   (§4.5's whole remaining list), or only to some? → copied to `PROTOCOL.md` §6.
 
+## 8. Addendum (2026-08-30) — inner field numbers resolved against a 2026-08-30 APK static-analysis
+pass (`REVERSE_ENGINEERING.md`'s `qjc`/`qja`/`qhr` entries); §7's first open question answered
+
+That pass decoded `libmaestro`'s `WriteSetting` request schema and found the wire's outer
+`field5{field4{...}}` wrapper corresponds to `pw_rpc.RpcPacket.payload` (field 5) wrapping a
+serialized `qjc` message whose own field 4 is `qhr` — a 38-field oneof. Re-decoding this capture's
+own frames 1741/1935 one level further than §3/§4 originally did (same unescape/CRC method, same raw
+hex, no re-capture needed) resolves §7's first question directly:
+
+```python
+import struct, binascii
+
+def unescape_hdlc(data):
+    out = bytearray(); i = 0
+    while i < len(data):
+        b = data[i]
+        if b == 0x7d:
+            i += 1; out.append(data[i] ^ 0x20)
+        else:
+            out.append(b)
+        i += 1
+    return bytes(out)
+
+def leb128(data, i=0):
+    val = 0; shift = 0
+    while True:
+        b = data[i]; val |= (b & 0x7f) << shift; i += 1
+        if not (b & 0x80): break
+        shift += 7
+    return val, i
+
+def read_tag(data, i):
+    val, j = leb128(data, i)
+    return val >> 3, val & 7, j
+
+def decode(hx):
+    raw = bytes.fromhex(hx)
+    un = unescape_hdlc(raw[1:-1])
+    body, trailer = un[:-4], un[-4:]
+    assert struct.pack('<I', binascii.crc32(body) & 0xffffffff) == trailer
+    addr, i = leb128(body, 0); ctrl = body[i]; i += 1
+    payload = body[i:]
+    rest = payload[13:]
+    f5, wt5, j = read_tag(rest, 0); ln5 = rest[j]; j += 1
+    inner = rest[j:j+ln5]
+    f4, wt4, k = read_tag(inner, 0); ln4 = inner[k]; k += 1
+    qhr_body = inner[k:k+ln4]
+    fq, wtq, m = read_tag(qhr_body, 0)
+    if wtq == 0:
+        val, _ = leb128(qhr_body, m)
+        return fq, val
+    return fq, None
+
+# frame 1741 (TOUCH-001), re-pulled directly from CAP-020-btsnoop_hci.log:
+#   tshark -r CAP-020-btsnoop_hci.log -Y "btrfcomm.dlci==0x02 and frame.number==1741" -T fields -e data.data
+print(decode("7e004b0310151dea71de7d5e251d9a8c9e2a0422022001c5a08a3c7e"))
+# -> (4, 1)   qhr field 4, value 1
+
+# frame 1935 (HEAD-001):
+#   tshark -r CAP-020-btsnoop_hci.log -Y "btrfcomm.dlci==0x02 and frame.number==1935" -T fields -e data.data
+print(decode("7e004b0310151dea71de7d5e251d9a8c9e2a052203e801020641623b7e"))
+# -> (29, 2)  qhr field 29, value 2
+```
+
+**Result — CONFIRMED, both frames match `qhr`'s own field register exactly:** frame 1741's inner
+field is `qhr` field **4** (`REVERSE_ENGINEERING.md`'s `qhr` table: BOOL, write site `fyo.java:124-144`,
+plausible role "Head/touch gestures master enable toggle") with value `1` (ON) — an exact match to
+this file's own `TOUCH-001` attribution. Frame 1935's inner field is `qhr` field **29** (ENUM per the
+decoder, write site listed as "not found" in that same table) with value `2` — matching this file's
+own `HEAD-001` attribution and `PROTOCOL.md` §4.5.4's existing wire-derived hypothesis ("field 29 =
+Head gestures") exactly, and additionally showing a real `Sent` frame *does* populate field 29 even
+though the 2026-08-30 static pass's call-site search didn't find its write site (a gap in that
+mechanical search, not evidence the field is unwritten).
+
+**Answers §7's first open question directly**: inner field numbers 4/29 are not an arbitrary
+per-setting ID scheme — they are `qhr`'s own oneof field numbers (the same 38-field schema `PROTOCOL.md`
+§4.1's ANC command and §4.2's EQ quintet also live inside), addressed via standard protobuf wire-format
+tags. §7's second question (does the wrapper generalize to every setting) is now also answered at the
+schema level: `qhr` has 38 fields total, of which this project's various captures have wire-confirmed
+only a subset — the wrapper itself generalizes by construction (it's just `qhr`'s own oneof), but
+*coverage* of all 38 fields does not.
+
+See `REVERSE_ENGINEERING.md`'s `qjc`/`qja` entry (2026-08-30 update) and `qhr` entry (2026-08-30
+update) for the full code-side derivation this re-decode is checked against.
+
+**Promoted 2026-08-30, maintainer sign-off (`DECISIONS.md` ADR-019):** `PROTOCOL.md` §2.2a (the
+nesting structure, for these 2 sampled fields) and §4.5.3 (this file's `TOUCH-001`/field-4 finding in
+full) now record this as 🟢 FACT. `HEAD-001`/field-29 was **not** included in that promotion — no
+self-describing app-code name was found for field 29 this session, only the wire-level match — it
+remains 🟡 HYPOTHESIS in `PROTOCOL.md` §4.5.4, unchanged.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-020-2026-08-21_07-46-14_07-47-49-Group_F/CAP-020-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-020-2026-08-21_07-46-14_07-47-49-Group_F/CAP-020-FINDINGS

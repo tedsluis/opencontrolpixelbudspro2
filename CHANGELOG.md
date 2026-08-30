@@ -321,6 +321,23 @@ for the "definition of done" that will mark v1.
   `CAP-NNN-FINDINGS.md` files use). `TODO.md`'s Phase 2 checklist updated to reflect this groundwork
   without checking off any actual analysis work, since no APK has been pulled yet.
 
+- **2026-08-30: Tier 0 (existing-capture re-decode) + Tier 2 (`qjc`/`qja`'s remaining oneof groups)
+  static-analysis session, then four pending FACT promotions reviewed and approved by the maintainer
+  per-point** (`AGENTS.md` §6), recorded in `DECISIONS.md` ADR-019: **§2.2a** — DLCI 0x02's
+  `field5{field4{...}}` wrapper's "..." confirmed 🟢 FACT to be `libmaestro`'s own recovered
+  `WriteSetting` schema (`qhr`), byte-decoded for 2 sampled fields (4, 29) against `CAP-020`. **§4.5.3**
+  — the top-level "Use touch controls" toggle (`field 4`) and the press-and-hold action-selection
+  opcode (`field 7`/`qju`, with a corrected `qik`→`qho` nesting level) promoted to 🟢 FACT in full,
+  each backed by both wire+video correlation and a self-describing app-code log message. The
+  ANC-mode-rotation-checklist opcode's field number (`field 12`/`qht`) promoted to 🟢 FACT; its
+  equivalence to the app's own "ANC gesture loop" name explicitly declined by the maintainer, staying
+  🟡 HYPOTHESIS. Separately (Tier 2, not promoted, static-analysis-only): found that `qjc`/`qja`'s
+  other 4 oneof groups (`qhx`/`qjn`/`qjt`/`qjv`) are very likely an **alternate product's** settings
+  schema, not additional Buds Pro 2 categories — the app's `fya` settings-write interface has 3
+  disjoint, DI-separated implementations, one per product variant, and `qjn`'s own internal codename
+  (found in a log string) is literally "presto." `qjv` confirmed fully unused in this app version
+  (zero construction sites anywhere in the decompiled tree).
+
 ### Removed
 
 - `PROTOCOL_NOTES.md`, `EXPERIMENTS.md` (retired 2026-08-15, see above).
