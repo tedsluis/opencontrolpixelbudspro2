@@ -289,6 +289,14 @@ Buds, both of which are more valuable and, in the pairing case, mildly disruptiv
 7. **Toggle 'Multipoint' on/off** [`MULTI-001`]. Wait. Note time.
 
 #### Group D — Equalizer: presets
+
+> **Note, added 2026-08-30 (audit finding):** neither Group D nor Group E has its own row in §9's
+> Capture Index — `EQP-001`/`003`–`008` and `EQS-001`–`003`/`005`'s actual wire capture happened
+> under **Group T** (`CAP-005`/`CAP-015`), which superseded these as isolated, one-action-at-a-time
+> sessions rather than the bundled run-through described below. Treat "D"/"E" in
+> `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s Capture-scenario column as historical/superseded by "T," not as
+> a still-open, separately-runnable scenario.
+
 8. **Select EQ preset: Standard** [`EQP-001`]. Wait. Note time.
 9. **Select EQ preset: Bass Boost** [`EQP-002`]. Wait. Note time.
 10. **Select EQ preset: Bass Reduction** [`EQP-003`]. Wait. Note time.

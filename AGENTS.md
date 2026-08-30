@@ -19,6 +19,14 @@ official Pixel Buds app or Google Play Services.
 > over Bluetooth Classic RFCOMM (see §5, §6); BLE is a secondary transport for
 > case/charging characteristics and the Fast Pair battery advertisement (see
 > `PROTOCOL.md` §1, §4.3).
+>
+> **Correction (2026-08-30, audit finding):** despite this project's
+> name for it, `libmaestro` is not necessarily a native `.so` library. For the analyzed companion
+> APK version (`v1.0.955078536-10253511`), no `libmaestro.so`/`libgfps.so` exists anywhere in the
+> base APK or its splits, and no `System.loadLibrary`/`System.load` call names either — the Maestro
+> control logic (`qhr`'s `WriteSetting` schema, the `fyo`/`hgj`/`fxb`-family classes) is pure
+> Kotlin/Java, decompiled directly via JADX. §4 below is updated accordingly. This doesn't change
+> any protocol finding, only the framing of where the logic lives.
 
 ## 0.1 Required reading order at session start
 
@@ -103,12 +111,13 @@ order:
 - Use `protobuf-javalite` or the `protobuf-kotlin-lite` Gradle plugin
   exclusively. Never the full `protobuf-java` runtime.
 - `.proto` files live under `data/src/main/proto/`. The agent assumes these
-  schemas have already been extracted (e.g. via `pbtk`) from the
-  `libmaestro`/`libgfps` binaries and are present in the workspace — the agent
-  does not need to (and should not attempt to) reverse-engineer binaries
-  itself; it only consumes provided `.proto` definitions. See
-  `REVERSE_ENGINEERING.md` for the extraction workflow and current schema
-  status.
+  schemas have already been extracted (e.g. via `pbtk`, or — per §0's
+  2026-08-30 correction — recovered directly from decompiled Kotlin/Java where
+  no native binary exists) from `libmaestro`/`libgfps` and are present in the
+  workspace — the agent does not need to (and should not attempt to)
+  reverse-engineer binaries itself; it only consumes provided `.proto`
+  definitions. See `REVERSE_ENGINEERING.md` for the extraction workflow and
+  current schema status.
 - Generated code is build-time only (`build/generated/`) and must never be
   committed to version control.
 - Every `.proto` file must carry a comment header noting the source

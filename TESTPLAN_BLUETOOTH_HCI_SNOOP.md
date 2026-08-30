@@ -306,6 +306,13 @@ Consolidated list of catalog rows not yet covered by a Group in
       battery)
 - [ ] `PAIR-003` — disconnect/reconnect to an already-bonded device, on the Pixel 7a
       specifically (currently only exercised on the Pixel 9a session)
+- [ ] `INEAR-002` / `INEAR-003` — inserting the Left/Right earbud into the ear (assigned Group M, but
+      no real or `planned` capture's Test(s) column names either — added 2026-08-30 audit finding;
+      `CAP-016-FINDINGS.md` already independently noted these as "still not exercised")
+- [ ] `ADAPT-001` — whether Adaptive Audio processing requires the app to stay active (assigned "Q
+      (partial)", but `planned` `CAP-030` explicitly scopes itself to Group Q's *other* two remaining
+      items, `LOUD-001`/`ADAPT-002`, only — added 2026-08-30 audit finding; needs its own capture
+      scenario or an explicit extension of `CAP-030`'s scope)
 
 _(`GATT-002`, added 2026-08-20 for the `0x0044` BLE notification-burst isolation question, is_
 _**not** listed here — it now has both a Test-ID (§5) and a capture scenario_

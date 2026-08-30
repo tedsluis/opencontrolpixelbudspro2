@@ -305,7 +305,72 @@ call per `AGENTS.md` §6/§15.
 - **Open questions**: full read/write/frame-decoding logic not traced this pass — this pass only
   located the class, not its `pw_hdlc` frame handling in detail.
 
-### `defpackage.fxm` — MaestroSoftwareInfoAndHidUuidCheck
+### `defpackage.fua` / `defpackage.gax` / `defpackage.gbo` / `defpackage.gba` / `defpackage.hjy` — Group-numbered `SparseArray` router on `gbd` (DLCI 0x02), and its per-device-variant handler registration
+
+> Added 2026-08-30, maintainer-approved write-up of a candidate cluster first surfaced during an
+> independent verification of a now-deleted, unofficial `REVIEW_REPORT.md`. That document's central
+> technical claim — that this router says something about DLCI 0x04 (the official Fast Pair Message
+> Stream) being GMS-exclusive — is a
+> **channel conflation** and is explicitly not repeated here: `fua` sends via `gbd`
+> (`InternalRfcommConnection`, entry above), which `DECISIONS.md` ADR-018 already confirms wraps
+> **DLCI 0x02** (the companion app's own "pigweed"/Maestro internal socket), not DLCI 0x04 at all.
+> Nothing below concerns DLCI 0x04.
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/fua.java`
+  (class declaration; methods `l()`/`m()`/`o()`)
+- **Readable alias**: MaestroGroupRouter
+- **Role**: 🟢 FACT (code exists and does this): implements `gbk, ftm`. Holds a `SparseArray` keyed by
+  integer Group ID (`this.m.put(i, fzyVar)` to register a handler, `(fzy) this.m.get(i)` to dispatch
+  an inbound message) and sends outbound messages via `gbdVar.d(i3, i2, bArr)` — i.e. through `gbd`'s
+  own `d(int, int, byte[])` write method (`[Group:1][Code:1][Length:2][Value]`, see `gbd`'s entry
+  above), on the DLCI 0x02 connection `gbm` already selected. 🟡 HYPOTHESIS: this is the concrete
+  `ftm`-interface router implementation the `gbm`/`fzd` cluster's Group-numbered dispatch was
+  inferred to need but hadn't been located until this pass.
+- **Relevant message groups/codes found**: registers whichever Group IDs its callers pass in (see
+  `gax`/`gbo` below) — not itself a fixed list.
+- **Hypothesis test**: not yet run against a capture — no DLCI 0x02 payload has been decoded to the
+  point of reading its own leading Group byte against this router's registered set (§2.2a's own
+  "Sent"-direction content remains opaque).
+- **Open questions**: how an inbound DLCI 0x02 payload's Group byte is actually extracted before
+  reaching `this.m.get(i)` — not traced this pass.
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/gax.java:20-26`
+- **Readable alias**: PrestoGroupHandlerRegistration
+- **Role**: 🟢 FACT: logs `"Registering handlers for Presto device: %s"` and calls
+  `ftmVar.h(135, this.c); ftmVar.h(136, this.d); ftmVar.h(130, this.e);` — registering handlers for
+  Group `130`/`135`/`136` (decimal) against a `fua`-shaped router, for a device variant internally
+  labeled "Presto."
+- **Open questions**: 🔴 whether "Presto" refers to the Pixel Buds Pro 2 specifically is
+  **unconfirmed, not settled** — this project's own memory/`CHANGELOG.md` 2026-08-30 entry already
+  flags a *different* internal codename, "presto" (via `qjn`/`gaa.java`), as very likely an
+  **alternate product's** settings schema, not the Buds Pro 2's own. Whether `gax`'s "Presto" is the
+  same product-labeling scheme as `qjn`'s is not checked this pass. Groups 130/135/136 are not yet
+  cross-checked against any capture.
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/gbo.java:15-20`
+- **Readable alias**: StrettoGroupHandlerRegistration
+- **Role**: 🟢 FACT: same pattern as `gax`, logging `"Registering handlers for Stretto device"` and
+  registering Groups `135`/`136`/`5` for a device variant labeled "Stretto." Not cross-checked
+  against any capture.
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/gba.java`
+  (class declaration, `implements fzy`; method `b(int, mxr)`)
+- **Readable alias**: GroupHandlerCandidate130
+- **Role**: ⚪ ASSUMPTION only — JADX reports `b(int, mxr)`'s method body as "Method not decompiled."
+  Per `APK_REVERSE_ENGINEERING_PROCEDURE.md` §6's JADX-misdecompile note, this needs an `apktool`
+  smali-output fallback read before any content claim; not attempted this pass.
+- **Open questions**: full handler body content — blocked on the smali fallback above.
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/hjy.java:1-40`
+- **Readable alias**: ScheduledTimeoutHandler (tentative)
+- **Role**: 🟢 FACT: implements `fzy`; owns its own `ScheduledExecutorService`/`ScheduledFuture` with
+  a 10000ms schedule, in a context that looks OTA-timeout-related. 🔴 **Explicitly not established**:
+  that this is *the only* scheduler used by any battery-related handler — `ScheduledExecutorService`
+  appears in roughly 78 files project-wide, so a claim like "the only `ScheduledExecutorService` used
+  by the battery-Group handlers is `hjy`, for OTA" (as the now-deleted `REVIEW_REPORT.md` asserted) is
+  not supported by this alone and should not be repeated without a dedicated scope read.
+- **Open questions**: what Group(s), if any, actually route to this class via `fua`'s router; full
+  relevance read not done this pass.
 
 - **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/fxm.java:10`
 - **Readable alias**: MaestroSoftwareInfoAndHidUuidCheck
@@ -1900,6 +1965,10 @@ promoted into the protocol documentation, to avoid the same finding being
 | Finding (this doc) | Promoted to `PROTOCOL.md` section | Date | Capture/Finding ID |
 |---|---|---|---|
 | `gbm`/`fzd` — "pigweed internal rfcomm socket" UUID (`25e97ff7-...`) = RFCOMM channel 1 = DLCI 0x02 (channel ownership only, not Sent-payload content) | §2.2a "Channel ownership", §2.3 three-channel table, 2026-08-14 addendum Status line, §4.2 EQ entry | 2026-08-30 | `CAP-001`, `CAP-002`, `CAP-032`; `DECISIONS.md` ADR-018 |
+| `qhr` field 4 = "Use touch controls" master enable toggle (write site `fyo.java:124-144`, read site `fxb.java` case 4) | §4.5.3 top-level toggle opcode | 2026-08-30 | `CAP-020` frame 1741; `DECISIONS.md` ADR-019 |
+| `qhr` field 7 = `qju` — Left/Right press-and-hold gesture-action customization (write site `fyo.java:300-374`, read site `fxb.java` case 7) | §4.5.3 press-and-hold action-selection opcode | 2026-08-30 | `CAP-021` frames 1895/3619/4315/4976; `DECISIONS.md` ADR-019 |
+| `qhr` field 12 = `qht` — field-number identity only (write site `hgj.java:216-331`, read site `fxb.java` case 12); "ANC gesture loop"/"ANC-mode rotation checklist" equivalence explicitly not promoted | §4.5.3 ANC-mode rotation checklist opcode | 2026-08-30 | `CAP-021` frames 5237/5247/5255; `DECISIONS.md` ADR-019 |
+| `qhr`'s oneof structure confirmed inside DLCI 0x02's `field5{field4{...}}` wrapper, for fields 4 and 29 sampled at the wire level | §2.2a 2026-08-30 update | 2026-08-30 | `CAP-020` frames 1741/1935; `DECISIONS.md` ADR-019 |
 | | | | |
 
 ## Known limitations of this analysis

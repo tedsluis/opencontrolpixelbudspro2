@@ -338,6 +338,25 @@ for the "definition of done" that will mark v1.
   (found in a log string) is literally "presto." `qjv` confirmed fully unused in this app version
   (zero construction sites anywhere in the decompiled tree).
 
+- **2026-08-30: `CAP-027` (Group N, touch gestures) captured and analyzed.** `TOUCH-002`–`TOUCH-006`
+  (tap/double-tap/triple-tap/swipe forward/swipe backward) confirmed 🟢 FACT as standard AVRCP `Pass
+  Through`/`RegisterNotification(VolumeChanged)` traffic — a spec-compliant profile carried over its
+  own L2CAP PSM, not an RFCOMM DLCI at all, the single most important structural finding of this
+  capture. `TOUCH-007` (press-and-hold) instead rides DLCI 0x04's official Fast Pair Message Stream,
+  Group `0x08` Code `0x13` ("Notify ANC state") — the same shape `PROTOCOL.md` §4.1 already documents
+  for app-driven ANC taps, now also confirmed produced by the hardware gesture itself. See
+  `CAP-027-FINDINGS.md`.
+- **2026-08-30: `CAP-033` (Group AA, SDP isolation) captured and analyzed.** Tested whether the
+  companion app's own "MAESTRO APP"/"default" internal-RFCOMM-socket SDP UUIDs (`DECISIONS.md`
+  ADR-018) are visible in an OS-only, app-force-stopped SDP browse (`SDP-001`) — result capped at 🟡
+  HYPOTHESIS by two isolation issues (Forget performed before Force-stop, not after as the procedure
+  requires; step 3's app-open baseline comparison never executed), so this is not yet a clean answer
+  either way; a repeat is needed. The browse's full named-service table is new, previously
+  undocumented content: it independently corroborates ADR-018's DLCI 0x02 = "MAESTRO APP" finding at
+  the wire/SDP level (not just APK code), and names DLCI 0x08 "GSND CONTROL" and DLCI 0x0a "GSND
+  AUDIO" for the first time — new leads for `PROTOCOL.md` §2.3's/§6's open DLCI-0x08-identity
+  question, proposed for maintainer review, not committed as a promotion. See `CAP-033-FINDINGS.md`.
+
 ### Removed
 
 - `PROTOCOL_NOTES.md`, `EXPERIMENTS.md` (retired 2026-08-15, see above).

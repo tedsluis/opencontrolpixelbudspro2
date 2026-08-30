@@ -30,17 +30,16 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    `.proto` files) — this is what `PROTOCOL.md` §2.2a's remaining HYPOTHESIS (does DLCI 0x02's
    Sent-payload content specifically carry `libmaestro`'s settings commands) needs to close, and
    it's what blocks `ARCHITECTURE.md` §2.1's `FrameEncoder`/`FrameDecoder` gate for every DLCI-0x02
-   feature. `CAP-033` (Group AA, `SDP-001`/`SDP-002` — designed 2026-08-30, not yet captured) is a
-   cheap, low-risk, ready-to-run capture that can happen in parallel/first, since it needs no new
-   research, just a standard forget-and-re-pair.
-4. **Remaining planned captures** (updated 2026-08-28 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`
-   are done, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9): `CAP-033` (Group AA, above) alongside a clean
-   connection-free repeat of the Battery Notification BLE scan (`CAP-011` was inconclusive), a
-   genuine attempt at Group W's own untried cache-busting methods (`pm clear com.android.bluetooth`
-   or the Pixel 9a — `CAP-010`/`CAP-017`/`CAP-014` all failed to try either), then `CAP-018` and the
-   still-uncaptured main-run-through remainder (`CAP-026`–`CAP-030`) — `CAP-027`/`CAP-028` (physical
-   touch/head gestures) are the highest-value of these, being core v1 features with zero capture
-   coverage so far.
+   feature. **`CAP-033` (Group AA, `SDP-001`/`SDP-002`) is done (2026-08-30)** — see below.
+4. **Remaining planned captures** (updated 2026-08-30 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`,
+   `CAP-027`, `CAP-033` are done, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9): a clean connection-free
+   repeat of the Battery Notification BLE scan (`CAP-011` was inconclusive), a genuine attempt at
+   Group W's own untried cache-busting methods (`pm clear com.android.bluetooth` or the Pixel 9a —
+   `CAP-010`/`CAP-017`/`CAP-014` all failed to try either), a proper isolation-clean repeat of
+   `SDP-001` (force-stop strictly before "Forget," and actually execute step 3 — `CAP-033`'s own
+   procedure deviation capped that result at 🟡 HYPOTHESIS, see `CAP-033-FINDINGS.md` §8), then
+   `CAP-018` and the still-uncaptured main-run-through remainder (`CAP-026`, `CAP-028`–`CAP-030`) —
+   `CAP-028` (head gestures) is now the highest-value of these still uncaptured.
 5. **Targeted research follow-ups**, lowest priority, tracked at their source per this file's
    "Open questions" section: the `CAP-021` DLCI 0x0a burst trigger and the DLCI 0x02 AES-128
    hypothesis (`PROTOCOL.md` §6) — the latter is only really testable once Phase 2 above provides
@@ -58,6 +57,11 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      conclusion) bracketing candidate triggers one at a time (app backgrounded/foregrounded, a
      scheduled sync window, a charge-state change) — the burst recurred in exactly 1 of 16 sessions
      checked so far, so passively waiting for it to reappear is not expected to work.
+   - **Added 2026-08-30 (audit finding):** apply `DECISIONS.md` ADR-019's same static-analysis method
+     (matching a confirmed wire field number against the recovered `qhr` schema) to the remaining
+     confirmed-but-unchecked DLCI 0x02 field numbers — `field` 11, 15, 17, 19, 22, 27, 28
+     (`PROTOCOL.md` §6's "what do DLCI 0x02's confirmed inner field numbers actually represent" item)
+     — not yet attempted for these specific fields.
 
 ## Setup
 
@@ -191,10 +195,10 @@ lower priority than finishing ANC/Battery/EQ):**
       already has its own row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index; listed here
       only so this file's priority ordering covers them too, not as a duplicate description):
       `CAP-018` (Group Y, `0x0044` BLE-notification-burst isolation), and the still-uncaptured main
-      run-through remainder — `CAP-026` (Group L, passive observation), `CAP-027` (Group N, touch
-      gestures — never attempted, a core v1 feature area with zero capture coverage so far),
-      `CAP-028` (Group O, head gestures, needs `CAP-020`'s Head-gestures toggle left on — also
-      never attempted), `CAP-029` (Group P, Conversation Detection voice trigger + the optional,
+      run-through remainder — `CAP-026` (Group L, passive observation). **`CAP-027` (Group N, touch
+      gestures) is done, 2026-08-30** — see `CAP-027-FINDINGS.md`. Still to do: `CAP-028` (Group O,
+      head gestures, needs `CAP-020`'s Head-gestures toggle left on — never attempted),
+      `CAP-029` (Group P, Conversation Detection voice trigger + the optional,
       destructive factory-reset comparison + the still-open shorter-press pairing-mode question),
       and `CAP-030` (Group Q items #19–20, Loud Noise Protection/Adaptive Audio, needs firmware
       ≥4.467 — worth double-checking this against the project's `release_5.203` baseline first,
@@ -253,11 +257,16 @@ lower priority than finishing ANC/Battery/EQ):**
       Sent-direction payload *content* specifically carries `libmaestro`'s settings commands —
       still 🟡 HYPOTHESIS (strong), which is what the unstarted `.proto` extraction above would
       settle.
-- [ ] **`CAP-033` (Group AA) — designed 2026-08-30, not yet captured.** Tests whether the second,
-      never-observed-on-the-wire "default internal rfcomm socket" SDP UUID (`gbm`/`fzd`) ever
-      appears when SDP is queried by the OS's own pairing flow before the companion app opens
-      (`SDP-001`), plus an opportunistic firmware-update before/after check (`SDP-002`). See
-      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AA and `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `SDP-*` rows.
+- [x] **`CAP-033` (Group AA) — done 2026-08-30.** Tested whether the second, never-observed-on-the-wire
+      "default internal rfcomm socket" SDP UUID (`gbm`/`fzd`) ever appears when SDP is queried by the
+      OS's own pairing flow before the companion app opens (`SDP-001`); `SDP-002` not attempted (no
+      firmware update pending). Result: the "default" UUID still does not appear; the full named
+      service list (including "MAESTRO APP") is returned even with the app force-stopped — but a
+      confirmed Forget-before-Force-stop procedure deviation and a never-executed step 3 (opening the
+      app for a baseline comparison) cap `SDP-001` at 🟡 HYPOTHESIS, not a clean result either way. A
+      proper isolation-clean repeat is still needed (see `CAP-033-FINDINGS.md` §8). **New lead,
+      unplanned:** the session's SDP browse also named DLCI 0x08 "GSND CONTROL" and DLCI 0x0a "GSND
+      AUDIO" for the first time — see `PROTOCOL.md` §2.3/§6.
 
 ## Phase 3 — Protocol reconstruction
 
@@ -346,6 +355,11 @@ tracked task above.)_
   one session extracted via the raw `btsnoop_hci.log` path instead (`CAP-032`) came out fully
   untruncated. Always check §3 step 3 (the raw file) first and prefer it whenever present — see
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3's own PROPOSAL note for the full detail.
+  **Verified 2026-08-30 (audit pass):** a `frame.cap_len == frame.len` sweep
+  across all 29 non-`planned` captures confirms these exact 4 are the only ones affected —
+  `CAP-017` is a filename-invisible case (named `-btsnoop_hci.log`, not `-btsnooz_hci.log`, despite
+  being truncated by a different mechanism, a phone-side snaplen setting) — no further
+  silently-truncated log exists among the remaining 25.
 
 ## Open questions
 

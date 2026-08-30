@@ -252,7 +252,12 @@ SDP Service Search Attribute Response resolves to **RFCOMM server channel 1** in
 captures (`CAP-001` frame 1327 @ 42.534s, `CAP-002` frame 1327 @ 42.534s, `CAP-032` frame 1632 @
 104.943s), and `tshark`'s own `btrfcomm.dlci` field reads **`0x02`** for every frame once that
 channel opens in each of them (`CAP-001` frame 1334 @ 42.545s; `CAP-032` frame 1645 @ 105.173s) — a
-direct wire reading, not the `2×channel` arithmetic applied blind. The same code path is where the
+direct wire reading, not the `2×channel` arithmetic applied blind. **Independently corroborated a
+fourth time (2026-08-30 audit finding, `CAP-033-FINDINGS.md` §3):** `CAP-033`'s own SDP browse (frame
+1279, within the 15:18:09.417–15:18:18.822 window) returns a full named-service table naming this
+same UUID's service **"MAESTRO APP"** on RFCOMM channel 1 — the first time this correlation is
+confirmed from a human-readable SDP service-name string rather than only the raw UUID/channel-number
+match above. The same code path is where the
 app's own `maestro_pw.*` pw_rpc services are dispatched (`Maestro`, `HeadGesture`, `EartipFitTest`,
 `Dosimeter`, `JitterBuffer`, `Multipoint`, `DynamicServerConfigService`), including a `WriteSetting`
 call (`fsz.java:75`) confirmed via a surviving Kotlin function-reference metadata string
@@ -388,6 +393,18 @@ remaining candidate for it. §2.3's three-channel table above is not restructure
 choice — it already correctly shows three coexisting channels; this addendum only sharpens which
 one the *libmaestro* hypothesis should now concentrate on.
 
+**Update (2026-08-30, audit finding, `CAP-033-FINDINGS.md` §3) — a new lead, not a resolution.**
+`CAP-033`'s SDP browse names DLCI 0x08's service **"GSND CONTROL"** (UUID
+`f8d1fbe4-7966-4334-8024-ff96c9330e15`, RFCOMM channel 4) on the wire — the first time this channel
+has had anything beyond a raw DLCI number to refer to it by. This is a concrete new search target for
+a future APK keyword pass (a `grep -ri "gsnd"` sweep of `jadx-output/` for `v1.0.955078536-10253511`
+found no match as of this update), not a resolution of the channel's identity — knowing it is *named*
+"GSND CONTROL" does not by itself reveal its Group/Code semantics or confirm/deny the Nearby/CDM
+candidate above. 🟡 HYPOTHESIS awaiting maintainer review, per `AGENTS.md` §6 — not committed as a
+promotion. The same browse also named DLCI 0x0a "GSND AUDIO" (`CAP-021-FINDINGS.md` §4a's
+still-unattributed 1123-frame burst channel), DLCI 0x06 "DEBUG APP", and DLCI 0x12 "BTIS" — none
+previously documented anywhere in this project.
+
 **Handling rule (unchanged regardless of which hypothesis is confirmed, per
 `AGENTS.md` §6 and `ARCHITECTURE.md` §5):** any checksum mismatch, or any frame
 that fails to parse against the relevant invariants, is dropped silently and
@@ -482,7 +499,11 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   §5's risk flag.
 - **Evidence**: UI presence (`SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
   §1); official spec (`developers.google.com/nearby/fast-pair/specifications/extensions/hearablecontrols`,
-  consulted 2026-08-12); `CAP-001` frames 2039/2132/2159/2193 (`Set`) and 2041/2134/2162/2195
+  consulted 2026-08-12, re-fetched 2026-08-30 with no drift — Message Group `0x08`, Codes
+  `0x11`/`0x12`/`0x13` unchanged; the page still contains no mention of touch-control/gesture
+  configuration, EQ, or a "GSND"-named service, corroborating §2.3's conclusion that EQ/touch
+  settings need `libmaestro`'s own channel, not a further official extension); `CAP-001` frames
+  2039/2132/2159/2193 (`Set`) and 2041/2134/2162/2195
   (ACK), cross-referenced against `CAP-001-EVENT-NOTES.md`'s tap timeline.
 - **Verified with experiment**: none formally logged in a `CAP-NNN-FINDINGS.md` yet — this is a
   deskresearch correlation against an existing capture, not a fresh, purpose-built experiment;
@@ -1336,6 +1357,10 @@ leaving them buried in prose elsewhere.
       the one concrete transport signature `pbpctrl` documents for Maestro). Leading remaining
       candidate: a lower-level Nearby/CDM companion-device negotiation, independent of both Fast
       Pair (DLCI 0x04) and `libmaestro` (DLCI 0x02) — not confirmed.
+      **Update (2026-08-30, `CAP-033-FINDINGS.md` §3, audit finding):** the channel now has an
+      on-the-wire SDP service name, **"GSND CONTROL"** (UUID `f8d1fbe4-7966-4334-8024-ff96c9330e15`,
+      RFCOMM channel 4) — a new search lead (see §2.3's 2026-08-30 update), not a resolution; no
+      match for "GSND" found in a first APK keyword pass. Still 🔴 open.
 - [ ] Added 2026-08-14: EQ's opcode/channel is explicitly **not** assumed to sit alongside ANC's
       (DLCI 0x04 Group `0x08`) — that assumption held only while ANC's own channel was unresolved.
       See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T (new top-priority capture target) and §4.2
@@ -1712,6 +1737,7 @@ leaving them buried in prose elsewhere.
 | 2026-08-2x | **`CAP-009` (`BATT-006`), independently re-analyzed, then 5 findings reviewed and explicitly approved by the maintainer** (`AGENTS.md` §6): **§4.3 Option C** — `battchg` confirmed 🟢 FACT a stale single snapshot; `AT+BIEV` confirmed 🟢 FACT per-earbud (Right, this session) rather than a fixed aggregate, revising the project's earlier aggregate assumption; push cadence corrected from "fixed ~6–7s" to "settling burst, then irregular" (also updates `AGENTS.md` §5's implementation guidance) — all recorded in `ADR-015`; `BATT-006` closed. **§4.3 Option E** — two addenda added at 🟡 HYPOTHESIS (a live charge-cycle observation; the Case field's two distinct "unknown"-placeholder wire encodings) as part of the "fully purpose-built confirmation" Option E's own entry had called for. **§4.3 Option B** — DLCI `0x04`'s `Group 0x03 Code 0x03` added as a 🟡 HYPOTHESIS candidate for the still-unconfirmed battery code (208 occurrences, Left/Right in near-lockstep with `AT+BIEV`/Option E outside the charging period). **§4.3 Option A** — a BLE Fast Pair scan added as a 🟡 HYPOTHESIS timing correlation for on-screen updates after HFP/Option E both close post-reconnect; device attribution not yet confirmed. See `CAP-009-FINDINGS.md` and `CAP-009-EVENT-NOTES.md` for the full independent re-analysis (its own video timeline, MAC re-derivation, filter-sanity/DLCI-inventory checks) behind all of the above | Claude (AI), maintainer-directed sign-off session |
 | 2026-08-27 | **PROPOSAL, pending maintainer approval.** `CAP-014` (Group W repeat, snaplen-fixed) analyzed: **§4.3 Option D and the `0x0c0X`/`0x0f2X` open item annotated, no status change** — the handle↔UUID mapping remains 🔴 OPEN after a 3rd Group-W-labeled attempt, but the blocking cause is now precisely identified as GATT-cache reuse on an already-bonded phone (not a snaplen issue this time, which this session's own check confirmed fixed) — see `CAP-014-FINDINGS.md` §4/§8 for the full analysis and the recommended next capture (genuinely combining a fixed snaplen with one of Group W's own untried cache-busting methods, `pm clear com.android.bluetooth` or the Pixel 9a). Byte-length/leading-byte shapes for `0x0c0c`/`0x0c13`/`0x0c14` and content for `0x0f2a` ("Revision 6")/`0x0f32` (`0x64`) reproduce exactly across independent sessions, strengthening confidence without changing any status | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-08-30 | **Four pending FACT promotions from a combined Tier 0 (capture re-decode) / Tier 2 (APK static-analysis) session reviewed and explicitly approved by the maintainer, per-point** (`AGENTS.md` §6), recorded in `DECISIONS.md` ADR-019: **§2.2a** — the "..." inside DLCI 0x02's `field5{field4{...}}` wrapper confirmed 🟢 FACT to be `libmaestro`'s own recovered `WriteSetting` schema (`qhr`), for 2 sampled fields (4, 29), via independent APK static analysis. **§4.5.3** — the top-level "Use touch controls" toggle opcode (`field 4`) and the press-and-hold action-selection opcode (`field 7`/`qju`, plus a corrected, one-level-deeper `qik`→`qho` nesting) both promoted to 🟢 FACT, each now backed by both wire+video correlation and a self-describing log message in the app's own code. The ANC-mode rotation-checklist opcode's **field number** (`field 12`/`qht`) promoted to 🟢 FACT; its equivalence to the app's own "ANC gesture loop" name explicitly **not** promoted — the maintainer reviewed this specific point and kept it at 🟡 HYPOTHESIS. See `REVERSE_ENGINEERING.md`'s `qjc`/`qja`/`qhr`/`qjo`/`qju`/`qjg`/`qht` entries (2026-08-30 updates) and `CAP-020-FINDINGS.md`/`CAP-021-FINDINGS.md`'s 2026-08-30 addenda for the full byte-level and code-level evidence | Claude (AI), maintainer-directed per-point sign-off session |
+| 2026-08-30 | Remediation from a 2026-08-30 project-wide documentation audit (maintainer-directed fixes, no new FACT promotion or ADR): **§2.2a** — added `CAP-033` as a fourth independent, SDP-service-name-level corroboration of DLCI 0x02's "MAESTRO APP" channel-ownership finding. **§2.3** — added a 2026-08-30 update recording `CAP-033`'s SDP-browse naming of DLCI 0x08 ("GSND CONTROL"), DLCI 0x0a ("GSND AUDIO"), DLCI 0x06 ("DEBUG APP"), and DLCI 0x12 ("BTIS") — new leads, 🟡 HYPOTHESIS, explicitly not a resolution of DLCI 0x08's identity. **§6** — added a matching dated update to the DLCI-0x08-ownership open item | Claude (AI), audit-remediation task, maintainer-directed |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

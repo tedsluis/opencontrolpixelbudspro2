@@ -35,9 +35,13 @@ the same version subfolder — record each file's own SHA-256 in the table below
 minSdk=32, targetSdk=36 (from `dumpsys package`, recorded here for reference; not part of the
 table's own columns).
 
-The first APK version has now been pulled and stored locally under
-`reverse-engineering/apk/v1.0.955078536-10253511/` (gitignored, not committed) — decompiling
-(§3 of `APK_REVERSE_ENGINEERING_PROCEDURE.md`) has not started yet.
+The first APK version has been pulled, decompiled (JADX + apktool, base and both splits), and had
+`pbtk` schema extraction attempted (0 `.proto` files written — see `WORKSTATION_PREPARATIONS.md`/
+`TODO.md` for the diagnosis: pbtk's own documented "works better with older APKs" limitation, not a
+tooling failure) under `reverse-engineering/apk/v1.0.955078536-10253511/` (gitignored, not
+committed). A first `§4` keyword-search pass is done — see `REVERSE_ENGINEERING.md`'s "Identified
+relevant classes" section and `DECISIONS.md` ADR-018/ADR-019 for what it found. Analysis is ongoing,
+not finished — further passes remain valuable (see `TODO.md` Phase 2).
 
 ## Why provenance matters here
 
