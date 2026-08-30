@@ -272,6 +272,26 @@ pbtk --version 2>/dev/null || pbtk-jar-extract -h
 pbtk-from-binary -h
 ```
 
+**Keeping pbtk up to date.** Checked 2026-08-30 against both PyPI and `github.com/marin-m/pbtk`'s
+releases: the pipx-installed version (`1.1.3`) was already the latest published release on both —
+the one commit ahead of it on `master` only touches `README.md`/`pyproject.toml`/`gui.py` (adds a
+version string to the GUI/CLI), not any extractor logic. `pbtk-jar-extract`'s own `--help` text
+("works better with older APKs, needs update") is a **built-in caveat about the tool's reflection
+heuristic against R8/ProGuard-obfuscated, newer-codegen APKs**, not a stale-install symptom — running
+it against `reverse-engineering/apk/v1.0.955078536-10253511/base.apk` produced 0 `.proto` files even
+on this confirmed-latest version, consistent with that caveat rather than an outdated tool. Don't
+expect an upgrade alone to fix a 0-file `pbtk-jar-extract` result; re-check PyPI/GitHub release dates
+the same way before assuming an upgrade will help.
+
+To upgrade when a real newer release *does* exist: `pipx upgrade pbtk` is the documented path, but
+was observed to hang indefinitely at the "upgrading pbtk..." step in this environment (2026-08-30) —
+if that happens, the equivalent `uv` call run directly against the pipx venv is a reliable fallback
+and completes in under a second when already current:
+
+```bash
+uv pip install --python "$HOME/.local/share/pipx/venvs/pbtk/bin/python" --upgrade pbtk
+```
+
 Extracted `.proto` output lands in `~/.pbtk/protos/<APK name>/` by default (per pbtk's own
 documented local-storage convention) — copy the relevant files into this project's
 `reverse-engineering/apk/v<versionName>-<versionCode>/pbtk-output/` (see `reverse-engineering/APK_VERSIONS.md`, not

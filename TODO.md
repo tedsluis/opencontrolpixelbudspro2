@@ -22,17 +22,25 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    framing → UI) is the cheapest way to prove the whole architecture works. Battery via HFP
    (`PROTOCOL.md` §4.3 Option C, also already 🟢 FACT) is the natural second target — together
    they cover most of `PROJECT.md`'s "Definition of done (v1)".
-3. **Start Phase 2 (APK reverse engineering) — currently 0% done.** Can run independently of new
-   captures and is likely to cheaply resolve several open `.proto`-field-number and HID-relevance
-   questions that captures alone can't (see `REVERSE_ENGINEERING.md`, updated 2026-08-23 with
-   HID-related keywords).
+3. **Phase 2 (APK reverse engineering) — updated 2026-08-30, no longer 0% done.** APK pulled,
+   JADX/apktool-decompiled, one full `§4` keyword-search pass done (`REVERSE_ENGINEERING.md`'s 10
+   class entries), and `DECISIONS.md` ADR-018 accepted (DLCI 0x02 channel-ownership → 🟢 FACT). The
+   **current highest-leverage single next step** is a targeted `pbtk`/pw_rpc-schema extraction
+   attempt against the specific classes `fux`/`fsz` reference (not the whole APK, which wrote 0
+   `.proto` files) — this is what `PROTOCOL.md` §2.2a's remaining HYPOTHESIS (does DLCI 0x02's
+   Sent-payload content specifically carry `libmaestro`'s settings commands) needs to close, and
+   it's what blocks `ARCHITECTURE.md` §2.1's `FrameEncoder`/`FrameDecoder` gate for every DLCI-0x02
+   feature. `CAP-033` (Group AA, `SDP-001`/`SDP-002` — designed 2026-08-30, not yet captured) is a
+   cheap, low-risk, ready-to-run capture that can happen in parallel/first, since it needs no new
+   research, just a standard forget-and-re-pair.
 4. **Remaining planned captures** (updated 2026-08-28 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`
-   are done, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9): a clean connection-free repeat of the Battery
-   Notification BLE scan (`CAP-011` was inconclusive), a genuine attempt at Group W's own untried
-   cache-busting methods (`pm clear com.android.bluetooth` or the Pixel 9a — `CAP-010`/`CAP-017`/
-   `CAP-014` all failed to try either), then `CAP-018` and the still-uncaptured main-run-through
-   remainder (`CAP-026`–`CAP-030`) — `CAP-027`/`CAP-028` (physical touch/head gestures) are the
-   highest-value of these, being core v1 features with zero capture coverage so far.
+   are done, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9): `CAP-033` (Group AA, above) alongside a clean
+   connection-free repeat of the Battery Notification BLE scan (`CAP-011` was inconclusive), a
+   genuine attempt at Group W's own untried cache-busting methods (`pm clear com.android.bluetooth`
+   or the Pixel 9a — `CAP-010`/`CAP-017`/`CAP-014` all failed to try either), then `CAP-018` and the
+   still-uncaptured main-run-through remainder (`CAP-026`–`CAP-030`) — `CAP-027`/`CAP-028` (physical
+   touch/head gestures) are the highest-value of these, being core v1 features with zero capture
+   coverage so far.
 5. **Targeted research follow-ups**, lowest priority, tracked at their source per this file's
    "Open questions" section: the `CAP-021` DLCI 0x0a burst trigger and the DLCI 0x02 AES-128
    hypothesis (`PROTOCOL.md` §6) — the latter is only really testable once Phase 2 above provides
@@ -207,20 +215,49 @@ lower priority than finishing ANC/Battery/EQ):**
       diff-against-previous-version pass and the out-of-scope exclusion list (AccountLinking/
       OwnershipTransfer/AccessoryNonOwner/Firebase-Analytics-Crashlytics); `REVERSE_ENGINEERING.md`'s
       template now requires a file+line citation per finding and a hypothesis-to-capture-test link.
-- [ ] Obtain the official APK (from the maintainer's own device), record it in
-      `reverse-engineering/APK_VERSIONS.md` (SHA-256, versionName/versionCode, pull date, source
-      device, provenance), and store it under `reverse-engineering/apk/v<versionName>-<versionCode>/`
-      per `APK_REVERSE_ENGINEERING_PROCEDURE.md` §2 — **not started**, despite the groundwork above.
-- [ ] Run JADX decompilation into `reverse-engineering/apk/v<versionName>-<versionCode>/jadx-output/`
-- [ ] Run apktool decompilation into `reverse-engineering/apk/v<versionName>-<versionCode>/apktool-output/`
-- [ ] Identify BLE/GATT-related classes **and** RFCOMM/Fast-Pair-related
-      classes (`BluetoothSocket`, `MessageStream`, `AccountKey`, `FastPair`) —
-      see the keyword list in `REVERSE_ENGINEERING.md` §Method,
-      `APK_REVERSE_ENGINEERING_PROCEDURE.md` §4's search-efficiency techniques, and
-      `AGENTS.md` §13
-- [ ] Extract real `.proto` schemas via `pbtk` (do not hand-reconstruct field
-      numbers from decompiled getter/setter names — see
-      `REVERSE_ENGINEERING.md` known limitations)
+- [x] **APK pulled — done 2026-08-30.** `v1.0.955078536-10253511` (base + `arm64_v8a`/`xxhdpi`
+      splits), pulled from the maintainer's own Pixel 7a, hashed, and recorded in
+      `reverse-engineering/APK_VERSIONS.md` per `APK_REVERSE_ENGINEERING_PROCEDURE.md` §2.
+- [x] **JADX decompilation — done 2026-08-30.** `jadx-output/` (12,545 Java/Kotlin files); 22
+      non-fatal per-class errors, typical for an obfuscated multi-dex app of this size.
+- [x] **apktool decompilation — done 2026-08-30.** `apktool-output/` (base) and
+      `apktool-output-arm64_v8a/` (native libs live only in that split, not in base.apk).
+- [x] **Keyword search (§4 pass) — done 2026-08-30, one pass; more passes still valuable.**
+      Found: no `libmaestro.so`/`libgfps.so` anywhere (only `libandroidx.graphics.path.so`/
+      `libpw_tokenizer_jni.so` — the app's Maestro logic is pure Kotlin, not a native binary,
+      contra this project's original assumption); the app's own RFCOMM-socket-selection logic
+      (`gbm.java`/`fzd.java`) and its two candidate SDP UUIDs ("pigweed"/"default"); literal
+      `maestro_pw.*` pw_rpc service/method names (`Maestro.WriteSetting`/`GetSoftwareInfo`,
+      `HeadGesture`, `EartipFitTest`, `Dosimeter`, `JitterBuffer`, `Multipoint`,
+      `DynamicServerConfigService`) and a surviving `dev.pigweed.pw_rpc.MethodClient` reference
+      confirming the app's own transport vocabulary. Full write-up: `REVERSE_ENGINEERING.md`'s
+      "Identified relevant classes" section (10 entries). **Not yet done:** a second pass tracing
+      how `ClassicBTReceiver`'s connection-state events lead into `gbm`'s socket selection, and how
+      `fsz`'s `WriteSetting`/`fux`'s per-service calls obtain their `MethodClient` — flagged as
+      untraced in `REVERSE_ENGINEERING.md`'s Call graph notes.
+- [ ] **Extract real `.proto`/pw_rpc schemas — attempted, not yet successful.** `pbtk-jar-extract`
+      against `base.apk` completed but wrote 0 `.proto` files (its own `--help` caveat: "works
+      better with older APKs" — confirmed not a stale-install issue, `WORKSTATION_PREPARATIONS.md`).
+      The reflection-based heuristic did surface `sun.misc.Unsafe`-based field-access patterns
+      consistent with protobuf-lite's `GeneratedMessageLite$MessageInfo` schema system during the
+      run, so the classes exist, just weren't resolved to a complete written schema. **Next attempt
+      should target specific classes** (the `nqs`/`nqo`/message-type classes referenced in `fux`'s
+      RPC definitions, e.g. `qib.a`, `nia.a`) rather than the whole APK, or try `pbtk`'s interactive
+      GUI. This is the current single highest-leverage blocker for `ARCHITECTURE.md` §2.1's
+      `FrameEncoder`/`FrameDecoder` gate on every DLCI-0x02 feature (`PROTOCOL.md` §2.2a).
+- [x] **DLCI 0x02 channel-ownership question — resolved 2026-08-30 (narrow promotion).**
+      `DECISIONS.md` ADR-018 (Option 2, maintainer-approved): DLCI 0x02 confirmed 🟢 FACT as the
+      companion app's own internal RFCOMM channel (SDP UUID `25e97ff7-...` = RFCOMM channel 1 =
+      DLCI 0x02, cross-checked against `CAP-001`/`CAP-002`/`CAP-032`), via the app's own
+      `gbm.java`/`fzd.java` selection logic — see `PROTOCOL.md` §2.2a. **Not resolved:** whether the
+      Sent-direction payload *content* specifically carries `libmaestro`'s settings commands —
+      still 🟡 HYPOTHESIS (strong), which is what the unstarted `.proto` extraction above would
+      settle.
+- [ ] **`CAP-033` (Group AA) — designed 2026-08-30, not yet captured.** Tests whether the second,
+      never-observed-on-the-wire "default internal rfcomm socket" SDP UUID (`gbm`/`fzd`) ever
+      appears when SDP is queried by the OS's own pairing flow before the companion app opens
+      (`SDP-001`), plus an opportunistic firmware-update before/after check (`SDP-002`). See
+      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AA and `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `SDP-*` rows.
 
 ## Phase 3 — Protocol reconstruction
 

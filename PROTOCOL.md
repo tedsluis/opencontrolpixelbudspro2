@@ -238,27 +238,47 @@ byte pattern — per `PROJECT_RULES.md` §1's promotion rule (byte-for-byte matc
 mechanism, replicated across ≥2 independent captures), **the framing mechanism itself (flag +
 escape + LEB128 address + control + CRC-32) is promoted to 🟢 FACT.**
 
-**What remains HYPOTHESIS, not promoted:** that this specific channel *is* `libmaestro`'s settings
-channel specifically (as opposed to some other Pigweed-RPC-based Google service) — `pbpctrl`'s
-notes describe Maestro's *transport* this way but do not give a DLCI/channel number, and no
-Maestro-specific *content* (an ANC-mode-change command, an EQ write, or any decoded pw_rpc
-service/method name) has been decoded from this channel's payload bytes yet — the "Rcvd"-direction
-payloads decode as protobuf (device serial `"1779298694"` + firmware `"release_5.203"`, per
-`CAP-001-FINDINGS.md` §2) and the "Sent"-direction payloads remain opaque 16-byte-ish blocks.
-**🟡 HYPOTHESIS (strong):** DLCI 0x02 is `libmaestro`'s pw_rpc channel. Still requires either (a) a
-pw_rpc/protobuf schema to decode the opaque "Sent" payloads and recognize an actual ANC/EQ
-method call, or (b) a properly isolated capture (Group B, single ANC/EQ action per window)
-correlating a specific "Sent" write here with a specific user action, before this can move to 🟢
-FACT.
+**Channel ownership — promoted to 🟢 FACT (2026-08-30, maintainer sign-off, `DECISIONS.md`
+ADR-018, Option 2 — a narrow promotion, see that ADR's "What this new evidence is, precisely — and
+what it is not"):** this channel is the Pixel Buds companion app's **own internal RFCOMM socket**,
+not some other/generic Pigweed-RPC-based Google service. Evidence, from an AI-run APK
+keyword-search pass (`DECISIONS.md` ADR-017's mechanical-assistance boundary;
+`REVERSE_ENGINEERING.md`'s `fzd`/`gbm`/`gau`/`gbd`/`fxm`/`fsz`/`fut`/`fux`/`ghd`/`goq` entries,
+`v1.0.955078536-10253511`) cross-checked against captures already in `captures/`: the app's own
+decompiled code (`gbm.java:35-43`) selects between two internal RFCOMM sockets by checking which of
+two 128-bit SDP UUIDs (`fzd.java:9`) is present in the discovered service set, logging `"Provide
+pigweed internal rfcomm socket"` for UUID `25e97ff7-24ce-4c4c-8951-f764a708f7b5`. That exact UUID's
+SDP Service Search Attribute Response resolves to **RFCOMM server channel 1** in three independent
+captures (`CAP-001` frame 1327 @ 42.534s, `CAP-002` frame 1327 @ 42.534s, `CAP-032` frame 1632 @
+104.943s), and `tshark`'s own `btrfcomm.dlci` field reads **`0x02`** for every frame once that
+channel opens in each of them (`CAP-001` frame 1334 @ 42.545s; `CAP-032` frame 1645 @ 105.173s) — a
+direct wire reading, not the `2×channel` arithmetic applied blind. The same code path is where the
+app's own `maestro_pw.*` pw_rpc services are dispatched (`Maestro`, `HeadGesture`, `EartipFitTest`,
+`Dosimeter`, `JitterBuffer`, `Multipoint`, `DynamicServerConfigService`), including a `WriteSetting`
+call (`fsz.java:75`) confirmed via a surviving Kotlin function-reference metadata string
+(`fsz.java:223`) to route through `dev.pigweed.pw_rpc.MethodClient` against the app's own
+`com.google.android.apps.wearables.maestro.companion.pw.hdlc.RouteProto$Route`.
 
-**Per `AGENTS.md` §6 / `ARCHITECTURE.md` §2.1's implementation gate:** this FACT-level framing
-confirmation covers the *wire envelope* for one specific channel, not the full §2.3 question below
-(which channel(s) carry `libmaestro`'s actual settings commands, and what their protobuf schema
-is). `FrameEncoder`/`FrameDecoder` implementation still requires a `DECISIONS.md` ADR recording
-this determination before any code is written against it — not added here, since that ADR is a
-maintainer sign-off decision per `AGENTS.md` §6's own reasoning ("cheap insurance against an AI
-agent... mis-promoting a hypothesis to FACT under implementation pressure"), flagged for the
-maintainer rather than added unilaterally by this research pass.
+**What remains HYPOTHESIS, not promoted by ADR-018:** that this channel's *opaque payload content*
+specifically carries `libmaestro`'s ANC/EQ/settings-write commands (as opposed to, say, only
+diagnostic/telemetry RPCs riding the same socket) — no Maestro-specific *content* (an
+ANC-mode-change command, an EQ write, or any decoded pw_rpc service/method name applied to a real
+value) has been decoded from this channel's payload bytes yet — the "Rcvd"-direction payloads
+decode as protobuf (device serial `"1779298694"` + firmware `"release_5.203"`, per
+`CAP-001-FINDINGS.md` §2) and the "Sent"-direction payloads remain opaque 16-byte-ish blocks.
+**🟡 HYPOTHESIS (strong):** DLCI 0x02's Sent-direction payloads specifically carry `libmaestro`'s
+settings-write commands. Still requires either (a) a pw_rpc/protobuf schema to decode the opaque
+"Sent" payloads and recognize an actual ANC/EQ method call, or (b) a properly isolated capture
+(Group B, single ANC/EQ action per window) correlating a specific "Sent" write here with a specific
+user action, before this can move to 🟢 FACT.
+
+**Per `AGENTS.md` §6 / `ARCHITECTURE.md` §2.1's implementation gate:** the FACT-level framing
+confirmation above, together with the channel-ownership FACT confirmed by ADR-018, still does not
+cover the full §2.3 question below (what protobuf schema `libmaestro`'s actual settings commands
+use, and which Sent-direction bytes correspond to which command). `FrameEncoder`/`FrameDecoder`
+implementation for the *settings-command content* still requires its own `DECISIONS.md` ADR
+recording that determination before any code is written against it — ADR-018 only settles channel
+ownership, not payload semantics, per that ADR's own explicit scope note.
 
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
@@ -282,7 +302,7 @@ same RFCOMM multiplexer session:
 | DLCI | Framing | Status | Content |
 |---|---|---|---|
 | 0x04 | Official Fast Pair Message Stream (§2.1) | 🟢 FACT (spec-verified, `CAP-002-FINDINGS.md` §3) | Device Information (Group `0x03`), SASS (Group `0x07`), and the officially-documented **Hearable Controls extension (Group `0x08`)** — Get/Set/Notify ANC state, see §4.1 below; GMS-and/or-app-dependent, unresolved which (absent in `CAP-004`, §4a there — GMS disabled and the app uninstalled together, a confound) |
-| 0x02 | Pigweed `pw_hdlc` (§2.2a) | 🟢 FACT for the framing; 🟡 HYPOTHESIS (strong) that this is specifically `libmaestro` | Opaque ~16-byte "Sent" blocks (phone→Buds, unresolved content) and protobuf-decodable "Rcvd" blocks (device serial + firmware) — not GMS-dependent (present regardless in every capture that opens it) |
+| 0x02 | Pigweed `pw_hdlc` (§2.2a) | 🟢 FACT for the framing and for channel ownership (this is the companion app's own internal RFCOMM socket, ADR-018); 🟡 HYPOTHESIS (strong) that its Sent-direction payload content specifically carries `libmaestro`'s settings-write commands | Opaque ~16-byte "Sent" blocks (phone→Buds, unresolved content) and protobuf-decodable "Rcvd" blocks (device serial + firmware) — not GMS-dependent (present regardless in every capture that opens it) |
 | 0x08 | Private, undocumented `[Group][Code][Length][Value]` envelope, structurally resembling §2.1's shape but with its own Group/Code numbering (`CAP-004-FINDINGS.md` §5a) | 🟢 FACT that it's a real, decodable envelope; 🔴 OPEN QUESTION what protocol it belongs to | One-time capability/setup handshake + a low-rate periodic status ping; not GMS-dependent (`CAP-004-FINDINGS.md` §4b) |
 
 **Resolved for ANC specifically (2026-08-12) — DLCI 0x04's Group `0x08` carries the actual ANC
@@ -340,10 +360,13 @@ matches the *official* Fast Pair Message Stream's TLV shape (§2.1) applied to a
 namespace — it does not use HDLC framing at all, and therefore **does not match `pbpctrl`'s own
 description of Maestro's transport mechanism**. This is a genuine negative result for DLCI 0x08
 as a `libmaestro` candidate specifically, not merely "still unresolved" — recorded here as such
-rather than left ambiguous. **Status, per the evidence rules:** DLCI 0x02 = `libmaestro` remains
-🟡 HYPOTHESIS (strong) — unchanged in strength from §2.2a, since no Maestro-specific *content*
-(an ANC/EQ method call) is decoded yet, so this cannot cross to 🟢 FACT on framing-mechanism
-match alone. DLCI 0x08's *identity* remains 🔴 OPEN QUESTION as before, but is now narrowed by a
+rather than left ambiguous. **Status, per the evidence rules (updated 2026-08-30, `DECISIONS.md`
+ADR-018):** DLCI 0x02 as the companion app's own internal RFCOMM channel is now 🟢 FACT (see
+§2.2a's "Channel ownership" finding — an SDP-record/APK-code correlation, not framing-mechanism
+match alone). What remains 🟡 HYPOTHESIS (strong), unchanged in strength, is narrower than the
+original "DLCI 0x02 = `libmaestro`" framing above: whether this channel's Sent-direction payload
+*content* specifically carries `libmaestro`'s settings-write commands, since no Maestro-specific
+content (an ANC/EQ method call) is decoded yet. DLCI 0x08's *identity* remains 🔴 OPEN QUESTION as before, but is now narrowed by a
 checked negative: **not** `libmaestro` (mechanism mismatch against the one concrete signature
 `pbpctrl` publishes), leaving "a lower-level Nearby/CDM companion-device negotiation independent
 of both Fast Pair and Maestro" (`CAP-004-FINDINGS.md` §5a's existing framing) as the leading
@@ -464,8 +487,11 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   identified the wire format on DLCI 0x02 (`libmaestro`'s Pigweed `pw_hdlc` channel, §2.2a) — an
   HDLC frame whose payload nests down to a 5×`float32` band-gain quintet, one `Sent` frame per
   changed value. 🟢 **FACT** for the envelope/quintet shape itself (byte-for-byte reproducible,
-  cross-capture replicated — see below); 🟡 HYPOTHESIS (strong) that this is specifically
-  `libmaestro`'s channel, unchanged from §2.2a's own caveat.
+  cross-capture replicated — see below), and 🟢 FACT that this channel is the companion app's own
+  internal RFCOMM socket (§2.2a's "Channel ownership" finding, `DECISIONS.md` ADR-018); 🟡
+  HYPOTHESIS (strong) that this specific EQ quintet write is `libmaestro`'s own settings-write
+  content (as opposed to, e.g., a coincidentally-similar payload from another RPC on the same
+  socket) — unchanged from §2.2a's narrower remaining caveat.
 - **Field-to-band mapping — 🟢 FACT, promoted 2026-08-18, maintainer sign-off obtained 2026-08-28
   (`DECISIONS.md` ADR-016)** (was 🟡 HYPOTHESIS as of 2026-08-15,
   inferred from only one slider ever having moved in that first capture). The 2026-08-18 session

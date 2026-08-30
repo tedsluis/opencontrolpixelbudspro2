@@ -688,6 +688,68 @@ If it does not appear, that's an equally useful negative result, pointing back t
 physical action as the real trigger after all — either outcome closes this open question, per the
 three-way outcome guidance already used for Group Q's items 19–20.
 
+#### Group AA — SDP UUID branch isolation for `gbm.a()`'s "default internal rfcomm socket" path (occasional, added 2026-08-30)
+
+**Purpose:** `REVERSE_ENGINEERING.md`'s `gbm`/`fzd` entries and `DECISIONS.md` ADR-018 found the
+companion app's own decompiled code (`gbm.java:35-43`) picks between two internal RFCOMM sockets
+depending on which of two SDP UUIDs is present in the discovered set: "pigweed" (`25e97ff7-...`,
+confirmed = DLCI 0x02 in every capture so far) or "default" (`3a046f6d-...`, never observed on the
+wire anywhere — a raw-byte scan of all 26 capture files this project has, in every format
+(`*btsnoop_hci.log`, `*btsnooz_hci.log`, both nRF Connect logs), found zero occurrences in either
+byte order; see `REVERSE_ENGINEERING.md`'s `gbm` entry Open questions). This Group covers the two
+hypotheses that are safely testable with a single Pixel Buds Pro 2 unit on its current firmware
+(`release_5.203`):
+
+- **`SDP-001`:** `gbm.a()`'s discovered-UUID set may come from an SDP browse whose content depends
+  on *who* triggers it — the OS's own default pairing flow, vs. the companion app's own
+  `fetchUuidsWithSdp()` call (`fxm.java:110`, which only fires when the HID UUID `0x1124` is
+  absent). Every existing capture has the app already open, so this hasn't been isolated.
+- **`SDP-002`** (opportunistic): a firmware update might be what changes which UUID gets advertised
+  at all — the "pigweed"/"default" pair reads plausibly as a pre-/post-migration artifact. Only
+  testable the next time an actual OTA update becomes available, same caveat as `FWUPD-001`/
+  `FWUPD-002`.
+
+**Explicitly out of scope for this Group** — not safely or practically testable, recorded here so
+they aren't silently retried: deliberately downgrading firmware (unsupported by Google, real
+bricking risk — see `WORKSTATION_PREPARATIONS.md`'s Disaster Recovery section; never attempt this),
+and testing against a different physical unit or hardware generation (the maintainer owns one
+Pixel Buds Pro 2 — `PROJECT_RULES.md` §8's own-hardware scope). If `SDP-001`/`SDP-002` both come
+back negative, the leading remaining explanation is that the "default" branch is unreachable on any
+currently-shipping `release_5.203`+ unit — a static-analysis question (checking for a
+firmware-version gate elsewhere in the APK, `APK_REVERSE_ENGINEERING_PROCEDURE.md` §4), not a
+capture question, and out of this Group's scope.
+
+1. **[`SDP-001`]** Force-stop the Pixel Buds companion app first (`Settings → Apps → Pixel Buds →
+   Force stop`), so it cannot react to the pairing at all. Start Bluetooth HCI snoop logging (§2).
+   "Forget" the Buds via system Bluetooth settings only — the same safe, repeatable action already
+   used for `PAIR-001` (Group A #1), **not** `CASE-007`'s factory reset. Re-pair via system
+   Bluetooth settings' "Pair new device" flow only. Note the exact time pairing completes.
+2. Keep observing for at least 60s after bonding completes, **without** opening the companion app
+   or touching the buds/case — this is the window where the pre-app-fetch UUID set (if one exists
+   and differs from the baseline) would show up.
+3. **Still `SDP-001`, second half of the same session:** now open the companion app normally and
+   let it connect as usual — this reproduces every prior capture's baseline in the same log, for a
+   direct in-session before/after comparison rather than relying on a separate session.
+4. Pull the bugreport (§3) once, at the end.
+5. **[`SDP-002`], opportunistic, separate session whenever a firmware update becomes available:**
+   repeat the SDP-observation half of steps 1–2 (a fresh SDP browse doesn't require a fresh bond —
+   simply reconnecting is enough if already bonded) immediately before installing the update, and
+   again immediately after it completes and the Buds reconnect.
+
+**Analysis:** pre-filter by address first, per §13's CLI-hygiene rule, then to `btsdp`:
+`tshark -r CAP-NNN-btsnoop_hci.log -Y "bluetooth.addr == 04:00:6e:cf:6e:07 and btsdp" -T fields -e frame.number -e frame.time_relative -e btsdp.data_element.value.uuid_128 -e btsdp.protocol.channel`
+(exact command already validated against `CAP-001`/`CAP-002`/`CAP-032` in `REVERSE_ENGINEERING.md`'s
+`gbm` entry). Three-way outcome, matching Group Y's own guidance above:
+- **Positive:** the pre-app-open window (step 2) shows the "default" UUID (`3a046f6d-...`, either
+  byte order) instead of or alongside "pigweed" — closes the open question; write it up per the
+  usual FACT/HYPOTHESIS discipline (`PROJECT_RULES.md` §1) before touching `PROTOCOL.md`.
+- **Negative:** still only "pigweed" (or no `btsdp` traffic at all, e.g. if the OS doesn't run a
+  full SDP browse without the app prompting it) — consistent with every capture to date; narrows
+  the explanation toward `SDP-002` or a static-analysis-only dead-code question rather than a
+  UI-timing artifact.
+- **`SDP-002` positive:** a before/after firmware comparison shows the advertised UUID changing —
+  directly explains the two-UUID code as a migration artifact.
+
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
 No app-driven commands are possible here, so this session focuses on connection-level
@@ -1060,6 +1122,7 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-030` | *planned* | either phone | TBD | TBD | TBD | Q (items #19–20) | `LOUD-001`, `ADAPT-002` | Group Q's two remaining items (item #18 already planned separately as `CAP-011`) — attempt to observe Loud Noise Protection and Adaptive Audio engaging; requires firmware ≥4.467 | — | — | planned |
 | `CAP-031` | 2026-08-27 | Pixel 7a | 17 (⚪ assumed, not screen-confirmed) | release_5.203 | official Pixel Buds Companion App (version not visible on screen) | A (repeat, 3rd attempt) | `PAIR-001`, `PAIR-004`, incidental `BATT-004` | Third attempt at `CAP-001-FINDINGS.md` §6's original goal — HCI snoop logging started before any prior association with the device exists, this time with a live in-recording file-size-polling check added specifically to avoid `CAP-013`'s failure mode. **PROPOSAL — pending maintainer approval:** status/row text below proposed, not yet maintainer-approved. | `captures/CAP-031-2026-08-27_06-04-48_06-08-10-Group_A/CAP-031-btsnooz_hci.log` (**`btsnooz`-format, inferred 15–126-byte captured length per packet, same truncation issue as `CAP-012`/`CAP-013`; see `CAP-031-FINDINGS.md` §1**) | same file | analyzed — **partial: pre-clearing-action window not captured, a second consecutive failure of this method** — see `CAP-031-FINDINGS.md`/`CAP-031-EVENT-NOTES.md` in that folder. This session used a genuine narrow, per-device "Forget" (screenshot-confirmed, unlike `CAP-013`'s broader reset) and a live snoop-log file-size-polling check during recording, but the log's first frame (06:06:37.16) still starts **66s after** the on-screen Forget tap (06:05:31) — also after case-open, pair-button-press, and the entire first "Pair new device" scan attempt, none of which are logged. **Primary question (`CAP-001-FINDINGS.md` §6) remains 🔴 OPEN, not answered, untested a third time.** **Secondary question (`PAIR-004`) is reconfirmed: 🟢 CONFIRMED fresh classic SSP handshake** (frames 598–689, a sixth confirming instance) — no key-reuse path observed. Bonus, both negative results: `CAP-013`'s DLCI 0x02 ~61s-delay does **not** reproduce (opens 1.64s after DLCI 0x00, within the initial burst) and `CAP-013`'s unattributed second BLE link does **not** reproduce (exactly one LE link this session, to the Buds' own public address) — both now look like single-session artifacts. A fourth attempt is still needed, this time verifying snoop-log *content* freshness (not just file size) before the Forget tap. |
 | `CAP-032` | 2026-08-27 | Pixel 7a | 17 (⚪ assumed, not screen-confirmed) | release_5.203 | official Pixel Buds Companion App (version not visible on screen) | A (repeat, 4th attempt) | `PAIR-001`, `PAIR-004`, incidental `BATT-004` | Fourth attempt at `CAP-001-FINDINGS.md` §6's original goal — this time extracted via the raw BTSnoop file path (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 3) rather than the `btsnooz.py` fallback used for `CAP-012`/`CAP-013`/`CAP-031`. **PROPOSAL — pending maintainer approval:** status/row text below proposed, not yet maintainer-approved. | `captures/CAP-032-2026-08-27_18-30-15_18-32-33-Group_A/CAP-032-btsnoop_hci.log` (**genuine raw, untruncated BTSnoop — `frame.cap_len == frame.len` for all 2,455 frames, no `capinfos`-inferred size cap; see `CAP-032-FINDINGS.md` §0.1**) | same file | analyzed — **success: pre-clearing-action window captured for the first time in four attempts** — see `CAP-032-FINDINGS.md`/`CAP-032-EVENT-NOTES.md` in that folder. The log's first frame (18:29:45.72) starts **~58s before** the on-screen Forget tap (18:30:42) and ~30s before the video itself begins. **Primary question (`CAP-001-FINDINGS.md` §6) is now answered for this session: 🟢 no prior BLE link or valid classic link key existed for the Buds anywhere in the covered pre-Forget window** (`CAP-032-FINDINGS.md` §0.3) — this does not reproduce `CAP-001`'s original finding (a clean counter-example, not a contradiction; `CAP-001`'s own session-specific puzzle remains independently open). **Secondary question (`PAIR-004`) reconfirmed: 🟢 CONFIRMED fresh classic SSP handshake** (frames 1090–1153, a seventh confirming instance). Bonus: the untruncated log fully decodes DLCI 0x08's battery push (`[100,1,1]`/`[100,1,2]`/`[57,1,3]` = Left/Right/Case, matching the on-screen reading exactly) and firmware/capability-identifier fields; a previously-undocumented vendor-specific HCI command (`0xFD57`/`0x0157`, frame 91) embeds the Buds' address 105ms into the log, structurally consistent with bulk bonded-device provisioning at BT-enable time, not a connection — recorded 🔴 OPEN QUESTION, not bearing on the primary question. The `btsnooz`-vs-raw extraction-path hypothesis (`CAP-013-FINDINGS.md` §1, `CAP-031-FINDINGS.md` §1) is supported by this one data point (`CAP-032-FINDINGS.md` §0.1/§7 Test C), not yet independently isolated. |
+| `CAP-033` | *planned* | Pixel 7a | TBD | TBD | TBD (n/a for `SDP-001`'s first half — app force-stopped) | AA | `SDP-001`, `SDP-002`(opportunistic) | SDP UUID branch isolation for `gbm.a()`'s "default internal rfcomm socket" path — system-settings-only pairing (app force-stopped) to check whether the pre-app-fetch SDP UUID set ever differs from every existing capture's "pigweed"-only result (`REVERSE_ENGINEERING.md`'s `gbm`/`fzd` entries, `DECISIONS.md` ADR-018) | — | — | planned |
 
 **Column notes:**
 

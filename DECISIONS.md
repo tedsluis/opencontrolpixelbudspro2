@@ -753,5 +753,92 @@ motivated this).
   disassembly assistance being newly in scope is a deliberate, separately-recorded decision (this
   ADR's §4), not an incidental scope expansion.
 
+## ADR-018 — DLCI 0x02 confirmed as the companion app's own internal RFCOMM channel (SDP UUID + APK-code correlation, 3 independent captures); channel *ownership* promoted to FACT, Sent-payload *content* remains HYPOTHESIS
+
+> **Maintainer sign-off obtained 2026-08-30** (session record: maintainer selected "Option 2" from
+> the options below). This entry was originally drafted by an AI session as a labeled proposal
+> (`Status: Proposed`) per `AGENTS.md` §6, and is updated in place — not stacked as a new entry —
+> now that the maintainer has reviewed and decided, per this file's non-destructive-update
+> convention.
+
+- **Date**: 2026-08-30
+- **Status**: Accepted — Option 2 (narrow promotion)
+- **Context**: `PROTOCOL.md` §2.2a already promoted DLCI 0x02's **framing mechanism** (HDLC flag/
+  escape/LEB128-address/CRC-32) to 🟢 FACT (2026-08-12, `pbpctrl`-notes cross-reference +
+  640/640-subframe CRC verification across `CAP-001`–`CAP-003`). What §2.2a/§2.3 explicitly left at
+  🟡 HYPOTHESIS (strong) is a narrower claim: that this specific channel *is* `libmaestro`'s own
+  settings channel, as opposed to some other Pigweed-RPC-based Google service sharing the same
+  framing library. §2.2a states two paths to close that gap: (a) decode the opaque "Sent"-direction
+  payload bytes and recognize an actual `libmaestro` method call, or (b) an isolated
+  single-action capture correlating one "Sent" write to one specific user action. Neither had
+  happened yet.
+  An AI-run §4 keyword-search pass over `v1.0.955078536-10253511`'s decompiled APK (`DECISIONS.md`
+  ADR-017's mechanical-assistance boundary; full write-up in `REVERSE_ENGINEERING.md`'s `fzd`/`gbm`/
+  `gau`/`gbd`/`fxm`/`fsz`/`fut`/`fux`/`ghd`/`goq` entries) found the app's own RFCOMM-socket-selection
+  logic: `gbm.java:35-43` picks between two internal RFCOMM sockets by checking which of two 128-bit
+  UUIDs (each present in both a canonical and a byte-reversed form, `fzd.java:9`) is in the
+  discovered SDP UUID set, logging **`"Provide pigweed internal rfcomm socket"`** for UUID
+  `25e97ff7-24ce-4c4c-8951-f764a708f7b5` and **`"Provide default internal rfcomm socket"`** for a
+  second, distinct UUID (`3a046f6d-24d2-7655-6534-0d7ecb759709`). Separately, `fsz.java:223` — a
+  Kotlin function-reference metadata string that survived R8 renaming — literally names the app's
+  own `com.google.android.apps.wearables.maestro.companion.pw.hdlc.RouteProto$Route` class and the
+  upstream `dev.pigweed.pw_rpc.MethodClient` class, and `fux.java`/`fxm.java`/others enumerate real
+  `maestro_pw.*` pw_rpc services (`Maestro`, `HeadGesture`, `EartipFitTest`, `Dosimeter`,
+  `JitterBuffer`, `Multipoint`, `DynamicServerConfigService`) called through this same selection
+  path.
+  This "pigweed" UUID was then checked against 3 independent captures already in `captures/`
+  (`CAP-001`, `CAP-002`, `CAP-032`; `bluetooth.addr == 04:00:6e:cf:6e:07`): in every session, the SDP
+  Service Search Attribute Response lists `25e97ff7-24ce-4c4c-8951-f764a708f7b5`, its Protocol
+  Descriptor List response resolves it to **RFCOMM server channel 1**, and `tshark`'s own
+  `btrfcomm.dlci` field reads **`0x02`** for every frame once that channel opens (`CAP-001` frame
+  1334 @ 42.545s; `CAP-032` frame 1645 @ 105.173s) — a direct wire reading, not the `2×channel`
+  arithmetic applied blind. Full frame/timestamp citations are in `REVERSE_ENGINEERING.md`'s `gbm`
+  entry and §UUID register. The second, "default"-labeled UUID (`3a046f6d-...`) was searched for
+  (both byte orders) across all 23 raw `*btsnoop_hci.log` files under `captures/` and found in none
+  of them — an open question, not explained by this pass.
+- **What this new evidence is, precisely — and what it is not:** it establishes, from the app's own
+  compiled selection logic plus a reproducible SDP/RFCOMM wire correlation, that DLCI 0x02 is the
+  specific RFCOMM channel *this companion app itself* selects and labels "pigweed," and that the app
+  calls real `maestro_pw.*` pw_rpc services (including `WriteSetting`) through that same selection
+  path. It does **not** decode the opaque "Sent"-direction payload bytes on DLCI 0x02, and does
+  **not** correlate one specific "Sent" write to one specific user action — i.e. it does not satisfy
+  either of §2.2a's two originally-stated paths (a)/(b) in the form they were written. It is a third,
+  independent evidentiary path: static app-code correlation via the SDP layer, rather than payload
+  decoding or capture isolation.
+- **Options considered** (maintainer's choice, not decided by this proposal):
+  1. **Promote fully**: treat this SDP+code correlation as sufficient to move DLCI 0x02's
+     channel-identity claim ("this is `libmaestro`'s channel") from 🟡 HYPOTHESIS (strong) to 🟢 FACT
+     in `PROTOCOL.md` §2.2a/§2.3, on the reasoning that tying the DLCI directly to the app's own
+     compiled selection logic and self-identifying log string is at least as strong as decoding one
+     opaque payload would be.
+  2. **Promote narrowly** (mirrors ADR-013's precedent of promoting only what's cleanly warranted):
+     record as 🟢 FACT only that *this RFCOMM channel is the companion app's own internal channel,
+     distinct from any other/generic Pigweed-based service* — leave "and its Sent-payload content is
+     specifically `libmaestro`'s ANC/EQ/settings commands" at 🟡 HYPOTHESIS (strong) pending §2.2a's
+     original paths (a)/(b).
+  3. **Do not promote**: keep §2.2a/§2.3's status text exactly as-is, and append this SDP+code
+     correlation to `PROTOCOL.md` purely as additional strengthening evidence for the existing 🟡
+     HYPOTHESIS (strong) label, explicitly reserving promotion for actual payload-content decoding or
+     an isolated single-action capture.
+- **Decision**: **Option 2, accepted.** Per `ARCHITECTURE.md` §2.1/`PROJECT_RULES.md` §1's
+  promotion rules, `PROTOCOL.md` is updated to record 🟢 FACT that DLCI 0x02 is the Pixel Buds
+  companion app's own internal RFCOMM channel — distinct from any other/generic Pigweed-based
+  service — based on the SDP UUID (`25e97ff7-24ce-4c4c-8951-f764a708f7b5`) the app's own code
+  (`gbm.java`/`fzd.java`) selects and labels "pigweed internal rfcomm socket," confirmed on the wire
+  as RFCOMM channel 1 = DLCI 0x02 across `CAP-001`/`CAP-002`/`CAP-032`. **Not promoted:** that this
+  channel's Sent-direction payload *content* specifically carries `libmaestro`'s ANC/EQ/settings
+  commands — that stays 🟡 HYPOTHESIS (strong), pending §2.2a's original paths (a) decoding the
+  opaque payloads via a pw_rpc/protobuf schema, or (b) an isolated single-action capture. See
+  `PROTOCOL.md` §2.2a ("Channel ownership" finding), §2.3's three-channel table, the 2026-08-14
+  addendum's Status line, and §4.2's EQ entry — all updated together for consistency, since they
+  restate the same underlying claim.
+- **Consequences**: `ARCHITECTURE.md` §2.1's per-channel implementation gate is **not** unblocked
+  for `FrameEncoder`/`FrameDecoder` work against DLCI 0x02's actual settings semantics — the opaque
+  "Sent" payload content remains undecoded; only the channel-*identity* question is settled. This
+  does give future work a firmer footing to state "this is `libmaestro`'s own channel" without
+  hedging, when discussing which channel to target for payload-decoding work (§2.2a's paths (a)/(b)).
+  Neither DLCI 0x08's still-🔴 open identity question nor the "default internal rfcomm socket"
+  UUID's unexplained absence from every capture searched so far is affected by this decision.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
