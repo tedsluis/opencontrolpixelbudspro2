@@ -187,7 +187,7 @@ When a protocol hypothesis is significant enough to implement against:
    treat the discrepancy itself as a signal that more evidence (a distinguishing
    capture/experiment) is needed before promoting anything.
 
-## Reverse engineering tools: JADX, apktool
+## Reverse engineering tools: JADX, apktool, pbtk
 
 ```bash
 sudo dnf install -y apktool || warn "apktool not in repo, install manual: https://apktool.org/docs/install"
@@ -206,6 +206,51 @@ else
   log "JADX al installed in $JADX_DIR, skipped."
 fi
 ```
+
+### pbtk (Protobuf toolkit — `.proto` schema extraction)
+
+Confirmed against pbtk's own README (`github.com/marin-m/pbtk`, checked 2026-08-30) rather than
+assumed. **Real scope, corrected from an earlier working assumption:** pbtk ships two separate
+extractors relevant here, not one — `pbtk-jar-extract` for Java-runtime protobuf (base/Lite/Nano/
+Micro/J2ME, i.e. DEX/APK-embedded classes), **and** `pbtk-from-binary` for "binaries containing
+embedded reflection metadata (typically C++, sometimes Java and most other bindings)," which the
+upstream README states "still works well" as of 2026. So native `.so` extraction is **not**
+ruled out the way this project first assumed — whether it actually works against
+`libmaestro`/`libgfps`'s specific `.so` files depends on whether those binaries retain their
+protobuf descriptor pool (full protobuf runtimes typically do; protobuf-lite builds typically strip
+it to save size) — this is an ⚪ ASSUMPTION until tried against a real extracted `.so`, not a known
+fact either way. Per `DECISIONS.md` ADR-017, running either extractor and explaining its output is
+in scope for AI mechanical assistance; deciding what a resulting `.proto`/candidate struct *means*
+for the wire protocol stays the maintainer's call.
+
+**Real dependencies** (per the upstream README, not assumed): Python ≥ 3.10, PySide 6, Python
+Protobuf 3, and a handful of external executables (`chromium`, `jad`, `dex2jar`) used by some
+extractor scripts. Debian/Ubuntu's own documented apt line is `python3-pip git openjdk-8-jre
+python3-qtpy-pyside6`; Fedora has no native `pbtk` package (no snap by default, and the upstream AUR
+package is Arch-specific), so the upstream-recommended `pipx`/`uv` path — which pulls PySide6 and
+python-protobuf into an isolated environment itself — is used instead:
+
+```bash
+# Runtime prerequisites pbtk itself doesn't vendor (Java 21 already installed above satisfies
+# pbtk's JRE dependency; jad/dex2jar aren't in Fedora's repos — install manually only if a
+# specific extractor script reports them missing, per pbtk's own runtime warning).
+sudo dnf install -y python3-pip pipx || warn "python3-pip/pipx install failed, check repo availability"
+pipx ensurepath
+
+# Install pbtk itself (pulls PySide6 + python-protobuf into its own isolated pipx venv)
+pipx install pbtk
+hash -r
+
+# Verify — launches the GUI, or use the two extractor scripts directly (no GUI required):
+pbtk --version 2>/dev/null || pbtk-jar-extract -h
+pbtk-from-binary -h
+```
+
+Extracted `.proto` output lands in `~/.pbtk/protos/<APK name>/` by default (per pbtk's own
+documented local-storage convention) — copy the relevant files into this project's
+`reverse-engineering/apk/v<versionName>-<versionCode>/pbtk-output/` (see `reverse-engineering/APK_VERSIONS.md`, not
+committed to git — see `.gitignore`) rather than leaving them only in pbtk's own home-directory
+cache, so a given APK version's extraction output stays associated with that version.
 
 ## Disaster Recovery
 

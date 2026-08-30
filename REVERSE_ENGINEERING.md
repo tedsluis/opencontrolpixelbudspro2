@@ -3,12 +3,27 @@
 Findings from static analysis of the official Pixel Buds companion app APK
 (`com.google.android.apps.wearables.maestro.companion`, see
 `SCREENSHOTS_PIXEL_BUDS_APP.md`). Every entry references a concrete file/path
-in `reverse-engineering/apk/jadx-output/` or `apktool-output/`.
+under `reverse-engineering/apk/v<versionName>-<versionCode>/jadx-output/` or
+`apktool-output/` (see `reverse-engineering/APK_VERSIONS.md` for which
+version(s) have been pulled/analyzed, and
+`APK_REVERSE_ENGINEERING_PROCEDURE.md` for the pull/decompile/search
+procedure — including the current, `DECISIONS.md` ADR-017 AI-assistance
+boundary for this kind of work).
 
 > **Status:** no analysis session has been logged yet — this document currently
 > defines the structure and workflow. Populate the sections below as findings
 > come in, one class/finding at a time, following `PROJECT_RULES.md` §1
 > (FACT / HYPOTHESIS / ASSUMPTION) and §3.
+
+**Non-destructive-update convention:** this document follows the same
+convention `CAP-NNN-FINDINGS.md` files use (`PROJECT_RULES.md` §3 rule 9a) —
+rewrite a finding in place as understanding changes; don't stack
+"Correction"/"Update" addendums under the original text. The history of *how*
+a finding changed belongs in `git log`/`git blame` and, for anything
+significant, `CHANGELOG.md` — not in this document's own prose. (This differs
+from `DECISIONS.md`/`PROTOCOL.md`'s convention, where dated `Update` notes are
+kept alongside the original text — see `PROJECT_RULES.md` §3 rule 9a for the
+scope distinction.)
 
 **Scope reminder** (see `PROJECT_RULES.md` §8, `PROJECT.md` non-goals): this
 analysis covers software the maintainer has legally installed themselves,
@@ -32,13 +47,15 @@ Status legend (consistent with `PROTOCOL.md` §0):
 
 ## APK metadata
 
+Version identity, SHA-256, pull date, source device, and provenance are tracked per-version in
+`reverse-engineering/APK_VERSIONS.md` (the git-tracked index — see `APK_REVERSE_ENGINEERING_PROCEDURE.md`),
+not duplicated here. This table covers the technical fields of whichever version is currently the
+main analysis target.
+
 | Field | Value |
 |---|---|
 | Package name | `com.google.android.apps.wearables.maestro.companion` |
-| App version | _(fill in — Play Store listing or `aapt dump badging`)_ |
-| Version code | _(fill in)_ |
-| Download/acquisition date | _(fill in)_ |
-| APK SHA-256 | _(fill in — `sha256sum pixelbuds.apk`)_ |
+| Current analysis target version | _(fill in — e.g. `v3.5.212-30500212`, cross-reference `reverse-engineering/APK_VERSIONS.md`)_ |
 | Min/target/compile SDK | _(fill in — from `AndroidManifest.xml`)_ |
 | Obfuscation present? | _(yes/no — R8/ProGuard indicators: short/renamed classes, `-keep` residue in strings, etc.)_ |
 | Native libraries present? | _(yes/no — which `.so` files under `lib/`, see §Native libraries below)_ |
@@ -46,9 +63,14 @@ Status legend (consistent with `PROTOCOL.md` §0):
 
 ## Method
 
-1. `apktool d pixelbuds.apk -o apktool-output/` — for resources, manifest,
+See `APK_REVERSE_ENGINEERING_PROCEDURE.md` for the full step-by-step procedure
+(pulling/storing a new version, the diff-against-previous-version pass, the
+keyword-search efficiency techniques, and the exclusion list for
+out-of-scope areas). Summary:
+
+1. `apktool d base.apk -o apktool-output/` — for resources, manifest,
    smali.
-2. `jadx -d jadx-output/ pixelbuds.apk` — for readable (decompiled)
+2. `jadx -d jadx-output/ base.apk` — for readable (decompiled)
    Kotlin/Java.
 3. Search `jadx-output/` for keywords:
    - `BluetoothSocket`, `BluetoothGatt`, `BluetoothGattCallback`,
@@ -82,11 +104,16 @@ Status legend (consistent with `PROTOCOL.md` §0):
 
 ## Identified relevant classes
 
-> Template per class — copy for each new finding.
+> Template per class — copy for each new finding. **Every finding must cite
+> the exact decompiled file *and line number*** (e.g.
+> `reverse-engineering/apk/v1.2.3-45/jadx-output/sources/com/google/.../Xy2.java:142`),
+> not only a class name — this is what `PROJECT_RULES.md` §1 rule 3 already
+> requires of a `REVERSE_ENGINEERING.md` evidence source; the **Path** field
+> below must always include `:line_number`, never a bare file path.
 
 ### `<package.ClassName>` (or obfuscated name, e.g. `a.b.c.Xy2`)
 
-- **Path**: `reverse-engineering/apk/jadx-output/.../ClassName.java`
+- **Path**: `reverse-engineering/apk/v<versionName>-<versionCode>/jadx-output/.../ClassName.java:<line_number>`
 - **Readable alias**: _(e.g. "GattCallbackImpl")_
 - **Role**: _(e.g. "🟢 FACT: implements `BluetoothGattCallback`, receives
   `onCharacteristicChanged` for battery updates" or "🟡 HYPOTHESIS: appears to
@@ -96,7 +123,15 @@ Status legend (consistent with `PROTOCOL.md` §0):
 - **Relevant message groups/codes found** (if Fast Pair Message Stream-related,
   cross-reference `PROTOCOL.md` §2.1): _(list)_
 - **Relevant methods**:
-  - `methodName(...)` — _(what this method does, and why you think so)_
+  - `methodName(...):<line_number>` — _(what this method does, and why you
+    think so)_
+- **Hypothesis test** _(required whenever **Role** is marked 🟡 HYPOTHESIS —
+  omit only for 🟢 FACT/⚪ ASSUMPTION/🔴 OPEN QUESTION entries)_: which
+  action/Test-ID (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`) would need to be captured
+  to confirm or refute this reading against real wire traffic — mirrors
+  `PROJECT_RULES.md` §4's hypothesis-test discipline already used for
+  captures, so code-derived and wire-derived evidence stay linked instead of
+  building two separate, unlinked evidence trails.
 - **Open questions**: _(what is still unclear)_
 
 ---
@@ -126,10 +161,16 @@ APK, in addition to the officially documented ones.
 |---|---|---|---|
 | | | | No / Ghidra in progress / Done |
 
-> Per `AGENTS.md` §6, the AI assistant does not attempt to reverse engineer
-> native binaries itself — schemas/opcodes extracted from them (e.g. via
-> `pbtk`) are treated as given inputs once the maintainer has extracted them.
-> This table tracks *what exists*, not a request for the AI to decompile it.
+> **Updated 2026-08-30 (`DECISIONS.md` ADR-017, superseding ADR-003):** native
+> `.so` disassembly is now in scope for AI *mechanical* assistance, on the
+> same terms as DEX/Java-level work — an AI session may run `pbtk-from-binary`
+> or disassembler tooling (Ghidra/radare2), search its output, and explain the
+> syntax/structure of already-surfaced disassembly. An AI session still does
+> **not** decide which disassembled function/struct is relevant, and does
+> **not** decide that something becomes a recorded finding here or in
+> `PROTOCOL.md` — both remain the maintainer's calls (`AGENTS.md` §6/§15,
+> unaffected by ADR-017). This table tracks *what exists and what's been
+> analyzed*, not a request for the AI to unilaterally decide what it means.
 
 ## Call graph notes
 

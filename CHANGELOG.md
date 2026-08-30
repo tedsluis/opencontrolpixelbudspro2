@@ -299,6 +299,28 @@ for the "definition of done" that will mark v1.
   specifically; `CAP-011`'s stale Case reading, the `flag` field's meaning, and the burst's
   trigger stay open, unaffected by the promotion.
 
+- **2026-08-30: Phase 2 (APK reverse engineering) groundwork — governance, storage, and procedure.**
+  The maintainer explicitly requested AI assistance with the *mechanical* parts of APK decompiling
+  and proto-schema extraction; `DECISIONS.md` ADR-017 (superseding ADR-003, sign-off obtained on
+  the exact wording before it was added) records the new boundary: an AI session may search, list
+  candidates, run `pbtk`, and explain already-surfaced code or native `.so` disassembly output —
+  the maintainer explicitly placed native `.so` disassembly assistance in scope too — but never
+  decides relevance or promotes a `REVERSE_ENGINEERING.md` finding; `AGENTS.md` §6/§15's FACT/ADR
+  sign-off requirement is unchanged. Also added: `WORKSTATION_PREPARATIONS.md`'s pbtk section,
+  corrected against pbtk's own README rather than assumed (it has two extractors — Java/DEX and
+  native-binary-with-reflection-metadata — so native `.so` extraction isn't ruled out the way this
+  project first assumed, only unconfirmed against `libmaestro`/`libgfps` specifically); a versioned
+  APK storage layout (`reverse-engineering/apk/v<versionName>-<versionCode>/`, indexed in the
+  git-tracked `reverse-engineering/APK_VERSIONS.md`; the APK/decompiled/pbtk output itself is never
+  committed, per an updated `.gitignore` covering the whole `reverse-engineering/apk/` tree);
+  `APK_REVERSE_ENGINEERING_PROCEDURE.md` (pull/store → diff-against-previous-version → decompile →
+  `pbtk` extract → keyword search, with an explicit out-of-scope exclusion list for
+  AccountLinking/OwnershipTransfer/AccessoryNonOwner/Firebase-Analytics-Crashlytics); and
+  `REVERSE_ENGINEERING.md` template updates (mandatory file+line citations, a per-finding
+  hypothesis-to-capture-test link, and the same non-destructive-rewrite-in-place convention
+  `CAP-NNN-FINDINGS.md` files use). `TODO.md`'s Phase 2 checklist updated to reflect this groundwork
+  without checking off any actual analysis work, since no APK has been pulled yet.
+
 ### Removed
 
 - `PROTOCOL_NOTES.md`, `EXPERIMENTS.md` (retired 2026-08-15, see above).

@@ -94,6 +94,8 @@ humans and AI coding assistants working on it:
 | `PROJECT.md` | Project goal, scope, and non-goals |
 | `ARCHITECTURE.md` | Software architecture of the Android app |
 | `REVERSE_ENGINEERING.md` | Findings from APK analysis |
+| `APK_REVERSE_ENGINEERING_PROCEDURE.md` | APK pull/decompile/extract/search procedure (prerequisites → steps → analysis approach → gotchas) |
+| `reverse-engineering/APK_VERSIONS.md` | Git-tracked index of every analyzed APK version (SHA-256, versionName/versionCode, pull date, provenance, tool versions) — the actual APK/decompiled output never leave the maintainer's own machine |
 | `PROTOCOL.md` | Reconstructed protocol specification |
 | `DESKRESEARCH_FINDINGS.md` | Offline, script-based pattern analyses across existing captures (no new capture involved) |
 | `DECISIONS.md` | Architecture and design decisions (ADR-style) |

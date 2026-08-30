@@ -97,7 +97,7 @@ motivated this).
 ## ADR-003 — Reverse engineering method: capture + APK analysis, no binary reverse engineering of protocol internals by the AI
 
 - **Date**: _(project start)_
-- **Status**: Accepted
+- **Status**: Superseded by ADR-017 (see below)
 - **Context**: `.proto` schemas and opcodes referenced by the app are extracted
   from `libmaestro`/`libgfps` binaries via external tooling (e.g. `pbtk`).
   There's a question of whether an AI coding assistant should attempt to
@@ -114,6 +114,15 @@ motivated this).
   (requires a maintainer-driven extraction step first), but avoids an AI
   silently inventing plausible-looking but unverified opcodes or APIs, which
   would violate the project's evidence-based reverse-engineering principle.
+- **Update (2026-08-30): superseded by ADR-017.** The maintainer explicitly requested, in
+  conversation, that AI assistance be allowed to help with the *mechanical* parts of APK
+  decompiling and proto-schema extraction (including running `pbtk` itself and, per a separate
+  explicit decision, explaining native `.so` disassembly output) ahead of Phase 2 (APK reverse
+  engineering) work. ADR-017 replaces this decision's blanket restriction with a narrower boundary:
+  the AI may run searches, list candidates, and explain already-surfaced code/disassembly, but never
+  decides relevance or promotes a finding to a recorded `REVERSE_ENGINEERING.md` HYPOTHESIS — see
+  ADR-017 for the full boundary. This entry's original text is left standing per `PROJECT_RULES.md`
+  §3 rule 9's non-destructive-update convention.
 
 ## ADR-004 — No dependency on Google Play Services or any network permission
 
@@ -686,6 +695,63 @@ motivated this).
   of "not yet reviewed by maintainer"; the corresponding body sections (§4.2, §5.1, §7 ×2, §6
   Resolved) gain an explicit `ADR-016` citation, matching the citation style already used for
   `ADR-011`–`ADR-015`.
+
+## ADR-017 — Supersedes ADR-003: AI-assisted mechanical decompilation and proto-schema extraction, within a maintainer-decides-relevance boundary; native `.so` disassembly assistance now in scope
+
+- **Date**: 2026-08-30
+- **Status**: Accepted
+- **Context**: ADR-003 banned an AI coding assistant from attempting to reverse engineer
+  `libmaestro`/`libgfps` binaries directly, requiring `.proto` schemas and opcodes to be extracted
+  up front by the maintainer and treated as given inputs. The maintainer has now explicitly
+  requested, in conversation, that AI assistance be allowed to help with the *mechanical* parts of
+  APK decompiling and proto-schema extraction ahead of the newly-planned Phase 2 (APK reverse
+  engineering) work (`TODO.md`, currently 0% done) — this is a maintainer-directed policy change,
+  not the AI expanding its own scope. Per `PROJECT_RULES.md` §3 rule 9, this is recorded as a new,
+  superseding ADR rather than an edit to ADR-003's existing text.
+- **Options considered**:
+  - Leave ADR-003 as-is (fully manual extraction only) — rejected per explicit maintainer
+    instruction to enable AI assistance for Phase 2.
+  - Let the AI independently decide which classes/strings/findings are relevant and record them as
+    HYPOTHESIS entries in `REVERSE_ENGINEERING.md` — rejected: this would erode the evidence
+    discipline in `PROJECT_RULES.md` §1 and conflicts with `AGENTS.md` §6's principle that
+    relevance/promotion judgments are the maintainer's call, not an AI's.
+  - Allow AI *mechanical* assistance only (running searches, listing candidate matches, explaining
+    syntax/structure of already-surfaced code, running `pbtk` extraction, and — per the maintainer's
+    explicit answer to this ADR's native-library question — disassembly-output analysis for native
+    `.so` libraries), while the maintainer retains every relevance and hypothesis-recording
+    decision — chosen.
+- **Decision**:
+  1. This ADR **supersedes ADR-003**.
+  2. **New boundary.** An AI session **may**: run keyword/string searches across `jadx-output/`,
+     `apktool-output/`, and `pbtk-output/`; run `pbtk` to extract `.proto` schemas from an
+     already-obtained APK; list candidate matching classes/methods/strings; and explain the
+     syntax/structure of already-surfaced decompiled or disassembled code — **including native
+     `.so` disassembly output** (Ghidra/radare2 or similar), which the maintainer has explicitly
+     placed in scope for this same mechanical-assistance boundary (resolving the question this ADR
+     was asked to record, see below). An AI session does **not** decide which class, string, or
+     finding is relevant to the protocol, and does **not** decide whether something becomes a
+     recorded HYPOTHESIS (or FACT/ASSUMPTION) entry in `REVERSE_ENGINEERING.md` — both remain the
+     maintainer's calls, unchanged from ADR-003's original intent.
+  3. **Unaffected rule.** This ADR does **not** change `AGENTS.md` §6/§15's sign-off requirement:
+     promoting anything to 🟢 FACT in `PROTOCOL.md`, or writing any other `DECISIONS.md` ADR
+     (including one superseding this one), still requires explicit maintainer approval — an AI
+     session may propose, never commit, exactly as before.
+  4. **Native `.so` boundary, explicitly decided (not silently inherited):** disassembling native
+     `.so` libraries is a materially deeper form of reverse engineering than DEX/Java decompilation,
+     and was called out separately rather than left to ride along with this change. The maintainer's
+     explicit answer (session of 2026-08-30): **in scope** for AI mechanical assistance, on the same
+     terms as §2 above — search, list, and explain only; relevance and hypothesis decisions stay
+     with the maintainer. `REVERSE_ENGINEERING.md`'s Native Libraries section note (written under
+     ADR-003's old blanket restriction) is updated accordingly so it no longer contradicts this ADR.
+- **Consequences**: Phase 2 (APK static analysis, `TODO.md`) can proceed with AI assistance on its
+  mechanical steps — keyword/string search, `pbtk` extraction, native-binary disassembly-output
+  explanation — without waiting for the maintainer to perform every step manually. The evidence
+  discipline in `PROJECT_RULES.md` §1 is preserved because relevance and hypothesis-recording
+  decisions stay exclusively with the maintainer. This does not change §4/§8 rule 20's rules on what
+  gets committed to this project's own codebase (no copied code, no committed decompiled output, no
+  committed APK — see the versioned storage structure introduced alongside this ADR). Native `.so`
+  disassembly assistance being newly in scope is a deliberate, separately-recorded decision (this
+  ADR's §4), not an incidental scope expansion.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

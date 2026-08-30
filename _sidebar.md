@@ -6,6 +6,8 @@
   - [PROTOCOL.md](/opencontrolpixelbudspro2/PROTOCOL.md)
   - [DECISIONS.md](/opencontrolpixelbudspro2/DECISIONS.md)
   - [REVERSE_ENGINEERING.md](/opencontrolpixelbudspro2/REVERSE_ENGINEERING.md)
+  - [APK_REVERSE_ENGINEERING_PROCEDURE.md](/opencontrolpixelbudspro2/APK_REVERSE_ENGINEERING_PROCEDURE.md)
+  - [reverse-engineering/APK_VERSIONS.md](/opencontrolpixelbudspro2/reverse-engineering/APK_VERSIONS.md)
   - [DESKRESEARCH_FINDINGS.md](/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS.md)
 
 - **Process & rules**

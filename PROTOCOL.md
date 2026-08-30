@@ -361,8 +361,10 @@ best-effort guess at the payload.
 
 The `libmaestro` control channel communicates using serialized Protocol
 Buffers. Schemas are extracted from the official companion app APK using tools
-such as `pbtk` — extraction is performed by the maintainer, not guessed by an
-AI assistant (see `AGENTS.md` §4/§6, `DECISIONS.md` ADR-003).
+such as `pbtk` — an AI session may run `pbtk` itself and search/explain its
+output mechanically, but never hand-reconstructs or guesses a schema, and
+never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
+`DECISIONS.md` ADR-017, superseding ADR-003).
 
 | File | Purpose | Status |
 |---|---|---|

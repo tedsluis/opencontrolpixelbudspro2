@@ -9,12 +9,18 @@ local.properties
 *.iml
 .idea/
 
-# Reverse-engineering workspace: generated/decompiled output and the APK itself are
-# never committed — see AGENTS.md §4 ("Generated code is build-time only ... must
-# never be committed to version control") and PROJECT.md's non-goals ("No distribution
-# of the original Google APK or any part of it").
-reverse-engineering/apk/jadx-output/
-reverse-engineering/apk/apktool-output/
+# Reverse-engineering workspace: the pulled APK(s), decompiled output (JADX/apktool), and
+# pbtk-extracted schemas are never committed to git — see AGENTS.md §4 ("Generated code is
+# build-time only ... must never be committed to version control"), PROJECT.md's non-goals
+# ("No distribution of the original Google APK or any part of it"), and PROJECT_RULES.md §8
+# rule 20 (decompiled Java/smali is a reproduction of Google's copyrighted code, banned from
+# this project's codebase even as research output — this holds even though it never leaves
+# the maintainer's own machine, since "codebase" here means this git history). Git LFS does
+# NOT exempt the APK file itself — anyone with repository access can still fetch an LFS
+# object, which is still distribution. The whole tree below (one subfolder per analyzed APK
+# version, per reverse-engineering/APK_VERSIONS.md) is ignored; only that small index file,
+# tracked outside this tree, is committed.
+reverse-engineering/apk/
 *.apk
 
 # OS/editor cruft

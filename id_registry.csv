@@ -1,7 +1,7 @@
 id,type,status_or_date,description,source_of_truth
 ADR-001,adr,accepted,"Architecture style: Clean Architecture + MVVM + Repository pattern",DECISIONS.md
 ADR-002,adr,accepted,"License: GNU AGPL-3.0",DECISIONS.md
-ADR-003,adr,accepted,"Reverse engineering method: capture + APK analysis, no binary reverse engineering of protocol internals by the AI",DECISIONS.md
+ADR-003,adr,superseded,"Reverse engineering method: capture + APK analysis, no binary reverse engineering of protocol internals by the AI (superseded by ADR-017)",DECISIONS.md
 ADR-004,adr,accepted,"No dependency on Google Play Services or any network permission",DECISIONS.md
 ADR-005,adr,accepted,"Device discovery via CompanionDeviceManager, no continuous BLE scanning",DECISIONS.md
 ADR-006,adr,accepted,"Bounded exception to the no-BLE-scanning rule, for the Fast Pair Battery Notification only",DECISIONS.md
@@ -15,6 +15,7 @@ ADR-013,adr,accepted,"DLCI 0x02 general-purpose settings-write envelope shape co
 ADR-014,adr,accepted,"DLCI 0x08 Group 0x0e Code 0x01 confirmed as per-earbud+case battery push (index=1/2/3 -> Left/Right/Case)",DECISIONS.md
 ADR-015,adr,accepted,"BATT-006 resolved: AT+CIND battchg is a stale single snapshot; AT+BIEV is per-earbud (Right), not fixed-aggregate/fixed-cadence",DECISIONS.md
 ADR-016,adr,accepted,"Retroactive sign-off: EQ field-to-band mapping/gain-clamp/preset quintets, and four CAP-016 hardware-behavior FACTs",DECISIONS.md
+ADR-017,adr,accepted,"Supersedes ADR-003: AI-assisted mechanical decompilation and proto-schema extraction, within a maintainer-decides-relevance boundary; native .so disassembly assistance now in scope",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

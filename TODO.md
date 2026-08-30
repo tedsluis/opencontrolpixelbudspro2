@@ -195,13 +195,28 @@ lower priority than finishing ANC/Battery/EQ):**
 
 ## Phase 2 — APK reverse engineering
 
-- [ ] Obtain the official APK (from the maintainer's own device) and record
-      its SHA-256 hash (`REVERSE_ENGINEERING.md` APK metadata table)
-- [ ] Run JADX decompilation into `reverse-engineering/apk/jadx-output/`
-- [ ] Run apktool decompilation into `reverse-engineering/apk/apktool-output/`
+- [x] **Groundwork/tooling — done 2026-08-30.** Governance, storage, and procedure now in place so
+      the actual analysis work below can start; none of it constitutes analysis having happened yet:
+      `DECISIONS.md` ADR-017 (supersedes ADR-003) permits AI mechanical assistance — search, `pbtk`
+      extraction, native `.so` disassembly explanation — within a maintainer-decides-relevance
+      boundary; `WORKSTATION_PREPARATIONS.md` documents `pbtk` installation/real scope/dependencies;
+      a versioned APK storage structure exists (`reverse-engineering/apk/v<versionName>-<versionCode>/`,
+      indexed in the git-tracked `reverse-engineering/APK_VERSIONS.md`, itself gitignored for the
+      APK/decompiled output per `.gitignore`); `APK_REVERSE_ENGINEERING_PROCEDURE.md` documents the
+      full pull → decompile → extract → search → analyze procedure, including the
+      diff-against-previous-version pass and the out-of-scope exclusion list (AccountLinking/
+      OwnershipTransfer/AccessoryNonOwner/Firebase-Analytics-Crashlytics); `REVERSE_ENGINEERING.md`'s
+      template now requires a file+line citation per finding and a hypothesis-to-capture-test link.
+- [ ] Obtain the official APK (from the maintainer's own device), record it in
+      `reverse-engineering/APK_VERSIONS.md` (SHA-256, versionName/versionCode, pull date, source
+      device, provenance), and store it under `reverse-engineering/apk/v<versionName>-<versionCode>/`
+      per `APK_REVERSE_ENGINEERING_PROCEDURE.md` §2 — **not started**, despite the groundwork above.
+- [ ] Run JADX decompilation into `reverse-engineering/apk/v<versionName>-<versionCode>/jadx-output/`
+- [ ] Run apktool decompilation into `reverse-engineering/apk/v<versionName>-<versionCode>/apktool-output/`
 - [ ] Identify BLE/GATT-related classes **and** RFCOMM/Fast-Pair-related
       classes (`BluetoothSocket`, `MessageStream`, `AccountKey`, `FastPair`) —
-      see the keyword list in `REVERSE_ENGINEERING.md` §Method and
+      see the keyword list in `REVERSE_ENGINEERING.md` §Method,
+      `APK_REVERSE_ENGINEERING_PROCEDURE.md` §4's search-efficiency techniques, and
       `AGENTS.md` §13
 - [ ] Extract real `.proto` schemas via `pbtk` (do not hand-reconstruct field
       numbers from decompiled getter/setter names — see
