@@ -40,12 +40,30 @@ phone)
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | Tap once on a bud | User (Hardware) | `TOUCH-002` | TBD |
-| TBD | Double-tap on a bud | User (Hardware) | `TOUCH-003` | TBD |
-| TBD | Triple-tap on a bud | User (Hardware) | `TOUCH-004` | TBD |
-| TBD | Swipe forward on a bud | User (Hardware) | `TOUCH-005` | TBD |
-| TBD | Swipe backward on a bud | User (Hardware) | `TOUCH-006` | TBD |
-| TBD | Press and hold on a bud (mode: TBD) | User (Hardware) | `TOUCH-007` | TBD |
+| 15:45:14 | start of video
+| 15:45:18 | user enables bluetooth
+| 15:45:20 | Pixel buds pro 2 connected
+| 15:45:30 | spotify app: user selects play, music starts playing 
+| 15:45:39 | Tap once on right bud | User (Hardware) | `TOUCH-002` | TBD |
+| 15:45:48 | swipe on right bud (unintentionaly)  
+| 15:45:59 | Double-tap on right bud | User (Hardware) | `TOUCH-003` | TBD |
+| 15:46:09 | Triple-tap on right bud | User (Hardware) | `TOUCH-004` | TBD |
+| 15:46:24 | Triple-tap on right bud | User (Hardware) | `TOUCH-004` | TBD |
+| 15:46:35 | Tap once on left bud | User (Hardware) | `TOUCH-002` | TBD |
+| 15:46:44 | Tap once on left bud | User (Hardware) | `TOUCH-002` | TBD |
+| 15:46:51 | Double-tap on left bud | User (Hardware) | `TOUCH-003` | TBD |
+| 15:47:07 | Triple-tap + tap once on left bud | User (Hardware) | `TOUCH-004` | TBD |
+| 15:47:14 | Tap once on left bud | User (Hardware) | `TOUCH-002` | TBD |
+| 15:47:32 | Triple-tap + tap once on left bud | User (Hardware) | `TOUCH-004` | TBD |
+| 15:47:36 | Tap once on left bud | User (Hardware) | `TOUCH-002` | TBD |
+| 15:47:54 | Triple-tap on left bud | User (Hardware) | `TOUCH-004` | TBD |
+| 15:48:07 | Swipe forward on right bud (volume up)| User (Hardware) | `TOUCH-005` | TBD |
+| 15:48:17 | Swipe backward on right bud (volume down)| User (Hardware) | `TOUCH-006` | TBD |
+| TDB | Press and hold on right bud (mode: TBD) | User (Hardware) | `TOUCH-007` | TBD |
+| 15:48:39 | Swipe forward on left bud (volume up) | User (Hardware) | `TOUCH-005` | TBD |
+| 15:48:44 | Swipe backward on left bud (volume down) | User (Hardware) | `TOUCH-006` | TBD |
+| TBD | Press and hold on left bud (mode: TBD) | User (Hardware) | `TOUCH-007` | TBD |
+| 15:49:07 | end of video
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5)
 

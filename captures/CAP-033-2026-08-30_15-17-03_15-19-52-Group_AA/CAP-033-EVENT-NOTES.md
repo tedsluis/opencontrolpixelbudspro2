@@ -57,14 +57,17 @@ or otherwise foregrounded at any point until step 3 begins.
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | Companion app force-stopped | User (Hardware) | `SDP-001` | TBD |
-| TBD | "Forget" via system Bluetooth settings | User (Hardware) | `SDP-001` | TBD |
-| TBD | Re-pair via system Bluetooth settings ("Pair new device") | User (Hardware) | `SDP-001` | TBD |
-| TBD | Bonding completes | Buds/Case (Auto) | `SDP-001` | TBD |
-| TBD | Observation window end (≥60s after bonding, app still not opened) | — | `SDP-001` | TBD |
-| TBD | Companion app opened | User (App) | `SDP-001` | TBD |
-| TBD | App connects / stabilizes | App (Auto) | `SDP-001` | TBD |
-| TBD (opportunistic) | Firmware update installed | App (Auto) | `SDP-002` | TBD — mark `not attempted` if no update was available |
+| 15:17:03 | start of the video
+| 15:17:10 | user enables bluetooth
+| 15:17:23 | "Forget" via system Bluetooth settings | User (Hardware) | `SDP-001` | TBD |
+| 15:17:34 | Companion app force-stopped | User (Hardware) | `SDP-001` | TBD |
+| 15:17:52 | user selects "pair new device"
+| 15:17:53 | user opens case
+| 15:17:55 | user presses and holds pair button on case
+| 15:18:01 | user selects pixel buds pro van Ted form Available devices.
+| 15:18:11 | User selects pair device
+| 15:18:16 | user cancels pixel buds app popup
+| 15:19:52 | end of video
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AA)
 
