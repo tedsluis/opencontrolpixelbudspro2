@@ -189,8 +189,31 @@ When a protocol hypothesis is significant enough to implement against:
 
 ## Reverse engineering tools: JADX, apktool, pbtk
 
+The snippet below is a standalone shell fragment (unlike the transcript-style blocks elsewhere in
+this file) — it uses two tiny helpers, `log`/`warn`, that must be defined in the *same* shell
+session before use; they are not built-in commands. Fedora 44's repos (base + RPM Fusion) carry no
+`apktool` package (confirmed 2026-08-30, `dnf install -y apktool` → `No match for argument:
+apktool`), so apktool is installed manually from its GitHub releases, the same way JADX already is
+below.
+
 ```bash
-sudo dnf install -y apktool || warn "apktool not in repo, install manual: https://apktool.org/docs/install"
+log()  { echo "[INFO] $*"; }
+warn() { echo "[WARN] $*" >&2; }
+
+APKTOOL_VERSION="3.0.3"
+APKTOOL_DIR="$HOME/tools/apktool"
+if [[ ! -x "$APKTOOL_DIR/apktool" ]]; then
+  log "apktool $APKTOOL_VERSION download and install in $APKTOOL_DIR..."
+  mkdir -p "$APKTOOL_DIR"
+  curl -L -o "$APKTOOL_DIR/apktool.jar" \
+    "https://github.com/iBotPeaches/Apktool/releases/download/v${APKTOOL_VERSION}/apktool_${APKTOOL_VERSION}.jar" \
+    || warn "apktool download failed, install manual: https://apktool.org/docs/install"
+  printf '#!/bin/sh\nexec java -jar "%s/apktool.jar" "$@"\n' "$APKTOOL_DIR" > "$APKTOOL_DIR/apktool"
+  chmod +x "$APKTOOL_DIR/apktool"
+  echo "export PATH=\"\$PATH:$APKTOOL_DIR\"" >> "$HOME/.bashrc"
+else
+  log "apktool already installed in $APKTOOL_DIR, skipped."
+fi
 
 JADX_VERSION="1.5.1"
 JADX_DIR="$HOME/tools/jadx"
@@ -203,9 +226,12 @@ if [[ ! -d "$JADX_DIR" ]]; then
   rm -f "$TMPZIP"
   echo "export PATH=\"\$PATH:$JADX_DIR/bin\"" >> "$HOME/.bashrc"
 else
-  log "JADX al installed in $JADX_DIR, skipped."
+  log "JADX already installed in $JADX_DIR, skipped."
 fi
 ```
+
+After either install, open a new shell (or `source "$HOME/.bashrc"`) so the updated `PATH` takes
+effect, then verify with `apktool --version` and `jadx --version`.
 
 ### pbtk (Protobuf toolkit — `.proto` schema extraction)
 
