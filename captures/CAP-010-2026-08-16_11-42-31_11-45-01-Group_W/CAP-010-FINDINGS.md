@@ -266,12 +266,22 @@ capture as a confirming citation):**
 - DLCI 0x08's private one-time handshake content, including the `release_5.203` firmware string —
   now five confirming captures.
 
-**Not ready yet:**
+**Not ready yet (at the time):**
 - Any UUID for handle `0x0f2a`, `0x0f28`, or the `0x0c0X`/`0x0c1X` cluster — **still unresolved,
   now 4-for-4 negative across every capture that has attempted this.** Needs Group W's actual
   defined method (§7 item 1), genuinely untried so far.
 - The `0x0c13`/`0x0c14` "structurally distinct from `0x0c04`/`0x0c05`" hypothesis (§3) — new this
   session, not cross-checked against any spec.
+
+**Resolved 2026-09-01 (`CAP-034`, maintainer sign-off obtained per `AGENTS.md` §6):** the handle↔UUID
+mapping above is now known. `0x0c04` = Key-based Pairing (`FE2C1234…`), `0x0c0a` = Account Key
+(`FE2C1236…`), `0x0c0c` = Additional Data (`FE2C1237…`), `0x0f28` = Serial Number String, `0x0f2a` =
+Firmware Revision String (both under Device Information, `0x180A`) — confirming this section's own
+80-byte-write/Key-based-Pairing-FORM hypothesis as an exact name match, not just a shape match. The
+`0x0c13`/`0x0c14` "structurally distinct" hypothesis above is also confirmed: `0x0c13` is
+`FE2C1238…`, a genuinely separate characteristic from the Key-based-Pairing quartet — still no
+official name found for it. See `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-FINDINGS.md`
+§4 for the full command+hex evidence and `PROTOCOL.md` §6 for the promoted table.
 - The 11:46:58–11:47:04 post-video reconnect cycle (§5) — single occurrence, no correlated
   on-screen event, cause unknown.
 - The `libmaestro`/ANC-EQ control channel identity — still completely unaddressed by any capture

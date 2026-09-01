@@ -396,12 +396,21 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   unrecoverable from the log, the video (§4b), **and** a same-app text-log export plus manual
   screenshots from a later reconnect (§4c) — three independent artifacts from this session/device
   now checked, none expose ATT handles. A recapture with a fixed snaplen or a handle-aware tool
-  (§5) is required; this is not a gap that more nRF-Connect screenshots will close.
+  (§5) is required; this is not a gap that more nRF-Connect screenshots will close. **Resolved
+  2026-09-01 (`CAP-034`, maintainer sign-off obtained per `AGENTS.md` §6):** the exact recapture
+  this item called for happened — unlimited snaplen + a genuine full-database cache miss (a phone
+  never before connected to this Buds unit). All 15 services' handle ranges are now known,
+  matching this file's own UUID list exactly. See
+  `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-FINDINGS.md` §4.1 and
+  `PROTOCOL.md` §6.
 - 🔴 Whether `109b862f-50e3-45cc-8ea1-ac62de4846d1` ("Unknown Service") is the container for the
   `0x0c0X` cluster already characterized by byte-shape in `CAP-002`/`CAP-003`/11:42-`CAP-010` — 🟡
   plausible given it's the one 128-bit UUID nRF's own database can't name, and now (§4c) known to
   hold exactly 3 characteristics, a plausible fit for the cluster's observed handle count, but
-  still not handle-confirmed.
+  still not handle-confirmed. **Resolved 2026-09-01 (`CAP-034`) — corrected, not confirmed: no.**
+  "Unknown Service" occupies handles `0x0f37`–`0x0f3e`, entirely separate from the Fast Pair
+  Service's `0x0c00`–`0x0c14`, which is the `0x0c0X` cluster's real container. "Unknown Service"'s
+  own purpose remains unidentified. See `CAP-034-FINDINGS.md` §4.6.
 - 🔴 What `0x0f32` (value `0x64`) represents, and why it and its CCCD `0x0f33` appear only in this
   session, never in any capture driven by the official app. **Update 2026-08-27 (`CAP-014`,
   PROPOSAL pending maintainer approval):** reproduces byte-for-byte (same handles, same value

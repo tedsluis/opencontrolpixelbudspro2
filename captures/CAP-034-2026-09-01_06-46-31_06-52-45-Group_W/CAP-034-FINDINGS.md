@@ -1,7 +1,9 @@
 # Findings: `CAP-034` (Group W, 4th attempt — GATT `0x0c0X`/`0x0f2X` handle↔UUID mapping RESOLVED)
 
-**PROPOSAL — pending maintainer approval per `AGENTS.md` §6/§15.** Nothing in this document has been
-promoted into `PROTOCOL.md` or `DECISIONS.md`; §9 lists exactly what is proposed and where.
+**✅ Maintainer sign-off obtained 2026-09-01, per `AGENTS.md` §6/§15.** All four promotions proposed
+in §9 (`PROTOCOL.md` §6/§4.3 Option D, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row,
+`CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index + Group W section, and the cross-reference notes in
+`CAP-010`/`CAP-017`/`CAP-014-FINDINGS.md`) have been applied.
 
 Standardized, evidence-based extraction from `CAP-034-btsnoop_hci.log` + `CAP-034-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled on
@@ -492,7 +494,7 @@ cross-check.
 - 🔴 Carried forward, unaffected: the `libmaestro`/ANC-EQ control channel identity (DLCI 0x02/0x08)
   — this session is BLE/GATT-only and touches neither (§2).
 
-## 9. Conclusions & proposed downstream updates (PROPOSAL — pending maintainer approval)
+## 9. Conclusions & downstream updates (✅ maintainer sign-off obtained 2026-09-01, applied)
 
 **The `0x0c0X`/`0x0f2X` handle↔UUID mapping question, open since `CAP-002`, is resolved by this
 capture (🟢 FACT, §4), on the strength of the primary 06:47:42.147–45.490 discovery burst alone —
@@ -506,21 +508,20 @@ second confirmation — this capture's resolution rests on one discovery pass, n
 is judged sufficient because it is a full, genuine `0x0001..0xffff` walk with an untruncated log and
 independent video corroboration.
 
-**Proposed for maintainer sign-off (none of this has been written into the target files yet, per
-`AGENTS.md` §6):**
+**Maintainer sign-off obtained 2026-09-01 — all four applied:**
 
-1. **`PROTOCOL.md` §6**'s `0x0c0X`/`0x0f2X` open item — propose closing it, citing this capture
-   (§4.1–§4.7) as 🟢 FACT, replacing the "🔴 OPEN QUESTION" framing (2026-08-27 entry, currently
-   still open after `CAP-014`) with the full handle/UUID/name table above.
-2. **`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`**'s `GATT-001` row — propose marking resolved, citing
-   `CAP-034-FINDINGS.md` in place of the current "still 🔴 OPEN" `CAP-014` note.
-3. **`CAPTURE_BLUETOOTH_HCI_SNOOP.md`**'s Capture Index — propose adding a `CAP-034` row (Group W,
-   4th attempt, method = `pm clear com.android.bluetooth` on a phone never before connected to this
-   Buds unit + nRF Connect, both `GATT-001` blockers combined for the first time) and updating Group
-   W's own section to record the question as resolved.
-4. **Closing cross-references** proposed for `CAP-010-FINDINGS.md` §8, `CAP-017-FINDINGS.md` §6, and
-   `CAP-014-FINDINGS.md` §9 — each pointing forward to this resolution where they currently list the
-   mapping as still open.
+1. **`PROTOCOL.md` §6**'s `0x0c0X`/`0x0f2X` open item — closed, citing this capture (§4.1–§4.7) as
+   🟢 FACT, with the full handle/UUID/name table added in place of the "🔴 OPEN QUESTION" framing.
+   `PROTOCOL.md` §4.3 Option D (Battery Service) also updated with the resolved handle range.
+2. **`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`**'s `GATT-001` row — marked resolved, citing this file in
+   place of the prior "still 🔴 OPEN" `CAP-014` note.
+3. **`CAPTURE_BLUETOOTH_HCI_SNOOP.md`**'s Capture Index — a `CAP-034` row added (Group W, 4th
+   attempt, method = `pm clear com.android.bluetooth` on a phone never before connected to this
+   Buds unit + nRF Connect, both `GATT-001` blockers combined for the first time) and Group W's own
+   section updated with a ✅ RESOLVED banner.
+4. **Closing cross-references** added to `CAP-010-FINDINGS.md` §8, `CAP-017-FINDINGS.md` §6, and
+   `CAP-014-FINDINGS.md` §9 — each now points forward to this resolution where they previously
+   listed the mapping as still open.
 5. **`DECISIONS.md`** — no new ADR is proposed; this is a protocol-fact resolution (governed by
    `PROTOCOL.md`'s own FACT/HYPOTHESIS process), not an architecture or scope decision.
 

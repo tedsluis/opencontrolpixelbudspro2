@@ -793,13 +793,20 @@ event-observation coroutines.
   characteristic, `0x2A19` (Bluetooth SIG-assigned, externally confirmed 2026-08-23) — the
   service UUID `0x180F` alone only identifies that the service exists, not which characteristic
   handle to read/subscribe to.
-  **PROPOSAL, pending maintainer approval (2026-08-27, `CAP-014`):** the Battery Service/Battery
-  Level pairing is independently reconfirmed a second time via nRF Connect's on-screen
-  characteristic list (`Properties: NOTIFY, READ`, `CAP-014-FINDINGS.md` §3) — still no value ever
-  read in any capture to date, status unchanged at 🟡. That capture's own attempt to close the
-  handle-range question (see the `0x0c0X`/`0x0f2X` open item below) did not succeed, for a newly
-  identified reason (a cached GATT client on an already-bonded phone, not a snaplen problem this
-  time).
+  The Battery Service/Battery Level pairing was independently reconfirmed a second time via nRF
+  Connect's on-screen characteristic list (`Properties: NOTIFY, READ`, `CAP-014-FINDINGS.md` §3).
+  **Handle range resolved 2026-09-01 (`CAP-034`, maintainer sign-off obtained per `AGENTS.md` §6,
+  🟢 FACT):** the Battery Service occupies handles `0x0f30`–`0x0f33`, with the Battery Level
+  characteristic at value handle `0x0f32` (CCCD `0x0f33`) — resolved by the same discovery burst
+  that closed the `0x0c0X`/`0x0f2X` open item below; see that item and
+  `CAP-034-FINDINGS.md` §4.5 for the full command+hex evidence. This also explains the
+  previously-unresolved `0x0f32`=`0x64` (100%) value first seen in `CAP-017`/`CAP-014`: it is an
+  ordinary Battery Level reading, not a proprietary field — it only ever appeared via nRF Connect
+  because the official app reads battery through the Fast Pair/HFP mechanisms above, not this BLE
+  characteristic. **Still not resolved:** no capture to date has observed a `Read`/`Notify` of this
+  characteristic actually returning a value while the official app is in use, so whether the app (or
+  this project's own future implementation) should read battery via this path remains open — status
+  stays 🟡 for that narrower question.
 
 #### Option E — DLCI 0x08 private envelope, per-earbud+case push (`Group 0x0e Code 0x01` / `Group 0x04 Code 0x03`)
 
@@ -1434,10 +1441,11 @@ leaving them buried in prose elsewhere.
       apparently duplicated on two addresses at once (`0x18` vs. `0x1a` as an inner field-2 value,
       correlating 1:1 with which address carries it) — genuinely unresolved, not guessed at. See
       `DESKRESEARCH_FINDINGS.md`'s 2026-08-17 entry.
-- [ ] **Added 2026-08-18, from `CAP-010-FINDINGS.md` §3 (11:42 session) — byte-level detail for two
+- [x] **Added 2026-08-18, from `CAP-010-FINDINGS.md` §3 (11:42 session) — byte-level detail for two
       GATT handles already known to be part of the `0x0c0X` Key-based-Pairing-shaped cluster
-      (§4.3 Option D context), not yet spec-identified.** 🟡 HYPOTHESIS, tracked as open — **not**
-      promoted as resolved facts:
+      (§4.3 Option D context), not yet spec-identified. Resolved 2026-09-01, see the `CAP-034`
+      update below.** Originally 🟡 HYPOTHESIS, tracked as open — **not**
+      promoted as resolved facts at the time:
       - `0x0c0c`: `Notification`, 40 bytes (frame 2020) — handle already known to be in the
         cluster (`CAP-003-FINDINGS.md` §4), payload length not previously characterized.
       - `0x0c13`/`0x0c14`: `0x0c13` carries 9-byte (`Read`), 10-byte (`Write`), and 32-byte
@@ -1451,16 +1459,61 @@ leaving them buried in prose elsewhere.
       (`0x0c0c` 41B notify, `0x0c13` 9B-Read/10B-Write/32B-Notify each with a leading `0x01`,
       `0x0c14` 2B CCCD) in an independent session 11 days later, on the same physical device —
       strengthens confidence these are stable characteristic shapes, not session artifacts, but
-      does **not** change their status: still 🟡 HYPOTHESIS, still not resolved to real UUIDs. The
-      **handle↔UUID mapping question itself remains 🔴 OPEN QUESTION** after this 3rd Group-W
-      attempt (`CAP-010`, `CAP-017`, now `CAP-014`) — `CAP-014` confirmed its own wire log is not
-      truncated (unlike `CAP-017`), but found a **different** blocking cause: the session reused an
-      already-bonded phone with a cached GATT client, so Android served this cluster from its
+      did **not**, at the time, change their status: still 🟡 HYPOTHESIS, still not resolved to real
+      UUIDs. The **handle↔UUID mapping question itself remained 🔴 OPEN QUESTION** after this 3rd
+      Group-W attempt (`CAP-010`, `CAP-017`, `CAP-014`) — `CAP-014` confirmed its own wire log was
+      not truncated (unlike `CAP-017`), but found a **different** blocking cause: the session reused
+      an already-bonded phone with a cached GATT client, so Android served this cluster from its
       cached database instead of re-declaring it live on the wire (only the GATT service itself,
       handles `0x0001`–`0x0009`, was genuinely re-discovered). Neither of Group W's own candidate
       cache-busting methods (`pm clear com.android.bluetooth`, or a phone that has never connected
-      to this Buds unit before) has been tried in any of the 3 sessions to date — see
-      `CAP-014-FINDINGS.md` §8 for the precise recommended next capture.
+      to this Buds unit before) had been tried in any of the 3 sessions to that point.
+
+      **🟢 FACT, resolved 2026-09-01 (`CAP-034`, maintainer sign-off obtained per `AGENTS.md` §6) —
+      the handle↔UUID mapping for this entire cluster, and the full 15-primary-service GATT profile,
+      is now known.** `CAP-034` (4th Group W attempt) combined, for the first time, an unlimited HCI
+      snoop snaplen with a genuine full-database GATT cache miss (`pm clear com.android.bluetooth`
+      run on a Pixel 9a that had never before connected to this Buds unit, plus a fresh nRF Connect
+      install) — the resulting 06:47:42.147–45.490 discovery burst (frames 3264–3469) is a complete,
+      untruncated `Read By Group Type`/`Read By Type`/`Find Information` walk of the entire
+      `0x0001`–`0xffff` handle space, decoded byte-for-byte and independently corroborated by nRF
+      Connect's own on-screen UUID-name rendering (a second, client-side decoding path agreeing with
+      the wire-hex decode on every field checked). See `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-FINDINGS.md`
+      §4 for the full command+hex evidence per handle. Resolved mapping:
+
+      | Handle range | UUID | Service |
+      |---|---|---|
+      | `0x0c00`–`0x0c14` | `0xFE2C` | **Google Fast Pair Service** |
+      | `0x0f20`–`0x0f2a` | `0x180A` | Device Information |
+      | `0x0f30`–`0x0f33` | `0x180F` | Battery Service |
+      | `0x0f37`–`0x0f3e` | `109b862f-50e3-45cc-8ea1-ac62de4846d1` | "Unknown Service" (name still unidentified — see below) |
+      | `0x0c15`–`0x0c18` | `15190001-12f4-c226-88ed-2ac5579f2a85` | Accessory Non-Owner Service (out of scope, `DECISIONS.md` ADR-008) |
+
+      Within the Fast Pair Service, every characteristic in the `0x0c0X` cluster this project has
+      tracked by byte-shape alone since `CAP-002` now has a spec-verified name (live-checked against
+      `developers.google.com/nearby/fast-pair`, not recalled from training data):
+
+      | Value handle | CCCD | UUID | Name | Properties |
+      |---|---|---|---|---|
+      | `0x0c02` | — | `FE2C1233…` | Model ID | Read |
+      | `0x0c04` | `0x0c05` | `FE2C1234…` | **Key-based Pairing** | Notify, Write |
+      | `0x0c07` | `0x0c08` | `FE2C1235…` | Passkey | Notify, Write |
+      | `0x0c0a` | — | `FE2C1236…` | Account Key | Write |
+      | `0x0c0c` | `0x0c0d` | `FE2C1237…` | Additional Data | Notify, Write |
+      | `0x0c0f` | — | `0x2A26` | Firmware Revision String (standard, 2nd copy) | Read |
+      | `0x0c11` | — | `FE2C1239…` | Message Stream PSM Characteristic | Read |
+      | `0x0c13` | `0x0c14` | `FE2C1238…` | **still unnamed** — checked against the base spec, the Message Stream extension, and the Personalized Name extension; not found on any of the three | Notify, Write, Read |
+
+      This directly confirms, as an exact UUID/name match rather than only a byte-shape match, the
+      FORM already hypothesized since `CAP-003-FINDINGS.md` §4 for the 80-byte-first-write/16-byte
+      pattern on `0x0c04` (Key-based Pairing) and resolves `0x0f28`="1"/`0x0f2a`="Revision 6"
+      (confirmed across `CAP-002`/`CAP-003`/`CAP-010`/`CAP-017`) as the Device Information Service's
+      ordinary Serial Number String and Firmware Revision String — not a Fast-Pair-proprietary value.
+      It also **corrects** a `CAP-017-FINDINGS.md` §6 hypothesis: "Unknown Service"
+      (`109b862f-…`) is **not** the `0x0c0X` cluster's container — it occupies a separate handle
+      range (`0x0f37`–`0x0f3e`) and its own purpose remains unidentified. **Not resolved by this
+      capture:** `FE2C1238…`'s official name, and "Unknown Service"'s own purpose — both remain
+      🔴 OPEN QUESTION, tracked in `CAP-034-FINDINGS.md` §8.
 - [ ] **Added 2026-08-21, `CAP-019`–`CAP-024`:** what do DLCI 0x02's confirmed inner field numbers
       (§4.5's `field4`=touch controls, `field11`=Multipoint, `field15`=Volume EQ, `field17`=Volume
       balance, `field19`=Mono audio, `field22`=Conversation Detection, `field27`/`field28`=Case

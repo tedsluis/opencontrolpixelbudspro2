@@ -362,11 +362,24 @@ future sessions choosing a bonding method.
 
 - 🔴 Whether the Buds were already unbonded from this phone before the video started (§1) —
   unresolvable from this capture's own artifacts.
-- 🔴 The `0x0c0X`/`0x0f2X` handle↔UUID mapping itself — still open; §8 states the precise next step.
+- 🔴 The `0x0c0X`/`0x0f2X` handle↔UUID mapping itself — §8 states the precise next step. **Resolved
+  2026-09-01 (`CAP-034`, maintainer sign-off obtained per `AGENTS.md` §6):** §8's recommended next
+  capture — a fixed snaplen combined with one of Group W's own untried cache-busting methods — was
+  run. `0x0c00`–`0x0c14` = Google Fast Pair Service (`0xFE2C`), `0x0f20`–`0x0f2a` = Device
+  Information, `0x0f30`–`0x0f33` = Battery Service; every handle this file characterized by byte
+  shape now has a spec-verified name. See
+  `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-FINDINGS.md` §4 and
+  `PROTOCOL.md` §6.
 - 🔴 Handle `0x0034`'s real identity and the "missing first 3 bytes" of its device-name-like read
-  value (§4c) — reported as raw bytes, not explained.
+  value (§4c) — reported as raw bytes, not explained. **Not resolved by `CAP-034`** — that capture's
+  own handle `0x0034` belonged to a different, legitimately-declared GAP Device Name characteristic
+  on the Buds' own attribute table, not this section's cross-connection-contaminated handle from a
+  different peer device; the two are unrelated, still open on its own terms.
 - 🔴 `0x0f32`/`0x0f33`'s semantic meaning (value `100`) — reproduces exactly across `CAP-017` and
-  `CAP-014`, still no UUID or meaning (§6).
+  `CAP-014`, still no UUID or meaning (§6). **Resolved 2026-09-01 (`CAP-034`):** `0x0f32` is the
+  standard Battery Level characteristic (`0x2A19`) within the Battery Service (`0x0f30`–`0x0f33`);
+  `0x0f33` is its CCCD. The value `100` is an ordinary 100% battery reading, not a proprietary
+  field. See `CAP-034-FINDINGS.md` §4.5.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-014-2026-08-27_20-53-37_20-59-17-Group_W/CAP-014-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-014-2026-08-27_20-53-37_20-59-17-Group_W/CAP-014-FINDINGS
