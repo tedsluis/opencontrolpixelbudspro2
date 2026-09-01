@@ -123,3 +123,5 @@
   - **CAP-033 (Group AA)**
     - [CAP-033-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-033-2026-08-30_15-17-03_15-19-52-Group_AA/CAP-033-EVENT-NOTES.md)
     - [CAP-033-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-033-2026-08-30_15-17-03_15-19-52-Group_AA/CAP-033-FINDINGS.md)
+  - **CAP-034 (Group W)**
+    - [CAP-034-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-034-2026-09-02_06-46-31_06_52-45-Group_W/CAP-034-EVENT-NOTES.md)
