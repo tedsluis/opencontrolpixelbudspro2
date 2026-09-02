@@ -126,3 +126,6 @@
   - **CAP-034 (Group W)**
     - [CAP-034-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-EVENT-NOTES.md)
     - [CAP-034-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-FINDINGS.md)
+  - **CAP-035 (Group AB)**
+    - [CAP-035-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-EVENT-NOTES.md)
+    - [CAP-035-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-FINDINGS.md)
