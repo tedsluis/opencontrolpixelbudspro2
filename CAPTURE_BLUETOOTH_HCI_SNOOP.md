@@ -770,6 +770,108 @@ capture question, and out of this Group's scope.
 - **`SDP-002` positive:** a before/after firmware comparison shows the advertised UUID changing —
   directly explains the two-UUID code as a migration artifact.
 
+#### Group AB — DLCI 0x08/0x0a/0x06/0x12 GMS-independence check on GrapheneOS (occasional, added 2026-09-02)
+
+**🟡 PARTIALLY ADVANCED 2026-09-02 (`CAP-035`, maintainer sign-off obtained per `AGENTS.md` §6).**
+DLCI 0x08's content reproduces byte-identical with Google Play Services present but
+`dumpsys`-*verified* disabled (`com.google.android.gms enabled=3`) — a rigorously confirmed
+strengthening of `CAP-004-FINDINGS.md` §4a's existing finding, not the fully conclusive
+genuinely-GMS-*absent* result this Group was designed to reach (the Pixel 9a used still has GMS
+installed, merely disabled, not absent as this Group's own Purpose below assumed it typically would
+be). DLCI 0x0a opens but stays silent both times; DLCI 0x06/0x12 never open at all — first-time
+clean negatives for both. See the `CAP-035` row in the Capture Index and `CAP-035-FINDINGS.md` for
+the full result. **Still open:** a repeat with GMS genuinely uninstalled, if full closure of the
+OS-stack-vs-GMS question is wanted.
+
+**Purpose:** `CAP-033-FINDINGS.md` §3 found the Buds' own SDP database names DLCI 0x08 as
+**"GSND CONTROL"**, DLCI 0x0a as **"GSND AUDIO"**, DLCI 0x06 as **"DEBUG APP"**, and DLCI 0x12 as
+**"BTIS"** — but a full, mechanical companion-APK search (per `ADR-017`'s boundary) found zero
+references to any of these names/UUIDs anywhere in the app's own decompiled code, meaning the app
+never registers or looks up these services itself. Two explanations remain open: (1) Android's own
+Bluetooth stack connects to these services at the OS/vendor level, independent of any app, or (2)
+Google Play Services' Nearby module does. `CAP-004-FINDINGS.md` §4a already found DLCI 0x08's
+content (the `google-pixel-buds-pro-v1` capability blob, `Europe/Amsterdam`, firmware string)
+reappears unchanged with GMS **disabled** and the Pixel Buds app uninstalled — a single data point,
+and a weaker test than this Group runs, since "disabled" is not the same as "absent." This Group
+repeats that isolation on the Pixel 9a (GrapheneOS), where Google Play Services is not merely
+disabled but typically not installed at all — the strongest available version of this test without
+decompiling any OS-level binary (a materially different, not-yet-authorized scope — see this
+session's own conversation record for the reasoning). Same underlying logic as Group S, applied to a
+cleaner GMS-absent environment and to four channels instead of one.
+
+**Runs exclusively on the Pixel 9a (GrapheneOS)** — no app-driven commands are possible on this
+device regardless (§4.2), which is a feature here, not a limitation: it keeps the phone-side
+software surface minimal (system Bluetooth stack only, no Pixel Buds app, no third-party GATT tool).
+
+**Test-ID:** `GSND-001` (new — added to `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` and `id_registry.csv`
+alongside this Group).
+
+**Setup — verify, don't assume, per `PROJECT_RULES.md` §1 (record the actual findings in
+`CAP-035-EVENT-NOTES.md`, not just the intended state):**
+1. Confirm no Google Play Services package is present at all (GrapheneOS's optional sandboxed Play
+   compatibility layer is a separate, explicitly-installed app — check it isn't present either):
+   ```
+   adb shell pm list packages | grep -i "google\|gms\|play"
+   ```
+   If any GMS-related package **is** present, additionally confirm/record its disabled state
+   (`adb shell dumpsys package <package> | grep -i enabled`) — "absent" and "present but disabled"
+   are different conditions and change how strong this session's result is.
+2. Confirm the Pixel Buds Companion App is not installed: `adb shell pm list packages | grep -i pixelbuds`
+   (or check the app drawer).
+3. Confirm nRF Connect (or any other BLE/GATT tool) is not used this session — system Bluetooth
+   settings only, the same constraint as Group S.
+4. If the Buds are currently bonded to this phone (e.g. left over from `CAP-034`), "Forget" them via
+   Settings → Connected devices → the Buds → Forget — a narrow, per-device action, **not** the
+   broader "Reset Wi-Fi, mobile & Bluetooth" system option (that wipes every other paired device and
+   all Wi-Fi networks on the phone for no benefit this session actually needs — this Group isn't
+   chasing a GATT-cache question, so Group W's heavier cache-busting isn't relevant here). A plain
+   per-device Forget is enough to get a clean fresh-pairing handshake as a bonus `PAIR-001` data
+   point; it is not strictly required for the DLCI-content question itself (`CAP-010-FINDINGS.md` §5
+   already showed DLCI 0x08's handshake reproduces on a reconnect to an already-bonded device too),
+   but keeps this session's own artifacts simple to read.
+5. Enable Bluetooth HCI snoop logging (§2) and reboot, same as every other session.
+
+**Procedure:**
+1. Start video recording (wall-clock overlay) and confirm HCI snoop logging is active.
+2. Open the case, press the pairing button. **[`PAIR-001`]**
+3. On the phone: Settings → Connected devices → Pair new device → select the Buds from the list.
+   Confirm the system pairing dialog. Note the exact tap time. **[`PAIR-001`, `GSND-001`]**
+4. Once connected, **do not open any app or tool** — leave the connection idle for at least
+   90–120 seconds. This is deliberately longer than Group S's window: DLCI 0x06/0x0a's only prior
+   payload-bearing occurrence (`CAP-021-FINDINGS.md` §4a) did not appear immediately on connect, so
+   a short window risks a false negative for those two channels specifically. **[`GSND-001`,
+   `BATT-003`]**
+5. Disconnect and reconnect once, as an isolated pair of actions — the one condition under which
+   DLCI 0x0a has ever carried content before. **[`PAIR-003`, `GSND-001`]**
+6. Idle again for ~30–60s after the reconnect settles.
+7. Stop recording and logging. Extract via the raw btsnoop path first (§3), and verify snaplen
+   integrity immediately (`capinfos` / `frame.cap_len == frame.len`) before any analysis, per every
+   prior session's practice.
+
+**Analysis:** filter on the Buds' address first (§13 CLI-hygiene), then check, per channel:
+```
+tshark -r CAP-035-btsnoop_hci.log -Y "bluetooth.addr == 04:00:6e:cf:6e:07 and btrfcomm.dlci in {6,8,10,18}" \
+  -T fields -e frame.number -e frame.time_relative -e btrfcomm.dlci -e _ws.col.Info
+```
+(DLCI values: 0x06=6, 0x08=8, 0x0a=10, 0x12=18 — decimal, since `tshark` fields compare numerically.)
+For DLCI 0x08 specifically, if it opens, reproduce `CAP-001`/`CAP-004`'s exact content check:
+```
+tshark -r CAP-035-btsnoop_hci.log -Y 'frame contains "google-pixel-buds-pro-v1"' -T fields -e frame.number -e frame.time
+```
+**Three-way outcome, stated in advance so the result isn't read selectively (same discipline as
+Group S/Y/AA):**
+- **DLCI 0x08's content appears, byte-identical to prior captures, with no GMS present at all** —
+  strengthens `CAP-004`'s single data point into a 2nd, stronger confirmation that this channel is
+  OS/vendor-Bluetooth-stack-level, not GMS/Nearby-dependent. Write up as a `CAP-035-FINDINGS.md`
+  proposal per the usual FACT/HYPOTHESIS discipline — this session alone does not authorize
+  self-promoting anything to 🟢 FACT in `PROTOCOL.md` (`AGENTS.md` §6).
+- **DLCI 0x08's content is absent or differs** — contradicts `CAP-004`, and becomes a new,
+  actively interesting open question in its own right (not a "failed" session — an absence here is
+  exactly as informative as a presence, same principle as Group S).
+- **DLCI 0x0a/0x06/0x12 show any payload at all** (previously unobserved outside `CAP-021`'s single
+  DLCI 0x0a burst) — first data point on whether these depend on GMS presence; record whatever is
+  found, don't force an interpretation beyond what the bytes show.
+
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
 No app-driven commands are possible here, so this session focuses on connection-level
@@ -1144,6 +1246,7 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-032` | 2026-08-27 | Pixel 7a | 17 (⚪ assumed, not screen-confirmed) | release_5.203 | official Pixel Buds Companion App (version not visible on screen) | A (repeat, 4th attempt) | `PAIR-001`, `PAIR-004`, incidental `BATT-004` | Fourth attempt at `CAP-001-FINDINGS.md` §6's original goal — this time extracted via the raw BTSnoop file path (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 3) rather than the `btsnooz.py` fallback used for `CAP-012`/`CAP-013`/`CAP-031`. **PROPOSAL — pending maintainer approval:** status/row text below proposed, not yet maintainer-approved. | `captures/CAP-032-2026-08-27_18-30-15_18-32-33-Group_A/CAP-032-btsnoop_hci.log` (**genuine raw, untruncated BTSnoop — `frame.cap_len == frame.len` for all 2,455 frames, no `capinfos`-inferred size cap; see `CAP-032-FINDINGS.md` §0.1**) | same file | analyzed — **success: pre-clearing-action window captured for the first time in four attempts** — see `CAP-032-FINDINGS.md`/`CAP-032-EVENT-NOTES.md` in that folder. The log's first frame (18:29:45.72) starts **~58s before** the on-screen Forget tap (18:30:42) and ~30s before the video itself begins. **Primary question (`CAP-001-FINDINGS.md` §6) is now answered for this session: 🟢 no prior BLE link or valid classic link key existed for the Buds anywhere in the covered pre-Forget window** (`CAP-032-FINDINGS.md` §0.3) — this does not reproduce `CAP-001`'s original finding (a clean counter-example, not a contradiction; `CAP-001`'s own session-specific puzzle remains independently open). **Secondary question (`PAIR-004`) reconfirmed: 🟢 CONFIRMED fresh classic SSP handshake** (frames 1090–1153, a seventh confirming instance). Bonus: the untruncated log fully decodes DLCI 0x08's battery push (`[100,1,1]`/`[100,1,2]`/`[57,1,3]` = Left/Right/Case, matching the on-screen reading exactly) and firmware/capability-identifier fields; a previously-undocumented vendor-specific HCI command (`0xFD57`/`0x0157`, frame 91) embeds the Buds' address 105ms into the log, structurally consistent with bulk bonded-device provisioning at BT-enable time, not a connection — recorded 🔴 OPEN QUESTION, not bearing on the primary question. The `btsnooz`-vs-raw extraction-path hypothesis (`CAP-013-FINDINGS.md` §1, `CAP-031-FINDINGS.md` §1) is supported by this one data point (`CAP-032-FINDINGS.md` §0.1/§7 Test C), not yet independently isolated. |
 | `CAP-033` | 2026-08-30 | Pixel 7a | TBD | release_5.203 (🟢 confirmed on-wire) | n/a — app force-stopped throughout the entire recorded session | AA | `SDP-001`, `SDP-002`(not attempted — no update pending) | SDP UUID branch isolation for `gbm.a()`'s "default internal rfcomm socket" path — system-settings-only pairing (app force-stopped) to check whether the pre-app-fetch SDP UUID set ever differs from every existing capture's "pigweed"-only result (`REVERSE_ENGINEERING.md`'s `gbm`/`fzd` entries, `DECISIONS.md` ADR-018) | `captures/CAP-033-2026-08-30_15-17-03_15-19-52-Group_AA/CAP-033-btsnoop_hci.log` | same file | analyzed, **isolation not fully clean — see `CAP-033-FINDINGS.md` §1** ("Forget" preceded Force-stop by ~10s, reverse of procedure, though scoped away from the actual SDP-browse window; Step 3's app-open baseline was never executed at all, on- or off-camera). `SDP-001` result capped at 🟡 HYPOTHESIS: "default" UUID still zero occurrences (raw byte scan, both byte orders), "pigweed" UUID confirmed present and named **"MAESTRO APP"** on-the-wire (SDP service-name string, frame 1279) — first wire-level (not just APK-code) corroboration of `DECISIONS.md` ADR-018's channel identity. **Bonus structural finding:** the same SDP response names DLCI 0x08 as **"GSND CONTROL"** and DLCI 0x0a as **"GSND AUDIO"** — new, previously-undocumented leads for `PROTOCOL.md` §2.3's open DLCI-0x08 identity question and `CAP-021-FINDINGS.md` §4a's unattributed DLCI-0x0a burst, proposed pending maintainer review, not promoted |
 | `CAP-034` | 2026-09-01 | Pixel 9a (GrapheneOS) — never before connected to this Buds unit | TBD | ⚪ assumed `release_5.203` (not re-confirmed — no official app used, DLCI 0x08 never opens) | nRF Connect for Mobile (Nordic Semiconductor); official Pixel Buds Companion App not installed | W (4th attempt) | `GATT-001`, incidental `PAIR-001`/`PAIR-003`/`BATT-003` | 4th Group W attempt at the `0x0c0X`/`0x0f2X` GATT handle↔UUID mapping — combines `CAP-014`'s confirmed-unlimited snaplen fix with Group W's own untried cache-busting method (`pm clear com.android.bluetooth` on a phone never before connected to this Buds unit), the first session to have both at once | `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-btsnoop_hci.log` | same file | analyzed, **✅ RESOLVED — maintainer sign-off obtained per `AGENTS.md` §6** — see `CAP-034-FINDINGS.md` in that folder. Confirmed 0/3,717 truncated frames (max 684B). The sole LE connection (chandle `0x0040`) yields one genuine, full `0x0001`–`0xffff` discovery walk (06:47:42.147–45.490) before bonding — the "reconnect" at 06:51:22 is a Database Hash cache-hit only, no second discovery pass. Resolves the full 15-primary-service GATT profile: `0x0c00`–`0x0c14` = **Google Fast Pair Service** (`0xFE2C`) with all 5 spec-defined characteristics (Model ID, Key-based Pairing, Passkey, Account Key, Additional Data) plus Message Stream PSM and one still-unnamed `FE2C1238…` characteristic; `0x0f20`–`0x0f2a` = Device Information (`0x0f28`=Serial Number String, `0x0f2a`=Firmware Revision String); `0x0f30`–`0x0f33` = Battery Service (`0x0f32`=Battery Level). Independently corroborated by nRF Connect's own on-screen UUID rendering and live-verified against the official Fast Pair spec. **Corrects** `CAP-017-FINDINGS.md` §6's hypothesis that "Unknown Service" (`109b862f-…`) might be the `0x0c0X` cluster's container — it does not; it occupies a separate range (`0x0f37`–`0x0f3e`), own purpose still unidentified. ADR-008 compliance confirmed (Accessory Non-Owner Service appears only in unavoidable discovery inventory, never read/written). See `PROTOCOL.md` §6 and §4.3 Option D for the promoted findings |
+| `CAP-035` | 2026-09-02 | Pixel 9a (GrapheneOS) | TBD | ⚪ assumed `release_5.203` (not re-confirmed — no official app used, DLCI 0x08's firmware string was never independently re-checked) | none — no Pixel Buds app, no nRF Connect, system Bluetooth settings only | AB | `GSND-001`, incidental `PAIR-001`/`PAIR-003`/`BATT-003` | GMS-independence check for DLCI 0x08 ("GSND CONTROL")/0x0a ("GSND AUDIO")/0x06 ("DEBUG APP")/0x12 ("BTIS"), per `CAP-033-FINDINGS.md` §3's negative APK-search result (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AB) | `captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-btsnoop_hci.log` | same file | analyzed, **maintainer sign-off obtained per `AGENTS.md` §6** — see `CAP-035-FINDINGS.md` in that folder. Confirmed 0/1,945 truncated frames. Two videos turned out to be sequential with only a ~7s recording-stop/restart gap (not the ~5min originally logged) — resolved directly from frame comparison, correcting the event timeline including a ~91–97s error in the original disconnect/reconnect time estimates. **GMS precondition:** `com.google.android.gms` present but `dumpsys`-verified disabled (`enabled=3` = `COMPONENT_ENABLED_STATE_DISABLED_USER`) — not genuinely absent, so this is a rigorously verified second data point for `CAP-004-FINDINGS.md` §4a's existing "GMS present but disabled" finding, not a stronger novel "GMS-absent" confirmation. **Result:** DLCI 0x08 content reproduces byte-identical twice (connect + reconnect); DLCI 0x0a opens in lockstep both times but carries zero payload; DLCI 0x06/0x12 never open at all — clean negatives for both, first time either has been specifically checked. ADR-008 compliant. Still open: a repeat with GMS genuinely uninstalled, for full closure of the OS-stack-vs-GMS question |
 
 **Column notes:**
 

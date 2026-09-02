@@ -133,6 +133,16 @@ unchanged:**
 unchanged with GMS disabled and no app installed, meaning the Buds (or the phone's own Bluetooth
 stack, independent of GMS) send this regardless.
 
+**Reproduced a second time, 2026-09-02 (`CAP-035`, maintainer sign-off obtained per `AGENTS.md`
+§6):** this exact channel-4/DLCI-0x08 content (`google-pixel-buds-pro-v1`, `Europe/Amsterdam`)
+reappears again, byte-identical, on a different phone/OS (Pixel 9a/GrapheneOS vs. this capture's
+Pixel 7a), with the GMS-disabled precondition independently `dumpsys`-verified this time
+(`com.google.android.gms enabled=3` = `COMPONENT_ENABLED_STATE_DISABLED_USER`) rather than only
+assumed — a materially more rigorous confirmation of the same "GMS present but disabled" condition
+this section already established, still short of a genuinely-GMS-absent test. See
+`captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-FINDINGS.md` §2/§5 for the full
+evidence.
+
 ### Conclusion: the honest answer is "it depends on which sub-mechanism"
 
 `CAP-002` §3 treated the channel-2 TLV content and general "device info exchange" as one
