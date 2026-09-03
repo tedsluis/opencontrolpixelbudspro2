@@ -996,7 +996,7 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     | 14 | BOOL | `fyo.java:234-254` (`o`) | unhandled (default) | write-only; response ignored |
     | 15 | BOOL | `fyo.java:168-188`→`u` (`fyo.java:376-396`) | case 15 (`:312-319`), no distinct log | not independently named |
     | 16 | MESSAGE→`qjw` | `fyp.java:301-322` (`f`, "update user eq") | case 16 (`:320-323`), `"received user eq setting value"` | **live/current user EQ curve** — see updated `qjw` entry below |
-    | 17 | INT32/BOOL-adjacent | `fxf.java:82-133` (case 16 of that dispatcher) | case 17 (`:324-327`), `"received last saved volume balance setting value"` | **volume balance** |
+    | 17 | `SINT32` (per this entry's own field register above, line 856) | `fxf.java:82-133` (case 16 of that dispatcher) | case 17 (`:324-327`), `"received last saved volume balance setting value"` | **volume balance** |
     | 18 | MESSAGE→`qjw` | `fyp.java:270-294` (`d`, "update last saved user eq"; also persists to local `SharedPreferences` key `key_user_custom_eq`) | case 18 (`:328-331`), `"received last saved user eq setting value"` | **last-saved/persisted user EQ curve** — see updated `qjw` entry below |
     | 19 | BOOL | `fyo.java:278-298` (`s`); also `fxf.java:113-133` (volume-balance-extremity side effect) | case 19 (`:332-340`), `"received mono setting value"` | **Mono audio** |
     | 21 | BOOL | `hey.java:165-190` (`HearingWellnessFragment` toggle) | case 21 (`:341-351`), no distinct log | HearingWellnessFragment-scoped toggle, not further named |
@@ -1036,6 +1036,44 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
   boolean) but nothing more. This is a genuine dead end via this specific path, not merely "not
   attempted" — recorded as such rather than left ambiguous, per this document's own zero-creativity
   standard. Fields 24/26/29 remain unnamed.
+
+- **Update (2026-09-03, maintainer-approved field promotions) — fields 17, 19, 22, 27, and 28 from
+  the bonus register above (2026-08-30 pass) promoted in `PROTOCOL.md`/`DECISIONS.md` ADR-019,
+  applying this entry's own evidence-path standard (wire capture + independently-traced,
+  self-describing app code).** 🟢 FACT (mechanical byte decode, re-extracted from `CAP-022`/`CAP-024`'s
+  raw logs, plus the same static call-site tracing already used above):
+  - **Field 17 ("volume balance") — full identity promoted.** `CAP-022` frames
+    1922/1944/2019/2039/2056/2073/2099, CRC-32 verified, decode to `qhr` field 17 across a
+    continuous drag gesture. This entry's own field register (line 856) already types field 17 as
+    `SINT32`; the bonus table above previously mistyped it as "INT32/BOOL-adjacent" (corrected in
+    place this session) — re-reading the 7 sampled wire values as zigzag-encoded `SINT32` (not raw
+    unsigned varints) gives `-100, -62, -25, 15, 75, 100, 5` (previously `199, 123, 49, 30, 150, 200,
+    10`). Combined with the self-describing read-side log `"received last saved volume balance
+    setting value"` (`fxb.java` case 17), promoted to `PROTOCOL.md` §4.5.7 in full.
+  - **Field 19 ("Mono audio") — full identity promoted.** `CAP-022` frames 1621/1823 (both
+    directions), CRC-32 verified, decode to `qhr` field 19. Self-describing read-side log
+    `"received mono setting value"` (`fxb.java` case 19) matches this entry's own "Mono audio"
+    reading exactly. Promoted to a new `PROTOCOL.md` §4.5.5a in full.
+  - **Field 22 ("Speech Detection") — field-number/type identity only promoted.** `CAP-019` frame
+    1808 decodes to `qhr` field 22. The write-side log is self-describing (`hnz.java`'s `"Set Speech
+    Detection"`), but that name is not the same string as `PROTOCOL.md` §4.5.1's pre-existing
+    "Conversation Detection" UI-label HYPOTHESIS — the maintainer reviewed this specifically and
+    declined to promote that equivalence, matching how field 12's "ANC gesture loop" name was
+    handled above. Promoted to `PROTOCOL.md` §4.5.1 for field-number/type identity only; the
+    "Conversation Detection" label equivalence remains 🟡 HYPOTHESIS.
+  - **Field 27 (case-sound category) — category-level identity only promoted.** `CAP-024` frames
+    2053/2084 (both directions), CRC-32 verified, decode to `qhr` field 27. The read-side log,
+    `"received case earcon setting value"` (`fxb.java` case 27), is self-describing enough to confirm
+    a real case-sound-family boolean, but is generic — it does not itself name "Other alerts"
+    specifically. Promoted to `PROTOCOL.md` §4.5.8 for category-level identity only; the specific
+    "Other alerts"/"Other notifications" label remains 🟡 HYPOTHESIS.
+  - **Field 28 ("Bud return") — full identity promoted.** `CAP-024` frames 1988/2023 decode to `qhr`
+    field 28. Self-describing read-side log `"received bud return sound setting value"` (`fxb.java`
+    case 28) matches this entry's own "Bud return"/"Earbuds replaced" reading exactly. Promoted to
+    `PROTOCOL.md` §4.5.8 in full.
+
+  Fields 11 (Multipoint) and 15 (Volume EQ) from `PROTOCOL.md` §6's same open item were **not**
+  checked against the recovered `qhr` schema this pass and remain 🟡 HYPOTHESIS, unaffected.
 
 ### `defpackage.qjn` / `defpackage.qjt` / `defpackage.qhx` / `defpackage.qjv` — `qjc`/`qja`'s other 4 oneof-group alternatives
 
@@ -2052,6 +2090,11 @@ promoted into the protocol documentation, to avoid the same finding being
 | `qhr` field 7 = `qju` — Left/Right press-and-hold gesture-action customization (write site `fyo.java:300-374`, read site `fxb.java` case 7) | §4.5.3 press-and-hold action-selection opcode | 2026-08-30 | `CAP-021` frames 1895/3619/4315/4976; `DECISIONS.md` ADR-019 |
 | `qhr` field 12 = `qht` — field-number identity only (write site `hgj.java:216-331`, read site `fxb.java` case 12); "ANC gesture loop"/"ANC-mode rotation checklist" equivalence explicitly not promoted | §4.5.3 ANC-mode rotation checklist opcode | 2026-08-30 | `CAP-021` frames 5237/5247/5255; `DECISIONS.md` ADR-019 |
 | `qhr`'s oneof structure confirmed inside DLCI 0x02's `field5{field4{...}}` wrapper, for fields 4 and 29 sampled at the wire level | §2.2a 2026-08-30 update | 2026-08-30 | `CAP-020` frames 1741/1935; `DECISIONS.md` ADR-019 |
+| `qhr` field 17 = "Volume balance" — full identity, plus zigzag/`SINT32` decoding correction (write site `fxf.java:82-133`, read site `fxb.java` case 17) | §4.5.7 Volume Balance opcode/payload | 2026-09-03 | `CAP-022` frames 1922/1944/2019/2039/2056/2073/2099; `DECISIONS.md` ADR-019 Update |
+| `qhr` field 19 = "Mono audio" — full identity (write site `fyo.java:278-298`, read site `fxb.java` case 19) | §4.5.5a Mono audio (new subsection) | 2026-09-03 | `CAP-022` frames 1621/1823; `DECISIONS.md` ADR-019 Update |
+| `qhr` field 22 = "Speech Detection" — field-number/type identity only (write site `hnz.java:29-49`, read site `fxb.java` case 22); "Conversation Detection" UI-label equivalence explicitly not promoted | §4.5.1 Conversation Detection opcode/payload | 2026-09-03 | `CAP-019` frame 1808; `DECISIONS.md` ADR-019 Update |
+| `qhr` field 27 = case-sound-family boolean — category-level identity only (write site `fyo.java:80-100`, read site `fxb.java` case 27); "Other alerts"/"Other notifications" label explicitly not promoted | §4.5.8 Case sounds opcode/payload | 2026-09-03 | `CAP-024` frames 2053/2084; `DECISIONS.md` ADR-019 Update |
+| `qhr` field 28 = "Bud return"/"Earbuds replaced" — full identity (write site `fyo.java:58-78`, read site `fxb.java` case 28) | §4.5.8 Case sounds opcode/payload | 2026-09-03 | `CAP-024` frames 1988/2023; `DECISIONS.md` ADR-019 Update |
 | | | | |
 
 ## Known limitations of this analysis

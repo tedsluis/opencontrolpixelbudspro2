@@ -80,8 +80,11 @@ Output: `ON -> ...2a052203980101` / `OFF -> ...2a0522039801 00`, decoding (offse
 Video: toggle tapped ON at t≈33s (08:15:57), tapped OFF at t≈41s (08:16:05) — both within a few
 seconds of frames 1621 (`08:15:53.965`) and 1823 (`08:16:04.605`) respectively.
 
-**Status:** 🟡 **HYPOTHESIS** — `field 19` = Mono audio, based on 2 samples (ON and OFF), both
-within the expected timing window, no official spec.
+**Status:** 🟢 **FACT** — `field 19` = Mono audio, promoted 2026-09-03 (`DECISIONS.md` ADR-019
+Update, maintainer-approved), based on this wire evidence (2 samples, ON and OFF, both within the
+expected timing window) plus, independently, the app's own code (write site `fyo.java:278-298`,
+read side logging `"received mono setting value"`, `fxb.java` case 19 — see
+`REVERSE_ENGINEERING.md`'s `qhr` entry).
 
 ## 4. Analysis: `AUDIO-002` (Volume EQ)
 
@@ -101,27 +104,83 @@ match.
 
 ## 5. Analysis: `AUDIO-003` (Volume balance)
 
-```
-frame 1922 (08:16:34.740): field17=199
-frame 1944 (08:16:42.770): field17=123
-frame 2019 (08:16:51.533): field17=49
-frame 2039 (08:16:59.396): field17=30
-frame 2056 (08:17:06.224): field17=150
-frame 2073 (08:17:12.863): field17=200
-frame 2099 (08:17:20.458): field17=10
+```python
+import struct, binascii
+
+def unescape_hdlc(data):
+    out = bytearray(); i = 0
+    while i < len(data):
+        b = data[i]
+        if b == 0x7d:
+            i += 1; out.append(data[i] ^ 0x20)
+        else:
+            out.append(b)
+        i += 1
+    return bytes(out)
+
+def leb128(data, i=0):
+    val = 0; shift = 0
+    while True:
+        b = data[i]; val |= (b & 0x7f) << shift; i += 1
+        if not (b & 0x80): break
+        shift += 7
+    return val, i
+
+def zigzag_decode(n):
+    return (n >> 1) ^ -(n & 1)
+
+frames = {
+    1922: "7e003b0310131dea71de7d5e251d9a8c9e2a0622048801c701bcfac4347e",
+    1944: "7e003b0310131dea71de7d5e251d9a8c9e2a05220388017bfe85dd7c7e",
+    2019: "7e003b0310131dea71de7d5e251d9a8c9e2a052203880131702dd4ea7e",
+    2039: "7e003b0310131dea71de7d5e251d9a8c9e2a05220388011e291005417e",
+    2056: "7e003b0310131dea71de7d5e251d9a8c9e2a06220488019601a99664977e",
+    2073: "7e003b0310131dea71de7d5e251d9a8c9e2a0622048801c80173e65cb37e",
+    2099: "7e003b0310131dea71de7d5e251d9a8c9e2a05220388010a54c4df5b7e",
+}
+for fn, hx in frames.items():
+    raw = bytes.fromhex(hx)
+    un = unescape_hdlc(raw[1:-1])
+    body, trailer = un[:-4], un[-4:]
+    assert struct.pack('<I', binascii.crc32(body) & 0xffffffff) == trailer   # CRC-32 verified
+    addr, i = leb128(body, 0); ctrl = body[i]; i += 1
+    payload = body[i:]
+    # field17's wire tag is 0x88 0x01 (field 17, wiretype 0=varint); the raw varint follows it
+    tag17, j = leb128(payload, payload.index(b'\x88\x01'))
+    raw_varint, j = leb128(payload, j)
+    print(fn, "raw_varint=", raw_varint, "zigzag=", zigzag_decode(raw_varint))
 ```
 
-All 7 within `field5{field4{field17=N}}`, all CRC-32 verified. Video confirms this whole window
-(08:16:34–08:17:20) is a single continuous drag gesture on the "Balance" slider, with no other
-action happening — centered at t=70s (08:16:34), toward the right edge by t=78s (08:16:42), back
-toward center-right by t=86s (08:16:50).
+Extracted via `tshark -r CAP-022-btsnoop_hci.log -Y "frame.number in {1922,1944,2019,2039,2056,2073,2099}" -T fields -e frame.number -e data.data`, all 7 CRC-32 verified against the raw hex above. Script
+output:
 
-**Status:** 🟡 **HYPOTHESIS** — `field 17` = Volume balance, based on exclusive timing overlap
-with the drag gesture (7 wire updates during one continuous drag is consistent with a
-live-position-streaming slider, matching the EQ band-slider behavior already documented in
-`PROTOCOL.md` §4.2). **Not confirmed:** the value's scale/range or which direction (L/R) it
-represents — 1fps video sampling only captured 3 checkpoints against 7 wire values, insufficient
-to map specific values to specific slider positions. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s note that
+```
+frame 1922 (08:16:34.740): raw_varint=199 zigzag=-100
+frame 1944 (08:16:42.770): raw_varint=123 zigzag=-62
+frame 2019 (08:16:51.533): raw_varint=49  zigzag=-25
+frame 2039 (08:16:59.396): raw_varint=30  zigzag=15
+frame 2056 (08:17:06.224): raw_varint=150 zigzag=75
+frame 2073 (08:17:12.863): raw_varint=200 zigzag=100
+frame 2099 (08:17:20.458): raw_varint=10  zigzag=5
+```
+
+**Correction (2026-09-03, `DECISIONS.md` ADR-019 Update, maintainer-approved):** `qhr`'s own schema
+types field 17 as `SINT32` (`REVERSE_ENGINEERING.md` line 856), so these raw varints must be
+zigzag-decoded (`(n>>1) ^ -(n&1)`), not read as plain unsigned values as this section originally
+did — the `zigzag=` column in the script output above is the correct reading.
+
+Video confirms this whole window (08:16:34–08:17:20) is a single continuous drag gesture on the
+"Balance" slider, with no other action happening — centered at t=70s (08:16:34), toward the right
+edge by t=78s (08:16:42), back toward center-right by t=86s (08:16:50).
+
+**Status:** 🟢 **FACT** for the field-number identity and semantic name ("Volume balance") —
+promoted 2026-09-03 (`DECISIONS.md` ADR-019 Update), based on this wire evidence plus,
+independently, the app's own code (write site `fxf.java:82-133`, read side logging `"received last
+saved volume balance setting value"`, `fxb.java` case 17 — see `REVERSE_ENGINEERING.md`'s `qhr`
+entry). **Not confirmed:** the value's full scale/range beyond these 7 samples, or which direction
+(L/R) increasing/decreasing values represent — 1fps video sampling only captured 3 checkpoints
+against 7 wire values, insufficient to map specific values to specific slider positions; the
+zigzag correction narrows but does not resolve this. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s note that
 this setting is stored **locally on the earbuds** (persistent, works across devices) was **not**
 tested this session — no disconnect/reconnect cycle was captured to confirm persistence.
 
@@ -137,7 +196,7 @@ Extends the running table (`CAP-021-FINDINGS.md` §5):
 | Multipoint ON | 11 | 1 | `CAP-019` |
 | Mono audio | 19 | 0 / 1 | `CAP-022` |
 | Volume EQ | 15 | 0 / 1 | `CAP-022` |
-| Volume balance | 17 | 10–200 (continuous) | `CAP-022` |
+| Volume balance | 17 | -100 to 100 (zigzag-decoded `SINT32`, continuous) | `CAP-022` |
 
 All seven settings share the same two-level `field5{field4{...}}` outer wrapper (or the
 per-earbud-extended `field5{field4{field7{...}}}` variant for `HOLD-001`–`HOLD-004`,
@@ -145,8 +204,10 @@ per-earbud-extended `field5{field4{field7{...}}}` variant for `HOLD-001`–`HOLD
 distinct field numbers across 7 different settings. The "general-purpose settings envelope"
 finding first raised in `CAP-020-FINDINGS.md` §5 was **promoted to 🟢 FACT 2026-08-23**
 (`DECISIONS.md` ADR-013) for the outer wrapper shape itself — this capture's 7 field numbers are
-part of the cross-capture evidence base for that promotion; each individual field's own meaning
-stays 🟡 HYPOTHESIS, unaffected.
+part of the cross-capture evidence base for that promotion. Field 19's ("Mono audio") and field
+17's ("Volume balance") own meanings were independently **promoted to 🟢 FACT 2026-09-03**
+(`DECISIONS.md` ADR-019 Update, per §3/§5 above); field 15's ("Volume EQ") own meaning stays 🟡
+HYPOTHESIS, unaffected by this update.
 
 ## 7. Conclusions & Next Steps
 

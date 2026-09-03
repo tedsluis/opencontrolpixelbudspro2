@@ -920,6 +920,77 @@ motivated this).
   question. Does not unblock `ARCHITECTURE.md` §2.1's `FrameEncoder`/`FrameDecoder` implementation gate
   for DLCI 0x02 generally — that still requires the broader payload-content HYPOTHESIS in `ADR-018` to
   reach FACT, which this ADR narrows but does not itself complete.
+- Update (2026-09-03): clarifying how findings 2-4 and the field-29 exclusion above were actually
+  decided, after a later summary compressed the reasoning into a single "a self-describing code site
+  exists" test. That compression loses a distinction this ADR relied on — two separate dimensions
+  were in play, not one:
+  a. Whether an independent code-side evidence path exists at all. Field 29's exclusion (above) was
+     not "a code site existed but wasn't self-describing" — this ADR's own text is explicit that "no
+     self-describing code-side name was found for field 29 (its write call site was not located by
+     the static pass), so only one evidence path exists for it." The write call site itself was
+     never located; there was no code-side path to evaluate for self-description in the first place.
+     A field whose code path simply hasn't been found yet is not evidence-equivalent to a field
+     whose code path was found and found generic or unnamed — anyone re-running this method on
+     further fields should keep that distinction.
+  b. A self-describing code path existing does not, by itself, clear the bar for full semantic
+     promotion. Field 12 is this ADR's own counter-example: its read site's log message ("Log ANC
+     gesture loop to Clearcut," finding 4) is self-describing, and yet only the field-number identity
+     was promoted, not the full semantic claim — because the code's own name ("ANC gesture loop") was
+     not reconciled with the pre-existing "ANC-mode rotation checklist" HYPOTHESIS the wire evidence
+     had already proposed. Full semantic promotion, as granted in full to findings 2 and 3, requires
+     the self-describing code name to match, or be explicitly reconciled with, whatever
+     hypothesis-level name already existed — not merely to exist.
+
+   Neither point changes findings 1-4, "What this ADR does NOT clear," or the Decision/Consequences
+   above — this note only corrects a compressed restatement of reasoning already used to reach them.
+- Update (2026-09-03): five further `qhr` field promotions, reviewed and approved by the maintainer
+  individually per field, applying this ADR's own evidence standard (independent wire-capture
+  evidence plus independently-traced app code, cross-validated) and the two-dimension distinction
+  clarified in the note directly above.
+  - **Field 17 = "Volume balance" — full identity, 🟢 FACT.** Evidence: `CAP-022-FINDINGS.md` §5
+    (7 wire samples across one continuous drag gesture — `CAP-022` frames 1922/1944/2019/2039/2056/
+    2073/2099, all CRC-32 verified, raw hex backfilled this session) **and**, independently, the
+    app's own code — write site `fxf.java:82-133` (case 16 of that dispatcher), read side logging
+    `"received last saved volume balance setting value"` (`fxb.java` case 17) — a self-describing
+    match to the pre-existing "Volume balance" HYPOTHESIS, satisfying dimension (b) above.
+    **Correction accompanying this promotion:** `qhr`'s own schema types field 17 as `SINT32`
+    (`REVERSE_ENGINEERING.md` line 856), so its wire values must be zigzag-decoded, not read as raw
+    unsigned varints. The 7 sampled values were previously recorded as `199, 123, 49, 30, 150, 200,
+    10`; correctly zigzag-decoded (`(n>>1) ^ -(n&1)`) they are `-100, -62, -25, 15, 75, 100, 5`. The
+    scale/range beyond these 7 samples and which direction (Left/Right) corresponds to negative vs.
+    positive values remain 🔴 open — this correction narrows, but does not resolve, `PROTOCOL.md`
+    §6's existing open item on this field.
+  - **Field 19 = "Mono audio" — full identity, 🟢 FACT.** Evidence: `CAP-022-FINDINGS.md` §3
+    (`CAP-022` frames 1621/1823, both directions, CRC-32 verified) **and**, independently, the app's
+    own code — write site `fyo.java:278-298` (`s`), read side logging `"received mono setting
+    value"` (`fxb.java` case 19) — a self-describing match to the pre-existing "Mono audio"
+    HYPOTHESIS.
+  - **Field 22 = `qhr`'s own "Speech Detection" — field-number/type identity only, 🟢 FACT.**
+    Evidence: `CAP-019-FINDINGS.md` §3 (single OFF→ON sample) **and**, independently, the app's own
+    code — write site `hnz.java:29-49` (`a`, logging `"Set Speech Detection"`), read side `fxb.java`
+    case 22. Per dimension (b) above: the code's own name, "Speech Detection," is not the same
+    string as `PROTOCOL.md` §4.5.1's pre-existing "Conversation Detection" UI-label HYPOTHESIS —
+    plausibly the same feature seen from two angles (an internal/engineering name vs. the UI's own
+    label), but not reconciled. The maintainer reviewed this specifically and declined to promote
+    that equivalence; it remains 🟡 HYPOTHESIS.
+  - **Field 27 = a real, code-confirmed case-sound-family boolean — category level only, 🟢 FACT.**
+    Evidence: `CAP-024-FINDINGS.md` §5 (`CAP-024` frames 2053/2084, both directions, CRC-32 verified,
+    raw hex backfilled this session) **and**, independently, the app's own code — write site
+    `fyo.java:80-100` (`e`), read side logging `"received case earcon setting value"` (`fxb.java`
+    case 27). The code's own log message confirms this is *a* case-sound-category setting but does
+    not itself distinguish which one — the specific "Other alerts"/"Other notifications" label
+    (`CAP-024`'s own `CASE-002` test) remains 🟡 HYPOTHESIS, unreconciled with the generic code-side
+    name, per dimension (b) above.
+  - **Field 28 = "Bud return"/"Earbuds replaced" — full identity, 🟢 FACT.** Evidence:
+    `CAP-024-FINDINGS.md` §4 (`CAP-024` frames 1988/2023, raw hex backfilled this session) **and**,
+    independently, the app's own code — write site `fyo.java:58-78` (`d`), read side logging
+    `"received bud return sound setting value"` (`fxb.java` case 28) — a self-describing match to
+    the pre-existing "Bud return" HYPOTHESIS.
+
+  As with the original four findings, none of these five promotions change the outer envelope's own
+  already-FACT status (`DECISIONS.md` ADR-013) or unblock `ARCHITECTURE.md` §5's per-command
+  implementation gate for any field beyond the ones explicitly promoted here — fields 11 and 15 are
+  unaffected by this update and remain 🟡 HYPOTHESIS.
 
 ## ADR-020 — EQ `FrameEncoder`/`FrameDecoder` implementation explicitly unblocked
 

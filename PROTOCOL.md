@@ -982,14 +982,25 @@ implementation gate.
 
 - **Feature confirmed present**: toggle at Device details → Sound → Audio intelligence →
   Conversation detection. 🟢 FACT (UI presence).
-- **Opcode/payload**: `field5(len5){ field4(len3){ field22 = 0|1 } }` (varint). 🟡 HYPOTHESIS —
-  `field 22` = Conversation Detection, ON (`1`) confirmed video-correlated; OFF direction not
-  captured this session.
+- **Opcode/payload — field-number/type identity 🟢 FACT, promoted 2026-09-03 (maintainer sign-off,
+  `DECISIONS.md` ADR-019)**: `field5(len5){ field4(len3){ field22 = 0|1 } }` (varint), `field 22` =
+  `libmaestro`'s own `qhr` schema field 22, independently confirmed by APK static analysis: write
+  site `hnz.java:29-49` (`a`, logging `"Set Speech Detection"`), read side `fxb.java` case 22 — a
+  self-describing app-code match confirming this is a real, distinctly-numbered `qhr` field. **Not
+  promoted**: whether the code's own internal name for this field, "Speech Detection," is the *same*
+  feature as this section's "Conversation Detection" UI label — the two could describe the same
+  feature seen from two angles (an internal/engineering name vs. the UI's own label), or something
+  narrower/broader; this has not been reconciled, and the maintainer explicitly declined to promote
+  that equivalence at this time. It remains 🟡 HYPOTHESIS: ON (`1`) confirmed video-correlated; OFF
+  direction not captured this session.
 - **Sent to**: DLCI 0x02 (`libmaestro`, §2.2a).
 - **Expected response**: `Rcvd`-direction echo of the same field/prefix shape (no distinct ACK
   opcode observed).
-- **Status**: 🟡 HYPOTHESIS.
-- **Evidence**: `CAP-019-FINDINGS.md` §3 (`[VERIFIED-LOCAL]`, 2026-08-21, frame 1808).
+- **Status**: 🟢 FACT for the field-number/type identity (`qhr` field 22 = the app's own "Speech
+  Detection"); 🟡 HYPOTHESIS for the equivalence to this UI's "Conversation Detection" label, and for
+  the OFF-direction wire value.
+- **Evidence**: `CAP-019-FINDINGS.md` §3 (`[VERIFIED-LOCAL]`, 2026-08-21, frame 1808);
+  `REVERSE_ENGINEERING.md`'s `qhr` entry; `DECISIONS.md` ADR-019.
 - **Verified with experiment**: `CAP-019` (2026-08-21), single OFF→ON sample.
 
 #### 4.5.2 Multipoint Bluetooth
@@ -1083,6 +1094,22 @@ implementation gate.
 - **Evidence**: `CAP-024-FINDINGS.md` §3 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1850/1912).
 - **Verified with experiment**: `CAP-024` (2026-08-21), both directions sampled.
 
+#### 4.5.5a Mono audio
+
+- **Feature confirmed present**: "Mono audio" toggle at Device details → Sound. 🟢 FACT (UI
+  presence).
+- **Opcode/payload — full identity 🟢 FACT, promoted 2026-09-03 (maintainer sign-off, `DECISIONS.md`
+  ADR-019)**: `field5(len5){ field4(len3){ field19 = 0|1 } }` (varint), `field 19` = `libmaestro`'s
+  own `qhr` schema field 19, independently confirmed by APK static analysis: write site
+  `fyo.java:278-298` (`s`), read side logging `"received mono setting value"` (`fxb.java` case 19)
+  — a self-describing app-code match to this section's own "Mono audio" reading, not a naming
+  inference. Both directions (ON/OFF) video-confirmed on the wire.
+- **Sent to**: DLCI 0x02.
+- **Status**: 🟢 FACT for the field-number identity and semantic name ("Mono audio").
+- **Evidence**: `CAP-022-FINDINGS.md` §3 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1621/1823);
+  `REVERSE_ENGINEERING.md`'s `qhr` entry; `DECISIONS.md` ADR-019.
+- **Verified with experiment**: `CAP-022` (2026-08-21), both directions sampled.
+
 #### 4.5.6 Volume EQ
 
 - **Feature confirmed present**: toggle at the bottom of Device details → Sound → Equalizer (not
@@ -1099,15 +1126,26 @@ implementation gate.
 - **Feature confirmed present**: "Balance" slider at Device details → Sound. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
   §1 claims this is stored locally on the earbuds (persistent, works across devices) — **not tested
   this batch** (no disconnect/reconnect cycle captured after setting it).
-- **Opcode/payload**: `field5{ field4{ field17 = N } }`, `N` observed in the range 10–200 across a
-  single continuous drag gesture (7 wire updates). 🟡 HYPOTHESIS — `field 17` = Volume balance,
-  based on exclusive timing overlap with the drag (matches the EQ band-slider's own
-  live-position-streaming behavior, §4.2). 🔴 **Not confirmed**: the value's scale/range or which
-  direction (L/R) it represents — 1fps video sampling was insufficient to map specific values to
-  specific slider positions.
+- **Opcode/payload — 🟢 FACT, promoted 2026-09-03 (maintainer sign-off, `DECISIONS.md` ADR-019)**:
+  `field5{ field4{ field17 = N } }`, `field 17` = `libmaestro`'s own `qhr` schema field 17,
+  independently confirmed by APK static analysis: write site `fxf.java:82-133` (case 16 of that
+  dispatcher), read side logging `"received last saved volume balance setting value"` (`fxb.java`
+  case 17) — a self-describing app-code match to this section's own "Volume balance" reading, not a
+  naming inference. **Correction accompanying this promotion**: `qhr`'s own schema types field 17 as
+  `SINT32` (`REVERSE_ENGINEERING.md` line 856), so its wire values must be zigzag-decoded, not read
+  as raw unsigned varints as this section previously did. The 7 samples from one continuous drag
+  gesture (`CAP-022` frames 1922/1944/2019/2039/2056/2073/2099), correctly zigzag-decoded
+  (`(n>>1) ^ -(n&1)`), are `-100, -62, -25, 15, 75, 100, 5` (previously misread as the raw unsigned
+  varints `199, 123, 49, 30, 150, 200, 10`).
 - **Sent to**: DLCI 0x02.
-- **Status**: 🟡 HYPOTHESIS for the field identity; 🔴 open for scale/direction/persistence.
-- **Evidence**: `CAP-022-FINDINGS.md` §5 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1922–2099).
+- **Status**: 🟢 FACT for the field-number identity and semantic name ("Volume balance"). 🔴 still
+  open: the scale/range beyond these 7 samples, which direction (Left/Right) corresponds to negative
+  vs. positive values, and persistence across a disconnect/reconnect — the zigzag correction narrows
+  but does not resolve any of these; none is derivable from the corrected values alone, and would
+  need isolated extreme-position samples with video correlation.
+- **Evidence**: `CAP-022-FINDINGS.md` §5 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1922–2099, raw hex
+  and corrected zigzag decode backfilled 2026-09-03); `REVERSE_ENGINEERING.md`'s `qhr` entry;
+  `DECISIONS.md` ADR-019.
 - **Verified with experiment**: `CAP-022` (2026-08-21) — a single continuous drag, not isolated
   extreme-position samples.
 
@@ -1117,14 +1155,30 @@ implementation gate.
   labeled **"Bud return"** (app's own settings-list wording: "Earbuds replaced") and **"Other
   alerts"** ("Other notifications"). 🟢 FACT.
 - **Opcode/payload**: `"Bud return"` = `field5(len5){ field4(len3){ field28 = 0|1 } }`; `"Other
-  alerts"` = `field5(len5){ field4(len3){ field27 = 0|1 } }`. 🟡 HYPOTHESIS. No case-specific vs.
-  bud-specific channel/address distinction was found — both use the same shared DLCI 0x02
-  envelope as every bud-targeted setting.
-- **Sent to**: DLCI 0x02.
-- **Status**: 🟡 HYPOTHESIS. The `"Bud return"` OFF sample (frame 1988) is not cleanly
-  disambiguated between a genuine tap and a screen-open state sync — the ON sample and both
-  `"Other alerts"` samples are unambiguous.
-- **Evidence**: `CAP-024-FINDINGS.md` §4–§5 (`[VERIFIED-LOCAL]`, 2026-08-21).
+  alerts"` = `field5(len5){ field4(len3){ field27 = 0|1 } }`.
+  - **`field 28` ("Bud return") — full identity 🟢 FACT, promoted 2026-09-03 (maintainer sign-off,
+    `DECISIONS.md` ADR-019)**: `libmaestro`'s own `qhr` schema field 28, independently confirmed by
+    APK static analysis: write site `fyo.java:58-78` (`d`), read side logging `"received bud return
+    sound setting value"` (`fxb.java` case 28) — a self-describing app-code match to this section's
+    own "Bud return"/"Earbuds replaced" reading, not a naming inference.
+  - **`field 27` ("Other alerts") — category-level identity only 🟢 FACT, promoted 2026-09-03
+    (maintainer sign-off, `DECISIONS.md` ADR-019)**: `libmaestro`'s own `qhr` schema field 27,
+    independently confirmed by APK static analysis: write site `fyo.java:80-100` (`e`), read side
+    logging `"received case earcon setting value"` (`fxb.java` case 27) — a self-describing app-code
+    match confirming this is a real, code-confirmed case-sound-family boolean. **Not promoted**: the
+    code's own log message is generic ("case earcon setting"), not specific to which case sound — it
+    does not itself distinguish "Other alerts" from any other case-sound toggle, so the specific
+    "Other alerts"/"Other notifications" label remains 🟡 HYPOTHESIS, based only on this section's own
+    wire/video correlation (`CASE-002`), not reconciled with the generic code-side name.
+- **Sent to**: DLCI 0x02. No case-specific vs. bud-specific channel/address distinction was found —
+  both use the same shared DLCI 0x02 envelope as every bud-targeted setting.
+- **Status**: 🟢 FACT for `field 28`'s full identity ("Bud return"). 🟢 FACT for `field 27`'s
+  category-level identity (a real case-sound-family boolean); 🟡 HYPOTHESIS for `field 27`'s specific
+  "Other alerts"/"Other notifications" label. The `"Bud return"` OFF sample (frame 1988) is not
+  cleanly disambiguated between a genuine tap and a screen-open state sync — the ON sample and both
+  `"Other alerts"` samples are unambiguous; this does not affect the field-identity promotions above.
+- **Evidence**: `CAP-024-FINDINGS.md` §4–§5 (`[VERIFIED-LOCAL]`, 2026-08-21, raw hex backfilled
+  2026-09-03); `REVERSE_ENGINEERING.md`'s `qhr` entry; `DECISIONS.md` ADR-019.
 - **Verified with experiment**: `CAP-024` (2026-08-21), both toggles, both directions.
 
 #### 4.5.9 Not yet mapped
@@ -1543,6 +1597,14 @@ leaving them buried in prose elsewhere.
       27, 28) also correspond 1:1 to this same recovered `qhr` schema's own field numbers — plausible
       given the pattern, but not individually checked against the recovered schema yet. See
       `PROTOCOL.md` §2.2a's 2026-08-30 update and `REVERSE_ENGINEERING.md`'s `qhr` entry.
+      **Further resolved 2026-09-03, maintainer sign-off (`DECISIONS.md` ADR-019 Update):** `field
+      17`, `field 19`, `field 22`, `field 27`, and `field 28` are now individually checked against the
+      recovered `qhr` schema and confirmed to match it (§4.5.1, §4.5.5a, §4.5.7, §4.5.8) — `field 17`
+      (full identity, plus a zigzag-decoding correction), `field 19` (full identity), and `field 28`
+      (full identity) promoted in full; `field 22` and `field 27` promoted for field-number/type or
+      category-level identity only, with their specific semantic-label equivalence left 🟡 HYPOTHESIS
+      (see those sections for the reasoning). **Still open**: `field 11` (Multipoint) and `field 15`
+      (Volume EQ) remain unchecked against the recovered schema — not part of this update.
 - [ ] **Added 2026-08-21:** does DLCI 0x02's general-purpose `field5{field4{...}}` settings-write
       envelope (§4.5's shared preamble) generalize to *every* remaining `libmaestro` setting, or
       only to the ones captured so far? Does the `field7{field1|field2{...}}` Left/Right selector
