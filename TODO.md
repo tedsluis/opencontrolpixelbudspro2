@@ -30,11 +30,18 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
 3. **Phase 2 (APK reverse engineering) — updated 2026-08-30, no longer 0% done.** APK pulled,
    JADX/apktool-decompiled, and multiple `§4` keyword-search/follow-up passes done
    (`REVERSE_ENGINEERING.md`'s growing class-entry list, 30+ entries as of the last pass), and
-   `DECISIONS.md` ADR-018 accepted (DLCI 0x02 channel-ownership → 🟢 FACT). The
-   **current highest-leverage single next step** is a targeted `pbtk`/pw_rpc-schema extraction
-   attempt against the specific classes `fux`/`fsz` reference (not the whole APK, which wrote 0
-   `.proto` files) — this is what `PROTOCOL.md` §2.2a's remaining HYPOTHESIS (does DLCI 0x02's
-   Sent-payload content specifically carry `libmaestro`'s settings commands) needs to close, and
+   `DECISIONS.md` ADR-018 accepted (DLCI 0x02 channel-ownership → 🟢 FACT), and `.proto`/pw_rpc
+   schema recovery — updated 2026-09-03, done via a different route than planned here: `pbtk`
+   confirmed structurally incapable of this APK's codegen (both the whole-APK and a 2026-09-03
+   targeted-class re-run wrote 0 `.proto` files; root cause is now source-cited, not just the
+   tool's own caveat — see the Phase 2 checklist item below). The schemas were instead recovered
+   by hand (`scripts/decode_rawmessageinfo.py`, `DECISIONS.md` ADR-019) and cross-correlated
+   against wire captures for `qhr` fields 4, 7, 12, and 29. **Current highest-leverage single next
+   step** is now applying that same static-analysis method to `qhr`'s remaining
+   confirmed-but-unchecked field numbers (11, 15, 17, 19, 22, 27, 28 — already listed in this
+   file's "Targeted research follow-ups" section below) — this is what `PROTOCOL.md` §2.2a's
+   remaining HYPOTHESIS (does DLCI 0x02's Sent-payload content specifically carry `libmaestro`'s
+   settings commands, beyond the 4 fields ADR-019 already sampled) needs to close further, and
    it's what blocks `ARCHITECTURE.md` §2.1's `FrameEncoder`/`FrameDecoder` gate for every DLCI-0x02
    feature. **`CAP-033` (Group AA, `SDP-001`/`SDP-002`) is done (2026-08-30)** — see below.
 4. **Remaining planned captures** (updated 2026-08-30 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`,
@@ -256,24 +263,34 @@ lower priority than finishing ANC/Battery/EQ):**
       how `ClassicBTReceiver`'s connection-state events lead into `gbm`'s socket selection, and how
       `fsz`'s `WriteSetting`/`fux`'s per-service calls obtain their `MethodClient` — flagged as
       untraced in `REVERSE_ENGINEERING.md`'s Call graph notes.
-- [ ] **Extract real `.proto`/pw_rpc schemas — attempted, not yet successful.** `pbtk-jar-extract`
-      against `base.apk` completed but wrote 0 `.proto` files (its own `--help` caveat: "works
-      better with older APKs" — confirmed not a stale-install issue, `WORKSTATION_PREPARATIONS.md`).
-      The reflection-based heuristic did surface `sun.misc.Unsafe`-based field-access patterns
-      consistent with protobuf-lite's `GeneratedMessageLite$MessageInfo` schema system during the
-      run, so the classes exist, just weren't resolved to a complete written schema. **Next attempt
-      should target specific classes** (the `nqs`/`nqo`/message-type classes referenced in `fux`'s
-      RPC definitions, e.g. `qib.a`, `nia.a`) rather than the whole APK, or try `pbtk`'s interactive
-      GUI. This is the current single highest-leverage blocker for `ARCHITECTURE.md` §2.1's
-      `FrameEncoder`/`FrameDecoder` gate on every DLCI-0x02 feature (`PROTOCOL.md` §2.2a).
+- [x] **Extract real `.proto`/pw_rpc schemas — done 2026-08-30/2026-09-03, via manual decode, not
+      `pbtk`.** `pbtk-jar-extract` against `base.apk` wrote 0 `.proto` files, and a 2026-09-03
+      follow-up confirmed this isn't a scope/targeting problem: `pbtk-jar-extract` has no
+      class-filter flag, and a manually-built 32-class targeted JAR (`qjc`/`qja`/`qhr`/`nqx`/`fux`/
+      `fsz`/etc., plus the one legacy `CodedInputStream`/`CodedOutputStream`-signature class pair
+      still present elsewhere in the APK) still produced 0 files — confirmed against `pbtk`'s own
+      `jar_extract.py` source: its extraction requires a per-class `mergeFrom(CodedInputStream)`
+      `switch`-structure in the generated class's own bytecode, which this APK's
+      `GeneratedMessageLite.newMessageInfo(default, infoString, objects)` reflection-based codegen
+      never emits, for any class. `pbtk`'s GUI shares the same extractor module, so it is not
+      expected to differ. **Solved instead via `scripts/decode_rawmessageinfo.py`** (a
+      dependency-free `RawMessageInfo` compact-schema-string decoder, ported field-for-field from
+      the public `protobuf` runtime source): `qjc`/`qja` (5-alternative oneof), `qhr` (38 fields,
+      all field-type/reference info recovered), and `nqx` (`pw_rpc.RpcPacket`, 7 fields) all
+      decoded and cross-correlated against real wire bytes (`CAP-020` frames 1741/1935). See
+      `DECISIONS.md` ADR-019 (maintainer sign-off obtained) for the accepted findings. **Not fully
+      closed:** only `qhr` fields 4, 7, 12 (field-number only), and 29 have been wire-cross-checked
+      so far — fields 11, 15, 17, 19, 22, 27, 28 are confirmed on the wire but not yet run through
+      this same method (tracked in this file's "Targeted research follow-ups" section).
 - [x] **DLCI 0x02 channel-ownership question — resolved 2026-08-30 (narrow promotion).**
       `DECISIONS.md` ADR-018 (Option 2, maintainer-approved): DLCI 0x02 confirmed 🟢 FACT as the
       companion app's own internal RFCOMM channel (SDP UUID `25e97ff7-...` = RFCOMM channel 1 =
       DLCI 0x02, cross-checked against `CAP-001`/`CAP-002`/`CAP-032`), via the app's own
-      `gbm.java`/`fzd.java` selection logic — see `PROTOCOL.md` §2.2a. **Not resolved:** whether the
-      Sent-direction payload *content* specifically carries `libmaestro`'s settings commands —
-      still 🟡 HYPOTHESIS (strong), which is what the unstarted `.proto` extraction above would
-      settle.
+      `gbm.java`/`fzd.java` selection logic — see `PROTOCOL.md` §2.2a. **Not fully resolved:**
+      whether the Sent-direction payload *content* specifically carries `libmaestro`'s settings
+      commands, in general — still 🟡 HYPOTHESIS (strong) per `DECISIONS.md` ADR-019's own scope
+      note, though now substantially strengthened for the 4 `qhr` fields ADR-019 sampled. Settling
+      it further means running more fields through the manual-decode item above, not `pbtk`.
 - [x] **`CAP-033` (Group AA) — done 2026-08-30.** Tested whether the second, never-observed-on-the-wire
       "default internal rfcomm socket" SDP UUID (`gbm`/`fzd`) ever appears when SDP is queried by the
       OS's own pairing flow before the companion app opens (`SDP-001`); `SDP-002` not attempted (no
