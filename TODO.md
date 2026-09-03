@@ -17,14 +17,20 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      current list. Per `AGENTS.md` §6 this step can only be done by the maintainer, not an agent.
    - DI approach (Hilt vs. manual) — Phase 4.
    - Minimum Android API level — Phase 5.
-2. **Start Phase 4 app development, ANC-first:** ANC is the only command that is fully 🟢 FACT
-   *and* implementation-unblocked (`DECISIONS.md` ADR-009) — building it end-to-end (transport →
-   framing → UI) is the cheapest way to prove the whole architecture works. Battery via HFP
-   (`PROTOCOL.md` §4.3 Option C, also already 🟢 FACT) is the natural second target — together
-   they cover most of `PROJECT.md`'s "Definition of done (v1)".
+   - Find My Buds Case/"both simultaneously" — whether to accept a Google Find Hub/account-mediated
+     fallback for this one sub-feature or ship v1 without local Case-ring support (`PROTOCOL.md` §6,
+     Behavior) — a genuine Zero-GMS scope trade-off, not a research gap; no capture or static
+     analysis can resolve this, only a maintainer product decision can.
+2. **Start Phase 4 app development, ANC-first:** ANC, Find My Buds Left/Right
+   (`DECISIONS.md` ADR-011), and EQ (`DECISIONS.md` ADR-020) are all fully 🟢 FACT *and*
+   implementation-unblocked — ANC remains the recommended starting point (`DECISIONS.md` ADR-009):
+   building it end-to-end (transport → framing → UI) is the cheapest way to prove the whole
+   architecture works. Battery via HFP (`PROTOCOL.md` §4.3 Option C, also already 🟢 FACT) is the
+   natural second target — together they cover most of `PROJECT.md`'s "Definition of done (v1)".
 3. **Phase 2 (APK reverse engineering) — updated 2026-08-30, no longer 0% done.** APK pulled,
-   JADX/apktool-decompiled, one full `§4` keyword-search pass done (`REVERSE_ENGINEERING.md`'s 10
-   class entries), and `DECISIONS.md` ADR-018 accepted (DLCI 0x02 channel-ownership → 🟢 FACT). The
+   JADX/apktool-decompiled, and multiple `§4` keyword-search/follow-up passes done
+   (`REVERSE_ENGINEERING.md`'s growing class-entry list, 30+ entries as of the last pass), and
+   `DECISIONS.md` ADR-018 accepted (DLCI 0x02 channel-ownership → 🟢 FACT). The
    **current highest-leverage single next step** is a targeted `pbtk`/pw_rpc-schema extraction
    attempt against the specific classes `fux`/`fsz` reference (not the whole APK, which wrote 0
    `.proto` files) — this is what `PROTOCOL.md` §2.2a's remaining HYPOTHESIS (does DLCI 0x02's
@@ -62,6 +68,17 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      confirmed-but-unchecked DLCI 0x02 field numbers — `field` 11, 15, 17, 19, 22, 27, 28
      (`PROTOCOL.md` §6's "what do DLCI 0x02's confirmed inner field numbers actually represent" item)
      — not yet attempted for these specific fields.
+   - **Added 2026-09-03 (audit finding):** trace `fyd.d`/`fyd.e`'s own call sites in the EQ UI
+     fragment (`REVERSE_ENGINEERING.md`'s `qjw` entry) — the one specific static-analysis step
+     identified as still missing to connect `qjw` field 16/18's code-derived "live vs. persisted"
+     reading to the wire-observed "drag vs. release" timing (`PROTOCOL.md` §4.2/§6). A further static
+     analysis pass, not a capture.
+   - **Added 2026-09-03 (audit finding):** re-verify `PROTOCOL.md` §4.3 Option A's "shown ≥8s,
+     auto-hidden after 20s" Battery Notification visibility-timing claim directly against the
+     official Fast Pair spec pages (a 2026-09-03 re-check found no such text on the
+     `batterynotification` extension page specifically — downgraded to 🟡 HYPOTHESIS pending this
+     check; the detail may live on a different spec page not checked yet, e.g. the base Message
+     Stream spec).
 
 ## Setup
 
@@ -270,7 +287,9 @@ lower priority than finishing ANC/Battery/EQ):**
 
 ## Phase 3 — Protocol reconstruction
 
-- [ ] Fill in the UUID register (`REVERSE_ENGINEERING.md` §UUID register)
+- [ ] Fill in the UUID register (`REVERSE_ENGINEERING.md` §UUID register) — partially done as of
+      2026-08-30 (3 of an unknown total number of UUIDs found so far, one at 🟢 FACT), not a blank
+      template; kept unchecked since it's not exhaustive
 - [ ] Fill in the Message Group/Code register, if the Fast Pair Message Stream
       framing hypothesis is confirmed (`REVERSE_ENGINEERING.md` §Message
       Group/Code register)

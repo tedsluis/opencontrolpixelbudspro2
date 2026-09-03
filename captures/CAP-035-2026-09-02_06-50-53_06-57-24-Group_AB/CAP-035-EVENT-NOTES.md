@@ -510,4 +510,4 @@ directly.
 - 🔴 *(carry forward any that remain unresolved after this session)*
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-035-Group_AB/CAP-035-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-035-Group_AB/CAP-035-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-EVENT-NOTES

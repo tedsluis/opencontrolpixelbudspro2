@@ -1982,7 +1982,13 @@ APK, in addition to the officially documented ones.
 
 | File | Architecture | Suspected function | Analyzed? |
 |---|---|---|---|
-| | | | No / Ghidra in progress / Done |
+| `libandroidx.graphics.path.so` | `arm64-v8a` (present only in `split_config.arm64_v8a.apk`, absent from `base.apk`) | AndroidX Graphics `Path` native backend (`System.loadLibrary("androidx.graphics.path")`) — unrelated to Bluetooth/`libmaestro` | Done — ruled out as protocol-relevant |
+| `libpw_tokenizer_jni.so` | `arm64-v8a` (same split as above) | Pigweed `pw_tokenizer` JNI bridge (`System.loadLibrary("pw_tokenizer_jni")`) — log-string detokenization support, not the protocol transport itself | Done — ruled out as protocol-relevant |
+
+No file named `libmaestro.so`/`libgfps.so` exists anywhere across `base.apk` or either split, and no
+`System.loadLibrary`/`System.load` call in the decompiled sources names one either (full-tree grep,
+see the "APK metadata" table above and `AGENTS.md` §0's 2026-08-30 correction) — the Maestro control
+logic is pure Kotlin/Java, not a native binary, for this analyzed version.
 
 > **Updated 2026-08-30 (`DECISIONS.md` ADR-017, superseding ADR-003):** native
 > `.so` disassembly is now in scope for AI *mechanical* assistance, on the
@@ -2016,11 +2022,22 @@ fxm.i()  [MaestroSoftwareInfoAndHidUuidCheck]
   -> fxm.c(goq, goq) x4  [maestro_pw.Maestro/GetSoftwareInfo pw_rpc unary,
                           one per {MAESTRO_A,MAESTRO_B} x {LEFT_BT_CORE,RIGHT_BT_CORE}]
   -> BluetoothDevice.fetchUuidsWithSdp()  [only if HID UUID 0x1124 not yet present]
+
+fye.a(qhs) / fsz's WriteSetting send path  [confirmed end-to-end, see the nqx/npy/nqo/npw/nqm
+                                            entry's "Full confirmed send chain" above]
+  -> nqo.e(qjc)      [pw_rpc.MethodClient.invoke]
+  -> npy.a(...)      [pw_rpc.Client — builds/serializes the RpcPacket, payload=serialized qjc]
+  -> npw.a(bytes)    [pw_rpc.Channel]
+  -> npv.a(bytes)    [one of frg.java's 6 anonymous ChannelOutput implementations]
+  -> fut.f(bytes, goq)  [HDLC-encode: flag + LEB128 address + control + payload + CRC-32 + flag]
+  -> ffd.j() = BluetoothSocket.getOutputStream()
 ```
 
-Not yet traced: how `ClassicBTReceiver`'s connection-state events lead into `gbm`'s socket selection,
-and how `fsz`'s `WriteSetting` / `fux`'s per-service pw_rpc calls get their `MethodClient` — both are
-plausible next steps for a follow-up §4 pass, not claimed here.
+Not yet traced: how `ClassicBTReceiver`'s connection-state events lead into `gbm`'s socket
+selection — a plausible next step for a follow-up §4 pass, not claimed here. (The other half of
+this section's original open item — how `fsz`'s `WriteSetting`/`fux`'s per-service pw_rpc calls
+obtain their `MethodClient` — was resolved by a later pass the same day; see the second call-graph
+block above and the `nqx`/`npy`/`nqo`/`npw`/`nqm` entry for the full trace.)
 
 ## Correlation status with PROTOCOL.md
 

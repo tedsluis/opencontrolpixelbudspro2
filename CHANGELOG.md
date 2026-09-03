@@ -356,6 +356,43 @@ for the "definition of done" that will mark v1.
   the wire/SDP level (not just APK code), and names DLCI 0x08 "GSND CONTROL" and DLCI 0x0a "GSND
   AUDIO" for the first time — new leads for `PROTOCOL.md` §2.3's/§6's open DLCI-0x08-identity
   question, proposed for maintainer review, not committed as a promotion. See `CAP-033-FINDINGS.md`.
+- **2026-09-01: `CAP-034` (Group W, 4th attempt) captured and analyzed — resolves the
+  `0x0c0X`/`0x0f2X` GATT handle↔UUID mapping, maintainer sign-off obtained.** Combined `CAP-014`'s
+  confirmed-unlimited HCI snaplen with Group W's own long-untried cache-busting method
+  (`pm clear com.android.bluetooth` on a Pixel 9a never before connected to this Buds unit) for the
+  first time. The resulting discovery burst resolves the full 15-primary-service GATT profile:
+  `0x0c00`–`0x0c14` = Google Fast Pair Service (all 5 spec-defined characteristics, plus Message
+  Stream PSM and one still-unnamed characteristic), `0x0f20`–`0x0f2a` = Device Information,
+  `0x0f30`–`0x0f33` = Battery Service. Corrects an earlier `CAP-017-FINDINGS.md` hypothesis that
+  "Unknown Service" (`109b862f-…`) contained this cluster — it occupies a separate handle range and
+  its own purpose remains unidentified. See `CAP-034-FINDINGS.md` and `PROTOCOL.md` §4.3 Option D/§6.
+- **2026-09-02: `CAP-035` (Group AB, GMS-independence check) captured and analyzed, maintainer
+  sign-off obtained.** Tested whether DLCI 0x08 ("GSND CONTROL")/0x0a ("GSND AUDIO")/0x06 ("DEBUG
+  APP")/0x12 ("BTIS") depend on Google Play Services, on a GrapheneOS phone with GMS present but
+  `dumpsys`-verified disabled. DLCI 0x08's content reproduces byte-identical across a fresh connect
+  and a reconnect; DLCI 0x0a opens in lockstep but stays payload-silent both times; DLCI 0x06/0x12
+  never open at all — clean negatives for both, the first time either has been specifically checked.
+  Strengthens (does not fully close) `CAP-004-FINDINGS.md` §4a's existing "GMS present but disabled"
+  finding — a repeat with GMS genuinely uninstalled would close it fully. See `CAP-035-FINDINGS.md`.
+- **2026-09-03: documentation audit remediation** (maintainer-directed fixes following a 2026-09-02
+  documentation audit): registered `CAP-034`/`CAP-035` in `id_registry.csv` (both had full Capture
+  Index rows and were cited throughout `PROTOCOL.md`/`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` but were never
+  added to the registry); fixed a live CI "Lint docs" failure (added the deliberately-referenced,
+  deleted `REVIEW_REPORT.md` to `scripts/lint_docs.py`'s historical-reference allowlist; repaired
+  `CAP-035-EVENT-NOTES.md`'s footer, which pointed at a truncated folder path); corrected a stale,
+  self-contradictory "not yet traced" note in `REVERSE_ENGINEERING.md`'s Call graph notes section
+  (the `fsz`/`fux` → `MethodClient` chain it described as untraced had in fact been fully traced
+  earlier in the same document); populated `REVERSE_ENGINEERING.md`'s previously-empty "Native
+  libraries" table from the already-documented finding; added the missing extraction commands and
+  raw hex to `CAP-008-FINDINGS.md`'s HFP-handshake and eSCO-setup sections, per `PROJECT_RULES.md`
+  §1's hex-and-script rule (all of that capture's original conclusions were independently
+  re-verified and confirmed correct in the process); refreshed two stale `TODO.md` status
+  descriptions (the UUID register is no longer an empty template; the APK keyword-search pass has
+  grown well past its originally-cited class-entry count). **`DECISIONS.md` ADR-020** — EQ's
+  `FrameEncoder`/`FrameDecoder` implementation explicitly unblocked, closing a gap where `ADR-016`
+  had promoted EQ's protocol knowledge to FACT without ever stating the `ARCHITECTURE.md` §5
+  implementation gate was cleared (unlike ANC/`ADR-009` and Find My Buds/`ADR-011`); no new protocol
+  knowledge, maintainer-approved.
 
 ### Removed
 

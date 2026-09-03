@@ -576,7 +576,11 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
 - **Status**: 🟢 FACT for the wire envelope, the field-to-band mapping, and the ±6.0 range; 🟡
   HYPOTHESIS (strong) that DLCI 0x02 is specifically `libmaestro`; 🟡 HYPOTHESIS for the
   preview/save field semantics; 🔴 unconfirmed for the gain units, the Control byte, and the
-  ~13-byte correlation-ID region (§6).
+  ~13-byte correlation-ID region (§6). **`FrameEncoder`/`FrameDecoder` implementation for EQ is
+  explicitly unblocked, 2026-09-03 (`DECISIONS.md` ADR-020)** — the FACT-level elements above
+  (envelope, field-to-band mapping, ±6.0 clamp, preset quintets) are sufficient on their own; the
+  field-16-vs-18 and gain-unit open items above are unaffected and should be resolved before a
+  "Save as preset" UI affordance ships, per that ADR's own scope note.
 - **Evidence**: `SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1,
   `captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS.md` (first candidate
   format, single-band sample), `captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`
@@ -640,6 +644,14 @@ event-observation coroutines.
   assumption of fixed-interval polling).
 - Shown ≥8 seconds when using the "show" type; auto-hidden after 20s or via an
   explicit "hide" type frame. Optional when a single bud is inserted/removed.
+  **Re-check flagged 2026-09-03**: two direct re-fetches of the official
+  `batterynotification` extension page found no sentence anywhere on it stating this
+  8s/20s timing — the byte-layout table above was re-confirmed exactly, but this specific
+  timing sub-claim's citation could not be re-verified against the currently-live page text.
+  Not retracted (the fetch tool's page-to-text conversion is not a guaranteed-complete read,
+  and this detail may live on a different Fast Pair spec page, e.g. the base Message Stream
+  spec, not checked this pass) — downgraded from unqualified `[OFFICIAL-SPEC]` to 🟡
+  HYPOTHESIS pending a maintainer or future session reading the actual page directly.
 - **Advantage**: visible on a passive BLE scan — no active connection required,
   useful for the battery fallback logic in `ARCHITECTURE.md` §4.
 - **Attempted 2026-08-21, `CAP-011` — inconclusive, not `[VERIFIED-LOCAL]`.** A dedicated capture
@@ -1791,6 +1803,8 @@ leaving them buried in prose elsewhere.
 | 2026-08-27 | **PROPOSAL, pending maintainer approval.** `CAP-014` (Group W repeat, snaplen-fixed) analyzed: **§4.3 Option D and the `0x0c0X`/`0x0f2X` open item annotated, no status change** — the handle↔UUID mapping remains 🔴 OPEN after a 3rd Group-W-labeled attempt, but the blocking cause is now precisely identified as GATT-cache reuse on an already-bonded phone (not a snaplen issue this time, which this session's own check confirmed fixed) — see `CAP-014-FINDINGS.md` §4/§8 for the full analysis and the recommended next capture (genuinely combining a fixed snaplen with one of Group W's own untried cache-busting methods, `pm clear com.android.bluetooth` or the Pixel 9a). Byte-length/leading-byte shapes for `0x0c0c`/`0x0c13`/`0x0c14` and content for `0x0f2a` ("Revision 6")/`0x0f32` (`0x64`) reproduce exactly across independent sessions, strengthening confidence without changing any status | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-08-30 | **Four pending FACT promotions from a combined Tier 0 (capture re-decode) / Tier 2 (APK static-analysis) session reviewed and explicitly approved by the maintainer, per-point** (`AGENTS.md` §6), recorded in `DECISIONS.md` ADR-019: **§2.2a** — the "..." inside DLCI 0x02's `field5{field4{...}}` wrapper confirmed 🟢 FACT to be `libmaestro`'s own recovered `WriteSetting` schema (`qhr`), for 2 sampled fields (4, 29), via independent APK static analysis. **§4.5.3** — the top-level "Use touch controls" toggle opcode (`field 4`) and the press-and-hold action-selection opcode (`field 7`/`qju`, plus a corrected, one-level-deeper `qik`→`qho` nesting) both promoted to 🟢 FACT, each now backed by both wire+video correlation and a self-describing log message in the app's own code. The ANC-mode rotation-checklist opcode's **field number** (`field 12`/`qht`) promoted to 🟢 FACT; its equivalence to the app's own "ANC gesture loop" name explicitly **not** promoted — the maintainer reviewed this specific point and kept it at 🟡 HYPOTHESIS. See `REVERSE_ENGINEERING.md`'s `qjc`/`qja`/`qhr`/`qjo`/`qju`/`qjg`/`qht` entries (2026-08-30 updates) and `CAP-020-FINDINGS.md`/`CAP-021-FINDINGS.md`'s 2026-08-30 addenda for the full byte-level and code-level evidence | Claude (AI), maintainer-directed per-point sign-off session |
 | 2026-08-30 | Remediation from a 2026-08-30 project-wide documentation audit (maintainer-directed fixes, no new FACT promotion or ADR): **§2.2a** — added `CAP-033` as a fourth independent, SDP-service-name-level corroboration of DLCI 0x02's "MAESTRO APP" channel-ownership finding. **§2.3** — added a 2026-08-30 update recording `CAP-033`'s SDP-browse naming of DLCI 0x08 ("GSND CONTROL"), DLCI 0x0a ("GSND AUDIO"), DLCI 0x06 ("DEBUG APP"), and DLCI 0x12 ("BTIS") — new leads, 🟡 HYPOTHESIS, explicitly not a resolution of DLCI 0x08's identity. **§6** — added a matching dated update to the DLCI-0x08-ownership open item | Claude (AI), audit-remediation task, maintainer-directed |
+| 2026-09-03 | **§4.2 EQ** — `FrameEncoder`/`FrameDecoder` implementation explicitly unblocked (`DECISIONS.md` ADR-020, maintainer-directed, closing a gap a 2026-09-02 documentation audit found: EQ's protocol knowledge was already fully FACT per `ADR-016`, but no ADR had ever explicitly cleared `ARCHITECTURE.md` §5's implementation gate for it, unlike ANC/`ADR-009` and Find My Buds/`ADR-011`). No new protocol knowledge; field-16-vs-18 and gain-unit questions remain open | Claude (AI), maintainer-directed sign-off session |
+| 2026-09-03 | Remediation from a 2026-09-02 documentation audit (mechanical fixes, no new FACT promotion or ADR beyond ADR-020 above): **§4.3 Option A** — the "shown ≥8s, auto-hidden after 20s" Battery Notification visibility-timing claim downgraded from unqualified `[OFFICIAL-SPEC]` to 🟡 HYPOTHESIS after two direct re-fetches of the official `batterynotification` extension page found no matching text; the byte-layout table in the same section was re-confirmed exactly and is unaffected | Claude (AI), audit-remediation task, maintainer-directed |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

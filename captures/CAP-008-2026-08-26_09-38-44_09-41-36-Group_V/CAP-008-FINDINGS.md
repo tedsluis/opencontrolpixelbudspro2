@@ -108,6 +108,36 @@ AT+COPS=3,0 / AT+CMEE=1    → OK
 (Full frame range: 776–1132, all within 09:38:50.66–.96, i.e. the entire handshake
 completes in under 300ms.)
 
+**Reproduction (added 2026-09-03, closing a hex-and-script-rule gap a documentation audit found —
+this section originally cited frame numbers and decoded AT-command text without the underlying
+extraction command or raw bytes):**
+
+```
+$ tshark -r CAP-008-btsnoop_hci.log -Y "frame.number in {776,778,788,793,794,801,802}" \
+    -T fields -e frame.number -e frame.time_relative -e _ws.col.Info
+776   10.060257  Rcvd AT+BRSF=921
+778   10.061124  Sent   +BRSF: 3951
+788   10.091497  Rcvd AT+BAC=1,2,3
+793   10.098829  Rcvd AT+CIND=?
+794   10.099336  Sent   +CIND: ("CALL",(0,1)),("CALLSETUP",(0-3)),("SERVICE",(0-1)),("SIGNAL",(0-5)),("ROAM",(0,1)),("BATTCHG",(0-5)),("CALLHELD",(0-2))
+801   10.114239  Rcvd AT+CIND?
+802   10.116962  Sent   +CIND: 0,0,0,0,0,3,0
+```
+
+Raw RFCOMM I-frame bytes for frame 776 (`AT+BRSF=921`) and its ACK'd response, frame 778
+(`+BRSF: 3951`), via `tshark -r CAP-008-btsnoop_hci.log -Y "frame.number==776" -x` /
+`-Y "frame.number==778" -x`:
+
+```
+776: 02 02 20 15 00 11 00 43 00 31 ff 19 03 41 54 2b   .. ....C.1...AT+
+     42 52 53 46 3d 39 32 31 0d 89                     BRSF=921..
+778: 02 02 00 17 00 13 00 88 a0 33 ef 1f 0d 0a 2b 42   .........3....+B
+     52 53 46 3a 20 33 39 35 31 0d 0a 4f               RSF: 3951..O
+```
+`41 54 2b 42 52 53 46 3d 39 32 31 0d` decodes as ASCII `AT+BRSF=921\r` — the AT-command payload is
+plain text carried directly in the RFCOMM I-frame, not a proprietary binary envelope, matching every
+other HFP-classified frame in this section.
+
 **This closes `PROTOCOL.md` §6's "Behavior" open item** ("why does HFP AT-command
 traffic never recur after `CAP-001`'s own handshake") **with a second, independent
 data point, not a contradiction of `CAP-002`'s negative result:** the handshake *does*
@@ -181,6 +211,37 @@ Call 1: frames 1646 (cmd) / 1656 (complete), 09:39:19.697/.821 — **7.6ms after
 09:40:23.468/.731 — essentially identical timing relative to that call's own
 `+CIEV: 2,1`. Both sync connections are cleanly torn down (`Disconnect Complete`,
 reason `0x16`) at the same moment their respective call's `+CIEV: 1,0` fires (§1, §4).
+
+**Reproduction (added 2026-09-03, same hex-and-script-rule gap as §3 above):**
+
+```
+$ tshark -r CAP-008-btsnoop_hci.log -Y "frame.number in {1646,1656}" \
+    -T fields -e frame.number -e frame.time_relative -e _ws.col.Info
+1646   39.092424  Sent Enhanced Setup Synchronous Connection
+1656   39.216659  Rcvd Synchronous Connection Complete
+```
+
+Raw HCI command/event bytes, via `tshark -r CAP-008-btsnoop_hci.log -Y "frame.number==1646" -x` /
+`-Y "frame.number==1656" -x`:
+
+```
+1646 (Enhanced Setup Synchronous Connection, opcode 0x043d, connection handle 0x0002):
+  01 3d 04 3b 02 00 40 1f 00 00 40 1f 00 00 05 00
+  00 00 00 05 00 00 00 00 3c 00 3c 00 00 7d 00 00
+  00 7d 00 00 04 00 00 00 00 04 00 00 00 00 10 00
+  10 00 02 02 00 00 01 01 00 00 0d 00 88 03 02
+
+1656 (Synchronous Connection Complete event, opcode 0x2c, status 0x00 = success,
+      new sync connection handle 0x0005, peer BD_ADDR 6e:cf:6e:07:00:05 (reversed on the wire),
+      link type 0x02 = eSCO):
+  04 2c 11 00 05 00 07 6e cf 6e 00 04 02 0c 04 3c
+  00 3c 00 05
+```
+Per Wireshark's own HCI dissector (`tshark -r CAP-008-btsnoop_hci.log -Y "frame.number==1646" -V`,
+not a hand-decode of the raw bytes above): both the Transmit and Receive Coding Format fields
+report `Codec: mSBC (0x05)`, `Transmit`/`Receive Codec Frame Size: 60`, `Input`/`Output Bandwidth:
+32000` — an exact match to this section's "mSBC (wideband speech), Tx/Rx bandwidth 8000 B/s, frame
+size 60" summary.
 
 `mSBC` (wideband) was selected via a standard Codec Connection Setup exchange just
 before each eSCO setup: `Sent +BCS: 2` → `Rcvd AT+BCS=2` → `OK` (frames 1641/1644/1645

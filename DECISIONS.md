@@ -921,5 +921,44 @@ motivated this).
   for DLCI 0x02 generally — that still requires the broader payload-content HYPOTHESIS in `ADR-018` to
   reach FACT, which this ADR narrows but does not itself complete.
 
+## ADR-020 — EQ `FrameEncoder`/`FrameDecoder` implementation explicitly unblocked
+
+- **Date**: 2026-09-03
+- **Status**: Accepted
+- **Context**: `ADR-016` (2026-08-28) promoted EQ's wire envelope shape, its field-to-band mapping,
+  the ±6.0 band-gain clamp, and the confirmed preset quintets to 🟢 FACT (`PROTOCOL.md` §4.2). Unlike
+  `ADR-009` (ANC) and `ADR-011` (Find My Buds Left/Right), which each explicitly state that the
+  `ARCHITECTURE.md` §5 per-command implementation gate is cleared, `ADR-016` never made the
+  equivalent statement for EQ — a 2026-09-02 documentation audit flagged this as a gap: EQ's protocol
+  knowledge is fully FACT-level, but its implementation-readiness status was left ambiguous rather
+  than explicitly settled. The maintainer reviewed this gap directly (session of 2026-09-03) and
+  explicitly instructed that it be closed via a new ADR, matching `ADR-009`/`ADR-011`'s pattern
+  rather than an in-place edit to `ADR-016`'s own text (`PROJECT_RULES.md` §3 rule 9's
+  non-destructive-update convention).
+- **Finding being recorded**: none new — this ADR does not add any protocol knowledge. It records
+  the maintainer's explicit decision that the FACT-level findings `ADR-016` already promoted (5×
+  `float32` band-gain quintet on DLCI 0x02's `field5{field4{...}}` envelope, field 1↔Low bass /
+  2↔Bass / 3↔Mid / 4↔Treble / 5↔Upper treble, wire order reversed from on-screen order, ±6.0 clamp,
+  and the six confirmed preset quintets) are sufficient, on their own, to unblock implementation.
+- **What this ADR does NOT clear**: EQ's outer field 16 vs. field 18 distinction (`PROTOCOL.md`
+  §4.2/§6 — "live value" vs. "persisted value," and whether that maps to "preview" vs.
+  "slider-release"/"commit") remains 🟡 HYPOTHESIS, unaffected by this ADR. An implementation needs to
+  pick one field for a given write; per `PROTOCOL.md` §4.2's own code-derived reading
+  (`REVERSE_ENGINEERING.md`'s `qjw` entry: field 16 = `fyp.f()`, "update user eq," fired on every
+  slider-drag value change and on preset selection; field 18 = `fyp.d()`, "update last saved user
+  eq," fired once per gesture and also persisted locally), field 16 is the correct target for a
+  live/preview-style write — this ADR does not promote that reading to FACT, it only notes it as the
+  practical default for an initial implementation. The gain unit (plausibly dB, never independently
+  confirmed) and the ~13-byte correlation-ID/`call_id` region also remain unconfirmed, unaffected.
+- **Decision**: EQ's `FrameEncoder`/`FrameDecoder` implementation is unblocked, per `ARCHITECTURE.md`
+  §5's per-command implementation gate, for the elements `ADR-016` already promoted to FACT (the
+  envelope wrapper, the 5-band quintet and its field-to-band mapping, the ±6.0 gain clamp, and the
+  preset quintets).
+- **Consequences**: `:data` can implement EQ's `FrameEncoder`/`FrameDecoder` now, against fixed
+  byte-array fixtures per `AGENTS.md` §11, using field 16 for live/slider-drag writes as the
+  practical default described above. The field-16-vs-18 semantic question and the gain-unit question
+  remain open research items (`PROTOCOL.md` §6, `TODO.md`) and should be resolved before EQ ships a
+  "Save as preset"-style UI affordance that specifically depends on field 18's exact semantics.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

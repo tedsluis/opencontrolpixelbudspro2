@@ -75,6 +75,10 @@ KNOWN_HISTORICAL_REFERENCES = {
                                 # the pre-fix (wrong) value of its Log Metadata table's Log file
                                 # field, kept as a "sic"/before-value — same pattern as the
                                 # CAP-005-recoding.mp4 entry above, not a live reference.
+    "REVIEW_REPORT.md",  # a deleted, unofficial third-party report REVERSE_ENGINEERING.md's
+                          # fua/gax/gbo/gba/hjy entry references by name to explain why its
+                          # "channel conflation" claim is not repeated there — same
+                          # deliberate-historical-reference pattern as the entries above.
 }
 
 # Only lint cross-references to the project's own capture/doc artifacts —

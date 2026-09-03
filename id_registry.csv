@@ -18,6 +18,7 @@ ADR-016,adr,accepted,"Retroactive sign-off: EQ field-to-band mapping/gain-clamp/
 ADR-017,adr,accepted,"Supersedes ADR-003: AI-assisted mechanical decompilation and proto-schema extraction, within a maintainer-decides-relevance boundary; native .so disassembly assistance now in scope",DECISIONS.md
 ADR-018,adr,accepted,"DLCI 0x02 confirmed as the companion app's own internal RFCOMM channel (SDP UUID + APK-code correlation, CAP-001/CAP-002/CAP-032); channel ownership FACT, Sent-payload content remains HYPOTHESIS (Option 2)",DECISIONS.md
 ADR-019,adr,accepted,"qhr's oneof structure confirmed inside DLCI 0x02's field5{field4{...}} wrapper (2 sampled fields); qhr fields 4 and 7 promoted to FACT; qhr field 12's field-number identity (not its name) promoted to FACT",DECISIONS.md
+ADR-020,adr,accepted,"EQ FrameEncoder/FrameDecoder implementation explicitly unblocked (mirrors ADR-009/ADR-011's pattern); no new protocol knowledge",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
@@ -51,6 +52,8 @@ CAP-030,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_S
 CAP-031,capture,captured,"session date/status: 2026-08-27 — analyzed, PROPOSAL — pending maintainer approval; third attempt at CAP-013's original intent (logging started before the clearing action itself), still did not achieve it — see CAP-031-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-032,capture,captured,"session date/status: 2026-08-27 — analyzed, PROPOSAL — pending maintainer approval; fourth attempt at CAP-013/CAP-031's original intent, succeeded (raw-path extraction, no truncation) — primary CAP-001-FINDINGS.md §6 question answered for this session (no pre-Forget BLE link/valid link key found) — see CAP-032-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-033,capture,2026-08-30,"session date/status: 2026-08-30 — Group AA, SDP UUID branch isolation (SDP-001/SDP-002), analyzed, isolation not fully clean",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-034,capture,2026-09-01,"session date/status: 2026-09-01 — Group W (4th attempt), resolved the 0x0c0X/0x0f2X GATT handle/UUID mapping and the full 15-service GATT profile, maintainer sign-off obtained",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-035,capture,2026-09-02,"session date/status: 2026-09-02 — Group AB, DLCI 0x08/0x0a/0x06/0x12 GMS-dependence check (GSND-001), maintainer sign-off obtained",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
