@@ -207,5 +207,157 @@ Status legend (consistent with `PROTOCOL.md` §0):
 - **Promoted to:** `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3's existing PROPOSAL note (trimmed to point
   here, 2026-08-28), `TODO.md`'s "Known technical debt" section (2026-08-28).
 
+### 2026-09-04 — Bonus battery/firmware cross-check across `CAP-004`/`CAP-007`/`CAP-016`/`CAP-033`
+
+- **Trigger:** following `CAP-036-FINDINGS.md` §12's incidental battery/firmware bonus pass (a
+  by-product of that session's own `OBS-004` analysis), the maintainer asked whether other
+  existing captures were worth a similar secondary look. No new capture — this is a pattern check
+  across logs already on disk, exactly this document's purpose.
+
+- **Selection rationale:** of the 30+ existing sessions, most already have exhaustive
+  battery/firmware treatment (`CAP-001`, `CAP-002`, `CAP-009`, `CAP-011`, `CAP-032`, `CAP-035`) or
+  are severely ACL-truncated (`CAP-012`, `CAP-013`, `CAP-017`, `CAP-031` — short frames like these
+  are exactly what truncation destroys). Four were picked for offering a genuinely different
+  condition, each pre-verified untruncated (`capinfos` + `frame.cap_len==frame.len`, 0 mismatches
+  in every case): `CAP-004` (GMS disabled **and** app uninstalled — the strongest independence
+  test on disk), `CAP-033` (app force-stopped throughout, GMS untouched — a different
+  independence axis), `CAP-016` (already flags an ANC-Notify byte question directly relevant to
+  `CAP-036`'s own open item), `CAP-007` (a ~6-minute session with several multi-minute idle
+  brackets — more natural-idle cadence data).
+
+- **Method:** same pipeline as `CAP-036-FINDINGS.md` §12 — `bthci_acl.chandle`-scoped DLCI census,
+  `_ws.col.Info`-based HFP AT-command extraction (some sessions' `data.data` field returns hex,
+  others return the dissected ASCII text directly depending on the dissector chain — checked per
+  session rather than assumed), and `data.data` hex extraction for DLCI 0x08/0x04 content.
+
+#### Result 1 — `CAP-004`: Option C (HFP battery) confirmed independent of GMS *and* the app
+
+```
+$ tshark -r CAP-004-btsnoop_hci.log -Y "btrfcomm.len>0" -T fields -e frame.number -e frame.time \
+    -e btrfcomm.dlci -e _ws.col.Info | grep -iE "BIEV|CIND"
+2124  ...  0x0c  Rcvd AT+CIND=? ...
+2146  ...  0x0c  Sent   +CIND: 0,0,0,0,0,3,0
+2203  ...  0x0c  Rcvd AT+BIEV=1,1
+2253  ...  0x0c  Rcvd AT+BIEV=2,100
+2600  ...  0x0c  Rcvd AT+BIEV=2,100
+2641  ...  0x0c  Rcvd AT+BIEV=2,100
+```
+`AT+BIEV=2,100` (HF Indicator #2, Battery Level) fires normally in this session, whose entire
+point (Group S, `GFPS-001`) was Google Play Services **disabled** and the official app
+**uninstalled** — the strongest GMS/app-independence condition of any capture on disk. DLCI 0x08's
+battery triple also reproduces unchanged:
+```
+$ tshark -r CAP-004-btsnoop_hci.log -Y "btrfcomm.dlci==8 and btrfcomm.len>0" -T fields \
+    -e frame.number -e data.data | grep "^0e01"
+2315  0e0100230a210a03616c6c121a0a060864100118010a060864100118020a060824100118032001
+```
+Decodes to `[100,1,1]` (Left) / `[100,1,2]` (Right) / Case `0x24`=36 in the short 2-field form —
+matching `AT+BIEV`'s Right=100 independently. **Result: Option C (HFP battery) and Option E (DLCI
+0x08 battery triple) are both confirmed working with GMS disabled *and* the app uninstalled** —
+🟢 FACT for this session, extending `CAP-035-FINDINGS.md`'s GMS-independence result (which only
+checked DLCI 0x08/0x0a/0x06/0x12, not HFP) to Option C specifically, on a different session/date
+than `CAP-035`'s own GrapheneOS test. As with `CAP-035`, DLCI 0x02/0x04 both stay absent in this
+session (already documented in `CAP-004-FINDINGS.md`) — unaffected, not re-litigated here.
+
+#### Result 2 — `CAP-033`: same independence result for app-force-stopped, plus a clean DLCI 0x02 usage/registration contrast
+
+```
+$ tshark -r CAP-033-btsnoop_hci.log -Y "btrfcomm.len>0" -T fields -e frame.number -e frame.time \
+    -e btrfcomm.dlci -e _ws.col.Info | grep -iE "BIEV=2"
+1475  ...  0x0c  Rcvd AT+BIEV=2,100
+2130  ...  0x0c  Rcvd AT+BIEV=2,100
+2185  ...  0x0c  Rcvd AT+BIEV=2,100
+2239  ...  0x0c  Rcvd AT+BIEV=2,100
+2268  ...  0x0c  Rcvd AT+BIEV=2,100
+2301  ...  0x0c  Rcvd AT+BIEV=2,100
+```
+`AT+BIEV=2,100` fires repeatedly with the official app **force-stopped throughout the entire
+session** — the condition `CAP-033`'s own procedure was built around. DLCI 0x08's battery triple
+and Device Information (Model ID `da2db1`) also reproduce unchanged (commands identical to Result
+1's pattern, frames 1604/1637, not repeated here). **New, additional to `CAP-033-FINDINGS.md`'s
+own SDP-level finding** (that "MAESTRO APP"/DLCI 0x02's UUID is still *advertised* via SDP with
+the app closed): a full-session DLCI census —
+```
+$ tshark -r CAP-033-btsnoop_hci.log -Y "btrfcomm" -T fields -e btrfcomm.dlci | sort | uniq -c
+     32 0x00
+     77 0x04
+     55 0x08
+      2 0x0a
+     55 0x0c
+```
+— shows **zero** DLCI 0x02 frames of any kind (not even `SABM`/`UA` control frames) in this
+entire 346-second session. **Result:** SDP *registration* (the service exists, per
+`CAP-033-FINDINGS.md`) and the RFCOMM *channel actually being opened* are different claims — this
+session cleanly separates them: DLCI 0x02 is registered but never used without the app running,
+while DLCI 0x04/0x08/0x0c (battery, firmware, capability content) all function normally. Consistent
+with, and sharpens, `DECISIONS.md` ADR-018's existing "DLCI 0x02 is the companion app's own
+internal channel" finding.
+
+#### Result 3 — `CAP-016`: second independent session reproducing the Settable-toggles-at-connect pattern that `CAP-036` also found
+
+```
+$ tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm.dlci==4 and btrfcomm.len>0" -T fields \
+    -e frame.number -e frame.time -e data.data | grep "^0813"
+1521  06:32:03.567  0813000401e80020   <- Settable=0x00, right after classic connect
+2128  06:32:18.631  0813000401e8e880   <- Settable=0xe8, ANC "Transparency" highlighted on screen
+...
+3054  06:33:23.456  0813000401e80020   <- Settable=0x00 again, after an unrelated channel bounce
+```
+`CAP-016-FINDINGS.md` §4 already documents this as a 🟡 HYPOTHESIS: `settable-toggles=0x00`
+correlates with the app's ANC row showing **no highlighted mode**, specifically observed
+immediately after connect (frame 1521, "both buds still docked at this instant... part of the
+immediate post-connect RFCOMM-channel-open burst") and again after a mid-session channel bounce —
+i.e. whenever the accessory's capability data hasn't (re-)synced yet, not a fixed property of the
+current ANC mode. **`CAP-036`'s own frame 1182 (`08 13 00 04 01 e8 00 20`, Settable=`0x00`,
+Current=`0x20`/Off) — flagged there as an unreconciled discrepancy against every other
+session's `0xe8`, `CAP-036-FINDINGS.md` §3/§11 — is structurally identical to `CAP-016`'s own
+connect-time sample**, both firing at the very first Notify after a fresh RFCOMM connection. This
+is a **second independent session** showing `Settable=0x00` specifically at connect-time,
+strengthening (not yet promoting) `CAP-016`'s original HYPOTHESIS — the "discrepancy" flagged in
+`CAP-036-FINDINGS.md` is best read as an instance of this same already-observed pattern, not a
+new, separate anomaly. Still 🟡 HYPOTHESIS (2 sessions, not maintainer-reviewed for promotion).
+
+Also reconfirms, incidentally: Model ID `da2db1` constant across this session's own two
+reconnects (frames 1507/2992); the "BLE address updated" field (Code `0x02`) differs **between
+those same two reconnects within one continuous log** (`49:c6:b1:16:78:70` vs `5b:7c:59:39:46:83`)
+— new evidence that the rotation is per-connection, not merely per-day/per-boot as the
+cross-session comparison in `CAP-036-FINDINGS.md` §12.3 alone could show.
+
+#### Result 4 — `CAP-007`: one more idle-cadence data point, plus a new Case-encoding sample
+
+```
+$ tshark -r CAP-007-btsnoop_hci.log -Y "btrfcomm.len>0" -T fields -e frame.number -e frame.time \
+    -e btrfcomm.dlci -e _ws.col.Info | grep "BIEV=2"
+556   09:14:17.216  0x0c  Rcvd AT+BIEV=2,100
+1150  09:14:43.012  0x0c  Rcvd AT+BIEV=2,100   (Δ25.8s)
+1291  09:15:12.148  0x0c  Rcvd AT+BIEV=2,100   (Δ29.1s)
+1647  09:16:02.085  0x0c  Rcvd AT+BIEV=2,100   (Δ49.9s)
+1697  09:16:23.211  0x0c  Rcvd AT+BIEV=2,100   (Δ21.1s)
+1777  09:17:02.073  0x0c  Rcvd AT+BIEV=2,100   (Δ38.9s)
+1880  09:17:52.504  0x0c  Rcvd AT+BIEV=2,100   (Δ50.4s)
+```
+Widening gaps (21–50s) over a ~4-minute idle stretch — another data point consistent with
+`PROTOCOL.md` §4.3 Option C's existing "settling burst, then irregular, median ~20s" model
+(`CAP-009`'s 101-minute session remains the primary evidence for that model; this adds a
+shorter, independent confirmation).
+
+DLCI 0x08's battery triple shows a Case entry in the **short, 2-field form** (no `flag` byte) —
+`0a 04 08 2d 18 03` (value `0x2d`=45, index=3) — constant for the whole session:
+```
+$ tshark -r CAP-007-btsnoop_hci.log -Y "btrfcomm.dlci==8 and btrfcomm.len>0" -T fields \
+    -e frame.number -e data.data | grep "^0e01" | head -1
+733  0e0100230a210a03616c6c121a0a060864100118010a060864100118020a04082d180318012001
+```
+`PROTOCOL.md` §4.3 Option E's addendum documents this short form as carrying a `0xff` (255)
+*unknown-value sentinel* specifically. **This sample does not match that specific sentinel value**
+(`0x2d`=45 here, a plausible real percentage, not `0xff`) — recorded as a new, distinct data point
+for the "two distinct Case wire encodings" open item, not force-fit into the existing sentinel
+reading: the short form may simply be usable for any Case value under some condition not yet
+identified, not exclusively for the unknown/255 placeholder.
+
+- **Promoted to:** `PROTOCOL.md` §4.3 Option C (GMS/app-independence note, `CAP-004`+`CAP-033`);
+  `PROTOCOL.md` §6's `CAP-016`/`CAP-036` Settable-toggles item (cross-session strengthening note);
+  `PROTOCOL.md` §4.3 Option E's Case-encoding addendum (new non-sentinel sample, `CAP-007`).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

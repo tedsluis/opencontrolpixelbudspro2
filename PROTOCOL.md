@@ -90,6 +90,21 @@ above it.
 > §3). Left as 🔴 OPEN QUESTION which (if any) is what the app itself would call "the firmware
 > version" until a capture also records that app screen.
 >
+> **Documentation-gap fix (2026-09-04, `CAP-036-FINDINGS.md` §12.3) — mechanical, no new sign-off
+> needed:** DLCI 0x04's own Device Information group (Group `0x03`, distinct from DLCI 0x08's
+> private numbering above) has two further codes that reached 🟢 FACT in `CAP-002-FINDINGS.md` §3
+> back on 2026-08-10 (direct fetch of Google's official `deviceinformation` spec page, worked-example
+> byte match) but were never copied into this document — fixed now: **Code `0x01` = "Model ID"**,
+> value `da 2d b1`, constant across every session checked to date (`CAP-001`, `CAP-002`, `CAP-010`,
+> `CAP-036`). **Code `0x02` = "BLE address updated"**, a 6-byte value that rotates every session
+> (`77:96:2c:96:68:1c`, `53:0c:b4:c8:06:3d`, `75:51:27:4f:ae:59`, `51:70:22:b8:72:2f`,
+> `5e:6a:14:ce:17:9f`, `44:d6:94:50:f0:4e` — six distinct sessions, six distinct values) —
+> consistent with a rotating private/resolvable BLE address, exactly as its name states. `CAP-036`
+> additionally cross-checked its own session's value against live BLE advertising traffic in the
+> same log and found it broadcasting a Fast Pair (`0xFE2C`) advertisement 407 times — see §4.3
+> Option A's device-attribution note below; this is 🟡 HYPOTHESIS (one session), not itself part of
+> this documentation-gap fix.
+>
 > **Update (2026-08-21), `CAP-023` — the capture this note asked for now exists.** Device details →
 > More settings → Firmware update shows **"Device firmware version": Left earbud `release_5.203`,
 > Right earbud `release_5.203`, Case `release_5.203`** — video-confirmed on-screen, same session,
@@ -487,6 +502,28 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   the "Current state" byte. Matches the `08 13 00 04 01 e8 e8 XX` frames independently documented
   in `CAP-001-FINDINGS.md` §5 (26 occurrences across the day this capture's log spans) — a
   periodic/on-change status report, not itself a command.
+- **"Get ANC state" (`0x11`) — opcode identity 🟢 FACT, promoted 2026-09-04 (maintainer sign-off,
+  `DECISIONS.md` ADR-021):** documented above by spec but never previously observed on the wire
+  until `CAP-036` (2026-09-04), frame 1169 (`08 11 00 00`, Sent, DLCI 0x04) — `Group=0x08,
+  Code=0x11, Len=0x0000`, exact structural match to the spec's `Get ANC state` (Seeker→Provider, no
+  payload). Fired 34ms after DLCI 0x04's channel opens during a *reconnect* — ~9s before the app's
+  own "Active" UI confirmation renders — and answered ~10.7ms later by frame 1182 (`08 13 00 04
+  01 e8 00 20`, Rcvd — Notify, current state=`0x20`=Off), matching the on-screen ANC state
+  confirmed later in the same session (an internal content cross-check, on the same pattern as
+  `0x12`'s own promotion above). **Scope of this promotion, narrower than it might look:** only the
+  *opcode's identity and existence on the wire* is FACT (Group/Code values, direction, zero-length
+  structure, and that the Notify response's decoded value matches on-screen ground truth). **Not
+  promoted — remains 🟡 HYPOTHESIS pending replication:** whether this query reliably fires on
+  *every* reconnect (n=1, one session, one sample) — a second independent capture reproducing the
+  same query/response pair on a fresh reconnect would be needed before that broader trigger-reliability
+  claim can be promoted. Directly relevant to `ARCHITECTURE.md` §3.1 (State Reconciliation) —
+  confirms the official app performs a comparable read-on-reconnect for ANC state specifically, at
+  least once. The same session found **no** query of any kind (this opcode or otherwise) when a
+  settings screen is opened with nothing touched, across five clean windows (EQ, Controls and
+  gestures, Touch controls, More settings, Multipoint) — that negative result likewise stays 🟡
+  HYPOTHESIS (single session), not promoted by this ADR. See `CAP-036-FINDINGS.md` §3–§7 for the
+  full decode, and an unreconciled discrepancy this same frame raises (`CAP-036-FINDINGS.md` §3, §6
+  below).
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -496,7 +533,9 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   `DECISIONS.md` ADR-009. **`FrameEncoder` implementation for this command is blocked pending
   `CAP-006`** (ADR-009) — the FACT status above does not by itself establish that every ANC tap
   reliably produces a command frame; see the open sub-question below and `CAP-001-FINDINGS.md`
-  §5's risk flag.
+  §5's risk flag. **`0x11`'s opcode identity independently 🟢 FACT as of 2026-09-04** (`CAP-036`,
+  `DECISIONS.md` ADR-021) — its trigger-reliability ("fires on every reconnect") remains 🟡
+  HYPOTHESIS, unaffected by ADR-009's scope.
 - **Evidence**: UI presence (`SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
   §1); official spec (`developers.google.com/nearby/fast-pair/specifications/extensions/hearablecontrols`,
   consulted 2026-08-12, re-fetched 2026-08-30 with no drift — Message Group `0x08`, Codes
@@ -683,8 +722,20 @@ event-observation coroutines.
   proves nor disproves whether the payload itself matches this section's documented layout (still
   open per the `CAP-011` result above). Proposed verifying experiment: capture the BLE side at
   full detail and decode the Account Key Filter to confirm device attribution.
+- **Device-attribution advance, 🟡 HYPOTHESIS (`CAP-036-FINDINGS.md` §12.4, 2026-09-04) — a
+  different sub-question than the payload-layout one above, not a resolution of it.** DLCI 0x04's
+  "BLE address updated" field (Device Information Group `0x03` Code `0x02`, §0.1) gave this
+  session's own value, `44:d6:94:50:f0:4e` — cross-checked directly against the same log's BLE
+  advertising traffic, this address broadcasts a Fast Pair (`0xFE2C`) + `0x1853` advertisement
+  **407 times**, stable payload, throughout the ~7-minute session. This is the first time a
+  live-observed advertising address has been tied back to a classic-channel field describing the
+  Buds themselves (rather than only a timing correlation, as the entry below records) — but the
+  payload's first byte is `0x10`, not the `0x00` "Flags" byte this section's table requires,
+  structurally still an Account Key Filter-shaped frame, not a Battery Notification match — the
+  payload-layout question above remains exactly as open as `CAP-011` left it.
 - **Evidence**: official Fast Pair spec; `CAP-011-FINDINGS.md` (2026-08-21, inconclusive
-  payload-layout result); `CAP-009-FINDINGS.md` §4 (2026-08-23, timing-only correlation).
+  payload-layout result); `CAP-009-FINDINGS.md` §4 (2026-08-23, timing-only correlation);
+  `CAP-036-FINDINGS.md` §12.4 (2026-09-04, device-attribution advance).
 
 #### Option B — RFCOMM via Fast Pair Message Stream "Device Information"
 
@@ -722,6 +773,14 @@ event-observation coroutines.
   Option E numbering has proven to be, or is itself session-dynamic; the charging-state field
   switch is unexplained. Proposed verifying experiment: reproduce in an independent session and
   check the `Group 0x03 Code 0x03` numbering holds.
+- **Cross-channel timing synchronization extended to DLCI 0x02, 🟡 HYPOTHESIS (`CAP-036-FINDINGS.md`
+  §12.5, 2026-09-04):** the near-lockstep pattern above (Option B/C/E firing within single-digit
+  milliseconds of each other) is joined, in this session, by a periodic DLCI 0x02 (`libmaestro`)
+  push firing within 7–18ms of Option E's DLCI 0x08 push at all 7 checked occurrences — suggesting
+  a single shared underlying trigger across at least 4 mechanisms, not four independently-timed
+  loops. The DLCI 0x02 push's own payload does not clearly match Option E's `[value, flag, index]`
+  battery-triple shape, though (§6's new open question below) — this extends the *timing*
+  observation only, not a claim that DLCI 0x02 carries confirmed battery content.
 - **Evidence**: official Fast Pair Message Stream / Find Hub Network extension
   docs (mechanism). `CAP-009-FINDINGS.md` §7, `[VERIFIED-LOCAL]` 2026-08-23 (candidate code).
 
@@ -784,6 +843,12 @@ event-observation coroutines.
   observed only once per session in every capture to date (consistent with `ADR-015`, not a
   contradiction of it). 🔴 OPEN QUESTION: is this a general mechanism (battchg can push on
   change, just rarely) or a one-off artifact? A single occurrence is not enough to resolve this.
+- **GMS/app-independence confirmed for Option C specifically, 🟢 FACT (`DESKRESEARCH_FINDINGS.md`
+  2026-09-04 entry):** `AT+BIEV=2,<value>` fires normally with Google Play Services **disabled
+  and** the official app **uninstalled** (`CAP-004`) and, independently, with the app
+  **force-stopped** for the entire session while GMS is untouched (`CAP-033`) — HFP battery
+  reporting is OS/Bluetooth-stack-level, not GMS- or app-driven. Extends `CAP-035-FINDINGS.md`'s
+  existing GMS-independence result (which only checked DLCI 0x08/0x0a/0x06/0x12) to Option C.
 
 #### Option D — BLE Battery Service (`0x180F`, Battery Level characteristic `0x2A19`)
 
@@ -869,7 +934,12 @@ event-observation coroutines.
   correlation against a capture recorded for another purpose. It is now the **4th independent
   confirming session** (after `CAP-001`/`CAP-002`/`CAP-011`) and by far the longest/densest: 75
   occurrences of `Group 0x0e Code 0x01`, Left and Right matching the on-screen value at every one
-  of 14 transitions across the whole session (`CAP-009-FINDINGS.md` §6).
+  of 14 transitions across the whole session (`CAP-009-FINDINGS.md` §6). **5th confirming session,
+  2026-09-04 (`CAP-036-FINDINGS.md` §12.2):** `100/100/100`, matching on-screen exactly.
+  **Completeness addendum, not a new claim:** `Group 0x04 Code 0x03`'s own payload has a constant
+  leading field (`field2=5`) preceding the Right-battery value in **every** session checked
+  (`CAP-001`, `CAP-002`, `CAP-011`, `CAP-036`) — not previously called out at this byte-level
+  precision.
 - **Two addenda, maintainer-approved 2026-08-2x (`AGENTS.md` §6) — `CAP-009-FINDINGS.md` §6:**
   - **A live charge cycle, observed for the first time on this mechanism.** After the Left earbud
     is placed in the case (~19:52:15), its `Group 0x0e Code 0x01` value climbs monotonically
@@ -886,6 +956,15 @@ event-observation coroutines.
     needs the case closed/holding a bud to be considered fresh; the no-`flag` form is a long-lived
     cached placeholder, while the `flag=1` form marks an actively-attempted-but-not-yet-successful
     fresh read, immediately before a real value lands. Not confirmed beyond this one transition.
+    **Complication, added 2026-09-04 (`DESKRESEARCH_FINDINGS.md` entry, `CAP-007`):** the same
+    short, no-`flag` form (`0a 04 08 2d 18 03`) is observed carrying a plausible **real** value
+    (`0x2d`=45, not the `0xff`/255 sentinel) throughout an entire ~6-minute session, with no
+    case-contact transition anywhere in that window. This doesn't fit "no-`flag` form = unknown
+    placeholder specifically" as a universal rule — 🔴 **narrowed to an open question**: either the
+    short form can carry any value under some other, not-yet-identified condition (not exclusively
+    the unknown/255 case), or `CAP-007`'s own session differs from `CAP-009`'s in some relevant way
+    not yet isolated (e.g. `CAP-007`'s Group U condition — buds removed from case, case lid
+    variously open/closed — versus `CAP-009`'s natural-discharge idle session).
   - **The Case field itself dips sharply right as charging begins, then declines further, more
     slowly.** 71%→69% in ~21 seconds (far faster than this session's other observed discharge
     rates), holds ~6 minutes, then 69%→68%. 🟡 **HYPOTHESIS:** may reflect an
@@ -1674,6 +1753,41 @@ leaving them buried in prose elsewhere.
       content comparable to Report Id `0x02`'s decoded `AndroidHeadTracker` string (same section,
       🟡 HYPOTHESIS, not yet promoted here); reported as short/near-empty, not decoded further, no
       content guessed.
+- [ ] **Added 2026-09-04, `CAP-036-FINDINGS.md` §5:** DLCI 0x08's connect-time burst contains
+      several `Sent` frames matching the identical `[Group:1][Code:1][Len(2BE)=0000]` zero-length
+      shape as DLCI 0x04's confirmed "Get" pattern (§4.1): `05 0c 00 00`, `04 02 00 00`,
+      `04 04 00 00`, `04 11 00 00`, `04 13 00 00`, `04 15 00 00`, and `0e 04 00 00`. None of these
+      Group/Code pairs is mapped to any known setting — genuinely open, not claimed as a settings
+      query given DLCI 0x08's semantics remain largely unresolved (see the `Group 0x01/0x02/0x05/
+      0x09` item above).
+- [ ] **Added 2026-09-04, `CAP-036-FINDINGS.md` §4:** a dense, RPC-shaped burst occurs on DLCI 0x02
+      immediately after channel establishment (`CAP-036` frames 1404–1591, ~3.1s), containing three
+      ASCII `"release_5.203"` firmware-version strings and many small request/response pairs
+      sharing a partial match to §4.5's documented correlation-ID prefix (`03 10 XX 1d ea 71 de
+      7e 25...`). Not decoded further — whether it carries any settings-state read-back via
+      `libmaestro`'s own channel (as opposed to the DLCI 0x04 "Get ANC state" mechanism confirmed
+      the same session, §4.1) is unresolved.
+- [ ] **Added 2026-09-04, `CAP-036-FINDINGS.md` §3; strengthened same day by
+      `DESKRESEARCH_FINDINGS.md`'s cross-check:** the "Notify ANC state" frame observed in
+      `CAP-036` (`08 13 00 04 01 e8 00 20`, Settable=`0x00`) fires as the very first Notify right
+      after a fresh RFCOMM connection — structurally the same situation as `CAP-016-FINDINGS.md`
+      §4's own frame 1521 (`08 13 00 04 01 e8 00 20`, byte-identical), which that capture's own
+      🟡 HYPOTHESIS already reads as "the Buds have not yet reported which ANC modes are currently
+      selectable," specifically observed right after connect. **Two independent sessions now show
+      the same connect-time `Settable=0x00` pattern** — this "discrepancy" against `CAP-001`'s
+      `0xe8` samples (all taken well after connection had settled) looks increasingly like an
+      instance of `CAP-016`'s already-documented pattern rather than a new, separate anomaly. Still
+      🟡 HYPOTHESIS (2 sessions, not maintainer-reviewed for promotion) — not reconciled at FACT
+      strength.
+- [ ] **Added 2026-09-04, `CAP-036-FINDINGS.md` §12.6 (bonus battery/firmware analysis):** DLCI
+      0x02's periodic push (§4.3 Option E's timing-correlation entry) decodes, HDLC-unescaped and
+      CRC-32-verified, to a repeated triple pattern (`0a 04 08 64 10 01`, `12 04 08 64 10 01`,
+      `1a 04 08 64 10 02`) that resembles but does not field-for-field match Option E's confirmed
+      `[value, flag, index]` battery-triple shape (only 2 fields per entry here, not 3, and the
+      trailing numbers are `01, 01, 02` rather than a clean `1, 2, 3` index). Not decoded further
+      per `AGENTS.md` §13.6's zero-creativity rule — genuinely open whether `libmaestro`'s own
+      channel carries a differently-shaped battery-adjacent message here, or something unrelated
+      that happens to repeat the value `100`.
 
 ### Behavior
 

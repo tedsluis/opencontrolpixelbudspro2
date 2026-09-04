@@ -1031,5 +1031,48 @@ motivated this).
   remain open research items (`PROTOCOL.md` §6, `TODO.md`) and should be resolved before EQ ships a
   "Save as preset"-style UI affordance that specifically depends on field 18's exact semantics.
 
+## ADR-021 — "Get ANC state" (`0x11`) opcode identity confirmed on the wire for the first time (DLCI 0x04); trigger-reliability explicitly NOT promoted
+
+- **Date**: 2026-09-04
+- **Status**: Accepted
+- **Context**: `PROTOCOL.md` §4.1 has documented Message Group `0x08` Code `0x11` ("Get ANC
+  state", Seeker→Provider) since the group was resolved from the official Fast Pair Hearable
+  Controls spec (2026-08-12) — but no capture had ever observed a `0x11` frame on the wire; only
+  `0x12` (Set) and `0x13` (Notify) had been seen (`CAP-001-FINDINGS.md` §5).
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AC / `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` `OBS-004` was
+  designed specifically to isolate whether the official app ever issues this (or any) settings-state
+  query, on two candidate triggers: reconnection and settings-screen-open. `CAP-036` (2026-09-04)
+  ran that isolation and, in a clean reconnect window, found `08 11 00 00` (Sent, DLCI 0x04, frame
+  1169) fired 34ms after the channel opens, answered ~10.7ms later by `08 13 00 04 01 e8 00 20`
+  (Rcvd, frame 1182 — decodes to current ANC state = Off), which matched the on-screen ANC state
+  confirmed later in the same session. The maintainer reviewed this finding directly (session of
+  2026-09-04) and explicitly approved promoting the opcode's identity to FACT, while declining to
+  promote the broader trigger-reliability claim from a single sample.
+- **Finding being promoted**: `PROTOCOL.md` §4.1's `Get ANC state` (`0x11`) opcode — its exact
+  Group/Code values, its zero-length/no-payload structure, its Seeker→Provider direction, and that
+  it is real, observed wire traffic (not merely a documented-but-theoretical spec entry) — is now
+  🟢 **FACT**, on the strength of an exact structural match to the official spec plus an internal
+  content cross-check within the same capture (the Notify response's decoded value matching
+  on-screen ground truth) — the same evidentiary pattern already used for `0x12`'s promotion
+  (`PROTOCOL.md` §4.1, this document's earlier ADRs).
+- **What this ADR explicitly does NOT promote:** whether this query reliably fires on *every*
+  reconnection (this is a single sample from one session — `CAP-036` ran exactly one reconnect).
+  This trigger-reliability claim remains 🟡 HYPOTHESIS pending replication in a second, independent
+  capture. Also not promoted: `CAP-036`'s clean-negative finding that no query of any kind occurs
+  on settings-screen-open (five clean windows, one session) — that stays 🟡 HYPOTHESIS for the same
+  reason. Also not resolved: the `Settable toggles` byte in `CAP-036`'s Notify frame reads `0x00`,
+  differing from every previously-documented Set frame's `0xe8` in the same position — left as an
+  open question (`PROTOCOL.md` §6), not reconciled or promoted by this ADR.
+- **Decision**: `PROTOCOL.md` §4.1's "Get ANC state" (`0x11`) opcode entry is promoted to 🟢 FACT
+  for its identity/structure as described above. The trigger-reliability and settings-screen-open
+  negative-result claims from the same capture remain 🟡 HYPOTHESIS, unaffected by this ADR.
+- **Consequences**: a future `FrameEncoder`/`FrameDecoder` implementation of the ANC read path (if
+  and when this project's own app wants to issue an equivalent read-on-reconnect query per
+  `ARCHITECTURE.md` §3.1) can now target a confirmed opcode rather than a spec-only placeholder.
+  Implementation should not yet assume the query is guaranteed to appear on every reconnect in the
+  wild (the reliability question is still open) — a second capture reproducing this pair is a
+  recommended, low-cost next step (`CAP-036-FINDINGS.md` §11's replication proposal) before treating
+  the trigger itself as dependable.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
