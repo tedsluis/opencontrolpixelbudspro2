@@ -86,7 +86,7 @@ step 4's `btsnooz.py` fallback, which is what produced the truncation in `CAP-01
 negative result ("no query frame found") is one of the two outcomes this capture is designed to
 produce, and a truncated log can manufacture that negative artificially by clipping exactly the
 short frames being looked for. Record which extraction path was actually used:
-`___` (raw step-3 path / `btsnooz.py` step-4 fallback).
+`./FS/data/misc/bluetooth/logs/btsnoop_hci.log` (raw step-3 path / `btsnooz.py` step-4 fallback).
 
 ## Preparation checklist (before recording)
 
@@ -94,7 +94,7 @@ short frames being looked for. Record which extraction path was actually used:
       re-pair — window 1 is a *reconnect* (`PAIR-003`), not a fresh pairing handshake, whose
       traffic burst would swamp the isolation this session needs.
 - [x] Official Pixel Buds Companion App installed and working; record its version if visible on
-      screen: `___`
+      screen: `1.0.955078535`
 - [x] Google Play Services **enabled** (the normal baseline — verify, don't assume):
       ```
       $ adb shell dumpsys package com.google.android.gms | grep -i enabled
@@ -386,9 +386,7 @@ event/boundary. Leave `___` where a value isn't known yet rather than estimating
 | `06:41:16` | **Window 5 end** | User (App) | `OBS-004` | frame `___` |
 | `06:41:18` | End video recording | — | — | — |
 
-**Contamination log (required — write "none" explicitly if nothing went wrong):** any setting
-touched by accident, any unrelated app/notification interaction, any window where the idle wasn't
-actually clean. `___`
+**Contamination log:** None. Windows were clean and no sliders or toggles were accidentally manipulated.
 
 ## Decode / Analysis
 
