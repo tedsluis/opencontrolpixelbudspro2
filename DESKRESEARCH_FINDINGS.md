@@ -359,5 +359,142 @@ identified, not exclusively for the unknown/255 placeholder.
   `PROTOCOL.md` §6's `CAP-016`/`CAP-036` Settable-toggles item (cross-session strengthening note);
   `PROTOCOL.md` §4.3 Option E's Case-encoding addendum (new non-sentinel sample, `CAP-007`).
 
+### 2026-09-04 (round 2) — Bonus battery/firmware cross-check, six more captures: a major "Get ANC state" replication, and the Settable-toggles hypothesis sharpened
+
+- **Trigger:** continuing the same maintainer-requested bonus-analysis line as the entry above.
+  Six more captures selected for offering a still-untested angle: `CAP-035` (Option C on
+  GrapheneOS specifically — the prior GrapheneOS session, `CAP-035` itself, never checked HFP),
+  `CAP-027` (active A2DP/AVRCP media streaming — every prior sample was an idle session),
+  `CAP-008` (a phone call — Device Info/cross-channel-sync not yet checked there),
+  `CAP-019`–`CAP-025` (seven settings-toggle sessions, each with its own independent RFCOMM
+  connection — never checked for `PROTOCOL.md` §4.1's "Get ANC state" opcode), `CAP-006` (a clean
+  ANC repeat with 3 separate DLCI 0x04 channel (re)opens in one log), `CAP-010` (a fresh-pairing
+  repeat). All 12 logs pre-verified untruncated.
+
+#### Result 1 — `CAP-035`: Option C (HFP) confirmed on GrapheneOS specifically
+
+```
+$ tshark -r CAP-035-btsnoop_hci.log -Y "btrfcomm.len>0" -T fields -e frame.number -e frame.time \
+    -e btrfcomm.dlci -e _ws.col.Info | grep -iE "BIEV=2"
+1230  06:52:37.670  0x0c  Rcvd AT+BIEV=2,100   (fresh connect)
+1309  06:53:35.936  0x0c  Rcvd AT+BIEV=2,100
+1744  06:56:00.419  0x0c  Rcvd AT+BIEV=2,100   (reconnect)
+```
+`AT+BIEV=2,100` fires normally on **both** connection events in this session — GMS present but
+`dumpsys`-verified disabled, no official app, no nRF Connect, on Pixel 9a/GrapheneOS
+(`CAP-035-FINDINGS.md`'s own precondition). DLCI 0x08's battery triple (`100/100/100`) and Model
+ID (`da2db1`) also reproduce unchanged. **Result: Option C is confirmed working on GrapheneOS
+itself** — this project's actual target platform — not just on stock Android
+(`CAP-004`/`CAP-033`, prior entry). Extends the GMS/app-independence result to a second OS.
+
+#### Result 2 — `CAP-027`: the "near-lockstep" cross-channel sync does NOT always hold during active audio use
+
+```
+$ tshark -r CAP-027-btsnoop_hci.log -Y "btrfcomm.len>0" -T fields -e frame.number -e frame.time \
+    -e btrfcomm.dlci -e _ws.col.Info | grep -iE "BIEV=2"
+618   15:45:16.947  Rcvd AT+BIEV=2,100
+1760  15:45:42.816  Rcvd AT+BIEV=2,100   (Δ25.9s)
+3323  15:50:08.188  Rcvd AT+BIEV=2,100   (Δ4m25.4s — largest gap seen outside CAP-009's own idle session)
+3438  15:51:28.341  Rcvd AT+BIEV=2,100   (Δ80.2s)
+3457  15:51:38.499  Rcvd AT+BIEV=2,100   (Δ10.2s)
+
+$ tshark -r CAP-027-btsnoop_hci.log -Y "btrfcomm.dlci==8 and btrfcomm.len>0" -T fields \
+    -e frame.number -e frame.time -e data.data | grep "^0e01"
+839   15:45:17.554  0e0100230a210a03616c6c121a0a060864100118010a060864100118020a040822180318012001
+1750  15:45:42.711  (same content)
+2935  15:48:24.913  (same content, no AT+BIEV counterpart within ±30s — checked directly, zero DLCI 0x0c frames 15:48:20–55)
+3060  15:48:46.669  (variant, longer form)
+3096  15:48:52.377  (same content, no AT+BIEV counterpart)
+3319  15:50:08.179  0e0100230a210a03616c6c121a0a060864100118010a060864100118020a040822180318012001
+3430  15:51:28.320  (same content)
+3450  15:51:38.401  (same content)
+```
+DLCI 0x08's battery-triple push fires **3 extra times** (15:48:24/46/52) with **no accompanying
+HFP `AT+BIEV` push nearby** — this session has AVRCP/A2DP traffic actively flowing throughout
+(the touch-gesture test's own procedure, `TOUCH-002`–`TOUCH-006` riding AVRCP per
+`CAP-027-FINDINGS.md`). 🟡 **HYPOTHESIS, new, single session:** the previously-documented
+"near-lockstep" synchronization between Option C and Option E (`CAP-009`, extended to DLCI 0x02 in
+`CAP-036-FINDINGS.md` §12.5) is **not universal** — it may specifically hold during idle/settled
+sessions and break down (or simply run at a different, independent cadence) during active audio
+streaming. Not confirmed as caused by the streaming itself — correlation only, one session.
+
+#### Result 3 — `CAP-008`: Device Info + a cross-mechanism confirmation of the already-known Left 98%→97% transition
+
+```
+$ tshark -r CAP-008-btsnoop_hci.log -Y "btrfcomm.dlci==8 and btrfcomm.len>0" -T fields \
+    -e frame.number -e frame.time -e data.data | grep "^0e01"
+1111  09:38:51.281  0e0100230a210a03616c6c121a0a060862100118010a060864100118020a04082b180310012001
+3451  09:43:13.003  0e0100230a210a03616c6c121a0a060861100118010a060864100118020a04082b180310012001
+```
+Decodes to Left `0x62`=98→`0x61`=97, Right constant `0x64`=100, Case constant `0x2b`=43 —
+**independently reproduces**, via a completely different mechanism (DLCI 0x08 Option E), the same
+98%→97% Left-earbud transition `CAP-008-FINDINGS.md` already established via HFP `AT+BIEV`. Both
+mechanisms agree, cross-confirming each other within one session. HFP battery pushes continue at a
+normal, undisrupted cadence through both SCO/eSCO call windows (09:39:19–?, 09:40:23–?) — the call
+itself does not interrupt Option C.
+
+#### Result 4 — `CAP-019`–`CAP-025`: **major replication of `PROTOCOL.md` §4.1's "Get ANC state" query — 12 occurrences, zero misses**
+
+```
+$ tshark -r <CAP-0NN>-btsnoop_hci.log -Y "btrfcomm.dlci==4 and btrfcomm.len>0" -T fields \
+    -e frame.number -e frame.time -e frame.p2p_dir -e data.data | grep "^08110000\|^0813"
+```
+Every one of these 7 independently-logged sessions has its **own fresh HCI `Connection Complete`**
+(`bthci_evt.code==0x03`, one per file) — and **every one shows `08 11 00 00` (Get) fired
+immediately after DLCI 0x04 opens, answered ~10–60ms later by `08 13`**:
+
+| Capture | `Get` occurrences | Settable-toggles byte(s) |
+|---|---|---|
+| `CAP-019` | 1 (07:35:58.54) | `0xe8` |
+| `CAP-020` | 1 (07:46:19.93) | `0xe8` |
+| `CAP-021` | 1 (07:59:41.90) | `0xe8` |
+| `CAP-022` | 1 (08:15:27.98) | `0xe8` |
+| `CAP-023` | 1 (08:23:45.85) | `0xe8` |
+| `CAP-024` | 1 (08:31:36.58) | `0xe8` |
+| `CAP-025` | 5 (08:40:58.04, 08:41:21.74, 08:43:42.55, 08:44:25.23, 08:45:04.58) | `0xe8` (all 5) |
+
+`CAP-025`'s 5 occurrences are the standout: this single session shows the classic ACL connection
+**never disconnects** (one `Connection Complete`, no `Disconnection Complete` for that handle) yet
+DLCI 0x04 itself bounces (`DISC`→`SABM`→`UA`) several times — **the query fires again every time
+the channel reopens with real payload following, even without a fresh ACL connection.** Several
+DLCI 0x04 bounces in this same log (e.g. frames 1484, 1570, 1683) are bare `SABM`→`UA`→`DISC`
+cycles carrying **zero payload** at all — these do **not** trigger a new `Get` — narrowing the
+trigger precisely: **it fires on every DLCI 0x04 (re)establishment that proceeds to carry real
+Message Stream traffic, not on a bare channel-level bounce with no payload, and not necessarily
+tied to the underlying classic ACL link itself reconnecting.**
+
+`CAP-006` (a clean, single-tap-per-window ANC repeat, previously never checked for this opcode)
+adds **3 more occurrences in one log**, at 17:23:54.37 (`Settable=0xe8`, right after the session's
+one and only classic `Connection Complete`), 17:25:02.03 (`Settable=0xe8`, after a DLCI-0x04-only
+bounce mid-session, no ACL reconnect), and 17:26:55.06 (`Settable=0x00`, near the very end of the
+session, again after a DLCI-0x04-only bounce). `CAP-010` (a fresh system-Settings forget-and-repair
+repeat) adds **2 more**, both `Settable=0x00` (11:43:46.98, 11:47:04.15).
+
+**Combined tally across this document's two entries + `CAP-036-FINDINGS.md` §3: 17 occurrences
+across 10 independent capture files (`CAP-006` ×3, `CAP-010` ×2, `CAP-016` ×1 [prior entry],
+`CAP-019`–`CAP-024` ×1 each, `CAP-025` ×5, `CAP-036` ×1), zero misses against the "opens with real
+payload" criterion.** This is a materially stronger replication base than several of this
+project's own existing FACT promotions required (e.g. `ADR-009`'s ANC-Set opcode: 4 samples in one
+capture; `ADR-014`'s Option E: 4 independent sessions before FACT).
+
+**Settable-toggles byte, sharpened not contradicted:** of the 17 occurrences, **12 show
+`Settable=0xe8`** (`CAP-006`'s first, all 7 of `CAP-019`–`CAP-025`) and **5 show `Settable=0x00`**
+(`CAP-016`, `CAP-036`, `CAP-006`'s last, both of `CAP-010`'s). Every `0x00` sample sits at a moment
+plausibly close to the Buds being in or near the case (`CAP-016`: "both buds still docked";
+`CAP-036`: buds sitting in the open case the whole session, never worn; `CAP-006`'s last: end of
+an ANC-tap test session; `CAP-010`: a fresh-pairing repeat, buds freshly taken from the case to
+re-pair). Every `0xe8` sample sits in a session where the buds are actively in use throughout
+(`CAP-019`–`CAP-025`'s settings-toggle tests; `CAP-006`'s first, mid-ANC-test). **Revises
+`CAP-036-FINDINGS.md` §3/§11 and the previous entry's own over-generalization** ("this is a
+connect-time pattern") — it is not connect-time as such; 12 of 17 connect/reopen-time samples show
+`0xe8`. The sharper reading: `Settable=0x00` correlates with the Buds being physically in/near the
+case, independent of whether DLCI 0x04 just (re)opened.
+
+- **Promoted to:** `PROTOCOL.md` §4.1 (`Get ANC state` trigger-reliability — **promoted to 🟢 FACT,
+  maintainer sign-off obtained 2026-09-04, `DECISIONS.md` ADR-022**); `PROTOCOL.md` §6's
+  Settable-toggles item (corrected reading, in/near-case not connect-time);
+  `PROTOCOL.md` §4.3 (Option A GrapheneOS confirmation, Option E cross-mechanism note, cross-sync
+  caveat).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

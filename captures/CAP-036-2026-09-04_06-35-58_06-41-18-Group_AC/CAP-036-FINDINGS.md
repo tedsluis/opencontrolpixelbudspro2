@@ -4,9 +4,18 @@
 opcode's *identity* (Group/Code values, direction, zero-length structure, real-observed-on-wire
 status) is promoted to 🟢 FACT in `PROTOCOL.md` §4.1, recorded in `DECISIONS.md` ADR-021. The
 broader *trigger-reliability* claim ("fires on every reconnect") and the settings-screen-open
-clean-negative result remain 🟡 HYPOTHESIS — the maintainer explicitly declined to promote those
-from a single sample. §10 lists every downstream update applied this session (`PROTOCOL.md` §4.1/
-§6, `DECISIONS.md` ADR-021, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, Capture Index, `id_registry.csv`).
+clean-negative result remained 🟡 HYPOTHESIS at the time of this session — the maintainer
+explicitly declined to promote those from a single sample. §10 lists every downstream update
+applied this session (`PROTOCOL.md` §4.1/§6, `DECISIONS.md` ADR-021, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`,
+Capture Index, `id_registry.csv`).
+
+**Update, same day (`DESKRESEARCH_FINDINGS.md`'s two-round bonus cross-check):** the
+trigger-reliability claim has since been independently replicated 17 times across 10 capture
+files (`CAP-006`, `CAP-010`, `CAP-016`, `CAP-019`–`CAP-025`, this session) with zero misses against
+a precisely-scoped condition, and **promoted to 🟢 FACT, `DECISIONS.md` ADR-022** — see that ADR
+and `DESKRESEARCH_FINDINGS.md`'s 2026-09-04 "round 2" entry for the full replication evidence. The
+settings-screen-open negative result (this session's own primary finding) is unaffected and
+remains 🟡 HYPOTHESIS.
 
 Standardized, evidence-based extraction from `CAP-036-btsnoop_hci.log` +
 `CAP-036-recording.mp4`, staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md`

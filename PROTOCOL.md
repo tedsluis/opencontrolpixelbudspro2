@@ -510,20 +510,36 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   own "Active" UI confirmation renders — and answered ~10.7ms later by frame 1182 (`08 13 00 04
   01 e8 00 20`, Rcvd — Notify, current state=`0x20`=Off), matching the on-screen ANC state
   confirmed later in the same session (an internal content cross-check, on the same pattern as
-  `0x12`'s own promotion above). **Scope of this promotion, narrower than it might look:** only the
-  *opcode's identity and existence on the wire* is FACT (Group/Code values, direction, zero-length
-  structure, and that the Notify response's decoded value matches on-screen ground truth). **Not
-  promoted — remains 🟡 HYPOTHESIS pending replication:** whether this query reliably fires on
-  *every* reconnect (n=1, one session, one sample) — a second independent capture reproducing the
-  same query/response pair on a fresh reconnect would be needed before that broader trigger-reliability
-  claim can be promoted. Directly relevant to `ARCHITECTURE.md` §3.1 (State Reconciliation) —
-  confirms the official app performs a comparable read-on-reconnect for ANC state specifically, at
-  least once. The same session found **no** query of any kind (this opcode or otherwise) when a
+  `0x12`'s own promotion above).
+- **Trigger-reliability 🟢 FACT, promoted 2026-09-04 (maintainer sign-off, `DECISIONS.md`
+  ADR-022):** the `08 11`/`08 13` query/response pair, initially a single `CAP-036` sample, has
+  since been found in **17 occurrences across 10 independent capture files** (`CAP-006` ×3,
+  `CAP-010` ×2, `CAP-016` ×1, `CAP-019`–`CAP-024` ×1 each, `CAP-025` ×5, `CAP-036` ×1), with
+  **zero misses** against a precisely-narrowed trigger condition: it fires every time DLCI 0x04
+  (re)establishes **and** proceeds to carry real Message Stream payload — including channel-level
+  bounces that don't involve the underlying classic ACL link reconnecting at all (`CAP-006`,
+  `CAP-025` each show this within a single continuous ACL connection). Bare `SABM`→`UA`→`DISC`
+  channel bounces carrying **zero** payload do **not** trigger it (`CAP-025`, 3 such bounces,
+  confirmed via full DLCI 0x04 frame-type listing). This replication base exceeds the sample size
+  behind several of this project's own existing FACT promotions (e.g. `ADR-009`'s 4-sample ANC-Set
+  opcode, `ADR-014`'s 4-independent-session Option E). **Precisely scoped claim, promoted:** "DLCI
+  0x04's `Get ANC state` (`0x11`) fires whenever the channel (re)establishes and carries real
+  Message Stream payload, independent of whether the underlying classic link itself reconnects."
+- **Settable-toggles byte, corrected reading (not a discrepancy) — 🟡 HYPOTHESIS, `DESKRESEARCH_FINDINGS.md`
+  2026-09-04:** of the 17 `Notify` samples above, 12 show `Settable=0xe8` and 5 show
+  `Settable=0x00` — **not a connect-time-vs-settled split** (both values appear at
+  channel-(re)open moments) but plausibly a **Buds-in/near-case-vs-actively-worn** split: every
+  `0x00` sample sits in a session where the Buds are in or near the case at that moment
+  (`CAP-016`, `CAP-036`, `CAP-006`'s last sample, both of `CAP-010`'s); every `0xe8` sample sits in
+  a session where the Buds are actively worn/in use (`CAP-019`–`CAP-025`, `CAP-006`'s first
+  sample). Supersedes this section's own earlier, narrower "connect-time" framing of the same
+  observation. Directly relevant to `ARCHITECTURE.md` §3.1 (State Reconciliation) —
+  confirms the official app performs a comparable read-on-reconnect for ANC state specifically.
+  The same `CAP-036` session found **no** query of any kind (this opcode or otherwise) when a
   settings screen is opened with nothing touched, across five clean windows (EQ, Controls and
-  gestures, Touch controls, More settings, Multipoint) — that negative result likewise stays 🟡
-  HYPOTHESIS (single session), not promoted by this ADR. See `CAP-036-FINDINGS.md` §3–§7 for the
-  full decode, and an unreconciled discrepancy this same frame raises (`CAP-036-FINDINGS.md` §3, §6
-  below).
+  gestures, Touch controls, More settings, Multipoint) — that negative result stays 🟡 HYPOTHESIS
+  (one session), not affected by the trigger-reliability proposal above (a different sub-question —
+  screen-open vs. channel-(re)establishment). See `CAP-036-FINDINGS.md` §3–§7 for the full decode.
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -849,6 +865,17 @@ event-observation coroutines.
   **force-stopped** for the entire session while GMS is untouched (`CAP-033`) — HFP battery
   reporting is OS/Bluetooth-stack-level, not GMS- or app-driven. Extends `CAP-035-FINDINGS.md`'s
   existing GMS-independence result (which only checked DLCI 0x08/0x0a/0x06/0x12) to Option C.
+  **Confirmed a second OS, 🟢 FACT (`DESKRESEARCH_FINDINGS.md` 2026-09-04, round 2):** the same
+  `AT+BIEV=2,100` behavior reproduces on **Pixel 9a/GrapheneOS** itself (`CAP-035`, GMS present but
+  `dumpsys`-verified disabled, no official app, no nRF Connect) — Option C works on this project's
+  actual target platform, not only on stock Android.
+- **Cross-channel synchronization caveat, 🟡 HYPOTHESIS, new (`DESKRESEARCH_FINDINGS.md` 2026-09-04,
+  round 2, `CAP-027`):** the "near-lockstep" timing between Option C and Option E (documented
+  above, extended to DLCI 0x02 in `CAP-036-FINDINGS.md` §12.5) is **not universal** — during an
+  active-media-streaming session (AVRCP/A2DP traffic flowing throughout), DLCI 0x08's battery-triple
+  push fired 3 times with no accompanying HFP push nearby (checked directly, zero DLCI 0x0c frames
+  in a ±30s window around each). One session, correlation only — not confirmed as caused by active
+  streaming specifically.
 
 #### Option D — BLE Battery Service (`0x180F`, Battery Level characteristic `0x2A19`)
 
@@ -1767,18 +1794,24 @@ leaving them buried in prose elsewhere.
       7e 25...`). Not decoded further — whether it carries any settings-state read-back via
       `libmaestro`'s own channel (as opposed to the DLCI 0x04 "Get ANC state" mechanism confirmed
       the same session, §4.1) is unresolved.
-- [ ] **Added 2026-09-04, `CAP-036-FINDINGS.md` §3; strengthened same day by
-      `DESKRESEARCH_FINDINGS.md`'s cross-check:** the "Notify ANC state" frame observed in
-      `CAP-036` (`08 13 00 04 01 e8 00 20`, Settable=`0x00`) fires as the very first Notify right
-      after a fresh RFCOMM connection — structurally the same situation as `CAP-016-FINDINGS.md`
-      §4's own frame 1521 (`08 13 00 04 01 e8 00 20`, byte-identical), which that capture's own
-      🟡 HYPOTHESIS already reads as "the Buds have not yet reported which ANC modes are currently
-      selectable," specifically observed right after connect. **Two independent sessions now show
-      the same connect-time `Settable=0x00` pattern** — this "discrepancy" against `CAP-001`'s
-      `0xe8` samples (all taken well after connection had settled) looks increasingly like an
-      instance of `CAP-016`'s already-documented pattern rather than a new, separate anomaly. Still
-      🟡 HYPOTHESIS (2 sessions, not maintainer-reviewed for promotion) — not reconciled at FACT
-      strength.
+- [ ] **Added 2026-09-04, `CAP-036-FINDINGS.md` §3; corrected same day by
+      `DESKRESEARCH_FINDINGS.md`'s two-round cross-check across 10 capture files:** `CAP-036`'s
+      "Notify ANC state" frame (`08 13 00 04 01 e8 00 20`, Settable=`0x00`) is one of **5** samples
+      showing `Settable=0x00`, against **12** samples showing `Settable=0xe8`, across every
+      `Get`/`Notify` pair found in this project's logs to date (`CAP-006`, `CAP-010`, `CAP-016`,
+      `CAP-019`–`CAP-025`, `CAP-036`). **A first pass over 2 sessions (`CAP-016`, `CAP-036`)
+      mis-read this as a connect-time pattern — corrected once 8 more sessions were checked:** 12
+      of the 17 samples are ALSO taken at a DLCI-0x04-open/reopen moment but show `0xe8`, not
+      `0x00` — so "fires right after the channel opens" does not, on its own, predict which value
+      appears. **Sharper reading, still 🟡 HYPOTHESIS:** every `0x00` sample sits at a session (or
+      moment within one) where the Buds are plausibly in or near the case — `CAP-016`'s own frame
+      1521 ("both buds still docked"), `CAP-036` (buds sitting in the open case the entire
+      session, never worn), `CAP-006`'s *last* sample (end of an ANC-tap test session), both of
+      `CAP-010`'s samples (a fresh-pairing repeat, buds just taken from the case). Every `0xe8`
+      sample sits in a session where the Buds are actively worn/in use throughout
+      (`CAP-019`–`CAP-025`, `CAP-006`'s *first* sample). Not maintainer-reviewed for promotion —
+      recorded as the current best reading, superseding the narrower "connect-time" framing this
+      item originally carried.
 - [ ] **Added 2026-09-04, `CAP-036-FINDINGS.md` §12.6 (bonus battery/firmware analysis):** DLCI
       0x02's periodic push (§4.3 Option E's timing-correlation entry) decodes, HDLC-unescaped and
       CRC-32-verified, to a repeated triple pattern (`0a 04 08 64 10 01`, `12 04 08 64 10 01`,

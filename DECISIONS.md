@@ -1074,5 +1074,45 @@ motivated this).
   recommended, low-cost next step (`CAP-036-FINDINGS.md` §11's replication proposal) before treating
   the trigger itself as dependable.
 
+## ADR-022 — "Get ANC state" (`0x11`) trigger-reliability promoted to FACT: 17 occurrences across 10 independent captures, zero misses
+
+- **Date**: 2026-09-04
+- **Status**: Accepted
+- **Context**: `ADR-021` promoted this opcode's *identity* to FACT from a single `CAP-036` sample,
+  while explicitly declining to promote whether it reliably fires on every reconnect — that
+  required more evidence than one session could provide. The maintainer subsequently asked for a
+  bonus battery/firmware analysis pass across other existing captures (two rounds,
+  `DESKRESEARCH_FINDINGS.md`'s 2026-09-04 entries); the second round specifically targeted seven
+  settings-toggle sessions (`CAP-019`–`CAP-025`) that had never been checked for this opcode, plus
+  `CAP-006` and `CAP-010`.
+- **Finding being promoted**: across `CAP-006` (×3), `CAP-010` (×2), `CAP-016` (×1, from the first
+  bonus round), `CAP-019`–`CAP-024` (×1 each), `CAP-025` (×5), and `CAP-036` (×1) — **17 total
+  occurrences across 10 independent capture files** — `08 11 00 00` (Sent, DLCI 0x04) fires and is
+  answered by `08 13` (Rcvd) within tens of milliseconds, **every single time**, under a precisely
+  identified trigger condition: DLCI 0x04 (re)establishes (`SABM`→`UA`) **and** subsequently carries
+  real Message Stream payload. This holds even when the underlying classic ACL link does **not**
+  itself disconnect/reconnect — `CAP-006` and `CAP-025` each show the query re-firing on a
+  DLCI-0x04-only channel bounce within one continuous ACL connection (`CAP-025` shows this 5 times
+  in one log, confirmed via its own single, unbroken HCI `Connection Complete`). The negative
+  control also holds: `CAP-025` additionally contains 3 bare `SABM`→`UA`→`DISC` channel bounces
+  carrying **zero** payload, and **none** of those trigger a new `Get` — the trigger condition is
+  precise, not "any DLCI 0x04 activity."
+- **Evidentiary bar met**: 17 occurrences / 10 independent sessions / zero misses against a
+  precisely-scoped condition exceeds the sample size this project has previously required for FACT
+  (`ADR-009`: 4 samples in one capture; `ADR-014`: 4 independent sessions).
+- **What this ADR does NOT promote:** the Settable-toggles byte's own meaning (still 🟡 HYPOTHESIS,
+  `PROTOCOL.md` §4.1 — now read as tracking whether the Buds are in/near the case rather than
+  connect-timing, per the same bonus analysis, but not maintainer-reviewed for promotion);
+  `CAP-036`'s settings-screen-open clean-negative result (a different sub-question, unaffected);
+  any claim about *why* the query fires on this trigger (mechanism/purpose not investigated).
+- **Decision**: `PROTOCOL.md` §4.1's "Get ANC state" (`0x11`) trigger-reliability claim — "fires
+  whenever DLCI 0x04 (re)establishes and carries real Message Stream payload, independent of
+  whether the underlying classic link itself reconnects" — is promoted to 🟢 FACT.
+- **Consequences**: this project's own `ARCHITECTURE.md` §3.1 (State Reconciliation) design — query
+  hardware state on every (re)connection before trusting a cached value — is now confirmed to
+  match a real, reliably-observed behavior of the official app for ANC specifically, not merely a
+  single-session anecdote. A `FrameEncoder`/`FrameDecoder` implementing this specific read (if
+  pursued) can rely on the trigger condition described above.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
