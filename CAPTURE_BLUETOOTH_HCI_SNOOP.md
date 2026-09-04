@@ -872,6 +872,132 @@ Group S/Y/AA):**
   DLCI 0x0a burst) — first data point on whether these depend on GMS presence; record whatever is
   found, don't force an interpretation beyond what the bytes show.
 
+#### Group AC — Settings-state read-back on (re)connect and on settings-screen open (occasional, added 2026-09-04)
+
+**Purpose:** `ARCHITECTURE.md` §3.1 (State Reconciliation) requires this project's own app to query
+the hardware's actual current state on **every** (re)connection — ANC mode, battery, EQ,
+touch-control config — before trusting or displaying any locally cached value. Whether the
+*official* app does the same thing, and over which channel, has never been isolated. What the
+evidence looks like today:
+
+- **DLCI 0x04 (Fast Pair Message Stream):** a read direction is *documented* for ANC — Group `0x08`
+  Code `0x11` "Get ANC state", Seeker → Provider (`PROTOCOL.md` §4.1's own table, straight from the
+  official Hearable Controls extension). But this project has never observed a `0x11` frame in any
+  capture: only `0x12` (Set) and `0x13` (Notify) appear on the wire (`CAP-001-FINDINGS.md` §5).
+  Documented-but-never-observed is not the same as absent — nobody has looked for it in a window
+  where it would be expected to fire.
+- **DLCI 0x02 (`libmaestro`'s Pigweed HDLC channel):** no read direction is documented *at all*.
+  Every entry in `PROTOCOL.md` §4.2 (EQ) and §4.5 (Conversation Detection, Multipoint, touch &
+  press-and-hold, head gestures, in-ear detection, mono audio, Volume EQ, volume balance, case
+  sounds) is evidenced exclusively by a **write**: a UI tap producing a `Sent` frame, whose only
+  observed response is an `Rcvd`-direction echo of the same field/prefix shape — "no distinct ACK
+  opcode observed," in §4.5.1's own wording, repeated verbatim across the §4.5 subsections. Not one
+  of those entries rests on a frame that reads as "give me the current value."
+
+So the question this Group exists to answer is genuinely open, and deliberately narrow: **does the
+official app ever issue a state *query* — as opposed to a state *write* — and if so, on what
+trigger?** The two candidate triggers this Group brackets are the two that matter for
+`ARCHITECTURE.md` §3.1's design: connection establishment, and opening a settings screen.
+
+**Runs on the Pixel 7a with the official Pixel Buds companion app and Google Play Services enabled
+— the normal baseline, deliberately.** This is the *opposite* setup from Groups S/AB, which strip
+GMS and the app away to isolate what the Buds do on their own. Here the official app's own behavior
+*is* the object of study, so it must be present, connected, and behaving normally.
+
+**Test-ID:** `OBS-004` (new — added to `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` and `id_registry.csv`
+alongside this Group). Deliberately distinct from `OBS-001` (app *launch* after a force-close,
+Group L) and `FW-002` (the firmware/serial *info* screen, Group I) — see that row's Note for why
+neither covers this.
+
+**A clean negative is a real result here, not a failed session.** If the log shows no query traffic
+anywhere in the three windows below, that is citable evidence that the official app does **not**
+read settings state back before a user change — which is itself directly load-bearing for
+`ARCHITECTURE.md` §3.1 (this project would then be doing something the official app doesn't, and
+needs to justify how). This project already has precedent for treating a clean negative as real
+evidence rather than an empty result: `DESKRESEARCH_FINDINGS.md`'s 2026-08-28 cross-capture pass
+records "the best available negative-result test for this question … and it comes back clean" as a
+finding in its own right, with the same FACT/HYPOTHESIS labelling discipline as any positive one.
+Same discipline applies here — record the absence explicitly, with the filters that were run and
+the windows they covered, per `PROJECT_RULES.md` §1 rule 4a.
+
+**Procedure — three isolated observation windows. No setting is touched at any point in this
+session.** Not a slider, not a toggle, not an ANC mode, not a preset — the entire value of this
+capture depends on every frame in it being app- or connection-initiated rather than user-initiated.
+If a setting is touched by accident, note it explicitly in `CAP-036-EVENT-NOTES.md` and treat the
+affected window as contaminated rather than quietly keeping it. Leave a clean few-second buffer
+before each window, per §4's usual rhythm, so the previous window's settling traffic doesn't bleed
+into the next one.
+
+1. **Reconnect — not a fresh pair** [`OBS-004`, incidental `PAIR-003`]. The Buds must already be
+   bonded to this phone; do **not** "Forget"/re-pair (a bonding handshake would flood the window
+   with pairing traffic and defeat the isolation). Trigger a reconnect the way a user normally
+   would — e.g. take the buds out of the case, or toggle the connection from system Bluetooth
+   settings. Note the exact time the connection is established on screen, then **idle ~10–15s
+   without navigating anywhere at all**, app included.
+2. **Open the EQ screen** [`OBS-004`]. Note the exact time the EQ screen finishes rendering, then
+   **idle ~15–20s without touching any slider or preset**. Do not scroll into a drag by accident —
+   the sliders are the whole risk on this screen.
+3. **Navigate away** (back out to the device details screen), leave a clean few-second buffer, then
+   **open the touch-controls screen** [`OBS-004`]. Note the exact open time, then **idle ~15–20s
+   without touching any toggle**.
+
+**Optional bonus, time permitting** — same idle-only pattern, still purely observational, still
+nothing touched: repeat window 3's shape for the **in-ear detection** and **multipoint** settings
+screens. These are cheap extra data points on whether any per-screen query exists, and they cost
+nothing but session time; skip them freely if the session is running long, and note in the event
+notes whether they were run at all.
+
+4. Stop recording and logging. Extract via the raw btsnoop path first (§3 step 3), and verify
+   snaplen integrity immediately (`capinfos` / `frame.cap_len == frame.len`) before any analysis —
+   a truncated log would silently hide exactly the short frames this Group is looking for.
+
+**Analysis:** pre-filter by the Buds' address first, per §13's CLI-hygiene rule, before layering on
+any protocol filter — a shared, non-restarted snoop log can contain unrelated devices' traffic.
+Then, per window:
+
+```
+tshark -r CAP-036-btsnoop_hci.log -Y "bluetooth.addr == 04:00:6e:cf:6e:07 and btrfcomm.dlci in {2,4,8}" \
+  -T fields -e frame.number -e frame.time -e frame.p2p_dir -e btrfcomm.dlci -e btrfcomm.len -e data.data
+```
+(DLCI values decimal: 0x02=2, 0x04=4, 0x08=8.) Specifically:
+- **DLCI 0x04:** does a `08 11 …` frame ("Get ANC state") appear anywhere — in any of the three
+  windows, or at connection setup? This is the one read-direction opcode this project knows to
+  exist by name, and has never seen.
+- **DLCI 0x02:** is there any `Sent`-direction HDLC frame inside a window where nothing was
+  touched? Split each RFCOMM payload on the `0x7e` flag byte before decoding (multiple complete
+  HDLC sub-frames routinely pack into one RFCOMM I-frame — `DESKRESEARCH_FINDINGS.md`'s 2026-08-28
+  pass documents this exact trap). Compare any such frame's shape against §4.5's known
+  `field5{field4{…}}` write envelope: a *write*-shaped frame with no user action behind it means
+  something different from an unrecognized, differently-shaped frame — say which was found.
+- **DLCI 0x08:** the private `[Group][Code][Length][Value]` envelope already pushes unsolicited
+  content (battery, capabilities, firmware string) on connect — expect traffic here in window 1 and
+  do **not** mistake a known push for a query. Attribute it against `PROTOCOL.md` §4.3 Option E
+  before reading anything new into it.
+
+**Three-way outcome, stated in advance so the result isn't read selectively (same discipline as
+Groups S/Y/AA/AB):**
+- **A query frame appears** in one or more windows — identify which channel and which trigger,
+  record it in this session's own `CAP-NNN-FINDINGS.md` with frame numbers and raw hex per
+  `PROJECT_RULES.md` §1 rule 4a, and treat the opcode itself as 🟡 HYPOTHESIS until it replicates.
+  Do **not** self-promote it to 🟢 FACT in `PROTOCOL.md`, and do **not** write a `DECISIONS.md` ADR
+  for it — both require explicit maintainer sign-off (`AGENTS.md` §6).
+- **No query traffic in any window, with clean, uncontaminated windows** — a positive finding in its
+  own right (see the negative-result note above): the official app does not read settings state back
+  before a user change, at least not on these two triggers, on this firmware. Record it as such,
+  with the exact filters run and windows covered, and copy the resulting open item into
+  `PROTOCOL.md` §6 per §8's mandatory rule.
+- **Inconclusive** — a setting was touched by accident, a window was contaminated by an unrelated
+  action, or the log came back truncated. This supports neither conclusion above; note it as
+  🔴 unconfirmed and re-run rather than reading a weak result either way.
+
+**Related open question this Group also informs (do not conflate it with the above):**
+`PROTOCOL.md` §6 Behavior carries an item from `CAP-024-FINDINGS.md` §4 — does opening the "Case
+sounds" screen itself trigger a state-sync **write** on DLCI 0x02, or does a write only register on
+an explicit tap? Windows 2 and 3 here are the same experimental shape (a settings screen opened with
+nothing touched) applied to different screens, so whatever they show is directly relevant to that
+question too — but a *write* on screen-open and a *read* on screen-open are different findings, and
+this Group's own question is the read. Keep them labelled separately in the findings.
+
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
 No app-driven commands are possible here, so this session focuses on connection-level
@@ -1247,6 +1373,7 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-033` | 2026-08-30 | Pixel 7a | TBD | release_5.203 (🟢 confirmed on-wire) | n/a — app force-stopped throughout the entire recorded session | AA | `SDP-001`, `SDP-002`(not attempted — no update pending) | SDP UUID branch isolation for `gbm.a()`'s "default internal rfcomm socket" path — system-settings-only pairing (app force-stopped) to check whether the pre-app-fetch SDP UUID set ever differs from every existing capture's "pigweed"-only result (`REVERSE_ENGINEERING.md`'s `gbm`/`fzd` entries, `DECISIONS.md` ADR-018) | `captures/CAP-033-2026-08-30_15-17-03_15-19-52-Group_AA/CAP-033-btsnoop_hci.log` | same file | analyzed, **isolation not fully clean — see `CAP-033-FINDINGS.md` §1** ("Forget" preceded Force-stop by ~10s, reverse of procedure, though scoped away from the actual SDP-browse window; Step 3's app-open baseline was never executed at all, on- or off-camera). `SDP-001` result capped at 🟡 HYPOTHESIS: "default" UUID still zero occurrences (raw byte scan, both byte orders), "pigweed" UUID confirmed present and named **"MAESTRO APP"** on-the-wire (SDP service-name string, frame 1279) — first wire-level (not just APK-code) corroboration of `DECISIONS.md` ADR-018's channel identity. **Bonus structural finding:** the same SDP response names DLCI 0x08 as **"GSND CONTROL"** and DLCI 0x0a as **"GSND AUDIO"** — new, previously-undocumented leads for `PROTOCOL.md` §2.3's open DLCI-0x08 identity question and `CAP-021-FINDINGS.md` §4a's unattributed DLCI-0x0a burst, proposed pending maintainer review, not promoted |
 | `CAP-034` | 2026-09-01 | Pixel 9a (GrapheneOS) — never before connected to this Buds unit | TBD | ⚪ assumed `release_5.203` (not re-confirmed — no official app used, DLCI 0x08 never opens) | nRF Connect for Mobile (Nordic Semiconductor); official Pixel Buds Companion App not installed | W (4th attempt) | `GATT-001`, incidental `PAIR-001`/`PAIR-003`/`BATT-003` | 4th Group W attempt at the `0x0c0X`/`0x0f2X` GATT handle↔UUID mapping — combines `CAP-014`'s confirmed-unlimited snaplen fix with Group W's own untried cache-busting method (`pm clear com.android.bluetooth` on a phone never before connected to this Buds unit), the first session to have both at once | `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-btsnoop_hci.log` | same file | analyzed, **✅ RESOLVED — maintainer sign-off obtained per `AGENTS.md` §6** — see `CAP-034-FINDINGS.md` in that folder. Confirmed 0/3,717 truncated frames (max 684B). The sole LE connection (chandle `0x0040`) yields one genuine, full `0x0001`–`0xffff` discovery walk (06:47:42.147–45.490) before bonding — the "reconnect" at 06:51:22 is a Database Hash cache-hit only, no second discovery pass. Resolves the full 15-primary-service GATT profile: `0x0c00`–`0x0c14` = **Google Fast Pair Service** (`0xFE2C`) with all 5 spec-defined characteristics (Model ID, Key-based Pairing, Passkey, Account Key, Additional Data) plus Message Stream PSM and one still-unnamed `FE2C1238…` characteristic; `0x0f20`–`0x0f2a` = Device Information (`0x0f28`=Serial Number String, `0x0f2a`=Firmware Revision String); `0x0f30`–`0x0f33` = Battery Service (`0x0f32`=Battery Level). Independently corroborated by nRF Connect's own on-screen UUID rendering and live-verified against the official Fast Pair spec. **Corrects** `CAP-017-FINDINGS.md` §6's hypothesis that "Unknown Service" (`109b862f-…`) might be the `0x0c0X` cluster's container — it does not; it occupies a separate range (`0x0f37`–`0x0f3e`), own purpose still unidentified. ADR-008 compliance confirmed (Accessory Non-Owner Service appears only in unavoidable discovery inventory, never read/written). See `PROTOCOL.md` §6 and §4.3 Option D for the promoted findings |
 | `CAP-035` | 2026-09-02 | Pixel 9a (GrapheneOS) | TBD | ⚪ assumed `release_5.203` (not re-confirmed — no official app used, DLCI 0x08's firmware string was never independently re-checked) | none — no Pixel Buds app, no nRF Connect, system Bluetooth settings only | AB | `GSND-001`, incidental `PAIR-001`/`PAIR-003`/`BATT-003` | GMS-independence check for DLCI 0x08 ("GSND CONTROL")/0x0a ("GSND AUDIO")/0x06 ("DEBUG APP")/0x12 ("BTIS"), per `CAP-033-FINDINGS.md` §3's negative APK-search result (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AB) | `captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-btsnoop_hci.log` | same file | analyzed, **maintainer sign-off obtained per `AGENTS.md` §6** — see `CAP-035-FINDINGS.md` in that folder. Confirmed 0/1,945 truncated frames. Two videos turned out to be sequential with only a ~7s recording-stop/restart gap (not the ~5min originally logged) — resolved directly from frame comparison, correcting the event timeline including a ~91–97s error in the original disconnect/reconnect time estimates. **GMS precondition:** `com.google.android.gms` present but `dumpsys`-verified disabled (`enabled=3` = `COMPONENT_ENABLED_STATE_DISABLED_USER`) — not genuinely absent, so this is a rigorously verified second data point for `CAP-004-FINDINGS.md` §4a's existing "GMS present but disabled" finding, not a stronger novel "GMS-absent" confirmation. **Result:** DLCI 0x08 content reproduces byte-identical twice (connect + reconnect); DLCI 0x0a opens in lockstep both times but carries zero payload; DLCI 0x06/0x12 never open at all — clean negatives for both, first time either has been specifically checked. ADR-008 compliant. Still open: a repeat with GMS genuinely uninstalled, for full closure of the OS-stack-vs-GMS question |
+| `CAP-036` | *planned* | Pixel 7a | TBD | TBD | TBD | AC | `OBS-004`, incidental `PAIR-003` | Settings-state read-back isolation — official app + GMS enabled (normal baseline, the opposite of Group S/AB), three idle-only observation windows (reconnect, EQ screen opened, touch-controls screen opened) with **no setting touched at any point**, to isolate whether the official app ever issues a state *query* (as opposed to the write-direction-only evidence in `PROTOCOL.md` §4.2/§4.5) before any user-initiated change — the requirement `ARCHITECTURE.md` §3.1 imposes on this project's own app. A clean negative is a real result here, not a failed session | — | — | planned |
 
 **Column notes:**
 

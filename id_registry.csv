@@ -54,6 +54,7 @@ CAP-032,capture,captured,"session date/status: 2026-08-27 — analyzed, PROPOSAL
 CAP-033,capture,2026-08-30,"session date/status: 2026-08-30 — Group AA, SDP UUID branch isolation (SDP-001/SDP-002), analyzed, isolation not fully clean",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-034,capture,2026-09-01,"session date/status: 2026-09-01 — Group W (4th attempt), resolved the 0x0c0X/0x0f2X GATT handle/UUID mapping and the full 15-service GATT profile, maintainer sign-off obtained",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-035,capture,2026-09-02,"session date/status: 2026-09-02 — Group AB, DLCI 0x08/0x0a/0x06/0x12 GMS-dependence check (GSND-001), maintainer sign-off obtained",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-036,capture,planned,"session date/status: *planned* — Group AC, settings-state read-back isolation (OBS-004), Pixel 7a + official app + GMS enabled",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
@@ -126,6 +127,7 @@ LOUD-001,test,catalogued,"Loud Noise Protection: automatic volume reduction on a
 ADAPT-002,test,catalogued,"Adaptive Audio: dynamic adjustment of the ANC/Transparency balance based on environment",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 FWUPD-002,test,catalogued,"Firmware installation when placed back in the case (with sufficient charge)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 OBS-003,test,catalogued,"Passive observation window covering two distinct sub-brackets used together in Group U: (1) closing the case lid while the connection stays active and both buds are elsewhere (not the normal `CASE-006` buds-back-in-case sequence), and (2) a deliberate ≥3-minute idle wait with nothing touched",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+OBS-004,test,catalogued,"Does the app query the Buds' current settings state (read direction) before any user-initiated change — on (re)connection, and/or on opening a settings screen (EQ, touch controls)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 CALL-001,test,catalogued,"Phone call during an active Buds connection (HFP SLC setup, SCO/eSCO pairing)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 PAIR-001,test,catalogued,"Pairing / bonding handshake (forget-and-re-pair baseline)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 PAIR-002,test,catalogued,"Pairing / bonding handshake from a true factory-reset state",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
