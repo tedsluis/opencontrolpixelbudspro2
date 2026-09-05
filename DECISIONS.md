@@ -1193,6 +1193,16 @@ motivated this).
   sub-question) is unaffected. The remaining 12 `0xe8` samples from `CAP-019`/`020`/`022`–`024`
   were not individually video-checked this pass (their session type — active settings-toggle
   tests — is consistent with the pattern but not each individually confirmed frame-by-frame).
+- **Update (2026-09-05, same day):** the maintainer re-pulled `CAP-006-recording.mp4` from the
+  phone; the replacement file (79.49s, opens cleanly in `ffmpeg`) covers `CAP-006`'s first two
+  `Settable` samples. Both video-confirmed: `17:23:54.37` (`Settable=0xe8`) — case open, **both
+  slots empty** at video start and throughout; `17:25:02.03` (`Settable=0xe8`) — case still empty.
+  **Now 7 of 7 video-checked samples confirm the pattern, zero counter-examples** (adds 2 to the
+  5 above). `CAP-006`'s own *third* sample (`17:26:55.06`, `Settable=0x00`) remains unverified —
+  the replacement file, like the original, ends at ~17:25:08, and the session's own log runs to
+  17:27:30, well past either video's coverage. The within-session `0xe8`→`0x00` transition this
+  ADR's "what this ADR does NOT clear" section flagged is therefore still open, independent of the
+  file corruption issue being resolved.
 - **Decision**: `PROTOCOL.md` §4.1's `Settable-toggles` byte is promoted to 🟢 FACT as a dock-state
   indicator: `0x00` when both earbuds are seated in the case, a non-zero value (`0xe8` in every
   sample seen to date) otherwise.

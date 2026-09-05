@@ -529,12 +529,16 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   (maintainer sign-off, `DECISIONS.md` ADR-024):** of the 17 `Notify` samples referenced above, 12
   show `Settable=0xe8` and 5 show `Settable=0x00` — **not a connect-time-vs-settled split** (both
   values appear at channel-(re)open moments) but a **Buds-in-the-case-vs-not-docked** split,
-  video-confirmed at 5 of 5 checked samples with zero counter-examples
-  (`DESKRESEARCH_FINDINGS.md` 2026-09-05 entry): `Settable=0x00` when both earbuds sit seated in
-  the case's charging slots (`CAP-016` frame 1521, `CAP-036`'s entire session, `CAP-010`'s
+  video-confirmed at 7 of 7 checked samples with zero counter-examples
+  (`DESKRESEARCH_FINDINGS.md` 2026-09-05 entry, updated same day once `CAP-006-recording.mp4` was
+  re-pulled from the phone to replace a corrupted copy): `Settable=0x00` when both earbuds sit
+  seated in the case's charging slots (`CAP-016` frame 1521, `CAP-036`'s entire session, `CAP-010`'s
   fresh-pairing frame — LED lit, dock confirmed on screen), `Settable=0xe8` when the case is open
-  and **empty** (`CAP-021`, `CAP-025` — both slots visually empty, buds off-frame or resting loose
-  beside the case, confirmed via cropped/zoomed frame extraction). Supersedes this section's
+  and **empty** (`CAP-021`, `CAP-025`, and now `CAP-006`'s first two samples — all slots visually
+  empty, buds off-frame or resting loose beside the case, confirmed via cropped/zoomed frame
+  extraction). `CAP-006`'s own *third* sample (`Settable=0x00`, 17:26:55) sits ~1m47s past both the
+  original and replacement video's coverage, so the one within-session `0xe8`→`0x00` transition on
+  record is still not itself video-confirmed. Supersedes this section's
   earlier, narrower "connect-time" framing of the same observation — the distinguishing factor is
   dock state, not timing. Directly relevant to `ARCHITECTURE.md` §3.1 (State Reconciliation) —
   confirms the official app performs a comparable read-on-reconnect for ANC state specifically.

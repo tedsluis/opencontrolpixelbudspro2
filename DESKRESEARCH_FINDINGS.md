@@ -531,5 +531,21 @@ case, independent of whether DLCI 0x04 just (re)opened.
 - **Promoted to:** `PROTOCOL.md` §4.1 — promoted to 🟢 FACT, maintainer sign-off obtained
   2026-09-05, `DECISIONS.md` ADR-024.
 
+**Addendum, same day — `CAP-006`'s corrupted video replaced, 2 more samples confirmed:** the
+maintainer re-pulled `CAP-006-recording.mp4` from the phone; the replacement (79.49s, 1280×720)
+opens cleanly in `ffmpeg` (`captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-EVENT-NOTES.md`'s
+video recovery note updated accordingly). This covers `CAP-006`'s first two `Settable` samples:
+
+```
+$ ffmpeg -ss 5.4 -i CAP-006-recording.mp4 -frames:v 1 t5.png   # wire time 17:23:54.37, Settable=0xe8
+$ ffmpeg -ss 73  -i CAP-006-recording.mp4 -frames:v 1 t73.png  # wire time 17:25:02.03, Settable=0xe8
+```
+Both frames show the case open with **both slots empty** (the case is already empty at video
+start, `t=0`/17:23:49, Bluetooth still off) — consistent with the pattern. **Now 7 of 7
+video-checked samples confirm it, zero counter-examples.** The replacement file, like the
+original, ends at ~17:25:08 — `CAP-006`'s own *third* sample (`Settable=0x00`, wire time
+17:26:55.06, ~1m47s past the video's end) remains unverified, so the specific within-session
+`0xe8`→`0x00` transition is still open, independent of the earlier file-corruption issue.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

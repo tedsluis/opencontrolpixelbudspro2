@@ -7,20 +7,22 @@ same folder for the standardized, evidence-graded protocol findings extracted fr
 correlation — this file is the *event timeline*, `CAP-006-FINDINGS.md` is *what it means for the
 protocol*.
 
-**Video recovery note:** `CAP-006-recording.mp4`'s `moov` atom is internally inconsistent for the
-video track (`stsc` claims 2,342 samples, `stsz` claims 2,353; the final sample offset points
-~3.8 KB past the actual end of the `mdat` box) — `ffmpeg`/`ffprobe` (8.1.2) refuse to open the file
-at all (`stream 1, contradictionary STSC and STCO`). VLC's (3.0.23) more lenient MP4 demuxer
-decodes the file up to the truncation point before disabling the video track
-(`Failed to read 6025 bytes sample at 20208791`). The video was recovered via VLC's `scene` video
-filter (`cvlc --intf dummy --vout dummy --aout dummy --video-filter=scene --scene-format=png
---scene-ratio=30 --scene-prefix=frame --scene-path=<dir> --play-and-exit CAP-006-recording.mp4
-vlc://quit`), producing one PNG roughly every native frame interval (recording is variable frame
-rate — not a fixed 30fps — so frame spacing in wall-clock time is uneven; each extracted PNG
-carries its own burned-in wall-clock overlay, which is what timestamps below are read from
-directly, not an fps model) from playback start up to ~17:25:05. This recovers every action in
-this session (all four ANC taps occur before 17:24:52); only the last ~2s of the recording
-(17:25:05–17:25:07, after the last user action) is unrecovered.
+**Video recovery note (resolved 2026-09-05):** the original `CAP-006-recording.mp4`'s `moov` atom
+was internally inconsistent for the video track (`stsc` claims 2,342 samples, `stsz` claims 2,353;
+the final sample offset points ~3.8 KB past the actual end of the `mdat` box) — `ffmpeg`/`ffprobe`
+(8.1.2) refused to open the file at all (`stream 1, contradictionary STSC and STCO`). VLC's (3.0.23)
+more lenient MP4 demuxer decoded the file up to the truncation point before disabling the video
+track (`Failed to read 6025 bytes sample at 20208791`); at the time, the video was recovered via
+VLC's `scene` video filter (`cvlc --intf dummy --vout dummy --aout dummy --video-filter=scene
+--scene-format=png --scene-ratio=30 --scene-prefix=frame --scene-path=<dir> --play-and-exit
+CAP-006-recording.mp4 vlc://quit`), producing one PNG roughly every native frame interval up to
+~17:25:05 — this recovered every action in this session (all four ANC taps occur before 17:24:52);
+only the last ~2s (17:25:05–17:25:07) was unrecovered. **The maintainer has since re-pulled the
+file from the phone and replaced it** — the current `CAP-006-recording.mp4` (79.49s, 1280×720,
+17:23:49–~17:25:08) opens cleanly in `ffmpeg`/`ffprobe`, no VLC workaround needed going forward.
+Note this file still does not extend to 17:26:55 (this session's third ANC-Notify occurrence,
+`CAP-006-FINDINGS.md`/`DECISIONS.md` ADR-024) — the session's log runs to 17:27:30, well past
+either video file's coverage, so that specific moment remains unverified on screen.
 
 ## Log Metadata
 
@@ -31,7 +33,7 @@ this session (all four ANC taps occur before 17:24:52); only the last ~2s of the
 |       Date       |                     2026-08-15                     |
 | Firmware version |                   release_5.203                    |
 |   Test device    |    Pixel 7a, Android 17 (Official Pixel Buds Companion App v1.0.955078536) |
-| Video file       | `CAP-006-recording.mp4` — nominal 17:23:49–17:25:07 (wall clock, +0200) per burned-in overlay; recovered up to 17:25:05 (see video recovery note above) |
+| Video file       | `CAP-006-recording.mp4` — 17:23:49–~17:25:08 (wall clock, +0200) per burned-in overlay; re-pulled from the phone 2026-09-05, opens cleanly (see video recovery note above) |
 | Log file         | `CAP-006-btsnoop_hci.log` — 233.16s, 2026-08-15 17:23:37.30–17:27:30.45 (wall clock, +0200), 3,441 packets |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `...cf:6e:07` (same physical device as `CAP-001`/`CAP-002`/`CAP-004`) |
 
