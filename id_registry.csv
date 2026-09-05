@@ -21,6 +21,8 @@ ADR-019,adr,accepted,"qhr's oneof structure confirmed inside DLCI 0x02's field5{
 ADR-020,adr,accepted,"EQ FrameEncoder/FrameDecoder implementation explicitly unblocked (mirrors ADR-009/ADR-011's pattern); no new protocol knowledge",DECISIONS.md
 ADR-021,adr,accepted,"Get ANC state (0x11) opcode identity confirmed on the wire for the first time (DLCI 0x04, CAP-036); trigger-reliability and screen-open negative result explicitly NOT promoted",DECISIONS.md
 ADR-022,adr,accepted,"Get ANC state (0x11) trigger-reliability promoted to FACT: 17 occurrences across 10 independent captures (CAP-006/010/016/019-025/036), zero misses",DECISIONS.md
+ADR-023,adr,accepted,"Retroactive sign-off: Option C (HFP battery) confirmed independent of GMS/app (CAP-004/CAP-033) and confirmed working on GrapheneOS (CAP-035)",DECISIONS.md
+ADR-024,adr,accepted,"Notify ANC state Settable-toggles byte confirmed as a dock-state indicator (0x00=both earbuds docked, 0xe8=otherwise), video-verified 5/5 samples across CAP-010/016/021/025/036",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

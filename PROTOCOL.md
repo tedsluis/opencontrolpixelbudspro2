@@ -525,21 +525,24 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   opcode, `ADR-014`'s 4-independent-session Option E). **Precisely scoped claim, promoted:** "DLCI
   0x04's `Get ANC state` (`0x11`) fires whenever the channel (re)establishes and carries real
   Message Stream payload, independent of whether the underlying classic link itself reconnects."
-- **Settable-toggles byte, corrected reading (not a discrepancy) — 🟡 HYPOTHESIS, `DESKRESEARCH_FINDINGS.md`
-  2026-09-04:** of the 17 `Notify` samples above, 12 show `Settable=0xe8` and 5 show
-  `Settable=0x00` — **not a connect-time-vs-settled split** (both values appear at
-  channel-(re)open moments) but plausibly a **Buds-in/near-case-vs-actively-worn** split: every
-  `0x00` sample sits in a session where the Buds are in or near the case at that moment
-  (`CAP-016`, `CAP-036`, `CAP-006`'s last sample, both of `CAP-010`'s); every `0xe8` sample sits in
-  a session where the Buds are actively worn/in use (`CAP-019`–`CAP-025`, `CAP-006`'s first
-  sample). Supersedes this section's own earlier, narrower "connect-time" framing of the same
-  observation. Directly relevant to `ARCHITECTURE.md` §3.1 (State Reconciliation) —
+- **Settable-toggles byte = whether the Buds are physically docked, 🟢 FACT, promoted 2026-09-05
+  (maintainer sign-off, `DECISIONS.md` ADR-024):** of the 17 `Notify` samples referenced above, 12
+  show `Settable=0xe8` and 5 show `Settable=0x00` — **not a connect-time-vs-settled split** (both
+  values appear at channel-(re)open moments) but a **Buds-in-the-case-vs-not-docked** split,
+  video-confirmed at 5 of 5 checked samples with zero counter-examples
+  (`DESKRESEARCH_FINDINGS.md` 2026-09-05 entry): `Settable=0x00` when both earbuds sit seated in
+  the case's charging slots (`CAP-016` frame 1521, `CAP-036`'s entire session, `CAP-010`'s
+  fresh-pairing frame — LED lit, dock confirmed on screen), `Settable=0xe8` when the case is open
+  and **empty** (`CAP-021`, `CAP-025` — both slots visually empty, buds off-frame or resting loose
+  beside the case, confirmed via cropped/zoomed frame extraction). Supersedes this section's
+  earlier, narrower "connect-time" framing of the same observation — the distinguishing factor is
+  dock state, not timing. Directly relevant to `ARCHITECTURE.md` §3.1 (State Reconciliation) —
   confirms the official app performs a comparable read-on-reconnect for ANC state specifically.
   The same `CAP-036` session found **no** query of any kind (this opcode or otherwise) when a
   settings screen is opened with nothing touched, across five clean windows (EQ, Controls and
   gestures, Touch controls, More settings, Multipoint) — that negative result stays 🟡 HYPOTHESIS
-  (one session), not affected by the trigger-reliability proposal above (a different sub-question —
-  screen-open vs. channel-(re)establishment). See `CAP-036-FINDINGS.md` §3–§7 for the full decode.
+  (one session), not affected by either promotion above (a different sub-question — screen-open
+  vs. channel-(re)establishment). See `CAP-036-FINDINGS.md` §3–§7 for the full decode.
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -859,16 +862,17 @@ event-observation coroutines.
   observed only once per session in every capture to date (consistent with `ADR-015`, not a
   contradiction of it). 🔴 OPEN QUESTION: is this a general mechanism (battchg can push on
   change, just rarely) or a one-off artifact? A single occurrence is not enough to resolve this.
-- **GMS/app-independence confirmed for Option C specifically, 🟢 FACT (`DESKRESEARCH_FINDINGS.md`
-  2026-09-04 entry):** `AT+BIEV=2,<value>` fires normally with Google Play Services **disabled
-  and** the official app **uninstalled** (`CAP-004`) and, independently, with the app
-  **force-stopped** for the entire session while GMS is untouched (`CAP-033`) — HFP battery
-  reporting is OS/Bluetooth-stack-level, not GMS- or app-driven. Extends `CAP-035-FINDINGS.md`'s
-  existing GMS-independence result (which only checked DLCI 0x08/0x0a/0x06/0x12) to Option C.
-  **Confirmed a second OS, 🟢 FACT (`DESKRESEARCH_FINDINGS.md` 2026-09-04, round 2):** the same
-  `AT+BIEV=2,100` behavior reproduces on **Pixel 9a/GrapheneOS** itself (`CAP-035`, GMS present but
-  `dumpsys`-verified disabled, no official app, no nRF Connect) — Option C works on this project's
-  actual target platform, not only on stock Android.
+- **GMS/app-independence confirmed for Option C specifically, 🟢 FACT (retroactive maintainer
+  sign-off 2026-09-05, `DECISIONS.md` ADR-023 — see that ADR's process note):** `AT+BIEV=2,<value>`
+  fires normally with Google Play Services **disabled and** the official app **uninstalled**
+  (`CAP-004`) and, independently, with the app **force-stopped** for the entire session while GMS
+  is untouched (`CAP-033`) — HFP battery reporting is OS/Bluetooth-stack-level, not GMS- or
+  app-driven. Extends `CAP-035-FINDINGS.md`'s existing GMS-independence result (which only checked
+  DLCI 0x08/0x0a/0x06/0x12) to Option C.
+  **Confirmed a second OS, 🟢 FACT (retroactive maintainer sign-off 2026-09-05, `DECISIONS.md`
+  ADR-023):** the same `AT+BIEV=2,100` behavior reproduces on **Pixel 9a/GrapheneOS** itself
+  (`CAP-035`, GMS present but `dumpsys`-verified disabled, no official app, no nRF Connect) —
+  Option C works on this project's actual target platform, not only on stock Android.
 - **Cross-channel synchronization caveat, 🟡 HYPOTHESIS, new (`DESKRESEARCH_FINDINGS.md` 2026-09-04,
   round 2, `CAP-027`):** the "near-lockstep" timing between Option C and Option E (documented
   above, extended to DLCI 0x02 in `CAP-036-FINDINGS.md` §12.5) is **not universal** — during an

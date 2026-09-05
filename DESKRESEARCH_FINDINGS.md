@@ -496,5 +496,40 @@ case, independent of whether DLCI 0x04 just (re)opened.
   `PROTOCOL.md` §4.3 (Option A GrapheneOS confirmation, Option E cross-mechanism note, cross-sync
   caveat).
 
+### 2026-09-05 — Video verification of the Settable-toggles "in-case vs. worn" hypothesis
+
+- **Trigger:** the maintainer asked to verify, before considering promotion, whether the
+  in-case/worn correlation from the round-2 entry above actually holds on screen — the "worn"
+  status for `CAP-019`–`CAP-025` had only been inferred from the session's procedure, not directly
+  checked frame-by-frame.
+
+- **Method:** `ffmpeg -ss <t> -frames:v 1` extraction (this project's standard method) at the
+  video-relative offset matching each target wire timestamp, computed from each video's own
+  wall-clock overlay at `t=0`. One `0x00` sample (`CAP-010`) and one `0xe8` sample each from
+  `CAP-021` and `CAP-025` were checked (all three videos playable); `CAP-006`'s
+  `CAP-006-recording.mp4` **could not be checked — the file fails to open in `ffmpeg`**
+  (`stream 1, contradictionary STSC and STCO` / `error reading header`; `ffprobe` fails
+  identically; no repair tool available in this environment). This is a genuine gap, not a
+  negative result — flagged for the maintainer, not silently skipped.
+
+- **Result — 3/3 checked samples confirm the hypothesis, no counter-examples:**
+
+  | Capture | Settable byte | Wire time | Video time (offset from t=0) | On-screen state |
+  |---|---|---|---|---|
+  | `CAP-010` | `0x00` | 11:43:46.98 | 11:43:48 (+76s) | Both buds **seated in the case's charging slots**, LED lit — mid Fast-Pair "Save device to account" dialog |
+  | `CAP-021` | `0xe8` | 07:59:41.90 | 07:59:42 (+6s) | Case open, **both slots empty** — cropped/zoomed to confirm, buds off-frame (presumably worn) |
+  | `CAP-025` | `0xe8` | 08:40:58.04 | 08:40:58 (+6s) | Case open, **both slots empty**, both buds visible loose on the table beside the case — not docked |
+
+  Combined with the two samples this hypothesis was originally built on (`CAP-016`'s own frame
+  1521, "both buds still docked at this instant"; `CAP-036`, buds sitting in the open case the
+  entire session, never worn) — **5 of 5 video-checked samples now confirm the pattern**: `Settable
+  =0x00` when the Buds are physically in the case, `Settable=0xe8` when they are not, with zero
+  counter-examples found. Note `CAP-025`'s specific state (buds loose beside the case, not
+  necessarily worn) refines "worn" to more precisely "not docked" — the distinguishing factor
+  is the case, not literally ear-insertion.
+
+- **Promoted to:** `PROTOCOL.md` §4.1 — promoted to 🟢 FACT, maintainer sign-off obtained
+  2026-09-05, `DECISIONS.md` ADR-024.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

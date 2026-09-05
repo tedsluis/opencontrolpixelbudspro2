@@ -1114,5 +1114,94 @@ motivated this).
   single-session anecdote. A `FrameEncoder`/`FrameDecoder` implementing this specific read (if
   pursued) can rely on the trigger condition described above.
 
+## ADR-023 — Retroactive sign-off: Option C (HFP battery) confirmed independent of GMS/app, and confirmed on GrapheneOS
+
+- **Date**: 2026-09-05
+- **Status**: Accepted
+- **Note on process**: this ADR closes a self-caught process gap, the same pattern as `ADR-016`.
+  While writing up `DESKRESEARCH_FINDINGS.md`'s 2026-09-04 bonus battery/firmware cross-check, the
+  two findings below were marked 🟢 FACT directly in `PROTOCOL.md` §4.3 Option C without first
+  obtaining the explicit maintainer sign-off `AGENTS.md` §6 requires for every FACT promotion, no
+  exceptions. This was caught by the agent itself on a later pass (not flagged by the maintainer)
+  and surfaced explicitly in the next session (2026-09-05) rather than left standing uncorrected.
+  The maintainer reviewed both findings directly in that session and explicitly approved recording
+  them as FACT retroactively, rather than reverting them to HYPOTHESIS pending a separate review.
+- **Findings being recorded**:
+  1. **Option C (HFP `AT+BIEV=2,<value>` battery reporting) is independent of both Google Play
+     Services and the official companion app** (`PROTOCOL.md` §4.3 Option C). Evidence: `CAP-004`
+     (`DESKRESEARCH_FINDINGS.md` 2026-09-04 entry) — GMS **disabled** and the official app
+     **uninstalled** together (the strongest independence condition of any capture on disk) —
+     `AT+BIEV=2,100` still fires normally, multiple times. `CAP-033` — the official app
+     **force-stopped** for the entire session, GMS untouched — `AT+BIEV=2,100` also fires
+     normally, multiple times. Both are simple, unambiguous binary observations (the AT command is
+     present in the log or it is not) rather than an interpretive reading, extending
+     `CAP-035-FINDINGS.md`'s existing GMS-independence result (which only checked DLCI
+     0x08/0x0a/0x06/0x12) to Option C specifically.
+  2. **Option C also works on GrapheneOS itself, not only stock Android** (`PROTOCOL.md` §4.3
+     Option C). Evidence: `CAP-035` (Pixel 9a/GrapheneOS, GMS present but `dumpsys`-verified
+     disabled, no official app, no nRF Connect) — `AT+BIEV=2,100` fires on both the fresh connect
+     and the later reconnect in that session. Same evidentiary character as finding 1: a direct,
+     unambiguous presence/absence observation.
+- **What this ADR does NOT clear**: no other finding from either bonus-analysis round is affected
+  — the Settable-toggles "in/near-case vs. actively-worn" reading (`PROTOCOL.md` §4.1) remains 🟡
+  HYPOTHESIS (correlational, not reconciled against any documented field meaning, and the
+  "actively worn" status for several sessions is inferred from the session's own procedure rather
+  than directly video-verified per sample) — not promoted by this ADR, and not proposed for
+  promotion this round; the `CAP-027` cross-channel-sync-caveat and the `CAP-036` BLE
+  device-attribution advance likewise remain untouched, single-session HYPOTHESES.
+- **Decision**: both findings above are accepted as 🟢 FACT, as already written in `PROTOCOL.md`
+  §4.3 Option C.
+- **Consequences**: `ARCHITECTURE.md` §4's battery-fallback priority order can rely on Option C
+  (HFP) as a mechanism that does not depend on Google Play Services or the companion app being
+  installed/running, and functions on GrapheneOS specifically — directly relevant to this
+  project's Zero-GMS goal (`AGENTS.md` §1) and its GrapheneOS target platform (`AGENTS.md` §2).
+
+## ADR-024 — "Notify ANC state" `Settable-toggles` byte confirmed as a dock-state indicator: `0x00` when both earbuds are seated in the case, `0xe8` otherwise
+
+- **Date**: 2026-09-05
+- **Status**: Accepted
+- **Context**: `CAP-036-FINDINGS.md` §3 flagged the "Notify ANC state" frame's `Settable-toggles`
+  byte reading `0x00` as an unreconciled discrepancy against every prior sample's `0xe8`.
+  `DESKRESEARCH_FINDINGS.md`'s first bonus round found `CAP-016-FINDINGS.md` §4 had already
+  observed the same `0x00` value, with its own 🟡 HYPOTHESIS that it tracks whether the Buds have
+  "reported which ANC modes are currently selectable" — plausibly tied to dock state. The second
+  bonus round found 12 more samples (7 sessions) all showing `0xe8`, each in a session where the
+  Buds were presumed (not directly checked) to be actively in use — sharpening the hypothesis to
+  "in/near-case vs. actively worn," still uncorroborated by direct video evidence for most
+  samples. The maintainer asked for that video verification before considering promotion.
+- **Finding being promoted**: a dedicated video check (`DESKRESEARCH_FINDINGS.md` 2026-09-05
+  entry), using `ffmpeg` frame extraction against each video's own wall-clock overlay, checked 3
+  new samples against their exact wire timestamps and found the case's dock state, not "worn"
+  per se, is the determining factor:
+  - `CAP-010`, `Settable=0x00` — both earbuds visibly seated in the case's charging slots, LED lit
+    (mid Fast-Pair "Save device to account" dialog).
+  - `CAP-021`, `Settable=0xe8` — case open, both slots empty (confirmed via a cropped/zoomed
+    frame), Buds off-frame.
+  - `CAP-025`, `Settable=0xe8` — case open, both slots empty, both Buds visible resting loose
+    beside the case (not docked, not necessarily worn either — refining "worn" to "not docked").
+  Combined with `CAP-016`'s original frame (both Buds docked, `0x00`) and `CAP-036`'s entire
+  session (Buds sitting in the open case throughout, never removed, `0x00` — confirmed via that
+  session's own full video re-pass), this is **5 of 5 video-checked samples confirming the same
+  pattern, zero counter-examples**, across 5 independently-run sessions with different procedures
+  (a case/bud-removal test, a fresh-pairing repeat, two settings-toggle sessions, and a
+  reconnect-isolation test).
+- **What this ADR does NOT clear**: `CAP-006`'s own two samples (`0xe8` then `0x00` within one
+  session) remain unverified — `CAP-006-recording.mp4` fails to open in `ffmpeg`
+  (`stream 1, contradictionary STSC and STCO`/`error reading header`) and no repair tool was
+  available; this would have been the first *within-session* transition check and is a genuine
+  gap, not a negative result. `CAP-036`'s settings-screen-open clean-negative finding (a separate
+  sub-question) is unaffected. The remaining 12 `0xe8` samples from `CAP-019`/`020`/`022`–`024`
+  were not individually video-checked this pass (their session type — active settings-toggle
+  tests — is consistent with the pattern but not each individually confirmed frame-by-frame).
+- **Decision**: `PROTOCOL.md` §4.1's `Settable-toggles` byte is promoted to 🟢 FACT as a dock-state
+  indicator: `0x00` when both earbuds are seated in the case, a non-zero value (`0xe8` in every
+  sample seen to date) otherwise.
+- **Consequences**: a future implementation reading this field can treat it as a live dock-state
+  signal from the accessory itself, independent of (and potentially more immediate than) the
+  case/bud-removal Bluetooth events `PROTOCOL.md` §5/§7 already document from other channels — a
+  candidate cross-check for `ARCHITECTURE.md`'s connection/dock-state model. The exact bit-level
+  meaning of `0xe8` beyond "not both docked" (e.g. whether it varies further for one-bud-docked
+  states) remains unexplored and is not claimed by this ADR.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
