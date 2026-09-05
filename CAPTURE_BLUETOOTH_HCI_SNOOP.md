@@ -998,6 +998,174 @@ nothing touched) applied to different screens, so whatever they show is directly
 question too — but a *write* on screen-open and a *read* on screen-open are different findings, and
 this Group's own question is the read. Keep them labelled separately in the findings.
 
+#### Group AD — "Get ANC state" reconnect-reliability + dock-state transition, purpose-built repeat (occasional, added 2026-09-05)
+
+**Purpose:** `DECISIONS.md` ADR-022 promoted DLCI 0x04's "Get ANC state" (`0x11`) trigger-
+reliability to 🟢 FACT and ADR-024 promoted the "Notify ANC state" `Settable-toggles` byte as a
+dock-state indicator (`0x00` = both earbuds docked, `0xe8` otherwise) — but **both promotions rest
+on retrospective analysis of captures never designed for either question** (settings-toggle tests,
+a pairing repeat, an ANC repeat), and no single session has yet captured the dock-state
+**transition** itself within one continuous recording. This Group is the first purpose-built
+session for both: 5 isolated reconnects in one sitting, deliberately alternating dock state.
+
+**Runs on the Pixel 7a with the official Pixel Buds companion app and Google Play Services
+enabled** — the same baseline as Group AC, so nothing about the phone/app/GMS condition is a new
+variable here; only the repeat structure and deliberate dock-state alternation are new.
+
+**Test-ID:** `OBS-004` (existing, `CAP-036`'s own Test-ID — this is a deeper replication of the
+same underlying question, not a new one) plus incidental `PAIR-003`.
+
+**Procedure — 5 reconnects, alternating dock state, buffered ~3–5s apart:** buds start docked;
+repeat 1 reconnect from docked; repeat 2 reconnect from undocked (both buds removed from the case,
+not worn, held/on the table); repeat 3 reconnect from docked again; repeat 4 reconnect from
+undocked; repeat 5 reconnect from docked. Toggle Bluetooth off between every repeat for a clean
+disconnect. See `CAP-037-EVENT-NOTES.md` for the full step-by-step procedure and preparation
+checklist.
+
+**Analysis:** for each of the 5 repeats, confirm `08 11 00 00`/`08 13` fires and record its
+`Settable-toggles` byte against that repeat's known dock state. A miss on any repeat is a
+counter-example to ADR-022; a `Settable-toggles` value that doesn't match dock state on any repeat
+is a counter-example to ADR-024 — either must be reported plainly, not reconciled away. See
+`CAP-037-EVENT-NOTES.md`'s Decode/Analysis checklist for the full three-way outcome.
+
+#### Group AE — Realistic physical reconnect trigger vs. a system-Bluetooth-toggle reconnect (occasional, added 2026-09-05)
+
+**Purpose:** every reconnect this project has captured to date on the Pixel 7a with the official
+app (`CAP-036`, `CAP-037`) was triggered by toggling Bluetooth in system settings while the Buds
+sat in the open case, never removed, never worn — not the normal user flow of taking the Buds out
+of the case and inserting them into the ears. That normal flow could exercise wire traffic a pure
+OS-level toggle never touches: an in-ear-detection event, A2DP audio-profile setup, or a different
+sequencing of the DLCI 0x02/0x04/0x08 connection burst. This Group tests that directly.
+
+**Runs on the Pixel 7a with the official Pixel Buds companion app and Google Play Services
+enabled**, same baseline as Group AC/AD.
+
+**Test-ID:** `OBS-005` (new), incidental `PAIR-003` and the `INEAR` family.
+
+**Procedure — two windows:** (1) with Bluetooth already on, physically remove both earbuds from
+the case and insert them into the ears, the normal user flow, and idle ~15–20s; (2) optional/time
+permitting — with the Buds back in the case and Bluetooth on, close the lid, then reopen it
+**without** touching the Bluetooth toggle, to see whether the lid alone triggers a differently-
+shaped reconnect than an OS-level toggle. See `CAP-038-EVENT-NOTES.md` for the full procedure.
+
+**Analysis:** confirm the DLCI 0x04 Get/Notify pair still fires (expected, per ADR-022's
+channel-(re)establishment-scoped trigger) and its `Settable-toggles` byte reads "undocked"
+(`0xe8`, per ADR-024, now genuinely worn rather than merely "not in the case"). The core question
+is whether **any** traffic appears here that has no counterpart in `CAP-036`/`CAP-037` — an
+in-ear-detection push, A2DP setup, or a structurally different connection burst. See
+`CAP-038-EVENT-NOTES.md`'s Decode/Analysis checklist.
+
+#### Group AF — `Settable-toggles` byte: Set-tap vs. reconnect-Get, fixed dock state (occasional, added 2026-09-05)
+
+**Purpose:** `CAP-036-FINDINGS.md` §3 originally framed this open question as "does a `Set`-
+triggered Notify differ from a `Get`-triggered Notify?" `DECISIONS.md` ADR-024 reframed it as
+tracking dock state instead — but that reframing has never been tested by comparing a `Set` and a
+`Get` **within one session, at a fixed, known dock state**. This Group closes that gap directly:
+one ANC tap (a `Set`) and one forced reconnect (a `Get`), both with the Buds worn (undocked)
+throughout, so dock state cannot explain any difference found.
+
+**Runs on the Pixel 7a with the official Pixel Buds companion app and Google Play Services
+enabled**, same baseline. Buds stay in the ears (undocked) for the entire session, including
+during the forced reconnect.
+
+**Test-ID:** `OBS-006` (new), incidental `ANC`-family and `PAIR-003`.
+
+**Procedure:** one ANC mode tap (any mode different from the current one), then a clean buffer,
+then force a reconnect via the Bluetooth toggle **without removing the Buds from the ears**. See
+`CAP-039-EVENT-NOTES.md` for the full procedure.
+
+**Analysis:** decode both the Set-triggered and the Get-triggered Notify frames' `Settable-toggles`
+byte and compare directly. Identical values (both `0xe8`, matching the constant undocked state)
+support ADR-024's dock-state reading as trigger-independent; a difference despite identical dock
+state is a genuine counter-example to ADR-024 and must be flagged prominently, not reconciled
+quietly. See `CAP-039-EVENT-NOTES.md`'s Decode/Analysis checklist.
+
+#### Group AG — DLCI 0x08's unmapped Get-shaped codes vs. a known-changing value (occasional, added 2026-09-05)
+
+**Purpose:** `CAP-036-FINDINGS.md` §5 found DLCI 0x08's connect-time burst contains several
+zero-length `[Group][Code][00 00]`-shaped `Sent` frames (`05 0c`, `04 02`, `04 04`, `04 11`,
+`04 13`, `04 15`, `0e 04`) structurally identical to DLCI 0x04's confirmed "Get" pattern — but none
+of these Group/Code pairs is mapped to any known setting, and their `Rcvd` responses have never
+been examined. Per `AGENTS.md` §13.6's zero-creativity rule, these can only be decoded via
+correlation against a known, independently-verifiable value, not by guessing.
+
+**Runs on the Pixel 7a with the official Pixel Buds companion app and Google Play Services
+enabled**, same baseline, with the app open on Device details so on-screen battery/case values are
+visible for cross-check.
+
+**Test-ID:** `PRIV-001` (new), incidental `PAIR-003` and the `BATT` family.
+
+**Procedure:** bracket a known-changing value across 4 reconnects — either an opportunistic
+battery-discharge gap (if a convenient one exists), or the recommended default: vary *which*
+component (Left/Right/both/neither) is docked at each of 4 reconnects, reading the resulting
+on-screen Left/Right/Case values each time. See `CAP-040-EVENT-NOTES.md` for the full procedure
+and both bracketing options.
+
+**Analysis:** for each unmapped code, find its `Sent` Get frame and the immediately-following
+`Rcvd` response(s) on the same Group, decode any numeric fields, and check whether any field
+tracks the bracketed value across all 4 repeats. A field that stays constant is not a match; only
+report a semantic reading for a field that visibly tracks the known value repeat after repeat. See
+`CAP-040-EVENT-NOTES.md`'s Decode/Analysis checklist for the full three-way outcome.
+
+#### Group AH — DLCI 0x02's connect-time RPC burst vs. non-default settings state (occasional, added 2026-09-05)
+
+**Purpose:** `CAP-036-FINDINGS.md` §4 found a dense, undecoded RPC-shaped burst on DLCI 0x02
+immediately after it opens on reconnect, captured under a session where every setting was at its
+default (EQ centered, touch controls on). This leaves open whether the burst's content reflects
+current settings state at all — directly relevant to `ARCHITECTURE.md` §3.1 (State Reconciliation):
+if `libmaestro`'s own channel carries a settings-state read-back, that would be a second,
+independent mechanism alongside DLCI 0x04's confirmed ANC read (ADR-021/ADR-022). This Group tests
+it by deliberately setting non-default EQ and touch-controls values *before* reconnecting, then
+comparing the resulting burst byte-for-byte against `CAP-036`'s own default-settings burst.
+
+**Runs on the Pixel 7a with the official Pixel Buds companion app and Google Play Services
+enabled**, same baseline as `CAP-036` — a clean single-variable comparison (settings state only).
+
+**Test-ID:** `OBS-007` (new), incidental `PAIR-003`.
+
+**Procedure:** set EQ bands well off-center and touch controls off *before* recording starts (the
+fixed starting condition for this session), confirm on screen, then reconnect once and idle ~15s.
+See `CAP-041-EVENT-NOTES.md` for the full procedure and preparation checklist.
+
+**Analysis:** extract this session's own connect-time DLCI 0x02 burst using the same method as
+`CAP-036-FINDINGS.md` §4, and diff it byte-for-byte against `CAP-036`'s own burst. Any payload that
+differs and also plausibly matches a known settings-value shape (e.g. a 5-band float quintet,
+`PROTOCOL.md` §4.2) is a strong candidate for a `libmaestro`-side state read-back; a byte-for-byte
+match despite genuinely different settings is a clean negative. See `CAP-041-EVENT-NOTES.md`'s
+Decode/Analysis checklist.
+
+#### Group AI — Long pure-idle bracket for the periodic DLCI 0x02/0x04/0x08/HFP push cadence (occasional, added 2026-09-05)
+
+**Purpose:** `CAP-036-FINDINGS.md` §12.5 found a periodic push recurring on DLCI 0x02, 0x04, 0x08,
+and HFP's `AT+BIEV` all within 7–18ms of each other, starting ~3.5 minutes after connection —
+but `CAP-036`'s own session only ran ~7 minutes, too short to characterize the cadence's longer-run
+behavior the way `CAP-009-FINDINGS.md` §2's 101-minute HFP-only session already does for `AT+BIEV`
+alone (`PROTOCOL.md` §4.3 Option C: "settling burst, then irregular, median ~20s, up to ~14.6
+minutes"). This Group is a dedicated, 15+ minute, genuinely idle bracket to extend that
+characterization across all four channels at once — this is exactly the capture scenario
+`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `OBS-002` row has been waiting for.
+
+**Runs on the Pixel 7a with the official Pixel Buds companion app (backgrounded, not kept open) and
+Google Play Services enabled**, same baseline. Dock state must be picked once and held constant
+for the whole session (worn or docked, either is fine, but ADR-024 shows dock state affects at
+least one of these frames' content, so a mid-session dock-state change would confound the cadence
+measurement).
+
+**Test-ID:** `OBS-002` (existing — this is that row's first dedicated capture scenario).
+
+**Procedure:** connect normally, confirm the fixed dock state once, then background the app and
+leave everything untouched (ideally screen off) for at least 15 minutes. See
+`CAP-042-EVENT-NOTES.md` for the full procedure, including a note on using periodic wall-clock
+check-in shots rather than continuous video for a session this long.
+
+**Analysis:** extract every DLCI 0x02/0x04/0x08 push and every `AT+BIEV=2` occurrence across the
+whole session, check whether the cross-channel near-lockstep timing holds up over dozens of
+occurrences (not just `CAP-036`'s handful), and compare the gap distribution against `CAP-009`'s
+existing HFP-only model. Also cross-check against `CAP-027`'s cross-sync-caveat
+(`DESKRESEARCH_FINDINGS.md` 2026-09-04 round 2) — that session found the sync breaking down 3
+times during active A2DP streaming; this idle session is the control for whether it holds up
+perfectly with no streaming at all. See `CAP-042-EVENT-NOTES.md`'s Decode/Analysis checklist.
+
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
 No app-driven commands are possible here, so this session focuses on connection-level
@@ -1374,6 +1542,12 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-034` | 2026-09-01 | Pixel 9a (GrapheneOS) — never before connected to this Buds unit | TBD | ⚪ assumed `release_5.203` (not re-confirmed — no official app used, DLCI 0x08 never opens) | nRF Connect for Mobile (Nordic Semiconductor); official Pixel Buds Companion App not installed | W (4th attempt) | `GATT-001`, incidental `PAIR-001`/`PAIR-003`/`BATT-003` | 4th Group W attempt at the `0x0c0X`/`0x0f2X` GATT handle↔UUID mapping — combines `CAP-014`'s confirmed-unlimited snaplen fix with Group W's own untried cache-busting method (`pm clear com.android.bluetooth` on a phone never before connected to this Buds unit), the first session to have both at once | `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-btsnoop_hci.log` | same file | analyzed, **✅ RESOLVED — maintainer sign-off obtained per `AGENTS.md` §6** — see `CAP-034-FINDINGS.md` in that folder. Confirmed 0/3,717 truncated frames (max 684B). The sole LE connection (chandle `0x0040`) yields one genuine, full `0x0001`–`0xffff` discovery walk (06:47:42.147–45.490) before bonding — the "reconnect" at 06:51:22 is a Database Hash cache-hit only, no second discovery pass. Resolves the full 15-primary-service GATT profile: `0x0c00`–`0x0c14` = **Google Fast Pair Service** (`0xFE2C`) with all 5 spec-defined characteristics (Model ID, Key-based Pairing, Passkey, Account Key, Additional Data) plus Message Stream PSM and one still-unnamed `FE2C1238…` characteristic; `0x0f20`–`0x0f2a` = Device Information (`0x0f28`=Serial Number String, `0x0f2a`=Firmware Revision String); `0x0f30`–`0x0f33` = Battery Service (`0x0f32`=Battery Level). Independently corroborated by nRF Connect's own on-screen UUID rendering and live-verified against the official Fast Pair spec. **Corrects** `CAP-017-FINDINGS.md` §6's hypothesis that "Unknown Service" (`109b862f-…`) might be the `0x0c0X` cluster's container — it does not; it occupies a separate range (`0x0f37`–`0x0f3e`), own purpose still unidentified. ADR-008 compliance confirmed (Accessory Non-Owner Service appears only in unavoidable discovery inventory, never read/written). See `PROTOCOL.md` §6 and §4.3 Option D for the promoted findings |
 | `CAP-035` | 2026-09-02 | Pixel 9a (GrapheneOS) | TBD | ⚪ assumed `release_5.203` (not re-confirmed — no official app used, DLCI 0x08's firmware string was never independently re-checked) | none — no Pixel Buds app, no nRF Connect, system Bluetooth settings only | AB | `GSND-001`, incidental `PAIR-001`/`PAIR-003`/`BATT-003` | GMS-independence check for DLCI 0x08 ("GSND CONTROL")/0x0a ("GSND AUDIO")/0x06 ("DEBUG APP")/0x12 ("BTIS"), per `CAP-033-FINDINGS.md` §3's negative APK-search result (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AB) | `captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-btsnoop_hci.log` | same file | analyzed, **maintainer sign-off obtained per `AGENTS.md` §6** — see `CAP-035-FINDINGS.md` in that folder. Confirmed 0/1,945 truncated frames. Two videos turned out to be sequential with only a ~7s recording-stop/restart gap (not the ~5min originally logged) — resolved directly from frame comparison, correcting the event timeline including a ~91–97s error in the original disconnect/reconnect time estimates. **GMS precondition:** `com.google.android.gms` present but `dumpsys`-verified disabled (`enabled=3` = `COMPONENT_ENABLED_STATE_DISABLED_USER`) — not genuinely absent, so this is a rigorously verified second data point for `CAP-004-FINDINGS.md` §4a's existing "GMS present but disabled" finding, not a stronger novel "GMS-absent" confirmation. **Result:** DLCI 0x08 content reproduces byte-identical twice (connect + reconnect); DLCI 0x0a opens in lockstep both times but carries zero payload; DLCI 0x06/0x12 never open at all — clean negatives for both, first time either has been specifically checked. ADR-008 compliant. Still open: a repeat with GMS genuinely uninstalled, for full closure of the OS-stack-vs-GMS question |
 | `CAP-036` | 2026-09-04 | Pixel 7a | 14 | ⚪ assumed `release_5.203` (carried over, not re-checked on-screen this session) | 1.0.955078535 | AC | `OBS-004`, incidental `PAIR-003` | Settings-state read-back isolation — official app + GMS enabled (normal baseline, the opposite of Group S/AB), idle-only observation windows (reconnect, EQ screen, Controls-and-gestures/Touch-controls screens, Multipoint screen) with **no setting touched at any point**, to isolate whether the official app ever issues a state *query* (as opposed to the write-direction-only evidence in `PROTOCOL.md` §4.2/§4.5) before any user-initiated change — the requirement `ARCHITECTURE.md` §3.1 imposes on this project's own app. A clean negative is a real result here, not a failed session | `captures/CAP-036-2026-09-04_06-35-58_06-41-18-Group_AC/CAP-036-btsnoop_hci.log` (raw path, confirmed untruncated: 0/2,492 mismatched frames, no snaplen cap) | same file | analyzed — see `CAP-036-FINDINGS.md` in that folder. **Split outcome, by trigger:** on **reconnection**, DLCI 0x04's spec-documented but never-before-observed "Get ANC state" (`0x11`) query fires once, 34ms after the channel opens, answered ~10.7ms later by "Notify ANC state" (`0x13`, current=Off, matching the on-screen state) — 🟡 HYPOTHESIS pending replication, proposed (not self-promoted) for `PROTOCOL.md` §4.1. On **settings-screen-open** (EQ, Controls-and-gestures, Touch controls, More settings, Multipoint — five clean, video-verified idle windows), zero query or write traffic occurs on DLCI 0x02/0x04/0x08 — a citable negative result. A frame-by-frame video re-pass corrected several of this session's own placeholder timestamps by 5–30 seconds against what the video actually shows (see `CAP-036-FINDINGS.md` §2). Three new 🔴 open questions raised (DLCI 0x08 Get-shaped connect-time frames with unmapped Group/Code pairs; an undecoded DLCI 0x02 connection-settling RPC burst; a `Settable toggles` byte discrepancy between this session's Notify frame and previously-documented Set frames) |
+| `CAP-037` | *planned* | Pixel 7a | TBD | TBD | TBD | AD | `OBS-004`, incidental `PAIR-003` | Purpose-built repeat of the "Get ANC state" reconnect-reliability + dock-state-transition question — 5 isolated reconnects in one session, alternating docked/undocked, to get the first within-session confirmation of both `DECISIONS.md` ADR-022 and ADR-024 (both currently rest on retrospective analysis of unrelated captures) | — | — | planned |
+| `CAP-038` | *planned* | Pixel 7a | TBD | TBD | TBD | AE | `OBS-005`, incidental `PAIR-003`, `INEAR`-family | Realistic physical reconnect trigger (Buds actually removed from the case and worn) vs. `CAP-036`/`CAP-037`'s system-Bluetooth-toggle-only trigger — checks for wire traffic (in-ear detection, A2DP setup) a pure OS-level toggle never exercises; optional second window testing whether opening the case lid alone (no BT toggle) triggers a differently-shaped reconnect | — | — | planned |
+| `CAP-039` | *planned* | Pixel 7a | TBD | TBD | TBD | AF | `OBS-006`, incidental `ANC`-family, `PAIR-003` | Direct, same-session comparison of the "Notify ANC state" `Settable-toggles` byte after a `Set` (ANC tap) vs. after a `Get` (forced reconnect), with dock state held constant (Buds worn throughout) — tests whether `DECISIONS.md` ADR-024's dock-state reading holds when trigger type is the only thing varying | — | — | planned |
+| `CAP-040` | *planned* | Pixel 7a | TBD | TBD | TBD | AG | `PRIV-001`, incidental `PAIR-003`, `BATT`-family | DLCI 0x08's unmapped zero-length Get-shaped codes (`CAP-036-FINDINGS.md` §5) decoded via correlation against a known-changing value (battery discharge or a deliberately varied dock state across 4 reconnects) — per `AGENTS.md` §13.6, decode by correlation, not by guessing | — | — | planned |
+| `CAP-041` | *planned* | Pixel 7a | TBD | TBD | TBD | AH | `OBS-007`, incidental `PAIR-003` | DLCI 0x02's connect-time RPC burst (`CAP-036-FINDINGS.md` §4) captured with deliberately non-default EQ/touch-controls settings, then diffed byte-for-byte against `CAP-036`'s own default-settings burst — tests whether `libmaestro`'s own channel carries a settings-state read-back, directly relevant to `ARCHITECTURE.md` §3.1 | — | — | planned |
+| `CAP-042` | *planned* | Pixel 7a | TBD | TBD | TBD | AI | `OBS-002` | Long (15+ minute), genuinely idle bracket to characterize the periodic DLCI 0x02/0x04/0x08/HFP cross-channel push cadence (`CAP-036-FINDINGS.md` §12.5) over a longer window than `CAP-036`'s own ~7 minutes — `OBS-002`'s first dedicated capture scenario | — | — | planned |
 
 **Column notes:**
 

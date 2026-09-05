@@ -228,6 +228,22 @@ lower priority than finishing ANC/Battery/EQ):**
       ≥4.467 — worth double-checking this against the project's `release_5.203` baseline first,
       since the two version identifiers have never been explicitly reconciled, `PROTOCOL.md` §0.1).
       Lower priority than a clean `CAP-011` repeat and a properly-done Group W attempt above.
+- [ ] **Added 2026-09-05 — six new planned captures, follow-ups to `CAP-036`'s `OBS-004` session**
+      (each already has its own row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index and its
+      own Group section there; listed here only for priority-ordering visibility, not as a
+      duplicate description): `CAP-037` (Group AD, purpose-built repeat of the "Get ANC state"
+      reconnect-reliability + dock-state-transition question — the first dedicated session for
+      what `DECISIONS.md` ADR-021/ADR-022/ADR-024 currently only have retrospective evidence for),
+      `CAP-038` (Group AE, realistic buds-out-of-case-and-worn reconnect vs. a system-toggle-only
+      reconnect), `CAP-039` (Group AF, `Settable-toggles` Set-vs-Get comparison at fixed dock
+      state), `CAP-040` (Group AG, DLCI 0x08's unmapped Get-shaped codes decoded via correlation
+      against a known-changing value), `CAP-041` (Group AH, DLCI 0x02's connect-time RPC burst vs.
+      non-default settings — directly relevant to `ARCHITECTURE.md` §3.1), `CAP-042` (Group AI, a
+      15+ minute idle bracket for `OBS-002`, characterizing the periodic DLCI 0x02/0x04/0x08/HFP
+      push cadence over a longer window than `CAP-036`'s own ~7 minutes). All six run on the same
+      Pixel 7a + official app + GMS-enabled baseline as `CAP-036` itself — see each capture's own
+      event-notes skeleton (in its `captures/CAP-0NN-...` folder) for the full preparation
+      checklist and procedure.
 
 ## Phase 2 — APK reverse engineering
 
