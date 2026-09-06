@@ -36,10 +36,10 @@ in the case at any point, or the dock-state variable stops being held constant.
 |------------------|-----------------------------------------------------|
 |    Capture ID    |                      `CAP-039`                      |
 |      Group(s)    | AF (`OBS-006` — Settable-toggles Set-vs-Get, fixed dock state; incidental `ANC`-family, `PAIR-003`) |
-|       Date       |                     `___`                           |
+|       Date       |                     2026-09-06                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` |
-|   Test device    | Pixel 7a, Android `___`. **Official Pixel Buds Companion App, Google Play Services enabled** |
-| Video file       | `CAP-039-recording.mp4` — `___` |
+|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+| Video file       | `CAP-039-recording.mp4` — 05:03s, `07:07:17`–`07:12:20` local time |
 | Log file         | `CAP-039-btsnoop_hci.log` — `___`s, `___` packets, `___`–`___` local time |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
 
@@ -48,16 +48,14 @@ results here: `___`
 
 ## Preparation checklist (before recording)
 
-- [ ] Buds already bonded and connect normally. Do **not** "Forget" or re-pair.
-- [ ] Official Pixel Buds Companion App installed and working; version if visible: `___`
-- [ ] Google Play Services **enabled** — carry `CAP-036`'s verification forward as ⚪ ASSUMPTION.
-- [ ] No third-party BLE/GATT tool used.
-- [ ] Bluetooth HCI snoop logging enabled and the phone rebooted.
-- [ ] Video recording with a visible wall-clock overlay ready.
-- [ ] **Note the current ANC mode before recording** (so the Set tap's before/after is known):
-      `___`
-- [ ] Decide in advance which ANC mode you'll tap to (any mode different from the current one is
-      fine — the specific mode doesn't matter, only that a genuine `0x12` Set frame is produced).
+- [x] Buds already bonded and connect normally. Do **not** "Forget" or re-pair.
+- [x] Official Pixel Buds Companion App installed and working.
+- [x] Google Play Services **enabled** — carried `CAP-036`'s verification forward as ⚪ ASSUMPTION.
+- [x] No third-party BLE/GATT tool used.
+- [x] Bluetooth HCI snoop logging enabled and the phone rebooted.
+- [x] Video recording with a visible wall-clock overlay ready.
+- [x] **Note the current ANC mode before recording:** 'Off' mode.
+- [x] Decide in advance which ANC mode you'll tap to: Tapped from 'Off' to 'Noise cancellation'.
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AF)
 
@@ -78,17 +76,17 @@ results here: `___`
 
 | Time (local) | Action / Event | Initiator | Test-ID | Evidence in `CAP-039-btsnoop_hci.log` |
 |---|---|---|---|---|
-| `___` | Start video recording | — | — | — |
-| `___` | **Window 1 (Set)** — ANC mode tapped | User (App) | `ANC`-family | frame `___` |
-| `___` | On-screen mode updates | App (Auto) | — | frame `___` |
-| `___` | **Window 2 start (Get)** — Bluetooth toggled OFF | User (Hardware) | `OBS-006`, `PAIR-003` | frame `___` |
-| `___` | Bluetooth toggled ON | User (Hardware) | `OBS-006` | frame `___` |
-| `___` | Connection established (on-screen) | App/OS (Auto) | `OBS-006` | frame `___` |
-| `___` - `___` | Idle, nothing touched | — | `OBS-006` | frames `___`–`___` |
-| `___` | **Window 2 end** | — | `OBS-006` | frame `___` |
-| `___` | End video recording | — | — | — |
+| `07:07:17` | Start video recording | — | — | — |
+| `07:07:23` | **Window 1 start (Set)** — ANC mode tapped ('Off' to 'Noise cancellation') | User (App) | `ANC`-family | frame `___` |
+| `07:07:23` | On-screen mode updates | App (Auto) | — | frame `___` |
+| `07:07:23` - `07:08:16` | User navigates multiple settings (EQ, In-Ear, Touch, Multipoint). *Note: While not standard protocol, this was to demonstrate the new "non-default" baseline and did not interfere with the ANC Set frame itself.* | User (App) | — | frames `___` |
+| `07:08:16` | **Window 2 start (Get)** — Bluetooth toggled OFF | User (OS) | `OBS-006`, `PAIR-003` | frame `___` |
+| `07:08:20` | Bluetooth toggled ON | User (OS) | `OBS-006` | frame `___` |
+| `07:08:24` | Connection established (on-screen) | App/OS (Auto) | `OBS-006` | frame `___` |
+| `07:08:24` - `07:12:20` | Idle, nothing touched | — | `OBS-006` | frames `___`–`___` |
+| `07:12:20` | **Window 2 end** / End video recording | — | `OBS-006` | frame `___` |
 
-**Contamination log:** `___`
+**Contamination log:** Between Window 1 (ANC Set) and Window 2 (Get), the user navigated through various settings (EQ, In-Ear Detection, Touch Controls, Multipoint) and modified them to establish the non-default baseline. This did not contaminate the ANC Set action itself, which occurred clearly at `07:07:23`. The Buds remained undocked throughout the entire recording.
 
 ## Decode / Analysis
 
