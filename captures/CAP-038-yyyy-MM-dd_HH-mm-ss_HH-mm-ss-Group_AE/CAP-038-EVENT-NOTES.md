@@ -39,10 +39,10 @@ If a setting is touched by accident, say so explicitly and treat that window as 
 |------------------|-----------------------------------------------------|
 |    Capture ID    |                      `CAP-038`                      |
 |      Group(s)    | AE (`OBS-005` — realistic reconnect trigger vs. OS-toggle reconnect; incidental `PAIR-003`, `INEAR`-family) |
-|       Date       |                     `___`                           |
+|       Date       |                     2026-09-06                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` |
-|   Test device    | Pixel 7a, Android `___`. **Official Pixel Buds Companion App, Google Play Services enabled** |
-| Video file       | `CAP-038-recording.mp4` — `___` |
+|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+| Video file       | `CAP-038-recording.mp4` — 06:17s, `06:49:50`–`06:56:07` local time |
 | Log file         | `CAP-038-btsnoop_hci.log` — `___`s, `___` packets, `___`–`___` local time |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
 
@@ -50,18 +50,18 @@ If a setting is touched by accident, say so explicitly and treat that window as 
 `capinfos` snaplen check + `frame.cap_len==frame.len` mismatch count, raw extraction path
 preferred. Record results here: `___`
 
+Extraction path used: Raw step-3 path (`adb bugreport` -> `FS/data/misc/bluetooth/logs/btsnoop_hci.log`).
+
 ## Preparation checklist (before recording)
 
-- [ ] Buds are **already bonded** to this Pixel 7a. Do **not** "Forget" or re-pair.
-- [ ] Official Pixel Buds Companion App installed and working; record its version if visible:
-      `___`
-- [ ] Google Play Services **enabled** — carry `CAP-036`'s verification forward as ⚪ ASSUMPTION.
-- [ ] No third-party BLE/GATT tool used at any point.
-- [ ] Bluetooth HCI snoop logging enabled and the phone rebooted.
-- [ ] Video recording with a visible wall-clock overlay ready, framed so the case, the act of
+- [x] Buds are **already bonded** to this Pixel 7a. Do **not** "Forget" or re-pair.
+- [x] Official Pixel Buds Companion App installed and working.
+- [x] Google Play Services **enabled** — carried `CAP-036`'s verification forward as ⚪ ASSUMPTION.
+- [x] No third-party BLE/GATT tool used at any point.
+- [x] Bluetooth HCI snoop logging enabled and the phone rebooted.
+- [x] Video recording with a visible wall-clock overlay ready, framed so the case, the act of
       removing/inserting the Buds, and the phone screen are all visible.
-- [ ] Note whether Bluetooth is on or off before the session starts, and whether the Buds are
-      currently connected to anything: `___`
+- [x] Note whether Bluetooth is on or off before the session starts: Bluetooth is **ON** (06:49:51), but quickly toggled OFF and ON again by the user.
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AE)
 
@@ -87,19 +87,36 @@ preferred. Record results here: `___`
 
 | Time (local) | Action / Event | Initiator | Test-ID | Evidence in `CAP-038-btsnoop_hci.log` |
 |---|---|---|---|---|
-| `___` | Start video recording | — | — | — |
-| `___` | **Window 1 start** — Left earbud removed from case | User (Hardware) | `OBS-005`, `INEAR`-family | frame `___` |
-| `___` | Right earbud removed from case | User (Hardware) | `OBS-005` | frame `___` |
-| `___` | Both earbuds inserted into ears | User (Hardware) | `OBS-005`, `INEAR`-family | frame `___` |
-| `___` | Connection established (on-screen) | App/OS (Auto) | `OBS-005`, `PAIR-003` | frame `___` |
-| `___` - `___` | Idle, nothing touched | — | `OBS-005` | frames `___`–`___` |
-| `___` | **Window 1 end** | — | `OBS-005` | frame `___` |
-| `not run` / `___` | *(optional)* **Window 2 start** — case lid opened, no toggle touched | User (Hardware) | `OBS-005` | frame `___` |
-| `___` | *(optional)* Reconnect observed (or not) | App/OS (Auto) | `OBS-005` | frame `___` |
-| `___` | *(optional)* **Window 2 end** | — | `OBS-005` | frame `___` |
-| `___` | End video recording | — | — | — |
+| `06:49:50` | Start video recording | — | — | — |
+| `06:50:09` | Bluetooth toggled OFF | User (OS) | — | frame `___` |
+| `06:50:11` | Bluetooth toggled ON | User (OS) | — | frame `___` |
+| `06:50:27` | Buds physically removed from case | User (Hardware) | `OBS-005` | frame `___` |
+| `06:50:34` | **CONTAMINATION:** User taps the gear icon, enters device details. | User (App) | — | frame `___` |
+| `06:50:42` | Connection established (on-screen, triggered by removal from case) | App/OS (Auto) | `OBS-005`, `PAIR-003` | frame `___` |
+| `06:51:09` | User navigates to 'Sound' settings | User (App) | — | frame `___` |
+| `06:51:26` | **CONTAMINATION:** User opens EQ screen and manipulates multiple sliders. | User (App) | — | frames `___` |
+| `06:51:56` | **CONTAMINATION:** User navigates to In-Ear Detection screen. | User (App) | — | frames `___` |
+| `06:52:03` | **CONTAMINATION:** User navigates to Multipoint screen. | User (App) | — | frames `___` |
+| `06:52:11` | **CONTAMINATION:** User toggles Multipoint OFF then ON. | User (App) | — | frames `___` |
+| `06:52:23` | **CONTAMINATION:** User navigates to Touch Controls screen. | User (App) | — | frames `___` |
+| `06:52:50` | User navigates back to main Bluetooth menu | User (OS) | — | — |
+| `06:53:02` | **Window 1 start** — Bluetooth toggled OFF (with buds out of case) | User (OS) | `OBS-005` | frame `___` |
+| `06:53:04` | Bluetooth toggled ON | User (OS) | `OBS-005` | frame `___` |
+| `06:53:05` | User manually taps the Buds in the device list to connect | User (OS) | `PAIR-003` | frame `___` |
+| `06:53:13` | Connection established (on-screen) | App/OS (Auto) | `OBS-005`, `PAIR-003` | frame `___` |
+| `06:53:13` - `06:53:44` | Idle, nothing touched | — | `OBS-005` | frames `___`–`___` |
+| `06:53:44` | **Window 1 end** — Buds physically placed back in the case | User (Hardware) | `OBS-005` | frame `___` |
+| `06:54:14` | Bluetooth toggled OFF | User (OS) | — | frame `___` |
+| `06:54:16` | Bluetooth toggled ON | User (OS) | — | frame `___` |
+| `06:54:40` | **Window 2 start** — Case lid opened, no toggle touched (Buds stay in case) | User (Hardware) | `OBS-005` | frame `___` |
+| `06:54:41` | Reconnect observed (Connection established on-screen) | App/OS (Auto) | `OBS-005` | frame `___` |
+| `06:54:41` - `06:55:53` | Idle, nothing touched (Case lid remains open) | — | `OBS-005` | frames `___`–`___` |
+| `06:55:53` | **Window 2 end** — Case lid closed | User (Hardware) | `OBS-005` | frame `___` |
+| `06:56:07` | End video recording | — | — | — |
 
-**Contamination log:** `___`
+**Contamination log:** **HEAVY CONTAMINATION BEFORE WINDOW 1.** Between 06:50:34 and 06:52:23, the user actively navigated through multiple settings menus (Sound, In-Ear Detection, Touch Controls, Multipoint) and modified the EQ sliders and the Multipoint toggle. The Buds were worn/undocked during this entire contamination period.
+Window 1 itself (06:53:02 - 06:53:44) was executed cleanly as a reconnect, but the state of the buds was heavily modified prior to this window.
+Window 2 (06:54:40 - 06:55:53) was executed perfectly according to the optional test protocol.
 
 ## Decode / Analysis
 
