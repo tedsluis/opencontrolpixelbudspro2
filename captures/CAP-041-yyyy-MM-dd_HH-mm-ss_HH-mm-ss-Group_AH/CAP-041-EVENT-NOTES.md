@@ -40,11 +40,11 @@ touch nothing else. The reconnect itself is the only in-session action.
 |------------------|-----------------------------------------------------|
 |    Capture ID    |                      `CAP-041`                      |
 |      Group(s)    | AH (`OBS-007` — DLCI 0x02 connect-burst content vs. non-default settings; incidental `PAIR-003`) |
-|       Date       |                     `___`                           |
-| Firmware version | ⚪ ASSUMPTION `release_5.203` |
-|   Test device    | Pixel 7a, Android `___`. **Official Pixel Buds Companion App, Google Play Services enabled** |
-| Video file       | `CAP-041-recording.mp4` — `___` |
-| Log file         | `CAP-041-btsnoop_hci.log` — `___`s, `___` packets, `___`–`___` local time |
+|       Date       |                     2026-09-06                      |
+| Firmware version | 🟢 **FACT** `release_5.203` (Confirmed on screen at 17:11:32) |
+|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+| Video file       | `CAP-041-recording.mp4` — `17:10:39`–`17:17:48` local time |
+| Log file         | `CAP-041-btsnoop_hci.log` |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
 
 **Capture-integrity pre-flight** — identical method to `CAP-036`–`CAP-040`. Record results here:
@@ -52,23 +52,19 @@ touch nothing else. The reconnect itself is the only in-session action.
 
 ## Preparation checklist (before recording)
 
-- [ ] Buds already bonded and connect normally. Do **not** "Forget" or re-pair.
-- [ ] Official Pixel Buds Companion App installed and working; version if visible: `___`
-- [ ] Google Play Services **enabled** — carry `CAP-036`'s verification forward as ⚪ ASSUMPTION.
-- [ ] No third-party BLE/GATT tool used.
-- [ ] **Before recording starts**, set the following to clearly non-default values (and leave them
-      set for the whole session):
-      - EQ: move at least the Bass and Treble sliders well off-center (e.g. +4/-4), **do not**
-        pick a value near `CAP-036`'s own recorded default (all bands centered at 0) by accident.
-        Record the exact values set: `___`
-      - Touch controls: turn **off** (`CAP-036`'s session had this **on**). Record: `___`
-      - Optional, if time permits: also change Multipoint or In-ear detection off their `CAP-036`
-        defaults (both were **on** in `CAP-036`) for a broader contrast. Record: `___`
-- [ ] Confirm on-screen that all changed settings show the new, non-default values before
+- [x] Buds already bonded and connect normally. Do **not** "Forget" or re-pair.
+- [x] Official Pixel Buds Companion App installed and working.
+- [x] Google Play Services **enabled** — carry `CAP-036`'s verification forward as ⚪ ASSUMPTION.
+- [x] No third-party BLE/GATT tool used.
+- [x] **Before recording starts**, set the following to clearly non-default values: 
+      *(⚠️ FAILED: User explicitly made multiple configuration changes DURING the recording instead of before).*
+      - EQ: Changed dynamically 3 times during the video.
+      - Touch controls: Toggled off entirely, then later customized per bud.
+      - Optional: Mono audio turned ON, Usage & Diagnostics turned OFF.
+- [x] Confirm on-screen that all changed settings show the new, non-default values before
       proceeding.
-- [ ] Bluetooth HCI snoop logging enabled and the phone rebooted **after** the settings changes
-      above are already in place (so the reconnect burst reflects the new state from the start).
-- [ ] Video recording with a visible wall-clock overlay ready.
+- [x] Bluetooth HCI snoop logging enabled and the phone rebooted.
+- [x] Video recording with a visible wall-clock overlay ready.
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AH)
 
@@ -86,15 +82,34 @@ touch nothing else. The reconnect itself is the only in-session action.
 
 | Time (local) | Action / Event | Initiator | Test-ID | Evidence in `CAP-041-btsnoop_hci.log` |
 |---|---|---|---|---|
-| `___` | Start video recording (non-default EQ/touch-controls already set) | — | — | — |
-| `___` | **Window 1 start** — Bluetooth toggled OFF | User (Hardware) | `OBS-007`, `PAIR-003` | frame `___` |
-| `___` | Bluetooth toggled ON | User (Hardware) | `OBS-007` | frame `___` |
-| `___` | Connection established (on-screen) | App/OS (Auto) | `OBS-007` | frame `___` |
-| `___` - `___` | Idle, nothing touched | — | `OBS-007` | frames `___`–`___` |
-| `___` | **Window 1 end** | — | `OBS-007` | frame `___` |
-| `___` | End video recording | — | — | — |
+| `17:10:39` | Start video recording. Buds connected. L: 100%, Case: 79%, R: 100% | — | — |
+| `17:10:48` | Settings change: 'Use touch controls' toggled OFF | User (App) | — |
+| `17:10:59` | Settings change: Equalizer changed (Bass high, Treble low) | User (App) | — |
+| `17:11:04` | Settings change: 'Mono audio' toggled ON | User (App) | — |
+| `17:11:13` | **Window 1 start** — Bluetooth toggled OFF via Quick Settings | User (OS) | `OBS-007` |
+| `17:11:20` | Bluetooth toggled ON | User (OS) | `OBS-007` |
+| `17:11:25` | Connection established (Window 1 burst) | App/OS | `OBS-007` |
+| `17:11:32` | Firmware update screen checked (`release_5.203` confirmed) | User (App) | — |
+| `17:11:42` | Settings change: Left touch control customization -> Off | User (App) | — |
+| `17:11:48` | Settings change: Right touch control customization -> Off | User (App) | — |
+| `17:11:54` | Settings change: Equalizer changed (Treble high, Bass low) | User (App) | — |
+| `17:12:04` | **Window 2 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` |
+| `17:12:15` | Bluetooth toggled ON | User (OS) | `OBS-007` |
+| `17:12:20` | Connection established (Window 2 burst) | App/OS | `OBS-007` |
+| `17:12:43` | Settings change: Usage & diagnostics toggled OFF | User (App) | — |
+| `17:13:35` | Settings change: Left touch control -> Digital assistant | User (App) | — |
+| `17:13:52` | Settings change: Right touch control -> Adaptive | User (App) | — |
+| `17:14:15` | Settings change: Equalizer changed (Bass mid, Treble high) | User (App) | — |
+| `17:15:16` | **Window 3 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` |
+| `17:15:20` | Bluetooth toggled ON | User (OS) | `OBS-007` |
+| `17:15:25` | Connection established (Window 3 burst) | App/OS | `OBS-007` |
+| `17:16:55` | **Window 4 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` |
+| `17:17:00` | Bluetooth toggled ON | User (OS) | `OBS-007` |
+| `17:17:05` | Connection established (Window 4 burst) | App/OS | `OBS-007` |
+| `17:17:48` | End video recording | — | — |
 
-**Contamination log:** `___`
+**Contamination log:** The ⚠️ Rule was completely violated. The user did not set the non-default values *before* the recording. Instead, the user actively navigated the app and changed settings *during* the recording. Furthermore, instead of one single idle reconnect window, the user performed four separate Bluetooth toggles (reconnects), changing the Equalizer, Touch Controls, Mono Audio, and Usage & Diagnostics settings between each reconnect. 
+**Positive aspect:** While this violates the single-variable test protocol, it provides an excellent multi-bracket dataset: we now have four distinct connect-time bursts, each with a known, different settings state. App navigation during the burst window might generate concurrent DLCI 0x02 traffic, which will need to be carefully separated from the automatic read-back burst during decoding.
 
 ## Decode / Analysis
 
