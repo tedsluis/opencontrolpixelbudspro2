@@ -37,10 +37,10 @@ across multiple reconnects.
 |------------------|-----------------------------------------------------|
 |    Capture ID    |                      `CAP-040`                      |
 |      Group(s)    | AG (`PRIV-001` — DLCI 0x08 unmapped Get-code correlation; incidental `PAIR-003`, `BATT`-family) |
-|       Date       |                     `___`                           |
+|       Date       |                     2026-09-06                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` |
-|   Test device    | Pixel 7a, Android `___`. **Official Pixel Buds Companion App, Google Play Services enabled** |
-| Video file       | `CAP-040-recording.mp4` — `___` |
+|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+| Video file       | `CAP-040-recording.mp4` — 24:10s, `07:28:00`–`07:52:10` local time |
 | Log file         | `CAP-040-btsnoop_hci.log` — `___`s, `___` packets, `___`–`___` local time |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
 
@@ -49,23 +49,16 @@ across multiple reconnects.
 
 ## Preparation checklist (before recording)
 
-- [ ] Buds already bonded and connect normally. Do **not** "Forget" or re-pair.
-- [ ] Official Pixel Buds Companion App installed and working; version if visible: `___`
-- [ ] Google Play Services **enabled** — carry `CAP-036`'s verification forward as ⚪ ASSUMPTION.
-- [ ] No third-party BLE/GATT tool used.
-- [ ] Bluetooth HCI snoop logging enabled and the phone rebooted.
-- [ ] Video recording with a visible wall-clock overlay ready, framed so the on-screen
+- [x] Buds already bonded and connect normally. Do **not** "Forget" or re-pair.
+- [x] Official Pixel Buds Companion App installed and working.
+- [x] Google Play Services **enabled** — carry `CAP-036`'s verification forward as ⚪ ASSUMPTION.
+- [x] No third-party BLE/GATT tool used.
+- [x] Bluetooth HCI snoop logging enabled and the phone rebooted.
+- [x] Video recording with a visible wall-clock overlay ready, framed so the on-screen
       Left/Right/Case battery percentages are legible at every reconnect.
-- [ ] **Record the starting on-screen battery values** (Left/Right/Case) before the session: `___`
-- [ ] Decide which known-changing value to bracket (pick one, don't try both in one session):
-      - **Option A (battery discharge)** — needs a genuinely non-trivial existing charge
-        difference between Left/Right/Case, or enough session time for one to visibly tick down;
-        opportunistic, cannot be forced on demand.
-      - **Option B (case dock count/state)** — reconnect repeatedly while deliberately varying
-        which of Left/Right/Case is docked at each reconnect (e.g. only Left docked, only Right
-        docked, both docked, both out) — forceable on demand, recommended default if no
-        convenient battery gap exists.
-      Chosen option: `___`
+- [x] **Record the starting on-screen battery values** (Left/Right/Case) before the session: Left: 95%, Case: 85%, Right: 100%. *(Note: These values remain exactly the same throughout the entire 24-minute video).*
+- [x] Decide which known-changing value to bracket:
+      Chosen option: **Option B (case dock count/state)**. *Note: User execution deviated from the protocol's 4-state sequence, opting for a 2-state (Both Docked vs Both Undocked) high-repetition loop instead.*
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AG)
 
@@ -90,15 +83,124 @@ across multiple reconnects.
 
 | Time (local) | Action / Event | On-screen L/R/Case | Test-ID | Evidence in `CAP-040-btsnoop_hci.log` |
 |---|---|---|---|---|
-| `___` | Start video recording | `___`/`___`/`___` | — | — |
-| `___` | **Repeat/bracket 1 start** | `___`/`___`/`___` | `PRIV-001`, `PAIR-003` | frame `___` |
-| `___` | Connection established | `___`/`___`/`___` | `PRIV-001` | frame `___` |
-| `___` | **Repeat/bracket 1 end** | `___`/`___`/`___` | `PRIV-001` | frame `___` |
-| `___` | **Repeat/bracket 2 start** | `___`/`___`/`___` | `PRIV-001`, `PAIR-003` | frame `___` |
-| `___` | Connection established | `___`/`___`/`___` | `PRIV-001` | frame `___` |
-| `___` | **Repeat/bracket 2 end** | `___`/`___`/`___` | `PRIV-001` | frame `___` |
-| `___` | *(repeat rows as needed for 3/4)* | | | |
-| `___` | End video recording | `___`/`___`/`___` | — | — |
+*Note: Because battery percentages remained static (95/85/100) for the entire duration, the only bracketed variable is the physical Dock State. The user repeated a specific cycle approximately 15 times. The cycle consists of: Auto-Connect via Case Open (Docked) -> App Connect (Undocked) -> App Connect (Docked) -> Case Close.*
+
+| Time (local) | Action / Event | Dock State | Test-ID | Evidence in `CAP-040-btsnoop_hci.log` |
+|---|---|---|---|---|
+| `07:28:00` | Start video recording | Unknown | — | — |
+| `07:28:16` | User navigates to Device Details | — | — | — |
+| `07:28:28` | Initial connection established | Undocked | `PRIV-001` | frame `___` |
+| `07:28:36` | Buds placed in case | Docked | — | — |
+| `07:28:40` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:28:44` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:29:10` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:29:32` | Case opened | Docked | `PRIV-001` | frame `___` |
+| `07:29:46` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:29:50` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:30:26` | Buds removed from case | Undocked | — | — |
+| `07:30:33` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:30:35` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:31:13` | Buds placed in case | Docked | — | — |
+| `07:31:21` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:31:34` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:31:49` | Buds removed from case | Undocked | — | — |
+| `07:31:54` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:31:56` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:32:27` | Buds placed in case | Docked | — | — |
+| `07:32:32` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:32:34` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:33:04` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:33:17` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:33:37` | Buds removed from case | Undocked | — | — |
+| `07:33:43` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:33:45` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:34:15` | Buds placed in case | Docked | — | — |
+| `07:34:24` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:34:26` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:34:52` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:35:04` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:35:25` | Buds removed from case | Undocked | — | — |
+| `07:35:32` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:35:34` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:36:03` | Buds placed in case | Docked | — | — |
+| `07:36:10` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:36:12` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:36:38` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:36:51` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:37:11` | Buds removed from case | Undocked | — | — |
+| `07:37:18` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:37:20` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:37:48` | Buds placed in case | Docked | — | — |
+| `07:37:54` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:37:55` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:38:22` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:38:34` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:38:52` | Buds removed from case | Undocked | — | — |
+| `07:38:58` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:39:00` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:39:28` | Buds placed in case | Docked | — | — |
+| `07:39:35` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:39:36` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:40:02` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:40:14` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:40:35` | Buds removed from case | Undocked | — | — |
+| `07:40:42` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:40:43` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:41:12` | Buds placed in case | Docked | — | — |
+| `07:41:19` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:41:20` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:41:46` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:41:58` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:42:20` | Buds removed from case | Undocked | — | — |
+| `07:42:26` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:42:28` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:42:56` | Buds placed in case | Docked | — | — |
+| `07:43:03` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:43:05` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:43:30` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:43:43` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:44:04` | Buds removed from case | Undocked | — | — |
+| `07:44:11` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:44:13` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:44:41` | Buds placed in case | Docked | — | — |
+| `07:44:48` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:44:50` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:45:15` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:45:27` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:45:48` | Buds removed from case | Undocked | — | — |
+| `07:45:55` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:45:57` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:46:25` | Buds placed in case | Docked | — | — |
+| `07:46:32` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:46:34` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:46:59` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:47:11` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:47:32` | Buds removed from case | Undocked | — | — |
+| `07:47:38` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:47:40` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:48:09` | Buds placed in case | Docked | — | — |
+| `07:48:15` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:48:17` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:48:42` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:48:54` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:49:15` | Buds removed from case | Undocked | — | — |
+| `07:49:22` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:49:23` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:49:52` | Buds placed in case | Docked | — | — |
+| `07:49:59` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:50:01` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:50:26` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:50:38` | Case opened (auto connect) | Docked | `PRIV-001` | frame `___` |
+| `07:50:58` | Buds removed from case | Undocked | — | — |
+| `07:51:04` | Tapped 'Disconnect' in App | Undocked | — | frame `___` |
+| `07:51:06` | Tapped 'Connect' in App | Undocked | `PRIV-001` | frame `___` |
+| `07:51:34` | Buds placed in case | Docked | — | — |
+| `07:51:41` | Tapped 'Disconnect' in App | Docked | — | frame `___` |
+| `07:51:43` | Tapped 'Connect' in App | Docked | `PRIV-001` | frame `___` |
+| `07:52:09` | Case closed (auto disconnect) | Docked | — | frame `___` |
+| `07:52:10` | End video recording | — | — | — |
+
+**Contamination log:** The execution deviated from the suggested "Option B" protocol in two ways. First, the user did not test intermediate states (e.g., "only Left docked" or "only Right docked"); the test alternated strictly between "both docked" and "both out". Second, the user utilized the Pixel Buds app's "Connect/Disconnect" UI buttons for many of the reconnects, rather than the OS-level Bluetooth toggle. While this provides a huge volume of "Both Docked" vs. "Both Undocked" samples, the reliance on the App UI for reconnection is a slight methodological deviation from earlier baselines like `CAP-036`.
 
 **Contamination log:** `___`
 
