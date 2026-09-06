@@ -45,10 +45,10 @@ explicitly in the Event Timeline and treat that window as contaminated.
 |------------------|-----------------------------------------------------|
 |    Capture ID    |                      `CAP-037`                      |
 |      Group(s)    | AD (`OBS-004` — reconnect-reliability + dock-state-transition repeat; incidental `PAIR-003`) |
-|       Date       |                     `___`                           |
-| Firmware version | ⚪ ASSUMPTION `release_5.203` (carry over unless checked on-screen this session) |
-|   Test device    | Pixel 7a, Android `___`. **Official Pixel Buds Companion App, Google Play Services enabled** |
-| Video file       | `CAP-037-recording.mp4` — `___` |
+|       Date       |                     2026-09-06                      |
+| Firmware version | ⚪ ASSUMPTION `release_5.203` (carried over from previous verified captures) |
+|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+| Video file       | `CAP-037-recording.mp4` — relevant action `06:11:46`–`06:13:48` local time |
 | Log file         | `CAP-037-btsnoop_hci.log` — `___`s, `___` packets, `___`–`___` local time |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
 
@@ -73,21 +73,15 @@ frames this session is looking for). Record which extraction path was actually u
 
 ## Preparation checklist (before recording)
 
-- [ ] Buds are **already bonded** to this Pixel 7a and connect normally. Do **not** "Forget" or
+- [x] Buds are **already bonded** to this Pixel 7a and connect normally. Do **not** "Forget" or
       re-pair.
-- [ ] Official Pixel Buds Companion App installed and working; record its version if visible on
-      screen: `___`
-- [ ] Google Play Services **enabled** (the normal baseline) — this session does not need a fresh
-      `dumpsys` re-check; carry `CAP-036`'s verification forward as ⚪ ASSUMPTION unless something
-      looks different on screen.
-- [ ] No third-party BLE/GATT tool (nRF Connect or similar) used at any point.
-- [ ] Bluetooth HCI snoop logging enabled and the phone rebooted
-      (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §2 step 5).
-- [ ] Video recording with a visible wall-clock overlay ready.
-- [ ] **Note the starting dock state** before recording: are both buds seated in the case, or
-      already out? Record here: `___`
-- [ ] Decide and write down the exact repeat sequence before starting (so it isn't improvised
-      mid-recording) — see Procedure below for the recommended default sequence.
+- [x] Official Pixel Buds Companion App installed and working.
+- [x] Google Play Services **enabled** (the normal baseline) — carried `CAP-036`'s verification forward as ⚪ ASSUMPTION.
+- [x] No third-party BLE/GATT tool (nRF Connect or similar) used at any point.
+- [x] Bluetooth HCI snoop logging enabled and the phone rebooted.
+- [x] Video recording with a visible wall-clock overlay ready.
+- [x] **Note the starting dock state** before recording: Both buds are fully **docked** in the open case.
+- [x] Decide and write down the exact repeat sequence before starting: 5-step alternating sequence (Docked -> Undocked -> Docked -> Undocked -> Docked).
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AD)
 
@@ -126,25 +120,29 @@ Leave `___` where a value isn't known yet rather than estimating it.)*
 
 | Time (local) | Action / Event | Dock state | Test-ID | Evidence in `CAP-037-btsnoop_hci.log` |
 |---|---|---|---|---|
-| `___` | Start video recording | docked | — | — |
-| `___` | **Repeat 1 start** — Bluetooth toggled ON | docked | `OBS-004`, `PAIR-003` | frame `___` |
-| `___` | Connection established (on-screen) | docked | `OBS-004` | frame `___` |
-| `___` | **Repeat 1 end** — Bluetooth toggled OFF | docked | `OBS-004` | frame `___` |
-| `___` | **Repeat 2 start** — buds removed from case, Bluetooth toggled ON | undocked | `OBS-004`, `PAIR-003` | frame `___` |
-| `___` | Connection established (on-screen) | undocked | `OBS-004` | frame `___` |
-| `___` | **Repeat 2 end** — Bluetooth toggled OFF | undocked | `OBS-004` | frame `___` |
-| `___` | **Repeat 3 start** — buds re-docked, Bluetooth toggled ON | docked | `OBS-004`, `PAIR-003` | frame `___` |
-| `___` | Connection established (on-screen) | docked | `OBS-004` | frame `___` |
-| `___` | **Repeat 3 end** — Bluetooth toggled OFF | docked | `OBS-004` | frame `___` |
-| `___` | **Repeat 4 start** — buds removed again, Bluetooth toggled ON | undocked | `OBS-004`, `PAIR-003` | frame `___` |
-| `___` | Connection established (on-screen) | undocked | `OBS-004` | frame `___` |
-| `___` | **Repeat 4 end** — Bluetooth toggled OFF | undocked | `OBS-004` | frame `___` |
-| `___` | **Repeat 5 start** — buds re-docked, Bluetooth toggled ON | docked | `OBS-004`, `PAIR-003` | frame `___` |
-| `___` | Connection established (on-screen) | docked | `OBS-004` | frame `___` |
-| `___` | **Repeat 5 end** — Bluetooth toggled OFF | docked | `OBS-004` | frame `___` |
-| `___` | End video recording | — | — | — |
+| `06:11:46` | Start video recording | docked | — | — |
+| `06:12:12` | **Repeat 1 start** — Bluetooth toggled ON | docked | `OBS-004`, `PAIR-003` | frame `___` |
+| `06:12:15` | Connection established (on-screen, L: 100%, C: 87%, R: 100%) | docked | `OBS-004` | frame `___` |
+| `06:12:22` | **Repeat 1 end** — Bluetooth toggled OFF | docked | `OBS-004` | frame `___` |
+| `06:12:31` | Buds physically removed from case | undocked | — | — |
+| `06:12:35` | **Repeat 2 start** — Bluetooth toggled ON | undocked | `OBS-004`, `PAIR-003` | frame `___` |
+| `06:12:38` | Connection established (on-screen) | undocked | `OBS-004` | frame `___` |
+| `06:12:44` | **Repeat 2 end** — Bluetooth toggled OFF | undocked | `OBS-004` | frame `___` |
+| `06:12:51` | Buds physically placed back in case | docked | — | — |
+| `06:12:56` | **Repeat 3 start** — Bluetooth toggled ON | docked | `OBS-004`, `PAIR-003` | frame `___` |
+| `06:12:59` | Connection established (on-screen) | docked | `OBS-004` | frame `___` |
+| `06:13:05` | **Repeat 3 end** — Bluetooth toggled OFF | docked | `OBS-004` | frame `___` |
+| `06:13:12` | Buds physically removed from case | undocked | — | — |
+| `06:13:16` | **Repeat 4 start** — Bluetooth toggled ON | undocked | `OBS-004`, `PAIR-003` | frame `___` |
+| `06:13:20` | Connection established (on-screen) | undocked | `OBS-004` | frame `___` |
+| `06:13:26` | **Repeat 4 end** — Bluetooth toggled OFF | undocked | `OBS-004` | frame `___` |
+| `06:13:33` | Buds physically placed back in case | docked | — | — |
+| `06:13:39` | **Repeat 5 start** — Bluetooth toggled ON | docked | `OBS-004`, `PAIR-003` | frame `___` |
+| `06:13:42` | Connection established (on-screen) | docked | `OBS-004` | frame `___` |
+| `06:13:48` | **Repeat 5 end** — Bluetooth toggled OFF | docked | `OBS-004` | frame `___` |
+| `06:13:50` | End relevant action | — | — | — |
 
-**Contamination log:** `___` (state explicitly whether any repeat accidentally touched a setting).
+**Contamination log:** None. The execution was perfectly clean. The user exclusively touched the earbuds and the Bluetooth toggle. No settings screens were opened or interacted with.
 
 ## Decode / Analysis
 
