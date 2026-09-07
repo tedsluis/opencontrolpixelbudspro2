@@ -656,7 +656,8 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
 Five candidate mechanisms, in priority order for implementation. **These do
 not all share one update model** — Options A/B (the Fast Pair mechanisms, on
 the official Message Stream, DLCI 0x04) are event-driven (sent on connect or
-on value change, per the official spec); Option C (HFP, on DLCI 0x09) instead
+on value change, per the official spec); Option C (HFP, on a session-local RFCOMM channel —
+most commonly observed at DLCI 0x0c, see below) instead
 **pushes periodically** regardless of whether the value changed —
 `CAP-001-FINDINGS.md` §3 observed `AT+BIEV=2,100` repeating on a roughly
 6–7 second cadence throughout the session, not just on change. An
@@ -810,14 +811,22 @@ event-observation coroutines.
 #### Option C — HFP AT commands (`AT+BIEV` HF Indicator #2, `AT+CIND` `battchg`)
 
 - **Status**: 🟢 FACT — confirmed active for this device (`CAP-001-FINDINGS.md`
-  §3), on channel 4 / **DLCI 0x09**. **Note (2026-08-23):** this "channel 4" is a *different*
-  logical channel from DLCI 0x08's "channel 4" (the private envelope, §2.3) — both DLCIs share
-  one RFCOMM multiplexer session (same ACL handle/L2CAP CID, independently confirmed via
-  `tshark`), but each side of the connection independently assigned its own service to server
-  channel 4, disambiguated by RFCOMM's direction bit (phone-initiated → DLCI 0x08, Buds-initiated
-  → DLCI 0x09). This is standard, spec-correct RFCOMM behavior, not a numbering conflict — see
-  `CAP-001-FINDINGS.md` §2 for the full phone-init/Buds-init disambiguation. Two
-  simultaneously-active HFP mechanisms
+  §3). **DLCI is session-local, not fixed — corrected 2026-09-07 (`AUDIT_REPORT_2026-09-07.md`
+  §2.1).** Originally documented as a fixed "DLCI 0x09" based on `CAP-001` alone; a cross-capture
+  check found HFP's AT-command traffic (`AT+CIND`/`AT+BIEV`) landing on **DLCI 0x0c** in every one of
+  four further independent sessions checked (`CAP-004`, `CAP-007`, `CAP-033`, `CAP-042`) — `CAP-001`'s
+  `0x09` was that session's own local value, never independently reconfirmed since, consistent with
+  this project's already-established finding that RFCOMM DLCI numbers are session-local (
+  `CAP-001-FINDINGS.md` §2), the same treatment already given to DLCI 0x02/0x04's own renumbering.
+  **Note (2026-08-23), on `CAP-001`'s own session specifically:** that session's HFP channel ("channel
+  4") was a *different* logical channel from DLCI 0x08's "channel 4" (the private envelope, §2.3) —
+  both DLCIs share one RFCOMM multiplexer session (same ACL handle/L2CAP CID, independently confirmed
+  via `tshark`), but each side of the connection independently assigned its own service to server
+  channel 4, disambiguated by RFCOMM's direction bit (phone-initiated → DLCI 0x08, Buds-initiated →
+  DLCI 0x09 in that session). This is standard, spec-correct RFCOMM behavior, not a numbering
+  conflict — see `CAP-001-FINDINGS.md` §2 for the full phone-init/Buds-init disambiguation; it
+  explains why `CAP-001`'s own value differs from later sessions', not a contradiction of the
+  session-local correction above. Two simultaneously-active HFP mechanisms
   observed: `AT+BIEV=2,<0-100>` (HF Indicator #2, Bluetooth-spec-assigned as
   Battery Level) and the older `AT+CIND?` `battchg` indicator (0–5 scale) —
   these **disagreed** in `CAP-001` (`battchg=3` ≈60% vs. `AT+BIEV=2,100` =
@@ -1868,6 +1877,16 @@ leaving them buried in prose elsewhere.
       handling the Buds (matches `CAP-027-FINDINGS.md` §4's established Buds-initiated
       Notify-without-Set mechanism for `TOUCH-007`), but not video-confirmed (camera was on the
       phone screen, not the buds/ears) — could equally be some other still-unidentified trigger.
+      **Second candidate added 2026-09-07 (`AUDIT_REPORT_2026-09-07.md` §1.1), code-evidenced but not
+      wire-tested:** `REVERSE_ENGINEERING.md`'s `qhr` entry documents `qhr` field 13 (`ANC_STATE`-typed,
+      alongside the already-FACT field 12/`qht`) as reachable from `fye.java`'s `a(qhs)` method with
+      `ANC_STATE_ACTIVE`/`ANC_STATE_AWARE` — a binary Active↔Aware ANC-state write through
+      `libmaestro`'s own DLCI 0x02 `WriteSetting` channel, distinct from DLCI 0x04's official Message
+      Stream. If something (a gesture or otherwise) writes ANC state via this DLCI-0x02 path and the
+      resulting hardware-side change is independently reported out via DLCI 0x04's Notify, that would
+      produce exactly this pattern without requiring a press-and-hold explanation. Not proposed as a
+      resolution — a second, un-preferred candidate to check a future session against (does a `qhr`
+      field-13 write on DLCI 0x02 immediately precede an unexplained DLCI-0x04 Notify?).
 - [ ] **Added 2026-09-06, `CAP-041-FINDINGS.md` §4 (Group AH, `OBS-007`):** a recurring 2-field
       sub-message inside DLCI 0x02's connect-time burst (first flagged, structurally, in
       `CAP-036-FINDINGS.md` §12.6) holds a constant value across an entire session that happens to
@@ -1884,6 +1903,27 @@ leaving them buried in prose elsewhere.
       `ARCHITECTURE.md` §3.1's "does `libmaestro` carry a settings-state read-back" question, but
       only at the length level: a full byte-for-byte content diff of the burst across these states
       was not completed (out of that session's time/token budget) and remains open.
+- [ ] **Added 2026-09-07 (`AUDIT_REPORT_2026-09-07.md` Q4, cross-checked in
+      `EXTERNAL_REVIEW_VALIDATION_2026-09-07.md`), 🟡 HYPOTHESIS, not FACT — which specific
+      `maestro_pw.*` service(s) fire inside DLCI 0x02's connect-time burst (above).** `fux.java`'s
+      service catalog (`case 8`, `fux.java:55-66`) confirms `GetSoftwareInfo`/`GetHardwareInfo`/
+      `SubscribeRuntimeInfo`/`SetWallclock`/`WriteSetting`/`ReadSetting`/`SubscribeToSettingsChanges`/
+      `SubscribeToOobeActions` are real, callable `maestro_pw.Maestro` methods, and `fxm.java:55`
+      confirms one concrete call site literally building a `GetSoftwareInfo` invocation
+      (`"maestro_pw.Maestro"`, `"GetSoftwareInfo"`), invoked 4× from `fxm.i()`
+      (`fxm.java:78-117`, `"Start fetch SoftwareInfo"`), itself called from a `"Change primary route
+      to %d"` lifecycle hook (`frb.java:83`) that is plausibly, but not confirmedly, connect-adjacent.
+      **This is a static service catalog plus one plausible trigger — it does not establish that these
+      are the specific RPCs inside `CAP-036`/`CAP-041`'s characterized ~44-46-frame burst**, as opposed
+      to available-but-unfired methods or a different trigger entirely; no byte-level or frame-count
+      correlation has been done. An earlier external review (`ANTIGRAVITY_AUDIT_REPORT_2026-09-07.md`)
+      cited the same two files and labeled this connection `🟢 FACT`, recommending an ADR — that
+      promotion was rejected on cross-validation (`EXTERNAL_REVIEW_VALIDATION_2026-09-07.md`) as an
+      evidentiary overclaim, independent of a separate governance problem with how it was submitted
+      (an AI report self-assigning FACT status, which `AGENTS.md` §6/`DECISIONS.md` ADR-017 do not
+      permit); recorded here at the HYPOTHESIS level the evidence actually supports. Next step
+      unchanged from `CAP-041-FINDINGS.md` §6's own recommendation: a byte-for-byte content diff of the
+      burst across differing settings states.
 - [ ] **Added 2026-09-06, `CAP-042-FINDINGS.md` §5 (Group AI, `OBS-002`):** across a genuinely idle,
       ~37m39s, app-backgrounded session, the DLCI 0x02/0x04/0x08 periodic push recurred only twice
       (at ~16m and ~35m in — far sparser than `CAP-036`'s several-per-few-minutes sample with the
@@ -1894,6 +1934,14 @@ leaving them buried in prose elsewhere.
       while the app's own screen is active) rather than a Buds-autonomous or link-supervision-level
       mechanism — consistent with the data, not established by it; the natural next capture toggles
       the app between foreground/background mid-session with everything else held constant.
+      **Refinement proposed 2026-09-07 (`EXTERNAL_REVIEW_VALIDATION_2026-09-07.md`, cross-validating
+      an external review), 🟡 HYPOTHESIS, contingent on `AUDIT_REPORT_2026-09-07.md` §1.0's own
+      still-unconfirmed premise that DLCI 0x04/0x08 are GMS-implemented:** if that premise holds, the
+      companion app's own foreground state could only *indirectly* trigger this push, via some IPC
+      call into GMS's Fast Pair/Nearby component, rather than the app polling the Buds directly — no
+      such IPC call site was found in the companion app's decompiled code (checked, `AUDIT_REPORT_2026-09-07.md`
+      §1.0), so this refines, without resolving, the open question above: is the trigger
+      app-foreground-driven at all (via either path), or something else entirely?
 - [ ] **Added 2026-09-06, `CAP-042-FINDINGS.md` §6:** `CAP-027-FINDINGS.md`'s "streaming
       specifically breaks the [4-channel] sync" reading (`DESKRESEARCH_FINDINGS.md` 2026-09-04
       round 2) does not hold as stated — `CAP-042`'s fully idle, no-streaming session *also* shows
@@ -2111,6 +2159,10 @@ leaving them buried in prose elsewhere.
 | 2026-08-30 | Remediation from a 2026-08-30 project-wide documentation audit (maintainer-directed fixes, no new FACT promotion or ADR): **§2.2a** — added `CAP-033` as a fourth independent, SDP-service-name-level corroboration of DLCI 0x02's "MAESTRO APP" channel-ownership finding. **§2.3** — added a 2026-08-30 update recording `CAP-033`'s SDP-browse naming of DLCI 0x08 ("GSND CONTROL"), DLCI 0x0a ("GSND AUDIO"), DLCI 0x06 ("DEBUG APP"), and DLCI 0x12 ("BTIS") — new leads, 🟡 HYPOTHESIS, explicitly not a resolution of DLCI 0x08's identity. **§6** — added a matching dated update to the DLCI-0x08-ownership open item | Claude (AI), audit-remediation task, maintainer-directed |
 | 2026-09-03 | **§4.2 EQ** — `FrameEncoder`/`FrameDecoder` implementation explicitly unblocked (`DECISIONS.md` ADR-020, maintainer-directed, closing a gap a 2026-09-02 documentation audit found: EQ's protocol knowledge was already fully FACT per `ADR-016`, but no ADR had ever explicitly cleared `ARCHITECTURE.md` §5's implementation gate for it, unlike ANC/`ADR-009` and Find My Buds/`ADR-011`). No new protocol knowledge; field-16-vs-18 and gain-unit questions remain open | Claude (AI), maintainer-directed sign-off session |
 | 2026-09-03 | Remediation from a 2026-09-02 documentation audit (mechanical fixes, no new FACT promotion or ADR beyond ADR-020 above): **§4.3 Option A** — the "shown ≥8s, auto-hidden after 20s" Battery Notification visibility-timing claim downgraded from unqualified `[OFFICIAL-SPEC]` to 🟡 HYPOTHESIS after two direct re-fetches of the official `batterynotification` extension page found no matching text; the byte-layout table in the same section was re-confirmed exactly and is unaffected | Claude (AI), audit-remediation task, maintainer-directed |
+| 2026-09-04 | **§4.1 "Get ANC state" (`0x11`) promoted to 🟢 FACT**, in two steps, both maintainer-approved: opcode identity first (`CAP-036`, `DECISIONS.md` ADR-021 — the first-ever wire observation of this spec-documented opcode), then trigger-reliability (`DECISIONS.md` ADR-022 — 17 occurrences across 10 independent captures, zero misses). **§0.1** — a documentation-gap fix backfilling DLCI 0x04 Device Information codes `0x01`/`0x02` (Model ID, rotating BLE address) that had reached FACT back on 2026-08-10 but were never copied in. **§4.3 Option A/B** — added a device-attribution advance (a DLCI 0x04 "BLE address updated" value tied to 407 live BLE advertisements in one session) and a cross-channel timing-synchronization extension to DLCI 0x02, both 🟡 HYPOTHESIS | Claude (AI), capture-analysis + maintainer-directed sign-off sessions |
+| 2026-09-05 | **Two further maintainer-approved FACT promotions, each its own ADR**: **§4.3 Option C** — HFP battery reporting (`AT+BIEV`) confirmed independent of GMS/the companion app and confirmed working on GrapheneOS itself (`DECISIONS.md` ADR-023, retroactive sign-off). **§4.1** — the "Notify ANC state" `Settable-toggles` byte confirmed as a dock-state indicator (`0x00` = both earbuds docked, `0xe8` otherwise), video-verified across 7 of 7 checked samples with zero counter-examples (`DECISIONS.md` ADR-024) | Claude (AI), maintainer-directed sign-off sessions |
+| 2026-09-06 | **Synced with a 6-capture batch (`CAP-037`–`CAP-042`), the first purpose-built repeats of `CAP-036`'s own questions.** No new FACT promotions — this batch's own role was large-scale replication of already-FACT findings (`CAP-037`: 26/26 ADR-022 replications and 26/26 ADR-024 dock-state matches in one session; `CAP-039`: 10 same-session Set-vs-Get samples confirming ADR-024's trigger-independence) plus several new 🔴 open items added to §6: DLCI 0x08's 7 unmapped Get-shaped codes still unattributed (`CAP-040`, inconclusive — the session's own procedure left N=1 per code); the in-app "Connect"/"Disconnect" buttons producing zero wire signal (`CAP-040`); a chandle-level `Settable-toggles` anomaly with no preceding Get (`CAP-037`); a `Settable-toggles=0x00` reading immediately after physical case-removal, in tension with ADR-024 (`CAP-038`, not resolved); two Get-less/Set-less ANC Notify frames (`CAP-038`); DLCI 0x02's connect-time burst shown length-invariant across 3 differing settings states, content-level diff still pending (`CAP-041`); and the periodic DLCI 0x02/0x04/0x08 push shown far sparser over a genuinely idle ~37-minute window than `CAP-036`'s short sample suggested, with HFP dropping out of the cross-channel sync entirely (`CAP-042`) | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
+| 2026-09-07 | **Remediation from a project-wide audit + cross-validation cycle** (`AUDIT_REPORT_2026-09-07.md`, `ANTIGRAVITY_AUDIT_REPORT_2026-09-07.md`, `EXTERNAL_REVIEW_VALIDATION_2026-09-07.md` — all three retired after processing, see `CHANGELOG.md`): backfilled this table's own 2026-09-04/05/06 gap (this row's three predecessors); **§4.3 Option C** corrected — HFP's own DLCI documented as a fixed `0x09` (`CAP-001`-only) but the clear majority of later captures (`CAP-004`/`CAP-007`/`CAP-033`/`CAP-042`) land it on `0x0c` — now documented as session-local, matching how DLCI 0x02/0x04 are already treated; **§6** — added `qhr` field 13 (a second, code-evidenced DLCI-0x02 ANC-state write path) as a named candidate to `CAP-038-FINDINGS.md` §5's open item, and added an app-foreground-vs-IPC refinement to `CAP-042-FINDINGS.md` §5's open item. No new FACT promotion; **`DECISIONS.md` ADR-025** separately records that GMS reverse-engineering is out of scope, since no DLCI 0x04/0x08 transport code exists anywhere in the companion app's own decompiled source | Claude (AI), audit-remediation task, maintainer-directed |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

@@ -289,6 +289,19 @@ FACT and implementable; DLCI 0x08's envelope shape is 🟢 FACT and its codec is
 implementable, but *acting on* payloads whose Group/Code is unmapped is not —
 those surface as `UnidentifiedFrame` instead (§7).
 
+**No decompiled reference exists for DLCI 0x04/0x08, by design, not by gap.** Exhaustive review of
+the companion app's own decompiled source found no code anywhere constructing or parsing DLCI 0x04's
+Fast Pair Message Stream frames or DLCI 0x08's private envelope — both appear to be implemented
+entirely inside Google Play Services rather than the companion app itself, and GMS reverse-engineering
+is explicitly out of scope for this project (`DECISIONS.md` ADR-025). This is not a blocker: this
+project's own evidentiary chain for DLCI 0x04 has never depended on companion-app code — every 🟢 FACT
+promotion for it traces to wire captures matched against the official, public Fast Pair specification
+alone (`PROTOCOL.md` §4.1), and `FrameEncoder`/`FrameDecoder` for ANC (ADR-009), Find My Buds
+Left/Right (ADR-011), and EQ (ADR-020) were all already implemented this same way, with zero APK code
+cross-reference. `FrameEncoder`/`FrameDecoder` work for DLCI 0x04/0x08 proceeds **clean-room, from
+capture evidence only** — this is the proven, already-practiced method for these channels, not a
+workaround for an "impossibility."
+
 ## 6. Bluetooth Resilience & GrapheneOS Degradation
 
 GrapheneOS enforces aggressive security/battery policies, including automatic

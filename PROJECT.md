@@ -64,6 +64,12 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
   Services. Explicitly includes Fast Pair **Account Linking**, **Ownership
   Transfer**, and the **Accessory Non-Owner Service** — investigating or
   implementing these is out of scope (see `DECISIONS.md` ADR-008).
+- No reverse-engineering of Google Play Services' own Fast Pair/Nearby module. DLCI 0x04's Fast
+  Pair Message Stream and DLCI 0x08's private envelope appear to be implemented entirely inside
+  GMS rather than the companion app itself (no trace of either transport was found anywhere in the
+  companion app's decompiled source) — this project implements both channels clean-room, from
+  wire-capture evidence (and, for DLCI 0x04, the public Fast Pair specification) alone, the same
+  method already used for every confirmed command (see `DECISIONS.md` ADR-025).
 - No distribution of the original Google APK or any part of it.
 - No telemetry, analytics, or crash reporting of any kind, and no `INTERNET`
   permission in the app (see `AGENTS.md` §1).

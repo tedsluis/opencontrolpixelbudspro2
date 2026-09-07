@@ -279,9 +279,15 @@ version string to the GUI/CLI), not any extractor logic. `pbtk-jar-extract`'s ow
 ("works better with older APKs, needs update") is a **built-in caveat about the tool's reflection
 heuristic against R8/ProGuard-obfuscated, newer-codegen APKs**, not a stale-install symptom — running
 it against `reverse-engineering/apk/v1.0.955078536-10253511/base.apk` produced 0 `.proto` files even
-on this confirmed-latest version, consistent with that caveat rather than an outdated tool. Don't
-expect an upgrade alone to fix a 0-file `pbtk-jar-extract` result; re-check PyPI/GitHub release dates
-the same way before assuming an upgrade will help.
+on this confirmed-latest version — **not** a stale-install symptom, that part of this finding stands.
+**Root cause corrected 2026-08-30/2026-09-03 (`TODO.md`'s Phase 2 checklist), superseding the generic
+"obfuscation/newer-codegen" reading above:** a targeted 32-class re-run still produced 0 files, and
+the actual cause is structural, confirmed against `pbtk`'s own `jar_extract.py` source — this APK's
+`GeneratedMessageLite.newMessageInfo(default, infoString, objects)` reflection-based codegen never
+emits the per-class `mergeFrom(CodedInputStream)` `switch`-structure the extractor requires, for any
+class, regardless of obfuscation. Don't expect an upgrade alone to fix a 0-file `pbtk-jar-extract`
+result against this codegen style; re-check PyPI/GitHub release dates the same way before assuming an
+upgrade will help for a *different* APK.
 
 To upgrade when a real newer release *does* exist: `pipx upgrade pbtk` is the documented path, but
 was observed to hang indefinitely at the "upgrading pbtk..." step in this environment (2026-08-30) —

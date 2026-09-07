@@ -1213,5 +1213,66 @@ motivated this).
   meaning of `0xe8` beyond "not both docked" (e.g. whether it varies further for one-bud-docked
   states) remains unexplored and is not claimed by this ADR.
 
+## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
+
+- **Date**: 2026-09-07
+- **Status**: Accepted
+- **Context**: `AUDIT_REPORT_2026-09-07.md` §1.0 found, via exhaustive full-tree string/identifier
+  searches across the companion app's entire decompiled source (12,545 files), no trace of the Fast
+  Pair Message Stream (DLCI 0x04) or DLCI 0x08's private-envelope transport logic anywhere in this
+  app's own code — no `MessageStream`/`HearableControls`/ANC-opcode literals, no `"GSND"`/capability-
+  string matches, no `Settable-toggles` parse site. The only ANC-adjacent code found is a downstream
+  domain-model sink (`gck.java`/`gcl.java`/`eht.java`) that receives an already-decoded value from
+  elsewhere and caches it locally in a Room/SQLite `device_info` table — strongly suggesting the
+  actual transport (RFCOMM socket ownership, frame construction/parsing) for these two channels lives
+  inside Google Play Services' own system-level Fast Pair/Nearby component, not in the companion
+  app's own APK. That report explicitly deferred the resulting scope question, per `ADR-017`'s
+  boundary (an AI session proposes, the maintainer decides): should this project bring GMS's own
+  module into its reverse-engineering effort to close Q1–Q3 from the code side? A second, independent
+  external review (`ANTIGRAVITY_AUDIT_REPORT_2026-09-07.md`, cross-validated in
+  `EXTERNAL_REVIEW_VALIDATION_2026-09-07.md`) reached a similar-sounding conclusion but additionally
+  mischaracterized it as an implementation-blocking "Impossibility" under the Zero-GMS rule — the
+  validation pass found that framing contradicted by this project's own already-practiced
+  architecture (see Consequences below). The maintainer has now made the underlying scope decision
+  directly.
+- **Options considered**:
+  - Pull, decompile, and analyze the relevant Google Play Services module(s) the same way this
+    project already treats the companion app, to locate DLCI 0x04/0x08's actual transport code.
+  - Leave GMS out of scope; continue implementing DLCI 0x04/0x08 exclusively from wire-capture
+    evidence (and, for DLCI 0x04, the official public Fast Pair specification) — exactly as this
+    project already does today for every command confirmed so far (ANC, Find My Buds, EQ), none of
+    which has ever required a companion-app code cross-reference to reach 🟢 FACT status.
+- **Decision**: the second option. Google Play Services reverse-engineering is explicitly **out of
+  scope** for this project, for reasons distinct from (and in addition to) `ADR-008`'s existing
+  GMS-adjacent exclusions (Account Linking/Ownership Transfer/Accessory Non-Owner Service):
+  1. **Legal/scale.** GMS is a much larger, actively-updated, closed-source system component, not
+     "software the maintainer has personally installed for interoperability with hardware they own"
+     in the same narrow sense `PROJECT_RULES.md` §8 rule 20 frames this project's existing APK
+     analysis — decompiling it would be a materially different, larger undertaking than analyzing one
+     companion app, with its own legal/scope questions this decision does not attempt to resolve.
+  2. **Unnecessary.** This project's own evidentiary chain for DLCI 0x04 has never depended on
+     companion-app code — every 🟢 FACT promotion for DLCI 0x04 traces to wire captures matched
+     against the official Fast Pair spec, never an APK file+line (`PROTOCOL.md` §4.1). DLCI 0x08 is
+     implemented the same way in principle (wire evidence + correlation, per `AGENTS.md` §13.6's
+     zero-creativity rule) once its own Group/Code semantics are decoded. A decompiled reference was
+     never the blocking dependency for either channel's own `FrameEncoder`/`FrameDecoder` work.
+- **Consequences**:
+  - DLCI 0x04/0x08 `FrameEncoder`/`FrameDecoder` implementation proceeds **clean-room, from wire
+    capture evidence alone** (plus, for DLCI 0x04, the public Fast Pair spec) — exactly the same
+    method already used for ANC (`ADR-009`), Find My Buds Left/Right (`ADR-011`), and EQ (`ADR-020`),
+    none of which needed a companion-app code cross-reference to reach FACT/implementation-ready
+    status. This is not a workaround forced by this decision — it is this project's proven,
+    already-practiced method for exactly these kinds of channels; `ARCHITECTURE.md` is updated with a
+    short note recording this explicitly.
+  - `AUDIT_REPORT_2026-09-07.md` §1.0's Q1–Q3 "not found in this APK" results are treated as **closed
+    from the code side** for this APK version — future work on DLCI 0x04/0x08 opcodes should not
+    expect, or spend further effort searching for, a companion-app code citation for these two
+    channels' own transport/framing.
+  - `REVERSE_ENGINEERING.md`'s "Message Group / Code register" table is expected to remain empty for
+    DLCI 0x04/0x08 specifically (its own header already scopes it to APK-derived values only) — a
+    clarifying note is added there rather than leaving this looking like an oversight.
+  - `PROJECT.md`'s non-goals gain a corresponding bullet citing this ADR. `TODO.md`'s Phase 2 section
+    records this decision explicitly rather than leaving the question implicitly open.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

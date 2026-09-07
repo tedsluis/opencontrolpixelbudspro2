@@ -1505,6 +1505,8 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
 
 
 
+### `defpackage.ghd` / `defpackage.ghb` — MaestroDynamicServerConfigRpcClient
+
 - **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/ghd.java:37`
   (also `ghb.java:116`)
 - **Readable alias**: MaestroDynamicServerConfigRpcClient
@@ -2016,6 +2018,16 @@ APK, in addition to the officially documented ones.
 |---|---|---|---|---|
 | | | | | |
 
+**Empty by design, not by omission (noted 2026-09-07, `AUDIT_REPORT_2026-09-07.md` §1.0/§2.1,
+`DECISIONS.md` ADR-025):** exhaustive full-tree searches found no code anywhere in this companion
+app's own decompiled source constructing or parsing a DLCI 0x04 Fast Pair Message Stream frame or
+DLCI 0x08's private envelope (no `MessageStream`/`HearableControls`/ANC-opcode literals, no
+`"GSND"`/capability-string matches). Both channels' transport appears to be implemented entirely
+inside Google Play Services, which is out of scope for this project's reverse-engineering effort
+(`DECISIONS.md` ADR-025) — this table is expected to stay empty for DLCI 0x04/0x08 specifically; all
+of this project's actual Group/Code knowledge for these two channels comes from wire captures
+(`PROTOCOL.md` §4.1/§6), not from this document.
+
 ## Native libraries
 
 | File | Architecture | Suspected function | Analyzed? |
@@ -2112,6 +2124,13 @@ promoted into the protocol documentation, to avoid the same finding being
   exercised by the specific user actions listed in
   `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` — treat static findings as 🟡 HYPOTHESIS
   until correlated with a capture showing the corresponding traffic.
+- **Low priority, noted 2026-09-07 (`EXTERNAL_REVIEW_VALIDATION_2026-09-07.md`):** file+line
+  citations in this document are only reproducible against the exact decompiler version that produced
+  them — `reverse-engineering/APK_VERSIONS.md`'s "Tool-version pinning" section already requires
+  recording JADX/apktool/pbtk versions per analyzed APK version for this reason. A further, not-yet-
+  adopted enhancement worth considering: storing a structural signature or short code excerpt
+  alongside a citation, not just the file+line number, so a citation survives a future JADX/apktool
+  version bump even without re-running the exact tool version that produced it.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/REVERSE_ENGINEERING.md - https://tedsluis.github.io/opencontrolpixelbudspro2/REVERSE_ENGINEERING

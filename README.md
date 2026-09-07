@@ -8,8 +8,8 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > protocol knowledge itself, however, has matured well beyond "early research": ANC
 > mode switching, Find My Buds (Left/Right), battery reporting (via HFP), and the
 > equalizer's live-write path are all confirmed 🟢 FACT and implementation-ready
-> (`PROTOCOL.md`, `DECISIONS.md`). See `PROJECT_ROADMAP_2026-09-03.md` for a full
-> readiness assessment, and `TODO.md` for the current task list.
+> (`PROTOCOL.md`, `DECISIONS.md`). See `TODO.md` for the current task list and
+> readiness assessment.
 
 > ## ⚠️ Disclaimer: hardware risk
 >
@@ -47,13 +47,15 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-09-03)
+## Current state (2026-09-07)
 
-- **Captures:** 35 registered sessions (`CAP-001`–`CAP-035`), 30 analyzed and 5 still
+- **Captures:** 42 registered sessions (`CAP-001`–`CAP-042`), most analyzed and a handful still
   planned — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed
-  (`v1.0.955078536-10253511`) — see `reverse-engineering/APK_VERSIONS.md`.
-- **Decisions:** 20 recorded architecture/protocol decisions (`DECISIONS.md`), every
+  (`v1.0.955078536-10253511`) — see `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's own
+  transport code was not found anywhere in it (`DECISIONS.md` ADR-025) — both channels are
+  implemented from wire-capture evidence alone, not by decompiled-code cross-reference.
+- **Decisions:** 25 recorded architecture/protocol decisions (`DECISIONS.md`), every
   🟢 FACT promotion in `PROTOCOL.md` traceable to an explicit maintainer sign-off.
 - **Confirmed and implementation-ready:** ANC/Transparency/Adaptive mode switching,
   Find My Buds (Left/Right), battery reporting (HFP), the equalizer's live-write
@@ -117,7 +119,6 @@ humans and AI coding assistants working on it:
 | `PROJECT_RULES.md` | Binding project rules (evidence, documentation, scope) |
 | `PROJECT.md` | Project goal, scope, and non-goals |
 | `ARCHITECTURE.md` | Software architecture of the Android app |
-| `PROJECT_ROADMAP_2026-09-03.md` | Functionality-readiness assessment, blockers, and prioritized next actions |
 | `REVERSE_ENGINEERING.md` | Findings from APK analysis |
 | `APK_REVERSE_ENGINEERING_PROCEDURE.md` | APK pull/decompile/extract/search procedure (prerequisites → steps → analysis approach → gotchas) |
 | `reverse-engineering/APK_VERSIONS.md` | Git-tracked index of every analyzed APK version (SHA-256, versionName/versionCode, pull date, provenance, tool versions) — the actual APK/decompiled output never leave the maintainer's own machine |

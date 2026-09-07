@@ -305,7 +305,6 @@ table — see the discussion in `DECISIONS.md` if this needs revisiting.
 Consolidated list of catalog rows not yet covered by a Group in
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1, so they aren't silently forgotten:
 
-- [ ] `OBS-002` — background battery polling (ambient, long-duration)
 - [ ] `FWUPD-001` / `FWUPD-002` — background firmware download/install (long-duration,
       low priority for early captures)
 - [ ] `BATT-005` — low battery notification (opportunistic only, needs genuinely low

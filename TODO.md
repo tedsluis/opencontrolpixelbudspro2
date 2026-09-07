@@ -318,6 +318,18 @@ lower priority than finishing ANC/Battery/EQ):**
       unplanned:** the session's SDP browse also named DLCI 0x08 "GSND CONTROL" and DLCI 0x0a "GSND
       AUDIO" for the first time — see `PROTOCOL.md` §2.3/§6.
 
+- [x] **GMS/Play Services reverse-engineering — decided out of scope, 2026-09-07 (`DECISIONS.md`
+      ADR-025).** A project-wide audit (`AUDIT_REPORT_2026-09-07.md` §1.0) found no trace of DLCI
+      0x04's Fast Pair Message Stream or DLCI 0x08's private envelope anywhere in the companion app's
+      own decompiled code — both appear to be implemented inside Google Play Services itself. The
+      resulting scope question (should this project decompile GMS to close that gap?) is now decided:
+      **no.** DLCI 0x04/0x08 `FrameEncoder`/`FrameDecoder` work proceeds clean-room, from wire-capture
+      evidence alone (plus, for DLCI 0x04, the public Fast Pair spec) — the same method already used
+      for ANC/Find My Buds/EQ, none of which ever needed a companion-app code cross-reference. No
+      further APK-search effort should be spent trying to locate DLCI 0x04/0x08 transport code in this
+      companion app; `REVERSE_ENGINEERING.md`'s empty Message Group/Code register for these two
+      channels reflects this, not an unfinished search.
+
 ## Phase 3 — Protocol reconstruction
 
 - [ ] Fill in the UUID register (`REVERSE_ENGINEERING.md` §UUID register) — partially done as of

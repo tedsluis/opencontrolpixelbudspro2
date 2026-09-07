@@ -394,9 +394,50 @@ for the "definition of done" that will mark v1.
   implementation gate was cleared (unlike ANC/`ADR-009` and Find My Buds/`ADR-011`); no new protocol
   knowledge, maintainer-approved.
 
+- **2026-09-06: `CAP-037`–`CAP-042` (Groups AD–AI) captured and analyzed — six purpose-built
+  repeats of `CAP-036`'s own open questions.** No new FACT promotions; large-scale replication of
+  already-FACT findings (`CAP-037`: 26/26 same-session `ADR-022`/`ADR-024` replications; `CAP-039`:
+  10 same-session `ADR-024` Set-vs-Get samples) plus several new open items (DLCI 0x08's unmapped
+  Get-shaped codes still unattributed; the app's in-app Connect/Disconnect buttons producing zero
+  wire signal; a `Settable-toggles` reading in tension with `ADR-024` immediately after physical
+  case-removal; DLCI 0x02's connect-time burst shown length-invariant across differing settings
+  states; the periodic cross-channel push shown far sparser over a genuinely idle window than
+  `CAP-036`'s short sample suggested). See each capture's own findings file.
+- **2026-09-07: project-wide audit + cross-validation review cycle, processed and closed out.**
+  `AUDIT_REPORT_2026-09-07.md` (this session's own Phase-1/Phase-2 audit, cross-checking
+  `CAP-037`–`CAP-042` against the decompiled APK source and auditing the project documentation) and
+  `ANTIGRAVITY_AUDIT_REPORT_2026-09-07.md` (an independent external review, Antigravity/Gemini 3.1
+  Pro) were cross-validated against each other in `EXTERNAL_REVIEW_VALIDATION_2026-09-07.md`, which
+  rejected the external review's `🟢 FACT`-labeled `maestro_pw.Maestro` connect-burst-identity claim
+  (an evidentiary overclaim *and* a governance violation — an AI report self-assigning FACT status
+  and recommending an ADR, which `AGENTS.md` §6/`DECISIONS.md` ADR-017 do not permit) and its
+  `REVIEW_REPORT.md`/"active workspace state" item (not a genuine finding about this repository).
+  Confirmed findings were applied directly: **`DECISIONS.md` ADR-025** records that Google Play
+  Services reverse-engineering is out of scope (no DLCI 0x04/0x08 transport code was found anywhere
+  in the companion app's own decompiled source — both channels are implemented clean-room, from wire
+  evidence alone, exactly as ANC/Find My Buds/EQ already are), with a matching `PROJECT.md` non-goals
+  bullet and an `ARCHITECTURE.md` note correcting the external review's "Impossibility"
+  mischaracterization of this same situation. `PROTOCOL.md` §8's changelog backfilled for
+  2026-09-04/05/06; §4.3 Option C's HFP DLCI corrected from a fixed `0x09` to session-local (`0x0c`
+  in the clear majority of captures); §6 gained a `qhr`-field-13 candidate for `CAP-038`'s
+  unexplained ANC Notify frames, an app-foreground-vs-IPC refinement for `CAP-042`'s open push-cadence
+  question, and the `maestro_pw.Maestro` burst-identity claim recorded at the `🟡 HYPOTHESIS` level
+  the evidence actually supports (not the rejected `🟢 FACT`). `README.md`'s two dangling references to a
+  never-existent roadmap file removed and its "Current
+  state" snapshot refreshed; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §9's stale `OBS-002` open-item removed;
+  `reverse-engineering/APK_VERSIONS.md`/`WORKSTATION_PREPARATIONS.md`'s `pbtk` root-cause explanation
+  reconciled with `TODO.md`'s more precise diagnosis; `REVERSE_ENGINEERING.md` gained a missing `###`
+  header, a note explaining why the Message Group/Code register stays empty for DLCI 0x04/0x08, and a
+  low-priority citation-fragility note. All three review documents retired after processing (same
+  lifecycle as `AUDIT_REPORT_2026-08-22.md`) — added to `scripts/lint_docs.py`'s historical-reference
+  allowlist so the citations to them throughout the docs above don't lint as dead references.
+
 ### Removed
 
 - `PROTOCOL_NOTES.md`, `EXPERIMENTS.md` (retired 2026-08-15, see above).
+- `AUDIT_REPORT_2026-09-07.md`, `ANTIGRAVITY_AUDIT_REPORT_2026-09-07.md`,
+  `EXTERNAL_REVIEW_VALIDATION_2026-09-07.md` (retired 2026-09-07, see above — findings applied,
+  historical references kept where cited).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/CHANGELOG.md - https://tedsluis.github.io/opencontrolpixelbudspro2/CHANGELOG

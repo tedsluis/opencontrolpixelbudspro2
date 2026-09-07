@@ -79,6 +79,13 @@ KNOWN_HISTORICAL_REFERENCES = {
                           # fua/gax/gbo/gba/hjy entry references by name to explain why its
                           # "channel conflation" claim is not repeated there — same
                           # deliberate-historical-reference pattern as the entries above.
+    "AUDIT_REPORT_2026-09-07.md",           # transient audit-report artifact, retired 2026-09-07
+    "ANTIGRAVITY_AUDIT_REPORT_2026-09-07.md",  # after processing (DECISIONS.md ADR-025,
+    "EXTERNAL_REVIEW_VALIDATION_2026-09-07.md",  # PROTOCOL.md/REVERSE_ENGINEERING.md/TODO.md/
+                                                  # README.md/APK_VERSIONS.md/WORKSTATION_PREPARATIONS.md
+                                                  # updates) — same lifecycle as AUDIT_REPORT_2026-08-22.md
+                                                  # above; findings live on in the docs/CHANGELOG.md
+                                                  # entries that cite these three by name.
 }
 
 # Only lint cross-references to the project's own capture/doc artifacts —
