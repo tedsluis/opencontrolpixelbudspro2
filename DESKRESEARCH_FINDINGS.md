@@ -547,5 +547,94 @@ original, ends at ~17:25:08 — `CAP-006`'s own *third* sample (`Settable=0x00`,
 17:26:55.06, ~1m47s past the video's end) remains unverified, so the specific within-session
 `0xe8`→`0x00` transition is still open, independent of the earlier file-corruption issue.
 
+### 2026-09-06 — Cross-capture correlation across `CAP-037`–`CAP-042` (Groups AD–AI): reconnect-trigger reliability is not uniform, and the "4-mechanism near-lockstep" cadence narrows to 3
+
+- **Trigger:** the six-capture batch's own Phase 4 instruction — beyond each capture's own stated
+  question, correlate findings across all six and against the wider project.
+
+- **Method:** direct comparison of `CAP-037-FINDINGS.md` through `CAP-042-FINDINGS.md` (all
+  captured 2026-09-06, same phone/app/GMS baseline) against each other and against
+  `CAP-009-FINDINGS.md` §2, `CAP-027-FINDINGS.md`, `DECISIONS.md` ADR-022/ADR-024, and
+  `CAP-036-FINDINGS.md` §12.5/§12.6 — no new capture, pure correlation of existing findings.
+
+- **Result 1 — reconnect-trigger reliability is highly trigger-dependent, not uniform (🟡
+  HYPOTHESIS, new, cross-capture):** `CAP-037`'s 34 OS-Bluetooth-toggle-triggered reconnects
+  produced 26 genuine DLCI 0x04 (re)establishments, every one answered by a Get/Notify pair
+  (`DECISIONS.md` ADR-022 holds, largest replication on file). `CAP-040`'s ~15 app-internal
+  "Connect"/"Disconnect"-button taps produced **zero** wire-visible signal at all — no ACL
+  teardown, no DLCI bounce, nothing for ADR-022's trigger condition to apply to. `CAP-038`'s single
+  physically-realistic (buds-removed-from-case) reconnect *did* form a genuine new ACL connection
+  and *did* open both channels — just under session-local DLCI numbers `0x05`/`0x03` instead of the
+  more usual `0x04`/`0x02` (`CAP-038-FINDINGS.md` §3, consistent with `CAP-001-FINDINGS.md` §2's
+  already-established session-local-numbering finding, not a new anomaly) — but that same
+  reconnect's resulting "Notify ANC state" frame read `Settable-toggles=0x00` (docked) immediately
+  after the Buds were reported physically removed from the case, an unreconciled tension with
+  ADR-024 (see `CAP-038-FINDINGS.md` §3). `CAP-039`'s own session shows 5 unexplained mid-session
+  disconnect/reconnect cycles with no identified UI trigger (reason `0x16`, the same
+  locally-terminated signature `CAP-040` used deliberately, but `CAP-040` independently shows *that
+  specific* app-button action produces no wire signal — so `CAP-039`'s own trigger remains
+  unidentified, not explained by `CAP-040`'s finding). **Read together, these four results do not
+  contradict each other or `DECISIONS.md` ADR-022** (whose claim is precisely scoped to "when DLCI
+  0x04 (re)establishes and carries real payload") — but they sharpen a previously implicit
+  assumption into an explicit open question: **not every user- or app-visible "reconnect" actually
+  produces the RFCOMM-level event ADR-022's trigger condition depends on**, and which triggers do
+  is now known to vary by mechanism (OS toggle: reliably yes; app-internal buttons: no; physical
+  case-removal: usually yes, but not this project's first counter-example). Not proposed for
+  promotion — recorded as a sharpened, evidence-backed open question, copied into `PROTOCOL.md` §6.
+
+- **Result 2 — the 4-mechanism near-lockstep cadence (`CAP-036-FINDINGS.md` §12.5) narrows to 3
+  once measured over a longer, backgrounded-app window (🟡 HYPOTHESIS, revises a prior reading):**
+  `CAP-042`'s ~37m39s idle bracket (Group AI's purpose-built extension of `CAP-009-FINDINGS.md` §2's
+  HFP-only model) found the DLCI 0x02/0x04/0x08 push recurring only twice, at ~16 and ~35 minutes
+  in, with gaps (16m8s, 18m44s) that **exceed** `CAP-009`'s own previously-documented maximum gap of
+  ~14.6 minutes — extending, not contradicting, `DECISIONS.md` ADR-015's "not a fixed cadence"
+  finding. More significantly: **HFP's `AT+BIEV` did not recur even once** in that window, dropping
+  entirely out of `CAP-036`'s documented 4-channel near-lockstep group, while DLCI 0x02/0x04/0x08
+  kept firing together in their own tight sync. `CAP-036`'s own session ran with the app open
+  on-screen for its full ~7 minutes; `CAP-042` deliberately ran with the app backgrounded — the
+  sparser cadence and HFP's dropout are both consistent with (not proven to be caused by) the push
+  being at least partly app-foreground-driven rather than a purely Buds-autonomous or
+  link-supervision-level mechanism. Cross-checked against `CAP-027-FINDINGS.md`'s "streaming
+  specifically breaks the sync" reading (`DESKRESEARCH_FINDINGS.md`'s 2026-09-04 round-2 entry,
+  Result 2): `CAP-042` is fully idle, no streaming, and *still* shows the same HFP dropout —
+  **narrowing `CAP-027`'s framing**: the sync-breakdown isn't specific to active streaming: HFP is
+  the piece of the group that decouples most easily, under at least two different conditions
+  (active A2DP streaming, idle app-backgrounding), while DLCI 0x02/0x04/0x08's own mutual sync has
+  now held up under both idle-with-app-open (`CAP-036`), idle-with-app-backgrounded (`CAP-042`), and
+  active-streaming (`CAP-027`, for the three of them not individually checked against each other
+  there but never reported desyncing). Not proposed for promotion (n=2 gap measurements, single
+  session for the HFP-dropout observation) — recorded as a genuine refinement candidate for
+  `PROTOCOL.md` §4.3 Option C's cadence model and the cross-channel-sync note, pending replication.
+
+- **Result 3 — `CAP-039`'s Set-vs-Get comparison and `CAP-037`'s dock-state table agree with each
+  other and with `DECISIONS.md` ADR-024 exactly; no counter-example found (🟢 FACT-level agreement,
+  no promotion needed — ADR-024 is already FACT):** `CAP-039` produced 10 same-session Set/Get
+  `Settable-toggles` samples (4 Set-triggered, 6 Get-triggered), all `0xe8`, dock state held
+  constant (undocked) throughout — direct, same-session support for ADR-024's trigger-independence
+  claim. `CAP-037` produced 26 same-session Get/Notify samples across a real (if unplanned)
+  dock-state-alternating sequence — 16 docked samples all `0x00`, 10 undocked samples all `0xe8`,
+  zero counter-examples, plus a new bonus sub-finding (a perfect `Settable`↔`Current-state`
+  co-occurrence: `Current=Off` every time `Settable=0x00`) proposed as a new 🟡 HYPOTHESIS. Neither
+  session surfaces anything in tension with ADR-024 as currently written. `CAP-037`'s one flagged
+  anomaly (a chandle's mid-connection `Settable` flip with no preceding Get, §5 there) is **not** a
+  counter-example to what the byte *means* — the flip is still consistent with dock-state semantics
+  (it moved toward, not away from, the documented meaning) — only the *mechanism* producing it
+  without a Get is unresolved, a distinct open question from whether ADR-024 itself holds.
+
+- **Result 4 — cross-check against `PROTOCOL.md`/`DECISIONS.md`/prior captures, explicit agreement
+  vs. contradiction, per this task's own instruction:** no genuine contradiction of any existing
+  🟢 FACT was found anywhere across the six captures — every apparent tension (the reconnect-trigger
+  variability in Result 1, the cadence/sync narrowing in Result 2) resolves as a *refinement* of a
+  scope already implicit in the FACT's own precise wording (ADR-022's "carries real payload"
+  qualifier; ADR-015's "not a fixed cadence" already anticipating exactly this kind of longer-window
+  divergence), not a counter-example to the FACT itself. `CAP-038`'s DLCI-0x02/0x04-skip and
+  `CAP-040`'s zero-wire-signal app-buttons finding are both new, previously-undocumented behaviors,
+  not previously-claimed-otherwise — recorded as new HYPOTHESES, not corrections.
+
+- **Promoted to:** `PROTOCOL.md` §6 (Behavior) — Result 1's reconnect-trigger-reliability open
+  question, added alongside each capture's own individual open questions (already copied in
+  per-capture, this session). `PROTOCOL.md` §4.3 Option C's cadence-model cross-reference — Result
+  2's narrowing noted (not yet a rewrite of the model itself, pending replication).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

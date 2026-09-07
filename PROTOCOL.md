@@ -1829,6 +1829,78 @@ leaving them buried in prose elsewhere.
       per `AGENTS.md` §13.6's zero-creativity rule — genuinely open whether `libmaestro`'s own
       channel carries a differently-shaped battery-adjacent message here, or something unrelated
       that happens to repeat the value `100`.
+- [ ] **Added 2026-09-06, `CAP-040-FINDINGS.md` §3 (Group AG, `PRIV-001`):** the 7 DLCI 0x08
+      unmapped zero-length `[Group][Code][00 00]`-shaped `Sent` frames (`05 0c`, `04 02`, `04 04`,
+      `04 11`, `04 13`, `04 15`, `0e 04`, first flagged `CAP-036-FINDINGS.md` §5) each fire exactly
+      **once** in a ~30-minute session, bundled together in a single frame immediately after DLCI
+      0x08's one-and-only channel open — because DLCI 0x08 never reopens for the rest of that
+      session (see the next item), none can be correlated against a bracketed value (N=1 for all
+      7). Still fully unattributed; needs a re-run with a trigger that genuinely reopens DLCI 0x08
+      (the OS Bluetooth toggle, per `CAP-037`'s own procedure, or physical case/bud cycling).
+- [ ] **Added 2026-09-06, `CAP-040-FINDINGS.md` §1:** the official app's own in-app "Connect"/
+      "Disconnect" buttons, tapped ~15 times across a 27-minute stretch, produced **zero**
+      wire-visible signal — no ACL disconnect/reconnect, no DLCI channel bounce of any kind. The
+      classic link and DLCI 0x08 stayed open continuously throughout. Whatever these buttons
+      actually do (if anything, beyond a local/optimistic UI-state toggle) is not visible at the
+      RFCOMM/HCI level in this session — genuinely open whether this holds under any condition.
+- [ ] **Added 2026-09-06, `CAP-040-FINDINGS.md` §4:** DLCI 0x08's `Group 0x0e Code 0x01` Left-earbud
+      battery field (`DECISIONS.md` ADR-014) reads the documented `0xff`/255 "unknown" sentinel for
+      exactly one occurrence, landing precisely inside a video-confirmed physical-docking event,
+      before settling to `100` on the very next occurrence 1.27s later. 🟡 HYPOTHESIS, single
+      occurrence: the sentinel may reflect a momentary sensor/contact-read gap at the instant of
+      case contact — not reconciled with any documented mechanism.
+- [ ] **Correction, 2026-09-06:** an earlier version of this entry described `CAP-038-FINDINGS.md`
+      §3's finding as "DLCI 0x02 and DLCI 0x04 never open at all" on one reconnect, framed as an
+      unexplained gap. That overstated it — `CAP-038-FINDINGS.md` §3 itself already identifies the
+      cause: on that one reconnect (immediately following physical removal of both earbuds from the
+      case), the official Fast Pair Message Stream and `libmaestro`'s own channel opened normally,
+      just under different session-local DLCI numbers (`0x05` and `0x03` respectively) instead of
+      the more usual `0x04`/`0x02` — consistent with `CAP-001-FINDINGS.md` §2's already-established
+      finding that RFCOMM channel/DLCI numbers are session-local, not fixed (`DECISIONS.md` ADR-018).
+      Not a new open question; the Get/Notify pair on DLCI `0x05` fired normally per ADR-022. The
+      genuinely open item from that same reconnect is a different one: the resulting "Notify ANC
+      state" frame read `Settable-toggles=0x00` (docked) immediately after the Buds were reported
+      physically removed from the case — a real tension with `DECISIONS.md` ADR-024's dock-state
+      reading, not yet reconciled (see `CAP-038-FINDINGS.md` §3's own discussion).
+- [ ] **Added 2026-09-06, `CAP-038-FINDINGS.md` §5:** two DLCI 0x04 "Notify ANC state" frames occur
+      with no preceding `08 11` Get and no `08 12` Set frame found anywhere in that session's log.
+      🟡 HYPOTHESIS: plausibly a hardware press-and-hold gesture accidentally triggered while
+      handling the Buds (matches `CAP-027-FINDINGS.md` §4's established Buds-initiated
+      Notify-without-Set mechanism for `TOUCH-007`), but not video-confirmed (camera was on the
+      phone screen, not the buds/ears) — could equally be some other still-unidentified trigger.
+- [ ] **Added 2026-09-06, `CAP-041-FINDINGS.md` §4 (Group AH, `OBS-007`):** a recurring 2-field
+      sub-message inside DLCI 0x02's connect-time burst (first flagged, structurally, in
+      `CAP-036-FINDINGS.md` §12.6) holds a constant value across an entire session that happens to
+      match the on-screen Case battery percentage (`0x4f`=79, matching "Case: 79%" throughout).
+      Because the value never changed during that session, this is consistent with, but does not
+      confirm, the field tracking Case battery — a second, still-inconclusive data point (the first
+      being `CAP-036`'s own all-100% session, equally unable to rule out coincidence). A capture
+      bracketing an actual mid-session Case-percentage change against this specific field is the
+      natural next step.
+- [ ] **Added 2026-09-06, `CAP-041-FINDINGS.md` §2/§6:** DLCI 0x02's connect-time RPC burst's
+      **length/shape signature** (frame count, dominant run of 26-byte frames) is essentially
+      invariant across 3 genuinely different, independently-logged non-default settings states in
+      one session, and matches `CAP-036`'s own all-defaults baseline — a scoped negative result for
+      `ARCHITECTURE.md` §3.1's "does `libmaestro` carry a settings-state read-back" question, but
+      only at the length level: a full byte-for-byte content diff of the burst across these states
+      was not completed (out of that session's time/token budget) and remains open.
+- [ ] **Added 2026-09-06, `CAP-042-FINDINGS.md` §5 (Group AI, `OBS-002`):** across a genuinely idle,
+      ~37m39s, app-backgrounded session, the DLCI 0x02/0x04/0x08 periodic push recurred only twice
+      (at ~16m and ~35m in — far sparser than `CAP-036`'s several-per-few-minutes sample with the
+      app open on-screen), and HFP's `AT+BIEV` did not recur even once, dropping out of the
+      previously-documented 4-channel near-lockstep sync (`CAP-036-FINDINGS.md` §12.5) entirely,
+      while DLCI 0x02/0x04/0x08's own mutual near-lockstep timing continued to hold. 🔴 Genuinely
+      open whether this reflects an app-foreground-driven trigger (a UI-refresh poll issued only
+      while the app's own screen is active) rather than a Buds-autonomous or link-supervision-level
+      mechanism — consistent with the data, not established by it; the natural next capture toggles
+      the app between foreground/background mid-session with everything else held constant.
+- [ ] **Added 2026-09-06, `CAP-042-FINDINGS.md` §6:** `CAP-027-FINDINGS.md`'s "streaming
+      specifically breaks the [4-channel] sync" reading (`DESKRESEARCH_FINDINGS.md` 2026-09-04
+      round 2) does not hold as stated — `CAP-042`'s fully idle, no-streaming session *also* shows
+      HFP dropping out of the sync (previous item). The more general reading both sessions together
+      support: HFP is the piece of the sync group that most easily decouples under multiple
+      different conditions (active streaming, idle backgrounding), not specifically streaming —
+      genuinely open which factor(s) actually govern HFP's participation.
 
 ### Behavior
 
@@ -1969,6 +2041,23 @@ leaving them buried in prose elsewhere.
       bulk bonded-device-list provisioning at Bluetooth-stack bring-up — recorded 🔴 OPEN QUESTION on
       its own terms (unconfirmed vendor semantics), not bearing on this section's primary question
       (`CAP-032-FINDINGS.md` §5).
+
+- [ ] **Added 2026-09-06, `CAP-037-FINDINGS.md` §5 (Group AD, `OBS-004` purpose-built repeat):** on
+      one of 26 same-session `DECISIONS.md` ADR-022 replications, a chandle shows a **second**
+      "Notify ANC state" frame 18 seconds after the first, with no new `08 11` Get frame in
+      between, and its `Settable-toggles` value flips from `0xe8` to `0x00`. Genuinely open whether
+      this reflects a real dock-state change while the ACL connection stayed open (in tension with
+      `DECISIONS.md` ADR-016's "ACL disconnects the instant both buds are re-docked" finding, from a
+      different session/context) or a spontaneous, unprompted second Notify unrelated to dock state
+      that happens to coincide with the docked-state byte value — not video-confirmed at
+      sub-second precision this pass.
+- [ ] **Added 2026-09-06, `CAP-039-FINDINGS.md` §6 (Group AF, `OBS-006`):** across a single
+      ~6-minute session, the classic ACL connection to the Buds disconnected and reconnected 5
+      times with no clearly camera-visible trigger for most of them (4 of 5 disconnects locally
+      terminated, reason `0x16`, the same pattern `CAP-040`'s own procedure used deliberately with
+      the app's Connect/Disconnect buttons — though `CAP-040-FINDINGS.md` §1 separately found those
+      specific buttons produce zero wire signal, so this session's own trigger remains unidentified).
+      Genuinely open what specifically caused the repeated disconnect/reconnect cycling here.
 
 ### Resolved
 
