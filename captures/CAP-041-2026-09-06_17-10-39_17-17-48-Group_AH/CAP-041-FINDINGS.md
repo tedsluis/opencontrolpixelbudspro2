@@ -202,19 +202,20 @@ specific field would be the natural next step.
 - A recurring sub-message inside that burst holds a constant value (79) matching this session's
   on-screen Case battery percentage throughout — 🟡 **HYPOTHESIS**, unconfirmed (no change occurred
   to test it), strengthens but does not resolve `CAP-036-FINDINGS.md` §12.6's existing open item.
+- **Content-level diff completed (§8, 2026-09-08 follow-up) — the byte-for-byte comparison this
+  section originally recommended is now done.** The burst's tail run (30 of ~46 subframes) is
+  byte-for-byte identical across all 4 compared sessions; the header portion contains the exact same
+  *set* of subframe values in every session (differing only in transmission order), with exactly one
+  exception — a single subframe that varies session-to-session in a way plausibly explained by a
+  per-session timestamp/nonce, not a settings value. See §8 for the full evidence.
 
 **Proposed, awaiting maintainer sign-off (per `AGENTS.md` §6/§15 — nothing below is committed as
 FACT and no `DECISIONS.md` ADR is drafted here):**
-- **Outcome classification for `OBS-007`: (b), a scoped clean negative.** At the structural
-  (frame-count/length-sequence) level, this session finds no evidence that DLCI 0x02's connect-time
-  RPC burst restructures itself based on EQ/touch-controls settings state. This is **not** a claim
-  that the burst's byte *content* is settings-independent — only its length signature was compared
-  this pass; a full HDLC-unescape+CRC-verify byte-for-byte content diff across all 4 compared bursts
-  was outside this pass's time/token budget. Propose recording this scoped negative in `PROTOCOL.md`
-  §6 pending a follow-up content-level diff, rather than treating the question as fully closed.
-- Recommend as a low-cost next step: complete the byte-for-byte content diff of the ~45-frame burst
-  across Windows A/B/C and `CAP-036`'s baseline (the length-sequence work above already isolates
-  which frames to compare) to close the gap between "same shape" and "same content."
+- **Outcome classification for `OBS-007`: (b), a scoped clean negative — now closed at the content
+  level, not just the length level (§8).** DLCI 0x02's connect-time RPC burst shows no evidence of
+  restructuring, reordering its meaningful content, or varying based on EQ/touch-controls settings
+  state — the only session-to-session variation found is one subframe consistent with a
+  timestamp/correlation value, not a settings read-back.
 
 ## 7. Open questions
 
@@ -222,8 +223,66 @@ FACT and no `DECISIONS.md` ADR is drafted here):**
   not resolved by the video frames pulled this pass (§1).
 - 🔴 Whether the DLCI 0x02 periodic push's 2-field sub-message (§4) actually tracks Case battery, or
   merely coincides with it, remains open — needs a capture bracketing an actual Case% change.
-- 🔴 Whether the connect-time burst's payload *content* (not just length) varies with settings state
-  is untested (§6) — the natural, low-cost follow-up to this session's own length-level negative.
+- ~~Whether the connect-time burst's payload *content* (not just length) varies with settings
+  state is untested (§6)~~ — **closed 2026-09-08, see §8**: no settings-state-dependent content
+  found; the one varying subframe is plausibly a timestamp/nonce, not decoded further.
+
+## 8. Content-level diff of the connect-time burst across 4 sessions (added 2026-09-08, `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 4 item 1) (🟢 FACT for the extraction/diff; 🟡 HYPOTHESIS for the one varying subframe's interpretation)
+
+**Method**: for each window (this capture's A/B/C, plus `CAP-036`'s baseline), extracted every
+Sent-direction DLCI 0x02 payload in the burst window already isolated in §2, concatenated the raw
+bytes across frames (RFCOMM I-frames can pack multiple HDLC sub-frames), split on unescaped `0x7e`
+flags, HDLC-unescaped each sub-frame (`0x7d <X>` → `X XOR 0x20`), and verified each one's trailing
+4-byte CRC-32 (IEEE 802.3/zlib) against the unescaped body — the same verification method as
+`PROTOCOL.md` §2.2a's own original framing proof.
+
+```
+$ tshark -r CAP-041-btsnoop_hci.log \
+  -Y "bthci_acl.chandle==0x0002 and btrfcomm.dlci==2 and btrfcomm.len>0 and frame.p2p_dir==0 and frame.time_relative>=3.7 and frame.time_relative<=9.5" \
+  -T fields -e frame.number -e data.data
+# (repeated per window with each window's own chandle/time bounds from §2; CAP-036's baseline
+# pulled from CAP-036-btsnoop_hci.log, chandle 0x0005, 45.2-48.4s)
+```
+
+**Result**: all 184 extracted sub-frames (46 per window × 4 windows) pass CRC-32 verification —
+**zero corrupted/misaligned extractions.** Comparing decoded (unescaped, CRC-stripped) sub-frame
+bodies:
+
+- **Tail run (sub-frames 16–45 of 46, the dominant run of 26-byte frames already characterized in
+  §2–§3): byte-for-byte identical across all 4 sessions**, with no exception — confirmed by direct
+  string equality of the decoded hex bodies at every one of these 30 positions.
+- **Header run (sub-frames 0–15): each session contains the exact same *set* of 16 distinct
+  sub-frame values as every other session** (verified via set symmetric-difference: 0 for the tail,
+  and for the header, exactly one differing pair per session — see below) — **the only difference is
+  transmission order**, not content. This matches this capture's own §2 finding that "the only
+  positional differences are in the early header frames' exact order/count," now confirmed at the
+  full-content level, not just the coarse length level.
+- **The one genuine content difference, present in every session, all four values distinct**:
+  ```
+  Window A:      00 4b 03 10 15 1d ea 71 de 7e 25 4e ed 3b 67 2a 07 08 a7 83 9b ba 87 34
+  Window B:      00 4b 03 10 15 1d ea 71 de 7e 25 4e ed 3b 67 2a 07 08 e4 8c a0 ba 87 34
+  Window C:      00 4b 03 10 15 1d ea 71 de 7e 25 4e ed 3b 67 2a 07 08 84 bc a8 ba 87 34
+  CAP-036:       00 4b 03 10 15 1d ea 71 de 7e 25 4e ed 3b 67 2a 07 08 cb fe d0 d5 86 34
+  ```
+  Bytes 0–17 (`00 4b 03 10 15 1d ea 71 de 7e 25 4e ed 3b 67 2a 07 08`) are constant across all four —
+  matching the cross-session-stable correlation-ID-prefix shape already documented in `PROTOCOL.md`
+  §4.5's shared preamble (`03 10 XX 1d ea 71 de 7e 25...`). Bytes 18–20 differ in every session
+  (`a7 83 9b` / `e4 8c a0` / `84 bc a8` / `cb fe d0`); bytes 21–23 are shared by Windows A/B/C
+  (`ba 87 34`) but differ for `CAP-036` (`d5 86 34`, 2 of 3 bytes different).
+- **🟡 HYPOTHESIS, unconfirmed, not decoded further (per `AGENTS.md` §13.6's zero-creativity
+  rule)**: this session-varying subframe plausibly carries a **timestamp or per-call nonce**, not a
+  settings value — `REVERSE_ENGINEERING.md`'s own `maestro_pw.Maestro` service catalog
+  (`fux.java:55-66`) already documents a real, callable `SetWallclock` method, which would
+  legitimately produce a session-specific value with no connection to settings state at all. This is
+  offered as a plausible candidate consistent with the byte pattern (varies every session, no
+  relationship found to any settings state), not asserted — the bytes were not decoded against any
+  confirmed timestamp encoding.
+
+**Conclusion**: the connect-time burst's `OBS-007` clean-negative result (§6) is now closed at the
+**content** level, not merely the length level this capture's own initial pass reached — no evidence
+across 4 genuinely different settings-state sessions that this burst carries a settings read-back of
+any kind. The one real content variation found is consistent with ordinary per-session/per-call
+metadata (a timestamp or correlation nonce), not a settings value.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-041-2026-09-06_17-10-39_17-17-48-Group_AH/CAP-041-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-041-2026-09-06_17-10-39_17-17-48-Group_AH/CAP-041-FINDINGS

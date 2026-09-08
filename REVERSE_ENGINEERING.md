@@ -981,11 +981,11 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
 
     | Field | Type | Write call site | Read case (`fxb.java`) / log message | Plausible role |
     |---|---|---|---|---|
-    | 2 | BOOL | `fyo.java:169-188` (`l`) | case 2 (`:52-59`), no distinct log | not independently named |
+    | 2 | BOOL | `fyo.java:169-188` (`l`) | case 2 (`:52-59`), no distinct log | **On-Head/In-ear Detection — category-level identity confirmed 2026-09-08**, via `MaestroDeviceSettingsProviderService` case `2102`'s internal category log `CATEGORY_OHD` (see that entry's update) |
     | 3 | BOOL | `fyo.java:212-232` (`n`) | case 3 (`:60-78`), `"Log OOBE Is Finished setting"` | **OOBE (out-of-box-experience) completion flag** |
     | 4 | BOOL | `fyo.java:124-144` (`h`) | case 4 (`:79-97`), `"Log Gestures Enable setting"` | **Head/touch gestures master enable toggle** |
     | 5 | BOOL | `fyo.java:102-122` (`f`) | case 5 (`:98-105`), no distinct log | not independently named |
-    | 6 | BOOL | not found (no write site) | unhandled (default) | write-silent, read-inert (like 9/10) |
+    | 6 | BOOL | `fyo.java:191-210` (`m`) — **found 2026-09-08, corrects this row's prior "not found" entry**; own caller not located (checked `fyb`'s cases 0-18 and `hqy.java`, neither reaches `.m()`) | unhandled (default) | write site exists; still read-inert and un-triggered from any found caller |
     | 7 | MESSAGE→`qju` | `fyo.java:300-374` (`t(gdx)`) | case 7 (`:124-219`), `"Log Gestures Customization for touch and hold setting, left: %s, right: %s"` | **touch-and-hold gesture customization, Left/Right** — see updated `qju` entry below |
     | 8 | BOOL | not found | unhandled (default) | write-silent, read-inert |
     | 9 | ENUM `qhs` | not found | unhandled (default) | write-silent, read-inert — see main finding above |
@@ -1005,6 +1005,7 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     | 27 | BOOL | `fyo.java:80-100` (`e`) | case 27 (`:358-361`), `"received case earcon setting value"` | **case-sound toggle (matches §4.5's "Case sound" grouping)** |
     | 28 | BOOL | `fyo.java:58-78` (`d`) | case 28 (`:362-365`), `"received bud return sound setting value"` | **"bud return" case-sound toggle (matches §4.5's other Case-sound entry)** |
     | 29 | ENUM (`qgx.n`/similar) | not found | case 29 (`:366-373`) | not independently named |
+    | 32 | BOOL | `fyo.java:257-276` (`r`) — **added 2026-09-08**, reached from `MaestroDeviceSettingsProviderService` case `2116` only (`fyc.i(new fyb(z,6))` → `fyb` case 6 → `fya.r`) | unhandled (default) | logged internal category `CATEGORY_RV_BLOCK_AUTO_TEST` (`fjm.H(24)`) — diagnostic/auto-test-sounding, not a recognizable user-facing feature |
 
     Fields left out of this table (2, 5, 11, 15, 21, 29 excepted where partially covered above) had a
     write and/or read site but no distinguishing log message or UI-fragment context traced this pass;
@@ -1376,6 +1377,53 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     each other, but neither independently confirms the other's specific causal claim (what code calls
     `d()`, vs. what UI gesture the wire's timing implies) — both remain 🟡 HYPOTHESIS, now on two
     convergent evidence paths instead of one.
+
+- **Update (2026-09-08, `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 4) — `fyd.d`
+  and `fyd.e`'s call sites in the EQ UI fragment (`UserEqFragment.java`) now traced fully; the result
+  is a genuine tension with the 2026-08-18 capture's "fires on slider-release" revised hypothesis,
+  not a confirmation of it.** 🟢 FACT (code call-graph tracing, self-describing log messages at both
+  ends of each path):
+  - **`fyd.e(gdy)` (field 16, "live") is fed directly and only from the slider-drag/preset-selection
+    path**: `UserEqFragment.java:294-300`'s `aC(Preference, Object)`-style callback (fired on every
+    slider value change and preset selection) calls `homVar.m.f(gdyVar11)` — `homVar.m` is a `pfz`
+    (RxJava-`Subject`-like) field wired, in `hom.java`'s constructor (`hom.java:77`), through a
+    150ms debounce and a `combineLatest` with the device-connection stream, into `hnv(2)`/`ggb`(case
+    3)'s subscriber body, which is exactly `fyd.e(gdy)`. This confirms field 16 fires reactively on
+    every debounced slider-drag tick and on preset selection — matching the existing "live/current
+    curve" reading, now with the actual UI trigger identified for the first time.
+  - **`fyd.d(gdy)` (field 18, "persisted") is gated behind an explicit, dedicated "Save" button —
+    not slider-release.** `hom.java`'s constructor (`:78`) wires a *second*, separate `pfz` field
+    (`this.t`, private) as an RxJava "sample" trigger: when `this.t` emits, the latest value from a
+    `combineLatest` of the device stream is passed through `hoq(this,1)`'s body (`hoq.java`, case 1),
+    which — after checking device-info/EQ-controller availability, logging `"Saving user EQ: %s"` —
+    calls exactly `fyd.d(gdy)`. `this.t` is emitted into by exactly one method, `hom.k()`
+    (`hom.java:132-138`: `this.t.f(true); return true;`), and `hom.k()`'s **sole caller in the
+    entire decompiled tree** is `hju.java` case 19 (`hju.java:208-216`), the click handler wired
+    (`UserEqFragment.java:457-479`) to a real, named `ButtonPreference`/`MaterialButton` —
+    string resources `key_eq_save_button`/`title_eq_save_button` — logging the **self-describing**
+    `"On click save EQ button"` before calling `homVar.k()`, and on success showing a
+    `toast_message_eq_saved` toast (`UserEqFragment.aK()`). No other call site for `homVar.k()`, and
+    no lifecycle hook (`onPause`/`onStop`/`onDestroy`) calling it either, was found anywhere in the
+    tree.
+  - **This is a genuine, unreconciled tension with the wire-observed timing, not a confirmation of
+    the "slider-release" hypothesis.** The code shows field 18/`fyd.d` is reachable **only** through
+    an explicit Save-button tap — there is no code path from slider-release (finger lift) to `d(gdy)`
+    anywhere in this app version's decompiled source. This directly contradicts
+    `CAP-015-FINDINGS.md` §6's own revised reading (that field 18 fires on slider-release with "no
+    video-visible `Save`-button tap in between") for every one of that capture's 15 drag-cycles. Per
+    this project's zero-creativity rule, this is recorded as an open tension, not resolved by
+    guessing which side is wrong — plausible (unconfirmed) explanations include: `CAP-015`'s own
+    video may have missed a genuinely-fast/off-screen Save-button tap between each drag-release and
+    the next action; the Save button may auto-fire under some UI state this pass didn't identify; or
+    an app-version difference between `CAP-015`'s capture date and this pass's analyzed APK version.
+    None of these is asserted — only that the code, as read, shows no other path to field 18.
+  - **This closes `TODO.md`'s own item** ("trace `fyd.d`/`fyd.e`'s own call sites... to connect
+    `qjw` field 16/18's code-derived reading to the wire-observed drag/release timing") with a
+    concrete, code-level answer — but the answer sharpens the open question into a real contradiction
+    rather than resolving it. Directly relevant to `DECISIONS.md` ADR-020's own scope note that the
+    field-16-vs-18 semantics should be resolved before EQ ships a "Save as preset" UI affordance —
+    this finding suggests that affordance's design should **not** assume field 18 fires on
+    slider-release, contrary to the capture's own prior working hypothesis.
 
 ### `defpackage.qjg` / `defpackage.qht` — 4×`BOOL` messages (press-and-hold ×4 shape candidates)
 
@@ -2061,7 +2109,15 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     `com/google/android/apps/wearables/maestro/companion/slices/MaestroSliceProvider.java:233` both
     build/query `content://com.google.android.gms.nearby.fastpair/links?address=<addr>&caller=maestro`.
 - **Open questions**: `TrueWirelessHeadset.modelId` as a candidate cross-reference against DLCI
-  0x04's already-FACT Device Information "Model ID" (`da 2d b1`) — not checked. `isBatteryAllTheTimeDevice`'s
+  0x04's already-FACT Device Information "Model ID" (`da 2d b1`) — **checked 2026-09-08
+  (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 4 item 3) for an already-available value
+  dump anywhere in this project's existing captures/docs; none found** (`grep -rli "modelId"`
+  across `captures/`, `DESKRESEARCH_FINDINGS.md`, and `ai-sessions/` returns no capture/finding
+  file, only this task's own prompt/result files referencing the open question itself) — confirmed
+  this genuinely needs the maintainer's own live-device access (an `adb`-level dump or a debug log
+  of the GMS-internal `TrueWirelessHeadset` object), not static analysis or existing capture
+  re-analysis; no value can be obtained without it, since this field is never carried on the wire.
+  `isBatteryAllTheTimeDevice`'s
   actual value/effect — no getter/log/UI reference traced. The actual FMD "ring"/"play sound"
   trigger for Case/"both" is not constructed anywhere in this APK's decompiled source (see
   `PROTOCOL.md` §4.4/§6's Behavior-section update).
@@ -2104,10 +2160,86 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   plus the 2 Fast Pair interfaces (entry above) are the only ones with any Bluetooth/Fast-Pair/
   settings relevance; the other 28 are generic Android/AndroidX/GMS-common-services/Play-Core
   plumbing unrelated to this project's scope.
-- **Open questions**: the case-ID→`qhr`-field mapping for all 6 case IDs (`TODO.md`).
-- **Hypothesis test**: none required for the service/interface existence (🟢 FACT); the case-ID→field
-  mapping is a further static-analysis task, not a capture task.
-- **Correlation with `PROTOCOL.md`**: §6 Commands & schemas, 2026-09-08 addition.
+
+- **Update (2026-09-08, `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 1) — all
+  6 case IDs traced to their exact accessor call, resolving 4 to a specific `qhr` field number; 2 do
+  not route through `qhr` at all.** 🟢 FACT (code call-graph tracing, `ct(DeviceInfo,
+  DeviceSettingState)` read line-by-line, `ftj.A(String)` confirmed to return `fyc` — the same class
+  already used for the Multipoint/Volume EQ forward traces — and every accessor method it calls
+  followed through `fyc`'s own source to `fyb`'s numbered dispatcher to `fya`'s (`fyo`'s) exact
+  `qhr.b = N` write). A useful byproduct: `ght.p(String,int,int,boolean)`/`q(...,fpm)` (the analytics
+  logger `g()` several cases call before writing) resolves its two `int` arguments through
+  `fms.m(int)` (a UI "page" name — all 6 cases pass `11` = `"MORE"`) and, more usefully,
+  `fjm.H(int)` (a self-describing internal **`CATEGORY_*`** settings-taxonomy name) — an
+  independent, code-internal naming source distinct from anything used to identify `qhr` fields so
+  far (not a UI string, not a read-side log message, a third kind of self-describing evidence).
+  - **Case `2102` → `qhr` field 2.** `e().A(str).f(z)` → `fyc.f(z)` → `fyb(z,4)` → `fya.l(z)` =
+    `fyo.l(z)` (`fyo.java:169-188`) = field 2. Logged category: **`fjm.H(14)` = `"CATEGORY_OHD"`**
+    — a second, independent internal-name source (distinct from the wire-derived label) that
+    corroborates `PROTOCOL.md` §4.5.5's "In-ear detection" HYPOTHESIS and the pre-existing `qjn`
+    entry's own "OHD state, plausibly On-Head-Detection" sibling-field note. **Promoted 2026-09-08,
+    maintainer sign-off (`DECISIONS.md` ADR-019 Update):** field 2's field-number/category-level
+    identity ("a real, code-recognized On-Head/In-ear-detection-family boolean") is now 🟢 FACT — "On-Head
+    Detection" and "In-ear detection" are closely related, not verbatim-identical UI wording, so the
+    specific label-equivalence claim (unlike fields 11/15's full identity) is **not** promoted, only
+    the field-number/category-level identity, at the same evidence bar as fields 22/27.
+  - **Case `2103` → `qhr` field 27.** `e().A(str).b(z)` → `fyc.b(z)` → `fyb(z,3)` → `fya.e(z)` =
+    `fyo.e(z)` (`fyo.java:80-100`) = field 27 (the already-known category-level-only "case-sound
+    family boolean," `ADR-019` Update). This case does not call `g().p()`/`g().q()`, so no
+    `CATEGORY_*` label is available for it.
+  - **Case `2104` → `qhr` field 11, plus a second, non-`qhr` write; a genuine internal-naming
+    tension, not resolved.** `e().A(str).e(z)` → `fyc.e(z)` → `fyb(z,9)` → `fya.j(z)` = `fyo.j(z)`
+    (`fyo.java:146-166`) = field 11 — the exact chain already confirmed for Multipoint. Logged
+    category: **`fjm.H(15)` = `"CATEGORY_MULTIPOINT"`** — a second, independent internal-name
+    confirmation of field 11 = Multipoint. **Tension**: this same logging call also passes
+    `fpm.ENABLED_HEAD_GESTURES`/`fpm.UNKNOWN` (a *different* enum, `fpm`, used as an outcome/event
+    tag rather than the category) — i.e. the category name says "Multipoint" but the outcome tag
+    says "head gestures," for the same call. Not reconciled; flagged as its own open item below,
+    not silently resolved in either direction. Case 2104 **also** issues a second, structurally
+    unrelated write: `e().j(str).al().e(new gox(new hlb(this, str, z, 1), 6)).p()` —
+    `ftj.j(String)` returns `oql` (a generic RxJava-style stream type, not `fyc`), and `hlb`'s case-1
+    branch resolves to `MaestroDeviceSettingsProviderService.h()` (the `kjj` field, named
+    `"premiumAudioHelper"` in its own accessor-exception string) calling `kjj.d(String, gcl,
+    boolean)`, logged `"Not required to turn off Feature A"` when the condition isn't met. This is
+    **not** part of the `qhr`/`WriteSetting` pipeline at all — a structurally separate mechanism.
+    🟡 **Plausible, unconfirmed reading**: enabling Multipoint here also disables an internally
+    code-named `"Feature A"` as a side effect — `fpm.ENABLED_SPATIAL_AUDIO` is a plausible (not
+    evidenced) candidate for what "Feature A" is, since Multipoint and head-tracked Spatial Audio
+    are mutually exclusive on many earbuds — offered as a lead for a future pass, not asserted.
+  - **Case `2113` → `qhr` field 5.** `e().A(str).c(z)` → `fyc.c(z)` → `fyb(z,12)` → `fya.f(z)` =
+    `fyo.f(z)` (`fyo.java:102-122`) = field 5 (previously "not independently named" in this entry's
+    own bonus register). No `g().p()`/`g().q()` call in this case's path, so no `CATEGORY_*` label
+    — field 5's semantic identity is still unnamed; only its case-ID association is new.
+  - **Case `2115` → does not touch `qhr` at all.** Uses `MaestroDeviceSettingsProviderService.h()`
+    (`kjj`, `"premiumAudioHelper"`) directly: `kjj.c(String, boolean)`, logged `"calling
+    setFeatureAState"` — the **same** `"Feature A"` mechanism case 2104 disables as a side effect
+    above. Plausibly this case ID is the system-Settings page's own standalone toggle for whatever
+    "Feature A" is (see the Spatial Audio lead above) — not confirmed, no `qhr` field involved.
+  - **Case `2116` → `qhr` field 32 (previously entirely absent from this entry's register, not even
+    as "not found").** `e().A(str).i(new fyb(z, 6))` → `fyc.i(pkg)` (the generic dispatcher every
+    `fyc` convenience method routes through) → `fyb(z,6)` → `fya.r(z)` = `fyo.r(z)`
+    (`fyo.java:257-276`) = field 32. Logged category: **`fjm.H(24)` = `"CATEGORY_RV_BLOCK_AUTO_TEST"`**
+    — an internal diagnostic/automated-test-sounding name, not a recognizable user-facing feature;
+    field 32 is at best a diagnostic-toggle candidate, genuinely unclear, not chased further.
+  - **Bonus, beyond this item's own ask — two corrections to this document's `qhr` field register**,
+    found while reading `fyo.java` in full to resolve the cases above (see that entry's own update
+    for the authoritative record; noted here too since it was this trace that found it): **field 6**
+    has a real write site (`fyo.java:191-210`, method `m`) — the register's prior "not found (no
+    write site)"/"write-silent" characterization was wrong; its own caller was not found this pass
+    (checked `fyb`'s cases 0–18 and the only other `fya`-referencing dispatcher, `hqy.java`, and
+    neither reaches `.m()`) — genuinely still open. **Field 32** (`fyo.r`, above) was entirely
+    absent from the register before this pass.
+- **Open questions**: field 5's and field 32's semantic identity (no self-describing name found for
+  either); case 2104's `CATEGORY_MULTIPOINT`-vs-`fpm.ENABLED_HEAD_GESTURES` naming tension; what
+  `"Feature A"`/`kjj`/"premiumAudioHelper" actually is (cases 2104's side effect, 2115's direct
+  toggle); `fyo.m()` (field 6)'s own caller.
+- **Hypothesis test**: none required for the case-ID→accessor traces above (🟢 FACT, static
+  call-graph tracing with no ambiguous branch); the remaining open questions are further
+  static-analysis tasks (field 5/32/6/"Feature A" naming) or a capture task (wire-confirming field
+  32 and the field-2/`CATEGORY_OHD` strengthening against real traffic) — not attempted this pass.
+- **Correlation with `PROTOCOL.md`**: §6 Commands & schemas, 2026-09-08 addition (original entry);
+  2026-09-08 update (this trace) proposed for `PROTOCOL.md` §6/§4.5.5, pending maintainer review —
+  see `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md`.
 
 ### `defpackage.frb` / `defpackage.fuh` / `defpackage.glk` / `defpackage.gjv` — `fxm.i()`/`GetSoftwareInfo` trigger structure
 
@@ -2145,6 +2277,32 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   `GetSoftwareInfo`-response-shaped payload (`qjb`, already decoded).
 - **Hypothesis test**: byte-level content diff of a fresh capture's DLCI 0x02 connect-time burst
   against `qjb`'s decoded shape, or a full static trace of `gjv.p()`'s caller.
+
+- **Update (2026-09-08, `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 3) —
+  re-attempted; `gjv.p()`'s own caller was not found this pass either, same conclusion as the prior
+  session, with one adjacent piece of context gained.** `giz` is confirmed an **abstract class** (not
+  an interface, correcting this entry's earlier looser phrasing), and `gjv` is its **sole**
+  subclass in this APK version (`grep -rl "extends giz"` finds only `gjv.java`) — so any external
+  `.p()` call on a `giz`-typed reference necessarily reaches `gjv.p()`. `giz`'s own field `u`
+  (the device-type/variant int `gjv.p()` gates on via `hwy.am(this.u)`) is a bare `public int`, set
+  directly rather than through a named setter — this rules out finding the caller by searching for a
+  setter method name, and (per this document's own zero-creativity standard) that avenue was not
+  pursued further given `".u = "` is too generic a token to search productively (20+ unrelated files
+  match it combined with the equally generic `".p()"`). Three classes hold a `giz`-typed field
+  (`gpk`/`gpr`/`hke`, all reached via `ftj.i(String)` — the same device-manager accessor interface
+  already used throughout this document) — none of the three calls `.p()` anywhere in its own file.
+  **Adjacent context found**: `gaa.java` (`implements fzy`, a `GetSoftwareInfo`-response-shaped event
+  listener — its method `d(qjb qjbVar)`, line 920, unpacks the `qjb` response type this document's
+  own entry already decoded) calls `((giz) this.h.a()).n((gdm) of.get())` at line 1043, inside a
+  block logged `"OTA handler handleFirmwareInfoUpdate"` — i.e. **`gaa` is the RESPONSE-side handler
+  for `GetSoftwareInfo`**, calling a *different* `giz` lifecycle method (`n(gdm)`, "wait for device
+  type update to check firmware version") once a response arrives — the reverse direction from
+  `gjv.p()`, which triggers the *request*. This confirms `gaa`/`giz.n()` and `gjv.p()`/`fuh.i()` are
+  two ends of the same round-trip, but does not itself locate `.p()`'s trigger. **Recommendation,
+  unchanged from the prior session**: the byte-level capture-correlation path (against `qjb`'s
+  decoded shape) is now the more promising route — pursued this same session, see `PROTOCOL.md` §6's
+  `CAP-041`/`CAP-036` connect-time-burst item and `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md`
+  Phase 4 item 1.
 - **Correlation with `PROTOCOL.md`**: §6 Commands & schemas' existing open item on the connect-time
   RPC burst (`CAP-036-FINDINGS.md` §4), updated 2026-09-08 with this deepened (not fully resolved)
   trace.
@@ -2161,15 +2319,77 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   on-device gRPC server (`mig`/`oez` — a method-descriptor-keyed dispatch table structurally like
   `io.grpc.ServerServiceDefinition`).
 - **Relevant methods**: `onCreate()` is JADX-undecompilable bytecode ("Method dump skipped... 599
-  instructions") — not read this pass.
-- **Open questions**: which gRPC service(s) it registers, and whether anything (GMS included) ever
-  binds to it. No other reference to this class/package exists anywhere else in the decompiled tree
-  (`grep -rln "MaestroEndpointService\|ondevicegrpcserver"` finds only the class itself and its
-  `ghl` base). Plausibly unrelated to DLCI 0x04/0x08 entirely (could be a different feature, e.g.
-  cross-device sync).
-- **Hypothesis test**: an `apktool` smali fallback read of `onCreate()`
-  (`APK_REVERSE_ENGINEERING_PROCEDURE.md` §6) — a further static-analysis task, not a capture task.
-- **Correlation with `PROTOCOL.md`**: §6 Commands & schemas, 2026-09-08 addition.
+  instructions") — read via the `apktool` smali fallback this pass.
+
+- **Update (2026-09-08, `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 2) —
+  `onCreate()` read via `apktool`'s smali output; the service registration mechanism and its
+  authorization model are now understood, though the literal service names are not.** 🟢 FACT
+  (smali read, `apktool-output/smali_classes2/.../MaestroEndpointService.smali:123` onward, 1376-line
+  file, per `APK_REVERSE_ENGINEERING_PROCEDURE.md` §6/`DECISIONS.md` ADR-017's smali-explanation
+  boundary):
+  - `onCreate()` reads the injected field `MaestroEndpointService.b` (declared `public Map b;` in the
+    JADX source), cast to `lov` (a Guava-style immutable-map type), and iterates its entry set —
+    each entry is `Map.Entry<String, Optional<ofd>>`. For each entry, if the `Optional` is present
+    it's added to a local `HashMap` and logged `"Service %s included"` (`%s` = the entry's String
+    key); if empty, logged `"Service %s is not included"` — i.e. **the registered-service list is a
+    Dagger/Hilt multibinding assembled elsewhere in the app's dependency graph** (a
+    `Map<String, Optional<ofd>>`), not a literal list inside this class. No Dagger-generated
+    multibinding-provider class survives with a findable name in this app version (checked;
+    `grep -rl "MembersInjector"` finds nothing for this class), so **the literal service-name
+    strings (the Map's keys) were not recovered this pass** — a genuinely open question, not a gap
+    in the smali read itself.
+  - **`ofd` is an authorization-policy interface, not a service-dispatch interface** — its single
+    abstract method, `oei a(int i)`, takes a **calling UID** (not a method index, despite the
+    interface's shape resembling a gRPC method dispatcher at first read) and returns an
+    allow/reject decision (`oei.b` = allow; `oei.f.e("<reason>")` = reject with a reason string).
+    Two concrete implementations exist in this APK version:
+    - **`ofb`** (`ofb.java`): allows only if the caller's UID equals a specific constant
+      (`i == ofc.a`) — otherwise rejects with **`"Rejected by (internal-only) security policy"`**.
+      This is `ofi`'s own default policy (`ofi.java`'s constructor: `this.e = new ofb();`).
+    - **`mie`** (`mie.java`): checks the caller's UID's package name against an allowlist (`lpl`,
+      a Guava `ImmutableSet`) **and** verifies that package is signed by a specific
+      signer (`hyp`, a signature-verification helper) — rejects with
+      **`"Rejected by (1st-party only Allowlist) security policy. Not google-signed."`** or
+      **`"...Package not allowed."`** if either check fails. The one call site found this pass
+      constructs `mie` with a *dynamically resolved single package name* (`new lsk(((gri) obj).b())`
+      — a Guava `ImmutableSet.of(...)` of one runtime-resolved string, not a hardcoded literal
+      allowlist), for an **unrelated, incidentally-discovered outbound gRPC client connection** (see
+      below) — so this specific call site does not itself confirm which package(s) `mie` allowlists
+      for `MaestroEndpointService`'s own inbound registrations.
+    - `oex` (abstract, `@Deprecated`, `a(int)` throws) — a legacy/unused base class, not chased
+      further.
+  - **This directly answers, in substance, the "is anything (GMS included) actually gated to bind to
+    this" question this project's own open item asked — not by naming GMS specifically, but by
+    showing the exported-with-no-`android:permission` manifest declaration is not the whole picture:
+    the service applies its own per-registered-service, application-layer authorization (either
+    same-app-UID-only, or an allowlisted-and-Google-signed-caller check) before honoring a call.**
+    Whether GMS specifically is ever in the "1st-party" allowlist for any of this service's own
+    registered gRPC methods was not determined — the concrete allowlist contents for
+    `MaestroEndpointService` itself were not found (see above).
+  - **Incidental, unrelated finding**: the `mie`/`ofb`/`ofd`/`ofi` types are a **generic, reusable
+    on-device-gRPC authorization framework**, not specific to `MaestroEndpointService`. The one
+    concrete `mie` construction site found (`fsg.java`, a large R8-merged factory dispatcher, case 1)
+    is building an **outbound** gRPC *client* channel from this companion app to a **separate Pixel
+    system app**: `new ComponentName("com.google.android.apps.pixel.dcservice",
+    "com.google.android.apps.pixel.dcservice.sdk.service.ExportedEndpointService")`, with an inline
+    comment string `"Don't use RemoteEndpoints-created channels to access in-app gRPC services"`.
+    This is a genuinely new, unrelated finding (this companion app is also a gRPC *client* of a
+    different Pixel-specific system service, `dcservice` — plausibly "Device Configuration/Personalization
+    Service"), out of scope for this project's Bluetooth/`libmaestro` focus — noted here since it
+    surfaced incidentally while tracing `mie`'s only construction site, not pursued further.
+- **Open questions**: the literal gRPC service name(s) registered on `MaestroEndpointService`
+  (the Dagger multibinding's own assembly site was not found); which specific authorization policy
+  (`ofb`/`mie`/neither, i.e. `Optional.empty()`) applies to each registered service; whether GMS
+  specifically is ever in a `mie`-style allowlist for this service. Plausibly unrelated to DLCI
+  0x04/0x08 entirely (could be a different feature, e.g. cross-device sync) — this pass found
+  nothing connecting it to Bluetooth/`libmaestro` at all, strengthening that reading.
+- **Hypothesis test**: none further for the mechanism itself (🟢 FACT, smali-read); finding the
+  literal service names would need locating the Dagger/Hilt multibinding-assembly code for this
+  specific `Map<String, Optional<ofd>>` — not attempted further this pass (a search across every
+  R8-merged factory dispatcher in the app was judged out of proportion to this item's scope).
+- **Correlation with `PROTOCOL.md`**: §6 Commands & schemas, 2026-09-08 addition (original entry);
+  2026-09-08 update (this trace) proposed for `PROTOCOL.md` §6, pending maintainer review — see
+  `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md`.
 
 ---
 
@@ -2321,6 +2541,10 @@ promoted into the protocol documentation, to avoid the same finding being
 | `MaestroDeviceSettingsProviderService`/`fhk`/`ges` — second UI entry point into `qhr`/`WriteSetting`, via the system Settings app's Bluetooth-device-details page | §6 Commands & schemas (new open item) | 2026-09-08 | `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 |
 | `FmdWorker`/`ijp` — companion app's own FMD code constructs only ToS accept/skip requests, no ring/play-sound trigger found anywhere | §4.4/§6 Behavior (existing open item, updated) | 2026-09-08 | `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 3 |
 | `MaestroEndpointService` — exported, no-permission on-device gRPC server, registered service(s)/caller(s) undetermined | §6 Commands & schemas (new open item) | 2026-09-08 | `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 |
+| `MaestroDeviceSettingsProviderService`'s 6 case IDs traced: `2102`→`qhr` field 2 (+`CATEGORY_OHD` internal-name corroboration, **promoted to category-level identity, maintainer sign-off**), `2103`→field 27, `2104`→field 11 (+`CATEGORY_MULTIPOINT` corroboration, plus a non-`qhr` "Feature A" side-write and an unreconciled `fpm.ENABLED_HEAD_GESTURES` naming tension), `2113`→field 5, `2115`→no `qhr` field (a standalone "Feature A" toggle), `2116`→field 32 (new field, `CATEGORY_RV_BLOCK_AUTO_TEST`) | §6 Commands & schemas / §4.5.5 | 2026-09-08 | `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 1; `DECISIONS.md` ADR-019 Update |
+| `qhr` field register corrections: field 6 has a real write site (`fyo.m`, caller unfound) — corrects a prior "not found" entry; field 32 (`fyo.r`) added, previously absent | (register correction, no `PROTOCOL.md` section — informational) | 2026-09-08 | `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 1 |
+| `MaestroEndpointService.onCreate()` (smali read): registered services come from a Dagger multibinding (names not recovered); `ofd`'s method is a per-call UID-based authorization check, not a service dispatcher — two policies found (`ofb` internal-UID-only, `mie` allowlisted+Google-signed). Incidental finding: an unrelated outbound gRPC client connection to `com.google.android.apps.pixel.dcservice` | §6 Commands & schemas (updated) | 2026-09-08 | `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 2 |
+| `fyd.d`/`fyd.e`'s call sites traced: field 16 fires from the slider-drag/preset path (as understood); field 18 is reachable only via a dedicated, self-describing Save-button click handler — contradicts, not confirms, `CAP-015`'s own "fires on slider-release" wire-timing hypothesis | §4.2 (updated), §6 (updated) | 2026-09-08 | `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 4 |
 | | | | |
 
 ## Known limitations of this analysis

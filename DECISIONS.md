@@ -991,6 +991,21 @@ motivated this).
   already-FACT status (`DECISIONS.md` ADR-013) or unblock `ARCHITECTURE.md` §5's per-command
   implementation gate for any field beyond the ones explicitly promoted here — fields 11 and 15 are
   unaffected by this update and remain 🟡 HYPOTHESIS.
+- Update (2026-09-08, maintainer sign-off via the chat session that authored prompt
+  `ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md`, implementing that session's Phase 3 item 1
+  finding): a sixth field promotion, applying this ADR's own evidence standard.
+  - **Field 2 = "CATEGORY_OHD" (On-Head/In-ear Detection) — category-level identity, 🟢 FACT.**
+    Evidence: `CAP-024-FINDINGS.md` §3 (`CAP-024` frames 1850/1912, both directions, video-confirmed)
+    **and**, independently, the app's own code — the already-known write site (`fyo.java:169-188`,
+    method `l`) is also reached from `MaestroDeviceSettingsProviderService` case `2102` (the system
+    Settings app's own Bluetooth-device-details page), logged there under the internal category name
+    `"CATEGORY_OHD"` (`fjm.H(14)`, a self-describing internal settings-taxonomy name, a source type
+    not previously used for any `qhr` field promotion). Per dimension (b) of the 2026-09-03
+    clarifying note above: the code's own name ("OHD"/"On-Head Detection") is closely related to,
+    but not verbatim identical to, `PROTOCOL.md` §4.5.5's pre-existing "In-ear detection" UI-label
+    HYPOTHESIS — the same kind of gap that kept fields 12/22/27 at category/field-number-level
+    identity rather than full semantic identity. Promoted for field-number/category-level identity
+    only; the specific "In-ear detection" label equivalence remains 🟡 HYPOTHESIS.
 
 ## ADR-020 — EQ `FrameEncoder`/`FrameDecoder` implementation explicitly unblocked
 

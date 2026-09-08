@@ -376,6 +376,16 @@ explicit length field, checksum) is independently confirmed by the upstream sour
 derived the length/checksum mechanics empirically from the capture bytes themselves, not from
 `pbpctrl`'s docs.
 
+**Re-checked again 2026-09-08 (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 2) — clean
+negative, no further published detail exists.** A fresh fetch of the same document found nothing
+beyond the one paragraph already quoted above: it restates "the pigweed RPC library"/"HDLC U-frames"
+and, at a purely feature-list level, that the protocol "allows for changing settings" including
+"noise-cancelling, equalizer, balance" and "getting hardware/firmware information" — no opcode,
+field number, or byte-layout detail for any of these settings exists anywhere in the document. This
+project's own independently-derived `qhr`/EQ/ANC findings (§4.1/§4.2/§4.5, `REVERSE_ENGINEERING.md`)
+are neither strengthened nor contradicted by anything further here — `pbpctrl`'s published notes
+simply do not go deeper than the transport-framing paragraph already cited.
+
 Checked against that one confirmed signature, the two candidates diverge sharply:
 
 | Field (per §2.2's Hypothesis B placeholder / `pbpctrl`'s stated mechanism) | DLCI 0x02 (§2.2a) | DLCI 0x08 (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md` §5a) |
@@ -634,6 +644,18 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   separate `Save`-button tap**; the visible `Save` button may instead persist the whole profile as
   the account's `Last saved` preset, a separate/higher-level action. Neither reading is confirmed;
   would need a capture that drags-and-releases without ever tapping `Save`.
+  **Code-level trace, 2026-09-08 (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item
+  4) — contradicts the "slider-release" revision above, does not confirm it.** `fyd.d`/`fyd.e`'s own
+  call sites in the EQ UI fragment are now traced: field 16 (`fyd.e`) fires reactively from the
+  slider-drag/preset-selection path, as already understood — but field 18 (`fyd.d`) is reachable
+  **only** through a dedicated, self-describing `"On click save EQ button"` handler wired to a real
+  `key_eq_save_button`/`title_eq_save_button` button — no code path from slider-release (finger lift)
+  to field 18 was found anywhere in this app version's decompiled source, and no other caller of the
+  save-trigger method exists in the tree. This directly contradicts `CAP-015-FINDINGS.md` §6's own
+  "field 18 fires on slider-release, no video-visible Save tap" reading for all 15 of that capture's
+  drag-cycles — a genuine, unreconciled tension, not resolved here (plausible explanations — a missed
+  fast/off-screen Save tap, an app-version difference — are unconfirmed). See
+  `REVERSE_ENGINEERING.md`'s `qjw` entry for the full trace.
 - **Sent to / expected response**: same open questions as §4.1.
 - **Status**: 🟢 FACT for the wire envelope, the field-to-band mapping, and the ±6.0 range; 🟡
   HYPOTHESIS (strong) that DLCI 0x02 is specifically `libmaestro`; 🟡 HYPOTHESIS for the
@@ -715,6 +737,19 @@ event-observation coroutines.
   and this detail may live on a different Fast Pair spec page, e.g. the base Message Stream
   spec, not checked this pass) — downgraded from unqualified `[OFFICIAL-SPEC]` to 🟡
   HYPOTHESIS pending a maintainer or future session reading the actual page directly.
+  **Follow-up re-check, 2026-09-08 (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 2):**
+  the specifically-proposed alternate location (the base Message Stream extension spec page,
+  `.../specifications/extensions/messagestream`) was fetched directly and also contains no
+  sentence about notification display duration or auto-hide timing anywhere on it — it only
+  describes the message format itself (Message Group/Code/Length/Data) and the two supported
+  underlying transports (RFCOMM/L2CAP). Combined with the `batterynotification` page's own
+  already-confirmed absence, this closes both candidate locations named so far with a clean
+  negative: neither of the two most plausible official spec pages currently states this
+  8s/20s timing anywhere. Still not retracted outright (a different, not-yet-identified page
+  could still carry it, and the fetch tool's page-to-text conversion remains an imperfect
+  read), but this claim now has no locatable official-spec citation at all — treat it as an
+  internally-observed-only detail (its original source was never itself re-traced to a
+  specific capture either) rather than a spec-backed one until a citation is found.
 - **Advantage**: visible on a passive BLE scan — no active connection required,
   useful for the battery fallback logic in `ARCHITECTURE.md` §4.
 - **Attempted 2026-08-21, `CAP-011` — inconclusive, not `[VERIFIED-LOCAL]`.** A dedicated capture
@@ -1224,11 +1259,25 @@ implementation gate.
 
 - **Feature confirmed present**: toggle at Device details → More settings → In-ear detection.
   🟢 FACT.
-- **Opcode/payload**: `field5(len4){ field4(len2){ field2 = 0|1 } }`. 🟡 HYPOTHESIS — `field 2` =
-  In-ear detection, both ON and OFF video-confirmed.
+- **Opcode/payload — category-level identity 🟢 FACT, promoted 2026-09-08 (maintainer sign-off,
+  `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 1, `DECISIONS.md` ADR-019
+  Update)**: `field5(len4){ field4(len2){ field2 = 0|1 } }`, `field 2` = `libmaestro`'s own `qhr`
+  schema field 2, independently confirmed by APK static analysis: the same field-2 write site
+  (`fyo.java:169-188`, method `l`) is also reachable from `MaestroDeviceSettingsProviderService`
+  case `2102` (the system Settings app's own Bluetooth-device-details page), logged there under the
+  internal category name **`"CATEGORY_OHD"`** (`fjm.H(14)`) — a self-describing internal name
+  confirming this is a real, code-recognized On-Head/In-ear-detection-family boolean, at the same
+  evidence bar already used for fields 22/27's category-level promotions (a self-describing internal
+  name, not a verbatim UI-label match — "On-Head Detection" and this section's own "In-ear
+  detection" UI label are closely related, not identical wording, so the specific label equivalence
+  is **not** promoted, only that this is a real, distinctly-numbered `qhr` field in the
+  on-head/in-ear-detection family). Both ON and OFF directions video-confirmed on the wire.
 - **Sent to**: DLCI 0x02.
-- **Status**: 🟡 HYPOTHESIS.
-- **Evidence**: `CAP-024-FINDINGS.md` §3 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1850/1912).
+- **Status**: 🟢 FACT for `field 2`'s field-number/category-level identity. 🟡 HYPOTHESIS for the
+  specific "In-ear detection" UI-label equivalence to the code's own "OHD" naming.
+- **Evidence**: `CAP-024-FINDINGS.md` §3 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1850/1912);
+  `REVERSE_ENGINEERING.md`'s `qhr`/`MaestroDeviceSettingsProviderService` entries; `DECISIONS.md`
+  ADR-019 Update.
 - **Verified with experiment**: `CAP-024` (2026-08-21), both directions sampled.
 
 #### 4.5.5a Mono audio
@@ -1623,7 +1672,13 @@ leaving them buried in prose elsewhere.
         deliberately never taps `Save`. **Still open** as of 2026-08-18 — that capture's 15
         field-18 frames all fire within ~2s of the preceding field-16 write with no video-visible
         `Save`-button tap in between, revising (not confirming) the reading to "field 18 = slider
-        release" — see `PROTOCOL.md` §4.2 and that capture's own §6.
+        release" — see `PROTOCOL.md` §4.2 and that capture's own §6. **Code-level trace closes the
+        call-site question but contradicts the "slider-release" revision, 2026-09-08
+        (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 4):** field 18/`fyd.d` is
+        reachable only through a dedicated, self-describing Save-button click handler
+        (`"On click save EQ button"`) — no slider-release code path to it exists anywhere in this
+        app version's source. Genuinely unreconciled with `CAP-015`'s own wire timing; see
+        `REVERSE_ENGINEERING.md`'s `qjw` entry for the full trace.
       - ~13 bytes of apparent `call_id`/correlation data (payload offset 1–12, echoed back
         verbatim by the Buds) are present but undecoded.
       - **Checked 2026-08-17 (deskresearch pass, `DESKRESEARCH_FINDINGS.md`): whether DLCI 0x02's
@@ -1656,6 +1711,19 @@ leaving them buried in prose elsewhere.
       apparently duplicated on two addresses at once (`0x18` vs. `0x1a` as an inner field-2 value,
       correlating 1:1 with which address carries it) — genuinely unresolved, not guessed at. See
       `DESKRESEARCH_FINDINGS.md`'s 2026-08-17 entry.
+      **Cross-checked against Pigweed's own public documentation, 2026-09-08
+      (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 2) — no external confirmation
+      either way, genuinely undocumented upstream.** Direct fetches of `pigweed.dev/pw_hdlc/` and
+      `pigweed.dev/pw_rpc/` (plus its linked design page) found no published explanation of how the
+      HDLC Address field or an RPC channel ID is assigned — the `pw_hdlc` page's own code examples
+      pass a literal, hardcoded address (`123`) with no discussion of whether it is static
+      configuration or dynamically negotiated, and neither `pw_rpc` page documents channel/client
+      addressing assignment at all. This neither confirms nor refutes the "per-connection-negotiated
+      pw_rpc handle" HYPOTHESIS above — it establishes that Pigweed's own public docs simply do not
+      cover this specific mechanism, so this project's own wire-observed behavior (the address
+      changing per connection/reopen) remains the only evidence either way, per `AGENTS.md` §12's
+      no-code-reuse rule (this check consulted only public documentation, not `pbpctrl`'s or
+      Pigweed's own source).
 - [x] **Added 2026-08-18, from `CAP-010-FINDINGS.md` §3 (11:42 session) — byte-level detail for two
       GATT handles already known to be part of the `0x0c0X` Key-based-Pairing-shaped cluster
       (§4.3 Option D context), not yet spec-identified. Resolved 2026-09-01, see the `CAP-034`
@@ -1728,7 +1796,19 @@ leaving them buried in prose elsewhere.
       (`109b862f-…`) is **not** the `0x0c0X` cluster's container — it occupies a separate handle
       range (`0x0f37`–`0x0f3e`) and its own purpose remains unidentified. **Not resolved by this
       capture:** `FE2C1238…`'s official name, and "Unknown Service"'s own purpose — both remain
-      🔴 OPEN QUESTION, tracked in `CAP-034-FINDINGS.md` §8.
+      🔴 OPEN QUESTION, tracked in `CAP-034-FINDINGS.md` §8. **Re-checked against the live spec,
+      2026-09-08 (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 2) — clean negative,
+      reconfirms rather than resolves.** A direct fetch of the official Fast Pair GATT
+      characteristics page lists exactly the 5 spec-defined characteristics already in this table
+      (Model ID `FE2C1233`, Key-based Pairing `FE2C1234`, Passkey `FE2C1235`, Account Key `FE2C1236`,
+      Additional Data `FE2C1237`) and nothing named `FE2C1238` — the currently-live spec still does
+      not document it, confirming `CAP-034-FINDINGS.md` §8's own check rather than finding anything
+      new. A web search for the "Unknown Service" UUID (`109b862f-50e3-45cc-8ea1-ac62de4846d1`)
+      returned no matches of any kind (not a Bluetooth SIG standard service, no vendor documentation
+      found) — genuinely unidentified, not merely unchecked. The Bluetooth SIG's own assigned-numbers
+      database is published only as a bulk PDF/YAML download, not a searchable web page — checking
+      either UUID against it directly (rather than via search) is a possible further step, not
+      completed this pass.
 - [ ] **Added 2026-08-21, `CAP-019`–`CAP-024`:** what do DLCI 0x02's confirmed inner field numbers
       (§4.5's `field4`=touch controls, `field11`=Multipoint, `field15`=Volume EQ, `field17`=Volume
       balance, `field19`=Mono audio, `field22`=Conversation Detection, `field27`/`field28`=Case
@@ -1782,12 +1862,29 @@ leaving them buried in prose elsewhere.
       all belong to the same physical Buds/Case unit (RSSI proximity is supporting, not conclusive,
       evidence)?
 - [ ] **Added 2026-08-21, `CAP-025-FINDINGS.md` §7; reopened 2026-08-23 against a corrected spec
-      citation (§2.1's 2026-08-23 correction):** what do the Ring action's two observed ACK
-      variants (`0xFF 0x01 0x00 0x02 0x04 0x01` and `0xFF 0x01 0x00 0x03 0x04 0x01 0x00`)
+      citation (§2.1's 2026-08-23 correction); cross-checked further 2026-09-08
+      (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 2):** what do the Ring action's two
+      observed ACK variants (`0xFF 0x01 0x00 0x02 0x04 0x01` and `0xFF 0x01 0x00 0x03 0x04 0x01 0x00`)
       represent, now that neither matches the spec's *actual* worked example
-      (`0xFF 0x01 0x00 0x04 0x04 0x01 0x01 0x3C`, 4 data bytes)? The spec's own extra two bytes
-      (`01 3C`) are a plausible status/result-code candidate for what the shorter observed
-      variants are missing or encoding differently — not yet checked against a fresh capture.
+      (`0xFF 0x01 0x00 0x04 0x04 0x01 0x01 0x3C`, 4 data bytes)? A direct re-fetch of the official
+      acknowledgement spec page confirms its own literal text for this worked example: *"if the
+      Provider receives a message containing the ring action (`0x04010002013C`), it should
+      acknowledge the action by sending back `0xFF0100040401013C`"*, where the trailing `0x013C` is
+      explicitly glossed as *"the current state of the action message group and code, ring right and
+      60 seconds timeout"* — i.e. the spec's own extra bytes are a documented **2-byte state**
+      (channel/side + a timeout in seconds), not an undifferentiated status/result code as this
+      item previously phrased it. Checked against both observed variants: neither fits this
+      2-byte-state shape — the first variant carries **zero** extra bytes beyond the echoed
+      group/code, and the second carries exactly **one** extra byte (`0x00`), not two. This
+      sharpens, but does not resolve, the open question: it rules out "the observed variants are a
+      truncated/reordered version of the spec's own 2-byte state" as an explanation (a 1-byte or
+      0-byte state cannot represent both a channel indicator and a timeout), leaving "these are a
+      structurally different ACK shape than the spec's worked example, for a still-unexplained
+      reason" as the leading, unconfirmed reading. The spec page documents a NAK format too (a
+      leading reason byte before the echoed group/code, e.g. `0xFF 0x02 0x00 0x04 0x01 0x04 0x01
+      0x00` for "Device busy") — checked against both observed variants, neither fits this shape
+      either (both start with the echoed group/code, not a reason byte). Not yet checked against a
+      fresh capture, per this item's own original ask.
 - [ ] **Added 2026-08-21, `CAP-022-FINDINGS.md` §8:** does Volume balance (`field 17`) actually
       persist locally on the earbuds across a disconnect/reconnect, as
       `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1's `AUDIO-003` row claims from the app's own on-screen
@@ -1929,13 +2026,22 @@ leaving them buried in prose elsewhere.
       being `CAP-036`'s own all-100% session, equally unable to rule out coincidence). A capture
       bracketing an actual mid-session Case-percentage change against this specific field is the
       natural next step.
-- [ ] **Added 2026-09-06, `CAP-041-FINDINGS.md` §2/§6:** DLCI 0x02's connect-time RPC burst's
-      **length/shape signature** (frame count, dominant run of 26-byte frames) is essentially
-      invariant across 3 genuinely different, independently-logged non-default settings states in
-      one session, and matches `CAP-036`'s own all-defaults baseline — a scoped negative result for
-      `ARCHITECTURE.md` §3.1's "does `libmaestro` carry a settings-state read-back" question, but
-      only at the length level: a full byte-for-byte content diff of the burst across these states
-      was not completed (out of that session's time/token budget) and remains open.
+- [x] **Added 2026-09-06, `CAP-041-FINDINGS.md` §2/§6, closed at the content level 2026-09-08
+      (`CAP-041-FINDINGS.md` §8, `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 4 item
+      1).** DLCI 0x02's connect-time RPC burst's **length/shape signature** (frame count, dominant
+      run of 26-byte frames) is essentially invariant across 3 genuinely different,
+      independently-logged non-default settings states in one session, and matches `CAP-036`'s own
+      all-defaults baseline — a scoped negative result for `ARCHITECTURE.md` §3.1's "does
+      `libmaestro` carry a settings-state read-back" question. **The follow-up content-level diff
+      this item asked for is now done**: HDLC-unescaped and CRC-32-verified every sub-frame across
+      all 4 sessions (184 sub-frames, zero CRC failures) — the burst's dominant tail run (30 of ~46
+      sub-frames) is byte-for-byte identical across all 4 sessions; the header portion contains the
+      exact same *set* of sub-frame values in every session, differing only in transmission order,
+      with exactly one exception per session: a single sub-frame that varies session-to-session in a
+      way plausibly consistent with a per-session timestamp/correlation nonce (`fux.java`'s
+      already-documented `SetWallclock` RPC is a candidate, not confirmed), not a settings value.
+      **`OBS-007` is now closed as a clean negative at the content level, not merely the length
+      level** — no evidence found that this burst carries any settings-state read-back.
 - [ ] **Added 2026-09-07 (`AUDIT_REPORT_2026-09-07.md` Q4, cross-checked in
       `EXTERNAL_REVIEW_VALIDATION_2026-09-07.md`), 🟡 HYPOTHESIS, not FACT — which specific
       `maestro_pw.*` service(s) fire inside DLCI 0x02's connect-time burst (above).** `fux.java`'s
@@ -1957,6 +2063,46 @@ leaving them buried in prose elsewhere.
       permit); recorded here at the HYPOTHESIS level the evidence actually supports. Next step
       unchanged from `CAP-041-FINDINGS.md` §6's own recommendation: a byte-for-byte content diff of the
       burst across differing settings states.
+      **Re-attempted 2026-09-08 (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 3)
+      — `gjv.p()`'s own caller (the second, more plausibly connect-lifecycle-shaped trigger candidate
+      `REVERSE_ENGINEERING.md`'s `frb`/`fuh`/`glk`/`gjv` entry already named) was still not found, same
+      conclusion as the prior session.** Confirmed `giz` is an abstract class with `gjv` as its sole
+      subclass, and confirmed none of the three classes holding a `giz`-typed field call `.p()`
+      anywhere in their own source — a generic-token search (`.u = `/`.p()`, both too common to be
+      productive) was judged not worth pursuing further. Found adjacent context instead: `gaa.java`
+      is the `GetSoftwareInfo` **response**-side handler (unpacks `qjb`, the already-decoded response
+      type), calling a *different* `giz` method (`n(gdm)`) once a response lands — confirming which
+      class sits on the response side of this round-trip, but not resolving the request-side trigger.
+      Given this static-analysis avenue is now exhausted twice, the byte-level capture-correlation
+      path (this section's own "Next step") is the recommended way forward — attempted this same
+      session, see the item below.
+      **Byte-level correlation against existing capture data, 2026-09-08
+      (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 4 item 2) — a plausible structural
+      match found, not a confirmed one; full closure still needs a fresh capture.** Per this
+      project's own scoping (a byte-level correlation against a *fresh* capture's burst vs. `qjb`'s
+      decoded shape is out of this task's scope — no new capture was taken), checked whether any
+      *already-captured* connect-time burst frame is structurally consistent with `qjb`'s decoded
+      shape instead. Within `CAP-036`'s own connect-time burst (frame 1423, `bthci_acl.chandle==0x0005`,
+      DLCI 0x02, Rcvd), a sub-message decodes to three length-14 strings inside a nested field —
+      `"57071WRBEC0251"`, `"57081WRBDR2309"`, `"57071WRBDL3147"` — structurally matching `qie`'s
+      documented shape (three optional sub-fields, `REVERSE_ENGINEERING.md`'s `qjb`/`gaa` entries:
+      `qie.c`/`.d`/`.e`, one of `qjb`'s two oneof alternatives) far more closely than a coincidence
+      would predict (three strings, same length, each resembling a component serial number —
+      plausibly Case/Right/Left given the "EC"/"DR"/"DL" substrings, not decoded further per
+      `AGENTS.md` §13.6). **What this does NOT establish**: whether this specific frame is `qjb`
+      itself (as opposed to a different, sibling response type sharing the same `qie`-shaped nested
+      structure, e.g. `GetHardwareInfo`'s own response) — the outer wire-format tags surrounding this
+      sub-message were not individually matched field-by-field against `qjb`'s own top-level 4-field
+      schema (fields 3/4/5/6) this pass, only the nested shape. A separate frame in the same burst
+      (1421) contains a long run of repeated `(index, float32)` pairs — structurally telemetry-shaped,
+      not matching `qjb`'s own simple 4-field shape at all, and plausibly a *different* RPC
+      (`SubscribeRuntimeInfo`/`GetHardwareInfo`, both real catalog entries per `fux.java`) riding the
+      same burst. **Conclusion**: existing capture data supports a plausible, not confirmed,
+      structural correlation for one candidate frame — this is a genuine advance over "no correlation
+      attempted at all," but per this item's own original scoping, full closure (confirming which
+      exact RPC response a given frame is, not just a shape resemblance) needs a fresh, purpose-built
+      capture correlating the burst against a live, independently-read `GetSoftwareInfo` value —
+      flagged as still needing that, not treated as closed.
 - [ ] **Added 2026-09-06, `CAP-042-FINDINGS.md` §5 (Group AI, `OBS-002`):** across a genuinely idle,
       ~37m39s, app-backgrounded session, the DLCI 0x02/0x04/0x08 periodic push recurred only twice
       (at ~16m and ~35m in — far sparser than `CAP-036`'s several-per-few-minutes sample with the
@@ -2018,6 +2164,30 @@ leaving them buried in prose elsewhere.
       platform settings-extension framework, not `com.google.android.gms.*`. See
       `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 "Finding 1" (last bullet) and Phase
       3 "Touch controls"/"Head gestures".
+      **Update (2026-09-08, `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 1) — all
+      6 case IDs now traced to their exact accessor call; the "head gestures" lead above did NOT pan
+      out as expected.** `2102`→`qhr` field 2 (also logged under an internal category name,
+      `CATEGORY_OHD` — **promoted to category-level identity 2026-09-08, maintainer sign-off,
+      `DECISIONS.md` ADR-019 Update; see §4.5.5**); `2103`→field 27 (matches the existing
+      category-level identity); `2104`→field 11 (**Multipoint**,
+      not head gestures — the case's own logged category is literally `CATEGORY_MULTIPOINT`, the same
+      internal-name evidence type that helped promote fields 11/15 to full identity, though the
+      `fpm.ENABLED_HEAD_GESTURES` tag riding alongside it in the same call is unreconciled, a
+      genuinely open naming tension, not resolved); `2113`→field 5 (still unnamed); `2115`→does not
+      touch `qhr` at all (a separate, unnamed "Feature A" toggle); `2116`→field 32 (a field not
+      previously in this project's `qhr` register at all, logged under an internal diagnostic-sounding
+      category, `CATEGORY_RV_BLOCK_AUTO_TEST`). Case 2104 also fires a second, non-`qhr` write to the
+      same "Feature A" mechanism as case `2115` — 🟡 plausible, unconfirmed lead that toggling
+      Multipoint here disables a mutually-exclusive feature (Spatial Audio is a plausible, unevidenced
+      candidate). **Head gestures (field 29) is NOT among these 6 mappings** — none of the 6 cases
+      route to `fyo`'s field-29 write path; this specific lead is now a checked negative, not merely
+      still open. Two `qhr` field-register corrections surfaced as a byproduct: field 6 has a real
+      write site (previously wrongly recorded as "not found"); field 32 (new) is now registered. Full
+      trace: `REVERSE_ENGINEERING.md`'s `MaestroDeviceSettingsProviderService` entry. Field 2's
+      promotion above and the case-2104/`fpm.ENABLED_HEAD_GESTURES` naming tension were both reviewed
+      directly by the maintainer in the chat session that authored this task's own prompt
+      (`ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md`); the naming tension was left open, not
+      resolved.
 - [ ] **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1,
       maintainer-approved per prompt `0002`).** The manifest also declares `MaestroEndpointService`
       (`grpc.ondevicegrpcserver`), **exported with no `android:permission` gate**, hosting a generic
@@ -2032,6 +2202,26 @@ leaving them buried in prose elsewhere.
       cross-device sync) — its exported-with-no-permission shape is worth a maintainer look on its
       own terms. See `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 "Verdict on Q1–Q3",
       Q3.
+      **Update (2026-09-08, `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 2) —
+      `onCreate()` read via the `apktool` smali fallback; the registration mechanism and its
+      authorization model are now understood, the literal service names are not.** The registered
+      services come from a Dagger/Hilt multibinding (`Map<String, Optional<ofd>>`) assembled
+      elsewhere in the app — no code inside this class hardcodes a service list, and the
+      multibinding's own assembly site wasn't found this pass. `ofd`'s single method takes a
+      **calling UID**, not a method index (despite superficially resembling a gRPC dispatch
+      interface) — it is an **authorization-policy check**: reject or allow a call, before it's
+      honored. Two concrete policies exist: `ofb` (allow only the app's own UID —
+      `"Rejected by (internal-only) security policy"` otherwise) and `mie` (allow only an
+      allowlisted, Google-signed caller package — `"Rejected by (1st-party only Allowlist) security
+      policy..."` otherwise). **This substantively answers "is anything actually gated to bind to
+      this," without naming GMS specifically**: the exported-with-no-Android-permission manifest
+      shape is not the whole picture — the service applies its own per-service, application-layer
+      authorization. Whether GMS specifically is ever allowlisted for any of *this* service's own
+      registered methods was not determined (the one `mie` construction site found belongs to an
+      unrelated outbound gRPC client connection to a different Pixel system app,
+      `com.google.android.apps.pixel.dcservice` — a genuinely new, incidental finding, out of scope
+      for this project's own Bluetooth focus). Full trace: `REVERSE_ENGINEERING.md`'s
+      `MaestroEndpointService` entry.
 
 ### Behavior
 
@@ -2261,6 +2451,8 @@ leaving them buried in prose elsewhere.
 | 2026-09-06 | **Synced with a 6-capture batch (`CAP-037`–`CAP-042`), the first purpose-built repeats of `CAP-036`'s own questions.** No new FACT promotions — this batch's own role was large-scale replication of already-FACT findings (`CAP-037`: 26/26 ADR-022 replications and 26/26 ADR-024 dock-state matches in one session; `CAP-039`: 10 same-session Set-vs-Get samples confirming ADR-024's trigger-independence) plus several new 🔴 open items added to §6: DLCI 0x08's 7 unmapped Get-shaped codes still unattributed (`CAP-040`, inconclusive — the session's own procedure left N=1 per code); the in-app "Connect"/"Disconnect" buttons producing zero wire signal (`CAP-040`); a chandle-level `Settable-toggles` anomaly with no preceding Get (`CAP-037`); a `Settable-toggles=0x00` reading immediately after physical case-removal, in tension with ADR-024 (`CAP-038`, not resolved); two Get-less/Set-less ANC Notify frames (`CAP-038`); DLCI 0x02's connect-time burst shown length-invariant across 3 differing settings states, content-level diff still pending (`CAP-041`); and the periodic DLCI 0x02/0x04/0x08 push shown far sparser over a genuinely idle ~37-minute window than `CAP-036`'s short sample suggested, with HFP dropping out of the cross-channel sync entirely (`CAP-042`) | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-09-07 | **Remediation from a project-wide audit + cross-validation cycle** (`AUDIT_REPORT_2026-09-07.md`, `ANTIGRAVITY_AUDIT_REPORT_2026-09-07.md`, `EXTERNAL_REVIEW_VALIDATION_2026-09-07.md` — all three retired after processing, see `CHANGELOG.md`): backfilled this table's own 2026-09-04/05/06 gap (this row's three predecessors); **§4.3 Option C** corrected — HFP's own DLCI documented as a fixed `0x09` (`CAP-001`-only) but the clear majority of later captures (`CAP-004`/`CAP-007`/`CAP-033`/`CAP-042`) land it on `0x0c` — now documented as session-local, matching how DLCI 0x02/0x04 are already treated; **§6** — added `qhr` field 13 (a second, code-evidenced DLCI-0x02 ANC-state write path) as a named candidate to `CAP-038-FINDINGS.md` §5's open item, and added an app-foreground-vs-IPC refinement to `CAP-042-FINDINGS.md` §5's open item. No new FACT promotion; **`DECISIONS.md` ADR-025** separately records that GMS reverse-engineering is out of scope, since no DLCI 0x04/0x08 transport code exists anywhere in the companion app's own decompiled source | Claude (AI), audit-remediation task, maintainer-directed |
 | 2026-09-08 | **Implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 4's proposals, maintainer-approved via `ai-sessions/0002_MAINTENANCE_PROMPT_2026_09_08.md`** (`DECISIONS.md` ADR-025's 2026-09-08 Update notes): **§4.5.2 Multipoint (`qhr` field 11)** and **§4.5.6 Volume EQ (`qhr` field 15)** promoted to 🟢 FACT for full field-number/semantic identity, each forward-traced from a named UI fragment/preference key to its write call site. **§6** — added four items: an informational note on `IFastPairDeviceDetailService`/`IFastPairFmdProxyService` (how the reference app sources battery data and handles Find My Device consent, explicitly out of scope for this project's own implementation); a refinement to the Find My Buds Case/"both" open item (`FmdWorker`/`ijp` construct only ToS accept/skip requests, no ring/play-sound trigger found); a new open item on `MaestroDeviceSettingsProviderService` as a second UI entry point into the `qhr`/`WriteSetting` pipeline; a new open item on `MaestroEndpointService`'s undetermined gRPC service registrations. Also closed the `field 11`/`field 15` entry in the "what do DLCI 0x02's confirmed inner field numbers actually represent" open item | Claude (AI), maintainer-directed sign-off session (prompt `0002`) |
+| 2026-09-08 | **`ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md` Phase 2 — external-source validation pass, no new FACT promotion.** **§4.3 Option A** — the "shown ≥8s, auto-hidden after 20s" timing claim re-checked against the base Message Stream spec page (the alternate location proposed 2026-09-03); also absent there, closing both candidate official pages with a clean negative. **§4.4/§6** — the Ring ACK open item sharpened with the acknowledgement spec's exact literal text (the worked example's trailing 2 bytes are explicitly glossed as a channel+timeout state, "ring right and 60 seconds timeout"); checked against both observed ACK variants, neither fits a 2-byte state (one has zero extra bytes, the other exactly one) — the spec's own documented NAK format (a leading reason byte) was also checked and doesn't fit either. **§6** — the DLCI 0x02 Address-field-renegotiation item cross-checked against Pigweed's public `pw_hdlc`/`pw_rpc` documentation directly: neither publishes how HDLC addresses or RPC channel IDs are assigned, so this remains genuinely undocumented upstream, not merely unread. **§2.3** — `pbpctrl`'s own published notes re-fetched in full; confirmed no detail exists beyond the already-quoted transport-framing paragraph and a bare feature list (no opcode/byte-layout detail for any setting). **§6** — `FE2C1238…`'s name and the "Unknown Service" UUID re-checked against the live Fast Pair characteristics page and a web search respectively; both reconfirm the existing negative result (still undocumented) rather than finding anything new | Claude (AI), external-validation task (HYPOTHESIS-level re-checks and negative-result confirmations only — no FACT promotion, no sign-off needed) |
+| 2026-09-08 | **`ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md` Phase 3/4 — APK reverse-engineering and capture cross-checks.** **§4.5.5 In-ear detection (`qhr` field 2)** promoted to 🟢 FACT for field-number/category-level identity, maintainer-approved (`DECISIONS.md` ADR-019 Update): the field's existing write site is also reached from the system Settings app's `MaestroDeviceSettingsProviderService` (case `2102`), logged there under the internal category name `"CATEGORY_OHD"` — the specific "In-ear detection" UI-label equivalence stays 🟡 HYPOTHESIS. **§4.2 EQ** — `fyd.d`/`fyd.e`'s call sites traced: field 16 confirmed fed from the slider-drag/preset path; field 18 found reachable *only* via a dedicated "Save EQ" button click handler, directly contradicting (not confirming) `CAP-015`'s own "fires on slider-release" wire-timing hypothesis — recorded as an open tension per the maintainer's own review, not resolved either way. **§6** — `MaestroDeviceSettingsProviderService`'s remaining 5 case IDs traced (field 27, field 11/Multipoint with a new internal-name confirmation and an unreconciled `fpm.ENABLED_HEAD_GESTURES` naming tension, field 5, a non-`qhr` "Feature A" toggle, and a new field 32); `MaestroEndpointService.onCreate()` read via `apktool` smali fallback (a Dagger-multibinding-based, per-call UID-authorization-gated service registry, service names not recovered); `gjv.p()`'s caller re-attempted and still not found (static analysis judged exhausted). **`CAP-041-FINDINGS.md` §8** — full byte-for-byte content diff of the DLCI 0x02 connect-time burst across 4 settings states: content-level clean negative for a settings-state read-back, closing `OBS-007` beyond the prior length-only result. **§6** — a plausible (unconfirmed) structural match found between `CAP-036`'s existing connect-time burst and `qjb`'s `qie`-shaped nested structure; `TrueWirelessHeadset.modelId` confirmed to need the maintainer's own device access, no existing data found | Claude (AI), APK-reverse-engineering + capture-analysis task; one item (`qhr` field 2) maintainer-directed sign-off, prompt `0003` |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

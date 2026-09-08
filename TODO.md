@@ -36,23 +36,29 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    targeted-class re-run wrote 0 `.proto` files; root cause is now source-cited, not just the
    tool's own caveat — see the Phase 2 checklist item below). The schemas were instead recovered
    by hand (`scripts/decode_rawmessageinfo.py`, `DECISIONS.md` ADR-019) and cross-correlated
-   against wire captures for `qhr` fields 4, 7, 12, and 29. **Current highest-leverage single next
-   step** is now applying that same static-analysis method to `qhr`'s remaining
-   confirmed-but-unchecked field numbers (11, 15, 17, 19, 22, 27, 28 — already listed in this
-   file's "Targeted research follow-ups" section below) — this is what `PROTOCOL.md` §2.2a's
-   remaining HYPOTHESIS (does DLCI 0x02's Sent-payload content specifically carry `libmaestro`'s
-   settings commands, beyond the 4 fields ADR-019 already sampled) needs to close further, and
-   it's what blocks `ARCHITECTURE.md` §2.1's `FrameEncoder`/`FrameDecoder` gate for every DLCI-0x02
-   feature. **`CAP-033` (Group AA, `SDP-001`/`SDP-002`) is done (2026-08-30)** — see below.
-4. **Remaining planned captures** (updated 2026-08-30 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`,
-   `CAP-027`, `CAP-033` are done, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9): a clean connection-free
-   repeat of the Battery Notification BLE scan (`CAP-011` was inconclusive), a genuine attempt at
-   Group W's own untried cache-busting methods (`pm clear com.android.bluetooth` or the Pixel 9a —
-   `CAP-010`/`CAP-017`/`CAP-014` all failed to try either), a proper isolation-clean repeat of
-   `SDP-001` (force-stop strictly before "Forget," and actually execute step 3 — `CAP-033`'s own
-   procedure deviation capped that result at 🟡 HYPOTHESIS, see `CAP-033-FINDINGS.md` §8), then
-   `CAP-018` and the still-uncaptured main-run-through remainder (`CAP-026`, `CAP-028`–`CAP-030`) —
-   `CAP-028` (head gestures) is now the highest-value of these still uncaptured.
+   against wire captures for `qhr` fields 4, 7, 12, and 29. **Updated 2026-09-08 — the "remaining
+   confirmed-but-unchecked field numbers" item this bullet used to point to is now fully closed**:
+   fields 17/19/22/27/28 closed 2026-09-03, and fields 11/15 (the two the maintainer's `0002`
+   sign-off was scoped to) closed 2026-09-08 — see this file's "Targeted research follow-ups"
+   section below, `PROTOCOL.md` §4.5.2/§4.5.6/§4.5.7/§4.5.5a/§4.5.8/§4.5.1, `DECISIONS.md` ADR-019
+   and its two Updates. **Current highest-leverage single next step** is now the
+   `MaestroDeviceSettingsProviderService` 6-case-ID→`qhr`-field forward trace (same "Targeted
+   research follow-ups" section, added 2026-09-08 by prompt `0002`) — the cheapest of the three
+   open APK-RE leads from `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md`'s Phase 1/Phase 2 (the
+   other two, `MaestroEndpointService`'s smali fallback read and `gjv.p()`'s caller trace, both need
+   either an untried smali read or a fresh capture first). **`CAP-033` (Group AA, `SDP-001`/`SDP-002`)
+   is done (2026-08-30)** — see below.
+4. **Remaining planned captures** (updated 2026-09-08 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`,
+   `CAP-027`, `CAP-033`–`CAP-042` are done, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9): a clean
+   connection-free repeat of the Battery Notification BLE scan (`CAP-011` was inconclusive), a
+   proper isolation-clean repeat of `SDP-001` (force-stop strictly before "Forget," and actually
+   execute step 3 — `CAP-033`'s own procedure deviation capped that result at 🟡 HYPOTHESIS, see
+   `CAP-033-FINDINGS.md` §8), then `CAP-018` and the still-uncaptured main-run-through remainder
+   (`CAP-026`, `CAP-028`–`CAP-030`) — `CAP-028` (head gestures) is now the highest-value of these
+   still uncaptured. **Closed this update:** Group W's own untried GATT cache-busting methods —
+   `CAP-034` (2026-09-01) combined `pm clear com.android.bluetooth` with a Pixel 9a never before
+   connected to this Buds unit and fully resolved the `0x0c0X`/`0x0f2X` handle↔UUID mapping (see
+   `PROTOCOL.md` §6, §4.3 Option D) — this bullet's own "untried" framing is now stale and removed.
 5. **Targeted research follow-ups**, lowest priority, tracked at their source per this file's
    "Open questions" section: the `CAP-021` DLCI 0x0a burst trigger and the DLCI 0x02 AES-128
    hypothesis (`PROTOCOL.md` §6) — the latter is only really testable once Phase 2 above provides
@@ -82,30 +88,51 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      fragment/preference key to the write call site (`PROTOCOL.md` §4.5.2/§4.5.6,
      `REVERSE_ENGINEERING.md`'s `qhr` entry, `DECISIONS.md` ADR-025 Update). All 7 field numbers
      this item originally listed are now checked against the recovered `qhr` schema — item closed.
-   - **Added 2026-09-03 (audit finding):** trace `fyd.d`/`fyd.e`'s own call sites in the EQ UI
-     fragment (`REVERSE_ENGINEERING.md`'s `qjw` entry) — the one specific static-analysis step
-     identified as still missing to connect `qjw` field 16/18's code-derived "live vs. persisted"
-     reading to the wire-observed "drag vs. release" timing (`PROTOCOL.md` §4.2/§6). A further static
-     analysis pass, not a capture.
+   - **Added 2026-09-03 (audit finding), closed 2026-09-08
+     (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 4):** traced `fyd.d`/`fyd.e`'s
+     own call sites in the EQ UI fragment — field 16 fires from the slider-drag/preset path; field 18
+     is reachable **only** via a dedicated, self-describing "On click save EQ button" handler, with
+     no slider-release code path found anywhere. This closes the static-analysis question but
+     **contradicts** `CAP-015`'s own wire-timing "fires on slider-release" hypothesis rather than
+     confirming it — a genuine, unreconciled tension, proposed for maintainer review. See
+     `REVERSE_ENGINEERING.md`'s `qjw` entry and `PROTOCOL.md` §4.2/§6.
    - **Added 2026-09-03 (audit finding):** re-verify `PROTOCOL.md` §4.3 Option A's "shown ≥8s,
      auto-hidden after 20s" Battery Notification visibility-timing claim directly against the
      official Fast Pair spec pages (a 2026-09-03 re-check found no such text on the
      `batterynotification` extension page specifically — downgraded to 🟡 HYPOTHESIS pending this
      check; the detail may live on a different spec page not checked yet, e.g. the base Message
      Stream spec).
-   - **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4,
-     prompt `0002`):** trace `MaestroDeviceSettingsProviderService`'s 6 case IDs
-     (2102/2103/2104/2113/2115/2116) to their specific `qhr` field numbers, using the same
-     forward-trace technique (named UI fragment/preference key → write call site) used for
-     Multipoint/Volume EQ above (`REVERSE_ENGINEERING.md`'s `MaestroDeviceSettingsProviderService`
-     entry). Case 2104's `fpm.ENABLED_HEAD_GESTURES`/`fpm.UNKNOWN` values are a promising but
-     unconfirmed lead for head gestures (`qhr` field 29, `PROTOCOL.md` §4.5.4).
-   - **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1, prompt
-     `0002`):** `apktool` smali-fallback read of `MaestroEndpointService.onCreate()`
-     (`APK_REVERSE_ENGINEERING_PROCEDURE.md` §6) — its bytecode is JADX-undecompilable
-     ("Method dump skipped... 599 instructions") — to determine which gRPC service(s) this
-     exported, no-permission-gated on-device server actually registers and who binds to it
-     (`REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry, `PROTOCOL.md` §6).
+   - **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4, prompt
+     `0002`), closed 2026-09-08 (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 1):**
+     traced `MaestroDeviceSettingsProviderService`'s 6 case IDs to their exact accessor call —
+     `2102`→`qhr` field 2, `2103`→field 27, `2104`→field 11 (Multipoint — the head-gestures lead
+     below did **not** pan out; field 29 is not among these 6 mappings), `2113`→field 5, `2115`→no
+     `qhr` field at all (a separate "Feature A" toggle), `2116`→field 32 (new). See
+     `REVERSE_ENGINEERING.md`'s `MaestroDeviceSettingsProviderService` entry for the full trace,
+     including two byproduct `qhr` register corrections (fields 6 and 32) and an unreconciled
+     `CATEGORY_MULTIPOINT`-vs-`fpm.ENABLED_HEAD_GESTURES` naming tension on case 2104 — proposed for
+     `PROTOCOL.md` promotion, pending maintainer review.
+   - **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1, prompt `0002`),
+     largely closed 2026-09-08 (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 2):**
+     `apktool` smali-fallback read of `MaestroEndpointService.onCreate()` done — the registered
+     services come from a Dagger multibinding (`Map<String, Optional<ofd>>`) assembled elsewhere
+     (names not recovered), and `ofd`'s method is a per-call, UID-based authorization check (not a
+     service dispatcher as its shape first suggested) — two policies found, an internal-UID-only
+     check and an allowlisted-Google-signed-caller check. See `REVERSE_ENGINEERING.md`'s
+     `MaestroEndpointService` entry. **Still open, if pursued further**: the literal registered
+     service names (would need locating the Dagger multibinding's own assembly site — judged out of
+     proportion to chase further this session) and whether GMS specifically is ever in the
+     allowlist for this service's own methods.
+   - **Formalized 2026-09-08 (`ai-sessions/0002_MAINTENANCE_RESULT_2026_09_08.md`'s own gap scan
+     flagged this as never added to this list; re-attempted and still not closed by
+     `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 3):** trace `gjv.p()`'s own
+     caller — the remaining open link needed to determine whether `fxm.i()`'s `GetSoftwareInfo` fetch
+     genuinely fires inside the `CAP-036`/`CAP-041` connect-time settling window
+     (`REVERSE_ENGINEERING.md`'s `frb`/`fuh`/`glk`/`gjv` entry). Two static-analysis passes have now
+     failed to locate this caller (generic-token searches on `.p()`/`.u = ` are unproductive against
+     this app's R8 obfuscation) — the byte-level capture-correlation alternative (`PROTOCOL.md` §6's
+     matching item) is now the recommended path, not a further static-analysis attempt, unless a
+     future session identifies a more targeted search strategy.
 
 ## Setup
 
@@ -248,22 +275,25 @@ lower priority than finishing ANC/Battery/EQ):**
       ≥4.467 — worth double-checking this against the project's `release_5.203` baseline first,
       since the two version identifiers have never been explicitly reconciled, `PROTOCOL.md` §0.1).
       Lower priority than a clean `CAP-011` repeat and a properly-done Group W attempt above.
-- [ ] **Added 2026-09-05 — six new planned captures, follow-ups to `CAP-036`'s `OBS-004` session**
-      (each already has its own row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index and its
-      own Group section there; listed here only for priority-ordering visibility, not as a
-      duplicate description): `CAP-037` (Group AD, purpose-built repeat of the "Get ANC state"
-      reconnect-reliability + dock-state-transition question — the first dedicated session for
-      what `DECISIONS.md` ADR-021/ADR-022/ADR-024 currently only have retrospective evidence for),
-      `CAP-038` (Group AE, realistic buds-out-of-case-and-worn reconnect vs. a system-toggle-only
-      reconnect), `CAP-039` (Group AF, `Settable-toggles` Set-vs-Get comparison at fixed dock
-      state), `CAP-040` (Group AG, DLCI 0x08's unmapped Get-shaped codes decoded via correlation
-      against a known-changing value), `CAP-041` (Group AH, DLCI 0x02's connect-time RPC burst vs.
-      non-default settings — directly relevant to `ARCHITECTURE.md` §3.1), `CAP-042` (Group AI, a
-      15+ minute idle bracket for `OBS-002`, characterizing the periodic DLCI 0x02/0x04/0x08/HFP
-      push cadence over a longer window than `CAP-036`'s own ~7 minutes). All six run on the same
-      Pixel 7a + official app + GMS-enabled baseline as `CAP-036` itself — see each capture's own
-      event-notes skeleton (in its `captures/CAP-0NN-...` folder) for the full preparation
-      checklist and procedure.
+- [x] **Six captures planned 2026-09-05, follow-ups to `CAP-036`'s `OBS-004` session — done and
+      analyzed 2026-09-06, updated here 2026-09-08 (was stale: still listed as "planned" though
+      `PROTOCOL.md` §8's 2026-09-06 changelog row already syncs their findings).** `CAP-037` (Group
+      AD, purpose-built repeat of the "Get ANC state" reconnect-reliability + dock-state-transition
+      question) ran far longer than planned — 34 reconnects, 26/26 zero-miss `DECISIONS.md` ADR-022
+      replications and 26/26 ADR-024 dock-state matches, the largest single-session replication of
+      either on file. `CAP-038` (Group AE, realistic buds-out-of-case-and-worn reconnect) found a
+      `Settable-toggles=0x00` reading immediately after physical case-removal, in unreconciled
+      tension with ADR-024 (`PROTOCOL.md` §6, still open). `CAP-039` (Group AF, Set-vs-Get
+      comparison) gave 10/10 same-session confirmations of ADR-024's trigger-independence. `CAP-040`
+      (Group AG, DLCI 0x08 unmapped codes) found the app's own in-app Connect/Disconnect buttons
+      produce zero wire signal, leaving its 7 target codes at N=1 each — inconclusive, still open.
+      `CAP-041` (Group AH, connect-time burst vs. non-default settings) found the burst's
+      length/shape signature invariant across 3 non-default states — a scoped negative at the
+      length level; a full content diff remains open (Phase 4 item 1 below). `CAP-042` (Group AI,
+      long idle bracket) found the periodic cross-channel push far sparser than `CAP-036`'s short
+      sample suggested, with HFP dropping out of the sync entirely. See each capture's own findings
+      file (in its `captures/CAP-0NN-...` folder) and `PROTOCOL.md` §6's matching open items for
+      full detail.
 
 ## Phase 2 — APK reverse engineering
 

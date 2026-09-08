@@ -47,7 +47,7 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-09-07)
+## Current state (2026-09-08)
 
 - **Captures:** 42 registered sessions (`CAP-001`–`CAP-042`), most analyzed and a handful still
   planned — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index.
@@ -60,9 +60,9 @@ to design, implement, test, and document a native Android app.
 - **Confirmed and implementation-ready:** ANC/Transparency/Adaptive mode switching,
   Find My Buds (Left/Right), battery reporting (HFP), the equalizer's live-write
   path, touch-controls top-level toggle and press-and-hold assignment, mono audio,
-  and the "Bud return" case sound.
+  multipoint, volume EQ, volume balance, and the "Bud return" case sound.
 - **Still open:** touch-controls' head-gestures and ANC-mode-rotation sub-features,
-  in-ear detection, multipoint, EQ preset persistence semantics, Find My Buds for
+  in-ear detection, EQ preset persistence semantics, Find My Buds for
   the case (a Zero-GMS scope question, not just a research gap), and per-component
   serial-number reading.
 - **Not started:** the Android app itself — no Gradle project exists in this
