@@ -990,11 +990,11 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     | 8 | BOOL | not found | unhandled (default) | write-silent, read-inert |
     | 9 | ENUM `qhs` | not found | unhandled (default) | write-silent, read-inert — see main finding above |
     | 10 | ENUM `qhs` | not found | unhandled (default) | write-silent, read-inert — see main finding above |
-    | 11 | BOOL | `fyo.java:146-166` (`j`) | case 11 (`:220-227`), no distinct log | not independently named |
+    | 11 | BOOL | `fyo.java:146-166` (`j`) | case 11 (`:220-227`), no distinct log | **Multipoint — confirmed** (self-describing log one layer up, at the ViewModel: `hiy.java:32`'s `"Set device Multipoint as: %s"`, reached from `MultipointFragment`'s toggle — see 2026-09-08 update below) |
     | 12 | MESSAGE→`qht` | `hgj.java:216-331` (ANC gesture-loop preference screen) | case 12 (`:228-277`), `"Log ANC gesture loop to Clearcut"` | **ANC gesture-loop membership (On/Off/Transparency/Adaptive)** — see updated `qjg`/`qht` entry below |
     | 13 | ENUM `qhs` | `fye.java:17-39` (2 callers, see main finding above) | case 13 (`:278-311`), `"Log ANC settings to Clearcut"` | **ANC state (Off/Active/Aware/Adaptive) — confirmed** |
     | 14 | BOOL | `fyo.java:234-254` (`o`) | unhandled (default) | write-only; response ignored |
-    | 15 | BOOL | `fyo.java:168-188`→`u` (`fyo.java:376-396`) | case 15 (`:312-319`), no distinct log | not independently named |
+    | 15 | BOOL | `fyo.java:168-188`→`u` (`fyo.java:376-396`) | case 15 (`:312-319`), no distinct log | **Volume EQ — confirmed** (self-describing log + literal preference-key string one layer up: `hlv.java:2127`'s `"Set volume eq: %s"`, gated on `str.equals("volume_eq_switch")` — see 2026-09-08 update below) |
     | 16 | MESSAGE→`qjw` | `fyp.java:301-322` (`f`, "update user eq") | case 16 (`:320-323`), `"received user eq setting value"` | **live/current user EQ curve** — see updated `qjw` entry below |
     | 17 | `SINT32` (per this entry's own field register above, line 856) | `fxf.java:82-133` (case 16 of that dispatcher) | case 17 (`:324-327`), `"received last saved volume balance setting value"` | **volume balance** |
     | 18 | MESSAGE→`qjw` | `fyp.java:270-294` (`d`, "update last saved user eq"; also persists to local `SharedPreferences` key `key_user_custom_eq`) | case 18 (`:328-331`), `"received last saved user eq setting value"` | **last-saved/persisted user EQ curve** — see updated `qjw` entry below |
@@ -1074,6 +1074,56 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
 
   Fields 11 (Multipoint) and 15 (Volume EQ) from `PROTOCOL.md` §6's same open item were **not**
   checked against the recovered `qhr` schema this pass and remain 🟡 HYPOTHESIS, unaffected.
+
+- **Update (2026-09-08, `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2, maintainer
+  sign-off obtained via prompt `0002`) — fields 11 (Multipoint) and 15 (Volume EQ) closed, via a
+  forward trace from a named UI fragment/preference key to the write call site, rather than the
+  backward-from-a-log-message technique used for the fields above.** 🟢 FACT (code
+  call-graph tracing, re-verified this session):
+  - **Field 11 = Multipoint — full trace, self-describing log message found one layer above
+    `fxb.java`'s response handler (which itself has no distinct log for case 11):**
+    `com/google/android/apps/wearables/maestro/companion/ui/settings/multipoint/MultipointFragment.java`
+    (a genuinely unobfuscated class name) binds its `key_multipoint_main_toggle`
+    `MainSwitchPreference`'s `OnCheckedChangeListener` (`cq(CompoundButton, boolean)`, line 71-75) to
+    `hiy.a(boolean)` (`hiy.java:31-38`), which logs **`"Set device Multipoint as: %s"`**
+    (`hiy.java:32`) before calling `((fyc) g.get()).e(z)` (`hiy.java:37`). `fyc.e(boolean)`
+    (`fyc.java`: `return i(new fyb(z, 9));`) dispatches through `fyb`'s case 9 (`fyb.java:66-70`:
+    `((fya) obj).j(this.a)`) — i.e. `fya.j(boolean)`, which is `fyo.j(boolean)` (`fyo.java:146-166`),
+    the exact call site already identified above as writing `qhr.b = 11`. **Full chain, UI to wire
+    field**: `MultipointFragment` (toggle: `key_multipoint_main_toggle`) → `hiy.a(z)` (`"Set device
+    Multipoint as: %s"`) → `fyc.e(z)` → `fyb(z,9)` → `fya.j(z)` = `fyo.j(z)` → **`qhr` field 11**.
+  - **Field 15 = Volume EQ — full trace, with a literal Android preference-key string match, a
+    stronger evidence type than any `qhr` field promoted so far:** `defpackage/hlv.java:2125-2134`
+    (a large R8-merged preference-click dispatcher, `e(Preference)`) has a case gated on
+    `str.equals("volume_eq_switch")` — the literal Settings-XML preference key for the "Volume EQ"
+    toggle at the bottom of Device details → Sound → Equalizer (`PROTOCOL.md` §4.5.6's own UI
+    description) — logging **`"Set volume eq: %s"`** (`hlv.java:2127`) before calling
+    `((fyc) g2.get()).h(z2)` (`hlv.java:2133`). `fyc.h(boolean)` (`fyc.java`: `return i(new fyb(z,
+    7));`) dispatches through `fyb`'s case 7 (`fyb.java:56-60`: `((fya) obj).u(this.a)`) — i.e.
+    `fya.u(boolean)` = `fyo.u(boolean)` (`fyo.java:376-396`), the exact call site already identified
+    as writing `qhr.b = 15`. **Full chain**: `hlv`'s preference-click handler (key:
+    `"volume_eq_switch"`) → `"Set volume eq: %s"` log → `fyc.h(z)` → `fyb(z,7)` → `fya.u(z)` =
+    `fyo.u(z)` → **`qhr` field 15**.
+  - **Bonus, adjacent finding (not part of this task's ask, found in the same dispatcher):** the case
+    immediately before Volume EQ's, `str.equals("loudness_comp_switch")` ("Loudness compensation"),
+    logs `"Set loudness compensation: %s"` and calls `((fyc) g.get()).i(new fyb(z, 5))` → `fyb`'s
+    case 5 → `fya.i(boolean)`. **`fyo.i(boolean)` (`fyo.java:411-412`) is an empty no-op method
+    body** — on this app version's Pixel-Buds-Pro-2-specific schema (`fyo` implements `fya`),
+    toggling "Loudness compensation" produces **no `qhr` write at all**; this method is presumably
+    only implemented by one of the sibling `fyw`/`fyx` classes for a different product. Not one of
+    `PROTOCOL.md`'s documented Buds Pro 2 features — recorded here as a genuine negative result (a
+    real, named Sound settings toggle that is wired in the shared UI code but produces zero wire
+    traffic for this device), not chased further.
+  - **Evidentiary strength, stated precisely**: both traces combine (a) an exact,
+    independently-verified call-graph path with no ambiguous branch, and (b) a self-describing
+    string — a log message for field 11, and *both* a log message *and* the literal Android
+    preference-key string for field 15. This meets or exceeds the evidence bar this entry's own
+    2026-09-03 update used for its already-promoted fields (which relied on the read-side
+    `fxb.java` log message alone in most cases). **Promoted to `PROTOCOL.md` §4.5.2 (Multipoint,
+    field 11) and §4.5.6 (Volume EQ, field 15) as 🟢 FACT in full, 2026-09-08, maintainer sign-off
+    (prompt `0002`, `DECISIONS.md` ADR-025's 2026-09-08 Update note)** — both readings match the
+    pre-existing wire-derived HYPOTHESIS labels exactly, unlike fields 12/22/27 which kept a naming
+    equivalence unpromoted.
 
 ### `defpackage.qjn` / `defpackage.qjt` / `defpackage.qhx` / `defpackage.qjv` — `qjc`/`qja`'s other 4 oneof-group alternatives
 
@@ -1963,6 +2013,164 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   `0x0c0X`/`0x0f2X` handle↔UUID mapping question itself (`PROTOCOL.md` §6) remains unresolved and is
   unaffected by this entry.
 
+### `defpackage.ijk` / `defpackage.ijp` / `defpackage.ijm` / `defpackage.iji` / `defpackage.gsy` / `TrueWirelessHeadset` / `HeadsetPiece` / `FmdRequest` / `FmdResponse` / `FmdWorker` — GMS Fast Pair client-library boundary (Chimera-brokered AIDL)
+
+*(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4, maintainer-approved per prompt `0002`.)*
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/ijk.java` (and sibling files below)
+- **Readable alias**: GMS Fast Pair client library boundary
+- **Role**: 🟢 FACT (code existence/structure, traced end-to-end): the companion app's own source
+  for on-screen battery display and Find My Device Terms-of-Service consent, reached via two
+  genuinely named, unobfuscated AIDL interfaces bound through Google's Chimera dynamic-module
+  broker. **Not GMS reverse-engineering** — this is the companion app's own client-side code calling
+  out to GMS, fully within this project's existing APK-analysis scope (`DECISIONS.md` ADR-017); no
+  GMS-side code was decompiled or analyzed.
+- **Relevant methods/classes**:
+  - `defpackage/ijk.java:42-52` (`b()`) — builds
+    `Intent("com.google.android.gms.nearby.discovery.fastpair.ACTION_BIND_DEVICE_DETAIL")`, targets
+    `intent.setClassName("com.google.android.gms", "com.google.android.gms.chimera.GmsBoundBrokerService")`,
+    calls `context.bindService(intent, this.c, 1)`.
+  - `defpackage/iji.java:20-33` (`onServiceConnected`) — calls
+    `iBinder.queryLocalInterface("com.google.android.libraries.bluetooth.fastpair.IFastPairDeviceDetailService")`,
+    falls back to `new ijm(iBinder)` (a hand-rolled Binder proxy, `defpackage/ijm.java:9`).
+  - `ijk.a(String):29-40` — raw `Parcel`-marshalled transact call (code 2) passing a device address,
+    unmarshals the reply as `com.google.android.libraries.bluetooth.fastpair.TrueWirelessHeadset`.
+  - `TrueWirelessHeadset` fields (`AutoValue_TrueWirelessHeadset.java`'s `toString()`, unobfuscated):
+    `leftBud`/`rightBud`/`headsetCase` (each a `HeadsetPiece`), `lastUpdateElapsedRealtimeMillis`,
+    `modelId`, `firstObservationTimestampMillis`, `mainIconContentUri`,
+    `isBatteryAllTheTimeDevice` (boolean, not yet interpreted).
+  - `HeadsetPiece` fields (`AutoValue_HeadsetPiece.java`'s `toString()`): `lowLevelThreshold` (int),
+    `batteryLevel` (int), `imageUrl` (String), `charging` (boolean), `imageContentUri` (Uri).
+  - `ijk.b()` also registers a `ContentObserver` on
+    `content://com.google.android.gms.nearby.fastpair/battery_status_update` — GMS notifies the
+    companion app of a battery change via `ContentResolver.notifyChange()`.
+  - `defpackage/gsy.java:17` (`this.i = new ijk(context, this)`) — `ijk`'s sole construction site.
+  - **Find My Device (FMD), same broker, different action**: `defpackage/ijp.java:37-45` (`b()`)
+    builds `Intent("com.google.android.gms.nearby.discovery.fastpair.ACTION_BIND_FMD_PROXY")`, same
+    `GmsBoundBrokerService` target; `iji.java`'s `onServiceConnected` case 2 queries
+    `"com.google.android.libraries.bluetooth.fastpair.fmd.IFastPairFmdProxyService"`.
+    `ijp.a(FmdRequest):24-35` sends an `FmdRequest` (fields via `AutoValue_FmdRequest`: `address`,
+    `acceptedTosVersion`, ...) and gets an `FmdResponse` back.
+  - `com.google.android.apps.wearables.maestro.companion.fmd.FmdWorker` (unobfuscated
+    `androidx.work.ListenableWorker`): static `c(Context, String, int)`/`n(Context, String)`
+    (`FmdWorker.java:51-66`) build `FmdRequest`s with operation code `3` ("Enqueued accept worker")
+    / `4` ("Enqueued skip worker") — ToS accept/skip only; no other `FmdRequest.d()` call site
+    exists anywhere in this APK version (`grep -rn "FmdRequest\.d()"` → 2 hits, both accept/skip).
+  - A third, ContentProvider-based channel to the same authority (not a bound service):
+    `defpackage/hlf.java:705` and
+    `com/google/android/apps/wearables/maestro/companion/slices/MaestroSliceProvider.java:233` both
+    build/query `content://com.google.android.gms.nearby.fastpair/links?address=<addr>&caller=maestro`.
+- **Open questions**: `TrueWirelessHeadset.modelId` as a candidate cross-reference against DLCI
+  0x04's already-FACT Device Information "Model ID" (`da 2d b1`) — not checked. `isBatteryAllTheTimeDevice`'s
+  actual value/effect — no getter/log/UI reference traced. The actual FMD "ring"/"play sound"
+  trigger for Case/"both" is not constructed anywhere in this APK's decompiled source (see
+  `PROTOCOL.md` §4.4/§6's Behavior-section update).
+- **Correlation with `PROTOCOL.md`**: informational context only (§6 Commands & schemas, 2026-09-08
+  addition) — explicitly not a candidate implementation path for this project's own app (would
+  require GMS, `AGENTS.md` §1).
+
+### `MaestroDeviceSettingsProviderService` / `defpackage.fhk` / `defpackage.ges` — AOSP Bluetooth-Device-Details settings-extension boundary
+
+*(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 3/Phase 4, maintainer-approved per prompt `0002`.)*
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/apktool-output/AndroidManifest.xml`
+  (service declaration);
+  `jadx-output/sources/com/google/android/apps/wearables/maestro/companion/settingprovider/service/MaestroDeviceSettingsProviderService.java`
+- **Readable alias**: AOSP Settings-app Bluetooth-device-details extension
+- **Role**: 🟢 FACT (code existence/structure): a **second, previously-undocumented UI entry point**
+  into the `qhr`/`WriteSetting` pipeline — the system Settings app's own Bluetooth-device-details
+  page, not one of this project's already-documented in-app screens. **Not GMS** — this is Android's
+  own platform (AOSP `SettingsLib`) extension framework.
+- **Relevant methods/classes**:
+  - Manifest: `exported=true`, `permission=android.permission.BLUETOOTH_PRIVILEGED`, `intent-filter
+    action="com.google.android.apps.wearables.maestro.companion.services.BIND_SERVICE"`.
+  - Extends `gpn`, implements callback methods annotated `@Override // defpackage.fhk` —
+    `a(DeviceInfo)`/`cs(DeviceInfo)`/`ct(DeviceInfo, DeviceSettingState)`, using
+    `com.android.settingslib.bluetooth.devicesettings.{DeviceInfo,DeviceSettingState,ActionSwitchPreferenceState}`.
+    `fhk`'s real (unobfuscated) name, confirmed via the exhaustive `queryLocalInterface` sweep
+    below, is `com.android.settingslib.bluetooth.devicesettings.IDeviceSettingsListener`.
+  - `ct(...)` routes case IDs 2102/2103/2104/2113/2115/2116 into the same `ftj`/`fya`-interface
+    accessor chain (`.f()`, `.b()`, etc.) this document's `qhr` register already names for several
+    fields — which specific `qhr` field each case ID maps to was **not** individually traced this
+    pass (the same forward-trace technique used for Multipoint/Volume EQ above would resolve this —
+    see `TODO.md`'s new item).
+  - `defpackage/ges.java` — a shared lambda-dispatch class this service also uses, directly
+    referencing `TrueWirelessHeadset` — i.e. a second, independent consumer of the GMS battery
+    boundary documented in the entry above.
+  - Case 2104 passes `fpm.ENABLED_HEAD_GESTURES`/`fpm.UNKNOWN` — a promising but unconfirmed lead
+    that this specific case is head-gestures-related (`qhr` field 29, `PROTOCOL.md` §4.5.4).
+- **Exhaustive confirmation**: every `queryLocalInterface("...")` call in the whole decompiled tree
+  was enumerated this pass (31 unique descriptor strings) — `IDeviceSettingsListener` (this entry)
+  plus the 2 Fast Pair interfaces (entry above) are the only ones with any Bluetooth/Fast-Pair/
+  settings relevance; the other 28 are generic Android/AndroidX/GMS-common-services/Play-Core
+  plumbing unrelated to this project's scope.
+- **Open questions**: the case-ID→`qhr`-field mapping for all 6 case IDs (`TODO.md`).
+- **Hypothesis test**: none required for the service/interface existence (🟢 FACT); the case-ID→field
+  mapping is a further static-analysis task, not a capture task.
+- **Correlation with `PROTOCOL.md`**: §6 Commands & schemas, 2026-09-08 addition.
+
+### `defpackage.frb` / `defpackage.fuh` / `defpackage.glk` / `defpackage.gjv` — `fxm.i()`/`GetSoftwareInfo` trigger structure
+
+*(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2/Phase 4, maintainer-approved per prompt `0002`.)*
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/{frb,fuh,glk,gjv}.java`
+- **Readable alias**: `GetSoftwareInfo` fetch-trigger dispatcher
+- **Role**: 🟡 HYPOTHESIS (call-graph traced further, a genuine advance over the prior "plausibly
+  connect-adjacent" reading, but not itself confirmed against a capture): `fxm.i()`'s trigger for
+  its 4× `GetSoftwareInfo` calls is **plural, not singular**.
+- **Relevant methods**:
+  - `frb` — confirmed a 21-case (0–20) R8-merged `oru`/`Consumer`-shaped lambda dispatcher (same
+    pattern as `gau`/`fwy`/`hvn`/`epf`); case 13's `"Change primary route to %d"` log is one
+    specific lambda instance, not `frb`'s "own" behavior.
+  - `fxm`'s constructor (`fxm.java:23-44`) wires `frb(13)` as a subscriber on `fxm.f` (an
+    RxJava-style hot-publisher field) — the log fires whenever something else pushes a new `goq`
+    value onto that field, not on a fixed schedule or directly on connect.
+  - `fuh` — a two-method start/stop-shaped lifecycle interface (`void b(); void i();`); 6 classes
+    implement it: `fxm`, `fvp` (Dosimeter), `fwc`, `fwx` (RuntimeInfo/low-latency-mode), `fxg`,
+    `fyq`, `geg`.
+  - `glk.j():530-534` — `if (optional.isPresent() && this.g.F() && this.v.q()) { fuh.i() }`, inside
+    a class whose surrounding code (`glk.java:220-260`, `500-530`) is unambiguously **firmware OTA
+    bundle-transfer orchestration** (log strings `"Device is ready to transfer"`, `"Route %d
+    transfer completed"`, `"Update bundles not staged"`, `"Transfer stopped after transfer
+    failed"`). This reframes `fxm.i()`'s trigger, for this call site, as OTA-transfer-readiness-
+    gated, not a generic post-connect settling action.
+  - `gjv.p():743-749` (implementing interface `giz`'s `p()`) — gated on `hwy.am(this.u)` before
+    calling `.i()`; `gjv` is a large per-device connection/settings-lifecycle class (other `giz`
+    methods: `m()` Auto-OTA check, `n(gdm)` "wait for device type update to check firmware version",
+    `o()` calls into `gcl`, `q()`). Looks more plausibly connect/pairing-lifecycle-shaped than
+    `glk`'s OTA-specific call site, but was **not** traced to its own ultimate caller this pass.
+- **Open questions**: whether `gjv.p()`'s own caller fires inside the `CAP-036`/`CAP-041`
+  connect-time settling window — needs either a full trace of `gjv.p()`'s caller, or a byte-level
+  correlation between a fresh capture's connect-time burst content and a
+  `GetSoftwareInfo`-response-shaped payload (`qjb`, already decoded).
+- **Hypothesis test**: byte-level content diff of a fresh capture's DLCI 0x02 connect-time burst
+  against `qjb`'s decoded shape, or a full static trace of `gjv.p()`'s caller.
+- **Correlation with `PROTOCOL.md`**: §6 Commands & schemas' existing open item on the connect-time
+  RPC burst (`CAP-036-FINDINGS.md` §4), updated 2026-09-08 with this deepened (not fully resolved)
+  trace.
+
+### `MaestroEndpointService` — exported, no-permission on-device gRPC server (open questions only)
+
+*(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4, maintainer-approved per prompt `0002`.)*
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/apktool-output/AndroidManifest.xml`
+  (service declaration, `grpc.ondevicegrpcserver`)
+- **Readable alias**: on-device gRPC endpoint service
+- **Role**: 🔴 OPEN QUESTION (existence confirmed 🟢 FACT; purpose unresolved): manifest declares
+  `MaestroEndpointService`, **exported with no `android:permission` gate**, hosting a generic
+  on-device gRPC server (`mig`/`oez` — a method-descriptor-keyed dispatch table structurally like
+  `io.grpc.ServerServiceDefinition`).
+- **Relevant methods**: `onCreate()` is JADX-undecompilable bytecode ("Method dump skipped... 599
+  instructions") — not read this pass.
+- **Open questions**: which gRPC service(s) it registers, and whether anything (GMS included) ever
+  binds to it. No other reference to this class/package exists anywhere else in the decompiled tree
+  (`grep -rln "MaestroEndpointService\|ondevicegrpcserver"` finds only the class itself and its
+  `ghl` base). Plausibly unrelated to DLCI 0x04/0x08 entirely (could be a different feature, e.g.
+  cross-device sync).
+- **Hypothesis test**: an `apktool` smali fallback read of `onCreate()`
+  (`APK_REVERSE_ENGINEERING_PROCEDURE.md` §6) — a further static-analysis task, not a capture task.
+- **Correlation with `PROTOCOL.md`**: §6 Commands & schemas, 2026-09-08 addition.
+
 ---
 
 > Template per class — copy for each new finding. **Every finding must cite
@@ -2107,6 +2315,12 @@ promoted into the protocol documentation, to avoid the same finding being
 | `qhr` field 22 = "Speech Detection" — field-number/type identity only (write site `hnz.java:29-49`, read site `fxb.java` case 22); "Conversation Detection" UI-label equivalence explicitly not promoted | §4.5.1 Conversation Detection opcode/payload | 2026-09-03 | `CAP-019` frame 1808; `DECISIONS.md` ADR-019 Update |
 | `qhr` field 27 = case-sound-family boolean — category-level identity only (write site `fyo.java:80-100`, read site `fxb.java` case 27); "Other alerts"/"Other notifications" label explicitly not promoted | §4.5.8 Case sounds opcode/payload | 2026-09-03 | `CAP-024` frames 2053/2084; `DECISIONS.md` ADR-019 Update |
 | `qhr` field 28 = "Bud return"/"Earbuds replaced" — full identity (write site `fyo.java:58-78`, read site `fxb.java` case 28) | §4.5.8 Case sounds opcode/payload | 2026-09-03 | `CAP-024` frames 1988/2023; `DECISIONS.md` ADR-019 Update |
+| `qhr` field 11 = "Multipoint" — full identity, forward-traced from `MultipointFragment`'s toggle via `hiy.java:32`'s `"Set device Multipoint as: %s"` log to write site `fyo.java:146-166` | §4.5.2 Multipoint opcode/payload | 2026-09-08 | `CAP-019` frame 2293; `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2; `DECISIONS.md` ADR-025 Update |
+| `qhr` field 15 = "Volume EQ" — full identity, forward-traced from `hlv.java:2127`'s `"Set volume eq: %s"` log (gated on literal preference key `"volume_eq_switch"`) to write site `fyo.java:376-396` | §4.5.6 Volume EQ opcode/payload | 2026-09-08 | `CAP-022` frames 1871/1895; `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2; `DECISIONS.md` ADR-025 Update |
+| `ijk`/`ijp`/`TrueWirelessHeadset`/`FmdWorker` — GMS Chimera-brokered Fast Pair client-library boundary (battery display, FMD ToS consent); informational context only, not an implementation path | §4.3/§6 Commands & schemas (informational note) | 2026-09-08 | `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 |
+| `MaestroDeviceSettingsProviderService`/`fhk`/`ges` — second UI entry point into `qhr`/`WriteSetting`, via the system Settings app's Bluetooth-device-details page | §6 Commands & schemas (new open item) | 2026-09-08 | `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 |
+| `FmdWorker`/`ijp` — companion app's own FMD code constructs only ToS accept/skip requests, no ring/play-sound trigger found anywhere | §4.4/§6 Behavior (existing open item, updated) | 2026-09-08 | `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 3 |
+| `MaestroEndpointService` — exported, no-permission on-device gRPC server, registered service(s)/caller(s) undetermined | §6 Commands & schemas (new open item) | 2026-09-08 | `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 |
 | | | | |
 
 ## Known limitations of this analysis

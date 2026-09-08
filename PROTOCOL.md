@@ -1129,18 +1129,32 @@ implementation gate.
 #### 4.5.2 Multipoint Bluetooth
 
 - **Feature confirmed present**: toggle at Device details → More settings → Multipoint. 🟢 FACT.
-- **Opcode/payload**: `field5(len4){ field4(len2){ field11 = 0|1 } }`. 🟡 HYPOTHESIS — `field 11` =
-  Multipoint, ON confirmed video-correlated.
+- **Opcode/payload — full identity 🟢 FACT, promoted 2026-09-08 (maintainer sign-off, prompt
+  `0002`, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2/Phase 4)**:
+  `field5(len4){ field4(len2){ field11 = 0|1 } }`, `field 11` = `libmaestro`'s own `qhr` schema
+  field 11, independently confirmed by APK static analysis tracing forward from the UI: the
+  unobfuscated
+  `com/google/android/apps/wearables/maestro/companion/ui/settings/multipoint/MultipointFragment.java`
+  binds its `key_multipoint_main_toggle` `MainSwitchPreference`'s `OnCheckedChangeListener`
+  (`cq(CompoundButton, boolean)`, line 71-75) to `hiy.a(boolean)` (`hiy.java:31-38`), which logs
+  **`"Set device Multipoint as: %s"`** before calling `fyc.e(z)` → `fyb(z,9)` → `fya.j(z)` =
+  `fyo.j(boolean)` (`fyo.java:146-166`) — the exact call site already identified as writing
+  `qhr.b = 11`. A self-describing app-code match to this section's own "Multipoint" reading, at the
+  ViewModel layer rather than `fxb.java`'s response handler (which has no distinct log for case 11).
+  ON direction video-correlated on the wire; OFF direction not captured.
 - **Additional finding**: enabling Multipoint also triggers a **Fast Pair Message Stream SASS
   burst** on DLCI 0x04, Group `0x07` (Codes `0x11`/`0x21`/`0x34`/`0x40`/`0x41`/`0x42`, the last
   containing the ASCII string `"in-use"`) — the first time this project has correlated SASS content
   (§2.3's table) with a specific triggering action. Directly confirms
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group C's own hint that Multipoint "may trigger an
-  SDP/connection update, not just an RFCOMM command."
+  SDP/connection update, not just an RFCOMM command." This SASS correlation remains 🟡 HYPOTHESIS,
+  unaffected by the field-11 promotion above.
 - **Sent to**: DLCI 0x02 (setting write) **and** DLCI 0x04 Group `0x07` (SASS negotiation).
-- **Status**: 🟡 HYPOTHESIS (both the DLCI 0x02 write and the SASS correlation).
+- **Status**: 🟢 FACT for `field 11`'s field-number identity and semantic name ("Multipoint"). 🟡
+  HYPOTHESIS for the SASS correlation and for the OFF-direction wire value.
 - **Evidence**: `CAP-019-FINDINGS.md` §4 (`[VERIFIED-LOCAL]`, 2026-08-21, frame 2293 + frames
-  2296–2319).
+  2296–2319); `MultipointFragment.java`/`hiy.java`/`fyc.java`/`fyb.java`/`fyo.java` (APK static
+  analysis); `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2.
 - **Verified with experiment**: `CAP-019` (2026-08-21), single OFF→ON sample.
 
 #### 4.5.3 Touch & Hold customization
@@ -1237,11 +1251,23 @@ implementation gate.
 
 - **Feature confirmed present**: toggle at the bottom of Device details → Sound → Equalizer (not
   the top-level Sound page). 🟢 FACT.
-- **Opcode/payload**: `field5(len4){ field4(len2){ field15 = 0|1 } }`. 🟡 HYPOTHESIS — `field 15` =
-  Volume EQ, both directions video-confirmed.
+- **Opcode/payload — full identity 🟢 FACT, promoted 2026-09-08 (maintainer sign-off, prompt
+  `0002`, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2/Phase 4)**:
+  `field5(len4){ field4(len2){ field15 = 0|1 } }`, `field 15` = `libmaestro`'s own `qhr` schema
+  field 15, independently confirmed by APK static analysis via a literal Android preference-key
+  string match: `defpackage/hlv.java:2125-2134` (a large R8-merged preference-click dispatcher,
+  `e(Preference)`) has a case gated on `str.equals("volume_eq_switch")` — the literal Settings-XML
+  preference key for the "Volume EQ" toggle described above — logging **`"Set volume eq: %s"`**
+  (`hlv.java:2127`) before calling `fyc.h(z)` → `fyb(z,7)` → `fya.u(z)` = `fyo.u(boolean)`
+  (`fyo.java:376-396`) — the exact call site already identified as writing `qhr.b = 15`. This
+  combines a self-describing log message *and* the literal preference-key string, a stronger
+  evidence type than any other `qhr` field promoted to date. Both directions video-confirmed on the
+  wire.
 - **Sent to**: DLCI 0x02.
-- **Status**: 🟡 HYPOTHESIS.
-- **Evidence**: `CAP-022-FINDINGS.md` §4 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1871/1895).
+- **Status**: 🟢 FACT for `field 15`'s field-number identity and semantic name ("Volume EQ").
+- **Evidence**: `CAP-022-FINDINGS.md` §4 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1871/1895);
+  `hlv.java`/`fyc.java`/`fyb.java`/`fyo.java` (APK static analysis);
+  `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2.
 - **Verified with experiment**: `CAP-022` (2026-08-21), both directions sampled.
 
 #### 4.5.7 Volume Balance (L/R slider)
@@ -1726,8 +1752,15 @@ leaving them buried in prose elsewhere.
       (full identity, plus a zigzag-decoding correction), `field 19` (full identity), and `field 28`
       (full identity) promoted in full; `field 22` and `field 27` promoted for field-number/type or
       category-level identity only, with their specific semantic-label equivalence left 🟡 HYPOTHESIS
-      (see those sections for the reasoning). **Still open**: `field 11` (Multipoint) and `field 15`
-      (Volume EQ) remain unchecked against the recovered schema — not part of this update.
+      (see those sections for the reasoning). **`field 11` (Multipoint) and `field 15` (Volume EQ)
+      resolved 2026-09-08** (maintainer sign-off, prompt `0002`, implementing
+      `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2/Phase 4): both traced end-to-end
+      from a named UI fragment/preference key forward to the `qhr` write call site (rather than
+      backward from a response-handler log message, the technique used for the fields above), each
+      confirmed by a self-describing log message (field 15 additionally by the literal
+      `"volume_eq_switch"` Android preference-key string) — see §4.5.2/§4.5.6. This closes the
+      specific two fields `TODO.md`'s "Targeted research follow-ups" section flagged as the
+      remaining unchecked ones from ADR-019's original four.
 - [ ] **Added 2026-08-21:** does DLCI 0x02's general-purpose `field5{field4{...}}` settings-write
       envelope (§4.5's shared preamble) generalize to *every* remaining `libmaestro` setting, or
       only to the ones captured so far? Does the `field7{field1|field2{...}}` Left/Right selector
@@ -1949,6 +1982,56 @@ leaving them buried in prose elsewhere.
       support: HFP is the piece of the sync group that most easily decouples under multiple
       different conditions (active streaming, idle backgrounding), not specifically streaming —
       genuinely open which factor(s) actually govern HFP's participation.
+- **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4,
+      maintainer-approved per prompt `0002`) — informational context, not an implementation
+      option.** The companion app itself sources its on-screen battery display and handles Find My
+      Device Terms-of-Service consent via two genuinely named, unobfuscated AIDL interfaces in
+      `com.google.android.libraries.bluetooth.fastpair` — **`IFastPairDeviceDetailService`**
+      (returns a `TrueWirelessHeadset{leftBud, rightBud, headsetCase}` Parcelable, each a
+      `HeadsetPiece{batteryLevel, charging, lowLevelThreshold, ...}`) and
+      **`IFastPairFmdProxyService`** (Find My Device ToS accept/skip) — both bound through Google's
+      Chimera dynamic-module broker (`com.google.android.gms.chimera.GmsBoundBrokerService`,
+      `defpackage/ijk.java:42-52`, `defpackage/ijp.java:37-45`, `defpackage/iji.java:20-33`). This is
+      **informational context on how the reference app is built, not a candidate implementation path
+      for this project's own app** — using a `com.google.android.gms`-internal Chimera-broker AIDL
+      interface would itself require Google Play Services, which `AGENTS.md` §1's Zero-GMS rule
+      forbids. It does not add a mechanism to §4.3's Option A–E list. See
+      `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 "Finding 1" for the full trace.
+- [ ] **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 3/Phase 4,
+      maintainer-approved per prompt `0002`).**
+      `com.google.android.apps.wearables.maestro.companion.settingprovider.service.MaestroDeviceSettingsProviderService`
+      (manifest: `exported=true`, `permission=android.permission.BLUETOOTH_PRIVILEGED`,
+      intent-filter action
+      `com.google.android.apps.wearables.maestro.companion.services.BIND_SERVICE`) is a **second,
+      previously-undocumented UI entry point** into the `qhr`/`WriteSetting` pipeline, independent of
+      this project's already-documented in-app screens: it implements the AOSP `SettingsLib`
+      "Bluetooth Device Details" custom-settings-extension callback interface
+      (`com.android.settingslib.bluetooth.devicesettings.IDeviceSettingsListener`, obfuscated as
+      `fhk`), and its `ct(DeviceInfo, DeviceSettingState)` handler routes at least 6 case IDs
+      (2102/2103/2104/2113/2115/2116) into the same `ftj`/`fya`-interface accessor chain (`.f()`,
+      `.b()`, etc.) already used by the confirmed in-app write sites — i.e. **the system Settings
+      app's own Bluetooth-device-details page can also trigger a `qhr`/`WriteSetting` write**, not
+      only this project's own already-documented in-app screens. Which specific `qhr` fields these 6
+      case IDs map to was not individually traced (case 2104 passing
+      `fpm.ENABLED_HEAD_GESTURES`/`fpm.UNKNOWN` is a promising but unconfirmed lead for head
+      gestures/field 29). 🔴 the case-ID→`qhr`-field mapping. Not GMS-related — this is Android's own
+      platform settings-extension framework, not `com.google.android.gms.*`. See
+      `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 "Finding 1" (last bullet) and Phase
+      3 "Touch controls"/"Head gestures".
+- [ ] **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1,
+      maintainer-approved per prompt `0002`).** The manifest also declares `MaestroEndpointService`
+      (`grpc.ondevicegrpcserver`), **exported with no `android:permission` gate**, hosting a generic
+      on-device gRPC server (`mig`/`oez` — a method-descriptor-keyed dispatch table structurally like
+      `io.grpc.ServerServiceDefinition`). No other reference to this class/package exists anywhere
+      else in the decompiled tree (`grep -rln "MaestroEndpointService\|ondevicegrpcserver"` finds
+      only the class itself and its `ghl` base). 🔴 **OPEN QUESTION**: which gRPC service(s) it
+      actually registers, and whether anything (GMS included) ever binds to it — `onCreate()` is
+      JADX-undecompilable bytecode ("Method dump skipped... 599 instructions"), which per
+      `APK_REVERSE_ENGINEERING_PROCEDURE.md` §6 would need an `apktool` smali fallback read, not yet
+      attempted. Plausibly unrelated to DLCI 0x04/0x08 entirely (could be a different feature, e.g.
+      cross-device sync) — its exported-with-no-permission shape is worth a maintainer look on its
+      own terms. See `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1 "Verdict on Q1–Q3",
+      Q3.
 
 ### Behavior
 
@@ -1961,6 +2044,20 @@ leaving them buried in prose elsewhere.
       own implementation, not just an open research question — flagged for maintainer awareness.
       Related: what triggers the three repeated classic-RFCOMM-connection-reopen bursts
       (~40s apart) observed while this Find Hub flow was active in `CAP-025`?
+      **Update (2026-09-08, `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 3,
+      maintainer-approved per prompt `0002`) — code-level support (not proof) for the
+      Zero-GMS-hard-limit reading, not a resolution.** The companion app's own
+      `com.google.android.apps.wearables.maestro.companion.fmd.FmdWorker` sends `FmdRequest`s
+      (operation codes `3`="accept"/`4`="skip") over `IFastPairFmdProxyService` — but **only** for
+      Find My Device Terms-of-Service accept/skip; no other `FmdRequest.d()` call site exists
+      anywhere in this APK version's decompiled source (`grep -rn "FmdRequest\.d()"` → 2 hits total,
+      both accept/skip). This confirms, at the code level for the first time, that the companion
+      app's own role in the Case/"both" path is limited to consent/onboarding plumbing — the actual
+      ring-trigger is not constructed anywhere in this app's decompiled source, consistent with (and
+      now partially explaining) the wire-observed "Connecting…" Find Hub map-view hand-off to a
+      separate app surface. Still 🔴 OPEN QUESTION whether a local-only fallback genuinely does not
+      exist — this is supporting evidence, not a closure, of the existing "possible hard Zero-GMS
+      limit" flag.
 - [ ] **Added 2026-08-21, `CAP-011-FINDINGS.md` §4/§5:** does an active classic RFCOMM connection
       suppress or alter the Buds' Fast Pair Battery Notification BLE advertisement? `CAP-011`'s own
       attempted passive-scan capture had an active connection present throughout (a procedure
@@ -2163,6 +2260,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-05 | **Two further maintainer-approved FACT promotions, each its own ADR**: **§4.3 Option C** — HFP battery reporting (`AT+BIEV`) confirmed independent of GMS/the companion app and confirmed working on GrapheneOS itself (`DECISIONS.md` ADR-023, retroactive sign-off). **§4.1** — the "Notify ANC state" `Settable-toggles` byte confirmed as a dock-state indicator (`0x00` = both earbuds docked, `0xe8` otherwise), video-verified across 7 of 7 checked samples with zero counter-examples (`DECISIONS.md` ADR-024) | Claude (AI), maintainer-directed sign-off sessions |
 | 2026-09-06 | **Synced with a 6-capture batch (`CAP-037`–`CAP-042`), the first purpose-built repeats of `CAP-036`'s own questions.** No new FACT promotions — this batch's own role was large-scale replication of already-FACT findings (`CAP-037`: 26/26 ADR-022 replications and 26/26 ADR-024 dock-state matches in one session; `CAP-039`: 10 same-session Set-vs-Get samples confirming ADR-024's trigger-independence) plus several new 🔴 open items added to §6: DLCI 0x08's 7 unmapped Get-shaped codes still unattributed (`CAP-040`, inconclusive — the session's own procedure left N=1 per code); the in-app "Connect"/"Disconnect" buttons producing zero wire signal (`CAP-040`); a chandle-level `Settable-toggles` anomaly with no preceding Get (`CAP-037`); a `Settable-toggles=0x00` reading immediately after physical case-removal, in tension with ADR-024 (`CAP-038`, not resolved); two Get-less/Set-less ANC Notify frames (`CAP-038`); DLCI 0x02's connect-time burst shown length-invariant across 3 differing settings states, content-level diff still pending (`CAP-041`); and the periodic DLCI 0x02/0x04/0x08 push shown far sparser over a genuinely idle ~37-minute window than `CAP-036`'s short sample suggested, with HFP dropping out of the cross-channel sync entirely (`CAP-042`) | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 | 2026-09-07 | **Remediation from a project-wide audit + cross-validation cycle** (`AUDIT_REPORT_2026-09-07.md`, `ANTIGRAVITY_AUDIT_REPORT_2026-09-07.md`, `EXTERNAL_REVIEW_VALIDATION_2026-09-07.md` — all three retired after processing, see `CHANGELOG.md`): backfilled this table's own 2026-09-04/05/06 gap (this row's three predecessors); **§4.3 Option C** corrected — HFP's own DLCI documented as a fixed `0x09` (`CAP-001`-only) but the clear majority of later captures (`CAP-004`/`CAP-007`/`CAP-033`/`CAP-042`) land it on `0x0c` — now documented as session-local, matching how DLCI 0x02/0x04 are already treated; **§6** — added `qhr` field 13 (a second, code-evidenced DLCI-0x02 ANC-state write path) as a named candidate to `CAP-038-FINDINGS.md` §5's open item, and added an app-foreground-vs-IPC refinement to `CAP-042-FINDINGS.md` §5's open item. No new FACT promotion; **`DECISIONS.md` ADR-025** separately records that GMS reverse-engineering is out of scope, since no DLCI 0x04/0x08 transport code exists anywhere in the companion app's own decompiled source | Claude (AI), audit-remediation task, maintainer-directed |
+| 2026-09-08 | **Implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 4's proposals, maintainer-approved via `ai-sessions/0002_MAINTENANCE_PROMPT_2026_09_08.md`** (`DECISIONS.md` ADR-025's 2026-09-08 Update notes): **§4.5.2 Multipoint (`qhr` field 11)** and **§4.5.6 Volume EQ (`qhr` field 15)** promoted to 🟢 FACT for full field-number/semantic identity, each forward-traced from a named UI fragment/preference key to its write call site. **§6** — added four items: an informational note on `IFastPairDeviceDetailService`/`IFastPairFmdProxyService` (how the reference app sources battery data and handles Find My Device consent, explicitly out of scope for this project's own implementation); a refinement to the Find My Buds Case/"both" open item (`FmdWorker`/`ijp` construct only ToS accept/skip requests, no ring/play-sound trigger found); a new open item on `MaestroDeviceSettingsProviderService` as a second UI entry point into the `qhr`/`WriteSetting` pipeline; a new open item on `MaestroEndpointService`'s undetermined gRPC service registrations. Also closed the `field 11`/`field 15` entry in the "what do DLCI 0x02's confirmed inner field numbers actually represent" open item | Claude (AI), maintainer-directed sign-off session (prompt `0002`) |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

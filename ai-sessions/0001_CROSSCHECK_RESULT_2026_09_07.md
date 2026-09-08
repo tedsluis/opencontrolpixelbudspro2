@@ -4,7 +4,7 @@
 **Category:** CROSSCHECK
 **Date:** 2026-09-07
 **Title:** Deep V1-without-GMS iterative cross-check (2nd pass)
-**Status:** awaiting maintainer sign-off
+**Status:** complete — Phase 4's proposals approved and implemented via `ai-sessions/0002_MAINTENANCE_PROMPT_2026_09_08.md`/`ai-sessions/0002_MAINTENANCE_RESULT_2026_09_08.md` (per `AI_SESSION_LOG_PROCEDURE.md` §4a)
 
 > **Retrofit note:** this file originated as `DEEP_CROSSCHECK_PROGRESS_2026-09-07.md` at the repo
 > root, written before `ai-sessions/`/`AI_SESSION_LOG_PROCEDURE.md` existed. It has been moved here

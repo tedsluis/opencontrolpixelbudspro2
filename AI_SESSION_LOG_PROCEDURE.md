@@ -87,6 +87,27 @@ Every prompt and result file starts with a header block immediately after the ti
 **Status:** complete | partial — resumed | awaiting maintainer sign-off
 ```
 
+### 4a. Updating a `Status` field later (added 2026-09-08, prompt `0002`)
+
+A `RESULT` file's `Status` field is not frozen at the value it was given when first written — a
+**later** logged session (a new `NNNN_CATEGORY_PROMPT_YYYY_MM_DD.md`/`NNNN_CATEGORY_RESULT_YYYY_MM_DD.md`
+pair) may update an earlier entry's `Status` field in place, when and only when the specific condition
+that value represents has actually been met in that later session:
+
+- `awaiting maintainer sign-off` → `complete` (or a status reflecting whatever new work followed) once
+  the maintainer has actually reviewed and signed off on the pending proposals — the later session's
+  own `RESULT` file must cite where/how that sign-off happened (e.g. "approved by the maintainer in
+  the chat session that authored prompt NNNN," or a specific `DECISIONS.md` ADR number it produced).
+- `partial — resumed` → `complete` (or a further `partial — resumed`) once the interrupted task
+  actually finishes or is picked up again.
+
+This is an *update to the earlier file's header field*, not a new duplicate entry — the earlier
+`NNNN_CATEGORY_RESULT_YYYY_MM_DD.md` file itself is edited in place, and `ai-sessions/INDEX.md`'s row
+for that same `NNNN` is updated to match. The later session's own new pair (its own `NNNN`) is what
+records *that the update happened and why*; it does not re-narrate the earlier file's substantive
+content, matching the spirit of `PROJECT_RULES.md` rule 9a (a reference document is not an
+accumulating changelog).
+
 ## 5. Multi-part results
 
 A long-running or rate-limit-interrupted task does not get a new number each time it resumes.
@@ -108,6 +129,22 @@ session ends.
 
 These files are **git-tracked**, not gitignored — they are permanent project record, on the same
 footing as `CAP-NNN-FINDINGS.md` or `DECISIONS.md`.
+
+## 8. Mandatory reading order (added 2026-09-08, prompt `0002`)
+
+Every `NNNN_CATEGORY_PROMPT_YYYY_MM_DD.md` file's body must itself state, explicitly, `AGENTS.md`
+§0.1's reading order (or a superset of it) — binding on the **prompt author**, not optional
+boilerplate an author may skip on the assumption the executing session already knows this.
+
+Regardless of what a specific prompt's task-specific instructions say, and regardless of whether the
+prompt itself restates this requirement, the **executing AI session** must, at minimum, read
+`AGENTS.md`, `PROJECT.md`, `PROJECT_RULES.md`, and `DECISIONS.md` in full before taking any other
+action. This is a floor, not a replacement for `AGENTS.md` §0.1's own full reading order (which also
+covers `ARCHITECTURE.md`, `PROTOCOL.md`, and `TODO.md`) or `PROJECT_RULES.md` rule 13/13a's existing
+requirement that an AI model read `AGENTS.md`, `PROJECT_RULES.md`, `ARCHITECTURE.md`, and the
+relevant sections of `PROTOCOL.md` at the start of a session. If a prompt's author forgot to restate
+the reading order, the executing session still does the reading — the absence of the reminder in a
+specific prompt file is a defect in that file, not license for the session to skip it.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/AI_SESSION_LOG_PROCEDURE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/AI_SESSION_LOG_PROCEDURE

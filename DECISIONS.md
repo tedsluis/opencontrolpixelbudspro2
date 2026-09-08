@@ -1273,6 +1273,41 @@ motivated this).
     clarifying note is added there rather than leaving this looking like an oversight.
   - `PROJECT.md`'s non-goals gain a corresponding bullet citing this ADR. `TODO.md`'s Phase 2 section
     records this decision explicitly rather than leaving the question implicitly open.
+- **Update (2026-09-08, maintainer sign-off via the chat session that authored prompt
+  `ai-sessions/0002_MAINTENANCE_PROMPT_2026_09_08.md`, implementing
+  `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4's approved proposals) —
+  GMS-boundary finding strengthened, not weakened.** A deeper Phase 1 search (structural
+  AIDL/`ServiceConnection` pattern search plus a full manifest read, going beyond the original
+  audit's literal-keyword grep) found that Google Play Services' Fast Pair module *is* reachable
+  from this companion app's own decompiled code, via two genuinely named, unobfuscated AIDL
+  interfaces (`com.google.android.libraries.bluetooth.fastpair.IFastPairDeviceDetailService`,
+  `...fmd.IFastPairFmdProxyService`) bound through Google's Chimera dynamic-module broker
+  (`com.google.android.gms.chimera.GmsBoundBrokerService`). **This does not weaken this ADR's
+  decision or its "DLCI 0x04/0x08 transport code is absent from this APK" evidentiary basis — it
+  strengthens it.** The newly-found boundary carries only already-decoded objects (a
+  `TrueWirelessHeadset` battery summary; an `FmdRequest`/`FmdResponse` consent-flow pair) — not raw
+  Message-Stream/private-envelope frame bytes — and an exhaustive sweep of every
+  `queryLocalInterface(...)` call in this APK version (31 total) found no third, ANC/settings-shaped
+  GMS interface. The original conclusion — that DLCI 0x04/0x08's actual frame
+  construction/parsing lives inside GMS itself, not this companion app — is now supported by a
+  *positive* architectural finding (a concrete, named, working example of exactly this kind of
+  higher-level GMS boundary existing and being reachable) in addition to the original *negative* one
+  (no transport code found). **No change to this ADR's Decision or Consequences sections** — this
+  Update records the strengthening finding per `PROJECT_RULES.md` §3's non-destructive-update
+  convention. See `REVERSE_ENGINEERING.md`'s `ijk`/`ijp`/`TrueWirelessHeadset`/`FmdWorker` entry and
+  `PROTOCOL.md` §6 for the full trace.
+- **Update (2026-09-08, same maintainer sign-off) — `qhr` fields 11 (Multipoint) and 15 (Volume EQ)
+  promoted to 🟢 FACT for full field-number/semantic identity.** Applying `DECISIONS.md` ADR-019's
+  same static-analysis method (a forward trace from a named UI fragment/preference key to the write
+  call site, rather than the log-message-backward technique used for ADR-019's own fields) to the
+  two fields explicitly flagged as still-unchecked in `TODO.md`'s "Targeted research follow-ups":
+  **field 11 = "Multipoint"** (`MultipointFragment`'s `key_multipoint_main_toggle` toggle →
+  `hiy.java:32`'s self-describing `"Set device Multipoint as: %s"` log → `fyo.java:146-166`) and
+  **field 15 = "Volume EQ"** (`hlv.java:2127`'s self-describing `"Set volume eq: %s"` log, gated on
+  the literal Android preference-key string `"volume_eq_switch"` → `fyo.java:376-396`) — both
+  readings match the pre-existing wire-derived HYPOTHESIS labels exactly, with no naming-equivalence
+  gap of the kind that kept fields 12/22/27 at field-number-only status. See `PROTOCOL.md`
+  §4.5.2/§4.5.6 and `REVERSE_ENGINEERING.md`'s `qhr` entry (2026-09-08 update) for the full evidence.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

@@ -70,11 +70,18 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      conclusion) bracketing candidate triggers one at a time (app backgrounded/foregrounded, a
      scheduled sync window, a charge-state change) — the burst recurred in exactly 1 of 16 sessions
      checked so far, so passively waiting for it to reappear is not expected to work.
-   - **Added 2026-08-30 (audit finding):** apply `DECISIONS.md` ADR-019's same static-analysis method
-     (matching a confirmed wire field number against the recovered `qhr` schema) to the remaining
-     confirmed-but-unchecked DLCI 0x02 field numbers — `field` 11, 15, 17, 19, 22, 27, 28
-     (`PROTOCOL.md` §6's "what do DLCI 0x02's confirmed inner field numbers actually represent" item)
-     — not yet attempted for these specific fields.
+   - **Added 2026-08-30 (audit finding), closed 2026-09-08 (prompt `0002`, implementing
+     `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2/Phase 4):** apply `DECISIONS.md`
+     ADR-019's same static-analysis method (matching a confirmed wire field number against the
+     recovered `qhr` schema) to the remaining confirmed-but-unchecked DLCI 0x02 field numbers —
+     `field` 11, 15, 17, 19, 22, 27, 28 (`PROTOCOL.md` §6's "what do DLCI 0x02's confirmed inner
+     field numbers actually represent" item). Fields 17/19/22/27/28 were closed 2026-09-03
+     (`DECISIONS.md` ADR-019 Update), though this bullet was never updated at the time to reflect
+     that. Fields 11 (Multipoint) and 15 (Volume EQ) — the two the maintainer's sign-off for prompt
+     `0002` was scoped to — are now closed too, via a forward trace from a named UI
+     fragment/preference key to the write call site (`PROTOCOL.md` §4.5.2/§4.5.6,
+     `REVERSE_ENGINEERING.md`'s `qhr` entry, `DECISIONS.md` ADR-025 Update). All 7 field numbers
+     this item originally listed are now checked against the recovered `qhr` schema — item closed.
    - **Added 2026-09-03 (audit finding):** trace `fyd.d`/`fyd.e`'s own call sites in the EQ UI
      fragment (`REVERSE_ENGINEERING.md`'s `qjw` entry) — the one specific static-analysis step
      identified as still missing to connect `qjw` field 16/18's code-derived "live vs. persisted"
@@ -86,6 +93,19 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      `batterynotification` extension page specifically — downgraded to 🟡 HYPOTHESIS pending this
      check; the detail may live on a different spec page not checked yet, e.g. the base Message
      Stream spec).
+   - **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4,
+     prompt `0002`):** trace `MaestroDeviceSettingsProviderService`'s 6 case IDs
+     (2102/2103/2104/2113/2115/2116) to their specific `qhr` field numbers, using the same
+     forward-trace technique (named UI fragment/preference key → write call site) used for
+     Multipoint/Volume EQ above (`REVERSE_ENGINEERING.md`'s `MaestroDeviceSettingsProviderService`
+     entry). Case 2104's `fpm.ENABLED_HEAD_GESTURES`/`fpm.UNKNOWN` values are a promising but
+     unconfirmed lead for head gestures (`qhr` field 29, `PROTOCOL.md` §4.5.4).
+   - **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1, prompt
+     `0002`):** `apktool` smali-fallback read of `MaestroEndpointService.onCreate()`
+     (`APK_REVERSE_ENGINEERING_PROCEDURE.md` §6) — its bytecode is JADX-undecompilable
+     ("Method dump skipped... 599 instructions") — to determine which gRPC service(s) this
+     exported, no-permission-gated on-device server actually registers and who binds to it
+     (`REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry, `PROTOCOL.md` §6).
 
 ## Setup
 

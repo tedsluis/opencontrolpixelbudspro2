@@ -7,8 +7,8 @@ a new session** — the same "check before assigning" discipline `id_registry.cs
 
 | Number | Category | Date | Title | Status |
 |---|---|---|---|---|
-| 0001 | CROSSCHECK | 2026-09-07 | Deep V1-without-GMS iterative cross-check (2nd pass) | awaiting maintainer sign-off |
-| 0002 | MAINTENANCE | 2026-09-08 | Session logging rule additions, 0001 sign-off implementation, and V1 protocol-readiness gap scan | pending — prompt only, not yet run |
+| 0001 | CROSSCHECK | 2026-09-07 | Deep V1-without-GMS iterative cross-check (2nd pass) | complete |
+| 0002 | MAINTENANCE | 2026-09-08 | Session logging rule additions, 0001 sign-off implementation, and V1 protocol-readiness gap scan | complete |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/INDEX.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/INDEX
