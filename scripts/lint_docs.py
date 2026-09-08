@@ -39,6 +39,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # files or IDs — e.g. `CAP-NNN-FINDINGS.md` used as a doc-writing convention.
 PLACEHOLDER_FILENAME_RE = re.compile(r"CAP-(NNN|nnn|00n|CAP-\d+)", re.IGNORECASE)
 
+# Same idea for ai-sessions/'s own `NNNN_CATEGORY_{PROMPT,RESULT}_YYYY_MM_DD.md`
+# naming-scheme placeholder, documented in AI_SESSION_LOG_PROCEDURE.md and
+# PROJECT_RULES.md rule 13a — not a reference to a real numbered file.
+AI_SESSION_PLACEHOLDER_RE = re.compile(
+    r"^NNNN_CATEGORY_(PROMPT|RESULT)_YYYY_MM_DD\.md$"
+)
+
 # Generic, un-prefixed mentions of the two btsnoop-log naming conventions
 # themselves (raw `btsnoop_hci.log` vs. the `btsnooz.py`-fallback
 # `btsnooz_hci.log`, each with or without a leading dash for the
@@ -86,6 +93,10 @@ KNOWN_HISTORICAL_REFERENCES = {
                                                   # updates) — same lifecycle as AUDIT_REPORT_2026-08-22.md
                                                   # above; findings live on in the docs/CHANGELOG.md
                                                   # entries that cite these three by name.
+    "DEEP_CROSSCHECK_PROGRESS_2026-09-07.md",  # pre-ai-sessions-convention repo-root name of
+                                                # ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md;
+                                                # both bootstrap files' own retrofit/reconstruction
+                                                # notes name it deliberately to explain the rename.
 }
 
 # Only lint cross-references to the project's own capture/doc artifacts —
@@ -228,6 +239,7 @@ def check_filenames(files: list[Path]) -> list[str]:
             name = match.group(1)
             if (
                 PLACEHOLDER_FILENAME_RE.search(name)
+                or AI_SESSION_PLACEHOLDER_RE.match(name)
                 or GENERIC_LOG_FILENAME_RE.match(name)
                 or name in KNOWN_HISTORICAL_REFERENCES
                 or Path(name).name in gitignored

@@ -161,6 +161,10 @@ document disconnected from the capture it belongs to.
       compatibility, coding standards, etc.) at all times, and flags any
       request that would conflict with them instead of silently complying.
     - uses consistent terminology as defined in `PROTOCOL.md`.
+13a. Every substantive AI-agent prompt and its resulting output/report are logged as a paired
+     `NNNN_CATEGORY_PROMPT_YYYY_MM_DD.md`/`NNNN_CATEGORY_RESULT_YYYY_MM_DD.md` file in
+     `ai-sessions/` — see `AI_SESSION_LOG_PROCEDURE.md` for the naming scheme, category vocabulary,
+     numbering discipline, and required header block.
 
 ## 6. Reproducibility and technical debt
 
