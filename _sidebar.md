@@ -150,3 +150,23 @@
   - **CAP-042 (Group AI)**
     - [CAP-042-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-042-2026-09-06_17-30-02_18-07-42-Group_AI/CAP-042-EVENT-NOTES.md)
     - [CAP-042-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-042-2026-09-06_17-30-02_18-07-42-Group_AI/CAP-042-FINDINGS.md)
+  - **CAP-043 (Group Q)** _(planned)_
+    - [CAP-043-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-043-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Q/CAP-043-EVENT-NOTES.md)
+  - **CAP-044 (Group AA)** _(planned)_
+    - [CAP-044-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-044-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AA/CAP-044-EVENT-NOTES.md)
+  - **CAP-045 (Group AJ)** _(planned)_
+    - [CAP-045-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-045-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AJ/CAP-045-EVENT-NOTES.md)
+  - **CAP-046 (Group AK)** _(planned)_
+    - [CAP-046-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-046-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AK/CAP-046-EVENT-NOTES.md)
+  - **CAP-047 (Group AL)** _(planned)_
+    - [CAP-047-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-047-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AL/CAP-047-EVENT-NOTES.md)
+  - **CAP-048 (Group AD)** _(planned)_
+    - [CAP-048-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-048-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AD/CAP-048-EVENT-NOTES.md)
+  - **CAP-049 (Group AF)** _(planned)_
+    - [CAP-049-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-049-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AF/CAP-049-EVENT-NOTES.md)
+  - **CAP-050 (Group AG)** _(planned)_
+    - [CAP-050-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-050-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AG/CAP-050-EVENT-NOTES.md)
+  - **CAP-051 (Group AM)** _(planned)_
+    - [CAP-051-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-051-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AM/CAP-051-EVENT-NOTES.md)
+  - **CAP-052 (Group AN)** _(planned)_
+    - [CAP-052-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-052-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AN/CAP-052-EVENT-NOTES.md)
