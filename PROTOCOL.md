@@ -1518,21 +1518,108 @@ purpose-built repeat, not merely a repeated negative — but per `AGENTS.md` §6
 Secure Connections link already existing gates CTKD vs. classic SSP" into this section's own 🟢 FACT
 connection-lifecycle diagram is left to the maintainer rather than done unilaterally here.
 
-**Not covered by this promotion — still ⚪ ASSUMPTION:** the RFCOMM
-channel-opening sequence, the Message Stream/`libmaestro` handshake ordering,
-and exactly when the first battery notification/app command arrives relative
-to the classic link completing (steps 3–6 in the diagram above). Only the
-classic BR/EDR link-establishment mechanics (steps 1–2) are promoted here.
+### 5.2 RFCOMM channel-opening sequence (step 3) — 🟡 HYPOTHESIS (strong), reviewed by the maintainer 2026-09-09, kept at HYPOTHESIS
+
+**Method**: extracted every `SABM` (channel-open request) event, per DLCI, from the classic ACL
+`Connection Complete` onward, across every already-on-disk capture confirmed untruncated with a
+clean connection window (`CAP-036`, `CAP-041` Windows A/B/C, `CAP-037`'s first reconnect on two
+different chandles) —
+
+```
+$ tshark -r <log> -Y "bthci_acl.chandle==<chandle> and btrfcomm.frame_type==0x2f" \
+  -T fields -e frame.number -e frame.time_relative -e btrfcomm.dlci -e frame.p2p_dir
+```
+
+**Result, 6 independent fresh-reconnect instances across 3 capture sessions, zero counter-examples
+within this specific condition:**
+
+```
+CAP-036            (frame 906 Connection Complete @ 43.609s):
+  0x00 @ 43.929s → 0x0c @ 43.946s → 0x04 @ 43.948s → 0x08 @ 44.017s → 0x0a @ 44.060s → 0x02 @ 45.216s
+CAP-041 Window A   (chandle 0x0002, frame 279 Connection Complete @ 17:11:59.210):
+  0x00 @ 2.479s → 0x0c @ 2.496s → 0x04 @ 2.693s → 0x0a @ 3.088s → 0x08 @ 3.152s → 0x02 @ 3.791s
+CAP-041 Window B   (chandle 0x0004, frame 1414 Connection Complete @ 17:13:22.494):
+  0x00 @ 85.706s → 0x0c @ 85.734s → 0x04 @ 85.957s → 0x0a @ 86.171s → 0x08 @ 86.216s → 0x02 @ 86.968s
+CAP-041 Window C   (chandle 0x0005, frame 2642 Connection Complete @ 17:15:39.443):
+  0x00 @ 222.764s → 0x0c @ 222.794s → 0x04 @ 222.877s → 0x08 @ 222.956s → 0x0a @ 222.999s → 0x02 @ 224.037s
+CAP-037            (chandle 0x0004, frame 863 Connection Complete @ 29.113s):
+  0x00 @ 29.561s → 0x0c @ 29.571s → 0x04 @ 29.596s → 0x0a @ 29.653s → 0x08 @ 29.702s → 0x02 @ 31.009s
+CAP-037            (chandle 0x0006, frame 3866 Connection Complete @ 81.696s):
+  0x00 @ 82.062s → 0x0c @ 82.093s → 0x04 @ 82.096s → 0x08 @ 82.144s → 0x0a @ 82.185s → 0x02 @ 83.360s
+```
+
+Every one of these 6 fresh-reconnect instances shows the **same macro-order**: the multiplexer
+control channel (`0x00`) opens first, HFP (`0x0c`) opens second (within tens of milliseconds — HFP
+is confirmed the *fastest* channel to establish, matching `PROTOCOL.md` §4.3 Option C's own
+observation that HFP's SLC handshake starts almost immediately), the official Fast Pair Message
+Stream (`0x04`) opens third, then the private envelope (`0x08`) and the silent channel (`0x0a`) open
+in either relative order (this sub-ordering is the *only* thing that varies across these 6 samples —
+`CAP-036`/Window C/`CAP-037`'s second sample show `0x08` before `0x0a`; Window A/B/`CAP-037`'s first
+sample show `0x0a` before `0x08`), and **`libmaestro`'s own channel (`0x02`) opens last in every
+single instance**, by a substantial, consistent margin (0.6–1.3 seconds after the fifth channel) —
+never interleaved with or ahead of any other channel.
+
+**One genuine, documented exception — not suppressed, since honestly scoping a pattern is more
+valuable than an artificially clean one.** `CAP-037`'s chandle `0x0006` shows a *second* full
+6-channel reopening later in the same log (frame 8827, `t≈253.9s`), confirmed via HCI-level
+`Disconnection Complete` events (`bthci_evt.code==0x05`, chandle `0x0006`: only two disconnects
+exist for this chandle, at `t=96.9s` and `t=274.5s` — this reopening at `t≈253.9s` sits *inside* one
+continuous, unbroken ACL connection, not a fresh reconnect) — i.e. this is an instance of the
+already-documented, still-unexplained **RFCOMM multiplexer channel-bounce** phenomenon
+(`CAP-016-FINDINGS.md` §3/§9, `PROTOCOL.md` §6), not a new pairing/reconnect. In *this* instance, the
+order is `0x00 → 0x0c → 0x04 → 0x02 → 0x0a → 0x08` — **`libmaestro`'s channel opens third, not
+last.** This is a real counter-example to the "always last" pattern, but it is scoped precisely: it
+occurs specifically during a mid-connection channel-bounce, a condition already known to behave
+differently from a fresh reconnect in other ways (per `PROTOCOL.md` §6's own open item on this
+phenomenon's trigger). The "opens last" pattern's 6/6 record holds without exception specifically
+for **fresh RFCOMM-multiplexer establishment following a new/renewed classic ACL connection**; it is
+not claimed to hold for a mid-session channel-bounce.
+
+**Mechanism, consistent with — and explaining — several already-documented individual findings**:
+each channel appears to independently fire its own connect-time handshake/burst as soon as *it*
+opens, not on a shared, single connect-time clock: DLCI 0x04's `Get ANC state`/`Notify ANC state`
+pair fires within tens of milliseconds of DLCI 0x04's own channel opening (already 🟢 FACT,
+`DECISIONS.md` ADR-021/ADR-022); DLCI 0x08's 7 unmapped zero-length `Get`-shaped frames and its own
+device-info dump fire within tens of milliseconds of DLCI 0x08's own opening (`CAP-036-FINDINGS.md`
+§5, `PROTOCOL.md` §6); and DLCI 0x02's own connect-time RPC burst (`CAP-036`/`CAP-041`,
+`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 4 item 1) fires within tens of milliseconds
+of DLCI 0x02's own opening. Since DLCI 0x02 is confirmed (above) to reliably open *last* of the five
+data-carrying channels on a fresh reconnect, its own connect-time burst is, as a direct consequence,
+also reliably the *last* burst to fire in the overall sequence — this is offered as the simplest
+explanation consistent with all of the above, not independently verified beyond what the timing data
+itself already shows.
+
+**Not established by this analysis**: *why* `libmaestro`'s channel specifically waits until last
+(a deliberate app-level sequencing choice vs. simply being the slowest internal RFCOMM-socket-selection
+path to resolve, per `REVERSE_ENGINEERING.md`'s `gbm`/`fzd` entry) — genuinely open, not guessed at.
+
+**Status, reviewed by the maintainer 2026-09-09 (chat session that authored prompt
+`ai-sessions/0004_MAINTENANCE_PROMPT_2026_09_09.md`) — kept at 🟡 HYPOTHESIS (strong), not
+promoted.** The maintainer reviewed this finding directly — 6 independent instances across 3 capture
+sessions, zero counter-examples within the fresh-reconnect condition, one honestly-scoped exception
+outside it (a mid-session channel-bounce, itself not yet explained) — and explicitly chose to leave
+it at HYPOTHESIS (strong) rather than promote to 🟢 FACT at this time, pending either more
+independent sessions or a dedicated purpose-built capture, given the one known exception isn't yet
+understood. This is a reviewed, deliberate decision, not an oversight — a future session should not
+re-propose this same finding without new evidence beyond what's already cited here.
+
+**Not covered by this section — still ⚪ ASSUMPTION:** the Message Stream/`libmaestro` handshake's
+own internal step-by-step *content* ordering beyond channel-open timing (step 4), and exactly when
+the first battery notification/app command arrives relative to the classic link completing for a
+*user-initiated* action rather than the automatic connect-time bursts characterized above (step 6).
 
 **Status**: 🟢 FACT for classic BR/EDR link establishment (§5.1, seven
-independent captures); ⚪ ASSUMPTION for the RFCOMM/Message-Stream/battery/
-command portions (steps 3–6); 🟢 FACT for step 5's specific behavioral outcome
+independent captures); 🟡 HYPOTHESIS (strong), maintainer-reviewed and kept at this tier 2026-09-09,
+for the RFCOMM channel-opening macro-order (§5.2, step 3); ⚪ ASSUMPTION for the remaining Message-Stream-content/
+user-triggered-command portions (steps 4/6); 🟢 FACT for step 5's specific behavioral outcome
 (battery notification on reconnect), per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §3.
 **Evidence**: §5.1 above for the classic-link portion (`CAP-001` frames
 732–917, `CAP-002` frames 653–734, `CAP-003` frames 1621/1687–1756, `CAP-016`
 frames 1213–1217, `CAP-013` frames 117–270, `CAP-031` frames 598–689, `CAP-032`
-frames 1090–1153); steps 3–6 still need a full connection sequence captured
-end-to-end (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md`).
+frames 1090–1153); §5.2 above for the channel-opening-order portion (`CAP-036`, `CAP-041` Windows
+A/B/C, `CAP-037` ×2, full frame numbers/timestamps quoted in §5.2 itself); the Message-Stream-content
+and user-triggered-command portions still need a full connection sequence captured/analyzed
+end-to-end with that specific question in mind.
 
 ## 6. Open questions
 
@@ -2453,6 +2540,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-08 | **Implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 4's proposals, maintainer-approved via `ai-sessions/0002_MAINTENANCE_PROMPT_2026_09_08.md`** (`DECISIONS.md` ADR-025's 2026-09-08 Update notes): **§4.5.2 Multipoint (`qhr` field 11)** and **§4.5.6 Volume EQ (`qhr` field 15)** promoted to 🟢 FACT for full field-number/semantic identity, each forward-traced from a named UI fragment/preference key to its write call site. **§6** — added four items: an informational note on `IFastPairDeviceDetailService`/`IFastPairFmdProxyService` (how the reference app sources battery data and handles Find My Device consent, explicitly out of scope for this project's own implementation); a refinement to the Find My Buds Case/"both" open item (`FmdWorker`/`ijp` construct only ToS accept/skip requests, no ring/play-sound trigger found); a new open item on `MaestroDeviceSettingsProviderService` as a second UI entry point into the `qhr`/`WriteSetting` pipeline; a new open item on `MaestroEndpointService`'s undetermined gRPC service registrations. Also closed the `field 11`/`field 15` entry in the "what do DLCI 0x02's confirmed inner field numbers actually represent" open item | Claude (AI), maintainer-directed sign-off session (prompt `0002`) |
 | 2026-09-08 | **`ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md` Phase 2 — external-source validation pass, no new FACT promotion.** **§4.3 Option A** — the "shown ≥8s, auto-hidden after 20s" timing claim re-checked against the base Message Stream spec page (the alternate location proposed 2026-09-03); also absent there, closing both candidate official pages with a clean negative. **§4.4/§6** — the Ring ACK open item sharpened with the acknowledgement spec's exact literal text (the worked example's trailing 2 bytes are explicitly glossed as a channel+timeout state, "ring right and 60 seconds timeout"); checked against both observed ACK variants, neither fits a 2-byte state (one has zero extra bytes, the other exactly one) — the spec's own documented NAK format (a leading reason byte) was also checked and doesn't fit either. **§6** — the DLCI 0x02 Address-field-renegotiation item cross-checked against Pigweed's public `pw_hdlc`/`pw_rpc` documentation directly: neither publishes how HDLC addresses or RPC channel IDs are assigned, so this remains genuinely undocumented upstream, not merely unread. **§2.3** — `pbpctrl`'s own published notes re-fetched in full; confirmed no detail exists beyond the already-quoted transport-framing paragraph and a bare feature list (no opcode/byte-layout detail for any setting). **§6** — `FE2C1238…`'s name and the "Unknown Service" UUID re-checked against the live Fast Pair characteristics page and a web search respectively; both reconfirm the existing negative result (still undocumented) rather than finding anything new | Claude (AI), external-validation task (HYPOTHESIS-level re-checks and negative-result confirmations only — no FACT promotion, no sign-off needed) |
 | 2026-09-08 | **`ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md` Phase 3/4 — APK reverse-engineering and capture cross-checks.** **§4.5.5 In-ear detection (`qhr` field 2)** promoted to 🟢 FACT for field-number/category-level identity, maintainer-approved (`DECISIONS.md` ADR-019 Update): the field's existing write site is also reached from the system Settings app's `MaestroDeviceSettingsProviderService` (case `2102`), logged there under the internal category name `"CATEGORY_OHD"` — the specific "In-ear detection" UI-label equivalence stays 🟡 HYPOTHESIS. **§4.2 EQ** — `fyd.d`/`fyd.e`'s call sites traced: field 16 confirmed fed from the slider-drag/preset path; field 18 found reachable *only* via a dedicated "Save EQ" button click handler, directly contradicting (not confirming) `CAP-015`'s own "fires on slider-release" wire-timing hypothesis — recorded as an open tension per the maintainer's own review, not resolved either way. **§6** — `MaestroDeviceSettingsProviderService`'s remaining 5 case IDs traced (field 27, field 11/Multipoint with a new internal-name confirmation and an unreconciled `fpm.ENABLED_HEAD_GESTURES` naming tension, field 5, a non-`qhr` "Feature A" toggle, and a new field 32); `MaestroEndpointService.onCreate()` read via `apktool` smali fallback (a Dagger-multibinding-based, per-call UID-authorization-gated service registry, service names not recovered); `gjv.p()`'s caller re-attempted and still not found (static analysis judged exhausted). **`CAP-041-FINDINGS.md` §8** — full byte-for-byte content diff of the DLCI 0x02 connect-time burst across 4 settings states: content-level clean negative for a settings-state read-back, closing `OBS-007` beyond the prior length-only result. **§6** — a plausible (unconfirmed) structural match found between `CAP-036`'s existing connect-time burst and `qjb`'s `qie`-shaped nested structure; `TrueWirelessHeadset.modelId` confirmed to need the maintainer's own device access, no existing data found | Claude (AI), APK-reverse-engineering + capture-analysis task; one item (`qhr` field 2) maintainer-directed sign-off, prompt `0003` |
+| 2026-09-09 | **`ai-sessions/0004_MAINTENANCE_PROMPT_2026_09_09.md` — connection-lifecycle analysis on existing captures.** **New §5.2**: DLCI 0x02 (`libmaestro`) reliably opens *last* of the five data-carrying RFCOMM channels on a fresh reconnect — 6 independent instances across `CAP-036`/`CAP-037`/`CAP-041`, zero counter-examples in that condition, one honestly-scoped exception during a mid-session RFCOMM channel-bounce (where the order differs). Maintainer reviewed this directly in the chat session that authored this prompt and explicitly chose to keep it at 🟡 HYPOTHESIS (strong) rather than promote, pending more evidence or an explanation for the one exception | Claude (AI), capture-re-analysis task; maintainer-reviewed, kept at HYPOTHESIS (not promoted), prompt `0004` |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

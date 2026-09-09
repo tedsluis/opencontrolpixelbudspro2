@@ -2436,6 +2436,28 @@ via a capture, update its status here **and** promote it into `PROTOCOL.md`.
 | `25e97ff7-24ce-4c4c-8951-f764a708f7b5` (byte-reversed alias: `b5f708a7-64f7-5189-4c4c-ce24f77fe925`) | `fzd.java:9`, `gbm.java:35` | App's own log label: "pigweed internal rfcomm socket" — SDP-confirmed (`CAP-001`/`CAP-002`/`CAP-032`) as RFCOMM server channel 1 = DLCI 0x02, AGENTS.md §6's Pigweed `pw_hdlc` channel | 🟢 FACT for channel ownership (confirmed by capture IDs `CAP-001`/`CAP-002`/`CAP-032`, `DECISIONS.md` ADR-018, `PROTOCOL.md` §2.2a); 🟡 HYPOTHESIS (strong) that Sent-direction payload content specifically carries `libmaestro`'s settings commands |
 | `00001124-0000-1000-8000-00805f9b34fb` | `fxm.java:12` | Bluetooth SIG-assigned HID Profile UUID (public spec, not project-specific) — app checks for it before triggering `fetchUuidsWithSdp()` | 🟢 FACT (that this official UUID is checked for); whether the Buds actually expose it is capture-dependent — cross-reference `CAP-002`/`CAP-016` |
 
+**Checked and confirmed absent, 2026-09-09 (`ai-sessions/0004_MAINTENANCE_RESULT_2026_09_09.md`
+Task 2) — a clean negative, recorded so a future pass doesn't re-attempt the same search assuming it
+was never tried.** `CAP-034` (2026-09-01) independently resolved a full 15-service GATT UUID mapping
+via wire capture alone (`PROTOCOL.md` §6, §4.3 Option D): the Fast Pair Service (`0xFE2C`) and its
+characteristics (`FE2C1233`–`FE2C1239`), Device Information (`0x180A`), Battery Service
+(`0x180F`)/Battery Level (`0x2A19`), Firmware Revision String (`0x2A26`), Accessory Non-Owner Service
+(`15190001-12f4-c226-88ed-2ac5579f2a85`), and the still-unnamed "Unknown Service"
+(`109b862f-50e3-45cc-8ea1-ac62de4846d1`). A case-insensitive search of the entire decompiled tree —
+`jadx-output/sources/` in full (both exact-case and `grep -li`) and `apktool-output/smali*/` — for
+every one of these UUIDs, in both their full 128-bit and short 16/32-bit forms, found **zero genuine
+matches**: the 5 smali hits that did surface (`akm.smali`, `hlf.smali`, `dps.smali`, `pex.smali`,
+`TestingToolsBroadcastReceiver.smali`) are all coincidental hex substrings inside unrelated numeric
+constants (a double literal, a resource ID, a hashCode-shaped constant, a `serialVersionUID`, a
+switch-case hash) — none is an actual UUID reference, individually verified by reading each hit's
+surrounding line. **This is consistent with, and further corroborates, `DECISIONS.md` ADR-025's
+existing finding**: this companion app's own decompiled source contains no trace of DLCI 0x04/0x08's
+GATT/Fast-Pair-service handling at all — that layer is implemented entirely inside Google Play
+Services, not this APK. No new register rows are added for these 8 UUIDs, per this document's own
+scope note (APK findings only) — their wire-level identity is already fully established in
+`PROTOCOL.md` directly from `CAP-034`'s own capture evidence, which does not need (and does not get)
+a redundant APK-code citation here.
+
 ## Message Group / Code register (Fast Pair Message Stream)
 
 If the Message Stream framing hypothesis (`PROTOCOL.md` §2.1) is confirmed,

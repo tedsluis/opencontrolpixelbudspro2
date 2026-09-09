@@ -382,20 +382,52 @@ lower priority than finishing ANC/Battery/EQ):**
 
 ## Phase 3 — Protocol reconstruction
 
-- [ ] Fill in the UUID register (`REVERSE_ENGINEERING.md` §UUID register) — partially done as of
-      2026-08-30 (3 of an unknown total number of UUIDs found so far, one at 🟢 FACT), not a blank
-      template; kept unchecked since it's not exhaustive
-- [ ] Fill in the Message Group/Code register, if the Fast Pair Message Stream
-      framing hypothesis is confirmed (`REVERSE_ENGINEERING.md` §Message
-      Group/Code register)
-- [ ] Resolve the framing question — Message Stream vs. proprietary envelope
-      (`PROTOCOL.md` §2.3) and record the determination as a `DECISIONS.md`
-      ADR — this blocks implementing `FrameEncoder`/`FrameDecoder` (see
-      `AGENTS.md` §6, `ARCHITECTURE.md` §2.1)
-- [ ] Document the full connection lifecycle with real capture evidence
-      (`PROTOCOL.md` §5, currently an ⚪ ASSUMPTION)
-- [ ] Bring the first command (e.g. battery status via the Fast Pair Battery
-      Notification, `PROTOCOL.md` §4.3 Option A) to full 🟢 FACT status
+- [ ] **Fill in the UUID register (`REVERSE_ENGINEERING.md` §UUID register) — cross-referencing pass
+      done 2026-09-09 (`ai-sessions/0004_MAINTENANCE_RESULT_2026_09_09.md` Task 2), clean negative.**
+      `CAP-034`'s 8 wire-confirmed GATT UUIDs (Fast Pair Service `0xFE2C`/`FE2C1233`–`FE2C1239`,
+      Device Information `0x180A`, Battery Service `0x180F`/`0x2A19`, Firmware Revision `0x2A26`,
+      Accessory Non-Owner Service `15190001-...`, "Unknown Service" `109b862f-...`) were searched for
+      across the entire decompiled tree (`jadx-output/` and `apktool-output/smali*/`, both full and
+      short UUID forms) — **zero genuine matches found**, corroborating `DECISIONS.md` ADR-025's
+      existing finding that this companion app's own code contains no Fast-Pair-GATT handling at all.
+      Recorded as a checked negative in the register itself rather than left silently untried. Kept
+      unchecked as "exhaustive" is still not claimed — a future APK version or a different keyword
+      angle could still surface something — but this specific, concretely-scoped next step is done.
+- [x] **Message Group/Code register — confirmed empty by design, not stalled (updated 2026-09-09).**
+      The Fast Pair Message Stream framing hypothesis *is* confirmed (`PROTOCOL.md` §2.1/§4.1), but
+      `DECISIONS.md` ADR-025 and `REVERSE_ENGINEERING.md`'s own register note already establish this
+      table is expected to stay empty for DLCI 0x04/0x08 specifically — their transport lives inside
+      Google Play Services, not the companion app's own decompiled code, so no vendor-specific
+      Group/Code value will ever be found there to fill this table with. Checked here, not
+      unfinished work.
+- [ ] **Resolve the framing question — updated 2026-09-09, resolved per channel, not monolithic.**
+      Per `PROTOCOL.md` §2.3/`ARCHITECTURE.md` §5's own per-channel implementation gate: DLCI 0x02
+      (Pigweed `pw_hdlc`) and DLCI 0x04 (official Fast Pair Message Stream) are both 🟢 FACT and
+      implementation-unblocked — `FrameEncoder`/`FrameDecoder` work for either is **not** blocked on
+      this item. Only DLCI 0x08's own identity remains 🔴 open (structurally decodable, `[Group][Code]
+      [Length][Value]`, but which protocol it belongs to is unresolved) — kept unchecked for that one
+      remaining channel only, not for the framing question as a whole.
+- [ ] **Document the full connection lifecycle with real capture evidence — updated 2026-09-09,
+      step 3 now analyzed and maintainer-reviewed.** `PROTOCOL.md` §5.1 already promotes the classic
+      BR/EDR link-establishment mechanics (steps 1–2) to 🟢 FACT across seven independent captures.
+      **Step 3 (the RFCOMM channel-opening sequence) is now analyzed**: a new `PROTOCOL.md` §5.2
+      records 🟡 HYPOTHESIS (strong) that DLCI 0x02 (`libmaestro`) reliably opens *last* of the five
+      data-carrying RFCOMM channels on a fresh reconnect (6/6 independent instances across
+      `CAP-036`/`CAP-037`/`CAP-041`, zero counter-examples in that condition, one honestly-scoped
+      exception during a mid-session channel-bounce) — the maintainer reviewed this directly and
+      explicitly chose to keep it at HYPOTHESIS rather than promote, pending more evidence or an
+      explanation for the exception (see `ai-sessions/0004_MAINTENANCE_RESULT_2026_09_09.md` Task 3
+      for the full analysis). **Still open**: steps 4/6 (the Message Stream/`libmaestro` handshake's
+      own internal content ordering beyond channel-open timing, and user-triggered-command timing) —
+      not attempted this pass.
+- [ ] **Bring the first command to full 🟢 FACT status — updated 2026-09-09, ANC and battery Option C
+      already done; only battery Option A remains, and that item is capture-blocked.** ANC
+      (`PROTOCOL.md` §4.1) reached full FACT status 2026-08-12 (see the checked item immediately
+      below). Battery via HFP (`PROTOCOL.md` §4.3 Option C) is also already 🟢 FACT
+      (`DECISIONS.md` ADR-015/ADR-023). Only battery Option A (the Fast Pair BLE Battery
+      Notification) remains open, and it is specifically blocked on the still-outstanding clean,
+      connection-free BLE-scan repeat this file's Phase 1 section already tracks (`CAP-011` was
+      inconclusive) — not a research gap an AI session can close without that capture.
 - [x] Bring ANC mode switching to full 🟢 FACT status (`PROTOCOL.md` §4.1) —
       **done 2026-08-12** via deskresearch correlation against the official
       Fast Pair "Hearable Controls" spec + `CAP-001`'s existing capture.
