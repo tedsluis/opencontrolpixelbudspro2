@@ -1166,6 +1166,115 @@ existing HFP-only model. Also cross-check against `CAP-027`'s cross-sync-caveat
 times during active A2DP streaming; this idle session is the control for whether it holds up
 perfectly with no streaming at all. See `CAP-042-EVENT-NOTES.md`'s Decode/Analysis checklist.
 
+#### Group AJ — `HOLD-005` Left/Right ANC-rotation-checklist split (occasional, added 2026-09-09)
+
+**Purpose:** `PROTOCOL.md` §4.5.3's ANC-mode rotation checklist (`qhr` field 12, confirmed
+field-number identity as `qht`) has 16 wire-observed boolean flags (`HOLD-005`, `CAP-021`) but no
+Left/Right-distinguishing field for this specific write — unlike `HOLD-001`–`HOLD-004`, it's
+unknown which frames belong to which earbud's own rotation list.
+
+1. Open Device details → Controls and gestures → the ANC-mode rotation checklist for the **Left**
+   earbud specifically (the UI is confirmed to expose this per-earbud, per `PROTOCOL.md` §4.5.3's
+   own UI description).
+2. Toggle each of the 4 checklist items (Noise cancellation / Off / Adaptive / Transparency) for
+   the Left earbud **one at a time**, with a clear pause (≥10s) and a distinct video-visible action
+   between each toggle, so each write can be isolated to one specific checklist item.
+3. Repeat step 2 for the **Right** earbud's own rotation checklist, again one item at a time.
+
+**Analysis:** do the Left-earbud toggles and Right-earbud toggles produce distinguishable wire
+patterns (e.g. a different inner field position, a different correlation-ID pattern, or simply a
+confirmed video-to-frame 1:1 timing correlation good enough to assign each frame to a side by
+elimination)? This directly closes `PROTOCOL.md` §6's open item on this question.
+
+#### Group AK — Volume balance (`field 17`) scale/direction (occasional, added 2026-09-09)
+
+**Purpose:** `PROTOCOL.md` §4.5.7 confirms `qhr` field 17 = Volume balance (full identity, 🟢
+FACT), but its numeric scale/range beyond the 7 samples in one continuous drag (`CAP-022`) and
+which direction (Left/Right) corresponds to negative vs. positive zigzag-decoded values remain 🔴
+open — a single continuous drag at 1fps video-sampling resolution wasn't enough to resolve this.
+
+1. Open Device details → Sound → the Balance slider.
+2. Drag the slider to its **full Left extreme**, release, and hold for ≥3s before any further
+   action (an isolated, discrete sample, not a continuous drag) — video-confirm the slider's own
+   on-screen position/label at this extreme.
+3. Return the slider to center, pause ≥5s, then drag to its **full Right extreme**, release, hold
+   ≥3s, video-confirm.
+4. Repeat steps 2–3 at least once more for a second independent sample of each extreme.
+5. Optionally, sample 1–2 clearly-labeled intermediate positions (e.g. "25% Left", "25% Right" if
+   the UI shows a numeric/percentage label) the same isolated way.
+
+**Analysis:** zigzag-decode (`(n>>1) ^ -(n&1)`) each isolated sample's `field 17` value and match
+it against the video-confirmed slider position/label at that exact moment — this directly closes
+`PROTOCOL.md` §6's open item on this field's scale/direction.
+
+#### Group AL — DLCI 0x0a burst trigger, purpose-built hypothesis test (occasional, added 2026-09-09)
+
+**Purpose:** `CAP-021`'s 1123-frame DLCI 0x0a burst (`PROTOCOL.md` §6) has recurred in exactly 1 of
+16+ sessions checked — passively waiting for it is not expected to work. `TODO.md`'s own
+"Recommended priority order" §5 asks for a purpose-built hypothesis test bracketing candidate
+triggers **one at a time**, per `PROJECT_RULES.md` §4's fixed template (hypothesis, setup, expected
+outcome, actual outcome, conclusion).
+
+Run as up to 3 separate bracketed sub-sessions, each testing exactly one candidate trigger, logged
+either as 3 rows under this one Group or as 3 short sequential capture windows in one continuous
+log with clear boundary timestamps — the maintainer's choice at execution time, record which was
+used:
+
+1. **Trigger candidate 1 — app backgrounded/foregrounded**: with the Buds connected and idle,
+   background the official app for ≥2 minutes, then foreground it again; log throughout.
+2. **Trigger candidate 2 — a scheduled sync window**: leave the Buds connected and the phone
+   otherwise idle (screen off, app backgrounded) for an extended window (≥15 minutes, matching
+   `CAP-042`'s own idle-bracket precedent) to see if the burst appears without any explicit action.
+3. **Trigger candidate 3 — a charge-state change**: dock one or both Buds into the case (charging
+   begins) or remove them (charging stops) while logging, isolating this specific transition.
+
+**Analysis, per `PROJECT_RULES.md` §4's template:** for each bracketed trigger, record explicitly
+whether the 1123-frame (or any size) DLCI 0x0a burst appeared in or shortly after that specific
+window — a negative result for all three is itself a valuable, reportable outcome, not a failed
+session.
+
+#### Group AM — `qhr` field 13 ANC-parallel-path wire confirmation (occasional, added 2026-09-09)
+
+**Purpose:** `REVERSE_ENGINEERING.md`'s `qhr` entry fully traces field 13 (ANC state, DLCI 0x02) to
+exactly two code-side callers — an in-app `QuickActionsFragment` toggle-group tap, and a physical
+press-and-hold gesture (`gvi`/`gvj`) — but neither has ever been wire-confirmed: no capture has yet
+correlated a `qhr`-field-13 write on DLCI 0x02 with an itself otherwise-unexplained DLCI-0x04
+Notify (the specific pattern `CAP-038-FINDINGS.md` §5 observed twice with no preceding Get/Set on
+DLCI 0x04).
+
+1. With full DLCI 0x02 traffic retained (raw-path extraction, not `btsnooz.py`), perform an
+   isolated ANC-mode change via the **in-app** `QuickActionsFragment` toggle group (a single tap,
+   pause ≥10s before the next action, matching `CAP-006`'s own isolated-tap discipline).
+2. Separately, perform an isolated ANC-mode change via a **physical press-and-hold gesture** on one
+   earbud (again, single gesture, pause ≥10s).
+
+**Analysis:** for each of the two actions, check whether a `field5{field4{field13=N}}}` write
+appears on DLCI 0x02 at that moment — a positive match (especially time-correlated with the
+tap/gesture, mirroring `CAP-006`'s DLCI-0x04 confirmation methodology) would be strong evidence
+DLCI 0x02 *also* carries ANC state in parallel to DLCI 0x04's already-confirmed path.
+
+#### Group AN — `CAP-041` Case%-change bracket (occasional, added 2026-09-09)
+
+**Purpose:** `CAP-041-FINDINGS.md` §4 and `CAP-036-FINDINGS.md` §12.6 both found a recurring
+2-field sub-message inside DLCI 0x02's connect-time/periodic burst holding a constant value that
+happens to match the on-screen Case battery percentage throughout the session — but because the
+value never changed in either session, this is consistent with, but does not confirm, the field
+tracking Case battery (it could equally be any other session-constant value that happens to
+match).
+
+1. Start a session with the Case at a known, video-confirmed battery percentage (check via the
+   official app's Device details screen before starting).
+2. Over an extended session (≥30 minutes, allowing genuine charge/discharge to occur — e.g. leave
+   the Case charging via USB for part of the window, or simply let it discharge naturally if a
+   bud is docked), periodically re-check and video-confirm the on-screen Case percentage.
+3. Ensure the DLCI 0x02 periodic push (already confirmed to recur every few minutes when the app is
+   foregrounded, per `CAP-036-FINDINGS.md` §12.5) is captured throughout.
+
+**Analysis:** does the recurring 2-field sub-message's value actually change in step with the
+video-confirmed Case percentage changes? A positive correlation across a genuine change would
+promote this from "consistent with" to real evidence; a mismatch would be an equally useful,
+reportable negative result.
+
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
 No app-driven commands are possible here, so this session focuses on connection-level
@@ -1548,6 +1657,16 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-040` | 2026-09-06 | Pixel 7a | 14 (⚪ assumed) | ⚪ assumed `release_5.203` | 1.0.955078536 (⚪ assumed) | AG | `PRIV-001`, incidental `PAIR-003`, `BATT`-family | DLCI 0x08's unmapped zero-length Get-shaped codes decoded via correlation against a known-changing value — executed as ~15 repeats of a docked/undocked cycle using the app's own Connect/Disconnect buttons | `captures/CAP-040-2026-09-06_07-28-00_07-57-05-Group_AG/CAP-040-btsnoop_hci.log` (its `.log.last` is **not** part of this session — see below) | main file only, raw path, 0/8,539 truncated | analyzed — see `CAP-040-FINDINGS.md`. **Integrity correction: `CAP-040-btsnoop_hci.log.last` is leftover on-device buffer content from `CAP-039`'s own session plus the idle gap before `CAP-040`, not an intra-session rotation — only the main log is this session's own evidence** (mirrors the same pattern independently found for `CAP-042`/`CAP-041`, below). **Major finding: the app's own in-app "Connect"/"Disconnect" buttons produce zero wire-visible signal** (no ACL teardown, no DLCI bounce) across ~15 taps — invalidating the session's own dock/undock bracketing for `PRIV-001`'s intended correlation test (DLCI 0x08 opens exactly once, so all 7 flagged codes have N=1). Bonus, in the video's own previously-unreviewed tail: a genuine real reconnect cluster and a 🟡 HYPOTHESIS that the `0xff` battery sentinel appears momentarily at the instant of physical docking |
 | `CAP-041` | 2026-09-06 | Pixel 7a | 14 (⚪ assumed) | 🟢 confirmed `release_5.203` (on-screen, 17:11:32) | 1.0.955078536 (⚪ assumed) | AH | `OBS-007`, incidental `PAIR-003` | DLCI 0x02's connect-time RPC burst captured with deliberately non-default EQ/touch-controls settings, diffed against `CAP-036`'s own default-settings burst | `captures/CAP-041-2026-09-06_17-10-39_17-17-48-Group_AH/CAP-041-btsnoop_hci.log` | same file, raw path, 0/4,003 truncated | analyzed — see `CAP-041-FINDINGS.md`. **Settings were changed continuously through the session instead of once beforehand, producing 3 wire-confirmed reconnects (not the planned 4) each against its own distinct, non-default settings state.** The connect-time burst's length/shape signature is essentially invariant across all 3 states and `CAP-036`'s default baseline — a scoped negative for a `libmaestro`-side settings read-back at the length level (full byte-for-byte content diff not completed, flagged as a follow-up). Bonus: a recurring 2-field sub-message inside the burst holds a constant value matching on-screen Case% throughout — consistent with, not confirming, `CAP-036-FINDINGS.md` §12.6's open item |
 | `CAP-042` | 2026-09-06 | Pixel 7a | ⚪ assumed (carried from `CAP-036`, not visible — screen off) | ⚪ assumed `release_5.203` | n/a (backgrounded) | AI | `OBS-002` | Long, genuinely idle bracket to characterize the periodic DLCI 0x02/0x04/0x08/HFP cross-channel push cadence, app backgrounded | `captures/CAP-042-2026-09-06_17-30-02_18-07-42-Group_AI/CAP-042-btsnoop_hci.log` (its `.log.last` is **not** part of this session — see below) | main file only, raw path, 0/8,560 truncated | analyzed — see `CAP-042-FINDINGS.md`. **Integrity correction: `CAP-042-btsnoop_hci.log.last` reproduces `CAP-041`'s own three Connection Complete events verbatim and simply continues through the idle gap before `CAP-042` — it is not this session's own data, contrary to this task's own initial "confirmed rotated" framing.** True session duration is ~37m39s (main log only), not ~55m45s. **Central finding: the periodic push recurs only twice in the whole session (~16m and ~35m in, far sparser than `CAP-036`'s short-session sample), and HFP's `AT+BIEV` drops out of the previously-documented 4-channel near-lockstep sync entirely — DLCI 0x02/0x04/0x08 keep their own mutual sync.** Proposed 🔴 open question: an app-foreground-driven trigger, not a Buds-autonomous mechanism. Also revises `CAP-027-FINDINGS.md`'s "streaming-specific" sync-breakdown framing — idle sessions desync too |
+| `CAP-043` | *planned* | either phone | TBD | TBD | TBD | Q (repeat) | `BATT-002`, `BATT-003` | Repeat of `CAP-011`'s Battery Notification BLE scan, this time with the official app force-stopped and no active classic RFCOMM+GATT connection throughout the entire capture — closes `CAP-011-FINDINGS.md` §4's open item either way | — | — | planned |
+| `CAP-044` | *planned* | Pixel 7a | TBD | TBD | TBD | AA (repeat, 2nd attempt) | `SDP-001`, `SDP-002` (opportunistic) | Repeat of `CAP-033`'s SDP UUID branch isolation, this time with Force-stop strictly preceding Forget and step 3's app-open baseline browse actually executed | — | — | planned |
+| `CAP-045` | *planned* | Pixel 7a | TBD | TBD | TBD | AJ (new) | `HOLD-005` | `HOLD-005` Left/Right ANC-rotation-checklist split — isolate each of the 4 checklist items per earbud, one at a time, to determine whether Left/Right rotation-list writes are wire-distinguishable | — | — | planned |
+| `CAP-046` | *planned* | Pixel 7a | TBD | TBD | TBD | AK (new) | `AUDIO-003` | Volume balance (`field 17`) scale/direction — isolated, discrete extreme-position samples (not a continuous drag) with tight video correlation, to resolve numeric scale and Left/Right sign | — | — | planned |
+| `CAP-047` | *planned* | Pixel 7a | TBD | TBD | TBD | AL (new) | none existing — flagged as a `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` follow-up, not assigned here (see `CAP-047-EVENT-NOTES.md`) | Purpose-built hypothesis test for the `CAP-021` DLCI 0x0a burst trigger — up to 3 bracketed sub-sessions (app background/foreground, long idle window, charge-state change), per `PROJECT_RULES.md` §4's fixed template | — | — | planned |
+| `CAP-048` | *planned* | Pixel 7a | TBD | TBD | TBD | AD (repeat) | `OBS-004` | Repeat of `CAP-037`'s dock-state anomaly with an open ACL — 20+ minutes of isolated reconnects alternating docked/undocked, this time with continuous physical dock-state video for sub-second correlation | — | — | planned |
+| `CAP-049` | *planned* | Pixel 7a | TBD | TBD | TBD | AF (repeat) | `OBS-006` | Repeat of `CAP-039`'s unexplained disconnect/reconnect cycling (5 cycles, no clear camera-visible trigger) — this time with continuous phone-screen recording throughout to catch any background system event | — | — | planned |
+| `CAP-050` | *planned* | Pixel 7a | TBD | TBD | TBD | AG (repeat) | `PRIV-001` | Repeat of `CAP-040`'s DLCI 0x08 unmapped Get-shaped codes correlation, this time using a trigger confirmed to actually reopen DLCI 0x08 (OS Bluetooth toggle or physical dock/undock), not the app's own Connect/Disconnect buttons | — | — | planned |
+| `CAP-051` | *planned* | Pixel 7a | TBD | TBD | TBD | AM (new) | none existing — flagged as a `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` follow-up, not assigned here (see `CAP-051-EVENT-NOTES.md`); incidental `ANC`-family, `TOUCH-007` | `qhr` field 13 ANC-parallel-path wire confirmation — isolated in-app tap and isolated physical press-and-hold gesture, checking whether either correlates with a DLCI 0x02 `field13` write alongside DLCI 0x04's confirmed path | — | — | planned |
+| `CAP-052` | *planned* | Pixel 7a | TBD | TBD | TBD | AN (new) | none existing — flagged as a `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` follow-up, not assigned here (see `CAP-052-EVENT-NOTES.md`) | `CAP-041` Case%-change bracket — ≥30-minute session with a genuine Case battery charge/discharge, to test whether DLCI 0x02's recurring 2-field sub-message actually tracks Case% or merely coincided with a constant value | — | — | planned |
 
 **Column notes:**
 

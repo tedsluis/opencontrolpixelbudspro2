@@ -8,7 +8,10 @@ date/start-time/end-time, e.g. `CAP-028-2026-09-01_10-30-00_10-34-00-Group_O`.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group O):** main run-through group, never yet
 captured. **Requires 'Head gestures' enabled first (Group F, `CAP-020`)** — do not run this
-session before `CAP-020` has toggled Head gestures on.
+session before `CAP-020` has toggled Head gestures on. Head gestures are a Pixel Buds Pro
+2-exclusive feature, officially confirmed present (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` `HEAD-001`);
+this session tests whether the gestures themselves (Nod/Shake) generate any wire-visible traffic,
+or are purely on-device given they only act on an already-active call/notification context.
 
 ## Log Metadata
 
@@ -17,17 +20,33 @@ session before `CAP-020` has toggled Head gestures on.
 |    Capture ID    |                      `CAP-028`                     |
 |      Group(s)    |                         O                          |
 |       Date       |                        TBD                         |
-| Firmware version |                        TBD                         |
+| Firmware version | TBD (must be ≥4.467 for Head gestures to exist at all, per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §6 — see the Preparation note below) |
 |   Test device    | TBD (Pixel 7a, Android version, official app version) |
 | Video file       |               TBD — `CAP-028-recording.mp4`        |
 | Log file         |             TBD — `CAP-028-btsnoop_hci.log`        |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
 
-**Pre-condition check (required):** confirm 'Head gestures' is enabled on screen before starting
-this Group's actions — record how/when this was confirmed.
+**Preparation (required before starting):**
+- Confirm 'Head gestures' is enabled on screen (Device details → Controls and gestures → Head
+  gestures) before starting this Group's actions — record how/when this was confirmed. **If it was
+  not already enabled in a separate prior session (`CAP-020`), enable it now as this session's own
+  first logged step** (see Procedure step 0 below) rather than assuming it's already on.
+- Firmware note (documentation only, not currently a blocker): `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §6
+  states Head Gestures require firmware ≥4.467, a version scheme distinct from this project's own
+  confirmed wire-baseline `"release_5.203"` — `PROTOCOL.md` §0.1's `XC-03` note leaves the numeric
+  relationship between the two schemes unreconciled, but also confirms this isn't currently
+  blocking anything: Head gestures are already known working on this project's own test device
+  since `CAP-020`. Record the firmware version shown on screen for this session regardless, per
+  `PROJECT_RULES.md` rule 11's reproducibility requirement.
+- Confirm HCI snoop logging is already enabled and running, and the Buds are connected, before
+  either the Head-gestures-enable step (if needed) or the Nod/Shake actions begin.
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group O — requires Head gestures enabled)
 
+0. **(Only if not already done in a separate session):** enable 'Head gestures' now, as this
+   session's own first logged step (Device details → Controls and gestures → Head gestures
+   toggle on). Note the exact time. If already confirmed enabled from a prior session, skip this
+   step and just record the confirmation per the Preparation note above.
 13. **Nod** [`HEAD-002`] (simulating answering a call, or a text reply if 'Spoken notifications'
     is on). Wait. Note time.
 14. **Shake** [`HEAD-003`] (simulating rejecting a call/dismissing a text reply). Wait. Note time.
@@ -36,6 +55,8 @@ this Group's actions — record how/when this was confirmed.
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
+| TBD | HCI snoop logging confirmed enabled and running, Buds connected | User | — | TBD |
+| TBD | (if needed) Head gestures toggled on as this session's own first step | User (App) | — | TBD |
 | TBD | Head gestures confirmed enabled on screen | — | — | TBD |
 | TBD | Nod | User (Hardware) | `HEAD-002` | TBD |
 | TBD | Shake | User (Hardware) | `HEAD-003` | TBD |

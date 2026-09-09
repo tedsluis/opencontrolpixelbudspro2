@@ -66,6 +66,16 @@ CAP-039,capture,2026-09-06,"Group AF, Settable-toggles Set-vs-Get fixed dock sta
 CAP-040,capture,2026-09-06,"Group AG, DLCI 0x08 unmapped Get-shaped codes (PRIV-001), analyzed — .log.last is CAP-039 leftover, not this session; app's own Connect/Disconnect buttons produce zero wire signal, invalidating the intended correlation bracket (N=1 per code)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-041,capture,2026-09-06,"Group AH, DLCI 0x02 connect-burst vs. non-default settings (OBS-007), analyzed — 3 wire-confirmed reconnects (not 4 planned), burst length/shape invariant across settings states, byte-level content diff still pending",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-042,capture,2026-09-06,"Group AI, long idle bracket for cross-channel push cadence (OBS-002), analyzed — .log.last is CAP-041 leftover, not this session (~37m39s true duration); push recurs only twice, HFP drops out of the near-lockstep sync entirely",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-043,capture,planned,"session date/status: *planned* — Group Q (repeat), clean connection-free repeat of the Battery Notification BLE scan (BATT-002/BATT-003), closes CAP-011-FINDINGS.md §4",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-044,capture,planned,"session date/status: *planned* — Group AA (repeat, 2nd attempt), isolation-clean repeat of SDP-001/SDP-002 (Force-stop-before-Forget, step 3 executed)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-045,capture,planned,"session date/status: *planned* — Group AJ (new), HOLD-005 Left/Right ANC-rotation-checklist split",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-046,capture,planned,"session date/status: *planned* — Group AK (new), Volume balance (field 17) scale/direction, isolated extreme-position samples",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-047,capture,planned,"session date/status: *planned* — Group AL (new), CAP-021 DLCI 0x0a burst trigger purpose-built hypothesis test (up to 3 bracketed sub-sessions)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-048,capture,planned,"session date/status: *planned* — Group AD (repeat), CAP-037 dock-state anomaly with an open ACL repeat, continuous physical dock-state video",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-049,capture,planned,"session date/status: *planned* — Group AF (repeat), CAP-039 unexplained disconnect/reconnect cycling repeat, continuous phone-screen video",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-050,capture,planned,"session date/status: *planned* — Group AG (repeat), CAP-040 DLCI 0x08 unmapped codes repeat with a genuine reopen trigger (not the app's in-app Connect/Disconnect buttons)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-051,capture,planned,"session date/status: *planned* — Group AM (new), qhr field 13 ANC-parallel-path wire confirmation (in-app tap vs. physical press-and-hold)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-052,capture,planned,"session date/status: *planned* — Group AN (new), CAP-041 Case%-change bracket over a genuine charge/discharge",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md

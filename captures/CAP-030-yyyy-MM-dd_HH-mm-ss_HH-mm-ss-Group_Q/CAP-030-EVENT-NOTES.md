@@ -30,31 +30,64 @@ start** and **observation end** boundaries, not just a single timestamp.
 |    Capture ID    |                      `CAP-030`                     |
 |      Group(s)    |                   Q (items #19–20)                 |
 |       Date       |                        TBD                         |
-| Firmware version |                        TBD (must be ≥4.467 for `LOUD-001`/`ADAPT-002` to exist at all) |
+| Firmware version |                        TBD (must be ≥4.467 for `LOUD-001`/`ADAPT-002` to exist at all — see Preparation note below) |
 |   Test device    | TBD (Pixel 7a, Android version, official app version) |
 | Video file       |               TBD — `CAP-030-recording.mp4`        |
 | Log file         |             TBD — `CAP-030-btsnoop_hci.log`        |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
 
+**Preparation (required before starting):**
+- Firmware note (documentation only, not currently a blocker): `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §6
+  states Loud Noise Protection and Adaptive Audio require firmware ≥4.467 — `PROTOCOL.md` §0.1's
+  `XC-03` note leaves the numeric relationship between that scheme and this project's own confirmed
+  wire-baseline `"release_5.203"` unreconciled, but also confirms this isn't currently blocking
+  anything for the sibling feature `ANC-003` (Adaptive), which is confirmed present and working on
+  this project's own test device since `CAP-001`. Record the firmware version shown on screen for
+  this session regardless, and note if either feature is visibly absent from the UI (which would
+  indicate an actual gate, not just an unreconciled version-scheme question).
+- **Decide and record the app's foreground/background state for both windows before starting**:
+  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` `ADAPT-001` has its own open sub-question ("does Adaptive Audio
+  processing require the app to be active?") — running this session with the app foregrounded
+  throughout only tests the "app active" condition; foregrounded-then-backgrounded (or
+  backgrounded throughout) additionally speaks to `ADAPT-001`, not just this session's own
+  `LOUD-001`/`ADAPT-002` questions. Pick one and record which, don't leave it ambiguous.
+- **Practical/safety notes:**
+  - `LOUD-001`: a "sudden loud sound" for this purpose means a sharp, brief, moderate-volume
+    trigger at a safe distance from the ears while worn (e.g. a single sharp handclap ~0.5–1m from
+    the buds, or a door closing firmly nearby) — loud enough to plausibly trigger volume-limiting
+    DSP, not loud enough to risk hearing damage or device/microphone damage. Do not use impulse
+    sounds (gunshots, fireworks, air horns) — these are explicitly out of scope per Google's own
+    documentation (see Purpose above).
+  - `ADAPT-002`: a "distinctly different acoustic environment" means a clear, sustained ambient-
+    noise-level change, not a momentary one — e.g. a quiet indoor room → a room with music/TV
+    playing, or indoors → outdoors near light traffic. Stay in each environment long enough
+    (~30–60s) for on-device adaptive processing to plausibly react before moving to the next.
+- Confirm HCI snoop logging is already enabled and running, and the Buds are connected and worn,
+  before either observation window starts.
+
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Q, items 19–20)
 
 19. **Trigger a loud, sudden sound near the buds while worn** [`LOUD-001`] (e.g. clap sharply
-    nearby) to attempt to observe Loud Noise Protection engaging. Confirm the local effect
-    (e.g. audible volume dip) actually occurred before concluding anything about the Bluetooth
-    traffic. Does not cover impulse sounds (gunshots, fireworks) per Google.
+    nearby, per the Preparation note's practical/safety guidance above) to attempt to observe Loud
+    Noise Protection engaging. Confirm the local effect (e.g. audible volume dip) actually occurred
+    before concluding anything about the Bluetooth traffic. Does not cover impulse sounds
+    (gunshots, fireworks) per Google.
 20. **Move between distinctly different acoustic environments while worn** [`ADAPT-002`] (e.g.
-    quiet room → street) to attempt to observe Adaptive Audio adjusting. Confirm the local effect
-    first, same guidance as #19.
+    quiet room → street/room with music playing, per the Preparation note's examples above), each
+    environment held for ~30–60s, to attempt to observe Adaptive Audio adjusting. Confirm the local
+    effect first, same guidance as #19.
 
 ## Event Timeline
 
 | Time | Action | Initiator | Test-ID | Local effect confirmed? | Wire evidence / Notes |
 |---|---|---|---|---|---|
+| TBD | HCI snoop logging confirmed enabled and running, Buds connected and worn | User | — | — | TBD |
+| TBD | App foreground/background state decided and recorded for both windows | User | — | — | App state: TBD |
 | TBD | Observation window 1 start (worn, ready for a loud sound) | — | `LOUD-001` | — | TBD |
 | TBD | Loud/sudden sound triggered | User (Hardware) | `LOUD-001` | TBD | TBD |
 | TBD | Observation window 1 end | — | `LOUD-001` | — | TBD |
-| TBD | Observation window 2 start (worn, in first acoustic environment) | — | `ADAPT-002` | — | TBD |
-| TBD | Moved to distinctly different acoustic environment | User (Hardware) | `ADAPT-002` | TBD | TBD |
+| TBD | Observation window 2 start (worn, in first acoustic environment, held ~30–60s) | — | `ADAPT-002` | — | TBD |
+| TBD | Moved to distinctly different acoustic environment, held ~30–60s | User (Hardware) | `ADAPT-002` | TBD | TBD |
 | TBD | Observation window 2 end | — | `ADAPT-002` | — | TBD |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Q)

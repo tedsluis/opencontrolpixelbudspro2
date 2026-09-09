@@ -48,12 +48,14 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    other two, `MaestroEndpointService`'s smali fallback read and `gjv.p()`'s caller trace, both need
    either an untried smali read or a fresh capture first). **`CAP-033` (Group AA, `SDP-001`/`SDP-002`)
    is done (2026-08-30)** — see below.
-4. **Remaining planned captures** (updated 2026-09-08 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`,
+4. **Remaining planned captures** (updated 2026-09-09 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`,
    `CAP-027`, `CAP-033`–`CAP-042` are done, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9): a clean
-   connection-free repeat of the Battery Notification BLE scan (`CAP-011` was inconclusive), a
-   proper isolation-clean repeat of `SDP-001` (force-stop strictly before "Forget," and actually
+   connection-free repeat of the Battery Notification BLE scan (`CAP-011` was inconclusive) —
+   skeleton created as **`CAP-043`** (Group Q repeat, `ai-sessions/0005_MAINTENANCE_RESULT_2026_09_09.md`),
+   a proper isolation-clean repeat of `SDP-001` (force-stop strictly before "Forget," and actually
    execute step 3 — `CAP-033`'s own procedure deviation capped that result at 🟡 HYPOTHESIS, see
-   `CAP-033-FINDINGS.md` §8), then `CAP-018` and the still-uncaptured main-run-through remainder
+   `CAP-033-FINDINGS.md` §8) — skeleton created as **`CAP-044`** (Group AA repeat, 2nd attempt), then
+   `CAP-018` and the still-uncaptured main-run-through remainder
    (`CAP-026`, `CAP-028`–`CAP-030`) — `CAP-028` (head gestures) is now the highest-value of these
    still uncaptured. **Closed this update:** Group W's own untried GATT cache-busting methods —
    `CAP-034` (2026-09-01) combined `pm clear com.android.bluetooth` with a Pixel 9a never before
@@ -67,15 +69,19 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`:**
    - `HOLD-005`'s Left/Right ANC-rotation-checklist split (`PROTOCOL.md` §6) — a purpose-built
      capture isolating one earbud's rotation list at a time (the envelope carries no
-     Left/Right-distinguishing field for this specific write, unlike `HOLD-001`–`HOLD-004`).
+     Left/Right-distinguishing field for this specific write, unlike `HOLD-001`–`HOLD-004`). **Now
+     designed, 2026-09-09: skeleton created as `CAP-045` (Group AJ, new — see
+     `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 and `ai-sessions/0005_MAINTENANCE_RESULT_2026_09_09.md`).**
    - Volume balance (`field 17`) scale/direction (`CAP-022-FINDINGS.md` §5, `PROTOCOL.md` §4.5.7/§6)
      — a capture with isolated extreme-position samples (not a continuous drag) plus tighter video
-     correlation.
+     correlation. **Now designed, 2026-09-09: skeleton created as `CAP-046` (Group AK, new).**
    - The `CAP-021` DLCI 0x0a burst trigger, more precisely: a purpose-built hypothesis test
      (`PROJECT_RULES.md` §4's fixed template — hypothesis, setup, expected outcome, actual outcome,
      conclusion) bracketing candidate triggers one at a time (app backgrounded/foregrounded, a
      scheduled sync window, a charge-state change) — the burst recurred in exactly 1 of 16 sessions
-     checked so far, so passively waiting for it to reappear is not expected to work.
+     checked so far, so passively waiting for it to reappear is not expected to work. **Now designed,
+     2026-09-09: skeleton created as `CAP-047` (Group AL, new; no existing Test-ID, flagged as a
+     `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` follow-up).**
    - **Added 2026-08-30 (audit finding), closed 2026-09-08 (prompt `0002`, implementing
      `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2/Phase 4):** apply `DECISIONS.md`
      ADR-019's same static-analysis method (matching a confirmed wire field number against the
@@ -253,7 +259,9 @@ lower priority than finishing ANC/Battery/EQ):**
       throughout, not the intended connection-free scan) and the sampled
       payloads don't structurally match the documented byte layout — see
       `PROTOCOL.md` §4.3 Option A and `CAP-011-FINDINGS.md`. **Still open:**
-      a genuinely clean, connection-free repeat is needed.
+      a genuinely clean, connection-free repeat is needed — skeleton created 2026-09-09 as
+      `CAP-043` (Group Q repeat, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and
+      `ai-sessions/0005_MAINTENANCE_RESULT_2026_09_09.md`).
 - [x] **`CAP-013`/`CAP-031`/`CAP-032` (Group A repeat) — whether "Forget" fully clears prior BLE
       association.** **Done 2026-08-27**, on the fourth attempt (`CAP-032`) — the first three
       (`CAP-001`'s original session, `CAP-013`, `CAP-031`) all either predate the question or
@@ -427,7 +435,8 @@ lower priority than finishing ANC/Battery/EQ):**
       (`DECISIONS.md` ADR-015/ADR-023). Only battery Option A (the Fast Pair BLE Battery
       Notification) remains open, and it is specifically blocked on the still-outstanding clean,
       connection-free BLE-scan repeat this file's Phase 1 section already tracks (`CAP-011` was
-      inconclusive) — not a research gap an AI session can close without that capture.
+      inconclusive; skeleton now created as `CAP-043`, see Phase 1 above) — not a research gap an AI
+      session can close without that capture.
 - [x] Bring ANC mode switching to full 🟢 FACT status (`PROTOCOL.md` §4.1) —
       **done 2026-08-12** via deskresearch correlation against the official
       Fast Pair "Hearable Controls" spec + `CAP-001`'s existing capture.

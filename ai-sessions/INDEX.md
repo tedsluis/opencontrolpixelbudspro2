@@ -11,6 +11,8 @@ a new session** — the same "check before assigning" discipline `id_registry.cs
 | 0002 | MAINTENANCE | 2026-09-08 | Session logging rule additions, 0001 sign-off implementation, and V1 protocol-readiness gap scan | complete |
 | 0003 | MAINTENANCE | 2026-09-08 | Execute 0002's Task 4 gap scan (APK RE, cross-checks, consistency, external validation, documentation) | complete |
 | 0004 | MAINTENANCE | 2026-09-09 | Clean up TODO.md's stale Phase 3 status; advance non-capture-dependent Phase 3 work (UUID register, connection-lifecycle analysis on existing captures) | complete |
+| 0005 | MAINTENANCE | 2026-09-09 | Create capture-session skeletons for the 10 outstanding non-destructive captures that are new or need re-execution | complete |
+| 0006 | MAINTENANCE | 2026-09-09 | Expand the CAP-018/026/028/029/030 placeholder skeletons into complete test/preparation/execution descriptions | complete |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/INDEX.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/INDEX

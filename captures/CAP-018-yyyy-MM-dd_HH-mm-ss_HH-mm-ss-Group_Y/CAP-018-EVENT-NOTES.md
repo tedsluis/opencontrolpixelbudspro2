@@ -27,6 +27,17 @@ triggered by the BLE connection forming alone, independent of any bud/case actio
 | Log file         |             TBD — `CAP-018-btsnoop_hci.log`        |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
 
+**Preparation (required before starting):**
+- Confirm the Buds are already **bonded** to this phone — Group Y assumes an existing bond, not a
+  fresh pairing; do not "Forget"/re-pair as part of this session.
+- Confirm Bluetooth is currently **off** (or the BLE link to the Buds has not yet formed) before
+  the timed action begins — the whole point of this session is to observe the link forming from a
+  cold start, so starting from an already-connected state defeats the test.
+- Confirm HCI snoop logging (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §2) is already **enabled and
+  actively running** *before* Bluetooth is (re-)enabled — per §2/§6's "a Bluetooth restart is
+  required for the snoop-log setting to take effect" caution. Do not enable logging and Bluetooth
+  in the same step; logging must already be live when the timed action starts.
+
 **Isolation check (required — this is the whole point of the session):** confirm and record
 explicitly that the buds/case were **not** touched at any point before, during, or for at least
 60s after the BLE link formed — the opposite of Group M's procedure, which deliberately triggers
@@ -34,6 +45,9 @@ bud/case events.
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Y)
 
+0. **Preparation step:** confirm, in this order, (a) HCI snoop logging is already enabled and
+   running, (b) the Buds are bonded but Bluetooth is currently off / the BLE link is not yet
+   formed. Note the exact time this starting state was confirmed.
 1. **Enable Bluetooth and let the phone's BLE link to the already-paired Buds form on its own**
    [`GATT-002`] — do not touch the buds or the case at any point before, during, or for at least
    60s after the link forms. Note the exact time Bluetooth was (re-)enabled or the BLE link began
@@ -45,6 +59,8 @@ bud/case events.
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
+| TBD | HCI snoop logging confirmed enabled and running | User | — | TBD |
+| TBD | Buds confirmed bonded, Bluetooth confirmed off / BLE link not yet formed | User | — | TBD |
 | TBD | Bluetooth (re-)enabled | User (Hardware) | `GATT-002` | TBD |
 | TBD | BLE link forms | Buds/Case (Auto) | `GATT-002` | TBD |
 | TBD | Observation window end (≥60s after link forms) | — | `GATT-002` | TBD |
