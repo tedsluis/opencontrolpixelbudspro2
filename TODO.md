@@ -139,6 +139,19 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      this app's R8 obfuscation) — the byte-level capture-correlation alternative (`PROTOCOL.md` §6's
      matching item) is now the recommended path, not a further static-analysis attempt, unless a
      future session identifies a more targeted search strategy.
+   - **Added 2026-09-11 (`ai-sessions/0008_CROSSCHECK_RESULT_2026_09_11.md`), full non-sampled
+     validation of Gemini's `ai-sessions/0007_CROSSCHECK_RESULT_2026_09_11.md`.** Independently
+     re-derived every citation in `0007`; roughly half of its line-number citations from §2.2 onward
+     point to the wrong location, two (the claimed field-19 write site and the claimed field-17 write
+     site) point to code with no connection to the claim at all. `0007`'s §2.6 "NEW INDEPENDENT
+     FINDING" (`qhr` field 19 as a "Volume Balance extreme/gate boolean") is not new — it restates
+     `REVERSE_ENGINEERING.md`/`DECISIONS.md` ADR-019's 2026-09-03 Update — and omits field 19's actual,
+     already-approved primary identity ("Mono audio"), and its reported field-17 value (10) skips the
+     zigzag-decode correction ADR-019 already documents (correct value: 5). `0007`'s Executive
+     Summary's "100%/absolute certainty" language is not supported. **Do not act on `0007`'s
+     recommendations directly** — see `0008`'s §3 for the maintainer decisions this raised (field 19's
+     documentation should not be changed to "limit gate"; `0007`'s "approve all Phase 4 Promotions"
+     recommendation needs to be evaluated per-item, not as a bundle).
 
 ## Setup
 
