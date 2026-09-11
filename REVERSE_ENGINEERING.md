@@ -1054,7 +1054,15 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
   - **Field 19 ("Mono audio") — full identity promoted.** `CAP-022` frames 1621/1823 (both
     directions), CRC-32 verified, decode to `qhr` field 19. Self-describing read-side log
     `"received mono setting value"` (`fxb.java` case 19) matches this entry's own "Mono audio"
-    reading exactly. Promoted to a new `PROTOCOL.md` §4.5.5a in full.
+    reading exactly. Promoted to a new `PROTOCOL.md` §4.5.5a in full. **Field 19 has two
+    independent write paths to the same field, not one:** (a) the dedicated Mono-audio toggle
+    (`fyo.java:278-298`, `s(boolean)`) — this field's established, primary identity, unchanged by
+    the below; and (b) `fxf.java:113-133`'s volume-balance-extreme-value side effect (part of the
+    same case-16 dispatcher that writes field 17, line 999 above) — a genuine **secondary** write
+    to field 19, triggered when an extreme balance value is set, not an alternative identity for
+    the field. Both write sites were independently re-confirmed maintainer-side (`ai-sessions/
+    0008_CROSSCHECK_RESULT_2026_09_11.md` §1.18/§1.22); "Mono audio" remains field 19's sole
+    primary role.
   - **Field 22 ("Speech Detection") — field-number/type identity only promoted.** `CAP-019` frame
     1808 decodes to `qhr` field 22. The write-side log is self-describing (`hnz.java`'s `"Set Speech
     Detection"`), but that name is not the same string as `PROTOCOL.md` §4.5.1's pre-existing
