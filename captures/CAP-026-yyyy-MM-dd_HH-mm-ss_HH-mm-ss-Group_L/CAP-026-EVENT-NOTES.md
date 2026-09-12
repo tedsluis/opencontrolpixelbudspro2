@@ -57,18 +57,18 @@ confused with genuinely spontaneous traffic during it.
 ## Event Timeline
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
-|---|---|---|---|---|
-| 00:00 | 06:49:54 | start of video- Bluetooth is disabled on the Pixel 7a. | — |
-| 00:01 | 06:49:58 | User enables Bluetooth. | — |
-| 00:05 | 06:50:00 | Pixel Buds Pro 2 shows status "Connecting...". | — |
-| 00:06 | 06:50:03 | Pixel Buds Pro 2 are connected ("Active. L: 100%, R: 100%"). | — |
-| 00:14 | 06:50:08 | User navigates back to homescreen. Device connection is gesetteld. | — |
-| 00:17 | 06:50:11 | Notification screen is opened and shows pop-up battery status (L: 100%, Case: 93%, R: 100%). | `BATT-001`<br> |
-| 00:22 | 06:50:13 | Bluetooth "Device details" screen is opened. Start idle observation window (app open, ~60s wait). | `BATT-001`<br> |
-| 01:24 | 06:51:19 | End of idle wait. Users opens multitasking screen. | `BATT-001`<br> |
-| 01:27 | 06:51:22 | User return to home screen. | — |
-| 01:37 | 06:51:32 | Pixel Buds app (Device details) are opened. Start of second observation window after reopening. | `OBS-001`<br> |
-| 02:56 | 06:52:51 | End of video. App was keept open for the rest of the video for passieve observation. | `OBS-001`<br> |
+|----------|---|---|---|---|
+| 06:49:54 | start of video- Bluetooth is disabled on the Pixel 7a. | — |
+| 06:49:58 | User enables Bluetooth. | — |
+| 06:50:00 | Pixel Buds Pro 2 shows status "Connecting...". | — |
+| 06:50:03 | Pixel Buds Pro 2 are connected ("Active. L: 100%, R: 100%"). | — |
+| 06:50:08 | User navigates back to homescreen. Device connection is gesetteld. | — |
+| 06:50:11 | Notification screen is opened and shows pop-up battery status (L: 100%, Case: 93%, R: 100%). | `BATT-001`<br> |
+| 06:50:13 | Bluetooth "Device details" screen is opened. Start idle observation window (app open, ~60s wait). | `BATT-001`<br> |
+| 06:51:19 | End of idle wait. Users opens multitasking screen. | `BATT-001`<br> |
+| 06:51:22 | User return to home screen. | — |
+| 06:51:32 | Pixel Buds app (Device details) are opened. Start of second observation window after reopening. | `OBS-001`<br> |
+| 06:52:51 | End of video. App was keept open for the rest of the video for passieve observation. | `OBS-001`<br> |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5)
 
