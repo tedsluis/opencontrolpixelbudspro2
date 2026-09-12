@@ -23,7 +23,7 @@ state.
 |       Date       |                        TBD                         |
 | Firmware version |                        TBD                         |
 |   Test device    |       TBD (Pixel 7a, official Pixel Buds Companion App + GMS enabled) |
-| Video file       |    TBD — must be a **continuous, timestamped video specifically of the Buds/case's own physical dock state**, not just the phone screen |
+| Video file       | `CAP-048-recording.mp4` (17:41:41 - 17:52:44)      |
 | Log file         |             TBD — `CAP-048-btsnoop_hci.log`        |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
 
@@ -39,12 +39,106 @@ state.
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | Session start, continuous dock-state video recording begins | User | `OBS-004` | Conn. state: TBD |
-| TBD | Reconnect #1 (docked/undocked, record which) | User (Hardware) | `OBS-004` | TBD |
-| TBD | Reconnect #2 | User (Hardware) | `OBS-004` | TBD |
-| TBD | (continue for 20+ minutes, alternating docked/undocked — add rows as needed) | User (Hardware) | `OBS-004` | TBD |
-| TBD | Session end | — | `OBS-004` | TBD |
-
+| 17:41:41 | Session start. Both buds are in the open case. Bluetooth is OFF. | User | `OBS-004` | — |
+| 17:41:43 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:41:48 | **Reconnect #1 (Docked)** | System | `OBS-004` | Active, L:100% R:100% Case:95% |
+| 17:42:04 | User opens Pixel Buds app ("Device details"). | User (App) | — | — |
+| 17:42:27 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:42:37 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:42:41 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:42:46 | **Reconnect #2 (Undocked)** | System | `OBS-004` | — |
+| 17:42:54 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:42:59 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:43:02 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:43:07 | **Reconnect #3 (Docked)** | System | `OBS-004` | — |
+| 17:43:09 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:43:10 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:43:15 | **Reconnect #4 (Docked)** | System | `OBS-004` | **Deviation**: User did not undock buds before this reconnect. |
+| 17:43:17 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:43:20 | Bluetooth toggled ON (after being toggled OFF at 01:35). | User (Hardware) | `OBS-004` | — |
+| 17:43:26 | **Reconnect #5 (Undocked)** | System | `OBS-004` | — |
+| 17:43:29 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:43:31 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:43:33 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:43:39 | **Reconnect #6 (Docked)** | System | `OBS-004` | — |
+| 17:43:43 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:43:45 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:43:46 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:43:50 | **Reconnect #7 (Undocked)** | System | `OBS-004` | — |
+| 17:44:08 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:44:09 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:44:15 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:44:19 | **Reconnect #8 (Docked)** | System | `OBS-004` | — |
+| 17:44:40 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:44:41 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:44:43 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:44:47 | **Reconnect #9 (Undocked)** | System | `OBS-004` | — |
+| 17:45:13 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:45:14 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:45:17 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:45:22 | **Reconnect #10 (Docked)** | System | `OBS-004` | — |
+| 17:45:38 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:45:39 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:45:43 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:45:47 | **Reconnect #11 (Undocked)** | System | `OBS-004` | — |
+| 17:46:15 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:46:16 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:46:19 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:46:23 | **Reconnect #12 (Docked)** | System | `OBS-004` | — |
+| 17:46:35 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:46:35 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:46:38 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:46:41 | **Reconnect #13 (Undocked)** | System | `OBS-004` | — |
+| 17:46:44 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:46:45 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:46:49 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:46:53 | **Reconnect #14 (Docked)** | System | `OBS-004` | — |
+| 17:47:12 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:47:13 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:47:17 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:47:21 | **Reconnect #15 (Undocked)** | System | `OBS-004` | — |
+| 17:47:37 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:47:38 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:47:42 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:47:47 | **Reconnect #16 (Docked)** | System | `OBS-004` | — |
+| 17:48:10 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:48:10 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:48:25 | Buds physically placed back in case (docked). | User (Hardware) | — | User fidgeted with buds while BT was off. |
+| 17:48:42 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:48:47 | **Reconnect #17 (Docked)** | System | `OBS-004` | **Deviation**: User did not reconnect while undocked here. |
+| 17:49:06 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:49:07 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:49:11 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:49:15 | **Reconnect #18 (Undocked)** | System | `OBS-004` | — |
+| 17:49:36 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:49:37 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:49:41 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:49:46 | **Reconnect #19 (Docked)** | System | `OBS-004` | — |
+| 17:50:10 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:50:11 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:50:14 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:50:18 | **Reconnect #20 (Undocked)** | System | `OBS-004` | — |
+| 17:50:31 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:50:33 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:50:37 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:50:41 | **Reconnect #21 (Docked)** | System | `OBS-004` | — |
+| 17:51:09 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:51:10 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:51:14 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:51:19 | **Reconnect #22 (Undocked)** | System | `OBS-004` | — |
+| 17:51:37 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:51:38 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:51:43 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:51:47 | **Reconnect #23 (Docked)** | System | `OBS-004` | — |
+| 17:52:03 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:52:04 | Buds physically removed from case (undocked). | User (Hardware) | — | — |
+| 17:52:08 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:52:12 | **Reconnect #24 (Undocked)** | System | `OBS-004` | — |
+| 17:52:21 | Bluetooth toggled OFF. | User (Hardware) | `OBS-004` | — |
+| 17:52:22 | Buds physically placed in case (docked). | User (Hardware) | — | — |
+| 17:52:26 | Bluetooth toggled ON. | User (Hardware) | `OBS-004` | — |
+| 17:52:30 | **Reconnect #25 (Docked)** | System | `OBS-004` | — |
+| 17:52:44 | Session end | — | `OBS-004` | Video ends. |
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AD)
 
 - [ ] For each reconnect, confirm `08 11 00 00`/`08 13` fires and record its `Settable-toggles` byte
