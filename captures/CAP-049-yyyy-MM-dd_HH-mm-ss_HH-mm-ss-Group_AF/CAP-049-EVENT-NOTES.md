@@ -20,7 +20,7 @@ session with no clearly camera-visible trigger for most of them (4 of 5 locally 
 |       Date       |                        TBD                         |
 | Firmware version |                        TBD                         |
 |   Test device    |       TBD (Pixel 7a, official Pixel Buds Companion App + GMS enabled) |
-| Video file       |    TBD — **continuous** phone-screen recording throughout, not just at action moments |
+| Video file       | `CAP-049-recording.mp4` (18:13:54 – 18:22:20) — **continuous** phone-screen recording throughout[cite: 25]. |
 | Log file         |             TBD — `CAP-049-btsnoop_hci.log`        |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
 
@@ -39,11 +39,21 @@ session with no clearly camera-visible trigger for most of them (4 of 5 locally 
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | Session start, continuous phone-screen recording begins | User | `OBS-006` | Conn. state: TBD |
-| TBD | ANC mode tap (Set) | User (App) | `OBS-006` | TBD |
-| TBD | Forced reconnect via Bluetooth toggle (Get) | User (Hardware) | `OBS-006` | TBD |
-| TBD | (any disconnect/reconnect event — add a row per occurrence, noting phone state: screen on/off, notification visible, foreground app) | — | `OBS-006` | TBD |
-| TBD | Session end | — | `OBS-006` | TBD |
+| 18:13:54 | Session start, continuous phone-screen recording begins. Both buds are out of the case. Bluetooth is OFF. | User | `OBS-006` | — |
+| 18:13:56 | Bluetooth toggled ON via quick-panel. | User (OS) | `OBS-006` | — |
+| 18:13:59 | "Pixel Buds Pro 2 van Ted" connecting. | System | `OBS-006` | — |
+| 18:14:09 | Connection active. Battery: L:100% R:100%. | System | `OBS-006` | — |
+| 18:14:14 | User opens Pixel Buds app ("Device details"). Current ANC mode is 'Noise cancellation'. | User (App) | `OBS-006` | — |
+| 18:14:21 | User taps 'Adaptive' ANC mode (Set). | User (App) | `OBS-006` | — |
+| 18:14:48 | User opens Bluetooth quick panel and toggles Bluetooth OFF. | User (OS) | `OBS-006` | — |
+| 18:14:58 | Bluetooth toggled ON. | User (OS) | `OBS-006` | Forced reconnect (Get) |
+| 18:14:59 | "Pixel Buds Pro 2 van Ted" connecting. | System | `OBS-006` | — |
+| 18:15:07 | Connection active. Battery: L:100% R:100%. | System | `OBS-006` | — |
+| 18:15:15 | User opens "Device details". Current ANC mode remains 'Adaptive'. | User (App) | `OBS-006` | — |
+| 18:15:25 | Screen dims to save power. | System | `OBS-006` | — |
+| 18:15:37 | Screen turns back on fully. | System | `OBS-006` | — |
+| :26 / 18:15:37–18:22:20 | Phone screen remains on "Device details". Connection remains stable. | System | `OBS-006` | No spontaneous disconnects observed. |
+| 18:22:20 | Video ends. | System | `OBS-006` | — |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AF)
 
