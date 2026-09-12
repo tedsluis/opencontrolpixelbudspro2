@@ -58,14 +58,17 @@ confused with genuinely spontaneous traffic during it.
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | HCI snoop logging confirmed enabled and running | User | — | TBD |
-| TBD | Buds connected, app open, connection visibly settled (~10s gap observed) | User | — | Conn. state: TBD / App state: TBD |
-| TBD | Window 1 start (idle, app open, ~10s after connect settles) | — | `BATT-001` | Conn. state: TBD / App state: TBD |
-| TBD | (any event of interest during window 1) | App (Auto) | `BATT-001` | TBD |
-| TBD | Window 1 end (~60s) | — | `BATT-001` | TBD |
-| TBD | Window 2 start — app force-closed and reopened | User (App) | `OBS-001` | Conn. state: TBD / App state: TBD |
-| TBD | (any event of interest during window 2) | App (Auto) | `OBS-001` | TBD |
-| TBD | Window 2 end (~30–60s, or once settled — no new DLCI activity for ≥10s) | — | `OBS-001` | TBD |
+| 00:00 | 06:49:54 | start of video- Bluetooth is disabled on the Pixel 7a. | — |
+| 00:01 | 06:49:58 | User enables Bluetooth. | — |
+| 00:05 | 06:50:00 | Pixel Buds Pro 2 shows status "Connecting...". | — |
+| 00:06 | 06:50:03 | Pixel Buds Pro 2 are connected ("Active. L: 100%, R: 100%"). | — |
+| 00:14 | 06:50:08 | User navigates back to homescreen. Device connection is gesetteld. | — |
+| 00:17 | 06:50:11 | Notification screen is opened and shows pop-up battery status (L: 100%, Case: 93%, R: 100%). | `BATT-001`<br> |
+| 00:22 | 06:50:13 | Bluetooth "Device details" screen is opened. Start idle observation window (app open, ~60s wait). | `BATT-001`<br> |
+| 01:24 | 06:51:19 | End of idle wait. Users opens multitasking screen. | `BATT-001`<br> |
+| 01:27 | 06:51:22 | User return to home screen. | — |
+| 01:37 | 06:51:32 | Pixel Buds app (Device details) are opened. Start of second observation window after reopening. | `OBS-001`<br> |
+| 02:56 | 06:52:51 | End of video. App was keept open for the rest of the video for passieve observation. | `OBS-001`<br> |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5)
 
