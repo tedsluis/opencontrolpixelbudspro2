@@ -1336,16 +1336,25 @@ implementation gate.
   (`(n>>1) ^ -(n&1)`), are `-100, -62, -25, 15, 75, 100, 5` (previously misread as the raw unsigned
   varints `199, 123, 49, 30, 150, 200, 10`).
 - **Sent to**: DLCI 0x02.
-- **Status**: 🟢 FACT for the field-number identity and semantic name ("Volume balance"). 🔴 still
-  open: the scale/range beyond these 7 samples, which direction (Left/Right) corresponds to negative
-  vs. positive values, and persistence across a disconnect/reconnect — the zigzag correction narrows
-  but does not resolve any of these; none is derivable from the corrected values alone, and would
-  need isolated extreme-position samples with video correlation.
+- **Scale/direction — PROPOSAL, added 2026-09-12 (`CAP-046-FINDINGS.md` §2), awaiting maintainer
+  sign-off, not yet promoted:** a dedicated isolated-extreme-position capture (Group AK) found the
+  range clamps at exactly **±100**, and — video-confirmed 3/3 times, zero counter-examples —
+  **`field17 = +100` corresponds to the Left extreme and `field17 = -100` to the Right extreme**,
+  the opposite of this section's own prior implicit labeling of `CAP-022`'s first sample as "Left."
+  Center-return samples read `0`/`1`/`1`/`2` (small drag-imprecision noise around a true zero).
+  **Not yet confirmed**: whether the field scales linearly between center and the extremes — this
+  capture sampled only the two extremes and near-center, never an intermediate position (its own
+  planned intermediate samples did not actually occur, see `CAP-046-FINDINGS.md` §4).
+- **Status**: 🟢 FACT for the field-number identity and semantic name ("Volume balance"). 🟡
+  HYPOTHESIS (strong), pending sign-off, for the ±100 range and the Left/+100↔Right/-100 direction
+  mapping above. 🔴 still open: intermediate-position scaling, and persistence across a
+  disconnect/reconnect.
 - **Evidence**: `CAP-022-FINDINGS.md` §5 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1922–2099, raw hex
-  and corrected zigzag decode backfilled 2026-09-03); `REVERSE_ENGINEERING.md`'s `qhr` entry;
-  `DECISIONS.md` ADR-019.
-- **Verified with experiment**: `CAP-022` (2026-08-21) — a single continuous drag, not isolated
-  extreme-position samples.
+  and corrected zigzag decode backfilled 2026-09-03); `CAP-046-FINDINGS.md` §2 (`[VERIFIED-LOCAL]`,
+  2026-09-12, isolated extreme-position samples, video-confirmed); `REVERSE_ENGINEERING.md`'s `qhr`
+  entry; `DECISIONS.md` ADR-019.
+- **Verified with experiment**: `CAP-022` (2026-08-21) — a single continuous drag. `CAP-046`
+  (2026-09-12) — isolated discrete extreme-position samples, video-correlated (Group AK).
 
 #### 4.5.8 Case sounds
 
@@ -1935,9 +1944,12 @@ leaving them buried in prose elsewhere.
 - [ ] **Added 2026-08-21, `CAP-021-FINDINGS.md` §4:** which of `HOLD-005`'s 16 ANC-mode-rotation
       checklist frames belong to Left's list vs. Right's — the envelope carries no
       earbud-distinguishing field for this specific write, unlike `HOLD-001`–`HOLD-004`.
-- [ ] **Added 2026-08-21, `CAP-022-FINDINGS.md` §5:** `field 17`'s (Volume balance) numeric
-      scale/range and which direction (L/R) increasing values represent — a single continuous drag
-      gesture (7 wire values) wasn't enough to resolve this at 1fps video-sampling resolution.
+- [x] **Added 2026-08-21, `CAP-022-FINDINGS.md` §5; addressed 2026-09-12 (`CAP-046-FINDINGS.md`
+      §2), PROPOSAL awaiting maintainer sign-off, not yet promoted:** `field 17`'s (Volume balance)
+      numeric scale/range and which direction (L/R) increasing values represent — a dedicated
+      isolated-extreme-position capture (Group AK) proposes range ±100, `+100`=Left, `-100`=Right,
+      3/3 video-confirmed. Intermediate-position scaling remains untested — see `PROTOCOL.md`
+      §4.5.7 for the full proposal.
 - [ ] **Added 2026-08-21, `CAP-019-FINDINGS.md` §4:** what do Fast Pair SASS (DLCI 0x04 Group
       `0x07`) Codes `0x11`/`0x21`/`0x40`/`0x42` encode beyond their raw bytes? Is Code `0x34`
       (which also fires with no Multipoint action nearby) a periodic/keepalive SASS code unrelated
@@ -2004,11 +2016,23 @@ leaving them buried in prose elsewhere.
       prior, less-supported "IMU/telemetry" guess about this same burst. A capture bracketing
       whatever background condition preceded ~08:02:29 in that session (app backgrounded?
       scheduled sync? battery/charge-state change?) would be needed to attribute a trigger.
-- [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §11:** a 73-frame `Handle Value Notification`
+- [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §11; sharpened 2026-09-12, `CAP-018-FINDINGS.md`
+      §3–§4 (PROPOSAL, awaiting maintainer review):** a 73-frame `Handle Value Notification`
       burst on BLE ATT handle `0x0044` (connection handle `0x0002`), confined to a ~29s window
       right after the BLE link forms and before the classic link exists; 23 of the 73 contain a
       recurring `0xfea9` byte-pair marker. Not decoded — payloads don't obviously match any
       already-documented envelope shape, and the handle's own UUID was not resolved this session.
+      `CAP-018` (Group Y, `GATT-002`) isolated the burst with the buds/case confirmed untouched on
+      video for the session's full 152.16s duration — the burst reappears (23 frames, matching
+      `CAP-016`'s own count) — but this session's *only* LE connection (the one carrying the burst)
+      has a GATT profile (a standard Heart Rate service present, no Google Fast Pair Service, no
+      `0x0c0X`/`0x0f2X` handle cluster) that this project's own evidence attributes to an unrelated
+      nearby device, not the Buds; the Buds' own classic connection carries zero ATT traffic in that
+      session. This does not resolve the question either way for `CAP-016`'s *original* burst (not
+      re-examined by `CAP-018`) — it sharpens the open question into a more basic one: is this burst
+      ever genuinely Buds-originated, or has every occurrence to date been an unrelated background
+      device coincidentally connecting near the same time as a bud/case action? Not force-fit into
+      either reading, per `AGENTS.md` §13.6.
 - [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §10:** Bluetooth HID (PSM `0x0011`) Feature Report
       Id `0x01`'s response (frame 1983) is only 3 bytes (`a3 00 00`) — too short to carry any
       content comparable to Report Id `0x02`'s decoded `AndroidHeadTracker` string (same section,
@@ -2464,15 +2488,31 @@ leaving them buried in prose elsewhere.
       its own terms (unconfirmed vendor semantics), not bearing on this section's primary question
       (`CAP-032-FINDINGS.md` §5).
 
-- [ ] **Added 2026-09-06, `CAP-037-FINDINGS.md` §5 (Group AD, `OBS-004` purpose-built repeat):** on
+- [x] **Added 2026-09-06, `CAP-037-FINDINGS.md` §5 (Group AD, `OBS-004` purpose-built repeat);
+      resolved 2026-09-12, `CAP-048-FINDINGS.md` §4 (PROPOSAL, awaiting maintainer sign-off):** on
       one of 26 same-session `DECISIONS.md` ADR-022 replications, a chandle shows a **second**
       "Notify ANC state" frame 18 seconds after the first, with no new `08 11` Get frame in
-      between, and its `Settable-toggles` value flips from `0xe8` to `0x00`. Genuinely open whether
-      this reflects a real dock-state change while the ACL connection stayed open (in tension with
-      `DECISIONS.md` ADR-016's "ACL disconnects the instant both buds are re-docked" finding, from a
-      different session/context) or a spontaneous, unprompted second Notify unrelated to dock state
-      that happens to coincide with the docked-state byte value — not video-confirmed at
-      sub-second precision this pass.
+      between, and its `Settable-toggles` value flips from `0xe8` to `0x00`. `CAP-048` (a repeat
+      with continuous physical dock-state video) reproduced this exact shape (chandle `0x0010`,
+      `17:52:25.14`) and resolved it directly: the video, extracted at the exact wire timestamp,
+      shows a hand actively placing a bud into the case at that moment — a genuine real-time
+      dock-state change while the ACL connection stayed open, **consistent with** (not in tension
+      with) `DECISIONS.md` ADR-016 — the second bud's own docking, 5.4s later, is what then triggers
+      the disconnect, matching ADR-016 exactly.
+- [ ] **Added 2026-09-12, `CAP-048-FINDINGS.md` §5:** a genuine, video-confirmed counter-example to
+      a simple reading of `DECISIONS.md` ADR-024: two fresh classic reconnects (`17:44:45`,
+      `17:47:42`) report `Settable-toggles=0x00` (docked) while the video, checked at essentially the
+      same wire timestamp, shows the case visibly empty. Four other readings in the same session
+      (including two same-chandle DLCI reopens, not fresh reconnects) are correct. 🟡 HYPOTHESIS,
+      not confirmed: a fresh reconnect's own Get/Notify might sometimes return a value queried before
+      the Buds' own firmware has settled on an already-changed physical state — offered as a testable
+      direction only; does not by itself explain why four *other* fresh reconnects in the same
+      session read correctly. Reported plainly, not reconciled away, per `AGENTS.md` §13.6.
+- [ ] **Added 2026-09-12, `CAP-048-FINDINGS.md` §6:** a 7-event connection-retry burst
+      (`17:48:51`–`17:49:47`, repeated `Create Connection`/`Connect Complete` cycles on one chandle,
+      no Disconnection Complete between them) coincides with the app showing "Connecting…" and the
+      case appearing closed on video. 🟡 HYPOTHESIS, not confirmed: a closed case may impede reliable
+      classic-link establishment — plausible, not verified against any documented mechanism.
 - [ ] **Added 2026-09-06, `CAP-039-FINDINGS.md` §6 (Group AF, `OBS-006`):** across a single
       ~6-minute session, the classic ACL connection to the Buds disconnected and reconnected 5
       times with no clearly camera-visible trigger for most of them (4 of 5 disconnects locally
@@ -2480,6 +2520,29 @@ leaving them buried in prose elsewhere.
       the app's Connect/Disconnect buttons — though `CAP-040-FINDINGS.md` §1 separately found those
       specific buttons produce zero wire signal, so this session's own trigger remains unidentified).
       Genuinely open what specifically caused the repeated disconnect/reconnect cycling here.
+      **Repeated 2026-09-12 (`CAP-049`, continuous phone-screen recording) — clean negative, does
+      not resolve the trigger:** the cycling did not reproduce; the classic connection stayed open
+      and stable for the entire ~9-minute repeat session after one deliberate reconnect. This rules
+      out nothing about `CAP-039`'s own original occurrence — only confirms the phenomenon is not
+      reliably reproducible under the same general procedure.
+- [ ] **Added 2026-09-12, `CAP-018-FINDINGS.md` §3 (Group Y, `GATT-002`):** the classic reconnect
+      took ~64s from the Bluetooth-toggle tap to the phone actually issuing `Create Connection`
+      (video-confirmed toggle at `~06:07:23`, wire `Create Connection` not until `06:08:27.77`) —
+      slower than the few-seconds-or-less reconnect timing typical of this project's other captures.
+      Not investigated further this session (out of scope for `GATT-002`'s own question); genuinely
+      open why.
+- [ ] **Added 2026-09-12, `CAP-028-FINDINGS.md` §3:** a third session (after `CAP-032`, `CAP-018`)
+      shows the same unrelated-nearby-device BLE signature — a standard Heart Rate service (`0x180D`)
+      present, no Google Fast Pair Service, no `0x0c0X` handle cluster — this time coincidentally
+      overlapping a head-gesture test window with substantial `Handle Value Notification`/`Write
+      Command` traffic on handles `0x0044`/`0x0042`. Not attributable to the Buds. Genuinely open
+      whether this is the same physical device recurring across sessions (BLE address rotation makes
+      this unverifiable from the address alone) — flagged for awareness, not investigated further.
+- [ ] **Added 2026-09-12, `CAP-029-FINDINGS.md` §2:** Conversation Detection's on-screen media-pause
+      effect (`CONV-002`) produces zero wire-visible signal — no ANC-mode Set/Notify (`08 12`/`08 13`),
+      no DLCI 0x02 settings write, no AVRCP command — anywhere in the session. Genuinely open whether
+      the pause is driven by a mechanism this project hasn't identified, or whether the documented
+      "switches to Transparency" behavior simply didn't trigger this time (ANC was already Adaptive).
 
 ### Resolved
 
