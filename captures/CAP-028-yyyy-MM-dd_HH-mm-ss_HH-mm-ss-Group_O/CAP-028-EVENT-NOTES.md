@@ -54,12 +54,15 @@ or are purely on-device given they only act on an already-active call/notificati
 ## Event Timeline
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
-|---|---|---|---|---|
-| TBD | HCI snoop logging confirmed enabled and running, Buds connected | User | — | TBD |
-| TBD | (if needed) Head gestures toggled on as this session's own first step | User (App) | — | TBD |
-| TBD | Head gestures confirmed enabled on screen | — | — | TBD |
-| TBD | Nod | User (Hardware) | `HEAD-002` | TBD |
-| TBD | Shake | User (Hardware) | `HEAD-003` | TBD |
+|----------|---|---|---|---|
+| 07:16:15 | Video start; Bluetooth settings opened, Bluetooth is disables. | Systeem |
+| 07:16:20 | User enables Bluetooth using toggle. | User |
+| 07:16:22 | "Pixel Buds Pro 2 van Ted" shows status "Connecting...". | Systeem |
+| 07:16:23 | "Pixel Buds Pro 2 van Ted" is successfully connected (Active. L: 100%, R: 100%). | Systeem |
+| 07:16:27 | User navigates to Android home screen. | User |
+| 07:16:29 | User opens Pixel Buds app ("Device details"). | User |
+| 07:16:34 - 07:17:15 | User performs head gestures like Nod/Shake multiple times outside of video | User |
+| 07:17:18 | Einde video. | Systeem |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5)
 
