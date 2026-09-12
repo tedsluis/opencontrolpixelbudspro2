@@ -1,10 +1,13 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group P, Voice & case button (`CAP-029`)
 
-**Status:** 🔲 **Not yet captured — skeleton only.** Fill in every `TBD` below after recording,
-per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), and
-`PROJECT_RULES.md` rule 11/14 (reproducibility metadata). Once reviewed, rename this folder from
-the placeholder `CAP-029-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_P` to the actual session
-date/start-time/end-time, e.g. `CAP-029-2026-09-01_10-40-00_10-50-00-Group_P`.
+**Status:** ✅ **Captured and analyzed 2026-09-12.** Full video (251.55s) and full log (4,944
+packets, untruncated) reviewed — see `CAP-029-FINDINGS.md`. **Major correction to the draft:** the
+draft's final line ("07:57:56 user forgets the device again") did **not** happen — both video (the
+device remains shown "Active"/paired at the very last frame) and wire (no `Delete Stored Link Key`,
+no ACL disconnect of the Buds' classic connection, anywhere after `07:56:34`) confirm the device stays
+connected through the end of the recording. `CASE-008` (a shorter/different case-button press) was
+**not attempted** this session — no second case-button interaction is visible anywhere after the
+30s factory-reset hold completes.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P):** main run-through group, never yet
 captured. Requires 'Conversation Detection' enabled first (Group C, `CAP-019`). Item 15
@@ -40,13 +43,14 @@ without a full factory reset, since no officially documented duration exists for
 |      Field       |                       Value                        |
 |------------------|-----------------------------------------------------|
 |    Capture ID    |                      `CAP-029`                     |
-|      Group(s)    |                         P                          |
-|       Date       |                        TBD                         |
-| Firmware version |                        TBD                         |
-|   Test device    | TBD (Pixel 7a, Android version, official app version) |
-| Video file       |               TBD — `CAP-029-recording.mp4`        |
-| Log file         |             TBD — `CAP-029-btsnoop_hci.log`        |
-| Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
+|      Group(s)    |                         P                           |
+|       Date       |                     2026-09-12                     |
+| Firmware version | ⚪ ASSUMPTION `release_5.203` (carried over; re-confirmed identical peer post-reset, same physical unit) |
+|   Test device    | Pixel 7a, Android 17, Pixel Buds Companion App `1.0.955078536`, Google Play services active |
+| Video file       | `CAP-029-recording.mp4` — 251.55s, overlay `07:53:53`–`07:58:05` |
+| Log file         | `CAP-029-btsnoop_hci.log` — 4,944 packets, 385.64s, `07:53:51.908`–`08:00:17.547`, untruncated |
+| Buds MAC (partial, per `AGENTS.md` §7/§9) |         `04:00:6e:...:07`         |
+| **Decision on item 16 (`CASE-007`)** | **Run** — the maintainer performed the 30s case-button hold (factory reset), per the video/wire evidence below. |
 
 **Preparation (required before starting):**
 - Confirm 'Conversation Detection' is enabled on screen (Device details → Sound → Audio
@@ -73,44 +77,52 @@ without a full factory reset, since no officially documented duration exists for
     duration exists — treat any local finding as `[VERIFIED-LOCAL]` material for
     `CAP-029-FINDINGS.md`.
 
-## Event Timeline
+## Event Timeline (corrected against full video review + full log analysis, 2026-09-12)
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| 07:53:55 | Start of video. Bluetooth is off. | User | — | — |
-| 07:54:01 | Bluetooth turned on, "Pixel Buds Pro 2 van Ted" connects. | User (Phone) | — | — |
-| 07:54:08 | Spotify is opened, music starts playing ("Tears Dry On Their Own"). | User (App) | — | — |
-| 07:54:13 | User starts speaking (thumb visible on screen). | User (Hardware) | `CONV-002` | Testing Conversation Detection. |
-| 07:54:55 | User forgets the Pixel Buds Pro 2 in Bluetooth settings. | User (Phone) | — | Preparation for factory reset. |
-| 07:55:03 | User starts holding the case button (buds in case, case open). | User (Hardware) | `CASE-007` | — |
-| 07:55:33 | User releases the case button after ~30 seconds. | User (Hardware) | `CASE-007` | Factory reset triggered. |
-| 07:56:01 | Reset Pixel Buds Pro 2 appear in the pairing list. | Hardware | `PAIR-002` | — |
-| 07:56:11 | User initiates pairing process. | User (Phone) | `PAIR-002` | — |
-| 07:57:10 | Setup complete, device is connected. | System | `PAIR-002` | — |
-| 07:57:56 | User forgets the device again in Bluetooth settings. | User (Phone) | — | — |
-| 07:58:04 | End of video. | User | — | — |
+| 07:53:53 | Video starts. Bluetooth off. | User | — | Video `t=0`. |
+| ~07:53:58 | Bluetooth toggled on | User (Hardware) | — | (not individually re-checked at sub-second resolution). |
+| 07:54:02.767 | Classic `Connect Complete` (stored key, no SSP) | System | — | Log frame 370. |
+| 07:54:03.253–.269 | DLCI 0x04 `Get`(`08110000`)/`Notify`(`Settable=0xe8`=undocked,`Current=0x40`=Adaptive) | System (auto) | — | Log frames 756/777 — this is the **only** Group `0x08` (ANC) traffic anywhere before the reset (checked, see Findings §2). |
+| ~07:54:08–14 | Spotify opened, "Amy Winehouse Best Of" playing | User (App) | — | Video `t=20`, still playing. |
+| ~07:54:14–16 | **Media pauses on screen** (play/pause icon flips from pause to play) | User (Hardware) → Buds (Auto)? | `CONV-002` | Video `t=20`→`t=22`: still playing at overlay `07:54:14`, already paused at `07:54:16`. **No DLCI 0x02/0x04/0x08 traffic of any kind accompanies this transition** (checked `07:54:00`–`07:54:30` in full) — see Findings §2 for the significance. |
+| ~07:54:55 | Buds "forgotten" in Bluetooth settings (in preparation for the reset) | User (Phone) | — | Video-inferred from the draft's own note; ACL disconnect (reason `0x16`, locally-terminated) at `07:54:54.532` (log frame 2034) matches closely. |
+| ~07:55:03–07:55:33 | Case button held for ~30s (case open, buds inside) | User (Hardware) | `CASE-007` | Video `t=68` (button being held, `07:55:02`) through `t=98` (case closed/lifted, `07:55:32`) — a full factory reset, per the app's already-confirmed behavior. |
+| 07:55:13.695 | First `Delete Stored Link Key` (during the hold) | System | — | Log frame 2091. |
+| 07:55:44.765–07:56:34.348 | Several reconnect/disconnect cycles as the reset settles (4 total `Delete Stored Link Key` events: `07:55:13`, `07:56:12`, `07:56:19`, `07:56:34`) | System (auto) | — | Log frames 2091/2497/2860/3316 — see Findings §3. |
+| ~07:56:01–07:56:09 | Reset "Pixel Buds Pro 2" reappears in "Pair new device" list | System/User | `PAIR-002` | Video `t=135` (`07:56:09`), user's finger tapping the entry. |
+| 07:56:34.035–07:56:34.653 | **Fresh classic SSP handshake**: `Link Key Request Negative Reply`→`IO Capability Request/Response`→`User Confirmation Request` | System | `PAIR-002` | Log frames 3316–3370 — genuine fresh pairing, not a key-reuse reconnect. |
+| ~07:56:45–07:57:09 | First-run onboarding: SDP browse, RFCOMM/HID/AVDTP connects, permission grants (Phone calls/Media audio/Input device) | System/User | `APP-001`/`APP-002` (incidental) | Video `t=195` (`07:57:09`). |
+| 07:56:49.53–~07:57:01.59 | A separate LE connection (chandle `0x0009`) performs GATT service discovery then disconnects — routine, not a Buds-classic-link drop | System (auto) | — | Log frames 4038–4482. |
+| ~07:57:09–07:58:05 | Device stays connected/"Active" on the "Device details" screen; **no further case-button interaction, no `Forget` tap visible** | — | — | Video spot-checked at `t=235,240,243,246,249,251` — unchanged "Active" state throughout, right to the last frame. **`CASE-008` was not attempted this session.** |
+| 07:58:05 | Video ends (251.55s) | System | — | Video `t=251`. |
+| (log continues to `08:00:17.547`) | No further Buds-classic-ACL disconnect anywhere in the remaining log | — | — | Confirms the device is still connected when the log itself ends, well past video end — **the draft's claimed `07:57:56` second "Forget" did not happen.** |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5)
 
-- [ ] `CONV-002`: check whether the Conversation Detection trigger (pause media, switch to
-      Transparency) produces a wire-visible command, and if so on which DLCI/channel.
-- [ ] `CASE-007` (if run): confirm this reproduces the previously-documented factory-reset
-      behavior (`CAP-001`/`CAP-002`, `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16) — a third
-      confirming data point, not expected to change the existing finding.
-- [ ] `CASE-008`: record the exact press duration tried and whether pairing mode triggered — this
-      resolves a genuinely open question (`PROTOCOL.md` §6), don't guess if inconclusive.
+- [x] `CONV-002`: check whether the Conversation Detection trigger (pause media, switch to
+      Transparency) produces a wire-visible command, and if so on which DLCI/channel. → **Clean
+      negative**: media visibly pauses, but zero DLCI 0x02/0x04/0x08 traffic of any kind accompanies
+      it, and no ANC mode change occurs anywhere in the pre-reset session.
+- [x] `CASE-007` (if run): confirm this reproduces the previously-documented factory-reset
+      behavior. → Confirmed — matches the established pattern (bond removed, multiple
+      `Delete Stored Link Key`/reconnect cycles, followed by a fresh device advertisement).
+- [ ] `CASE-008`: record the exact press duration tried and whether pairing mode triggered. →
+      **Not attempted this session** — no second case-button interaction occurs anywhere after the
+      reset; this open question remains untested.
 
 ## Next steps after filling this in
 
-- [ ] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13's
-      traceability check) — confirm `CONV-002`/`CASE-007`/`CASE-008`/`PAIR-002` (as applicable)
-      are clearly referenced above.
-- [ ] Write `CAP-029-FINDINGS.md` per `PROJECT_RULES.md` §2, using this file's timeline as the
+- [x] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13's
+      traceability check) — confirm `CONV-002`/`CASE-007`/`PAIR-002` are clearly referenced above
+      (`CASE-008` explicitly not exercised, noted as such).
+- [x] Write `CAP-029-FINDINGS.md` per `PROJECT_RULES.md` §2, using this file's timeline as the
       evidence source, following the hex & script rule (§1 rule 4a).
-- [ ] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
+- [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
       from `planned` to `analyzed`, fill in Android/firmware/app-version columns and the log path.
-- [ ] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
+- [x] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
       actual session date/start-time/end-time.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-029-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_P/CAP-029-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-029-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_P/CAP-029-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-029-2026-09-12_07-53-53_07-58-05-Group_P/CAP-029-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-029-2026-09-12_07-53-53_07-58-05-Group_P/CAP-029-EVENT-NOTES

@@ -1,10 +1,11 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group Y, BLE-only isolation of the `0x0044` notification burst (`CAP-018`)
 
-**Status:** 🔲 **Not yet captured — skeleton only.** Fill in every `TBD` below after recording,
-per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), and
-`PROJECT_RULES.md` rule 11/14 (reproducibility metadata). Once reviewed, rename this folder from
-the placeholder `CAP-018-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Y` to the actual session
-date/start-time/end-time, e.g. `CAP-018-2026-09-01_08-30-00_08-32-00-Group_Y`.
+**Status:** ✅ **Captured and analyzed 2026-09-12.** Full video (152.16s, `ffprobe`-confirmed) and
+full log (2,309 packets, untruncated, `capinfos`/`cap_len==len` verified) reviewed in full — see
+`CAP-018-FINDINGS.md` for the complete write-up. The draft Event Timeline below (as originally
+filled in by hand the same day) understated the BT-toggle-to-connect timing and did not know about
+the session's second, unrelated BLE connection — both corrected here against direct video-frame and
+wire evidence, per this task's own instruction not to trust the draft timeline as-is.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Y, added 2026-08-20):** `CAP-016-FINDINGS.md`
 §11 found a 73-frame `Handle Value Notification` burst on BLE ATT handle `0x0044` (connection
@@ -20,12 +21,12 @@ triggered by the BLE connection forming alone, independent of any bud/case actio
 |------------------|-----------------------------------------------------|
 |    Capture ID    |                      `CAP-018`                     |
 |      Group(s)    |                         Y                          |
-|       Date       |                        TBD                         |
-| Firmware version |                        TBD                         |
-|   Test device    |         TBD (either phone — Pixel 7a or 9a)        |
-| Video file       |          TBD — optional (nothing to visually confirm beyond "buds/case were not touched") |
-| Log file         |             TBD — `CAP-018-btsnoop_hci.log`        |
-| Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
+|       Date       |                     2026-09-12                     |
+| Firmware version | ⚪ ASSUMPTION `release_5.203` (carried over; not re-checked on-screen or on-the-wire this session) |
+|   Test device    |     Pixel 7a, Android 17, Pixel Buds Companion App `1.0.955078536`, Google Play services active |
+| Video file       | `CAP-018-recording.mp4` — 152.16s (`ffprobe`), overlay `06:07:20`–`06:09:52`, 1280×720 @30fps |
+| Log file         | `CAP-018-btsnoop_hci.log` — 2,309 packets, 409.75s, `2026-09-12 06:06:05.722`–`06:12:55.471`, untruncated (`cap_len==len` for all 2,309 frames) |
+| Buds MAC (partial, per `AGENTS.md` §7/§9) |         `04:00:6e:...:07` (classic)         |
 
 **Preparation (required before starting):**
 - [x] Confirm the Buds are already **bonded** to this phone — Group Y assumes an existing bond, not a
@@ -55,37 +56,59 @@ bud/case events.
 - [x] Keep the observation window open and logging for at least 60s past that point, per the usual
       observation-window discipline (note observation start, any event of interest, observation end).
 
-## Event Timeline
+## Event Timeline (corrected against full video review + full log analysis, 2026-09-12)
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| 06:07:20 | HCI snoop logging confirmed enabled and running | User | — | Video start. Devices are untouched. |
-| 06:07:21 | Buds confirmed bonded, Bluetooth confirmed off / BLE link not yet formed | User | — | Bluetooth is disabled in interfacemenu. |
-| 06:08:26 | Bluetooth (re-)enabled | User (Hardware) | `GATT-002` | User selects Bluetooth-toggle to enable bluetooth. |
-| 06:08:27 | BLE link forms | Buds/Case (Auto) | `GATT-002` | Status changes instantly to "Active" including battery info (L: 100%, C: 95%, R: 100%). |
-| 06:09:46 | Observation window end (≥60s after link forms) | — | `GATT-002` | Video ends. |
+| 06:07:20 | Video starts. Buds+case sit untouched on top of the phone. Bluetooth Settings sheet open, "Bluetooth is off." | User | — | Video frame `t=0` (`f_000.png`). |
+| ~06:07:23 | Bluetooth toggle tapped ON (finger visible near toggle, "Use Bluetooth" animates on) | User (Hardware) | `GATT-002` | Video frames `t=2`–`t=4` (overlay `06:07:22`→`06:07:24`). Corrected from the draft's `06:08:26` — that value was ~63s too late; the real toggle tap is here. |
+| 06:07:23.926–06:07:24.023 | Classic BR/EDR controller comes up (Write Extended Inquiry Response / Write Scan Enable / Write Page Scan Activity) | System (OS/controller) | — | Log frames 328–363 — confirms the video-observed toggle tap to within ~1s of wall-clock (near-zero video/log drift, consistent with this project's other captures). |
+| 06:07:24–06:08:25 | Paired-device row shows cached "L:100%, C:95%, R:100%" info, **not yet marked Active** — a client-side cached display, not a live connection (see Findings §2) | System (UI) | — | Video frames `t=6`…`t=65` (`h_006.png`…`g_065.png`) all show the identical non-Active state; log shows only background `LE Extended Advertising Report`s in this window, no `Create Connection`. |
+| 06:08:27.773 | Phone sends classic `Create Connection` to the Buds (`04:00:6e:cf:6e:07`) | System (OS, phone-initiated) | `GATT-002` | Log frame 761. |
+| 06:08:28.615 | Classic `Connect Complete` (status 0x00) — stored link key reused, no SSP | System | `GATT-002` | Log frame 763. |
+| 06:08:28.615–~06:08:30 | RFCOMM multiplexer + DLCIs `0x00/0x02/0x04/0x08/0x0a/0x0c` open; DLCI 0x04 `Get ANC state`(`08110000`)/`Notify`(`Settable=0x00`=docked, `Current=0x20`=Off) fires per ADR-021/022 | System (App/OS auto) | — | Log frames 1017–1041 (Get 1024, Notify 1041, `Settable=0x00` matches the buds visibly sitting in the open case on video). |
+| ~06:08:50 | Device row turns purple/"Active. L:100%, R:100% batte…"; bottom notification shows full "Left 100% Case 95% Right 100%" | System (UI) | `GATT-002` | Video frame `t=90` (`j_090.png`). |
+| 06:07:20–06:09:52 | **Isolation check: buds/case never touched, entire video** — same static framing/shadow in every reviewed frame (`t=0,2,4,6,20,35,45,55,65,90,120,151`) | — | `GATT-002` | Video review, full duration. |
+| 06:09:52 | Video ends (152.16s after start) | System | `GATT-002` | Video frame `t=151` (`j_151.png`, overlay `06:09:51`). |
+| 06:10:09.976–06:10:10.008 | **A *second*, unrelated LE connection forms** — `LE Extended Create Connection`/`Enhanced Connection Complete` to address `40:a8:ef:16:bb:35` (chandle `0x0004`) — **not** the Buds' own classic address, and **not video-covered** (20s after the video ends) | Buds/Case or unrelated device (Auto) | `GATT-002` | Log frames 1580/1589 — see Findings §3 for why this is attributed to an unrelated nearby device, not the Buds. |
+| 06:10:10.034–06:10:10.409 | Full bidirectional GATT primary-service discovery on chandle `0x0004`: GAP/GATT/Device Information, two "Unknown" 128-bit-UUID services (handles `0x0040–0x0045` and `0x0050–0x0054`), and a standard **Heart Rate** service (`0x180D`) | System ↔ peer | — | Log frames 1607–1690 (full walk); Heart Rate response at frame 1663. |
+| 06:10:12.474–06:10:12.9 (approx.) | The `0x0044` `Handle Value Notification` burst (23 frames, chandle `0x0004`) — same shape/marker (`a9fe`) as `CAP-016-FINDINGS.md` §11's original burst | Peer device (Auto) | `GATT-002` | Log frames 1929–2028 (full range); see Findings §3. |
+
+**Note on the draft's original timestamps:** the hand-filled draft (06:07:21 "confirmed off", 06:08:26
+toggle, 06:08:27 "link forms", 06:09:46 window end) was off by roughly a minute on the toggle/connect
+timing and did not know about the second LE connection at 06:10:10 (after its own stated window end)
+— both corrected above from direct video-frame and wire evidence, per this task's instruction to
+verify rather than trust the draft.
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Y)
 
-- [ ] Filter for `btatt.opcode==0x1b and btatt.handle==0x0044`.
-- [ ] If the burst appears despite no bud/case action anywhere in/near the window: narrows the
-      trigger to "BLE link establishment alone" (`PROTOCOL.md` §6).
+- [x] Filter for `btatt.opcode==0x1b and btatt.handle==0x0044`. → 23 frames found, chandle `0x0004`.
+- [x] If the burst appears despite no bud/case action anywhere in/near the window: narrows the
+      trigger to "BLE link establishment alone" (`PROTOCOL.md` §6). → **Refined further, not simply
+      confirmed**: the burst appears, but on a connection (chandle `0x0004`, address
+      `40:a8:ef:16:bb:35`) this session's own evidence attributes to an unrelated nearby BLE
+      device (GATT discovery finds a standard Heart Rate service, no Fast Pair Service, no
+      `0x0c0X` cluster), not the Buds' own classic address (`04:00:6e:cf:6e:07`, chandle `0x0003`,
+      zero ATT traffic). See `CAP-018-FINDINGS.md` §3.
 - [ ] If it does not appear: points back toward a bud/case physical action as the real trigger —
-      an equally useful negative result.
-- [ ] Either outcome closes this open question — don't leave it ambiguous.
+      N/A, the burst did appear (see above).
+- [x] Either outcome closes this open question — don't leave it ambiguous. → Closed with a
+      **different** answer than either of the two originally anticipated outcomes: the isolation
+      test (no bud/case touch) is satisfied, but the burst itself is now evidenced as *not*
+      Buds-originated in this capture — see Findings.
 
 ## Next steps after filling this in
 
-- [ ] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13's
+- [x] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13's
       traceability check) — confirm `GATT-002` is clearly referenced above.
-- [ ] Write `CAP-018-FINDINGS.md` per `PROJECT_RULES.md` §2, using this file's timeline as the
+- [x] Write `CAP-018-FINDINGS.md` per `PROJECT_RULES.md` §2, using this file's timeline as the
       evidence source, following the hex & script rule (§1 rule 4a).
-- [ ] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
+- [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
       from `planned` to `analyzed`, fill in Android/firmware/app-version columns and the log path.
-- [ ] Update `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-002` row's Evidence column with a pointer
+- [x] Update `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-002` row's Evidence column with a pointer
       once promoted into `PROTOCOL.md`.
-- [ ] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
+- [x] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
       actual session date/start-time/end-time.
 
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-018-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Y/CAP-018-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-018-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Y/CAP-018-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-018-2026-09-12_06-07-20_06-09-52-Group_Y/CAP-018-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-018-2026-09-12_06-07-20_06-09-52-Group_Y/CAP-018-EVENT-NOTES
