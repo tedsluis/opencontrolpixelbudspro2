@@ -16,6 +16,7 @@ a new session** — the same "check before assigning" discipline `id_registry.cs
 | 0007 | CROSSCHECK | 2026-09-11 | Independent Gemini CLI review of the APK reverse-engineering catalog and the 0001 deep cross-check pass | complete |
 | 0008 | CROSSCHECK | 2026-09-11 | Full, non-sampled Claude Code validation of Gemini's 0007 cross-check result, with direct application of verified corrections | complete |
 | 0009 | MAINTENANCE | 2026-09-11 | Apply maintainer decisions from 0008's validation: field-19 dual-write-path clarification, 0007/0008 status closeout | complete |
+| 0010 | CAPTURE | 2026-09-12 | Full video+log re-analysis and FINDINGS for CAP-018, CAP-026, CAP-028, CAP-029, CAP-045, CAP-046, CAP-048, CAP-049 | not yet run |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/INDEX.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/INDEX
