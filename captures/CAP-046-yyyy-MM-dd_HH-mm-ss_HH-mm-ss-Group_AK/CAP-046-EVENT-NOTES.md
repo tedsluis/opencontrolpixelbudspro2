@@ -21,8 +21,8 @@ drag at 1fps video-sampling resolution wasn't enough to resolve this.
 |       Date       |                        TBD                         |
 | Firmware version |                        TBD                         |
 |   Test device    |       TBD (Pixel 7a, official Pixel Buds Companion App) |
-| Video file       |    TBD — must clearly show the Balance slider's on-screen position/label at each isolated sample |
-| Log file         |             TBD — `CAP-046-btsnoop_hci.log`        |
+| Video file       | `CAP-046-recording.mp4` (17:02:59 - 17:05:49)      |
+| Log file         |             `CAP-046-btsnoop_hci.log`              |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AK)
@@ -41,13 +41,26 @@ drag at 1fps video-sampling resolution wasn't enough to resolve this.
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | Balance slider screen opened | User (App) | `AUDIO-003` | Conn. state: TBD |
-| TBD | Sample 1: full Left extreme, hold ≥3s, video-confirmed label | User (App) | `AUDIO-003` | TBD |
-| TBD | Slider returned to center. Pause ≥5s | User (App) | `AUDIO-003` | TBD |
-| TBD | Sample 1: full Right extreme, hold ≥3s, video-confirmed label | User (App) | `AUDIO-003` | TBD |
-| TBD | Sample 2: full Left extreme, hold ≥3s, video-confirmed label | User (App) | `AUDIO-003` | TBD |
-| TBD | Sample 2: full Right extreme, hold ≥3s, video-confirmed label | User (App) | `AUDIO-003` | TBD |
-| TBD | (optional) intermediate position sample(s), video-confirmed label | User (App) | `AUDIO-003` | TBD |
+| 17:02:59 | Video starts. Buds are out of the case and in ears. Bluetooth is off. | User | — | — |
+| 17:03:01 | User enables Bluetooth via toggle. | User | — | — |
+| 17:03:04 | "Pixel Buds Pro 2 van Ted" connecting. | System | — | — |
+| 17:03:14 | Connection active. Battery: L:100%, C:96%, R:100% | System | — | — |
+| 17:03:34 | User opens Pixel Buds app ("Device details") and navigates to the 'Sound' menu. | User (App) | `AUDIO-003` | — |
+| 17:03:59 | Sample 1: Slider dragged to full Left extreme (-100). | User (App) | `AUDIO-003` | Held for ≥ 3s |
+| 17:04:03 | Slider returned to center. | User (App) | `AUDIO-003` | Paused for ≥ 5s |
+| 17:04:12 | Sample 1: Slider dragged to full Right extreme (100). | User (App) | `AUDIO-003` | Held for ≥ 3s |
+| 17:04:17 | Slider returned to center. | User (App) | `AUDIO-003` | Paused for ≥ 5s |
+| 17:04:30 | Sample 2: Slider dragged to full Left extreme (-100). | User (App) | `AUDIO-003` | Held for ≥ 3s |
+| 17:04:35 | Slider returned to center. | User (App) | `AUDIO-003` | Paused for ≥ 5s |
+| 17:04:48 | Sample 2: Slider dragged to full Right extreme (100). | User (App) | `AUDIO-003` | Held for ≥ 3s |
+| 17:04:53 | Slider returned to center. | User (App) | `AUDIO-003` | Paused for ≥ 5s |
+| 17:05:03 | Sample 3: Slider dragged to intermediate position Left (-93). | User (App) | `AUDIO-003` | Held for ≥ 3s |
+| 17:05:07 | Slider returned to center. | User (App) | `AUDIO-003` | Paused for ≥ 5s |
+| 17:05:20 | Sample 3: Slider dragged to intermediate position Right (96). | User (App) | `AUDIO-003` | Held for ≥ 3s |
+| 17:05:24 | Slider returned to center. | User (App) | `AUDIO-003` | Paused for ≥ 5s |
+| 17:05:39 | Sample 4: Slider dragged to intermediate position Left (-31). | User (App) | `AUDIO-003` | Held for ≥ 3s |
+| 17:05:43 | Slider returned to center. | User (App) | `AUDIO-003` | Paused for ≥ 5s |
+| 17:05:49 | Video ends. | System | — | — |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AK)
 
