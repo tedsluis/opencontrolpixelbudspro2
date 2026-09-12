@@ -77,13 +77,18 @@ without a full factory reset, since no officially documented duration exists for
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | HCI snoop logging confirmed enabled and running, Buds connected | User | — | TBD |
-| TBD | (if needed) Conversation Detection toggled on as this session's own first step | User (App) | — | TBD |
-| TBD | Item-16 decision recorded (run factory reset this session, or skip it) | — | — | TBD |
-| TBD | Start speaking (Conversation Detection on) | User (Hardware) | `CONV-002` | TBD |
-| TBD | (If run) Hold case button 30s — factory reset | User (Hardware) | `CASE-007` | TBD |
-| TBD | (If item 16 run) Re-pair from factory-reset state, own isolated window | User (Hardware) | `PAIR-002` | TBD |
-| TBD | Shorter/different case-button press attempt | User (Hardware) | `CASE-008` | TBD |
+| 07:53:55 | Start of video. Bluetooth is off. | User | — | — |
+| 07:54:01 | Bluetooth turned on, "Pixel Buds Pro 2 van Ted" connects. | User (Phone) | — | — |
+| 07:54:08 | Spotify is opened, music starts playing ("Tears Dry On Their Own"). | User (App) | — | — |
+| 07:54:13 | User starts speaking (thumb visible on screen). | User (Hardware) | `CONV-002` | Testing Conversation Detection. |
+| 07:54:55 | User forgets the Pixel Buds Pro 2 in Bluetooth settings. | User (Phone) | — | Preparation for factory reset. |
+| 07:55:03 | User starts holding the case button (buds in case, case open). | User (Hardware) | `CASE-007` | — |
+| 07:55:33 | User releases the case button after ~30 seconds. | User (Hardware) | `CASE-007` | Factory reset triggered. |
+| 07:56:01 | Reset Pixel Buds Pro 2 appear in the pairing list. | Hardware | `PAIR-002` | — |
+| 07:56:11 | User initiates pairing process. | User (Phone) | `PAIR-002` | — |
+| 07:57:10 | Setup complete, device is connected. | System | `PAIR-002` | — |
+| 07:57:56 | User forgets the device again in Bluetooth settings. | User (Phone) | — | — |
+| 07:58:04 | End of video. | User | — | — |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5)
 
