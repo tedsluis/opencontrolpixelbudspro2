@@ -39,16 +39,23 @@ own rotation list.
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | Left earbud rotation checklist opened | User (App) | `HOLD-005` | Conn. state: TBD |
-| TBD | Left: toggle 'Noise cancellation'. Wait ≥10s | User (App) | `HOLD-005` | TBD |
-| TBD | Left: toggle 'Off'. Wait ≥10s | User (App) | `HOLD-005` | TBD |
-| TBD | Left: toggle 'Adaptive'. Wait ≥10s | User (App) | `HOLD-005` | TBD |
-| TBD | Left: toggle 'Transparency'. Wait ≥10s | User (App) | `HOLD-005` | TBD |
-| TBD | Right earbud rotation checklist opened | User (App) | `HOLD-005` | TBD |
-| TBD | Right: toggle 'Noise cancellation'. Wait ≥10s | User (App) | `HOLD-005` | TBD |
-| TBD | Right: toggle 'Off'. Wait ≥10s | User (App) | `HOLD-005` | TBD |
-| TBD | Right: toggle 'Adaptive'. Wait ≥10s | User (App) | `HOLD-005` | TBD |
-| TBD | Right: toggle 'Transparency'. Wait ≥10s | User (App) | `HOLD-005` | TBD |
+| 08:22:51 | Video starts. Left bud is in the case, right bud is out of the case (on the right). The left bud is in my ear. Bluetooth is off. | System | — | — |
+| 08:22:53 | User enables Bluetooth via toggle. | User | — | — |
+| 08:22:54 | "Pixel Buds Pro 2 van Ted" connecting. | System | — | — |
+| 08:22:56 | Connection active. | System | — | — |
+| 08:23:01 | User opens Pixel Buds app ("Device details"). | User | — | — |
+| 08:23:04 | App UI loaded. Battery: Left 100%, Case 87%, Right 100%. ANC controls are disabled (greyed out). | System | — | — |
+| 08:23:21 | user long-pressed left bud: ANC switches from Adaptive to Transsparant. |
+| 08:23:31 | user long-pressed left bud: ANC switches from Transsparant to Noice cancellation. |
+| 08:23:46 | user long-pressed left bud: ANC switches from Noice cancellation to Adaptive. |
+| 08:23:53 | user removes left bud from ear. |
+| 08:24:00 | user puts right bud in ear. |
+| 08:24:06 | user long-pressed right bud: ANC switches from Adaptive to Transsparant. |
+| 08:24:15 | user long-pressed right bud: ANC switches from Transsparant to noice cancellation. |
+| 08:24:20 | user long-pressed right bud: ANC switches from noice cancellation to Adaptive. |
+| 08:24:20 | user long-pressed right bud: ANC switches from Adaptive to transparant. |
+| 08:24:29 | user removes right bud from ear. |
+| 08:24:32 | Video ends. | System | — | - |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AJ)
 
