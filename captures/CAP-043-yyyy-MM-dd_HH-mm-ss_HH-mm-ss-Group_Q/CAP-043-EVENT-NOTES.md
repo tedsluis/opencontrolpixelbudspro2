@@ -53,13 +53,10 @@ any point during the capture — the specific procedure deviation `CAP-011` had.
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | Official app force-stopped, confirmed via Settings → Apps | User | `BATT-002`, `BATT-003` | Conn. state: TBD |
-| TBD | HCI snoop logging started (Buds already bonded, not re-paired) | User | `BATT-002`, `BATT-003` | TBD |
-| TBD | Passive observation window start (case closed/idle, or worn, no in-app interaction) | — | `BATT-002`, `BATT-003` | TBD |
-| TBD | (any event of interest during window) | Buds/Case (Auto) | `BATT-002`, `BATT-003` | TBD |
-| TBD | Passive observation window end (≥60–90s) | — | `BATT-002`, `BATT-003` | TBD |
-| TBD | Confirmed no classic RFCOMM connection was ever established during the window | — | `BATT-002`, `BATT-003` | TBD |
-| TBD | Logging stopped, extracted via raw path | — | — | TBD |
+| 09:50:31 | Session start. Both buds are in the closed case. Bluetooth is OFF. App was force-stopped prior to recording. | User | `BATT-002`, `BATT-003` | — |
+| 09:50:34 | Bluetooth toggled ON. | User (OS) | `BATT-002`, `BATT-003` | — |
+| :09 / 09:50:35–09:53:40 | Passive observation window. The case remains closed and untouched. The Bluetooth menu remains open on the phone. | — | `BATT-002`, `BATT-003` | Window duration: ~3 minutes and 5 seconds. Confirmed no active connection (device is not highlighted in purple). |
+| 09:53:40 | Video ends. | — | — | — |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Q item #18 / `CAP-011-FINDINGS.md` §4)
 
