@@ -1227,6 +1227,20 @@ motivated this).
   candidate cross-check for `ARCHITECTURE.md`'s connection/dock-state model. The exact bit-level
   meaning of `0xe8` beyond "not both docked" (e.g. whether it varies further for one-bud-docked
   states) remains unexplored and is not claimed by this ADR.
+- **Update (2026-09-13, maintainer sign-off, `ai-sessions/0015_MAINTENANCE_RESULT_2026_09_13.md`):
+  two counter-examples found in a single session, not yet reconciled.** `CAP-048`
+  (`CAP-048-FINDINGS.md` §5, a purpose-built repeat with continuous dock-state video) found two
+  fresh classic reconnects (`17:44:45`, `17:47:42`) reporting `Settable-toggles=0x00` (docked) while
+  the video, checked at essentially the same wire timestamp, shows the case visibly **empty**. Four
+  other readings in the same session (including two same-chandle DLCI reopens, not fresh
+  reconnects) are correct — this is not a reversal of this ADR's own dock-state-indicator finding,
+  which the same session's other readings continue to confirm. 🟡 **HYPOTHESIS, not confirmed:** a
+  fresh reconnect's own Get/Notify may occasionally return a value queried before the Buds' own
+  firmware has settled on an already-changed physical state — offered as a testable direction only;
+  does not by itself explain why the other four fresh reconnects in the same session read
+  correctly. Implementations reading this field on a fresh reconnect specifically (as opposed to a
+  same-chandle DLCI reopen) should treat it as usually, not unconditionally, reliable immediately
+  after connection.
 
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 

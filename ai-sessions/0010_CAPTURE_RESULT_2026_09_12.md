@@ -4,7 +4,10 @@
 **Category:** CAPTURE
 **Date:** 2026-09-12
 **Title:** Full video+log re-analysis and FINDINGS for CAP-018, CAP-026, CAP-028, CAP-029, CAP-045, CAP-046, CAP-048, CAP-049
-**Status:** awaiting maintainer sign-off
+**Status:** complete — all 3 originally-pending sign-off items resolved: item 1 (Volume Balance) via
+`DECISIONS.md` ADR-026 (`ai-sessions/0013`); items 2 and 3 (the `CAP-037`/`CAP-048` anomaly and the
+`DECISIONS.md` ADR-024 caveat) approved by the maintainer and applied via
+`ai-sessions/0015_MAINTENANCE_RESULT_2026_09_13.md`
 
 ---
 
@@ -93,15 +96,18 @@ connection-retry burst.
 (per `AGENTS.md` §6/§15 — none of these were self-promoted; all are labeled PROPOSAL in the affected
 documents):
 
-1. **`PROTOCOL.md` §4.5.7 (Volume Balance)** — promote the ±100 range and the
-   `+100`=Left/`-100`=Right direction mapping to 🟢 FACT (`CAP-046-FINDINGS.md` §2, 3/3
-   video-confirmed, zero counter-examples).
+1. ~~**`PROTOCOL.md` §4.5.7 (Volume Balance)** — promote the ±100 range and the
+   `+100`=Left/`-100`=Right direction mapping to 🟢 FACT.~~ **Resolved 2026-09-13** — approved by
+   the maintainer in the chat session that authored `ai-sessions/0013_FEATURE_PROMPT_2026_09_13.md`,
+   recorded as `DECISIONS.md` ADR-026. `PROTOCOL.md` §4.5.7 updated accordingly.
 2. **`DECISIONS.md` ADR-024** — record `CAP-048`'s two video-confirmed counter-examples (stale
    `Settable-toggles` readings on two fresh reconnects) as an explicit, documented exception —
    **not** proposed as a reversal of the existing FACT, proposed as a caveat needing the
-   maintainer's own read on how to qualify it.
+   maintainer's own read on how to qualify it. **Still pending** — see
+   `ai-sessions/0015_MAINTENANCE_RESULT_2026_09_13.md`.
 3. **`CAP-037-FINDINGS.md` §5 / `PROTOCOL.md` §6** — mark this specific anomaly class as resolved
-   (real-time dock-state change, ADR-016-consistent), citing `CAP-048`.
+   (real-time dock-state change, ADR-016-consistent), citing `CAP-048`. **Still pending** — see
+   `ai-sessions/0015_MAINTENANCE_RESULT_2026_09_13.md`.
 4. **`HOLD-005` (`PROTOCOL.md` §4.5.3 / `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`)** — no promotion proposed;
    flagged instead that `CAP-045` did not close this question and a genuine re-run of Group AJ's own
    procedure (open the rotation-checklist screen, not physical long-presses) is still needed.
@@ -109,6 +115,10 @@ documents):
    session): the 3-instance unrelated-BLE-device pattern; the ~64s slow-reconnect question;
    Conversation Detection's wire-silent pause; the Balance↔Mono-audio timing correlation; the
    `CAP-048` connection-retry burst.
+
+**Update (2026-09-13, `ai-sessions/0015_MAINTENANCE_RESULT_2026_09_13.md`):** item 1 resolved (see
+above). Items 2 and 3 are this file's only remaining open sign-off items — surfaced again to the
+maintainer in `0015`.
 
 ## Uncommitted work
 
