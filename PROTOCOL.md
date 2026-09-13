@@ -656,6 +656,18 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   drag-cycles — a genuine, unreconciled tension, not resolved here (plausible explanations — a missed
   fast/off-screen Save tap, an app-version difference — are unconfirmed). See
   `REVERSE_ENGINEERING.md`'s `qjw` entry for the full trace.
+  **Re-verification, 2026-09-13 (`ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 1) — the
+  2026-09-08 trace's own "sole caller" claim was incomplete, not wrong about the Save button itself:
+  a genuine second call path to field 18 exists.** 🟢 FACT (code existence): a second lambda
+  (`hod.java:36`) also reaches the same field-18 write, gated on an unsaved-changes-shaped condition
+  and self-describingly logged `"Navigate away, save EQ"` — registered as an event-bus listener in
+  `UserEqFragment`, not confirmed as a literal "user left the EQ screen" trigger (what specific event
+  fires it was not traced this pass). This adds a **third** candidate trigger (Save button /
+  navigate-away-with-unsaved-changes / the still-unconfirmed slider-release reading) — see
+  `REVERSE_ENGINEERING.md`'s `qjw` entry for the full correction. The tension between wire timing and
+  static analysis remains open; a capture isolating all three conditions from each other (no Save
+  tap, no navigation away, genuine slider-release only) is designed as
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AO (**PROPOSAL — new capture**, planned `CAP-053`).
 - **Sent to / expected response**: same open questions as §4.1.
 - **Status**: 🟢 FACT for the wire envelope, the field-to-band mapping, and the ±6.0 range; 🟡
   HYPOTHESIS (strong) that DLCI 0x02 is specifically `libmaestro`; 🟡 HYPOTHESIS for the
@@ -2219,6 +2231,22 @@ leaving them buried in prose elsewhere.
       exact RPC response a given frame is, not just a shape resemblance) needs a fresh, purpose-built
       capture correlating the burst against a live, independently-read `GetSoftwareInfo` value —
       flagged as still needing that, not treated as closed.
+      **Re-traced 2026-09-13 (`ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 5) — the
+      "structurally matching `qie`'s documented shape" reading above is corrected, not confirmed,
+      by decoding `qie`'s own shape and re-checking frame 1423's exact bytes field-by-field.** 🟢
+      FACT (mechanical decode + direct byte comparison, command+hex in the RESULT file): `qie`
+      decodes to 3 fields, **each typed `MESSAGE`**, not `STRING` — a `qie` instance's 3 fields would
+      each need an extra nested tag+length wrapper around their string content. Frame 1423's actual
+      48-byte sub-message decodes cleanly as 3 fields (1/2/3), **each a direct length-14 `STRING`**
+      (`0a 0e <14 bytes>`, `12 0e <14 bytes>`, `1a 0e <14 bytes>`), with no such extra nesting —
+      **this does not match `qie`'s shape**. It instead matches `qjm`/`qjr` (`GetHardwareInfo`'s own
+      two oneof alternatives, `qiv`) exactly: both are 3-field, fields-1/2/3, all-`STRING` messages.
+      **Net effect**: this pass strengthens the case that frame 1423 is `GetHardwareInfo`-shaped
+      content, not `GetSoftwareInfo`/`qjb`-shaped — the opposite lean from the 2026-09-08 entry above,
+      though RPC identity (service/method) still isn't decoded, only field shape. See
+      `REVERSE_ENGINEERING.md`'s `qjb` entry for the full trace. A live correlation capture (video-
+      transcribed serial numbers vs. the wire burst, checking which RPC actually fires) is designed
+      as Group AS (**PROPOSAL — new capture**, planned `CAP-057`).
 - [ ] **Added 2026-09-06, `CAP-042-FINDINGS.md` §5 (Group AI, `OBS-002`):** across a genuinely idle,
       ~37m39s, app-backgrounded session, the DLCI 0x02/0x04/0x08 periodic push recurred only twice
       (at ~16m and ~35m in — far sparser than `CAP-036`'s several-per-few-minutes sample with the
@@ -2545,6 +2573,15 @@ leaving them buried in prose elsewhere.
       Command` traffic on handles `0x0044`/`0x0042`. Not attributable to the Buds. Genuinely open
       whether this is the same physical device recurring across sessions (BLE address rotation makes
       this unverifiable from the address alone) — flagged for awareness, not investigated further.
+      **Re-checked 2026-09-13 (`ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 3):** a full
+      re-scan of `CAP-028`'s entire 227.71s log (not just the originally-checked 07:16:25–07:17:15
+      window) for DLCI 0x02/0x04/0x08 traffic, AVRCP/AVCTP, genuine SCO/eSCO (Synchronous Connection
+      Complete) events, and any `AT+` HFP command reproduces the same clean negative — zero new
+      signal anywhere in the log, and the 3 additional DLCI-0x04/0x08 pushes found after the original
+      window's end (07:17:15.55, 07:18:02.17, 07:19:35.78) are the already-documented routine
+      periodic battery/keepalive push (§4.3 Option B/E content), not gesture-related. A correctly
+      scoped repeat (active call/notification, camera also framing the gesture) is designed as
+      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AQ (**PROPOSAL — new capture**, planned `CAP-055`).
 - [ ] **Added 2026-09-12, `CAP-029-FINDINGS.md` §2:** Conversation Detection's on-screen media-pause
       effect (`CONV-002`) produces zero wire-visible signal — no ANC-mode Set/Notify (`08 12`/`08 13`),
       no DLCI 0x02 settings write, no AVRCP command — anywhere in the session. Genuinely open whether
@@ -2613,6 +2650,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-09 | **`ai-sessions/0004_MAINTENANCE_PROMPT_2026_09_09.md` — connection-lifecycle analysis on existing captures.** **New §5.2**: DLCI 0x02 (`libmaestro`) reliably opens *last* of the five data-carrying RFCOMM channels on a fresh reconnect — 6 independent instances across `CAP-036`/`CAP-037`/`CAP-041`, zero counter-examples in that condition, one honestly-scoped exception during a mid-session RFCOMM channel-bounce (where the order differs). Maintainer reviewed this directly in the chat session that authored this prompt and explicitly chose to keep it at 🟡 HYPOTHESIS (strong) rather than promote, pending more evidence or an explanation for the one exception | Claude (AI), capture-re-analysis task; maintainer-reviewed, kept at HYPOTHESIS (not promoted), prompt `0004` |
 | 2026-09-13 | **`ai-sessions/0013_FEATURE_PROMPT_2026_09_13.md` — pending `0012` decisions resolved.** **§4.5.7 Volume Balance** — the ±100 range and `+100`=Left/`-100`=Right polarity promoted to 🟢 FACT (`DECISIONS.md` ADR-026), maintainer-approved in the same chat session that authored this prompt; matching §6 open item closed. **§4.4/§6 Behavior** — Find My Buds Case/"both simultaneously" scope decision resolved (`DECISIONS.md` ADR-027): v1 ships with Left/Right ring only, Case/"both" out of scope absent a future local mechanism; see `PROJECT.md`'s non-goals and `TODO.md`'s Phase 1 item for the corresponding updates. Also this session: mechanical count corrections to `CAP-036-FINDINGS.md`/`CAP-037-FINDINGS.md` (not a `PROTOCOL.md` change), a bounded APK research pass (`REVERSE_ENGINEERING.md`'s `frb`/`fuh`/`glk`/`gjv` entry and a new "GSND" naming-lead entry), and the first real, buildable/tested Android Studio project (`android/`, five Gradle modules, ANC `FrameEncoder`/`FrameDecoder` implemented and unit-tested against real capture fixtures) — none of which touch this document's own body | Claude (AI), maintainer-directed sign-off session, prompt `0013` |
 | 2026-09-13 | **`ai-sessions/0015_MAINTENANCE_PROMPT_2026_09_13.md` — resolved `ai-sessions/0010`'s two remaining sign-off items.** **§6** — the `CAP-037`/`CAP-048` dock-timing anomaly's "(PROPOSAL, awaiting maintainer sign-off)" hedge removed; the explanation itself (a genuine real-time docking action, consistent with `DECISIONS.md` ADR-016) was maintainer-approved, citing `ai-sessions/0015`. No new FACT beyond ADR-016 was introduced — this only closes a previously-open citation. `DECISIONS.md` ADR-024 gained a dated Update recording `CAP-048`'s two counter-example `Settable-toggles` readings as a documented, unreconciled 🟡 HYPOTHESIS exception, maintainer-approved | Claude (AI), maintainer-directed sign-off session, prompt `0015` |
+| 2026-09-13 | **`ai-sessions/0017_MAINTENANCE_PROMPT_2026_09_13.md` — re-verification of 5 open items, no FACT/ADR promotion (all proposals pending maintainer sign-off).** **§4.2 EQ** — the 2026-09-08 "field 18 reachable only via the Save button" trace corrected: a genuine second call path exists (`hod.java`, a "navigate away with unsaved changes" trigger), adding a third candidate alongside Save-button and the still-unconfirmed slider-release reading; a new capture (Group AO, `CAP-053`) is proposed to isolate all three. **§6 serial-number candidate** — `CAP-036` frame 1423 re-traced field-by-field: its 3-string sub-message structurally matches `qjm`/`qjr` (`GetHardwareInfo`'s oneof alternatives) exactly, not `qie` (`GetSoftwareInfo`'s alternative, which is typed `MESSAGE` not `STRING`) as the existing entry read — reverses which RPC is the better structural candidate; a live correlation capture (Group AS, `CAP-057`) is proposed. **§6 head-gesture item** — `CAP-028`'s clean negative re-verified across its *entire* log (not just the originally-checked window) plus HID/AVRCP/SCO checks, reproducing the same result; a correctly-scoped repeat with an active call/notification (Group AQ, `CAP-055`) is proposed. Also (not touching this document): `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `HOLD-005` row updated with a Group AR (`CAP-056`) re-run proposal (`CAP-045` never opened the rotation-checklist screen), and `PROTOCOL.md` §4.3 Option A's Battery Notification item — `CAP-043`'s non-match re-verified byte-for-byte, a single-bud-insertion/removal bracket proposed as Group AP (`CAP-054`). Full phase-by-phase detail and the complete pending-decision inventory: `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` | Claude (AI), maintenance/re-verification task, not yet reviewed by maintainer |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

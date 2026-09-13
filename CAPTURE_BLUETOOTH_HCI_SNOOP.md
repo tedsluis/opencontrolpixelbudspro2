@@ -1275,6 +1275,151 @@ video-confirmed Case percentage changes? A positive correlation across a genuine
 promote this from "consistent with" to real evidence; a mismatch would be an equally useful,
 reportable negative result.
 
+#### Group AO — EQ outer field 16-vs-18: drag-and-release without ever tapping Save (occasional, added 2026-09-13, `ai-sessions/0017`)
+
+**Purpose:** `PROTOCOL.md` §4.2's "Outer field 16 vs. 18" item is a genuine, unreconciled tension:
+`CAP-015`'s wire timing reads as "field 18 fires on slider-release" (no video-visible `Save` tap
+before any of 15 field-18 frames), but a full call-graph trace of `fyd.d`/`fyd.e`
+(`REVERSE_ENGINEERING.md`'s `qjw` entry) found field 18 (`fyd.d`) reachable through exactly **two**
+code paths — a dedicated `key_eq_save_button`/`title_eq_save_button` click handler (self-describing
+log `"On click save EQ button"`), and, newly found by this session's own re-verification, a
+**navigate-away-from-the-EQ-screen** path (`hod.java:36`, self-describing log `"Navigate away, save
+EQ"`, gated on an unsaved-changes-shaped flag) — but **no** slider-release code path to field 18
+anywhere in this app version's decompiled source. This capture is designed to isolate all three
+candidate triggers from each other for the first time.
+
+1. Open the EQ screen (Device details → Sound → Equalizer → custom sliders).
+2. Drag **slider 1** to a new position, release, and **wait ≥10s** with the `Save` button never
+   tapped and **without navigating away from the EQ screen** (stay on this exact screen the whole
+   time) — video must clearly show both: the `Save` button not being touched, and the screen not
+   changing.
+3. Repeat step 2 for **slider 2** (a second, independent release-only sample, still without leaving
+   the screen or tapping Save).
+4. As a clearly separated second half of the same session: drag **slider 3**, release, wait ≥10s (no
+   Save tap, no navigation, replicating steps 2–3's isolation once more), then **deliberately tap the
+   `Save` button** and video-confirm the tap.
+5. As a third, separated part: drag **slider 4**, release, wait ≥3s, then **navigate away from the EQ
+   screen** (e.g. press back to Device details) without ever tapping `Save` — video must show the
+   screen change clearly.
+
+**Analysis:** for each of the three isolated conditions (release-only, release+Save, release+navigate-away),
+does a `field5{field4{field18=...}}` write appear on DLCI 0x02, and if so, at which specific action?
+This directly distinguishes the three candidate triggers `REVERSE_ENGINEERING.md`'s `qjw` entry now
+names, closing `PROTOCOL.md` §4.2's own open item with a within-session positive/negative contrast
+instead of a single ambiguous reading.
+
+#### Group AP — Battery Notification: bracket a single-bud insertion/removal, connection-free (occasional, added 2026-09-13, `ai-sessions/0017`)
+
+**Purpose:** `CAP-043` (Group Q repeat) established, under rigorously clean connection-free isolation,
+that the Buds' idle/case-closed `0xFE2C` BLE advertisement does not structurally match `PROTOCOL.md`
+§4.3 Option A's documented Battery Notification layout — but only tested the idle/case-closed
+condition. The official Fast Pair spec itself describes the Battery Notification extension as
+"**optional** when a single bud is inserted/removed" — a materially different trigger condition,
+not yet bracketed by any capture to date.
+
+1. Force-stop the official Pixel Buds app (as `CAP-043` did) and confirm, before starting the log,
+   that no classic RFCOMM connection to the Buds is active (system Bluetooth settings showing
+   "not connected," or the Buds already disconnected).
+2. Start HCI snoop logging and a screen/phone-camera recording of the system Bluetooth settings
+   panel (matching `CAP-043`'s own methodology).
+3. With the case closed and the phone otherwise idle, **remove exactly one earbud from the case**
+   (video-confirm the exact removal moment), then wait ≥15s without touching anything else.
+4. **Re-insert that same earbud** into the case (video-confirm), wait ≥15s again.
+5. Repeat steps 3–4 once more for the **other** earbud, as an independent second sample.
+6. Throughout, avoid opening the official app or making any classic RFCOMM connection — per
+   `AGENTS.md` §7's bounded scanning exception (filtered to the bonded device, foreground-triggered,
+   time-boxed).
+
+**Analysis:** does a `0xFE2C` service-data advertisement carrying the documented Battery Notification
+layout (`[Flags=0x00][Account Key Data][0x33/0x34 marker][L][R][Case]`) appear within a few seconds of
+either bracketed insertion/removal event, even though it does not appear during idle/case-closed
+conditions? A clean negative here (matching `CAP-011`/`CAP-036`/`CAP-043`'s existing non-matches)
+would materially strengthen the case for reframing `PROTOCOL.md` §4.3 Option A's status, per
+`CAP-043-FINDINGS.md` §7's own recommendation — see `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md`
+Phase 2 for that scoping question.
+
+#### Group AQ — Head gestures (Nod/Shake) with an active call/notification (occasional, added 2026-09-13, `ai-sessions/0017`)
+
+**Purpose:** `CAP-028` (Group O) found zero wire-visible traffic on the Buds' own connection during
+a claimed Nod/Shake gesture window — but `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s own description ties
+Nod/Shake's actual function to an active call ("answers a call") or notification ("dismisses a text
+reply"), and no call/notification was active during `CAP-028`'s own window, so the clean-negative
+result cannot distinguish "functionally inert, as expected" from "gesture not actually triggered."
+This Group fixes that specific gap.
+
+1. Confirm "Use head gestures" is toggled ON (Device details → Controls and gestures) before starting
+   — per `CAP-020`'s own precondition, re-confirm on camera this time (do not rely on a carried-over
+   assumption).
+2. With the Buds connected and worn, **trigger an actual incoming phone call** (e.g. call the test
+   phone from a second phone). While the call is ringing, perform a **Nod** gesture — camera angled to
+   capture **both** the phone screen (showing the call being answered) **and** the user's head/ears
+   (the gesture itself), unlike `CAP-028`'s phone-only framing.
+3. During the call, end it normally; then trigger a second incoming call and perform a **Shake**
+   gesture to reject it — same dual camera framing.
+4. Separately, trigger a text-message notification (with 'Spoken notifications'/dictation-reply
+   context if feasible) and perform a Nod (reply via dictation) or Shake (dismiss) gesture, camera
+   angled the same dual way.
+
+**Analysis:** does a Nod/Shake gesture performed while a call/notification is genuinely active produce
+any wire-visible signal (SCO/eSCO setup change, AVRCP command, DLCI 0x02/0x04/0x08 write) correlated
+with the gesture, now that both the gesture itself and its effect are camera-confirmed? Also check the
+`REVERSE_ENGINEERING.md` `HeadGesture`/`qin` register (updated by `ai-sessions/0017` Phase 3 — the
+`SubscribeToResults` response enum is confirmed 3-valued, structurally consistent with exactly two
+real gesture types plus one unset/unknown sentinel, though which raw value is Nod vs. Shake is not
+recoverable from static analysis) against any DLCI 0x02 traffic this session captures.
+
+#### Group AR — `HOLD-005` ANC-rotation-checklist Left/Right split, genuine re-run (occasional, added 2026-09-13, `ai-sessions/0017`)
+
+**Purpose:** `CAP-045` (Group AJ) did not run Group AJ's own procedure — the maintainer performed
+physical press-and-hold ANC cycling instead, and the rotation-checklist screen was never opened, so
+`HOLD-005`'s Left/Right question remains exactly as open as before `CAP-045`. This Group is a fresh
+attempt at the same question, **not** a `CAP-045` v2 reusing Group AJ's own letter — Group AJ's
+procedure is unchanged and still valid; this Group exists specifically to add an explicit anti-repeat
+safeguard, named as such, referencing `CAP-045` by name as the reason for the extra emphasis.
+
+1. **Anti-repeat safeguard (mandatory, named per `CAP-045`'s own gap):** before toggling anything,
+   video-confirm the actual on-screen destination is "Device details → Controls and gestures → [the
+   ANC-mode rotation checklist screen]" — a checkbox list titled with the four modes (Noise
+   cancellation / Off / Adaptive / Transparency) must be clearly visible on-camera for **at least one
+   full toggle** before this session counts as having run the procedure at all. If the checklist
+   screen is not visible on camera at this point, stop and restart — do not proceed and hope the wire
+   data disambiguates it after the fact, as happened in `CAP-045`.
+2. With the checklist screen confirmed open for the **Left** earbud specifically (per
+   `PROTOCOL.md` §4.5.3's own UI description confirming this is per-earbud), toggle each of the 4
+   checklist items **one at a time**, with a clear pause (≥10s) and a distinct video-visible action
+   between each toggle.
+3. Navigate to the **Right** earbud's own rotation checklist (video-confirm the screen again, per
+   step 1's safeguard) and repeat step 2.
+
+**Analysis:** identical to Group AJ's own — do the Left-earbud and Right-earbud toggles produce
+distinguishable wire patterns (inner field position, correlation-ID pattern, or a confirmed
+video-to-frame 1:1 timing correlation good enough to assign each frame to a side by elimination)?
+
+#### Group AS — Live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the connect-time burst (occasional, added 2026-09-13, `ai-sessions/0017`)
+
+**Purpose:** `PROTOCOL.md` §6's serial-number candidate (`CAP-036` frame 1423, three length-14
+strings inside DLCI 0x02's connect-time burst) was re-traced this session
+(`ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 5): the decoded sub-message's own top-level
+fields (1/2/3, each a direct `STRING`) structurally match `qjm`/`qjr` (`GetHardwareInfo`'s two oneof
+alternatives, `qiv`) exactly, and do **not** match `qie` (`GetSoftwareInfo`'s own oneof alternative,
+whose 3 fields are typed `MESSAGE`, requiring an extra nesting level not present in the observed
+bytes) — a correction to, not a confirmation of, the existing HYPOTHESIS. Static analysis alone cannot
+go further; this needs a live correlation.
+
+1. With full DLCI 0x02 traffic retained (raw-path extraction, not `btsnooz.py`), open Device details →
+   More settings → "View firmware version per component (L/R/Case)" **and** "View serial numbers per
+   component" (`FW-002`/`FW-003`) — video-confirm and transcribe the exact displayed serial numbers
+   per component (Left/Right/Case) on camera.
+2. Separately, disconnect and reconnect the Buds (a fresh classic connection) to capture a fresh
+   connect-time DLCI 0x02 burst.
+
+**Analysis:** does the connect-time burst's own three-length-14-string sub-message match the
+video-transcribed serial numbers from step 1, confirming the "EC"/"DR"/"DL"-substring
+Case/Right/Left semantic reading (still 🟡 HYPOTHESIS per `AGENTS.md` §13.6 even if the RPC identity
+resolves)? And does decoding the burst's surrounding RPC envelope (service/method identifiers, per
+`REVERSE_ENGINEERING.md`'s `nqx`/`npy`/`nqo` pw_rpc entries) show a `GetHardwareInfo` call/response
+rather than `GetSoftwareInfo`, resolving this session's own structural finding one way or the other?
+
 ### 4.2 Pixel 9a (GrapheneOS) — secondary/validation session
 
 No app-driven commands are possible here, so this session focuses on connection-level
@@ -1667,6 +1812,11 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-050` | *planned* | Pixel 7a | TBD | TBD | TBD | AG (repeat) | `PRIV-001` | Repeat of `CAP-040`'s DLCI 0x08 unmapped Get-shaped codes correlation, this time using a trigger confirmed to actually reopen DLCI 0x08 (OS Bluetooth toggle or physical dock/undock), not the app's own Connect/Disconnect buttons | — | — | planned |
 | `CAP-051` | *planned* | Pixel 7a | TBD | TBD | TBD | AM (new) | none existing — flagged as a `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` follow-up, not assigned here (see `CAP-051-EVENT-NOTES.md`); incidental `ANC`-family, `TOUCH-007` | `qhr` field 13 ANC-parallel-path wire confirmation — isolated in-app tap and isolated physical press-and-hold gesture, checking whether either correlates with a DLCI 0x02 `field13` write alongside DLCI 0x04's confirmed path | — | — | planned |
 | `CAP-052` | *planned* | Pixel 7a | TBD | TBD | TBD | AN (new) | none existing — flagged as a `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` follow-up, not assigned here (see `CAP-052-EVENT-NOTES.md`) | `CAP-041` Case%-change bracket — ≥30-minute session with a genuine Case battery charge/discharge, to test whether DLCI 0x02's recurring 2-field sub-message actually tracks Case% or merely coincided with a constant value | — | — | planned |
+| `CAP-053` | *planned* | Pixel 7a | TBD | TBD | TBD | AO (new) | `EQS-004`, `EQP-008` | EQ outer field 16-vs-18 — drag-and-release without ever tapping Save, isolated from the newly-found navigate-away trigger too, added `ai-sessions/0017` | — | — | planned |
+| `CAP-054` | *planned* | Pixel 7a | TBD | TBD | TBD | AP (new) | `BATT-002`, `BATT-003` | Connection-free Battery Notification scan bracketing a single-bud insertion/removal event (per the Fast Pair spec's own "optional" trigger condition), added `ai-sessions/0017` | — | — | planned |
+| `CAP-055` | *planned* | Pixel 7a | TBD | TBD | TBD | AQ (new) | `HEAD-002`, `HEAD-003` | Nod/Shake head gestures performed while an actual incoming call/notification is active, camera angled to also capture the gesture itself, added `ai-sessions/0017` | — | — | planned |
+| `CAP-056` | *planned* | Pixel 7a | TBD | TBD | TBD | AR (new) | `HOLD-005` | Genuine re-run of the ANC-rotation-checklist Left/Right split (`CAP-045` never opened the checklist screen), with a mandatory on-camera anti-repeat safeguard, added `ai-sessions/0017` | — | — | planned |
+| `CAP-057` | *planned* | Pixel 7a | TBD | TBD | TBD | AS (new) | `FW-002`, `FW-003` (incidental) | Live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the DLCI 0x02 connect-time burst's 3-string sub-message, following this session's structural finding that it matches `qjm`/`qjr` (`GetHardwareInfo`) better than `qie` (`GetSoftwareInfo`), added `ai-sessions/0017` | — | — | planned |
 
 **Column notes:**
 

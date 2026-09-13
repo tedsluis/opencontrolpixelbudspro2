@@ -58,8 +58,9 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    execute step 3 — `CAP-033`'s own procedure deviation capped that result at 🟡 HYPOTHESIS, see
    `CAP-033-FINDINGS.md` §8) — skeleton created as **`CAP-044`** (Group AA repeat, 2nd attempt), then
    `CAP-018` and the still-uncaptured main-run-through remainder
-   (`CAP-026`, `CAP-028`–`CAP-030`) — `CAP-028` (head gestures) is now the highest-value of these
-   still uncaptured. **Closed this update:** Group W's own untried GATT cache-busting methods —
+   (`CAP-026`, `CAP-029`–`CAP-030`) — **`CAP-028` (head gestures) is done (2026-09-12, inconclusive) and
+   re-verified (2026-09-13); its follow-up is now tracked as planned `CAP-055` (Group AQ), not this
+   bullet.** **Closed this update:** Group W's own untried GATT cache-busting methods —
    `CAP-034` (2026-09-01) combined `pm clear com.android.bluetooth` with a Pixel 9a never before
    connected to this Buds unit and fully resolved the `0x0c0X`/`0x0f2X` handle↔UUID mapping (see
    `PROTOCOL.md` §6, §4.3 Option D) — this bullet's own "untried" framing is now stale and removed.
@@ -74,6 +75,11 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      Left/Right-distinguishing field for this specific write, unlike `HOLD-001`–`HOLD-004`). **Now
      designed, 2026-09-09: skeleton created as `CAP-045` (Group AJ, new — see
      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4.1 and `ai-sessions/0005_MAINTENANCE_RESULT_2026_09_09.md`).**
+     **`CAP-045` run 2026-09-12 but did not exercise Group AJ's own procedure** (physical
+     press-and-hold ANC cycling was captured instead — the rotation-checklist screen was never
+     opened); the question remains fully open. A genuine re-run, with a mandatory on-camera
+     anti-repeat safeguard, is designed as Group AR (planned `CAP-056`,
+     `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 4).
    - Volume balance (`field 17`) scale/direction (`CAP-022-FINDINGS.md` §5, `PROTOCOL.md` §4.5.7/§6)
      — a capture with isolated extreme-position samples (not a continuous drag) plus tighter video
      correlation. **Now designed, 2026-09-09: skeleton created as `CAP-046` (Group AK, new).**
@@ -102,7 +108,12 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      is reachable **only** via a dedicated, self-describing "On click save EQ button" handler, with
      no slider-release code path found anywhere. This closes the static-analysis question but
      **contradicts** `CAP-015`'s own wire-timing "fires on slider-release" hypothesis rather than
-     confirming it — a genuine, unreconciled tension, proposed for maintainer review. See
+     confirming it — a genuine, unreconciled tension, proposed for maintainer review.
+     **Re-verified 2026-09-13 (`ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 1):** the
+     "reachable only via Save button" reading was incomplete — a second call path exists
+     (`hod.java`, a navigate-away-with-unsaved-changes trigger), adding a third candidate. A capture
+     isolating all three (Save tap / navigate-away / genuine slider-release only) is proposed as
+     `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AO (planned `CAP-053`). See
      `REVERSE_ENGINEERING.md`'s `qjw` entry and `PROTOCOL.md` §4.2/§6.
    - **Added 2026-09-03 (audit finding):** re-verify `PROTOCOL.md` §4.3 Option A's "shown ≥8s,
      auto-hidden after 20s" Battery Notification visibility-timing claim directly against the
@@ -285,7 +296,12 @@ lower priority than finishing ANC/Battery/EQ):**
       `PROTOCOL.md` §4.3 Option A and `CAP-011-FINDINGS.md`. **Still open:**
       a genuinely clean, connection-free repeat is needed — skeleton created 2026-09-09 as
       `CAP-043` (Group Q repeat, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and
-      `ai-sessions/0005_MAINTENANCE_RESULT_2026_09_09.md`).
+      `ai-sessions/0005_MAINTENANCE_RESULT_2026_09_09.md`). **`CAP-043` done 2026-09-13**: genuinely
+      clean isolation confirmed, a second confirmed non-match against Option A's documented layout —
+      closes the active-connection-confound question, but only the idle/case-closed trigger condition
+      was tested. A single-bud-insertion/removal bracket (the Fast Pair spec's own "optional" trigger)
+      is proposed as `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AP (planned `CAP-054`,
+      `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 2).
 - [x] **`CAP-013`/`CAP-031`/`CAP-032` (Group A repeat) — whether "Forget" fully clears prior BLE
       association.** **Done 2026-08-27**, on the fourth attempt (`CAP-032`) — the first three
       (`CAP-001`'s original session, `CAP-013`, `CAP-031`) all either predate the question or
@@ -299,9 +315,13 @@ lower priority than finishing ANC/Battery/EQ):**
       only so this file's priority ordering covers them too, not as a duplicate description):
       `CAP-018` (Group Y, `0x0044` BLE-notification-burst isolation), and the still-uncaptured main
       run-through remainder — `CAP-026` (Group L, passive observation). **`CAP-027` (Group N, touch
-      gestures) is done, 2026-08-30** — see `CAP-027-FINDINGS.md`. Still to do: `CAP-028` (Group O,
-      head gestures, needs `CAP-020`'s Head-gestures toggle left on — never attempted),
-      `CAP-029` (Group P, Conversation Detection voice trigger + the optional,
+      gestures) is done, 2026-08-30** — see `CAP-027-FINDINGS.md`. **`CAP-028` (Group O, head
+      gestures) run 2026-09-12 — inconclusive**: zero wire-visible traffic during the claimed
+      gesture window, but no active call/notification existed for a gesture to act on, so this
+      cannot distinguish "functionally inert, as expected" from "gesture not triggered." Re-verified
+      across the full log 2026-09-13, same clean negative (`ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md`
+      Phase 3) — a correctly-scoped repeat with an active call/notification is designed as Group AQ
+      (planned `CAP-055`). Still to do: `CAP-029` (Group P, Conversation Detection voice trigger + the optional,
       destructive factory-reset comparison + the still-open shorter-press pairing-mode question),
       and `CAP-030` (Group Q items #19–20, Loud Noise Protection/Adaptive Audio, needs firmware
       ≥4.467 — worth double-checking this against the project's `release_5.203` baseline first,

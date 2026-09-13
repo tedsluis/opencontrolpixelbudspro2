@@ -1425,6 +1425,33 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     the next action; the Save button may auto-fire under some UI state this pass didn't identify; or
     an app-version difference between `CAP-015`'s capture date and this pass's analyzed APK version.
     None of these is asserted — only that the code, as read, shows no other path to field 18.
+  - **Correction (2026-09-13, `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 1
+    re-verification) — the "reachable only through a dedicated Save-button handler" claim above is
+    factually incomplete: a genuine second call site to `hom.k()` (and therefore to `fyd.d`/field 18)
+    exists, not found by the 2026-09-08 pass.** 🟢 FACT (code existence, self-describing log message):
+    `hod.java:36` — a second, distinct lambda (`hod`, `implements ebe`) also calls `homVar.k()`,
+    gated on `crmVar.d() != null && ((hpp) crmVar.d()).b` (a boolean, plausibly an "unsaved changes"
+    flag — `hom.java:128` sets `hpp`'s second boolean field from a diff-equality check,
+    `hoj.a(...) == -1`, consistent with but not confirmed as a dirty-flag), and logging the
+    self-describing `"Navigate away, save EQ"` immediately before calling `userEqFragment.aK()` (the
+    same save-confirmation toast method the Save-button path also calls). This `hod` instance is
+    registered in `UserEqFragment.java:82` (`private final ebe am = new hod(this, 0);`) and wired via
+    `bvl.n(this).g(this.am)` (`UserEqFragment.java:556`) — an event-bus-shaped registration (`ebo`'s
+    constructor computes a string key from `ecfVar.getClass()`), not a `SeekBar`/slider-touch
+    listener and not confirmed as a Jetpack Navigation destination-changed callback either; **exactly
+    what event class triggers `hod.a(ebo)` was not traced this pass** (out of this bounded
+    re-verification's scope). The 2026-09-08 entry's own "sole caller in the entire decompiled tree"
+    claim is corrected here, not silently left standing, per this project's zero-creativity rule —
+    a targeted cross-reference of every file holding a `hom`-typed field against every `.k()` call
+    site found exactly these two call sites (`hju.java` case 19, `hod.java:36`), no others.
+  - **What this does NOT establish**: whether this second, "navigate away" trigger is what actually
+    fired in `CAP-015`'s 15 drag-cycles (still no call-site trace connects either path to a literal
+    slider-release/finger-lift gesture) — it adds a **third** candidate trigger (Save button /
+    navigate-away-with-unsaved-changes / the still-unconfirmed slider-release reading) rather than
+    resolving which one explains the wire timing. A capture isolating all three conditions from each
+    other (not tapping Save, not navigating away, and genuinely only releasing the slider) is the
+    only way to close this — designed as `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AO (planned
+    `CAP-053`), see `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 1.
   - **This closes `TODO.md`'s own item** ("trace `fyd.d`/`fyd.e`'s own call sites... to connect
     `qjw` field 16/18's code-derived reading to the wire-observed drag/release timing") with a
     concrete, code-level answer — but the answer sharpens the open question into a real contradiction
@@ -1608,6 +1635,28 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
   beyond that one call site's control-flow behavior.
 - **Open questions**: `qjj`/`qie` (the two oneof alternatives) and field 5's `FIXED64` value were not
   traced further this pass.
+- **Update (2026-09-13, `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 5) — `qie`'s own
+  shape decoded (`scripts/decode_rawmessageinfo.py`), and compared byte-for-byte against `CAP-036`
+  frame 1423's actual wire content; the existing "structurally matches `qie`" reading in
+  `PROTOCOL.md` §6 is corrected, not confirmed, by this pass.** 🟢 FACT (mechanical decode + direct
+  byte-level comparison, command+hex shown in the RESULT file above):
+  `qie` decodes to 3 fields (1/2/3), **each typed `MESSAGE`** (Java fields c/d/e) — not `STRING`.
+  `CAP-036` frame 1423's own connect-time-burst sub-message (the pw_rpc payload field, 48 bytes)
+  decodes cleanly and exhaustively as a 3-field message with fields 1/2/3, **each a direct,
+  length-14 `STRING`** (`0a 0e <14 bytes "57071WRBEC0251">`, `12 0e <...>`, `1a 0e <...>`) — no
+  additional nested tag+length exists between each field's own length-delimiter and its string
+  bytes, which a `MESSAGE`-typed field would require. **This is a structural non-match against `qie`,
+  not a match**: a `qie` instance's own 3 fields would each need to look like
+  `0a NN 0a MM <string bytes>` (an extra nested message wrapper), not the flat `0a 0e <string
+  bytes>` actually observed. By contrast, `qjm`/`qjr` (`qiv`'s/`GetHardwareInfo`'s own two oneof
+  alternatives, decoded this same pass) are **each exactly a 3-field, fields-1/2/3, all-`STRING`**
+  message — matching frame 1423's observed shape exactly, both in field numbering and field typing.
+  **What this does NOT establish**: RPC identity (no service/method identifier was decoded this
+  pass — the outer pw_rpc/`pw_hdlc` envelope bytes surrounding this 48-byte payload were not fully
+  parsed, only the payload's own field structure) — this is a structural-shape comparison only, the
+  same evidentiary tier the original 2026-09-08 finding used, now pointing the other way. Proposed
+  for `PROTOCOL.md` §6 as a correction, pending review; a live correlation capture (Group AS,
+  planned `CAP-057`) is the recommended way to settle RPC identity directly.
 
 
 
@@ -2002,6 +2051,28 @@ MaestroEmptyMarker entry above).
 **Open questions**: none of the "plausibly" readings above are anything more than ⚪ ASSUMPTION from
 field count/type/RPC-name context — none is capture-correlated. Included here only to keep this
 register complete for whoever picks up the corresponding capture-correlation work next.
+
+**Update (2026-09-13, `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 3) — `qin`'s single
+`ENUM` field's own validity range decoded; no Nod/Shake-named constant found anywhere in the
+decompiled tree.** 🟢 FACT (code existence): `qin`'s field 1 (`c`) references a shared,
+R8-merged enum-validity checker (`qgx`, `implements mys`, a single `a(int)` method dispatching on a
+stored instance index — the same infrastructure class validates ~20 unrelated proto enums across
+this APK, one `case` per enum type); the specific instance `qin` references (`qgx.q`, index 16)
+routes to `a.aO(int)` → `a.aI(int) != 0`, and `a.aI(int)` returns non-zero **only for raw input values
+0, 1, and 2** (mapping them to 1, 2, 3 respectively; everything else returns 0/invalid). This means
+the wire-format enum `HeadGesture.SubscribeToResults` returns is a genuine, code-confirmed
+**3-valued** enum (raw values `{0, 1, 2}`) — structurally consistent with exactly one
+unset/unknown sentinel plus the two real gesture types (Nod, Shake) this project already expects,
+but **no name for any of the 3 values survives** anywhere in the decompiled tree: an exhaustive
+case-insensitive search for `"nod"`/`"shake"`/`NOD_GESTURE`/`SHAKE_GESTURE`/`HeadGestureType`-style
+literals across the full `jadx-output/` tree found zero matches. Which raw value (0, 1, or 2) is
+Nod and which is Shake is **not** recoverable from static analysis — only a capture with an actual,
+triggered, camera-confirmed gesture (designed as `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AQ, planned
+`CAP-055`) can resolve this.
+- **What this does NOT establish**: whether `HeadGesture.SubscribeToResults`/`qin` is even the
+  channel this project would observe on the wire for a Nod/Shake action (the `StartDetection`/
+  `EndDetection` unary calls and this server-stream response are all still unconfirmed against any
+  capture) — this pass only sharpens the *shape* of what to look for once a capture exists.
 
 ### Candidate rich schemas outside this pass's traced call graph (807-class sweep, unidentified)
 

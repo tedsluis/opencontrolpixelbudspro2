@@ -80,6 +80,11 @@ CAP-049,capture,analyzed,"session date/status: 2026-09-12 — cycling did not re
 CAP-050,capture,planned,"session date/status: *planned* — Group AG (repeat), CAP-040 DLCI 0x08 unmapped codes repeat with a genuine reopen trigger (not the app's in-app Connect/Disconnect buttons)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-051,capture,planned,"session date/status: *planned* — Group AM (new), qhr field 13 ANC-parallel-path wire confirmation (in-app tap vs. physical press-and-hold)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-052,capture,planned,"session date/status: *planned* — Group AN (new), CAP-041 Case%-change bracket over a genuine charge/discharge",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-053,capture,planned,"session date/status: *planned* — Group AO (new), EQ outer field 16-vs-18 drag-and-release-without-Save isolation, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-054,capture,planned,"session date/status: *planned* — Group AP (new), connection-free Battery Notification scan bracketing a single-bud insertion/removal event, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-055,capture,planned,"session date/status: *planned* — Group AQ (new), Nod/Shake head gestures performed while an active call/notification exists, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-056,capture,planned,"session date/status: *planned* — Group AR (new), HOLD-005 ANC-rotation-checklist Left/Right split genuine re-run (CAP-045 never opened the checklist screen), added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-057,capture,planned,"session date/status: *planned* — Group AS (new), live GetSoftwareInfo/GetHardwareInfo correlation against the DLCI 0x02 connect-time burst, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
