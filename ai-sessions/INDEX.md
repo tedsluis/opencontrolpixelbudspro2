@@ -22,7 +22,7 @@ a new session** — the same "check before assigning" discipline `id_registry.cs
 | 0013 | FEATURE | 2026-09-13 | Resolve pending 0012 decisions and documentation consistency, then begin Phase 4 app development (ANC-first) | complete |
 | 0014 | MAINTENANCE | 2026-09-13 | Decide minimum Android API level, refresh README.md's project status, commit and push | complete |
 | 0015 | MAINTENANCE | 2026-09-13 | Investigate and resolve ai-sessions/0010's remaining sign-off items | complete |
-| 0016 | CAPTURE | 2026-09-13 | Full video+log re-analysis and FINDINGS for CAP-043, CAP-044 | planned — prompt drafted, not yet executed |
+| 0016 | CAPTURE | 2026-09-13 | Full video+log re-analysis and FINDINGS for CAP-043, CAP-044 | complete |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/INDEX.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/INDEX
