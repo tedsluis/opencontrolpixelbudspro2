@@ -15,7 +15,13 @@ carries a status per `PROJECT_RULES.md` §1:
 **Log file:** `CAP-002-btsnoop_hci.log` — a long-running, non-restarted snoop log spanning
 08:50:32–17:10:58 (~8h20m, 50,468 packets total, shared with `CAP-001`); this capture's actual
 window is the ~150s slice **17:04:35–17:07:05** (1,877 packets after slicing with
-`editcap -A/-B`). **Video:** `CAP-002-recording.mp4` (114.2s, 17:04:53–17:06:46 local, on-screen
+`editcap -A/-B`). **Every frame number cited below is in this original ~1,877-packet sliced
+numbering, not the frame numbers `tshark`/Wireshark report against the actual
+`CAP-002-btsnoop_hci.log` file now stored in the workspace (the full, unsliced ~8h20m/50,468-packet
+buffer) — add a constant offset of `+47984` to translate a frame number cited below into the
+current file's own numbering (e.g. this document's "frame 1578" = the current file's frame 49562;
+independently confirmed via two more citation pairs in this same file, `ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md`
+Finding 6).** **Video:** `CAP-002-recording.mp4` (114.2s, 17:04:53–17:06:46 local, on-screen
 wall-clock overlay). **Devices:** phone `Google_7e:ca:81` (Pixel 7a, `E8:D5:2B:7E:CA:81`,
 BD_ADDR partially visible on-screen in this capture — same phone as `CAP-001`), peer
 `Google_cf:6e:07` (`04:00:6E:CF:6E:07`, the Buds/case — confirmed the **same physical device** as
