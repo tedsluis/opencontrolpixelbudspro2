@@ -50,14 +50,32 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    other two, `MaestroEndpointService`'s smali fallback read and `gjv.p()`'s caller trace, both need
    either an untried smali read or a fresh capture first). **`CAP-033` (Group AA, `SDP-001`/`SDP-002`)
    is done (2026-08-30)** — see below.
-4. **Remaining planned captures** (updated 2026-09-09 — `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`,
-   `CAP-027`, `CAP-033`–`CAP-042` are done, see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9): a clean
-   connection-free repeat of the Battery Notification BLE scan (`CAP-011` was inconclusive) —
-   skeleton created as **`CAP-043`** (Group Q repeat, `ai-sessions/0005_MAINTENANCE_RESULT_2026_09_09.md`),
-   a proper isolation-clean repeat of `SDP-001` (force-stop strictly before "Forget," and actually
-   execute step 3 — `CAP-033`'s own procedure deviation capped that result at 🟡 HYPOTHESIS, see
-   `CAP-033-FINDINGS.md` §8) — skeleton created as **`CAP-044`** (Group AA repeat, 2nd attempt), then
-   `CAP-018` and the still-uncaptured main-run-through remainder
+4. **Remaining planned captures** (updated 2026-09-13 — see below for the next-test-session queue;
+   `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`, `CAP-027`, `CAP-033`–`CAP-042` are done, see
+   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9):
+   - **Next test session (added 2026-09-13, `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md`) —
+     5 short, self-contained captures, each with its own placeholder capture folder and event-notes
+     skeleton already prepared under `captures/` (see each `CAP-0NN`'s own row in
+     `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9), each ~3–10 minutes, no destructive/one-time action among
+     them (all safely repeatable if a retry is needed):**
+     1. `CAP-053` (Group AO) — EQ outer field 16-vs-18: isolate Save-tap / navigate-away /
+        genuine slider-release from each other.
+     2. `CAP-054` (Group AP) — Battery Notification, connection-free, bracketing a single-bud
+        insertion/removal (the Fast Pair spec's own "optional" trigger, untested so far).
+     3. `CAP-055` (Group AQ) — Nod/Shake head gestures with an actual active call/notification,
+        camera also framing the gesture itself (needs a second phone to place the call).
+     4. `CAP-056` (Group AR) — ANC-rotation-checklist Left/Right split, genuine re-run — **read the
+        skeleton's anti-repeat safeguard first**, `CAP-045` skipped the actual checklist screen.
+     5. `CAP-057` (Group AS) — live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the
+        connect-time burst, using the firmware/serial-number screen.
+   - Also still queued from before, lower priority than the 5 above: **`CAP-043` (Group Q repeat,
+     Battery Notification BLE scan) is done (2026-09-13)** — a second confirmed non-match, see
+     Phase 1 above and `CAP-054` in the next-test-session queue for its own follow-up.
+   - **`CAP-044` (Group AA repeat, 2nd attempt, `SDP-001`/`SDP-002`) is done (2026-09-13)** — still
+     🟡 HYPOTHESIS, a different isolation gap than `CAP-033`'s; a 3rd attempt is a Tier-2 decision
+     item in `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 6, not yet designed as a
+     skeleton pending that go/no-go.
+   - `CAP-018` and the still-uncaptured main-run-through remainder
    (`CAP-026`, `CAP-029`–`CAP-030`) — **`CAP-028` (head gestures) is done (2026-09-12, inconclusive) and
    re-verified (2026-09-13); its follow-up is now tracked as planned `CAP-055` (Group AQ), not this
    bullet.** **Closed this update:** Group W's own untried GATT cache-busting methods —
