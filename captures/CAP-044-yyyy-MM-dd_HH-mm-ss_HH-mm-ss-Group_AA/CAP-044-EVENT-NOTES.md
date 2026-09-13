@@ -48,13 +48,17 @@ capped `CAP-033` at 🟡 HYPOTHESIS.
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| TBD | Official app force-stopped, confirmed via Settings → Apps (screenshot/video) | User | `SDP-001` | Conn. state: TBD |
-| TBD | "Forget" performed via system Bluetooth settings (per-device, not a broader reset) | User (Hardware) | `SDP-001` | TBD |
-| TBD | Re-pair via system Bluetooth settings' "Pair new device" flow; SDP browse captured | User (Hardware) | `SDP-001` | TBD |
-| TBD | Observation window ≥60s after bonding completes, app still not opened | — | `SDP-001` | TBD |
-| TBD | Official companion app opened, second SDP browse captured (app-triggered) | User (App) | `SDP-001` | TBD |
-| TBD | Logging stopped, extracted via raw path | — | — | TBD |
-| — | (opportunistic only, separate session) `SDP-002` — before/after a firmware OTA update | — | `SDP-002` | Not attempted this session unless an update is pending |
+| 13:05:51 | Session start. Case is open with buds inside. Official app force-stopped via Settings → Apps. | User (OS) | `SDP-001` | — |
+| 13:05:55 | User navigates back into the Pixel Buds app ("Device details" screen) via the multitasking menu. | User (App) | `SDP-001` | **Deviation:** App is woken up again. |
+| 13:05:59 | "Forget device" tapped within the Pixel Buds app. | User (App) | `SDP-001` | Device is forgotten. |
+| 13:06:34 | User presses the pairing button on the back of the open case. Light pulses white. | User (Hardware) | `SDP-001` | Entering pairing mode. |
+| 13:06:40 | Fast Pair prompt appears. User taps "Connect". | User (OS) | `SDP-001` | — |
+| 13:06:52 | User navigates to standard BT settings and taps "Pixel Buds Pro 2 van Ted" under available devices. | User (OS) | `SDP-001` | — |
+| 13:07:00 | Standard pairing prompt accepted. | User (OS) | `SDP-001` | SDP browse expected here. |
+| 13:08:10 | Connection completes. The Pixel Buds app "Device details" / Setup UI automatically surfaces on screen. | System / App | `SDP-001` | **Deviation:** The app is active. The 60s system-only isolation window is broken. |
+| 13:10:18 | User manually navigates back to Settings → Apps and force stops the Pixel Buds app again. | User (OS) | `SDP-001` | — |
+| 13:10:23 | User opens the Pixel Buds app manually from the home screen. | User (App) | `SDP-001` | App requests permissions; device connects and shows battery stats. |
+| 13:11:07 | Video ends. | — | `SDP-001` | — |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AA)
 
