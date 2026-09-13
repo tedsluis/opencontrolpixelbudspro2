@@ -3,13 +3,14 @@
 An independent, open-source Android app to fully control the **Google Pixel Buds
 Pro 2** without the official Pixel Buds app or Google Play Services.
 
-> **Status:** protocol-reconstruction phase. There is no application code yet — no
-> Gradle project or module skeleton has been created (see `TODO.md` Phase 4). The
-> protocol knowledge itself, however, has matured well beyond "early research": ANC
-> mode switching, Find My Buds (Left/Right), battery reporting (via HFP), and the
-> equalizer's live-write path are all confirmed 🟢 FACT and implementation-ready
-> (`PROTOCOL.md`, `DECISIONS.md`). See `TODO.md` for the current task list and
-> readiness assessment.
+> **Status:** protocol reconstruction is mature, and Android app development has begun. ANC mode
+> switching, Find My Buds (Left/Right), battery reporting (via HFP), and the equalizer's live-write
+> path are all confirmed 🟢 FACT and implementation-ready (`PROTOCOL.md`, `DECISIONS.md`). A real,
+> building, unit-tested Android Studio project now exists at [`android/`](./android) — five Gradle
+> modules, ANC's `FrameEncoder`/`FrameDecoder` implemented and tested against real capture bytes, a
+> working Hilt-wired composition root — but it has **no UI screens for real device control yet** and
+> has **never been run against real Pixel Buds hardware** (see `TODO.md` Phase 4 for exactly what's
+> done vs. still open).
 
 > ## ⚠️ Disclaimer: hardware risk
 >
@@ -47,26 +48,37 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-09-08)
+## Current state (2026-09-13)
 
-- **Captures:** 42 registered sessions (`CAP-001`–`CAP-042`), most analyzed and a handful still
-  planned — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index.
+- **Captures:** 52 registered sessions (`CAP-001`–`CAP-052`), most analyzed and a handful still
+  planned — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index. A full, independent,
+  non-sampled re-derivation of every finding from an earlier full-catalog review found the core
+  protocol-decode content held up with zero errors (`ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md`).
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed
   (`v1.0.955078536-10253511`) — see `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's own
   transport code was not found anywhere in it (`DECISIONS.md` ADR-025) — both channels are
   implemented from wire-capture evidence alone, not by decompiled-code cross-reference.
-- **Decisions:** 25 recorded architecture/protocol decisions (`DECISIONS.md`), every
-  🟢 FACT promotion in `PROTOCOL.md` traceable to an explicit maintainer sign-off.
+- **Decisions:** 29 recorded architecture/protocol decisions (`DECISIONS.md`), every
+  🟢 FACT promotion in `PROTOCOL.md` traceable to an explicit maintainer sign-off. The three
+  previously-open architecture questions are now all decided: dependency injection is **Hilt**
+  (ADR-028), minimum supported Android API is **34/Android 14**, matching compile/target SDK
+  (ADR-029), and Find My Buds for the Case/"both simultaneously" is an explicit, permanent v1
+  non-goal (ADR-027, Zero-GMS scope limit — see `PROJECT.md`).
 - **Confirmed and implementation-ready:** ANC/Transparency/Adaptive mode switching,
   Find My Buds (Left/Right), battery reporting (HFP), the equalizer's live-write
   path, touch-controls top-level toggle and press-and-hold assignment, mono audio,
-  multipoint, volume EQ, volume balance, and the "Bud return" case sound.
+  multipoint, volume EQ, volume balance (including its Left/Right polarity, ADR-026),
+  and the "Bud return" case sound.
 - **Still open:** touch-controls' head-gestures and ANC-mode-rotation sub-features,
-  in-ear detection, EQ preset persistence semantics, Find My Buds for
-  the case (a Zero-GMS scope question, not just a research gap), and per-component
+  in-ear detection, EQ preset persistence semantics, and per-component
   serial-number reading.
-- **Not started:** the Android app itself — no Gradle project exists in this
-  repository yet.
+- **App development has started** — see [`android/`](./android): five Gradle modules
+  (`:app`, `:ui`, `:domain`, `:data`, `:hardware`), a Hilt-wired `:app` composition root, and ANC's
+  `FrameEncoder`/`FrameDecoder` implemented and unit-tested against real, `tshark`-extracted capture
+  bytes (`./gradlew assembleDebug test` builds a real debug APK, all unit tests passing). **Not yet
+  done:** any UI screen for actually controlling the Buds, a real `BluetoothSocket`-backed transport
+  verified against hardware, and EQ/Battery/Find-My-Buds codecs (`:data` has ANC only so far) — see
+  `TODO.md` Phase 4 for the exact, up-to-date checklist.
 
 ## Approach
 
@@ -143,11 +155,11 @@ humans and AI coding assistants working on it:
 | `AI_SESSION_LOG_PROCEDURE.md` | Naming scheme, category vocabulary, and numbering discipline for logging AI-agent prompts/results into `ai-sessions/` |
 | `ai-sessions/INDEX.md` | Registry of every logged AI-agent prompt/result pair under `ai-sessions/` — check before assigning the next number |
 | `scripts/lint_docs.py` | Grep-based doc lint (dead filenames, unregistered IDs, stale project name) — run before committing a doc change |
+| `android/` | The Android Studio project itself (five Gradle modules: `:app`, `:ui`, `:domain`, `:data`, `:hardware`) — see the "Current state" section above for what's implemented so far |
 
 ## Target platform
 
-- Compile/target SDK: API 34 (Android 14)
-- Minimum supported Android API: **TBD** (see `ARCHITECTURE.md` §15)
+- Compile/target/minimum SDK: **API 34 (Android 14)** — `DECISIONS.md` ADR-029
 - Primary reference OS: GrapheneOS, with compatibility maintained for stock
   AOSP-based ROMs
 

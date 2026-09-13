@@ -1417,5 +1417,34 @@ motivated this).
   open. Every future module needing a dependency graph entry uses Hilt's `@Inject`/`@Provides`
   conventions rather than a hand-rolled locator.
 
+## ADR-029 — Minimum supported Android API level: API 34 (Android 14)
+
+- **Date**: 2026-09-13
+- **Status**: Accepted
+- **Context**: `ARCHITECTURE.md` §15 left the minimum supported Android API level open — compile/
+  target SDK was already fixed at API 34 (Android 14), but how far down the minimum should go for
+  broader AOSP-ROM compatibility was undecided. The open item itself noted this wasn't blocked on a
+  single API: the generic battery broadcast (`ARCHITECTURE.md` §4 option 0) needs API 31+, but the
+  confirmed primary battery/ANC/EQ paths (Fast Pair advertisement, Message Stream, HFP, GATT) don't
+  depend on it, and `CompanionDeviceManager` (`DECISIONS.md` ADR-005) only needs API 26. The
+  maintainer decided directly, in conversation, that the minimum should simply match the
+  already-fixed compile/target SDK rather than support a wider, lower floor.
+- **Options considered**:
+  - A lower minimum (e.g. API 26, the floor `CompanionDeviceManager` itself needs) for broader
+    AOSP-ROM/older-device compatibility, accepting that API 31's generic battery broadcast (a cheap
+    supplementary check, not a required mechanism) degrades gracefully below that version.
+  - **API 34 (Android 14), matching compile/target SDK exactly** — chosen. Simplest option: no
+    version-gated code paths anywhere in the app, and this project's primary reference platform
+    (GrapheneOS, `ARCHITECTURE.md` §1) tracks current Android releases closely, so a lower floor
+    buys little real compatibility benefit for this project's actual user base.
+- **Decision**: minimum supported Android API level is **34 (Android 14)**, identical to
+  compile/target SDK. No lower-API compatibility path is pursued.
+- **Consequences**: `ARCHITECTURE.md` §1/§15 updated to record this as decided, not open. The
+  Android Gradle project's `minSdk` is set to 34 across every module that declares one (`:app`,
+  `:hardware`, `:ui`) — simpler than the API-26 floor used provisionally before this decision, since
+  every Bluetooth/battery mechanism this project relies on is available well below API 34 anyway.
+  This forecloses running on older Android versions/ROMs that can't be updated past API 33, a
+  deliberate trade-off given this project's GrapheneOS-first target.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

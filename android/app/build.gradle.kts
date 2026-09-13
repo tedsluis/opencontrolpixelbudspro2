@@ -12,7 +12,8 @@ android {
 
     defaultConfig {
         applicationId = "io.github.tedsluis.opencontrolpixelbuds"
-        minSdk = 26
+        // DECISIONS.md ADR-029: minimum supported Android API is 34, matching compile/target SDK.
+        minSdk = 34
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0-dev"

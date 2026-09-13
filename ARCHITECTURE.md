@@ -31,9 +31,9 @@ Communication happens over two transports:
   proprietary RFCOMM traffic — not confirmed, no HID report content has been captured or decoded.
   Not treated as a confirmed transport for this app's own use until decoded.
 
-Compile/target SDK: API 34 (Android 14). Minimum supported Android API: **TBD** — see
-the open question in §15; do not treat "API 34" as if it already answered that. Primary
-reference OS: GrapheneOS, with compatibility maintained for stock AOSP-based ROMs.
+Compile/target/minimum SDK: **API 34 (Android 14)** — decided 2026-09-13, `DECISIONS.md` ADR-029;
+see §15's "already decided" list. Primary reference OS: GrapheneOS, with compatibility maintained
+for stock AOSP-based ROMs.
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -529,18 +529,6 @@ undecided (see §15's "Already decided, not open" list, updated to match).
 
 > Move to `DECISIONS.md` once decided, following the ADR template.
 
-- [ ] Minimum supported Android API level: compile/target SDK is set at API 34
-      (Android 14), but the minimum SDK for broader AOSP-ROM compatibility is
-      not yet fixed. This is not blocked on a single API, so "TBD" here does
-      not mean unplanned: the generic battery broadcast (§4 option 0,
-      `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED`) requires **API 31+**,
-      but §4's options 1–4 (Fast Pair advertisement, Message Stream, HFP,
-      GATT) are the confirmed primary paths and do not depend on API 31 — so a
-      lower min API (e.g. API 26 for `CompanionDeviceManager`, ADR-005) is not
-      blocked by option 0's availability, which simply degrades gracefully to
-      "unavailable on this API level, other options still work." The exact
-      floor still depends on which other BLE/Bluetooth APIs (foreground
-      service types, etc.) turn out to be required.
 - [ ] Added 2026-08-14: is the observed Bluetooth HID surface (§1) architecturally relevant to
       `:hardware`/`BudsTransport` — i.e. does any control feature this app needs actually route
       through HID reports rather than RFCOMM/GATT — or is it exclusively used by parts of the
@@ -561,7 +549,11 @@ undecided (see §15's "Already decided, not open" list, updated to match).
 > **dependency injection — Hilt** (see §10, `DECISIONS.md` ADR-028, decided
 > 2026-09-13); **Find My Buds Case/"both simultaneously" — out of scope for v1**
 > (`PROJECT.md` non-goals, `DECISIONS.md` ADR-027, decided 2026-09-13) — Left/Right
-> ring is unaffected and already implemented.
+> ring is unaffected and already implemented; **minimum supported Android API level
+> — API 34 (Android 14), same as compile/target SDK** (§1, `DECISIONS.md` ADR-029,
+> decided 2026-09-13) — no lower-API compatibility path is pursued; `CompanionDeviceManager`
+> (API 26, ADR-005) and the generic battery broadcast (API 31, §4 option 0) are both
+> trivially satisfied at this floor.
 
 ## 16. Attribution
 

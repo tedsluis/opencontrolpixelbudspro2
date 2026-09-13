@@ -17,7 +17,7 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      current list. Per `AGENTS.md` §6 this step can only be done by the maintainer, not an agent.
    - ~~DI approach (Hilt vs. manual) — Phase 4.~~ **Resolved 2026-09-13: Hilt** (`DECISIONS.md`
      ADR-028).
-   - Minimum Android API level — Phase 5.
+   - ~~Minimum Android API level — Phase 5.~~ **Resolved 2026-09-13: API 34** (`DECISIONS.md` ADR-029).
    - ~~Find My Buds Case/"both simultaneously" — whether to accept a Google Find Hub/account-mediated
      fallback for this one sub-feature or ship v1 without local Case-ring support (`PROTOCOL.md` §6,
      Behavior) — a genuine Zero-GMS scope trade-off, not a research gap; no capture or static
@@ -525,8 +525,9 @@ lower priority than finishing ANC/Battery/EQ):**
       (differing Android version and/or OEM, including GrapheneOS as the
       primary reference target per `ARCHITECTURE.md` §1)
 - [ ] Update `README.md` with build instructions once the app builds
-- [ ] Decide minimum supported Android API level and record it in
-      `DECISIONS.md` (currently open, see `ARCHITECTURE.md` §15)
+- [x] **Decide minimum supported Android API level — resolved 2026-09-13: API 34 (Android 14),
+      matching compile/target SDK** (`DECISIONS.md` ADR-029, `ARCHITECTURE.md` §1/§15). Applied to
+      `android/`'s `:app`/`:hardware`/`:ui` modules (`minSdk = 34`).
 - [ ] Decide multi-device (multiple paired Buds) support for v1 and record it
       in `PROJECT.md` scope + `DECISIONS.md` (currently open, see
       `ARCHITECTURE.md` §15)

@@ -27,6 +27,7 @@ ADR-025,adr,accepted,"Google Play Services (GMS) reverse-engineering is out of s
 ADR-026,adr,accepted,"Volume Balance (qhr field 17) range and Left/Right polarity confirmed: +-100, +100=Left, -100=Right",DECISIONS.md
 ADR-027,adr,accepted,"Find My Buds Case/'both simultaneously': ship v1 with Left/Right ring only, no local fallback",DECISIONS.md
 ADR-028,adr,accepted,"Dependency injection: Hilt",DECISIONS.md
+ADR-029,adr,accepted,"Minimum supported Android API level: API 34 (Android 14)",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

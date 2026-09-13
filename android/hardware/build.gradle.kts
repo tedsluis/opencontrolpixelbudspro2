@@ -8,10 +8,10 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        // API 26 for CompanionDeviceManager (ARCHITECTURE.md §9, DECISIONS.md ADR-005) — a
-        // reasonable floor, not itself a settled decision; see ARCHITECTURE.md §15's own
-        // still-open "minimum supported Android API level" question.
-        minSdk = 26
+        // Minimum supported Android API: 34 (Android 14), matching compile/target SDK
+        // (DECISIONS.md ADR-029) — well above the 26 CompanionDeviceManager itself needs
+        // (ARCHITECTURE.md §9, DECISIONS.md ADR-005).
+        minSdk = 34
     }
 
     compileOptions {
