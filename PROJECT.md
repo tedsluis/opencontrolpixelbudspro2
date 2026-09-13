@@ -64,6 +64,14 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
   Services. Explicitly includes Fast Pair **Account Linking**, **Ownership
   Transfer**, and the **Accessory Non-Owner Service** — investigating or
   implementing these is out of scope (see `DECISIONS.md` ADR-008).
+- **No "Find My Buds" ring support for the Case, or "ring both simultaneously"** — in the official
+  app, both route exclusively through Google's Find My Device Network (an account/cloud-mediated
+  path; `PROTOCOL.md` §4.4 confirms zero local wire traffic while that flow is active, and a
+  code-level trace found no local ring-trigger anywhere in the companion app's own decompiled
+  source). Left/Right ring is unaffected — it is local, 🟢 FACT, and already implemented (see
+  `DECISIONS.md` ADR-011). This is a deliberate, permanent v1 scope decision, not a placeholder for
+  future work — see `DECISIONS.md` ADR-027; revisit only if a future capture or protocol change
+  finds a genuine local mechanism.
 - No reverse-engineering of Google Play Services' own Fast Pair/Nearby module. DLCI 0x04's Fast
   Pair Message Stream and DLCI 0x08's private envelope appear to be implemented entirely inside
   GMS rather than the companion app itself (no trace of either transport was found anywhere in the

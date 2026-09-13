@@ -465,17 +465,17 @@ nothing here that can drift out of sync with §7 (`PROJECT_RULES.md` §2).
 
 ## 10. Dependency Injection
 
-Preference: **Hilt** (if there is no objection to the Dagger/Hilt dependency —
-note Hilt/Dagger does **not** touch the `com.google.android.gms.*` namespace
-and does not itself require Google Play Services, so it does not conflict with
-the Zero-GMS rule in `AGENTS.md` §1) — or a manual DI approach via a light
-service locator, if full independence from Google-authored tooling is also
-desired for the build itself.
+**Decided 2026-09-13: Hilt** (`DECISIONS.md` ADR-028) — Hilt/Dagger does **not** touch the
+`com.google.android.gms.*` namespace and does not itself require Google Play Services, so it does
+not conflict with the Zero-GMS rule in `AGENTS.md` §1, and it reduces `:app`'s own composition-root
+boilerplate across `:domain`/`:data`/`:hardware`/`:ui` (§2). `:app` is a real Hilt composition root:
+`@HiltAndroidApp` `Application`, `@AndroidEntryPoint` `MainActivity`, `@Module`/`@InstallIn` bindings
+for `BudsTransport`/`BudsRepository`. Per the dependency policy in `AGENTS.md` §10, the Hilt version
+is pinned (no `+`) and confirmed to bundle no network/analytics SDK transitively
+(`./gradlew :app:dependencies`).
 
-**This is an open question, not yet decided** — see §13. Whichever option is
-chosen must be justified per the dependency policy in `AGENTS.md` §10
-(justification, no network/analytics SDK bundled transitively, pinned
-versions) and recorded in `DECISIONS.md` before broad adoption.
+**No longer an open question** — this section previously left Hilt vs. a manual service locator
+undecided (see §15's "Already decided, not open" list, updated to match).
 
 ## 11. State Management
 
@@ -529,7 +529,6 @@ versions) and recorded in `DECISIONS.md` before broad adoption.
 
 > Move to `DECISIONS.md` once decided, following the ADR template.
 
-- [ ] Hilt vs. manual DI (§10).
 - [ ] Minimum supported Android API level: compile/target SDK is set at API 34
       (Android 14), but the minimum SDK for broader AOSP-ROM compatibility is
       not yet fixed. This is not blocked on a single API, so "TBD" here does
@@ -558,7 +557,11 @@ versions) and recorded in `DECISIONS.md` before broad adoption.
 > `DECISIONS.md` ADR-006); **single-device support only for v1** — the app
 > targets exactly one paired Pixel Buds Pro 2 at a time (matches `PROJECT.md`'s
 > "Definition of done"); simultaneous multi-device support is explicitly out
-> of scope until separately proposed and recorded in `DECISIONS.md`.
+> of scope until separately proposed and recorded in `DECISIONS.md`;
+> **dependency injection — Hilt** (see §10, `DECISIONS.md` ADR-028, decided
+> 2026-09-13); **Find My Buds Case/"both simultaneously" — out of scope for v1**
+> (`PROJECT.md` non-goals, `DECISIONS.md` ADR-027, decided 2026-09-13) — Left/Right
+> ring is unaffected and already implemented.
 
 ## 16. Attribution
 

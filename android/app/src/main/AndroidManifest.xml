@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    No INTERNET permission anywhere in this manifest, ever (AGENTS.md §1) — a
+    CI/lint check should assert this remains true (ARCHITECTURE.md §14).
+
+    BLUETOOTH_CONNECT/BLUETOOTH_SCAN and the foreground-service permissions
+    (AGENTS.md §2) are intentionally NOT yet declared here: no code in this
+    module talks to a real Bluetooth device yet (the injected BudsTransport
+    resolves to FakeBudsTransport, see app/di/TransportModule.kt) — declaring
+    those permissions now would be premature (AGENTS.md §2's "any additional
+    permission must be justified" rule applies just as much to declaring one
+    before it's used).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:name=".OpenControlApplication"
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.OpenControlPixelBuds">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

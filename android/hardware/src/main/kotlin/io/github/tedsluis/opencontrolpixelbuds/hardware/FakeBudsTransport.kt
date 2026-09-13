@@ -1,0 +1,53 @@
+/*
+ * OpenControl for Pixel Buds Pro 2
+ * Copyright (C) 2026 Ted Sluis
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+package io.github.tedsluis.opencontrolpixelbuds.hardware
+
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+
+/**
+ * Scripted [BudsTransport] for domain/data unit tests — no real
+ * `BluetoothSocket` involved (AGENTS.md §11). A real `BluetoothSocket`-backed
+ * implementation of this interface needs actual hardware to validate and is
+ * out of scope for this phase (see `RfcommBudsTransport`'s own doc comment).
+ */
+class FakeBudsTransport : BudsTransport {
+    override var connected: Boolean = true
+
+    private val _inbound = MutableSharedFlow<Pair<Int, ByteArray>>(extraBufferCapacity = 64)
+    override val inbound: SharedFlow<Pair<Int, ByteArray>> = _inbound
+
+    val sent = mutableListOf<Pair<Int, ByteArray>>()
+    var sendShouldFail: BudsError? = null
+
+    /** Test hook: push a scripted inbound frame as if the Buds had sent it. */
+    suspend fun emit(channelId: Int, frame: ByteArray) {
+        _inbound.emit(channelId to frame)
+    }
+
+    override suspend fun send(channelId: Int, frame: ByteArray): BudsResult<Unit> {
+        sendShouldFail?.let { return BudsResult.Failure(it) }
+        if (!connected) return BudsResult.Failure(BudsError.ConnectionLost)
+        sent += channelId to frame
+        return BudsResult.Success(Unit)
+    }
+}

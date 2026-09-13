@@ -1096,15 +1096,18 @@ option (C), even though its per-earbud content is now FACT-confirmed.
   sound on Pixel Buds Pro 2."* Across a ~2.5-minute window with this flow active, **zero**
   `Group 0x04 Code 0x01` frames appear on the wire — 🟢 FACT (checked explicitly, not assumed) that
   Case/"both" do **not** use the confirmed local Ring mechanism. 🟡 HYPOTHESIS: this instead routes
-  through Google's Find My Device Network (account/cloud-mediated) — **potentially a hard
-  Zero-GMS limit** (`AGENTS.md` §1) on offline Case-ring support, not just an open research
-  question; flagged for maintainer awareness.
+  through Google's Find My Device Network (account/cloud-mediated).
+  **Scope decision, 2026-09-13 (maintainer sign-off, `DECISIONS.md` ADR-027):** this Zero-GMS limit
+  is accepted, not further pursued — v1 ships with **Left/Right ring only**; Case/"both" is
+  explicitly **out of scope** for this project's own app unless a future capture or protocol change
+  finds a genuine local (non-GMS-mediated) mechanism, which no evidence to date suggests exists. See
+  `PROJECT.md`'s non-goals for the corresponding scope statement.
 - **Evidence**: official Fast Pair Message Stream spec worked example; `CAP-025-FINDINGS.md` §3–§7
   (`[VERIFIED-LOCAL]`, 2026-08-21) — video-confirmed taps, 4 action/response pairs (2 starts, 2
   stops), cross-validated against ANC's confirmed envelope.
 - **Verified with experiment**: `CAP-025` (2026-08-21) — see `captures/CAP-025-2026-08-21_08-40-52_08-45-26-Group_K/CAP-025-FINDINGS.md`.
-  Recommended follow-up: none required for Left/Right; a targeted capture of the Find Hub network
-  path (if in-scope at all, per the Zero-GMS question above) would be needed for Case/"both".
+  No further capture is planned for Case/"both" — `DECISIONS.md` ADR-027 closes this as a scope
+  decision, not a remaining research gap.
 
 ### 4.5 Other toggles and secondary features
 
@@ -1336,23 +1339,25 @@ implementation gate.
   (`(n>>1) ^ -(n&1)`), are `-100, -62, -25, 15, 75, 100, 5` (previously misread as the raw unsigned
   varints `199, 123, 49, 30, 150, 200, 10`).
 - **Sent to**: DLCI 0x02.
-- **Scale/direction — PROPOSAL, added 2026-09-12 (`CAP-046-FINDINGS.md` §2), awaiting maintainer
-  sign-off, not yet promoted:** a dedicated isolated-extreme-position capture (Group AK) found the
-  range clamps at exactly **±100**, and — video-confirmed 3/3 times, zero counter-examples —
+- **Scale/direction — 🟢 FACT, promoted 2026-09-13 (maintainer sign-off, `DECISIONS.md` ADR-026):**
+  a dedicated isolated-extreme-position capture (`CAP-046`, Group AK) found the range clamps at
+  exactly **±100**, and — video-confirmed 3/3 times, zero counter-examples, independently
+  re-derived at the wire level a second time (`ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md`
+  Finding 125, exact byte-level match on all 8 samples) —
   **`field17 = +100` corresponds to the Left extreme and `field17 = -100` to the Right extreme**,
   the opposite of this section's own prior implicit labeling of `CAP-022`'s first sample as "Left."
   Center-return samples read `0`/`1`/`1`/`2` (small drag-imprecision noise around a true zero).
-  **Not yet confirmed**: whether the field scales linearly between center and the extremes — this
-  capture sampled only the two extremes and near-center, never an intermediate position (its own
-  planned intermediate samples did not actually occur, see `CAP-046-FINDINGS.md` §4).
-- **Status**: 🟢 FACT for the field-number identity and semantic name ("Volume balance"). 🟡
-  HYPOTHESIS (strong), pending sign-off, for the ±100 range and the Left/+100↔Right/-100 direction
-  mapping above. 🔴 still open: intermediate-position scaling, and persistence across a
-  disconnect/reconnect.
+  **Still not confirmed, unaffected by this promotion**: whether the field scales linearly between
+  center and the extremes — this capture sampled only the two extremes and near-center, never an
+  intermediate position (its own planned intermediate samples did not actually occur, see
+  `CAP-046-FINDINGS.md` §4).
+- **Status**: 🟢 FACT for the field-number identity and semantic name ("Volume balance"), and 🟢
+  FACT for the ±100 range and the Left/+100↔Right/-100 direction mapping. 🔴 still open:
+  intermediate-position scaling, and persistence across a disconnect/reconnect.
 - **Evidence**: `CAP-022-FINDINGS.md` §5 (`[VERIFIED-LOCAL]`, 2026-08-21, frames 1922–2099, raw hex
   and corrected zigzag decode backfilled 2026-09-03); `CAP-046-FINDINGS.md` §2 (`[VERIFIED-LOCAL]`,
   2026-09-12, isolated extreme-position samples, video-confirmed); `REVERSE_ENGINEERING.md`'s `qhr`
-  entry; `DECISIONS.md` ADR-019.
+  entry; `DECISIONS.md` ADR-019/ADR-026.
 - **Verified with experiment**: `CAP-022` (2026-08-21) — a single continuous drag. `CAP-046`
   (2026-09-12) — isolated discrete extreme-position samples, video-correlated (Group AK).
 
@@ -1944,12 +1949,12 @@ leaving them buried in prose elsewhere.
 - [ ] **Added 2026-08-21, `CAP-021-FINDINGS.md` §4:** which of `HOLD-005`'s 16 ANC-mode-rotation
       checklist frames belong to Left's list vs. Right's — the envelope carries no
       earbud-distinguishing field for this specific write, unlike `HOLD-001`–`HOLD-004`.
-- [x] **Added 2026-08-21, `CAP-022-FINDINGS.md` §5; addressed 2026-09-12 (`CAP-046-FINDINGS.md`
-      §2), PROPOSAL awaiting maintainer sign-off, not yet promoted:** `field 17`'s (Volume balance)
-      numeric scale/range and which direction (L/R) increasing values represent — a dedicated
-      isolated-extreme-position capture (Group AK) proposes range ±100, `+100`=Left, `-100`=Right,
-      3/3 video-confirmed. Intermediate-position scaling remains untested — see `PROTOCOL.md`
-      §4.5.7 for the full proposal.
+- [x] **Added 2026-08-21, `CAP-022-FINDINGS.md` §5; resolved 2026-09-13, 🟢 FACT (maintainer
+      sign-off, `DECISIONS.md` ADR-026):** `field 17`'s (Volume balance) numeric scale/range and
+      which direction (L/R) increasing values represent — a dedicated isolated-extreme-position
+      capture (`CAP-046`, Group AK) confirmed range ±100, `+100`=Left, `-100`=Right, 3/3
+      video-confirmed, zero counter-examples. Intermediate-position scaling remains untested,
+      unaffected by this promotion — see `PROTOCOL.md` §4.5.7.
 - [ ] **Added 2026-08-21, `CAP-019-FINDINGS.md` §4:** what do Fast Pair SASS (DLCI 0x04 Group
       `0x07`) Codes `0x11`/`0x21`/`0x40`/`0x42` encode beyond their raw bytes? Is Code `0x34`
       (which also fires with no Multipoint action nearby) a periodic/keepalive SASS code unrelated
@@ -2336,29 +2341,31 @@ leaving them buried in prose elsewhere.
 
 ### Behavior
 
-- [ ] **Added 2026-08-21, `CAP-025-FINDINGS.md` §7/§8 — directly relevant to this project's
-      Zero-GMS goal (`AGENTS.md` §1).** Does "Find My Buds" for the Case and "both simultaneously"
-      (`FIND-003`/`FIND-004`) genuinely require Google's Find My Device Network (an
-      account/cloud-mediated path, video-confirmed showing a "Connecting…" state and copy
-      referencing "another device linked with your Google Account"), with **no local-only
-      fallback**? If so, this may be a hard limit on offline Case-ring support for this project's
-      own implementation, not just an open research question — flagged for maintainer awareness.
-      Related: what triggers the three repeated classic-RFCOMM-connection-reopen bursts
-      (~40s apart) observed while this Find Hub flow was active in `CAP-025`?
+- [x] **Added 2026-08-21, `CAP-025-FINDINGS.md` §7/§8 — directly relevant to this project's
+      Zero-GMS goal (`AGENTS.md` §1); scope decision resolved 2026-09-13 (maintainer sign-off,
+      `DECISIONS.md` ADR-027).** Whether "Find My Buds" for the Case and "both simultaneously"
+      (`FIND-003`/`FIND-004`) genuinely requires Google's Find My Device Network with no local-only
+      fallback is still, on the research question alone, not fully closed (see the code-level
+      support below) — but this no longer blocks anything: the maintainer decided **v1 ships with
+      Left/Right ring only**, and Case/"both" is now an explicit, permanent `PROJECT.md` non-goal
+      rather than an open item pending further research. Reopen only if a future capture or protocol
+      change surfaces a genuine local mechanism.
       **Update (2026-09-08, `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 3,
       maintainer-approved per prompt `0002`) — code-level support (not proof) for the
-      Zero-GMS-hard-limit reading, not a resolution.** The companion app's own
+      Zero-GMS-hard-limit reading.** The companion app's own
       `com.google.android.apps.wearables.maestro.companion.fmd.FmdWorker` sends `FmdRequest`s
       (operation codes `3`="accept"/`4`="skip") over `IFastPairFmdProxyService` — but **only** for
       Find My Device Terms-of-Service accept/skip; no other `FmdRequest.d()` call site exists
       anywhere in this APK version's decompiled source (`grep -rn "FmdRequest\.d()"` → 2 hits total,
-      both accept/skip). This confirms, at the code level for the first time, that the companion
-      app's own role in the Case/"both" path is limited to consent/onboarding plumbing — the actual
-      ring-trigger is not constructed anywhere in this app's decompiled source, consistent with (and
-      now partially explaining) the wire-observed "Connecting…" Find Hub map-view hand-off to a
-      separate app surface. Still 🔴 OPEN QUESTION whether a local-only fallback genuinely does not
-      exist — this is supporting evidence, not a closure, of the existing "possible hard Zero-GMS
-      limit" flag.
+      both accept/skip). This confirms, at the code level, that the companion app's own role in the
+      Case/"both" path is limited to consent/onboarding plumbing — the actual ring-trigger is not
+      constructed anywhere in this app's decompiled source, consistent with (and partially
+      explaining) the wire-observed "Connecting…" Find Hub map-view hand-off to a separate app
+      surface — supporting evidence for ADR-027's decision, not what settled it (the decision itself
+      was a scope call, not a research closure).
+      **Not resolved by this decision, still genuinely open if anyone cares to chase it (low
+      priority, no longer blocking):** what triggers the three repeated classic-RFCOMM-connection-
+      reopen bursts (~40s apart) observed while this Find Hub flow was active in `CAP-025`.
 - [ ] **Added 2026-08-21, `CAP-011-FINDINGS.md` §4/§5:** does an active classic RFCOMM connection
       suppress or alter the Buds' Fast Pair Battery Notification BLE advertisement? `CAP-011`'s own
       attempted passive-scan capture had an active connection present throughout (a procedure
@@ -2604,6 +2611,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-08 | **`ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md` Phase 2 — external-source validation pass, no new FACT promotion.** **§4.3 Option A** — the "shown ≥8s, auto-hidden after 20s" timing claim re-checked against the base Message Stream spec page (the alternate location proposed 2026-09-03); also absent there, closing both candidate official pages with a clean negative. **§4.4/§6** — the Ring ACK open item sharpened with the acknowledgement spec's exact literal text (the worked example's trailing 2 bytes are explicitly glossed as a channel+timeout state, "ring right and 60 seconds timeout"); checked against both observed ACK variants, neither fits a 2-byte state (one has zero extra bytes, the other exactly one) — the spec's own documented NAK format (a leading reason byte) was also checked and doesn't fit either. **§6** — the DLCI 0x02 Address-field-renegotiation item cross-checked against Pigweed's public `pw_hdlc`/`pw_rpc` documentation directly: neither publishes how HDLC addresses or RPC channel IDs are assigned, so this remains genuinely undocumented upstream, not merely unread. **§2.3** — `pbpctrl`'s own published notes re-fetched in full; confirmed no detail exists beyond the already-quoted transport-framing paragraph and a bare feature list (no opcode/byte-layout detail for any setting). **§6** — `FE2C1238…`'s name and the "Unknown Service" UUID re-checked against the live Fast Pair characteristics page and a web search respectively; both reconfirm the existing negative result (still undocumented) rather than finding anything new | Claude (AI), external-validation task (HYPOTHESIS-level re-checks and negative-result confirmations only — no FACT promotion, no sign-off needed) |
 | 2026-09-08 | **`ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md` Phase 3/4 — APK reverse-engineering and capture cross-checks.** **§4.5.5 In-ear detection (`qhr` field 2)** promoted to 🟢 FACT for field-number/category-level identity, maintainer-approved (`DECISIONS.md` ADR-019 Update): the field's existing write site is also reached from the system Settings app's `MaestroDeviceSettingsProviderService` (case `2102`), logged there under the internal category name `"CATEGORY_OHD"` — the specific "In-ear detection" UI-label equivalence stays 🟡 HYPOTHESIS. **§4.2 EQ** — `fyd.d`/`fyd.e`'s call sites traced: field 16 confirmed fed from the slider-drag/preset path; field 18 found reachable *only* via a dedicated "Save EQ" button click handler, directly contradicting (not confirming) `CAP-015`'s own "fires on slider-release" wire-timing hypothesis — recorded as an open tension per the maintainer's own review, not resolved either way. **§6** — `MaestroDeviceSettingsProviderService`'s remaining 5 case IDs traced (field 27, field 11/Multipoint with a new internal-name confirmation and an unreconciled `fpm.ENABLED_HEAD_GESTURES` naming tension, field 5, a non-`qhr` "Feature A" toggle, and a new field 32); `MaestroEndpointService.onCreate()` read via `apktool` smali fallback (a Dagger-multibinding-based, per-call UID-authorization-gated service registry, service names not recovered); `gjv.p()`'s caller re-attempted and still not found (static analysis judged exhausted). **`CAP-041-FINDINGS.md` §8** — full byte-for-byte content diff of the DLCI 0x02 connect-time burst across 4 settings states: content-level clean negative for a settings-state read-back, closing `OBS-007` beyond the prior length-only result. **§6** — a plausible (unconfirmed) structural match found between `CAP-036`'s existing connect-time burst and `qjb`'s `qie`-shaped nested structure; `TrueWirelessHeadset.modelId` confirmed to need the maintainer's own device access, no existing data found | Claude (AI), APK-reverse-engineering + capture-analysis task; one item (`qhr` field 2) maintainer-directed sign-off, prompt `0003` |
 | 2026-09-09 | **`ai-sessions/0004_MAINTENANCE_PROMPT_2026_09_09.md` — connection-lifecycle analysis on existing captures.** **New §5.2**: DLCI 0x02 (`libmaestro`) reliably opens *last* of the five data-carrying RFCOMM channels on a fresh reconnect — 6 independent instances across `CAP-036`/`CAP-037`/`CAP-041`, zero counter-examples in that condition, one honestly-scoped exception during a mid-session RFCOMM channel-bounce (where the order differs). Maintainer reviewed this directly in the chat session that authored this prompt and explicitly chose to keep it at 🟡 HYPOTHESIS (strong) rather than promote, pending more evidence or an explanation for the one exception | Claude (AI), capture-re-analysis task; maintainer-reviewed, kept at HYPOTHESIS (not promoted), prompt `0004` |
+| 2026-09-13 | **`ai-sessions/0013_FEATURE_PROMPT_2026_09_13.md` — pending `0012` decisions resolved.** **§4.5.7 Volume Balance** — the ±100 range and `+100`=Left/`-100`=Right polarity promoted to 🟢 FACT (`DECISIONS.md` ADR-026), maintainer-approved in the same chat session that authored this prompt; matching §6 open item closed. **§4.4/§6 Behavior** — Find My Buds Case/"both simultaneously" scope decision resolved (`DECISIONS.md` ADR-027): v1 ships with Left/Right ring only, Case/"both" out of scope absent a future local mechanism; see `PROJECT.md`'s non-goals and `TODO.md`'s Phase 1 item for the corresponding updates. Also this session: mechanical count corrections to `CAP-036-FINDINGS.md`/`CAP-037-FINDINGS.md` (not a `PROTOCOL.md` change), a bounded APK research pass (`REVERSE_ENGINEERING.md`'s `frb`/`fuh`/`glk`/`gjv` entry and a new "GSND" naming-lead entry), and the first real, buildable/tested Android Studio project (`android/`, five Gradle modules, ANC `FrameEncoder`/`FrameDecoder` implemented and unit-tested against real capture fixtures) — none of which touch this document's own body | Claude (AI), maintainer-directed sign-off session, prompt `0013` |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

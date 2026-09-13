@@ -1324,5 +1324,98 @@ motivated this).
   gap of the kind that kept fields 12/22/27 at field-number-only status. See `PROTOCOL.md`
   §4.5.2/§4.5.6 and `REVERSE_ENGINEERING.md`'s `qhr` entry (2026-09-08 update) for the full evidence.
 
+## ADR-026 — Volume Balance (`qhr` field 17) range and Left/Right polarity confirmed: ±100, `+100`=Left, `-100`=Right
+
+- **Date**: 2026-09-13
+- **Status**: Accepted
+- **Context**: `DECISIONS.md` ADR-019 already promoted `field 17`'s field-number/semantic identity
+  ("Volume balance") to 🟢 FACT, explicitly leaving the numeric scale/range and which direction
+  (Left/Right) corresponds to negative vs. positive values open (`PROTOCOL.md` §4.5.7/§6). `CAP-046`
+  (Group AK, 2026-09-12) ran a dedicated isolated-extreme-position capture specifically to close
+  this gap, and `ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md` Finding 125 independently
+  re-derived its wire-side values with an exact byte-level match on all 8 samples. This proposal was
+  drafted in `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 4 and explicitly approved by the
+  maintainer in the same chat session that authored that prompt.
+- **Finding being recorded**: `field 17`'s range clamps at exactly ±100. `field17 = +100`
+  corresponds to the Volume Balance slider's Left extreme; `field17 = -100` corresponds to the
+  Right extreme — the opposite of this project's own earlier, unstated assumption
+  (`CAP-022-FINDINGS.md` §5 implicitly labeled its first negative sample "Left"). Evidence: 3 of 3
+  extreme-position samples video-confirmed (`CAP-046-FINDINGS.md` §2), zero counter-examples,
+  independently re-derived at the wire level a second time (`0012` Finding 125, exact byte-level
+  match on all 8 samples).
+- **What this ADR does NOT clear**: whether `field17` scales linearly (or at all) between center
+  and the ±100 extremes — untested, no intermediate-position sample exists in any capture to date
+  (`CAP-046-FINDINGS.md` §4/§7). The `field17`/`field19` (Mono audio) timing correlation
+  `CAP-046-FINDINGS.md` §3 also found is not covered by this ADR and stays 🟡 HYPOTHESIS.
+- **Decision**: the range (±100) and Left/Right polarity (`+100`=Left, `-100`=Right) above are
+  accepted as 🟢 FACT.
+- **Consequences**: `PROTOCOL.md` §4.5.7 and §6's matching open item are updated to record the
+  range/polarity as 🟢 FACT. A future EQ/Volume-Balance UI implementation can render the slider's
+  Left/Right mapping without hedging — but should still clamp/interpolate defensively for
+  intermediate positions, since linearity there remains unconfirmed and is not settled by this ADR.
+
+## ADR-027 — Find My Buds Case/"both simultaneously": ship v1 with Left/Right ring only, no local fallback
+
+- **Date**: 2026-09-13
+- **Status**: Accepted
+- **Context**: `PROTOCOL.md` §4.4's "Major structural finding" and §6 Behavior's matching open item
+  established that Case ring and "ring both simultaneously" are reachable, in the official app, only
+  via a separate Find Hub/Find My Device map-view flow that is account/cloud-mediated
+  (video-confirmed "Connecting…" state, on-screen copy referencing "another device linked with your
+  Google Account"). `PROTOCOL.md` §4.4 confirms a checked negative — **zero** local
+  `Group 0x04 Code 0x01` (Ring) traffic occurs while this flow is active, across a ~2.5-minute
+  observation window — and a later code-level trace
+  (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 3) found the companion app's own code
+  constructs Find My Device Terms-of-Service accept/skip requests only, with no ring/play-sound
+  trigger anywhere in its own decompiled source. `TODO.md` and
+  `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 5 both already framed this as "a genuine
+  Zero-GMS scope trade-off... no capture or static analysis can resolve this, only a maintainer
+  product decision can." The maintainer made that decision directly in the chat session that
+  authored `ai-sessions/0013_FEATURE_PROMPT_2026_09_13.md`.
+- **Options considered**:
+  - Accept a Google Find Hub/account-mediated fallback for Case/"both" ring specifically — rejected:
+    this would require a GMS/Google-account dependency, exactly what this project's Zero-GMS goal
+    (`AGENTS.md` §1, `PROJECT.md` non-goals) exists to avoid, for one sub-feature whose local wire
+    mechanism this project has already checked and found does not exist.
+  - Ship v1 without local Case/"both" ring support, documenting it as a permanent, explicit
+    limitation — chosen.
+- **Decision**: v1 ships with **Left/Right Find My Buds ring only** (already 🟢 FACT and
+  implementation-unblocked, `DECISIONS.md` ADR-011). Case ring and "ring both simultaneously" are
+  explicitly **out of scope** for this project, unless a future capture or protocol change finds a
+  genuine local (non-GMS-mediated) mechanism — no such evidence exists today.
+- **Consequences**: `PROJECT.md`'s non-goals gain a corresponding bullet citing this ADR.
+  `TODO.md`'s Phase 1 open item and `PROTOCOL.md` §4.4/§6 Behavior are updated to record this as a
+  closed scope decision rather than an open research question. `:app`'s eventual Find My Buds UI
+  screen should offer Left/Right controls only, with no "Case"/"both" affordance implying a
+  capability this project does not provide.
+
+## ADR-028 — Dependency injection: Hilt
+
+- **Date**: 2026-09-13
+- **Status**: Accepted
+- **Context**: `ARCHITECTURE.md` §10/§15 left dependency injection as an open architecture question
+  between Hilt/Dagger and a manual, light service locator — `AGENTS.md` §1 already clarifies Hilt
+  itself does not touch `com.google.android.gms.*` and does not itself require Google Play Services,
+  so it is not disqualified by the Zero-GMS rule on that basis alone. `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md`
+  Phase 6 surfaced this to the maintainer, recommending Hilt (this project's own module graph — `:app`
+  as composition root wiring four other modules together, `ARCHITECTURE.md` §2 — is exactly the shape
+  Hilt/Dagger's compile-time DI is built to reduce boilerplate for). The maintainer approved this
+  recommendation directly in the chat session that authored `ai-sessions/0013_FEATURE_PROMPT_2026_09_13.md`.
+- **Options considered**:
+  - **Hilt/Dagger** — chosen. Mature, widely-used, AndroidX-adjacent, compile-time DI; reduces
+    `:app`'s own composition-root boilerplate across `:domain`/`:data`/`:hardware`/`:ui`.
+  - **Manual service locator** — full independence from Google-authored build tooling, at the cost
+    of hand-written wiring code across all five modules; rejected as a reasonable but non-preferred
+    alternative given the maintainer's own priorities favor less boilerplate.
+- **Decision**: Hilt is this project's dependency-injection framework, per `AGENTS.md` §10's
+  dependency policy (pinned version, justified, no network/analytics SDK bundled transitively —
+  confirmed via `./gradlew :app:dependencies`, see `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md`'s
+  Hilt-wiring update for the check).
+- **Consequences**: `:app` becomes a real Hilt composition root (`@HiltAndroidApp`
+  `Application`/`@AndroidEntryPoint` `MainActivity`, `@Module`/`@InstallIn` bindings for
+  `BudsTransport`/`BudsRepository`). `ARCHITECTURE.md` §10/§15 updated to record this as decided, not
+  open. Every future module needing a dependency graph entry uses Hilt's `@Inject`/`@Provides`
+  conventions rather than a hand-rolled locator.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

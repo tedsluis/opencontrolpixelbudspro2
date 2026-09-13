@@ -2315,6 +2315,48 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   RPC burst (`CAP-036-FINDINGS.md` §4), updated 2026-09-08 with this deepened (not fully resolved)
   trace.
 
+- **Update (2026-09-13, `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 8) — `gjv.p()`'s own
+  caller found, via a materially different search strategy from the two prior (failed) passes: a
+  direct smali method-descriptor search rather than a generic Java-source token grep.** Both prior
+  passes searched decompiled Java source for generic tokens (`.p()`, `.u = `) and were swamped by
+  false positives; this pass instead searched `apktool-output/`'s smali for the literal invoke
+  target `Lgiz;->p()` (the abstract method `gjv.p()` overrides) — a search space too specific for
+  R8 obfuscation to genericize away. Result: **exactly one match**,
+  `apktool-output/smali_classes2/ftw.smali:337` (`invoke-virtual {p0}, Lgiz;->p()V`), inside
+  `pswitch_8` of `ftw`'s single dispatch method `a()V` — `ftw` (`implements Lorr;`) is the same
+  R8-merged, `int`-tagged synthetic-lambda-dispatcher shape already documented elsewhere in this
+  file for `frb`/`gau`/`fwy`/`hvn`/`epf` (a `packed-switch` on a stored `int` field selects one of
+  18 cases, 0x0–0x11). `pswitch_8` corresponds to **case index `9`** (`packed-switch 0x0` table,
+  reverse-listed: index 0→`pswitch_11` … index 9→`pswitch_8`).
+  - Of `ftw`'s 19 construction sites across 15 files (`grep -rl "Lftw;-><init>"`), exactly **one**
+    passes case index `9` (`const/16 v0, 0x9`): `apktool-output/smali_classes2/gag.smali:158`
+    (inside `gag`'s own `pswitch_4` block, itself another R8-merged dispatcher of the same shape,
+    `implements Lorz;`, resembling a Guava `AsyncFunction`/`ListenableFuture`-transform callback —
+    `Loqh;->f(Lorr;)Loqh;` immediately follows the `ftw` construction, consistent with
+    `com.google.common.util.concurrent.Futures.transformAsync`-shaped code).
+  - `gag`'s `pswitch_4` block first does `check-cast p1, Ljava/lang/Boolean;` on its input, and
+    JADX's partial decompile of the surrounding method (`gag.a(Object)`, undecompilable in full —
+    "Method dump skipped, instructions count: 620") surfaces one readable fragment via its own
+    "Code restructure failed" warning comment: `if (Instant.now().minusMillis(((Long)
+    r7.get()).longValue()).toEpochMilli() >= 604800000) goto L35;` — **`604800000` ms is exactly 7
+    days**, structurally shaped like a staleness/last-checked-timestamp gate ("has it been ≥7 days
+    since some cached instant?").
+  - **What this does NOT establish**: whether this 7-day check is the actual, sole gate on
+    `gjv.p()`/`fxm.i()`'s `GetSoftwareInfo` fetch (as opposed to one of several `Boolean`-producing
+    branches in `gag`'s own multi-case dispatcher feeding into this specific `pswitch_4` outcome),
+    or what schedules `gag`'s own invocation in the first place (its 16 construction sites were not
+    individually traced this pass — out of proportion to this bounded phase's time-box). **This is
+    a materially different, and more plausible, trigger shape than either of this document's own
+    prior candidates** (`glk`'s OTA-transfer-readiness gate, or a generic post-connect settling
+    action) — a **periodic, ~weekly staleness check**, not obviously connect-time-adjacent at all —
+    but it is a proposal for the maintainer's review, per `DECISIONS.md` ADR-017's boundary, not a
+    resolution: this pass did not confirm the 7-day reading against any wire capture, and does not
+    itself decide whether this changes `PROTOCOL.md` §6's connect-time-burst framing for this
+    trigger candidate.
+  - **Recommendation, given the time-box**: a fourth static-analysis pass tracing `gag`'s own 16
+    construction sites (to find what schedules this specific `Boolean`-gated case) is a reasonable
+    next step if this lead is judged worth pursuing further, but was not attempted this session.
+
 ### `MaestroEndpointService` — exported, no-permission on-device gRPC server (open questions only)
 
 *(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4, maintainer-approved per prompt `0002`.)*
@@ -2485,6 +2527,53 @@ inside Google Play Services, which is out of scope for this project's reverse-en
 (`DECISIONS.md` ADR-025) — this table is expected to stay empty for DLCI 0x04/0x08 specifically; all
 of this project's actual Group/Code knowledge for these two channels comes from wire captures
 (`PROTOCOL.md` §4.1/§6), not from this document.
+
+### `"GSND"` naming lead (DLCI 0x08 "GSND CONTROL"/DLCI 0x0a "GSND AUDIO") — re-searched 2026-09-13, a related string family found, not the literal abbreviation itself
+
+*(Added 2026-09-13, `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 8, within `DECISIONS.md`
+ADR-017's mechanical-assistance boundary — search/list/explain only, not a relevance or promotion
+decision.)*
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/resources/assets/1/tokenized_logs`,
+  `.../jadx-output/resources/assets/2/crash` (both CSV-formatted tokenized log/crash-string tables
+  bundled as APK assets, not `.java` source — no single line number applies; matches are scattered
+  throughout each file).
+- **Commands run** (repeating and extending `CAP-033-FINDINGS.md` §3's original 2026-08-30
+  `grep -ri "gsnd"` sweep of `jadx-output/`, per this phase's instructions):
+  ```
+  $ grep -ril "gsnd" jadx-output/                        # 0 matches (reconfirms the 2026-08-30 negative)
+  $ grep -ril "gsound" jadx-output/                      # 2 matches (new this pass)
+  $ grep -rEil "google[._-]?sound" jadx-output/           # 0 matches
+  $ grep -rn "GSND" jadx-output/ apktool-output/ apktool-output-arm64_v8a/   # 0 matches (case-sensitive)
+  ```
+- **Finding**: the literal string `"GSND"` (or `"gsnd"`, any case) still does not appear anywhere in
+  `jadx-output/` or either smali tree — the 2026-08-30 clean negative reconfirms. **A related but
+  distinct string, `"gsound"`, appears 43 times** across the two tokenized log-string CSV assets
+  above, exclusively as substrings of bundled on-device-firmware source-file paths, e.g.:
+  `../../services/ble_profiles//voicepath/gsound/{ams,ancs,bms,gsound}_gatt_server.c`,
+  `../../services/voicepath/gsound//gsound_target/{gsound_ota.cpp,gsound_presto_device_actions.c,
+  gsound_service_utils.c,gsound_target_os.c}`. These are firmware crash-log/telemetry string tables
+  (used to decode on-device crash dumps sent back through the app, not app logic itself) —
+  `"gsound"` is not a class name, UUID, or opcode; it is a firmware source-directory component name
+  embedded in bundled string data.
+- **What this is, and is not**: `"gsound"` is a **plausible, unconfirmed** expansion for the
+  `"GSND"` abbreviation seen in `CAP-033`'s SDP service names ("GSND CONTROL"/"GSND AUDIO") — the
+  string family (`voicepath/gsound/...`, GATT-server source files, an OTA module) is at least
+  thematically consistent with a BLE-based audio/voice-control accessory service, which is what
+  DLCI 0x08/0x0a's own SDP entries describe. **This is not a confirmed identification** — no direct
+  textual link between the literal 4-letter "GSND" and "gsound" was found (no comment, constant, or
+  string concatenation anywhere ties the two together), and this class of asset (a firmware
+  crash-string table) is bundled for crash-dump decoding, not proof that the *companion app itself*
+  implements or names anything "GSND". Proposed as a new, more specific search lead for a future
+  pass — **not** proposed as a `PROTOCOL.md` §2.3/§6 update at this time, per `AGENTS.md` §6/§15 (an
+  AI session may propose, never commit, a finding of this kind).
+- **Hypothesis test**: none proposed this pass beyond further static search — a wire-level test
+  isn't applicable to a naming-etymology question. A future pass could search for other file-path
+  fragments from the same string family (`voicepath`, `ble_profiles`) to see whether they surface
+  any additional, more specific naming correlation.
+- **Correlation with `PROTOCOL.md`**: §2.3's 2026-08-30 update / §6's DLCI-0x08-ownership open item
+  — this is a proposed addendum (a related-but-unconfirmed string family, not a resolution),
+  pending maintainer review before either section is edited.
 
 ## Native libraries
 

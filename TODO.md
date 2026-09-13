@@ -15,12 +15,14 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
 1. **Decisions & sign-offs (no new data needed — cheapest, unlocks the most):**
    - Maintainer sign-off on pending 🟢 FACT promotions — see the new Phase 3 item below for the
      current list. Per `AGENTS.md` §6 this step can only be done by the maintainer, not an agent.
-   - DI approach (Hilt vs. manual) — Phase 4.
+   - ~~DI approach (Hilt vs. manual) — Phase 4.~~ **Resolved 2026-09-13: Hilt** (`DECISIONS.md`
+     ADR-028).
    - Minimum Android API level — Phase 5.
-   - Find My Buds Case/"both simultaneously" — whether to accept a Google Find Hub/account-mediated
+   - ~~Find My Buds Case/"both simultaneously" — whether to accept a Google Find Hub/account-mediated
      fallback for this one sub-feature or ship v1 without local Case-ring support (`PROTOCOL.md` §6,
      Behavior) — a genuine Zero-GMS scope trade-off, not a research gap; no capture or static
-     analysis can resolve this, only a maintainer product decision can.
+     analysis can resolve this, only a maintainer product decision can.~~ **Resolved 2026-09-13: ship
+     v1 with Left/Right ring only** (`DECISIONS.md` ADR-027, `PROJECT.md` non-goals).
 2. **Start Phase 4 app development, ANC-first:** ANC, Find My Buds Left/Right
    (`DECISIONS.md` ADR-011), and EQ (`DECISIONS.md` ADR-020) are all fully 🟢 FACT *and*
    implementation-unblocked — ANC remains the recommended starting point (`DECISIONS.md` ADR-009):
@@ -152,6 +154,15 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      recommendations directly** — see `0008`'s §3 for the maintainer decisions this raised (field 19's
      documentation should not be changed to "limit gate"; `0007`'s "approve all Phase 4 Promotions"
      recommendation needs to be evaluated per-item, not as a bundle).
+   - **Added 2026-09-13 (`ai-sessions/0013_FEATURE_RESULT_2026_09_13.md`), housekeeping pointer for
+     `0012`.** `ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md` ran a full, non-sampled independent
+     re-derivation of all 130 findings in Gemini CLI's `0011` review. Headline result: `0011`'s core
+     protocol-decode content (opcodes, field mappings, byte-level payload claims) held up with zero
+     errors; 5 citation errors and 1 overclaim were found, all in secondary/background material
+     (co-occurring unrelated devices, one-off vendor commands, procedural timestamps), never in a
+     primary protocol claim. Two pre-existing capture-count discrepancies `0012` itself surfaced
+     (`CAP-036`'s "34-frame" burst count, `CAP-037`'s "34 reconnects" count) are now resolved — see
+     `0012` §4 for both.
 
 ## Setup
 
@@ -471,26 +482,37 @@ lower priority than finishing ANC/Battery/EQ):**
 
 ## Phase 4 — App development
 
-- [ ] Set up the Android Studio project per `ARCHITECTURE.md` (five Gradle
-      modules: `:app`, `:ui`, `:domain`, `:data`, `:hardware`)
-- [ ] Decide dependency injection approach — Hilt vs. manual service locator —
-      and record it in `DECISIONS.md` (currently open, see `ARCHITECTURE.md`
-      §10/§15)
+- [x] **Set up the Android Studio project per `ARCHITECTURE.md` — done and verified
+      2026-09-13 (`ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 7).** Five Gradle modules
+      (`:app`, `:ui`, `:domain`, `:data`, `:hardware`) at `android/`, version catalog
+      (`android/gradle/libs.versions.toml`, pinned versions per `AGENTS.md` §10). `./gradlew
+      assembleDebug testDebugUnitTest test` actually run in this environment (Gradle 9.5.1 wrapper
+      pinned to 8.9, JDK 21, Android SDK `android-34`/build-tools `34.0.0`) — builds a real
+      `app-debug.apk`, 232 unit tests, 0 failures.
+- [x] **Decide dependency injection approach — resolved 2026-09-13: Hilt** (`DECISIONS.md`
+      ADR-028, `ARCHITECTURE.md` §10/§15 updated). `:app`'s composition root wired accordingly this
+      same session — see `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md`.
 - [x] Decide the passive-scanning policy for the Fast Pair Battery
       Notification — resolved as a bounded exception (filtered,
       foreground-triggered, time-boxed); see `DECISIONS.md` ADR-006,
       `AGENTS.md` §7, `ARCHITECTURE.md` §9.1
-- [ ] Implement `ProtocolCodec` (`FrameEncoder`/`FrameDecoder`) with unit tests
-      for the first confirmed command(s), against fixed byte-array fixtures
-      (`AGENTS.md` §11). **Recommended first target (added 2026-08-23): ANC**
-      (DLCI 0x04 Group `0x08`) — the only command that is both 🟢 FACT and
-      implementation-unblocked today (`DECISIONS.md` ADR-009); cheapest way to
-      prove the transport/framing/UI pipeline end-to-end.
-- [ ] Implement `BudsTransport` (RFCOMM primary, secondary GATT for
-      case/charging characteristics) and `ConnectionStateMachine`
-      (`ARCHITECTURE.md` §2.1)
+- [x] **Implement `ProtocolCodec` (`FrameEncoder`/`FrameDecoder`) with unit tests for ANC — done and
+      verified 2026-09-13** (`ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 7). `:data`'s
+      `AncFrameEncoder`/`AncFrameDecoder` (DLCI 0x04 Group `0x08`) tested against real `tshark`-extracted
+      fixture bytes from `CAP-001`/`CAP-006`/`CAP-036` (225 passing tests, including a 206-case
+      fuzz-adjacent malformed-input sweep, `AGENTS.md` §11). EQ/Battery/Find My Buds codecs remain
+      unimplemented, as scoped.
+- [ ] **Implement `BudsTransport` (RFCOMM primary, secondary GATT for case/charging characteristics)
+      and `ConnectionStateMachine` — partially done 2026-09-13.** `ConnectionStateMachine` and the
+      `BudsTransport` interface + a scripted `FakeBudsTransport` are implemented and unit-tested
+      (7/7 passing, `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 7) — but the real,
+      `BluetoothSocket`-backed `RfcommBudsTransport` is only sketched (compiles, follows the
+      sealed-error-conversion/`Dispatchers.IO` rules) and explicitly **not** verified against real
+      hardware, and per-DLCI socket multiplexing (`PROTOCOL.md` §2.3's three channels) is left as a
+      documented `// TODO(verify)`, not implemented — this checkbox stays open until that part is.
 - [ ] Implement `BudsRepository` / `BudsRepositoryImpl` wiring `:data` to
-      `:domain` (`ARCHITECTURE.md` §2.1, `DECISIONS.md` ADR-001)
+      `:domain` (`ARCHITECTURE.md` §2.1, `DECISIONS.md` ADR-001) — **not attempted 2026-09-13**, out
+      of that session's own scope (only the `BudsRepository` interface exists so far, in `:domain`).
 - [ ] First working end-to-end connection + battery status shown in the UI.
       **Recommended mechanism (added 2026-08-23): HFP** (`PROTOCOL.md` §4.3
       Option C) — already 🟢 FACT and not blocked, unlike Option A (still

@@ -51,11 +51,20 @@ Connection Complete timestamp).
 **The video (1072.10s) and log (1212.32s) run roughly 15–18 minutes past the originally-documented
 "relevant action 06:11:46–06:13:48" window.** A full-log scan for the Buds' own HCI Connection
 Complete events (`bthci_evt.bd_addr==04:00:6e:cf:6e:07 and bthci_evt.code==0x03`) finds **34
-reconnects** spread across the entire ~20-minute log (06:12:22 through 06:28:58), not 5. Video
-review (`ffmpeg -ss <t> -frames:v 1`, at each connect timestamp) confirms this activity is real
-and deliberate — a continued Bluetooth-toggle reconnect loop, matching the same
-"more-repeats-than-planned" deviation pattern documented in `CAP-040-EVENT-NOTES.md`'s own
-Contamination log for this same 2026-09-06 batch.
+reconnects** spread across the entire ~20-minute log (06:12:22 through 06:28:58), not 5 (34 logical
+reconnects; **36 raw Connection Complete events** — 31 success/`0x00` + 5 Page Timeout/`0x04` —
+re-verified 2026-09-13, TShark 4.6.8, `ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md` §4 Item 2 /
+`ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 2. The 36-vs-34 gap reconciles exactly if 2 of
+the 5 Page Timeouts — each immediately (0.07s/4.76s later) followed by a success — are each counted
+together with that following success as one logical reconnect attempt rather than two separate
+events, leaving the remaining 3 Page Timeouts (all consecutive, at the very end of the log, none
+followed by any subsequent success — consistent with the case lid closing around 06:28:48) counted
+individually: 31 successes − 2 paired-off successes + 2 paired reconnects + 3 standalone failures =
+34 exactly. Plausible, not independently confirmed as the original counting intent, but an exact
+arithmetic fit with no other tested reading found). Video review (`ffmpeg -ss <t> -frames:v 1`, at
+each connect timestamp) confirms this activity is real and deliberate — a continued
+Bluetooth-toggle reconnect loop, matching the same "more-repeats-than-planned" deviation pattern
+documented in `CAP-040-EVENT-NOTES.md`'s own Contamination log for this same 2026-09-06 batch.
 
 **More importantly, the planned alternation itself did not happen as written.** The procedure
 called for Docked→Undocked→Docked→Undocked→Docked. Video frames at the connect times of what the

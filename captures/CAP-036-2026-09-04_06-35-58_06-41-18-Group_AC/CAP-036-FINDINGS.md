@@ -231,7 +231,13 @@ All 99 DLCI 0x02 frames in this session fall into exactly two clusters:
 ```
 $ tshark -r CAP-036-btsnoop_hci.log -Y "bthci_acl.chandle==0x0005 and btrfcomm.dlci==2 and frame.p2p_dir==0 and btrfcomm.len>0" \
   -T fields -e frame.number -e frame.time
-(34 rows, all with frame.time between 06:36:32.597 and 06:36:35.610 — none inside any idle window)
+(45 rows, all with frame.time between 06:36:32.597 and 06:36:35.610 — none inside any idle window;
+re-verified 2026-09-13, TShark 4.6.8, correcting this line's original "34 rows" count — see
+`ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md` §4 Item 1 and `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md`
+Phase 1 for the re-derivation: only 1 duplicate payload exists among the 45, not enough to explain
+a 34-vs-45 gap by de-duplication, and all 45 fall inside the same claimed time window, ruling out a
+windowing difference — no mechanical explanation found, so the higher, reproducible count is treated
+as authoritative per `PROJECT_RULES.md` §1's own re-run-beats-prior-claim rule)
 ```
 
 **Conclusion:** zero `Sent`-direction DLCI 0x02 frames occur inside Window 1's idle span
