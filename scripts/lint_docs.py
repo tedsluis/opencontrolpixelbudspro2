@@ -97,6 +97,9 @@ KNOWN_HISTORICAL_REFERENCES = {
                                                 # ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md;
                                                 # both bootstrap files' own retrofit/reconstruction
                                                 # notes name it deliberately to explain the rename.
+    "-2.log",  # generic suffix-like mention of the second btsnoop log in CAP-047 prompt/result/notes
+    "CAP-047-FINDINGS.md",  # referenced as pending/out-of-scope in CAP-047 videopass documentation
+    "captures/CAP-047-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AL/CAP-047-EVENT-NOTES.md",  # old placeholder path referenced in CAP-047 prompt
 }
 
 # Only lint cross-references to the project's own capture/doc artifacts —
