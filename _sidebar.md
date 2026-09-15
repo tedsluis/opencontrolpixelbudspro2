@@ -174,10 +174,10 @@
   - **CAP-049 (Group AF)**
     - [CAP-049-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-049-2026-09-12_18-13-54_18-21-49-Group_AF/CAP-049-EVENT-NOTES.md)
     - [CAP-049-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-049-2026-09-12_18-13-54_18-21-49-Group_AF/CAP-049-FINDINGS.md)
-  - **CAP-050 (Group AG)** _(planned)_
-    - [CAP-050-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-050-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AG/CAP-050-EVENT-NOTES.md)
-  - **CAP-051 (Group AM)** _(planned)_
-    - [CAP-051-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-051-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AM/CAP-051-EVENT-NOTES.md)
+  - **CAP-050 (Group AG)**
+    - [CAP-050-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-050-2026-09-14_21-01-01_21-13-30-Group_AG/CAP-050-EVENT-NOTES.md)
+  - **CAP-051 (Group AM)**
+    - [CAP-051-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-051-2026-09-14_21-42-55_21-44-09-Group_AM/CAP-051-EVENT-NOTES.md)
   - **CAP-052 (Group AN)** _(planned)_
     - [CAP-052-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-052-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AN/CAP-052-EVENT-NOTES.md)
   - **CAP-053 (Group AO)** _(planned)_
