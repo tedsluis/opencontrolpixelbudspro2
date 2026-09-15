@@ -25,6 +25,8 @@ a new session** — the same "check before assigning" discipline `id_registry.cs
 | 0016 | CAPTURE | 2026-09-13 | Full video+log re-analysis and FINDINGS for CAP-043, CAP-044 | complete |
 | 0017 | MAINTENANCE | 2026-09-13 | Close out Phase 1–3's remaining open items (head gestures, ANC-rotation split, EQ persistence, Battery Option A, serial numbers), inventory pending maintainer decisions, assess Phase 3/4 readiness | awaiting maintainer sign-off |
 | 0018 | CAPTURE | 2026-09-14 | Video-only analysis of CAP-047's two recordings and CAP-047-EVENT-NOTES.md update (Group AL, Trigger 3 only; log/btsnoop analysis and FINDINGS explicitly out of scope) | complete |
+| 0019 | CAPTURE | 2026-09-14 | Video-only analysis of CAP-050's recording and CAP-050-EVENT-NOTES.md update (Group AG repeat; log/btsnoop analysis and FINDINGS explicitly out of scope) | complete |
+| 0020 | CAPTURE | 2026-09-14 | Video-only analysis of CAP-051's recording and CAP-051-EVENT-NOTES.md update (Group AM, qhr field 13 ANC-parallel-path; log/btsnoop analysis and FINDINGS explicitly out of scope) | complete |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/INDEX.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/INDEX
