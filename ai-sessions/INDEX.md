@@ -29,6 +29,7 @@ a new session** — the same "check before assigning" discipline `id_registry.cs
 | 0020 | CAPTURE | 2026-09-14 | Video-only analysis of CAP-051's recording and CAP-051-EVENT-NOTES.md update (Group AM, qhr field 13 ANC-parallel-path; log/btsnoop analysis and FINDINGS explicitly out of scope) | complete |
 | 0021 | CAPTURE | 2026-09-15 | Full, non-sampled log analysis and FINDINGS for CAP-050 (Group AG repeat, PRIV-001) and CAP-051 (Group AM, qhr field 13 ANC-parallel-path) | awaiting maintainer sign-off |
 | 0022 | CAPTURE | 2026-09-15 | Full, non-sampled log analysis and FINDINGS for CAP-047 (Group AL, DLCI 0x0a burst trigger hypothesis test), plus targeted video re-check of a recalled corrected docking in Recording 2 | awaiting maintainer sign-off |
+| 0023 | CROSSCHECK | 2026-09-15 | Deep, non-sampled cross-validation of CAP-047/CAP-050/CAP-051 against the decompiled APK, from as many angles as possible, plus full external spec validation | planned |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/INDEX.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/INDEX
