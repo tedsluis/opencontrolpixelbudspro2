@@ -77,8 +77,8 @@ CAP-046,capture,analyzed,"session date/status: 2026-09-12 — polarity resolved,
 CAP-047,capture,planned,"session date/status: *planned* — Group AL (new), CAP-021 DLCI 0x0a burst trigger purpose-built hypothesis test (up to 3 bracketed sub-sessions)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-048,capture,analyzed,"session date/status: 2026-09-12 — CAP-037 anomaly resolved, ADR-024 counter-example found",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-049,capture,analyzed,"session date/status: 2026-09-12 — cycling did not reproduce, clean negative",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-050,capture,planned,"session date/status: *planned* — Group AG (repeat), CAP-040 DLCI 0x08 unmapped codes repeat with a genuine reopen trigger (not the app's in-app Connect/Disconnect buttons)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-051,capture,planned,"session date/status: *planned* — Group AM (new), qhr field 13 ANC-parallel-path wire confirmation (in-app tap vs. physical press-and-hold)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-050,capture,analyzed,"session date/status: 2026-09-14, analyzed — Group AG (repeat), CAP-040 DLCI 0x08 unmapped codes repeat with a genuine reopen trigger (not the app's in-app Connect/Disconnect buttons)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-051,capture,analyzed,"session date/status: 2026-09-14, analyzed — Group AM (new), qhr field 13 ANC-parallel-path wire confirmation (in-app tap vs. physical press-and-hold)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-052,capture,planned,"session date/status: *planned* — Group AN (new), CAP-041 Case%-change bracket over a genuine charge/discharge",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-053,capture,planned,"session date/status: *planned* — Group AO (new), EQ outer field 16-vs-18 drag-and-release-without-Save isolation, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-054,capture,planned,"session date/status: *planned* — Group AP (new), connection-free Battery Notification scan bracketing a single-bud insertion/removal event, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
