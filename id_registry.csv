@@ -74,7 +74,7 @@ CAP-043,capture,analyzed,"session date/status: 2026-09-13 — Group Q (repeat), 
 CAP-044,capture,analyzed,"session date/status: 2026-09-13 — Group AA (repeat, 2nd attempt); Force-stop-before-Forget order fixed and step 3 executed, but a different isolation gap remains (no confirmed force-stop before the Pair tap); default UUID absent a 5th time, still SDP-001 HYPOTHESIS",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-045,capture,analyzed,"session date/status: 2026-09-12 — procedure not run as planned, see CAP-045-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-046,capture,analyzed,"session date/status: 2026-09-12 — polarity resolved, proposal awaiting sign-off",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-047,capture,planned,"session date/status: *planned* — Group AL (new), CAP-021 DLCI 0x0a burst trigger purpose-built hypothesis test (up to 3 bracketed sub-sessions)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-047,capture,analyzed,"session date/status: 2026-09-14, analyzed — Group AL (new), CAP-021 DLCI 0x0a burst trigger purpose-built hypothesis test, Trigger candidate 3 only (charge-state change) — clean negative",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-048,capture,analyzed,"session date/status: 2026-09-12 — CAP-037 anomaly resolved, ADR-024 counter-example found",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-049,capture,analyzed,"session date/status: 2026-09-12 — cycling did not reproduce, clean negative",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-050,capture,analyzed,"session date/status: 2026-09-14, analyzed — Group AG (repeat), CAP-040 DLCI 0x08 unmapped codes repeat with a genuine reopen trigger (not the app's in-app Connect/Disconnect buttons)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

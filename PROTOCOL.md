@@ -2033,6 +2033,17 @@ leaving them buried in prose elsewhere.
       prior, less-supported "IMU/telemetry" guess about this same burst. A capture bracketing
       whatever background condition preceded ~08:02:29 in that session (app backgrounded?
       scheduled sync? battery/charge-state change?) would be needed to attribute a trigger.
+      **Update, 2026-09-15 (`CAP-047`, Group AL, purpose-built hypothesis test, Trigger candidate 3
+      only — charge-state change) — clean, complete negative.** Zero DLCI 0x0a-role payload frames
+      across six independently bracketed dock/undock transitions (two full recordings, three
+      separate classic connections, each with its own session-local silent-channel DLCI —
+      `0x0a`/`0x0b` — identified by content signature), checked across each in-scope log's entire
+      duration, not just around the bracketed moments. This includes the burst's own channel
+      undergoing RFCOMM multiplexer channel-bounces (`SABM`→`UA` reopens) adjacent to a dock-state
+      change — even these carry no payload. Raises the "1 of N sessions checked" denominator to at
+      least **twenty**. Trigger candidate 3 is ruled out as an explanation for `CAP-021`'s burst;
+      Trigger candidates 1 (app backgrounded/foregrounded) and 2 (a scheduled idle sync window)
+      remain untested. See `CAP-047-FINDINGS.md` §3 for the full command+hex evidence.
 - [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §11; sharpened 2026-09-12, `CAP-018-FINDINGS.md`
       §3–§4 (PROPOSAL, awaiting maintainer review):** a 73-frame `Handle Value Notification`
       burst on BLE ATT handle `0x0044` (connection handle `0x0002`), confined to a ~29s window
@@ -2543,6 +2554,28 @@ leaving them buried in prose elsewhere.
       the Buds' own firmware has settled on an already-changed physical state — offered as a testable
       direction only; does not by itself explain why four *other* fresh reconnects in the same
       session read correctly. Reported plainly, not reconciled away, per `AGENTS.md` §13.6.
+      **Extended 2026-09-15 (`CAP-047`, Group AL) — two more counter-example readings, plus a first
+      direct test of a swapped-slot (mismatched L/R) seating, in an independent session.** `CAP-047`
+      confirms `DECISIONS.md` ADR-024's core finding directly answers a previously-untested case:
+      `Settable-toggles` reads `0x00` ("both docked") during a swapped-slot seating exactly as it
+      does for a correctly-slotted one (`CAP-047-FINDINGS.md` §5, frame 2803, `06:10:20.78`,
+      video-correlated to the on-screen swapped-dock moment) — the dock-sensor mechanism does not
+      check slot correctness, only physical presence. Separately, two further stale-reading
+      counter-examples were found (`CAP-047-FINDINGS.md` §5): one following a channel-level reopen
+      (not a full ACL reconnect) that self-corrects 1.15s later via a spontaneous re-Notify — a
+      second, independent instance of this file's own "settling" HYPOTHESIS above — and one with no
+      preceding channel-(re)establishment at all (a spontaneous Notify on an apparently-empty case),
+      which does not fit the settling explanation and is left as its own, still-open question.
+- [ ] **Added 2026-09-15, `CAP-047-FINDINGS.md` §4 (Group AL) — unreconciled tension with
+      `DECISIONS.md` ADR-016's disconnect-on-redock mechanism.** Of three swapped-slot (mismatched
+      L/R) dockings captured across two sessions/recordings, two produce a genuine ACL
+      `Disconnection Complete` (reason `0x13`, Buds-initiated) within seconds, matching ADR-016
+      exactly — but the third (`CAP-047` Recording 1, `06:10:21`) does not: the classic connection
+      stays up continuously for the rest of that ~22-minute log, despite the dock-state sensor
+      itself reading "both docked" (`Settable-toggles=0x00`) at that exact moment, the identical
+      reading the other two instances also show. No video- or wire-visible procedural difference
+      between the three docking actions was found that would explain the discrepancy. 🔴 OPEN
+      QUESTION — reported plainly, not force-fit into a guessed mechanism, per `AGENTS.md` §13.6.
 - [ ] **Added 2026-09-12, `CAP-048-FINDINGS.md` §6:** a 7-event connection-retry burst
       (`17:48:51`–`17:49:47`, repeated `Create Connection`/`Connect Complete` cycles on one chandle,
       no Disconnection Complete between them) coincides with the app showing "Connecting…" and the
@@ -2651,6 +2684,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-13 | **`ai-sessions/0013_FEATURE_PROMPT_2026_09_13.md` — pending `0012` decisions resolved.** **§4.5.7 Volume Balance** — the ±100 range and `+100`=Left/`-100`=Right polarity promoted to 🟢 FACT (`DECISIONS.md` ADR-026), maintainer-approved in the same chat session that authored this prompt; matching §6 open item closed. **§4.4/§6 Behavior** — Find My Buds Case/"both simultaneously" scope decision resolved (`DECISIONS.md` ADR-027): v1 ships with Left/Right ring only, Case/"both" out of scope absent a future local mechanism; see `PROJECT.md`'s non-goals and `TODO.md`'s Phase 1 item for the corresponding updates. Also this session: mechanical count corrections to `CAP-036-FINDINGS.md`/`CAP-037-FINDINGS.md` (not a `PROTOCOL.md` change), a bounded APK research pass (`REVERSE_ENGINEERING.md`'s `frb`/`fuh`/`glk`/`gjv` entry and a new "GSND" naming-lead entry), and the first real, buildable/tested Android Studio project (`android/`, five Gradle modules, ANC `FrameEncoder`/`FrameDecoder` implemented and unit-tested against real capture fixtures) — none of which touch this document's own body | Claude (AI), maintainer-directed sign-off session, prompt `0013` |
 | 2026-09-13 | **`ai-sessions/0015_MAINTENANCE_PROMPT_2026_09_13.md` — resolved `ai-sessions/0010`'s two remaining sign-off items.** **§6** — the `CAP-037`/`CAP-048` dock-timing anomaly's "(PROPOSAL, awaiting maintainer sign-off)" hedge removed; the explanation itself (a genuine real-time docking action, consistent with `DECISIONS.md` ADR-016) was maintainer-approved, citing `ai-sessions/0015`. No new FACT beyond ADR-016 was introduced — this only closes a previously-open citation. `DECISIONS.md` ADR-024 gained a dated Update recording `CAP-048`'s two counter-example `Settable-toggles` readings as a documented, unreconciled 🟡 HYPOTHESIS exception, maintainer-approved | Claude (AI), maintainer-directed sign-off session, prompt `0015` |
 | 2026-09-13 | **`ai-sessions/0017_MAINTENANCE_PROMPT_2026_09_13.md` — re-verification of 5 open items, no FACT/ADR promotion (all proposals pending maintainer sign-off).** **§4.2 EQ** — the 2026-09-08 "field 18 reachable only via the Save button" trace corrected: a genuine second call path exists (`hod.java`, a "navigate away with unsaved changes" trigger), adding a third candidate alongside Save-button and the still-unconfirmed slider-release reading; a new capture (Group AO, `CAP-053`) is proposed to isolate all three. **§6 serial-number candidate** — `CAP-036` frame 1423 re-traced field-by-field: its 3-string sub-message structurally matches `qjm`/`qjr` (`GetHardwareInfo`'s oneof alternatives) exactly, not `qie` (`GetSoftwareInfo`'s alternative, which is typed `MESSAGE` not `STRING`) as the existing entry read — reverses which RPC is the better structural candidate; a live correlation capture (Group AS, `CAP-057`) is proposed. **§6 head-gesture item** — `CAP-028`'s clean negative re-verified across its *entire* log (not just the originally-checked window) plus HID/AVRCP/SCO checks, reproducing the same result; a correctly-scoped repeat with an active call/notification (Group AQ, `CAP-055`) is proposed. Also (not touching this document): `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `HOLD-005` row updated with a Group AR (`CAP-056`) re-run proposal (`CAP-045` never opened the rotation-checklist screen), and `PROTOCOL.md` §4.3 Option A's Battery Notification item — `CAP-043`'s non-match re-verified byte-for-byte, a single-bud-insertion/removal bracket proposed as Group AP (`CAP-054`). Full phase-by-phase detail and the complete pending-decision inventory: `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` | Claude (AI), maintenance/re-verification task, not yet reviewed by maintainer |
+| 2026-09-15 | **`ai-sessions/0022_CAPTURE_PROMPT_2026_09_15.md` — `CAP-047` (Group AL, `CAP-021`'s DLCI 0x0a burst trigger, Trigger candidate 3 only), no FACT/ADR promotion (all proposals pending maintainer sign-off).** **§6 DLCI 0x0a item** — a dated update recording a clean, complete negative for Trigger candidate 3 (charge-state change) across six independently bracketed dock/undock transitions in two full, untruncated logs; the burst's "1 of N sessions checked" denominator rises to at least twenty. **§6 (new item, ADR-016 tension)** — of three swapped-slot (mismatched L/R) dockings captured this session, two produce a genuine ACL disconnect matching `DECISIONS.md` ADR-016 exactly, but a third does not, despite an identical dock-sensor reading — flagged as an unreconciled 🔴 open question. **§6 (extends the existing `CAP-048-FINDINGS.md` §5 item)** — `DECISIONS.md` ADR-024's dock-state byte confirmed to read "both docked" during a swapped-slot seating (a previously-untested case, directly answered); two further stale-reading counter-examples found, one matching the already-proposed "settling" hypothesis and one that does not. A dense video re-check (1fps + 4fps, cross-validated against the phone's own per-earbud charging-icon indicator) also confirmed, contrary to a maintainer recollection, that no corrected (matching-slot) docking occurred in either of this capture's two recordings. See `CAP-047-FINDINGS.md` for the full command+hex evidence and proposed downstream updates | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

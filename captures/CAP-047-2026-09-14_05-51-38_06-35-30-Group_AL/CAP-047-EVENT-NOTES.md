@@ -1,6 +1,6 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AL, DLCI 0x0a burst trigger, purpose-built hypothesis test (`CAP-047`)
 
-**Status:** ⚪ **Captured & Video-analyzed.** Video-only analysis completed on 2026-09-14. `.log`/`.log.last`/`-2.log` wire-level analysis and `CAP-047-FINDINGS.md` remain **TBD** as a separate, future task.
+**Status:** ⚪ **Captured, video-analyzed (incl. a targeted dense re-check of Recording 2's tail), and wire-level analyzed.** See `CAP-047-FINDINGS.md` for the full log analysis and hypothesis-test conclusion.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AL, added 2026-09-09):** `CAP-021`'s 1123-frame
 DLCI 0x0a burst (`PROTOCOL.md` §6) has recurred in exactly 1 of 16+ sessions checked — passively
@@ -75,7 +75,7 @@ evidence anchor for the findings file instead.
 | 06:34:59 | Right hand removes bottom bud (Right bud) from bottom slot. Top bud (Left bud) remains inside top slot. | User | — | `TBD — pending separate log-analysis session` |
 | 06:35:01 | Left bud remains in top slot (Right slot) and charges (green charging bolt visible for Left: 100% on phone screen). Right bud is outside and re-establishes connection (screen button says "Disconnect", active status). | HW / User | — | `TBD — pending separate log-analysis session` |
 | 06:35:12 | Right hand removes Left bud from the top slot (Right slot). Both slots are empty and both buds rest outside. | User | — | `TBD — pending separate log-analysis session` |
-| 06:35:30 | Recording 2 ends with both buds resting outside the open, empty case. *Note: Proper (matching) slot corrected docking was never performed during either recording.* | User | — | `TBD — pending separate log-analysis session` |
+| 06:35:30 | Recording 2 ends with both buds resting outside the open, empty case. *Note: Proper (matching) slot corrected docking was never performed during either recording — re-confirmed 2026-09-15 (prompt `0022`) via a targeted, dense re-check (1fps across the full 06:33:41–06:35:30 window, 4fps across the densest 06:34:47–06:35:13 sub-window), cross-validated against the phone screen's own per-earbud charging-icon indicator (Device details' Left/Case/Right circles). No frame anywhere in this window shows both Left and Right simultaneously displaying the charging-bolt icon — the signature a genuine matching-slot docking would be expected to produce — and no case-visual frame shows a bud configuration inconsistent with the swap timeline already documented above. The maintainer's recollection of a corrected docking in Recording 2 is not supported by this denser re-check; see `CAP-047-FINDINGS.md` §1 for the full evidence and the corresponding hypothesis-test writeup.* | User | — | See `CAP-047-FINDINGS.md` §1 |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AL, `PROJECT_RULES.md` §4's fixed template)
 
@@ -87,11 +87,11 @@ setup, expected outcome, actual outcome, conclusion):
       *Note: Not attempted this session.*
 - [ ] **Trigger 2 (scheduled sync window):** did the burst appear during or after this idle window?
       *Note: Not attempted this session.*
-- [ ] **Trigger 3 (charge-state change):** did the burst appear at or shortly after the dock/undock
+- [x] **Trigger 3 (charge-state change):** did the burst appear at or shortly after the dock/undock
       transition?
-      *Note: Video analysis confirms the physical sequence of three swapped-side docking attempts across two recordings (one in video 1, two in video 2) and that the corrected proper docking attempt was not attempted. Evaluating whether the DLCI 0x0a burst appeared requires the separate, out-of-scope log-analysis session.*
-- [ ] A negative result for all three is itself a valuable, reportable outcome, not a failed
-      session — record it as such rather than treating the session as inconclusive.
+      *Note: Video analysis (including a targeted dense re-check, see the 06:35:30 row above) confirms the physical sequence of three swapped-side docking attempts across two recordings (one in video 1, two in video 2), and that a corrected (matching-slot) docking attempt was never performed in either recording. See `CAP-047-FINDINGS.md` for the full DLCI 0x0a wire-log result against each of these bracketed charge-state transitions.*
+- [x] A negative result for all three is itself a valuable, reportable outcome, not a failed
+      session — record it as such rather than treating the session as inconclusive. *See `CAP-047-FINDINGS.md` for the actual result.*
 
 ## Next steps after filling this in
 

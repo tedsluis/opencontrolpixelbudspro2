@@ -174,6 +174,7 @@ _Physical interactions with the device._
 | `CASE-006` | Place buds back in the case and close the lid | User (Hardware) | M | 🔵 | Terminates the active Bluetooth Classic connection. | — |
 | `CASE-007` | Hold the case button for 30 seconds (case open, buds inside, plugged into power) | User (Hardware) | P | 🔵 | This is a **full factory reset**, not just pairing mode. Also resets the Find My Device link on the Pro 2 — destructive, do this deliberately and last (see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16). | — |
 | `CASE-008` | Press the case button briefly/differently to force pairing mode | User (Hardware) | P | 🔴 | **Still to verify** — no officially confirmed press duration found for a shorter pairing trigger, separate from the 30s reset. Open question, see §9 below and `PROTOCOL.md` §6. | — |
+| `CASE-009` | Place both buds into the case in the wrong (swapped Left/Right) slots | User (Hardware) | AL | 🔴 (PROPOSAL — new Test-ID, awaiting maintainer sign-off) | **Added 2026-09-15 (`CAP-047-FINDINGS.md` §9 item 4).** A distinct, reproducible scenario from `CASE-006`'s correctly-slotted docking: `DECISIONS.md` ADR-024's dock-state byte reads "both docked" identically regardless of slot correctness (confirmed), but the resulting ACL-disconnect behavior is inconsistent across the three instances captured so far (two disconnect, matching `DECISIONS.md` ADR-016; one does not) — an unreconciled 🔴 open question, not yet its own tracked Test-ID before this proposal. | `CAP-047-FINDINGS.md` §4/§5 |
 
 ---
 
