@@ -636,5 +636,44 @@ original, ends at ~17:25:08 — `CAP-006`'s own *third* sample (`Settable=0x00`,
   per-capture, this session). `PROTOCOL.md` §4.3 Option C's cadence-model cross-reference — Result
   2's narrowing noted (not yet a rewrite of the model itself, pending replication).
 
+### 2026-09-15 — External spec/naming validation for `CAP-050`'s `PRIV-001` codes and the "GSND" lead (`ai-sessions/0023`)
+
+- **Trigger:** `ai-sessions/0023_CROSSCHECK_PROMPT_2026_09_15.md` Phase 2 (a systematic official-spec
+  sweep for `CAP-050`'s 7 unmapped DLCI 0x08 codes, going beyond the Hearable Controls/Device
+  Information/SASS/Find Hub Network pages already checked) and Phase 3 (a broader "GSND" naming
+  search, this time including a public-web angle).
+- **Method:** `WebFetch` against every remaining official Fast Pair specification extension page
+  linked from `developers.google.com/nearby/fast-pair/specifications/introduction` — Message Stream
+  (base), Device Action, Change Capability, Personalized Name, Retroactive Account Key, and Message
+  Authentication Code — each fetched directly and checked for the literal Group/Code pairs `05/0c`,
+  `04/02`, `04/04`, `04/11`, `04/13`, `04/15`, `0e/04`. Separately, `WebSearch` for
+  `"GSOUND_BT_CONTROL"`/`"GSOUND_BT_AUDIO"` (the un-truncated candidate expansion of "GSND
+  CONTROL"/"GSND AUDIO," `CAP-033-FINDINGS.md` §3), and a follow-up `WebSearch` for any
+  chipset/SDK-vendor attribution of the "GSOUND" name.
+- **Captures examined:** `CAP-050` (`PRIV-001`'s 7 codes); `CAP-033`/`CAP-021` (the "GSND"
+  naming lead, no new capture data involved — this is a pure external-source check).
+- **Result:**
+  - **Fast Pair spec sweep — clean, complete negative.** Change Capability documents only Group
+    `0x03`/`0x06`; Device Action documents only Group `0x04` Code `0x01` (Ring, already known);
+    Personalized Name, Retroactive Account Key, and the base Message Stream page document no
+    numeric Group/Code values at all; Message Authentication Code documents only Group `0x03` Code
+    `0x0A` (a session nonce). None of the 7 target pairs appears on any of these six pages. 🟢 FACT
+    (direct page fetch, this session) — every official Fast Pair extension page has now been
+    checked for these 7 codes, not just the four checked previously.
+  - **"GSND"/"GSOUND" — a new, externally-verifiable, cross-vendor lead, not a resolution.**
+    `"GSOUND_BT_CONTROL"` and `"GSOUND_BT_AUDIO"` are independently documented, verbatim, as
+    Bluetooth service names observed in Windows Device Manager for a **Sony WH-1000XM5/WF-1000XM4**
+    headphone (a Tom's Hardware forum thread enumerating "mystery" Bluetooth services for that
+    product) — a different vendor and product line entirely from Google/Pixel Buds. 🟡 HYPOTHESIS:
+    "GSND"/"GSOUND" is a cross-vendor Bluetooth-audio-accessory service-naming convention
+    (plausibly chipset/SDK-level), not a Google-specific or `libmaestro`-specific term. A further
+    `WebSearch` for the underlying chipset/SDK vendor found no attribution — the convention's origin
+    remains unidentified beyond this cross-vendor observation.
+- **Promoted to:** `PROTOCOL.md` §6 (both the `PRIV-001` item and the DLCI-0x08-ownership/"GSND"
+  item) — dated updates recorded at 🟡 HYPOTHESIS, maintainer sign-off obtained 2026-09-16 (chat
+  session continuing `ai-sessions/0023`), per `AGENTS.md` §6 (no FACT promotion or `DECISIONS.md`
+  ADR involved; the spec-sweep negative itself needed no sign-off per `AGENTS.md` §15, since it is
+  a direct observation, not a new protocol claim).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

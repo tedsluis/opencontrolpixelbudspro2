@@ -162,6 +162,21 @@ per `AGENTS.md` §13.6's zero-creativity rule (no forced resolution offered):
   to the `gvi`/`gvj` static-analysis path's own premise that this specific app-side callback fires on
   a `HOLD` gesture event.
 
+## 3a. `ai-sessions/0023` follow-up — static trace of `fye.a(qhs)`'s full dispatch chain, and a candidate shared gate for both callers (🟡 HYPOTHESIS, maintainer sign-off obtained 2026-09-16, not a new wire finding)
+
+Per `ai-sessions/0023_CROSSCHECK_PROMPT_2026_09_15.md` Phase 1: traced `fye.a(qhs)` (`fye.java:17-38`) end to end through its full dispatch chain, looking for a gate, early return, swallowed exception, or dead code path that would explain §3's clean 4-for-4 wire silence without contradicting the compiled code's own reachability.
+
+- **`fye.a(qhs)` itself is unconditional** — no branch, no null-check, no try/catch. It builds `qhr{b=13, c=state}`, wraps it `qjc{b=4, c=qhr}`, and calls `this.a.c(qjc)` where `this.a` is a `fyv` instance.
+- **`fyv.c(qjc)`** (`fyv.java:56-83`) computes a per-`qhr`-field dispatch key (`al = pld.as(qhr.b) - 1`, i.e. one key per oneof case number — 13 in this case) and calls `Map.compute(this.g, al, new krb(new aie(this, qjc, 7), 1))` — a coalescing map keyed by *which setting field* is being written.
+- **The `BiFunction` (`aie`, discriminator `c=7`) is JADX-undecompilable** ("Method dump skipped, instructions count: 1926") — resolved via the `apktool` smali fallback per `DECISIONS.md` ADR-017 §4: `aie.smali`'s packed-switch (`c=7` → `:pswitch_c`, lines 2544-2610) decodes to: if a previous pending write exists for this same key, cancel it (`ore.cT()`); then call `fyv.a(qjc).p()` and store the result. **`oqh.p()` (`oqh.java:105-109`) genuinely subscribes/executes** (`r(oti)` → abstract `s(oqiVar)`), not a cold, never-subscribed observable — so this is not a "constructed but never run" dead end.
+- **`fyv.a(qjc)`**'s Rx-style chain ultimately reaches `esk`'s discriminator-19 case (`esk.java:129-148`), which calls `nqoVar.e(qjcVar2)` — a genuine Pigweed `pw_rpc` client send (`nqo`, per `REVERSE_ENGINEERING.md`'s `nqx`/`npy`/`nqo` entry) — wrapped in a 5s timeout and a retry operator. **Conclusion: every JADX-decompilable step in this chain, once reached, unconditionally attempts a real RPC send** — no silent kill-switch was found inside `fye`/`fyv.c`/`fyv.a`/`esk` themselves.
+- **The actual gate sits one level higher, in each caller, and is the *same* gate for both**: `QuickActionsFragment`'s `onClick` (already quoted in `REVERSE_ENGINEERING.md`'s `qhr` entry) does `Optional p = hesVar.d.p(hesVar.c.c()); if (p.isEmpty()) { log("ANC controller is empty"); return; }` **before ever reaching `fye.a()`**. `gvj.java:105-110`'s `HOLD`-gesture case does the equivalent check earlier still — `this.d = ftjVar.p(str)` is computed once at `gvj` construction (`gvj.java:45`), and the `HOLD` case only proceeds (`if (!gvjVar.d.isEmpty())`) to fetch device info and construct `gvi` at all if that same Optional is non-empty; `gvi.s()` (`gvi.java:19-33`) then also silently returns — **no log line at all** — if a *second*, independently-fetched `Optional<gcl>` (device-info snapshot, via `gck.a(deviceId)`) comes back empty, before it would call `fye.a()`.
+- **Both `hesVar.d`/`gvj.d` are the same `ftj.p(String deviceId)` accessor** (`ftj` is an interface; its only found implementation, `ftf.p()`, is `g(str).g().a()`, where `g(str)` = `mcn.O(D(str), ftn.class)` — a Dagger/Hilt per-device subcomponent lookup, `ftn.class` being the per-device entry point that (per the existing `qhr` entry) exposes `fye` as an `Optional`). Tracing `D(str)`'s own construction — specifically, under what condition this per-device subcomponent's `Optional<fye>` is populated vs. empty (e.g. a capability/feature-detection gate tied to whether the device's SDP record was resolved as supporting `libmaestro`'s "pigweed internal rfcomm socket," `PROTOCOL.md` §2.2a) — was **not completed this pass**; flagged as the natural next static-analysis step.
+- **This refutes, not confirms, the original Phase 1 item 6 "wrong screen" hypothesis.** `res/layout/main_fragment_contents.xml` shows `QuickActionsFragment` is embedded *directly inside* the same screen as `DeviceStatusFragment` (battery/status) and `SettingsFragment` (settings list), stacked vertically — i.e. it is not a separate "Quick actions" tab distinct from the Device details screen CAP-051's video shows being tapped. The in-app tap this capture used **is** `QuickActionsFragment`'s own toggle group; the "different screen" explanation does not apply.
+- **Version check**: `CAP-047` (same maintainer, same phone, same day) independently states the companion app version as `1.0.955078536`, matching the decompiled APK (`v1.0.955078536-10253511`) exactly; no version-drift indicator found anywhere in `PROTOCOL.md`'s changelog for this timeframe. Not itself screenshot-confirmed for `CAP-051` specifically, but no contrary evidence exists.
+
+**Net effect on this file's own §3/§6 open questions**: a single, previously-untraced candidate root cause (`ftj.p(deviceId)`/`Optional<fye>` reading empty) would explain **both** the in-app-tap silence and the physical-gesture silence uniformly, without requiring two separate explanations — but this is a 🟡 **HYPOTHESIS**, not confirmed: whether that Optional was actually empty during `CAP-051`'s session cannot be determined from static analysis or from this capture's own wire log (the gate, if it fired, is by definition invisible on the wire). **Maintainer sign-off obtained 2026-09-16** (chat session continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS in `PROTOCOL.md` §6 and `REVERSE_ENGINEERING.md`'s `qhr`/`fye` entry, per `AGENTS.md` §6 — not a resolution of §6's open questions below, which remain open.
+
 ## 4. Test-ID traceability (`AGENTS.md` §13)
 
 - **`ANC`-family / `TOUCH-007`**: all four transitions individually confirmed and time-correlated
@@ -213,8 +228,12 @@ to 🟢 FACT in the sense of a new command/opcode finding) — nothing is propos
   accompanying DLCI 0x02 `qhr` field-13 write, despite `REVERSE_ENGINEERING.md`'s static-analysis
   finding that this exact UI element's `OnClickListener` calls `fye.a(qhs)` (§3)? Not resolved by
   this capture — a genuinely open tension between static code analysis and wire behavior, not
-  reconciled here.
-- 🔴 Same question for the physical press-and-hold gesture's `gvi`/`gvj` code path (§3).
+  reconciled here. **`ai-sessions/0023`'s follow-up (§3a) traces this further**: every
+  JADX-decompilable step of `fye.a()`'s own dispatch chain unconditionally attempts a real RPC
+  send once reached — the candidate explanation now sits in an `Optional<fye>` (`ftj.p(deviceId)`)
+  gate shared by both callers, not yet confirmed empty or non-empty for this specific session.
+- 🔴 Same question for the physical press-and-hold gesture's `gvi`/`gvj` code path (§3) — §3a's
+  same candidate gate applies to this path too (independently checked, same `ftj.p()` accessor).
 - 🔴 Left/Right identity of the physical earbud used for all three gestures remains unconfirmed from
   video alone (carried over from `CAP-051-EVENT-NOTES.md`'s own Procedure note — not investigated
   further this session, as it does not bear on the DLCI 0x02/0x04 correlation question).

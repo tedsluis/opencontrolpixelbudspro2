@@ -1745,6 +1745,24 @@ leaving them buried in prose elsewhere.
       on-the-wire SDP service name, **"GSND CONTROL"** (UUID `f8d1fbe4-7966-4334-8024-ff96c9330e15`,
       RFCOMM channel 4) — a new search lead (see §2.3's 2026-08-30 update), not a resolution; no
       match for "GSND" found in a first APK keyword pass. Still 🔴 open.
+      **Update (2026-09-15, `ai-sessions/0023`) — a broader APK search (resource XML, not just
+      source/asset CSVs) reconfirms the clean negative; an external, cross-vendor lead found via
+      `WebSearch`, not the APK.** `grep -rli "gsnd" apktool-output/res/ jadx-output/resources/`
+      (a genuinely different search location than the 2026-09-13 pass's source/asset-CSV sweep,
+      `REVERSE_ENGINEERING.md`'s "GSND naming lead" entry) — zero matches, still no literal "GSND"
+      anywhere in this APK version. Separately, `WebSearch` for `"GSOUND_BT_CONTROL"`/
+      `"GSOUND_BT_AUDIO"` (the un-truncated form of "GSND CONTROL"/"GSND AUDIO" this project's own
+      `"gsound"` firmware-path lead already proposed as a plausible expansion) finds these two exact
+      strings independently documented as Bluetooth service names on a **Sony WH-1000XM5/WF-1000XM4**
+      headphone, in an unrelated Tom's Hardware forum thread listing mystery Windows Device Manager
+      services (not a Google or Pixel-Buds-specific source). This is genuinely new, externally
+      verifiable evidence that "GSND"/"GSOUND" is a **cross-vendor** Bluetooth-audio-accessory
+      service-naming convention (plausibly chipset/SDK-level) rather than a Google-`libmaestro`-
+      specific term — it does not identify DLCI 0x08's Group/Code semantics, and no further vendor/
+      SDK attribution was found. 🟡 HYPOTHESIS — narrows the naming question (points away from
+      "Google-internal," not toward any specific alternative owner) but does not resolve DLCI 0x08's
+      identity, which remains 🔴 open. **Maintainer sign-off obtained 2026-09-16** (chat session
+      continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS as written above.
 - [ ] Added 2026-08-14: EQ's opcode/channel is explicitly **not** assumed to sit alongside ANC's
       (DLCI 0x04 Group `0x08`) — that assumption held only while ANC's own channel was unresolved.
       See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T (new top-priority capture target) and §4.2
@@ -2115,6 +2133,37 @@ leaving them buried in prose elsewhere.
       session (see the next item), none can be correlated against a bracketed value (N=1 for all
       7). Still fully unattributed; needs a re-run with a trigger that genuinely reopens DLCI 0x08
       (the OS Bluetooth toggle, per `CAP-037`'s own procedure, or physical case/bud cycling).
+      **Update (2026-09-14/15, `CAP-050`, Group AG repeat + `ai-sessions/0023` follow-up) — 5 of the
+      7 codes resolve to "not a match"/"no candidate found"; 2 remain genuinely inconclusive, not
+      one blanket "still unattributed."** `CAP-050-FINDINGS.md` §3/§4 reopened DLCI 0x08 across **16
+      genuine reconnects in one session** (not N=1), decoding the full `[Group][Code][Length][Value]`
+      TLV stream around all 7 flagged codes on **14 fully-captured bursts**: `05 0c`/`04 11`/`04 13`
+      resolve **not a match** (their nearest non-zero-length neighbor is byte-identical across all 14
+      bursts); `04 02`'s neighbor is the already-documented Option E battery-cross-check field
+      (unrelated to dock state); `0e 04` has no distinct neighbor at all — **no candidate found**.
+      `04 04`/`04 15`'s neighbors (`Group 0x04 Code 0x05`/`Code 0x16`) *do* fluctuate near dock-state
+      changes, but the same physical dock configuration (Left docked/Right out) produced **three
+      different** `Code 0x05` values across the session (`08 03`×2, `08 05`×1) — ruled out as a
+      simple steady-state dock encoding; genuinely **inconclusive**, not a HYPOTHESIS. `ai-sessions/
+      0023`'s own follow-up ran a structurally different search than either prior pass: (a) every
+      remaining official Fast Pair spec extension page (Message Stream, Device Action, Change
+      Capability, Personalized Name, Retroactive Account Key, MAC) fetched directly — none documents
+      any of these 7 Group/Code pairs; (b) a hex-literal-pair search (`0x05,0x0c` etc., not merely the
+      noisy decimal-pair search) across the full decompiled `jadx-output/` tree returns **zero**
+      matches for all 7 pairs; (c) `qhr`'s own field 21 (a numeric coincidence with Code `0x15`=21)
+      already has a known, unrelated write site (`hey.java`'s `HearingWellnessFragment` toggle) —
+      confirms this is coincidence, not a link between the two independently-numbered channels; (d)
+      `MaestroDeviceSettingsProviderService`'s dispatcher (`ct()`) re-read in full — confirmed exactly
+      6 case IDs exist (`2102`/`2103`/`2104`/`2113`/`2115`/`2116`), all routing through the `ftj`
+      accessor (the `qhr`/settings pipeline), none through any different, DLCI-0x08-shaped accessor;
+      (e) the native `.so` list re-checked directly (`apktool-output-arm64_v8a/lib/arm64-v8a/`) —
+      still only `libandroidx.graphics.path.so`/`libpw_tokenizer_jni.so`, no new candidate. All five
+      angles reinforce the existing negative rather than finding anything new. **Maintainer sign-off
+      obtained 2026-09-16** (chat session continuing `ai-sessions/0023`) for the 5-resolved/
+      2-inconclusive characterization above, at 🟡 HYPOTHESIS for the two still-inconclusive codes and
+      as a reinforced negative for the five resolved ones. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s
+      `PRIV-001` row and this item both still need updating to reflect the resolved/inconclusive split
+      (a separate, still-pending mechanical follow-through, `CAP-050-FINDINGS.md` §8).
 - [ ] **Added 2026-09-06, `CAP-040-FINDINGS.md` §1:** the official app's own in-app "Connect"/
       "Disconnect" buttons, tapped ~15 times across a 27-minute stretch, produced **zero**
       wire-visible signal — no ACL disconnect/reconnect, no DLCI channel bounce of any kind. The
@@ -2156,6 +2205,36 @@ leaving them buried in prose elsewhere.
       produce exactly this pattern without requiring a press-and-hold explanation. Not proposed as a
       resolution — a second, un-preferred candidate to check a future session against (does a `qhr`
       field-13 write on DLCI 0x02 immediately precede an unexplained DLCI-0x04 Notify?).
+      **Update (2026-09-15, `CAP-051`, Group AM) — the first candidate (physical press-and-hold
+      gesture) is directly confirmed; the second candidate (a parallel DLCI-0x02 `qhr` field-13
+      write) is a clean, confirmed negative.** `CAP-051-FINDINGS.md` §2/§3 ran a video-confirmed
+      isolated-action capture (one in-app tap, three physical press-and-hold gestures): all three
+      gestures reproduce this exact "Notify without Set" pattern with direct video correlation
+      (resolving the first candidate as confirmed, not merely plausible), and **no** `qhr`
+      field-13 write (or any DLCI 0x02 `Sent` payload of any kind) appears on any of the four
+      actions, including the in-app tap — a clean negative for the second candidate specifically.
+      **This is, however, a genuine contradiction, not a resolution**: `REVERSE_ENGINEERING.md`'s
+      `qhr`/`fye` entry independently confirms `fye.a(qhs)` is reachable from *both* the in-app tap
+      (`QuickActionsFragment`, the exact screen `CAP-051`'s video used — confirmed, not merely
+      assumed, via `res/layout/main_fragment_contents.xml`'s embedding, `ai-sessions/0023`) and the
+      physical gesture (`gvj`/`gvi`'s `HOLD` case) — compiled, reachable code that this session's
+      capture shows produces zero wire effect for either trigger. `ai-sessions/0023`'s follow-up
+      trace (`CAP-051-FINDINGS.md` §3a) found every JADX-decompilable step of `fye.a()`'s own
+      dispatch chain (`fyv.c()`'s per-field `Map.compute` coalescing, resolved via the `apktool`
+      smali fallback for its JADX-undecompilable `BiFunction`; `fyv.a()`'s Rx chain reaching a real
+      `pw_rpc` client send) unconditionally attempts a genuine RPC send once reached — no
+      JADX-decompilable kill-switch exists inside `fye`/`fyv.c`/`fyv.a`. 🟡 **HYPOTHESIS, not
+      confirmed**: both callers share the same upstream gate, `ftj.p(deviceId)` → `Optional<fye>`
+      (a Dagger/Hilt per-device-subcomponent lookup) — if empty, neither caller ever reaches
+      `fye.a()` at all (the in-app path logs "ANC controller is empty" and returns; the gesture
+      path returns with no log at all). Whether this Optional was actually empty during `CAP-051`'s
+      session is not determined by static analysis or by this capture's own wire log (by
+      definition invisible on the wire if it fired) — tracing the Dagger subcomponent's own
+      population condition (`ftf.g(str)` → `mcn.O(D(str), ftn.class)`) is the recommended next
+      static-analysis step, not yet completed. **Maintainer sign-off obtained 2026-09-16** (chat
+      session continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS as written
+      above — not promoted to FACT, since the Optional's actual state during `CAP-051`'s session
+      remains unconfirmed.
 - [ ] **Added 2026-09-06, `CAP-041-FINDINGS.md` §4 (Group AH, `OBS-007`):** a recurring 2-field
       sub-message inside DLCI 0x02's connect-time burst (first flagged, structurally, in
       `CAP-036-FINDINGS.md` §12.6) holds a constant value across an entire session that happens to
@@ -2215,6 +2294,26 @@ leaving them buried in prose elsewhere.
       Given this static-analysis avenue is now exhausted twice, the byte-level capture-correlation
       path (this section's own "Next step") is the recommended way forward — attempted this same
       session, see the item below.
+      **Found 2026-09-15 (`ai-sessions/0023`), via a genuinely different static-analysis strategy —
+      resolved, but the resolution narrows rather than confirms `gjv.p()` as the connect-time
+      burst's trigger.** A smali cross-reference on the abstract supertype's call descriptor
+      (`Lgiz;->p(`) rather than a search for `giz`-typed fields finds exactly one call site:
+      `ftw.java`'s discriminator-9 lambda, an `OtaApplyWorker` completion callback (logged `"On
+      apply finished."`) reached via an inline `ftj.i(str).p()` chain — never stored in a field,
+      which is exactly why searching for `giz`-typed fields (both prior passes' strategy)
+      structurally could not find it. **This makes `gjv.p()` an OTA-firmware-update-apply-completion
+      trigger, specifically**, not a generic connect-time/settling trigger as this item's own
+      framing ("more plausibly connect-lifecycle-shaped") had assumed — it makes it *less* likely,
+      not more, that this call is what fires inside `CAP-036`/`CAP-041`'s ordinary connect-time
+      burst, since neither of those sessions involved a firmware OTA update. See
+      `REVERSE_ENGINEERING.md`'s `frb`/`fuh`/`glk`/`gjv` entry's 2026-09-15 update for the full trace
+      (command + smali/JADX evidence). Whether the connect-time burst's own trigger is something
+      else entirely remains open — the byte-level correlation path below is unaffected by this
+      finding and remains the best next step for that separate question. **Maintainer sign-off
+      obtained 2026-09-16** (chat session continuing `ai-sessions/0023`): the call-site finding
+      itself is a direct code-reading result (no ADR needed); the interpretive reading above (that
+      this narrows away from, rather than confirms, `gjv.p()` as the connect-time burst's trigger)
+      is accepted for recording at 🟡 HYPOTHESIS.
       **Byte-level correlation against existing capture data, 2026-09-08
       (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 4 item 2) — a plausible structural
       match found, not a confirmed one; full closure still needs a fresh capture.** Per this
@@ -2685,6 +2784,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-13 | **`ai-sessions/0015_MAINTENANCE_PROMPT_2026_09_13.md` — resolved `ai-sessions/0010`'s two remaining sign-off items.** **§6** — the `CAP-037`/`CAP-048` dock-timing anomaly's "(PROPOSAL, awaiting maintainer sign-off)" hedge removed; the explanation itself (a genuine real-time docking action, consistent with `DECISIONS.md` ADR-016) was maintainer-approved, citing `ai-sessions/0015`. No new FACT beyond ADR-016 was introduced — this only closes a previously-open citation. `DECISIONS.md` ADR-024 gained a dated Update recording `CAP-048`'s two counter-example `Settable-toggles` readings as a documented, unreconciled 🟡 HYPOTHESIS exception, maintainer-approved | Claude (AI), maintainer-directed sign-off session, prompt `0015` |
 | 2026-09-13 | **`ai-sessions/0017_MAINTENANCE_PROMPT_2026_09_13.md` — re-verification of 5 open items, no FACT/ADR promotion (all proposals pending maintainer sign-off).** **§4.2 EQ** — the 2026-09-08 "field 18 reachable only via the Save button" trace corrected: a genuine second call path exists (`hod.java`, a "navigate away with unsaved changes" trigger), adding a third candidate alongside Save-button and the still-unconfirmed slider-release reading; a new capture (Group AO, `CAP-053`) is proposed to isolate all three. **§6 serial-number candidate** — `CAP-036` frame 1423 re-traced field-by-field: its 3-string sub-message structurally matches `qjm`/`qjr` (`GetHardwareInfo`'s oneof alternatives) exactly, not `qie` (`GetSoftwareInfo`'s alternative, which is typed `MESSAGE` not `STRING`) as the existing entry read — reverses which RPC is the better structural candidate; a live correlation capture (Group AS, `CAP-057`) is proposed. **§6 head-gesture item** — `CAP-028`'s clean negative re-verified across its *entire* log (not just the originally-checked window) plus HID/AVRCP/SCO checks, reproducing the same result; a correctly-scoped repeat with an active call/notification (Group AQ, `CAP-055`) is proposed. Also (not touching this document): `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `HOLD-005` row updated with a Group AR (`CAP-056`) re-run proposal (`CAP-045` never opened the rotation-checklist screen), and `PROTOCOL.md` §4.3 Option A's Battery Notification item — `CAP-043`'s non-match re-verified byte-for-byte, a single-bud-insertion/removal bracket proposed as Group AP (`CAP-054`). Full phase-by-phase detail and the complete pending-decision inventory: `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` | Claude (AI), maintenance/re-verification task, not yet reviewed by maintainer |
 | 2026-09-15 | **`ai-sessions/0022_CAPTURE_PROMPT_2026_09_15.md` — `CAP-047` (Group AL, `CAP-021`'s DLCI 0x0a burst trigger, Trigger candidate 3 only), no FACT/ADR promotion (all proposals pending maintainer sign-off).** **§6 DLCI 0x0a item** — a dated update recording a clean, complete negative for Trigger candidate 3 (charge-state change) across six independently bracketed dock/undock transitions in two full, untruncated logs; the burst's "1 of N sessions checked" denominator rises to at least twenty. **§6 (new item, ADR-016 tension)** — of three swapped-slot (mismatched L/R) dockings captured this session, two produce a genuine ACL disconnect matching `DECISIONS.md` ADR-016 exactly, but a third does not, despite an identical dock-sensor reading — flagged as an unreconciled 🔴 open question. **§6 (extends the existing `CAP-048-FINDINGS.md` §5 item)** — `DECISIONS.md` ADR-024's dock-state byte confirmed to read "both docked" during a swapped-slot seating (a previously-untested case, directly answered); two further stale-reading counter-examples found, one matching the already-proposed "settling" hypothesis and one that does not. A dense video re-check (1fps + 4fps, cross-validated against the phone's own per-earbud charging-icon indicator) also confirmed, contrary to a maintainer recollection, that no corrected (matching-slot) docking occurred in either of this capture's two recordings. See `CAP-047-FINDINGS.md` for the full command+hex evidence and proposed downstream updates | Claude (AI), capture-analysis task, not yet reviewed by maintainer |
+| 2026-09-15/16 | **`ai-sessions/0021`/`0022_CAPTURE_RESULT`'s `CAP-050`/`CAP-051` findings, plus `ai-sessions/0023_CROSSCHECK_PROMPT_2026_09_15.md`'s APK cross-validation pass, synced together — no FACT/ADR promotion; the four HYPOTHESIS-level correlations below explicitly maintainer-approved 2026-09-16 (chat session continuing `ai-sessions/0023`).** **§6 `qhr` field 13 item** — `CAP-051`'s clean, video-confirmed 4-for-4 wire negative for a DLCI 0x02 field-13 write (both the in-app tap and all three physical gestures) recorded, alongside a full static trace of `fye.a()`'s dispatch chain (`fyv.c()`'s per-field `Map.compute` coalescer, its JADX-undecompilable `BiFunction` resolved via smali) that finds no silent gate anywhere in that chain — the candidate gate is a shared `Optional<fye>` (`ftj.p(deviceId)`) check in both callers, not yet confirmed empty/non-empty for this session; the "wrong screen" alternative explanation is refuted (`QuickActionsFragment` is confirmed, via `main_fragment_contents.xml`, to be embedded in the same screen `CAP-051` used). **§6 `PRIV-001` item** — `CAP-050`'s 16-reconnect, 14-fully-captured-burst re-analysis resolves 5 of the 7 previously-unattributed DLCI 0x08 codes to "not a match"/"no candidate found," leaves 2 (`04 04`/`04 15`) genuinely inconclusive (their neighbors fluctuate near dock-state changes but don't reproduce for the same configuration across reconnects) — plus a structurally broader search this session (every remaining official Fast Pair spec page, a hex-literal-pair APK search, the `qhr`-field-number-coincidence check, a full re-read of `MaestroDeviceSettingsProviderService`'s dispatcher, a native-`.so` re-check) reinforces the negative without finding anything new. **§6 "GSND" item** — a new, externally-verifiable, cross-vendor lead: `"GSOUND_BT_CONTROL"`/`"GSOUND_BT_AUDIO"` independently documented as Bluetooth service names on an unrelated Sony headphone, suggesting "GSND"/"GSOUND" is a cross-vendor accessory-naming convention, not Google/`libmaestro`-specific. **`REVERSE_ENGINEERING.md`** — `gjv.p()`'s long-unresolved caller found (an `OtaApplyWorker` completion callback, an inline call missed by both prior field-search-based passes), sharpening its role toward OTA-lifecycle rather than generic connect-lifecycle; `MaestroDeviceSettingsProviderService`'s 6-case-ID dispatcher re-confirmed exhaustive; `HeadsetPiece`'s per-earbud `charging` field confirmed a raw GMS pass-through with no app-side derivation logic (checked against `CAP-047`'s charging-icon-asymmetry observation — unresolvable from this app's own code). See `CAP-050-FINDINGS.md`, `CAP-051-FINDINGS.md` §3a, `REVERSE_ENGINEERING.md`'s `qhr`/`frb`-`gjv`/`MaestroDeviceSettingsProviderService`/`ijk`/GSND entries, and `DESKRESEARCH_FINDINGS.md`'s 2026-09-15 entry for the full command+hex/code evidence | Claude (AI), APK cross-validation task; maintainer-directed sign-off session, chat session continuing prompt `0023` |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

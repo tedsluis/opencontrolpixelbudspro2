@@ -1134,6 +1134,68 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     pre-existing wire-derived HYPOTHESIS labels exactly, unlike fields 12/22/27 which kept a naming
     equivalence unpromoted.
 
+- **Update (2026-09-15, `ai-sessions/0023`) — field 13's full send-dispatch chain traced end to end
+  (`fye`→`fyv`→`esk`→`nqo`), following up on `CAP-051`'s clean wire negative (see that capture's own
+  §3a). No JADX-decompilable step in this chain contains a silent gate; the actual candidate gate
+  sits one level above `fye.a()`, in both callers alike.** 🟢 FACT (code reading, this pass):
+  - `fye.a(qhs)` (`fye.java:17-38`) is unconditional and calls `this.a.c(qjc)` (`this.a` = a `fyv`
+    instance, `fyv.java`).
+  - `fyv.c(qjc)` (`fyv.java:56-83`) computes a per-`qhr`-field dispatch key
+    (`al = pld.as(qhr.b) - 1` — one key per oneof case number, so field 13's writes never collide
+    with, e.g., field 4's) and calls `Map.EL.compute(this.g, al, new krb(new aie(this, qjc, 7), 1))`
+    — a coalescing map keyed by *which setting field* is being written, not a global lock.
+  - **`aie`'s own `apply()` (the `BiFunction` `krb` wraps) is JADX-undecompilable**
+    ("Method dump skipped, instructions count: 1926") — a large, R8-shared synthetic class
+    (20-way `packed-switch` on a constructor-supplied discriminator int, reused across many
+    unrelated lambda call sites in this app). Resolved via the `apktool` smali fallback per
+    `DECISIONS.md` ADR-017 §4 (`apktool-output/smali_classes2/aie.smali`): the packed-switch's
+    entry 7 (`fyv.c`'s own `new aie(this, qjc, 7)`) is `:pswitch_c` (lines 2544-2610), which decodes
+    to: if a previous pending value exists for this map key, cancel it (`ore.cT()`); then call
+    `fyv.a(qjc).p()` and store the result as the new map value. This is a **per-field
+    superseding-write coalescer** (rapid repeated writes to the *same* field cancel the earlier
+    in-flight one), not a mechanism that could explain total silence for an isolated, first write to
+    a field with no prior pending write.
+  - `oqh.p()` (`oqh.java:105-109`) genuinely subscribes/executes (`r(oti)` → the abstract `s()`) —
+    confirmed this is not a cold, never-subscribed Rx chain.
+  - `fyv.a(qjc)` (`fyv.java:44-49`)'s chain reaches `esk`'s discriminator-19 branch
+    (`esk.java:129-148`): `nqoVar.e(qjcVar2)` — a genuine `pw_rpc` client send (`nqo`, this
+    document's own `nqx`/`npy`/`nqo` entry), wrapped in a 5s timeout (`.m(5L, TimeUnit.SECONDS)`)
+    and a retry operator (`fyt`). **Every step here, once reached, unconditionally attempts a real
+    RPC send** — no silent kill-switch exists anywhere in this specific chain.
+  - **The actual gate is upstream, in each caller, and is the *same* gate for both, per this pass's
+    own re-reading of `QuickActionsFragment`'s `onClick` (already quoted above in this entry) and
+    `gvj`/`gvi`:** `QuickActionsFragment` does `Optional p = hesVar.d.p(hesVar.c.c()); if
+    (p.isEmpty()) { log("ANC controller is empty"); return; }` before ever reaching `fye.a()`.
+    `gvj.java:45` computes the identical `this.d = ftjVar.p(str)` once at construction, and its
+    `HOLD`-gesture case (`gvj.java:105-110`) only proceeds — fetching device info and constructing a
+    `gvi` callback — `if (!gvjVar.d.isEmpty())`; `gvi.s()` (`gvi.java:19-33`) then *also* silently
+    returns (no log line at all) if a second, independently-fetched `Optional<gcl>` (via
+    `gck.a(deviceId)`) is empty, before calling `fye.a()`.
+  - **Both `hesVar.d`/`gvj.d` are the same `ftj.p(String deviceId)` call.** `ftj` is an interface;
+    its only implementation found in this app version, `ftf.p(str)` (`ftf.java:222-227`), is
+    `g(str).g().a()`, where `g(str)` (`ftf.java:154-159`) is `mcn.O(D(str), ftn.class)` — a
+    Dagger/Hilt per-device subcomponent lookup (`D(str)` builds/retrieves a device-scoped component,
+    `ftn.class` its entry-point interface, whose own `.g()` accessor is presumably what exposes
+    `fye` as an `Optional`). **Not traced this pass**: `D(str)`'s own construction, and specifically
+    under what condition this per-device subcomponent's `Optional<fye>` is populated vs. empty (a
+    plausible candidate: a capability/feature-detection gate tied to whether this device's SDP
+    record was resolved as supporting the "pigweed internal rfcomm socket," `PROTOCOL.md` §2.2a's
+    `gbm`/`fzd` selection logic) — flagged as the natural next static-analysis step, not completed.
+  - **Net effect**: a single, previously-untraced candidate (`ftj.p(deviceId)` reading empty) would
+    explain `CAP-051`'s full 4-for-4 wire silence for *both* callers uniformly. 🟡 **HYPOTHESIS, not
+    confirmed** — whether this Optional was actually empty during `CAP-051`'s specific session
+    cannot be determined from static analysis or from that capture's own wire log (this gate, if it
+    fired, is by definition invisible on the wire). **Maintainer sign-off obtained 2026-09-16** (chat
+    session continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS in `PROTOCOL.md`
+    §6, per `AGENTS.md` §6 — see `CAP-051-FINDINGS.md` §3a for the capture-side write-up of the same
+    trace.
+  - **Also resolved this pass, refuting rather than confirming an earlier candidate explanation**:
+    `res/layout/main_fragment_contents.xml` (apktool output) shows `QuickActionsFragment` is embedded
+    directly inside the same screen as `DeviceStatusFragment`/`SettingsFragment` (stacked
+    vertically), not a separate "Quick actions" tab distinct from the Device-details screen —
+    `CAP-051`'s in-app tap *is* on `QuickActionsFragment`'s own toggle group, ruling out "wrong
+    screen" as the explanation for that specific action's silence.
+
 ### `defpackage.qjn` / `defpackage.qjt` / `defpackage.qhx` / `defpackage.qjv` — `qjc`/`qja`'s other 4 oneof-group alternatives
 
 - **Path**: `qjn.java:28` (field 2 of `qjc`/`qja`), `qjt.java:28` (field 3), `qhx.java:28` (field 1),
@@ -2203,6 +2265,18 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
 - **Correlation with `PROTOCOL.md`**: informational context only (§6 Commands & schemas, 2026-09-08
   addition) — explicitly not a candidate implementation path for this project's own app (would
   require GMS, `AGENTS.md` §1).
+- **Update (2026-09-15, `ai-sessions/0023`) — checked against `CAP-047-FINDINGS.md` §1's per-earbud
+  charging-icon asymmetry bonus observation.** 🟢 FACT (code reading, this pass):
+  `HeadsetPiece.java` (`com/google/android/libraries/bluetooth/fastpair/HeadsetPiece.java`) is a
+  **pure abstract `Parcelable` data holder** — its `charging` field (this entry's own field list
+  above) is an abstract accessor (`e()`) with no derivation logic anywhere in this class; the class
+  contains no other method beyond `Parcelable` boilerplate (`describeContents()`,
+  `writeToParcel()`). Since this companion app never constructs a `HeadsetPiece` itself (the AIDL
+  boundary above receives an already-built instance from GMS), the `charging` boolean is a raw
+  pass-through of whatever value GMS supplies — **this project's own decompiled source contains no
+  logic that could explain, or rule out, `CAP-047`'s per-earbud charging-icon asymmetry**; that
+  question is not answerable from this companion app's code at all, consistent with `DECISIONS.md`
+  ADR-025's existing GMS-boundary finding.
 
 ### `MaestroDeviceSettingsProviderService` / `defpackage.fhk` / `defpackage.ges` — AOSP Bluetooth-Device-Details settings-extension boundary
 
@@ -2319,6 +2393,17 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
 - **Correlation with `PROTOCOL.md`**: §6 Commands & schemas, 2026-09-08 addition (original entry);
   2026-09-08 update (this trace) proposed for `PROTOCOL.md` §6/§4.5.5, pending maintainer review —
   see `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md`.
+- **Update (2026-09-15, `ai-sessions/0023`) — re-read `ct(DeviceInfo, DeviceSettingState)`'s full
+  body directly (not re-derived from this entry's own prior summary) to check whether any case ID
+  beyond the 6 already listed routes to a different, DLCI-0x08-shaped accessor (`CAP-050`'s
+  `PRIV-001` cross-check).** 🟢 FACT: the method's `if`/`switch` chain covers **exactly** `2113`,
+  `2115`, `2116`, `2102`, `2103`, `2104` — no other case ID exists in this dispatcher. All 6 route
+  through `ftj`'s own accessor surface (`e().A(str).c/.b/.e/.i(...)`, or `g().p/.q(...)` for
+  analytics logging) — the same `qhr`/`WriteSetting` pipeline this entry already documents for each
+  case, not a different, DLCI-0x08-shaped accessor. Also notable, found in the same read: `ct()`
+  itself has an early-return guard — if `deviceSettingState.b` is not an `ActionSwitchPreferenceState`,
+  it logs `"Invalid preference state received"` and returns without touching any case — a
+  general-purpose type guard, not specific to any one setting.
 
 ### `defpackage.frb` / `defpackage.fuh` / `defpackage.glk` / `defpackage.gjv` — `fxm.i()`/`GetSoftwareInfo` trigger structure
 
@@ -2379,6 +2464,54 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   `gjv.p()`, which triggers the *request*. This confirms `gaa`/`giz.n()` and `gjv.p()`/`fuh.i()` are
   two ends of the same round-trip, but does not itself locate `.p()`'s trigger. **Recommendation,
   unchanged from the prior session**: the byte-level capture-correlation path (against `qjb`'s
+  content, described below) remains the fallback if static analysis stays exhausted.
+
+- **Update (2026-09-15, `ai-sessions/0023`) — `gjv.p()`'s own caller found, via a genuinely
+  different strategy than either prior pass (a smali-level cross-reference on the abstract
+  supertype's call descriptor, `Lgiz;->p(`, rather than a search for classes holding a
+  `giz`-typed *field*).** 🟢 FACT (smali + JADX cross-read, this pass): `grep -rn "Lgiz;->p("
+  apktool-output/smali*/` finds exactly one call site, `apktool-output/smali_classes2/ftw.smali:337`
+  — inside `ftw`, a large R8-merged `orr`/`Runnable`-shaped lambda dispatcher (same pattern as
+  `krb`/`aie`/`esk` elsewhere in this document), discriminator case **9** (JADX: `ftw.java:61-73`):
+  ```java
+  case 9:
+      OtaApplyWorker otaApplyWorker = (OtaApplyWorker) this.a;
+      String str = otaApplyWorker.o;
+      ftj ftjVar = otaApplyWorker.m;
+      if (!ftjVar.A(str).q()) {
+          log("Reconnecting the device.");
+          ((fti) otaApplyWorker.h.a()).a(str);
+      } else {
+          log("On apply finished.");
+          ftjVar.i(str).p();   // == gjv.p(), since gjv is giz's sole subclass
+      }
+  ```
+  This was missed by both prior passes because the call is an **inline chain**
+  (`ftjVar.i(str).p()`, the `giz` result never stored in a field) rather than a call through a
+  `giz`-typed field — the prior strategy ("find classes holding a `giz`-typed field, check if any
+  calls `.p()`") could not find an inline-chained call by construction, regardless of how many
+  field-holding classes were checked.
+  **What this establishes about `gjv.p()`'s trigger, precisely**: this specific call site fires as
+  part of `OtaApplyWorker`'s own completion callback, specifically the branch taken when the device
+  is confirmed still connected (`ftj.A(str).q()` true) right after a firmware OTA update finishes
+  applying — logged `"On apply finished."` — as opposed to the reconnect-first branch taken when it
+  is not. This is a firmware-OTA-completion trigger, not a generic per-connection/settling trigger.
+  **What this does NOT establish**: whether this is `gjv.p()`'s *only* caller (only one call site
+  matched `Lgiz;->p(` directly — but a caller reached through a different, not-yet-considered
+  dispatch shape, e.g. a method reference rather than a literal `invoke-virtual`, cannot be ruled
+  out by this specific grep alone); and it does **not** confirm or deny that `fxm.i()`'s own
+  `GetSoftwareInfo` burst inside `CAP-036`/`CAP-041`'s connect-time window is triggered via *this*
+  path — an OTA-apply completion is a much rarer, more specific event than an ordinary reconnect,
+  and neither `CAP-036` nor `CAP-041`'s own procedure involved a firmware update. **This makes it
+  *less* likely, not more, that `gjv.p()`'s call is the specific trigger behind the ordinary
+  connect-time burst** — `glk`'s own OTA-transfer-readiness-gated call site (above) and this new
+  OTA-apply-completion call site are both firmware-OTA-lifecycle events, sharpening this entry's own
+  existing "plausibly connect/pairing-lifecycle-shaped" reading for `gjv.p()` specifically toward
+  "OTA-lifecycle-shaped" instead. `TODO.md`'s "Targeted research follow-ups" item for this trace can
+  be closed as **found, with a surprising answer** — not "still not found." **Maintainer sign-off
+  obtained 2026-09-16** (chat session continuing `ai-sessions/0023`): the call-site finding is a
+  direct code fact; the interpretive "OTA-lifecycle, not connect-lifecycle" reading is accepted at
+  🟡 HYPOTHESIS in `PROTOCOL.md` §6, per `AGENTS.md` §6.
   decoded shape) is now the more promising route — pursued this same session, see `PROTOCOL.md` §6's
   `CAP-041`/`CAP-036` connect-time-burst item and `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md`
   Phase 4 item 1.
@@ -2645,6 +2778,31 @@ decision.)*
 - **Correlation with `PROTOCOL.md`**: §2.3's 2026-08-30 update / §6's DLCI-0x08-ownership open item
   — this is a proposed addendum (a related-but-unconfirmed string family, not a resolution),
   pending maintainer review before either section is edited.
+- **Update (2026-09-15, `ai-sessions/0023`) — the literal string re-search reconfirms the negative
+  from a genuinely different location (resource XML, not source/asset CSVs); a new, externally
+  verifiable cross-vendor lead found via `WebSearch`, independent of the APK.**
+  - `grep -rli "gsnd" apktool-output/res/ jadx-output/resources/` — **zero matches**, extending the
+    2026-08-30/2026-09-13 negatives (which checked `jadx-output/` source and the tokenized-log/crash
+    asset CSVs respectively) to this app version's resource-XML tree specifically, a location
+    neither prior pass covered.
+  - `WebSearch` for the literal strings `"GSOUND_BT_CONTROL"`/`"GSOUND_BT_AUDIO"` (the un-truncated
+    form this entry's own "gsound" firmware-path lead already proposed as a plausible expansion of
+    "GSND") finds **both exact strings independently documented as Bluetooth service names on a
+    Sony WH-1000XM5/WF-1000XM4 headphone** (a Tom's Hardware forum thread listing mystery Windows
+    Device Manager Bluetooth services for that device, unrelated to Google or this APK in any way).
+    This is external, non-APK evidence that "GSND CONTROL"/"GSND AUDIO" (this project's own SDP
+    browse naming, `CAP-033-FINDINGS.md` §3) most plausibly expands to a **cross-vendor**
+    Bluetooth-audio-accessory service-name pair — appearing on at least two unrelated products
+    (Sony headphones, the Pixel Buds Pro 2) — rather than a Google-`libmaestro`-specific or
+    Pixel-Buds-specific name. No source identifying the actual chipset/SDK vendor behind "GSOUND"
+    was found (checked via a further `WebSearch`) — the convention's own origin remains unidentified,
+    only its cross-vendor reach is newly evidenced.
+  - **What this does and does not establish**: it narrows the *kind* of thing "GSND"/"GSOUND" is
+    (a shared accessory-firmware/SDK naming convention, not evidence of Google's own protocol
+    design) — it does not identify DLCI 0x08's Group/Code semantics or resolve its ownership
+    question, which remains 🔴 open per `PROTOCOL.md` §6. **Maintainer sign-off obtained 2026-09-16**
+    (chat session continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS in
+    `PROTOCOL.md` §6, per `AGENTS.md` §6/§15.
 
 ## Native libraries
 
@@ -2657,6 +2815,10 @@ No file named `libmaestro.so`/`libgfps.so` exists anywhere across `base.apk` or 
 `System.loadLibrary`/`System.load` call in the decompiled sources names one either (full-tree grep,
 see the "APK metadata" table above and `AGENTS.md` §0's 2026-08-30 correction) — the Maestro control
 logic is pure Kotlin/Java, not a native binary, for this analyzed version.
+
+**Re-verified 2026-09-15 (`ai-sessions/0023`, per `CAP-050`'s Phase 2 item 5):** `find
+apktool-output-arm64_v8a/lib -iname "*.so"` against the current on-disk decompiled output returns
+only the same two files listed above — no new native library has appeared for this APK version.
 
 > **Updated 2026-08-30 (`DECISIONS.md` ADR-017, superseding ADR-003):** native
 > `.so` disassembly is now in scope for AI *mechanical* assistance, on the

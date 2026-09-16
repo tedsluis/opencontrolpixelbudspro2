@@ -170,6 +170,17 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      this app's R8 obfuscation) — the byte-level capture-correlation alternative (`PROTOCOL.md` §6's
      matching item) is now the recommended path, not a further static-analysis attempt, unless a
      future session identifies a more targeted search strategy.
+     **Closed 2026-09-15 (`ai-sessions/0023`), found via a genuinely different strategy — a smali
+     cross-reference on the abstract supertype's call descriptor (`Lgiz;->p(`) rather than a search
+     for `giz`-typed fields.** The sole call site is `ftw.java`'s discriminator-9 lambda (an
+     `OtaApplyWorker` completion callback, `"On apply finished."`), reached via an inline
+     `ftj.i(str).p()` chain — never stored in a field, which is exactly why the field-search
+     strategy in both prior passes structurally could not find it. **This makes `gjv.p()` an
+     OTA-firmware-update-apply-completion trigger, not a generic connect-time/settling trigger** —
+     it sharpens, rather than confirms, the original "connect-adjacent" reading, and makes it *less*
+     likely (not more) that this specific call is what's inside `CAP-036`/`CAP-041`'s ordinary
+     connect-time burst (neither session involved an OTA update). See
+     `REVERSE_ENGINEERING.md`'s `frb`/`fuh`/`glk`/`gjv` entry's 2026-09-15 update for the full trace.
    - **Added 2026-09-11 (`ai-sessions/0008_CROSSCHECK_RESULT_2026_09_11.md`), full non-sampled
      validation of Gemini's `ai-sessions/0007_CROSSCHECK_RESULT_2026_09_11.md`.** Independently
      re-derived every citation in `0007`; roughly half of its line-number citations from §2.2 onward
