@@ -164,7 +164,9 @@ v1 — see §6).
 
 ## 5. Interface (CLI)
 
-Two commands only, matching the two things this tool does:
+Three commands, matching the three things this tool does — `resolve-all` added 2026-09-16 after the
+maintainer asked how to use the tool effectively at scale, once `resolve`'s single-value form
+proved the mechanism on the three worked examples:
 
 ```
 lambda-resolver list \
@@ -175,6 +177,11 @@ lambda-resolver resolve \
   --apk-root reverse-engineering/apk/v1.0.955078536-10253511 \
   --class <fully-qualified-class-name-or-short-name> \
   --discriminator <int>
+
+lambda-resolver resolve-all \
+  --apk-root reverse-engineering/apk/v1.0.955078536-10253511 \
+  --class <fully-qualified-class-name-or-short-name> \
+  [--output-dir <dir>]            # one file per case; omit for one JSON array on stdout
 ```
 
 - `list` scans the whole APK per §3's structural check and prints one row per candidate class:
@@ -185,8 +192,14 @@ lambda-resolver resolve \
 - `resolve` takes one class + one discriminator value and prints the full evidence bundle (§6). If
   the discriminator falls outside the enumerated cases, it reports the `default` branch explicitly
   (never an error swallowed into "not found").
+- `resolve-all` takes one class only, and resolves **every** case its own dispatch table actually
+  defines, plus exactly one extra entry for the default branch — never an arbitrary guessed range
+  (§7's "never guess" rule extends here too). This is the effective way to use this tool on a class
+  already known to be protocol-relevant (e.g. `aie`/`esk`/`ftw`, each of which has had only one of
+  its 18-20 real cases manually investigated so far) — one call surfaces every branch's evidence at
+  once, rather than requiring the caller to already know which discriminator values exist.
 
-Exact flag names are negotiable during implementation; the two-command shape and the
+Exact flag names are negotiable during implementation; the command shapes and the
 no-side-effects contract in §8 are not.
 
 ## 6. Output format
@@ -290,6 +303,12 @@ matching the wrong case.
 
 `list` is accepted once it independently re-discovers all of `krb`, `aie`, `esk`, `ftw` (this
 session's four known instances) from a full-APK scan, with zero manual seeding of class names.
+
+**`resolve-all`** (added 2026-09-16) is accepted once, for both a packed-switch class (`ftw`) and
+an if-chain class (`krb`): it returns exactly `case_count + 1` results (every real case plus one
+default), every real-case value is `"resolved"` with the same evidence `resolve` would give it
+individually, and exactly one `"resolved-default-branch"` entry exists whose `discriminator_value`
+is not among the real cases.
 
 No regression test may be marked passing by inspection alone — each must assert the exact expected
 line range/text, per this project's own `AGENTS.md` §11 fixture discipline.

@@ -30,7 +30,7 @@ from pathlib import Path
 
 import pytest
 
-from lambda_dispatcher_resolver import androguard_index, jadx_correlate, smali_reader
+from lambda_dispatcher_resolver import androguard_index, cli, jadx_correlate, smali_reader
 
 # The one, real, locally-decompiled APK version this tool has been built and
 # verified against — see reverse-engineering/APK_VERSIONS.md.
@@ -201,3 +201,29 @@ class TestAndroguardIndex:
         assert dex_file == "classes2.dex"
         assert interface_name == "Lpkk;"
         assert discriminator_field == "c"
+
+
+class TestResolveAll:
+    """`resolve-all`'s own contract (added after the maintainer asked for it
+    following the single-value `resolve` command): every explicitly-defined
+    case, plus exactly one extra entry for the default branch — never an
+    arbitrary guessed range (SPEC.md §7's "never guess" rule)."""
+
+    def test_krb_if_chain_resolves_exactly_its_two_cases_plus_one_default(self):
+        results = cli.cmd_resolve_all(APK_ROOT, "krb")
+        by_value = {r.discriminator_value: r for r in results}
+        assert len(results) == 3  # values 0, 1, and one default entry
+        assert by_value[0].smali.branch_label == "cond_1"
+        assert by_value[1].smali.branch_label == "cond_0"
+        defaults = [r for r in results if r.resolution_status == "resolved-default-branch"]
+        assert len(defaults) == 1
+        assert defaults[0].discriminator_value not in (0, 1)
+
+    def test_ftw_packed_switch_resolves_all_18_cases_plus_one_default(self):
+        results = cli.cmd_resolve_all(APK_ROOT, "ftw")
+        assert len(results) == 19  # 18 real cases (0-17) + 1 default
+        by_value = {r.discriminator_value: r for r in results if r.resolution_status == "resolved"}
+        assert set(by_value.keys()) == set(range(18))
+        assert by_value[9].smali.branch_label == "pswitch_8"  # the OtaApplyWorker branch
+        default_entries = [r for r in results if r.resolution_status == "resolved-default-branch"]
+        assert len(default_entries) == 1

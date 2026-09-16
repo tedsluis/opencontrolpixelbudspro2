@@ -27,10 +27,24 @@ uv pip install --python .venv/bin/python -e ".[dev]"
 .venv/bin/python3 -m lambda_dispatcher_resolver.cli resolve \
   --apk-root ../../apk/v1.0.955078536-10253511 \
   --class aie --discriminator 7
+
+# Resolve EVERY defined case of one class in a single pass (plus its default
+# branch) — the effective way to use this tool on a class you already know
+# is protocol-relevant but have only ever spot-checked one discriminator of:
+.venv/bin/python3 -m lambda_dispatcher_resolver.cli resolve-all \
+  --apk-root ../../apk/v1.0.955078536-10253511 --class aie \
+  --output-dir /tmp/aie_all      # omit --output-dir to get one JSON array on stdout instead
 ```
 
 `--class` accepts the short form (`aie`), the default-package dotted form (`defpackage.aie`), or
 the raw smali descriptor (`Laie;`) — all three resolve to the same class.
+
+`resolve-all` never guesses a discriminator range to try — it resolves exactly the values the
+class's own dispatch table actually defines (read from the `packed-switch`/`sparse-switch` data or
+the `if`-chain's own checked values), plus exactly one extra entry for the default/"no case
+matched" branch. With `--output-dir`, each case is written as its own
+`<class>_<value>.json`/`<class>_default.json` file; without it, the whole set prints as one JSON
+array to stdout.
 
 ## Tests
 
