@@ -391,10 +391,25 @@ lower priority than finishing ANC/Battery/EQ):**
       §11 text, caught and corrected during implementation; see that section's own note). Deliberately
       scoped to only this one capability — a possible future broader UUID/BLE-analysis pipeline is
       tracked as ideas, not designed, in `reverse-engineering/tools/BACKLOG.md`.
-      **Not yet done:** wiring this into an actual APK-RE session's workflow (e.g. re-running it
-      against `MaestroEndpointService`'s own multibinding-assembly search, still open per
-      `REVERSE_ENGINEERING.md`'s own entry) — the tool exists and is tested, but hasn't yet been used
-      to advance a real open protocol question.
+      **Update (2026-09-16, `ai-sessions/0024`) — now actually used, `resolve-all` on `aie`/`esk` full
+      case sets.** `.venv/bin/python3 -m pytest tests/ -v` re-run before use: **14/14 passing**
+      (`reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md`'s own count grew from 12 to 14 once the `resolve-all`-specific fixtures were added —
+      this bullet's "12 pytest cases" phrasing above is now stale, noted here rather than silently
+      left). `resolve-all --class aie` and `--class esk` both ran cleanly (21 files each, no
+      `resolution_status: "ambiguous"`, no tool bug) — see `ai-sessions/0024_AUDIT_RESULT_2026_09_16.md`
+      Phase 1 for the full per-case read (all 42 cases, no sampling). Headline: only 1 of `aie`'s 20
+      real cases (discriminator 7) and 3 of `esk`'s 20 real cases + default (discriminators 18/19,
+      plus the default branch) are Bluetooth/Maestro-relevant; the rest are checked negatives
+      (unrelated app-UI code for `aie`; bundled AndroidX WorkManager DAO internals for 17 of `esk`'s
+      cases). Two new leads recorded in `REVERSE_ENGINEERING.md`'s new `esk` entry: a located write
+      site for the previously-unlocated "Feature A" mechanism (discriminator 18, `ftf.java:312`), and
+      a previously-uncatalogued `device_info`-table Room DAO pair (`gcp`/`gcn`, the default branch,
+      `gcp.java:51`) whose relationship to the already-known `gcl`/`gck`/`eht` device_info-sink
+      classes is a new 🔴 open question. **`MaestroEndpointService`'s own multibinding-assembly
+      search remains not yet advanced by this tool** — this session's own scope was `aie`/`esk`
+      specifically, not that search; `ai-sessions/0024`'s own Phase 2 recommends a general
+      structural/XREF code index (`reverse-engineering/tools/BACKLOG.md`) as the next tool to build,
+      partly for exactly that search.
 - [x] **Groundwork/tooling — done 2026-08-30.** Governance, storage, and procedure now in place so
       the actual analysis work below can start; none of it constitutes analysis having happened yet:
       `DECISIONS.md` ADR-017 (supersedes ADR-003) permits AI mechanical assistance — search, `pbtk`

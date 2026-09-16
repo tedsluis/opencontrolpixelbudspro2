@@ -45,6 +45,24 @@ Any tool built from this list operates inside the exact same boundary
 
 This ordering is a lens, not a commitment — the maintainer may pick any subset in any order.
 
+> **Proposed re-ordering, added 2026-09-16 (`ai-sessions/0024`, awaiting maintainer sign-off — a
+> proposal, not applied as a decision by this edit alone) — item 1 unchanged, but item 4's own
+> "protobuf/`RawMessageInfo` schema batch-extractor" sub-item promoted ahead of items 2/3 below.**
+> Reasoning, drawn from a real usage pass (`lambda_dispatcher_resolver resolve-all` run against
+> `aie`/`esk`'s full case sets, `ai-sessions/0024_AUDIT_RESULT_2026_09_16.md` Phase 2/Phase 3): items
+> 2/3 are both gated on genuinely *new wire/GATT evidence* that this project's own APK-side search has
+> already exhausted for the current APK version (`REVERSE_ENGINEERING.md`'s "Full-tree GATT/BLE
+> reference sweep" entry found zero `BluetoothGatt` references anywhere in this app's decompiled
+> source) — building tooling to *organize* UUID/BLE findings doesn't manufacture new findings to
+> organize. The schema batch-extractor has real, current work waiting the moment a new APK version is
+> pulled (this procedure's own §2.1 diff-pass) or the 12 never-attributed "candidate rich schemas"
+> (`REVERSE_ENGINEERING.md`) are picked up. Revised order: **(1) structural code index, (2) schema
+> batch-extractor, (3) UUID/BLE-context reconstruction, (4) limited dataflow, (5) the three remaining
+> independently-useful items (wire-payload-vs-schema decoder, APK version-diff, tshark/DLCI-reassignment
+> helper) unordered relative to each other, unchanged from the original text.** This is a proposal for
+> the maintainer to approve or reject, per this file's own header note that nothing here is committed
+> to being built.
+
 ---
 
 ## Idea: general androguard-based structural code index
@@ -55,6 +73,24 @@ Y" (an XREF search — exactly what a manual `grep -rn "Lgiz;->p("` search stood
 2026-09-15 `gjv.p()` trace, `REVERSE_ENGINEERING.md`'s `frb`-`gjv` entry), "list every subclass of
 Z." Cheap once androguard is already a dependency; would remove most remaining need for ad hoc
 smali `grep` during a research session.
+
+> **Sketch of a first, narrowest useful version, added 2026-09-16 (`ai-sessions/0024`) — not a
+> spec document, per this file's own "graduates out by getting its own spec document" rule; a
+> starting point for whoever writes that spec.** Single capability for v1: given a class name
+> (short or `defpackage.`-qualified), list every other class/method that (a) constructs it
+> (`new X(`-shaped invokes), (b) calls one of its methods, or (c) holds it as a field type — the
+> exact query `ai-sessions/0024_AUDIT_RESULT_2026_09_16.md`'s Phase 1 ran by hand three times in one
+> session (`esk`'s 20 constructor sites; an 11-class "already catalogued?" check against
+> `REVERSE_ENGINEERING.md`; the `gwv` cross-reference collision), and `ai-sessions/0023` ran by hand
+> across three separate sessions for `gjv.p()`'s caller before finding it. Reuse
+> `lambda_dispatcher_resolver`'s own Layer 1 (`androguard_index.py`) directly — same DEX-structure
+> foundation, different query shape. Same output/governance contract as `lambda_dispatcher_resolver`
+> (plain JSON, never decides relevance, never writes into `REVERSE_ENGINEERING.md`/`PROTOCOL.md`/
+> `DECISIONS.md`). Explicitly deferred to a later version: an `implements`-query (different lookup
+> shape, needed for the `MaestroEndpointService` Dagger-multibinding search) and a resource/string-
+> table search (a different data source, `apktool-output/res/`, not DEX structure at all).
+> Acceptance criterion, mirroring `lambda_dispatcher_resolver/SPEC.md` §10's own worked-example
+> discipline: reproduce, from a single query each, the three by-hand lookups named above.
 
 ## Idea: UUID extraction + BLE/GATT context reconstruction
 

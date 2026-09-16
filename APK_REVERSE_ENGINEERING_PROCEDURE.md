@@ -142,6 +142,21 @@ anything is recorded in `REVERSE_ENGINEERING.md`.
    one-line note on why it looked relevant. **[Maintainer decision]** which candidates get written up
    in `REVERSE_ENGINEERING.md`, and at what confidence tier.
 
+### 4a. Resolving an R8-merged lambda dispatcher (added 2026-09-16, `ai-sessions/0024`)
+
+If step 4's keyword search (or any other reading) surfaces a class matching the shape in
+`reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md` §3 (a `synthetic final` class, one
+interface with one abstract method, an `int` discriminator field assigned in every constructor and
+switched on immediately in the method body) — run `lambda_dispatcher_resolver list` first if the
+class isn't already a known instance of this pattern, then `resolve-all --class <name>` rather than
+hand-reading the smali `packed-switch`/`if`-chain. Read **every** returned case (per `AGENTS.md`
+§13.6 — an unresolved case is not the same as a checked-and-irrelevant one), cross-reference each
+against `REVERSE_ENGINEERING.md`'s existing catalogue, and record only genuinely Bluetooth-relevant
+findings there — most cases of a heavily-reused dispatcher (see `ai-sessions/0024`'s own `aie`/`esk`
+pass, which found only 1 of 20 and 3 of 21 cases respectively were Bluetooth-relevant) will be
+unrelated app-wide code, and that is a legitimate, recordable checked-negative result, not a reason
+to stop reading partway through.
+
 ### 4.1 Exclusion list — noise to skip past, not to investigate
 
 A fully decompiled app exposes far more surface area than any single capture. The following are
@@ -165,6 +180,11 @@ Account-Linking/Non-Owner traffic in captures) and move on — do not follow the
 1. Write up each maintainer-approved candidate in `REVERSE_ENGINEERING.md`'s "Identified relevant
    classes" section, using its template — **every finding cites the exact decompiled file and line
    number** (e.g. `jadx-output/sources/com/google/.../Xy2.java:142`), not only a class name.
+   **Tracing a wire-confirmed field number back to its APK write/read call sites** follows a named
+   precedent, `DECISIONS.md` ADR-019 — either backward (from an already-decoded response-handler log
+   message to the write call site that populates the same field) or forward (from a named UI
+   fragment/preference key to the write call site), whichever direction actually has evidence
+   available; both directions are equally valid, per ADR-019's own two applications.
 2. Label every finding FACT / HYPOTHESIS / ASSUMPTION / OPEN QUESTION per `PROJECT_RULES.md` §1 —
    static analysis alone is never 🟢 FACT for a *protocol* claim (only for "this code exists and
    looks like X"); a protocol-behavior claim needs capture correlation first.
@@ -197,6 +217,14 @@ Account-Linking/Non-Owner traffic in captures) and move on — do not follow the
   relevance or promote a finding. Whether `pbtk-from-binary` actually succeeds against
   `libmaestro`/`libgfps`'s specific binaries (vs. a stripped protobuf-lite descriptor pool) is
   unconfirmed until tried — see `WORKSTATION_PREPARATIONS.md`.
+- **If a caller/reference search comes back empty, retry with the structurally opposite search
+  strategy before concluding it's a dead end** (added 2026-09-16, `ai-sessions/0023`/`ai-sessions/0024`).
+  `ai-sessions/0023`'s `gjv.p()` caller trace failed twice searching for classes holding a
+  `giz`-typed *field*, then succeeded immediately on a differently-shaped search (a smali
+  invoke-descriptor grep, `Lgiz;->p(`, for an inline-chained call that was never stored in a field —
+  structurally invisible to the first strategy by construction, not by bad luck). Two different
+  search strategies for the same question is cheap; a third session re-deriving the same failed
+  strategy from scratch is not.
 - **A class or method existing in the APK does not prove it's exercised by any specific action** in
   `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` — treat every static finding as 🟡 HYPOTHESIS until a capture
   shows the corresponding traffic (`REVERSE_ENGINEERING.md`'s own "Known limitations" section).

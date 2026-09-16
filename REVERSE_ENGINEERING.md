@@ -846,6 +846,86 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
   found about the *other* branch's construction (`fwy.java` case 3) and its structural match to DLCI
   0x08's envelope shape.
 
+### `defpackage.esk` — R8-merged lambda dispatcher, mostly bundled AndroidX WorkManager DAO internals; one already-known Maestro `WriteSetting` send site (discriminator 19) plus two new leads (discriminators 18 and the default branch)
+
+*(Added 2026-09-16, `ai-sessions/0024` — `esk` had only ever been mentioned inline, at its
+discriminator-19 branch, inside the `qjc`/`qja` and `nqx`/`npy`/`nqo`/`npw`/`nqm` entries above; this
+is its own, dedicated entry after `lambda_dispatcher_resolver resolve-all --class esk` was run for
+the first time against every one of its 20 real discriminators + default branch.)*
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/esk.java`
+  (all 20 real cases are JADX-decompilable, unlike `aie` above)
+- **Readable alias**: n/a — a generic R8-merged lambda dispatcher, structurally the same
+  `packed-switch`-on-constructor-int-discriminator shape as `aie`/`ftw`/`krb` (`reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md` §1/§3), not
+  a single coherent feature.
+- **Role**: 🟢 FACT (mechanical read of all 21 `resolve-all` results, cross-referenced against every
+  `grep -rn "new esk(" jadx-output/sources/defpackage/` construction site — 12+ constructor
+  overloads, matching `reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md` §1's own count): **17 of the 20 real discriminators (0-3, 5-6, 8-17)
+  are the companion app's bundled copy of AndroidX WorkManager's own Room-generated DAO
+  implementation** (`androidx.work.impl.model.WorkSpecDao`/`WorkTagDao`/`WorkProgressDao`,
+  R8-obfuscated as `ess`/`esc`/`esv`/`esf`/`gos`/`ejv`/`qa`) — confirmed by literal, unobfuscated SQL
+  text still present in the decompiled source, not inferred from naming alone:
+  `"SELECT `progress`,`work_spec_id` FROM `WorkProgress` WHERE `work_spec_id` IN (...)"`
+  (`ess.java:59`'s `G()`), `"SELECT `tag`,`work_spec_id` FROM `WorkTag` WHERE `work_spec_id` IN
+  (...)"` (`ess.java:96`'s `H()`), `"SELECT * FROM workspec WHERE id=?"` (`ess.java`'s `c()`), and
+  `esf.java`'s own log tag `ems.a("WorkSpec")` — `WorkSpec`/`WorkTag`/`WorkProgress` are the exact
+  table names of `androidx.work.impl.WorkDatabase` (a public AndroidX library, cited here only to
+  explain what the app's own decompiled SQL text matches — no third-party code was read to reach
+  this conclusion, only this project's own decompiled APK). **This is a checked negative for these
+  17 discriminators** — genuinely examined, genuinely not Bluetooth-relevant, not silently skipped.
+  - **Discriminator 19 — already fully documented.** `fyv.java:48` constructs `new esk(this, qjcVar,
+    19, null)`; the branch casts `obj`→`nqo` (`pw_rpc.MethodClient`) and calls `nqoVar.e(qjcVar)` —
+    the `WriteSetting` unary RPC invoke, wrapped in an `oqj`/`oqh` deferred-task with a 5-second
+    timeout and an `fyt` retry operator. Matches this document's own `qjc`/`qja` and
+    `nqx`/`npy`/`nqo`/`npw`/`nqm` entries' existing citations byte-for-byte; no new claim.
+  - **Discriminator 18 — genuinely new, locates a previously-unlocated write site.**
+    `ftf.java:312` constructs `new esk(str, this, 18)`; the branch casts `obj`→`Boolean`, and if
+    true, logs `"Disabling Feature A for %s"` (`ftf.a.e().R(79)`) and calls
+    `((ftf) obj2).f.f((String) obj3, false)` — catching `RuntimeException` and logging `"Failed to
+    disable Feature A for %s"` on failure. `ftf` is already catalogued in this document's `qhr`/`fye`
+    entry (the sole implementation of `ftj`, the Dagger/Hilt per-device-subcomponent accessor). This
+    concretely locates the write call site for the "Feature A" mechanism this document's own
+    `MaestroDeviceSettingsProviderService` entry named but never located (case `2115`→"a separate,
+    unnamed 'Feature A' toggle"; case `2104`→"also fires a second, non-`qhr` write to the same
+    'Feature A' mechanism"). 🟡 HYPOTHESIS (code-level, not capture-correlated) that this is the same
+    "Feature A" those two case IDs refer to — the class/log-message match is direct, but no wire
+    capture has observed this specific write firing.
+  - **Default branch (real call site at discriminator `20`, outside the enumerated `0-19` range) —
+    genuinely new, promising lead, not chased to full depth.** `gcp.java:51` constructs `new esk(this,
+    gwvVar, 20, null)` — a real, legitimate use of `resolve-all`'s own "resolved-default-branch"
+    behavior (`reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md` §7), not a tool gap. The default branch casts `this.a`→`gcp` and calls
+    `((gcp) this.a).a.f((ejv) obj, this.b)` — a write into the app's own **`"device_info"`** Room
+    table, confirmed by literal SQL in `gcp.c()` (`efs.P(efrVar, false, new String[]{"device_info"},
+    ...)`), of a `gwv`-typed value built by `gcp.f(String, gcm)`. `gcp extends gcn` — **neither is
+    catalogued anywhere else in this document.** `gwv` **is** already catalogued, but in a wholly
+    unrelated context (this document's other `gwv` citation, in the KPI/analytics section, is a
+    `"STREAMZ_GNP_ANDROID"`-tagged construction) — flagged explicitly as a likely R8 short-name reuse
+    for an unrelated small data-holder type, **not** claimed as the same feature, per `AGENTS.md`
+    §13.6's zero-creativity rule. 🔴 **OPEN QUESTION**: whether `gcp`/`gcn` is the same `device_info`
+    Room DAO this document's `qhr`/`fye` entry's `ftj.p(deviceId)` gate discussion and
+    `DECISIONS.md` ADR-025 already reference under different obfuscated names (`gcl`/`gck`/`eht`),
+    or a second, distinct accessor of the same table — not traced further this pass (`gcp`/`gcn`'s
+    own full method list — `a()`→count, `b(String)`→lookup, `c(String)`→an observable stream over
+    the table, `d(String)`→`Optional` single read, `e(String)`→delete, `f(String,gcm)`→build,
+    `g(gwv)`→write — is a complete CRUD+observe interface, read this pass but not cross-checked
+    against `gcl`/`gck`/`eht`'s own call sites).
+- **What this entry does NOT establish**: no wire capture has been checked against either new lead
+  (discriminator 18's "Feature A" write, or the default branch's `device_info` write) — both are
+  code-level-only findings, per this document's own template requirement that static analysis alone
+  is never 🟢 FACT for a protocol-behavior claim.
+- **Hypothesis test**: for discriminator 18, correlate a `MaestroDeviceSettingsProviderService` case
+  `2104`/`2115` action (Multipoint toggle) against a fresh capture and check whether a
+  `ftf.f(deviceId, false)`-attributable side effect appears; for the default branch, trace
+  `gcp`/`gcn`'s own callers and cross-check against `gcl`/`gck`/`eht`'s call sites to determine
+  whether they are the same DAO.
+- **Open questions**: the `gcp`/`gcn` vs. `gcl`/`gck`/`eht` relationship (above); whether any of the
+  17 WorkManager-DAO discriminators' *captured values* (not the dispatcher shape itself) ever
+  intersect with Bluetooth-relevant data (considered unlikely — `WorkSpec`/`WorkProgress`/`WorkTag`
+  are WorkManager's own job-scheduling bookkeeping tables — but not independently disproven for
+  every one of the 17 branches).
+- **Correlation with `PROTOCOL.md`**: none — this entire entry is code-level only; no `PROTOCOL.md`
+  section cites it and none is proposed to.
+
 ### `defpackage.qhr` — MaestroSettingGroup4 (38-field oneof; contains 3 fields of the `qhs` **`ANC_STATE_*`** enum)
 
 - **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/qhr.java:29`
@@ -1195,6 +1275,27 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     vertically), not a separate "Quick actions" tab distinct from the Device-details screen —
     `CAP-051`'s in-app tap *is* on `QuickActionsFragment`'s own toggle group, ruling out "wrong
     screen" as the explanation for that specific action's silence.
+
+- **Update (2026-09-16, `ai-sessions/0024`) — `lambda_dispatcher_resolver resolve-all --class aie`
+  run for the first time on every one of `aie`'s 20 real discriminators (previously only
+  discriminator 7 had been manually investigated, the `fyv.c()`/`qhr` coalescing-write branch
+  documented above).** 🟢 FACT (mechanical smali read, all 20 cases + default, `aie.a()` remains
+  JADX-undecompilable for every one of them — smali is the sole evidence throughout, not just for
+  discriminator 7): **the other 19 discriminators are all unrelated, non-Bluetooth app-UI code** —
+  Android `Slice`-provider/Assistant-permission machinery (discriminators 0, 1, 4, 8, 13, 14, 17),
+  an ExoPlayer/media-session-shaped state-restore routine (discriminator 6), a
+  `MyDevicesFragment`/generic-Fragment Slice-builder family (discriminators 9, 10, 11, 12, 16, 19),
+  and an unrelated "LargoMr" OOBE mini-app onboarding flow (discriminators 15, 18) — sharing this one
+  R8-merged `pkk`-shaped dispatcher purely because their bytecode shapes matched, exactly as this
+  entry's own §1 already characterized the class ("a large, R8-shared synthetic class... reused
+  across many unrelated lambda call sites"). None references any Maestro/RFCOMM/GATT-adjacent
+  symbol. This is a **checked negative**, not a newly-discovered gap: discriminator 7 remains the
+  sole Bluetooth-relevant `aie` case, and no other case was skipped rather than examined. Full
+  per-case evidence (smali branch label + line range for each) is in
+  `ai-sessions/0024_AUDIT_RESULT_2026_09_16.md`'s Phase 1 table, not reproduced here to avoid
+  duplicating 20 rows of non-Bluetooth-relevant detail in this document. No `lambda_dispatcher_resolver`
+  bug was found (all 21 results were `resolution_status: "resolved"`/`"resolved-default-branch"` as
+  `reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md` §7 specifies) — the tool itself was not modified.
 
 ### `defpackage.qjn` / `defpackage.qjt` / `defpackage.qhx` / `defpackage.qjv` — `qjc`/`qja`'s other 4 oneof-group alternatives
 
