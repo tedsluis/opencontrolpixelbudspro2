@@ -23,6 +23,17 @@ local.properties
 reverse-engineering/apk/
 *.apk
 
+# Lambda Dispatcher Resolver tool (reverse-engineering/tools/lambda_dispatcher_resolver/):
+# its own Python source is tracked normally (original tooling code, not derived APK content),
+# but its virtualenv/caches are not, and — same rule as above, same reason — it must never gain
+# a committed copy of decompiled smali/JADX output under its own tests/ directory either; its
+# test suite runs against the maintainer's local reverse-engineering/apk/<version>/ tree instead
+# and skips itself when that tree isn't present (see that tool's own SPEC.md §11 and tests/).
+reverse-engineering/tools/*/.venv/
+reverse-engineering/tools/*/*.egg-info/
+**/__pycache__/
+.pytest_cache/
+
 # OS/editor cruft
 .DS_Store
 Thumbs.db

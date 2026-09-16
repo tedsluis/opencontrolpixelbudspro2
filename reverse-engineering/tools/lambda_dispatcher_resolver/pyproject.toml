@@ -1,0 +1,23 @@
+[project]
+name = "lambda-dispatcher-resolver"
+version = "0.1.0"
+description = "Resolves R8-merged synthetic lambda-dispatcher classes in the decompiled Pixel Buds companion APK to exact smali+JADX source evidence. See SPEC.md."
+requires-python = ">=3.10"
+dependencies = [
+    "androguard>=4.1.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+lambda-resolver = "lambda_dispatcher_resolver.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lambda_dispatcher_resolver"]

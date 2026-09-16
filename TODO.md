@@ -378,6 +378,23 @@ lower priority than finishing ANC/Battery/EQ):**
 
 ## Phase 2 — APK reverse engineering
 
+- [x] **Added 2026-09-16, implemented same day — Lambda Dispatcher Resolver.**
+      `reverse-engineering/tools/lambda_dispatcher_resolver/` (`SPEC.md` for the design; `README.md`
+      for usage) mechanically resolves R8-merged synthetic lambda-dispatcher classes (the
+      `krb`/`aie`/`esk`/`ftw` pattern this project has repeatedly had to resolve by hand — see
+      `REVERSE_ENGINEERING.md`'s `qhr`/`fye` entry and `frb`-`gjv` entry) to their exact smali+JADX
+      source evidence, via a `list`/`resolve` CLI over androguard (DEX structure) + a narrow smali
+      reader (packed-switch/sparse-switch/if-chain resolution) + a JADX case-block correlator. All of
+      `SPEC.md` §10's acceptance criteria pass (12 pytest cases, including the adversarial
+      out-of-range-discriminator fixture) against the real, locally-decompiled APK — no decompiled
+      content is committed anywhere in the tool's own tree (a design mistake in `SPEC.md`'s original
+      §11 text, caught and corrected during implementation; see that section's own note). Deliberately
+      scoped to only this one capability — a possible future broader UUID/BLE-analysis pipeline is
+      tracked as ideas, not designed, in `reverse-engineering/tools/BACKLOG.md`.
+      **Not yet done:** wiring this into an actual APK-RE session's workflow (e.g. re-running it
+      against `MaestroEndpointService`'s own multibinding-assembly search, still open per
+      `REVERSE_ENGINEERING.md`'s own entry) — the tool exists and is tested, but hasn't yet been used
+      to advance a real open protocol question.
 - [x] **Groundwork/tooling — done 2026-08-30.** Governance, storage, and procedure now in place so
       the actual analysis work below can start; none of it constitutes analysis having happened yet:
       `DECISIONS.md` ADR-017 (supersedes ADR-003) permits AI mechanical assistance — search, `pbtk`
