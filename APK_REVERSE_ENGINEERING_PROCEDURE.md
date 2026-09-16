@@ -142,7 +142,7 @@ anything is recorded in `REVERSE_ENGINEERING.md`.
    one-line note on why it looked relevant. **[Maintainer decision]** which candidates get written up
    in `REVERSE_ENGINEERING.md`, and at what confidence tier.
 
-### 4a. Resolving an R8-merged lambda dispatcher (added 2026-09-16, `ai-sessions/0024`)
+### 4a. Resolving an R8-merged lambda dispatcher (added 2026-09-16, `ai-sessions/0024`; adoption confirmed 2026-09-16, `ai-sessions/0025`)
 
 If step 4's keyword search (or any other reading) surfaces a class matching the shape in
 `reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md` §3 (a `synthetic final` class, one
@@ -156,6 +156,14 @@ findings there — most cases of a heavily-reused dispatcher (see `ai-sessions/0
 pass, which found only 1 of 20 and 3 of 21 cases respectively were Bluetooth-relevant) will be
 unrelated app-wide code, and that is a legitimate, recordable checked-negative result, not a reason
 to stop reading partway through.
+
+**Adoption note (2026-09-16, `ai-sessions/0025`):** this step's own text was applied directly by
+`ai-sessions/0024` as normative procedure (never carried a "proposal"/"awaiting sign-off" tag in
+this file's own text, unlike `reverse-engineering/tools/BACKLOG.md`'s separate priority-order
+blockquote) — this note records that `ai-sessions/0025` re-read and exercised it for real
+(`resolve-all --class gag`, per that session's own Phase 1/Phase 3 write-up) with no need for
+substantive change, per `AI_SESSION_LOG_PROCEDURE.md` §4a's citation requirement for this class of
+workflow-process decision.
 
 ### 4.1 Exclusion list — noise to skip past, not to investigate
 
@@ -224,7 +232,12 @@ Account-Linking/Non-Owner traffic in captures) and move on — do not follow the
   invoke-descriptor grep, `Lgiz;->p(`, for an inline-chained call that was never stored in a field —
   structurally invisible to the first strategy by construction, not by bad luck). Two different
   search strategies for the same question is cheap; a third session re-deriving the same failed
-  strategy from scratch is not.
+  strategy from scratch is not. **Adoption note (2026-09-16, `ai-sessions/0025`):** confirmed
+  practiced, not just documented — this same session found `qhr` field 6's own caller
+  (`REVERSE_ENGINEERING.md`'s `qhr` entry's 2026-09-16 update) using exactly this technique
+  (`fyo.m`'s own zero callers → retrying against the abstract interface type `fya` instead of the
+  concrete class → finding the real caller immediately), an independent second confirmation beyond
+  `gjv.p()` that this discipline generalizes.
 - **A class or method existing in the APK does not prove it's exercised by any specific action** in
   `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` — treat every static finding as 🟡 HYPOTHESIS until a capture
   shows the corresponding traffic (`REVERSE_ENGINEERING.md`'s own "Known limitations" section).

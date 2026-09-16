@@ -2314,6 +2314,21 @@ leaving them buried in prose elsewhere.
       itself is a direct code-reading result (no ADR needed); the interpretive reading above (that
       this narrows away from, rather than confirms, `gjv.p()` as the connect-time burst's trigger)
       is accepted for recording at 🟡 HYPOTHESIS.
+      **Confirmed from the trigger side, 2026-09-16 (`ai-sessions/0025`, `lambda_dispatcher_resolver
+      resolve-all --class gag`, implementing `ai-sessions/0024`'s own recommended "free win").**
+      `gag`'s own discriminator-15 construction site (the branch feeding `ftw(_,9)`/`gjv.p()`) is now
+      found: `gjy.java:38`, inside a `gjy` method operating on a local variable literally named
+      `otaApplyWorker2` — an independent, second confirmation (from the construction/trigger side,
+      not only the `ftw.smali`/response side already documented) that this whole chain is
+      OTA-apply-lifecycle-scoped throughout. **Also corrects a separate, previously-recorded static-
+      analysis misattribution** (2026-09-13, `REVERSE_ENGINEERING.md`'s same entry): a `604800000`ms
+      (~7-day) staleness-check literal, earlier associated with this same discriminator-15 branch via
+      a partial JADX fragment, actually belongs to a structurally different `gag` branch
+      (discriminator 10, `HearingWellnessNotificationWorker`'s own unrelated notification throttle)
+      — `gag`'s discriminator-15 branch itself contains no staleness check of any kind. No periodic/
+      weekly gate exists on the `GetSoftwareInfo`/`fxm.i()` OTA-completion path; that reading is
+      withdrawn. See `REVERSE_ENGINEERING.md`'s `frb`/`fuh`/`glk`/`gjv` entry's 2026-09-16 update for
+      the full trace (command + smali evidence, all 21 of `gag`'s cases read, no sampling).
       **Byte-level correlation against existing capture data, 2026-09-08
       (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 4 item 2) — a plausible structural
       match found, not a confirmed one; full closure still needs a fresh capture.** Per this
@@ -2433,11 +2448,25 @@ leaving them buried in prose elsewhere.
       category, `CATEGORY_RV_BLOCK_AUTO_TEST`). Case 2104 also fires a second, non-`qhr` write to the
       same "Feature A" mechanism as case `2115` — 🟡 plausible, unconfirmed lead that toggling
       Multipoint here disables a mutually-exclusive feature (Spatial Audio is a plausible, unevidenced
-      candidate). **Head gestures (field 29) is NOT among these 6 mappings** — none of the 6 cases
+      candidate). **Update (2026-09-16, `ai-sessions/0025`, cross-referencing `ai-sessions/0024`'s
+      own `esk` discriminator-18 finding against this item):** the "Feature A" mechanism's own write
+      call site is now located at the code level — `ftf.java:312` (`esk` discriminator 18), logging
+      `"Disabling Feature A for %s"`/`"Failed to disable Feature A for %s"` and writing through
+      `ftf.f.f(deviceId, false)` — the same accessor class (`ftf`) already used throughout this
+      pipeline. This is the same mechanism this item already names, now with a concrete file+line
+      citation rather than only case IDs 2104/2115 — still 🟡 HYPOTHESIS/code-level, no wire capture
+      has observed this specific write firing; see `REVERSE_ENGINEERING.md`'s `esk` entry.
+      **Head gestures (field 29) is NOT among these 6 mappings** — none of the 6 cases
       route to `fyo`'s field-29 write path; this specific lead is now a checked negative, not merely
       still open. Two `qhr` field-register corrections surfaced as a byproduct: field 6 has a real
-      write site (previously wrongly recorded as "not found"); field 32 (new) is now registered. Full
-      trace: `REVERSE_ENGINEERING.md`'s `MaestroDeviceSettingsProviderService` entry. Field 2's
+      write site (previously wrongly recorded as "not found"); field 32 (new) is now registered.
+      **Field 6's own caller, left unfound by this update, was found 2026-09-16 (`ai-sessions/0025`,
+      `structural_index refs`): `guy.java`'s `b()`/`c()` OOBE-mode lifecycle toggle, logging
+      `"Enable OOBE mode"`/`"Disable OOBE mode"`** — 🟡 HYPOTHESIS (code-level only): field 6 is
+      plausibly a transient "OOBE mode active" state flag, distinct from field 3's already-documented
+      completion flag; see `REVERSE_ENGINEERING.md`'s `qhr` entry's own 2026-09-16 update for the full
+      trace (via the same abstract-interface-indirection technique that found `gjv.p()`'s caller).
+      Full trace: `REVERSE_ENGINEERING.md`'s `MaestroDeviceSettingsProviderService` entry. Field 2's
       promotion above and the case-2104/`fpm.ENABLED_HEAD_GESTURES` naming tension were both reviewed
       directly by the maintainer in the chat session that authored this task's own prompt
       (`ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md`); the naming tension was left open, not
@@ -2476,6 +2505,24 @@ leaving them buried in prose elsewhere.
       `com.google.android.apps.pixel.dcservice` — a genuinely new, incidental finding, out of scope
       for this project's own Bluetooth focus). Full trace: `REVERSE_ENGINEERING.md`'s
       `MaestroEndpointService` entry.
+      **Update (2026-09-16, `ai-sessions/0025`, `structural_index refs`) — the multibinding assembly
+      site remains unfound; a promising-looking new lead checked and ruled out.** `ofd`'s 3
+      implementations (`mie`/`oex`/`ofb`) are confirmed to be the only ones in this APK version, and
+      3 new classes holding `ofd`-typed fields were found (`ofh`/`ofi`/`ofj`) — but reading them
+      shows they are generic `io.grpc`-shaped transport-builder plumbing (a default-policy field on
+      a transport factory), not `MaestroEndpointService`'s own specific service-registration map.
+      🔴 still open. Full trace: `REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry's own
+      2026-09-16 update.
+- [ ] **Added 2026-09-16 (`ai-sessions/0025`, Phase 3 item L — full `AndroidManifest.xml`
+      re-review).** A previously-uncatalogued exported broadcast receiver,
+      `com.google.android.apps.wearables.maestro.companion.phone.bluetoothpriority.BluetoothPriorityReceiver`,
+      handles a custom action (`ACTION_TRIGGER_CLASSIC_CONNECTION_PRIORITY`, extras `EXTRA_BD_ADDR`/
+      `EXTRA_PRIORITY`/`EXTRA_DATA_DIRECTION`) and holds a direct field of type `fzd`
+      (`InternalRfcommUuidRegistry`, already used by `gbm`'s socket-selection logic, `PROTOCOL.md`
+      §2.2a). 🔴 **OPEN QUESTION**: what sends this broadcast, what it accomplishes on the wire, and
+      whether it relates to Multipoint or RFCOMM-channel-priority behavior — none of this determined
+      by static analysis alone; no capture correlation attempted. See `REVERSE_ENGINEERING.md`'s new
+      `BluetoothPriorityReceiver` entry.
 
 ### Behavior
 

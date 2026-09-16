@@ -845,6 +845,18 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
   via `gau`'s already-documented `case 3` normalizer. See the `gbm` entry below for what this pass
   found about the *other* branch's construction (`fwy.java` case 3) and its structural match to DLCI
   0x08's envelope shape.
+- **Update (2026-09-16, `ai-sessions/0025`, `structural_index refs`) — item J of `ai-sessions/0024`'s
+  Phase 2 inventory ("does `gbb`/`gbc`'s second `gbd`-construction path generalize beyond the one
+  already-traced default branch") answered: no, because there is no second path to generalize
+  from.** 🟢 FACT (mechanical construct/call-site enumeration, whole-APK scan, this pass): `gbc` has
+  **exactly one** construction site in the entire decompiled tree (`fqg.java`, method `K`), and `gbb`
+  has **exactly one** (inside `gbc`'s own method `b`) — `structural-index refs --class gbc` and
+  `--class gbb` both return a single `constructs` entry each. This is a distinct pair/question from
+  the *other* singleton this section's own 2026-08-30 update already documents (`gbn`, constructed
+  once at `fqg.java:623` — a different class, not re-litigated here). **Closing characterization**:
+  `gbb`/`gbc`'s own construction wiring is a single, fixed chain (`fqg.K` → `gbc.b()` → `gbb`), not
+  one of several parallel entry points — the open question's own premise (a "second path" that might
+  or might not generalize) does not apply; there is only the one path this project already traced.
 
 ### `defpackage.esk` — R8-merged lambda dispatcher, mostly bundled AndroidX WorkManager DAO internals; one already-known Maestro `WriteSetting` send site (discriminator 19) plus two new leads (discriminators 18 and the default branch)
 
@@ -918,11 +930,29 @@ the first time against every one of its 20 real discriminators + default branch.
   `ftf.f(deviceId, false)`-attributable side effect appears; for the default branch, trace
   `gcp`/`gcn`'s own callers and cross-check against `gcl`/`gck`/`eht`'s call sites to determine
   whether they are the same DAO.
-- **Open questions**: the `gcp`/`gcn` vs. `gcl`/`gck`/`eht` relationship (above); whether any of the
-  17 WorkManager-DAO discriminators' *captured values* (not the dispatcher shape itself) ever
-  intersect with Bluetooth-relevant data (considered unlikely — `WorkSpec`/`WorkProgress`/`WorkTag`
-  are WorkManager's own job-scheduling bookkeeping tables — but not independently disproven for
-  every one of the 17 branches).
+- **Open questions**: whether any of the 17 WorkManager-DAO discriminators' *captured values* (not
+  the dispatcher shape itself) ever intersect with Bluetooth-relevant data (considered unlikely —
+  `WorkSpec`/`WorkProgress`/`WorkTag` are WorkManager's own job-scheduling bookkeeping tables — but
+  not independently disproven for every one of the 17 branches).
+- **Update (2026-09-16, `ai-sessions/0025`, `structural_index refs`) — the `gcp`/`gcn` vs.
+  `gcl`/`gck`/`eht` relationship (item F of `ai-sessions/0024`'s Phase 2 inventory) is resolved: they
+  are the same `device_info` data pathway at different layers, not two independent accessors.** 🟢
+  FACT (mechanical reference search + direct read of `gcn.java`, this pass): `structural-index refs
+  --class gcp` shows `gcp`'s sole construction site is `DeviceInfoRoomDatabase_Impl` (the Room
+  library's own generated implementation class, unobfuscated) — confirming `gcp` is the literal,
+  generated Room DAO for the `device_info` table, not a hand-written accessor. `structural-index refs
+  --class gcn` shows `defpackage.gck` (the already-known `device_info` sink this document and
+  `DECISIONS.md` ADR-025 already cite) **holds a `gcn`-typed field** (`gck.b`) — i.e. `gck` itself
+  wraps this exact DAO internally. Reading `gcn.java` directly (the abstract base `gcp extends gcn`)
+  confirms it: `gcn.f(String, gcm)` — the very method `esk`'s default branch (line 894 above) calls —
+  is `gcn`'s own inherited implementation, and its body **constructs `new gcl(...)`** (`gcn.java`:
+  `gwv gwvVar = new gwv((Object) str, (Object) Long.valueOf(...), (Object) new gcl(gcmVar.a(...)), ...)`
+  ) before calling the abstract `g(gwvVar)` write — i.e. `gcl` (the domain/value-object type) is
+  literally instantiated *inside* the same DAO base class `gcp` extends. **Conclusion**: `gcp`/`gcn`
+  is the Room DAO layer underlying `gcl`/`gck`/`eht`'s already-documented `device_info` sink, not a
+  second, distinct accessor of the same table — `gck` (repository) → `gcn`/`gcp` (DAO) → `gcl`
+  (domain value object) is one continuous pathway, confirmed end-to-end by direct code reading, not
+  merely a table-name coincidence. This closes item F.
 - **Correlation with `PROTOCOL.md`**: none — this entire entry is code-level only; no `PROTOCOL.md`
   section cites it and none is proposed to.
 
@@ -1296,6 +1326,36 @@ the first time against every one of its 20 real discriminators + default branch.
   duplicating 20 rows of non-Bluetooth-relevant detail in this document. No `lambda_dispatcher_resolver`
   bug was found (all 21 results were `resolution_status: "resolved"`/`"resolved-default-branch"` as
   `reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md` §7 specifies) — the tool itself was not modified.
+
+- **Update (2026-09-16, `ai-sessions/0025`, `structural_index refs`) — field 6's own caller (part of
+  item G of `ai-sessions/0024`'s Phase 2 inventory, "the remaining `qhr` fields never traced to any
+  call site") is found, via the same abstract-supertype-indirection technique
+  `APK_REVERSE_ENGINEERING_PROCEDURE.md`'s "Notes & Gotchas" already names for `gjv.p()`.** 🟡
+  HYPOTHESIS (code-level, not capture-correlated): the 2026-09-08 update above found field 6's write
+  site (`fyo.java:191-210`, method `m`) but explicitly could not find its caller ("checked `fyb`'s
+  cases 0-18 and `hqy.java`, neither reaches `.m()`"). A direct `structural-index refs --class fyo
+  --method m` query this pass likewise returns **zero** calls — because `fyo` implements interface
+  `fya` (already noted elsewhere in this document), and every real caller invokes the method through
+  that interface type, not the concrete class, exactly the same receiver-type indirection that made
+  `gjv.p()`'s caller invisible to a `giz`-typed-field search for three sessions running. Re-querying
+  `--class fya --method m` finds **exactly two** call sites, both from `defpackage.fmp` — itself
+  **another** R8-merged lambda dispatcher (`implements pkg`, single `int` discriminator field, same
+  shape family as `gag`/`aie`/`esk`/`ftw`). `lambda_dispatcher_resolver resolve-all --class fmp`
+  shows discriminators **11** and **19** are the two branches calling `fya.m(Z)V` (with different
+  boolean literals). Their construction sites: `fyc.java:44` (`return i(new fmp(11)).d(new ftw(this,
+  2));`, `fyc`'s method `a()`) and `guy.java:43` (`fycVar.i(new fmp(19)).d(new ftw(fycVar,
+  6)).p();`). **Reading `guy.java` in full is directly, self-describingly informative**: `guy` is a
+  lifecycle observer whose `b()` method logs the literal string **`"Enable OOBE mode"`** before
+  calling the `fmp(11)`/`fya.m()` chain, and whose `c()` method logs **`"Disable OOBE mode"`** before
+  calling the `fmp(19)`/`fya.m()` chain — both gated on `fyc.q()` (an applicability check) and a
+  local re-entrancy guard (`this.m`). **Proposed reading**: `qhr` field 6 is a second,
+  transient/state OOBE-mode flag ("OOBE mode is currently active"), distinct from field 3's
+  already-documented "OOBE is finished" *completion* flag — a state-vs-completion distinction, not a
+  duplicate. Not promoted (per dimension (a)/(b) of `DECISIONS.md` ADR-019's 2026-09-03 clarifying
+  note: an independent code-side path now exists and is self-describing, but no wire capture has
+  ever observed field 6, so this is a code-level HYPOTHESIS only). This closes the field-6-specific
+  part of item G; the field 6 row in this entry's own bonus register (line ~1068) should be read
+  together with this update.
 
 ### `defpackage.qjn` / `defpackage.qjt` / `defpackage.qhx` / `defpackage.qjv` — `qjc`/`qja`'s other 4 oneof-group alternatives
 
@@ -2271,6 +2331,46 @@ these were traced to a specific `maestro_pw.*` (or other) service/method this pa
 natural next step for whoever picks this up (search for `X.class` and `X.a` reference sites the way
 `qjc`/`qjb` were traced back to `fux.java`/`fxk.java` above).
 
+- **Update (2026-09-16, `ai-sessions/0025`, `structural_index refs`, implementing `ai-sessions/0024`'s
+  Phase 3 recommendation to run the schema batch-extractor/structural index on item H) — the "no
+  external reference found" characterization for the top 3 is confirmed and extended to all 12
+  candidates; a nesting relationship among them is newly found, narrowing the effective count of
+  independent "unattributed roots"; a distinct, previously-uncatalogued naming cluster is surfaced
+  as the field-type-holder side, unattributed.** 🔴 OPEN QUESTION, unchanged in substance, narrowed
+  in detail (mechanical reference search, all 12 classes, no sampling):
+  - **All 12 confirmed to have zero external construction sites** — `structural-index refs` run
+    against each of `nhm`/`nef`/`qaa`/`ndi`/`mtn`/`nca`/`gdw`/`nfh`/`msw`/`qaj`/`qbu`/`qar` shows
+    every one is constructed **only** inside its own `<clinit>` (static initializer) and its own
+    `a` method — the standard `GeneratedMessageLite` singleton-instance/builder-factory pattern, not
+    an external caller. This confirms, for the full 12 (not just "the top 3" the original pass
+    checked by hand), that none is directly instantiated anywhere else in the app's own code.
+  - **New: a nesting relationship narrows the 12 to effectively fewer independent "roots."**
+    `ndi` and `nca` are each held as a field of `nef` (`nef.v` and `nef.w` respectively — i.e. `nef`'s
+    74-field schema contains both as nested sub-messages), and `nfh` is held as a field of `nhm`
+    (`nhm.ap` — `nhm`'s 76-field schema contains it). This means at least 3 of the 12 are not
+    independent unattributed schemas needing their own separate RPC-method attribution — they are
+    already reachable as nested content of two of the other candidates (`nef`, `nhm`) once *those*
+    two are attributed. `qaa`/`mtn`/`gdw`/`msw`/`qaj`/`qbu`/`qar` showed no such nesting among each
+    other in this pass (their own field-type-holder classes, below, are all outside this 12-class
+    set).
+  - **New, unattributed: a distinct naming cluster holds several of these classes as field types,
+    itself not previously catalogued anywhere in this document.** `qaa`'s holders are `kii.a`/
+    `koq.c`/`pzr.j`; `mtn`'s are `jau.e`/`msc.e`; `msw`'s are `jaj.f`/`jjn.g`/`jjx.j`/`jkl.e`/`jsg.q`;
+    `qbu`'s are `kip.i`/`kiq.c`/`kob.c`/`kol.c`; `qar`'s is `qan.f`; `nef` itself is additionally
+    called (not just held) from `fwe.b` (38 distinct call-site methods, e.g. `S`/`R`/`P`/`aa`/`Y`).
+    None of `kii`/`koq`/`pzr`/`jau`/`msc`/`jaj`/`jjn`/`jjx`/`jkl`/`jsg`/`kip`/`kiq`/`kob`/`kol`/`qan`/
+    `fwe`/`nbm` (the `nef`-holder found by the field-type search too) is catalogued anywhere else in
+    this document. 🔴 **Genuinely open, not guessed at, per `AGENTS.md` §13.6**: the field-count
+    density and this naming cluster's own shape (many single-letter-suffixed accessor classes
+    reading/writing one field each) is *plausibly* consistent with a bundled feedback/diagnostics
+    reporting subsystem (Google apps commonly bundle a large "send feedback" data schema) rather
+    than anything `libmaestro`-specific — but no class name, string literal, or log tag in this
+    cluster was found this pass that actually confirms that guess, so it is recorded here as an
+    unconfirmed plausibility, not a reading. This narrows, but does not resolve, item H — the
+    natural next step remains what this section's own text already names: tracing `X.class`/`X.a`
+    reference sites the way `qjc`/`qjb` were traced, now with `structural-index` doing the reference
+    enumeration mechanically instead of by hand.
+
 ---
 
 ### Full-tree GATT/BLE reference sweep (2026-08-30, cross-validation follow-up)
@@ -2662,6 +2762,114 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     construction sites (to find what schedules this specific `Boolean`-gated case) is a reasonable
     next step if this lead is judged worth pursuing further, but was not attempted this session.
 
+- **Update (2026-09-16, `ai-sessions/0025`, `lambda_dispatcher_resolver resolve-all --class gag`,
+  implementing `ai-sessions/0024`'s own "free win" recommendation and its Phase 2 item C) — the
+  2026-09-13 "~7-day staleness check" reading above is corrected: that literal does NOT belong to
+  `gag`'s discriminator-15/`pswitch_4` branch (the one feeding `ftw(_,9)`/`gjv.p()`/`fxm.i()`) at
+  all — it belongs to a structurally different, unrelated `gag` branch. The actual discriminator-15
+  construction site is now found and confirms an OTA-lifecycle trigger, not a periodic timer.** 🟢
+  FACT (mechanical resolve-all read, all 21 of `gag`'s cases — 20 real + default — read in full, no
+  sampling; command: `resolve-all --apk-root ... --class gag --output-dir /tmp/gag_all`):
+  - **The `604800000`ms (7-day) check lives in discriminator 10 (`pswitch_9`, lines 438-555), not
+    discriminator 15.** Discriminator 10's own smali (read in full this pass) is a `Boolean` result
+    gated on `Ljava/lang/Integer` input `p1` compared against `0x43`(67) and an `Instant.now()
+    .minusMillis(...).toEpochMilli()` comparison against the literal `0x240c8400` = `604800000`ms —
+    and it references `com/google/android/apps/wearables/maestro/companion/notification/
+    hearingwellness/HearingWellnessNotificationWorker` directly (an unobfuscated class name) as the
+    method's own log-tag owner (`sget-object v0,
+    Lcom/.../HearingWellnessNotificationWorker;->f:Llsz;`). This is **`HearingWellnessNotificationWorker`'s
+    own once-per-7-days notification-throttle check** — an entirely different, unrelated feature
+    (hearing-wellness/loud-noise-exposure notifications), not anything gating `fxm.i()`/
+    `GetSoftwareInfo`. The 2026-09-13 finding's own "Code restructure failed" JADX fragment was
+    genuinely present somewhere inside `gag.a()`'s giant, mostly-undecompilable method body, but
+    `resolve-all`'s own per-case line-range isolation (unavailable to that prior pass, which read
+    `gag.smali:158`'s single citation without isolating the full branch) shows it belongs to a
+    different `packed-switch` case than the one under discussion at the time. **This is a correction
+    to a static-analysis misattribution, not a capture-level finding** — no `PROTOCOL.md`/
+    `DECISIONS.md` content is affected (the original reading was never promoted beyond a maintainer-
+    reviewed HYPOTHESIS in `REVERSE_ENGINEERING.md` itself).
+  - **Discriminator 15's own branch (`pswitch_4`, lines 141-173) is confirmed to contain only the
+    already-documented `check-cast Boolean` → `new ftw(this, 9)` → `Loqh;->f(Lorr;)` chain — no
+    staleness check of any kind inside it.** Its own real-world construction site is now found:
+    `gjy.java:38` — `otaApplyWorker2.k.e(b2.u(new ftq(14)).al().e(new gag(obj2, 15)).p());` — inside a
+    `gjy` method operating on a local variable literally named `otaApplyWorker2`. This directly
+    confirms, from the *trigger* side this time (rather than only the *response*/`gaa.java` side
+    already documented), that discriminator 15's chain is OTA-apply-lifecycle-scoped — consistent
+    with, and now doubly confirming, `ai-sessions/0023`'s own finding (this entry's 2026-09-15 update
+    above) that `ftw`'s case 9/`gjv.p()` fires from `OtaApplyWorker`'s own completion callback, not a
+    generic connect-time settling action.
+  - **The other 19 real discriminators were also read in full** (per `AGENTS.md` §13.6 — no
+    sampling): most are generic utility/transform helpers (`La;->E/D/H/J`, `Lpkg;->a` — a reused
+    `Function`-shaped passthrough with no Bluetooth-specific content) or OTA-apply progress-tracking
+    machinery (discriminators 13/14, both operating on `OtaApplyWorker`'s own progress fields, no new
+    Bluetooth content beyond what this section already documents); discriminator 4 (`pswitch_f`) is a
+    **real RFCOMM socket-creation call site** — `gbd.j`'s own `"Creating socket: %s"` log,
+    `BluetoothDevice.createRfcommSocketToServiceRecord(UUID)`, `.connect()`, then wrapping the
+    resulting streams — matching this document's own `gbd`/`InternalRfcommConnection` entry's
+    already-documented role, not a new finding; discriminator 9 references a
+    `"key_lea_ever_enabled"` `SharedPreferences` key (plausibly "LE Audio ever enabled," an
+    analytics/Clearcut-logging branch, not a control-plane write) — genuinely new, not previously
+    catalogued, but not chased further (no self-describing Bluetooth-control content beyond the key
+    name itself). No other Maestro/RFCOMM/GATT-adjacent content was found among the remaining 19
+    cases — a checked negative for all of them except discriminator 4 (already documented) and
+    discriminator 15 (this update).
+  - **Item C of `ai-sessions/0024`'s Phase 2 inventory ("what schedules the ~7-day staleness check
+    candidate gate on `fxm.i()`/`GetSoftwareInfo`") is now closed with a corrective answer: nothing
+    does — there is no periodic staleness gate on that path.** The only gate on discriminator 15's
+    own chain is the OTA-apply-completion event itself (`gjy.java:38`'s own caller, not traced
+    further this pass); the 7-day check that motivated the original question belongs to an unrelated
+    feature entirely.
+
+### `BluetoothPriorityReceiver` — exported broadcast receiver requesting classic-BT connection priority, holding a direct `fzd` reference (new, from a Phase 3 item L manifest re-review)
+
+*(Added 2026-09-16, `ai-sessions/0025`, implementing `ai-sessions/0024`'s Phase 3 item L — a full
+`AndroidManifest.xml` re-review, previously flagged as cheap/mechanical/not yet re-run.)*
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/apktool-output/AndroidManifest.xml`
+  (receiver declaration); `jadx-output/sources/com/google/android/apps/wearables/maestro/companion/
+  phone/bluetoothpriority/BluetoothPriorityReceiver.java:28-31`
+- **Readable alias**: n/a — a genuinely unobfuscated class/package name already (`phone.bluetoothpriority`).
+- **Role**: 🔴 OPEN QUESTION (existence, exported status, and direct `fzd` field confirmed 🟢 FACT;
+  what triggers it and what it accomplishes on the wire are unresolved). Not previously catalogued
+  anywhere in this document — a full manifest re-read (this pass's own method: `grep -B3
+  'android:exported="true"' AndroidManifest.xml`) surfaced it directly; a prior keyword-search pass
+  evidently never matched this specific package name.
+- **Relevant methods/classes**:
+  - Manifest: `<receiver android:enabled="true" android:exported="true"
+    android:name="com.google.android.apps.wearables.maestro.companion.phone.bluetoothpriority.BluetoothPriorityReceiver"
+    android:permission="android.permission.CAPTURE_AUDIO_HOTWORD">` — exported, gated by a
+    permission (`CAPTURE_AUDIO_HOTWORD`) whose name reads as unrelated to its own custom intent
+    action (below), worth flagging as-is rather than explained.
+  - `onReceive` handles a custom, app-defined action,
+    `com.google.android.apps.wearables.maestro.companion.ACTION_TRIGGER_CLASSIC_CONNECTION_PRIORITY`
+    (also declared as an intent-filter action in the manifest), requiring three extras:
+    `EXTRA_BD_ADDR`, `EXTRA_PRIORITY`, `EXTRA_DATA_DIRECTION` (all under the same app-specific
+    package prefix) — logging `"Received Bluetooth priority change intent: %s"` and, on missing
+    extras, `"Missing info, ignore request"`.
+  - The class holds a direct field `c: fzd` — **`fzd` is already catalogued in this document**
+    (`InternalRfcommUuidRegistry`, the class holding the two candidate RFCOMM socket UUIDs used by
+    `gbm`'s "pigweed"/"default" socket selection, `DECISIONS.md` ADR-018's own evidentiary basis).
+    This is a direct, concrete, previously-unknown consumer of `fzd` beyond `gbm` itself. Other
+    injected fields: `b: nmx`, `d: oqy`, `e: gno`, `f: ftk` — none independently catalogued yet.
+- **What this is, and is not, evidence of**: the presence of `EXTRA_BD_ADDR`/`EXTRA_PRIORITY`/
+  `EXTRA_DATA_DIRECTION` extras and a "classic connection priority" name is *suggestive* of BR/EDR
+  link-supervision or profile-connection-priority signaling (plausibly relevant to Multipoint
+  switching, or to `PROTOCOL.md` §5.2's still-HYPOTHESIS RFCOMM channel-opening-order question) —
+  but per `AGENTS.md` §13.6's zero-creativity rule, no further reading was done this pass to confirm
+  or refute that reading, and it is explicitly **not** asserted here. Who sends this broadcast (the
+  Android OS itself, a different Google app, or this app's own code) was not determined.
+- **Open questions**: what actually sends the `ACTION_TRIGGER_CLASSIC_CONNECTION_PRIORITY` broadcast
+  (in-app self-broadcast, or an external sender); what `EXTRA_PRIORITY`'s value space and
+  `EXTRA_DATA_DIRECTION`'s meaning are; whether this receiver's own effect is ever wire-visible
+  (e.g. as an HCI-level link-policy/QoS command, distinguishable from ordinary connection traffic);
+  whether it relates to Multipoint switching or any other already-documented feature.
+- **Hypothesis test**: none proposed this pass — this is a static-analysis-only finding with no
+  capture correlation attempted; a future capture bracketing a Multipoint switch or a
+  multi-device-connection scenario while watching for this broadcast (via `adb shell dumpsys
+  activity broadcasts` or similar) would be the natural next step, not attempted here.
+- **Correlation with `PROTOCOL.md`**: none yet — code-level-only finding, not proposed for
+  promotion.
+
 ### `MaestroEndpointService` — exported, no-permission on-device gRPC server (open questions only)
 
 *(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4, maintainer-approved per prompt `0002`.)*
@@ -2745,6 +2953,30 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
 - **Correlation with `PROTOCOL.md`**: §6 Commands & schemas, 2026-09-08 addition (original entry);
   2026-09-08 update (this trace) proposed for `PROTOCOL.md` §6, pending maintainer review — see
   `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md`.
+- **Update (2026-09-16, `ai-sessions/0025`, `structural_index refs`) — item B of `ai-sessions/0024`'s
+  Phase 2 inventory (the Dagger-multibinding assembly site) advanced by one more level; a promising-
+  looking lead checked and ruled out as a checked negative, not the assembly site itself; the
+  multibinding-provider class itself remains unfound.** 🟡 HYPOTHESIS/checked-negative (mechanical
+  reference search, this pass): `structural-index refs --class ofd` confirms exactly the three
+  implementations this entry's own 2026-09-08 update already found (`mie`, `oex`, `ofb` — no fourth
+  implementation exists anywhere in this APK version) and surfaces three **field-type holders** of
+  `ofd` not previously catalogued: `ofh.b`, `ofi.e`, `ofj.e`. These looked like a promising candidate
+  for the still-missing multibinding-assembly site — but reading `ofh.java`/`ofi.java`/`ofj.java`
+  directly shows they are **generic gRPC transport-factory/server-builder plumbing**
+  (`ofi implements olq`, `ofj implements oil`, structurally resembling `io.grpc`'s own
+  `ServerBuilder`/`TransportFactory`/`Transport` interfaces), where `ofi`'s constructor merely sets a
+  *default* `ofd` policy (`this.e = new ofb();`) for whatever transport it builds — unrelated to
+  `MaestroEndpointService`'s own specific `Map<String, Optional<ofd>>` service registration. **This
+  is a checked negative, not a finding**: `ofh`/`ofi`/`ofj` are ruled out as the multibinding
+  assembly site. Separately, `structural-index refs --class MaestroEndpointService`-equivalent
+  queries (searching for writers of the class's own `public Map b;` field) found no injector class
+  with a literal, findable name, confirming this entry's own existing note that no
+  `*MembersInjector`-named class exists for it — locating the actual assembly site would need either
+  (a) a future `implements`-query capability (`reverse-engineering/tools/structural_index/SPEC.md` §2.2, explicitly deferred
+  from v1) to enumerate every Dagger `@Provides`/`@Binds`/`@IntoMap` generated factory class in the
+  app, or (b) a field-*write* search (as opposed to v1's field-*type-declaration* search) for
+  `MaestroEndpointService.b`'s own setter — neither built this pass. Item B remains open, narrowed by
+  one ruled-out candidate rather than closed.
 
 ---
 

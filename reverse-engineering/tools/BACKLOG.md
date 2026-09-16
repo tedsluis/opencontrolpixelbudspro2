@@ -45,9 +45,13 @@ Any tool built from this list operates inside the exact same boundary
 
 This ordering is a lens, not a commitment — the maintainer may pick any subset in any order.
 
-> **Proposed re-ordering, added 2026-09-16 (`ai-sessions/0024`, awaiting maintainer sign-off — a
-> proposal, not applied as a decision by this edit alone) — item 1 unchanged, but item 4's own
-> "protobuf/`RawMessageInfo` schema batch-extractor" sub-item promoted ahead of items 2/3 below.**
+> **Re-ordering approved 2026-09-16 — `ai-sessions/0025` is the sign-off event, per
+> `AI_SESSION_LOG_PROCEDURE.md` §4a's citation requirement (this class of tooling-priority decision
+> does not go through the FACT/HYPOTHESIS/ADR gate; see that prompt's own "On authorization to
+> proceed" note in its Context section).** Originally proposed 2026-09-16 (`ai-sessions/0024`) —
+> item 1 unchanged, but item 4's own "protobuf/`RawMessageInfo` schema batch-extractor" sub-item
+> promoted ahead of items 2/3 below.
+>
 > Reasoning, drawn from a real usage pass (`lambda_dispatcher_resolver resolve-all` run against
 > `aie`/`esk`'s full case sets, `ai-sessions/0024_AUDIT_RESULT_2026_09_16.md` Phase 2/Phase 3): items
 > 2/3 are both gated on genuinely *new wire/GATT evidence* that this project's own APK-side search has
@@ -59,13 +63,26 @@ This ordering is a lens, not a commitment — the maintainer may pick any subset
 > (`REVERSE_ENGINEERING.md`) are picked up. Revised order: **(1) structural code index, (2) schema
 > batch-extractor, (3) UUID/BLE-context reconstruction, (4) limited dataflow, (5) the three remaining
 > independently-useful items (wire-payload-vs-schema decoder, APK version-diff, tshark/DLCI-reassignment
-> helper) unordered relative to each other, unchanged from the original text.** This is a proposal for
-> the maintainer to approve or reject, per this file's own header note that nothing here is committed
-> to being built.
+> helper) unordered relative to each other, unchanged from the original text.** This ordering is now
+> adopted, not merely proposed — the structural code index (item 1) has already been built against
+> it (see that idea's own "Implemented 2026-09-16" note above); items 2-5 remain not-yet-built and
+> still follow this same order per this file's own header note that nothing here is committed to
+> being built until it graduates its own spec document.
 
 ---
 
 ## Idea: general androguard-based structural code index
+
+**Implemented 2026-09-16 (`ai-sessions/0025`) — v1 only, per the sketch below.** See
+[`structural_index/SPEC.md`](structural_index/SPEC.md) for the full design, and
+[`structural_index/README.md`](structural_index/README.md) for usage. v1 delivers exactly the
+narrowest-useful-version sketch's own single capability (construct/call/field-type-holder search
+for one class) and passes all three of its own named acceptance criteria against the real,
+locally-decompiled APK (`esk`'s 21 construction sites; `giz.p()`'s sole `ftw.a` caller, reproducing
+`ai-sessions/0023`'s `Lgiz;->p(` smali-grep finding from a structured query; the `aie`
+non-catalogued-class zero-reference check). The `implements`-query and resource/string-table search
+named below as "explicitly deferred to a later version" remain not built — this entry stays open for
+whoever picks either of those up next, rather than being marked fully closed.
 
 Generalizes `lambda_dispatcher_resolver`'s Layer 1 beyond just lambda-dispatcher detection into a
 standing query tool: "list every class implementing interface X," "find every caller of method

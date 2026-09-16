@@ -404,12 +404,37 @@ lower priority than finishing ANC/Battery/EQ):**
       cases). Two new leads recorded in `REVERSE_ENGINEERING.md`'s new `esk` entry: a located write
       site for the previously-unlocated "Feature A" mechanism (discriminator 18, `ftf.java:312`), and
       a previously-uncatalogued `device_info`-table Room DAO pair (`gcp`/`gcn`, the default branch,
-      `gcp.java:51`) whose relationship to the already-known `gcl`/`gck`/`eht` device_info-sink
-      classes is a new 🔴 open question. **`MaestroEndpointService`'s own multibinding-assembly
-      search remains not yet advanced by this tool** — this session's own scope was `aie`/`esk`
-      specifically, not that search; `ai-sessions/0024`'s own Phase 2 recommends a general
-      structural/XREF code index (`reverse-engineering/tools/BACKLOG.md`) as the next tool to build,
-      partly for exactly that search.
+      `gcp.java:51`). **Relationship to `gcl`/`gck`/`eht` resolved 2026-09-16 (`ai-sessions/0025`,
+      via the new `structural_index` tool below): they are the same `device_info` data pathway at
+      different layers** (`gck` holds a `gcn`-typed field; `gcn.f()` itself constructs `gcl`) —
+      see `REVERSE_ENGINEERING.md`'s `esk` entry's own 2026-09-16 update for the full trace. Not a
+      second, distinct accessor after all — this specific open question is closed, code-level-only,
+      not requiring maintainer FACT sign-off since it makes no protocol-behavior claim.
+      **`MaestroEndpointService`'s own multibinding-assembly search advanced but not closed,
+      2026-09-16 (`ai-sessions/0025`)** — `structural_index` found `ofd`'s 3 implementations
+      (`mie`/`oex`/`ofb`, confirming no 4th exists) and 3 new field-type holders (`ofh`/`ofi`/`ofj`),
+      but reading them showed they are generic gRPC transport-builder plumbing, not the assembly
+      site — a checked negative, not a resolution; see `REVERSE_ENGINEERING.md`'s
+      `MaestroEndpointService` entry's own 2026-09-16 update.
+- [x] **Added 2026-09-16, implemented same day — Structural Index (`ai-sessions/0025`, implementing
+      `ai-sessions/0024`'s top-1 `reverse-engineering/tools/BACKLOG.md` priority).**
+      `reverse-engineering/tools/structural_index/` (`reverse-engineering/tools/structural_index/SPEC.md` for the design; `README.md` for
+      usage) generalizes `lambda_dispatcher_resolver`'s own Layer 1 (`androguard_index.py`, reused
+      directly, not re-implemented) into a standing reference-search query: given a class, list
+      every other class/method that (a) constructs it, (b) calls one of its methods, or (c) holds
+      it as a field type, via a `refs`/`unreferenced` CLI. All 3 of `reverse-engineering/tools/structural_index/SPEC.md` §10's named
+      acceptance criteria pass (7 pytest cases) against the real, locally-decompiled APK — `esk`'s
+      21 construction sites (matching `ai-sessions/0024`'s own by-hand `grep` count exactly),
+      `giz.p()`'s sole caller (`defpackage.ftw`, method `a`, matching `ai-sessions/0023`'s
+      `Lgiz;->p(` smali-grep finding from one structured query instead of a raw grep), and the
+      "which of `aie`'s never-catalogued referenced classes have zero external references" check
+      (`Laly`/`Lcvo`/`Lgza` all confirmed externally referenced). No decompiled content committed
+      anywhere in the tool's own tree (`.gitignore`'s tool-glob pattern covers it automatically).
+      **Used for real APK-RE work the same session** — see this file's Phase 2 section and
+      `REVERSE_ENGINEERING.md` for what it found on open questions B/F/G/H/J.
+      Deliberately v1-only: an `implements`-query (needed for item B's Dagger-multibinding search)
+      and a resource/string-table search (item M) are both explicitly deferred, per
+      `reverse-engineering/tools/BACKLOG.md`'s own "start narrow" sketch — not built this pass.
 - [x] **Groundwork/tooling — done 2026-08-30.** Governance, storage, and procedure now in place so
       the actual analysis work below can start; none of it constitutes analysis having happened yet:
       `DECISIONS.md` ADR-017 (supersedes ADR-003) permits AI mechanical assistance — search, `pbtk`
