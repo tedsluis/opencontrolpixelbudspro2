@@ -1,0 +1,23 @@
+[project]
+name = "uuid-ble-context"
+version = "0.1.0"
+description = "UUID extraction + usage-context reconstruction (built on structural_index) across the decompiled Pixel Buds companion APK. See SPEC.md."
+requires-python = ">=3.10"
+dependencies = [
+    "androguard>=4.1.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+uuid-ble-context = "uuid_ble_context.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/uuid_ble_context"]
