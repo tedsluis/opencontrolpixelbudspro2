@@ -953,6 +953,23 @@ the first time against every one of its 20 real discriminators + default branch.
   second, distinct accessor of the same table — `gck` (repository) → `gcn`/`gcp` (DAO) → `gcl`
   (domain value object) is one continuous pathway, confirmed end-to-end by direct code reading, not
   merely a table-name coincidence. This closes item F.
+- **Update (2026-09-17, `ai-sessions/0025`, `limited_dataflow trace-branch`) — mechanical
+  confirmation, discriminator 19 and discriminator 18, no new protocol claim.** 🟢 FACT (mechanical
+  single-basic-block register trace, `reverse-engineering/tools/limited_dataflow/SPEC.md` §10 item
+  1): tracing `v0` from discriminator 19's own `iget-object v0, p0, Lesk;->b:Ljava/lang/Object;`
+  (line 325) reproduces exactly this entry's own prose — a `check-cast` to `qjc` (line 333) then a
+  `sink_use` into `Lfys;-><init>(Lqjc;Lnqo;)V` (line 337) — and, just as this document's §1-level
+  disclosed boundary already says, the trace does **not** reach `nqo.e(...)` itself (that call is
+  inside `fys`'s own body, out of this v1 tool's single-basic-block scope; it stops instead at a
+  later, unrelated reuse of the same `v0` register slot by the RPC send's own 5-second timeout setup,
+  `const-wide/16 v0, 0x5` at line 386 — a correct, disclosed stop, not a new finding). Separately,
+  tracing `p0` (`esk.b`, the device-id-carrying value) from discriminator 18's own capture site (line
+  459) confirms, mechanically, that the value never gets a chance to move before the branch's own
+  `if-eqz p1, :cond_0` (line 463) — i.e. the "Feature A" write this entry's discriminator-18 bullet
+  already describes as conditional on the boolean flag is confirmed, at the bytecode level, to
+  happen (if at all) strictly inside that `if`-branch, one basic block away from where the value is
+  first read. This narrows nothing new about *what* discriminator 18 does (already documented above)
+  — it is a mechanical cross-check of the existing prose using a new tool, not a new lead.
 - **Correlation with `PROTOCOL.md`**: none — this entire entry is code-level only; no `PROTOCOL.md`
   section cites it and none is proposed to.
 
@@ -2371,6 +2388,57 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     reference sites the way `qjc`/`qjb` were traced, now with `structural-index` doing the reference
     enumeration mechanically instead of by hand.
 
+- **Update (2026-09-16, `ai-sessions/0025` resumption, `reverse-engineering/tools/schema_batch_extractor
+  scan`/`refs`, implementing this session's Phase 1 tool 2 and Phase 3 item H) — full field-level
+  schemas recovered for all 12 candidates for the first time (previously only header counts were
+  known), and a genuinely new nesting/reference graph found, one layer further out than
+  `structural_index`'s own bytecode-XREF pass reached. 🟢 FACT (code existence/structure — mechanical
+  decode via the same, previously-validated `scripts/decode_rawmessageinfo.py` algorithm, batch-run
+  and regression-tested against the already-known `qhr`/`qjc`/`qjb`/`nqx` schemas before being
+  trusted here; see `reverse-engineering/tools/schema_batch_extractor/SPEC.md` §10):**
+  - **Full field counts, all 12** (previously only the header-only sweep's field/oneof/map counts for
+    the ranked-list view were known — this is the same tool, but every field's type/oneof-ness/
+    message-ref is now recovered too): `qaa` 63 fields/0 oneofs, `qbu` 24/0, `msw` 26/1, `nhm` 76/0,
+    `nef` 74/0, `mtn` 30/1, `nfh` 27/0, `nca` 30/0, `ndi` 35/0, `qaj` 24/1, `qar` 21/0 (+1 map field),
+    `gdw` 28/0.
+  - **New: `mtn` and `msw` are not two independent unattributed roots — `mtn`'s own field 12 (a oneof
+    alternative) *is* `msw`.** `schema-batch-extractor refs --class msw` returns exactly one entry:
+    `defpackage.mtn`, field 12, context `oneof` — the schema-string-encoded oneof reference, not a
+    bytecode field-type-holder guess. This narrows the 12-candidate count by one more independent root
+    (after the already-recorded `nef`⊃`ndi`/`nca` and `nhm`⊃`nfh` nestings, found via `structural_index`
+    the same session), via a different, complementary data source (the compact schema string itself,
+    not a DEX field-descriptor scan).
+  - **New, previously-uncatalogued: `mtn` is itself held as a repeated (`MESSAGE_LIST`) field of three
+    small, previously-unlisted-anywhere-in-this-document protobuf message classes — `mqm` (2 fields,
+    field 5), `mra` (1 field, field 1), and `mqk` (4 fields, field 7).** `mqk` additionally references
+    a fourth new, unexplored class, `mtg`, as one of its own fields — not traced further this pass.
+    None of `mqm`/`mra`/`mqk`/`mtg` has any *incoming* schema-level reference of its own
+    (`refs --class mqm`/`mra`/`mqk` each return `referenced_by: []`) — this chain terminates here, at
+    least via this tool's own oneof/list/map data source (a plain-field reference from yet another
+    class, if any, would need `structural_index`'s bytecode query instead, per this tool's own §3
+    disclosed limitation).
+  - **New, previously-uncatalogued: `qaj` is itself held as a repeated field of `qak`** (2 fields,
+    field 1), and `qaj`'s own field 29 (oneof) references a fifth new class, `qaz` — neither `qak` nor
+    `qaz` traced further this pass. `qak` also references a sixth new class, `qam`, not traced.
+  - **`qar`'s field 16 is a `MAP` field whose default-entry descriptor is `qaq.a`** (a nested class,
+    `qaq`'s own inner class `a` — the `.a` suffix is read directly from the source text, not
+    normalized away, since it is plausibly meaningful here) — a structurally distinct finding from
+    the other 11 candidates (`qar` is the only one of the 12 with a map field at all, matching the
+    original header-only sweep's own note).
+  - **`nhm`/`nef`/`qaa`/`ndi`/`nca`/`gdw`/`nfh`/`qbu` show zero incoming oneof/list/map references** —
+    consistent with, not contradicting, the already-recorded "zero external construction sites"
+    finding from `structural_index` (a different query: bytecode `new-instance`/field-descriptor vs.
+    this tool's own schema-string oneof/list/map decode) — no new nesting found for these 8 via this
+    data source. This does **not** mean nothing anywhere holds these as a plain field (`nef` itself
+    already known to hold `ndi`/`nca` that way, per this section's own entry above) — it means this
+    *specific* tool's own oneof/list/map query, run against the *whole* 807-class register (not just
+    the other 11 candidates), finds none for these 8.
+  - **None of the 7 new leads this pass surfaced** (`mqm`/`mra`/`mqk`/`mtg`/`qak`/`qaz`/`qam`) **is
+    catalogued anywhere else in this document.** 🔴 Genuinely open, not guessed at: no class name,
+    string literal, or log tag was found this pass naming any of them — recorded as new open leads,
+    not a reading, exactly as this section's own prior update already modeled for the field-holder
+    naming cluster below.
+
 ---
 
 ### Full-tree GATT/BLE reference sweep (2026-08-30, cross-validation follow-up)
@@ -3044,6 +3112,36 @@ Services, not this APK. No new register rows are added for these 8 UUIDs, per th
 scope note (APK findings only) — their wire-level identity is already fully established in
 `PROTOCOL.md` directly from `CAP-034`'s own capture evidence, which does not need (and does not get)
 a redundant APK-code citation here.
+
+**Update (2026-09-16, `ai-sessions/0025` resumption, `reverse-engineering/tools/uuid_ble_context
+extract`/`context`, implementing this session's Phase 1 tool 3) — first genuinely unseeded, blind
+sweep of the whole decompiled tree for any UUID-shaped literal, superseding the earlier keyword-
+seeded searches above for completeness (not contradicting them — every UUID they found is
+reconfirmed).** 🟢 FACT (mechanical extraction, regression-tested — see
+`reverse-engineering/tools/uuid_ble_context/SPEC.md` §10):
+
+- **Exactly 6 distinct UUID-shaped literals exist anywhere in `jadx-output/sources/`** (12,545
+  files) — the 5 literal forms already in this register above (the two RFCOMM UUIDs and their own
+  byte-reversed alias forms, plus the HID Profile UUID), and **one genuinely new find**:
+  `95ed6082-b8e9-46e8-a73f-ff56f00f5d9d`, appearing twice in `defpackage/ehs.java` (lines 989 and
+  1102). Reading both occurrences directly: this is a literal `"androidx.work.Data-95ed6082-..."`
+  sentinel string used by bundled AndroidX WorkManager's own `Data` (de)serialization code as a
+  null-value placeholder — **not Bluetooth-related**, and not a real UUID reference at all (it is
+  the tail of a longer sentinel string that happens to contain a UUID-shaped substring). No
+  Bluetooth-API name (per the tool's own fixed list, `SPEC.md` §3) appears anywhere in `ehs.java`.
+  This is a genuine, mechanically-confirmed checked negative, not a new open question.
+- **The co-occurrence heuristic's own precision limits, demonstrated on real data**: `fzd.java` and
+  `gbm.java` (both already known, `ADR-018`-relevant files) both textually co-occur with a
+  Bluetooth-API name — but `defpackage/fqg.java` (the already-catalogued `gbb`/`gbc`
+  construction-wiring class, above) does **not**, despite being a genuinely Bluetooth-adjacent file
+  that merely passes the same UUID constant through without ever naming a BT API directly in its own
+  text. Recorded so a future session reads a `bt_api_cooccurrence: false` result as "this specific
+  file names no BT API directly," never as "this file is unrelated to Bluetooth."
+- **No new nesting/attribution for the existing 3 registered UUIDs** — `uuid-ble-context context`'s
+  own `structural_index`-reused usage graph for `fzd`/`gbm`/`fxm` reproduces exactly what
+  `structural_index refs` already returns directly for each (e.g. `fxm`'s sole construction site,
+  `fxw.a`, already known from the `frb`-`gjv` entry) — no contradiction, no new lead beyond the one
+  above.
 
 ## Message Group / Code register (Fast Pair Message Stream)
 

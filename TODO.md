@@ -435,6 +435,72 @@ lower priority than finishing ANC/Battery/EQ):**
       Deliberately v1-only: an `implements`-query (needed for item B's Dagger-multibinding search)
       and a resource/string-table search (item M) are both explicitly deferred, per
       `reverse-engineering/tools/BACKLOG.md`'s own "start narrow" sketch — not built this pass.
+- [x] **Added 2026-09-16, implemented same day — Schema Batch-Extractor (`ai-sessions/0025`
+      resumption, implementing `ai-sessions/0024`'s top-2 `reverse-engineering/tools/BACKLOG.md`
+      priority).** `reverse-engineering/tools/schema_batch_extractor/` (`SPEC.md` for the design;
+      `README.md` for usage) generalizes `scripts/decode_rawmessageinfo.py` (reused directly via a
+      `sys.path` insertion, not re-implemented or modified) into a batch mode: scans the whole
+      `jadx-output/sources/` tree (12,545 files) for every `new naa(...)` compact-schema
+      construction and decodes each one's full field-level schema in one pass, plus a derived
+      reverse index (`refs`) of which other classes' own schema references a given class via a
+      oneof/repeated/map field. All 6 of `SPEC.md` §10's named acceptance criteria pass (12 pytest
+      cases) against the real, locally-decompiled APK: `qhr`/`qjc`/`qja`/`nqx`/`qjb` all reproduce
+      their already-known field counts/types/message-refs exactly; the whole-tree scan finds exactly
+      807 candidates (matching `REVERSE_ENGINEERING.md`'s own independently-obtained header-only-sweep
+      count) with zero unparsable constructions; and a disclosed-limitation regression confirms the
+      tool correctly returns no incoming reference for `ndi` despite `nef` genuinely holding it as a
+      plain (non-oneof) field — a real, documented scope boundary (a plain `MESSAGE` field's type is
+      not encoded in the compact schema string at all, per protobuf-lite's own algorithm), not a bug.
+      No decompiled content committed anywhere in the tool's own tree.
+      **Used for real APK-RE work the same session** — see `REVERSE_ENGINEERING.md`'s "Candidate rich
+      schemas" section's 2026-09-16 update for the full field-level schemas of all 12 candidates
+      (previously only header counts were known) and a newly-found nesting/reference graph one layer
+      further out (`mtn`⊃`msw`; `mtn`⊂{`mqm`,`mra`,`mqk`}; `qaj`⊂`qak`, `qaj`⊃`qaz`; `qar`'s map field
+      → `qaq.a`) — 7 genuinely new, previously-uncatalogued class leads (`mqm`/`mra`/`mqk`/`mtg`/
+      `qak`/`qaz`/`qam`), none traced further this pass.
+- [x] **Added 2026-09-16, implemented same day — UUID Extraction + BLE/GATT Context Reconstruction
+      (`ai-sessions/0025` resumption, implementing `ai-sessions/0024`'s top-3
+      `reverse-engineering/tools/BACKLOG.md` priority).**
+      `reverse-engineering/tools/uuid_ble_context/` (`SPEC.md` for the design; `README.md` for usage)
+      runs a genuinely unseeded, blind regex sweep of the whole `jadx-output/sources/` tree for every
+      UUID-shaped literal, tags each occurrence's file with a textual BLE/GATT/RFCOMM-API
+      co-occurrence signal (a fixed name list, never a call-graph trace), and reuses
+      `structural_index`'s own `find_refs`/`load_apk` directly (a two-hop reuse chain down to
+      `lambda_dispatcher_resolver`'s Layer 1) for the "usage location" half, via an `extract`/`context`
+      CLI. All 6 of `SPEC.md` §10's named acceptance criteria pass (9 pytest cases) against the real,
+      locally-decompiled APK. No decompiled content committed anywhere in the tool's own tree.
+      **Used for real APK-RE work the same session** — found exactly 6 distinct UUID-shaped literals
+      in this APK version (the 5 already-registered forms, reconfirmed, plus one genuinely new,
+      non-Bluetooth find: an AndroidX WorkManager `Data`-serialization sentinel string,
+      `95ed6082-b8e9-46e8-a73f-ff56f00f5d9d`, in `defpackage/ehs.java`) — see `REVERSE_ENGINEERING.md`'s
+      UUID register's 2026-09-16 update for the full write-up, including a demonstrated real-data
+      limitation of the co-occurrence heuristic itself (`fqg.java` is genuinely Bluetooth-adjacent but
+      shows `false`, since it never names a BT API directly).
+- [x] **Added 2026-09-16, implemented 2026-09-17 — Limited Dataflow Analysis (`ai-sessions/0025`
+      resumption, continued after a mid-task rate-limit interruption; implementing
+      `ai-sessions/0024`'s top-4 `reverse-engineering/tools/BACKLOG.md` priority).**
+      `reverse-engineering/tools/limited_dataflow/` (`reverse-engineering/tools/limited_dataflow/SPEC.md`
+      for the design; `README.md` for usage) traces one register forward, instruction by instruction,
+      through a resolved dispatcher branch or a plain method body — reusing `lambda_dispatcher_resolver`
+      directly (via a `sys.path` insertion to its `src/`, not re-implemented) for method/branch
+      location — recognizing exactly four shapes (alias/`move-object`, cast/`check-cast`, sink
+      use/`invoke-*` argument, basic-block boundary) and stopping, never guessing, on anything else.
+      Strictly single-basic-block only, per `reverse-engineering/tools/BACKLOG.md`'s own risk-scoping
+      for this idea. All of `reverse-engineering/tools/limited_dataflow/SPEC.md` §10's acceptance
+      criteria pass (10 pytest cases: 6 against the real APK, 4 synthetic fixtures that always run)
+      against the real, locally-decompiled APK. **Two of that document's own §10 acceptance-criteria
+      *descriptions* were found wrong against the real APK while building the tests, and corrected in
+      place rather than weakened to match a bug** — item 1's claimed `final_status` for the `esk`
+      discriminator-19 `v0` trace, and item 2's named register (`p1` does not exercise the case it's
+      meant to; `v1` does) — see that document's own corrected §10 text for the full explanation. No
+      decompiled content committed anywhere in the tool's own tree.
+      **Used for real APK-RE work the same session** — confirmed the primary regression fixture
+      (`esk` discriminator 19's already-known `WriteSetting` chain, including the disclosed
+      non-reach of `nqo.e(...)`, per that document's own §1/§9), the adversarial basic-block-boundary
+      fixture, and one genuinely new trace on `esk` discriminator 18 (the "Feature A" write site) —
+      see `REVERSE_ENGINEERING.md`'s `esk` entry for the finding. Cross-method/cross-block tracing,
+      constant-propagation, and array-content tracking remain explicitly deferred (that document's
+      §2.2/§9), not built this pass.
 - [x] **Groundwork/tooling — done 2026-08-30.** Governance, storage, and procedure now in place so
       the actual analysis work below can start; none of it constitutes analysis having happened yet:
       `DECISIONS.md` ADR-017 (supersedes ADR-003) permits AI mechanical assistance — search, `pbtk`

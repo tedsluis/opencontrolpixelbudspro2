@@ -68,6 +68,16 @@ This ordering is a lens, not a commitment — the maintainer may pick any subset
 > it (see that idea's own "Implemented 2026-09-16" note above); items 2-5 remain not-yet-built and
 > still follow this same order per this file's own header note that nothing here is committed to
 > being built until it graduates its own spec document.
+>
+> **Update (2026-09-16, `ai-sessions/0025` resumption):** item 2 (schema batch-extractor) and item 3
+> (UUID/BLE-context reconstruction) are now also built (see each idea's own "Implemented 2026-09-16"
+> note above). Item 4 (limited dataflow) and the three remaining unordered items remain not-yet-built
+> and still follow this same order.
+>
+> **Update (2026-09-17, same resumption, continued after a mid-task rate-limit interruption):** item
+> 4 (limited dataflow) is now also built (see that idea's own "Implemented 2026-09-16/17" note below).
+> The three remaining unordered items (wire-payload-vs-schema decoder, APK version-diff, tshark/DLCI-
+> reassignment helper) remain not-yet-built.
 
 ---
 
@@ -111,6 +121,19 @@ smali `grep` during a research session.
 
 ## Idea: UUID extraction + BLE/GATT context reconstruction
 
+**Implemented 2026-09-16 (`ai-sessions/0025` resumption) — v1 only, per the design below.** See
+[`uuid_ble_context/SPEC.md`](uuid_ble_context/SPEC.md) for the full design, and
+[`uuid_ble_context/README.md`](uuid_ble_context/README.md) for usage. v1 runs a genuinely unseeded
+regex sweep for every UUID-shaped literal across `jadx-output/sources/`, tags each occurrence's file
+with a textual BLE/GATT/RFCOMM-API co-occurrence signal, and reuses `structural_index`'s own
+`find_refs`/`load_apk` directly for the "usage location" half, exactly as this idea's own text below
+already anticipated. Passes all 6 of its own named acceptance criteria against the real,
+locally-decompiled APK. Used for real APK-RE work the same session: found exactly 6 distinct
+UUID-shaped literals in this APK version (5 already known, plus one genuinely new, non-Bluetooth
+find — see `REVERSE_ENGINEERING.md`'s UUID register for the full write-up). Byte-reversed-alias
+detection and GATT-semantic mapping remain explicitly deferred (`SPEC.md` §2.2/§9), not built this
+pass.
+
 The original, broader ambition this backlog's own tooling effort started from: UUID → usage
 location → BLE operation (`BluetoothGattCharacteristic`/`writeCharacteristic`/
 `setCharacteristicNotification`/etc.) → possible protocol role, as a relationship graph rather than
@@ -118,6 +141,32 @@ a bare list of UUID strings. Large scope — likely its own multi-phase spec doc
 depends on the structural code index above for the "usage location" half.
 
 ## Idea: limited dataflow analysis
+
+**Implemented 2026-09-16/17 (`ai-sessions/0025` resumption, continued after a mid-task rate-limit
+interruption) — v1 only, exactly the risk-bounded scope this idea's own text below already
+prescribed ("scope the first version to straight-line, single-basic-block flows only").** See
+[`limited_dataflow/SPEC.md`](limited_dataflow/SPEC.md) for the full design, and
+[`limited_dataflow/README.md`](limited_dataflow/README.md) for usage. v1 traces one register
+forward, instruction by instruction, through a resolved dispatcher branch or a plain method body
+(reusing `lambda_dispatcher_resolver` directly for method/branch location), recognizing exactly
+four shapes — alias (`move-object`), cast (`check-cast`), sink use (`invoke-*` argument), and a
+basic-block boundary (label/`goto`/`if-*`/switch) — and stopping, never guessing, on anything else
+(`ambiguous_redefinition`). Passes all of its own named acceptance criteria (10 pytest cases, 6
+against the real APK + 4 synthetic fixtures that always run) against the real, locally-decompiled
+APK. **Two of `limited_dataflow/SPEC.md` §10's own acceptance-criteria descriptions were found to be wrong against
+the real APK during this build and corrected in place** (not weakened to match a bug): item 1's
+claimed `final_status: "reached_end_of_block"` for the `esk` discriminator-19 `v0` trace is actually
+`"ambiguous_redefinition"` (the same register slot is legitimately reused later in the same branch
+by the RPC send's own 5-second timeout setup, `const-wide/16 v0, 0x5`); item 2's named register
+`p1` does not exercise the basic-block-boundary case it's meant to (a `move-result-object p1`
+intervenes first) — `v1` does, and is what the test actually uses. **Used for real APK-RE work the
+same session**: confirmed the primary regression fixture (`esk` discriminator 19's already-known
+`WriteSetting` chain, including the disclosed non-reach of `nqo.e(...)`), the adversarial
+basic-block-boundary fixture, and one genuinely new trace on `esk` discriminator 18 (the "Feature
+A" write site, `REVERSE_ENGINEERING.md`'s `esk` entry) — see that entry's own update for the
+finding. Cross-method/cross-block tracing, constant-propagation, and array-content tracking remain
+explicitly deferred (`limited_dataflow/SPEC.md` §2.2/§9), not built this pass; a v2 would need a real interprocedural
+call graph, a materially larger undertaking not attempted here.
 
 Tracking a byte-array's construction (`new-array`/`fill-array-data`/`aput-byte`, or equivalent
 protobuf-builder calls) forward to the `writeCharacteristic`/`WriteSetting` call site it ends up
@@ -127,6 +176,21 @@ single-basic-block flows only, and require the same worked-example test discipli
 `lambda_dispatcher_resolver` before it's used on anything not already manually verified.
 
 ## Idea: protobuf/`RawMessageInfo` schema batch-extractor
+
+**Implemented 2026-09-16 (`ai-sessions/0025` resumption) — v1 only, per the design below.** See
+[`schema_batch_extractor/SPEC.md`](schema_batch_extractor/SPEC.md) for the full design, and
+[`schema_batch_extractor/README.md`](schema_batch_extractor/README.md) for usage. v1 batch-decodes
+every `new naa(...)` compact-schema construction under `jadx-output/sources/` (807 in this APK
+version, matching `REVERSE_ENGINEERING.md`'s own independently-obtained count), reusing
+`scripts/decode_rawmessageinfo.py` directly rather than modifying it, and passes all 6 of its own
+named acceptance criteria (exact reproduction of `qhr`/`qjc`/`qja`/`nqx`/`qjb`, the whole-tree count,
+and a disclosed-limitation regression) against the real, locally-decompiled APK. Used for real APK-RE
+work the same session on the 12 "candidate rich schemas" (see `REVERSE_ENGINEERING.md`'s own section
+for the full findings — a new `mtn`⊃`msw` nesting and 7 new, previously-uncatalogued class leads). A
+follow-up cross-referencing this tool's own register against `structural_index`'s bytecode
+field-holder query — to close the "plain `MESSAGE` field" gap `schema_batch_extractor/SPEC.md` §3/§9
+discloses — remains
+explicitly deferred, not built this pass.
 
 `scripts/decode_rawmessageinfo.py` already recovers one `GeneratedMessageLite` class's schema at a
 time (this is how `qhr`/`qjc`/`qjb`/etc. were originally recovered). A batch mode that scans the
