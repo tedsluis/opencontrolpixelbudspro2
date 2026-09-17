@@ -2618,15 +2618,35 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
       specific to this app, not a generic third-party SDK), Google's **Primes** performance-monitoring
       library (`qaa`/`kii`/`koq`/`pzr`, `qbu`/`kip`/`kiq`/`kob`/`kol`, `qan`/`qar`, `qaj`/`qak`/`qaz`/
       `qam`), and Google's **GNP (notification-platform) SDK** (`mtn`/`msc`/`jau`, `msw`/`jaj`/`jjn`/
-      `jjx`/`jkl`/`jsg`, `mqm`/`jik`, `mra`/`jyl`, `mqk`/`jfs`, `mtg`). **`nhm`/`gdw`/`nfh` alone remain
-      without their own independent trace this pass** — `nfh` is already known to be nested inside
-      `nhm` (the KPI cluster, per the original `structural_index` pass), and `nhm`/`gdw` were not
-      re-checked this session specifically, though `nhm` itself is already the KPI-envelope class per
-      the prior continuation's own trace (`gbt.a()` builds an `nhm` per-KPI-event detail record) —
-      not repeated here. This is a **comprehensive checked negative for Bluetooth/`libmaestro`
-      relevance across the entire original item-H inventory**, sharpening the 2026-09-16 pass's own
-      "plausibly a bundled feedback/diagnostics reporting subsystem" guess into three concretely
-      named, independently-confirmed bundled libraries — not one subsystem, three.
+      `jjx`/`jkl`/`jsg`, `mqm`/`jik`, `mra`/`jyl`, `mqk`/`jfs`, `mtg`). `nfh` is nested inside `nhm`
+      (the KPI cluster, per the original `structural_index` pass), and `nhm` itself is already the
+      KPI-envelope class per the prior continuation's own trace (`gbt.a()` builds an `nhm`
+      per-KPI-event detail record). This is a **comprehensive checked negative for Bluetooth/
+      `libmaestro` relevance across the entire original item-H inventory**, sharpening the
+      2026-09-16 pass's own "plausibly a bundled feedback/diagnostics reporting subsystem" guess
+      into three concretely named, independently-confirmed bundled libraries — not one subsystem,
+      three.
+    - **Update (2026-09-17, further continuing `ai-sessions/0027`) — `gdw`, the one candidate from
+      the original 12 with no trace of its own anywhere above, resolved: this app's own local
+      device-metadata/consent-flag data model, the same pathway that gates the KPI pipeline above,
+      not a fourth mystery.** 🟢 FACT (`structural_index refs` plus direct code reading, re-confirming
+      an existing citation rather than a fresh guess): `gdw`'s own sole external field-type holder is
+      `gdb.f` (`structural_index refs --class gdw`) — `gdb` (7 message-typed fields, `c`–`h`, all
+      sharing the `gd*` prefix) is a "device descriptor" aggregate this document's own `gbu` entry
+      already cites, without having independently named `gdw` as its field-`f` payload at the time:
+      `gcl.B()` (`gcl.java:47-...`, the already-extensively-documented diagnostics/telemetry-consent
+      check that gates both the KPI-event path, `gic.a()`, and the settings-event Clearcut path,
+      `ghs.java`) reads `this.a.f` — `this.a` being `gcl`'s own `gdb`-typed field — i.e. **`gdw` is
+      the exact sub-message `gcl.B()`'s own consent check reads**, specifically checking a presence
+      bit on `gdw`'s own field `k` and comparing `a.aI(gdwVar.k)` (the already-documented generic
+      3-valued tri-state remap helper) against `2`. **Conclusion**: `gdw` (28 fields) is part of this
+      companion app's own local device-info/consent-flag storage model — the same `gcl`/`gdb`/
+      `gck`/`gcp`/`gcn`/"device_info" pathway already extensively documented elsewhere in this
+      document, structurally distinct from (but functionally adjacent to, since it gates) the
+      KPI-telemetry cluster above. Not a generic third-party library like Primes/GNP, and not a
+      Bluetooth/`libmaestro` schema either — this app's own local settings/consent storage.
+    - **Item H's entire original inventory is now genuinely, fully closed — all 12 of the original
+      candidate rich schemas are accounted for**, the last one (`gdw`) resolved above.
   - **Correlation with `PROTOCOL.md`**: none — code-level only; no `PROTOCOL.md` section cites this
     and none is proposed to (a checked-negative Bluetooth-relevance finding needs no protocol
     cross-reference, per this document's own established convention for entries like `gbu`'s KPI

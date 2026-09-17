@@ -296,5 +296,24 @@ return) is a narrower, separate question, not part of item B's own original ask 
 chased further. Full trace in `REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry's own newest
 dated update.
 
+### Further continuation, same session — item H's one genuinely remaining candidate (`gdw`) resolved
+
+Asked once more to continue item H's remaining leads. Re-checked the original 12 candidate rich
+schemas against the prior three closure passes and found one that had never actually been traced to
+an attribution: `gdw` (28 fields) — the "Item H is closed" write-up had listed it as resolved by
+omission, but no trace for it existed anywhere in this session's own work.
+
+`structural_index refs --class gdw` shows its sole external field-type holder is `gdb.f` — and `gdb`
+turns out to be a class this document's own `gbu`/KPI entry had *already* cited, without having named
+`gdw` as its own field-`f` payload: `gcl.B()` (the already-extensively-documented diagnostics/
+telemetry-consent check that gates both the KPI-event path and the settings-event Clearcut path)
+reads exactly this field. **`gdw` is the sub-message `gcl.B()`'s own consent check reads** — part of
+this app's own local device-info/consent-flag storage model (the same `gcl`/`gdb`/`gck`/`gcp`/`gcn`
+pathway already documented elsewhere), not a fourth mystery library and not Bluetooth-relevant either.
+
+**Item H's entire original inventory is now genuinely, fully closed — all 12 of the original
+candidate rich schemas are accounted for.** Full trace in `REVERSE_ENGINEERING.md`'s "Candidate rich
+schemas" section's own newest dated update.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17
