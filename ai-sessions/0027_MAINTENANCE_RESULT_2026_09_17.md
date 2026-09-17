@@ -351,5 +351,52 @@ omission** — both of its previously-flagged-but-unchased sub-threads (feature 
 this "device type == 1" condition) have now actually been chased to their own exhausted ends. Full
 trace in `REVERSE_ENGINEERING.md`'s "Resource/string-table sweep" section's own newest dated update.
 
+### Further continuation, same session — item H's actual 4th remaining pool (28 leads from `fwe`'s own
+sub-message parsers and `fwk`'s remaining logged outputs) traced; 10 resolved, 18 honestly left open
+
+Asked once more to continue item H's remaining leads. Re-checked every prior item-H closure claim
+against the document's own text and found that the "item H's entire inventory is now closed" claims
+(the 12 candidate schemas, the 17-class naming cluster, the 7 new schema leads) never actually covered
+a separate, 4th pool that document's own 2026-09-17 `fwe`/`fwk` update had explicitly enumerated as
+"genuinely new, previously-uncatalogued leads, none individually traced further this pass": 24 classes
+`fwe.java`'s own private `A`–`z` byte-stream parser methods construct, plus 4 more (`ndf`/`nel`/`nem`/
+`ndg`) from `fwk`'s own two logged methods. This was a real gap in the "closed" framing, not a
+manufactured one — worth flagging plainly rather than quietly working around.
+
+Mapped all 26 of `fwe`'s private parser methods to their own output classes by direct line-number
+reading (`fwe.A`→`nec`, `fwe.B`→`nee`, `fwe.H`→`ncu`, `fwe.d`→`nbu`, and so on through `fwe.z`→`neb`).
+Searched each method's own body for self-describing string literals (the same "field X is not set"
+exception-message technique already used elsewhere in this document) and found real field names for
+6 of the 24: `nbu` (`audio_stream_context_mask`, `status bits`), `nbv` (`audio_sample_rate`,
+`audio_stream_context_mask`, `status bits`), `nbz` (`host_session_id`), `ncn` (`is_primary`,
+`host_session_id`, `audio_session_id`, `sequence_id`), `ncw` (`status bits`), plus a **logged**
+"Receive crash happened event" string for `ncf` (a crash-report telemetry record, not connection
+-quality). Two already-known classes (`nca`, `ndi`) got sharpened from "some KPI sub-message" to
+concrete field names too: `afh_map_tw`/`tw_max_per`/`tw_per_average`/`role_switch_happened` (standard
+Bluetooth Classic AFH/role-switch link-quality terms) plus `audio_sample_rate` (`nca`) or
+`jitter_buffer_size` (`ndi`).
+
+Also read `fwe.b(myk, qhd)`'s own dispatch fully: cases 5/6/7 of its type-selector all three parse into
+the *same* `nch` class (cases 2/3/4 each map to their own distinct class) — a new structural fact, but
+no field names recoverable for `ncs`/`ndm`/`ncx`/`nch` themselves (standard wire-parser path, no
+exception text).
+
+Read `fwk`'s remaining logged method (`fwk.n`, "KPI event OTA status...") in full and matched its own
+5-placeholder log format to its own field-assignment order, resolving all 4 of its previously
+-uncatalogued output classes: `ndf` (OTA-status record: status/isManual/duration/from-version/target
+-bundle-version fields, one field left genuinely unnamed since it isn't one of the log's own
+placeholders), `nel` (a 3-slot "from version" record), `nem` (a per-version-component record used 3x
+inside `nel`), and `ndg` (already-partially-seen via `fwk.c`'s own "OTTS result" log — a small
+left/right-earbud pairing record nested inside the already-documented `nef`/`nbm` chain).
+
+**Explicitly not claimed closed**: 18 of the 24 `fwe` classes (`nec`/`nee`/`ncu`/`nby`/`ncg`/`nck`/
+`ncl`/`ncm`/`ncv`/`ndb`/`nde`/`ndn`/`ndo`/`ndq`/`ndu`/`ndw`/`ndy`/`neb`) plus `ncs`/`ndm`/`ncx`/`nch`'s
+own field-level content carry no self-describing text anywhere in their own constructing method —
+checked directly, not merely grepped past, and reported as genuinely still open, not glossed over. All
+resolutions in this pass are Bluetooth Classic connection-quality/audio-session/crash/OTA-status
+*telemetry* the official app collects about itself, not a control-channel schema — same caveat this
+document's `gbu`/KPI entry already carries, repeated rather than silently assumed. Full trace in
+`REVERSE_ENGINEERING.md`'s "Candidate rich schemas" section's own newest dated update.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17

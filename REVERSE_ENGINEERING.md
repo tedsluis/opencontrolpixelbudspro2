@@ -2651,6 +2651,106 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     and none is proposed to (a checked-negative Bluetooth-relevance finding needs no protocol
     cross-reference, per this document's own established convention for entries like `gbu`'s KPI
     entry and the earlier `esk`/WorkManager-DAO checked negative).
+  - **Update (2026-09-17, further continuing `ai-sessions/0027`) — the "closed" inventory above only
+    ever covered the original 12 candidate schemas, the 17-class naming cluster, and the 7 new schema
+    leads; a fourth, separate pool this document's own 2026-09-17 `fwe`/`fwk` update explicitly left
+    untouched — 24 brand-new sub-message classes `fwe.A()`–`fwe.z()` construct, plus `ndf`/`nel`/`nem`/
+    `ndg` from `fwk`'s own two logged methods — was never actually chased. 10 of those 28 are now
+    resolved to concrete field-level semantics (not just "some KPI sub-message"), via self-describing
+    exception-message and log-format-string text found directly in each one's own constructing method;
+    18 remain genuinely unnamed after this same search, a real (not glossed-over) exhausted-search
+    result for those specifically.** 🟢 FACT (direct code reading of `fwe.java`/`fwk.java`'s own
+    literal string constants — no protocol-behavior/wire claim, needs no maintainer sign-off on that
+    basis alone, per `PROJECT_RULES.md` §1):
+    - **Method-to-class mapping, established first** (`fwe.java`'s 26 private `A`–`z` parser methods,
+      matched to line numbers via direct reading, since letter case reuses — e.g. lowercase `d`–`z` are
+      distinct from uppercase `A`/`B`/`H` — and several letters in between, e.g. `C`–`G`, `I`–`W`,
+      turned out to be non-class-returning helpers, not further chased): `A`→`nec` (`fwe.java:21`),
+      `B`→`nee` (`:73`), `H`→`ncu` (`:169`), `d`→`nbu` (`:283`), `e`→`nbv` (`:363`), `f`→`nby` (`:464`),
+      `g`→`nbz` (`:614`), `h`→`nca` (`:721`), `i`→`ncf` (`:1004`), `j`→`ncg` (`:1257`), `k`→`nck`
+      (`:1287`), `l`→`ncl` (`:1337`), `m`→`ncm` (`:1349`), `n`→`ncn` (`:1400`), `o`→`ncv` (`:1514`),
+      `p`→`ncw` (`:1552`), `q`→`ndb` (`:1631`), `r`→`nde` (`:1672`), `s`→`ndi` (`:1690`), `t`→`ndn`
+      (`:2022`), `u`→`ndo` (`:2034`), `v`→`ndq` (`:2065`), `w`→`ndu` (`:2125`), `x`→`ndw` (`:2201`),
+      `y`→`ndy` (`:2255`), `z`→`neb` (`:2368`).
+    - **6 of the 24 `fwe` sub-messages carry self-describing field-presence exception text (the
+      "Field X is not set" pattern, exactly the mechanism this document already used to name other
+      protobuf-lite fields elsewhere), giving real field names, not just a schema shape:**
+      - **`nbu`** (`d`, `fwe.java:354,358`): fields named **`audio_stream_context_mask`**, **`status
+        bits`**.
+      - **`nbv`** (`e`, `:451,455,459`): fields named **`audio_sample_rate`**, **`audio_stream_context_
+        mask`**, **`status bits`**.
+      - **`nbz`** (`g`, `:716`): field named **`host_session_id`**.
+      - **`ncn`** (`n`, `:1505,1509`): fields named **`is_primary`**, **`host_session_id`**,
+        **`audio_session_id`**, **`sequence_id`**.
+      - **`ncw`** (`p`, `:1626`): field named **`status bits`**.
+      - **`nca`/`ndi`** (`h`/`s`, `:962-970` and `:2009-2017` respectively — both already known from the
+        2026-09-17 `fwe`/`fwk` update as KPI sub-messages, now sharpened to actual field names, the
+        thing that update's own text explicitly flagged as *not yet done*: "does not decode any
+        individual field's own semantic meaning"): both carry fields named **`afh_map_tw`**,
+        **`tw_max_per`**, **`tw_per_average`**, **`role_switch_happened`** — standard Bluetooth-Classic
+        link-quality terms (AFH = Adaptive Frequency Hopping map, `tw` = time-window, a periodic
+        packet-error-rate sampling window; a BT role switch is the master/slave-role renegotiation
+        event) — plus `nca` additionally carries **`audio_sample_rate`** and `ndi` additionally carries
+        **`jitter_buffer_size`**. **These are real Bluetooth Classic connection-quality/audio-session
+        telemetry field names, self-describingly present in the APK's own validation-exception text —
+        not an inference from field shape.** This is diagnostic telemetry the *official* app collects
+        about its own connection quality, not a control-channel schema — same caveat this document's
+        `gbu`/KPI entry already states applies to all of this cluster, repeated here rather than
+        silently assumed.
+      - **`ncf`** (`i`, `:1253`) carries no exception text but a **logged** string instead: `((lsx)
+        ...).s("Receive crash happened event with payload : %s", k.q())` — i.e. `ncf` is **a crash
+        -report telemetry record**, not a connection-quality one; the log call itself is the only
+        evidence read this pass, `ncf`'s own field layout was not further opened.
+    - **The remaining 18 of the 24 (`nec`/`nee`/`ncu`/`nby`/`ncg`/`nck`/`ncl`/`ncm`/`ncv`/`ndb`/`nde`/
+      `ndn`/`ndo`/`ndq`/`ndu`/`ndw`/`ndy`/`neb`) carry no exception or log string anywhere in their own
+      constructing method** — checked via direct reading of the full method body for each (not merely
+      grepped past), confirmed via `grep -n '"[^"]*"' fwe.java` returning no hits inside any of their
+      line ranges. 🔴 **Genuinely open, not guessed at** — no name recoverable this way; still fully
+      open.
+    - **`fwe.b(myk, qhd)`'s own `switch` (already documented structurally in the 2026-09-17 `fwe`/`fwk`
+      update) additionally shows one new structural fact**: cases `5`, `6`, and `7` of the `qhd.e`
+      type-selector — three *distinct* incoming message-type codes — all three parse into the **same**
+      `nch` sub-message class (`fwe.java:2526-2544`), unlike cases `2`/`3`/`4` which each map to a
+      distinct class (`ncs`/`ndm`/`ncx`). No exception/log text found for `ncs`/`ndm`/`ncx`/`nch`
+      themselves (these use the standard wire-format parser path, not the hand-rolled byte reader the
+      exception messages above come from) — the shared-schema fact stands on its own, the schemas'
+      own field names remain unnamed.
+    - **`fwk`'s own two logged methods (`fwk.c`, `fwk.n`) resolve all 4 of their previously-uncatalogued
+      output classes (`ndf`/`nel`/`nem`/`ndg`) by direct positional correspondence between the method's
+      own log-format placeholders and its own field-assignment order — the same technique already used
+      for `nbm`'s own "KPI event OTTS result" log in the prior update, applied here to `fwk`'s other
+      logged method too:**
+      - **`fwk.c(ndh, ndh)`** (`fwk.java:91-108`, logged `"KPI event OTTS result: left: %s, right:
+        %s"`) builds **`ndg`**: `ndgVar.c = ndhVar` ("left"), `ndgVar.d = ndhVar2` ("right") — i.e.
+        `ndg` is a small 2-slot left/right-earbud pairing record, embedded into `nef` (field `D`) which
+        is in turn embedded into `nbm` (field `e`) — `ndg` sits one level inside the already-documented
+        `nef`/`nbm` "OTTS result" chain, not a separate, unrelated schema.
+      - **`fwk.n(String, qgu, boolean, Duration, Optional, int)`** (`fwk.java:144-244`, logged `"KPI
+        event OTA status: %s, isManual: %s, duration: %s, from version: %s, target bundle version:
+        %d"`) builds **`ndf`** with fields matching the log's own positional order: `ndf.c` = the
+        method's `qgu` param ("OTA **status**"), `ndf.e` = the `boolean` param ("**isManual**"),
+        `ndf.f` = the `Duration` param, converted via `lwa.K(...)` ("**duration**"), `ndf.g` = a
+        `nel`-typed field built from the method's `Optional<gdm>` param ("**from version**"), `ndf.h`
+        = the `int` param ("**target bundle version**"). `ndf.d` = the method's own leading `String`
+        parameter — this one is *not* one of the log's own placeholders (the log has 5 `%s`/`%d`
+        slots for 5 of the method's 6 parameters), so it is **not** self-describingly named by this
+        technique — recorded as unnamed, not guessed. **`nel`** (`"from version"`) is itself a 3-slot
+        record (`nelVar.c`/`.d`/`.e`), each slot populated from one of the input `Optional<gdm>`
+        value's own 3 `gdd`-typed fields (`gdm.c`/`.d`/`.e`) via a shared helper (`a.aG(myk, gdd)`)
+        into 3 separate **`nem`** instances — i.e. `nem` is a per-version-component record used 3 times
+        inside `nel`, and `nel` itself represents 3 version identifiers (plausibly a firmware-version
+        triple, e.g. current/target/case, given the OTA-status context — flagged as a plausible reading
+        from context, not a confirmed one, since no field-level name distinguishes the 3 slots from
+        each other).
+    - **Net scope**: this closes 10 of the 28 previously-fully-open leads from this specific,
+      separate 4th pool (6 `fwe` classes named outright plus 2 already-known ones sharpened, plus all
+      4 of `fwk`'s remaining output classes), and one shared-schema structural fact (`ncs`/`ndm`/`ncx`
+      distinct, `nch` shared 3-ways). 18 `fwe` classes (`nec`/`nee`/`ncu`/`nby`/`ncg`/`nck`/`ncl`/`ncm`/
+      `ncv`/`ndb`/`nde`/`ndn`/`ndo`/`ndq`/`ndu`/`ndw`/`ndy`/`neb`) plus `ncs`/`ndm`/`ncx`/`nch`'s own
+      field-level content remain genuinely open — this pool is **not** claimed closed, unlike the
+      original 12/17/7 pools above; it is reported honestly as partially resolved.
+  - **Correlation with `PROTOCOL.md`**: none — code-level only, same reasoning as this section's other
+    entries; no `PROTOCOL.md` section cites this and none is proposed to.
 
 ---
 
