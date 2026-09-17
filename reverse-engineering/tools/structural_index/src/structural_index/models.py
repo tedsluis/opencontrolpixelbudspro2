@@ -64,3 +64,44 @@ class UnreferencedResult:
             "total_references": self.total_references,
             "referenced": self.referenced,
         }
+
+
+@dataclass
+class ImplementerSite:
+    implementer_class: str
+    dex_file: str
+
+
+@dataclass
+class ImplementsResult:
+    interface: str
+    implementers: list[ImplementerSite] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "interface": self.interface,
+            "implementers": [vars(i) for i in self.implementers],
+            "count": len(self.implementers),
+        }
+
+
+@dataclass
+class FieldWriteSite:
+    caller_class: str
+    caller_method: str
+    dex_file: str
+
+
+@dataclass
+class FieldWritesResult:
+    cls: str
+    field_name: str
+    writes: list[FieldWriteSite] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "class": self.cls,
+            "field": self.field_name,
+            "writes": [vars(w) for w in self.writes],
+            "count": len(self.writes),
+        }

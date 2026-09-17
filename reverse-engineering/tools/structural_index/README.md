@@ -35,6 +35,19 @@ uv pip install --python .venv/bin/python -e ".[dev]"
 # in the APK (constructs + calls + field-type holders combined):
 .venv/bin/python3 -m structural_index.cli unreferenced \
   --apk-root ../../apk/v1.0.955078536-10253511 --class aly --class cvo --class gza
+
+# v1.1 (2026-09-17): every class DIRECTLY implementing an interface (not a
+# transitive-via-superclass implementor — see SPEC.md §5a):
+.venv/bin/python3 -m structural_index.cli implements \
+  --apk-root ../../apk/v1.0.955078536-10253511 --interface fya
+
+# v1.1 (2026-09-17): every iput/sput site writing into one class's own named
+# field — the complementary query to `refs`'s field-*type*-declaration search
+# (SPEC.md §5b):
+.venv/bin/python3 -m structural_index.cli field-writes \
+  --apk-root ../../apk/v1.0.955078536-10253511 \
+  --class com.google.android.apps.wearables.maestro.companion.phone.bluetoothpriority.BluetoothPriorityReceiver \
+  --field c
 ```
 
 `--class` accepts the short form (`esk`), the default-package dotted form (`defpackage.esk`), or the

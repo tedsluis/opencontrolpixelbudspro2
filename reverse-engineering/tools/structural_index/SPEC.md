@@ -53,12 +53,17 @@ explicitly-higher-risk "limited dataflow analysis" idea, out of scope here).
 Deferred to a later version, per the same "start narrow" discipline `lambda_dispatcher_resolver`
 itself used and `../BACKLOG.md`'s own sketch names explicitly:
 
-- An `implements`-query ("list every class implementing interface `X`") — a materially different
+- ~~An `implements`-query ("list every class implementing interface `X`") — a materially different
   lookup shape (interface table, not instruction/field scanning), needed for
   `MaestroEndpointService`'s Dagger-multibinding search (open question B, `ai-sessions/0024` Phase 2)
-  but not built here.
+  but not built here.~~ **Built 2026-09-17 (`ai-sessions/0027`), as a `v1.1` addition — see §5a/§6a/§10a
+  below.** Also added in the same pass, for the same item B: a field-*write* search (§5b/§6b/§10a),
+  the second named approach `ai-sessions/0024`'s own item-B write-up proposed alongside the
+  `implements`-query.
 - A resource/string-table search (`apktool-output/res/`) — a different data source entirely (XML,
-  not DEX structure), needed for open question M but not built here.
+  not DEX structure), needed for open question M but not built here. **Remains deferred** — item M
+  was instead answered manually this same session (`ai-sessions/0027`), per that item's own
+  narrower, one-off scope; a standing tool for this data source is still not built.
 - Any dataflow/value-tracking capability.
 - Any relevance judgment — see §8.
 - A persistent database/cache across runs — v1's output is files/stdout, same as
@@ -160,6 +165,45 @@ structural-index unreferenced \
 Exact flag spellings are negotiable during future extension; the two command shapes and the
 no-side-effects contract in §8 are not.
 
+### 5a. `implements` — v1.1 addition, 2026-09-17
+
+```
+structural-index implements \
+  --apk-root reverse-engineering/apk/v1.0.955078536-10253511 \
+  --interface <fully-qualified-class-name-or-short-name> \
+  [--output-dir <dir>]
+```
+
+Scans every class in every `.dex` file's `get_interfaces()` declaration (androguard's own direct
+read of the class's `implements` clause — one flat list per class, not a transitive closure) and
+returns every class whose list contains the target interface descriptor. This is a **direct**-
+implementation query only, matching a plain `grep -rl "implements X"` in spirit — it does not follow
+`extends`/abstract-superclass chains to find indirect implementors (a class implementing `X` via an
+abstract intermediate superclass that itself implements `X` will not show up unless it *also*
+re-declares `implements X` directly), and does not resolve `X`'s own supertype hierarchy (an
+implementor of a *sub*-interface of `X` is not returned). This scope matches §3's own "shape-level,
+not transitive" philosophy for the rest of this tool — disclosed here rather than silently assumed
+complete.
+
+### 5b. `field-writes` — v1.1 addition, 2026-09-17
+
+```
+structural-index field-writes \
+  --apk-root reverse-engineering/apk/v1.0.955078536-10253511 \
+  --class <fully-qualified-class-name-or-short-name> \
+  --field <fieldName> \
+  [--output-dir <dir>]
+```
+
+The complementary query to §3's existing category (c) (field-*type*-declaration search): given a
+class and one of its own declared field names, scans every method's decoded instruction stream (the
+same pass `refs` already runs) for any `iput-*`/`iput-*-wide`/`sput-*` instruction whose operand
+targets exactly `<class>-><field>:<descriptor>` — i.e. "who actually writes a value into this specific
+field," as opposed to "who merely declares a field of this type" (§3's existing (c), which cannot
+distinguish a field that is written from one that is only ever read, or answer "which specific field
+of a multi-field class"). Field name only, not the field's own type — the target class already fixes
+which field is meant.
+
 ## 6. Output format
 
 Plain JSON, same governance as `lambda_dispatcher_resolver` (§8) — no database in v1.
@@ -187,6 +231,42 @@ Plain JSON, same governance as `lambda_dispatcher_resolver` (§8) — no databas
 {"class": "defpackage.laly", "total_references": 0, "referenced": false}
 ```
 
+`implements` returns:
+
+```json
+{
+  "interface": "defpackage.fya",
+  "implementers": [
+    {"implementer_class": "defpackage.fxz", "dex_file": "classes2.dex"},
+    {"implementer_class": "defpackage.fyo", "dex_file": "classes2.dex"}
+  ],
+  "count": 2
+}
+```
+
+(Real output, `v1.0.955078536-10253511` — `fya` is a real, direct-`implements`-typed interface,
+unlike this section's original `ofd` example: `ofd` turned out, on actually running this query, to be
+a `public abstract class` (androguard's own `get_superclassname()` confirms `mie`/`oex`/`ofb` all
+`extends Lofd;`, not `implements`) — a correction this pass made to `REVERSE_ENGINEERING.md`'s own
+prior "authorization-policy interface" wording for `ofd`, not just to this example. `fya` is the
+right worked example instead: `fyo` and `fxz` both directly `implements fya`; `fyw`/`fyx` only
+implement it *transitively*, via `extends fxz` — correctly excluded by this query's own disclosed
+direct-only scope (§5a), matching `REVERSE_ENGINEERING.md`'s own hand-derived
+`grep -rln "implements fya\|extends fxz"` finding exactly.)
+
+`field-writes` returns:
+
+```json
+{
+  "class": "defpackage.MaestroEndpointService",
+  "field": "b",
+  "writes": [
+    {"caller_class": "defpackage.xyz", "caller_method": "<init>", "dex_file": "classes2.dex"}
+  ],
+  "count": 1
+}
+```
+
 ## 7. Explicit failure modes (never silent)
 
 Mirrors `../lambda_dispatcher_resolver/SPEC.md` §7's own discipline:
@@ -197,6 +277,10 @@ Mirrors `../lambda_dispatcher_resolver/SPEC.md` §7's own discipline:
 | Class found, but zero references in every one of (a)/(b)/(c) | Not an error — a real, empty-but-valid result (`counts` all zero, empty lists); this is a legitimate "zero external references" finding, not a tool failure. |
 | `--method` given but that method name never appears as a call target for the class | Not an error — `calls` comes back empty; `constructs`/`field_type_holders` are unaffected by the filter. |
 | A method's bytecode fails to decode (corrupt/unsupported instruction) | That one method is skipped with a warning printed to stderr (class+method name), scan continues for every other method — never aborts the whole run for one bad method. |
+| `implements`: interface class not found anywhere in the APK's dex set | Non-zero exit, clear error naming the interface and APK root searched. |
+| `implements`: interface found, but zero classes directly implement it | Not an error — a real, empty-but-valid result (`implementers: []`, `count: 0`); this is a legitimate finding (every implementor is transitive-only, or none exist), not a tool failure. |
+| `field-writes`: class not found anywhere in the APK's dex set | Non-zero exit, clear error naming the class and APK root searched. |
+| `field-writes`: class found, but the named field is never written anywhere (read-only, or the name doesn't exist on this class at all) | Not an error — a real, empty-but-valid result (`writes: []`, `count: 0`); this tool does not separately validate that the field name is a real declared field of the class (an unrecognized field name and a genuinely-unwritten real field are indistinguishable from this query's own instruction-scan method, and both legitimately produce zero results) — recorded as a disclosed scope note, not a silent gap. |
 
 ## 8. Governance (binding, not optional)
 
@@ -243,6 +327,24 @@ regression-test-against-known-truth, not a guess at the right answer:
 
 No regression test may be marked passing by inspection alone — each asserts the exact expected
 result set, per this project's own `AGENTS.md` §11 fixture discipline.
+
+### 10a. `implements`/`field-writes` acceptance criteria — v1.1, 2026-09-17
+
+Both fixtures below were independently verified by direct code reading (not merely by running the
+new tool and trusting its own output) before being written into a test assertion, per this
+project's own `AGENTS.md` §13.6 discipline:
+
+4. **`implements --interface fya`** must return exactly 2 implementers — `defpackage.fxz` and
+   `defpackage.fyo` — matching `REVERSE_ENGINEERING.md`'s own hand-derived
+   `grep -rln "implements fya\|extends fxz" .` finding (4 files total: `fxz`/`fyo`/`fyw`/`fyx`), of
+   which only `fxz` and `fyo` directly `implements fya`; `fyw`/`fyx` only reach `fya` transitively via
+   `extends fxz` and must **not** appear — this is the query's own disclosed direct-only scope (§5a),
+   demonstrated on real data, not merely asserted.
+5. **`field-writes --class BluetoothPriorityReceiver --field c`** (full dotted class name — this
+   class lives in a real package, not `defpackage`) must return exactly one write site:
+   `caller_class: defpackage.fqm`, `caller_method: o` — matching `fqm.java:2710`'s own Hilt
+   member-injector body (`bluetoothPriorityReceiver.c = (fzd) this.ac.a();`), independently read and
+   confirmed this same session (`ai-sessions/0027`) before being trusted as a fixture.
 
 ## 11. Directory layout and git-tracking boundary
 

@@ -33,6 +33,7 @@ a new session** — the same "check before assigning" discipline `id_registry.cs
 | 0024 | AUDIT | 2026-09-16 | Run lambda_dispatcher_resolver's resolve-all on aie/esk, extract findings, and audit APK reverse-engineering readiness (BACKLOG.md prioritization, RE workflows/scripts needed) | complete |
 | 0025 | MAINTENANCE | 2026-09-16 | Implement 0024's top-4 BACKLOG.md tools and workflow recommendations, continue APK-RE with them, cross-reference findings against CAP-NNN-FINDINGS.md/PROTOCOL.md/REVERSE_ENGINEERING.md/DESKRESEARCH_FINDINGS.md/TODO.md, consistency checks, update all documents | complete |
 | 0026 | MAINTENANCE | 2026-09-17 | Record maintainer sign-off on 0024/0025's tooling/workflow adoption and code-level findings; fix 0025's stale maintainer-summary section | complete |
+| 0027 | MAINTENANCE | 2026-09-17 | Trace ACTION_TRIGGER_CLASSIC_CONNECTION_PRIORITY's senders; item M string/resource sweep; item B via structural_index's implements-query; trace item H's new schema leads/naming cluster further | complete |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/INDEX.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/INDEX

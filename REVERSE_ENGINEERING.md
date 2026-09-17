@@ -2439,6 +2439,82 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     not a reading, exactly as this section's own prior update already modeled for the field-holder
     naming cluster below.
 
+- **Update (2026-09-17, `ai-sessions/0027`) — the "bundled feedback/diagnostics subsystem" HYPOTHESIS
+  for the field-holder naming cluster is confirmed and sharpened for two of its own members (`nef`,
+  `nbm`), plus one of the 12 candidate rich schemas (`nca`) and one already-nested one (`ndi`): this
+  is the companion app's own KPI (Key Performance Indicator) device-telemetry pipeline, a second,
+  independent instance of the mechanism `gbu`/`KpiEventCollector`'s own entry already documents —
+  not a new subsystem, a second concrete consumer of an already-known one.** 🟢 FACT (code
+  existence/structure, mechanical `structural_index refs` trace plus direct code reading; no
+  protocol-behavior/wire claim, per `PROJECT_RULES.md` §1 — this needs no maintainer sign-off on that
+  basis alone):
+  - **Traced `fwe`** (`nef`'s own field-type holder per the "Candidate rich schemas" section's own
+    earlier update, "`nef` itself is additionally called (not just held) from `fwe.b`, 38 distinct
+    call-site methods") — `structural_index refs --class fwe` finds its **sole construction site**,
+    `fwk.<init>` (`fwk.java:29`: `this.b = new fwe(new ghp(...), <a Supplier resolving a per-core
+    "gec" decoder>);`). `fwe.java` (4209 lines) is a **binary-blob-to-protobuf decoder factory**: ~26
+    private methods (`A`–`z`), each hand-parsing a raw byte stream (via `mxr`/`oaj` byte-reader
+    types, not the standard `RawMessageInfo`/`GeneratedMessageLite` wire format this project's own
+    tooling otherwise decodes) into one specific protobuf sub-message — **including `fwe.h(mxr)` →
+    `nca` and `fwe.s(mxr)` → `ndi`, two of this section's own 12 "candidate rich schemas"**,
+    confirming (from the opposite, constructing-code direction) the same `nef⊃ndi`/`nef⊃nca` nesting
+    `structural_index`'s first pass already found from the bytecode field-descriptor side
+    (`ai-sessions/0025`) — two independent evidence paths now agree, not merely one restated.
+  - **`fwe`'s public method, `b(myk, qhd)`**, is a large `switch` on an incoming type-selector
+    (`qhd.e`) that parses further sub-messages (`ncs`/`ndm`/`ncx`/`nch`/...) via the *standard*
+    protobuf parser machinery this time (not the hand-rolled `A`–`z` readers) and writes each into
+    **`nef`** directly (`nef.U(...)`/`nef.af(...)`/`nef.W(...)`, one setter per case) — i.e. `nef`
+    (74 fields) is confirmed, structurally, to be a single large **event record aggregating many
+    distinct sub-telemetry-message types**, exactly the shape a KPI/diagnostics event envelope would
+    have.
+  - **`fwk`** (`fwe`'s sole constructor caller) **`implements gak`** — the *same* interface this
+    document's own `gbu`/`KpiEventCollector` entry already documents (`"gbu implements fzy, gak"`) —
+    i.e. `fwk` is a **second, independent concrete implementation of the already-catalogued KPI
+    interface**, not an unrelated new mechanism. `fwk.f(goq)` fetches via `npy.f(..., "a10a20.kpi.Kpi",
+    "KpiStream")` — the *exact*, already-documented `fux.java` `case 6` service-catalog entry
+    (`a10a20.kpi.Kpi`/`KpiStream`) — once per Bluetooth core (`goq.LEFT_BT_CORE`/`RIGHT_BT_CORE`,
+    `fwk.a()`), i.e. this is a **per-earbud** KPI-stream fetch, distinct from `gbu`'s own
+    Group-`137`/Code-`2` RFCOMM-level fetch mechanism (a second, independent KPI-acquisition path, not
+    confirmed as the same one).
+  - **`fwk.c(ndh, ndh)`**, self-describingly logged **`"KPI event OTTS result: left: %s, right:
+    %s"`**, assembles the parsed `nef` into **`nbm`** — one of the 17-class field-holder naming
+    cluster this section's own 2026-09-16 update flagged but could not attribute ("`nbm` (the
+    `nef`-holder found by the field-type search too)") — via `nbmVar.e = nefVar2` (a direct field
+    assignment, matching the field-type-holder finding exactly). `fwk.n(...)`, logged
+    **`"KPI event OTA status: %s, isManual: %s, duration: %s, from version: %s, target bundle
+    version: %d"`**, builds a sibling telemetry record (`ndf`/`nel`/`nem`, none of which were in the
+    original 12-candidate or 17-class lists — new, unchased leads) for firmware-OTA-status KPI
+    events specifically. Both paths end at `this.c.b(this.d, ...)` — `this.c` (`fwk`'s own `ghw`-typed
+    field) was not independently traced this pass, but by direct structural analogy to
+    `ghq`/`ght`/`gbt`'s own already-documented Clearcut-sink chain (same "build event → hand to a
+    named sink" shape), is very plausibly the same or an equivalent analytics-logging destination —
+    not confirmed as literally the same sink instance, flagged as a plausible reading, not asserted.
+  - **What this establishes, and what it doesn't**: this is a genuine, well-evidenced resolution of
+    *what kind of thing* `nef`/`nbm`/`nca`/`ndi` are (KPI/device-telemetry records, specifically
+    per-earbud-core KPI-stream data and OTA-status events) — sharpening, not merely confirming, the
+    2026-09-16 pass's own "plausibly...a bundled feedback/diagnostics reporting subsystem" guess into
+    a concretely-named, already-partially-documented mechanism (Key Performance Indicator telemetry,
+    the same `gak`/`KpiEventCollector` family `gbu`'s own entry covers). It does **not** decode any
+    individual field's own semantic meaning within `nec`/`ncu`/`nca`/`ndi`/etc. (the hand-rolled
+    binary parsers' own per-field content — plausibly per-sensor/per-metric counters, given the
+    fixed-size repeated-int-array shape observed in `fwe.A()`/`nec` — was read structurally, not
+    semantically decoded), and it does **not** establish whether this specific telemetry ever leaves
+    the device (this project's own existing `gbu`/`ght`/`ghq` entry's own caveat about describing only
+    the *official* app's behavior, never a suggestion for this project's own implementation, applies
+    identically here). The remaining 24 sub-message types `fwe`'s own `A`–`z`/`b()` methods construct
+    (`nec`/`nee`/`ncu`/`nbu`/`nbv`/`nby`/`nbz`/`ncf`/`ncg`/`nck`/`ncl`/`ncm`/`ncn`/`ncv`/`ncw`/`ndb`/
+    `nde`/`ndn`/`ndo`/`ndq`/`ndu`/`ndw`/`ndy`/`neb`, plus `ncs`/`ndm`/`ncx`/`nch` from `b()`'s own
+    switch, plus `ndf`/`nel`/`nem`/`ndg`/`nbm` from `fwk`'s two logged methods) are genuinely new,
+    previously-uncatalogued leads, none individually traced further this pass, per this task's own
+    "trace what's promising one level further, then stop" scoping.
+  - **What remains untraced from the original two lists**: the 7 new schema leads
+    (`mqm`/`mra`/`mqk`/`mtg`/`qak`/`qaz`/`qam`) and the remaining 16 members of the 17-class naming
+    cluster (`kii`/`koq`/`pzr`/`jau`/`msc`/`jaj`/`jjn`/`jjx`/`jkl`/`jsg`/`kip`/`kiq`/`kob`/`kol`/`qan`,
+    plus this update's own newly-attributed `fwe`/`nbm`/`nca`/`ndi`/`nef` removed from the "unattributed"
+    count) are unaffected by this update — still fully open, not chased this pass.
+  - **Correlation with `PROTOCOL.md`**: none — code-level only, same as `gbu`'s own entry; no
+    `PROTOCOL.md` section cites this and none is proposed to.
+
 ---
 
 ### Full-tree GATT/BLE reference sweep (2026-08-30, cross-validation follow-up)
@@ -2938,6 +3014,108 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
 - **Correlation with `PROTOCOL.md`**: none yet — code-level-only finding, not proposed for
   promotion.
 
+- **Update (2026-09-17, `ai-sessions/0027`) — exhaustive checked-negative search for an in-app
+  sender; a genuinely new, concretely-cited finding for the receiver's own *downstream* effect
+  instead.** 🟢 FACT (exhaustive text/smali search, this pass, both JADX and `apktool` smali roots
+  checked independently):
+  - **No in-app sender found anywhere in this app's own decompiled code.** The literal action string
+    (`ACTION_TRIGGER_CLASSIC_CONNECTION_PRIORITY`, both the fully-qualified form and a
+    `TRIGGER_CLASSIC` substring check for a dynamically-built variant) and all three extra-key
+    strings (`EXTRA_BD_ADDR`/`EXTRA_PRIORITY`/`EXTRA_DATA_DIRECTION`) each occur in **exactly one
+    place** in the entire decompiled tree — `BluetoothPriorityReceiver.java`'s own `onReceive()`
+    check (and its `.smali` twin) — confirmed independently across `jadx-output/sources/` (whole
+    tree) and every `apktool-output*/smali*/` root. The class name itself
+    (`BluetoothPriorityReceiver`/`bluetoothpriority`) appears in exactly 4 other files beyond itself
+    and the manifest — `gnr` (a Hilt member-injector *interface*, `void o(BluetoothPriorityReceiver)`),
+    `fqm` (the giant generated Hilt `ApplicationComponent`, whose own `o(BluetoothPriorityReceiver)`
+    at `fqm.java:2710` is the interface's sole implementation — pure DI field-injection plumbing,
+    not a sender), and `kbf` (the receiver's own post-receipt async handler, described below) — none
+    of these three constructs or sends an `Intent` carrying this action or targeting this component.
+    This is a genuine, thoroughly-checked negative, not merely "not found on the first pass."
+  - **🟡 HYPOTHESIS, not FACT — the sender is very plausibly external to this app.** Static analysis
+    of this app's own code cannot positively confirm an external sender, only fail to find an
+    internal one — but two circumstantial signals point the same direction: (a) the manifest gates
+    this exported receiver with `android.permission.CAPTURE_AUDIO_HOTWORD`
+    (`AndroidManifest.xml`), a privileged, unrelated-sounding permission typically held by trusted
+    system/Assistant-adjacent components, not a third-party app — consistent with a deliberately
+    narrow, privileged-sender design rather than an accidental broad-open receiver; (b) the
+    receiver's own downstream effect (below) forwards the request to a *separate Pixel system app*,
+    suggesting this broadcast is one leg of a cross-app coordination flow between Pixel system
+    components, of which this companion app is only the middle relay, not the originator. Neither
+    point is proof of an external sender; recorded as a HYPOTHESIS per this project's own evidence
+    rules.
+  - **New finding: the receiver's own downstream effect is a real, concrete RPC to a separate Pixel
+    system app, `com.google.android.apps.pixel.dcservice`, via a generic Get/SetFeatureState API —
+    not a Bluetooth-stack call made directly by this companion app.** `onReceive()` constructs
+    `kbf(this, EXTRA_BD_ADDR-value, EXTRA_PRIORITY-value, EXTRA_DATA_DIRECTION-value, goAsync(), ...)`
+    — `kbf` is an R8-merged coroutine-continuation dispatcher (3 discriminators); its discriminator-1
+    branch (the one constructed here) does, in order: checks `fzd.d(address)` ("is this a known
+    Maestro device" — `fzd` is the already-catalogued `InternalRfcommUuidRegistry`, confirming this
+    receiver only acts on Buds-family devices), checks `ftk.c(address)` ("bluetoothProfileConnectionStatusChecker",
+    a field name recovered from the injected-field local-variable-elimination message,
+    `kbf.java:166`/`BluetoothPriorityReceiver.java:33`), and — if that check fails — checks
+    `gno.E()` ("phenotypeHelper", logging **`"Classic connection priority optimization is not
+    enabled"`** and no-op-returning if false, `kbf.java:170-178`) — i.e. this entire mechanism is
+    itself gated behind a Google Phenotype (server-side A/B flag) feature check, a genuinely new
+    detail not previously documented anywhere in this project. If all guards pass, it logs
+    **`"Sending request to DCService"`** (`kbf.java:180`) and calls `ffd.e(address, priorityArg,
+    directionArg, this)` (`kbf.java:187-191`).
+  - **`ffd.e()` traced via the `apktool` smali fallback** (JADX shows it as "Method dump skipped");
+    `apktool-output/smali/ffd.smali:2294` onward confirms it builds an **`fmx`** message (`sget-object
+    p4, Lfmx;->a:Lfmx;`, smali line 56 of the method) — `fmx` is independently confirmed, via
+    `scripts/decode_rawmessageinfo.py`, to be the exact request type `defpackage/fms.java:151`'s
+    `fms.b()` names as the **`dcservice.sdk.bluetooth.BluetoothApiService`/`SetFeatureState`** gRPC
+    request (`odc.c("dcservice.sdk.bluetooth.BluetoothApiService", "SetFeatureState")`) — a
+    **Bluetooth-named API service on a separate Pixel system app**, reached via the same
+    `com.google.android.apps.pixel.dcservice` package this project's own `MaestroEndpointService`
+    entry had already found once, incidentally, as an "unrelated outbound gRPC client connection...
+    out of scope for this project's Bluetooth focus" (`fsg.java:41`'s `ComponentName`
+    construction) — that framing is corrected here: `dcservice` has its own **Bluetooth**-specific
+    API surface, making this squarely in-scope, not incidental. `fmx`'s own decoded schema (5
+    fields: 1=`ENUM` `e`, 2=`STRING` `f`, 3=`ENUM` `g`, 4/5=a 2-alternative oneof →`fna`/`fmz`) is
+    populated in `ffd.e()`'s own smali as: `fms.k(3, ...)` sets field 1/`e` to a fixed constant
+    (`3-1=2`, this enum's own type/meaning not independently named — `fms.l(int)`, the first
+    same-named method found nearby, is a *different*, unrelated event-name enum reused by this same
+    R8-merged `fms` utility class, and does **not** describe this field; not chased further, flagged
+    honestly rather than force-fit), `fms.i(address, ...)` sets field 2/`f` to the literal
+    `EXTRA_BD_ADDR` string (i.e. field `f` identifies *which device*, not a named feature-flag key as
+    an earlier working assumption in this pass guessed before decoding it — corrected in place, not
+    left as the wrong guess), and builds an `fna`-typed oneof payload (field 4) whose own single
+    sub-field is set from the receiver's `EXTRA_PRIORITY` extra (`i6 = this.c == 1 ? 3 : 2`) via a
+    standard protobuf-lite enum-ordinal remap — `fna`'s own field/enum semantics were not decoded
+    this pass (a further, deferred step, not chased to avoid open-ended tangenting past this task's
+    own scope).
+  - **Also newly connects an existing, separately-tracked open item**: `hlv.java:2638` (the same
+    Settings preference-click dispatcher already documented for Volume EQ/Loudness compensation)
+    independently calls `fms.a()` = **`GetFeatureState`** — the *other* half of this same
+    `dcservice.sdk.bluetooth.BluetoothApiService` pair — routed through `kjj`
+    (`"premiumAudioHelper"`), the exact, previously-unresolved **"Feature A"** accessor this
+    document's `MaestroDeviceSettingsProviderService` entry (cases `2104`/`2115`) and `esk` entry
+    (discriminator 18) both already named but could not trace to a concrete backend. 🟡 HYPOTHESIS,
+    code-level, not capture-correlated: "Feature A" is very plausibly backed by this same
+    `dcservice.sdk.bluetooth.BluetoothApiService` Get/SetFeatureState pair, not `qhr`/`WriteSetting`
+    at all — i.e. two previously-separate open questions (`BluetoothPriorityReceiver`'s own backend,
+    and "Feature A"'s own backend) converge on the same external service. Not confirmed as the same
+    *feature* within that service (the `fmx`/`fmv` request's own `ENUM` field 1/`e` — the closest
+    candidate for a feature-selector — was not decoded for either call site), only the same *service*.
+  - **Open questions**: what actually sends the broadcast remains 🔴 OPEN (checked-negative
+    in-app, HYPOTHESIS-only external-sender reading, per above); `fna`/`fmz`'s own field-level
+    schema and what `fmx`/`fmv` field 1/`e`'s `ENUM` values represent; whether "Feature A" and
+    `BluetoothPriorityReceiver`'s own request are the *same* feature-state key within
+    `dcservice.sdk.bluetooth.BluetoothApiService` or two different ones; whether this receiver's
+    own effect is ever wire-visible at the HCI/RFCOMM level (this pass did not check — `dcservice`
+    is a separate system app, out of this project's own decompiled-APK scope per `DECISIONS.md`
+    ADR-025's GMS/system-app-boundary precedent, though `dcservice` is a Pixel-specific system app,
+    not GMS itself, so that ADR does not directly cover it — flagged as a scope question for the
+    maintainer, not decided here).
+  - **Hypothesis test**: none attempted this pass (no new capture, per this task's own guardrails).
+    A capture bracketing a Multipoint switch or a multi-device-connection scenario, watching both
+    for the broadcast itself (`adb shell dumpsys activity broadcasts`, as this entry's own original
+    text already proposed) and for any wire-visible HCI-level link-policy/QoS command coinciding
+    with it, remains the natural next step if the maintainer wants to pursue this further.
+  - **Correlation with `PROTOCOL.md`**: §6 Commands & schemas' `BluetoothPriorityReceiver` open item
+    updated with this pass's findings — see that document for the corresponding text.
+
 ### `MaestroEndpointService` — exported, no-permission on-device gRPC server (open questions only)
 
 *(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4, maintainer-approved per prompt `0002`.)*
@@ -3045,6 +3223,64 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   app, or (b) a field-*write* search (as opposed to v1's field-*type-declaration* search) for
   `MaestroEndpointService.b`'s own setter — neither built this pass. Item B remains open, narrowed by
   one ruled-out candidate rather than closed.
+- **Update (2026-09-17, `ai-sessions/0027`) — item B resolved outright, via approach (b): the
+  multibinding "assembly site" is a hardcoded, always-empty Guava `ImmutableMap` constant, not a real
+  Dagger `@IntoMap` multibinding at all.** 🟢 FACT (code existence/structure — mechanical field-write
+  search plus direct code reading, no wire capture involved, per this project's own standard that a
+  code-fact of this kind does not need maintainer sign-off, unlike a protocol-behavior claim):
+  - **Both named approaches were built this pass** — `structural_index` gained a v1.1
+    `implements`-query (§5a) and a field-*write* search, `field-writes` (§5b), per
+    `reverse-engineering/tools/structural_index/SPEC.md`'s own updated §2.2/§5a/§5b (both tested
+    against independently-verified real-APK fixtures,
+    `reverse-engineering/tools/structural_index/SPEC.md` §10a). The field-write search
+    resolved item B directly, on its first real use — the `implements`-query, while built and
+    validated, was not additionally needed once the write site was found.
+  - **`structural-index field-writes --class MaestroEndpointService --field b` finds exactly one
+    write site anywhere in the APK: `ghl.onCreate()`** (`ghl.java`, `public class ghl extends crd
+    implements npd` — the standard Hilt-generated `Service`-entry-point base class
+    `MaestroEndpointService` itself extends, performing Hilt field-injection at the top of its own
+    `onCreate()` override before calling `super.onCreate()` — the same lifecycle-injection shape
+    already documented for `BluetoothPriorityReceiver`'s own `gnr`/`fqm.o()` pair, one class up the
+    inheritance chain instead of via a separate injector interface). Its body:
+    `maestroEndpointService.a = new mig(service, (ScheduledExecutorService) fqmVar.am.a(), (obh)
+    fqmVar.oz.a()); maestroEndpointService.b = lrw.b;` — **`b` is assigned directly from a static
+    field, `lrw.b`, with no `Provider.get()`/`.a()` accessor call of any kind** — unlike field `a`
+    (the actual gRPC server object, `mig`, whose own two constructor arguments genuinely do come from
+    Dagger-provider `.a()` calls on the `fqm` component).
+  - **`lrw.java` (read in full) is Guava's own `RegularImmutableMap`/`ImmutableMap` implementation
+    (obfuscated) — and `lrw.b` is specifically its own zero-entry singleton**:
+    `public static final lov b = new lrw(null, new Object[0], 0);` — a `private lrw(Object, Object[],
+    int)` constructor called with a null "entries" backing structure, an empty `Object[]` array, and
+    size `0`. `lrw`'s own static factory `d(int i, Object[] objArr, lot lotVar)` independently
+    confirms this reading: `if (i == 0) { return (lrw) b; }` — i.e. `b` is exactly what Guava's
+    `ImmutableMap.of()` (the no-argument, zero-entry builder) returns, a compile-time-fixed constant,
+    not something built from runtime provider values.
+  - **Conclusion**: `MaestroEndpointService.b` (the `Map<String, Optional<ofd>>` this document's own
+    template already describes iterating and logging `"Service %s included"`/`"...not included"` per
+    entry) is **unconditionally empty** in this APK version — the iteration logic is real, generic,
+    and would handle a populated map correctly, but the map it actually receives, every time, has
+    zero entries. **No gRPC service is registered on `MaestroEndpointService` in this APK version at
+    all.** This is not a partial multibinding hidden behind further Dagger indirection — it is a
+    literal empty-collection constant, confirmed by reading `lrw.java`'s own source directly, not
+    inferred from absence of a findable provider class (which is exactly *why* no
+    `*MembersInjector`-named class or `@IntoMap` provider was ever found for this specific
+    `Map<String, Optional<ofd>>` in three prior search passes — there was never a real multibinding
+    assembling it to find).
+  - **What this does NOT establish**: whether this is deliberate (a scaffolded, not-yet-launched
+    feature; a kill-switch; dead code left in from an earlier development stage) or an artifact of
+    this specific APK version/build variant — no evidence either way was found, and none is guessed
+    at, per `AGENTS.md` §13.6. Also unaffected: `ofd`'s own authorization-policy role (`mie`/`oex`/
+    `ofb`, already documented) is real, compiled code that exists regardless of whether any service
+    is currently registered to be checked against it.
+  - **Correction to this project's own prior wording, found incidentally while reading `ofd`'s
+    relationship to `mie`/`oex`/`ofb` for this same trace**: `ofd` is a `public abstract class`
+    (`ofd.java:5`), not an "interface" as this entry's own 2026-09-08 text called it — `mie`/`oex`/
+    `ofb` all `extends Lofd;` (androguard's own `get_superclassname()`), never `implements` it. A
+    minor wording correction, not a substantive change to any finding about `ofd`'s own role.
+  - **Item B is now closed** — the literal gRPC-service-name question this item originally asked
+    ("what service names are registered") has a definitive answer: none are, in this APK version.
+  - **Correlation with `PROTOCOL.md`**: §6 Commands & schemas' `MaestroEndpointService` open item
+    updated with this resolution — see that document for the corresponding text.
 
 ---
 
@@ -3234,6 +3470,105 @@ decision.)*
     question, which remains 🔴 open per `PROTOCOL.md` §6. **Maintainer sign-off obtained 2026-09-16**
     (chat session continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS in
     `PROTOCOL.md` §6, per `AGENTS.md` §6/§15.
+
+## Resource/string-table sweep (item M, `ai-sessions/0027`)
+
+*(Added 2026-09-17. A manual/`grep`-driven pass over
+`reverse-engineering/apk/v1.0.955078536-10253511/apktool-output/res/` — string resources and other
+`values/` XML files, not the DEX/JADX tree, which none of the 5 existing tools cover
+(`reverse-engineering/tools/structural_index/SPEC.md` §2.2 explicitly defers this data source). Per
+`APK_REVERSE_ENGINEERING_PROCEDURE.md` §4.1, the AccountLinking/OwnershipTransfer/AccessoryNonOwner/
+Firebase-Analytics-Crashlytics exclusion list was applied at search time — none of that noise is
+reproduced below.)*
+
+Base locale only (`res/values/strings.xml`, 1069 lines, English) — the ~120 other `values-*/`
+directories are almost entirely per-language translations of the same string IDs, not new content;
+the handful of non-language qualifier dirs with their own `strings.xml`
+(`values-v29`/`values-notlong`/`values-land`) were checked and are tiny (4–6 lines each, dimension
+ratios and a font-feature string only — nothing RE-relevant). `bools.xml`/`arrays.xml`/`integers.xml`
+were also read in full (small enough to check exhaustively) and confirmed to be generic AndroidX/
+Material-Design/GMS-font-cert boilerplate — no feature-flag-shaped or log-tag-shaped entries found
+there. `colors.xml`/`dimens.xml`/`attrs.xml`/`public.xml`/`styles.xml`/`ids.xml` (22,000+ lines
+combined) were not read line-by-line — these are exhaustively generic Material Design/AndroidX
+resource tables by construction (colors, dimensions, style inheritance, resource-ID public API
+surface); not searched further, flagged rather than silently skipped.
+
+🟢 FACT (string literals, direct read) throughout — no protocol-behavior claim is made by a string's
+mere existence; each finding below states explicitly what it does and doesn't establish, per
+`PROJECT_RULES.md` §1.
+
+- **"Feature A" is named, on-screen, "Quartz" — resolves a question this project has carried since
+  `ai-sessions/0001`'s original discovery of the mechanism.** `res/values/strings.xml` has an entire
+  `feature_a`-prefixed string family: `title_feature_a_pref` = **"Quartz"** (line 960, the Settings
+  toggle's own on-screen title), `summary_feature_a_pref` = **"Improves sound quality when
+  possible"** (828), `title_feature_a_required_dialog` = **"LE Audio required"** (961),
+  `summary_multipoint_with_feature_a_enabled` = **"Not available with Quartz on"** (853),
+  `summary_sa_switch_with_feature_a_enable` = **"Not available with Quartz ON"** (865 — "sa" =
+  Spatial Audio, confirmed by the adjacent `summary_sa_pref`/`summary_sa_switch`/`summary_sa_unavailable_pref`
+  strings' own text, "immersive surround sound"), plus `key_feature_a`/`key_feature_a_dialog`
+  (preference-key strings, 420–421) and `feature_a_alert_cancel`/`feature_a_alert_continue`/
+  `feature_a_le_audio_required_alert_okay` (dialog button labels, 288–290). **This directly confirms
+  and sharpens, from an independent evidence source (UI resource strings, not code), what this
+  project's own `MaestroDeviceSettingsProviderService` entry (cases 2104/2115) and `esk` entry
+  (discriminator 18) had already named "Feature A" but never given a user-facing identity: it is
+  "Quartz," a toggle requiring LE Audio, that improves sound quality "when possible," and is
+  mutually exclusive with both Multipoint and Spatial Audio** — matching, not contradicting, this
+  project's own prior 🟡 HYPOTHESIS that Multipoint/Feature-A mutual exclusivity was plausible
+  (`REVERSE_ENGINEERING.md`'s `MaestroDeviceSettingsProviderService` entry, case 2104's own note).
+  **What this does not establish**: the exact technical mechanism "Quartz" implements (plausibly a
+  proprietary LE Audio codec/quality enhancement, given the "LE Audio required" gate) — identifying
+  precise audio codec parameters is explicitly out of this project's own scope
+  (`PROJECT.md` non-goals) and not attempted; only the feature's *name* and *UI-level relationships*
+  are recorded here, the same kind of finding already made for "Mono audio"/"Volume EQ"/etc.
+- **The "LargoMr" OOBE mini-app (`aie` discriminators 15/18) is Buds-related, correcting that
+  entry's own "unrelated... non-Buds-pairing" framing.** `res/values/strings.xml` has
+  `illustration_largo_mr_oobe_adaptive_noise_control` = "Noise control with ear buds" (361) and
+  `illustration_largo_mr_oobe_head_gestures` = "Head nod and shake" (362), plus
+  `continue_largo_mr_oobe`/`done_largo_mr_oobe` (198/234). This is a real onboarding flow for ANC/
+  head-gesture features on this same device, not a distinct, unrelated mini-app as
+  `ai-sessions/0024`'s original `aie` per-case table speculated ("an out-of-box-experience intro
+  screen for an unrelated, non-Buds-pairing 'LargoMr' mini-app feature") — a correction to that
+  entry's own framing, not a new mechanism. `LargoMrOobeIntroFragment`'s own role (already
+  catalogued) should be read with this corrected context.
+- **A genuine, unresolved tension surfaced, not chased further this pass**: the firmware-update
+  notification strings `notification_title_presto_mr1` = "Your Pixel Buds just got better" and
+  `notification_content_presto_mr1` = "Boost the bass, Attention Alerts, Find My Device, and more"
+  (615–619) present **Attention Alerts** (this project's own `qjg` entry — a field of the `qjn`
+  ("presto") schema, structurally hypothesized to belong to a *different, non-Buds-Pro-2* product —
+  see this document's own `qjn` entry's 2026-08-30 "structural reframing" update) as a
+  generally-available Pixel Buds feature in a notification string bundled with *this* device's own
+  companion app. 🔴 **OPEN QUESTION, not resolved either way**: this could mean the "presto"/`qjn`
+  schema hypothesis needs revisiting (Attention Alerts might reach the Buds Pro 2 through a
+  different, not-yet-identified path than `qjg`/Group 2), or it could simply be a generic marketing
+  notification template reused across product lines regardless of which schema a given device
+  actually uses (a resource string's mere existence doesn't prove *this* device's own code path ever
+  renders it) — no code trace was run this pass to distinguish these; flagged for a future session
+  rather than guessed at, per `AGENTS.md` §13.6. Directly bears on this document's own `qjn`/`qjt`/
+  `qhx`/`qjv` entry's 2026-08-30 "structural reframing" HYPOTHESIS (that `qjn`("presto") is a
+  different product's schema) — check that entry before extending it further.
+- **Checked negatives, reconfirmed from this independent data source** (no hits, consistent with —
+  not merely repeating — the existing code-side findings): `"priority"` and `"classic"` — zero
+  matches anywhere in `strings.xml` (no user-facing text exists for `BluetoothPriorityReceiver`'s own
+  mechanism, consistent with it being an internal, non-UI cross-app signal, not a user-toggleable
+  setting). `"gfps"`, `"hid"` (word-boundary), `"gsnd"`/`"gsound"` — zero matches, reconfirming
+  `REVERSE_ENGINEERING.md`'s own existing GSND-lead entry and the Fast-Pair-GATT full-tree-sweep
+  entry from a third, previously-unchecked location (resource strings, distinct from both the
+  source-code sweep and the `apktool-output/res/` XML sweep the GSND entry's own 2026-09-15 update
+  already ran — that update checked the same `res/` tree for the literal "GSND" substring only; this
+  pass's own broader keyword list is the addition). `"phenotype"`, `"dcservice"` — zero matches (both
+  are internal/backend names with no corresponding user-facing string, consistent with them being
+  system-level/cross-app plumbing, not user-configurable settings). `"streamz"`, `"clearcut"` — zero
+  matches (consistent with `gbu`/`ght`/`ghq` entry's own reading that these are internal analytics-
+  pipeline names, never surfaced to the user). The "diagnostics" string family (18 hits, e.g.
+  `title_diagnostics_pref` = "Usage & diagnostics") is the already-documented, ordinary
+  usage-and-diagnostics consent toggle (`gcl.B()`'s gate, per the `gbu`/`ght` entries) — not a new
+  lead, cross-referenced and confirmed already-catalogued rather than re-recorded.
+- **Swept, nothing new found beyond the above**: `"connection"` (5 hits, all ordinary UI copy —
+  OTA-lost-connection, pairing permission rationale, a "disconnected" notification — none
+  protocol-relevant); `"maestro"` (2 hits: the content-provider `authority` string, and
+  `maestro_notification_title` = "Pixel Buds" — both already understood, not new). No new
+  Bluetooth/RE-relevant log tag, notification-channel name, or feature-flag-shaped string was found
+  beyond the "Quartz"/LargoMr findings above.
 
 ## Native libraries
 

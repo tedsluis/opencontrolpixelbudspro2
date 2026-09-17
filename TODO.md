@@ -156,10 +156,13 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      (names not recovered), and `ofd`'s method is a per-call, UID-based authorization check (not a
      service dispatcher as its shape first suggested) — two policies found, an internal-UID-only
      check and an allowlisted-Google-signed-caller check. See `REVERSE_ENGINEERING.md`'s
-     `MaestroEndpointService` entry. **Still open, if pursued further**: the literal registered
-     service names (would need locating the Dagger multibinding's own assembly site — judged out of
-     proportion to chase further this session) and whether GMS specifically is ever in the
-     allowlist for this service's own methods.
+     `MaestroEndpointService` entry. **Closed 2026-09-17 (`ai-sessions/0027`, `structural_index
+     field-writes`):** the "literal registered service names" question has a definitive answer —
+     `MaestroEndpointService.b`'s own sole write site (`ghl.onCreate()`, the Hilt injection base
+     class) assigns it directly from `lrw.b`, Guava's own zero-entry `ImmutableMap` singleton, with
+     no Dagger provider call involved. **No gRPC service is registered on this endpoint at all, in
+     this APK version** — not a hidden multibinding, a hardcoded empty constant. Whether GMS is ever
+     in the allowlist remains moot given nothing is registered to allowlist a caller for.
    - **Formalized 2026-09-08 (`ai-sessions/0002_MAINTENANCE_RESULT_2026_09_08.md`'s own gap scan
      flagged this as never added to this list; re-attempted and still not closed by
      `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 3):** trace `gjv.p()`'s own
@@ -415,7 +418,11 @@ lower priority than finishing ANC/Battery/EQ):**
       (`mie`/`oex`/`ofb`, confirming no 4th exists) and 3 new field-type holders (`ofh`/`ofi`/`ofj`),
       but reading them showed they are generic gRPC transport-builder plumbing, not the assembly
       site — a checked negative, not a resolution; see `REVERSE_ENGINEERING.md`'s
-      `MaestroEndpointService` entry's own 2026-09-16 update.
+      `MaestroEndpointService` entry's own 2026-09-16 update. **Resolved 2026-09-17
+      (`ai-sessions/0027`, `structural_index field-writes` — a new v1.1 capability built this
+      session):** the field's sole write site (`ghl.onCreate()`) assigns it directly from `lrw.b`,
+      Guava's own zero-entry `ImmutableMap` singleton — no gRPC service is registered on this
+      endpoint at all, in this APK version; a hardcoded empty constant, not a hidden multibinding.
 - [x] **Added 2026-09-16, implemented same day — Structural Index (`ai-sessions/0025`, implementing
       `ai-sessions/0024`'s top-1 `reverse-engineering/tools/BACKLOG.md` priority).**
       `reverse-engineering/tools/structural_index/` (`reverse-engineering/tools/structural_index/SPEC.md` for the design; `README.md` for

@@ -96,6 +96,66 @@ class TestUnreferenced:
         assert all(r.total_references > 0 for r in results)
 
 
+class TestImplements:
+    def test_fya_direct_implementers_only_not_transitive(self, loaded):
+        """SPEC.md §10a acceptance criterion 4 (v1.1, ai-sessions/0027): `fya` is a
+        real interface (`fya.java:5`, `public interface fya`) with 2 *direct*
+        implementers (`fxz.java:5`, `fyo.java:7`) — `fyw`/`fyx` only reach it
+        transitively via `extends fxz`, matching REVERSE_ENGINEERING.md's own
+        hand-derived `grep -rln "implements fya\\|extends fxz" .` finding (4 files
+        total) and demonstrating this query's own disclosed direct-only scope on
+        real data, not merely asserting it."""
+        result = xref_index.find_implementers(loaded, "fya")
+        classes = {i.implementer_class for i in result.implementers}
+        assert classes == {"defpackage.fxz", "defpackage.fyo"}
+        assert "defpackage.fyw" not in classes
+        assert "defpackage.fyx" not in classes
+
+    def test_interface_not_found_raises_keyerror(self, loaded):
+        with pytest.raises(KeyError):
+            xref_index.find_implementers(loaded, "ThisClassDoesNotExistAnywhereInThisApk")
+
+    def test_ofd_abstract_class_has_zero_direct_interface_implementers(self, loaded):
+        """`ofd` (`ofd.java:5`, `public abstract class ofd`) is an abstract class,
+        not an interface — `mie`/`oex`/`ofb` all `extends` it (a superclass
+        relationship, confirmed via androguard's own `get_superclassname()`),
+        never `implements` it. This is a real, disclosed limit of a direct-
+        `implements`-only query (SPEC.md §5a) demonstrated on real data — not a
+        bug, and a correction to this project's own prior "authorization-policy
+        interface" wording for `ofd` (REVERSE_ENGINEERING.md's `MaestroEndpointService`
+        entry)."""
+        result = xref_index.find_implementers(loaded, "ofd")
+        assert result.implementers == []
+
+
+class TestFieldWrites:
+    def test_bluetooth_priority_receiver_field_c_written_by_hilt_injector(self, loaded):
+        """SPEC.md §10a acceptance criterion 5 (v1.1, ai-sessions/0027): `fqm.o()`
+        (`fqm.java:2710`, the Hilt member-injector for `BluetoothPriorityReceiver`,
+        `@Override // defpackage.gnr`) writes `bluetoothPriorityReceiver.c = (fzd)
+        this.ac.a();` — the sole write site for this field anywhere in the APK,
+        independently read and confirmed before being trusted as a fixture."""
+        result = xref_index.find_field_writes(
+            loaded,
+            "com.google.android.apps.wearables.maestro.companion.phone.bluetoothpriority.BluetoothPriorityReceiver",
+            "c",
+        )
+        assert len(result.writes) == 1
+        assert result.writes[0].caller_class == "defpackage.fqm"
+        assert result.writes[0].caller_method == "o"
+
+    def test_class_not_found_raises_keyerror(self, loaded):
+        with pytest.raises(KeyError):
+            xref_index.find_field_writes(loaded, "ThisClassDoesNotExistAnywhereInThisApk", "x")
+
+    def test_never_written_field_name_returns_empty_not_error(self, loaded):
+        """SPEC.md §7's own disclosed note: a field name that doesn't correspond
+        to any real write site (whether never-written or simply misspelled)
+        legitimately returns an empty, not-an-error result."""
+        result = xref_index.find_field_writes(loaded, "esk", "thisFieldNameDoesNotExist")
+        assert result.writes == []
+
+
 class TestCli:
     def test_cli_refs_outputs_expected_json_shape(self, capsys):
         exit_code = cli.main(
@@ -122,6 +182,58 @@ class TestCli:
                 str(APK_ROOT),
                 "--class",
                 "ThisClassDoesNotExistAnywhereInThisApk",
+            ]
+        )
+        assert exit_code == 1
+
+    def test_cli_implements_outputs_expected_json_shape(self, capsys):
+        exit_code = cli.main(
+            ["implements", "--apk-root", str(APK_ROOT), "--interface", "fya"]
+        )
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert '"implementer_class": "defpackage.fyo"' in captured.out
+        assert '"interface": "defpackage.fya"' in captured.out
+
+    def test_cli_implements_unknown_interface_is_non_zero_exit(self, capsys):
+        exit_code = cli.main(
+            [
+                "implements",
+                "--apk-root",
+                str(APK_ROOT),
+                "--interface",
+                "ThisClassDoesNotExistAnywhereInThisApk",
+            ]
+        )
+        assert exit_code == 1
+
+    def test_cli_field_writes_outputs_expected_json_shape(self, capsys):
+        exit_code = cli.main(
+            [
+                "field-writes",
+                "--apk-root",
+                str(APK_ROOT),
+                "--class",
+                "com.google.android.apps.wearables.maestro.companion.phone.bluetoothpriority.BluetoothPriorityReceiver",
+                "--field",
+                "c",
+            ]
+        )
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert '"caller_class": "defpackage.fqm"' in captured.out
+        assert '"caller_method": "o"' in captured.out
+
+    def test_cli_field_writes_unknown_class_is_non_zero_exit(self, capsys):
+        exit_code = cli.main(
+            [
+                "field-writes",
+                "--apk-root",
+                str(APK_ROOT),
+                "--class",
+                "ThisClassDoesNotExistAnywhereInThisApk",
+                "--field",
+                "x",
             ]
         )
         assert exit_code == 1

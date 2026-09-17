@@ -7,7 +7,13 @@ import json
 import sys
 from pathlib import Path
 
-from .xref_index import find_refs, find_unreferenced, load_apk
+from .xref_index import (
+    find_field_writes,
+    find_implementers,
+    find_refs,
+    find_unreferenced,
+    load_apk,
+)
 
 
 def _cmd_refs(args: argparse.Namespace) -> int:
@@ -31,6 +37,30 @@ def _cmd_unreferenced(args: argparse.Namespace) -> int:
         return 1
     payload = [r.to_dict() for r in results]
     _emit(payload, args.output_dir, "unreferenced.json")
+    return 0
+
+
+def _cmd_implements(args: argparse.Namespace) -> int:
+    loaded = load_apk(Path(args.apk_root))
+    try:
+        result = find_implementers(loaded, args.interface)
+    except KeyError as e:
+        print(f"structural-index: error: interface {e} not found under {args.apk_root}", file=sys.stderr)
+        return 1
+    payload = result.to_dict()
+    _emit(payload, args.output_dir, f"{result.interface.rsplit('.', 1)[-1]}_implementers.json")
+    return 0
+
+
+def _cmd_field_writes(args: argparse.Namespace) -> int:
+    loaded = load_apk(Path(args.apk_root))
+    try:
+        result = find_field_writes(loaded, args.cls, args.field)
+    except KeyError as e:
+        print(f"structural-index: error: class {e} not found under {args.apk_root}", file=sys.stderr)
+        return 1
+    payload = result.to_dict()
+    _emit(payload, args.output_dir, f"{result.cls.rsplit('.', 1)[-1]}_{result.field_name}_writes.json")
     return 0
 
 
@@ -60,6 +90,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_unref.add_argument("--class", dest="cls", action="append", required=True)
     p_unref.add_argument("--output-dir", default=None)
     p_unref.set_defaults(func=_cmd_unreferenced)
+
+    p_impl = sub.add_parser("implements", help="every class directly implementing an interface")
+    p_impl.add_argument("--apk-root", required=True)
+    p_impl.add_argument("--interface", required=True)
+    p_impl.add_argument("--output-dir", default=None)
+    p_impl.set_defaults(func=_cmd_implements)
+
+    p_fw = sub.add_parser("field-writes", help="every iput/sput site targeting one class's own field")
+    p_fw.add_argument("--apk-root", required=True)
+    p_fw.add_argument("--class", dest="cls", required=True)
+    p_fw.add_argument("--field", required=True)
+    p_fw.add_argument("--output-dir", default=None)
+    p_fw.set_defaults(func=_cmd_field_writes)
 
     return parser
 

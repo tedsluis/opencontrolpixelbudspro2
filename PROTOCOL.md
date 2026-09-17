@@ -2471,8 +2471,9 @@ leaving them buried in prose elsewhere.
       directly by the maintainer in the chat session that authored this task's own prompt
       (`ai-sessions/0003_MAINTENANCE_PROMPT_2026_09_08.md`); the naming tension was left open, not
       resolved.
-- [ ] **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1,
-      maintainer-approved per prompt `0002`).** The manifest also declares `MaestroEndpointService`
+- [x] **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1,
+      maintainer-approved per prompt `0002`); resolved 2026-09-17 (`ai-sessions/0027`, see the
+      2026-09-17 update below).** The manifest also declares `MaestroEndpointService`
       (`grpc.ondevicegrpcserver`), **exported with no `android:permission` gate**, hosting a generic
       on-device gRPC server (`mig`/`oez` — a method-descriptor-keyed dispatch table structurally like
       `io.grpc.ServerServiceDefinition`). No other reference to this class/package exists anywhere
@@ -2513,6 +2514,24 @@ leaving them buried in prose elsewhere.
       a transport factory), not `MaestroEndpointService`'s own specific service-registration map.
       🔴 still open. Full trace: `REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry's own
       2026-09-16 update.
+      **Update (2026-09-17, `ai-sessions/0027`) — resolved outright.** 🟢 FACT (code existence/
+      structure, mechanical field-write search + direct code reading): `structural_index`'s new v1.1
+      `field-writes` query finds `MaestroEndpointService.b`'s sole write site anywhere in the APK is
+      `ghl.onCreate()` (the standard Hilt-generated `Service`-entry-point base class this service
+      extends, performing member-injection before `super.onCreate()`) — and that write is
+      `maestroEndpointService.b = lrw.b;`, a **direct static-field reference with no Dagger
+      `Provider.get()` call at all**. `lrw` is Guava's own `ImmutableMap` implementation
+      (obfuscated), and `lrw.b` is specifically its zero-entry singleton
+      (`public static final lov b = new lrw(null, new Object[0], 0);`, confirmed by `lrw`'s own
+      static factory: `i == 0` returns exactly this same field). **`MaestroEndpointService.b` is an
+      unconditionally empty map in this APK version — no gRPC service is registered on this endpoint
+      at all.** This is not a hidden multibinding needing deeper Dagger tracing to find; it is a
+      literal empty-collection compile-time constant, which is exactly why no `@IntoMap`
+      provider/`*MembersInjector` class was ever found for it across three prior search passes —
+      there was never a real multibinding assembling it. Whether this is deliberate (a scaffolded,
+      not-yet-launched feature) or an artifact of this build is not established either way. See
+      `REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry's own 2026-09-17 update for the full
+      trace (file+line citations, source excerpts).
 - [ ] **Added 2026-09-16 (`ai-sessions/0025`, Phase 3 item L — full `AndroidManifest.xml`
       re-review).** A previously-uncatalogued exported broadcast receiver,
       `com.google.android.apps.wearables.maestro.companion.phone.bluetoothpriority.BluetoothPriorityReceiver`,
@@ -2523,6 +2542,35 @@ leaving them buried in prose elsewhere.
       whether it relates to Multipoint or RFCOMM-channel-priority behavior — none of this determined
       by static analysis alone; no capture correlation attempted. See `REVERSE_ENGINEERING.md`'s new
       `BluetoothPriorityReceiver` entry.
+      **Update (2026-09-17, `ai-sessions/0027`) — exhaustive checked negative for an in-app sender;
+      the receiver's own downstream effect resolved instead, a genuinely new finding.** No code
+      anywhere in this companion app's own decompiled source (JADX or `apktool` smali, whole-tree)
+      constructs or sends this broadcast, or targets this receiver's component — confirmed
+      exhaustively for the action string, all three extras, and the class name itself. 🟡 HYPOTHESIS
+      (not FACT — a negative search cannot positively confirm an external sender): two circumstantial
+      signals both point toward an external, privileged sender — the receiver is gated by
+      `android.permission.CAPTURE_AUDIO_HOTWORD` (an unrelated-sounding, privileged permission,
+      per `AndroidManifest.xml`), and its own downstream effect (below) forwards to a separate Pixel
+      system app, consistent with this being one leg of a cross-app coordination flow this companion
+      app only relays, not originates. **New finding**: on receipt, the companion app forwards the
+      request (after checking it's a known Maestro device, a Bluetooth-profile-connection-status
+      check, and a Google Phenotype server-side flag gate logged `"Classic connection priority
+      optimization is not enabled"` when off) to **`com.google.android.apps.pixel.dcservice`'s own
+      `dcservice.sdk.bluetooth.BluetoothApiService`/`SetFeatureState`** gRPC method (traced via the
+      `apktool` smali fallback for the one JADX-undecompilable call site, `ffd.e()`) — a *separate
+      Pixel system app* actually implements whatever this "classic connection priority" mechanism
+      does, not this companion app itself. This corrects an earlier, incidental framing
+      (`REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry) that treated a `dcservice`
+      reference as "unrelated... out of scope" — `dcservice` has its own Bluetooth-specific API
+      surface, making it in-scope, not incidental. Also newly connects this to the long-open
+      "Feature A"/`kjj`/"premiumAudioHelper" mechanism (`MaestroDeviceSettingsProviderService`
+      cases 2104/2115, `esk` discriminator 18): a separate call site (`hlv.java:2638`) independently
+      calls the *other* half of the same `dcservice.sdk.bluetooth.BluetoothApiService` pair,
+      `GetFeatureState` — 🟡 HYPOTHESIS, code-level only: "Feature A" is plausibly backed by this same
+      external service, not `qhr`/`WriteSetting`, though not confirmed as the *same* feature-state
+      key within it. See `REVERSE_ENGINEERING.md`'s `BluetoothPriorityReceiver` entry's own
+      2026-09-17 update for the full trace (file+line citations, smali evidence). Not wire-correlated
+      — no new capture was taken this pass, per this task's own guardrails.
 
 ### Behavior
 

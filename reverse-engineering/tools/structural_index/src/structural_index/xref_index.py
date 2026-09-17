@@ -23,9 +23,26 @@ from lambda_dispatcher_resolver.androguard_index import (  # noqa: E402
     load_apk,
 )
 
-from .models import CallSite, ConstructSite, FieldTypeHolder, RefsResult, UnreferencedResult
+from .models import (
+    CallSite,
+    ConstructSite,
+    FieldTypeHolder,
+    FieldWriteSite,
+    FieldWritesResult,
+    ImplementerSite,
+    ImplementsResult,
+    RefsResult,
+    UnreferencedResult,
+)
 
-__all__ = ["load_apk", "normalize_class_name", "find_refs", "find_unreferenced"]
+__all__ = [
+    "load_apk",
+    "normalize_class_name",
+    "find_refs",
+    "find_unreferenced",
+    "find_implementers",
+    "find_field_writes",
+]
 
 # Re-exported under a public name — `_normalize_class_name` is a private helper
 # in the upstream tool; this module's own callers should not reach past this
@@ -144,6 +161,86 @@ def find_refs(loaded: LoadedApk, class_name: str, method_filter: str | None = No
                         )
                     )
 
+    return result
+
+
+def find_implementers(loaded: LoadedApk, interface_name: str) -> ImplementsResult:
+    """SPEC.md §5a's `implements` query: every class whose own `get_interfaces()`
+    list (androguard's direct read of the class's `implements` clause) contains
+    `interface_name`. Direct implementation only — no `extends`-chain traversal,
+    no supertype-of-the-interface resolution (SPEC.md §5a's own disclosed scope).
+    Raises KeyError if the interface class itself isn't present anywhere in the
+    APK's dex set (mirrors find_refs's own contract)."""
+    target = normalize_class_name(interface_name)
+    if target not in loaded.class_by_name:
+        raise KeyError(target)
+
+    result = ImplementsResult(interface=_short_name(target))
+    for position, dex in enumerate(loaded.dexes):
+        dex_file = loaded.dex_names[position]
+        for cls in dex.get_classes():
+            try:
+                interfaces = cls.get_interfaces()
+            except Exception:  # pragma: no cover — SPEC.md §7's "skip, don't abort" rule
+                continue
+            if target in interfaces:
+                result.implementers.append(
+                    ImplementerSite(implementer_class=_short_name(cls.get_name()), dex_file=dex_file)
+                )
+    return result
+
+
+_FIELD_WRITE_PREFIXES = ("iput", "sput")
+
+
+def find_field_writes(loaded: LoadedApk, class_name: str, field_name: str) -> FieldWritesResult:
+    """SPEC.md §5b's `field-writes` query: every `iput-*`/`sput-*` instruction
+    anywhere in the APK whose operand targets exactly `<class_name>-><field_name>`.
+    Raises KeyError if the class isn't present anywhere in the APK's dex set."""
+    target = normalize_class_name(class_name)
+    if target not in loaded.class_by_name:
+        raise KeyError(target)
+
+    # The field-descriptor marker an iput/sput instruction's own text operand
+    # carries is "<Ltarget;>-><fieldName> <typeDescriptor>" (a literal space,
+    # not "->fieldName(" as invoke instructions use — confirmed against real
+    # androguard output before being trusted, see SPEC.md §10a's own fixture).
+    marker = f"{target}->{field_name} "
+
+    result = FieldWritesResult(cls=_short_name(target), field_name=field_name)
+    for position, dex in enumerate(loaded.dexes):
+        dex_file = loaded.dex_names[position]
+        for cls in dex.get_classes():
+            caller_class = _short_name(cls.get_name())
+            for method in cls.get_methods():
+                code = method.get_code()
+                if code is None:
+                    continue
+                try:
+                    bc = code.get_bc()
+                    instructions = list(bc.get_instructions())
+                except Exception:  # pragma: no cover
+                    print(
+                        f"structural-index: warning: failed to decode {caller_class}.{method.get_name()}, skipping",
+                        file=sys.stderr,
+                    )
+                    continue
+                for ins in instructions:
+                    name = ins.get_name()
+                    if not name.startswith(_FIELD_WRITE_PREFIXES):
+                        continue
+                    try:
+                        out = ins.get_output(0)
+                    except Exception:  # pragma: no cover
+                        continue
+                    if marker in out:
+                        result.writes.append(
+                            FieldWriteSite(
+                                caller_class=caller_class,
+                                caller_method=method.get_name(),
+                                dex_file=dex_file,
+                            )
+                        )
     return result
 
 
