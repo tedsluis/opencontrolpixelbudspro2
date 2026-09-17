@@ -3558,6 +3558,67 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
       item B's own already-closed conclusion** (no service names are registered, confirmed twice over
       now) — this is a narrower, separate question about the resulting `Binder` object's own identity,
       not the service-registration question item B originally asked.
+  - **Update (2026-09-17, further continuing `ai-sessions/0027`) — the "genuinely open" `oez.a` question
+    directly above is now resolved: `onBind()` returns a real, live Binder object with its own
+    functioning UID-based authorization handler — not an inert stub — and this live object is
+    confirmed, independently of the discarded-map finding above, to be built by a code path that never
+    reads `MaestroEndpointService.b` at all.** 🟢 FACT (direct register-by-register smali read,
+    `MaestroEndpointService.smali`'s `onCreate()`, immediately following the discarded-map instructions
+    already read above, plus direct JADX reads of every class in the resulting chain — no cross-block
+    dataflow tool needed in the end, a careful straight-line read sufficed since this segment turned out
+    to have no branches):
+    - **The exact write to `oez.a`** (`MaestroEndpointService.smali:1145`, `iput-object v6, v0,
+      Loez;->a:Ljava/lang/Object;`) resolves, tracing `v6` and `v0` back through the immediately
+      preceding instructions (`:1082-1141`), to: `v0` = `((pyk) oov.r).b` cast to `oez` (i.e. the
+      *same* `oez` instance passed in, round-tripped through a tuple — see below, not a different
+      object), and `v6` = `(new ofm(ofkVar)).c`, i.e. **the `oge`-typed field of a freshly constructed
+      `ofm` instance**.
+    - **`ofm`'s own constructor** (`ofm.java:31-45`) confirms this directly: `this.c = new oge(this);`
+      (`ofm.java:44`) — `ofm` (`implements okj, ogd`) constructs a **real `oge` instance wrapping
+      itself**. `oge` (`oge.java:9`) is **`public final class oge extends android.os.Binder`** — a
+      genuine `Binder` subclass, not a placeholder. Its constructor stores the `ogd`-typed argument (the
+      `ofm` instance) in `oge.a`. **This settles the open question directly: the value that ends up in
+      `MaestroEndpointService`'s own `oez.a`, and thus in `onBind()`'s returned `IBinder`, is a real,
+      live `android.os.Binder` object, not an inert one.**
+    - **The Binder's own transaction handler is a genuine, functioning authorization check, not a
+      stub either.** `ofm implements ogd`, and `oge`'s own transaction path calls back into that `ogd`
+      (`ofm.a(int, Parcel)`, `ofm.java:48-60+`): for transaction code `1`, it reads a `Parcel`-encoded
+      `readStrongBinder()`, calls `Binder.getCallingUid()`, and constructs an `ogq`/`nzs`-based
+      authorization object (`ogqVar.c(obg.b, oevVar)`) — the same **per-call UID-based authorization**
+      shape this document's own original 2026-09-08 `MaestroEndpointService` entry already documented
+      from `ofd`'s method (`ofb`-internal-UID-only / `mie`-allowlisted-and-Google-signed policies) —
+      confirming that mechanism operates on *this* real Binder object, not a hypothetical one.
+    - **This live Binder-construction chain is confirmed, independently, to never read
+      `MaestroEndpointService.b` (the empty service map) at all** — re-reading the full straight-line
+      instruction sequence from the loop's exit (`:cond_2`, `MaestroEndpointService.smali:344`) through
+      the `oez.a` write (`:1145`) top to bottom found no branch back into the earlier per-service-map
+      block and no read of local `v0` (the HashMap built from `b`) after its own discarded conversion
+      (`Llov;->g(Ljava/util/Map;)Llov;`, `:357`, already established as unused) — every register feeding
+      the `obf`/`oov`/`ofk`/`ofm`/`oge` chain instead traces to `this.d()` (`Lmig;`, `:345`), a `Context`
+      wrapper (`Loev;->b(Context)`, `:380`), and `this.d.d` (the persistent `oez` instance itself,
+      `:388`) — none of which touch `b`. **The transport-construction chain and the (empty, discarded)
+      service-map chain are two textually adjacent but functionally disconnected code paths within the
+      same method** — not merely "the map happens to be empty," but "the map's own result, even if
+      non-empty, has no wire into this Binder at all," a stronger and more specific version of the
+      already-recorded "vestigial" finding.
+    - **Net picture for item B, now complete**: `MaestroEndpointService` constructs and returns (via
+      `onBind()`) a real, live, `Binder`-based transport endpoint with a working UID-authorization
+      gate — this part is genuinely functional, not inert. But no gRPC service is ever registered onto
+      it through the mechanism this class itself provides for that purpose (`b`'s per-key `Optional<
+      ofd>` map, confirmed empty and confirmed disconnected from the transport either way). Naming
+      convention (`oge extends Binder`, `io.grpc.internal.ServerImplBuilder`/`getTracerFactories`/
+      "Unable to apply census stats" string literals read in the same instruction block) makes this
+      **plausibly** Google's own `grpc-binder` (gRPC-over-`android.os.Binder`) library's internal
+      server-construction path — flagged as a plausible reading from these strings and shapes, not
+      independently confirmed against that library's own public source in this pass, since doing so
+      would mean auditing a third-party open-source library's internals rather than this app's own
+      code, which is outside item B's own scope.
+    - **What remains genuinely open, and is explicitly not chased further**: what happens when an
+      authorized call reaches `ofm.a()`'s own dispatch logic looking for a matching service to route
+      to, given no service is ever registered — does it error, silently no-op, or something else. This
+      is a further, deeper question than item B's own original ask ("is a service registered" — no) or
+      the "real vs. inert Binder" question this update resolves (real) — genuinely open, not guessed
+      at, and left for a future pass if ever needed.
 
 ---
 

@@ -398,5 +398,41 @@ resolutions in this pass are Bluetooth Classic connection-quality/audio-session/
 document's `gbu`/KPI entry already carries, repeated rather than silently assumed. Full trace in
 `REVERSE_ENGINEERING.md`'s "Candidate rich schemas" section's own newest dated update.
 
+### Further continuation, same session — item B's own last remaining open thread (real vs. inert
+`onBind()` Binder object) resolved: real, live, and independently disconnected from the empty map
+
+Asked once more to continue item B's remaining leads. The prior continuation had left exactly one
+thing genuinely open: what value ends up in `MaestroEndpointService`'s own `oez.a` field (the thing
+`onBind()` casts to `IBinder` and returns), flagged as requiring register-by-register smali tracing
+"explicitly beyond this pass's own bounded scope."
+
+Did that tracing directly this time: the single write site (`MaestroEndpointService.smali:1145`)
+resolves to `(new ofm(ofkVar)).c`, and `ofm`'s own constructor (`ofm.java:44`) reads plainly: `this.c =
+new oge(this);` — `oge` (`oge.java:9`) is `public final class oge extends android.os.Binder`, a real
+Binder subclass, not a placeholder. `ofm implements ogd`, and `oge`'s own transaction path calls back
+into `ofm.a(int, Parcel)` (`ofm.java:48-60+`), which for transaction code 1 reads a Parcel-encoded
+strong binder, calls `Binder.getCallingUid()`, and builds an `ogq`/`nzs`-based authorization object —
+the same per-call UID-based authorization shape this document's own original entry already documented
+from `ofd`'s method. **`onBind()` returns a real, live, authorization-checking Binder — not an inert
+stub.**
+
+Also re-read the full straight-line instruction sequence from the per-service-map loop's exit through
+this `oez.a` write and confirmed no register in the transport-construction chain (`obf`/`oov`/`ofk`/
+`ofm`/`oge`) traces back to `MaestroEndpointService.b` (the empty map) or its already-discarded
+immutable-map conversion — a stronger, more specific version of the existing "vestigial" finding:
+not just "the map happens to be empty," but "the map's own result has no wire into this Binder at all,
+even hypothetically." String literals read in the same instruction block
+(`"io.grpc.internal.ServerImplBuilder"`, `"getTracerFactories"`, `"Unable to apply census stats"`)
+make this plausibly Google's own `grpc-binder` library's internal server-construction path — flagged
+as a plausible reading, not confirmed against that library's own public source (auditing a third-party
+open-source library is outside item B's own scope).
+
+**Item B's own last remaining thread is now closed**: the on-device Binder endpoint is real and
+functional, with a genuine UID-authorization gate, but has no service ever wired to it through the
+mechanism this class provides for that purpose. What happens when an authorized call reaches `ofm.a()`
+looking for a service to route to, given none is registered, is a further, deeper question than item
+B ever asked — left genuinely open, not chased. Full trace in `REVERSE_ENGINEERING.md`'s
+`MaestroEndpointService` entry's own newest dated update.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17
