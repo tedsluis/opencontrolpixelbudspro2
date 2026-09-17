@@ -30,8 +30,9 @@ a new session** — the same "check before assigning" discipline `id_registry.cs
 | 0021 | CAPTURE | 2026-09-15 | Full, non-sampled log analysis and FINDINGS for CAP-050 (Group AG repeat, PRIV-001) and CAP-051 (Group AM, qhr field 13 ANC-parallel-path) | awaiting maintainer sign-off |
 | 0022 | CAPTURE | 2026-09-15 | Full, non-sampled log analysis and FINDINGS for CAP-047 (Group AL, DLCI 0x0a burst trigger hypothesis test), plus targeted video re-check of a recalled corrected docking in Recording 2 | awaiting maintainer sign-off |
 | 0023 | CROSSCHECK | 2026-09-15 | Deep, non-sampled cross-validation of CAP-047/CAP-050/CAP-051 against the decompiled APK, from as many angles as possible, plus full external spec validation | partial — resumed |
-| 0024 | AUDIT | 2026-09-16 | Run lambda_dispatcher_resolver's resolve-all on aie/esk, extract findings, and audit APK reverse-engineering readiness (BACKLOG.md prioritization, RE workflows/scripts needed) | tooling/workflow proposals adopted (0025); Phase 1 code-level leads still unreviewed |
-| 0025 | MAINTENANCE | 2026-09-16 | Implement 0024's top-4 BACKLOG.md tools and workflow recommendations, continue APK-RE with them, cross-reference findings against CAP-NNN-FINDINGS.md/PROTOCOL.md/REVERSE_ENGINEERING.md/DESKRESEARCH_FINDINGS.md/TODO.md, consistency checks, update all documents | partial — resumed |
+| 0024 | AUDIT | 2026-09-16 | Run lambda_dispatcher_resolver's resolve-all on aie/esk, extract findings, and audit APK reverse-engineering readiness (BACKLOG.md prioritization, RE workflows/scripts needed) | complete |
+| 0025 | MAINTENANCE | 2026-09-16 | Implement 0024's top-4 BACKLOG.md tools and workflow recommendations, continue APK-RE with them, cross-reference findings against CAP-NNN-FINDINGS.md/PROTOCOL.md/REVERSE_ENGINEERING.md/DESKRESEARCH_FINDINGS.md/TODO.md, consistency checks, update all documents | complete |
+| 0026 | MAINTENANCE | 2026-09-17 | Record maintainer sign-off on 0024/0025's tooling/workflow adoption and code-level findings; fix 0025's stale maintainer-summary section | complete |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/INDEX.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/INDEX

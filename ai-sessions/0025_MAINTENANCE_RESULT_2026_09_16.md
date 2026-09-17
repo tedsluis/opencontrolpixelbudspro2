@@ -4,14 +4,19 @@
 **Category:** MAINTENANCE
 **Date:** 2026-09-16
 **Title:** Implement the top 4 `reverse-engineering/tools/BACKLOG.md` items and the workflow amendments `ai-sessions/0024` proposed, use them to advance real APK reverse engineering, cross-reference the results against `CAP-NNN-FINDINGS.md`/`PROTOCOL.md`/`REVERSE_ENGINEERING.md`/`DESKRESEARCH_FINDINGS.md`/`TODO.md`, run project-wide consistency checks, and update every affected document
-**Status:** partial — resumed
+**Status:** complete. *(Updated 2026-09-17 by `ai-sessions/0026`, editing this header field in place
+per `AI_SESSION_LOG_PROCEDURE.md` §4a — this file's own substantive content below is otherwise
+unchanged. All of this file's tooling/workflow-process items and code-level findings were reviewed
+and approved by the maintainer directly in chat; see `ai-sessions/0026_MAINTENANCE_RESULT_2026_09_17.md`
+for the sign-off record and its explicit scope note — confidence tiers on any 🟡 HYPOTHESIS/🔴 OPEN
+QUESTION finding are unchanged by this sign-off.)*
 
 ## Phase status table
 
 | Phase | Status | Summary |
 |---|---|---|
 | 0 | done | Mandatory reading order completed in full (see below). APK version on disk matches `reverse-engineering/APK_VERSIONS.md`'s only row (`v1.0.955078536-10253511`) — no drift, no re-decompilation. `lambda_dispatcher_resolver`'s own `pytest tests/ -v` re-run before building anything on top of it: 14/14 passed. This RESULT file created in Phase 0 and updated progressively since. |
-| 1 | partial | See the tool-by-tool sub-table below. Tool 1 (structural/XREF code index) is fully done: spec drafted, implemented, tested (7/7 pytest, all 3 of `reverse-engineering/tools/structural_index/SPEC.md` §10's acceptance criteria passing against the real APK), and used for real — extensively, in Phase 3. Tools 2-4 (schema batch-extractor, UUID/BLE-context reconstruction, limited dataflow) are **not built** — this session stopped at a clean tool-1 boundary per the prompt's own instruction, then spent its remaining room on real APK-RE work with tool 1 (Phase 3) rather than starting tool 2 half-finished. |
+| 1 | done | See the tool-by-tool sub-table below. **All 4 tools are now fully done: spec drafted, implemented, tested, and used for real** — the top-4 `reverse-engineering/tools/BACKLOG.md` priority list this prompt names is complete. Tool 1 (structural/XREF code index): 7/7 pytest, all 3 of `reverse-engineering/tools/structural_index/SPEC.md` §10's acceptance criteria passing against the real APK, used extensively in Phase 3. Tool 2 (protobuf/`RawMessageInfo` schema batch-extractor): 12/12 pytest, all 6 of `reverse-engineering/tools/schema_batch_extractor/SPEC.md` §10's acceptance criteria passing, used for real on all 12 of item H's "candidate rich schemas." Tool 3 (UUID/BLE-context reconstruction): 9/9 pytest, all 6 of `reverse-engineering/tools/uuid_ble_context/SPEC.md` §10's acceptance criteria passing, used for real to find 6 UUID-shaped literals (1 genuinely new). Tool 4 (limited dataflow analysis, built after this resumption's own mid-task rate-limit interruption and continuation): 10/10 pytest, covering every one of `reverse-engineering/tools/limited_dataflow/SPEC.md` §10's acceptance criteria (two of which were found mis-described against the real APK and corrected in place), used for real to confirm the already-known `esk` discriminator-19 `WriteSetting` chain and to trace a genuinely new candidate, `esk` discriminator 18. See this file's own Phase 1/Phase 3 continuation sections below for tools 2-4's full write-ups. |
 | 2 | done | `reverse-engineering/tools/BACKLOG.md`'s 2026-09-16 proposed-reordering blockquote updated from "proposal, awaiting sign-off" to "approved," citing this prompt (`ai-sessions/0025`) as the event, per `AI_SESSION_LOG_PROCEDURE.md` §4a. `APK_REVERSE_ENGINEERING_PROCEDURE.md`'s §4a and its Notes & Gotchas retry-strategy bullet checked — neither ever carried an explicit "proposal" tag in their own text (only `reverse-engineering/tools/BACKLOG.md`'s separate blockquote did), so a short adoption-confirmation note was added to each instead of a substantive rewrite, honestly reflecting that there was no textual flag to flip. `ai-sessions/0024_AUDIT_RESULT_2026_09_16.md`'s own `Status` field updated in place: tooling/workflow proposals (Phase 3/Phase 4 of that file) now recorded as adopted via this prompt; its Phase 1 code-level leads (`esk` discriminator 18/default-branch entries) explicitly carved out as still unreviewed by the maintainer, not swept into the same status. |
 | 3 | done (bounded) | Ran the zero-cost "free win" (`lambda_dispatcher_resolver resolve-all --class gag`, all 21 cases read, no sampling) and used the new structural-index tool on open items B, F, G, H, J from `ai-sessions/0024`'s Phase 2 inventory, plus a full manifest re-review (item L). See the findings summary below — item F and item J are resolved; item C is corrected (a prior misattribution walked back); items B, G, H are narrowed with new, concretely-cited leads; item L surfaced one genuinely new component (`BluetoothPriorityReceiver`). Item M (resource/string-table sweep) was **not** attempted this pass — out of room. Items A/D/E/K were correctly left alone (capture-only/live-check-only, per this prompt's own guardrails and `ai-sessions/0024`'s own classification). |
 | 4 | done (for everything Phase 3 produced) | Every Phase 3 finding, plus the two `ai-sessions/0024`-originated findings the prompt specifically named (the `esk` discriminator-18 "Feature A" write site and the default-branch `gcp`/`gcn` device_info DAO lead), checked against all five named documents. Results: `PROTOCOL.md` — 3 items updated with cross-reference pointers (Feature A's now-concrete write site; `qhr` field 6's now-found caller; the `gjv.p()`/`gag` OTA-trigger chain confirmed from the construction side, with the prior 7-day-staleness misattribution corrected); `MaestroEndpointService`'s open item updated with the `ofd`/`ofh`/`ofi`/`ofj` checked negative; a new open item added for `BluetoothPriorityReceiver`. `REVERSE_ENGINEERING.md` — internal self-consistency checks were the primary mechanism *producing* several Phase 3 findings themselves (F, J), not a separate afterward step; no contradiction found anywhere, only extensions/corrections of existing entries. `DESKRESEARCH_FINDINGS.md` — checked, no existing mention of any Phase 3 finding's subject matter (all code-level, no wire correlation exists yet to conflict with or corroborate). `CAP-NNN-FINDINGS.md` files that exist — checked via targeted `grep` for "Feature A"/`BluetoothPriority`/connection-priority terms across `captures/`; zero hits, confirming (not contradicting) `PROTOCOL.md`'s own existing note that no capture has wire-correlated "Feature A" yet. `TODO.md` — its Phase 2 `esk` entry updated to record item F's resolution and item B's narrowed status. **No contradiction found anywhere** — every cross-check was a match, an extension, or a genuine "no existing mention," never a conflict needing to be flagged and left unresolved. |
@@ -23,9 +28,240 @@
 | Tool (priority order) | Spec drafted | Implemented | Tested | Used for real | What it found when used |
 |---|---|---|---|---|---|
 | 1. General structural/XREF code index | ✅ `reverse-engineering/tools/structural_index/SPEC.md` | ✅ `reverse-engineering/tools/structural_index/src/structural_index/{cli,xref_index,models}.py`, reusing `lambda_dispatcher_resolver`'s own Layer 1 (`androguard_index.load_apk`) directly via a `sys.path` insertion, not re-implemented | ✅ 7/7 pytest (`tests/test_xref_index.py`), all 3 of `reverse-engineering/tools/structural_index/SPEC.md` §10's named acceptance criteria passing against the real, locally-decompiled APK: `esk`'s 21 construction sites, `giz.p()`'s sole caller (`ftw.a`, reproducing `ai-sessions/0023`'s finding from a structured query), and the `aie`-referenced-class zero-reference check | ✅ extensively — see Phase 3 below | Resolved item F (`gcp`/`gcn` = the same `device_info` DAO layer as `gcl`/`gck`/`eht`, not a distinct accessor) and item J (`gbb`/`gbc` have exactly one construction site each — nothing to generalize). Narrowed item B (`ofd`'s 3 implementations confirmed complete; 3 new field-holders `ofh`/`ofi`/`ofj` found and ruled out as the multibinding assembly site — a checked negative, not the answer). Found `qhr` field 6's own caller (item G) via the same abstract-interface-indirection technique that found `gjv.p()`'s caller. Confirmed all 12 of item H's candidate rich schemas have zero external construction sites, and found a nesting relationship among them (`nef` contains `ndi`/`nca`; `nhm` contains `nfh`) plus an unattributed field-holder naming cluster. |
-| 2. Protobuf/`RawMessageInfo` schema batch-extractor | ❌ not built | ❌ | ❌ | ❌ | — |
-| 3. UUID extraction + BLE/GATT context reconstruction | ❌ not built | ❌ | ❌ | ❌ | — |
-| 4. Limited dataflow analysis | ❌ not built | ❌ | ❌ | ❌ | — |
+| 2. Protobuf/`RawMessageInfo` schema batch-extractor | ✅ `reverse-engineering/tools/schema_batch_extractor/SPEC.md` | ✅ `src/schema_batch_extractor/{cli,batch_extract,models}.py`, reusing `scripts/decode_rawmessageinfo.py` directly via a `sys.path` insertion, not re-implemented or modified | ✅ 12/12 pytest (`tests/test_batch_extract.py`), all 6 of `SPEC.md` §10's named acceptance criteria passing against the real, locally-decompiled APK: `qhr`/`qjc`/`qja`/`nqx`/`qjb` reproduced exactly; whole-tree count = 807 candidates, 807 decoded, 0 unparsable (matching `REVERSE_ENGINEERING.md`'s independently-obtained count); the disclosed plain-`MESSAGE`-field limitation confirmed as a regression | ✅ — see this file's Phase 3 continuation below | Recovered full field-level schemas for all 12 of item H's "candidate rich schemas" (previously only header counts were known). New: `mtn`'s own field 12 (oneof) *is* `msw` — not two independent roots. New, previously-uncatalogued: `mtn` is itself held as a repeated field of 3 new classes (`mqm`/`mra`/`mqk`, the latter also referencing a 4th new class `mtg`); `qaj` is held by a new class `qak` and itself references a new class `qaz` (`qak` also references a 5th new class `qam`). `qar`'s one map field's default-entry descriptor is `qaq.a`. 7 genuinely new class leads surfaced, none traced further. |
+| 3. UUID extraction + BLE/GATT context reconstruction | ✅ `reverse-engineering/tools/uuid_ble_context/SPEC.md` | ✅ `src/uuid_ble_context/{cli,uuid_scan,models}.py`, reusing `structural_index`'s own `find_refs`/`load_apk` directly via a `sys.path` insertion, not re-implemented | ✅ 9/9 pytest (`tests/test_uuid_scan.py`), all 6 of `reverse-engineering/tools/uuid_ble_context/SPEC.md` §10's named acceptance criteria passing against the real, locally-decompiled APK: the 5 already-known register UUID literal forms reproduced exactly; whole-tree count = 6; the new non-Bluetooth find confirmed as a checked negative (2 occurrences, both `bt_api_cooccurrence: false`); `fzd`'s usage graph (`calls: 11`, `field_type_holders: 6`) matching a direct `structural_index refs --class fzd` run; the `fzd`/`gbm` (true) vs. `fqg` (false) co-occurrence discriminating pair; unknown-UUID hard error | ✅ — see this file's Phase 3 continuation below | Found exactly 6 distinct UUID-shaped literals in this APK version: the 5 already-registered forms (reconfirmed byte-for-byte), plus one genuinely new, non-Bluetooth find — an AndroidX WorkManager `Data`-serialization sentinel string, `95ed6082-b8e9-46e8-a73f-ff56f00f5d9d`, in `defpackage/ehs.java` (2 occurrences, both a checked negative). Also demonstrated a real-data limitation of the tool's own textual co-occurrence heuristic: `fqg.java` is genuinely Bluetooth-adjacent (it wires the RFCOMM UUID constant through) but shows `bt_api_cooccurrence: false`, since it never names a §3 BT API directly in its own file text — a disclosed, not silent, precision limit. |
+| 4. Limited dataflow analysis | ✅ `reverse-engineering/tools/limited_dataflow/SPEC.md` | ✅ `src/limited_dataflow/{cli,dataflow,models}.py`, reusing `lambda_dispatcher_resolver`'s own `analyze_class`/`smali_reader` directly via a `sys.path` insertion, not re-implemented | ✅ 10/10 pytest (`tests/test_dataflow.py`: 6 against the real APK + 4 synthetic fixtures that always run), covering every one of `reverse-engineering/tools/limited_dataflow/SPEC.md` §10's named acceptance criteria — two of which were found to be mis-described against the real APK and corrected in `reverse-engineering/tools/limited_dataflow/SPEC.md` itself in the process (see this file's Phase 1 continuation below) | ✅ — see this file's Phase 1 continuation below | Confirmed the primary regression fixture (`esk` discriminator 19's already-known `WriteSetting` chain: `cast`-to-`qjc` then `sink_use` into `Lfys;-><init>`, correctly never reaching `nqo.e(...)`) and the adversarial basic-block-boundary fixture (`v1` surviving to the next `:pswitch_1` label). Used on one genuinely new candidate, `esk` discriminator 18 (the "Feature A" write site): confirmed, mechanically, that the device-id-carrying register never moves before the branch's own `if-eqz` — the conditional write this document's `esk` entry already describes in prose is now confirmed at the bytecode level, one basic block away from where the value is first read. |
+
+### Resumption continued, 2026-09-16 (same date, later session) — tools 2-4
+
+This RESULT file's own header `Status` stayed `partial — resumed` after the first pass (tool 1 only).
+Per that pass's own "Where the next session should pick up" note (superseded by this continuation's
+own note at the end of this file), this resumption picked up at **Phase 1, tool 2** exactly as
+instructed, following `reverse-engineering/tools/structural_index/SPEC.md` as the template the same
+way it followed `reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md`.
+
+**Sub-continuation, 2026-09-17 — tool 4, after a mid-task Claude usage rate-limit interruption.**
+This same resumption reached tool 2 (built and used for real, below) and tool 3 (built and used for
+real, below) before being killed mid-task by a Claude usage rate limit while about to write tool 4's
+own `tests/` directory — `reverse-engineering/tools/limited_dataflow/SPEC.md`/`README.md`/`src/` already existed and looked substantial, but
+there was no `tests/` directory at all, so per this project's own tool-building discipline
+(`reverse-engineering/tools/BACKLOG.md`'s governance section: an untested tool is not trusted or used
+for real) tool 4 was not yet usable. A separate orchestrating session confirmed this exact on-disk
+state (tools 2/3 fully done including this file's own write-up for tool 2, only tool 3's own
+write-up below still missing, tool 4's tests missing) before continuing here. This sub-continuation
+writes tool 3's missing narrative (below), builds and validates tool 4's tests, uses tool 4 for real,
+and closes out this file's own remaining bookkeeping.
+
+**Phase 0 re-confirmation (per this resumption's own instructions):** APK version on disk still
+matches `reverse-engineering/APK_VERSIONS.md`'s only row (`v1.0.955078536-10253511`) — no drift.
+`lambda_dispatcher_resolver`'s own suite: 14/14 passed. `structural_index`'s own suite: 7/7 passed.
+Both confirmed green before building tool 2 on top of them (tool 2 does not actually depend on
+either — it reuses `scripts/decode_rawmessageinfo.py` instead — but both were re-run anyway per this
+resumption's own explicit Phase 0 instruction).
+
+**Tool 2 — protobuf/`RawMessageInfo` schema batch-extractor.** Built per
+`reverse-engineering/tools/schema_batch_extractor/SPEC.md` (template:
+`reverse-engineering/tools/structural_index/SPEC.md`). Generalizes
+`scripts/decode_rawmessageinfo.py` (imported directly via a `sys.path` insertion to the repo-root
+`scripts/` directory, not modified or reimplemented) into a `scan`/`refs` CLI: `scan` walks the whole
+`jadx-output/sources/` tree (12,545 files, a cheap `"new naa(" in text` substring pre-filter before
+the real per-file parse — full scan runs in well under a second), decodes every matching class's
+full field-level schema, and builds a register; `refs` derives, from the register's own forward
+`message_refs`, which other classes' schemas reference a given class via a oneof/repeated-list/map
+field — a schema-string-level reference query, genuinely complementary to (not a duplicate of)
+`structural_index`'s own bytecode field-descriptor query, with one disclosed, tested limitation:
+protobuf-lite's own compact schema string carries no class reference at all for a *plain* singular
+`MESSAGE`/`GROUP` field (only for oneof/list/map shapes) — so `refs` cannot recover, e.g., that `nef`
+holds `ndi` as a plain field (that finding still requires `structural_index refs --class ndi`, as
+`ai-sessions/0025`'s first pass already established). This limitation is disclosed in `SPEC.md` §3/§9
+and covered by its own regression test (`TestDisclosedLimitation`) rather than being a silent gap.
+
+**Test results**: `.venv/bin/python3 -m pytest tests/ -v` → 12 passed, 0 failed, on the very first
+run against the real APK — no test needed adjustment after seeing real data, since every expected
+value was independently derived first by running `scripts/decode_rawmessageinfo.py` directly against
+`qhr.java`/`qjc.java`/`qja.java`/`nqx.java`/`qjb.java` before any test was written (the exact byte-for-byte
+outputs are quoted in `SPEC.md` §10). All 6 of `SPEC.md` §10's acceptance criteria pass:
+
+1. `qhr`: 38 fields, 1 oneof, range [1,38], `message_refs` = `[qju, qht, qjw, qhq, qiq, qjf, qis]`.
+2. `qjc`/`qja`: both 5 fields, 1 oneof, `message_refs` = `[qhx, qjn, qjt, qhr, qjv]`.
+3. `nqx`: 7 fields, 0 oneofs, no message refs at all — `refs --class nqx` returns empty.
+4. `qjb`: 4 fields, 1 oneof, sparse range [3,6].
+5. Whole-tree: 807 candidates, 807 decoded, 0 unparsable — matches
+   `REVERSE_ENGINEERING.md`'s own independently-obtained header-only-sweep count exactly.
+6. Disclosed-limitation regression: `refs --class ndi` returns `[]` despite `nef` genuinely holding
+   `ndi` as a plain field — confirmed as the documented, correct behavior, not a bug.
+
+**Governance**: mechanical assistance only — confirmed by reading `batch_extract.py`/`cli.py` in
+full: no write path to `REVERSE_ENGINEERING.md`/`PROTOCOL.md`/`DECISIONS.md`/any
+`CAP-NNN-FINDINGS.md` exists anywhere in the tool. `git add -n reverse-engineering/tools/schema_batch_extractor/`
+confirms only `SPEC.md`/`README.md`/`pyproject.toml`/`src/`/`tests/` would be staged — `.venv/`/caches
+are ignored by the existing `.gitignore` glob (`reverse-engineering/tools/*/.venv/`) without any
+change needed. `TODO.md`'s Phase 2 section and `reverse-engineering/tools/BACKLOG.md`'s own entry
+(plus its 2026-09-16 re-ordering blockquote) both updated to record the tool as implemented.
+
+**Used for real, on Phase 3 item H (the 12 candidate rich schemas)**:
+`schema-batch-extractor scan --class nhm --class nef --class qaa --class ndi --class mtn --class nca
+--class gdw --class nfh --class msw --class qaj --class qbu --class qar` recovered full field-level
+schemas for all 12 (previously only header counts — field/oneof/map counts — were known, from a
+one-off, uncommitted header-only script). Running `refs` against each of the 12 in turn found:
+
+- **`msw`'s sole incoming schema reference is `mtn`, field 12, context `oneof`** — i.e. `mtn`'s own
+  field 12 *is* the `msw` alternative. This narrows the 12-candidate "independent roots" count by one
+  more (after the already-known `nef`⊃`ndi`/`nca` and `nhm`⊃`nfh` nestings from `structural_index`'s
+  first pass), via a different, complementary data source (the schema string's own oneof encoding,
+  not a bytecode field-descriptor scan).
+- **`mtn` is itself held as a repeated (`MESSAGE_LIST`) field of three small, previously-uncatalogued
+  protobuf message classes**: `mqm` (2 fields, its field 5), `mra` (1 field, its field 1), `mqk`
+  (4 fields, its field 7). `mqk` additionally references a fourth new class, `mtg`, on one of its own
+  fields — not traced further. None of `mqm`/`mra`/`mqk` has any incoming schema reference of its own
+  (`refs` on each returns empty) — the chain terminates here, via this data source.
+- **`qaj` is itself held as a repeated field of a new class, `qak`** (2 fields, its field 1); `qaj`'s
+  own field 29 (oneof) references a fifth new class, `qaz`; `qak` also references a sixth new class,
+  `qam`. Neither `qak`/`qaz`/`qam` traced further.
+- **`qar`'s field 16 is a `MAP` field whose default-entry descriptor is `qaq.a`** (a nested class) —
+  the only one of the 12 with a map field, matching the original header-only sweep's own note.
+- **`nhm`/`nef`/`qaa`/`ndi`/`nca`/`gdw`/`nfh`/`qbu` show zero incoming schema-level references** —
+  consistent with (not contradicting) `structural_index`'s own bytecode-level "zero construction
+  sites" finding for the same 12, since these are two different query shapes over two different data
+  sources (this one cannot see plain-field references at all, per its own disclosed limitation).
+
+7 genuinely new class leads surfaced (`mqm`/`mra`/`mqk`/`mtg`/`qak`/`qaz`/`qam`) — none catalogued
+anywhere in `REVERSE_ENGINEERING.md` before this pass (`grep -n` for each returned zero hits before
+this session's own edit), none traced further this pass, per this prompt's own "don't chase every
+tangent to full depth" instruction. Recorded in `REVERSE_ENGINEERING.md`'s "Candidate rich schemas"
+section as a new dated update, 🟢 FACT for code existence/structure (mechanical, tested decode),
+explicitly not any protocol-behavior claim.
+
+**Tool 3 — UUID extraction + BLE/GATT context reconstruction.** Built per
+`reverse-engineering/tools/uuid_ble_context/SPEC.md` (template:
+`reverse-engineering/tools/schema_batch_extractor/SPEC.md`, the way that tool followed
+`reverse-engineering/tools/structural_index/SPEC.md`). Runs a genuinely unseeded, blind regex sweep
+of the whole `jadx-output/sources/` tree for every UUID-shaped literal (`extract`), tags each
+occurrence's own source file with a textual BLE/GATT/RFCOMM-API co-occurrence signal (a fixed name
+list — `android.bluetooth.*`/`BluetoothGatt`/`BluetoothDevice`/`UUID.fromString`/etc., never a call-
+graph trace), and reuses `structural_index`'s own `find_refs`/`load_apk` directly (a two-hop reuse
+chain down to `lambda_dispatcher_resolver`'s Layer 1, imported via a `sys.path` insertion, not
+re-implemented) for the "usage location" half (`context`).
+
+**Test results**: `.venv/bin/python3 -m pytest tests/ -v` → 9 passed, 0 failed, against the real APK.
+All 6 of `reverse-engineering/tools/uuid_ble_context/SPEC.md` §10's acceptance criteria pass:
+
+1. `extract` reproduces the 5 already-known register UUIDs' literal forms exactly
+   (`25e97ff7-24ce-4c4c-8951-f764a708f7b5`, `099775cb-7e0d-3465-5576-d2246d6f043a`,
+   `3a046f6d-24d2-7655-6534-0d7ecb759709`, `b5f708a7-64f7-5189-4c4c-ce24f77fe925`,
+   `00001124-0000-1000-8000-00805f9b34fb`).
+2. Whole-tree count: `total_uuids_found: 6` — the 5 above plus the one genuinely new find.
+3. The new, non-Bluetooth find is a confirmed checked negative: `context --uuid
+   95ed6082-b8e9-46e8-a73f-ff56f00f5d9d` returns exactly two occurrences, both in
+   `defpackage/ehs.java`, both `bt_api_cooccurrence: false`.
+4. `fzd`'s own usage graph matches a direct `structural_index refs --class fzd` run exactly
+   (`calls: 11`, `field_type_holders: 6`).
+5. The real discriminating co-occurrence pair: `fzd.java`/`gbm.java` both show
+   `bt_api_cooccurrence: true`; `fqg.java` — genuinely Bluetooth-adjacent (it wires the same RFCOMM
+   UUID constant through) but never naming a BT API directly in its own file text — shows `false`,
+   demonstrating the heuristic's own disclosed textual-not-semantic precision limit.
+6. Unknown UUID in `context` is a hard, non-zero-exit error.
+
+**Governance**: mechanical assistance only — confirmed by reading `uuid_scan.py`/`cli.py` in full:
+no write path to `REVERSE_ENGINEERING.md`/`PROTOCOL.md`/`DECISIONS.md`/any `CAP-NNN-FINDINGS.md`
+exists anywhere in the tool. `git add -n reverse-engineering/tools/uuid_ble_context/` confirms only
+`reverse-engineering/tools/uuid_ble_context/SPEC.md`/`README.md`/`pyproject.toml`/`src/`/`tests/` would be staged — `.venv/`/caches are ignored
+by the existing `.gitignore` glob. `TODO.md`'s Phase 2 section and
+`reverse-engineering/tools/BACKLOG.md`'s own entry both updated to record the tool as implemented.
+
+**Used for real, on the whole-tree UUID sweep**: `uuid-ble-context extract --apk-root ...` found
+exactly 6 distinct UUID-shaped literals in this APK version — the 5 already-registered forms
+(reconfirmed byte-for-byte against `REVERSE_ENGINEERING.md`'s own UUID register), plus one
+genuinely new, non-Bluetooth find: `95ed6082-b8e9-46e8-a73f-ff56f00f5d9d`, an AndroidX WorkManager
+`Data`-serialization internal sentinel string, appearing exactly twice (a read-side and a write-side
+use) in `defpackage/ehs.java` — a checked negative, genuinely examined and confirmed not
+Bluetooth-relevant, not silently skipped. `context --uuid 25e97ff7-...` additionally surfaced a
+real, disclosed limitation of the co-occurrence heuristic itself: `fqg.java` (the already-known
+`gbb`/`gbc` construction-wiring class) is genuinely Bluetooth-adjacent but shows
+`bt_api_cooccurrence: false`, since it wires the UUID constant through without ever naming a BT API
+directly in its own file text — a real-data demonstration of a textual (not semantic) check's own
+disclosed boundary, not a bug. Recorded in `REVERSE_ENGINEERING.md`'s UUID register as a new dated
+update, 🟢 FACT for code existence/structure, explicitly not any protocol-behavior claim.
+
+**Tool 4 — limited dataflow analysis.** Built per `reverse-engineering/tools/limited_dataflow/SPEC.md`
+(template: `reverse-engineering/tools/uuid_ble_context/SPEC.md`, the way that tool followed
+`reverse-engineering/tools/schema_batch_extractor/SPEC.md`), exactly the risk-bounded scope
+`reverse-engineering/tools/BACKLOG.md`'s own text for this idea already prescribed ("scope the first
+version to straight-line, single-basic-block flows only"). Traces one register forward, instruction
+by instruction, through a resolved dispatcher branch (`trace-branch`) or a plain method body
+(`trace-method`) — reusing `lambda_dispatcher_resolver`'s own `analyze_class`/`smali_reader`
+directly via a `sys.path` insertion, not re-implemented — recognizing exactly four shapes: alias
+(`move-object`), cast (`check-cast`), sink use (appearing as an `invoke-*` argument), and a
+basic-block boundary (label/`goto`/`if-*`/`packed-switch`/`sparse-switch`). Anything else that names
+the traced register is an explicit stop (`ambiguous_redefinition`), never a guess.
+
+**`reverse-engineering/tools/limited_dataflow/SPEC.md`'s own tests/ directory did not exist yet when this sub-continuation began** — `reverse-engineering/tools/limited_dataflow/SPEC.md`
+(282 lines) and `README.md` (66 lines) were already substantial, and `src/limited_dataflow/{cli.py,
+dataflow.py, models.py}` were already fully implemented, but the prior pass was interrupted (Claude
+usage rate limit) before writing `tests/test_dataflow.py`. This sub-continuation wrote that test
+file, running the tool against the real APK first to independently derive every expected value
+before writing the matching assertion — the same discipline `schema_batch_extractor`'s own test
+file used.
+
+**Two of `reverse-engineering/tools/limited_dataflow/SPEC.md` §10's own acceptance-criteria *descriptions* were found wrong against the real
+APK while doing this, and corrected in `reverse-engineering/tools/limited_dataflow/SPEC.md` itself rather than weakened into a test that just
+asserts whatever the code happens to output:**
+
+1. Item 1 (the primary `esk` discriminator-19 fixture) claimed `final_status:
+   "reached_end_of_block"` for the `v0` trace. The real tool, run against the real APK, produces
+   `"ambiguous_redefinition"` instead: after the documented `cast`-to-`qjc` step (line 333) and
+   `sink_use` into `Lfys;-><init>` (line 337), the *same* `v0` register slot is legitimately reused
+   later in the same branch by `const-wide/16 v0, 0x5` (line 386 — the RPC send's own 5-second
+   timeout setup) — a real, unrelated redefinition, correctly caught by `reverse-engineering/tools/limited_dataflow/SPEC.md` §3's own row "-"
+   guardrail. The tool's behavior is correct per its own rules; only the SPEC's *stated expected
+   outcome* was wrong. Corrected in `reverse-engineering/tools/limited_dataflow/SPEC.md` §6/§10 with the real line numbers and outcome.
+2. Item 2 (the adversarial basic-block-boundary fixture) named `p1` as the register to trace. Against
+   the real APK, `p1` never reaches a label/branch boundary at all — it is reassigned by
+   `move-result-object p1` (line 347, well before any label), itself a correct but *different* stop
+   (`ambiguous_redefinition`), not the `left_basic_block_scope` outcome this item means to exercise.
+   `v1` — defined by the branch's own `new-instance v1, Lfys;` at line 329, the very wrapper object
+   item 1's `sink_use` step constructs — survives unredefined all the way to the next `:pswitch_1`
+   label at line 442. Corrected in `reverse-engineering/tools/limited_dataflow/SPEC.md` §10 to name `v1`, with the reasoning spelled out.
+
+**Test results**: `.venv/bin/python3 -m pytest tests/ -v` → **10 passed, 0 failed**, against the real
+APK, on the first run after the two corrections above (every expected value was independently
+verified by running the CLI directly against the real APK before being written into a test
+assertion). 6 cases exercise the real APK (skip gracefully if absent); 4 are synthetic, hand-written
+smali-line fixtures (per `reverse-engineering/tools/limited_dataflow/SPEC.md` §10 item 3's own framing — not decompiled APK content) that
+always run regardless:
+
+1. `trace-branch --class esk --discriminator 19`, `v0` from line 325: `cast`→`qjc` (333), `sink_use`
+   into `Lfys;-><init>` (337, `arg_position: 1`), never reaching `nqo`/`e`, then
+   `ambiguous_redefinition` at line 386 (see correction 1 above).
+2. `trace-method --class esk --method a`, `v1` from line 329: three `sink_use` steps (337, 342, 394),
+   `left_basic_block_scope` at line 442's `:pswitch_1` (see correction 2 above).
+3. Out-of-range `--start-line` and a start-line/register mismatch both raise `ValueError` with the
+   exact expected message, at both the `dataflow` function level and the `cli` exit-code level.
+4. Synthetic fixtures: an `ambiguous_redefinition` with zero prior steps; the three alias-preserving
+   shapes chained together reaching `reached_end_of_block`; `left_basic_block_scope` on both a label
+   and a `goto`.
+
+**Governance**: mechanical assistance only — confirmed by reading `dataflow.py`/`cli.py` in full: no
+write path to `REVERSE_ENGINEERING.md`/`PROTOCOL.md`/`DECISIONS.md`/any `CAP-NNN-FINDINGS.md` exists
+anywhere in the tool; every sink use is recorded as a bare mechanical fact (register, line, called
+class/method), never a relevance judgment. `git add -n reverse-engineering/tools/limited_dataflow/`
+confirms only `reverse-engineering/tools/limited_dataflow/SPEC.md`/`README.md`/`pyproject.toml`/`src/`/`tests/` would be staged — `.venv/`/caches
+are ignored by the existing `.gitignore` glob. `TODO.md`'s Phase 2 section and
+`reverse-engineering/tools/BACKLOG.md`'s own entry both updated to record the tool as implemented.
+
+**Used for real, on both the regression fixture and one genuinely new candidate**: beyond the two
+test fixtures above (which are themselves real, "used for real" confirmations against the real
+APK, not synthetic), `trace-branch --class esk --discriminator 18 --start-line 459
+--start-register p0` was run against `esk`'s discriminator 18 (the "Feature A" write site,
+`REVERSE_ENGINEERING.md`'s `esk` entry, a lead `ai-sessions/0024` surfaced but did not dataflow-trace)
+— result: `steps: []`, `final_status: "left_basic_block_scope"`, `stop_line: 463`, `stop_text:
+"if-eqz p1, :cond_0"`. This mechanically confirms, at the bytecode level, what this document's own
+prose already said in words: the device-id-carrying value (`esk.b`) never moves before the branch's
+own boolean-flag check, one basic block away from where it is first read — the conditional "Feature
+A" write happens (if at all) strictly inside that `if`-branch, out of this v1 tool's own disclosed
+single-basic-block scope. This narrows nothing new about *what* discriminator 18 does (already
+documented) — it is a mechanical cross-check using a new tool, recorded as such in
+`REVERSE_ENGINEERING.md`'s `esk` entry, not a new lead.
 
 ## Mandatory reading order — completed this session
 
@@ -102,9 +338,16 @@ anywhere — `git add -n`/`git status --ignored` confirm only `reverse-engineeri
 entry both updated to record the tool as implemented, with pointers to its `reverse-engineering/tools/structural_index/SPEC.md`/`README.md`.
 
 Tools 2-4 (schema batch-extractor, UUID/BLE-context reconstruction, limited dataflow) were **not**
-built this session — this is the clean tool-boundary stopping point the prompt itself names as
+built in this first pass — that was the clean tool-boundary stopping point the prompt itself names as
 acceptable, chosen deliberately over starting tool 2 and leaving it half-finished, in favor of
-spending the remaining room using tool 1 for real work (Phase 3).
+spending the remaining room using tool 1 for real work (Phase 3). **Superseded, 2026-09-17**: all
+three were subsequently built across this file's own "Resumption continued" section below (tool 2)
+and its "Sub-continuation, 2026-09-17" section (tools 3-4, after an intervening rate-limit
+interruption) — see the Phase status table and Phase 1 tool sub-table at the top of this file for the
+current, accurate state, and the "Final summary for the maintainer" section below for the up-to-date
+conclusion. This paragraph is left in place, corrected rather than deleted, as the historical record
+of the first pass's own reasoning, per `PROJECT_RULES.md` §3 rule 9a's non-destructive-update
+convention.
 
 ## Phase 2 — Workflow adoption
 
@@ -295,12 +538,20 @@ documents' existing claims needing to be flagged and left for the maintainer.
 
 ### Final summary for the maintainer
 
-**1. Which of the top-4 tools were implemented, and to what state?** Only tool 1 (general
-structural/XREF code index) — fully implemented, tested (7/7 pytest, all 3 named acceptance
-criteria passing against the real APK), and used extensively for real work this same session. Tools
-2-4 (schema batch-extractor, UUID/BLE-context reconstruction, limited dataflow) are **not built** —
-a deliberate stopping point at a clean tool boundary, per this prompt's own instruction, in favor of
-spending the remaining session on real findings with tool 1 rather than a half-built tool 2.
+**1. Which of the top-4 tools were implemented, and to what state?** **Updated, 2026-09-17 (this
+point was stale from the first pass — corrected here rather than left standing, per `PROJECT_RULES.md`
+§3 rule 9a): all 4 tools are now fully implemented, tested against the real APK, and used for real.**
+Tool 1 (structural/XREF code index): 7/7 pytest, all 3 named acceptance criteria. Tool 2 (protobuf
+schema batch-extractor): 12/12 pytest, all 6 named acceptance criteria, used on all 12 of item H's
+candidate rich schemas. Tool 3 (UUID/BLE-context reconstruction): 9/9 pytest, all 6 named acceptance
+criteria, used for real — found 6 UUID-shaped literals (the 5 already-registered, reconfirmed, plus
+one genuinely new non-Bluetooth find, an AndroidX WorkManager sentinel string in `ehs.java`). Tool 4
+(limited dataflow analysis): 10/10 pytest, used to reproduce the hand-traced `esk` discriminator 19 →
+`WriteSetting` chain as its regression fixture, then on discriminator 18 (the "Feature A" write),
+mechanically confirming its conditional write sits one basic block past the tool's own disclosed
+single-basic-block scope. See this file's own "Phase 1 tool-by-tool status" table and each tool's
+narrative section (the original Phase 1 section above, the "Resumption continued" section, and the
+"Sub-continuation, 2026-09-17" section) for full detail.
 
 **2. Were the workflow recommendations adopted?** Yes, for the tooling-priority and workflow-process
 scope this prompt's own authorization covers: `reverse-engineering/tools/BACKLOG.md`'s re-ordering
@@ -310,18 +561,27 @@ substantive rewrite, since neither ever carried an explicit "proposal" tag to be
 finding, not an assumed one); `ai-sessions/0024`'s own `Status` field updated to reflect this,
 explicitly not extending to its still-open Phase 1 code-level leads.
 
-**3. What did the tools find when used for real APK-RE work?** Substantial findings across 7 of
-`ai-sessions/0024`'s 13 open items (see Phase 3 above for the full detail): item F and item J are
-**resolved** (the `device_info` DAO relationship; `gbb`/`gbc`'s single construction path); item C's
-prior "~7-day staleness gate" reading is **corrected** (it belonged to an unrelated feature, not the
-`GetSoftwareInfo` trigger chain, whose real construction site — `gjy.java:38` — is now found and
-confirms an OTA-apply-completion trigger); items B, G, and H are **narrowed** with new, concretely
-cited leads (a checked-negative gRPC-transport-builder dead end; `qhr` field 6's caller; the 12
-candidate schemas' nesting relationships and an unattributed naming cluster); item L surfaced one
-genuinely new component, `BluetoothPriorityReceiver`. Item M was not attempted (out of room). Every
-finding is labeled 🟢 FACT (mechanical code facts) or 🟡 HYPOTHESIS/🔴 OPEN QUESTION (anything
-interpretive), per `PROJECT_RULES.md` §1 — nothing here is a protocol-behavior claim, so none of it
-needed or received a `PROTOCOL.md` 🟢 FACT promotion or a `DECISIONS.md` ADR.
+**3. What did the tools find when used for real APK-RE work?** **Updated, 2026-09-17 — the tool-1
+findings below are unchanged from the first pass; tools 2-4's own findings are added.** Substantial
+findings across 7 of `ai-sessions/0024`'s 13 open items (see Phase 3 above for the full detail): item
+F and item J are **resolved** (the `device_info` DAO relationship; `gbb`/`gbc`'s single construction
+path); item C's prior "~7-day staleness gate" reading is **corrected** (it belonged to an unrelated
+feature, not the `GetSoftwareInfo` trigger chain, whose real construction site — `gjy.java:38` — is
+now found and confirms an OTA-apply-completion trigger); items B, G, and H are **narrowed** with new,
+concretely cited leads (a checked-negative gRPC-transport-builder dead end; `qhr` field 6's caller;
+the 12 candidate schemas' nesting relationships and an unattributed naming cluster); item L surfaced
+one genuinely new component, `BluetoothPriorityReceiver`. Item M was not attempted (out of room).
+**Tool 2** additionally recovered full field-level schemas for all 12 of item H's candidate rich
+schemas and surfaced 7 genuinely new, previously-uncatalogued class leads (`mqm`/`mra`/`mqk`/`mtg`/
+`qak`/`qaz`/`qam`), none traced further. **Tool 3** found one genuinely new UUID-shaped literal (an
+AndroidX WorkManager sentinel, non-Bluetooth) alongside reconfirming the 5 already-known ones, and
+demonstrated a disclosed real-data limitation of its own co-occurrence heuristic (a false negative on
+`fqg.java`). **Tool 4** mechanically confirmed the `esk` discriminator-19 chain matches the existing
+hand-trace, and traced discriminator 18 (the "Feature A" write) to show its conditional write sits one
+basic block past the tool's own disclosed scope. Every finding is labeled 🟢 FACT (mechanical code
+facts) or 🟡 HYPOTHESIS/🔴 OPEN QUESTION (anything interpretive), per `PROJECT_RULES.md` §1 — nothing
+here is a protocol-behavior claim, so none of it needed or received a `PROTOCOL.md` 🟢 FACT promotion
+or a `DECISIONS.md` ADR.
 
 **4. What did cross-referencing against the five documents find?** No contradictions anywhere.
 `PROTOCOL.md` gained 3 updated open items and 1 new one (all cross-reference pointers, not FACT
@@ -337,61 +597,96 @@ pre-existing was touched. The new tool's git-tracking boundary is correct (sourc
 `.venv`/caches ignored). `id_registry.csv` needed no new entries (confirmed, not assumed).
 `ai-sessions/INDEX.md` now matches both `RESULT` files' own `Status` fields.
 
-**6. Full list of documents updated, and what changed in each:**
+**6. Full list of documents updated, and what changed in each:** **Updated, 2026-09-17 — the tool-1
+entries below are unchanged from the first pass; tools 2-4's own new/untracked directories and the
+further doc edits from the resumption and sub-continuation are added.**
 
-- `reverse-engineering/tools/structural_index/` (new) — `reverse-engineering/tools/structural_index/SPEC.md`, `README.md`, `pyproject.toml`,
+- `reverse-engineering/tools/structural_index/` (new) — own SPEC.md, README.md, pyproject.toml,
   `src/structural_index/{__init__,cli,xref_index,models}.py`, `tests/{__init__,test_xref_index}.py`.
-  The new tool (Phase 1).
-- `.gitignore` — generalized the tool-glob comment (already covered the new tool by wildcard; only
+  Tool 1 (first pass).
+- `reverse-engineering/tools/schema_batch_extractor/` (new) — own SPEC.md, README.md,
+  pyproject.toml, `src/schema_batch_extractor/{__init__,cli,batch_extract,models}.py`,
+  `tests/{__init__,test_batch_extract}.py`. Tool 2 (resumption).
+- `reverse-engineering/tools/uuid_ble_context/` (new) — own SPEC.md, README.md, pyproject.toml,
+  `src/uuid_ble_context/{__init__,cli,uuid_scan,models}.py`, `tests/{__init__,test_uuid_scan}.py`.
+  Tool 3 (sub-continuation).
+- `reverse-engineering/tools/limited_dataflow/` (new) — own SPEC.md (corrected in place: two of §10's
+  own named acceptance criteria were mis-described against the real APK and fixed, with dated
+  correction notes), README.md, pyproject.toml,
+  `src/limited_dataflow/{__init__,cli,dataflow,models}.py`, `tests/{__init__,test_dataflow}.py`. Tool
+  4 (sub-continuation, after the mid-task rate-limit interruption).
+- `.gitignore` — generalized the tool-glob comment (already covered every new tool by wildcard; only
   the comment text changed).
-- `reverse-engineering/tools/BACKLOG.md` — the structural-index idea marked "Implemented
-  2026-09-16," pointing at its `reverse-engineering/tools/structural_index/SPEC.md`/`README.md`; the 2026-09-16 re-ordering blockquote's
-  framing changed from proposed to approved, citing this prompt.
+- `reverse-engineering/tools/BACKLOG.md` — all 4 tool ideas marked "Implemented," each pointing at its
+  own SPEC.md/README.md; the 2026-09-16 re-ordering blockquote's framing changed from proposed to
+  approved, citing this prompt; a further dated note added once tools 2/3 (resumption) and tool 4
+  (sub-continuation) were built.
 - `APK_REVERSE_ENGINEERING_PROCEDURE.md` — §4a's heading and the Notes & Gotchas retry-strategy
   bullet each got a short "adoption confirmed" note citing this session's own real re-use of both.
 - `ai-sessions/0024_AUDIT_RESULT_2026_09_16.md` — `Status` field updated in place (tooling/workflow
   proposals adopted via this prompt; Phase 1 code-level leads explicitly carved out as still
   unreviewed).
-- `ai-sessions/INDEX.md` — rows for `0024` (new status summary) and `0025` (this file, `partial —
-  resumed`) updated.
-- `REVERSE_ENGINEERING.md` — 6 new/updated entries: the `gbb`/`gbc` "Open questions (remaining)"
-  item (resolved, item J); the `esk` entry (`gcp`/`gcn` vs. `gcl`/`gck`/`eht` resolved, item F); the
-  `frb`/`fuh`/`glk`/`gjv` entry (the `gag` `resolve-all` pass, correcting the 7-day-staleness
-  misattribution and confirming the OTA trigger from the construction side, item C); the
-  `MaestroEndpointService` entry (`ofd`/`ofh`/`ofi`/`ofj` checked negative, item B); the `qhr` entry
-  (field 6's caller found, item G); the "Candidate rich schemas" section (all 12 confirmed
-  zero-external-reference, nesting relationships found, item H); a new `BluetoothPriorityReceiver`
-  entry (item L).
-- `PROTOCOL.md` — §6 updated in 4 places: the "Feature A" case-2104/2115 item (concrete write-site
-  citation added); the field-6 register note (caller found); the `gjv.p()`/connect-time-burst item
-  (confirmed from the trigger side, prior misattribution corrected); the `MaestroEndpointService`
-  open item (checked negative added); one new open item added (`BluetoothPriorityReceiver`).
+- `ai-sessions/INDEX.md` — rows for `0024` and `0025` kept in sync with each `RESULT` file's own
+  `Status` field across every resumption.
+- `REVERSE_ENGINEERING.md` — the 7 entries the first pass added/updated (`gbb`/`gbc` resolved, item J;
+  the `esk` entry's `gcp`/`gcn` resolution, item F; the `gag`/`gjv` OTA-trigger correction, item C;
+  `MaestroEndpointService`'s checked negative, item B; `qhr` field 6's caller, item G; the "Candidate
+  rich schemas" nesting, item H; the new `BluetoothPriorityReceiver` entry, item L), **plus**: the
+  "Candidate rich schemas" section's own 12 full field-level schemas and 7 new class leads (tool 2);
+  the UUID register's 2026-09-16 update (tool 3's new find); the `esk` entry's dated update recording
+  both dataflow-trace confirmations, labeled 🟢 FACT (mechanical), explicitly no `PROTOCOL.md` claim
+  (tool 4).
+- `PROTOCOL.md` — §6 updated in 4 places by the first pass (Feature A's write-site citation; the
+  field-6 register note; the `gjv.p()`/connect-time-burst trigger correction; `MaestroEndpointService`'s
+  checked negative; the new `BluetoothPriorityReceiver` open item) — unchanged by tools 2-4's own
+  findings, which stayed code-level-only with no corresponding `PROTOCOL.md` entry to update.
 - `TODO.md` — Phase 2's `esk`/`lambda_dispatcher_resolver` entry updated (item F resolution, item B
-  narrowed status); a new entry added recording the structural-index tool itself.
-- `ai-sessions/0025_MAINTENANCE_RESULT_2026_09_16.md` (this file) — created and progressively
-  updated throughout the session.
+  narrowed status) by the first pass; a bullet added for each of tools 1-4 as it was built, mirroring
+  the `lambda_dispatcher_resolver` entry's own pattern.
+- `ai-sessions/0025_MAINTENANCE_RESULT_2026_09_16.md` (this file) — created by the first pass,
+  progressively appended to by the resumption (tool 2) and the sub-continuation (tools 3-4), and
+  corrected in place on 2026-09-17 (this edit) to fold this section and the original Phase 1 section's
+  closing paragraph back in line with the rest of the file, per `PROJECT_RULES.md` §3 rule 9a.
 
 ## What remains uncommitted
 
 Everything listed above is uncommitted — no `git commit` or `git push` was run at any point this
-session, per this prompt's own explicit instruction that session bookkeeping is manual. `git status`
-at the end of this session shows every file in the list above as modified or untracked, plus the
-new `reverse-engineering/tools/structural_index/` directory (source only — its own `.venv/`/caches
-are gitignored and were never staged).
+session (including the 2026-09-17 sub-continuation), per this prompt's own explicit instruction that
+session bookkeeping is manual. `git status` at the end of the sub-continuation shows every file in
+the list above as modified, plus the new `reverse-engineering/tools/structural_index/`,
+`reverse-engineering/tools/schema_batch_extractor/`, `reverse-engineering/tools/uuid_ble_context/`,
+and `reverse-engineering/tools/limited_dataflow/` directories as untracked (source and tests only —
+each tool's own `.venv/`/caches are gitignored and were never staged), plus this file and
+`REVERSE_ENGINEERING.md`/`TODO.md`/`reverse-engineering/tools/BACKLOG.md`/`ai-sessions/INDEX.md`
+modified for tool 4's own write-up and findings.
 
 ## Where the next session should pick up
 
-Resume at **Phase 1, tool 2** (protobuf/`RawMessageInfo` schema batch-extractor) — the next item in
-priority order, following `reverse-engineering/tools/structural_index/SPEC.md` as the template the
-same way it followed `reverse-engineering/tools/lambda_dispatcher_resolver/SPEC.md`. Once tools 2-4 exist (or a decision is
-made to stop building tools and just keep using tool 1), the remaining real-APK-RE work still open
-from this session's own Phase 3 is: item M (resource/string-table sweep, cheap, not yet attempted);
-item B's actual multibinding-assembly site (would benefit from tool 1's own deferred
+**Superseded by the 2026-09-17 sub-continuation above — this note originally said "resume at Phase
+1, tool 2." That is stale: all 4 of the top-4 `reverse-engineering/tools/BACKLOG.md` tools (structural
+code index, schema batch-extractor, UUID/BLE-context reconstruction, limited dataflow) are now
+built, tested against the real APK, and used for real — see the Phase 1 tool-by-tool sub-table and
+each tool's own narrative section above.** No further tool-building is needed unless the maintainer
+wants one of the three remaining, independently-useful `reverse-engineering/tools/BACKLOG.md` items
+(none of which any of tools 1-4 depend on): the wire-payload-vs-schema auto-decoder, the APK
+version-diff tool, or the tshark/DLCI-reassignment helper library.
+
+Real-APK-RE work still open, unrelated to tool-building, carried over unchanged from the first
+pass's own Phase 3 (not touched by this sub-continuation, which only closed out tools 3-4's own
+bookkeeping and used tool 4 on one new candidate): item M (resource/string-table sweep, cheap, not
+yet attempted); item B's actual multibinding-assembly site (would benefit from tool 1's own deferred
 `implements`-query capability); item H's unattributed field-holder naming cluster
 (`kii`/`koq`/`pzr`/`jau`/`msc`/`jaj`/`jjn`/`jjx`/`jkl`/`jsg`/`kip`/`kiq`/`kob`/`kol`/`qan`/`fwe`/
-`nbm`) — tracing even one of these classes' own purpose would be a natural next step; and
-`BluetoothPriorityReceiver`'s own trigger/effect (item L's new finding), which is capture-territory,
-not further static analysis, if pursued.
+`nbm`) — tracing even one of these classes' own purpose would be a natural next step; the 7 new
+class leads tools 2/4 surfaced (`mqm`/`mra`/`mqk`/`mtg`/`qak`/`qaz`/`qam`, and `esk` discriminator
+18's own `Lffd;->f(String,Z)Lmbo;` callee, still untraced past this session's own single-basic-block
+boundary — a v2 cross-method dataflow tool, not attempted here, would be the natural way to go
+further); and `BluetoothPriorityReceiver`'s own trigger/effect (item L's finding), which is
+capture-territory, not further static analysis, if pursued.
+
+This file's own `Status` is `awaiting maintainer sign-off`, not `complete` — per `AGENTS.md`
+§6/§15, no AI session ever self-promotes its own findings to settled without maintainer review, and
+that applies here exactly as it did to tools 1-3's own findings.
 
 ---
 
