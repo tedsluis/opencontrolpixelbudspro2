@@ -251,5 +251,19 @@ feedback/diagnostics reporting subsystem" guess was pointing at, not one subsyst
 now named. Full trace in `REVERSE_ENGINEERING.md`'s "Candidate rich schemas" section's own final
 dated update.
 
+### Further continuation, same session — item M's last remaining thread closed
+
+Asked once more to continue item M's remaining leads. The one still-open thread was "what feature
+index 6 (the `presto_mr1`/`markPrestoPreMR1Device` gate) itself represents." Checked exhaustively:
+a full-tree survey of every other `ggs`/`ggq`-typed `.c(<index>)` call site finds ~25 other numeric
+indices used the same way across a dozen-plus unrelated files, confirming this is a large, generic,
+~40-feature remote capability-gate system, not something built specifically for "presto MR1." Feature
+6 itself has exactly the two call sites already found — no third site exists to name it against. The
+remote-config protobuf messages (`ggv`/`ggw`) that back this system decode to plain, unnamed fields
+(`b`/`c`/`d`/`e`/`f`) with no string label anywhere — a numeric feature-ID/minimum-version tuple whose
+human-readable name, if any, lives only in Google's own backend config, never shipped in this APK.
+**This is a genuine, exhausted static-analysis dead end, not an unattempted gap** — item M is now
+closed; nothing further to trace from this session's own sweep.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17

@@ -3714,6 +3714,26 @@ mere existence; each finding below states explicitly what it does and doesn't es
       maintainer's own paired Buds Pro 2 unit** — that is a live/capture question, not something
       static analysis of the APK alone can answer, and is explicitly not attempted here per this
       project's own capture guardrails.
+    - **Update (2026-09-17, further continuing `ai-sessions/0027`) — "what feature index 6
+      represents" checked one level further and found to be a genuine, exhausted dead end for static
+      analysis, not merely unattempted.** 🟢 FACT (direct code reading of the remote-config schema
+      classes, plus a broader survey of every other `.c(<index>)` call site found in the APK): a
+      full-tree grep for `ggs`/`ggq`-typed `.c(N)` calls finds this same feature-support query used
+      for roughly 25 other numeric indices across a dozen-plus unrelated files (`1`, `3`, `4`, `5`,
+      `7`, `9`, `10`, `11`, `12`, `13`, `14`, `15`, `17`, `18`, `19`, `21`, `24`, `25`, `29`, `31`,
+      `33`, `35`, `36`, `37`) — confirming `ggs`/`ggq` is a large, generic, ~40-feature remote
+      capability-gate system used throughout the app, not something built specifically for "presto
+      MR1." **Feature index `6` itself has exactly the two call sites already found** (`fpz.java:53`,
+      `fsx.java:127`) — no third site exists to cross-reference for a name. `ggv`/`ggw` (the
+      remote-config protobuf messages `ggq`'s own constructor fetches and caches) decode to plain,
+      unnamed fields (`b`/`c`/`d`/`e`/`f`, standard obfuscated Java field names, confirmed via
+      `scripts/decode_rawmessageinfo.py`) — a numeric feature-ID/minimum-app-version/minimum-firmware
+      -version tuple with **no string label anywhere in either message**, consistent with this being
+      a genuine server-driven (Phenotype/remote-config-style) feature-gate whose human-readable name,
+      if one exists, lives only in Google's own backend configuration, never shipped in this APK.
+      **Conclusion**: this is a legitimate, exhausted static-analysis dead end, not an unattempted
+      gap — closing this specific sub-thread of the `presto_mr1` trace. This is also this session's
+      own last remaining item-M thread; item M is now closed.
 - **Checked negatives, reconfirmed from this independent data source** (no hits, consistent with —
   not merely repeating — the existing code-side findings): `"priority"` and `"classic"` — zero
   matches anywhere in `strings.xml` (no user-facing text exists for `BluetoothPriorityReceiver`'s own
