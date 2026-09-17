@@ -265,5 +265,36 @@ human-readable name, if any, lives only in Google's own backend config, never sh
 **This is a genuine, exhausted static-analysis dead end, not an unattempted gap** — item M is now
 closed; nothing further to trace from this session's own sweep.
 
+### Further continuation, same session, after `ai-sessions/0028`'s sign-off — item B's own remaining
+lead traced (does not change item B's own already-closed conclusion)
+
+Asked to continue item B's remaining leads, after the maintainer's `ai-sessions/0028` sign-off on the
+findings above. Item B's own literal question ("which gRPC service names are registered") was already
+definitively closed in this file's first pass — this continuation re-confirmed that conclusion
+independently, from a source not previously read in full, and surfaced one narrower, genuinely open
+detail that does not reopen it.
+
+Read `MaestroEndpointService`'s own `onCreate()` (distinct from `ghl.onCreate()`'s injection of the
+`b` field itself) via the `apktool` smali fallback, start to finish (~599 instructions). Confirmed,
+byte-for-byte, that the per-service `Map` iteration runs over zero entries (independently
+re-confirming the already-established empty-`b` finding) — and found a further detail: the resulting
+local `HashMap`'s conversion to an immutable map (`Llov;->g(...)`) has its own return value discarded
+(no `move-result-object` follows it), meaning even that conversion step is vestigial, not just the map
+itself. Also traced `onBind(Intent)`'s own returned value (`oez.a`, cast to `IBinder`) far enough to
+confirm it genuinely does get written to somewhere inside this same `onCreate()` method (via
+`structural_index field-writes`) — but tracing *what* value ends up there would require careful,
+register-by-register tracing across the full 599-instruction method with heavy register reuse, which
+is both outside this pass's own bounded scope and outside `limited_dataflow`'s own disclosed
+single-basic-block-only capability. One near-misreading was caught and corrected mid-trace (an early
+reading briefly attributed an unrelated `ofa.a`/`Logt`-object construction to the per-service map,
+before re-checking the raw instruction order corrected it) — recorded honestly in
+`REVERSE_ENGINEERING.md`'s own write-up as a caught, not repeated, mistake.
+
+**Item B's own conclusion is unchanged and now doubly confirmed**: no gRPC service is registered on
+`MaestroEndpointService` in this APK version. The one new open thread (what `onBind()` would actually
+return) is a narrower, separate question, not part of item B's own original ask — flagged, not
+chased further. Full trace in `REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry's own newest
+dated update.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17

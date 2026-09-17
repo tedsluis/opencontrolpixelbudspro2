@@ -3398,6 +3398,46 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     ("what service names are registered") has a definitive answer: none are, in this APK version.
   - **Correlation with `PROTOCOL.md`**: §6 Commands & schemas' `MaestroEndpointService` open item
     updated with this resolution — see that document for the corresponding text.
+  - **Update (2026-09-17, continuing `ai-sessions/0027`) — `MaestroEndpointService`'s own `onCreate()`
+    (distinct from `ghl.onCreate()`'s injection of the field itself) read directly via the `apktool`
+    smali fallback, independently re-confirming the empty-map conclusion and surfacing one further,
+    genuinely open detail about the resulting `onBind()` call — not a change to item B's own already
+    -closed conclusion.** 🟢 FACT (direct smali read, `apktool-output/smali_classes2/.../MaestroEndpointService.smali`,
+    the `onCreate()` method body, ~599 instructions, read start to finish per `AGENTS.md` §13.6):
+    - **The per-service `Map` iteration is confirmed, at the instruction level, to run over zero
+      entries — an independent re-confirmation of the already-established empty-`b` finding, not a
+      restatement of it.** The method reads `this.b` (`MaestroEndpointService.b` — the same field
+      `ghl.onCreate()` already assigns from `lrw.b`, Guava's zero-entry `ImmutableMap` singleton),
+      builds a local `HashMap`, and for each entry checks `Optional.isPresent()` before either adding
+      it and logging `"Service %s included"`, or logging `"Service %s is not included"` — exactly the
+      logic this document's own original 2026-09-08 entry already described from a partial read; this
+      pass confirms it byte-for-byte and adds one further, previously-unread detail: the resulting
+      local `HashMap` is converted to an immutable map via `Llov;->g(Ljava/util/Map;)Llov;`
+      (`lov` = Guava's `ImmutableMap`, the same base class as `lrw`) — **and that call's own return
+      value is never captured** (no `move-result-object` follows it before the next instruction,
+      confirmed directly from the raw smali) — i.e. even the *conversion* of whatever ends up in the
+      map is discarded, not merely the map's own emptiness. This strengthens the reading that the
+      entire per-service inclusion mechanism is vestigial with respect to whatever gRPC server object
+      gets built next — its only observable effect, in this APK version, is the (never-firing, since
+      `b` is empty) log lines.
+    - **`onBind(Intent)` (already-known JADX source) returns `d().d.a` — `mig.d`'s own `oez.a` field,
+      cast to `IBinder`** (`oez` is the already-documented trivial single-field holder, `public
+      volatile Object a;`, defaulting to `null`). `structural_index field-writes --class oez --field
+      a` confirms this field IS written, exactly once, inside this same `onCreate()` method (plus once
+      more from an unrelated class's own static initializer, `ims.<clinit>`, not traced this pass —
+      out of scope for `MaestroEndpointService` specifically). **Genuinely open, not guessed at**:
+      tracing exactly what value ends up in `oez.a` — i.e. whether `onBind()` would return a real,
+      functioning (if service-less) gRPC transport object or something inert — requires careful,
+      register-by-register tracing across this method's full 599 instructions with heavy register
+      reuse (a real misread risk this pass caught once in its own working notes: an early reading
+      mistakenly attributed a later `ofa.a`/`Logt`-object construction sequence to the per-service
+      map, before re-checking the raw instruction order corrected it). This is explicitly beyond both
+      this pass's own bounded scope and `limited_dataflow`'s own v1 single-basic-block-only capability
+      (`reverse-engineering/tools/limited_dataflow/SPEC.md` §2.2's own disclosed limitation) — a
+      cross-block dataflow tracer would be the natural tool for this, not built. **Does not affect
+      item B's own already-closed conclusion** (no service names are registered, confirmed twice over
+      now) — this is a narrower, separate question about the resulting `Binder` object's own identity,
+      not the service-registration question item B originally asked.
 
 ---
 
