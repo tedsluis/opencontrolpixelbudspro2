@@ -151,7 +151,7 @@ leads (`mqm`/`mra`/`mqk`/`mtg`/`qak`/`qaz`/`qam`), the remaining 15 members of t
 cluster, and 24 further sub-message-type leads this pass's own trace of `fwe` surfaced along the way
 — none chased further this session, per its own "trace one promising lead, then stop" scoping.
 
-## Uncommitted
+## Uncommitted (as of the original 6-phase pass)
 
 Nothing has been committed to git this session. Files modified: `REVERSE_ENGINEERING.md`,
 `PROTOCOL.md`, `TODO.md`, `ai-sessions/INDEX.md`, and, under
@@ -160,6 +160,37 @@ Nothing has been committed to git this session. Files modified: `REVERSE_ENGINEE
 and `tests/test_xref_index.py` — and this file. No `git add`/`git commit`/`git push` was run at any
 point this session — session bookkeeping stayed manual throughout, per this prompt's own
 instructions.
+
+*(This work was subsequently committed and pushed, `f1b8eb8` on `main`, in the same chat session
+before the continuation below was requested.)*
+
+## Continuation, 2026-09-17 (same chat session) — item M's remaining lead traced
+
+The maintainer asked to continue with "item M's remaining leads" after the original 6-phase pass
+above (and its commit) was already complete — this is bonus follow-on work in the same conversation,
+not a resumption of an unfinished phase, so this file's own `Status` stays `complete`; this section
+records what the follow-on work found rather than reopening the phase table above.
+
+**Traced the `presto_mr1` open tension** (this file's own Phase 2 summary and
+`REVERSE_ENGINEERING.md`'s "Resource/string-table sweep" section's own flagged item) one level
+further, via `structural_index refs --class gnx --method w` (the sole setter of the
+`"key_has_presto_pre_mr1_device"` SharedPreferences flag) → `fpz.java` discriminators 4/5, both
+self-describingly logged `"markPrestoPreMR1Device"`. **Finding**: "Presto MR1" is a live,
+per-already-known-device firmware-capability check (feature index 6, via a remote-config-driven
+`ggq`/`ggs` mechanism), run over every device this app installation has already recognized as
+supported (`gnx.e()`'s own `"known_supported_devices"` set) — not a hardcoded, different-product
+comparison. This is genuinely new evidence that "Presto" is plausibly a firmware/platform-*generation*
+codename evaluated live against whichever devices the app already knows (which would include this
+project's own Buds Pro 2 unit), independent of the `qjn` entry's own `fyo`/`fyw`/`fyx`
+disjoint-DI-provider structural finding — it neither confirms nor overrides that existing HYPOTHESIS,
+only adds a genuinely new, separately-sourced data point that nuances how the `presto_mr1` notification
+strings should be read. Still open: what feature index 6 itself represents, and whether this check has
+ever fired for the maintainer's own paired unit (capture-territory, not attempted). Full trace, with
+file+line citations, recorded in `REVERSE_ENGINEERING.md`'s "Resource/string-table sweep" section's
+own dated update and a matching cross-reference note added to the `qjn`/`qjt`/`qhx`/`qjv` entry.
+
+No further item-M leads were chased beyond this one trace, matching the original prompt's own "trace
+one promising lead, then stop" scoping for this kind of item.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17

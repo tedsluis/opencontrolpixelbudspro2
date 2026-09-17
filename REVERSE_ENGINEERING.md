@@ -1438,6 +1438,18 @@ the first time against every one of its 20 real discriminators + default branch.
   independently confirmed**: no capture evidence (this project has none targeting a different earbud
   model) checks which of `qhx`/`qjn`/`qjt` a *different* physical device would actually select — this
   reading rests entirely on the DI/method-overlap structure, not a wire observation.
+  - **Cross-reference (2026-09-17, continuing `ai-sessions/0027`), not a change to this HYPOTHESIS.**
+    The "Resource/string-table sweep" section's own `presto_mr1` entry traced a *separate* use of the
+    word "presto" in this same APK — `"markPrestoPreMR1Device"` (self-describingly logged,
+    `fpz.java` discriminators 4/5), a live, per-already-known-device firmware-capability check (does
+    the device support feature index 6), unrelated in its own mechanism to this entry's
+    `fyo`/`fyw`/`fyx` disjoint-DI-provider structural finding above. This neither confirms nor
+    refutes this entry's own HYPOTHESIS (that reading rests entirely on the DI/method-overlap
+    structure, unaffected) — it is new evidence that "Presto" is plausibly used, elsewhere in this
+    same app, as a firmware/platform-*generation* codename evaluated live against whichever devices
+    the app already recognizes (which would include this project's own target hardware), not
+    necessarily as proof of "a completely separate product." See that section's own full trace for
+    detail — not repeated here.
 
 - **`qhx` (Group 1) resolved — OOBE (out-of-box-experience) mode toggle, both directions.** 🟡
   HYPOTHESIS (strong — code-level, both write and read sides self-describing): the only call sites
@@ -3546,6 +3558,57 @@ mere existence; each finding below states explicitly what it does and doesn't es
   rather than guessed at, per `AGENTS.md` §13.6. Directly bears on this document's own `qjn`/`qjt`/
   `qhx`/`qjv` entry's 2026-08-30 "structural reframing" HYPOTHESIS (that `qjn`("presto") is a
   different product's schema) — check that entry before extending it further.
+  - **Update (2026-09-17, continuing `ai-sessions/0027`) — "presto MR1" traced one level further via
+    a code chain, and shown to be a live, per-connected-device firmware-capability check, not a
+    hardcoded different-product marker; the original tension is nuanced, not resolved.** 🟢 FACT
+    (mechanical `structural_index refs` trace plus direct code reading, self-describing log
+    messages throughout):
+    - **The trigger chain, traced end-to-end**: `fsx.e(String, boolean)` (`fsx.java:131-140`, an
+      `fti`-interface method — `fsx`'s own class-level log context is Bluetooth
+      connection-management, importing `BluetoothAdapter`/`BluetoothDevice`/`BluetoothManager`) runs
+      **`this.d.e()`** — `fsx.d` is `gnx` (this document's own `gnw`/`gnx` entry above), and `gnx.e()`
+      returns the **`"known_supported_devices"`** SharedPreferences string set (`gnw.java:141-144`)
+      — i.e. this check iterates every device this specific app installation has already recognized
+      as a supported Buds unit, not a fixed/hardcoded list scoped to one product. Each device's
+      address flows through `fpz` (another R8-merged lambda dispatcher, `implements orz`)
+      discriminators **4** and **5**, both self-describingly logged
+      **`"markPrestoPreMR1Device"`** (`fpz.java`, cases 4/5: `"markPrestoPreMR1Device flatMap %s"` /
+      `"markPrestoPreMR1Device flatMapCompletable %s %d"`).
+    - **Case 4** queries `fsxVar.c.h(str).c(6)` — the *exact* `ggs.h(String).c(int)` chain
+      `gci.java`'s own case-2 notification-trigger logic also uses (`fsx.java:127`,
+      `gigVar.i.h(str2).c(6)`) — a live, per-device **feature-support query for feature index `6`**,
+      answered by `ggq` (`ggs`'s real implementation): a remote-config-driven (`ggv`/`ggt`/`ggw`
+      classes, a server-fetched config compared against the device's own reported firmware version)
+      tri-state `ggx` enum (`UNKNOWN_FEATURE_SUPPORTED`/`SUPPORTED`/`NOT_SUPPORTED`) — a generic
+      capability-gate mechanism, not something "presto"-specific in its own machinery.
+    - **Case 5** — `if (obj2 == ggx.NOT_SUPPORTED && ((Integer) obj3).intValue() == 1) { ((fsx)
+      this.a).d.w(); }` — **`gnx.w()`/`gnw.w()`** (this document's own `gnw` entry, "marks
+      `key_has_presto_pre_mr1_device`") is called **if and only if** the queried device reports
+      feature index 6 as `NOT_SUPPORTED` (plus a second, not-decoded integer condition `== 1`). This
+      is the literal, code-confirmed meaning of "presto pre-MR1": *a connected device whose current
+      firmware does not yet support feature #6* — a live capability check, not a static
+      product/model-name comparison. `structural_index refs --class gnx --method w` confirms `fpz.a`
+      (this exact call site) is the field's **sole** setter anywhere in the APK.
+    - **What this establishes, precisely**: "Presto"/"MR1" is very plausibly Google's own internal
+      codename for a firmware/platform *generation* (an update milestone that adds feature #6,
+      whatever that is) rather than proof of an entirely separate, unrelated hardware product — and
+      the check that drives it runs against whichever devices this app installation has itself
+      already recognized as supported, which for this project's own testing includes the
+      maintainer's own Buds Pro 2 unit. This is genuinely new evidence, independent of the
+      `fyo`/`fyw`/`fyx` disjoint-DI-implementation structural finding the `qjn` entry's own
+      HYPOTHESIS rests on — it does **not** contradict or override that structural finding (which
+      remains solid on its own terms: `fyo` alone writes `qhr`, confirmed by this project's own wire
+      captures), but it weakens treating the `notification_title_presto_mr1`/`_content_presto_mr1`
+      strings' mention of Attention Alerts as strong evidence either way, since this specific
+      notification mechanism is demonstrably generic (evaluated per already-known-supported device,
+      not gated to one hardcoded product).
+    - **What remains genuinely open, not guessed at**: what feature index `6` itself represents (no
+      name/label was found for it this pass — `ggw`/`ggv`/`grk`'s own field semantics were not
+      decoded); the second integer condition (`== 1`) case 5 also requires; and, most importantly,
+      **whether this exact check has ever actually fired (in either direction) against the
+      maintainer's own paired Buds Pro 2 unit** — that is a live/capture question, not something
+      static analysis of the APK alone can answer, and is explicitly not attempted here per this
+      project's own capture guardrails.
 - **Checked negatives, reconfirmed from this independent data source** (no hits, consistent with —
   not merely repeating — the existing code-side findings): `"priority"` and `"classic"` — zero
   matches anywhere in `strings.xml` (no user-facing text exists for `BluetoothPriorityReceiver`'s own
