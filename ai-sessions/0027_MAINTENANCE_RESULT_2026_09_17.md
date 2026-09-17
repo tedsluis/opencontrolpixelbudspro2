@@ -315,5 +315,41 @@ pathway already documented elsewhere), not a fourth mystery library and not Blue
 candidate rich schemas are accounted for.** Full trace in `REVERSE_ENGINEERING.md`'s "Candidate rich
 schemas" section's own newest dated update.
 
+### Further continuation, same session — item M's own last remaining sub-thread (the `fpz` case-5
+"device type == 1" condition) traced to its own origin and closed
+
+Asked once more to continue item M's remaining leads. Re-checked the `presto_mr1` write-up's own
+prior text and found a genuinely never-chased thread flagged there: `fpz.java`'s case 5 guards
+`"markPrestoPreMR1Device"` behind *two* conditions — feature-6 non-support (already traced) **and**
+`((Integer) obj3).intValue() == 1`, this second integer never previously traced to its source.
+
+Traced the full chain: `fpz`'s case-4 combiner pairs feature-6 support with `fsxVar.e.c(str)` —
+`fsx.e` is `gck` (the already-documented device-info repository). `gck.c(str)` routes through the
+same R8-merged `gci` dispatcher already read for the `presto_mr1` notification itself, this time
+discriminator 0, whose own log string self-describes the stream's contents: `"doAfterNext, device
+address: %s, device type: %d"`. So `fpz` case 5's second condition is gated on the connected device's
+own reported **"device type"** integer equalling `1`.
+
+Traced "device type" further upstream via `structural_index refs --class gea --method V` (interface
+-indirection technique, since the concrete class's own method had no direct callers) to its sole
+caller, `gaa.a(qiv)` — `qiv` being the already-documented `GetHardwareInfo` pw_rpc response type.
+`gaa.a()`'s body decodes "device type" directly from **`qiv.e`** (field 1, `ENUM`), defaulting to `1`
+whenever the wire value is unset/`0`. So this is a live, per-connected-device hardware-reported value,
+not an app-side hardcoded marker.
+
+Attempted to resolve what ordinal `1` itself *means* by name: `qiv.e`'s validity check routes to
+`qgx.m` (index 12 of the already-documented generic multi-type `qgx` dispatcher), which itself calls
+`pld.ap(int)` — read directly, this is a generic, unnamed protobuf-lite ordinal identity/validity
+remap (valid ordinals map to themselves, invalid ones default to `0`), not a self-describing named
+enum the way e.g. `qhs`'s `ANC_STATE_*` values are. **No human-readable name for value `1` (or any
+other value this field can take) exists anywhere in the decompiled tree — a second, independently
+-reached exhausted dead end, the same character as the earlier feature-index-6 finding, not a first
+one glossed over.**
+
+**Item M's own true final thread is now closed, genuinely traced rather than asserted closed by
+omission** — both of its previously-flagged-but-unchased sub-threads (feature index 6's name, and
+this "device type == 1" condition) have now actually been chased to their own exhausted ends. Full
+trace in `REVERSE_ENGINEERING.md`'s "Resource/string-table sweep" section's own newest dated update.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17

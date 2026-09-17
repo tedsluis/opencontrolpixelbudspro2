@@ -3792,8 +3792,55 @@ mere existence; each finding below states explicitly what it does and doesn't es
       a genuine server-driven (Phenotype/remote-config-style) feature-gate whose human-readable name,
       if one exists, lives only in Google's own backend configuration, never shipped in this APK.
       **Conclusion**: this is a legitimate, exhausted static-analysis dead end, not an unattempted
-      gap — closing this specific sub-thread of the `presto_mr1` trace. This is also this session's
-      own last remaining item-M thread; item M is now closed.
+      gap — closing this specific sub-thread of the `presto_mr1` trace.
+    - **Update (2026-09-17, further continuing `ai-sessions/0027`) — the "second integer condition"
+      case 5 also requires (flagged above as open but never actually traced) is now traced to its own
+      source: the connected earbuds' own `GetHardwareInfo` response, reporting a "device type" value
+      — and, like feature index 6, this specific value's own name is unrecoverable, a second genuine
+      dead end, not a first one glossed over.** 🟢 FACT (mechanical `structural_index refs` trace plus
+      direct code reading, self-describing log messages):
+      - **`fpz`'s own case-4 chain, re-examined**: `oql.j(fsxVar.c.h(str).c(6), fsxVar.e.c(str), new
+        fuj(1)).al()` combines *two* streams — `ggs.h(str).c(6)` (feature-6 support, already traced)
+        and **`fsxVar.e.c(str)`** — `fsx.e` is `gck` (the already-extensively-documented device-info
+        repository class). `gck.c(str)` (`gck.java:456-461`) routes through `new gci(str, 0)` — the
+        *same* R8-merged dispatcher already read in full for its case-2 `presto_mr1` notification
+        logic — whose **discriminator 0** is self-describingly logged: `"doAfterNext, device address:
+        %s, device type: %d"` (`gci.java`, already quoted in `ai-sessions/0024`'s own per-case table
+        for a different discriminator's context, re-confirmed here for discriminator 0 specifically).
+        **`gck.c(str)`'s own stream literally carries "device type" integers.** `fpz`'s case 5 (`if
+        (obj2 == ggx.NOT_SUPPORTED && ((Integer) obj3).intValue() == 1)`) therefore reads precisely:
+        mark this device "presto pre-MR1" only if its firmware doesn't support feature 6 **and its own
+        reported device type equals `1`**.
+      - **"Device type" traced to its own origin**: `structural_index refs --class gea --method V`
+        (the abstract-interface-indirection technique already used elsewhere in this document, since
+        the concrete class `gck`'s own method wasn't directly called) finds exactly one caller,
+        `gaa.a(qiv)` — `qiv` is the already-documented `GetHardwareInfo` RPC's own response type.
+        `gaa.a()`'s own body: `int ap = pld.ap(qivVar.e); int i = ap == 0 ? 1 : ap;` ... `geaVar.V(str,
+        ..., i);` — **"device type" is decoded directly from `qiv`'s own field 1 (`e`, `ENUM` per
+        `scripts/decode_rawmessageinfo.py`), with a fallback default of `1` whenever the wire value is
+        `0`/unrecognized.** I.e. the connected earbuds' own hardware-info response reports this value;
+        this app does not invent or hardcode it.
+      - **The enum's own named values are not recoverable from this APK — a second, independently
+        -reached dead end, same character as feature index 6's.** `qiv.e`'s own validity delegate is
+        `qgx.m` (index 12 of the already-documented generic, multi-type `qgx` validity dispatcher),
+        which itself routes to `pld.ap(int)` — read directly: a **plain, generic protobuf-lite
+        "forNumber"-style identity/invalid-check remap** (`case 1: return 1; case 2: return 2; ...
+        default: return 0;`), not a named-constant enum class the way `qhs`'s `ANC_STATE_*` values
+        were. No self-describing name for value `1` (or any other value this field can take) was
+        found anywhere in the decompiled tree.
+      - **Net effect on the `presto_mr1` reading**: sharpens, without fully resolving, the earlier
+        "runs against whichever devices this app already recognizes as supported" framing — the check
+        is actually narrower still, requiring the connected device's own live-reported hardware "device
+        type" to equal a specific (but unnamed) value, not merely "any known-supported device." The
+        `ap == 0 ? 1 : 0` fallback design (treating an unset/unrecognized wire value as `1`) is at
+        least suggestive that `1` is this app's own assumed *default* device-type classification, but
+        this is stated as a plausible reading, not a confirmed one — no evidence ties it definitively
+        to "the Buds Pro 2 specifically" versus any other reading. Genuinely open, not guessed at.
+      - **This is item M's own true final thread — now also exhausted for static analysis**, matching
+        feature index 6's own resolution in kind (a real value traced to its precise origin, whose own
+        human-readable name is not shipped anywhere in this APK). Item M is now closed, both of its
+        own previously-flagged-but-unchased sub-threads (feature index 6, and this "device type == 1"
+        condition) genuinely traced rather than asserted closed by omission.
 - **Checked negatives, reconfirmed from this independent data source** (no hits, consistent with —
   not merely repeating — the existing code-side findings): `"priority"` and `"classic"` — zero
   matches anywhere in `strings.xml` (no user-facing text exists for `BluetoothPriorityReceiver`'s own
