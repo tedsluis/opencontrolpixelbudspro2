@@ -2527,6 +2527,70 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   - **Correlation with `PROTOCOL.md`**: none — code-level only, same as `gbu`'s own entry; no
     `PROTOCOL.md` section cites this and none is proposed to.
 
+- **Update (2026-09-17, continuing `ai-sessions/0027`) — 2 more of the 12 candidate rich schemas
+  (`qaa`, `qbu`) and 7 more of the 17-class naming cluster (`kii`/`koq`/`pzr`/`kip`/`kiq`/`kob`/`kol`)
+  resolved: both are Google's own bundled Primes performance-monitoring/crash-reporting library
+  internals, unrelated to Bluetooth/`libmaestro` — a checked negative for protocol relevance, not an
+  unexamined gap.** 🟢 FACT (direct code reading of small, JADX-decompilable classes, one
+  self-describing `toString()` and one self-describing builder-field-name set; `kol` alone needed the
+  `apktool` smali fallback per `APK_REVERSE_ENGINEERING_PROCEDURE.md` §6, since it's a genuine
+  JADX-misdecompile — not read this pass, its 3 siblings already gave a conclusive answer):
+  - **`qaa` (63 fields) — resolved via its 3 field-holders.** `kii.java` (a plain, hand-written data
+    class, not a protobuf message) wraps a `qaa` alongside timing/version fields, and its own
+    `toString()` is **directly self-describing**: `String.format("StatsRecord:\n  elapsed: %d\n
+    current: %d\n  Primes version: %d\n  version name #: %d\n  customName: %s\n", ...)` — i.e. `kii`
+    literally calls itself a **"StatsRecord"** and names one of its own fields **"Primes version"**.
+    `koq`/`pzr` (the other 2 holders, both real protobuf messages) each hold a `qaa` alongside
+    similarly-shaped `long` timing fields (`elapsed`/`current`-style) and a `qac`-typed field shared
+    with `kii` — the same record shape, twice more. `kii`'s own sole construction site
+    (`structural_index refs --class kii`), `idm.java:1272`, sits inside a method whose surrounding
+    ~50 lines import **`android.os.health.HealthStats`** (a real Android system API for historical
+    battery/power-usage statistics) and build the `qaa` instance field-by-field immediately
+    beforehand — directly explaining `qaa`'s own 63-field, heavily-`long`-typed, list-heavy shape
+    (per its own earlier header-only sweep entry) as a serialized Android `HealthStats` snapshot.
+    **Conclusion**: `qaa`/`kii`/`koq`/`pzr` are Google's **Primes** library's own battery/power-usage
+    stats-collection record, not a Bluetooth/Maestro schema.
+  - **`qbu` (24 fields) — resolved via 3 of its 4 field-holders.** `kip.java` is a **Builder** class
+    (the "Missing required properties" exception-message pattern) whose own named fields are
+    **`isEventNameConstant`**, **`metric`** (the `qbu`-typed field itself), **`isUnsampled`**,
+    **`shouldAttachActiveTraces`**, **`maxActiveTraces`**, **`activeTracePredicate`**,
+    **`debugLogsSize`** — a builder for a named, sampled performance-**metric** definition, matching
+    Google's own public Primes library's known `MetricExtension`/event-metric-definition builder
+    shape by name, not by inference from structure alone. `kiq` (the object `kip.a()` builds) is
+    reached, via `structural_index refs --class kiq`, from `kkl.uncaughtException` — a genuinely
+    unobfuscated method name matching `Thread.UncaughtExceptionHandler.uncaughtException` — directly
+    confirming this whole `ki*`/`ko*`-prefixed cluster sits inside Primes' own crash/exception
+    -reporting infrastructure. `kob` is a third, structurally identical `qbu`-holding protobuf
+    message (2 fields: a case selector `b` and the `qbu` value `c`). **`kol`** (the 4th holder) exists
+    only in `apktool` smali (a genuine JADX-misdecompile) — not opened this pass, since `kip`/`kiq`/
+    `kob` already give a conclusive, self-describing answer without it. **Conclusion**: `qbu`/`kip`/
+    `kiq`/`kob`/`kol` are Google's **Primes** library's own metric/event-definition machinery, not a
+    Bluetooth/Maestro schema.
+  - **Checked, not conclusively resolved this pass**: `msw` (one of the 12 candidates, already known
+    to be `mtn`'s own field-12 oneof alternative) and its 5 field-holders
+    (`jaj`/`jjn`/`jjx`/`jkl`/`jsg`). `jaj.java` (233 lines) is a plain data holder with no
+    self-describing method; `jjn.java` (27 lines, a Kotlin-coroutine continuation class) holds an
+    `msw` alongside a `cce`-typed field — `cce` is already known elsewhere in this document (`gci`'s
+    own case-2 notification-building logic) to be Android's `NotificationCompat.Builder`, obfuscated
+    — and its own suspend-function target, `jjy.o(cce, jof, jsl, jsk, kcv, msw, cdh, pip)`, builds a
+    `PendingIntent` and further notification-shaped objects (`kom`, `Bundle`) from its own `jsk`
+    parameter's plain string fields, with no log message or self-describing name found in the portion
+    read. 🔴 **Genuinely open, not guessed at**: this is plausibly notification/OTA-update-adjacent
+    given the `cce`/`PendingIntent` shapes involved (thematically closer to the `presto_mr1`/OTA
+    notification family this document's "Resource/string-table sweep" section traces than to the
+    Primes cluster above), but no evidence found this pass actually names what `msw`/`mtn`
+    represents — recorded as read-but-unresolved, not force-fit into either reading.
+  - **Item H's own 17-class naming cluster is now down to 9 genuinely unattributed members**:
+    `jau`/`msc`/`jaj`/`jjn`/`jjx`/`jkl`/`jsg`/`qan`, plus `nbm` was already attributed to the KPI
+    pipeline in the prior update above — `kii`/`koq`/`pzr`/`kip`/`kiq`/`kob`/`kol` are now resolved
+    (Primes), leaving `jau`/`msc` (holders of `mtn`) and `jaj`/`jjn`/`jjx`/`jkl`/`jsg` (holders of
+    `msw`) and `qan` (holder of `qar`) as the remaining open members — none of the 7 new schema leads
+    (`mqm`/`mra`/`mqk`/`mtg`/`qak`/`qaz`/`qam`) were chased this pass either.
+  - **Correlation with `PROTOCOL.md`**: none — code-level only; no `PROTOCOL.md` section cites this
+    and none is proposed to (a checked-negative Bluetooth-relevance finding needs no protocol
+    cross-reference, per this document's own established convention for entries like `gbu`'s KPI
+    entry and the earlier `esk`/WorkManager-DAO checked negative).
+
 ---
 
 ### Full-tree GATT/BLE reference sweep (2026-08-30, cross-validation follow-up)

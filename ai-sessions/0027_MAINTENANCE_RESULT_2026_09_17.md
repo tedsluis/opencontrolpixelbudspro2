@@ -192,5 +192,36 @@ own dated update and a matching cross-reference note added to the `qjn`/`qjt`/`q
 No further item-M leads were chased beyond this one trace, matching the original prompt's own "trace
 one promising lead, then stop" scoping for this kind of item.
 
+### Further continuation, same session — item H's remaining leads traced
+
+The maintainer then asked to continue with "item H's remaining leads." Picked up the 17-class
+naming-cluster's own still-unattributed members via their already-known parent schemas: `qaa`'s 3
+holders (`kii`/`koq`/`pzr`) and `qbu`'s 4 holders (`kip`/`kiq`/`kob`/`kol`).
+
+**Resolved, both as checked negatives for Bluetooth relevance**: `qaa` (63 fields) and its holder
+`kii` is directly self-describing — `kii.toString()` literally formats itself as `"StatsRecord:..
+Primes version: %d.."`, and `kii`'s sole construction site sits inside a method that builds `qaa`
+field-by-field immediately after importing `android.os.health.HealthStats` — `qaa`/`kii`/`koq`/`pzr`
+are Google's own **Primes** performance-monitoring library's battery/power-usage stats-snapshot
+record. `qbu` (24 fields) and 3 of its 4 holders resolved the same way: `kip` is a Builder class whose
+own field names (`isEventNameConstant`, `metric`, `isUnsampled`, `shouldAttachActiveTraces`,
+`maxActiveTraces`, `activeTracePredicate`, `debugLogsSize`) match Primes' own known metric-definition
+builder shape, and `kiq` (the object it builds) is reached, via `structural_index refs`, from
+`kkl.uncaughtException` — confirming this whole cluster sits inside Primes' own crash/exception
+-reporting machinery, not Bluetooth/Maestro. `kol` (the 4th holder) exists only in `apktool` smali (a
+genuine JADX-misdecompile) — not opened, since the other 3 already gave a conclusive answer.
+
+**Checked, not resolved**: `msw` and its 5 holders (`jaj`/`jjn`/`jjx`/`jkl`/`jsg`) — read directly;
+`jjn`'s own coroutine-continuation chain touches Android's `NotificationCompat.Builder` (`cce`,
+already known from `gci`'s entry) and builds a `PendingIntent`, plausibly OTA/update-notification
+-adjacent, but no self-describing name or log message was found — recorded as an honest "read it,
+still don't know," not force-fit into a guess.
+
+This leaves the 17-class naming cluster down to 9 genuinely unattributed members
+(`jau`/`msc`/`jaj`/`jjn`/`jjx`/`jkl`/`jsg`/`qan`, plus `nbm` already attributed to the KPI pipeline in
+the prior continuation above) — the 7 new schema leads (`mqm`/`mra`/`mqk`/`mtg`/`qak`/`qaz`/`qam`)
+remain untraced. Full trace recorded in `REVERSE_ENGINEERING.md`'s "Candidate rich schemas" section's
+own new dated update.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17
