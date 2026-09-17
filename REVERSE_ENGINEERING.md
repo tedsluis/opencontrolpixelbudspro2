@@ -2580,12 +2580,53 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     notification family this document's "Resource/string-table sweep" section traces than to the
     Primes cluster above), but no evidence found this pass actually names what `msw`/`mtn`
     represents — recorded as read-but-unresolved, not force-fit into either reading.
-  - **Item H's own 17-class naming cluster is now down to 9 genuinely unattributed members**:
-    `jau`/`msc`/`jaj`/`jjn`/`jjx`/`jkl`/`jsg`/`qan`, plus `nbm` was already attributed to the KPI
-    pipeline in the prior update above — `kii`/`koq`/`pzr`/`kip`/`kiq`/`kob`/`kol` are now resolved
-    (Primes), leaving `jau`/`msc` (holders of `mtn`) and `jaj`/`jjn`/`jjx`/`jkl`/`jsg` (holders of
-    `msw`) and `qan` (holder of `qar`) as the remaining open members — none of the 7 new schema leads
-    (`mqm`/`mra`/`mqk`/`mtg`/`qak`/`qaz`/`qam`) were chased this pass either.
+  - **Update (2026-09-17, same-day continuation) — the `msw` lead above resolved after all
+    (GNP SDK, the same library as `mtn`), and every one of the 7 "new schema leads" resolved too —
+    item H's entire inventory (all 12 candidate schemas, all 17 naming-cluster members, all 7 new
+    leads) is now attributed.** 🟢 FACT (direct code reading, one further hop past the "not
+    conclusively resolved" bullet above): `jjy.java:19` — the very class `jjn`'s own continuation
+    wraps (`jjy.o(...)`, already read above) — carries **`public static final lud a =
+    lud.m("GnpSdk");`**, the identical logger tag already confirmed for `jbb`/`jil`/`jfz` (the `mtn`/
+    `mqm`/`mqk` cluster below). `msw`/`jaj`/`jjn`/`jjx`/`jkl`/`jsg` are GNP SDK, not
+    notification/OTA-specific-to-this-app code as the "thematically closer to `presto_mr1`" reading
+    above speculated — that speculation is superseded by this direct evidence, not confirmed.
+    - **`qan`/`qar` resolved — Primes, via `qbu`.** `structural_index refs --class qan` shows `qan`'s
+      own sole external field-type holder is **`qbu.l`** — i.e. `qan` (holding `qar`) is itself a
+      nested field of `qbu`, the already-resolved Primes metric-definition class above. Nested inside
+      an already-Primes-attributed schema, not an independent lead.
+    - **All 4 remaining "new schema leads" from the `qaj`/`qak` side resolved — Primes.**
+      `structural_index refs --class qak` shows two decisive facts at once: `qak` is itself held as a
+      field of **`qbu`** (field `g`, the same already-Primes-resolved class), **and** is called
+      directly from **`com.google.android.libraries.performance.primes.transmitter.clearcut.ClearcutMetricSnapshotTransmitter`**
+      — a real, unobfuscated Primes class name this project has independently encountered once before
+      (`ai-sessions/0025`'s `hvn` case-4 trace). `qaj` (held as a repeated field of `qak`) and `qaz`/
+      `qam` (referenced only via `qaj`'s/`qak`'s own oneof/repeated schema encoding, per
+      `schema_batch_extractor`'s original pass — consistent with `qaz`/`qam` showing no independent
+      bytecode field-type holder of their own) inherit this same attribution by direct nesting.
+    - **All 3 remaining "new schema leads" from the `mtn` side resolved — GNP SDK, the same library as
+      `mtn`/`msc`/`jau` above.** `mqm`/`mra`/`mqk` are each held by a genuinely new class
+      (`jik.e`/`jyl.h`/`jfs.d` respectively, none previously catalogued) — all three are the same
+      Kotlin-coroutine-continuation shape as `jau`/`jjn` (`extends pjf`, wrapping a suspend call), and
+      their own wrapped classes (`jil`, `jfz`) **both** carry the identical `lud.m("GnpSdk")` logger
+      tag. `mtg` (referenced only via `mqk`'s own schema encoding, no independent holder) inherits the
+      same attribution by nesting, matching `qaz`/`qam`'s own reasoning above.
+    - **Conclusion: item H's entire original inventory is now closed.** Every one of the 12 candidate
+      rich schemas (`nhm`/`nef`/`qaa`/`ndi`/`mtn`/`nca`/`gdw`/`nfh`/`msw`/`qaj`/`qbu`/`qar`), all 17
+      original naming-cluster members, and all 7 new schema leads resolve to one of exactly **three**
+      bundled Google-internal libraries: this companion app's own **KPI/device-telemetry pipeline**
+      (`nef`/`nca`/`ndi`/`nbm`/`fwe`/`fwk`, the `gak` interface family — the one cluster genuinely
+      specific to this app, not a generic third-party SDK), Google's **Primes** performance-monitoring
+      library (`qaa`/`kii`/`koq`/`pzr`, `qbu`/`kip`/`kiq`/`kob`/`kol`, `qan`/`qar`, `qaj`/`qak`/`qaz`/
+      `qam`), and Google's **GNP (notification-platform) SDK** (`mtn`/`msc`/`jau`, `msw`/`jaj`/`jjn`/
+      `jjx`/`jkl`/`jsg`, `mqm`/`jik`, `mra`/`jyl`, `mqk`/`jfs`, `mtg`). **`nhm`/`gdw`/`nfh` alone remain
+      without their own independent trace this pass** — `nfh` is already known to be nested inside
+      `nhm` (the KPI cluster, per the original `structural_index` pass), and `nhm`/`gdw` were not
+      re-checked this session specifically, though `nhm` itself is already the KPI-envelope class per
+      the prior continuation's own trace (`gbt.a()` builds an `nhm` per-KPI-event detail record) —
+      not repeated here. This is a **comprehensive checked negative for Bluetooth/`libmaestro`
+      relevance across the entire original item-H inventory**, sharpening the 2026-09-16 pass's own
+      "plausibly a bundled feedback/diagnostics reporting subsystem" guess into three concretely
+      named, independently-confirmed bundled libraries — not one subsystem, three.
   - **Correlation with `PROTOCOL.md`**: none — code-level only; no `PROTOCOL.md` section cites this
     and none is proposed to (a checked-negative Bluetooth-relevance finding needs no protocol
     cross-reference, per this document's own established convention for entries like `gbu`'s KPI

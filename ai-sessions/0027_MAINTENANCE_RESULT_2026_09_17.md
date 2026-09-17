@@ -223,5 +223,33 @@ the prior continuation above) — the 7 new schema leads (`mqm`/`mra`/`mqk`/`mtg
 remain untraced. Full trace recorded in `REVERSE_ENGINEERING.md`'s "Candidate rich schemas" section's
 own new dated update.
 
+### Final continuation, same session — item H's entire remaining inventory closed
+
+The maintainer asked once more to continue item H's remaining leads. One further hop past the `msw`
+"checked, not resolved" note above closed it completely: `jjy.java` (the class `jjn`'s own
+continuation wraps) carries the identical `lud.m("GnpSdk")` logger tag already confirmed for the
+`mtn`/`jau` cluster — so `msw`/`jaj`/`jjn`/`jjx`/`jkl`/`jsg` are GNP SDK too, not
+notification/OTA-specific to this app as speculated.
+
+The remaining leads fell the same way: `qan` turned out to be held as a field of `qbu` (the
+already-resolved Primes metric class) — nested inside an already-attributed schema, not independent.
+`qak` is both held by `qbu` *and* called directly from the real, unobfuscated
+`com.google.android.libraries.performance.primes.transmitter.clearcut.ClearcutMetricSnapshotTransmitter`
+class — Primes, confirmed twice over. `qaj`/`qaz`/`qam` inherit that attribution by nesting inside
+`qaj`/`qak`'s own schema. On the GNP side, `mqm`/`mra`/`mqk` are each held by a new class
+(`jik`/`jyl`/`jfs`), all three of the identical coroutine-continuation shape as `jau`/`jjn`, and their
+own wrapped classes both carry `"GnpSdk"` too; `mtg` inherits the same attribution by nesting.
+
+**Item H's entire original inventory — all 12 candidate rich schemas, all 17 naming-cluster members,
+and all 7 new schema leads — is now closed.** Everything resolves to one of exactly three bundled
+Google-internal libraries: this app's own KPI/device-telemetry pipeline (the one cluster genuinely
+specific to this app, already documented in the first continuation above), Google's **Primes**
+performance-monitoring library, and Google's **GNP** notification-platform SDK. This is a
+comprehensive checked negative for Bluetooth/`libmaestro` relevance across the entire original
+inventory — a complete, specific answer to what the 2026-09-16 pass's own "plausibly a bundled
+feedback/diagnostics reporting subsystem" guess was pointing at, not one subsystem but three, all
+now named. Full trace in `REVERSE_ENGINEERING.md`'s "Candidate rich schemas" section's own final
+dated update.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0027_MAINTENANCE_RESULT_2026_09_17
