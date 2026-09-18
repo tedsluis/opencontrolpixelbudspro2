@@ -42,6 +42,12 @@ interface BudsRepository {
     val batteryStatus: Flow<BatteryStatus>
     val unidentifiedFrames: Flow<UnidentifiedFrame>
 
+    /** Connects to the already-bonded Buds (ARCHITECTURE.md §9.0a step 6) —
+     * fails with [BudsError.PermissionDenied] if no bonded device exists yet
+     * (pairing is a separate, prior step, `ai-sessions/0036`). */
+    suspend fun connect(): BudsResult<Unit>
+    suspend fun disconnect(): BudsResult<Unit>
+
     suspend fun setAncMode(mode: AncMode): BudsResult<Unit>
     suspend fun refreshAncMode(): BudsResult<AncMode>
 

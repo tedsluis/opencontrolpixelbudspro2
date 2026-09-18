@@ -738,9 +738,18 @@ lower priority than finishing ANC/Battery/EQ):**
       nothing new was decided).
 - [ ] Prepare the first public release (tag, `CHANGELOG.md` entry, GitHub
       Release per the manual-update-distribution decision in `AGENTS.md` §1)
-- [ ] **Added 2026-09-18** (`ai-sessions/0033`): wire `MainActivity`'s `onConnect`/`onDisconnect`
-      actions to a real `RfcommBudsTransport.connect()`/`disconnect()` call once pairing has been
-      exercised against real hardware — currently placeholders, see that file's own comments.
+- [x] **Added 2026-09-18** (`ai-sessions/0033`), **done 2026-09-18** (`ai-sessions/0037`): wire
+      `MainActivity`'s `onConnect`/`onDisconnect` actions to a real `RfcommBudsTransport.connect()`/
+      `disconnect()` call. Required extending `BudsTransport`/`BudsRepository` (domain) with
+      `connect()`/`disconnect()`, changing `BudsRepositoryImpl`'s constructor to hold the real
+      `ConnectionStateMachine` object (not just its read-only `Flow`) plus a lazily-resolved
+      `bondedDeviceProvider`, and swapping Hilt's `TransportModule` from `FakeBudsTransport` to the
+      real `RfcommBudsTransport`. Also fixed a latent bug found during this refactor:
+      `RfcommBudsTransport.disconnect()` used to cancel a single object-lifetime `CoroutineScope`,
+      which would have permanently broken any later reconnect attempt — now a fresh scope per
+      `connect()` call. **Still not hardware-verified**: this is this project's first real
+      `BluetoothSocket`-level connect attempt against actual Pixel Buds Pro 2 hardware; everything
+      downstream of "sockets opened" remains as untested as before.
 - [x] **Added 2026-09-18** (`ai-sessions/0033`), **done 2026-09-18** (`ai-sessions/0035`): launch
       `BudsCompanionPairing`'s returned `IntentSender` via an `ActivityResultLauncher`
       (`pairingLauncher`) in `MainActivity`'s `onPending` callback — closed while investigating a
@@ -782,6 +791,20 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+- **Bottom-nav back-stack asymmetry (Debug tab), found and fixed 2026-09-18
+  (`ai-sessions/0037`).** A real maintainer report: switching between tabs, then
+  using the system back gesture, could land on the Debug tab unexpectedly
+  instead of the tab actually being navigated to. Root cause: `OpenControlNavHost`
+  special-cased the Debug `NavigationBarItem` with a plain `navController.navigate()`
+  call, while the other four tabs used the `popUpTo(start){saveState} +
+  launchSingleTop + restoreState` pattern — the asymmetry let Debug accumulate
+  duplicate back-stack entries the other four's `popUpTo`/`saveState` handling
+  never touched. Fixed by merging all five destinations into one
+  `TAB_DESTINATIONS` list using identical navigation mechanics; Debug stays
+  visually distinct only in never showing as "selected." Also fixed in the same
+  pass: `iconFor()` had no `Routes.DEBUG` branch, so Debug silently fell through
+  to the generic `else -> Icons.Filled.Settings` case (same icon as
+  Connection/ANC) — now maps to `Icons.Filled.Info` explicitly.
 - **Capture extraction path matters, added 2026-08-28.** Four captures (`CAP-012`, `CAP-013`,
   `CAP-017`, `CAP-031`) lost significant byte-level payload content to severe ACL truncation from
   the `btsnooz.py`-from-bugreport fallback path (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 4); the

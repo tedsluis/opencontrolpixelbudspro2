@@ -85,6 +85,30 @@ mark v1.
   re-check so pairing via Android's own Bluetooth settings (which bypasses this app's own CDM flow
   entirely) is no longer invisible to the running app. Full build/test/lint suite re-verified clean
   (1232 tests, 0 failures).
+- **2026-09-18 (`ai-sessions/0037`): "Connect" doing nothing with no status shown, plus a bottom-nav
+  bug where switching tabs could land on Debug unexpectedly — both found by the maintainer after
+  retesting the `ai-sessions/0036` fix, this time successfully paired via Android's own Bluetooth
+  settings.** Root cause of "Connect does nothing": `MainActivity`'s `onConnect`/`onDisconnect`
+  actions were still the placeholders `ai-sessions/0033` had left in place — `BudsRepository` itself
+  had no `connect()`/`disconnect()` at all. Implemented for real: `BudsTransport`/`BudsRepository`
+  (domain) gained `connect()`/`disconnect()`; `BudsRepositoryImpl`'s constructor now holds the real
+  `ConnectionStateMachine` object (not just its read-only `Flow`) plus a lazily-resolved
+  `bondedDeviceProvider`, since the bonded device can only be known at connect time, well after this
+  singleton is constructed; Hilt's `TransportModule` now provides the real, `BluetoothSocket`-backed
+  `RfcommBudsTransport` instead of `FakeBudsTransport`. Found and fixed a latent bug during this
+  refactor: `RfcommBudsTransport.disconnect()` cancelled a single object-lifetime `CoroutineScope`,
+  which would have permanently broken any later reconnect attempt — now a fresh scope per `connect()`
+  call. Root cause of the nav bug: `OpenControlNavHost` special-cased the Debug tab with a plain
+  `navController.navigate()` call while the other four tabs used the
+  `popUpTo(start){saveState}+launchSingleTop+restoreState` pattern, letting Debug accumulate
+  duplicate back-stack entries the other four's handling never touched; fixed by unifying all five
+  destinations under identical navigation mechanics (Debug stays visually distinct only in never
+  showing as "selected"). Also fixed in the same pass: `iconFor()` had no `Routes.DEBUG` branch, so
+  Debug silently reused the generic Settings icon; and added
+  `android:enableOnBackInvokedCallback="true"` to the app manifest. **This is this project's first
+  real RFCOMM socket-connect attempt against actual hardware — everything downstream of "sockets
+  opened" remains as hardware-unverified as before.** Full build/test/lint suite re-verified clean
+  (1233 tests, 0 failures).
 
 ### Changed
 

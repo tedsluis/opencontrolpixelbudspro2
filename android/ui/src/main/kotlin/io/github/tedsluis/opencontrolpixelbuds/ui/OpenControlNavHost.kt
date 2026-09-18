@@ -47,9 +47,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 
-/** Route constants (ARCHITECTURE.md §2.4). [DEBUG] is deliberately not
- * listed in [PRIMARY_DESTINATIONS] — it is reachable only via a non-primary
- * entry point, per AGENTS.md §6/§9. */
+/** Route constants (ARCHITECTURE.md §2.4). */
 private object Routes {
     const val CONNECTION = "connection"
     const val ANC = "anc"
@@ -58,13 +56,27 @@ private object Routes {
     const val DEBUG = "debug"
 }
 
-private data class PrimaryDestination(val route: String, val label: String)
+private data class TabDestination(val route: String, val label: String)
 
-private val PRIMARY_DESTINATIONS = listOf(
-    PrimaryDestination(Routes.CONNECTION, "Connection"),
-    PrimaryDestination(Routes.ANC, "ANC"),
-    PrimaryDestination(Routes.EQ, "EQ"),
-    PrimaryDestination(Routes.FIND_MY_BUDS, "Find"),
+/**
+ * Every bottom-nav destination, **including** Debug — all five use identical
+ * single-top-tab navigation semantics (`popUpTo(start){saveState} +
+ * launchSingleTop + restoreState`). Debug used to be special-cased with a
+ * plain `navigate()` call, which let it accumulate duplicate back-stack
+ * entries never covered by the other tabs' `popUpTo`/`saveState` handling —
+ * a real, reproducible bug (not just a style choice) confirmed by a
+ * maintainer report of tabs "disappearing" behind Debug after navigating
+ * with the system back gesture (`ai-sessions/0037`). Debug stays visually
+ * distinct only in that it's never *highlighted* as the current primary
+ * destination (AGENTS.md §6/§9 — it's a developer surface, not part of
+ * ordinary use) — see [selected] below.
+ */
+private val TAB_DESTINATIONS = listOf(
+    TabDestination(Routes.CONNECTION, "Connection"),
+    TabDestination(Routes.ANC, "ANC"),
+    TabDestination(Routes.EQ, "EQ"),
+    TabDestination(Routes.FIND_MY_BUDS, "Find"),
+    TabDestination(Routes.DEBUG, "Debug"),
 )
 
 /**
@@ -103,10 +115,12 @@ data class OpenControlUiState(
 )
 
 /**
- * Top-level navigation graph (ARCHITECTURE.md §2.4). A bottom navigation bar
- * covers the four primary destinations; the Debug screen is reached via the
- * top app bar's overflow-style settings icon instead, keeping it out of the
- * primary flow.
+ * Top-level navigation graph (ARCHITECTURE.md §2.4). A single bottom
+ * navigation bar covers all five destinations, including Debug — kept out of
+ * the *ordinary* flow only by never being shown as "selected" (see
+ * [TAB_DESTINATIONS]'s own doc comment for why it still needs the same
+ * navigation mechanics as the primary four, not a visually separate entry
+ * point as originally designed).
  */
 @Composable
 fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
@@ -117,9 +131,13 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
             NavigationBar {
                 val backStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = backStackEntry?.destination
-                PRIMARY_DESTINATIONS.forEach { destination ->
+                TAB_DESTINATIONS.forEach { destination ->
+                    val isCurrent = currentDestination?.hierarchy?.any { it.route == destination.route } == true
                     NavigationBarItem(
-                        selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
+                        // Debug is never shown as "selected," per AGENTS.md §6/§9 — a developer
+                        // surface, not one of the app's ordinary tabs — even though it now uses
+                        // the exact same navigation mechanics as the primary four.
+                        selected = isCurrent && destination.route != Routes.DEBUG,
                         onClick = {
                             navController.navigate(destination.route) {
                                 popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -131,12 +149,6 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                         label = { Text(destination.label) },
                     )
                 }
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { navController.navigate(Routes.DEBUG) },
-                    icon = { Icon(Icons.Filled.Info, contentDescription = "Debug") },
-                    label = { Text("Debug") },
-                )
             }
         },
     ) { padding ->
@@ -195,5 +207,6 @@ private fun iconFor(route: String) = when (route) {
     Routes.ANC -> Icons.Filled.Settings
     Routes.EQ -> Icons.AutoMirrored.Filled.List
     Routes.FIND_MY_BUDS -> Icons.Filled.Notifications
+    Routes.DEBUG -> Icons.Filled.Info
     else -> Icons.Filled.Settings
 }

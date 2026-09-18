@@ -70,16 +70,17 @@ import javax.inject.Inject
  * a `BudsViewModel` class that would do little beyond what
  * `collectAsStateWithLifecycle()` already does here).
  *
- * **Honest scope**: [budsRepository] resolves to `BudsRepositoryImpl` wired
- * against `FakeBudsTransport` (`TransportModule.kt`) until `RfcommBudsTransport`
- * is verified against real hardware — every screen below is real, wired code,
- * but not yet exercised against a real Pixel Buds Pro 2 (ARCHITECTURE.md §5a).
- * Pairing itself (CDM picker → classic bonding, `ai-sessions/0036`) is now
- * fully wired, including the `createBond()` step CDM's own association
- * callback does **not** perform automatically. [OpenControlActions.onConnect]/
- * `onDisconnect` remain placeholders, since `RfcommBudsTransport.connect()`
- * needs a resolved `BluetoothDevice` + channel map this session still has no
- * hardware to exercise.
+ * **Honest scope**: [budsRepository] now resolves to `BudsRepositoryImpl`
+ * wired against the real, `BluetoothSocket`-backed `RfcommBudsTransport`
+ * (`TransportModule.kt`, `ai-sessions/0037`) — [OpenControlActions.onConnect]/
+ * `onDisconnect` call `budsRepository.connect()`/`disconnect()` for real.
+ * This is this project's **first** real RFCOMM socket-open attempt against
+ * actual Pixel Buds Pro 2 hardware — everything downstream of "sockets
+ * opened" (per-DLCI framing, ANC/EQ/Find My Buds commands) remains as
+ * untested against real hardware as it was before this session
+ * (ARCHITECTURE.md §5a). Pairing itself (CDM picker → classic bonding,
+ * `ai-sessions/0036`) is fully wired, including the `createBond()` step
+ * CDM's own association callback does **not** perform automatically.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -195,10 +196,8 @@ class MainActivity : ComponentActivity() {
                         onFailure = { reason -> pairingState = PairingState.Failed(reason.toString()) },
                     )
                 },
-                onConnect = { /* RfcommBudsTransport.connect() needs a resolved BluetoothDevice +
-                    channel map — wiring a real connect action through to the UI is the next
-                    increment once pairing is exercised against real hardware. */ },
-                onDisconnect = { },
+                onConnect = { scope.launch { budsRepository.connect() } },
+                onDisconnect = { scope.launch { budsRepository.disconnect() } },
                 onAncModeSelected = { mode -> scope.launch { budsRepository.setAncMode(mode) } },
                 onEqGainsChanged = { gains -> scope.launch { budsRepository.setEqGains(gains) } },
                 onEqPresetSelected = { preset -> scope.launch { budsRepository.applyEqPreset(preset) } },

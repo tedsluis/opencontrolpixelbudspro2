@@ -19,8 +19,10 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.hardware
 
+import android.bluetooth.BluetoothDevice
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 /**
  * Abstracts the underlying RFCOMM `BluetoothSocket` (primary transport) so
@@ -42,6 +44,17 @@ interface BudsTransport {
      * framing of its own so that job stays in exactly one place.
      */
     val inbound: Flow<Pair<Int, ByteArray>>
+
+    /**
+     * Opens one socket per entry in [channels] (channelId -> SDP UUID) against
+     * [device] — [device] is a parameter here, not a constructor argument,
+     * because it is only known once pairing has actually happened, which can
+     * be well after this transport instance itself is constructed
+     * (`ai-sessions/0037`).
+     */
+    suspend fun connect(device: BluetoothDevice, channels: Map<Int, UUID>): BudsResult<Unit>
+
+    suspend fun disconnect()
 
     suspend fun send(channelId: Int, frame: ByteArray): BudsResult<Unit>
 }

@@ -25,9 +25,9 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
-import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
+import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
 import io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -49,9 +49,23 @@ private fun hex(s: String): ByteArray {
 
 class BudsRepositoryImplTest {
 
+    /** A fresh [ConnectionStateMachine] starts at `Disconnected` (its own default) — [driveToReady]
+     * replays the real `Disconnected -> Connecting -> Discovering -> Ready` sequence
+     * ([ConnectionStateMachine]'s only public path to `Ready`) so most tests below can assume an
+     * already-connected repository without duplicating that sequence inline. */
+    private fun buildConnectionStateMachine(driveToReady: Boolean = true): ConnectionStateMachine {
+        val machine = ConnectionStateMachine()
+        if (driveToReady) {
+            machine.onConnectRequested()
+            machine.onLinkEstablished()
+            machine.onReady()
+        }
+        return machine
+    }
+
     private fun buildRepository(
         scope: TestScope,
-        connectionState: MutableStateFlow<ConnectionState> = MutableStateFlow(ConnectionState.Ready),
+        connectionStateMachine: ConnectionStateMachine = buildConnectionStateMachine(),
         hfpBatteryPercent: MutableSharedFlow<Int> = MutableSharedFlow(extraBufferCapacity = 8),
     ): Triple<BudsRepositoryImpl, FakeBudsTransport, MutableSharedFlow<Int>> {
         val transport = FakeBudsTransport()
@@ -61,11 +75,14 @@ class BudsRepositoryImplTest {
         // scope to finish by the test's end, and only backgroundScope's children are
         // exempted (auto-cancelled instead), which matches what these collectors actually are.
         val repo = BudsRepositoryImpl(
-            transport,
-            connectionState,
-            hfpBatteryPercent,
-            MutableStateFlow(false),
-            scope.backgroundScope,
+            transport = transport,
+            connectionStateMachine = connectionStateMachine,
+            // No real BluetoothDevice needed — none of the tests below exercise connect() against
+            // a bonded device (see the dedicated connect()-failure test instead).
+            bondedDeviceProvider = { null },
+            hfpBatteryPercent = hfpBatteryPercent,
+            debugModeEnabled = MutableStateFlow(false),
+            scope = scope.backgroundScope,
         )
         return Triple(repo, transport, hfpBatteryPercent)
     }
@@ -151,8 +168,11 @@ class BudsRepositoryImplTest {
 
     @Test
     fun `EQ profile resets to unknown on every fresh Ready transition`() = runTest {
-        val connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Connecting)
-        val (repo, transport) = buildRepository(this, connectionState = connectionState)
+        // driveToReady = false: a fresh machine starts at Disconnected, which is already
+        // "not Ready" — exactly what this test needs before it drives its own Ready transition
+        // below and checks that transition specifically causes the reset.
+        val connectionStateMachine = buildConnectionStateMachine(driveToReady = false)
+        val (repo, transport) = buildRepository(this, connectionStateMachine = connectionStateMachine)
         advanceUntilIdle()
 
         repo.setEqGains(EqBandGains(1f, 1f, 1f, 1f, 1f))
@@ -160,11 +180,22 @@ class BudsRepositoryImplTest {
 
         val job = launch { repo.eqProfile.first { it == null } }
         runCurrent()
-        connectionState.value = ConnectionState.Disconnected
-        connectionState.value = ConnectionState.Ready
+        connectionStateMachine.onConnectRequested()
+        connectionStateMachine.onLinkEstablished()
+        connectionStateMachine.onReady()
         job.join()
 
         assertNull(repo.eqProfile.value)
+    }
+
+    @Test
+    fun `connect fails with PermissionDenied when no bonded device exists yet`() = runTest {
+        val (repo, _) = buildRepository(this)
+        advanceUntilIdle()
+
+        val result = repo.connect()
+        assertInstanceOf(BudsResult.Failure::class.java, result)
+        assertEquals(BudsError.PermissionDenied, (result as BudsResult.Failure).error)
     }
 
     @Test

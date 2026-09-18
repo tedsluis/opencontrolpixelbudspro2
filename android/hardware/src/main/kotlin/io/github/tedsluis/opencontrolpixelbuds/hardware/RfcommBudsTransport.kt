@@ -39,28 +39,33 @@ import java.util.UUID
 /**
  * Real `BluetoothSocket`-backed [BudsTransport], one socket per RFCOMM DLCI
  * (PROTOCOL.md §2.3 — each channel has independent framing and cannot share
- * one socket). **Sketched, not verified against real hardware — no physical
- * Pixel Buds Pro 2 is available in this environment** (ARCHITECTURE.md §5a).
- * This class compiles and follows AGENTS.md §3's rules (all I/O on
- * `Dispatchers.IO`, every socket call site wrapped and converted to a
- * [BudsError], never a bare `catch (e: Exception) {}`), and resolves this
- * session's previously-open `// TODO(verify)` for per-DLCI socket selection —
- * but connecting and demultiplexing against real hardware is exactly the part
- * this environment cannot validate.
+ * one socket). **First real connect attempt this session (`ai-sessions/0037`)
+ * — still not confirmed to actually complete a handshake against real Pixel
+ * Buds Pro 2 hardware**, only that the socket-opening/demultiplexing code
+ * itself follows AGENTS.md §3's rules (all I/O on `Dispatchers.IO`, every
+ * socket call site wrapped and converted to a [BudsError], never a bare
+ * `catch (e: Exception) {}`).
+ *
+ * [device] is a per-call [connect] parameter, not a constructor argument —
+ * the target device is only known once pairing has actually happened
+ * (`BudsCompanionPairing.bondedDevice()`), which can be well after this
+ * transport singleton itself is constructed by Hilt.
  *
  * Each socket's `InputStream` is read on its own coroutine and forwarded to
  * the shared [inbound] flow as raw, not-necessarily-frame-aligned chunks
  * (`BudsTransport.inbound`'s own doc comment) — `:data`'s `CodecRouter`
- * (Phase 3) does the actual frame-boundary detection.
+ * does the actual frame-boundary detection.
  */
 class RfcommBudsTransport(
-    private val device: BluetoothDevice,
-    private val socketFactory: (channelId: Int, uuid: UUID) -> BluetoothSocket,
+    private val socketFactory: (channelId: Int, uuid: UUID, device: BluetoothDevice) -> BluetoothSocket,
 ) : BudsTransport {
 
     private val sockets = mutableMapOf<Int, BluetoothSocket>()
-    private val supervisor = SupervisorJob()
-    private val scope = CoroutineScope(Dispatchers.IO + supervisor)
+
+    // Created fresh per connect(), not a single object-lifetime scope — disconnect() cancels only
+    // this connection's own coroutines, so a later connect() (reconnect) isn't left permanently
+    // broken by an already-cancelled scope.
+    private var connectionScope: CoroutineScope? = null
     private var readerJobs: List<Job> = emptyList()
 
     override var connected: Boolean = false
@@ -71,34 +76,38 @@ class RfcommBudsTransport(
 
     /**
      * Opens one socket per entry in [channels] (channelId -> SDP UUID, see
-     * [BudsSdpUuids]) and starts a reader coroutine for each. If any channel
-     * fails to connect, every already-opened socket in this call is closed
-     * before returning failure — this app has no use for a partially-usable
-     * transport where, say, ANC works but EQ silently doesn't.
+     * [BudsSdpUuids]) against [device] and starts a reader coroutine for
+     * each. If any channel fails to connect, every already-opened socket in
+     * this call is closed before returning failure — this app has no use for
+     * a partially-usable transport where, say, ANC works but EQ silently
+     * doesn't.
      */
-    suspend fun connect(channels: Map<Int, UUID>): BudsResult<Unit> = withContext(Dispatchers.IO) {
-        val opened = mutableMapOf<Int, BluetoothSocket>()
-        try {
-            for ((channelId, uuid) in channels) {
-                val socket = socketFactory(channelId, uuid)
-                socket.connect()
-                opened[channelId] = socket
+    override suspend fun connect(device: BluetoothDevice, channels: Map<Int, UUID>): BudsResult<Unit> =
+        withContext(Dispatchers.IO) {
+            val opened = mutableMapOf<Int, BluetoothSocket>()
+            try {
+                for ((channelId, uuid) in channels) {
+                    val socket = socketFactory(channelId, uuid, device)
+                    socket.connect()
+                    opened[channelId] = socket
+                }
+                sockets.putAll(opened)
+                connected = true
+                val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+                connectionScope = scope
+                readerJobs = opened.map { (channelId, socket) -> startReader(scope, channelId, socket) }
+                BudsResult.Success(Unit)
+            } catch (e: IOException) {
+                opened.values.forEach { runCatching { it.close() } }
+                connected = false
+                BudsResult.Failure(BudsError.ConnectionLost)
+            } catch (e: SecurityException) {
+                opened.values.forEach { runCatching { it.close() } }
+                BudsResult.Failure(BudsError.PermissionDenied)
             }
-            sockets.putAll(opened)
-            connected = true
-            readerJobs = opened.map { (channelId, socket) -> startReader(channelId, socket) }
-            BudsResult.Success(Unit)
-        } catch (e: IOException) {
-            opened.values.forEach { runCatching { it.close() } }
-            connected = false
-            BudsResult.Failure(BudsError.ConnectionLost)
-        } catch (e: SecurityException) {
-            opened.values.forEach { runCatching { it.close() } }
-            BudsResult.Failure(BudsError.PermissionDenied)
         }
-    }
 
-    private fun startReader(channelId: Int, socket: BluetoothSocket): Job = scope.launch {
+    private fun startReader(scope: CoroutineScope, channelId: Int, socket: BluetoothSocket): Job = scope.launch {
         val input = socket.inputStream
         val buffer = ByteArray(1024)
         try {
@@ -132,7 +141,7 @@ class RfcommBudsTransport(
             }
         }
 
-    suspend fun disconnect() = withContext(Dispatchers.IO) {
+    override suspend fun disconnect() = withContext(Dispatchers.IO) {
         readerJobs.forEach { it.cancel() }
         sockets.values.forEach { socket ->
             try {
@@ -143,6 +152,7 @@ class RfcommBudsTransport(
         }
         sockets.clear()
         connected = false
-        scope.coroutineContext.cancel()
+        connectionScope?.cancel()
+        connectionScope = null
     }
 }

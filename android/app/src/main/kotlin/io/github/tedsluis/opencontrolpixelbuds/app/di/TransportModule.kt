@@ -24,25 +24,36 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsTransport
-import io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport
+import io.github.tedsluis.opencontrolpixelbuds.hardware.RfcommBudsTransport
 import javax.inject.Singleton
 
 /**
- * Binds [BudsTransport] to [FakeBudsTransport] for now — the real
- * `RfcommBudsTransport` (`:hardware`) is sketched but explicitly unverified
- * against real hardware (no physical Buds available in this environment,
- * `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 7). This module
- * exists to prove the Hilt composition root actually resolves an interface
- * binding end-to-end, not to claim a working hardware connection.
- *
- * // TODO(blocked on real-hardware verification): swap this binding for
- * // `RfcommBudsTransport` once it is implemented and verified end-to-end
- * // against a real Pixel Buds Pro 2, per `ARCHITECTURE.md` §2.1.
+ * Binds [BudsTransport] to the real, `BluetoothSocket`-backed
+ * [RfcommBudsTransport] (`ai-sessions/0037` — the maintainer now has a real
+ * bonded Pixel Buds Pro 2 to test against; `FakeBudsTransport` stays wired
+ * only in test source sets, never in the shipped app, per AGENTS.md §11).
+ * The default socket factory uses `BluetoothDevice.createRfcommSocketToServiceRecord()`
+ * directly — the standard Android RFCOMM-client pattern, no custom transport
+ * logic beyond what `RfcommBudsTransport` itself already implements.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object TransportModule {
     @Provides
     @Singleton
-    fun provideBudsTransport(): BudsTransport = FakeBudsTransport()
+    fun provideBudsTransport(): BudsTransport = RfcommBudsTransport(
+        // BLUETOOTH_CONNECT is runtime-revocable (AGENTS.md §2/§8) — lint's MissingPermission
+        // check can't see across this lambda into RfcommBudsTransport.connect()'s own
+        // `catch (e: SecurityException)` (RfcommBudsTransport.kt), which is the real call site
+        // that converts a denied/revoked permission into BudsError.PermissionDenied, so the
+        // exception must be allowed to propagate out of this factory unhandled, not swallowed
+        // here.
+        socketFactory = { _, uuid, device ->
+            try {
+                device.createRfcommSocketToServiceRecord(uuid)
+            } catch (e: SecurityException) {
+                throw e
+            }
+        },
+    )
 }

@@ -19,16 +19,19 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.hardware
 
+import android.bluetooth.BluetoothDevice
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import java.util.UUID
 
 /**
  * Scripted [BudsTransport] for domain/data unit tests — no real
- * `BluetoothSocket` involved (AGENTS.md §11). A real `BluetoothSocket`-backed
- * implementation of this interface needs actual hardware to validate and is
- * out of scope for this phase (see `RfcommBudsTransport`'s own doc comment).
+ * `BluetoothSocket` involved (AGENTS.md §11). [connect]/[disconnect] are
+ * trivial state flips, not real socket I/O — `RfcommBudsTransport` is the
+ * real implementation, unit-tested only up to what doesn't require actual
+ * hardware (see its own doc comment).
  */
 class FakeBudsTransport : BudsTransport {
     override var connected: Boolean = true
@@ -38,10 +41,21 @@ class FakeBudsTransport : BudsTransport {
 
     val sent = mutableListOf<Pair<Int, ByteArray>>()
     var sendShouldFail: BudsError? = null
+    var connectShouldFail: BudsError? = null
 
     /** Test hook: push a scripted inbound frame as if the Buds had sent it. */
     suspend fun emit(channelId: Int, frame: ByteArray) {
         _inbound.emit(channelId to frame)
+    }
+
+    override suspend fun connect(device: BluetoothDevice, channels: Map<Int, UUID>): BudsResult<Unit> {
+        connectShouldFail?.let { return BudsResult.Failure(it) }
+        connected = true
+        return BudsResult.Success(Unit)
+    }
+
+    override suspend fun disconnect() {
+        connected = false
     }
 
     override suspend fun send(channelId: Int, frame: ByteArray): BudsResult<Unit> {

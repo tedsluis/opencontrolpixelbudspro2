@@ -28,6 +28,7 @@ import dagger.hilt.components.SingletonComponent
 import io.github.tedsluis.opencontrolpixelbuds.data.BudsRepositoryImpl
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsTransport
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
 import io.github.tedsluis.opencontrolpixelbuds.hardware.HfpBatteryReader
@@ -38,13 +39,10 @@ import javax.inject.Singleton
 
 /**
  * Wires `:data`'s `BudsRepositoryImpl` into the real `BudsRepository`
- * interface (ARCHITECTURE.md §2.1, DECISIONS.md ADR-001) — completes the
- * dependency chain `TransportModule.kt`'s own doc comment describes as
- * missing ("no `BudsRepository`/use-case layer exists yet"). The underlying
- * [BudsTransport] this resolves to is still `FakeBudsTransport`
- * (`TransportModule.kt`) until `RfcommBudsTransport` is verified against real
- * hardware — this module wires the *shape* of the real dependency graph
- * correctly, it does not itself make the transport real.
+ * interface (ARCHITECTURE.md §2.1, DECISIONS.md ADR-001). [BudsTransport]
+ * resolves to `RfcommBudsTransport` (`TransportModule.kt`, `ai-sessions/0037`
+ * — the real transport is now the default, `FakeBudsTransport` stays only in
+ * test source sets).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -65,15 +63,22 @@ object RepositoryModule {
 
     @Provides
     @Singleton
+    fun provideBudsCompanionPairing(@ApplicationContext context: Context): BudsCompanionPairing =
+        BudsCompanionPairing(context)
+
+    @Provides
+    @Singleton
     fun provideBudsRepository(
         transport: BudsTransport,
         connectionStateMachine: ConnectionStateMachine,
+        companionPairing: BudsCompanionPairing,
         @ApplicationContext context: Context,
         debugSettingsStore: DebugSettingsStore,
         scope: CoroutineScope,
     ): BudsRepository = BudsRepositoryImpl(
         transport = transport,
-        connectionState = connectionStateMachine.state,
+        connectionStateMachine = connectionStateMachine,
+        bondedDeviceProvider = companionPairing::bondedDevice,
         hfpBatteryPercent = HfpBatteryReader(context).observeBievBatteryPercent(),
         debugModeEnabled = debugSettingsStore.debugModeEnabled,
         scope = scope,

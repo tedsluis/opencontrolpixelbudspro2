@@ -19,6 +19,7 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data
 
+import android.bluetooth.BluetoothDevice
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncFrame
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncFrameEncoder
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.CodecRouter
@@ -41,7 +42,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsSdpUuids
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsTransport
+import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -67,19 +70,26 @@ import kotlinx.coroutines.withTimeoutOrNull
  *   query, only listening.
  * - **Find My Buds**: no persisted state to reconcile.
  *
- * [hfpBatteryPercent] and [connectionState] are injected as plain [Flow]s
- * (rather than concrete `:hardware` types beyond [BudsTransport] itself) so
- * this class stays unit-testable against a [io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport]
- * and scripted flows, per AGENTS.md §11 — no real `BluetoothHeadset`/
- * `ConnectionStateMachine` involved in a test of this class.
+ * [hfpBatteryPercent] is injected as a plain [Flow] so this class stays
+ * unit-testable against a [io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport]
+ * and scripted flows, per AGENTS.md §11 — no real `BluetoothHeadset` involved
+ * in a test of this class. [connectionStateMachine] is the real, already
+ * independently-tested `:hardware` class (not just its `Flow`) — [connect]/
+ * [disconnect] need to drive its transitions, not just observe them.
+ * [bondedDeviceProvider] resolves the current bonded device lazily at
+ * [connect] time (never cached at construction — pairing can happen well
+ * after this repository singleton is built, `ai-sessions/0037`).
  */
 class BudsRepositoryImpl(
     private val transport: BudsTransport,
-    override val connectionState: Flow<ConnectionState>,
+    private val connectionStateMachine: ConnectionStateMachine,
+    private val bondedDeviceProvider: () -> BluetoothDevice?,
     hfpBatteryPercent: Flow<Int>,
     debugModeEnabled: Flow<Boolean>,
     private val scope: CoroutineScope,
 ) : BudsRepository {
+
+    override val connectionState: Flow<ConnectionState> = connectionStateMachine.state
 
     private val codecRouter = CodecRouter()
 
@@ -156,6 +166,37 @@ class BudsRepositoryImpl(
 
             is RoutedFrame.Ring -> Unit // No persisted state (ARCHITECTURE.md §3.1's table).
         }
+    }
+
+    override suspend fun connect(): BudsResult<Unit> {
+        val device = bondedDeviceProvider()
+            ?: return BudsResult.Failure(BudsError.PermissionDenied)
+        connectionStateMachine.onConnectRequested()
+        val channels = mapOf(
+            Dlci.MAESTRO to BudsSdpUuids.MAESTRO,
+            Dlci.FAST_PAIR_MESSAGE_STREAM to BudsSdpUuids.FAST_PAIR_MESSAGE_STREAM,
+        )
+        return when (val result = transport.connect(device, channels)) {
+            is BudsResult.Success -> {
+                connectionStateMachine.onLinkEstablished()
+                // PROTOCOL.md §5.2's own "Discovering" step is HYPOTHESIS-level, not a confirmed
+                // sequence this app can act on — SDP resolution already happened implicitly inside
+                // createRfcommSocketToServiceRecord() above, so there is nothing further to
+                // discover before the sockets are actually usable.
+                connectionStateMachine.onReady()
+                BudsResult.Success(Unit)
+            }
+            is BudsResult.Failure -> {
+                connectionStateMachine.onError(result.error)
+                result
+            }
+        }
+    }
+
+    override suspend fun disconnect(): BudsResult<Unit> {
+        transport.disconnect()
+        connectionStateMachine.onDisconnected()
+        return BudsResult.Success(Unit)
     }
 
     override suspend fun setAncMode(mode: AncMode): BudsResult<Unit> {
