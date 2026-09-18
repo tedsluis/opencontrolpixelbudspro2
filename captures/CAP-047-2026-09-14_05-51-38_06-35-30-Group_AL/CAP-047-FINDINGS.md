@@ -435,7 +435,9 @@ promotions of new protocol semantics):**
 2. Add a new `PROTOCOL.md` §6 (or a `DECISIONS.md` ADR-016 update) item recording §4's unreconciled
    Video-1-vs-Video-2 disconnect-behavior difference during a swapped-slot dock.
 3. Add a dated update to `DECISIONS.md` ADR-024 recording §5's two new counter-example readings,
-   alongside `CAP-048-FINDINGS.md` §5's existing ones.
+   alongside `CAP-048-FINDINGS.md` §5's existing ones. **Done 2026-09-18** — `DECISIONS.md` ADR-024
+   gained a dated update recording all three of §5's counter-example frames (3364, 3834→3996, 3048),
+   maintainer-approved in a chat session continuing `ai-sessions/0031`/`0032`.
 4. Propose a new Test-ID (e.g. `CASE-009` or similar, area prefix `CASE`) in
    `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` for "swapped-slot (mismatched L/R) docking" as its own
    bracketed behavior, given this session establishes it as a distinct, reproducible scenario with

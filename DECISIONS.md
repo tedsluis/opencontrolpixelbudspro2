@@ -1241,6 +1241,46 @@ motivated this).
   correctly. Implementations reading this field on a fresh reconnect specifically (as opposed to a
   same-chandle DLCI reopen) should treat it as usually, not unconditionally, reliable immediately
   after connection.
+- **Update (2026-09-18, `CAP-047-FINDINGS.md` §5) — three further counter-examples, from an
+  independent session, reproducing and extending the same still-open reliability question.**
+  `CAP-047` (Group AL, Recording 2) found three additional `Settable-toggles=0x00` ("both docked")
+  readings that do not match the video-confirmed physical dock state at the same wire timestamp,
+  alongside this session's own primary result (§5's swapped-slot-seating check, unaffected and
+  still 🟢 FACT — the byte correctly reads `0x00` for a swapped-slot docking, confirming the sensor
+  tracks physical presence only, not per-slot identity):
+  - **Frame 3364** (`06:34:46.79`) — follows a DLCI 0x05 channel-bounce reopen (not a full ACL
+    reconnect) at `06:34:45.78`–`45.92`. Only one bud is seated at this timestamp per video
+    re-check. Extends the settling HYPOTHESIS's trigger condition from "fresh ACL reconnect" to
+    "any fresh DLCI (re)establishment."
+  - **Frame 3834 → 3996** (`06:35:01.05` → `06:35:02.20`) — a fresh ACL reconnect's own
+    connect-time Get/Notify reads `0x00` while only one bud is seated; a spontaneous re-Notify
+    1.15s later self-corrects to `0xe8` with no intervening Get. This is a **second, independent
+    reproduction** of the exact settling pattern `CAP-048-FINDINGS.md` §5 first proposed —
+    strengthening it from a single-session anecdote to a reproduced pattern, but still not
+    independently confirmed as *the* mechanism (no direct evidence of *why* the firmware/stack
+    returns a stale value, only that it does and self-corrects).
+  - **Frame 3048** (`06:34:39.51`) — 🔴 **a new, unreconciled failure mode, distinct from the
+    settling pattern above.** No channel reopen or Get precedes this spontaneous Notify (DLCI 0x05
+    had been open, unbroken, for 20 seconds); the case is empty per video re-check. Does not fit
+    "stale value after a fresh (re)establishment" — there is no (re)establishment to be stale
+    from. Left as an open question (`PROTOCOL.md` §6), not folded into the settling HYPOTHESIS by
+    assumption.
+  - **What this update does NOT change:** ADR-024's core dock-state-vs-not finding remains 🟢 FACT,
+    unaffected — every genuinely-both-docked and genuinely-neither-docked reading in both `CAP-047`
+    and every prior session continues to confirm it. The settling HYPOTHESIS remains 🟡 HYPOTHESIS
+    (now with 2 independent reproducing sessions instead of 1, but still not independently confirmed
+    as a mechanism). Frame 3048's own failure mode is **not** claimed to share a cause with the
+    settling pattern — reported as a separate open question per `AGENTS.md` §13.6's zero-creativity
+    discipline, not merged into it for tidiness.
+  - **Consequences**: an implementation reading this field on a fresh reconnect or channel reopen
+    should not treat the first Notify/Get response as immediately authoritative — per two
+    independent sessions now, a stale reading can occur and self-corrects within roughly 1–2 seconds
+    via a spontaneous re-Notify. A defensive implementation should either wait briefly for a
+    possible correcting Notify before surfacing dock state in the UI, or treat a dock-state read
+    taken within ~2s of a fresh (re)connection/reopen as provisional. Frame 3048's own
+    no-connection-event failure mode has no known mitigation yet — it is recorded as a residual risk
+    for any dock-state-dependent UI feature, not solved by this update. Maintainer-approved
+    2026-09-18 (this chat session, continuing `ai-sessions/0031`/`0032`'s own open item).
 
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 

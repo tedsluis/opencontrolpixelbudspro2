@@ -2798,12 +2798,15 @@ leaving them buried in prose elsewhere.
       `Settable-toggles` reads `0x00` ("both docked") during a swapped-slot seating exactly as it
       does for a correctly-slotted one (`CAP-047-FINDINGS.md` §5, frame 2803, `06:10:20.78`,
       video-correlated to the on-screen swapped-dock moment) — the dock-sensor mechanism does not
-      check slot correctness, only physical presence. Separately, two further stale-reading
-      counter-examples were found (`CAP-047-FINDINGS.md` §5): one following a channel-level reopen
-      (not a full ACL reconnect) that self-corrects 1.15s later via a spontaneous re-Notify — a
-      second, independent instance of this file's own "settling" HYPOTHESIS above — and one with no
-      preceding channel-(re)establishment at all (a spontaneous Notify on an apparently-empty case),
-      which does not fit the settling explanation and is left as its own, still-open question.
+      check slot correctness, only physical presence. Separately, further stale-reading
+      counter-examples were found (`CAP-047-FINDINGS.md` §5, three frames in total — this entry's own
+      "two further" phrasing above undercounts them; see `DECISIONS.md` ADR-024's 2026-09-18 update
+      for the fully itemized three-frame breakdown): one following a channel-level reopen (not a full
+      ACL reconnect); one from a fresh ACL reconnect that self-corrects 1.15s later via a spontaneous
+      re-Notify — a second, independent instance of this file's own "settling" HYPOTHESIS above; and
+      one with no preceding channel-(re)establishment at all (a spontaneous Notify on an
+      apparently-empty case), which does not fit the settling explanation and is left as its own,
+      still-open question.
 - [ ] **Added 2026-09-15, `CAP-047-FINDINGS.md` §4 (Group AL) — unreconciled tension with
       `DECISIONS.md` ADR-016's disconnect-on-redock mechanism.** Of three swapped-slot (mismatched
       L/R) dockings captured across two sessions/recordings, two produce a genuine ACL
