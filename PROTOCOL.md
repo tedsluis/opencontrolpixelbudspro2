@@ -845,11 +845,8 @@ event-observation coroutines.
   itself is stable across sessions the way DLCI `0x08`'s Option E numbering has proven to be, or is
   session-dynamic, is also not independently re-verified by this promotion — a future session
   reproducing this on a fresh capture would still be useful for that specific question, even though
-  it is no longer a precondition for the code-identity FACT above. **`DECISIONS.md` ADR note:**
-  per this project's own established convention (e.g. ADR-021/ADR-022/ADR-024/ADR-026), a FACT
-  promotion like this is normally recorded as a dedicated `DECISIONS.md` ADR — not written here,
-  since `AGENTS.md` §6/§15 require the maintainer's own separate, explicit approval of an ADR's
-  actual text. Flagged for the maintainer to draft/approve that ADR text, or confirm none is needed.
+  it is no longer a precondition for the code-identity FACT above. Recorded as `DECISIONS.md`
+  ADR-031 (maintainer-approved 2026-09-18, `ai-sessions/0031`).
 - **Cross-channel timing synchronization extended to DLCI 0x02, 🟡 HYPOTHESIS (`CAP-036-FINDINGS.md`
   §12.5, 2026-09-04):** the near-lockstep pattern above (Option B/C/E firing within single-digit
   milliseconds of each other) is joined, in this session, by a periodic DLCI 0x02 (`libmaestro`)
@@ -1548,13 +1545,8 @@ initiated by a BLE tool, nRF Connect, connecting first).** This is a direct caus
 purpose-built repeat, not merely a repeated negative: "an LE Secure Connections link already
 existing gates CTKD vs. classic SSP" is now promoted into this section's own 🟢 FACT
 connection-lifecycle diagram, per the maintainer's explicit 2026-09-18 approval
-(`ai-sessions/0031_MAINTENANCE_RESULT_2026_09_18.md` Phase 4). **`DECISIONS.md` ADR note:** this
-project's own established convention (e.g. ADR-021/ADR-022/ADR-024/ADR-026) is to record a FACT
-promotion like this one as a dedicated `DECISIONS.md` ADR — that ADR has **not** been written here,
-since `AGENTS.md` §6/§15 require the maintainer's own separate, explicit approval of an ADR's actual
-text (a sign-off on the underlying fact is not automatically a sign-off on ADR wording). Flagged for
-the maintainer to either draft/approve that ADR text directly, or explicitly confirm no ADR is
-needed for this particular promotion.
+(`ai-sessions/0031_MAINTENANCE_RESULT_2026_09_18.md` Phase 4). Recorded as `DECISIONS.md` ADR-030
+(maintainer-approved 2026-09-18, `ai-sessions/0031`).
 
 ### 5.2 RFCOMM channel-opening sequence (step 3) — 🟡 HYPOTHESIS (strong), reviewed by the maintainer 2026-09-09, kept at HYPOTHESIS
 

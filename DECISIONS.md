@@ -1460,5 +1460,72 @@ motivated this).
   This forecloses running on older Android versions/ROMs that can't be updated past API 33, a
   deliberate trade-off given this project's GrapheneOS-first target.
 
+## ADR-030 — Cross-Transport Key Derivation (CTKD) confirmed as a third bonding path, gated on a pre-existing LE link
+
+- **Date**: 2026-09-18
+- **Status**: Accepted
+- **Context**: `CAP-004-FINDINGS.md` §2 first observed a bonding path where an LE Secure Connections
+  link to the Buds already existed before classic pairing began (nRF Connect): `Delete Stored Link
+  Key` → SMP `Pairing Request` (`Linkkey` distribution) → Public Key/Confirm/Random → `DHKey Check`
+  → classic `Create Connection` → `Link Key Request Reply` — the classic link key derived from the
+  LE pairing rather than negotiated via classic SSP. `CAP-004-FINDINGS.md` §10 withheld this from
+  promotion: the finding rested on one capture with a specific confound (nRF Connect's early BLE
+  connection might itself cause CTKD, independent of the GMS-disabled/no-app condition actually
+  being tested). `CAP-012` (2026-08-26) directly tested this as a controlled hypothesis: repeating
+  the same GMS-disabled/no-app condition with **no** BLE tool at any point, and independently
+  confirming zero BLE connection to the Buds anywhere in that session's log, produced classic SSP
+  instead of CTKD. Combined with `CAP-002`/`CAP-003` (classic SSP in every session with no
+  pre-existing LE link) and `CAP-014`/`CAP-015` (2026-08-27, a second, independently confirming CTKD
+  instance, again initiated by nRF Connect connecting first), this is a direct causal isolation, not
+  merely a repeated negative. Maintainer approved promotion 2026-09-18 (`ai-sessions/0031`, Phase 4).
+- **Finding being promoted**: "An LE Secure Connections link already existing to the Buds before
+  classic pairing begins gates Cross-Transport Key Derivation (CTKD) instead of classic Secure
+  Simple Pairing (SSP)" — `PROTOCOL.md` §5.1's "Third path" note — is now 🟢 **FACT**.
+- **What this ADR does NOT promote**: why a BLE tool connecting first matters, or whether the
+  official companion app itself ever triggers this path (every confirmed instance used nRF Connect,
+  not the official app) — both remain open questions. This is not a per-DLCI
+  `FrameEncoder`/`FrameDecoder` content-decoding gate under `AGENTS.md` §6's specific
+  implementation-gate clause (CTKD is bonding/pairing-layer behavior, not a Message-Group/Code
+  frame) — recorded as its own ADR per this project's general convention of an ADR per FACT
+  promotion, not because §6's narrower implementation-gate rule requires one here.
+- **Decision**: `PROTOCOL.md` §5.1's CTKD-gating claim is promoted to 🟢 FACT.
+- **Consequences**: `ARCHITECTURE.md`'s pairing/bonding logic (`CompanionDeviceManager`-based
+  first-time pairing, `AGENTS.md` §7) can now assume both bonding paths converge to the same
+  encrypted classic link regardless of entry point, so reconnection logic doesn't need to
+  special-case which path was used. Does not itself unblock any new command implementation.
+
+## ADR-031 — Battery Option B's `Group 0x03 Code 0x03` message confirmed as the Fast Pair "Battery updated" notification (while discharging)
+
+- **Date**: 2026-09-18
+- **Status**: Accepted
+- **Context**: `PROTOCOL.md` §4.3 Option B tracked a candidate battery message on DLCI 0x04
+  (`03 03 00 03 <b1> <b2> ff`), originally recorded as 🟡 HYPOTHESIS per maintainer sign-off
+  (`CAP-009-FINDINGS.md` §7). The 2026-08-28 project-wide audit (`EXT-01`) found Google's official
+  Fast Pair Device Information extension spec documents Message Group `0x03` Code `0x03` =
+  **"Battery updated"** — an exact match, independently derived from `CAP-009`'s own wire behavior.
+  Across 208 occurrences in a 101-minute natural-discharge session (`CAP-009`), `b2` matched the
+  Right earbud's percentage at all 7 of its transitions, and `b1` matched Left's percentage at both
+  of its transitions while not charging, with both fields updating within single-digit milliseconds
+  of the already-FACT `AT+BIEV` (Option C) and DLCI-0x08 Option E pushes for the same underlying
+  change. Maintainer approved 2026-09-18 (`ai-sessions/0031`, Phase 4) accepting this single-session
+  evidence combined with the exact spec-code match as sufficient, without requiring the
+  independently-reproducing session originally proposed.
+- **Finding being promoted**: DLCI 0x04's `Group 0x03 Code 0x03` message is the Fast Pair "Battery
+  updated" notification, encoding per-earbud battery percentage in `b1` (Left) / `b2` (Right)
+  **while discharging** — `PROTOCOL.md` §4.3 Option B's candidate code identity is now 🟢 **FACT**.
+- **What this ADR does NOT promote**: the charging-state field-switch anomaly — once the Left
+  earbud starts charging, `b1` stops behaving like a percentage (jumps to 221, climbs ~1/sample
+  instead of following the known 93→100 charging curve) — remains 🟡 HYPOTHESIS/unexplained, a
+  distinct regime not covered by this promotion. Whether the `Group`/`Code` numbering itself is
+  stable across sessions (the way DLCI 0x08's Option E numbering has proven to be) or is
+  session-dynamic is also not independently re-verified here.
+- **Decision**: `PROTOCOL.md` §4.3 Option B's candidate battery message code identity is promoted to
+  🟢 FACT for the discharging case specifically.
+- **Consequences**: `ARCHITECTURE.md` §4's battery-fallback priority order can cite Option B (Fast
+  Pair Message Stream Battery notification) as a second confirmed, event-driven mechanism alongside
+  Option C (HFP) — but any implementation must treat `b1`'s value as unreliable/unknown while the
+  Left earbud is reported charging, until the regime-change is separately investigated. Does not
+  change the existing HFP-first priority ordering.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
