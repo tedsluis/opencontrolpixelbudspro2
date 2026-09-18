@@ -25,6 +25,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
+import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
@@ -196,6 +197,20 @@ class BudsRepositoryImplTest {
         val result = repo.connect()
         assertInstanceOf(BudsResult.Failure::class.java, result)
         assertEquals(BudsError.PermissionDenied, (result as BudsResult.Failure).error)
+    }
+
+    @Test
+    fun `a transport-reported connection loss moves connectionState to Disconnected`() = runTest {
+        val connectionStateMachine = buildConnectionStateMachine()
+        val (repo, transport) = buildRepository(this, connectionStateMachine = connectionStateMachine)
+        advanceUntilIdle()
+
+        val job = launch { repo.connectionState.first { it is ConnectionState.Disconnected } }
+        runCurrent()
+        transport.emitConnectionLost()
+        job.join()
+
+        assertInstanceOf(ConnectionState.Disconnected::class.java, connectionStateMachine.state.value)
     }
 
     @Test

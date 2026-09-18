@@ -109,6 +109,24 @@ mark v1.
   real RFCOMM socket-connect attempt against actual hardware — everything downstream of "sockets
   opened" remains as hardware-unverified as before.** Full build/test/lint suite re-verified clean
   (1233 tests, 0 failures).
+- **2026-09-18 (`ai-sessions/0038`): a self-directed audit of the v1 app's remaining gaps — a
+  maintainer question ("are there other parts that are unimplemented or too basic?"), not a bug
+  report.** Four real, distinct findings, all fixed: (1) `BudsForegroundService` was a fully-built,
+  compiling class that nothing ever started or stopped — `MainActivity` now binds it to
+  `ConnectionStateMachine`'s transitions per `ARCHITECTURE.md` §6.0a's own already-documented design;
+  (2) `BleLogger.exportLog()`'s ring buffer had no UI path to actually reach it — the Debug screen now
+  has an "Export debug log" button handing it to the system share sheet, local-only per AGENTS.md §9;
+  (3) **no peer-disconnect detection** — `RfcommBudsTransport` privately noticed a dropped link
+  (range loss, OS-triggered teardown) via its reader coroutine's `IOException`, but nothing told
+  `ConnectionStateMachine`, so the UI could have kept showing `Ready` for a connection that had
+  actually already died; fixed with a new `BudsTransport.connectionLost: Flow<Unit>`, carefully
+  distinguishing a genuine peer/range-loss drop from the `IOException` this app's own `disconnect()`
+  deliberately causes by closing the socket mid-read; (4) `BudsRepository.refreshAncMode()` (built
+  and unit-tested since `ai-sessions/0033`) had no UI affordance — `AncScreen` gained a "Refresh"
+  button — and a related, more subtle find in the same screen sweep: `EqScreen`'s sliders wired
+  `onGainsChanged` (a real DLCI 0x02 wire write) to `Slider`'s continuous `onValueChange`, which would
+  have sent one RFCOMM frame per pixel of drag movement, instead of the once-per-drag
+  `onValueChangeFinished`. Full build/test/lint suite re-verified clean (1234 tests, 0 failures).
 
 ### Changed
 

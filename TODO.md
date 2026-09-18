@@ -772,12 +772,18 @@ lower priority than finishing ANC/Battery/EQ):**
       entirely) was invisible to it — now re-checked on every `ON_RESUME`. **Still not
       hardware-verified**: this session has no device of its own to confirm the picker now shows
       only Pixel Buds, or that a full pairing attempt actually reaches `Bonded`.
-- [ ] **Added 2026-09-18** (`ai-sessions/0033`): start/stop `BudsForegroundService` from
-      `ConnectionStateMachine` transitions (ARCHITECTURE.md §6.0a) — the service class exists and
-      compiles but nothing calls `startForegroundService`/`stopService` on it yet.
-- [ ] **Added 2026-09-18** (`ai-sessions/0033`): an "Export debug log" UI action reading
-      `BleLogger.exportLog()` — the ring buffer itself is built and populated, only the
-      share/export affordance on the Debug screen is missing.
+- [x] **Added 2026-09-18** (`ai-sessions/0033`), **done 2026-09-18** (`ai-sessions/0038`): start/stop
+      `BudsForegroundService` from `ConnectionStateMachine` transitions (ARCHITECTURE.md §6.0a) —
+      `MainActivity` now observes `connectionState`/`ancMode` and calls `startForegroundService()`
+      for any non-`Disconnected`/non-`Failed` state (notification text: `Connecting…` /
+      `Discovering services…` / `Connected — ANC: <mode>`), `stopService()` back at `Disconnected`/
+      `Failed`. **Still not hardware-verified**: no physical Buds in this environment to confirm the
+      notification actually behaves correctly through a real connect/disconnect cycle.
+- [x] **Added 2026-09-18** (`ai-sessions/0033`), **done 2026-09-18** (`ai-sessions/0038`): an "Export
+      debug log" UI action reading `BleLogger.exportLog()` — a button on the Debug screen now hands
+      the ring-buffer snapshot to the system share sheet (`Intent.ACTION_SEND`, local-only per
+      AGENTS.md §9 — the destination is the user's own choice, never a network call this app makes
+      itself).
 - [ ] **PROPOSAL, added 2026-09-18** (`ai-sessions/0033`, `ARCHITECTURE.md` §5a): a consolidated
       `DECISIONS.md` ADR explicitly unblocking DLCI 0x02's generic settings-write `FrameEncoder`/
       `FrameDecoder` for the fields already at full/category-level FACT identity (touch controls,
@@ -791,6 +797,28 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+- **No peer-disconnect detection, found and fixed 2026-09-18 (`ai-sessions/0038`).** Found via an
+  audit of `BudsRepository`'s API surface after `ai-sessions/0037`'s real-Connect work, not a
+  maintainer report. `BudsTransport.connected` was a plain, unobserved `Boolean` — if the peer
+  dropped the link (range loss, an OS-triggered socket teardown) rather than the user tapping
+  Disconnect, `RfcommBudsTransport`'s reader coroutine caught the resulting `IOException` and
+  flipped its own `connected` flag privately, but nothing ever told `ConnectionStateMachine`, so the
+  UI would have kept showing `Ready` for a connection that had actually already died —
+  `ConnectionStateMachine.onDisconnected()`'s own doc comment already documented this exact case as
+  "a normal, expected transition," it had just never been wired end-to-end. Fixed: a new
+  `BudsTransport.connectionLost: Flow<Unit>`, emitted only when the reader coroutine's own `isActive`
+  is still true at the `IOException` (distinguishing a genuine peer/range-loss drop from the
+  `IOException` this app's own `disconnect()` deliberately causes by closing the socket out from
+  under an in-flight blocking read) — `BudsRepositoryImpl` now collects it and calls
+  `connectionStateMachine.onDisconnected()`. Unit-tested via `FakeBudsTransport.emitConnectionLost()`.
+- **Two implemented-but-unreachable repository methods, found and fixed 2026-09-18
+  (`ai-sessions/0038`).** `BudsRepository.refreshAncMode()` (manual ANC re-query, unit-tested since
+  `ai-sessions/0033`) had no UI affordance anywhere — `AncScreen` now has a "Refresh" button. Also
+  found in the same audit: `EqScreen`'s sliders called `onGainsChanged` (a real DLCI 0x02 wire write,
+  `BudsRepositoryImpl.setEqGains`) from `Slider`'s continuous `onValueChange` callback instead of the
+  once-per-drag `onValueChangeFinished`, which would have sent one RFCOMM frame per pixel of drag
+  movement — fixed with a local `remember(value)`-keyed slider value that only calls `onGainsChanged`
+  when the drag completes.
 - **Bottom-nav back-stack asymmetry (Debug tab), found and fixed 2026-09-18
   (`ai-sessions/0037`).** A real maintainer report: switching between tabs, then
   using the system back gesture, could land on the Debug tab unexpectedly

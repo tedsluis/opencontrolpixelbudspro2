@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -50,6 +51,7 @@ fun DebugScreen(
     debugModeEnabled: Boolean,
     onDebugModeChanged: (Boolean) -> Unit,
     unidentifiedFrames: List<UnidentifiedFrame>,
+    onExportLog: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
@@ -60,6 +62,11 @@ fun DebugScreen(
                 Text("Debug mode (verbose hex-dump logging)")
                 Switch(checked = debugModeEnabled, onCheckedChange = onDebugModeChanged)
             }
+
+            // Local-only (AGENTS.md §9) — hands the ring-buffer snapshot to the system share
+            // sheet, the destination is the user's own choice, never a network call this app
+            // makes itself.
+            Button(onClick = onExportLog) { Text("Export debug log") }
 
             HorizontalDivider()
 

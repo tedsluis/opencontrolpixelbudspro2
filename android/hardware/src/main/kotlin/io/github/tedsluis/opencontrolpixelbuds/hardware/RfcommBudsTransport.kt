@@ -74,6 +74,12 @@ class RfcommBudsTransport(
     private val _inbound = MutableSharedFlow<Pair<Int, ByteArray>>(extraBufferCapacity = 256)
     override val inbound: SharedFlow<Pair<Int, ByteArray>> = _inbound
 
+    // extraBufferCapacity, not replay — each per-DLCI reader can independently notice the same
+    // real-world link loss (all sockets to one peer die together), and every one of them should be
+    // able to emit without suspending/dropping (ai-sessions/0038).
+    private val _connectionLost = MutableSharedFlow<Unit>(extraBufferCapacity = 4)
+    override val connectionLost: SharedFlow<Unit> = _connectionLost
+
     /**
      * Opens one socket per entry in [channels] (channelId -> SDP UUID, see
      * [BudsSdpUuids]) against [device] and starts a reader coroutine for
@@ -122,6 +128,12 @@ class RfcommBudsTransport(
             // for send()/the caller's next attempt to discover and report via
             // BudsError.ConnectionLost, rather than this reader coroutine racing to
             // flip shared state on its own.
+            //
+            // isActive is false here when this IOException was *caused* by our own disconnect()
+            // (its socket.close() call unblocks this coroutine's still-in-flight read() with an
+            // IOException, after readerJobs.forEach { it.cancel() } already marked this job
+            // cancelled) — that expected teardown must not be reported as a connection loss.
+            if (isActive) _connectionLost.tryEmit(Unit)
         } finally {
             connected = false
         }

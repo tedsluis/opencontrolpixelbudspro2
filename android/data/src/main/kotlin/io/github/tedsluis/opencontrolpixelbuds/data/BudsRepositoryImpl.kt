@@ -149,6 +149,13 @@ class BudsRepositoryImpl(
                 }
             }
         }
+        scope.launch {
+            // Peer disconnect/range loss (ARCHITECTURE.md §6, `BudsTransport.connectionLost`'s own
+            // doc comment) — without this, `transport.connected` could silently go false with
+            // nothing telling `ConnectionStateMachine`, leaving the UI stuck showing `Ready` for a
+            // link that had actually already died (`ai-sessions/0038`).
+            transport.connectionLost.collect { connectionStateMachine.onDisconnected() }
+        }
     }
 
     private fun handleRoutedFrame(frame: RoutedFrame) {

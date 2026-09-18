@@ -92,11 +92,16 @@ data class OpenControlActions(
     val onConnect: () -> Unit,
     val onDisconnect: () -> Unit,
     val onAncModeSelected: (AncMode) -> Unit,
+    val onRefreshAncMode: () -> Unit,
     val onEqGainsChanged: (EqBandGains) -> Unit,
     val onEqPresetSelected: (EqPreset) -> Unit,
     val onRing: (RingTarget) -> Unit,
     val onStopRinging: () -> Unit,
     val onDebugModeChanged: (Boolean) -> Unit,
+    /** Shares `BleLogger.exportLog()`'s current ring-buffer snapshot via the system share sheet —
+     * local-only (AGENTS.md §9), the destination is the user's own choice, never an automatic
+     * network call this app makes itself. */
+    val onExportLog: () -> Unit,
 )
 
 data class OpenControlUiState(
@@ -172,6 +177,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     connectionState = state.connectionState,
                     ancMode = state.ancMode,
                     onAncModeSelected = actions.onAncModeSelected,
+                    onRefreshAncMode = actions.onRefreshAncMode,
                     modifier = Modifier.padding(padding),
                 )
             }
@@ -195,6 +201,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     debugModeEnabled = state.debugModeEnabled,
                     onDebugModeChanged = actions.onDebugModeChanged,
                     unidentifiedFrames = state.unidentifiedFrames,
+                    onExportLog = actions.onExportLog,
                     modifier = Modifier.padding(padding),
                 )
             }

@@ -27,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,19 +37,22 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 
 /**
- * Minimal, stateless ANC control screen — just enough to wire the pipeline
- * end-to-end (transport -> framing -> UI), per this session's own scope note
- * (`ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 7). Deliberately
- * takes plain domain values, not a ViewModel — wiring a real
- * `BudsViewModel`/`ToggleAncUseCase` (ARCHITECTURE.md §2) needs the `:app`
- * composition root, which is gated on Phase 6's dependency-injection
- * decision (Hilt vs. manual service locator).
+ * Minimal, stateless ANC control screen — takes plain domain values, not a
+ * ViewModel, matching `MainActivity`'s own state-hoisting-in-the-Activity
+ * pattern (its doc comment). [ancMode] is normally kept current without any
+ * action here — `BudsRepositoryImpl` simply observes the peer's own
+ * connect-time `Get`/`Notify` pair (ARCHITECTURE.md §3.1) — [onRefreshAncMode]
+ * exposes the already-implemented `BudsRepository.refreshAncMode()` manual
+ * re-query for the case that pair is ever missed or the value looks stale
+ * (`ai-sessions/0038` — this method existed and was unit-tested since
+ * `ai-sessions/0033` but had no UI affordance to actually reach it).
  */
 @Composable
 fun AncScreen(
     connectionState: ConnectionState,
     ancMode: AncMode?,
     onAncModeSelected: (AncMode) -> Unit,
+    onRefreshAncMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
@@ -72,6 +76,7 @@ fun AncScreen(
                     Text(mode.name)
                 }
             }
+            TextButton(onClick = onRefreshAncMode) { Text("Refresh") }
         }
     }
 }
@@ -84,6 +89,7 @@ private fun AncScreenPreview() {
             connectionState = ConnectionState.Ready,
             ancMode = AncMode.ADAPTIVE,
             onAncModeSelected = {},
+            onRefreshAncMode = {},
         )
     }
 }

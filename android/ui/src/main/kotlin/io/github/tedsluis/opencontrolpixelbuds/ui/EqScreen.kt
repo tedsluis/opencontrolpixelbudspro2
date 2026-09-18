@@ -33,6 +33,10 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
@@ -94,16 +98,29 @@ fun EqScreen(
     }
 }
 
+/**
+ * [onValueChange] fires once per completed drag ([Slider]'s own
+ * `onValueChangeFinished`), not per drag-frame — each call sends a real
+ * frame over the RFCOMM `MAESTRO` channel (`BudsRepositoryImpl.setEqGains`),
+ * so wiring it to the continuous `onValueChange` callback instead would have
+ * spammed a wire write per pixel of drag movement. [localValue] tracks the
+ * drag smoothly in the meantime and re-syncs from [value] whenever it
+ * changes for a reason other than this slider's own drag (a preset tap, or a
+ * real Notify frame arriving) — `remember(value)`'s own re-keying handles
+ * that, since [value] never itself changes mid-drag (`ai-sessions/0038`).
+ */
 @Composable
 private fun EqBandSlider(label: String, value: Float, onValueChange: (Float) -> Unit) {
+    var localValue by remember(value) { mutableStateOf(value) }
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label)
-            Text("%.1f".format(value))
+            Text("%.1f".format(localValue))
         }
         Slider(
-            value = value,
-            onValueChange = onValueChange,
+            value = localValue,
+            onValueChange = { localValue = it },
+            onValueChangeFinished = { onValueChange(localValue) },
             valueRange = EqBandGains.RANGE.start..EqBandGains.RANGE.endInclusive,
         )
     }

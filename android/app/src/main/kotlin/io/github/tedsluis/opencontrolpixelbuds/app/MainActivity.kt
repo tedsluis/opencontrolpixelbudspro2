@@ -44,9 +44,11 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothAdapterState
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothStateObserver
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsForegroundService
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingState
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlActions
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlNavHost
@@ -145,6 +147,35 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // ARCHITECTURE.md §6.0a: :app's composition root is the documented owner of
+            // BudsForegroundService's start/stop lifecycle, bound to the same ConnectionState
+            // this screen already observes — started for any non-Disconnected/non-Failed state
+            // (all reachable only via a user-initiated Connect tap right now, no background
+            // reconnect exists), stopped once back at Disconnected or Failed. The service itself
+            // holds no Bluetooth logic (BudsForegroundService's own doc comment) — this is purely
+            // the "one source of truth" binding ARCHITECTURE.md §6.0a specifies.
+            var foregroundServiceActive by remember { mutableStateOf(false) }
+            LaunchedEffect(connectionState, ancMode) {
+                val isActive = connectionState != ConnectionState.Disconnected &&
+                    connectionState !is ConnectionState.Failed
+                if (isActive) {
+                    val statusText = when (connectionState) {
+                        ConnectionState.Connecting -> "Connecting…"
+                        ConnectionState.Discovering -> "Discovering services…"
+                        ConnectionState.Ready -> ancMode?.let { "Connected — ANC: ${it.name}" } ?: "Connected"
+                        else -> "Connecting…"
+                    }
+                    startForegroundService(
+                        Intent(this@MainActivity, BudsForegroundService::class.java)
+                            .putExtra(BudsForegroundService.EXTRA_STATUS_TEXT, statusText),
+                    )
+                    foregroundServiceActive = true
+                } else if (foregroundServiceActive) {
+                    stopService(Intent(this@MainActivity, BudsForegroundService::class.java))
+                    foregroundServiceActive = false
+                }
+            }
+
             val state = OpenControlUiState(
                 connectionState = connectionState,
                 bluetoothEnabled = bluetoothAdapterState == BluetoothAdapterState.ON,
@@ -199,11 +230,22 @@ class MainActivity : ComponentActivity() {
                 onConnect = { scope.launch { budsRepository.connect() } },
                 onDisconnect = { scope.launch { budsRepository.disconnect() } },
                 onAncModeSelected = { mode -> scope.launch { budsRepository.setAncMode(mode) } },
+                onRefreshAncMode = { scope.launch { budsRepository.refreshAncMode() } },
                 onEqGainsChanged = { gains -> scope.launch { budsRepository.setEqGains(gains) } },
                 onEqPresetSelected = { preset -> scope.launch { budsRepository.applyEqPreset(preset) } },
                 onRing = { target -> scope.launch { budsRepository.ringBud(target) } },
                 onStopRinging = { scope.launch { budsRepository.stopRinging() } },
                 onDebugModeChanged = { enabled -> scope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
+                onExportLog = {
+                    // Local-only hand-off to the system share sheet (AGENTS.md §9) — the user
+                    // picks the destination, this app never transmits it anywhere itself.
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, BleLogger.exportLog())
+                        putExtra(Intent.EXTRA_TITLE, "OpenControl debug log")
+                    }
+                    startActivity(Intent.createChooser(shareIntent, "Export debug log"))
+                },
             )
 
             MaterialTheme {

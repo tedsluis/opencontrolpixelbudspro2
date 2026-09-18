@@ -46,6 +46,18 @@ interface BudsTransport {
     val inbound: Flow<Pair<Int, ByteArray>>
 
     /**
+     * Emits once whenever this transport notices the connection was lost for a reason other than
+     * this app's own [disconnect] call (peer disconnect, range loss, an OS-triggered socket
+     * teardown) — ARCHITECTURE.md §6's "an `IOException` from the socket always moves to
+     * Disconnected, a normal expected transition" rule, wired here so `BudsRepositoryImpl` can
+     * react to it instead of only ever transitioning [io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine]
+     * on an explicit user action. Never emitted for a caller-initiated [disconnect] (`ai-sessions/0038`
+     * — before this, [connected] silently flipped to `false` with nothing downstream ever noticing,
+     * so the UI kept showing `Ready` after the peer actually dropped the link).
+     */
+    val connectionLost: Flow<Unit>
+
+    /**
      * Opens one socket per entry in [channels] (channelId -> SDP UUID) against
      * [device] — [device] is a parameter here, not a constructor argument,
      * because it is only known once pairing has actually happened, which can

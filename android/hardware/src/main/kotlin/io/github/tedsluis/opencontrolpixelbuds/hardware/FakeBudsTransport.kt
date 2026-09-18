@@ -39,6 +39,9 @@ class FakeBudsTransport : BudsTransport {
     private val _inbound = MutableSharedFlow<Pair<Int, ByteArray>>(extraBufferCapacity = 64)
     override val inbound: SharedFlow<Pair<Int, ByteArray>> = _inbound
 
+    private val _connectionLost = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
+    override val connectionLost: SharedFlow<Unit> = _connectionLost
+
     val sent = mutableListOf<Pair<Int, ByteArray>>()
     var sendShouldFail: BudsError? = null
     var connectShouldFail: BudsError? = null
@@ -46,6 +49,13 @@ class FakeBudsTransport : BudsTransport {
     /** Test hook: push a scripted inbound frame as if the Buds had sent it. */
     suspend fun emit(channelId: Int, frame: ByteArray) {
         _inbound.emit(channelId to frame)
+    }
+
+    /** Test hook: simulate the peer dropping the link (range loss, OS teardown) without an
+     * explicit [disconnect] call — see [BudsTransport.connectionLost]'s own doc comment. */
+    suspend fun emitConnectionLost() {
+        connected = false
+        _connectionLost.emit(Unit)
     }
 
     override suspend fun connect(device: BluetoothDevice, channels: Map<Int, UUID>): BudsResult<Unit> {
