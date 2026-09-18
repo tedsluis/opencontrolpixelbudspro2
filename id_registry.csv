@@ -85,6 +85,7 @@ CAP-054,capture,planned,"session date/status: *planned* — Group AP (new), conn
 CAP-055,capture,planned,"session date/status: *planned* — Group AQ (new), Nod/Shake head gestures performed while an active call/notification exists, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-056,capture,planned,"session date/status: *planned* — Group AR (new), HOLD-005 ANC-rotation-checklist Left/Right split genuine re-run (CAP-045 never opened the checklist screen), added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-057,capture,planned,"session date/status: *planned* — Group AS (new), live GetSoftwareInfo/GetHardwareInfo correlation against the DLCI 0x02 connect-time burst, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-058,capture,planned,"session date/status: *planned* — Group AT (new), SDP-001 3rd attempt with an explicit on-device process-liveness check, maintainer-approved and added by ai-sessions/0031",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
@@ -142,6 +143,7 @@ CONV-002,test,catalogued,"User starts speaking (voice), triggering Conversation 
 CASE-006,test,catalogued,"Place buds back in the case and close the lid",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 CASE-007,test,catalogued,"Hold the case button for 30 seconds (case open, buds inside, plugged into power)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 CASE-008,test,catalogued,"Press the case button briefly/differently to force pairing mode",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+CASE-009,test,catalogued,"Place both buds into the case in the wrong (swapped Left/Right) slots — underlying disconnect-inconsistency question still open, registration only, per maintainer sign-off 2026-09-18 (ai-sessions/0031)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 OBS-001,test,catalogued,"App launches (after force close) → requests status",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 BATT-001,test,catalogued,"Notification with battery status on every reconnect",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 OBS-002,test,catalogued,"App running in the background (battery polling)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md

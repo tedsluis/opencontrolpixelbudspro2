@@ -810,40 +810,46 @@ event-observation coroutines.
 
 #### Option B — RFCOMM via Fast Pair Message Stream "Device Information"
 
-- **Status**: 🟢 FACT (mechanism exists) / 🟡 HYPOTHESIS (candidate battery
-  message code identified, `CAP-009`, 2026-08-23 — not yet a confirmed match).
+- **Status**: 🟢 FACT (mechanism exists) / 🟢 FACT (candidate battery message
+  code identity, `CAP-009`, promoted 2026-09-18 — see below; the charging-state field-switch
+  anomaly remains 🟡 HYPOTHESIS/unexplained).
 - The Message Stream (§2.1) has a documented "Device Information" message
   group. Firmware version is confirmed at code `0x09` (per the Find Hub
   Network extension doc), sent once per Message Stream establishment. Battery
   is expected to have its own code in the same group, following the same
-  event-driven pattern; **PROPOSAL, added 2026-08-28 (2026-08-28 project-wide audit finding
-  `EXT-01`), pending maintainer review — the specific code value now has external spec support:**
+  event-driven pattern; **added 2026-08-28 (2026-08-28 project-wide audit finding
+  `EXT-01`) — the specific code value has external spec support:**
   Google's official Fast Pair Device Information extension spec
   (`developers.google.com/nearby/fast-pair/specifications/extensions/deviceinformation`, fetched
   2026-08-28) documents Message Group `0x03` Code `0x03` = **"Battery updated"** — an exact match
-  to the candidate below, independently derived from `CAP-009`'s own wire behavior. This
-  strengthens, but does not by itself promote, the HYPOTHESIS below (`AGENTS.md` §6 still requires
-  explicit maintainer sign-off, and ideally the fresh independent-session reproduction already
-  proposed there, before promotion).
+  to the candidate below, independently derived from `CAP-009`'s own wire behavior.
 - This is presumed to be the same underlying channel as the
   `hardware_status.proto` hypothesis in §3 — i.e. likely **not** a
   Buds-specific protobuf schema at all, but generic Fast Pair Message Stream
   traffic.
-- **Candidate battery code, 🟡 HYPOTHESIS (`CAP-009-FINDINGS.md` §7, maintainer-approved
-  2026-08-2x for recording here per `AGENTS.md` §6):** DLCI `0x04`'s `Group 0x03 Code 0x03`
-  message (`03 03 00 03 <b1> <b2> ff`) is a strong structural and behavioral candidate. Across
+- **Candidate battery code identity — 🟢 FACT. Maintainer sign-off obtained 2026-09-18
+  (`ai-sessions/0031`), accepting the existing single-session evidence below (208 occurrences,
+  2 earbud transition sets) combined with the exact official-spec code match above as sufficient,
+  without requiring the independently-reproducing session originally proposed
+  (`CAP-009-FINDINGS.md` §7).** DLCI `0x04`'s `Group 0x03 Code 0x03`
+  message (`03 03 00 03 <b1> <b2> ff`) is confirmed as the "Battery updated" message: across
   208 occurrences in a 101-minute natural-discharge session, `b2` matched the Right earbud's
   percentage at all 7 of its transitions, and `b1` matched Left's percentage at both of its
   transitions **while not charging** — both fields updating within single-digit milliseconds of
   the already-established `AT+BIEV` (Option C) and DLCI-0x08 Option E pushes for the same
-  underlying change. Once the Left earbud starts charging, `b1` stops behaving like a percentage
-  (jumps to 221 and climbs ~1/sample instead of following L's known 93→100 charging curve) —
-  read as a regime change (the field switches to reporting something else while charging, not yet
-  identified) rather than a counter-example against the mapping while discharging. **Not yet
-  confirmed**: whether this `Group`/`Code` numbering is stable across sessions the way DLCI `0x08`'s
-  Option E numbering has proven to be, or is itself session-dynamic; the charging-state field
-  switch is unexplained. Proposed verifying experiment: reproduce in an independent session and
-  check the `Group 0x03 Code 0x03` numbering holds.
+  underlying change. **Still 🟡 HYPOTHESIS/unexplained, not part of this promotion:** once the Left
+  earbud starts charging, `b1` stops behaving like a percentage (jumps to 221 and climbs ~1/sample
+  instead of following L's known 93→100 charging curve) — read as a regime change (the field
+  switches to reporting something else while charging, not yet identified) rather than a
+  counter-example against the mapping while discharging; whether the `Group`/`Code` numbering
+  itself is stable across sessions the way DLCI `0x08`'s Option E numbering has proven to be, or is
+  session-dynamic, is also not independently re-verified by this promotion — a future session
+  reproducing this on a fresh capture would still be useful for that specific question, even though
+  it is no longer a precondition for the code-identity FACT above. **`DECISIONS.md` ADR note:**
+  per this project's own established convention (e.g. ADR-021/ADR-022/ADR-024/ADR-026), a FACT
+  promotion like this is normally recorded as a dedicated `DECISIONS.md` ADR — not written here,
+  since `AGENTS.md` §6/§15 require the maintainer's own separate, explicit approval of an ADR's
+  actual text. Flagged for the maintainer to draft/approve that ADR text, or confirm none is needed.
 - **Cross-channel timing synchronization extended to DLCI 0x02, 🟡 HYPOTHESIS (`CAP-036-FINDINGS.md`
   §12.5, 2026-09-04):** the near-lockstep pattern above (Option B/C/E firing within single-digit
   milliseconds of each other) is joined, in this session, by a periodic DLCI 0x02 (`libmaestro`)
@@ -1519,18 +1525,17 @@ the case-open/bud-removal event first, not yet tested directly.
 Encryption` → `Encryption Change`, converging to the same encrypted classic
 link regardless of which path reached it.
 
-**Third path — Cross-Transport Key Derivation (CTKD), gated on a pre-existing LE link — 🟡
-HYPOTHESIS (strengthened 2026-08-26), PROPOSAL awaiting maintainer sign-off for promotion to 🟢
-FACT.** `CAP-004-FINDINGS.md` §2 first observed a third bonding path when a BLE (LE Secure
-Connections) link to the Buds already existed before classic pairing began (nRF Connect,
-`CAP-004`): `Delete Stored Link Key` → SMP `Pairing Request` (requesting `Linkkey` key
-distribution) → Public Key/Confirm/Random → `DHKey Check` → classic `Create Connection` →
-`Link Key Request Reply` (not Negative) — i.e. the classic link key is derived from the LE pairing
-rather than negotiated via classic SSP. `CAP-004-FINDINGS.md` §10 explicitly withheld this from
-promotion, since it rested on one capture with a specific confound: nRF Connect's early BLE
-connection might itself be *why* CTKD occurred, not the GMS-disabled/no-app condition that
-session was actually testing. **`CAP-012` (2026-08-26) directly tested this as a controlled
-hypothesis test** (`CAP-012-FINDINGS.md` §2/§10): repeating the same GMS-disabled/no-app
+**Third path — Cross-Transport Key Derivation (CTKD), gated on a pre-existing LE link — 🟢 FACT.
+Maintainer sign-off obtained 2026-09-18 (`ai-sessions/0031`).** `CAP-004-FINDINGS.md` §2 first
+observed a third bonding path when a BLE (LE Secure Connections) link to the Buds already existed
+before classic pairing began (nRF Connect, `CAP-004`): `Delete Stored Link Key` → SMP `Pairing
+Request` (requesting `Linkkey` key distribution) → Public Key/Confirm/Random → `DHKey Check` →
+classic `Create Connection` → `Link Key Request Reply` (not Negative) — i.e. the classic link key is
+derived from the LE pairing rather than negotiated via classic SSP. `CAP-004-FINDINGS.md` §10
+explicitly withheld this from promotion, since it rested on one capture with a specific confound:
+nRF Connect's early BLE connection might itself be *why* CTKD occurred, not the GMS-disabled/no-app
+condition that session was actually testing. **`CAP-012` (2026-08-26) directly tested this as a
+controlled hypothesis test** (`CAP-012-FINDINGS.md` §2/§10): repeating the same GMS-disabled/no-app
 condition with no BLE tool at any point, and independently confirming zero BLE connection to the
 Buds anywhere in that session's log, produced classic SSP instead — not CTKD. Combined with
 `CAP-002`/`CAP-003` (classic SSP, official app / nRF Connect but classic-only pairing path — no
@@ -1540,9 +1545,16 @@ every session that had one (`CAP-004`, and now `CAP-014` — 2026-08-27, `CAP-01
 second, independently confirming CTKD instance: SMP `Pairing Request` with `Linkkey` distribution →
 Public Key/Confirm/DHKey Check → classic `Create Connection` → `Link Key Request Reply`, again
 initiated by a BLE tool, nRF Connect, connecting first).** This is a direct causal isolation from a
-purpose-built repeat, not merely a repeated negative — but per `AGENTS.md` §6, promoting "an LE
-Secure Connections link already existing gates CTKD vs. classic SSP" into this section's own 🟢 FACT
-connection-lifecycle diagram is left to the maintainer rather than done unilaterally here.
+purpose-built repeat, not merely a repeated negative: "an LE Secure Connections link already
+existing gates CTKD vs. classic SSP" is now promoted into this section's own 🟢 FACT
+connection-lifecycle diagram, per the maintainer's explicit 2026-09-18 approval
+(`ai-sessions/0031_MAINTENANCE_RESULT_2026_09_18.md` Phase 4). **`DECISIONS.md` ADR note:** this
+project's own established convention (e.g. ADR-021/ADR-022/ADR-024/ADR-026) is to record a FACT
+promotion like this one as a dedicated `DECISIONS.md` ADR — that ADR has **not** been written here,
+since `AGENTS.md` §6/§15 require the maintainer's own separate, explicit approval of an ADR's actual
+text (a sign-off on the underlying fact is not automatically a sign-off on ADR wording). Flagged for
+the maintainer to either draft/approve that ADR text directly, or explicitly confirm no ADR is
+needed for this particular promotion.
 
 ### 5.2 RFCOMM channel-opening sequence (step 3) — 🟡 HYPOTHESIS (strong), reviewed by the maintainer 2026-09-09, kept at HYPOTHESIS
 
@@ -2177,8 +2189,9 @@ leaving them buried in prose elsewhere.
       obtained 2026-09-16** (chat session continuing `ai-sessions/0023`) for the 5-resolved/
       2-inconclusive characterization above, at 🟡 HYPOTHESIS for the two still-inconclusive codes and
       as a reinforced negative for the five resolved ones. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s
-      `PRIV-001` row and this item both still need updating to reflect the resolved/inconclusive split
-      (a separate, still-pending mechanical follow-through, `CAP-050-FINDINGS.md` §8).
+      `PRIV-001` row already reflects this resolved/inconclusive split (confirmed 2026-09-18,
+      `ai-sessions/0031` — the mechanical follow-through `CAP-050-FINDINGS.md` §8 called for is done,
+      this note was stale).
 - [ ] **Added 2026-09-06, `CAP-040-FINDINGS.md` §1:** the official app's own in-app "Connect"/
       "Disconnect" buttons, tapped ~15 times across a 27-minute stretch, produced **zero**
       wire-visible signal — no ACL disconnect/reconnect, no DLCI channel bounce of any kind. The
@@ -2597,6 +2610,16 @@ leaving them buried in prose elsewhere.
       key within it. See `REVERSE_ENGINEERING.md`'s `BluetoothPriorityReceiver` entry's own
       2026-09-17 update for the full trace (file+line citations, smali evidence). Not wire-correlated
       — no new capture was taken this pass, per this task's own guardrails.
+      **Resolved 2026-09-18 (`ai-sessions/0031`) — NOT the same key.** 🟢 FACT (direct smali/JADX
+      literal-value reading, code-existence only, no wire claim): "Feature A"'s own Get/Set pair
+      (`hlv.java:2635`'s `GetFeatureState` read and `kjj.c`/`kjj.d` → `ffd.f()`'s `SetFeatureState`
+      write) both use feature-state key **1** (`fms.e`/`fms.k`'s own `i-1` decode of the literal `2`
+      passed at each site); `BluetoothPriorityReceiver`'s own `SetFeatureState` write (`ffd.e()`) uses
+      key **2** (literal `3`, decoded the same way) — two distinct keys within the same
+      `dcservice.sdk.bluetooth.BluetoothApiService`, not one mechanism seen from two angles. See
+      `REVERSE_ENGINEERING.md`'s `BluetoothPriorityReceiver` entry's own 2026-09-18 update for the full
+      trace (file+line citations, smali evidence). Key 2's own reader (if any) remains unfound — a
+      residual, lower-priority open item, not blocking this resolution.
 
 ### Behavior
 

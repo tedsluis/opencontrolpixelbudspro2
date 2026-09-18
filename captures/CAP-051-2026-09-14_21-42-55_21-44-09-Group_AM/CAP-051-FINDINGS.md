@@ -216,7 +216,10 @@ observations, not FACT promotions to `PROTOCOL.md`):**
    covers this specific DLCI-0x02/DLCI-0x04 correlation question): a candidate ID such as `ANC-005`
    ("DLCI 0x02 `qhr` field-13 parallel-write check for an ANC-mode change") could be added to
    `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, linked to Group AM, with this file as its first (negative)
-   evidence — proposed, not added unilaterally.
+   evidence — proposed, not added unilaterally. **Declined 2026-09-18 (`ai-sessions/0031`)**: not
+   registered as a separate Test-ID — `TOUCH-007`'s own row already documents this exact finding
+   (this file, as a second confirming session alongside `CAP-027`), making a dedicated `ANC-005`
+   redundant.
 
 None of the above reaches `DECISIONS.md`'s promotion bar (a clean negative does not promote anything
 to 🟢 FACT in the sense of a new command/opcode finding) — nothing is proposed there.

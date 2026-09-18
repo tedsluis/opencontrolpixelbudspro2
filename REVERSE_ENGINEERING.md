@@ -1531,6 +1531,52 @@ the first time against every one of its 20 real discriminators + default branch.
   original pass's sparse-numbering list) were not traced to a call site this pass — `fyx.java` has no
   method setting `qjtVar.b` to 3 or 7.
 
+- **Update (2026-09-18, `ai-sessions/0031`) — the field-matching pass this entry's own original text
+  flagged as "a natural next step... not attempted" is now done, against `PROTOCOL.md` §4.5.1–§4.5.8's
+  HYPOTHESIS individual-settings list, applying the same shared-interface-method cross-reference
+  technique used above one class further: `qhr` (Group 4, `fyo`, the Buds Pro 2's own confirmed
+  schema) is a fourth sibling of `fyw`/`fyx` under the exact same `fxz`/`fya` structure this entry's
+  2026-08-30 update already documents. Where `fyo` shares a method name with `fyw`/`fyx`, the same
+  cross-reference logic used above to name `qjt`'s fields from `qjn`'s siblings applies equally to
+  `qhr`'s still-unnamed fields — with the standing "different product" HYPOTHESIS above meaning any
+  such match names a *different device's* field, not a confirmed Buds-Pro-2 feature. 🟡 **HYPOTHESIS
+  (structural cross-schema match, not wire-confirmed, and explicitly not read as confirming a
+  Buds-Pro-2 feature)**:
+  - **`qhr` field 5's write site, `fyo.f(boolean z)` (`fyo.java:102-122`), shares its exact method name,
+    `f(boolean)`, with `fyw.f()` (`qjn` field 10, "diagnostics state") and `fyx.f()` (`qjt` field 10,
+    same name, cross-referenced above).** All three classes override the identical `fya` interface
+    method slot. `fyo.f()` itself carries no log message or exception text of its own (confirmed by
+    direct reading, `fyo.java:102-122` — the same dead end this project's `MaestroDeviceSettingsProviderService`
+    trace already found via the read side, `fxb.java` case 5 → `gea.u()`/`gea.i()`, both generic and
+    unnamed). This is the first time `qhr` field 5 has picked up *any* candidate name — but it is a
+    cross-schema, structural-position match only (the same interface-method "slot" happens to be used
+    for "diagnostics state" in the other product's schema), not a Buds-Pro-2-specific finding. **Not
+    promoted, not treated as resolving the field's identity** — recorded as a candidate lead for a
+    future session (or a capture correlation) to check against, exactly as the "different product"
+    HYPOTHESIS above requires this kind of match to be flagged rather than silently accepted.
+  - **No other direct field-number-and-shared-method-name match was found between `qhr`'s remaining
+    unnamed fields (6, 9, 10, 13, 14, 16, 18 partially named already, 20, 21 [already named
+    elsewhere], 23–26, 30, 31, 33–38) and `qjn`/`qjt`/`qhx`'s own named fields** — this pass checked
+    only the one exact hit above (field 5/`f()`); a systematic method-by-method cross-check of every
+    remaining `qhr` field against every `qjn`/`qjt`/`qhx` method name was not attempted (bounded scope,
+    per this task's own "trace one level, then move on" instruction) and is flagged as a further
+    possible step, not completed here.
+  - **Position/name correspondence worth flagging on its own terms, not a field-5 match:** `qjn` field
+    4 ("touch control[s]", `fyw.t(gdx)`) shares both its exact field number *and* a matching feature
+    name with `qhr` field 4 ("Use touch controls" master toggle, `PROTOCOL.md` §4.5.3, 🟢 FACT,
+    `fyo.java:124-144`) — already independently noted in this entry's own 2026-08-30 table ("plausibly
+    ... this app's own 'touch control' gesture-action pair ... structurally and functionally parallel
+    to `qju`/`qhr` field 7"), restated here only to make explicit that this is the closest
+    field-number+name correspondence found across the two schemas in this pass, and it is a
+    resemblance between two *different* products' schemas (per the standing HYPOTHESIS above), not
+    evidence that the two devices share a literal field-5/field-10 mapping.
+  - **Conclusion, per this task's own explicit caution**: this pass finds one plausible, flagged,
+    cross-schema candidate name for `qhr` field 5 ("diagnostics state," borrowed from a *different*
+    product's schema via a shared interface-method slot) and confirms no other direct match among the
+    remaining unnamed fields checked. Nothing here is treated as resolving `qhr` field 5's own
+    identity for the Buds Pro 2 — the field remains 🔴 **unnamed for this project's own target
+    hardware**, consistent with `ai-sessions/0030`'s own "still open" status for it.
+
 - **`qjv` (Group 5) confirmed fully unused in this app version — both write-silent and read-inert,
   for the entire group, not just some fields within it.** 🟢 FACT (exhaustive whole-tree text search,
   not merely "no call site found in the files searched" as the original pass's phrasing put it):
@@ -2751,6 +2797,48 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
       original 12/17/7 pools above; it is reported honestly as partially resolved.
   - **Correlation with `PROTOCOL.md`**: none — code-level only, same reasoning as this section's other
     entries; no `PROTOCOL.md` section cites this and none is proposed to.
+  - **Update (2026-09-18, `ai-sessions/0031`) — the 18-class caller search this section's own prior
+    update explicitly left undone (whether any of the 18 classes picks up a label secondhand from a
+    caller beyond its own constructing method) is now done, via `structural_index refs --class <X>`
+    for each of the 18, independently cross-checked with a plain whole-tree `grep -rl` (the two methods
+    agree exactly, no discrepancy).** 🟢 FACT (mechanical reference search, no protocol-behavior claim,
+    needs no maintainer sign-off on that basis alone, per `PROJECT_RULES.md` §1):
+    - **17 of the 18 (`nec`/`nee`/`ncu`/`nby`/`ncg`/`nck`/`ncl`/`ncm`/`ncv`/`ndb`/`nde`/`ndn`/`ndq`/
+      `ndu`/`ndw`/`ndy`/`neb`) have exactly two external referencing files anywhere in the decompiled
+      tree, both already fully attributed: `fwe.java` (the constructing factory, already documented
+      above) and `nef.java` (the shared container class each is a field of, already attributed to the
+      KPI-telemetry cluster). No third file references any of these 17 — a genuine, exhaustive,
+      whole-tree negative for a secondhand label, not merely "not found in the files searched before."**
+      These 17 remain 🔴 genuinely open on their own field-level content; the caller search itself is
+      now closed for them.
+    - **The 18th, `ndo`, has two additional referencing files beyond `fwe.java`/`nef.java` — one false
+      positive, one genuinely new and informative.** `defpackage/cpa.java`'s one apparent hit is a
+      confirmed false positive: an unrelated AndroidX EmojiCompat error string that happens to contain
+      the literal substring `"can\ndo this"` (the `\n` line-escape immediately followed by `do`), not a
+      reference to the `ndo` class — verified by direct byte-context inspection
+      (`grep -o '.\{5\}ndo.\{5\}' cpa.java` → ` can\ndo this`).
+      **`defpackage/fwf.java` is a genuinely new, previously-uncatalogued class.** 🟢 FACT (direct code
+      reading): `fwf` (`implements gbw`, a synthetic lambda held as `fwk`'s own field `a` — i.e. it is
+      wired from `fwk`, the same class already documented above as `nef`/`nbm`'s downstream logger) is
+      an **Android `StatsLog`/`StatsEvent` atom writer for `atomId=213000`, self-describingly logged
+      `"Logging audio session time to statsd"` (`fwf.java`, via `ghv.a.e().R(567)`)**. It reads `ndo`
+      (`nef.r`) for two fields — `ndo.c` (a `long`, used directly as one of the atom's logged values)
+      and `ndo.d` (a `myb`-typed sub-message, converted via a documented Duration-style
+      leading-zero-count computation into a millisecond duration also logged to the same atom) — and
+      separately reads `nel` (the already-documented 3-slot "from version" record from `fwk.n()`'s own
+      OTA-status entry above) for three version-identifier hashes and three raw version strings, also
+      logged to the same atom. **Conclusion**: `ndo` is an audio-session-timing record (a start/id value
+      plus a `myb` duration) consumed exclusively by this one Android-statsd audio-session-time atom —
+      confirms, rather than changes, `ndo`'s existing KPI/telemetry-cluster attribution; it is Android
+      OS-level metrics plumbing, not a Bluetooth control-channel schema, so no `PROTOCOL.md` correlation
+      is proposed for it, consistent with this cluster's own established convention.
+    - **Net scope of this update**: the caller-search step this section's own prior update left
+      undone is now complete for all 18 classes — 17 confirmed to have no secondhand label available
+      (clean, exhaustive negative), 1 (`ndo`) gained additional field-level content via a genuinely new
+      class (`fwf`) this project had not previously catalogued. No class among the 18 gained a
+      Bluetooth/`libmaestro`-relevant label — this pool's Bluetooth-irrelevance is reinforced, not
+      reversed, by this pass.
+  - **Correlation with `PROTOCOL.md`**: none — code-level only, unchanged by this update.
 
 ---
 
@@ -3353,6 +3441,48 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   - **Correlation with `PROTOCOL.md`**: §6 Commands & schemas' `BluetoothPriorityReceiver` open item
     updated with this pass's findings — see that document for the corresponding text.
 
+- **Update (2026-09-18, `ai-sessions/0031`) — the "same feature-state key?" open question above is now
+  resolved: NO, they are two different keys.** 🟢 FACT (direct smali/JADX code reading of the actual
+  enum-value literals passed at each call site — not a guess from field shape):
+  - **`hlv.java:2635`'s GetFeatureState call ("Feature A"'s read side)** calls `fms.e(2, k)` —
+    `fms.e(int i, myk mykVar)` (`fms.java:181-192`) sets `fmv.e = i - 1`, so this call sets the
+    request's field 1/`e` = **1**.
+  - **`BluetoothPriorityReceiver`'s own SetFeatureState call, `ffd.e()`** (already documented above)
+    calls `fms.k(3, ...)` — `fms.k(int i, myk mykVar)` (`fms.java:238-249`) sets `fmx.e = i - 1`, so
+    this call sets the request's field 1/`e` = **2**. Confirmed directly in the `apktool` smali fallback
+    (`ffd.smali:2354` `const/4 v3, 0x3` feeding the `invoke-static {v3, p4}, Lfms;->k(ILmyk;)V` at
+    `:2432`, the `cond_2` branch `kbf`'s discriminator-1 chain reaches).
+  - **A second, previously-uncatalogued `ffd` method, `ffd.f(String, boolean)` (`ffd.smali:2777`
+    onward), is a second, distinct SetFeatureState call site**, `const/4 v1, 0x2` feeding
+    `invoke-static {v1, v0}, Lfms;->k(ILmyk;)V` (`:2803`) — field 1/`e` = **1**, matching the
+    GetFeatureState value above, not `ffd.e()`'s value.
+  - **`structural_index refs --class ffd --method f` finds exactly 4 external call sites, and two of
+    them are `kjj.c` and `kjj.d`** — `kjj` is the exact, already-named **"premiumAudioHelper"**/"Feature
+    A" accessor (`hlv.java:2629`'s own field, and this document's `esk` entry's discriminator-18
+    finding). The other two callers are `esk.a` (discriminator 18, already documented) and `fyy.a`, a
+    genuinely new, not-yet-catalogued class this pass did not open further (out of this task's own
+    bounded scope).
+  - **Conclusion**: "Feature A"'s own Get/Set pair (`hlv.java:2635`'s `fms.e(2,...)` read,
+    `kjj.c`/`kjj.d` → `ffd.f()`'s `fms.k(2,...)` write, both field `e`=1) is internally consistent and
+    uses feature-state key **1**. `BluetoothPriorityReceiver`'s own write (`ffd.e()`'s `fms.k(3,...)`,
+    field `e`=2) uses a **different** key, **2**. These are confirmed **two distinct feature-state keys
+    within the same `dcservice.sdk.bluetooth.BluetoothApiService`**, not the same mechanism seen from
+    two angles — the open question this section and `ai-sessions/0030` both left standing is now closed
+    with a concrete negative, not merely narrowed. `ffd.e()`'s own key (2) still has no independently
+    confirmed reader anywhere in this app's own decompiled code (no `fms.e(2+1=3,...)`-equivalent
+    GetFeatureState call using key 2 was found this pass) — recorded as a residual open item, not
+    resolved by this update.
+  - **Open questions this update leaves**: `fyy.a`'s own role (a new `ffd.f()` caller, not opened);
+    whether key 2 (`BluetoothPriorityReceiver`'s own) has any reader anywhere in this app; `fna`/`fmz`'s
+    own field-level schema (unchanged, still open); whether either mechanism is ever wire-visible at
+    the HCI/RFCOMM level (unchanged, still out of this project's own decompiled-APK scope per the
+    existing note above).
+  - **Hypothesis test**: none attempted (code-level finding only, no new capture, per this task's own
+    guardrails).
+  - **Correlation with `PROTOCOL.md`**: none proposed — this is a code-level negative result within a
+    system app (`dcservice`) already flagged as being outside this project's own Bluetooth-protocol
+    scope; no wire behavior is claimed or implied.
+
 ### `MaestroEndpointService` — exported, no-permission on-device gRPC server (open questions only)
 
 *(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4, maintainer-approved per prompt `0002`.)*
@@ -3824,8 +3954,12 @@ decision.)*
   fragments from the same string family (`voicepath`, `ble_profiles`) to see whether they surface
   any additional, more specific naming correlation.
 - **Correlation with `PROTOCOL.md`**: §2.3's 2026-08-30 update / §6's DLCI-0x08-ownership open item
-  — this is a proposed addendum (a related-but-unconfirmed string family, not a resolution),
-  pending maintainer review before either section is edited.
+  — this is a proposed addendum (a related-but-unconfirmed string family, not a resolution). **Fixed,
+  2026-09-18 (`ai-sessions/0031`, Phase 3 staleness pass): the "pending maintainer review" wording
+  here was stale** — the finding was already reviewed and approved (see the 2026-09-15 update
+  immediately below, and `PROTOCOL.md` §6's own DLCI-0x08 item, which already cites "Maintainer
+  sign-off obtained 2026-09-16"). A plain factual correction, not a new finding (`PROJECT_RULES.md`
+  §1) — the sign-off itself is unchanged, only this stale trailing sentence is fixed.
 - **Update (2026-09-15, `ai-sessions/0023`) — the literal string re-search reconfirms the negative
   from a genuinely different location (resource XML, not source/asset CSVs); a new, externally
   verifiable cross-vendor lead found via `WebSearch`, independent of the APK.**

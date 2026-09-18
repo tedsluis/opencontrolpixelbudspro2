@@ -73,13 +73,18 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
         skeleton's anti-repeat safeguard first**, `CAP-045` skipped the actual checklist screen.
      5. `CAP-057` (Group AS) — live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the
         connect-time burst, using the firmware/serial-number screen.
+     6. `CAP-058` (Group AT, added 2026-09-18, `ai-sessions/0031`) — 3rd `SDP-001`/`SDP-002` attempt,
+        adding an explicit on-device process-liveness check before the "Pair" tap (see
+        `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AT and `CAP-044-FINDINGS.md` §5) — maintainer approved
+        the go/no-go below.
    - Also still queued from before, lower priority than the 5 above: **`CAP-043` (Group Q repeat,
      Battery Notification BLE scan) is done (2026-09-13)** — a second confirmed non-match, see
      Phase 1 above and `CAP-054` in the next-test-session queue for its own follow-up.
    - **`CAP-044` (Group AA repeat, 2nd attempt, `SDP-001`/`SDP-002`) is done (2026-09-13)** — still
-     🟡 HYPOTHESIS, a different isolation gap than `CAP-033`'s; a 3rd attempt is a Tier-2 decision
-     item in `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 6, not yet designed as a
-     skeleton pending that go/no-go.
+     🟡 HYPOTHESIS, a different isolation gap than `CAP-033`'s. **The Tier-2 go/no-go decision item in
+     `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 6 is now resolved: go** — maintainer
+     approved a 3rd attempt 2026-09-18 (`ai-sessions/0031`), now designed as `CAP-058` (Group AT)
+     above.
    - `CAP-018` and the still-uncaptured main-run-through remainder
    (`CAP-026`, `CAP-029`–`CAP-030`) — **`CAP-028` (head gestures) is done (2026-09-12, inconclusive) and
    re-verified (2026-09-13); its follow-up is now tracked as planned `CAP-055` (Group AQ), not this
