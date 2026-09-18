@@ -741,9 +741,12 @@ lower priority than finishing ANC/Battery/EQ):**
 - [ ] **Added 2026-09-18** (`ai-sessions/0033`): wire `MainActivity`'s `onConnect`/`onDisconnect`
       actions to a real `RfcommBudsTransport.connect()`/`disconnect()` call once pairing has been
       exercised against real hardware — currently placeholders, see that file's own comments.
-- [ ] **Added 2026-09-18** (`ai-sessions/0033`): launch `BudsCompanionPairing`'s returned
-      `IntentSender` via an `ActivityResultLauncher` in `MainActivity`'s `onPending` callback —
-      currently a no-op placeholder.
+- [x] **Added 2026-09-18** (`ai-sessions/0033`), **done 2026-09-18** (`ai-sessions/0035`): launch
+      `BudsCompanionPairing`'s returned `IntentSender` via an `ActivityResultLauncher`
+      (`pairingLauncher`) in `MainActivity`'s `onPending` callback — closed while investigating a
+      real crash the maintainer hit tapping "Pair a device" (a separate, now-fixed manifest bug,
+      `android.software.companion_device_setup`'s missing `uses-feature` declaration). Still not
+      hardware-verified beyond "the picker now launches instead of doing nothing."
 - [ ] **Added 2026-09-18** (`ai-sessions/0033`): start/stop `BudsForegroundService` from
       `ConnectionStateMachine` transitions (ARCHITECTURE.md §6.0a) — the service class exists and
       compiles but nothing calls `startForegroundService`/`stopService` on it yet.

@@ -59,6 +59,17 @@ mark v1.
   the check — removing the one automated signal that would have caught this pre-emptively. Fixed by
   using fully-qualified class names in the manifest and removing the incorrect lint suppression; full
   build/test/lint suite re-verified clean with zero suppressions.
+- **2026-09-18 (`ai-sessions/0035`): a crash-on-pair, found by the maintainer immediately after
+  retesting the `ai-sessions/0034` fix on their own real hardware.** Tapping "Pair a device" called
+  `CompanionDeviceManager.associate()`, which throws `IllegalStateException` at call time if the
+  manifest never declares `<uses-feature android:name="android.software.companion_device_setup">` —
+  which this project's manifest never did. Confirmed this one crash fully explains the maintainer's
+  report that every other screen/function "didn't work either": the app never survived long enough
+  past the Connection screen's only available action to reach them. Fixed by adding the missing
+  `uses-feature` declaration, and closed an adjacent, already-disclosed gap in the same pass — the
+  `CompanionDeviceManager` picker's returned `IntentSender` was never actually launched via an
+  `ActivityResultLauncher`, so fixing only the crash would have left "Pair a device" silently do
+  nothing. Full build/test/lint suite re-verified clean (1232 tests, 0 failures).
 
 ### Changed
 

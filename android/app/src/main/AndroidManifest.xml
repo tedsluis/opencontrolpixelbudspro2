@@ -32,6 +32,15 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 
+    <!-- CompanionDeviceManager.associate() (BudsCompanionPairing) throws IllegalStateException at
+         call time without this — found via a real crash on hardware (ai-sessions/0035); also
+         declared in :hardware's own manifest, redundant with this one, not an error (see that
+         file's own comment for why both). required="true" — this app has no pairing path other
+         than CDM. -->
+    <uses-feature
+        android:name="android.software.companion_device_setup"
+        android:required="true" />
+
     <application
         android:name="io.github.tedsluis.opencontrolpixelbuds.app.OpenControlApplication"
         android:allowBackup="false"

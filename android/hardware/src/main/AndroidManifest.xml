@@ -18,6 +18,15 @@
         android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
 
+    <!-- CompanionDeviceManager.associate() (BudsCompanionPairing, AGENTS.md §7's sanctioned
+         discovery path) throws IllegalStateException at call time, not at manifest-parse or
+         install time, if this isn't declared — found via a real crash on hardware
+         (ai-sessions/0035). required="true" because this app genuinely cannot pair without CDM,
+         no fallback path exists. -->
+    <uses-feature
+        android:name="android.software.companion_device_setup"
+        android:required="true" />
+
     <application>
         <service
             android:name=".BudsForegroundService"

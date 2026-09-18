@@ -23,6 +23,8 @@ import android.bluetooth.BluetoothAdapter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,6 +66,11 @@ import javax.inject.Inject
  * against `FakeBudsTransport` (`TransportModule.kt`) until `RfcommBudsTransport`
  * is verified against real hardware — every screen below is real, wired code,
  * but not yet exercised against a real Pixel Buds Pro 2 (ARCHITECTURE.md §5a).
+ * The `CompanionDeviceManager` picker itself is now launched for real
+ * (`pairingLauncher`, `ai-sessions/0035`) — [OpenControlActions.onConnect]/
+ * `onDisconnect` remain placeholders, since `RfcommBudsTransport.connect()`
+ * needs a resolved `BluetoothDevice` + channel map this session still has no
+ * hardware to exercise.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -76,6 +83,16 @@ class MainActivity : ComponentActivity() {
 
     private val companionPairing by lazy { BudsCompanionPairing(this) }
     private val bluetoothStateObserver by lazy { BluetoothStateObserver(this) }
+
+    // Must be registered unconditionally before the Activity reaches STARTED (ComponentActivity's
+    // own contract) — a class property, not something created inside the Composable content
+    // lambda below. Launches the system CDM picker; the actual "device selected" outcome is
+    // handled by CompanionDeviceManager.Callback.onAssociationCreated (BudsCompanionPairing),
+    // already wired below — this launcher only needs to present the UI (ai-sessions/0035, closing
+    // the gap ai-sessions/0033 left open).
+    private val pairingLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) { /* no-op: onCreated/onFailure (BudsCompanionPairing) handle the actual outcome */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -120,9 +137,9 @@ class MainActivity : ComponentActivity() {
                 },
                 onPair = {
                     companionPairing.requestAssociation(
-                        onPending = { /* :ui has no ActivityResultLauncher hook yet this session —
-                            TODO(verify): launching the returned IntentSender against a real
-                            picker is not exercised in this environment. */ },
+                        onPending = { intentSender ->
+                            pairingLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
+                        },
                         onCreated = { hasBondedDevice = companionPairing.bondedDevice() != null },
                         onFailure = { },
                     )
