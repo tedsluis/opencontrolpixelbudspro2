@@ -215,6 +215,15 @@ one major control feature this project still needs to attribute, now that the ea
 same caution applies to Group T's result as applied here to Group K: a superficial byte-pattern
 match on a single capture is a HYPOTHESIS, not a FACT — see Group T's own cross-command check.
 
+**This "Group T is top priority" framing is itself now superseded (fixed 2026-09-18,
+`ai-sessions/0032`, a plain staleness correction, not a new finding — `PROJECT_RULES.md` §1) — kept
+below, not deleted, per `PROJECT_RULES.md` §3's precedent already established by this same block.**
+EQ's command channel was fully resolved by `CAP-005`/`CAP-015` (Group T's own captures, see §9's
+Capture Index): the field-to-band mapping, the outer envelope, and the individual settings are all
+🟢 FACT and implementation-unblocked (`DECISIONS.md` ADR-013/ADR-019/ADR-020). Group T itself is no
+longer an open capture priority — see `TODO.md`'s own current priority order for whatever this
+project's actual current top priority is.
+
 **Original tip (2026-08-08 or earlier, kept for the record):** this document's own verification
 methodology flags the "Play sound on Left earbud" action (group K below) as a specifically
 valuable, low-risk target — its frame can be directly compared against the Fast Pair Message
@@ -486,13 +495,17 @@ assumed by the setup validation above.
    analyzing** — either result (present or absent) is a real, useful finding for the open
    question above, not a "pass" or "fail" of this Group.
 
-#### Group T — EQ command isolation (occasional, not part of the normal run-through; **current top priority**, added 2026-08-14)
-**Why this replaces the earlier ANC-first priority tip:** ANC's command channel is now confirmed
-(`PROTOCOL.md` §4.1 — the official Fast Pair Message Stream, Group `0x08`, DLCI 0x04), which also
-retires the earlier assumption that EQ "probably shares ANC's channel." EQ's command channel is
-therefore still completely open, and is now the single highest-priority capture target for this
-project's original implementation goal (see the corrected note at the end of §4.1's intro, below
-Group S).
+#### Group T — EQ command isolation (occasional, not part of the normal run-through; added 2026-08-14, **no longer an open priority — fixed 2026-09-18, `ai-sessions/0032`**)
+**Why this replaced the earlier ANC-first priority tip (historical):** ANC's command channel was
+confirmed (`PROTOCOL.md` §4.1 — the official Fast Pair Message Stream, Group `0x08`, DLCI 0x04),
+which also retired the earlier assumption that EQ "probably shares ANC's channel." EQ's command
+channel was, at the time this note was written, still completely open, and was then the
+single highest-priority capture target for this project's original implementation goal (see the
+corrected note at the end of §4.1's intro, below Group S). **This is no longer current**: EQ's
+command channel was fully resolved by this Group's own captures (`CAP-005`/`CAP-015`, §9's Capture
+Index) and is 🟢 FACT/implementation-unblocked (`DECISIONS.md` ADR-013/ADR-019/ADR-020) — kept here
+per `PROJECT_RULES.md` §3 as the historical record of why this Group was designed, not as a
+still-open instruction.
 1. **Change EQ preset: Bass Boost** [`EQP-002`], as a single isolated action — same rhythm as
    Group D (≥10s silence before, ≥10s after) — but run **alone** this time, not bundled with the
    other seven preset taps back-to-back the way Group D does it, so the capture has only one

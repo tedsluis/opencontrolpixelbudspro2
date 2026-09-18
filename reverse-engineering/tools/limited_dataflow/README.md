@@ -61,6 +61,4 @@ an excerpt of the companion app's own source) always run — see `tests/test_dat
 docstring.
 
 ---
-
----
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/reverse-engineering/tools/limited_dataflow/README.md - https://tedsluis.github.io/opencontrolpixelbudspro2/reverse-engineering/tools/limited_dataflow/README

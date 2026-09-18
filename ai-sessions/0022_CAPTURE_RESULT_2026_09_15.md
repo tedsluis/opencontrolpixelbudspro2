@@ -4,7 +4,13 @@
 **Category:** CAPTURE
 **Date:** 2026-09-15
 **Title:** Full, non-sampled `.log`/`.log.last`/`-2.log` analysis, cross-validation, and `CAP-047-FINDINGS.md` authoring for `CAP-047` (Group AL, `CAP-021`'s DLCI 0x0a burst trigger hypothesis test, Trigger candidate 3 only) — including a targeted video re-check of a maintainer-recalled corrected docking in Recording 2
-**Status:** awaiting maintainer sign-off
+**Status:** awaiting maintainer sign-off — partially reconciled 2026-09-18 (`ai-sessions/0031`, per
+`AI_SESSION_LOG_PROCEDURE.md` §4a): 2 of 4 proposals resolved (`CASE-009` Test-ID registered); the
+Recording-1-vs-2 swapped-dock `DECISIONS.md` ADR-016 disconnect-inconsistency remains a genuinely
+open research question, and a formal ADR-024 text update (folding in 2 new counter-examples) still
+awaits a maintainer decision — this field was previously left stale at the bare
+`awaiting maintainer sign-off` value after `ai-sessions/INDEX.md`'s own row was updated 2026-09-18;
+fixed to match and to state precisely what's still pending.
 
 ## Phase status table
 

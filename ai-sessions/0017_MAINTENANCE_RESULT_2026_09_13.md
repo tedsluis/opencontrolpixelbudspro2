@@ -4,7 +4,13 @@
 **Category:** MAINTENANCE
 **Date:** 2026-09-13
 **Title:** Close out Phase 1–3's remaining open items, inventory pending maintainer decisions, and assess Phase 3/4 readiness
-**Status:** awaiting maintainer sign-off
+**Status:** complete — reconciled 2026-09-18 (`ai-sessions/0031`, per `AI_SESSION_LOG_PROCEDURE.md` §4a):
+all 8 sign-off items resolved (5 Tier-1 items already closed by the 2026-09-16 sign-off or requiring
+no sign-off; Tier-2 items 6/7 approved 2026-09-18); Tier-2 item 8 and Tier-3's 5 designed captures
+(`CAP-053`–`057`, plus `CAP-058`) remain open as ordinary `TODO.md` capture-queue items, not a
+sign-off blocker. This field was previously left stale at `awaiting maintainer sign-off` after
+`ai-sessions/INDEX.md`'s own row was updated 2026-09-18 — fixed to match, per §4a's requirement that
+an earlier file's `Status` field be updated in place, not just its `INDEX.md` summary row.
 
 ## Phase status
 

@@ -48,9 +48,9 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-09-13)
+## Current state (2026-09-18)
 
-- **Captures:** 52 registered sessions (`CAP-001`–`CAP-052`), most analyzed and a handful still
+- **Captures:** 58 registered sessions (`CAP-001`–`CAP-058`), most analyzed and 10 still
   planned — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index. A full, independent,
   non-sampled re-derivation of every finding from an earlier full-catalog review found the core
   protocol-decode content held up with zero errors (`ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md`).

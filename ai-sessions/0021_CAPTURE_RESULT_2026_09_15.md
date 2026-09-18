@@ -4,7 +4,11 @@
 **Category:** CAPTURE
 **Date:** 2026-09-15
 **Title:** Full, non-sampled `.log` analysis, cross-validation, and `CAP-NNN-FINDINGS.md` authoring for CAP-050 (Group AG repeat, `PRIV-001`) and CAP-051 (Group AM, `qhr` field 13 ANC-parallel-path, `TOUCH-007`/`ANC`-family)
-**Status:** awaiting maintainer sign-off
+**Status:** complete — reconciled 2026-09-18 (`ai-sessions/0031`, per `AI_SESSION_LOG_PROCEDURE.md` §4a):
+all 5 proposals resolved (4 via the 2026-09-16 sign-off continuing `ai-sessions/0023`; `ANC-005`
+declined 2026-09-18 as redundant with `TOUCH-007`'s own row). This field was previously left stale at
+`awaiting maintainer sign-off` after `ai-sessions/INDEX.md`'s own row was updated 2026-09-18 — fixed
+to match, per §4a's requirement that an earlier file's `Status` field be updated in place.
 
 ## Phase status table
 

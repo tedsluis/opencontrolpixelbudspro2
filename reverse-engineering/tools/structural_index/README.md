@@ -66,6 +66,4 @@ tree used above and is **skipped** (not failed) if that tree isn't present — s
 `tests/test_xref_index.py`'s own module docstring.
 
 ---
-
----
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/reverse-engineering/tools/structural_index/README.md - https://tedsluis.github.io/opencontrolpixelbudspro2/reverse-engineering/tools/structural_index/README

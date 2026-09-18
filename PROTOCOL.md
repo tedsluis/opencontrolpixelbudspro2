@@ -2591,7 +2591,10 @@ leaving them buried in prose elsewhere.
       `android.permission.CAPTURE_AUDIO_HOTWORD` (an unrelated-sounding, privileged permission,
       per `AndroidManifest.xml`), and its own downstream effect (below) forwards to a separate Pixel
       system app, consistent with this being one leg of a cross-app coordination flow this companion
-      app only relays, not originates. **New finding**: on receipt, the companion app forwards the
+      app only relays, not originates. **New finding, 🟢 FACT (code-existence only, mechanical trace —
+      fixed 2026-09-18, `ai-sessions/0032`, to carry the same tag as `REVERSE_ENGINEERING.md`'s own
+      entry for this finding, per `ai-sessions/0028`'s own flagged-but-unfixed consistency nit):** on
+      receipt, the companion app forwards the
       request (after checking it's a known Maestro device, a Bluetooth-profile-connection-status
       check, and a Google Phenotype server-side flag gate logged `"Classic connection priority
       optimization is not enabled"` when off) to **`com.google.android.apps.pixel.dcservice`'s own
