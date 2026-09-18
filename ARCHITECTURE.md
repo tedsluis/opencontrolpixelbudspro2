@@ -53,17 +53,20 @@ for stock AOSP-based ROMs.
 ┌──────────────────────▼─────────────────────────────────┐
 │  :data                                                │
 │  - BudsRepositoryImpl                                  │
-│  - MaestroSerializer (protobuf), CodecRouter           │
-│    (per-DLCI FrameEncoder/FrameDecoder: 0x02/0x04/0x08) │
-│  - Encrypted DataStore (EQ presets, last-known battery) │
+│  - CodecRouter (per-DLCI FrameEncoder/FrameDecoder:     │
+│    0x02 EQ, 0x04 ANC/Ring implemented; 0x08 not yet)    │
+│  - DataStore (Debug Mode toggle — as built; see §2's    │
+│    Data Layer note for the encryption-scope disclosure) │
 └──────────────────────┬─────────────────────────────────┘
                         │ consumes BudsTransport(channelId)
 ┌──────────────────────▼─────────────────────────────────┐
 │  :hardware                                            │
 │  - BudsTransport (interface, channelId-aware)           │
-│  - RFCOMM socket manager, secondary GATT client         │
-│  - ConnectionStateMachine                               │
-│  - ForegroundService                                     │
+│  - RFCOMM socket manager (implemented; secondary GATT   │
+│    client not yet built — no v1 feature needs it today) │
+│  - ConnectionStateMachine, BleLogger                    │
+│  - ForegroundService, BudsCompanionPairing,             │
+│    BluetoothStateObserver, HfpBatteryReader              │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -84,26 +87,73 @@ enforced by the build graph, not just by convention:
 ```
 
 - **UI Layer** (`:ui`, Jetpack Compose): 100% open-source Material 3
-  components. No OEM theme dependencies. Observes `StateFlow` exposed by
-  ViewModels; sends user intents (`onAncToggle()`, `onEqChanged(band, value)`)
-  down to the domain layer.
-- **Domain Layer** (`:domain`): `BudsViewModel` + use-case classes
-  (`ToggleAncUseCase`, `ReadBatteryUseCase`, `UpdateEqUseCase`). Owns
-  `ConnectionState`, `BatteryStatus`, `AncMode`, `EqProfile` as immutable state
-  models, and defines the `BudsRepository` interface (implemented in `:data`;
-  see §2.2). Has no Android framework dependency beyond
-  `StateFlow`/Coroutines, making it independently unit-testable.
-- **Data Layer** (`:data`): Builds/parses `.proto`-defined messages via
-  `protobuf-kotlin-lite`, and wraps them in the appropriate per-DLCI byte
-  envelope (see §5) via `CodecRouter`. Implements `BudsRepositoryImpl`, translating
-  transport-level events from `:hardware` into domain models. Also owns local
-  persistence (EQ presets, last-known battery) via encrypted AndroidX
-  DataStore (decided; see `AGENTS.md` §10 — no open question here).
+  components. No OEM theme dependencies. Observes plain state passed in as
+  parameters and sends user intents up via callback lambdas
+  (`OpenControlActions`, §2.4) — **as actually built (`ai-sessions/0033`),
+  `:ui` holds no ViewModel and no Hilt dependency at all**; state hoisting and
+  the `BudsRepository` calls that back these callbacks live in `:app`'s
+  `MainActivity` instead (see §2.4's own note on why, and
+  `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 6). The diagram above
+  still shows "ViewModels (MVVM)" as the general intended shape for this
+  layer — a future session adding a dedicated `:ui`-hosted ViewModel class
+  would be extending this pattern, not correcting a mistake in it.
+- **Domain Layer** (`:domain`): domain models (`ConnectionState`, `AncMode`,
+  `EqBandGains`, `BatteryStatus`, `RingTarget`, the `BudsError`/`BudsResult`
+  sealed hierarchy) and the `BudsRepository` interface (implemented in
+  `:data`; see §2.1). No dedicated use-case classes exist as of
+  `ai-sessions/0033` — `BudsRepository`'s own suspend functions
+  (`setAncMode`, `setEqGains`, `ringBud`, ...) are called directly by `:app`;
+  a `ToggleAncUseCase`-style indirection layer was judged unnecessary
+  boilerplate for this app's actual command surface, not an oversight. Has no
+  Android framework dependency beyond `StateFlow`/Coroutines, making it
+  independently unit-testable.
+- **Data Layer** (`:data`): Builds/parses per-DLCI wire frames via `CodecRouter`
+  and each feature's `FrameEncoder`/`FrameDecoder` (§5). Implements
+  `BudsRepositoryImpl`, translating transport-level events from `:hardware`
+  into domain models. Also owns local persistence — as actually built, this
+  is the Debug Mode toggle via plain (not encrypted) AndroidX DataStore
+  Preferences (`DebugSettingsStore.kt`); see that file's own `// TODO(verify)`
+  for why encryption was judged unnecessary for this one non-sensitive
+  boolean, and AGENTS.md §10 for the dependency-policy reasoning. No EQ-preset
+  or battery persistence exists yet — this project's own state-reconciliation
+  design (§3.1) treats the hardware as the sole source of truth for those,
+  by design, not as a gap.
 - **Hardware Layer** (`:hardware`): Owns raw `BluetoothSocket`/`BluetoothGatt`
   objects and the `ForegroundService` that keeps the RFCOMM channel alive
   during active use. Exposes a small interface (`BudsTransport`) so upper
   layers never touch Android BT APIs directly. Contains the
   `ConnectionStateMachine` (§2.1).
+
+### 2.4 UI Navigation Structure (added `ai-sessions/0033`)
+
+`:ui` uses `androidx.navigation:navigation-compose` (pinned, justified below) for a small,
+flat destination graph — one screen per `ARCHITECTURE.md`-recognized v1 feature, plus a Debug screen
+gated behind Debug Mode (§7/§12):
+
+```
+Connection screen (start destination)
+ ├─ ANC screen
+ ├─ EQ screen
+ ├─ Battery (rendered as a section of the Connection screen, not a separate destination —
+ │   battery is push-driven ambient state, not a user-operated control, so it doesn't need its
+ │   own navigation stop; see §3.1's table)
+ ├─ Find My Buds screen
+ └─ Debug screen (only reachable via a clearly-labeled, non-primary entry point — e.g. a menu
+     item — never shown in the main bottom/side navigation; per AGENTS.md §6/§9 this is a
+     developer-facing surface, not part of ordinary use)
+```
+
+- **Connection screen** is always the start destination — every other screen assumes `ConnectionState
+  == Ready`; navigating to ANC/EQ/Find My Buds while not connected is not offered (the Connection
+  screen's own UI is what surfaces `BudsError` states and the GrapheneOS Bluetooth-disabled prompt,
+  §6.0a/§9.1).
+- **Why a separate screen per feature, not one dense screen**: each of ANC/EQ/Find My Buds has enough
+  controls (EQ alone is 5 sliders + 6 presets) that combining them would fight the "every implemented
+  function is clearly displayed and operable" goal this whole build session is scoped against.
+- **Justification for `navigation-compose`** (`AGENTS.md` §10's dependency-policy requirement): pure
+  AndroidX/Compose-first library, no network/analytics/GMS dependency, the standard Compose-idiomatic
+  way to implement a back-stack-aware multi-screen flow without hand-rolling one; avoids the
+  main-activity-owned `when`-on-an-enum navigation anti-pattern for a graph this shaped.
 
 Dependency direction: `:ui → :domain ← :data → :hardware`. `:ui` depends on
 `:domain` to observe state and invoke use cases. `:data` depends on `:domain`
@@ -172,6 +222,21 @@ change state while this app is disconnected or backgrounded.
   state for responsiveness, but that optimistic update is provisional until
   the acknowledgement in step 6 above confirms it — same rule, applied to the
   single-command case.
+
+**Per-feature reconciliation mechanism (added `ai-sessions/0033`, since this session's `BudsRepositoryImpl`
+must implement this concretely for every v1 feature, not just ANC — the mechanism differs by feature and
+should not be assumed uniform):**
+
+| Feature | Reconciliation mechanism on (re)connect | Confidence |
+|---|---|---|
+| ANC | `AncFrame.Get` (`0x11`) fires automatically whenever DLCI 0x04 (re)establishes and carries real Message Stream traffic — reliably answered by a `Notify` (`0x13`) within tens of ms. The repository does not need to send its own `Get`; it observes the peer's own connect-time query/response pair. | 🟢 FACT (`DECISIONS.md` ADR-021/ADR-022) |
+| EQ | No confirmed connect-time push exists yet for EQ specifically (unlike ANC) — `PROTOCOL.md` has not documented an EQ-state broadcast on reconnect. `BudsRepositoryImpl` must actively request the current quintet; since no dedicated "Get EQ" opcode is FACT-confirmed, the safest honest behavior is to mark EQ state `stale`/`unknown` on every fresh connection until the peer sends an unsolicited DLCI 0x02 EQ write (e.g. reflecting a physical-button/other-host change) and treat the locally-cached value as provisional until then — do **not** invent a query this project has no evidence for. |  ⚪ ASSUMPTION (no confirmed read-path exists yet) |
+| Battery (HFP, Option C) | Push-based, not query-based: `AT+BIEV`/`AT+CIND` deliver a value shortly after HFP's Service Level Connection completes on every (re)connection (`PROTOCOL.md` §4.3 Option C) — the repository listens, it does not ask. `AT+CIND`'s `battchg` is a one-time snapshot per session (ADR-015); `AT+BIEV` may arrive once, or repeat, non-fixed-cadence. | 🟢 FACT |
+| Find My Buds Left/Right | Fire-and-forget action, not persisted state — there is nothing to reconcile on reconnect (no "currently ringing" flag this app tracks across a reconnect boundary). | N/A |
+
+**Consequence for `:data`'s codec scope**: since no EQ read/query opcode is FACT-confirmed, EQ's
+`FrameDecoder` only needs to parse *outbound-mirrored* writes and any unsolicited `Rcvd`-direction EQ
+frame — it is not required to construct a "Get EQ" request frame, and Phase 3/6 should not invent one.
 
 ## 4. Battery Status Logic (Android Fallback)
 
@@ -302,6 +367,38 @@ cross-reference. `FrameEncoder`/`FrameDecoder` work for DLCI 0x04/0x08 proceeds 
 capture evidence only** — this is the proven, already-practiced method for these channels, not a
 workaround for an "impossibility."
 
+### 5a. Implementation-ready feature summary (refreshed `ai-sessions/0033`, 2026-09-18)
+
+The per-channel gate above tells you whether a *channel's framing* can be coded against. It does not,
+by itself, tell you whether a *specific command* on that channel may be implemented — `AGENTS.md` §6
+requires a command's own FACT determination **and** an explicit implementation-unblock statement in a
+`DECISIONS.md` ADR, and those two things are tracked per command, not per channel. Re-derived directly
+from `PROTOCOL.md` + every `DECISIONS.md` ADR through ADR-031 (not assumed from an earlier session's
+summary), the current state is:
+
+| Feature | Channel | FACT status | Unblock ADR | Implementation status |
+|---|---|---|---|---|
+| ANC (Get/Set/Notify) | DLCI 0x04, Group `0x08` | 🟢 FACT | ADR-009 (explicit "block lifted"), ADR-021/ADR-022/ADR-024 | **Implemented** (`AncFrameEncoder`/`AncFrameDecoder`, `:data`) |
+| Find My Buds Left/Right | DLCI 0x04, Group `0x04` Code `0x01` | 🟢 FACT | ADR-011 (explicit "implementation is unblocked") | **Implemented** (`RingFrameEncoder`/`RingFrameDecoder`, `:data`) — structurally complete, not hardware-verified (`ai-sessions/0033`) |
+| EQ | DLCI 0x02, `field5{field4{5×float32}}` | 🟢 FACT (envelope, field-to-band mapping, ±6.0 clamp, presets) | ADR-020 (explicit "implementation is unblocked") | **Implemented** (`EqFrameEncoder`/`EqFrameDecoder`, `:data`) — structurally complete, not hardware-verified (`ai-sessions/0033`) |
+| Battery, Option C (HFP `AT+BIEV`/`AT+CIND`) | HFP AT-command channel (not a Message-Group/Code frame) | 🟢 FACT | None needed — plain AT-command text parsing isn't gated by the per-DLCI `FrameEncoder`/`FrameDecoder` rule at all (the same reasoning ADR-030 uses for CTKD) | **Implemented** (`HfpAtParser`/`HfpBatteryReader`, `:hardware`) — structurally complete, not hardware-verified (`ai-sessions/0033`) |
+| Battery, Option B (DLCI 0x04 `Group 0x03 Code 0x03`) | DLCI 0x04 | 🟢 FACT (message *identity* only) | **None** — ADR-031's Decision section promotes only the code identity; unlike ADR-009/011/020 it never states an implementation-unblock | **Gated — not implemented.** Needs its own explicit unblock ADR before a decoder is written. |
+| §4.5's other DLCI 0x02 settings (Touch & Hold, Head gestures, In-ear detection, Mono audio, Volume EQ, Volume Balance, Case sounds, Multipoint, Conversation Detection) | DLCI 0x02 | 🟢 FACT for several individual fields' number/semantic identity (ADR-019 and its Updates) | **None** — ADR-013 explicitly unblocks only the *generic* wrapper-building path, and ADR-019's own Consequences section states explicitly that it does **not** unblock `FrameEncoder`/`FrameDecoder` for DLCI 0x02 "generally," since the broader "this channel's Sent-direction payload carries `libmaestro` settings-write commands" HYPOTHESIS (ADR-018) was never itself promoted to FACT after being narrowed. No later ADR closed this gap the way ADR-020 explicitly did for EQ. | **Gated — not implemented.** A single consolidated ADR unblocking the fields already at FACT identity would close this. |
+| Find My Buds Case / "ring both" | — | — | ADR-027 | **Permanently out of scope**, not a gate to lift |
+
+This table is this project's authoritative implementation-readiness list until superseded by a new ADR
+— a future session should re-derive it from `DECISIONS.md` directly rather than copying it forward
+uncritically, the same discipline this refresh itself applied.
+
+**PROPOSAL — awaiting maintainer decision, surfaced by this refresh, not decided here:** the §4.5
+settings row above represents nine real, user-visible features (per `PROJECT.md`'s v1 functional-scope
+checklist: touch controls/head gestures, in-ear detection status, etc.) whose individual field mappings
+are already 🟢 FACT, blocked from implementation only by a missing umbrella ADR, not by any remaining
+protocol uncertainty. Recommended next step: a single `DECISIONS.md` ADR, modeled on `ADR-020`'s own
+EQ precedent, explicitly unblocking DLCI 0x02's generic settings-write `FrameEncoder`/`FrameDecoder` for
+the specific fields already at full or category-level FACT identity (4, 7, 11, 15, 17, 19, 22, 27, 28,
+2) — left for the maintainer to review and approve, per `AGENTS.md` §6; not committed by this session.
+
 ## 6. Bluetooth Resilience & GrapheneOS Degradation
 
 GrapheneOS enforces aggressive security/battery policies, including automatic
@@ -328,6 +425,27 @@ physical link as inherently unstable:
   a schedule; the only place anything resembling a schedule appears is the
   bounded, foreground-triggered advertisement window in §9.1, which is
   time-boxed by design, not a recurring poll.
+
+### 6.0a Foreground Service Lifecycle (added `ai-sessions/0033`)
+
+`AGENTS.md` §2 requires any code path keeping a Bluetooth connection alive beyond an active user
+session to run inside a `ForegroundService` with `foregroundServiceType="connectedDevice"` and a
+persistent, low-priority notification. Concretely, for this app:
+
+- **Started** when `ConnectionStateMachine` transitions out of `Disconnected` for a **user-initiated**
+  connect (opening the app with a bonded device present, or an explicit reconnect tap) — not eagerly at
+  app process start, and not by a background scheduler (`ARCHITECTURE.md` §6's "user-initiated
+  reconnection only" rule applies here too).
+- **Notification** shows the current `ConnectionState` (`Connecting`/`Ready`/a specific `BudsError`
+  case) and, once `Ready`, a one-line summary (e.g. current ANC mode) — no raw payload content, per
+  §12's logging-privacy rules extended to user-visible text.
+- **Stopped** when `ConnectionStateMachine` reaches `Disconnected` and no reconnect is in flight, or
+  when the user explicitly disconnects from the Connection screen. The service does not restart itself
+  automatically (`START_NOT_STICKY`) — matching the "no aggressive background retry loops" rule (§6).
+- **Ownership**: lives in `:hardware` alongside `BudsTransport`/`ConnectionStateMachine` (§2's module
+  table already lists it there) — `:ui`/`:domain` only observe `ConnectionState`, they never start or
+  stop the service directly; `:app`'s composition root binds the service's own lifecycle to the same
+  Hilt-provided `ConnectionStateMachine` singleton so there is exactly one source of truth.
 
 ### 6.1 Resource Budget (Wakelocks)
 
@@ -386,7 +504,8 @@ data class UnidentifiedFrame(
 `CodecRouter` (§5) emits these on a separate `Flow<UnidentifiedFrame>` exposed
 by `BudsRepository`, independent of the normal command/state pipeline. A
 Debug UI screen (gated behind the same "Debug mode" setting as raw frame
-logging, §12) subscribes to this flow so unclassified wire data is visible
+logging, §12; navigational placement per §2.4 — a non-primary entry point,
+never part of the main flow) subscribes to this flow so unclassified wire data is visible
 and inspectable rather than silently dropped — consistent with the
 evidence-based reverse-engineering principle in `AGENTS.md` §6/`PROJECT_RULES.md`
 §1.
@@ -434,6 +553,37 @@ of firmware versions this app has been verified against.
   `CompanionDeviceManager` (API 26+) instead of custom BLE scanning — this
   delegates the scan UI to the OS and grants the app access only to the
   explicitly selected device. See `DECISIONS.md` ADR-005.
+
+### 9.0a First-time pairing flow (added `ai-sessions/0033`)
+
+Concrete hand-off from CDM's OS-owned picker to `:hardware`'s own `BudsTransport`, since Phase 4/6 need
+this sequence explicit rather than inferred from ADR-005's decision alone:
+
+1. **UI trigger** — the Connection/Pairing screen (§2.4 below) shows a "Pair a device" affordance when
+   `BluetoothAdapter.getBondedDevices()` (already-paired path) yields no Buds Pro 2. Tapping it is the
+   user-visible trigger CDM itself requires — never invoked automatically on app start.
+2. **`CompanionDeviceManager.associate(AssociationRequest, ...)`**, built with a
+   `BluetoothDeviceFilter` (no name/address hardcoded — the OS's own picker UI lets the user identify
+   the Buds visually, consistent with never hardcoding a MAC per `AGENTS.md` §7/§9). `singleDevice(true)`
+   since this project targets exactly one paired device (`ARCHITECTURE.md` §15, `PROJECT.md`
+   non-goals).
+3. **OS picker UI** renders (system-owned, not this app's own Compose UI) — the user selects the Buds
+   Pro 2 from the list CDM itself populates via its own (OS-level, not this app's) scan.
+4. **Callback** (`AssociationRequest` result, delivered via a registered `ActivityResultLauncher` or the
+   `CompanionDeviceManager.Callback` API, API-level-dependent) hands the app a `BluetoothDevice`
+   reference for the selected device.
+5. **Classic bonding** — if the returned device is not yet bonded, the app calls
+   `BluetoothDevice.createBond()` and observes `BluetoothDevice.ACTION_BOND_STATE_CHANGED`;
+   `PROTOCOL.md` §5.1's classic BR/EDR link establishment (SSP or CTKD, depending on whether a prior LE
+   link exists — `DECISIONS.md` ADR-030) happens at the OS/Bluetooth-stack level, invisible to this
+   app's own code beyond observing the bond-state broadcast.
+6. **Hand-off to `BudsTransport`** — once bonded, the resolved `BluetoothDevice` is what
+   `RfcommBudsTransport`'s constructor/factory consumes (§2.1's table) to open each DLCI's own RFCOMM
+   socket. `ConnectionStateMachine.onConnectRequested()`/`onLinkEstablished()`/`onReady()` (§2.1) drive
+   `ConnectionState` through exactly this hand-off, matching `PROTOCOL.md` §5's documented sequence.
+7. **Reconnection** (every subsequent app launch/Bluetooth toggle) skips steps 1–4 entirely —
+   `BluetoothAdapter.getBondedDevices()` already has the device, so the app goes directly to step 5's
+   bonding check (normally a no-op, since the link key is already stored) and step 6.
 - **Local state persistence:** user preferences (custom EQ profiles, last
   known battery) are stored via encrypted AndroidX DataStore. Nothing is ever
   transmitted off-device (see `AGENTS.md` §1 and §9 for the enforcement
@@ -528,6 +678,13 @@ undecided (see §15's "Already decided, not open" list, updated to match).
 ## 15. Open Architecture Questions
 
 > Move to `DECISIONS.md` once decided, following the ADR template.
+
+**Re-checked `ai-sessions/0033` (2026-09-18):** the HID-surface question below is confirmed still the
+only genuinely open *architecture* question — no new one surfaced during this session's Phase 1 refresh.
+A related but distinct gap *was* found (the missing consolidated implementation-unblock ADR for DLCI
+0x02's individual §4.5 settings) — that is a protocol/decision-gate matter, not an architecture
+question, so it is tracked as a `PROPOSAL —` note in §5a above and in
+`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md`, not added here.
 
 - [ ] Added 2026-08-14: is the observed Bluetooth HID surface (§1) architecturally relevant to
       `:hardware`/`BudsTransport` — i.e. does any control feature this app needs actually route

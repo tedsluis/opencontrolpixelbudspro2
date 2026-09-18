@@ -64,17 +64,21 @@ class ConnectionStateMachine @Inject constructor() {
      * teardown, range loss, peer disconnect) always moves to Disconnected —
      * this is a normal, expected transition, never a crash condition. */
     fun onDisconnected() {
+        BleLogger.logConnectionEvent("ConnectionState: ${_state.value::class.simpleName} -> Disconnected")
         _state.value = ConnectionState.Disconnected
     }
 
     fun onError(error: BudsError) {
+        BleLogger.logConnectionEvent("ConnectionState: ${_state.value::class.simpleName} -> Failed(${error::class.simpleName})")
         _state.value = ConnectionState.Failed(error)
     }
 
     private inline fun transition(from: (ConnectionState) -> Boolean, next: () -> ConnectionState) {
         val current = _state.value
         if (from(current)) {
-            _state.value = next()
+            val nextState = next()
+            BleLogger.logConnectionEvent("ConnectionState: ${current::class.simpleName} -> ${nextState::class.simpleName}")
+            _state.value = nextState
         }
     }
 }

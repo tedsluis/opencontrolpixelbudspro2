@@ -3,10 +3,11 @@
 All notable changes to this project are documented in this file. Format loosely
 based on [Keep a Changelog](https://keepachangelog.com/).
 
-This project is currently in the reverse-engineering phase — there is no
-working app yet, so entries so far are documentation, tooling, and process
-rather than app releases. See `TODO.md` for current status and `PROJECT.md`
-for the "definition of done" that will mark v1.
+Most entries below are documentation, tooling, and protocol-reconstruction process
+rather than app releases, reflecting this project's reverse-engineering-first approach — a v1
+Android app now exists (`ai-sessions/0033`, 2026-09-18) but is not yet hardware-verified or
+released. See `TODO.md` for current status and `PROJECT.md` for the "definition of done" that will
+mark v1.
 
 ## [Unreleased]
 
@@ -23,6 +24,24 @@ for the "definition of done" that will mark v1.
   (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`).
 - Reference screenshots for the official app and web companion app.
 - `SECURITY.md`, `CONTRIBUTING.md`, `DESKRESEARCH_FINDINGS.md`.
+- **2026-09-18 (`ai-sessions/0033`): the v1 app, implemented end to end for every genuinely
+  FACT-and-unblocked feature.** EQ (`EqFrameEncoder`/`EqFrameDecoder`, DLCI 0x02, byte layout
+  re-derived directly from `CAP-015` fixtures), Find My Buds Left/Right
+  (`RingFrameEncoder`/`RingFrameDecoder`, DLCI 0x04, `CAP-025` fixtures), and Battery via HFP
+  (`HfpAtParser`/`HfpBatteryReader`) all implemented and unit-tested against real capture bytes,
+  alongside a new `CodecRouter` doing per-DLCI stream buffering/frame-boundary detection that didn't
+  exist in code before this session. `BudsRepositoryImpl` wires all of it to the domain layer,
+  implementing `ARCHITECTURE.md` §3.1's per-feature state-reconciliation rules. A 5-screen Compose UI
+  (Connection, ANC, EQ, Find My Buds, Debug) via `navigation-compose`. `BleLogger` (always-on
+  connection-state logging, Debug-Mode-gated hex dumps, an in-app ring buffer) and
+  `DebugSettingsStore` (AndroidX DataStore-persisted Debug Mode toggle). `CompanionDeviceManager`
+  pairing (`BudsCompanionPairing`), a `BluetoothAdapter` state observer, and a real multi-DLCI
+  `RfcommBudsTransport` (one `BluetoothSocket` per DLCI, resolving the prior session's own
+  `// TODO(verify)`), plus `BudsForegroundService`. 1232 unit tests (up from 232), 0 failures;
+  `./gradlew assembleDebug testDebugUnitTest test lint` all pass, producing a real debug APK. **None
+  of this is verified against real Pixel Buds Pro 2 hardware** — see
+  `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 8's capability table for the exact,
+  feature-by-feature compiles/unit-tested/hardware-verified breakdown.
 
 ### Changed
 

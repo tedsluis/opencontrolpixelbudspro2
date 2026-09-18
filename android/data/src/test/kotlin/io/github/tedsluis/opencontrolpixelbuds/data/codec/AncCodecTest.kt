@@ -32,20 +32,11 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
-/**
- * Fixed byte-array fixtures pulled directly from raw captures via `tshark`
- * (AGENTS.md §11) — no fabricated bytes. Every hex string below is this
- * project's own already-committed capture data, not a device identifier
- * needing redaction (PROJECT_RULES.md §7's ADR-010 exception covers this
- * project's own `captures/`).
- */
-private fun hex(s: String): ByteArray {
-    val clean = s.trim()
-    require(clean.length % 2 == 0)
-    return ByteArray(clean.length / 2) { i ->
-        clean.substring(i * 2, i * 2 + 2).toInt(16).toByte()
-    }
-}
+// Fixed byte-array fixtures pulled directly from raw captures via `tshark`
+// (AGENTS.md §11) — no fabricated bytes. Every hex string below is this
+// project's own already-committed capture data, not a device identifier
+// needing redaction (PROJECT_RULES.md §7's ADR-010 exception covers this
+// project's own `captures/`). `hex()` is the shared helper in TestHex.kt.
 
 class AncFrameDecoderTest {
 

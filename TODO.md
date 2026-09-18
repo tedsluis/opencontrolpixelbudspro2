@@ -685,43 +685,77 @@ lower priority than finishing ANC/Battery/EQ):**
       Notification — resolved as a bounded exception (filtered,
       foreground-triggered, time-boxed); see `DECISIONS.md` ADR-006,
       `AGENTS.md` §7, `ARCHITECTURE.md` §9.1
-- [x] **Implement `ProtocolCodec` (`FrameEncoder`/`FrameDecoder`) with unit tests for ANC — done and
-      verified 2026-09-13** (`ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 7). `:data`'s
-      `AncFrameEncoder`/`AncFrameDecoder` (DLCI 0x04 Group `0x08`) tested against real `tshark`-extracted
-      fixture bytes from `CAP-001`/`CAP-006`/`CAP-036` (225 passing tests, including a 206-case
-      fuzz-adjacent malformed-input sweep, `AGENTS.md` §11). EQ/Battery/Find My Buds codecs remain
-      unimplemented, as scoped.
-- [ ] **Implement `BudsTransport` (RFCOMM primary, secondary GATT for case/charging characteristics)
-      and `ConnectionStateMachine` — partially done 2026-09-13.** `ConnectionStateMachine` and the
-      `BudsTransport` interface + a scripted `FakeBudsTransport` are implemented and unit-tested
-      (7/7 passing, `ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 7) — but the real,
-      `BluetoothSocket`-backed `RfcommBudsTransport` is only sketched (compiles, follows the
-      sealed-error-conversion/`Dispatchers.IO` rules) and explicitly **not** verified against real
-      hardware, and per-DLCI socket multiplexing (`PROTOCOL.md` §2.3's three channels) is left as a
-      documented `// TODO(verify)`, not implemented — this checkbox stays open until that part is.
-- [ ] Implement `BudsRepository` / `BudsRepositoryImpl` wiring `:data` to
-      `:domain` (`ARCHITECTURE.md` §2.1, `DECISIONS.md` ADR-001) — **not attempted 2026-09-13**, out
-      of that session's own scope (only the `BudsRepository` interface exists so far, in `:domain`).
-- [ ] First working end-to-end connection + battery status shown in the UI.
-      **Recommended mechanism (added 2026-08-23): HFP** (`PROTOCOL.md` §4.3
-      Option C) — already 🟢 FACT and not blocked, unlike Option A (still
-      inconclusive, see Phase 1) or Option B (battery message code
-      unconfirmed).
+- [x] **Implement `ProtocolCodec` (`FrameEncoder`/`FrameDecoder`) with unit tests for ANC, EQ, and
+      Find My Buds Left/Right — done and verified 2026-09-18** (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md`
+      Phases 3/8). `:data`'s `AncFrameEncoder`/`AncFrameDecoder` (2026-09-13, unchanged),
+      `EqFrameEncoder`/`EqFrameDecoder` (DLCI 0x02, byte layout re-derived from `CAP-015` frames
+      2111/2165/2227, encoder output matches the real capture byte-for-byte) and
+      `RingFrameEncoder`/`RingFrameDecoder` (DLCI 0x04, `CAP-025` fixtures) all tested against real
+      `tshark`-extracted fixture bytes, plus a `CodecRouter` doing per-DLCI stream buffering/frame-
+      boundary detection (HDLC-flag-delimited for 0x02, length-prefixed for 0x04) that didn't exist
+      in code before this session. Battery Option C's `HfpAtParser` (`:hardware`) also implemented
+      and tested. Battery Option B and §4.5's other DLCI 0x02 settings remain unimplemented — **not
+      a gap, a deliberate gate**: neither carries an explicit implementation-unblock ADR (see
+      `ARCHITECTURE.md` §5a's re-derivation and its own `PROPOSAL —` note).
+- [x] **Implement `BudsTransport` (RFCOMM primary, secondary GATT for case/charging characteristics)
+      and `ConnectionStateMachine` — `RfcommBudsTransport`'s per-DLCI multiplexing done 2026-09-18**
+      (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 4), resolving the `2026-09-13` `//
+      TODO(verify)` this item used to describe: one `BluetoothSocket` per DLCI (`BudsSdpUuids.kt`'s
+      two confirmed SDP UUIDs), a reader coroutine per socket. **Still not hardware-verified** — no
+      physical Buds in this environment, so `connect()` itself remains unexercised. Secondary GATT
+      client still not built (no v1 feature needs it yet).
+- [x] **Implement `BudsRepository` / `BudsRepositoryImpl` wiring `:data` to
+      `:domain` (`ARCHITECTURE.md` §2.1, `DECISIONS.md` ADR-001) — done 2026-09-18**
+      (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 5). Implements `ARCHITECTURE.md` §3.1's
+      per-feature state-reconciliation table for all four features; 11 unit tests against
+      `FakeBudsTransport`.
+- [x] **First working end-to-end connection + battery status shown in the UI — UI-complete, not
+      hardware-verified, 2026-09-18** (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phases 5-6).
+      HFP Option C (`PROTOCOL.md` §4.3 Option C) is wired end-to-end from `HfpBatteryReader` through
+      `BudsRepositoryImpl` to `ConnectionScreen`'s battery card — but `MainActivity`'s `onConnect`/
+      `onDisconnect` actions are still placeholders (no real device to connect to in this
+      environment) and `HfpBatteryReader`'s actual broadcast delivery is itself unverified (see its
+      own `// TODO(verify)`), so "end-to-end" here means "every layer is wired and compiles," not
+      "confirmed working against hardware."
 
 ## Phase 5 — Testing & documentation
 
 - [ ] Execute `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` on at least 2 devices
       (differing Android version and/or OEM, including GrapheneOS as the
       primary reference target per `ARCHITECTURE.md` §1)
-- [ ] Update `README.md` with build instructions once the app builds
+- [x] **Update `README.md` with build instructions once the app builds — done 2026-09-18**
+      (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 9).
 - [x] **Decide minimum supported Android API level — resolved 2026-09-13: API 34 (Android 14),
       matching compile/target SDK** (`DECISIONS.md` ADR-029, `ARCHITECTURE.md` §1/§15). Applied to
       `android/`'s `:app`/`:hardware`/`:ui` modules (`minSdk = 34`).
-- [ ] Decide multi-device (multiple paired Buds) support for v1 and record it
-      in `PROJECT.md` scope + `DECISIONS.md` (currently open, see
-      `ARCHITECTURE.md` §15)
+- [x] **Multi-device (multiple paired Buds) support for v1 — already decided, this item was stale,
+      fixed 2026-09-18** (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 0). `PROJECT.md`'s
+      own non-goals section already states this as settled scope ("No simultaneous multi-device
+      support in v1 — the app targets exactly one paired Pixel Buds Pro 2 at a time"), matching
+      `ARCHITECTURE.md` §15's "Already decided, not open" list — this checklist item was the one
+      document that had drifted out of sync, not an actually-open question. Fixed here, a plain
+      documentation correction per `PROJECT_RULES.md` §3 (no new `DECISIONS.md` ADR needed since
+      nothing new was decided).
 - [ ] Prepare the first public release (tag, `CHANGELOG.md` entry, GitHub
       Release per the manual-update-distribution decision in `AGENTS.md` §1)
+- [ ] **Added 2026-09-18** (`ai-sessions/0033`): wire `MainActivity`'s `onConnect`/`onDisconnect`
+      actions to a real `RfcommBudsTransport.connect()`/`disconnect()` call once pairing has been
+      exercised against real hardware — currently placeholders, see that file's own comments.
+- [ ] **Added 2026-09-18** (`ai-sessions/0033`): launch `BudsCompanionPairing`'s returned
+      `IntentSender` via an `ActivityResultLauncher` in `MainActivity`'s `onPending` callback —
+      currently a no-op placeholder.
+- [ ] **Added 2026-09-18** (`ai-sessions/0033`): start/stop `BudsForegroundService` from
+      `ConnectionStateMachine` transitions (ARCHITECTURE.md §6.0a) — the service class exists and
+      compiles but nothing calls `startForegroundService`/`stopService` on it yet.
+- [ ] **Added 2026-09-18** (`ai-sessions/0033`): an "Export debug log" UI action reading
+      `BleLogger.exportLog()` — the ring buffer itself is built and populated, only the
+      share/export affordance on the Debug screen is missing.
+- [ ] **PROPOSAL, added 2026-09-18** (`ai-sessions/0033`, `ARCHITECTURE.md` §5a): a consolidated
+      `DECISIONS.md` ADR explicitly unblocking DLCI 0x02's generic settings-write `FrameEncoder`/
+      `FrameDecoder` for the fields already at full/category-level FACT identity (touch controls,
+      multipoint, volume EQ, volume balance, mono audio, in-ear detection, case sounds — fields 2,
+      4, 7, 11, 15, 17, 19, 27, 28), modeled on `ADR-020`'s own EQ precedent — awaiting maintainer
+      review, not committed.
 
 ## Known technical debt
 

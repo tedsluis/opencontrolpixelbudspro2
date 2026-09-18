@@ -32,10 +32,15 @@ import kotlinx.coroutines.flow.Flow
 interface BudsTransport {
     val connected: Boolean
 
-    /** Inbound frames as `(channelId, frame)` pairs, one element per already
-     * frame-delimited payload — buffering/frame-boundary detection is each
-     * DLCI's own `FrameDecoder`'s job (ARCHITECTURE.md §5), not this
-     * interface's. */
+    /**
+     * Inbound bytes as `(channelId, bytes)` pairs. Each element is whatever a
+     * single `InputStream.read()` call returned — **not** necessarily one
+     * complete logical frame, since RFCOMM is a byte stream with no
+     * message-delimiting at the socket level. Buffering and frame-boundary
+     * detection are `:data`'s `CodecRouter`'s job (ARCHITECTURE.md §5),
+     * consuming this raw stream — this interface deliberately does no
+     * framing of its own so that job stays in exactly one place.
+     */
     val inbound: Flow<Pair<Int, ByteArray>>
 
     suspend fun send(channelId: Int, frame: ByteArray): BudsResult<Unit>

@@ -3,15 +3,34 @@
     No INTERNET permission anywhere in this manifest, ever (AGENTS.md §1) — a
     CI/lint check should assert this remains true (ARCHITECTURE.md §14).
 
-    BLUETOOTH_CONNECT/BLUETOOTH_SCAN and the foreground-service permissions
-    (AGENTS.md §2) are intentionally NOT yet declared here: no code in this
-    module talks to a real Bluetooth device yet (the injected BudsTransport
-    resolves to FakeBudsTransport, see app/di/TransportModule.kt) — declaring
-    those permissions now would be premature (AGENTS.md §2's "any additional
-    permission must be justified" rule applies just as much to declaring one
-    before it's used).
+    Every permission below is declared because `ai-sessions/0033`'s Phase 4
+    hardware layer (RfcommBudsTransport, BudsCompanionPairing,
+    HfpBatteryReader, BluetoothStateObserver, BudsForegroundService) actually
+    uses it — none is speculative (AGENTS.md §2's "any additional permission
+    must be justified" rule).
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- RFCOMM socket I/O against the already-bonded/CDM-selected device
+         (RfcommBudsTransport, BudsCompanionPairing). -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Flagged neverForLocation per AGENTS.md §2 — this app never does
+         device-discovery scanning; the only scan this permission covers is
+         the bounded Fast Pair Battery Notification exception (AGENTS.md §7,
+         DECISIONS.md ADR-006), not yet implemented this session (Battery
+         Option A is out of this session's scope, ARCHITECTURE.md §5a), but
+         the manifest flag itself is a static declaration independent of
+         which battery option is wired up. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+
+    <!-- BudsForegroundService's persistent connection-status notification
+         (AGENTS.md §2, ARCHITECTURE.md §6.0a). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 
     <application
         android:name=".OpenControlApplication"

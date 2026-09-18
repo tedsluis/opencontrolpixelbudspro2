@@ -35,6 +35,8 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.core)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.navigation.compose) // ARCHITECTURE.md §2.4: navigation structure.
     debugImplementation(libs.compose.ui.tooling)
 }

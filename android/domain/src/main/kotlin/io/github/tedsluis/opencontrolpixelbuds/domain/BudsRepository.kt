@@ -26,13 +26,28 @@ import kotlinx.coroutines.flow.Flow
  * §2.1). Local state exposed here is a cache of the hardware's last-known
  * state, never the authority on it (ARCHITECTURE.md §3.1) — [ancMode] is
  * reconciled against a fresh read on every (re)connection, not assumed to
- * still hold across a reconnect.
+ * still hold across a reconnect. See ARCHITECTURE.md §3.1's per-feature table
+ * for exactly how each Flow below is reconciled (push-based for battery,
+ * query/response for ANC, provisional-until-an-unsolicited-update for EQ).
  */
 interface BudsRepository {
     val connectionState: Flow<ConnectionState>
     val ancMode: Flow<AncMode>
+
+    /** `null` = no confirmed value yet this connection (ARCHITECTURE.md §3.1 —
+     * EQ has no confirmed read/query opcode, unlike ANC, so this starts
+     * unknown on every fresh connection rather than trusting a stale cache). */
+    val eqProfile: Flow<EqBandGains?>
+
+    val batteryStatus: Flow<BatteryStatus>
     val unidentifiedFrames: Flow<UnidentifiedFrame>
 
     suspend fun setAncMode(mode: AncMode): BudsResult<Unit>
     suspend fun refreshAncMode(): BudsResult<AncMode>
+
+    suspend fun setEqGains(gains: EqBandGains): BudsResult<Unit>
+    suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit>
+
+    suspend fun ringBud(target: RingTarget): BudsResult<Unit>
+    suspend fun stopRinging(): BudsResult<Unit>
 }

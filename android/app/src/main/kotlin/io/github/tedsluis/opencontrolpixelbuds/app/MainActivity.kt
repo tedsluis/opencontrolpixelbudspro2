@@ -19,72 +19,128 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.app
 
+import android.bluetooth.BluetoothAdapter
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
-import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsTransport
-import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
-import io.github.tedsluis.opencontrolpixelbuds.ui.AncScreen
+import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
+import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothStateObserver
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
+import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlActions
+import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlNavHost
+import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlUiState
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * `:app`'s Hilt composition root (DECISIONS.md ADR-028). [connectionStateMachine]
- * and [budsTransport] are real, already-tested `:hardware` components,
- * resolved through Hilt's dependency graph rather than constructed by hand —
- * this is what "the composition root is wired" means concretely. What is
- * still **not** wired is a real hardware connection: [budsTransport] resolves
- * to `FakeBudsTransport` (see `di/TransportModule.kt`) until
- * `RfcommBudsTransport` is verified against real hardware, and no
- * `BudsRepository`/use-case layer exists yet to turn [ancMode] taps into an
- * actual outbound frame — that remains out of this session's own scope
- * (`ai-sessions/0013_FEATURE_RESULT_2026_09_13.md` Phase 7).
+ * `:app`'s Hilt composition root (DECISIONS.md ADR-028). Wires the full
+ * dependency chain — [budsRepository] (real interface, `RepositoryModule.kt`),
+ * [companionPairing]/[bluetoothStateObserver] (`:hardware`), and
+ * [debugSettingsStore] (`:data`) — into `:ui`'s [OpenControlNavHost].
+ *
+ * State hoisting lives here rather than in a dedicated ViewModel class this
+ * session (ARCHITECTURE.md §2's diagram labels ViewModels as living in
+ * `:ui`, but `:ui` deliberately has no Hilt dependency — see §2.4's own doc
+ * comment on `OpenControlActions`/`OpenControlUiState` — so a Hilt-injected
+ * ViewModel would need to live in `:app` regardless; collecting flows
+ * directly in this Activity, matching `ai-sessions/0013`'s own established
+ * pattern, was judged sufficient for this session's scope rather than adding
+ * a `BudsViewModel` class that would do little beyond what
+ * `collectAsStateWithLifecycle()` already does here).
+ *
+ * **Honest scope**: [budsRepository] resolves to `BudsRepositoryImpl` wired
+ * against `FakeBudsTransport` (`TransportModule.kt`) until `RfcommBudsTransport`
+ * is verified against real hardware — every screen below is real, wired code,
+ * but not yet exercised against a real Pixel Buds Pro 2 (ARCHITECTURE.md §5a).
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject
-    lateinit var connectionStateMachine: ConnectionStateMachine
+    lateinit var budsRepository: BudsRepository
 
     @Inject
-    lateinit var budsTransport: BudsTransport
+    lateinit var debugSettingsStore: DebugSettingsStore
 
-    companion object {
-        private const val TAG = "MainActivity"
-    }
+    private val companionPairing by lazy { BudsCompanionPairing(this) }
+    private val bluetoothStateObserver by lazy { BluetoothStateObserver(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            var ancMode by mutableStateOf(AncMode.OFF)
-            val connectionState by connectionStateMachine.state.collectAsState()
+            val scope = rememberCoroutineScope()
 
-            // Proves the injected ConnectionStateMachine and BudsTransport are
-            // real, working instances resolved from Hilt's graph, not
-            // placeholders — walks Disconnected -> Connecting -> Discovering
-            // -> Ready once, and logs the (fake, for now) transport's state.
-            // Connection-state transitions are always safe to log (AGENTS.md §9).
-            LaunchedEffect(Unit) {
-                Log.d(TAG, "BudsTransport injected, connected=${budsTransport.connected}")
-                connectionStateMachine.onConnectRequested()
-                connectionStateMachine.onLinkEstablished()
-                connectionStateMachine.onReady()
+            val connectionState by budsRepository.connectionState
+                .collectAsStateWithLifecycle(initialValue = ConnectionState.Disconnected)
+            val ancMode by budsRepository.ancMode.collectAsStateWithLifecycle(initialValue = null)
+            val eqProfile by budsRepository.eqProfile.collectAsStateWithLifecycle(initialValue = null)
+            val batteryStatus by budsRepository.batteryStatus.collectAsStateWithLifecycle(
+                initialValue = io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus(),
+            )
+            val bluetoothAdapterState by remember { bluetoothStateObserver.observe() }
+                .collectAsStateWithLifecycle(
+                    initialValue = io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothAdapterState.OFF,
+                )
+            val debugModeEnabled by debugSettingsStore.debugModeEnabled.collectAsStateWithLifecycle(initialValue = false)
+
+            var hasBondedDevice by remember { mutableStateOf(companionPairing.bondedDevice() != null) }
+            val unidentifiedFrames = remember { mutableStateOf(listOf<UnidentifiedFrame>()) }
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                budsRepository.unidentifiedFrames.collect { frame ->
+                    unidentifiedFrames.value = (unidentifiedFrames.value + frame).takeLast(200)
+                }
             }
 
+            val state = OpenControlUiState(
+                connectionState = connectionState,
+                bluetoothEnabled = bluetoothAdapterState == io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothAdapterState.ON,
+                hasBondedDevice = hasBondedDevice,
+                ancMode = ancMode,
+                eqProfile = eqProfile,
+                batteryStatus = batteryStatus,
+                unidentifiedFrames = unidentifiedFrames.value,
+                debugModeEnabled = debugModeEnabled,
+            )
+
+            val actions = OpenControlActions(
+                onRequestEnableBluetooth = {
+                    startActivity(android.content.Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                },
+                onPair = {
+                    companionPairing.requestAssociation(
+                        onPending = { /* :ui has no ActivityResultLauncher hook yet this session —
+                            TODO(verify): launching the returned IntentSender against a real
+                            picker is not exercised in this environment. */ },
+                        onCreated = { hasBondedDevice = companionPairing.bondedDevice() != null },
+                        onFailure = { },
+                    )
+                },
+                onConnect = { /* RfcommBudsTransport.connect() needs a resolved BluetoothDevice +
+                    channel map — wiring a real connect action through to the UI is the next
+                    increment once pairing is exercised against real hardware. */ },
+                onDisconnect = { },
+                onAncModeSelected = { mode -> scope.launch { budsRepository.setAncMode(mode) } },
+                onEqGainsChanged = { gains -> scope.launch { budsRepository.setEqGains(gains) } },
+                onEqPresetSelected = { preset -> scope.launch { budsRepository.applyEqPreset(preset) } },
+                onRing = { target -> scope.launch { budsRepository.ringBud(target) } },
+                onStopRinging = { scope.launch { budsRepository.stopRinging() } },
+                onDebugModeChanged = { enabled -> scope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
+            )
+
             MaterialTheme {
-                AncScreen(
-                    connectionState = connectionState,
-                    ancMode = ancMode,
-                    onAncModeSelected = { ancMode = it },
-                )
+                OpenControlNavHost(state = state, actions = actions)
             }
         }
     }

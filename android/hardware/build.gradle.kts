@@ -36,7 +36,7 @@ dependencies {
     // javax.inject.Inject only — this module has no other Hilt/Dagger dependency,
     // so it stays usable from a manual-DI consumer too (DECISIONS.md ADR-028 only
     // decided Hilt for :app's own composition root, not a hard dependency here).
-    implementation("javax.inject:javax.inject:1")
+    implementation(libs.javax.inject)
 
     testImplementation(libs.junit5.jupiter.api)
     testRuntimeOnly(libs.junit5.jupiter.engine)

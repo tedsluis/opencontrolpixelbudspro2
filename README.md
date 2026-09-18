@@ -3,14 +3,15 @@
 An independent, open-source Android app to fully control the **Google Pixel Buds
 Pro 2** without the official Pixel Buds app or Google Play Services.
 
-> **Status:** protocol reconstruction is mature, and Android app development has begun. ANC mode
-> switching, Find My Buds (Left/Right), battery reporting (via HFP), and the equalizer's live-write
-> path are all confirmed 🟢 FACT and implementation-ready (`PROTOCOL.md`, `DECISIONS.md`). A real,
-> building, unit-tested Android Studio project now exists at [`android/`](./android) — five Gradle
-> modules, ANC's `FrameEncoder`/`FrameDecoder` implemented and tested against real capture bytes, a
-> working Hilt-wired composition root — but it has **no UI screens for real device control yet** and
-> has **never been run against real Pixel Buds hardware** (see `TODO.md` Phase 4 for exactly what's
-> done vs. still open).
+> **Status:** protocol reconstruction is mature, and a v1 Android app now exists end to end for
+> every genuinely FACT-and-implementation-unblocked feature. ANC mode switching, Find My Buds
+> (Left/Right), the equalizer, and battery reporting (via HFP) are all implemented — codec, hardware
+> transport, repository, and UI — and 1232 unit tests pass (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md`).
+> A real, building debug APK exists (`./gradlew assembleDebug`). **What this does *not* mean**: none
+> of it has been run against real Pixel Buds Pro 2 hardware or a real Android device/emulator in the
+> environment this was built in — see "Building and installing" below and `ai-sessions/0033`'s own
+> Phase 8 capability table for a precise, feature-by-feature compiles/unit-tested/hardware-verified
+> breakdown before you trust any of this against your own earbuds.
 
 > ## ⚠️ Disclaimer: hardware risk
 >
@@ -72,13 +73,59 @@ to design, implement, test, and document a native Android app.
 - **Still open:** touch-controls' head-gestures and ANC-mode-rotation sub-features,
   in-ear detection, EQ preset persistence semantics, and per-component
   serial-number reading.
-- **App development has started** — see [`android/`](./android): five Gradle modules
-  (`:app`, `:ui`, `:domain`, `:data`, `:hardware`), a Hilt-wired `:app` composition root, and ANC's
-  `FrameEncoder`/`FrameDecoder` implemented and unit-tested against real, `tshark`-extracted capture
-  bytes (`./gradlew assembleDebug test` builds a real debug APK, all unit tests passing). **Not yet
-  done:** any UI screen for actually controlling the Buds, a real `BluetoothSocket`-backed transport
-  verified against hardware, and EQ/Battery/Find-My-Buds codecs (`:data` has ANC only so far) — see
-  `TODO.md` Phase 4 for the exact, up-to-date checklist.
+- **App development (`ai-sessions/0033`, 2026-09-18)** — see [`android/`](./android): five Gradle
+  modules (`:app`, `:ui`, `:domain`, `:data`, `:hardware`), a Hilt-wired `:app` composition root, and
+  ANC/EQ/Find-My-Buds-Left-Right `FrameEncoder`/`FrameDecoder` pairs plus HFP battery parsing all
+  implemented and unit-tested against real, `tshark`-extracted capture bytes (1232 tests, 0
+  failures; `./gradlew assembleDebug testDebugUnitTest test lint` all pass). A Compose UI with 5
+  screens (Connection, ANC, EQ, Find My Buds, Debug) is wired to a real `BudsRepositoryImpl`. **Not
+  yet done:** the underlying `BluetoothSocket` transport, `CompanionDeviceManager` pairing flow, and
+  foreground service are implemented but **not verified against real hardware** (no physical Buds or
+  Android device in the build environment) — see `TODO.md` Phase 4/5 and
+  `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 8's capability table for the exact,
+  feature-by-feature breakdown.
+
+## Building and installing the debug APK
+
+Requirements: JDK 21, Android SDK with `android-34`/build-tools `34.0.0` installed (the Gradle
+wrapper handles the rest). No Android Studio installation is required — the commands below use the
+wrapper directly.
+
+```bash
+cd android
+./gradlew assembleDebug
+```
+
+The APK lands at `android/app/build/outputs/apk/debug/app-debug.apk`. Install it on a device with
+[ADB](https://developer.android.com/tools/adb) (USB debugging enabled) or by copying the file to the
+device and opening it (Android will prompt to allow installing from that source):
+
+```bash
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+**Minimum Android version: 14 (API 34)** — `DECISIONS.md` ADR-029; the app will not install on an
+older OS version. **Permissions the app requests, and why** (AGENTS.md §2, each declared with its
+own justification comment in `android/app/src/main/AndroidManifest.xml` and
+`android/hardware/src/main/AndroidManifest.xml`): `BLUETOOTH_CONNECT` (RFCOMM socket I/O against the
+paired Buds), `BLUETOOTH_SCAN` (flagged `neverForLocation` — this app never does device-discovery
+scanning), `POST_NOTIFICATIONS`/`FOREGROUND_SERVICE`/`FOREGROUND_SERVICE_CONNECTED_DEVICE` (the
+persistent connection-status notification while connected). No `INTERNET` permission, ever
+(AGENTS.md §1) — verify this yourself with `aapt dump permissions android/app/build/outputs/apk/debug/app-debug.apk`
+if you want to check before installing.
+
+To also run the full test suite and static analysis (matching what `ai-sessions/0033` verified
+before producing the APK above):
+
+```bash
+./gradlew assembleDebug testDebugUnitTest test lint
+```
+
+**Before testing against real hardware**, read `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md`
+Phase 8's capability table — it states plainly, feature by feature, what's only compiled-and-tested
+versus what (nothing, as of that session) has been confirmed working against a real Pixel Buds Pro
+2. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means
+"safe against your earbuds" — it means the wire bytes match known-good captures, nothing more.
 
 ## Approach
 
