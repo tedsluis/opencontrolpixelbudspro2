@@ -9,6 +9,12 @@ local.properties
 *.iml
 .idea/
 
+# Maintainer's own device/app logs pulled while testing the app on real hardware (AGENTS.md §9 —
+# these can contain device identifiers and are never committed, distinct from the captures/ research
+# data ADR-010 exempts) — never tracked, and any of this project's own docs/commits must summarize
+# findings from a log directly rather than pointing back at a file here.
+android/logs/
+
 # Reverse-engineering workspace: the pulled APK(s), decompiled output (JADX/apktool), and
 # pbtk-extracted schemas are never committed to git — see AGENTS.md §4 ("Generated code is
 # build-time only ... must never be committed to version control"), PROJECT.md's non-goals

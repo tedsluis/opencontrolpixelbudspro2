@@ -33,13 +33,26 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 
     <application
-        android:name=".OpenControlApplication"
+        android:name="io.github.tedsluis.opencontrolpixelbuds.app.OpenControlApplication"
         android:allowBackup="false"
         android:label="@string/app_name"
         android:theme="@style/Theme.OpenControlPixelBuds">
 
+        <!-- Fully-qualified class names here, not the usual ".ClassName" shorthand: this
+             module's `namespace` (build.gradle.kts) is "io.github.tedsluis.opencontrolpixelbuds",
+             but OpenControlApplication/MainActivity's actual Kotlin package is
+             "io.github.tedsluis.opencontrolpixelbuds.app" (one level deeper, matching this
+             source tree's own directory layout) — a relative name resolves against the
+             manifest's namespace, not a class's real package, so ".OpenControlApplication" was
+             silently resolving to a class that doesn't exist and crashing on launch with
+             ClassNotFoundException. Confirmed by installing a real debug APK on hardware and
+             reading the resulting crash: the exact malformed class name it looked for was
+             "io.github.tedsluis.opencontrolpixelbuds.OpenControlApplication", missing the ".app"
+             segment — lint's own `MissingClass` check had already flagged this and was
+             incorrectly suppressed in app/build.gradle.kts (see that file's own corrected
+             comment) rather than investigated fully. -->
         <activity
-            android:name=".MainActivity"
+            android:name="io.github.tedsluis.opencontrolpixelbuds.app.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

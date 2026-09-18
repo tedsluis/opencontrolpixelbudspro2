@@ -43,6 +43,23 @@ mark v1.
   `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 8's capability table for the exact,
   feature-by-feature compiles/unit-tested/hardware-verified breakdown.
 
+### Fixed
+
+- **2026-09-18 (`ai-sessions/0034`): a crash-on-launch in the v1 app, found by the maintainer on
+  their own real hardware the first time `ai-sessions/0033`'s debug APK was actually installed.**
+  `:app`'s `AndroidManifest.xml` declared `OpenControlApplication`/`MainActivity` with the usual
+  relative `".ClassName"` shorthand, which resolves against the module's manifest `namespace`
+  (`io.github.tedsluis.opencontrolpixelbuds`) rather than either class's real Kotlin package
+  (`io.github.tedsluis.opencontrolpixelbuds.app`, one segment deeper) — silently resolving to a
+  class that has never existed and crashing with `ClassNotFoundException` before any app code runs.
+  Present since the app skeleton was first created (`ai-sessions/0013`, 2026-09-13); never previously
+  exercised, since no prior session had run a real build on a real device. Compounding factor:
+  `ai-sessions/0033`'s own Phase 8 build verification had already hit Android lint's `MissingClass`
+  check flagging exactly this, misdiagnosed it as an AGP+Hilt tooling false positive, and disabled
+  the check — removing the one automated signal that would have caught this pre-emptively. Fixed by
+  using fully-qualified class names in the manifest and removing the incorrect lint suppression; full
+  build/test/lint suite re-verified clean with zero suppressions.
+
 ### Changed
 
 - Defined a narrow, bounded BLE-scanning exception for the Fast Pair Battery
