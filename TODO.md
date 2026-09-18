@@ -43,13 +43,18 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    fields 17/19/22/27/28 closed 2026-09-03, and fields 11/15 (the two the maintainer's `0002`
    sign-off was scoped to) closed 2026-09-08 — see this file's "Targeted research follow-ups"
    section below, `PROTOCOL.md` §4.5.2/§4.5.6/§4.5.7/§4.5.5a/§4.5.8/§4.5.1, `DECISIONS.md` ADR-019
-   and its two Updates. **Current highest-leverage single next step** is now the
-   `MaestroDeviceSettingsProviderService` 6-case-ID→`qhr`-field forward trace (same "Targeted
-   research follow-ups" section, added 2026-09-08 by prompt `0002`) — the cheapest of the three
-   open APK-RE leads from `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md`'s Phase 1/Phase 2 (the
-   other two, `MaestroEndpointService`'s smali fallback read and `gjv.p()`'s caller trace, both need
-   either an untried smali read or a fresh capture first). **`CAP-033` (Group AA, `SDP-001`/`SDP-002`)
-   is done (2026-08-30)** — see below.
+   and its two Updates. **Correction, 2026-09-17 (`ai-sessions/0030`): the "current highest-leverage
+   single next step" sentence this bullet used to carry here is stale and removed.** All three open
+   APK-RE leads it named are now closed: the `MaestroDeviceSettingsProviderService` 6-case-ID→`qhr`-field
+   forward trace closed 2026-09-08 (`DECISIONS.md` ADR-019 Update, this file's "Targeted research
+   follow-ups" section below); `MaestroEndpointService`'s smali fallback read closed 2026-09-17
+   (`ai-sessions/0027`, `structural_index field-writes` — see `REVERSE_ENGINEERING.md`'s
+   `MaestroEndpointService` entry); `gjv.p()`'s caller trace closed 2026-09-15 (`ai-sessions/0023`). No
+   single-item replacement is named here — see `PROTOCOL.md` §6 for the current, full open-questions
+   list (this file's own "Open questions" section at the bottom points there rather than duplicating
+   it) and `ai-sessions/0030_MAINTENANCE_RESULT_2026_09_17.md`'s own Phase 2 worklist for a
+   static-analysis-tractable subset of it. **`CAP-033` (Group AA, `SDP-001`/`SDP-002`) is done
+   (2026-08-30)** — see below.
 4. **Remaining planned captures** (updated 2026-09-13 — see below for the next-test-session queue;
    `CAP-008`, `CAP-009`, `CAP-013`, `CAP-014`, `CAP-027`, `CAP-033`–`CAP-042` are done, see
    `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9):

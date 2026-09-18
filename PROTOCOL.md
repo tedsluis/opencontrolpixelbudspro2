@@ -1780,6 +1780,21 @@ leaving them buried in prose elsewhere.
       is a different, live possibility. If confirmed, this would materially affect
       `FrameDecoder`'s design for this channel (decryption step required before payload parsing)
       — see `ARCHITECTURE.md` §5.
+      **Checked 2026-09-17 (`ai-sessions/0030`), a static-analysis angle not previously tried — clean,
+      whole-tree negative, narrows without resolving.** `grep -rl "javax.crypto.Cipher\|javax.crypto.spec.SecretKeySpec"`
+      across the entire decompiled `jadx-output/sources/` tree (12,545 files, not scoped to
+      `defpackage/`) returns **zero matches** — no file anywhere in the companion app's own decompiled
+      Java/Kotlin source imports the standard Android crypto API. A broader standalone-identifier
+      search for `AES` outside `defpackage/` is also zero; the handful of `defpackage/` hits for a
+      looser `AES` substring search are confirmed false positives (they match inside "MA**AES**TRO",
+      not a real `AES` identifier). The actual `WriteSetting`/pw_rpc send-path classes checked directly
+      (`fyo.java`, `fyv.java`, `fuh.java`, `fux.java`, `frb.java`, `fxm.java`) contain no
+      cipher/encrypt-related identifier of any kind. **Does not resolve the hypothesis** — this only
+      rules out ordinary `javax.crypto` API usage visible in this app's own Java/Kotlin source; it does
+      not rule out encryption happening inside a bundled native library, inside Pigweed's own linked
+      code, or inside Google Play Services (both out of this project's scope per `DECISIONS.md`
+      ADR-025), nor a differently-styled crypto call this exact grep pattern wouldn't match. Recorded as
+      a genuine, narrower checked negative, not a resolution either way.
 - [ ] **Added 2026-08-15, from `CAP-005-FINDINGS.md` (Group T, EQ isolation) §6 — carried over per
       this session's task instructions.** A properly isolated capture (`EQP-002` preset tap,
       `EQS-004` Bass slider drag, ≥10s gaps) found DLCI 0x02's `Sent` direction is silent all
@@ -2532,6 +2547,17 @@ leaving them buried in prose elsewhere.
       not-yet-launched feature) or an artifact of this build is not established either way. See
       `REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry's own 2026-09-17 update for the full
       trace (file+line citations, source excerpts).
+      **Update (2026-09-17, `ai-sessions/0030`) — the follow-on question ("what happens when an
+      authorized call reaches `ofm.a()`'s own dispatch logic with no service registered") narrowed, not
+      resolved.** `ofm.a(int, Parcel)` read in full: it handles only the `SETUP_TRANSPORT` handshake for
+      a `grpc-binder`-style Binder transport, and never itself performs a per-service-name lookup — any
+      such dispatch, if it exists, is a property of the underlying `io.grpc` server machinery one or
+      more layers deeper, not reached by this class or its immediate collaborators (`mig`, whose own
+      constructor also takes no service-set argument). One further hop (`ofk`, the type feeding `ofm`'s
+      own constructor) hit a genuine R8 class-merging ambiguity — its one JADX-visible builder methods
+      construct unrelated HTTP-header/gzip objects — and was not chased past that point. See
+      `REVERSE_ENGINEERING.md`'s `MaestroEndpointService` entry's own 2026-09-17 (`0030`) update for the
+      full trace.
 - [ ] **Added 2026-09-16 (`ai-sessions/0025`, Phase 3 item L — full `AndroidManifest.xml`
       re-review).** A previously-uncatalogued exported broadcast receiver,
       `com.google.android.apps.wearables.maestro.companion.phone.bluetoothpriority.BluetoothPriorityReceiver`,

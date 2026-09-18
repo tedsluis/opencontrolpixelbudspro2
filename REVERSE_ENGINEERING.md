@@ -3619,6 +3619,49 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
       is a further, deeper question than item B's own original ask ("is a service registered" — no) or
       the "real vs. inert Binder" question this update resolves (real) — genuinely open, not guessed
       at, and left for a future pass if ever needed.
+  - **Update (2026-09-17, `ai-sessions/0030`) — `ofm.a(int, Parcel)` read in full: it is not itself a
+    per-service dispatcher at all, narrowing rather than closing the question above; one further hop
+    (`mig`'s own constructor) checked and also does not consume a service set; a second hop
+    (`ofk`, the class feeding `ofm`'s own constructor) hit a genuine R8 class-merging ambiguity and was
+    not pursued past that point.** 🟢 FACT (direct JADX read, `ofm.java` read in full, 160 lines):
+    - `ofm.a(int i, Parcel parcel)` (`ofm.java:47-100`) only ever handles transaction code `1` — its
+      body is the **`SETUP_TRANSPORT` handshake for a `grpc-binder`-style Binder transport**: after the
+      already-documented UID-authorization object (`ogq`/`nzs`) is built, it constructs a new `ofn`
+      transport, registers it into the `oow`/`off` server wrapper's own connection list
+      (`ootVar.q.add(ofnVar)`, `ofm.java:84`), and starts a timeout task — it never inspects a service
+      name/method string, and never reads `MaestroEndpointService.b` (the already-confirmed-empty
+      per-service map) or anything derived from it. **Per-RPC service-name dispatch, if it happens at
+      all, is not in this method** — it would be a property of whatever `io.grpc`-standard server
+      object the newly-registered `ofn` transport is attached to, one layer deeper than `ofm` itself,
+      not traced this pass (would mean auditing `io.grpc`/`grpc-binder` library internals, arguably
+      out of this project's own-app-code scope, `AGENTS.md` §12).
+    - **`mig`'s own constructor** (`mig.java:15-21`, the class `MaestroEndpointService.a` is built
+      from, sibling to the already-discarded `.b` map) takes exactly three arguments — the hosting
+      `Service`, a `ScheduledExecutorService`, and an `obh` — **no service-set/registry argument at
+      all**. This is consistent with (not proof of, but does not contradict) the reading that no
+      code path from `MaestroEndpointService.onCreate()` ever wires a real service list into the
+      transport/server machinery it builds — the already-confirmed-discarded `b` map was never going
+      to be consumable here even if it had been non-empty.
+    - **Attempted one further hop on `ofk`** (the argument type `ofm`'s own constructor consumes,
+      `ofm.java:31`) — **hit a genuine ambiguity, not chased past it.** The one `ofk.java` file found
+      in `defpackage/` declares two constructors and three builder-style methods (`a()`→`kpe`,
+      `b()`→`jqw`, `c()`→`Map`) that construct HTTP-header/gzip-response-shaped objects with no
+      apparent connection to Binder-transport bootstrapping — structurally consistent with R8 having
+      merged multiple, originally-distinct small builder classes into one physical class sharing
+      generic `Object`-typed field slots `a`–`f` (a known R8 optimization for structurally-identical
+      private classes), meaning the actual call site that populates `ofk`'s fields for `ofm`'s own use
+      was not identified this pass — searching for it would need a construction-site search scoped to
+      `new ofk()` followed by direct field assignment (not the `a()`/`b()`/`c()` builder methods, which
+      build unrelated objects), not attempted here.
+    - **Net effect on the open question**: narrows it, does not close it. The specific mechanism this
+      item's own framing asked about ("`ofm.a()`'s own dispatch logic looking for a matching service")
+      does not exist as such — `ofm.a()` is transport bootstrap, not service dispatch — so the
+      "what happens on no match" question, if it has an answer at all in this app's own code, sits one
+      or more layers deeper (inside `io.grpc`/`grpc-binder`'s own generic server machinery) than
+      `MaestroEndpointService`'s own class and its immediate collaborators (`mig`/`ofm`/`ofk`) reach.
+      Given `mig` also takes no service set, and the one available further hop (`ofk`) hit a genuine
+      class-merging ambiguity rather than a traceable single-purpose class, this is reported as this
+      pass's own honest stopping point per `AGENTS.md` §13.6, not pressed into a guess.
 
 ---
 
