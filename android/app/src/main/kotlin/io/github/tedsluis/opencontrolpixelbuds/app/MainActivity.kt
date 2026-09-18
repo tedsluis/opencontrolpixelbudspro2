@@ -20,26 +20,34 @@
 package io.github.tedsluis.opencontrolpixelbuds.app
 
 import android.bluetooth.BluetoothAdapter
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
+import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothAdapterState
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothStateObserver
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
+import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingState
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlActions
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlNavHost
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlUiState
@@ -66,8 +74,9 @@ import javax.inject.Inject
  * against `FakeBudsTransport` (`TransportModule.kt`) until `RfcommBudsTransport`
  * is verified against real hardware — every screen below is real, wired code,
  * but not yet exercised against a real Pixel Buds Pro 2 (ARCHITECTURE.md §5a).
- * The `CompanionDeviceManager` picker itself is now launched for real
- * (`pairingLauncher`, `ai-sessions/0035`) — [OpenControlActions.onConnect]/
+ * Pairing itself (CDM picker → classic bonding, `ai-sessions/0036`) is now
+ * fully wired, including the `createBond()` step CDM's own association
+ * callback does **not** perform automatically. [OpenControlActions.onConnect]/
  * `onDisconnect` remain placeholders, since `RfcommBudsTransport.connect()`
  * needs a resolved `BluetoothDevice` + channel map this session still has no
  * hardware to exercise.
@@ -104,17 +113,32 @@ class MainActivity : ComponentActivity() {
             val ancMode by budsRepository.ancMode.collectAsStateWithLifecycle(initialValue = null)
             val eqProfile by budsRepository.eqProfile.collectAsStateWithLifecycle(initialValue = null)
             val batteryStatus by budsRepository.batteryStatus.collectAsStateWithLifecycle(
-                initialValue = io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus(),
+                initialValue = BatteryStatus(),
             )
             val bluetoothAdapterState by remember { bluetoothStateObserver.observe() }
-                .collectAsStateWithLifecycle(
-                    initialValue = io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothAdapterState.OFF,
-                )
+                .collectAsStateWithLifecycle(initialValue = BluetoothAdapterState.OFF)
             val debugModeEnabled by debugSettingsStore.debugModeEnabled.collectAsStateWithLifecycle(initialValue = false)
 
             var hasBondedDevice by remember { mutableStateOf(companionPairing.bondedDevice() != null) }
+            var pairingState by remember { mutableStateOf<PairingState?>(null) }
+
+            // Pairing done outside this app entirely (Android's own Bluetooth settings) never
+            // fires any callback this Activity owns — the only way to notice it is to re-check
+            // on every resume (ai-sessions/0036: the maintainer's own report that a
+            // Settings-app pairing was invisible to this app).
+            val lifecycleOwner = LocalLifecycleOwner.current
+            DisposableEffect(lifecycleOwner) {
+                val observer = LifecycleEventObserver { _, event ->
+                    if (event == Lifecycle.Event.ON_RESUME) {
+                        hasBondedDevice = companionPairing.bondedDevice() != null
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+            }
+
             val unidentifiedFrames = remember { mutableStateOf(listOf<UnidentifiedFrame>()) }
-            androidx.compose.runtime.LaunchedEffect(Unit) {
+            LaunchedEffect(Unit) {
                 budsRepository.unidentifiedFrames.collect { frame ->
                     unidentifiedFrames.value = (unidentifiedFrames.value + frame).takeLast(200)
                 }
@@ -122,8 +146,9 @@ class MainActivity : ComponentActivity() {
 
             val state = OpenControlUiState(
                 connectionState = connectionState,
-                bluetoothEnabled = bluetoothAdapterState == io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothAdapterState.ON,
+                bluetoothEnabled = bluetoothAdapterState == BluetoothAdapterState.ON,
                 hasBondedDevice = hasBondedDevice,
+                pairingStatusText = pairingState?.toUserMessage(),
                 ancMode = ancMode,
                 eqProfile = eqProfile,
                 batteryStatus = batteryStatus,
@@ -133,15 +158,41 @@ class MainActivity : ComponentActivity() {
 
             val actions = OpenControlActions(
                 onRequestEnableBluetooth = {
-                    startActivity(android.content.Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                    // BLUETOOTH_CONNECT is runtime-revocable (AGENTS.md §2) — a denied/missing
+                    // grant here just means the native re-enable prompt can't be shown yet, not a
+                    // crash condition.
+                    try {
+                        startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                    } catch (e: SecurityException) {
+                        // Nothing to do — the Connection screen's own Bluetooth-disabled state
+                        // stays visible either way, so the user isn't left with silent nothing.
+                    }
                 },
                 onPair = {
+                    pairingState = null
                     companionPairing.requestAssociation(
                         onPending = { intentSender ->
                             pairingLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
                         },
-                        onCreated = { hasBondedDevice = companionPairing.bondedDevice() != null },
-                        onFailure = { },
+                        onCreated = { associationInfo ->
+                            // CDM's own success callback only grants this app permission to see the
+                            // device — it does not pair it (BudsCompanionPairing.observeBonding's own
+                            // doc comment). Classic bonding is a separate, explicit step.
+                            val device = companionPairing.deviceForAssociation(associationInfo)
+                            if (device == null) {
+                                pairingState = PairingState.Failed("Could not resolve the selected device.")
+                            } else {
+                                scope.launch {
+                                    companionPairing.observeBonding(device).collect { newState ->
+                                        pairingState = newState
+                                        if (newState is PairingState.Bonded) {
+                                            hasBondedDevice = companionPairing.bondedDevice() != null
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        onFailure = { reason -> pairingState = PairingState.Failed(reason.toString()) },
                     )
                 },
                 onConnect = { /* RfcommBudsTransport.connect() needs a resolved BluetoothDevice +
@@ -161,4 +212,12 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+/** Plain, user-facing copy per [PairingState] case — the Connection screen renders this directly,
+ * closing the "no message why it didn't work" gap (`ai-sessions/0036`). */
+private fun PairingState.toUserMessage(): String = when (this) {
+    is PairingState.Bonding -> "Pairing…"
+    is PairingState.Bonded -> "Paired with ${deviceName ?: "the Buds"}."
+    is PairingState.Failed -> "Pairing failed: $reason"
 }

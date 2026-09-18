@@ -70,6 +70,21 @@ mark v1.
   `CompanionDeviceManager` picker's returned `IntentSender` was never actually launched via an
   `ActivityResultLauncher`, so fixing only the crash would have left "Pair a device" silently do
   nothing. Full build/test/lint suite re-verified clean (1232 tests, 0 failures).
+- **2026-09-18 (`ai-sessions/0036`): the pairing flow itself, found by the maintainer immediately
+  after retesting the `ai-sessions/0035` fix — no more crash, but pairing offered arbitrary nearby
+  Bluetooth devices and never actually paired the real Pixel Buds Pro 2, with no error shown.** Two
+  distinct bugs: (1) `BudsCompanionPairing`'s `BluetoothDeviceFilter` had no name/address/service
+  constraint at all, so `CompanionDeviceManager` offered any nearby device one at a time instead of a
+  Pixel-Buds-only list; (2) `CompanionDeviceManager.associate()`'s own success callback only grants
+  this app permission to see the selected device — it does not perform Bluetooth bonding itself.
+  `ARCHITECTURE.md` §9.0a's own design already specified the needed `BluetoothDevice.createBond()` +
+  `ACTION_BOND_STATE_CHANGED` step; it had simply never been implemented, so accepting the CDM
+  consent dialog silently did nothing further. Fixed: a name-pattern device filter (confirmed against
+  the maintainer's own real device), a `PairingState`-driven bonding flow implementing §9.0a's
+  already-correct design for the first time, on-screen pairing status/error text, and a resume-time
+  re-check so pairing via Android's own Bluetooth settings (which bypasses this app's own CDM flow
+  entirely) is no longer invisible to the running app. Full build/test/lint suite re-verified clean
+  (1232 tests, 0 failures).
 
 ### Changed
 

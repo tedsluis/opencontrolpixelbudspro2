@@ -747,6 +747,22 @@ lower priority than finishing ANC/Battery/EQ):**
       real crash the maintainer hit tapping "Pair a device" (a separate, now-fixed manifest bug,
       `android.software.companion_device_setup`'s missing `uses-feature` declaration). Still not
       hardware-verified beyond "the picker now launches instead of doing nothing."
+- [x] **Added 2026-09-18** (`ai-sessions/0036`), **done same session**: `BudsCompanionPairing`'s
+      device filter and the classic-bonding step. Found via a real hardware report: the CDM picker
+      offered arbitrary nearby Bluetooth devices one at a time (no filter was ever set), and
+      selecting the actual Pixel Buds Pro 2 and granting CDM permission never resulted in a paired
+      device with no error shown — because `CompanionDeviceManager.associate()`'s own success
+      callback only grants an association (permission to see the device), it does not perform
+      Bluetooth bonding itself; `ARCHITECTURE.md` §9.0a's own design already documented the needed
+      `BluetoothDevice.createBond()` step, it had just never actually been wired to a real call.
+      Both fixed: a `BluetoothDeviceFilter` name pattern (`Pixel Buds`, confirmed against the
+      maintainer's own device) now scopes the picker, and `BudsCompanionPairing.observeBonding()`
+      calls `createBond()` and reports `Bonding`/`Bonded`/`Failed` via `ACTION_BOND_STATE_CHANGED`,
+      surfaced on the Connection screen. Also fixed in the same pass: the app never re-checked for
+      a bonded device on resume, so pairing via Android's own Bluetooth settings (bypassing the app
+      entirely) was invisible to it — now re-checked on every `ON_RESUME`. **Still not
+      hardware-verified**: this session has no device of its own to confirm the picker now shows
+      only Pixel Buds, or that a full pairing attempt actually reaches `Bonded`.
 - [ ] **Added 2026-09-18** (`ai-sessions/0033`): start/stop `BudsForegroundService` from
       `ConnectionStateMachine` transitions (ARCHITECTURE.md §6.0a) — the service class exists and
       compiles but nothing calls `startForegroundService`/`stopService` on it yet.

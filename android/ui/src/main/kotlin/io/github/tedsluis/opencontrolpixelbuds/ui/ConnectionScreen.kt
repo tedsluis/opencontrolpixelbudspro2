@@ -52,6 +52,7 @@ fun ConnectionScreen(
     connectionState: ConnectionState,
     bluetoothEnabled: Boolean,
     hasBondedDevice: Boolean,
+    pairingStatusText: String?,
     batteryStatus: BatteryStatus,
     onRequestEnableBluetooth: () -> Unit,
     onPair: () -> Unit,
@@ -78,6 +79,11 @@ fun ConnectionScreen(
                 !hasBondedDevice -> {
                     Text("No Pixel Buds Pro 2 paired yet.", style = MaterialTheme.typography.bodyLarge)
                     Button(onClick = onPair) { Text("Pair a device") }
+                    // Status/error feedback for the pairing attempt itself (ai-sessions/0036 — a
+                    // maintainer report that a failed pairing gave no on-screen reason at all).
+                    pairingStatusText?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
 
                 else -> {

@@ -91,6 +91,10 @@ data class OpenControlUiState(
     val connectionState: ConnectionState,
     val bluetoothEnabled: Boolean,
     val hasBondedDevice: Boolean,
+    /** `null` = no pairing attempt in progress/to report — a status line the Connection screen
+     * shows while/after pairing (ARCHITECTURE.md §9.0a), so the maintainer's own "no message why
+     * it didn't work" report (`ai-sessions/0036`) can't recur silently. */
+    val pairingStatusText: String?,
     val ancMode: AncMode?,
     val eqProfile: EqBandGains?,
     val batteryStatus: BatteryStatus,
@@ -142,6 +146,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     connectionState = state.connectionState,
                     bluetoothEnabled = state.bluetoothEnabled,
                     hasBondedDevice = state.hasBondedDevice,
+                    pairingStatusText = state.pairingStatusText,
                     batteryStatus = state.batteryStatus,
                     onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
                     onPair = actions.onPair,
