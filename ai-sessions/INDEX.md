@@ -37,6 +37,7 @@ a new session** — the same "check before assigning" discipline `id_registry.cs
 | 0028 | MAINTENANCE | 2026-09-17 | Record maintainer sign-off on 0027's findings (item M/B/H's full resolution across 4 continuation passes) | complete |
 | 0029 | MAINTENANCE | 2026-09-17 | Compile and record maintainer sign-off on 0027's three post-0028 continuation findings (item M device-type trace, item H's fwe/fwk pool, item B's real-Binder resolution) | complete |
 | 0030 | MAINTENANCE | 2026-09-17 | Verify/fix TODO.md's stale MaestroDeviceSettingsProviderService priority-order claim, then advance as many open static-analysis-tractable leads as possible | partial — resumed |
+| 0031 | MAINTENANCE | 2026-09-18 | Resume 0030's worklist; advance TODO.md Phase 3 (protocol reconstruction); full document cross-check/consistency pass; compile and collect every pending maintainer sign-off individually; produce a v1-readiness overview | prompt only — not yet run |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/INDEX.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/INDEX
