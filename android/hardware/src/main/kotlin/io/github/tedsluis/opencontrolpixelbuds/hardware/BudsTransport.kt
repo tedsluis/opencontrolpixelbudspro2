@@ -46,16 +46,22 @@ interface BudsTransport {
     val inbound: Flow<Pair<Int, ByteArray>>
 
     /**
-     * Emits once whenever this transport notices the connection was lost for a reason other than
-     * this app's own [disconnect] call (peer disconnect, range loss, an OS-triggered socket
+     * Emits **at most once per connection** whenever this transport notices the connection was lost
+     * for a reason other than this app's own [disconnect] call (peer disconnect, range loss, an OS-triggered socket
      * teardown) — ARCHITECTURE.md §6's "an `IOException` from the socket always moves to
      * Disconnected, a normal expected transition" rule, wired here so `BudsRepositoryImpl` can
      * react to it instead of only ever transitioning [io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine]
      * on an explicit user action. Never emitted for a caller-initiated [disconnect] (`ai-sessions/0038`
      * — before this, [connected] silently flipped to `false` with nothing downstream ever noticing,
      * so the UI kept showing `Ready` after the peer actually dropped the link).
+     *
+     * `ai-sessions/0039`: by the time this emits, the transport has already closed **every** socket
+     * of the lost connection (an implementation must not leave a surviving channel's socket open —
+     * the Android stack refuses a second RFCOMM connection to a channel that is still open, so a
+     * zombie socket makes the very next [connect] fail), and a loss from a connection that has
+     * already been replaced by a newer [connect] or ended by [disconnect] is never emitted.
      */
-    val connectionLost: Flow<Unit>
+    val connectionLost: Flow<ConnectionLoss>
 
     /**
      * Opens one socket per entry in [channels] (channelId -> SDP UUID) against
@@ -70,3 +76,9 @@ interface BudsTransport {
 
     suspend fun send(channelId: Int, frame: ByteArray): BudsResult<Unit>
 }
+
+/**
+ * A connection-loss report from [BudsTransport.connectionLost]: which RFCOMM channel's read/write
+ * noticed the loss first ([channelId]) and a short, address-redacted description of why ([detail]).
+ */
+data class ConnectionLoss(val channelId: Int, val detail: String?)

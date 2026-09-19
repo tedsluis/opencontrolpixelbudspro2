@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 
 /**
@@ -43,6 +44,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
  */
 @Composable
 fun FindMyBudsScreen(
+    connectionState: ConnectionState,
     onRing: (RingTarget) -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
@@ -54,9 +56,10 @@ fun FindMyBudsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text("Find My Buds", style = MaterialTheme.typography.headlineSmall)
-            Button(onClick = { onRing(RingTarget.LEFT) }) { Text("Ring Left") }
-            Button(onClick = { onRing(RingTarget.RIGHT) }) { Text("Ring Right") }
-            OutlinedButton(onClick = onStop) { Text("Stop") }
+            NotConnectedBanner(connectionState)
+            Button(onClick = { onRing(RingTarget.LEFT) }, enabled = connectionState.isReady()) { Text("Ring Left") }
+            Button(onClick = { onRing(RingTarget.RIGHT) }, enabled = connectionState.isReady()) { Text("Ring Right") }
+            OutlinedButton(onClick = onStop, enabled = connectionState.isReady()) { Text("Stop") }
         }
     }
 }

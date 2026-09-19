@@ -32,6 +32,15 @@ import kotlinx.coroutines.flow.Flow
  */
 interface BudsRepository {
     val connectionState: Flow<ConnectionState>
+
+    /**
+     * Why the most recent session ended without the user asking for it (an open channel died) —
+     * `null` after a fresh [connect] starts, after a successful connect, and after an explicit
+     * [disconnect]. Exists so a drop back to plain [ConnectionState.Disconnected] never happens
+     * without a visible explanation (`ai-sessions/0039`); a failed *attempt* is reported through
+     * [ConnectionState.Failed] instead, not through this flow.
+     */
+    val lastConnectionError: Flow<BudsError?>
     val ancMode: Flow<AncMode>
 
     /** `null` = no confirmed value yet this connection (ARCHITECTURE.md §3.1 —

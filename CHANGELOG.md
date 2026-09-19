@@ -127,6 +127,24 @@ mark v1.
   `onGainsChanged` (a real DLCI 0x02 wire write) to `Slider`'s continuous `onValueChange`, which would
   have sent one RFCOMM frame per pixel of drag movement, instead of the once-per-drag
   `onValueChangeFinished`. Full build/test/lint suite re-verified clean (1234 tests, 0 failures).
+- **2026-09-19 (`ai-sessions/0039`): flaky Connect, an always-empty EQ tab and an app-vs-OS connection
+  mismatch, found by the maintainer testing `ai-sessions/0038`'s build on real hardware (two rounds,
+  ~28 connect attempts).** Root cause established from Bluetooth-stack logs, not guessed:
+  `RFCOMM_CreateConnectionWithSecurity: already at opened state` — Android allows one RFCOMM connection per
+  (device, channel) across all apps and its failure path closes the *incumbent's* port too. Contenders:
+  Google Play services' Fast Pair event stream on the Message Stream channel (outside this app; nothing here
+  touches Play services) and — this app's own defect — leaked sockets: `connectionLost` never closed the
+  surviving channel, a failed `connect()` never closed the socket that failed, EOF and failed writes were
+  never reported, two readers reported one loss twice, and a stale loss could knock a fresh attempt back
+  to `Disconnected`. Fixed in `RfcommBudsTransport` (one-unit teardown, at-most-one/current-connection loss,
+  bounded in-tap retry for fast collisions, `RfcommSocket` extracted so it is unit-testable), with the
+  reason kept (`BudsError.ChannelUnavailable`/`ChannelLost`) and shown. The EQ tab was a UX dead end
+  (controls hidden while the value was unknown, and the Buds never volunteer it), not a socket failure —
+  controls are now always shown with an explicit "unknown" banner; ANC/EQ/Find are disabled while not
+  connected; an informational "Android shows your Buds as connected" hint was added (`OsConnectionObserver`,
+  public APIs only). Design questions (per-channel tolerance, auto-reconnect, lazy Message Stream) are
+  maintainer proposals, not decided. Full suite clean (1253 tests, 0 failures; 2 mutants caught). Not
+  hardware-verified.
 
 ### Changed
 

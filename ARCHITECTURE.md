@@ -174,7 +174,7 @@ These components are deliberately isolated from the rest of the app so that:
 
 | Component | Layer | Responsibility |
 |---|---|---|
-| `BudsTransport` | `:hardware` (interface consumed by `:data`) | Abstracts the underlying RFCOMM `BluetoothSocket` (primary) and, where applicable, `BluetoothGatt` (secondary — case/charging characteristics). Upper layers see only `send(channelId: Int, frame: ByteArray)` / an inbound `Flow<Pair<channelId: Int, frame: ByteArray>>`, never raw Android BT types. `channelId` addresses one of the three coexisting RFCOMM DLCIs (`PROTOCOL.md` §2.3) — it is not optional, since the three channels have independent framing and cannot share one send/receive path. |
+| `BudsTransport` | `:hardware` (interface consumed by `:data`) | Abstracts the underlying RFCOMM `BluetoothSocket` (primary) and, where applicable, `BluetoothGatt` (secondary — case/charging characteristics). Upper layers see only `send(channelId: Int, frame: ByteArray)` / an inbound `Flow<Pair<channelId: Int, frame: ByteArray>>`, never raw Android BT types. `channelId` addresses one of the three coexisting RFCOMM DLCIs (`PROTOCOL.md` §2.3) — it is not optional, since the three channels have independent framing and cannot share one send/receive path. `connectionLost` (added `ai-sessions/0038`, hardened `ai-sessions/0039`) emits at most once per connection, only after every socket of that connection is closed — see §6.0b. |
 | `ConnectionStateMachine` | `:hardware` | Explicit state machine (`Disconnected → Connecting → Discovering → Ready → ...`) driving `ConnectionState`. States and transitions must match what's actually observed in captures — see the connection lifecycle in `PROTOCOL.md` §5, which is still an ⚪ ASSUMPTION pending a full end-to-end capture. |
 | `CodecRouter` (per-DLCI `FrameEncoder` / `FrameDecoder`) | `:data` | Routes each inbound `(channelId, bytes)` pair from `BudsTransport` to the codec for that DLCI, and routes each outbound command to the codec for whichever DLCI it belongs on. See §5 for the three channels and their framing. Pure Kotlin, no Android dependencies — fully unit-testable against fixed byte-array fixtures, per `AGENTS.md` §11. Each per-DLCI codec is implemented independently, gated on that DLCI's own framing reaching 🟢 FACT confidence (see §5's implementation gate) — one DLCI's codec is never blocked on another's. |
 | `BudsRepository` / `BudsRepositoryImpl` | interface in `:domain`, implementation in `:data` | Translates protocol-level events into domain models, exposed as `Flow`/`StateFlow` to the domain layer. |
@@ -447,6 +447,35 @@ persistent, low-priority notification. Concretely, for this app:
   stop the service directly; `:app`'s composition root binds the service's own lifecycle to the same
   Hilt-provided `ConnectionStateMachine` singleton so there is exactly one source of truth.
 
+### 6.0b Connection-lifecycle rules for the RFCOMM transport (added `ai-sessions/0039`)
+
+Recorded here because they are implementation behaviour forced by a fact about the Android Bluetooth
+stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here changes §6's
+"user-initiated reconnection only" rule):
+
+- **Android allows one RFCOMM connection per (device, channel), across all apps.** A second client's
+  `connect()` to a channel already open fails with `RFCOMM_CreateConnectionWithSecurity: already at opened
+  state`, and the stack's failure path then closes the **incumbent's** port too (`ai-sessions/0039` §2.4,
+  system-log evidence). On a phone with Google Play services' Fast Pair active, Play services holds the
+  Message Stream channel (DLCI 0x04) and re-opens it whenever it drops — so this app and Play services
+  can knock each other off it. This app cannot prevent that (it must not touch Play services, `AGENTS.md`
+  §1); it can only avoid contending with **itself** and report honestly.
+- **A connection is one unit.** Any channel's loss (read failure, EOF, failed write) closes *all* of that
+  connection's sockets before `BudsTransport.connectionLost` emits — a surviving socket stays "open" in the
+  stack and makes the next `connect()` collide with this app's own leftover.
+- **At most one loss report per connection**, and none from a connection already replaced by a newer
+  `connect()` or ended by `disconnect()`; `ConnectionStateMachine.onDisconnected()` is idempotent;
+  `BudsRepositoryImpl` acts on a loss only while `Discovering`/`Ready`.
+- **A failed `connect()` closes the socket that failed**, not only the ones that succeeded.
+- **Bounded retry inside one user-initiated `connect()`:** up to 3 attempts per channel, 400 ms apart, only
+  for *fast* (< 2 s) failures — a collision returns in well under a second and the failed attempt itself
+  frees the port. Slow failures (peer unreachable) are never retried. This ends with the tap that started
+  it; it is not a background retry loop.
+- **The cause is never discarded:** `BudsError.ChannelUnavailable`/`ChannelLost` carry the channel id and the
+  underlying exception text (Bluetooth addresses redacted), shown on the Connection screen and logged.
+- **Per-channel failure tolerance was evaluated and not adopted** (`ConnectionState` has no "degraded" state) —
+  a maintainer proposal, `ai-sessions/0039` §8.
+
 ### 6.1 Resource Budget (Wakelocks)
 
 - The `ForegroundService` (§1) holds a wakelock only while a command is
@@ -472,6 +501,8 @@ exceptions crossing module boundaries:
 ```kotlin
 sealed class BudsError {
     data object ConnectionLost : BudsError()
+    data class ChannelUnavailable(val channelId: Int, val detail: String?) : BudsError() // socket open failed (`ai-sessions/0039`)
+    data class ChannelLost(val channelId: Int, val detail: String?) : BudsError()        // open channel died (`ai-sessions/0039`)
     data object Timeout : BudsError()
     data class MalformedFrame(val raw: ByteArray) : BudsError()
     data object UnsupportedFirmware : BudsError()

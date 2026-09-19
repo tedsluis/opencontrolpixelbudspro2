@@ -797,6 +797,29 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+- **Connect flicker, zombie sockets, empty EQ tab, app-vs-OS state mismatch — found and fixed
+  2026-09-19 (`ai-sessions/0039`), from the maintainer's real-hardware test of `ai-sessions/0038`'s
+  build.** Root-caused with Bluetooth-stack log evidence (`ai-sessions/0039_FEATURE_RESULT_2026_09_19.md`
+  §2): Android allows one RFCOMM connection per (device, channel) and its failure path closes the
+  incumbent too; the contenders were Google Play services' Fast Pair event stream (Message Stream, DLCI
+  0x04) **and this app's own leaked sockets** (`connectionLost` never closed the surviving channel).
+  Fixed and regression-tested: teardown of every socket on any loss, the failing socket closed on a failed
+  connect, at-most-one loss per connection and none from a replaced one, EOF/failed-write now reported,
+  bounded in-tap retry for fast collisions, the underlying reason kept (`BudsError.ChannelUnavailable`/
+  `ChannelLost`) and shown, connect mutex, ANC/EQ/Find controls disabled while not `Ready`, EQ controls
+  shown even while the value is unknown (they were unreachable), an informational "Android shows your
+  Buds as connected" hint (`OsConnectionObserver`). **Not hardware-verified.** Deliberately left
+  (each needs a maintainer decision, `ai-sessions/0039` §8): per-channel tolerance/"degraded" state
+  (contention is DLCI 0x04-only; DLCI 0x02 was never contested), auto-reconnect / auto-connect on launch
+  (contradicts `ARCHITECTURE.md` §6 and would ping-pong with Play services), lazily opening the Message
+  Stream. **The Play-services contention itself cannot be removed from this app's side.**
+- **Small items found in the same session, not fixed:** `BudsRepositoryImpl.connect()` returns
+  `PermissionDenied` ("Bluetooth permission is required") when merely no bonded device exists —
+  misleading copy; `BudsCompanionPairing.bondedDevice()` matches by the substring "Pixel Buds" in the
+  device *name*, so a user-renamed device would not be found; every failed connect attempt starts and
+  stops `BudsForegroundService` within ~160 ms (a notification flash, `ARCHITECTURE.md` §6.0a's own rule).
+  Also untested by design (no Compose/instrumented test infrastructure yet): the `ai-sessions/0039` UI
+  changes, `OsConnectionObserver`, and `BudsRepositoryImpl.connect()`'s success/failure mapping.
 - **No peer-disconnect detection, found and fixed 2026-09-18 (`ai-sessions/0038`).** Found via an
   audit of `BudsRepository`'s API surface after `ai-sessions/0037`'s real-Connect work, not a
   maintainer report. `BudsTransport.connected` was a plain, unobserved `Boolean` — if the peer

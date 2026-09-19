@@ -56,6 +56,33 @@ class ConnectionStateMachineTest {
     }
 
     @Test
+    fun `onDisconnected is idempotent - a second report of the same loss changes nothing`() {
+        val sm = ConnectionStateMachine()
+        sm.onConnectRequested()
+        sm.onLinkEstablished()
+        sm.onReady()
+        sm.onDisconnected()
+        sm.onDisconnected() // ai-sessions/0039: two readers each reported the same loss ("Disconnected -> Disconnected")
+        assertEquals(ConnectionState.Disconnected, sm.state.value)
+    }
+
+    @Test
+    fun `onDisconnected still leaves Failed for Disconnected`() {
+        val sm = ConnectionStateMachine()
+        sm.onConnectRequested()
+        sm.onError(BudsError.ConnectionLost)
+        sm.onDisconnected()
+        assertEquals(ConnectionState.Disconnected, sm.state.value)
+    }
+
+    @Test
+    fun `BleLogger describe redacts any Bluetooth address embedded in an exception message`() {
+        val described = BleLogger.describe(java.io.IOException("connect to 04:00:6e:cf:6e:07 failed"))
+        assertEquals("IOException: connect to XX:XX:XX:XX:XX:XX failed", described)
+        assertEquals("IOException", BleLogger.describe(java.io.IOException()))
+    }
+
+    @Test
     fun `an error surfaces as Failed with the specific BudsError, not a generic message`() {
         val sm = ConnectionStateMachine()
         sm.onConnectRequested()

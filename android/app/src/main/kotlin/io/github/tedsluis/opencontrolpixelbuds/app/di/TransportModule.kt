@@ -23,6 +23,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothRfcommSocket
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsTransport
 import io.github.tedsluis.opencontrolpixelbuds.hardware.RfcommBudsTransport
 import javax.inject.Singleton
@@ -50,7 +51,7 @@ object TransportModule {
         // here.
         socketFactory = { _, uuid, device ->
             try {
-                device.createRfcommSocketToServiceRecord(uuid)
+                BluetoothRfcommSocket(device.createRfcommSocketToServiceRecord(uuid))
             } catch (e: SecurityException) {
                 throw e
             }

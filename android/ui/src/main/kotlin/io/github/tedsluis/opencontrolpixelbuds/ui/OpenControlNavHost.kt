@@ -41,6 +41,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
@@ -112,6 +113,12 @@ data class OpenControlUiState(
      * shows while/after pairing (ARCHITECTURE.md §9.0a), so the maintainer's own "no message why
      * it didn't work" report (`ai-sessions/0036`) can't recur silently. */
     val pairingStatusText: String?,
+    /** Why the last session ended unexpectedly (`null` = nothing to explain) — shown under
+     * "Disconnected" so an unexpected drop is never a bare state change (`ai-sessions/0039`). */
+    val lastConnectionError: BudsError?,
+    /** Android itself reports the bonded Buds as connected to this phone (audio/HFP profiles) —
+     * distinct from this app's own control channels being open (`ai-sessions/0039` §5). */
+    val osConnected: Boolean,
     val ancMode: AncMode?,
     val eqProfile: EqBandGains?,
     val batteryStatus: BatteryStatus,
@@ -164,6 +171,8 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     bluetoothEnabled = state.bluetoothEnabled,
                     hasBondedDevice = state.hasBondedDevice,
                     pairingStatusText = state.pairingStatusText,
+                    lastConnectionError = state.lastConnectionError,
+                    osConnected = state.osConnected,
                     batteryStatus = state.batteryStatus,
                     onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
                     onPair = actions.onPair,
@@ -183,6 +192,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
             }
             composable(Routes.EQ) {
                 EqScreen(
+                    connectionState = state.connectionState,
                     gains = state.eqProfile,
                     onGainsChanged = actions.onEqGainsChanged,
                     onPresetSelected = actions.onEqPresetSelected,
@@ -191,6 +201,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
             }
             composable(Routes.FIND_MY_BUDS) {
                 FindMyBudsScreen(
+                    connectionState = state.connectionState,
                     onRing = actions.onRing,
                     onStop = actions.onStopRinging,
                     modifier = Modifier.padding(padding),

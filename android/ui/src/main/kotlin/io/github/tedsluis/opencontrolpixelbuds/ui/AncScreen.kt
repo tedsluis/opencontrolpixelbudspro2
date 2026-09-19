@@ -63,6 +63,7 @@ fun AncScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            NotConnectedBanner(connectionState)
             Text(
                 text = "Connection: ${connectionState::class.simpleName}",
                 style = MaterialTheme.typography.titleMedium,
@@ -72,11 +73,11 @@ fun AncScreen(
                 style = MaterialTheme.typography.bodyLarge,
             )
             AncMode.entries.forEach { mode ->
-                Button(onClick = { onAncModeSelected(mode) }) {
+                Button(onClick = { onAncModeSelected(mode) }, enabled = connectionState.isReady()) {
                     Text(mode.name)
                 }
             }
-            TextButton(onClick = onRefreshAncMode) { Text("Refresh") }
+            TextButton(onClick = onRefreshAncMode, enabled = connectionState.isReady()) { Text("Refresh") }
         }
     }
 }

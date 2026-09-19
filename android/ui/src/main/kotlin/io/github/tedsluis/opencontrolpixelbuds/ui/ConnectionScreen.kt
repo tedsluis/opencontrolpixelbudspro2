@@ -53,6 +53,8 @@ fun ConnectionScreen(
     bluetoothEnabled: Boolean,
     hasBondedDevice: Boolean,
     pairingStatusText: String?,
+    lastConnectionError: BudsError?,
+    osConnected: Boolean,
     batteryStatus: BatteryStatus,
     onRequestEnableBluetooth: () -> Unit,
     onPair: () -> Unit,
@@ -87,7 +89,7 @@ fun ConnectionScreen(
                 }
 
                 else -> {
-                    ConnectionStateCard(connectionState, onConnect, onDisconnect)
+                    ConnectionStateCard(connectionState, lastConnectionError, osConnected, onConnect, onDisconnect)
                     if (connectionState is ConnectionState.Ready) {
                         BatteryCard(batteryStatus)
                     }
@@ -100,6 +102,8 @@ fun ConnectionScreen(
 @Composable
 private fun ConnectionStateCard(
     state: ConnectionState,
+    lastConnectionError: BudsError?,
+    osConnected: Boolean,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
@@ -108,6 +112,9 @@ private fun ConnectionStateCard(
             when (state) {
                 ConnectionState.Disconnected -> {
                     Text("Disconnected")
+                    // Never a bare "Disconnected" after an unexpected drop (ai-sessions/0039): say why.
+                    lastConnectionError?.let { ErrorExplanation(it) }
+                    OsConnectionHint(osConnected)
                     Button(onClick = onConnect) { Text("Connect") }
                 }
                 ConnectionState.Connecting -> Text("Connecting…")
@@ -117,12 +124,38 @@ private fun ConnectionStateCard(
                     TextButton(onClick = onDisconnect) { Text("Disconnect") }
                 }
                 is ConnectionState.Failed -> {
-                    Text(state.error.userMessage())
+                    ErrorExplanation(state.error)
+                    OsConnectionHint(osConnected)
                     Button(onClick = onConnect) { Text("Retry") }
                 }
             }
         }
     }
+}
+
+/** The plain-language message plus, when the error carries one, the raw technical detail in a
+ * smaller line — so "why did it fail" is visible without exporting a log (ai-sessions/0039). */
+@Composable
+private fun ErrorExplanation(error: BudsError) {
+    Text(error.userMessage())
+    error.technicalDetail()?.let {
+        Text(it, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+/**
+ * Android's own idea of "connected" (audio/hands-free profiles) is separate from this app's own
+ * control channels — the Connection screen used to say "Disconnected" while Android's Bluetooth
+ * settings said "Connected" (ai-sessions/0039 §5). Informational only; never triggers a connect.
+ */
+@Composable
+private fun OsConnectionHint(osConnected: Boolean) {
+    val text = if (osConnected) {
+        "Android shows your Buds as connected to this phone. This app isn't controlling them yet — tap Connect."
+    } else {
+        "Your Buds don't appear to be connected to this phone right now (open the case or put them in your ears). Connect will still try."
+    }
+    Text(text, style = MaterialTheme.typography.bodySmall)
 }
 
 @Composable
@@ -159,5 +192,29 @@ internal fun BudsError.userMessage(): String = when (this) {
     is BudsError.MalformedFrame -> "Received an unexpected response from the Buds."
     BudsError.UnsupportedFirmware -> "This firmware version isn't recognized — running in read-only Safe Mode."
     BudsError.PermissionDenied -> "Bluetooth permission is required."
+    is BudsError.ChannelUnavailable ->
+        "Couldn't open the ${channelLabel(channelId)}. Another app on this phone — for example Google " +
+            "Play services' Fast Pair — may already be using it. Wait a few seconds, then tap Retry."
+    is BudsError.ChannelLost ->
+        "The ${channelLabel(channelId)} was closed. Another app may have taken it over, or the Buds " +
+            "dropped it. Tap Connect to reconnect."
     is BudsError.Unknown -> "Something went wrong: ${cause.message ?: cause::class.simpleName}"
+}
+
+/** The underlying exception text for the errors that carry one — shown small, never the only message. */
+internal fun BudsError.technicalDetail(): String? = when (this) {
+    is BudsError.ChannelUnavailable -> detail
+    is BudsError.ChannelLost -> detail
+    else -> null
+}
+
+/**
+ * Human label for an RFCOMM channel id (`:data`'s `Dlci` constants — `:ui` cannot depend on `:data`,
+ * ARCHITECTURE.md §2, so the two values are mirrored here: 0x02 = `Dlci.MAESTRO`, 0x04 =
+ * `Dlci.FAST_PAIR_MESSAGE_STREAM`, PROTOCOL.md §2.3).
+ */
+internal fun channelLabel(channelId: Int): String = when (channelId) {
+    0x02 -> "Maestro channel (equalizer)"
+    0x04 -> "Message Stream channel (ANC, Find My Buds)"
+    else -> "Bluetooth channel 0x%02x".format(channelId)
 }

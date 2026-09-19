@@ -53,6 +53,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -90,6 +92,12 @@ class BudsRepositoryImpl(
 ) : BudsRepository {
 
     override val connectionState: Flow<ConnectionState> = connectionStateMachine.state
+
+    private val _lastConnectionError = MutableStateFlow<BudsError?>(null)
+    override val lastConnectionError: Flow<BudsError?> = _lastConnectionError
+
+    /** One [connect] at a time — a double tap must not start two overlapping socket-opening runs. */
+    private val connectMutex = Mutex()
 
     private val codecRouter = CodecRouter()
 
@@ -154,7 +162,24 @@ class BudsRepositoryImpl(
             // doc comment) — without this, `transport.connected` could silently go false with
             // nothing telling `ConnectionStateMachine`, leaving the UI stuck showing `Ready` for a
             // link that had actually already died (`ai-sessions/0038`).
-            transport.connectionLost.collect { connectionStateMachine.onDisconnected() }
+            //
+            // `ai-sessions/0039`: only a loss of a *live* session (Discovering/Ready) is acted on. The
+            // transport already suppresses losses from replaced connections; this is the second line
+            // of defence — a loss observed while Connecting/Disconnected/Failed cannot belong to the
+            // session the UI is showing, and must not knock a fresh attempt back to Disconnected (the
+            // "Failed -> Disconnected 7-50 ms later" pattern seen in the round-1/2 logs).
+            transport.connectionLost.collect { loss ->
+                val state = connectionStateMachine.state.value
+                if (state is ConnectionState.Ready || state is ConnectionState.Discovering) {
+                    _lastConnectionError.value = BudsError.ChannelLost(loss.channelId, loss.detail)
+                    connectionStateMachine.onDisconnected()
+                } else {
+                    BleLogger.logConnectionEvent(
+                        "Ignoring connection-loss report on channel 0x%02x while ${state::class.simpleName}"
+                            .format(loss.channelId),
+                    )
+                }
+            }
         }
     }
 
@@ -175,15 +200,19 @@ class BudsRepositoryImpl(
         }
     }
 
-    override suspend fun connect(): BudsResult<Unit> {
+    override suspend fun connect(): BudsResult<Unit> = connectMutex.withLock {
+        // Already connected (e.g. a stale second tap): nothing to do — re-running connect() would tear
+        // the live connection down (RfcommBudsTransport.connect() replaces any current one).
+        if (connectionStateMachine.state.value is ConnectionState.Ready) return@withLock BudsResult.Success(Unit)
         val device = bondedDeviceProvider()
-            ?: return BudsResult.Failure(BudsError.PermissionDenied)
+            ?: return@withLock BudsResult.Failure(BudsError.PermissionDenied)
+        _lastConnectionError.value = null
         connectionStateMachine.onConnectRequested()
         val channels = mapOf(
             Dlci.MAESTRO to BudsSdpUuids.MAESTRO,
             Dlci.FAST_PAIR_MESSAGE_STREAM to BudsSdpUuids.FAST_PAIR_MESSAGE_STREAM,
         )
-        return when (val result = transport.connect(device, channels)) {
+        when (val result = transport.connect(device, channels)) {
             is BudsResult.Success -> {
                 connectionStateMachine.onLinkEstablished()
                 // PROTOCOL.md §5.2's own "Discovering" step is HYPOTHESIS-level, not a confirmed
@@ -201,6 +230,7 @@ class BudsRepositoryImpl(
     }
 
     override suspend fun disconnect(): BudsResult<Unit> {
+        _lastConnectionError.value = null
         transport.disconnect()
         connectionStateMachine.onDisconnected()
         return BudsResult.Success(Unit)

@@ -25,7 +25,25 @@ package io.github.tedsluis.opencontrolpixelbuds.domain
  * one of these instead of letting a raw exception cross a module boundary.
  */
 sealed class BudsError {
+    /** The link is gone and no more specific cause is known (e.g. a `send()` with no open socket). */
     data object ConnectionLost : BudsError()
+
+    /**
+     * Opening RFCOMM channel [channelId]'s socket failed (after this app's own bounded retries).
+     * Distinct from [ConnectionLost] on purpose (`ai-sessions/0039`): the OS-level Bluetooth link to
+     * the Buds is usually fine when this happens — only this one RFCOMM channel could not be
+     * opened, which the Android Bluetooth stack's own log attributes to the channel already being
+     * open in another client (`ai-sessions/0039` §3). [detail] is the underlying exception's class
+     * and message with any Bluetooth address redacted, for display and the debug log only.
+     */
+    data class ChannelUnavailable(val channelId: Int, val detail: String?) : BudsError()
+
+    /**
+     * A previously open RFCOMM channel [channelId] died while connected (read/write failed or the
+     * peer closed the stream). Same [detail] contract as [ChannelUnavailable].
+     */
+    data class ChannelLost(val channelId: Int, val detail: String?) : BudsError()
+
     data object Timeout : BudsError()
     data class MalformedFrame(val raw: ByteArray) : BudsError() {
         override fun equals(other: Any?): Boolean =

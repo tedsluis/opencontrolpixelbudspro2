@@ -64,6 +64,10 @@ class ConnectionStateMachine @Inject constructor() {
      * teardown, range loss, peer disconnect) always moves to Disconnected —
      * this is a normal, expected transition, never a crash condition. */
     fun onDisconnected() {
+        // Already Disconnected: nothing to transition to — logging/re-emitting would only produce
+        // the duplicate "Disconnected -> Disconnected" lines `ai-sessions/0039` found (two sockets'
+        // readers each reporting the same loss).
+        if (_state.value is ConnectionState.Disconnected) return
         BleLogger.logConnectionEvent("ConnectionState: ${_state.value::class.simpleName} -> Disconnected")
         _state.value = ConnectionState.Disconnected
     }

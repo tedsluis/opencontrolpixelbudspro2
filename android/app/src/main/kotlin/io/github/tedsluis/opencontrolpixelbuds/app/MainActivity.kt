@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
@@ -49,6 +50,7 @@ import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothAdapterState
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothStateObserver
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsForegroundService
+import io.github.tedsluis.opencontrolpixelbuds.hardware.OsConnectionObserver
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingState
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlActions
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlNavHost
@@ -95,6 +97,9 @@ class MainActivity : ComponentActivity() {
 
     private val companionPairing by lazy { BudsCompanionPairing(this) }
     private val bluetoothStateObserver by lazy { BluetoothStateObserver(this) }
+    private val osConnectionObserver by lazy {
+        OsConnectionObserver(this) { companionPairing.bondedDevice()?.address }
+    }
 
     // Must be registered unconditionally before the Activity reaches STARTED (ComponentActivity's
     // own contract) — a class property, not something created inside the Composable content
@@ -118,6 +123,10 @@ class MainActivity : ComponentActivity() {
             val batteryStatus by budsRepository.batteryStatus.collectAsStateWithLifecycle(
                 initialValue = BatteryStatus(),
             )
+            val lastConnectionError by budsRepository.lastConnectionError
+                .collectAsStateWithLifecycle(initialValue = null as BudsError?)
+            val osConnected by remember { osConnectionObserver.observe() }
+                .collectAsStateWithLifecycle(initialValue = false)
             val bluetoothAdapterState by remember { bluetoothStateObserver.observe() }
                 .collectAsStateWithLifecycle(initialValue = BluetoothAdapterState.OFF)
             val debugModeEnabled by debugSettingsStore.debugModeEnabled.collectAsStateWithLifecycle(initialValue = false)
@@ -181,6 +190,8 @@ class MainActivity : ComponentActivity() {
                 bluetoothEnabled = bluetoothAdapterState == BluetoothAdapterState.ON,
                 hasBondedDevice = hasBondedDevice,
                 pairingStatusText = pairingState?.toUserMessage(),
+                lastConnectionError = lastConnectionError,
+                osConnected = osConnected,
                 ancMode = ancMode,
                 eqProfile = eqProfile,
                 batteryStatus = batteryStatus,

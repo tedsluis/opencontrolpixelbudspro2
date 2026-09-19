@@ -28,6 +28,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
+import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionLoss
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
 import io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport
 import kotlinx.coroutines.launch
@@ -191,7 +192,9 @@ class BudsRepositoryImplTest {
 
     @Test
     fun `connect fails with PermissionDenied when no bonded device exists yet`() = runTest {
-        val (repo, _) = buildRepository(this)
+        // Not Ready: connect() on an already-Ready repository is a deliberate no-op success (see the
+        // dedicated test below), so this scenario needs a machine that is still Disconnected.
+        val (repo, _) = buildRepository(this, connectionStateMachine = buildConnectionStateMachine(driveToReady = false))
         advanceUntilIdle()
 
         val result = repo.connect()
@@ -211,6 +214,84 @@ class BudsRepositoryImplTest {
         job.join()
 
         assertInstanceOf(ConnectionState.Disconnected::class.java, connectionStateMachine.state.value)
+    }
+
+    /** Emits [loss] and returns only after the repository's own `connectionLost` collector has
+     * had it delivered: a second, later subscriber is resumed after the repository's (FIFO) and
+     * `join()` drives the scheduler until it has seen the event too. */
+    private suspend fun TestScope.deliverLoss(transport: FakeBudsTransport, loss: ConnectionLoss) {
+        val witness = launch { transport.connectionLost.first() }
+        runCurrent()
+        transport.emitConnectionLost(loss)
+        witness.join()
+        runCurrent()
+    }
+
+    @Test
+    fun `a connection loss records why, naming the channel and the underlying reason`() = runTest {
+        val machine = buildConnectionStateMachine()
+        val (repo, transport) = buildRepository(this, connectionStateMachine = machine)
+        advanceUntilIdle()
+
+        deliverLoss(transport, ConnectionLoss(channelId = Dlci.FAST_PAIR_MESSAGE_STREAM, detail = "IOException: bt socket closed, read return: -1"))
+
+        // ai-sessions/0039: never a bare Disconnected — the reason must be available to the UI.
+        assertEquals(ConnectionState.Disconnected, machine.state.value)
+        assertEquals(
+            BudsError.ChannelLost(Dlci.FAST_PAIR_MESSAGE_STREAM, "IOException: bt socket closed, read return: -1"),
+            repo.lastConnectionError.first(),
+        )
+    }
+
+    @Test
+    fun `a loss report arriving while Connecting is ignored and cannot knock a fresh attempt back to Disconnected`() = runTest {
+        // The round-1/2 logs showed "Failed -> Disconnected" 7-50 ms after a failed attempt: a stale
+        // loss from the previous session being applied to the new one.
+        val machine = buildConnectionStateMachine(driveToReady = false)
+        val (repo, transport) = buildRepository(this, connectionStateMachine = machine)
+        advanceUntilIdle()
+        machine.onConnectRequested()
+
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, "stale"))
+
+        assertEquals(ConnectionState.Connecting, machine.state.value)
+        assertNull(repo.lastConnectionError.first())
+    }
+
+    @Test
+    fun `a loss report arriving while Failed is ignored`() = runTest {
+        val machine = buildConnectionStateMachine(driveToReady = false)
+        val (_, transport) = buildRepository(this, connectionStateMachine = machine)
+        advanceUntilIdle()
+        machine.onConnectRequested()
+        machine.onError(BudsError.ChannelUnavailable(Dlci.MAESTRO, "scripted"))
+
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, "stale"))
+
+        assertEquals(ConnectionState.Failed(BudsError.ChannelUnavailable(Dlci.MAESTRO, "scripted")), machine.state.value)
+    }
+
+    @Test
+    fun `an explicit disconnect clears the last connection error`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, "scripted"))
+        assertEquals(BudsError.ChannelLost(Dlci.MAESTRO, "scripted"), repo.lastConnectionError.first())
+
+        repo.disconnect()
+
+        assertNull(repo.lastConnectionError.first())
+    }
+
+    @Test
+    fun `connect while already Ready is a no-op success and does not tear the live connection down`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+
+        val result = repo.connect() // bondedDeviceProvider is null in these tests: only the Ready short-circuit can succeed
+
+        assertInstanceOf(BudsResult.Success::class.java, result)
+        assertEquals(true, transport.connected)
     }
 
     @Test

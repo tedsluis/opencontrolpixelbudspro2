@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 
@@ -52,47 +53,60 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
  *
  * [gains] is nullable per ARCHITECTURE.md §3.1's table: EQ has no confirmed
  * read-on-reconnect opcode, so a fresh connection's value is genuinely
- * unknown, not merely "not yet loaded" — the UI must say so, not show a
- * default `0.0` quintet that looks like a real reading.
+ * unknown — the UI says so, and never presents a default `0.0` quintet as if it
+ * were a real reading.
+ *
+ * **`ai-sessions/0039`:** the controls are now shown *even while [gains] is
+ * `null`*. Previously a `null` value replaced the whole screen with "change a
+ * setting or wait for the Buds to report one" — but every control was hidden, so
+ * there was nothing to change, and the Buds never volunteer their EQ on connect
+ * (the maintainer's one successful session: the MAESTRO channel was open and
+ * delivered its connect-time frame, and no EQ frame ever followed). A preset is
+ * a complete quintet and a slider move sends all five bands, so neither needs a
+ * known starting value — the sliders simply start from flat and the screen says
+ * plainly that this is *not* the Buds' current setting.
  */
 @Composable
 fun EqScreen(
+    connectionState: ConnectionState,
     gains: EqBandGains?,
     onGainsChanged: (EqBandGains) -> Unit,
     onPresetSelected: (EqPreset) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val enabled = connectionState.isReady()
+    val shown = gains ?: EqBandGains.FLAT
     Surface(modifier = modifier.fillMaxSize()) {
-        if (gains == null) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    "EQ state unknown — change a setting or wait for the Buds to report one.",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-            return@Surface
-        }
-
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Equalizer", style = MaterialTheme.typography.headlineSmall)
-
-            EqBandSlider("Upper treble", gains.upperTreble) { onGainsChanged(gains.copy(upperTreble = it)) }
-            EqBandSlider("Treble", gains.treble) { onGainsChanged(gains.copy(treble = it)) }
-            EqBandSlider("Mid", gains.mid) { onGainsChanged(gains.copy(mid = it)) }
-            EqBandSlider("Bass", gains.bass) { onGainsChanged(gains.copy(bass = it)) }
-            EqBandSlider("Low bass", gains.lowBass) { onGainsChanged(gains.copy(lowBass = it)) }
-
-            Text("Presets", style = MaterialTheme.typography.titleMedium)
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                items(EqPreset.entries) { preset ->
-                    AssistChip(
-                        onClick = { onPresetSelected(preset) },
-                        label = { Text(preset.name.replace('_', ' ')) },
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item { Text("Equalizer", style = MaterialTheme.typography.headlineSmall) }
+            item { NotConnectedBanner(connectionState) }
+            if (gains == null) {
+                item {
+                    Text(
+                        "The Buds haven't reported their current EQ, and they don't send it when " +
+                            "this app connects. Pick a preset or move a slider — that sends all five " +
+                            "bands. The sliders below start from flat (0.0) and do NOT show what the " +
+                            "Buds are currently set to.",
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
+            }
+            item { EqBandSlider("Upper treble", shown.upperTreble, enabled) { onGainsChanged(shown.copy(upperTreble = it)) } }
+            item { EqBandSlider("Treble", shown.treble, enabled) { onGainsChanged(shown.copy(treble = it)) } }
+            item { EqBandSlider("Mid", shown.mid, enabled) { onGainsChanged(shown.copy(mid = it)) } }
+            item { EqBandSlider("Bass", shown.bass, enabled) { onGainsChanged(shown.copy(bass = it)) } }
+            item { EqBandSlider("Low bass", shown.lowBass, enabled) { onGainsChanged(shown.copy(lowBass = it)) } }
+
+            item { Text("Presets", style = MaterialTheme.typography.titleMedium) }
+            items(EqPreset.entries) { preset ->
+                AssistChip(
+                    onClick = { onPresetSelected(preset) },
+                    enabled = enabled,
+                    label = { Text(preset.name.replace('_', ' ')) },
+                )
             }
         }
     }
@@ -110,7 +124,7 @@ fun EqScreen(
  * that, since [value] never itself changes mid-drag (`ai-sessions/0038`).
  */
 @Composable
-private fun EqBandSlider(label: String, value: Float, onValueChange: (Float) -> Unit) {
+private fun EqBandSlider(label: String, value: Float, enabled: Boolean, onValueChange: (Float) -> Unit) {
     var localValue by remember(value) { mutableStateOf(value) }
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -121,6 +135,7 @@ private fun EqBandSlider(label: String, value: Float, onValueChange: (Float) -> 
             value = localValue,
             onValueChange = { localValue = it },
             onValueChangeFinished = { onValueChange(localValue) },
+            enabled = enabled,
             valueRange = EqBandGains.RANGE.start..EqBandGains.RANGE.endInclusive,
         )
     }

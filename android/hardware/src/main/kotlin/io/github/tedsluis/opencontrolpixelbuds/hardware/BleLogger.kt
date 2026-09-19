@@ -80,6 +80,18 @@ object BleLogger {
         if (debugModeEnabled) append(line)
     }
 
+    private val macPattern = Regex("(?i)([0-9a-f]{2}:){5}[0-9a-f]{2}")
+
+    /**
+     * One-line description of [e] safe for the always-on log and for user-visible text: exception
+     * class plus message, with any Bluetooth address in the message redacted (AGENTS.md §9 — never
+     * log the paired device's MAC at INFO or above; some framework messages embed it).
+     */
+    fun describe(e: Throwable): String {
+        val message = e.message?.let { macPattern.replace(it, "XX:XX:XX:XX:XX:XX") }
+        return if (message.isNullOrBlank()) e.javaClass.simpleName else "${e.javaClass.simpleName}: $message"
+    }
+
     /** Snapshot of the ring buffer for "Export debug log" — local-only, the
      * caller decides how to persist/share it (still never over a network,
      * per AGENTS.md §9). */

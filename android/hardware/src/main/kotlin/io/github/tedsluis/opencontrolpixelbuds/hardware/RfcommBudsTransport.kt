@@ -20,14 +20,15 @@
 package io.github.tedsluis.opencontrolpixelbuds.hardware
 
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothSocket
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.isActive
@@ -35,16 +36,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Real `BluetoothSocket`-backed [BudsTransport], one socket per RFCOMM DLCI
  * (PROTOCOL.md §2.3 — each channel has independent framing and cannot share
- * one socket). **First real connect attempt this session (`ai-sessions/0037`)
- * — still not confirmed to actually complete a handshake against real Pixel
- * Buds Pro 2 hardware**, only that the socket-opening/demultiplexing code
- * itself follows AGENTS.md §3's rules (all I/O on `Dispatchers.IO`, every
- * socket call site wrapped and converted to a [BudsError], never a bare
- * `catch (e: Exception) {}`).
+ * one socket). Every socket call site is wrapped and converted to a
+ * [BudsError] (AGENTS.md §3/§8), all I/O runs on [ioDispatcher].
  *
  * [device] is a per-call [connect] parameter, not a constructor argument —
  * the target device is only known once pairing has actually happened
@@ -55,30 +53,68 @@ import java.util.UUID
  * the shared [inbound] flow as raw, not-necessarily-frame-aligned chunks
  * (`BudsTransport.inbound`'s own doc comment) — `:data`'s `CodecRouter`
  * does the actual frame-boundary detection.
+ *
+ * ## Connection-lifecycle rules (`ai-sessions/0039`, evidence in its RESULT file §3)
+ *
+ * The Android Bluetooth stack allows **one** open RFCOMM connection per (device, channel) across
+ * *all* apps, and a second client's `connect()` to a channel that is already open fails with
+ * "already at opened state" — and, worse, the stack's failure path then closes the **incumbent**
+ * port too. On the maintainer's phone, Google Play Services' Fast Pair event stream (channel 2,
+ * DLCI 0x04) and this app's own zombie sockets were the incumbents. Hence:
+ *
+ * 1. **A connection is one unit.** Any channel's loss (read failure, EOF, write failure) closes
+ *    *all* of that connection's sockets before [connectionLost] emits — a surviving socket would
+ *    still be "open" in the stack and make the very next [connect] fail against ourselves.
+ * 2. **At most one [connectionLost] per connection**, and none from a connection already replaced
+ *    by a newer [connect] or ended by [disconnect] (stale-event suppression).
+ * 3. **A failed [connect] closes the socket that failed**, not only the ones that succeeded.
+ * 4. **Bounded retry inside one user-initiated [connect]**: a *fast* failure (collision failures
+ *    return in well under a second) is retried up to [connectAttempts] times, [retryDelayMs]
+ *    apart — because the colliding attempt itself frees the port. Slow failures (device
+ *    unreachable) are never retried, so an out-of-range Buds does not stall for minutes. This is
+ *    not a background retry loop (ARCHITECTURE.md §6): it ends with the one tap that started it.
+ * 5. **The underlying exception is never discarded** — class + address-redacted message go into
+ *    [BudsError.ChannelUnavailable]/[BudsError.ChannelLost] and the always-on log.
  */
 class RfcommBudsTransport(
-    private val socketFactory: (channelId: Int, uuid: UUID, device: BluetoothDevice) -> BluetoothSocket,
+    private val socketFactory: (channelId: Int, uuid: UUID, device: BluetoothDevice) -> RfcommSocket,
+    private val connectAttempts: Int = DEFAULT_CONNECT_ATTEMPTS,
+    private val retryDelayMs: Long = DEFAULT_RETRY_DELAY_MS,
+    private val fastFailureThresholdMs: Long = DEFAULT_FAST_FAILURE_THRESHOLD_MS,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BudsTransport {
 
-    private val sockets = mutableMapOf<Int, BluetoothSocket>()
+    /** One successfully opened set of channel sockets plus the coroutines reading them. */
+    private inner class Connection(val sockets: Map<Int, RfcommSocket>) {
+        val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
+        val lossReported = AtomicBoolean(false)
+        private val closed = AtomicBoolean(false)
 
-    // Created fresh per connect(), not a single object-lifetime scope — disconnect() cancels only
-    // this connection's own coroutines, so a later connect() (reconnect) isn't left permanently
-    // broken by an already-cancelled scope.
-    private var connectionScope: CoroutineScope? = null
-    private var readerJobs: List<Job> = emptyList()
+        val isOpen: Boolean get() = !closed.get()
 
-    override var connected: Boolean = false
-        private set
+        /** Cancels the readers, then closes every socket. Idempotent. */
+        fun closeAll() {
+            if (!closed.compareAndSet(false, true)) return
+            scope.cancel()
+            sockets.values.forEach(::closeQuietly)
+        }
+    }
+
+    private val lock = Any()
+
+    @Volatile
+    private var current: Connection? = null
+
+    override val connected: Boolean
+        get() = current?.isOpen == true
 
     private val _inbound = MutableSharedFlow<Pair<Int, ByteArray>>(extraBufferCapacity = 256)
     override val inbound: SharedFlow<Pair<Int, ByteArray>> = _inbound
 
-    // extraBufferCapacity, not replay — each per-DLCI reader can independently notice the same
-    // real-world link loss (all sockets to one peer die together), and every one of them should be
-    // able to emit without suspending/dropping (ai-sessions/0038).
-    private val _connectionLost = MutableSharedFlow<Unit>(extraBufferCapacity = 4)
-    override val connectionLost: SharedFlow<Unit> = _connectionLost
+    // extraBufferCapacity, not replay — a loss must reach the collector once, never be replayed to
+    // a later subscriber as if it described a newer connection.
+    private val _connectionLost = MutableSharedFlow<ConnectionLoss>(extraBufferCapacity = 4)
+    override val connectionLost: SharedFlow<ConnectionLoss> = _connectionLost
 
     /**
      * Opens one socket per entry in [channels] (channelId -> SDP UUID, see
@@ -86,85 +122,177 @@ class RfcommBudsTransport(
      * each. If any channel fails to connect, every already-opened socket in
      * this call is closed before returning failure — this app has no use for
      * a partially-usable transport where, say, ANC works but EQ silently
-     * doesn't.
+     * doesn't. (Per-channel tolerance was evaluated in `ai-sessions/0039` and
+     * deliberately not adopted: `ConnectionState` has no "degraded" state, and a
+     * `Ready` that silently lacks a channel would be the same lie this rule prevents.)
      */
     override suspend fun connect(device: BluetoothDevice, channels: Map<Int, UUID>): BudsResult<Unit> =
-        withContext(Dispatchers.IO) {
-            val opened = mutableMapOf<Int, BluetoothSocket>()
-            try {
-                for ((channelId, uuid) in channels) {
-                    val socket = socketFactory(channelId, uuid, device)
-                    socket.connect()
-                    opened[channelId] = socket
+        connectWith(channels) { channelId, uuid -> socketFactory(channelId, uuid, device) }
+
+    /** [connect]'s real body, with the per-channel socket source injected so a unit test can
+     * drive it with scripted fakes (`BluetoothDevice` itself cannot be constructed in a JVM test). */
+    internal suspend fun connectWith(
+        channels: Map<Int, UUID>,
+        open: (channelId: Int, uuid: UUID) -> RfcommSocket,
+    ): BudsResult<Unit> = withContext(ioDispatcher) {
+        // A previous connection (possibly a zombie whose peer already dropped it) must be gone
+        // before a new one is attempted, or its still-open sockets collide with the new ones.
+        replaceCurrent(null)?.closeAll()
+
+        val opened = LinkedHashMap<Int, RfcommSocket>()
+        try {
+            for ((channelId, uuid) in channels) {
+                when (val result = openChannel(channelId, uuid, open)) {
+                    is ChannelOpen.Opened -> opened[channelId] = result.socket
+                    is ChannelOpen.Failed -> {
+                        opened.values.forEach(::closeQuietly)
+                        return@withContext BudsResult.Failure(result.error)
+                    }
                 }
-                sockets.putAll(opened)
-                connected = true
-                val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-                connectionScope = scope
-                readerJobs = opened.map { (channelId, socket) -> startReader(scope, channelId, socket) }
-                BudsResult.Success(Unit)
-            } catch (e: IOException) {
-                opened.values.forEach { runCatching { it.close() } }
-                connected = false
-                BudsResult.Failure(BudsError.ConnectionLost)
-            } catch (e: SecurityException) {
-                opened.values.forEach { runCatching { it.close() } }
-                BudsResult.Failure(BudsError.PermissionDenied)
             }
+        } catch (e: CancellationException) {
+            opened.values.forEach(::closeQuietly)
+            throw e
         }
 
-    private fun startReader(scope: CoroutineScope, channelId: Int, socket: BluetoothSocket): Job = scope.launch {
-        val input = socket.inputStream
-        val buffer = ByteArray(1024)
-        try {
-            while (isActive) {
-                val read = input.read(buffer)
-                if (read < 0) break // peer closed the stream — normal disconnect, not an error.
-                _inbound.emit(channelId to buffer.copyOf(read))
+        val connection = Connection(opened)
+        replaceCurrent(connection)
+        opened.forEach { (channelId, socket) -> startReader(connection, channelId, socket) }
+        BudsResult.Success(Unit)
+    }
+
+    private sealed interface ChannelOpen {
+        class Opened(val socket: RfcommSocket) : ChannelOpen
+        class Failed(val error: BudsError) : ChannelOpen
+    }
+
+    private suspend fun openChannel(
+        channelId: Int,
+        uuid: UUID,
+        open: (Int, UUID) -> RfcommSocket,
+    ): ChannelOpen {
+        var lastDetail: String? = null
+        for (attempt in 1..connectAttempts) {
+            val startedNanos = System.nanoTime()
+            var socket: RfcommSocket? = null
+            try {
+                socket = open(channelId, uuid)
+                socket.connect()
+                BleLogger.logConnectionEvent("RFCOMM channel 0x%02x connected (attempt %d/%d)".format(channelId, attempt, connectAttempts))
+                return ChannelOpen.Opened(socket)
+            } catch (e: SecurityException) {
+                // BLUETOOTH_CONNECT is runtime-revocable (AGENTS.md §2) — not retryable.
+                socket?.let(::closeQuietly)
+                return ChannelOpen.Failed(BudsError.PermissionDenied)
+            } catch (e: IOException) {
+                // The socket that failed is closed too — not only those that succeeded (rule 3).
+                socket?.let(::closeQuietly)
+                lastDetail = BleLogger.describe(e)
+                val elapsedMs = (System.nanoTime() - startedNanos) / 1_000_000
+                BleLogger.logConnectionEvent(
+                    "RFCOMM channel 0x%02x connect failed after %d ms (attempt %d/%d): %s"
+                        .format(channelId, elapsedMs, attempt, connectAttempts, lastDetail),
+                )
+                if (elapsedMs > fastFailureThresholdMs) break // slow failure: peer unreachable, not a collision.
+            } catch (e: RuntimeException) {
+                socket?.let(::closeQuietly)
+                return ChannelOpen.Failed(BudsError.Unknown(e))
             }
-        } catch (e: IOException) {
-            // Socket torn down (OS teardown, range loss, peer disconnect) — a normal,
-            // expected transition (ARCHITECTURE.md §6), not a crash. connected is left
-            // for send()/the caller's next attempt to discover and report via
-            // BudsError.ConnectionLost, rather than this reader coroutine racing to
-            // flip shared state on its own.
-            //
-            // isActive is false here when this IOException was *caused* by our own disconnect()
-            // (its socket.close() call unblocks this coroutine's still-in-flight read() with an
-            // IOException, after readerJobs.forEach { it.cancel() } already marked this job
-            // cancelled) — that expected teardown must not be reported as a connection loss.
-            if (isActive) _connectionLost.tryEmit(Unit)
-        } finally {
-            connected = false
+            if (attempt < connectAttempts) delay(retryDelayMs)
+        }
+        return ChannelOpen.Failed(BudsError.ChannelUnavailable(channelId, lastDetail))
+    }
+
+    private fun startReader(connection: Connection, channelId: Int, socket: RfcommSocket) {
+        connection.scope.launch {
+            val buffer = ByteArray(1024)
+            try {
+                val input = socket.inputStream
+                while (isActive) {
+                    val read = input.read(buffer)
+                    if (read < 0) {
+                        // EOF: the peer/stack closed this channel. Not "normal" — the channel is
+                        // dead, and leaving the UI on Ready would be wrong.
+                        reportLoss(connection, channelId, "stream closed (EOF)")
+                        break
+                    }
+                    _inbound.emit(channelId to buffer.copyOf(read))
+                }
+            } catch (e: IOException) {
+                // isActive is false when this IOException was *caused* by our own disconnect()/
+                // teardown closing the socket under a blocked read() — an expected, silent end.
+                if (isActive) reportLoss(connection, channelId, BleLogger.describe(e))
+            }
         }
     }
 
+    /** Rules 1 and 2: dedupe per connection, tear everything down, and only then announce it. */
+    private fun reportLoss(connection: Connection, channelId: Int, detail: String?) {
+        if (!connection.lossReported.compareAndSet(false, true)) return
+        val wasCurrent = synchronized(lock) {
+            if (current === connection) {
+                current = null
+                true
+            } else {
+                false
+            }
+        }
+        connection.closeAll()
+        if (!wasCurrent) return // stale: already replaced by a newer connect() or ended by disconnect().
+        BleLogger.logConnectionEvent(
+            "RFCOMM channel 0x%02x lost (%s) — all channels of this connection closed".format(channelId, detail),
+        )
+        _connectionLost.tryEmit(ConnectionLoss(channelId, detail))
+    }
+
+    private fun replaceCurrent(next: Connection?): Connection? = synchronized(lock) {
+        val previous = current
+        current = next
+        previous
+    }
+
     override suspend fun send(channelId: Int, frame: ByteArray): BudsResult<Unit> =
-        withContext(Dispatchers.IO) {
-            val output = sockets[channelId]?.outputStream
+        withContext(ioDispatcher) {
+            val connection = current
+            val socket = connection?.sockets?.get(channelId)
                 ?: return@withContext BudsResult.Failure(BudsError.ConnectionLost)
             try {
+                val output = socket.outputStream
                 output.write(frame)
                 output.flush()
                 BudsResult.Success(Unit)
             } catch (e: IOException) {
-                connected = false
-                BudsResult.Failure(BudsError.ConnectionLost)
+                val detail = BleLogger.describe(e)
+                reportLoss(connection, channelId, detail)
+                BudsResult.Failure(BudsError.ChannelLost(channelId, detail))
             }
         }
 
-    override suspend fun disconnect() = withContext(Dispatchers.IO) {
-        readerJobs.forEach { it.cancel() }
-        sockets.values.forEach { socket ->
-            try {
-                socket.close()
-            } catch (e: IOException) {
-                // Closing an already-broken socket — nothing further to report.
-            }
+    override suspend fun disconnect() = withContext(ioDispatcher) {
+        replaceCurrent(null)?.closeAll()
+        Unit
+    }
+
+    private fun closeQuietly(socket: RfcommSocket) {
+        try {
+            socket.close()
+        } catch (e: IOException) {
+            // Closing an already-broken socket — the only thing left to do is note it.
+            BleLogger.logConnectionEvent("RFCOMM socket close: ${BleLogger.describe(e)}")
         }
-        sockets.clear()
-        connected = false
-        connectionScope?.cancel()
-        connectionScope = null
+    }
+
+    companion object {
+        /** Attempts per channel within one [connect] call (rule 4). */
+        const val DEFAULT_CONNECT_ATTEMPTS = 3
+
+        /** Pause between attempts — long enough for the stack's DISC/UA teardown of a port the
+         * failed attempt itself just closed (~50 ms in the `ai-sessions/0039` logs), short enough
+         * to be invisible next to a human tap. */
+        const val DEFAULT_RETRY_DELAY_MS = 400L
+
+        /** Collision failures returned in 60–190 ms in the `ai-sessions/0039` logs; an unreachable
+         * peer blocks for seconds. Anything slower than this is not retried. */
+        const val DEFAULT_FAST_FAILURE_THRESHOLD_MS = 2_000L
     }
 }
