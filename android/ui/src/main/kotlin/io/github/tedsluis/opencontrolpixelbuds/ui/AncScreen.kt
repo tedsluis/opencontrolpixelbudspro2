@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 
 /**
@@ -50,6 +51,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 @Composable
 fun AncScreen(
     connectionState: ConnectionState,
+    messageStreamError: BudsError?,
     ancMode: AncMode?,
     onAncModeSelected: (AncMode) -> Unit,
     onRefreshAncMode: () -> Unit,
@@ -64,12 +66,13 @@ fun AncScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             NotConnectedBanner(connectionState)
+            MessageStreamNotice(messageStreamError)
             Text(
                 text = "Connection: ${connectionState::class.simpleName}",
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                text = "ANC mode: ${ancMode?.name ?: "unknown"}",
+                text = "ANC mode (last known): ${ancMode?.name ?: "unknown"}",
                 style = MaterialTheme.typography.bodyLarge,
             )
             AncMode.entries.forEach { mode ->
@@ -78,6 +81,7 @@ fun AncScreen(
                 }
             }
             TextButton(onClick = onRefreshAncMode, enabled = connectionState.isReady()) { Text("Refresh") }
+            MessageStreamHint()
         }
     }
 }
@@ -88,6 +92,7 @@ private fun AncScreenPreview() {
     MaterialTheme {
         AncScreen(
             connectionState = ConnectionState.Ready,
+            messageStreamError = null,
             ancMode = AncMode.ADAPTIVE,
             onAncModeSelected = {},
             onRefreshAncMode = {},

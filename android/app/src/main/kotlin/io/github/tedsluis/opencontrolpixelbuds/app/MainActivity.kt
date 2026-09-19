@@ -125,6 +125,8 @@ class MainActivity : ComponentActivity() {
             )
             val lastConnectionError by budsRepository.lastConnectionError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
+            val messageStreamError by budsRepository.messageStreamError
+                .collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val osConnected by remember { osConnectionObserver.observe() }
                 .collectAsStateWithLifecycle(initialValue = false)
             val bluetoothAdapterState by remember { bluetoothStateObserver.observe() }
@@ -192,6 +194,7 @@ class MainActivity : ComponentActivity() {
                 pairingStatusText = pairingState?.toUserMessage(),
                 lastConnectionError = lastConnectionError,
                 osConnected = osConnected,
+                messageStreamError = messageStreamError,
                 ancMode = ancMode,
                 eqProfile = eqProfile,
                 batteryStatus = batteryStatus,

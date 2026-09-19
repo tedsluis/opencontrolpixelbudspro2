@@ -145,6 +145,21 @@ mark v1.
   public APIs only). Design questions (per-channel tolerance, auto-reconnect, lazy Message Stream) are
   maintainer proposals, not decided. Full suite clean (1253 tests, 0 failures; 2 mutants caught). Not
   hardware-verified.
+- **2026-09-19 (`ai-sessions/0040`): on-demand claiming of the shared Message Stream channel, a live battery decoder, and two
+  research items — after the maintainer's three real-hardware rounds and explicit decisions.** With Google Play services' Fast Pair
+  active the app held DLCI 0x04 for a median 4.5 s (20 of 20 sessions ended on that channel, never on DLCI 0x02), because Play services
+  re-opens its own socket 2.7–5.0 s after losing it and the Android stack's failure path then closes ours. **ADR-032** (maintainer's
+  choice, retracting his earlier "never connect automatically", since only one channel — not the Buds connection — is lost): the
+  session is the MAESTRO channel; DLCI 0x04 is claimed for the duration of an ANC / Find / Connect tap (claim → act → wait for the
+  Buds' reply → release after 1.5 s) and its loss is not a session loss; a busy channel is reported per action with the reason.
+  **ADR-033** (maintainer-requested): the Battery Option B decoder (`Group 0x03 Code 0x03`) is unblocked for the percentage regime;
+  bit-7-as-charging-flag is a supported but unaccepted proposal (CAP-009: 221→228 vs. Option E's 93→100, step for step). Also fixed:
+  a Ring ACK was routed as an ANC ACK (found by a test), and the optimistic ANC update could overwrite the Buds' own Notify.
+  **Research** (`DESKRESEARCH_FINDINGS.md`): the app's HFP battery route most likely cannot receive `AT+BIEV` on Android 14+ (all battery
+  rows "unavailable" in every session); DLCI 0x02 is verifiably Pigweed `pw_rpc` (`service_id`/`method_id` match the name hashes of
+  `maestro_pw.Maestro`/`WriteSetting` byte for byte) and the official app reads every setting, including the current EQ
+  (`ReadSetting 4:16`), on each connect — a read path for the EQ tab, awaiting sign-off. New `scripts/pwrpc_decode.py`. 1281 tests, 0
+  failures; not hardware-verified.
 
 ### Changed
 

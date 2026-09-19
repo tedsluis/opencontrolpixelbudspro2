@@ -355,4 +355,163 @@ class RfcommBudsTransportTest {
         val result = transport().send(messageStream, byteArrayOf(1))
         assertEquals(BudsError.ConnectionLost, (result as BudsResult.Failure).error)
     }
+
+    // ---- on-demand channels (DECISIONS.md ADR-032) -------------------------------------------
+
+    private val sessionOnly = linkedMapOf(maestro to UUID.randomUUID())
+    private val messageStreamUuid = UUID.randomUUID()
+
+    @Test
+    fun `an on-demand channel opens on the current connection and delivers inbound bytes`() = blocking {
+        val stack = CollidingStack()
+        val t = transport()
+        collecting(t.inbound) { inbound ->
+            t.connectWith(sessionOnly, stack::open)
+            assertFalse(t.isChannelOpen(messageStream))
+
+            assertInstanceOf(BudsResult.Success::class.java, t.openChannel(messageStream, messageStreamUuid))
+
+            assertTrue(t.isChannelOpen(messageStream))
+            stack.socketsFor(messageStream).single().input.events.offer(Event.Bytes(byteArrayOf(9)))
+            awaitUntil("inbound") { inbound.items.isNotEmpty() }
+            assertEquals(messageStream, inbound.items.single().first)
+        }
+        t.disconnect()
+    }
+
+    @Test
+    fun `opening an already open on-demand channel is a no-op success`() = blocking {
+        val stack = CollidingStack()
+        val t = transport()
+        t.connectWith(sessionOnly, stack::open)
+        t.openChannel(messageStream, messageStreamUuid)
+
+        assertInstanceOf(BudsResult.Success::class.java, t.openChannel(messageStream, messageStreamUuid))
+
+        assertEquals(1, stack.socketsFor(messageStream).size)
+        t.disconnect()
+    }
+
+    @Test
+    fun `a deliberate closeChannel closes only that socket and reports nothing`() = blocking {
+        val stack = CollidingStack()
+        val t = transport()
+        collecting(t.channelClosed) { closed ->
+            t.connectWith(sessionOnly, stack::open)
+            t.openChannel(messageStream, messageStreamUuid)
+
+            t.closeChannel(messageStream)
+            delay(200)
+
+            assertTrue(closed.items.isEmpty(), "a deliberate release must never look like a loss")
+            assertTrue(stack.socketsFor(messageStream).single().closed)
+            assertFalse(t.isChannelOpen(messageStream))
+            assertTrue(t.connected, "the session channel must be untouched")
+            assertFalse(stack.socketsFor(maestro).single().closed)
+        }
+        t.disconnect()
+    }
+
+    @Test
+    fun `an on-demand channel dying is reported on channelClosed and is not a connection loss`() = blocking {
+        // The 0039/0040 evidence: Google Play services' failed connect closes our Message Stream port
+        // while our MAESTRO port stays open.
+        val stack = CollidingStack()
+        val t = transport()
+        collecting(t.channelClosed) { closed ->
+            collecting(t.connectionLost) { losses ->
+                t.connectWith(sessionOnly, stack::open)
+                t.openChannel(messageStream, messageStreamUuid)
+
+                stack.socketsFor(messageStream).single().input.events.offer(Event.Fail(IOException("bt socket closed, read return: -1")))
+                awaitUntil("channel closed") { closed.items.isNotEmpty() }
+                delay(150)
+
+                assertEquals(1, closed.items.size)
+                assertEquals(messageStream, closed.items.single().channelId)
+                assertTrue(losses.items.isEmpty(), "an on-demand channel's loss is not a connection loss")
+                assertTrue(t.connected)
+                assertFalse(stack.socketsFor(maestro).single().closed)
+                assertFalse(t.isChannelOpen(messageStream))
+            }
+        }
+        t.disconnect()
+    }
+
+    @Test
+    fun `an on-demand channel can be claimed again right after it was taken away`() = blocking {
+        // No zombie: the dead on-demand socket is closed, so a re-claim does not collide with our own leftover.
+        val stack = CollidingStack()
+        val t = transport(attempts = 1)
+        collecting(t.channelClosed) { closed ->
+            t.connectWith(sessionOnly, stack::open)
+            t.openChannel(messageStream, messageStreamUuid)
+            stack.socketsFor(messageStream).single().input.events.offer(Event.Fail(IOException("port closed by another client")))
+            awaitUntil("channel closed") { closed.items.isNotEmpty() }
+
+            assertInstanceOf(BudsResult.Success::class.java, t.openChannel(messageStream, messageStreamUuid))
+            assertTrue(t.isChannelOpen(messageStream))
+        }
+        t.disconnect()
+    }
+
+    @Test
+    fun `losing the session channel also closes any on-demand channel and reports one connection loss`() = blocking {
+        val stack = CollidingStack()
+        val t = transport()
+        collecting(t.connectionLost) { losses ->
+            t.connectWith(sessionOnly, stack::open)
+            t.openChannel(messageStream, messageStreamUuid)
+
+            stack.socketsFor(maestro).single().input.events.offer(Event.Fail(IOException("peer DISC")))
+            awaitUntil("loss") { losses.items.isNotEmpty() }
+            delay(100)
+
+            assertEquals(1, losses.items.size)
+            assertEquals(maestro, losses.items.single().channelId)
+            assertTrue(stack.all.all { it.closed })
+            assertFalse(t.isChannelOpen(messageStream))
+        }
+    }
+
+    @Test
+    fun `an on-demand open that stays busy fails with ChannelUnavailable and leaves the session alone`() = blocking {
+        val stack = CollidingStack()
+        val t = transport(attempts = 2)
+        t.connectWith(sessionOnly, stack::open)
+        stack.failNextConnects(messageStream, times = 99)
+
+        val result = t.openChannel(messageStream, messageStreamUuid)
+
+        val error = (result as BudsResult.Failure).error
+        assertEquals(messageStream, (error as BudsError.ChannelUnavailable).channelId)
+        assertTrue(t.connected)
+        assertFalse(t.isChannelOpen(messageStream))
+        assertTrue(stack.socketsFor(messageStream).all { it.closed })
+        t.disconnect()
+    }
+
+    @Test
+    fun `openChannel with no connection fails with ConnectionLost`() = blocking {
+        val result = transport().openChannel(messageStream, messageStreamUuid)
+        assertEquals(BudsError.ConnectionLost, (result as BudsResult.Failure).error)
+    }
+
+    @Test
+    fun `a failed write on an on-demand channel closes only that channel`() = blocking {
+        val stack = CollidingStack()
+        val t = transport()
+        collecting(t.channelClosed) { closed ->
+            t.connectWith(sessionOnly, stack::open)
+            t.openChannel(messageStream, messageStreamUuid)
+            stack.socketsFor(messageStream).single().failWrites = IOException("Broken pipe")
+
+            val result = t.send(messageStream, byteArrayOf(0x08, 0x11, 0x00, 0x00))
+
+            assertEquals(BudsError.ChannelLost(messageStream, "IOException: Broken pipe"), (result as BudsResult.Failure).error)
+            awaitUntil("closed") { closed.items.isNotEmpty() }
+            assertTrue(t.connected)
+        }
+        t.disconnect()
+    }
 }

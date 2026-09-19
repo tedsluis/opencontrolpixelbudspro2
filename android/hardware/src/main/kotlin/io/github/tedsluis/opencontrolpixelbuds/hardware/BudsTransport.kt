@@ -74,6 +74,30 @@ interface BudsTransport {
 
     suspend fun disconnect()
 
+    /**
+     * Opens one more channel on the **current** connection, on demand (DECISIONS.md ADR-032): the
+     * Message Stream channel (DLCI 0x04) is shared with other apps (Google Play services' Fast Pair)
+     * and is claimed only for the duration of a user action. Unlike a channel opened by [connect],
+     * an on-demand channel's loss is **not** a connection loss — it is reported on [channelClosed]
+     * and leaves the connection (and its [connect]-opened channels) untouched. Idempotent: succeeds
+     * immediately if [channelId] is already open. Fails with `BudsError.ConnectionLost` when there is
+     * no current connection.
+     */
+    suspend fun openChannel(channelId: Int, uuid: UUID): BudsResult<Unit>
+
+    /** Deliberately closes an on-demand channel. Never reported on [channelClosed]. No-op if not open. */
+    suspend fun closeChannel(channelId: Int)
+
+    /** Whether [channelId] is currently open on the current connection. */
+    fun isChannelOpen(channelId: Int): Boolean
+
+    /**
+     * Emits when an on-demand channel ([openChannel]) died on its own (the peer or another client's
+     * failed connect closed it) rather than through [closeChannel] — a normal, expected event for the
+     * shared Message Stream channel (ADR-032), not a connection loss.
+     */
+    val channelClosed: Flow<ChannelClosed>
+
     suspend fun send(channelId: Int, frame: ByteArray): BudsResult<Unit>
 }
 
@@ -82,3 +106,6 @@ interface BudsTransport {
  * noticed the loss first ([channelId]) and a short, address-redacted description of why ([detail]).
  */
 data class ConnectionLoss(val channelId: Int, val detail: String?)
+
+/** An on-demand channel died on its own ([BudsTransport.channelClosed]); [detail] is address-redacted. */
+data class ChannelClosed(val channelId: Int, val detail: String?)

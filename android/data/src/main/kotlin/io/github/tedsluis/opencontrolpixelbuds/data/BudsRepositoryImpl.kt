@@ -28,6 +28,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrame
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrameEncoder
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingFrame
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingFrameEncoder
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RoutedFrame
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
@@ -46,7 +47,13 @@ import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsSdpUuids
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsTransport
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -96,6 +103,22 @@ class BudsRepositoryImpl(
     private val _lastConnectionError = MutableStateFlow<BudsError?>(null)
     override val lastConnectionError: Flow<BudsError?> = _lastConnectionError
 
+    private val _messageStreamError = MutableStateFlow<BudsError?>(null)
+    override val messageStreamError: Flow<BudsError?> = _messageStreamError
+
+    /**
+     * Serialises every use of the shared Message Stream channel (DLCI 0x04) — claim, action, release
+     * — so a release can never close the channel under a command that is still waiting for its reply
+     * (DECISIONS.md ADR-032).
+     */
+    private val claimMutex = Mutex()
+
+    @Volatile
+    private var releaseJob: Job? = null
+
+    @Volatile
+    private var snapshotJob: Job? = null
+
     /** One [connect] at a time — a double tap must not start two overlapping socket-opening runs. */
     private val connectMutex = Mutex()
 
@@ -119,6 +142,9 @@ class BudsRepositoryImpl(
 
     private val _batteryStatus = MutableStateFlow(BatteryStatus())
     override val batteryStatus: StateFlow<BatteryStatus> = _batteryStatus
+
+    /** A Ring ACK arrived — what a Find My Buds tap waits for before the channel is released. */
+    private val _ringAcks = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
 
     private val _unidentifiedFrames = MutableSharedFlow<UnidentifiedFrame>(extraBufferCapacity = 32)
     override val unidentifiedFrames: Flow<UnidentifiedFrame> = _unidentifiedFrames
@@ -172,6 +198,7 @@ class BudsRepositoryImpl(
                 val state = connectionStateMachine.state.value
                 if (state is ConnectionState.Ready || state is ConnectionState.Discovering) {
                     _lastConnectionError.value = BudsError.ChannelLost(loss.channelId, loss.detail)
+                    cancelClaimJobs()
                     connectionStateMachine.onDisconnected()
                 } else {
                     BleLogger.logConnectionEvent(
@@ -191,12 +218,26 @@ class BudsRepositoryImpl(
                     _ancModeFresh.tryEmit(it)
                 }
                 is AncFrame.Set -> _ancMode.tryEmit(anc.mode)
-                is AncFrame.Get, is AncFrame.Ack -> Unit
+                is AncFrame.Get -> Unit
+                // AncFrameDecoder accepts *every* Message Stream ACK (Group 0xFF), so the Buds' ACK of a
+                // Find My Buds Ring arrives here, not as RoutedFrame.Ring — tell them apart by the
+                // Group/Code the ACK echoes (PROTOCOL.md §2.1; real frame `ff 01 00 03 04 01 00`).
+                is AncFrame.Ack -> if (anc.echoedGroup == RingMessageStream.GROUP && anc.echoedCode == RingMessageStream.CODE_RING) {
+                    _ringAcks.tryEmit(Unit)
+                }
             }
 
             is RoutedFrame.Eq -> _eqProfile.value = frame.frame.gains
 
-            is RoutedFrame.Ring -> Unit // No persisted state (ARCHITECTURE.md §3.1's table).
+            // No persisted state (ARCHITECTURE.md §3.1's table); an ACK only releases a waiting tap.
+            is RoutedFrame.Ring -> if (frame.frame is RingFrame.Ack) _ringAcks.tryEmit(Unit)
+
+            // ADR-033. A byte the decoder does not interpret arrives as Unavailable and *replaces* any
+            // earlier Known value: a stale percentage must never linger once the Buds report a
+            // regime we cannot read (AGENTS.md §5). The Case and the HFP field are untouched.
+            is RoutedFrame.Battery -> _batteryStatus.update {
+                it.copy(left = frame.frame.left, right = frame.frame.right)
+            }
         }
     }
 
@@ -208,10 +249,9 @@ class BudsRepositoryImpl(
             ?: return@withLock BudsResult.Failure(BudsError.PermissionDenied)
         _lastConnectionError.value = null
         connectionStateMachine.onConnectRequested()
-        val channels = mapOf(
-            Dlci.MAESTRO to BudsSdpUuids.MAESTRO,
-            Dlci.FAST_PAIR_MESSAGE_STREAM to BudsSdpUuids.FAST_PAIR_MESSAGE_STREAM,
-        )
+        // ADR-032: the session is the MAESTRO channel only. The Message Stream channel (DLCI 0x04) is shared
+        // with Google Play services' Fast Pair, so it is claimed on demand, never held by Connect.
+        val channels = mapOf(Dlci.MAESTRO to BudsSdpUuids.MAESTRO)
         when (val result = transport.connect(device, channels)) {
             is BudsResult.Success -> {
                 connectionStateMachine.onLinkEstablished()
@@ -220,6 +260,9 @@ class BudsRepositoryImpl(
                 // createRfcommSocketToServiceRecord() above, so there is nothing further to
                 // discover before the sockets are actually usable.
                 connectionStateMachine.onReady()
+                // ADR-032 (agent detail): one short claim, started by this Connect tap, so the ANC mode
+                // and the battery the Buds push on DLCI 0x04 are known without a further tap.
+                launchInitialSnapshot()
                 BudsResult.Success(Unit)
             }
             is BudsResult.Failure -> {
@@ -231,24 +274,35 @@ class BudsRepositoryImpl(
 
     override suspend fun disconnect(): BudsResult<Unit> {
         _lastConnectionError.value = null
+        _messageStreamError.value = null
+        cancelClaimJobs()
         transport.disconnect()
         connectionStateMachine.onDisconnected()
         return BudsResult.Success(Unit)
     }
 
-    override suspend fun setAncMode(mode: AncMode): BudsResult<Unit> {
-        val result = transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, AncFrameEncoder.encode(AncFrame.Set(mode)))
-        // Optimistic update (ARCHITECTURE.md §3.1) — provisional until the peer's own
-        // Notify confirms it via handleRoutedFrame above; a failed send is not applied.
-        if (result is BudsResult.Success) _ancMode.tryEmit(mode)
-        return result
+    override suspend fun setAncMode(mode: AncMode): BudsResult<Unit> = withMessageStream {
+        val (result, notified) = sendAndAwait(_ancModeFresh, ACK_WAIT_MS) {
+            transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, AncFrameEncoder.encode(AncFrame.Set(mode)))
+        }
+        // Optimistic update (ARCHITECTURE.md §3.1), applied only when the Buds did NOT answer in time:
+        // if their Notify arrived it already set the real mode via handleRoutedFrame, and re-applying
+        // the requested mode here would overwrite it (e.g. after a NAK). A failed send is never applied.
+        if (result is BudsResult.Success && notified == null) _ancMode.tryEmit(mode)
+        result
     }
 
-    override suspend fun refreshAncMode(): BudsResult<AncMode> {
-        val sendResult = transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, AncFrameEncoder.encode(AncFrame.Get))
-        if (sendResult is BudsResult.Failure) return BudsResult.Failure(sendResult.error)
-        val mode = withTimeoutOrNull(GET_RESPONSE_TIMEOUT_MS) { _ancModeFresh.first() }
-        return mode?.let { BudsResult.Success(it) } ?: BudsResult.Failure(BudsError.Timeout)
+    override suspend fun refreshAncMode(): BudsResult<AncMode> = refreshAncMode(GET_RESPONSE_TIMEOUT_MS)
+
+    private suspend fun refreshAncMode(timeoutMs: Long): BudsResult<AncMode> = withMessageStream {
+        val (sendResult, mode) = sendAndAwait(_ancModeFresh, timeoutMs) {
+            transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, AncFrameEncoder.encode(AncFrame.Get))
+        }
+        when {
+            sendResult is BudsResult.Failure -> BudsResult.Failure(sendResult.error)
+            mode != null -> BudsResult.Success(mode)
+            else -> BudsResult.Failure(BudsError.Timeout)
+        }
     }
 
     override suspend fun setEqGains(gains: EqBandGains): BudsResult<Unit> {
@@ -262,14 +316,109 @@ class BudsRepositoryImpl(
 
     override suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit> = setEqGains(preset.gains)
 
-    override suspend fun ringBud(target: RingTarget): BudsResult<Unit> =
-        transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, RingFrameEncoder.encode(RingFrame.Start(target)))
+    override suspend fun ringBud(target: RingTarget): BudsResult<Unit> = withMessageStream {
+        sendAndAwait(_ringAcks, ACK_WAIT_MS) {
+            transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, RingFrameEncoder.encode(RingFrame.Start(target)))
+        }.first
+    }
 
-    override suspend fun stopRinging(): BudsResult<Unit> =
-        transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, RingFrameEncoder.encode(RingFrame.Stop))
+    override suspend fun stopRinging(): BudsResult<Unit> = withMessageStream {
+        sendAndAwait(_ringAcks, ACK_WAIT_MS) {
+            transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, RingFrameEncoder.encode(RingFrame.Stop))
+        }.first
+    }
+
+    // ---- on-demand Message Stream channel (DECISIONS.md ADR-032) --------------------------------
+
+    /**
+     * Claims the Message Stream channel (DLCI 0x04) for one user action, runs [action], and schedules
+     * its release [MESSAGE_STREAM_LINGER_MS] later so Google Play services can take the channel back
+     * and hold it stably. Serialised by [claimMutex]. Requires an open session (the MAESTRO channel);
+     * a channel that is busy is retried inside `transport.openChannel` and, if still busy, reported
+     * through [messageStreamError] and the returned failure — never silently dropped.
+     *
+     * If the channel dies under [action] (another client's failed connect closed it) the claim is
+     * retried **once** — the failed attempt has just freed the port.
+     */
+    private suspend fun <T> withMessageStream(action: suspend () -> BudsResult<T>): BudsResult<T> {
+        if (connectionStateMachine.state.value !is ConnectionState.Ready) {
+            return BudsResult.Failure(BudsError.ConnectionLost)
+        }
+        return claimMutex.withLock {
+            releaseJob?.cancel()
+            releaseJob = null
+            var result: BudsResult<T> = BudsResult.Failure(BudsError.ConnectionLost)
+            for (attempt in 1..2) {
+                if (!transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM)) {
+                    val opened = transport.openChannel(Dlci.FAST_PAIR_MESSAGE_STREAM, BudsSdpUuids.FAST_PAIR_MESSAGE_STREAM)
+                    if (opened is BudsResult.Failure) {
+                        _messageStreamError.value = opened.error
+                        return@withLock BudsResult.Failure(opened.error)
+                    }
+                }
+                result = action()
+                val diedUnderUs = result is BudsResult.Failure &&
+                    (result as BudsResult.Failure).error is BudsError.ChannelLost
+                if (!diedUnderUs) break
+            }
+            _messageStreamError.value = (result as? BudsResult.Failure)?.error
+            scheduleRelease()
+            result
+        }
+    }
+
+    private fun scheduleRelease() {
+        releaseJob = scope.launch {
+            delay(MESSAGE_STREAM_LINGER_MS)
+            claimMutex.withLock { transport.closeChannel(Dlci.FAST_PAIR_MESSAGE_STREAM) }
+        }
+    }
+
+    private fun launchInitialSnapshot() {
+        snapshotJob?.cancel()
+        snapshotJob = scope.launch { refreshAncMode(SNAPSHOT_TIMEOUT_MS) }
+    }
+
+    private fun cancelClaimJobs() {
+        releaseJob?.cancel()
+        releaseJob = null
+        snapshotJob?.cancel()
+        snapshotJob = null
+    }
+
+    /**
+     * Subscribes to [reply] **before** sending, then waits up to [timeoutMs] for one emission.
+     * Subscribing first matters: the Buds answer within tens of milliseconds, and a subscription made
+     * after `send()` returns can miss a fast reply. A send failure cancels the wait.
+     */
+    private suspend fun <R, T> sendAndAwait(
+        reply: SharedFlow<R>,
+        timeoutMs: Long,
+        send: suspend () -> BudsResult<T>,
+    ): Pair<BudsResult<T>, R?> = coroutineScope {
+        val waiter = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(timeoutMs) { reply.first() } }
+        val result = send()
+        if (result is BudsResult.Failure) {
+            waiter.cancel()
+            result to null
+        } else {
+            result to waiter.await()
+        }
+    }
 
     companion object {
-        private const val GET_RESPONSE_TIMEOUT_MS = 5_000L
+        /** Wait for a fresh ANC Notify after a manual Refresh. Kept short: the channel is held meanwhile,
+         * and Google Play services re-opens it 2.7–5.0 s after losing it (`ai-sessions/0040` §2.1). */
+        private const val GET_RESPONSE_TIMEOUT_MS = 2_000L
+
+        /** Wait for the Buds' ACK/Notify after a Set or Ring before the channel may be released. */
+        private const val ACK_WAIT_MS = 1_000L
+
+        /** Wait for the ANC state during the Connect-time snapshot. */
+        private const val SNAPSHOT_TIMEOUT_MS = 1_000L
+
+        /** How long the channel stays claimed after an action so replies land, then it is released. */
+        private const val MESSAGE_STREAM_LINGER_MS = 1_500L
 
         // TODO(verify): PROTOCOL.md §2.2a — DLCI 0x02's HDLC Address field is
         // per-connection-negotiated, not a small fixed set; every capture to date

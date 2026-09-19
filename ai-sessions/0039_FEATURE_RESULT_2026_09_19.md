@@ -4,9 +4,9 @@
 **Category:** FEATURE
 **Date:** 2026-09-19
 **Title:** Investigate and fix flaky Connect (flickers to Disconnected within 1-2s), an always-empty EQ tab, and inconsistent app-vs-OS Bluetooth connection state after `ai-sessions/0038`'s peer-disconnect-detection fix
-**Status:** awaiting maintainer sign-off
+**Status:** complete — the maintainer reviewed §8's proposals in the chat session that authored `ai-sessions/0040` (2026-09-19) and chose a different design from B/B2 (on-demand claiming of DLCI 0x04, `DECISIONS.md` ADR-032), implemented in `0040`; hardware re-test still pending
 
-> **Why "awaiting maintainer sign-off" and not "complete":** every app-side root cause found is fixed,
+> **Why this was "awaiting maintainer sign-off" when first written (closed by `0040`):** every app-side root cause found is fixed,
 > tested and verified by the full build/test/lint suite — but (a) nothing here is hardware-verified
 > (no Buds in this environment), and (b) the **largest** cause found is *outside* this app (Google Play
 > services' Fast Pair holding the same RFCOMM channel this app needs) and cannot be removed by this app

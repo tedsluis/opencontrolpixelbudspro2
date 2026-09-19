@@ -797,6 +797,22 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+- **On-demand Message Stream claiming, Battery Option B decoder, and two research items — 2026-09-19
+  (`ai-sessions/0040`, `DECISIONS.md` ADR-032/ADR-033).** Done: the session is now the MAESTRO channel only; DLCI 0x04
+  is claimed per user action (ANC tap, Refresh, Find tap, plus one snapshot at Connect) and released after 1.5 s
+  (`BudsRepositoryImpl.withMessageStream`, `RfcommBudsTransport.openChannel/closeChannel`); the battery decoder is
+  live for the percentage regime. **Not hardware-verified.** Open, all needing the maintainer:
+  (1) **accept or reject ADR-033's charging-flag proposal** (bit 7 = charging; CAP-009's 221→228 vs Option E's 93→100);
+  (2) **EQ read** — promote the `pw_rpc` identification / `ReadSetting` reading (`DESKRESEARCH_FINDINGS.md` 2026-09-19) and
+  write an ADR unblocking a *read* path on DLCI 0x02, then a debug-only `ReadSetting 4:16` experiment; open sub-questions there
+  (what a fresh client must send first, channel id 19 vs 21, request/response matching);
+  (3) **HFP battery** — confirm with `dumpsys bluetooth_manager`, then decide remove/keep/relabel (`HfpBatteryReader`);
+  (4) **a `btsnoop` capture of the deny-mode drop** (both RFCOMM channels closed by the Buds after 89 s; cause unknown) in the
+  `captures/CAP-NNN-…` convention, plus a check of whether the official app answers the periodic `07 34` SASS message;
+  (5) **BLE Fast Pair battery advertisement** (ADR-006's bounded exception) as the channel-independent battery source;
+  (6) verify on hardware whether **Find My Buds keeps ringing after the Message Stream socket is released** (else lengthen the Find hold).
+- **Found and left, `ai-sessions/0040`:** `AncFrameDecoder` accepts every Message Stream ACK (Group `0xFF`), so a Ring ACK arrives as
+  `AncFrame.Ack` — worked around by the echoed Group/Code in `BudsRepositoryImpl`; a cleaner fix is to give ACKs their own routed type.
 - **Connect flicker, zombie sockets, empty EQ tab, app-vs-OS state mismatch — found and fixed
   2026-09-19 (`ai-sessions/0039`), from the maintainer's real-hardware test of `ai-sessions/0038`'s
   build.** Root-caused with Bluetooth-stack log evidence (`ai-sessions/0039_FEATURE_RESULT_2026_09_19.md`

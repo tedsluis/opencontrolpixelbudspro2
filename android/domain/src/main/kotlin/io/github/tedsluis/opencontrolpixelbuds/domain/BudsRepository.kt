@@ -49,6 +49,15 @@ interface BudsRepository {
     val eqProfile: Flow<EqBandGains?>
 
     val batteryStatus: Flow<BatteryStatus>
+
+    /**
+     * Why the **Message Stream channel** (DLCI 0x04, used by ANC, Find My Buds and battery) could not
+     * be claimed for the most recent action that needed it — `null` when the last claim succeeded or
+     * none has been attempted (DECISIONS.md ADR-032). Distinct from [connectionState]: the session (the
+     * MAESTRO channel) can be perfectly healthy while another app (Google Play services' Fast Pair)
+     * holds this shared channel.
+     */
+    val messageStreamError: Flow<BudsError?>
     val unidentifiedFrames: Flow<UnidentifiedFrame>
 
     /** Connects to the already-bonded Buds (ARCHITECTURE.md §9.0a step 6) —

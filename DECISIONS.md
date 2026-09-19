@@ -1567,5 +1567,85 @@ motivated this).
   Left earbud is reported charging, until the regime-change is separately investigated. Does not
   change the existing HFP-first priority ordering.
 
+## ADR-032 — DLCI 0x04 (Message Stream) is a shared, on-demand channel: opened by the user's own ANC/Find/Connect action and released shortly after; loss of it is not a session loss
+
+- **Date**: 2026-09-19
+- **Status**: Accepted
+- **Note on process**: drafted by an AI agent; the decision itself is the maintainer's, made explicitly in the
+  chat session of 2026-09-19 that followed `ai-sessions/0039` ("ik wil dat een ANC- of Find-tik het kanaal zelf
+  claimt", after choosing this over per-channel tolerance/manual take-over), together with an explicit
+  retraction of the earlier "never connect automatically, not even on an ANC/EQ change" instruction — the
+  maintainer's reason: that instruction assumed the app dropped the *Bluetooth connection to the Buds*, whereas
+  what is actually lost is only one RFCOMM *channel*. Recorded here so the provenance is auditable
+  (`AGENTS.md` §6). The *details* below marked "agent detail" are the agent's implementation proposals inside
+  that decision, for the maintainer to veto.
+- **Context**: `ai-sessions/0039`/`0040` (system-log evidence from three real-hardware test rounds): Android allows
+  one RFCOMM connection per (device, channel) across all apps, refuses a second with `already at opened
+  state` and its failure path closes the incumbent's port too. Google Play services' Fast Pair event stream
+  holds the Message Stream channel (DLCI 0x04) and re-opens it 2.7–5.0 s after losing it (three observed recoveries). With Play services'
+  Nearby-devices permission allowed, this app therefore holds DLCI 0x04 for a median of 4.5 s (20 of 20
+  sessions ended on 0x04; 0.07–4.7 s). DLCI 0x02 (MAESTRO) was never contested by another app in any log.
+  While the app holds the channel, commands work (ACK and Notify frames arrive within tens of ms).
+- **Options considered**: (a) keep both channels as one all-or-nothing unit (status quo — flickers every ~5 s
+  on a phone with Play services' Fast Pair active); (b) per-channel tolerance with a "degraded" state and
+  manual retry; (c) (b) plus explicit take-over/release buttons; (d) this decision — claim on demand.
+- **Decision**:
+  1. The **session** is the MAESTRO channel (DLCI 0x02). `Connect` opens it; `ConnectionState.Ready` means
+     "the MAESTRO channel is open". Loss of DLCI 0x02 is a session loss (`Disconnected`), as before.
+  2. **DLCI 0x04 is claimed on demand**, by the user's own action that needs it: an ANC mode tap, an ANC
+     Refresh, a Find My Buds ring/stop tap, and (agent detail) once at `Connect` to take an initial ANC/battery
+     snapshot. No background/automatic claim, no periodic re-claim, no reconnect loop (`ARCHITECTURE.md` §6's
+     "user-initiated only" is kept — the trigger is always a user tap).
+  3. After the action completes the channel is **released after a short linger** (agent detail: 1.5 s) so
+     Google Play services can reclaim it and hold it stably; a claim is short, not held. A claim that finds the
+     channel busy is retried a bounded number of times within that one action (as `ai-sessions/0039` §3 fix 6).
+  4. **Loss of DLCI 0x04 is not a session loss**: it does not change `ConnectionState`; it is logged, and the
+     next action claims again. A failed claim is reported per action with its reason (`ChannelUnavailable`).
+  5. Values learned from DLCI 0x04 (ANC mode, battery) are **only as fresh as the last claim**; the UI treats
+     them as "last known", and each claim re-queries ANC (`Get`, `PROTOCOL.md` §4.1, ADR-021/022).
+- **What this does NOT settle / known limits**: (i) it does not remove Play services' contention — each claim
+  closes Play services' socket for its duration (unavoidable stack behaviour), which may briefly disturb
+  Android's own ANC controls; (ii) whether Find My Buds ringing continues after the Message Stream socket is
+  released is **unverified on hardware** (🟡 HYPOTHESIS that it does) — if it does not, the Find flow needs a
+  longer hold (a constant); (iii) 2 of 20 observed windows were < 1 s, so an action can occasionally fail and
+  must say so; (iv) EQ is unaffected (DLCI 0x02); (v) nothing here is hardware-verified.
+- **Consequences**: `BudsTransport` gains per-channel open/close and a distinct "on-demand channel closed"
+  signal; `BudsRepositoryImpl` orchestrates claim → act → linger → release under one mutex;
+  `ARCHITECTURE.md` §2.1/§6.0b updated. `ConnectionState` itself is unchanged. This supersedes nothing in
+  `DECISIONS.md`; it refines `ARCHITECTURE.md` §6.0b (which had recorded per-channel tolerance as "evaluated,
+  not adopted") by replacing the all-or-nothing rule for the Message Stream channel only.
+
+## ADR-033 — Battery Option B: `Group 0x03 Code 0x03` decoder on DLCI 0x04 unblocked for implementation (percentage regime only)
+
+- **Date**: 2026-09-19
+- **Status**: Accepted (implementation unblock, scope below); the charging-flag reading is a separate,
+  explicitly **unaccepted proposal** — see "Proposal awaiting sign-off"
+- **Note on process**: drafted by an AI agent; the unblock is the maintainer's explicit instruction in the
+  chat session of 2026-09-19 ("een ADR vrijgeven voor de batterijdecoder op 0x04"), per `AGENTS.md` §6/
+  `ARCHITECTURE.md` §5a's requirement that a command's implementation-unblock be stated in an ADR.
+- **Context**: ADR-031 promoted the *identity* of DLCI 0x04 `Group 0x03 Code 0x03` (Fast Pair "Battery
+  updated") to FACT for the discharging case but, unlike ADR-009/011/020, never stated an implementation
+  unblock, so `ARCHITECTURE.md` §5a kept it gated. Meanwhile the Buds push these frames in the maintainer's
+  own app logs: three immediately after DLCI 0x04 opens and again on every change (`03 03 00 03 <b1> <b2> ff`).
+  The app's HFP battery route shows "Battery unavailable" on the maintainer's phone (`ai-sessions/0040` §4), and
+  ADR-032 makes short DLCI 0x04 claims the app's model — a short claim receives this connect-time burst.
+- **Decision**: implementing a `FrameDecoder` for this message is unblocked, restricted to what ADR-031 already
+  promoted: `Value` = 3 bytes `[b1, b2, b3]`; `b1` = Left earbud, `b2` = Right earbud; **a byte in `0..100` is that
+  earbud's percentage** (`isCharging` stays unknown — never fabricated, `BatteryLevel`'s own contract); **any
+  other byte value is not interpreted** and the earbud stays "Battery unavailable" (`AGENTS.md` §5: never
+  guess); `b3` (observed `0xff`) is not interpreted and the Case stays unavailable.
+- **Proposal awaiting sign-off (NOT accepted by this ADR; `AGENTS.md` §6)**: bytes with bit 7 set are the
+  official Fast Pair encoding `0bSVVVVVVV` (S = charging, V = 0–100 %, `0x7F` = unknown) documented in
+  `PROTOCOL.md` §4.3 Option A, and `b3 = 0xff` means "unknown". Evidence: `CAP-009-FINDINGS.md` §4/§6 — after
+  the Left earbud entered the case, `b1` went 221→222→223→224→225→226→228 (frames 26852…28563) while Option E
+  (independent DLCI 0x08 message, FACT per ADR-014) reported that earbud climbing 93→94→95→96→97→98→100:
+  `b1 − 128` reproduces that sequence step for step, including the skipped 99. The same session's `AT+BIEV`/
+  Option E cross-checks are unaffected. This reading would explain ADR-031's "charging-state field-switch
+  anomaly" as a decoded flag rather than a regime change. If the maintainer accepts it, the decoder can show a
+  charging state and a level while charging, and the case byte; until then those regimes read as unavailable.
+- **Consequences**: `:data` gains a Battery frame decoder, routed through `CodecRouter`, feeding
+  `BatteryStatus.left`/`right`; `ARCHITECTURE.md` §5a's row for Battery Option B moves from "gated" to
+  "implemented"; the HFP `hfpEarbud` field stays as-is. Nothing else in DLCI 0x04 Group 0x03 is unblocked.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

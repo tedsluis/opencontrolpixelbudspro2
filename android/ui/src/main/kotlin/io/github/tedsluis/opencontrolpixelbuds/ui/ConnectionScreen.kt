@@ -163,6 +163,10 @@ private fun BatteryCard(status: BatteryStatus) {
     Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Battery", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Read from the Buds when the app last reached their Message Stream (at Connect and after each ANC / Find action).",
+                style = MaterialTheme.typography.bodySmall,
+            )
             BatteryRow("Left", status.left)
             BatteryRow("Right", status.right)
             BatteryRow("Case", status.case)
@@ -194,7 +198,7 @@ internal fun BudsError.userMessage(): String = when (this) {
     BudsError.PermissionDenied -> "Bluetooth permission is required."
     is BudsError.ChannelUnavailable ->
         "Couldn't open the ${channelLabel(channelId)}. Another app on this phone — for example Google " +
-            "Play services' Fast Pair — may already be using it. Wait a few seconds, then tap Retry."
+            "Play services' Fast Pair — may already be using it. Wait a few seconds, then try again."
     is BudsError.ChannelLost ->
         "The ${channelLabel(channelId)} was closed. Another app may have taken it over, or the Buds " +
             "dropped it. Tap Connect to reconnect."

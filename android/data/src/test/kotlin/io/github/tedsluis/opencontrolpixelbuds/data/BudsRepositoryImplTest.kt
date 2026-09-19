@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -306,6 +307,167 @@ class BudsRepositoryImplTest {
         assertEquals("0401000100", transport.sent[1].second.toHex())
     }
 
+    // ---- on-demand Message Stream claim (DECISIONS.md ADR-032) ------------------------------------
+
+    @Test
+    fun `an ANC tap claims the Message Stream, sends on it, and releases it after the linger`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        assertEquals(emptyList<Int>(), transport.openChannelCalls)
+
+        repo.setAncMode(AncMode.ADAPTIVE)
+
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.openChannelCalls)
+        assertEquals(Dlci.FAST_PAIR_MESSAGE_STREAM, transport.sent.single().first)
+        assertEquals(true, transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM), "still claimed during the linger")
+
+        advanceTimeBy(1_600)
+        runCurrent()
+
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.closeChannelCalls)
+        assertEquals(false, transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM), "released so Play services can take it back")
+    }
+
+    @Test
+    fun `a second action inside the linger reuses the open channel and only the last one releases it`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+
+        repo.ringBud(RingTarget.LEFT)
+        advanceTimeBy(700)
+        repo.stopRinging()
+
+        assertEquals(1, transport.openChannelCalls.size, "no second claim while the first is still held")
+        advanceTimeBy(1_000) // 1.0 s after the second action: the first action's timer must have been cancelled
+        runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls)
+        advanceTimeBy(700)
+        runCurrent()
+        assertEquals(1, transport.closeChannelCalls.size)
+    }
+
+    @Test
+    fun `a busy Message Stream fails the action with the reason, sends nothing, and clears on the next success`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        val busy = BudsError.ChannelUnavailable(Dlci.FAST_PAIR_MESSAGE_STREAM, "read failed, socket might closed")
+        transport.openChannelShouldFail = busy
+
+        val failed = repo.setAncMode(AncMode.OFF)
+
+        assertEquals(busy, (failed as BudsResult.Failure).error)
+        assertEquals(busy, repo.messageStreamError.first())
+        assertEquals(emptyList<Pair<Int, ByteArray>>().size, transport.sent.size)
+        // The session itself is untouched — Play services holding DLCI 0x04 is not a lost connection.
+        assertInstanceOf(ConnectionState.Ready::class.java, repo.connectionState.first())
+
+        transport.openChannelShouldFail = null
+        assertInstanceOf(BudsResult.Success::class.java, repo.setAncMode(AncMode.OFF))
+        assertNull(repo.messageStreamError.first())
+    }
+
+    @Test
+    fun `losing the on-demand channel is not a session loss and the next tap claims it again`() = runTest {
+        val machine = buildConnectionStateMachine()
+        val (repo, transport) = buildRepository(this, connectionStateMachine = machine)
+        advanceUntilIdle()
+        repo.setAncMode(AncMode.OFF)
+
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, "taken by another client")
+        advanceUntilIdle()
+
+        assertEquals(ConnectionState.Ready, machine.state.value)
+        repo.setAncMode(AncMode.ADAPTIVE)
+        assertEquals(2, transport.openChannelCalls.size, "claimed again after it was taken away")
+    }
+
+    @Test
+    fun `an ANC or Find tap while the session is not Ready fails without touching the Message Stream`() = runTest {
+        val machine = buildConnectionStateMachine(driveToReady = false)
+        val (repo, transport) = buildRepository(this, connectionStateMachine = machine)
+        advanceUntilIdle()
+
+        assertEquals(BudsError.ConnectionLost, (repo.setAncMode(AncMode.OFF) as BudsResult.Failure).error)
+        assertEquals(BudsError.ConnectionLost, (repo.ringBud(RingTarget.RIGHT) as BudsResult.Failure).error)
+        assertEquals(emptyList<Int>(), transport.openChannelCalls)
+    }
+
+    @Test
+    fun `the Buds' own Notify wins over the optimistic ANC update`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+
+        val tap = launch { repo.setAncMode(AncMode.ACTIVE) }
+        runCurrent()
+        // The Buds answer with their real state (Off, CAP-036 frame 1182) — e.g. after refusing the Set.
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e80020"))
+        tap.join()
+
+        assertEquals(AncMode.OFF, repo.ancMode.first())
+    }
+
+    @Test
+    fun `a Find My Buds tap returns as soon as the Buds ACK, not after the full wait`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        var finishedAt = -1L
+
+        val tap = launch { repo.ringBud(RingTarget.LEFT); finishedAt = testScheduler.currentTime }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("ff010003" + "040100")) // ACK of a Ring (real frame)
+        tap.join()
+
+        assertEquals(0L, finishedAt, "no virtual time may pass: the ACK ended the wait")
+    }
+
+    @Test
+    fun `an explicit disconnect clears the Message Stream error`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        transport.openChannelShouldFail = BudsError.ChannelUnavailable(Dlci.FAST_PAIR_MESSAGE_STREAM, "busy")
+        repo.setAncMode(AncMode.OFF)
+
+        repo.disconnect()
+
+        assertNull(repo.messageStreamError.first())
+    }
+
+    @Test
+    fun `a Battery updated frame fills Left and Right from the Buds' own push, Case stays unavailable`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+
+        val job = launch { repo.batteryStatus.first { it.left is io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known } }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "605fff")) // 96 % / 95 %
+        job.join()
+
+        val status = repo.batteryStatus.value
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(96, null), status.left)
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(95, null), status.right)
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Unavailable, status.case)
+    }
+
+    @Test
+    fun `a charging-regime battery frame replaces a known percentage with unavailable, never a stale value`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        val first = launch { repo.batteryStatus.first { it.left is io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known } }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "6464ff"))
+        first.join()
+
+        val second = launch { repo.batteryStatus.first { it.left is io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Unavailable } }
+        runCurrent()
+        // 0xe4 / 0xdd: the charging regime real logs show while the earbuds sit in the case. ADR-033
+        // does not interpret it, so it must read as unavailable — not keep showing the old 100 %.
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "e4ddff"))
+        second.join()
+
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Unavailable, repo.batteryStatus.value.left)
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Unavailable, repo.batteryStatus.value.right)
+    }
+
     @Test
     fun `HFP battery pushes update batteryStatus hfpEarbud without fabricating a charging state`() = runTest {
         val (repo, _, hfpBattery) = buildRepository(this)
@@ -336,13 +498,13 @@ class BudsRepositoryImplTest {
         var frame: io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame? = null
         val job = launch { frame = repo.unidentifiedFrames.first() }
         runCurrent()
-        // Group 0x03 Code 0x03 ("Battery updated", ADR-031) — FACT-identified but gated
-        // (ARCHITECTURE.md §5a), so this repository must not decode it as anything.
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003") + byteArrayOf(1, 2, 3))
+        // Group 0x07 (SASS) Code 0x34 — a real periodic Buds message with no known meaning yet
+        // (PROTOCOL.md §6). (This test used Group 0x03 Code 0x03 until ADR-033 unblocked its decoder.)
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0734000c") + ByteArray(12) { 1 })
         job.join()
 
-        assertEquals(0x03, frame?.group)
-        assertEquals(0x03, frame?.code)
+        assertEquals(0x07, frame?.group)
+        assertEquals(0x34, frame?.code)
     }
 }
 

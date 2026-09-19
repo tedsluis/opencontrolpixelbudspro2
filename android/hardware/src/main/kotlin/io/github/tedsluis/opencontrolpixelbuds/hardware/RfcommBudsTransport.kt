@@ -26,6 +26,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -36,6 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -84,19 +86,31 @@ class RfcommBudsTransport(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BudsTransport {
 
-    /** One successfully opened set of channel sockets plus the coroutines reading them. */
-    private inner class Connection(val sockets: Map<Int, RfcommSocket>) {
+    /**
+     * One successfully opened set of channel sockets plus the coroutines reading them. [sockets] are
+     * the **session** channels opened by [connect] (loss of any = loss of the connection);
+     * [auxSockets] are **on-demand** channels opened later by [openChannel] (loss = that channel
+     * only, ADR-032). [open] is how this connection opens further channels.
+     */
+    private inner class Connection(
+        val sockets: Map<Int, RfcommSocket>,
+        val open: (channelId: Int, uuid: UUID) -> RfcommSocket,
+    ) {
         val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
         val lossReported = AtomicBoolean(false)
+        val auxSockets = ConcurrentHashMap<Int, RfcommSocket>()
+        val auxJobs = ConcurrentHashMap<Int, Job>()
         private val closed = AtomicBoolean(false)
 
         val isOpen: Boolean get() = !closed.get()
 
-        /** Cancels the readers, then closes every socket. Idempotent. */
+        /** Cancels the readers, then closes every socket (session and on-demand). Idempotent. */
         fun closeAll() {
             if (!closed.compareAndSet(false, true)) return
             scope.cancel()
             sockets.values.forEach(::closeQuietly)
+            auxSockets.values.forEach(::closeQuietly)
+            auxSockets.clear()
         }
     }
 
@@ -115,6 +129,9 @@ class RfcommBudsTransport(
     // a later subscriber as if it described a newer connection.
     private val _connectionLost = MutableSharedFlow<ConnectionLoss>(extraBufferCapacity = 4)
     override val connectionLost: SharedFlow<ConnectionLoss> = _connectionLost
+
+    private val _channelClosed = MutableSharedFlow<ChannelClosed>(extraBufferCapacity = 8)
+    override val channelClosed: SharedFlow<ChannelClosed> = _channelClosed
 
     /**
      * Opens one socket per entry in [channels] (channelId -> SDP UUID, see
@@ -142,7 +159,7 @@ class RfcommBudsTransport(
         val opened = LinkedHashMap<Int, RfcommSocket>()
         try {
             for ((channelId, uuid) in channels) {
-                when (val result = openChannel(channelId, uuid, open)) {
+                when (val result = openSocketWithRetry(channelId, uuid, open)) {
                     is ChannelOpen.Opened -> opened[channelId] = result.socket
                     is ChannelOpen.Failed -> {
                         opened.values.forEach(::closeQuietly)
@@ -155,9 +172,9 @@ class RfcommBudsTransport(
             throw e
         }
 
-        val connection = Connection(opened)
+        val connection = Connection(opened, open)
         replaceCurrent(connection)
-        opened.forEach { (channelId, socket) -> startReader(connection, channelId, socket) }
+        opened.forEach { (channelId, socket) -> startReader(connection, channelId, socket, onDemand = false) }
         BudsResult.Success(Unit)
     }
 
@@ -166,7 +183,7 @@ class RfcommBudsTransport(
         class Failed(val error: BudsError) : ChannelOpen
     }
 
-    private suspend fun openChannel(
+    private suspend fun openSocketWithRetry(
         channelId: Int,
         uuid: UUID,
         open: (Int, UUID) -> RfcommSocket,
@@ -203,7 +220,7 @@ class RfcommBudsTransport(
         return ChannelOpen.Failed(BudsError.ChannelUnavailable(channelId, lastDetail))
     }
 
-    private fun startReader(connection: Connection, channelId: Int, socket: RfcommSocket) {
+    private fun startReader(connection: Connection, channelId: Int, socket: RfcommSocket, onDemand: Boolean): Job =
         connection.scope.launch {
             val buffer = ByteArray(1024)
             try {
@@ -213,17 +230,37 @@ class RfcommBudsTransport(
                     if (read < 0) {
                         // EOF: the peer/stack closed this channel. Not "normal" — the channel is
                         // dead, and leaving the UI on Ready would be wrong.
-                        reportLoss(connection, channelId, "stream closed (EOF)")
+                        endOfChannel(connection, channelId, "stream closed (EOF)", onDemand)
                         break
                     }
                     _inbound.emit(channelId to buffer.copyOf(read))
                 }
             } catch (e: IOException) {
                 // isActive is false when this IOException was *caused* by our own disconnect()/
-                // teardown closing the socket under a blocked read() — an expected, silent end.
-                if (isActive) reportLoss(connection, channelId, BleLogger.describe(e))
+                // closeChannel()/teardown closing the socket under a blocked read() — an expected,
+                // silent end.
+                if (isActive) endOfChannel(connection, channelId, BleLogger.describe(e), onDemand)
             }
         }
+
+    private fun endOfChannel(connection: Connection, channelId: Int, detail: String?, onDemand: Boolean) {
+        if (onDemand) reportChannelClosed(connection, channelId, detail) else reportLoss(connection, channelId, detail)
+    }
+
+    /**
+     * An on-demand channel (ADR-032) died on its own: drop just that socket and announce it. If
+     * [closeChannel] already removed it (a deliberate close) the removal below finds nothing and
+     * nothing is announced. The connection and its other channels are untouched.
+     */
+    private fun reportChannelClosed(connection: Connection, channelId: Int, detail: String?) {
+        val socket = connection.auxSockets.remove(channelId) ?: return
+        connection.auxJobs.remove(channelId)?.cancel()
+        closeQuietly(socket)
+        if (current !== connection) return
+        BleLogger.logConnectionEvent(
+            "RFCOMM on-demand channel 0x%02x closed (%s) — session channels untouched".format(channelId, detail),
+        )
+        _channelClosed.tryEmit(ChannelClosed(channelId, detail))
     }
 
     /** Rules 1 and 2: dedupe per connection, tear everything down, and only then announce it. */
@@ -253,8 +290,9 @@ class RfcommBudsTransport(
 
     override suspend fun send(channelId: Int, frame: ByteArray): BudsResult<Unit> =
         withContext(ioDispatcher) {
-            val connection = current
-            val socket = connection?.sockets?.get(channelId)
+            val connection = current ?: return@withContext BudsResult.Failure(BudsError.ConnectionLost)
+            val onDemand = connection.auxSockets.containsKey(channelId)
+            val socket = connection.sockets[channelId] ?: connection.auxSockets[channelId]
                 ?: return@withContext BudsResult.Failure(BudsError.ConnectionLost)
             try {
                 val output = socket.outputStream
@@ -263,10 +301,46 @@ class RfcommBudsTransport(
                 BudsResult.Success(Unit)
             } catch (e: IOException) {
                 val detail = BleLogger.describe(e)
-                reportLoss(connection, channelId, detail)
+                endOfChannel(connection, channelId, detail, onDemand)
                 BudsResult.Failure(BudsError.ChannelLost(channelId, detail))
             }
         }
+
+    override suspend fun openChannel(channelId: Int, uuid: UUID): BudsResult<Unit> = withContext(ioDispatcher) {
+        val connection = current ?: return@withContext BudsResult.Failure(BudsError.ConnectionLost)
+        if (connection.sockets.containsKey(channelId) || connection.auxSockets.containsKey(channelId)) {
+            return@withContext BudsResult.Success(Unit)
+        }
+        when (val result = openSocketWithRetry(channelId, uuid, connection.open)) {
+            is ChannelOpen.Failed -> BudsResult.Failure(result.error)
+            is ChannelOpen.Opened -> {
+                // The connection may have been lost or replaced while this (possibly retried) open
+                // was in flight — never attach a socket to a dead connection.
+                if (current !== connection || !connection.isOpen) {
+                    closeQuietly(result.socket)
+                    return@withContext BudsResult.Failure(BudsError.ConnectionLost)
+                }
+                connection.auxSockets[channelId] = result.socket
+                connection.auxJobs[channelId] = startReader(connection, channelId, result.socket, onDemand = true)
+                BudsResult.Success(Unit)
+            }
+        }
+    }
+
+    override suspend fun closeChannel(channelId: Int) = withContext(ioDispatcher) {
+        val connection = current ?: return@withContext
+        // Remove first, so the reader's resulting IOException finds nothing to report (deliberate close).
+        val socket = connection.auxSockets.remove(channelId) ?: return@withContext
+        connection.auxJobs.remove(channelId)?.cancel()
+        closeQuietly(socket)
+        BleLogger.logConnectionEvent("RFCOMM on-demand channel 0x%02x released".format(channelId))
+    }
+
+    override fun isChannelOpen(channelId: Int): Boolean {
+        val connection = current ?: return false
+        return connection.isOpen &&
+            (connection.sockets.containsKey(channelId) || connection.auxSockets.containsKey(channelId))
+    }
 
     override suspend fun disconnect() = withContext(ioDispatcher) {
         replaceCurrent(null)?.closeAll()

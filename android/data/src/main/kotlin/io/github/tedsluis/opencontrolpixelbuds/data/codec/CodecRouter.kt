@@ -33,6 +33,7 @@ sealed class RoutedFrame {
     data class Anc(val frame: AncFrame) : RoutedFrame()
     data class Eq(val frame: EqFrame) : RoutedFrame()
     data class Ring(val frame: RingFrame) : RoutedFrame()
+    data class Battery(val frame: BatteryFrame) : RoutedFrame()
 }
 
 /**
@@ -109,6 +110,11 @@ class CodecRouter {
                 val ringResult = RingFrameDecoder.decode(frame)
                 if (ringResult is BudsResult.Success) {
                     routed += RoutedFrame.Ring(ringResult.value)
+                    continue
+                }
+                val batteryResult = BatteryFrameDecoder.decode(frame)
+                if (batteryResult is BudsResult.Success) {
+                    routed += RoutedFrame.Battery(batteryResult.value)
                     continue
                 }
                 // Structurally short/malformed frames never reach here distinctly from

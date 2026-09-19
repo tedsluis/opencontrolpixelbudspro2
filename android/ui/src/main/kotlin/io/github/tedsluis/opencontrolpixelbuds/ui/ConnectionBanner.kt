@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 
 /** True only when the app's own control channels are open — every command screen gates on this. */
@@ -46,6 +47,36 @@ internal fun NotConnectedBanner(state: ConnectionState, modifier: Modifier = Mod
         text = "$what Controls are disabled — open the Connection tab to connect.",
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.error,
+        modifier = modifier,
+    )
+}
+
+/**
+ * Why the last ANC/Find action could not reach the Buds' Message Stream channel (DECISIONS.md
+ * ADR-032) — shown on the screens whose actions need that channel. Renders nothing when there is
+ * no error. The session (the Connection card) can be perfectly healthy while this is shown.
+ */
+@Composable
+internal fun MessageStreamNotice(error: BudsError?, modifier: Modifier = Modifier) {
+    if (error == null) return
+    Text(
+        text = error.userMessage(),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.error,
+        modifier = modifier,
+    )
+    error.technicalDetail()?.let {
+        Text(text = it, style = MaterialTheme.typography.bodySmall, modifier = modifier)
+    }
+}
+
+/** One-line explanation of what a tap on these screens does to the shared channel (ADR-032). */
+@Composable
+internal fun MessageStreamHint(modifier: Modifier = Modifier) {
+    Text(
+        text = "Each action briefly claims the Buds' Message Stream channel. Another app that uses it " +
+            "(for example Google Play services' Fast Pair) may lose it for a moment.",
+        style = MaterialTheme.typography.bodySmall,
         modifier = modifier,
     )
 }

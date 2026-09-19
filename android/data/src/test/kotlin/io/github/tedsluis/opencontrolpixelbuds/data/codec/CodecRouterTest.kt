@@ -21,6 +21,7 @@ package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
+import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -79,20 +80,51 @@ class CodecRouterTest {
     fun `surfaces an unrecognized Message Stream frame as UnidentifiedFrame`() {
         val router = CodecRouter()
         val unidentified = mutableListOf<UnidentifiedFrame>()
-        // Group 0x03 Code 0x03 ("Battery updated", DECISIONS.md ADR-031) — a real, FACT-identified
-        // message, but its implementation gate is unresolved (ARCHITECTURE.md §5a), so this router
-        // correctly does not decode it as anything, only flags it.
+        // Group 0x07 (SASS) Code 0x34 — a real periodic message the Buds push on this channel, whose
+        // meaning is still an open question (PROTOCOL.md §6), so this router correctly does not decode
+        // it as anything, only flags it. (Payload bytes here are dummies; only Group/Code/length matter.)
+        // This test used to use Group 0x03 Code 0x03 (battery) — that message is now decoded (ADR-033).
         val routed = router.feed(
             Dlci.FAST_PAIR_MESSAGE_STREAM,
-            hex("03030003") + byteArrayOf(0x50, 0x50, 0xff.toByte()),
+            hex("0734000c") + ByteArray(12) { 0x01 },
             timestampMillis = 123L,
             onUnidentified = { unidentified += it },
         )
         assertTrue(routed.isEmpty())
         assertEquals(1, unidentified.size)
-        assertEquals(0x03, unidentified[0].group)
-        assertEquals(0x03, unidentified[0].code)
+        assertEquals(0x07, unidentified[0].group)
+        assertEquals(0x34, unidentified[0].code)
         assertEquals(123L, unidentified[0].timestampMillis)
+    }
+
+    @Test
+    @DisplayName("DLCI 0x04: a Battery updated frame is decoded and routed, not left unidentified (ADR-033)")
+    fun `routes a Battery updated frame`() {
+        val router = CodecRouter()
+        val unidentified = mutableListOf<UnidentifiedFrame>()
+        val routed = router.feed(
+            Dlci.FAST_PAIR_MESSAGE_STREAM,
+            hex("03030003" + "605fff"),
+            timestampMillis = 1L,
+            onUnidentified = { unidentified += it },
+        )
+        assertEquals(1, routed.size)
+        val battery = (routed[0] as RoutedFrame.Battery).frame
+        assertEquals(BatteryLevel.Known(96, null), battery.left)
+        assertEquals(BatteryLevel.Known(95, null), battery.right)
+        assertTrue(unidentified.isEmpty())
+    }
+
+    @Test
+    @DisplayName("DLCI 0x04: two battery frames glued into one socket read (seen in real logs) both decode")
+    fun `routes two concatenated Battery updated frames`() {
+        val router = CodecRouter()
+        val routed = router.feed(
+            Dlci.FAST_PAIR_MESSAGE_STREAM,
+            hex("03030003" + "6464ff" + "03030003" + "6464ff"),
+            timestampMillis = 1L,
+        )
+        assertEquals(2, routed.size)
     }
 
     @Test

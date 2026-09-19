@@ -42,6 +42,19 @@ class FakeBudsTransport : BudsTransport {
     private val _connectionLost = MutableSharedFlow<ConnectionLoss>(extraBufferCapacity = 8)
     override val connectionLost: SharedFlow<ConnectionLoss> = _connectionLost
 
+    private val _channelClosed = MutableSharedFlow<ChannelClosed>(extraBufferCapacity = 8)
+    override val channelClosed: SharedFlow<ChannelClosed> = _channelClosed
+
+    /** Channels currently open via [openChannel] (on-demand, ADR-032). */
+    val openChannels = mutableSetOf<Int>()
+
+    /** Every [openChannel] call in order — lets a test assert claim/release behaviour. */
+    val openChannelCalls = mutableListOf<Int>()
+    val closeChannelCalls = mutableListOf<Int>()
+
+    /** When set, [openChannel] fails with this error (a busy Message Stream channel). */
+    var openChannelShouldFail: BudsError? = null
+
     val sent = mutableListOf<Pair<Int, ByteArray>>()
     var sendShouldFail: BudsError? = null
     var connectShouldFail: BudsError? = null
@@ -66,6 +79,27 @@ class FakeBudsTransport : BudsTransport {
 
     override suspend fun disconnect() {
         connected = false
+    }
+
+    override suspend fun openChannel(channelId: Int, uuid: UUID): BudsResult<Unit> {
+        openChannelCalls += channelId
+        if (!connected) return BudsResult.Failure(BudsError.ConnectionLost)
+        openChannelShouldFail?.let { return BudsResult.Failure(it) }
+        openChannels += channelId
+        return BudsResult.Success(Unit)
+    }
+
+    override suspend fun closeChannel(channelId: Int) {
+        closeChannelCalls += channelId
+        openChannels -= channelId
+    }
+
+    override fun isChannelOpen(channelId: Int): Boolean = channelId in openChannels
+
+    /** Test hook: the on-demand channel died on its own (Google Play services took it back). */
+    suspend fun emitChannelClosed(channelId: Int, detail: String? = "scripted") {
+        openChannels -= channelId
+        _channelClosed.emit(ChannelClosed(channelId, detail))
     }
 
     override suspend fun send(channelId: Int, frame: ByteArray): BudsResult<Unit> {

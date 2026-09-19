@@ -119,6 +119,8 @@ data class OpenControlUiState(
     /** Android itself reports the bonded Buds as connected to this phone (audio/HFP profiles) —
      * distinct from this app's own control channels being open (`ai-sessions/0039` §5). */
     val osConnected: Boolean,
+    /** Why the last action needing the shared Message Stream channel could not claim it (ADR-032). */
+    val messageStreamError: BudsError?,
     val ancMode: AncMode?,
     val eqProfile: EqBandGains?,
     val batteryStatus: BatteryStatus,
@@ -184,6 +186,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
             composable(Routes.ANC) {
                 AncScreen(
                     connectionState = state.connectionState,
+                    messageStreamError = state.messageStreamError,
                     ancMode = state.ancMode,
                     onAncModeSelected = actions.onAncModeSelected,
                     onRefreshAncMode = actions.onRefreshAncMode,
@@ -202,6 +205,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
             composable(Routes.FIND_MY_BUDS) {
                 FindMyBudsScreen(
                     connectionState = state.connectionState,
+                    messageStreamError = state.messageStreamError,
                     onRing = actions.onRing,
                     onStop = actions.onStopRinging,
                     modifier = Modifier.padding(padding),

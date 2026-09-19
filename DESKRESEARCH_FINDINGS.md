@@ -675,5 +675,137 @@ original, ends at ~17:25:08 — `CAP-006`'s own *third* sample (`Settable=0x00`,
   ADR involved; the spec-sweep negative itself needed no sign-off per `AGENTS.md` §15, since it is
   a direct observation, not a new protocol claim).
 
+### 2026-09-19 — Can the current EQ be read? DLCI 0x02 is pw_rpc `maestro_pw.Maestro`, and the official app reads every setting with `ReadSetting` on each connect (`ai-sessions/0040`, maintainer-requested EQ-read research)
+
+**Question.** `ARCHITECTURE.md` §3.1 records "no confirmed read path exists for EQ" and the shipped app
+shows the EQ as *unknown* because the Buds never volunteer it. Is there a read path in the existing
+captures? **Result: yes — strong wire evidence, none of it promoted (`AGENTS.md` §6; proposals at the end).**
+
+**Method (rule 4a — commands and raw bytes).** Every claim below can be reproduced with
+`scripts/pwrpc_decode.py <capture>` (added this session; it runs
+`tshark -r <cap> -Y "btrfcomm.dlci==2 && btrfcomm.frame_type==0xef" -T fields -e frame.number -e bluetooth.src -e data.data`,
+reassembles the RFCOMM byte stream, splits on `0x7e`, HDLC-unescapes, and parses each payload as a
+Pigweed `RpcPacket` protobuf: 1 `type`, 2 `channel_id`, 3 `service_id`, 4 `method_id`, 5 `payload`,
+6 `status`, 7 `call_id`).
+
+**Finding 1 — the constant prefix of every DLCI 0x02 EQ write is a pw_rpc packet header, byte-exact.**
+`CAP-015` frame 2165 (an EQ write; already a unit-test fixture in `:data`'s EQ codec tests):
+```
+7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 1e 22 1c 82 01 19 0d 00 00 a0 40 15 … 7e
+```
+HDLC-unescaped (`7d 5e` → `7e`) and read as `RpcPacket`: `channel_id = 19`,
+`service_id = 0x7ede71ea`, `method_id = 0x9e8c9a1d`, `payload = 30 bytes`. The pw_rpc/pw_tokenizer 65599
+name hash (`h = len; c = 65599; h += c·byte; c *= 65599`, mod 2³², `scripts/pwrpc_decode.py:h65599`) gives
+`hash("maestro_pw.Maestro") = 0x7ede71ea` and `hash("WriteSetting") = 0x9e8c9a1d` — **both 32-bit IDs match
+exactly** (chance of coincidence 2⁻⁶⁴). The service and method names are the ones `REVERSE_ENGINEERING.md`
+recovered from the APK (`fux.java`'s `maestro_pw.Maestro` service table). This is the direct wire
+confirmation the ADR-018 Option-2 text and `PROTOCOL.md` §2.2a said was still missing ("DLCI 0x02's
+Sent-direction payload is `libmaestro`'s settings-write commands" — 🟡 HYPOTHESIS).
+
+**Finding 2 — the other methods' IDs, computed the same way, occur on the wire.**
+`hash("ReadSetting") = 0xaed0ae51`, `hash("SubscribeToSettingsChanges") = 0x2821adf5`,
+`hash("GetSoftwareInfo") = 0x7199fa44`. A raw byte scan of all 52 `*btsnoop*.log` files under `captures/`
+for `1d ea 71 de 7d 5e 25 <method_id LE>` (script in `ai-sessions/0040_FEATURE_RESULT_2026_09_19.md` §5)
+finds `ReadSetting` 7 416×, `SubscribeToSettingsChanges` 457×, `WriteSetting` 344×, `GetSoftwareInfo` 151×
+(plus three further method IDs, `0x28eca5e3`, `0xe61e8290`, `0x673bed4e`, still unnamed). **Caveat:** these are
+*packet* counts, requests **and** responses/stream messages together, not request counts.
+
+**Finding 3 — on every connect the official app reads ~30 settings one by one.** `CAP-036` (a plain
+reconnect, no user action) contains 64 `ReadSetting` packets: request payload `4:N` (`N` = the `qhr` field
+number: 1, 2, 3, 4, 5, 7, 11, 12, 13, 15, 16, 17, 18, 19, 21 … 32), each answered by a `RESPONSE` whose payload is
+`4:{N: value}` — the same shape as the write body. The **EQ** is `N = 16` (live EQ) and `N = 18` (last saved EQ).
+Raw frames, `CAP-036` frames 1523/1525 (field 16) and 1529/1531 (field 18):
+```
+1523  req  7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 2a 02 20 10 47 ee ad cf 7e      -> 4:16
+1525  resp 7e 00 a5 03 2a 1e 22 1c 82 01 19 0d c0 cc cc 3d 15 00 00 00 00 1d a0 99 99 3e 25 c0 cc 4c 3e 2d c0 cc 4c 3e 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 85 b6 18 ed 7e
+      -> 4:{16:{1:0.10 2:0.00 3:0.30 4:0.20 5:0.20}}   (5 × float32, wire order per ADR-016)
+1529  req  7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 2a 02 20 12 6b 8f a3 21 7e      -> 4:18
+1531  resp … 22 1c 92 01 19 0d c0 cc cc 3d …                                                  -> 4:{18:{same quintet}}
+```
+(CRC-32 bytes and the request's HDLC address `00 4b` vs. the response's `00 a5` are as captured; the request
+`channel_id` is 21 here, 19 in `CAP-015`'s writes — see open item 2.)
+
+**Finding 4 — the read value is the true current EQ, and stream updates track every change.**
+`CAP-015` (the EQ session, Group T): the connect-time `ReadSetting` of field 16 (frame 1978) and 18 (frame 1985)
+both return `[4.5, −4.9, 4.5, 3.8, 4.1]`. Every later single-band drag in that capture (e.g. frames 2470→2573,
+2616→2642) changes only the fifth band while bands 1–4 stay `4.5, −4.9, 4.5, 3.8` — i.e. the value read at
+connect *was* the Buds' actual state, not a default. `SubscribeToSettingsChanges` (`RpcPacket.type = 7`,
+`SERVER_STREAM`) mirrors each write within ~0.05–0.6 s (114 EQ-carrying packets in the capture). Side observation,
+🟡 HYPOTHESIS strengthened (`PROTOCOL.md` §4.2's open field-16-vs-18 item, ADR-020): field 16 changes stream
+*during* a drag (frames 2527→2573: 3.9 → 1.6 → −1.1 → −3.5 → −5.3 → −6.0), field 18 appears once, ~1 s *after* the drag ends
+(frames 2586, 2653, 2819, 2863) — consistent with 16 = live/preview and 18 = persisted on release.
+
+**Finding 5 — what this app's own connect already shows.** At connect the app's debug export shows the Buds
+pushing, unprompted, `RESPONSE` `maestro_pw.Maestro/GetSoftwareInfo` on `channel_id 21` with
+`call_id = 0xFFFFFFFF` (pw_rpc's "open/unrequested call" id) carrying serial and `release_5.203`. So a fresh
+client that sends nothing still receives on channel 21.
+
+**Open items before any implementation (recorded, not decided).**
+1. **What request a fresh client must send.** The official app's first packets before the settings sweep go to
+   other services (`0x73d5d805`, `0xaf3a7737`, `0x755ffe65`, `0x1c256c5d`, all unnamed); whether a `ReadSetting`
+   from a client that skipped them is answered is untested.
+2. **Which `channel_id` and HDLC address to use for our own requests** (19 in `CAP-015`'s writes, 21 in `CAP-036`'s
+   reads and in the Buds' own unsolicited frame; `ARCHITECTURE.md` §5's "address is per-connection-negotiated").
+3. **Request/response matching** — the responses carry `call_id` `0xFFFFFFFF` or omit it; how to pair concurrent reads is unknown.
+4. Independent confirmation on a *second* capture that `ReadSetting 4:16` equals the on-screen EQ (only `CAP-015`'s
+   self-consistency was checked here, not the screen).
+
+**Proposals awaiting maintainer sign-off (`AGENTS.md` §6 — an agent proposes, never promotes).**
+(a) Promote to 🟢 FACT: *DLCI 0x02 carries pw_rpc packets of service `maestro_pw.Maestro`; the constant frame prefix is
+the RpcPacket header (Finding 1).* (b) Promote to 🟡→🟢 as evidence accrues: *`ReadSetting {4:N}` returns the current
+value of `qhr` field N, EQ = 16/18 (Findings 3–4).* (c) A `DECISIONS.md` ADR unblocking a **read** path on DLCI 0x02
+(ADR-013 unblocked only the generic *write* wrapper; ADR-020 unblocks EQ *write*) — needed before any
+`ReadSetting` is sent from the app. (d) The cheapest safe next experiment: a capture with the app itself sending
+one `ReadSetting 4:16` from a debug-only action, once (c) exists.
+
+### 2026-09-19 (second entry) — Why the app's HFP battery (Option C) shows "Battery unavailable" on the maintainer's phone (`ai-sessions/0040`, maintainer-requested)
+
+**Observation (🟢 FACT, direct).** In every screenshot of the Connection screen taken while the app reported
+`Connected` — three separate sessions on 2026-09-18 and 2026-09-19 — all four battery rows (Left, Right, Case,
+"One earbud (side unknown)") read "Battery unavailable". `HfpBatteryReader` never produced a value on this phone
+(Pixel 9a, GrapheneOS, Android 17).
+
+**What is *not* in question.** `DECISIONS.md` ADR-015/ADR-023 are statements about the **wire**: the Buds send
+`AT+BIEV=2,<n>` over HFP to the phone's Bluetooth stack, independent of GMS and of the companion app. Nothing
+here contradicts that. The open point is only whether that traffic is *delivered to an app* by a public API.
+
+**Findings.**
+1. **The receiver is registered without a company-ID category** (`HfpBatteryReader.observeBievBatteryPercent()`
+   registers `IntentFilter(BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT)` and nothing else). That class's
+   own doc comment already carries a `// TODO(verify)` predicting exactly this: standard indicators may never reach
+   apps at all. 🟡 HYPOTHESIS (Android's intent-matching rule — a filter must declare every category the intent
+   carries — not verified against a live intent).
+2. **Standard `AT+BIEV` is not a vendor-specific command.** AOSP's `HeadsetStateMachine` broadcasts
+   `ACTION_VENDOR_SPECIFIC_HEADSET_EVENT` for a fixed set of vendor AT commands mapped to company IDs (the map
+   named Plantronics, Google and Apple entries); a battery HF-indicator is handled by `processAtBiev` and updates
+   the OS's own remote-device battery record instead of being broadcast. Read on 2026-09-19 from
+   `android.googlesource.com/platform/packages/modules/Bluetooth/…/hfp/HeadsetStateMachine.java` through a
+   fetch tool that returned a **partial, summarised** view (it could not quote `processAtBiev` verbatim) — so this
+   is a strong lead, not a line-by-line reading. 🟡 HYPOTHESIS (strong).
+3. **The OS-side battery record is not reachable through a public API.** `BluetoothDevice.getBatteryLevel()` and
+   `ACTION_BATTERY_LEVEL_CHANGED` are `@hide`/`@SystemApi`; `AGENTS.md` §3 bans hidden-API access and reflection.
+   (`ARCHITECTURE.md` §4 option 0 lists that broadcast as "worth checking" — on this evidence it is not available to
+   this app either.)
+4. **Negative log evidence, weak.** At the app's connect the system log shows HFP up (`Telecom … HFP device …
+   changed state to 2`) and Play services receiving the Buds' battery through its Fast Pair path
+   (`DeviceInfoGroupListener: The device pass battery info to seeker`), but no line about a vendor-specific headset
+   event; the log's Bluetooth-stack coverage does not include AT traffic, so absence proves nothing by itself.
+
+**Conclusion (🟡 HYPOTHESIS, strong).** Option C's *wire facts* stand, but the app's *implementation path* for it
+(this receiver) most likely cannot work on Android 14+ for the standard `AT+BIEV` indicator, so `AGENTS.md` §5 /
+`ARCHITECTURE.md` §4's implicit assumption that HFP is an app-consumable battery source is falsified in practice.
+
+**How the maintainer can confirm (safe, not done here).** (i) With the Buds connected,
+`adb shell dumpsys bluetooth_manager | grep -i -B3 -A3 battery` — a battery level for the Buds in the OS's own
+record means the OS consumed the indicator (also why Android's Bluetooth settings can show a battery).
+(ii) A debug-only receiver logging *every* `BluetoothHeadset` broadcast action (action name only) for one connect.
+
+**Consequences.** Battery now comes from DLCI 0x04's "Battery updated" message (`DECISIONS.md` ADR-033,
+implemented this session); the connection-free BLE Fast Pair advertisement (ADR-006's bounded exception,
+`PROTOCOL.md` §4.3 Option A) is the next source that does not depend on who holds a channel. The HFP row and
+`HfpBatteryReader` are left in place (they cost nothing and show "unavailable" honestly) — removing them, or
+re-labelling Option C in `PROTOCOL.md`/`ARCHITECTURE.md` §4 as "wire-confirmed, not app-consumable", is a
+maintainer decision (proposal, `AGENTS.md` §6).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS
