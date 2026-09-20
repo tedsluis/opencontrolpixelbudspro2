@@ -110,8 +110,8 @@ class CodecRouterTest {
         )
         assertEquals(1, routed.size)
         val battery = (routed[0] as RoutedFrame.Battery).frame
-        assertEquals(BatteryLevel.Known(96, null), battery.left)
-        assertEquals(BatteryLevel.Known(95, null), battery.right)
+        assertEquals(BatteryLevel.Known(96, false), battery.left)
+        assertEquals(BatteryLevel.Known(95, false), battery.right)
         assertTrue(unidentified.isEmpty())
     }
 
@@ -128,23 +128,94 @@ class CodecRouterTest {
     }
 
     @Test
-    @DisplayName("DLCI 0x02: splits two back-to-back real EQ preset frames sharing a flag byte")
+    @DisplayName("DLCI 0x02: splits two back-to-back real pw_hdlc frames sharing a flag byte (CAP-015 frames 2116 and 2117)")
     fun `routes two concatenated HDLC frames from one chunk`() {
         val router = CodecRouter()
-        val frame2111 =
-            "7e003b0310131dea71de7d5e251d9a8c9e2a1e221c8201190d0000000015" +
-                "000000001d0000000025000000002d00000000881667fe7e"
-        val frame2165 =
-            "7e003b0310131dea71de7d5e251d9a8c9e2a1e221c8201190d0000a04015" +
-                "000040401d0000000025000000002d000000007b1bccbe7e"
-        // Real streams share the boundary flag (one frame's trailing 0x7E doubles
-        // as the next frame's leading 0x7E) — keep frame2111's trailing flag, drop
-        // frame2165's own leading one, so exactly one flag separates them.
-        val concatenated = hex(frame2111 + frame2165.drop(2))
-        val routed = router.feed(Dlci.MAESTRO, concatenated, timestampMillis = 0)
+        val frame2116 = // SERVER_STREAM SubscribeToSettingsChanges: the all-zero EQ mirrored by the Buds
+            "7e80a3032a1e221c8201190d0000000015000000001d0000000025000000002d00000000080710131dea71de7d5e25f5ad2128b1cbb10b7e"
+        val frame2117 = "7e80a303080110131dea71de7d5e251d9a8c9e4c05e6d97e" // the empty RESPONSE to the WriteSetting
+        // Real streams share the boundary flag (one frame's trailing 0x7E doubles as the next frame's leading 0x7E).
+        val routed = router.feed(Dlci.MAESTRO, hex(frame2116 + frame2117.drop(2)), timestampMillis = 0)
         assertEquals(2, routed.size)
         assertEquals(0f, (routed[0] as RoutedFrame.Eq).frame.gains.lowBass)
-        assertEquals(5.0f, (routed[1] as RoutedFrame.Eq).frame.gains.lowBass)
+        assertTrue((routed[1] as RoutedFrame.RpcResult).isOk)
+    }
+
+    // Real frames (CAP-036 / CAP-015; the GetSoftwareInfo tail is the real header with the serial-carrying payload left out).
+    private val readResponse16 =
+        "7e00a5032a1e221c8201190dc0cccc3d15000000001da099993e25c0cc4c3e2dc0cc4c3e080110151dea71de7d5e2551aed0ae85b618ed7e"
+    private val writeAck2117 = "7e80a303080110131dea71de7d5e251d9a8c9e4c05e6d97e"
+
+    @Test
+    @DisplayName("DLCI 0x02: a ReadSetting RESPONSE (CAP-036 frame 1525) is routed as the EQ value and logged as a pw_rpc packet")
+    fun `routes a ReadSetting response as an EQ value`() {
+        val router = CodecRouter()
+        val packets = mutableListOf<RpcPacket>()
+        val routed = router.feed(Dlci.MAESTRO, hex(readResponse16), timestampMillis = 0, onRpcPacket = { packets += it })
+        assertEquals(1, routed.size)
+        val eq = (routed[0] as RoutedFrame.Eq).frame
+        assertEquals(21, eq.channelId)
+        assertEquals(false, eq.persist)
+        assertEquals(1, packets.size)
+        assertEquals("pw_rpc RESPONSE ch=21 method=ReadSetting status=OK", packets[0].summary())
+    }
+
+    @Test
+    @DisplayName("DLCI 0x02: the empty RESPONSE to a WriteSetting (CAP-015 frame 2117) is an OK RpcResult")
+    fun `routes a WriteSetting acknowledgement`() {
+        val routed = CodecRouter().feed(Dlci.MAESTRO, hex(writeAck2117), timestampMillis = 0)
+        val result = routed.single() as RoutedFrame.RpcResult
+        assertEquals(Maestro.METHOD_WRITE_SETTING, result.methodId)
+        assertTrue(result.isOk)
+        assertEquals(19, result.channelId)
+    }
+
+    @Test
+    @DisplayName("DLCI 0x02: a RESPONSE with status UNKNOWN / an error packet for our request is a non-OK RpcResult")
+    fun `routes error results`() {
+        val router = CodecRouter()
+        fun frame(packet: RpcPacket) = Hdlc.encode(3712, PW_HDLC_CONTROL_UI, PwRpc.encode(packet))
+        val readUnknown = RpcPacket(PwRpc.TYPE_RESPONSE, 19, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, status = 2) // CAP-015 frame 1920
+        val serverError = RpcPacket(PwRpc.TYPE_SERVER_ERROR, 19, Maestro.SERVICE_ID, Maestro.METHOD_WRITE_SETTING, status = 5)
+        for (packet in listOf(readUnknown, serverError)) {
+            val result = router.feed(Dlci.MAESTRO, frame(packet), timestampMillis = 0).single() as RoutedFrame.RpcResult
+            assertTrue(!result.isOk)
+            assertEquals(packet.status, result.status)
+        }
+    }
+
+    @Test
+    @DisplayName("DLCI 0x02: the Buds' unsolicited GetSoftwareInfo push (real header, CAP-036 frame 1405) announces the channel")
+    fun `routes the unsolicited announcement`() {
+        val tail = hex("08011015" + "1dea71de7e25" + "44fa9971" + "38ffffffff0f") // type 1, ch 21, svc, method, call_id 0xFFFFFFFF
+        val frame = Hdlc.encode(10496, PW_HDLC_CONTROL_UI, tail)
+        val routed = CodecRouter().feed(Dlci.MAESTRO, frame, timestampMillis = 0)
+        assertEquals(RoutedFrame.MaestroHello(21), routed.single())
+    }
+
+    @Test
+    @DisplayName("DLCI 0x02: a Maestro packet for anything else (other service, other method) stays UnidentifiedFrame")
+    fun `other pw_rpc packets stay unidentified`() {
+        val unidentified = mutableListOf<UnidentifiedFrame>()
+        val other = RpcPacket(PwRpc.TYPE_REQUEST, 21, 0x73d5d805, 0x73b772ce)
+        val routed = CodecRouter().feed(
+            Dlci.MAESTRO,
+            Hdlc.encode(4736, PW_HDLC_CONTROL_UI, PwRpc.encode(other)),
+            timestampMillis = 5L,
+            onUnidentified = { unidentified += it },
+        )
+        assertTrue(routed.isEmpty())
+        assertEquals(1, unidentified.size)
+    }
+
+    @Test
+    @DisplayName("DLCI 0x02: a stream update for the *saved* EQ (field 18) is routed with persist = true, never as the active EQ")
+    fun `field 18 is flagged as persisted`() {
+        val eq = EqFrame(io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains.FLAT, persist = true, channelId = 21)
+        val payload = EqFrameEncoder.settingsPayload(eq)
+        val packet = RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, payload)
+        val routed = CodecRouter().feed(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, PwRpc.encode(packet)), timestampMillis = 0)
+        assertEquals(true, (routed.single() as RoutedFrame.Eq).frame.persist)
     }
 
     @Test

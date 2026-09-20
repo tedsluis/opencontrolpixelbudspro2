@@ -24,7 +24,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 /**
  * Fast Pair "Battery updated" on DLCI 0x04's Message Stream — Message Group `0x03` ("Device
  * Information"), Code `0x03` (PROTOCOL.md §4.3 Option B, DECISIONS.md ADR-031). Implementation
- * unblocked by ADR-033, **restricted to the percentage regime** ADR-031 promoted.
+ * unblocked by ADR-033; the charging-flag reading (`0bSVVVVVVV`) was accepted by the maintainer 2026-09-20.
  */
 object BatteryMessageStream {
     const val GROUP: Int = 0x03
@@ -35,8 +35,13 @@ object BatteryMessageStream {
 }
 
 /**
- * One decoded "Battery updated" frame. Only the Left/Right earbud levels are surfaced (ADR-031:
- * `b1` = Left, `b2` = Right). `b3` (observed `0xff`) is deliberately not interpreted — the Case
- * stays "unavailable" until a maintainer-approved ADR says what it means (ADR-033).
+ * One decoded "Battery updated" frame (ADR-031: `b1` = Left, `b2` = Right; ADR-033's 2026-09-20 update: each byte is
+ * `0bSVVVVVVV`). `b3` (observed `0xff` = unknown) is deliberately not interpreted beyond that: the maintainer's
+ * acceptance does not cover any other `b3` value as the Case battery, so [case] is always
+ * [BatteryLevel.Unavailable] here (the DLCI 0x08 message, ADR-014, is the separate, unapproved Case source).
  */
-data class BatteryFrame(val left: BatteryLevel, val right: BatteryLevel)
+data class BatteryFrame(
+    val left: BatteryLevel,
+    val right: BatteryLevel,
+    val case: BatteryLevel = BatteryLevel.Unavailable,
+)

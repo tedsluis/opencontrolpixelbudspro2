@@ -4,7 +4,7 @@
 **Category:** FEATURE
 **Date:** 2026-09-19
 **Title:** Claim the shared Message Stream channel (DLCI 0x04) on the user's own ANC/Find tap, unblock the Battery Option B decoder by ADR, and research why HFP battery shows nothing and whether the EQ can be read
-**Status:** awaiting maintainer sign-off
+**Status:** awaiting maintainer sign-off — §10 proposals 1–4 answered by the maintainer in prompt `0041` §1 (2026-09-20, re-confirmed in chat; charging flag accepted, `pw_rpc` promotions + read-path ADR approved (ADR-034), HFP removal decided after one confirming run, the `btsnoop` capture will be supplied) and implemented/handled in `ai-sessions/0041`; proposal 5 (BLE Fast Pair battery advertisement) is still open
 
 > **Why "awaiting maintainer sign-off":** everything requested is done and verified by the full suite, but
 > (a) nothing is hardware-verified, (b) §3's charging-flag reading and §5's `pw_rpc` findings are **proposals**

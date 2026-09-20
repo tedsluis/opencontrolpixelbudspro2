@@ -43,12 +43,17 @@ interface BudsRepository {
     val lastConnectionError: Flow<BudsError?>
     val ancMode: Flow<AncMode>
 
-    /** `null` = no confirmed value yet this connection (ARCHITECTURE.md §3.1 —
-     * EQ has no confirmed read/query opcode, unlike ANC, so this starts
-     * unknown on every fresh connection rather than trusting a stale cache). */
+    /** `null` = no value read yet this connection (ARCHITECTURE.md §3.1): the Connect sequence reads it with
+     * `ReadSetting 4:16` (ADR-034), so it stays `null` only until that answer arrives or if it failed — see [eqError]. */
     val eqProfile: Flow<EqBandGains?>
 
     val batteryStatus: Flow<BatteryStatus>
+
+    /**
+     * Why the last EQ read or write did not succeed (`null` = it did, or none was attempted this connection) —
+     * shown on the EQ screen instead of silently assuming success (`ai-sessions/0041`, DECISIONS.md ADR-034).
+     */
+    val eqError: Flow<BudsError?>
 
     /**
      * Why the **Message Stream channel** (DLCI 0x04, used by ANC, Find My Buds and battery) could not
@@ -68,6 +73,9 @@ interface BudsRepository {
 
     suspend fun setAncMode(mode: AncMode): BudsResult<Unit>
     suspend fun refreshAncMode(): BudsResult<AncMode>
+
+    /** Reads the Buds' active EQ (`ReadSetting 4:16`, ADR-034) and updates [eqProfile]. Requires an open session. */
+    suspend fun refreshEq(): BudsResult<EqBandGains>
 
     suspend fun setEqGains(gains: EqBandGains): BudsResult<Unit>
     suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit>

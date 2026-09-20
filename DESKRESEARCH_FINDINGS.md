@@ -807,5 +807,65 @@ implemented this session); the connection-free BLE Fast Pair advertisement (ADR-
 re-labelling Option C in `PROTOCOL.md`/`ARCHITECTURE.md` §4 as "wire-confirmed, not app-consumable", is a
 maintainer decision (proposal, `AGENTS.md` §6).
 
+### 2026-09-20 — Second-capture confirmation of `ReadSetting`, the pw_hdlc/pw_rpc framing correction, the channel rule, and the periodic `07 34` census (`ai-sessions/0041`)
+
+**Question.** `DECISIONS.md` ADR-034 (maintainer-approved 2026-09-20) made the `pw_rpc` promotions conditional on the evidence
+rule: open item 4 of the 2026-09-19 entry asked for *independent confirmation on a second capture*. Also: why were the app's own
+EQ writes inaudible, and which channel must a fresh client use? **Result: confirmed by three cross-capture chains; two byte-level
+readings corrected.**
+
+**Method (rule 4a).** `scripts/pwrpc_decode.py` (extended this session: frame numbers, corrected `RpcPacket.type` table, `--eq`,
+`--channels`) reassembles DLCI 2 with `tshark -r <cap> -Y "btrfcomm.dlci==2 && btrfcomm.frame_type==0xef" -T fields -e frame.number
+-e bluetooth.src -e data.data`, splits on `0x7e`, HDLC-unescapes, reads the pw_hdlc address as a one-terminated varint, the control
+byte, then the `RpcPacket`.
+
+**Finding 1 — framing correction (🟢 FACT, wire-verified).** `CAP-015` frame 2165 raw `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a
+8c 9e 2a 1e …`: address `00 3b` (= 3712), control `03`, `RpcPacket` = `10 13` (`channel_id 19`) `1d ea 71 de 7e` (service) `25 1d 9a 8c
+9e` (method) `2a 1e …` (payload). Control byte census, `CAP-015`: `{3: 304}` — every one of 304 packets. The previous notation ("address 0,
+control `0x3b`, payload `03 10 <correlation byte> …`") described the same bytes off by one; the "correlation byte" is the `channel_id`,
+which the app's encoder defaulted to `0`.
+
+**Finding 2 — `ReadSetting` returns the current value; second-capture confirmation (🟢 FACT).**
+`python3 scripts/pwrpc_decode.py --eq captures/CAP-005-*/CAP-005-btsnoop_hci.log captures/CAP-006-*/CAP-006-btsnoop_hci.log` (and the
+same for 015→016, 041→042) — first connect-time read vs. last write of the previous capture (values as decoded `float32`, wire order):
+
+| Chain | Last write in the earlier capture | First read (fields 16 / 18) in the next capture |
+|---|---|---|
+| `CAP-005` (2026-08-15 15:02) → `CAP-006` (17:23) | frames 1321 (16) / 1338 (18): `[5.0, −4.1, 0, 0, 0]` | frames 936 / 974: `[5.0, −4.1, 0, 0, 0]` (also `CAP-007`, `CAP-010`, unchanged) |
+| `CAP-015` (2026-08-18 06:11) → `CAP-016` (06:31) | last writes 16 / 18: `[0.1, 0, 0.3, 0.2, 0.2]` | frames 1945 / 1963: `[0.1, 0, 0.3, 0.2, 0.2]` |
+| `CAP-041` (2026-09-06 17:10) → `CAP-042` (17:30) | last writes 16 / 18: `[−6, −6, −6, −6, −6]` | frames 897 / 903: `[−6, −6, −6, −6, −6]` |
+
+Each pair is a different btsnoop file and connection; 005→006 also used a different `channel_id` (19 → 21; 015→016 both 19, 041→042 both 21; see Finding 3). Additionally, on 2026-09-12…14 (15 captures, `CAP-018`…`CAP-051`) field 16 reads `[−1, 0, 4, 2, 0]` while
+field 18 reads `[−6]*5`: `[−1, 0, 4, 2, 0]` is the "Vocal boost" preset independently recorded from the official app's UI
+(`PROTOCOL.md` §4.2), `[−6]*5` the last custom curve of `CAP-042` — 16 = active EQ, 18 = last saved custom EQ. `CAP-001`…`CAP-003`
+(2026-08-09/10) read 16 = `[−1, 0, 4, 2, 0]` and an *empty* field 18 (`4:{18:0x}`) — before any custom EQ was ever saved. Not checked: the
+value against a screen recording.
+
+**Finding 3 — the channel rule (🟢 FACT as an observation; the *client* behaviour it implies is still 🟡).**
+`python3 scripts/pwrpc_decode.py --channels captures/*/*btsnoop_hci*.log`: in 43 of 43 captures with both a first Buds packet and Maestro
+requests, the phone's most-used request channel equals the channel of the Buds' first unsolicited `GetSoftwareInfo` `RESPONSE` (`call_id
+0xFFFFFFFF`; e.g. `CAP-036` frame 1405 ch 21, `CAP-015` frame 1879 ch 19, `CAP-007` frame 792 ch 24). Pairs seen (channel ↔ request /
+response HDLC address): 19 ↔ `00 3b` / `80 a3`; 21 ↔ `00 4b` / `00 a5`; 24 ↔ `80 3d` / `80 d3`; 26 ↔ `80 4d` / `00 d5`. Raw, the real
+announcement header (serial-carrying payload omitted here): `08 01 10 15 1d ea 71 de 7e 25 44 fa 99 71 38 ff ff ff ff 0f` = type 1, channel 21,
+service `maestro_pw.Maestro`, method `GetSoftwareInfo`, `call_id 0xFFFFFFFF`. A write is acknowledged by an empty-payload `RESPONSE` ~50 ms later
+(`CAP-015` frame 2117 after write 2111: `7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e`), status absent = OK; `RESPONSE`
+packets with `status` 2 (`UNKNOWN`, e.g. to a `ReadSetting` at frames 1920, 2006, …) and 5 (`NOT_FOUND`, service `0x755ffe65`) also occur.
+🟡 HYPOTHESIS (not derived, only tabulated): the mapping channel → address. 🔴 OPEN: what a fresh client must send first.
+
+**Finding 4 — why the app's EQ writes were inaudible (🟡 HYPOTHESIS, strong).** The app sent `channel_id 0` (the codec's default) with
+address `00 3b`; no capture ever uses channel 0. The Buds' answer to such a packet was never logged (the app logged only inbound DLCI 0x02 bytes in
+Debug mode and never interpreted responses). Verification: the always-on `pw_rpc <TYPE> ch=<n> method=<name> status=<name>` log added in
+`ai-sessions/0041`, on hardware.
+
+**Finding 5 — the periodic `07 34` message is never ACKed (🟢 FACT for these captures; its meaning stays 🔴).** Census over all `captures/*/*btsnoop*.log`:
+`tshark -r <cap> -Y "btrfcomm.dlci==4 && btrfcomm.frame_type==0xef && frame.p2p_dir==1 && data.data[0:2]==07:34" -T fields -e frame.number` — 415
+messages received by the phone in 44 captures (in `CAP-009`/`036`/`037`/`048` none was sent by the phone); `… && data.data[0:1]==ff` (Message Stream ACK group) — **0** frames in those captures. Example, `CAP-037` frames 3222 (`07 34 00 0c 01 …`,
+t = 56.543 s, from the Buds) then from the phone (Play services) 3260 `07 11 00 14 …` (+29 ms), 3281 `07 11 …`, 3285 `07 41 …`, 3301 `07 42 …`, then the Buds'
+next `07 34` at 3324. The phone answers with a Group-7 burst ~30–55 ms later; 🟡 HYPOTHESIS whether that burst is the "answer" (temporal correlation only).
+
+**`LOGS-001` (deny-mode drop capture).** The folder `android/logs/LOGS-001/` (kept locally, gitignored) contained only the empty events skeleton when this
+was written — no HCI snoop log, recording, app export or system log — so the analysis of what preceded the Buds' `DISC`/`DM` on DLCI 2/4 was **not** performed.
+Re-run the task once the files exist.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

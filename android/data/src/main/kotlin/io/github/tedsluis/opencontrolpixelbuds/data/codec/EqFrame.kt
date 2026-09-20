@@ -22,41 +22,26 @@ package io.github.tedsluis.opencontrolpixelbuds.data.codec
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 
 /**
- * DLCI 0x02 EQ settings-write envelope (PROTOCOL.md §4.2/§4.5's shared
- * preamble, DECISIONS.md ADR-013/ADR-016/ADR-020). Byte layout re-derived
- * this session directly from `CAP-015` frames 2111/2165/2227 (see
- * `EqFrameEncoderTest`/`EqFrameDecoderTest` for the fixtures):
+ * One EQ quintet inside a `maestro_pw.Maestro` pw_rpc packet on DLCI 0x02 (PROTOCOL.md §4.2, DECISIONS.md
+ * ADR-013/016/020/034). The whole packet is `RpcPacket{channel_id, service, method, payload}` (see [PwRpc]) wrapped in
+ * a pw_hdlc frame (see [Hdlc]); its `payload` is the Maestro settings message
  *
  * ```
- * [0x03 0x10 <correlationByte> <10-byte constant tail>]   -- 13-byte prefix, PROTOCOL.md §4.5 intro
- * [0x2a <len>]                                            -- field 5 (outer wrapper), wiretype 2
- * [0x22 <len>]                                            -- field 4 (inner wrapper), wiretype 2
- * [<varint tag: field 16 or 18, wiretype 2> <len=25>]     -- "live"/"save" outer field, PROTOCOL.md §4.2
+ * [0x22 <len>]                                            -- field 4 (the setting oneof wrapper)
+ * [<varint tag: field 16 or 18, wiretype 2> <len=25>]     -- 16 = active EQ, 18 = last-saved custom EQ (ADR-034)
  * [(tag:1 wiretype5 + float32LE:4)] x5                    -- fields 1..5 = Low bass/Bass/Mid/Treble/Upper treble
  * ```
  *
- * `persist == false` (field 16) is ADR-020's documented practical default for
- * a live/preview-style write. `persist == true` (field 18) mirrors CAP-015's
- * observed "fires shortly after field 16, save-shaped" frames.
+ * `persist == false` is field 16, `true` is field 18. **[channelId] is the pw_rpc channel** — earlier code called the
+ * same byte a "correlation byte" and defaulted it to 0, which no capture ever uses (channels are 19/21/24/26, chosen
+ * per connection — ADR-034). It has no default on purpose.
  *
- * // TODO(verify): field 16 vs. 18's exact semantics ("preview" vs.
- * // "slider-release" vs. "Save button") remain 🟡 HYPOTHESIS, unresolved
- * // even after a 2026-09-08/2026-09-13 code-level trace found a genuine,
- * // unreconciled tension against the wire-timing reading (PROTOCOL.md
- * // §4.2). Do not ship a "Save as preset" UI affordance against [persist]
- * // without re-checking PROTOCOL.md §4.2/§6 first, per DECISIONS.md
- * // ADR-020's own scope note.
- *
- * // TODO(verify): [correlationByte] (the 13-byte prefix's one
- * // session-specific byte, offset 2) has no confirmed derivation — this
- * // project has only ever observed it, never traced how the official app
- * // computes it (PROTOCOL.md §4.5 intro calls it a "request/response
- * // correlation ID"). A caller that doesn't know the peer's expected value
- * // for the current session has no evidenced way to supply one; this
- * // encoder defaults to 0x00, unverified against real hardware.
+ * // TODO(verify): field 16 vs. 18 write semantics ("preview" vs. "slider-release" vs. "Save button") remain
+ * // 🟡 HYPOTHESIS (ADR-020's open item); do not ship a "Save as preset" affordance against [persist] without
+ * // re-checking PROTOCOL.md §4.2/§6.
  */
 data class EqFrame(
     val gains: EqBandGains,
     val persist: Boolean = false,
-    val correlationByte: Int = 0x00,
+    val channelId: Int,
 )

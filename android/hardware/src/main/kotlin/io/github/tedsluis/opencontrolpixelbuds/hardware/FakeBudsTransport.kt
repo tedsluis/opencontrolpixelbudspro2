@@ -56,6 +56,9 @@ class FakeBudsTransport : BudsTransport {
     var openChannelShouldFail: BudsError? = null
 
     val sent = mutableListOf<Pair<Int, ByteArray>>()
+
+    /** Test hook: runs inside every successful [send], so a test can script the Buds' reply to that exact frame. */
+    var onSent: (suspend (channelId: Int, frame: ByteArray) -> Unit)? = null
     var sendShouldFail: BudsError? = null
     var connectShouldFail: BudsError? = null
 
@@ -106,6 +109,7 @@ class FakeBudsTransport : BudsTransport {
         sendShouldFail?.let { return BudsResult.Failure(it) }
         if (!connected) return BudsResult.Failure(BudsError.ConnectionLost)
         sent += channelId to frame
+        onSent?.invoke(channelId, frame)
         return BudsResult.Success(Unit)
     }
 }

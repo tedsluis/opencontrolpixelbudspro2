@@ -29,8 +29,8 @@ import org.junit.jupiter.api.Test
 import java.util.Random
 
 /**
- * DLCI 0x04 "Battery updated" decoder (DECISIONS.md ADR-031 identity, ADR-033 unblock — percentage
- * regime only). Pure byte-array in/out, no Bluetooth (AGENTS.md §11).
+ * DLCI 0x04 "Battery updated" decoder (DECISIONS.md ADR-031 identity, ADR-033 unblock + its 2026-09-20 charging-flag
+ * update: each byte is `0bSVVVVVVV`). Pure byte-array in/out, no Bluetooth (AGENTS.md §11).
  */
 class BatteryCodecTest {
 
@@ -38,45 +38,59 @@ class BatteryCodecTest {
         (BatteryFrameDecoder.decode(hex("03030003$dataHex")) as BudsResult.Success).value
 
     @Test
-    @DisplayName("CAP-009 frame 1044 (ADR-031's evidence): Left 96 %, Right 93 %")
+    @DisplayName("CAP-009 frame 1044 (ADR-031's evidence): Left 96 %, Right 93 %, not charging")
     fun `decodes the CAP-009 first frame`() {
-        val frame = decode("605dff") // b1=96, b2=93, b3 unread
-        assertEquals(BatteryLevel.Known(96, null), frame.left)
-        assertEquals(BatteryLevel.Known(93, null), frame.right)
+        val frame = decode("605dff") // b1=96, b2=93, b3 = 0xff (unknown)
+        assertEquals(BatteryLevel.Known(96, false), frame.left)
+        assertEquals(BatteryLevel.Known(93, false), frame.right)
     }
 
     @Test
-    @DisplayName("real 2026-09-19 frames from the maintainer's device: 100/100 and 96/95, charging state never fabricated")
+    @DisplayName("real 2026-09-19 frames from the maintainer's device: not charging (64 64, 60 5f)")
     fun `decodes real frames from the maintainer's device`() {
-        assertEquals(BatteryFrame(BatteryLevel.Known(100, null), BatteryLevel.Known(100, null)), decode("6464ff"))
-        assertEquals(BatteryFrame(BatteryLevel.Known(96, null), BatteryLevel.Known(95, null)), decode("605fff"))
+        assertEquals(BatteryFrame(BatteryLevel.Known(100, false), BatteryLevel.Known(100, false)), decode("6464ff"))
+        assertEquals(BatteryFrame(BatteryLevel.Known(96, false), BatteryLevel.Known(95, false)), decode("605fff"))
     }
 
     @Test
-    @DisplayName("the charging regime (bit 7 set: 0xe4, 0xdd, ...) is NOT interpreted — reads unavailable (ADR-033)")
-    fun `does not interpret bytes above 100`() {
-        // 0xe4 / 0xdd are real frames seen while the earbuds sit charging in the case. Reading bit 7 as a
-        // charging flag is a proposal awaiting sign-off, so today they must be "unavailable".
-        assertEquals(BatteryFrame(BatteryLevel.Unavailable, BatteryLevel.Unavailable), decode("e4e4ff"))
-        assertEquals(BatteryFrame(BatteryLevel.Unavailable, BatteryLevel.Unavailable), decode("dddd" + "ff"))
+    @DisplayName("bit 7 is the charging flag (accepted 2026-09-20): e4 e4 = 100 % charging, dd dd = 93 % charging (real frames)")
+    fun `decodes the charging regime`() {
+        assertEquals(BatteryFrame(BatteryLevel.Known(100, true), BatteryLevel.Known(100, true)), decode("e4e4ff"))
+        assertEquals(BatteryFrame(BatteryLevel.Known(93, true), BatteryLevel.Known(93, true)), decode("ddddff"))
         // One earbud in the case, one not (real: `e4 64`): each byte is judged on its own.
-        assertEquals(BatteryFrame(BatteryLevel.Unavailable, BatteryLevel.Known(100, null)), decode("e464ff"))
+        assertEquals(BatteryFrame(BatteryLevel.Known(100, true), BatteryLevel.Known(100, false)), decode("e464ff"))
     }
 
     @Test
-    @DisplayName("boundaries: 0 and 100 are percentages; 101, 0x7f (unknown), 0x80 and 0xff are not")
+    @DisplayName("CAP-009 frames 26852…28563: b1 = 221…228 is 93…100 % charging, exactly Option E's curve incl. the skipped 99")
+    fun `reproduces the CAP-009 charging sequence`() {
+        val b1 = listOf(0xdd, 0xde, 0xdf, 0xe0, 0xe1, 0xe2, 0xe4) // frames 26852, 26907, 27020, 27195, 27377, 27581, 28563
+        val expected = listOf(93, 94, 95, 96, 97, 98, 100) // DLCI 0x08 Option E for the same earbud (ADR-014)
+        for ((raw, percent) in b1.zip(expected)) {
+            val frame = decode("%02x58ff".format(raw)) // b2 stayed 0x58 = 88 % not charging
+            assertEquals(BatteryLevel.Known(percent, true), frame.left)
+            assertEquals(BatteryLevel.Known(88, false), frame.right)
+        }
+    }
+
+    @Test
+    @DisplayName("boundaries: 0 and 100 are percentages; V = 101, 0x7f (unknown) and 0xff (V = 0x7f) are Unavailable")
     fun `percentage boundaries`() {
-        assertEquals(BatteryLevel.Known(0, null), decode("0000ff").left)
-        assertEquals(BatteryLevel.Known(100, null), decode("6400ff").left)
-        for (raw in listOf("65", "7f", "80", "ff")) {
+        assertEquals(BatteryLevel.Known(0, false), decode("0000ff").left)
+        assertEquals(BatteryLevel.Known(100, false), decode("6400ff").left)
+        assertEquals(BatteryLevel.Known(0, true), decode("8000ff").left)
+        assertEquals(BatteryLevel.Known(100, true), decode("e400ff").left)
+        for (raw in listOf("65", "7f", "e5", "ff")) { // V = 101, V = 0x7f, V = 101 charging, V = 0x7f charging
             assertEquals(BatteryLevel.Unavailable, decode(raw + "00" + "ff").left, "0x$raw must not be a percentage")
         }
     }
 
     @Test
-    @DisplayName("the third byte (Case) is never surfaced")
+    @DisplayName("the Case (b3) is never decoded: 0xff (unknown) and every other value read Unavailable")
     fun `third byte is not interpreted`() {
-        // Whatever b3 is, only left/right exist on the decoded frame — the Case has no field to leak into.
+        for (b3 in listOf("ff", "00", "50", "e4", "7f")) {
+            assertEquals(BatteryLevel.Unavailable, decode("6464$b3").case, "b3=0x$b3")
+        }
         assertEquals(decode("6464ff"), decode("646400"))
     }
 

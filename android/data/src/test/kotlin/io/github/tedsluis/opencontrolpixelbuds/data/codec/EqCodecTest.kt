@@ -77,18 +77,48 @@ class EqFrameDecoderTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("presetFixtures")
-    @DisplayName("decode() parses every captured EQ preset frame")
+    @DisplayName("decode() parses every captured EQ preset frame (pw_hdlc -> RpcPacket -> quintet)")
     fun `decodes real captured EQ preset frames`(fixture: Fixture) {
-        val hdlcResult = Hdlc.decode(hex(fixture.rawHdlcHex))
-        assertInstanceOf(BudsResult.Success::class.java, hdlcResult)
-        val hdlcFrame = (hdlcResult as BudsResult.Success).value
-        assertEquals(0x13, hdlcFrame.payload[2].toInt() and 0xFF) // this session's correlation byte
+        val hdlcFrame = (Hdlc.decode(hex(fixture.rawHdlcHex)) as BudsResult.Success).value
+        val rpc = (PwRpc.decode(hdlcFrame.payload) as BudsResult.Success).value
+        assertEquals(19, rpc.channelId) // 0x13 — the byte the old code called the "correlation byte"
+        assertEquals(Maestro.SERVICE_ID, rpc.serviceId)
+        assertEquals(Maestro.METHOD_WRITE_SETTING, rpc.methodId)
 
-        val eqResult = EqFrameDecoder.decode(hdlcFrame.payload)
+        val eqResult = EqFrameDecoder.decode(rpc)
         assertInstanceOf(BudsResult.Success::class.java, eqResult)
         val eq = (eqResult as BudsResult.Success).value
         assertEquals(fixture.gains, eq.gains)
         assertEquals(fixture.persist, eq.persist)
+        assertEquals(19, eq.channelId)
+    }
+
+    @Test
+    @DisplayName("CAP-036 frames 1525/1531: a ReadSetting RESPONSE carries the quintet for field 16 (active) / 18 (saved)")
+    fun `decodes real ReadSetting responses`() {
+        val active = readResponse("7e00a5032a1e221c8201190dc0cccc3d15000000001da099993e25c0cc4c3e2dc0cc4c3e080110151dea71de7d5e2551aed0ae85b618ed7e")
+        val saved = readResponse("7e00a5032a1e221c9201190dc0cccc3d15000000001da099993e25c0cc4c3e2dc0cc4c3e080110151dea71de7d5e2551aed0aeebdf2efe7e")
+        // wire order low bass → upper treble = 0.1, 0.0, 0.3, 0.2, 0.2 (PROTOCOL.md §4.2); the raw float32s are e.g. 0x3dcccccc,
+        // i.e. 0.0999999…, so compare with a tolerance.
+        for (frame in listOf(active, saved)) {
+            assertEquals(0.1f, frame.gains.lowBass, 1e-4f)
+            assertEquals(0.0f, frame.gains.bass, 1e-4f)
+            assertEquals(0.3f, frame.gains.mid, 1e-4f)
+            assertEquals(0.2f, frame.gains.treble, 1e-4f)
+            assertEquals(0.2f, frame.gains.upperTreble, 1e-4f)
+        }
+        assertEquals(false, active.persist)
+        assertEquals(true, saved.persist)
+        assertEquals(21, active.channelId)
+    }
+
+    private fun readResponse(rawHdlcHex: String): EqFrame {
+        val hdlc = (Hdlc.decode(hex(rawHdlcHex)) as BudsResult.Success).value
+        assertEquals(10496, hdlc.address) // 00 a5
+        val rpc = (PwRpc.decode(hdlc.payload) as BudsResult.Success).value
+        assertEquals(PwRpc.TYPE_RESPONSE, rpc.type)
+        assertEquals(Maestro.METHOD_READ_SETTING, rpc.methodId)
+        return (EqFrameDecoder.decode(rpc) as BudsResult.Success).value
     }
 
     @Nested
@@ -97,42 +127,44 @@ class EqFrameDecoderTest {
 
         @Test
         fun `empty buffer never throws`() {
-            val result = EqFrameDecoder.decode(ByteArray(0))
+            val result = EqFrameDecoder.decodePayload(ByteArray(0), 19)
             assertInstanceOf(BudsResult.Failure::class.java, result)
             assertInstanceOf(BudsError.MalformedFrame::class.java, (result as BudsResult.Failure).error)
         }
 
         @Test
-        fun `truncated prefix never throws`() {
-            assertTrue(EqFrameDecoder.decode(hex("0310")) is BudsResult.Failure)
+        fun `truncated payload never throws`() {
+            assertTrue(EqFrameDecoder.decodePayload(hex("2202"), 19) is BudsResult.Failure)
         }
 
         @Test
         fun `unrecognized outer field never throws`() {
-            // Same shape as a real preset frame's payload but field 5 tag replaced
-            // with an unrelated field (7) — a real, gated §4.5 setting, not EQ.
-            val real = Hdlc.decode(
-                hex(
-                    "7e003b0310131dea71de7d5e251d9a8c9e2a1e221c8201190d0000000015" +
-                        "000000001d0000000025000000002d00000000881667fe7e",
-                ),
-            ) as BudsResult.Success
-            val mutated = real.value.payload.copyOf()
-            mutated[13] = 0x3a // field 7, wiretype 2 — a different setting entirely
-            assertTrue(EqFrameDecoder.decode(mutated) is BudsResult.Failure)
+            // Same shape as a real quintet payload but the field-16 tag (82 01) replaced by field 7 (3a) — a different setting.
+            val real = ((Hdlc.decode(hex(presetFixtures().toList()[1].rawHdlcHex)) as BudsResult.Success).value.payload)
+            val rpc = (PwRpc.decode(real) as BudsResult.Success).value
+            val mutated = rpc.payload.copyOf()
+            mutated[2] = 0x3a
+            assertTrue(EqFrameDecoder.decodePayload(mutated, 19) is BudsResult.Failure)
+        }
+
+        @Test
+        fun `a non-finite float is rejected`() {
+            val rpc = (PwRpc.decode((Hdlc.decode(hex(presetFixtures().toList()[1].rawHdlcHex)) as BudsResult.Success).value.payload) as BudsResult.Success).value
+            val mutated = rpc.payload.copyOf()
+            // first float32 (bytes 6..9 of the payload: 22 1c 82 01 19 0d <4 bytes>) := NaN
+            mutated[6] = 0x00; mutated[7] = 0x00; mutated[8] = 0xc0.toByte(); mutated[9] = 0x7f
+            assertTrue(EqFrameDecoder.decodePayload(mutated, 19) is BudsResult.Failure)
         }
 
         @Test
         fun `declared length overrunning the buffer never throws`() {
-            assertTrue(
-                EqFrameDecoder.decode(hex("0310131dea71de7e251d9a8c9e2a7f22" + "00".repeat(10))) is BudsResult.Failure,
-            )
+            assertTrue(EqFrameDecoder.decodePayload(hex("227f8201" + "00".repeat(10)), 19) is BudsResult.Failure)
         }
 
         @ParameterizedTest
         @MethodSource("io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrameDecoderTest#randomByteArrays")
         fun `random byte sequences never throw`(bytes: ByteArray) {
-            EqFrameDecoder.decode(bytes)
+            EqFrameDecoder.decodePayload(bytes, 19)
         }
     }
 }
@@ -141,14 +173,26 @@ class EqFrameEncoderTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrameDecoderTest#presetFixtures")
-    @DisplayName("encode() matches the real captured payload byte-for-byte")
+    @DisplayName("encode() + Hdlc.encode() reproduce the real captured wire frame byte-for-byte (channel 19, address 3712)")
     fun `encodes a preset frame matching the real capture`(fixture: EqFrameDecoderTest.Fixture) {
-        val hdlcResult = Hdlc.decode(hex(fixture.rawHdlcHex)) as BudsResult.Success
-        val realPayload = hdlcResult.value.payload
+        val realFrame = hex(fixture.rawHdlcHex)
+        val realPayload = ((Hdlc.decode(realFrame) as BudsResult.Success).value.payload)
 
-        val encoded = EqFrameEncoder.encode(EqFrame(fixture.gains, persist = fixture.persist, correlationByte = 0x13))
+        val encoded = EqFrameEncoder.encode(EqFrame(fixture.gains, persist = fixture.persist, channelId = 19))
         assertTrue(realPayload.contentEquals(encoded)) {
             "expected ${realPayload.toHex()} but got ${encoded.toHex()}"
+        }
+        val wire = Hdlc.encode(address = 3712, control = PW_HDLC_CONTROL_UI, payload = encoded)
+        assertTrue(realFrame.contentEquals(wire)) { "expected ${realFrame.toHex()} but got ${wire.toHex()}" }
+    }
+
+    @Test
+    @DisplayName("the channel id is what the caller passes — never a hidden default of 0 (the ai-sessions/0041 root cause)")
+    fun `encodes the given channel id`() {
+        val gains = EqBandGains.FLAT
+        for (channel in listOf(19, 21, 24, 26)) {
+            val rpc = (PwRpc.decode(EqFrameEncoder.encode(EqFrame(gains, channelId = channel))) as BudsResult.Success).value
+            assertEquals(channel, rpc.channelId)
         }
     }
 
@@ -156,14 +200,14 @@ class EqFrameEncoderTest {
     @DisplayName("encode() then decode() round-trips arbitrary gains, including the negative extreme")
     fun `round-trips through decode`() {
         val gains = EqBandGains(upperTreble = -6.0f, treble = 5.9f, mid = 0.0f, bass = -6.0f, lowBass = 5.8f)
-        val frame = EqFrame(gains, persist = true, correlationByte = 0x42)
-        val encoded = EqFrameEncoder.encode(frame)
-        val decoded = EqFrameDecoder.decode(encoded)
+        val frame = EqFrame(gains, persist = true, channelId = 24)
+        val rpc = (PwRpc.decode(EqFrameEncoder.encode(frame)) as BudsResult.Success).value
+        val decoded = EqFrameDecoder.decode(rpc)
         assertInstanceOf(BudsResult.Success::class.java, decoded)
         val result = (decoded as BudsResult.Success).value
         assertEquals(gains, result.gains)
         assertEquals(true, result.persist)
-        assertEquals(0x42, result.correlationByte)
+        assertEquals(24, result.channelId)
     }
 }
 

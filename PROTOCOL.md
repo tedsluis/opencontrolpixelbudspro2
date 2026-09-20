@@ -314,6 +314,35 @@ one of `qhr`'s 38 fields has been wire-verified, and does not by itself promote 
 HYPOTHESIS above to FACT for fields not yet sampled; it substantially strengthens that HYPOTHESIS
 without fully closing it. See `DECISIONS.md` ADR-019 for the complete scope note.
 
+**Update (2026-09-20, `ai-sessions/0041`, maintainer-approved 2026-09-20, `DECISIONS.md` ADR-034) — the payload of every
+DLCI 0x02 packet is a Pigweed pw_rpc `RpcPacket` for service `maestro_pw.Maestro`.** 🟢 **FACT** (this closes the
+"HYPOTHESIS that this is specifically `libmaestro`" wording above for the *service identity*; it is still not a claim
+about every field of every message). Evidence and commands (`PROJECT_RULES.md` rule 4a; full listing in
+`DESKRESEARCH_FINDINGS.md`, entries 2026-09-19 and 2026-09-20):
+- `python3 scripts/pwrpc_decode.py captures/CAP-015-*/CAP-015-btsnoop_hci.log` (runs `tshark -r <cap> -Y "btrfcomm.dlci==2 &&
+  btrfcomm.frame_type==0xef" -T fields -e frame.number -e bluetooth.src -e data.data`, reassembles, splits on `0x7e`,
+  HDLC-unescapes). Frame 2165, raw: `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 1e 22 1c 82 01 19 0d 00 00 a0 40 15 … 7e`.
+  Read as pw_hdlc: **address** `00 3b` (a *one-terminated varint*: bytes up to and including the first with bit 0 set), **control**
+  `03` (unnumbered information; `03` in 304 of 304 packets of `CAP-015`), then the `RpcPacket`: `10 13` = `channel_id 19`,
+  `1d ea 71 de 7e` = `service_id 0x7ede71ea`, `25 1d 9a 8c 9e` = `method_id 0x9e8c9a1d`, `2a 1e …` = 30-byte `payload`.
+  The 65599 name hashes of `maestro_pw.Maestro` and `WriteSetting` equal those ids exactly (`scripts/pwrpc_decode.py:h65599`).
+  `RpcPacket.type` (field 1) is omitted for a REQUEST (value 0). Observed types: `REQUEST` (phone), `RESPONSE` and
+  `SERVER_STREAM` (Buds), plus `RESPONSE` with `status` 2 (`UNKNOWN`) / 5 (`NOT_FOUND`) and `type 4` packets with
+  `status` 1 / 9 in `CAP-015`.
+- **Correction of earlier notation:** the app's `Hdlc`/`EqFrame` code and §4.2/§4.5 wrote this frame as "address `0x0000`,
+  control `0x3b`, payload `03 10 <correlation byte> 1d…`". The bytes on the wire are identical; the reading was off by one
+  byte: `3b` is the second **address** byte, `03` the **control** byte, and the "correlation byte" is the RpcPacket
+  **`channel_id`**. The "per-connection-negotiated address" observed in §2.2a/§6 (`0x00`, `0xD180`, `0x1e80`, `0x2680`, …) is the
+  same pw_hdlc address read with a different byte split.
+- **Channel ids and addresses are per connection, and paired.** `python3 scripts/pwrpc_decode.py --channels captures/*/*btsnoop_hci*.log`
+  (43 captures with both a first push and Maestro requests): the phone's Maestro requests use the `channel_id` of the Buds' first
+  unsolicited `GetSoftwareInfo` `RESPONSE` (`call_id 0xFFFFFFFF`, carrying serial and `release_5.203`) in **43 of 43**; the pairs
+  seen are channel 19 ↔ request address `00 3b` / response address `80 a3`, 21 ↔ `00 4b` / `00 a5`, 24 ↔ `80 3d` / `80 d3`,
+  26 ↔ `80 4d` / `00 d5`. 🟡 HYPOTHESIS: the mapping from channel to address is not derived here, only tabulated; an unseen channel
+  has no known address.
+- **What a fresh client must send first** (the official app sends requests to unnamed services `0x73d5d805`, `0xaf3a7737`, … before
+  its settings sweep) is still 🔴 OPEN.
+
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
 `[Group:1][Code:1][Length:2B-BE][Value]` envelope (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md`
@@ -677,6 +706,24 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   (envelope, field-to-band mapping, ±6.0 clamp, preset quintets) are sufficient on their own; the
   field-16-vs-18 and gain-unit open items above are unaffected and should be resolved before a
   "Save as preset" UI affordance ships, per that ADR's own scope note.
+- **Reading the current EQ — `ReadSetting {4:N}`; 🟢 FACT, promoted 2026-09-20 (maintainer-approved, `DECISIONS.md`
+  ADR-034).** On DLCI 0x02 the request `RpcPacket{channel_id, service = maestro_pw.Maestro, method = ReadSetting (0xaed0ae51),
+  payload = 04:N}` (payload bytes `20 <N>`, i.e. `2a 02 20 10` for N = 16) is answered by a `RESPONSE` whose payload is
+  `4:{N: value}` in the same shape as the write body. For the EQ, **N = 16 returns the active quintet and N = 18 the last-saved
+  custom quintet** (same 5 × `float32`, wire order = the band order above). Raw: `CAP-036` frame 1523 request
+  `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 2a 02 20 10 47 ee ad cf 7e`; frame 1525 response
+  `7e 00 a5 03 2a 1e 22 1c 82 01 19 0d c0 cc cc 3d 15 00 00 00 00 1d a0 99 99 3e 25 c0 cc 4c 3e 2d c0 cc 4c 3e 08 01 10 15 … 7e`
+  = `[0.1, 0.0, 0.3, 0.2, 0.2]`. **Independent confirmation on a second capture** (the condition the maintainer's approval carried;
+  `python3 scripts/pwrpc_decode.py --eq captures/CAP-005-*/*btsnoop_hci.log captures/CAP-006-*/*btsnoop_hci.log` etc.): the value
+  read at connect equals the last write of the *previous* capture — `CAP-005` frames 1321/1338 wrote `[5.0,−4.1,0,0,0]`, `CAP-006`
+  frames 936/974 read `[5.0,−4.1,0,0,0]`; `CAP-015` last writes `[0.1,0,0.3,0.2,0.2]`, `CAP-016` frames 1945/1963 read the same;
+  `CAP-041` last writes `[−6]*5`, `CAP-042` frames 897/903 read `[−6]*5`. And field 16 = `[−1,0,4,2,0]` (the "Vocal boost" preset
+  above) while field 18 = `[−6]*5` in 15 consecutive captures on 2026-09-12…14 — 16 is the active EQ, 18 the last saved custom
+  EQ. **Not** checked: the value against a screen recording. A `WriteSetting` is acknowledged by an empty-payload `RESPONSE`
+  (`CAP-015` frame 2117 after write 2111; `status` absent = OK) and mirrored on the `SubscribeToSettingsChanges` stream.
+- **Why the app's own EQ writes were inaudible (🟡 HYPOTHESIS, strong — `ai-sessions/0041`):** the app's write frames carried
+  `channel_id 0` (the codec's "correlation byte" defaulted to `0x00`) and a fixed address `00 3b` (channel 19's); every capture
+  uses channel 19/21/24/26 chosen per connection. Not verified on hardware; the new always-on pw_rpc status log settles it.
 - **Evidence**: `SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1,
   `captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS.md` (first candidate
   format, single-band sample), `captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`
@@ -847,6 +894,14 @@ event-observation coroutines.
   reproducing this on a fresh capture would still be useful for that specific question, even though
   it is no longer a precondition for the code-identity FACT above. Recorded as `DECISIONS.md`
   ADR-031 (maintainer-approved 2026-09-18, `ai-sessions/0031`).
+- **Update (2026-09-20, `ai-sessions/0041`) — the charging-state "anomaly" is the official Fast Pair encoding; 🟢 FACT
+  (maintainer accepted the proposal 2026-09-20, `DECISIONS.md` ADR-033's update).** Each of `b1` (Left) / `b2` (Right) is
+  `0bSVVVVVVV`: bit 7 = charging, low 7 bits = level 0–100, `0x7F` = unknown; `b3 = 0xff` = unknown (the meaning of a `b3` other
+  than `0xff` — the Case — is **not** covered and stays unimplemented). Evidence: `tshark -r CAP-009-btsnoop_hci.log -Y
+  "btrfcomm.dlci==4 && frame.number>=26800 && frame.number<=28600 && data.data[0:4]==03:03:00:03" -T fields -e frame.number -e
+  data.data` → frames 26852 (`03 03 00 03 dd 58 ff`), 26907 (`de`), 27020 (`df`), 27195 (`e0`), 27377 (`e1`), 27581 (`e2`), 28563
+  (`e4`): `b1 − 128` = 93 94 95 96 97 98 100 — Option E's charging curve for the same earbud, including the skipped 99. Frame 1044
+  `03 03 00 03 60 5d ff` = 96 % / 93 %, not charging. The "field-switch / regime change" reading above is therefore superseded.
 - **Cross-channel timing synchronization extended to DLCI 0x02, 🟡 HYPOTHESIS (`CAP-036-FINDINGS.md`
   §12.5, 2026-09-04):** the near-lockstep pattern above (Option B/C/E firing within single-digit
   milliseconds of each other) is joined, in this session, by a periodic DLCI 0x02 (`libmaestro`)

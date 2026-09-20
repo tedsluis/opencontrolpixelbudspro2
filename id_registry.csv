@@ -32,6 +32,7 @@ ADR-030,adr,accepted,"Cross-Transport Key Derivation (CTKD) confirmed as a third
 ADR-031,adr,accepted,"Battery Option B's Group 0x03 Code 0x03 message confirmed as the Fast Pair 'Battery updated' notification (while discharging)",DECISIONS.md
 ADR-032,adr,accepted,"DLCI 0x04 (Message Stream) is a shared on-demand channel: claimed by the user's own ANC/Find/Connect action and released after a short linger; its loss is not a session loss",DECISIONS.md
 ADR-033,adr,accepted,"Battery Option B Group 0x03 Code 0x03 decoder unblocked for implementation (percentage regime only; charging-flag reading is an unaccepted proposal)",DECISIONS.md
+ADR-034,adr,accepted,"DLCI 0x02 is pw_rpc maestro_pw.Maestro; read-only ReadSetting path unblocked (EQ fields 16/18); requests mirror the channel the Buds announce",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

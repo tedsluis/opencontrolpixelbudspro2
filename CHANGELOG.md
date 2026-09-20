@@ -24,6 +24,14 @@ mark v1.
   (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`).
 - Reference screenshots for the official app and web companion app.
 - `SECURITY.md`, `CONTRIBUTING.md`, `DESKRESEARCH_FINDINGS.md`.
+- **2026-09-20 (`ai-sessions/0041`): pairing/permission fixes, Android-state mirroring, charging flag, EQ read.** Fixed the in-app pairing failure
+  "Could not resolve the selected device" (CDM's lower-case `MacAddress` was passed to `getRemoteDevice`, which requires upper-case; association reuse and
+  duplicate clean-up, already-bonded is success, distinct bond-failure reasons); added the runtime-permission flow the app never had (its absence made a
+  cleared-data app see "no bonded device"); the Connection screen now mirrors Android's Bluetooth state (`OsConnectionObserver`, `DeviceStatus`); the battery
+  decoder reads the charging flag (ADR-033 update, maintainer-accepted); DLCI 0x02 is decoded as pw_hdlc + pw_rpc (ADR-034, `PROTOCOL.md` §2.2a/§4.2 promotions,
+  a codec correction: the old "correlation byte" was the `channel_id`, defaulted to 0), the EQ is read at Connect and write results are surfaced; `HfpBatteryReader`
+  logs every headset broadcast action (removal is a later session). `scripts/pwrpc_decode.py` gained frame numbers, `--eq`, `--channels` and a corrected packet-type
+  table. Tests: 1335 (1281 before), 0 failures; not hardware-verified.
 - **2026-09-18 (`ai-sessions/0033`): the v1 app, implemented end to end for every genuinely
   FACT-and-unblocked feature.** EQ (`EqFrameEncoder`/`EqFrameDecoder`, DLCI 0x02, byte layout
   re-derived directly from `CAP-015` fixtures), Find My Buds Left/Right

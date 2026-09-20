@@ -30,50 +30,65 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
- * Whether Android itself currently considers the bonded Buds *connected to this phone* (audio/
- * hands-free profiles up) — as opposed to whether **this app** has opened its own RFCOMM control
- * channels. These are two different things (`ai-sessions/0039` §5): before this class existed the
- * Connection screen said "Disconnected" while Android's own Bluetooth settings said "Connected",
- * because the app only ever knew about its own sockets.
+ * Whether Android itself currently considers the bonded Buds *connected to this phone* (audio/hands-free/LE-audio profiles
+ * up) — as opposed to whether **this app** has opened its own RFCOMM control channels (`ai-sessions/0039` §5,
+ * `ai-sessions/0041`: the Connection screen mirrors Android's Bluetooth settings, including the moment a bud is taken out
+ * of the case).
  *
- * Uses only public APIs (`BluetoothProfile.getConnectedDevices()` on the A2DP/HEADSET proxies plus
- * their connection-state broadcasts) — `BluetoothDevice.isConnected()` is `@hide` and banned by
- * AGENTS.md §3. Purely informational: this never triggers a connect (ARCHITECTURE.md §6 —
- * user-initiated connection only).
+ * **Read-only and visibility-bound** (AGENTS.md §2/§7): public APIs only — `BluetoothProfile.getConnectedDevices()` on the
+ * A2DP/HEADSET/LE_AUDIO proxies, re-read on every relevant broadcast (profile connection state, ACL connect/disconnect, bond
+ * state). It registers when the flow is collected — the UI collects it only while visible — and unregisters on cancel. It
+ * never opens a socket, claims a channel or starts a service; it is not scanning and discovers nothing.
  *
- * // TODO(verify): not exercised against real hardware in this environment; the profile proxies
- * // are asynchronous, so the first emission is `false` until they bind.
+ * Every transition is logged (always-on, no address). The evaluation itself is [LinkEvaluation] (unit-tested); flapping is
+ * smoothed by [settled].
+ *
+ * // TODO(verify): not exercised against real hardware in this environment — the maintainer re-test (a)–(d) in
+ * // `ai-sessions/0041` §"Re-test" confirms/refutes it. In particular whether a non-exported receiver receives these
+ * // system broadcasts on GrapheneOS, and that the proxies list the Buds as soon as Android shows them connected.
  */
 class OsConnectionObserver(
     private val context: Context,
-    /** Address of the currently bonded Buds, or `null` — re-resolved on every evaluation so a
-     * pairing that happens while this flow is collected is picked up. Never logged (AGENTS.md §9). */
+    /** Address of the currently bonded Buds, or `null` — re-resolved on every evaluation so a pairing that happens while this
+     * flow is collected is picked up. Never logged (AGENTS.md §9). */
     private val bondedAddress: () -> String?,
 ) {
 
-    fun observe(): Flow<Boolean> = callbackFlow {
+    fun observe(): Flow<AndroidLink> = callbackFlow {
         val proxies = mutableMapOf<Int, BluetoothProfile>()
+        val requested = mutableSetOf<Int>()
 
-        fun evaluate() {
-            val address = bondedAddress()
-            val connected = address != null && proxies.values.any { proxy ->
-                try {
-                    proxy.connectedDevices.any { it.address == address }
-                } catch (e: SecurityException) {
-                    false // BLUETOOTH_CONNECT revoked (AGENTS.md §2): "unknown" reads as not connected.
+        fun evaluate(reason: String) {
+            val permissionOk = BluetoothPermissions.hasConnect(context)
+            val connectedByProfile: Map<Int, List<String>> = if (!permissionOk) {
+                emptyMap()
+            } else {
+                proxies.mapValues { (_, proxy) ->
+                    try {
+                        proxy.connectedDevices.map { it.address }
+                    } catch (e: SecurityException) {
+                        emptyList() // revoked between the check and the call: treated as "not listed"; next evaluation re-checks
+                    }
                 }
             }
-            trySend(connected)
+            val address = bondedAddress()
+            val link = LinkEvaluation.evaluate(address, permissionOk, requested.toSet(), connectedByProfile)
+            BleLogger.logConnectionEvent(
+                "Android link (): ${link ?: "not yet known"}" +
+                    if (link == AndroidLink.CONNECTED) " via profiles ${LinkEvaluation.connectedProfiles(address, connectedByProfile)}" else "",
+            )
+            if (link != null) trySend(link)
         }
 
         val receiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context?, intent: Intent?) = evaluate()
+            override fun onReceive(ctx: Context?, intent: Intent?) = evaluate(intent?.action?.substringAfterLast('.') ?: "broadcast")
         }
         val filter = IntentFilter().apply {
             addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED)
@@ -83,28 +98,40 @@ class OsConnectionObserver(
             addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         }
         ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        BleLogger.logConnectionEvent("Android link observer started")
 
         val listener = object : BluetoothProfile.ServiceListener {
             override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
                 proxies[profile] = proxy
-                evaluate()
+                evaluate("profile $profile bound")
             }
 
             override fun onServiceDisconnected(profile: Int) {
                 proxies.remove(profile)
-                evaluate()
+                evaluate("profile $profile unbound")
             }
         }
         val adapter = context.getSystemService<BluetoothManager>()?.adapter
-        adapter?.getProfileProxy(context, listener, BluetoothProfile.A2DP)
-        adapter?.getProfileProxy(context, listener, BluetoothProfile.HEADSET)
-
-        trySend(false)
+        if (adapter == null || !BluetoothPermissions.hasConnect(context)) {
+            // No permission (or no adapter): nothing can be read — say so instead of claiming "not connected".
+            trySend(AndroidLink.UNKNOWN)
+        } else {
+            for (profile in listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET, BluetoothProfile.LE_AUDIO)) {
+                // getProfileProxy returns false when the profile is unsupported on this device — then it is not waited for.
+                if (adapter.getProfileProxy(context, listener, profile)) requested += profile
+            }
+        }
 
         awaitClose {
             context.unregisterReceiver(receiver)
             proxies.forEach { (profile, proxy) -> adapter?.closeProfileProxy(profile, proxy) }
             proxies.clear()
+            BleLogger.logConnectionEvent("Android link observer stopped")
         }
-    }.distinctUntilChanged()
+    }.distinctUntilChanged().settled(NOT_CONNECTED_SETTLE_MS)
+
+    companion object {
+        /** A "not connected" must persist this long before it is shown — a bud coming out of the case flaps. */
+        const val NOT_CONNECTED_SETTLE_MS = 1_500L
+    }
 }

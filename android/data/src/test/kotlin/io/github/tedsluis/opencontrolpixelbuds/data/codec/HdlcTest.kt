@@ -54,7 +54,7 @@ class HdlcTest {
     }
 
     @Test
-    @DisplayName("CAP-015 frame 2111: address=0, control=0x3b, CRC-32 verified (PROTOCOL.md §2.2a)")
+    @DisplayName("CAP-015 frame 2111: pw_hdlc address 00 3b (=3712), control 0x03, CRC-32 verified (PROTOCOL.md §2.2a)")
     fun `decodes a real DLCI 0x02 frame`() {
         val raw = hex(
             "7e003b0310131dea71de7d5e251d9a8c9e2a1e221c8201190d0000000015" +
@@ -63,28 +63,46 @@ class HdlcTest {
         val result = Hdlc.decode(raw)
         assertInstanceOf(BudsResult.Success::class.java, result)
         val frame = (result as BudsResult.Success).value
-        assertEquals(0, frame.address)
-        assertEquals(0x3b, frame.control)
-        assertEquals(45, frame.payload.size)
+        assertEquals(3712, frame.address) // 00 3b: 0 | (0x3b >> 1) << 7
+        assertEquals(0x03, frame.control)
+        assertEquals(44, frame.payload.size)
+        assertEquals(0x10, frame.payload[0].toInt() and 0xFF) // RpcPacket field 2 (channel_id)
+    }
+
+    @Test
+    @DisplayName("pw_hdlc addresses seen in the captures decode to their values and re-encode to the same bytes")
+    fun `address varint round-trips the captured addresses`() {
+        // (address bytes) -> value: 00 3b, 00 4b (requests, ch 19/21), 80 a3, 00 a5 (responses), 80 3d, 80 d3 (ch 24) — PROTOCOL.md §2.2a.
+        val cases = mapOf("003b" to 3712, "004b" to 4736, "803d" to 3904, "804d" to 4928, "80a3" to 10432, "00a5" to 10496, "80d3" to 13504)
+        for ((bytes, value) in cases) {
+            assertEquals(value, Hdlc.decodeAddress(hex(bytes), 0)!!.first, bytes)
+            assertEquals(bytes, Hdlc.encodeAddress(value).joinToString("") { "%02x".format(it) }, bytes)
+        }
+    }
+
+    @Test
+    fun `an address without a terminating byte never decodes`() {
+        assertEquals(null, Hdlc.decodeAddress(hex("0000000000"), 0))
+        assertEquals(null, Hdlc.decodeAddress(hex("00"), 0))
     }
 
     @Test
     @DisplayName("encode() then decode() round-trips address, control, and payload")
     fun `round-trips through encode and decode`() {
         val payload = byteArrayOf(0x01, 0x7e, 0x7d, 0x02, 0x03) // includes bytes that must be escaped
-        val encoded = Hdlc.encode(address = 0x1e80, control = 0x3b, payload = payload)
+        val encoded = Hdlc.encode(address = 0x1e80, control = 0x03, payload = payload)
         val decoded = Hdlc.decode(encoded)
         assertInstanceOf(BudsResult.Success::class.java, decoded)
         val frame = (decoded as BudsResult.Success).value
         assertEquals(0x1e80, frame.address)
-        assertEquals(0x3b, frame.control)
+        assertEquals(0x03, frame.control)
         assertTrue(payload.contentEquals(frame.payload))
     }
 
     @Test
     @DisplayName("a corrupted CRC is reported as MalformedFrame, never accepted")
     fun `rejects a corrupted CRC`() {
-        val encoded = Hdlc.encode(address = 0, control = 0x3b, payload = byteArrayOf(1, 2, 3))
+        val encoded = Hdlc.encode(address = 3712, control = 0x03, payload = byteArrayOf(1, 2, 3))
         val corrupted = encoded.copyOf()
         corrupted[corrupted.size - 3] = (corrupted[corrupted.size - 3] + 1).toByte()
         val result = Hdlc.decode(corrupted)

@@ -30,21 +30,21 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
  * Parses one already-delimited DLCI 0x04 frame (`[Group][Code][Length:2BE][Data]`, PROTOCOL.md
  * §2.1) as a Fast Pair "Battery updated" message (DECISIONS.md ADR-031, unblocked by ADR-033).
  *
- * **Scope is exactly what ADR-033 accepted:** a byte in `0..100` is that earbud's percentage and
- * its charging state stays unknown (`null` — never fabricated); **any other byte value is not
- * interpreted** and yields [BatteryLevel.Unavailable] (AGENTS.md §5: never guess a percentage).
- * Real frames in that regime exist — e.g. `e4 e4` and `dd dd` in the maintainer's own logs while
- * the earbuds sit charging in the case — and they intentionally read as "unavailable" here. A
- * reading of bit 7 as a charging flag (`0bSVVVVVVV`) is a *proposal awaiting maintainer sign-off*
- * in ADR-033, not implemented.
+ * **Scope is what ADR-033 (and its 2026-09-20 update) accepted:** each of `b1`/`b2` is `0bSVVVVVVV` —
+ * bit 7 = charging, the low 7 bits the percentage; a level `V` in `0..100` is a [BatteryLevel.Known]
+ * with `isCharging = S`, and `V = 0x7F` (or any other `V > 100`) is [BatteryLevel.Unavailable]
+ * (AGENTS.md §5: never guess a percentage). `b3 = 0xff` is "unknown" and no other `b3` value is decoded as the
+ * Case battery (not covered by the acceptance), so the Case is always [BatteryLevel.Unavailable].
+ * Real frames: `e4 e4` = 100 % charging both, `dd dd` = 93 % charging both, `e4 64` = Left charging 100 %,
+ * Right 100 % not charging (maintainer's logs, 2026-09-19; the on-screen values were not recorded).
  *
  * Structural failure is [BudsError.MalformedFrame], never thrown (AGENTS.md §11); a well-formed
  * frame that is simply not this message (any other Group/Code, or a different payload width) is
  * also a Failure so [CodecRouter] can offer it to the next decoder or surface it as unidentified.
  *
- * Fixtures (`BatteryFrameDecoderTest`): `CAP-009` frame 1044's `b1=96, b2=93` and its later
- * transitions (ADR-031's evidence), plus real 2026-09-19 frames from the maintainer's own device
- * (`64 64`, `60 5f`, and the charging-regime `e4 e4`/`dd dd`).
+ * Fixtures (`BatteryCodecTest`): `CAP-009` frame 1044's `b1=96, b2=93` and the 221→228 charging sequence
+ * (frames 26852…28563), plus real 2026-09-19 frames from the maintainer's own device (`64 64 ff`, `60 5f ff`,
+ * `e4 e4 ff`, `dd dd ff`, `e4 64 ff`).
  */
 object BatteryFrameDecoder {
 
@@ -61,16 +61,13 @@ object BatteryFrameDecoder {
             return BudsResult.Failure(BudsError.MalformedFrame(bytes))
         }
 
-        return BudsResult.Success(
-            BatteryFrame(
-                left = levelOf(data[0]),
-                right = levelOf(data[1]),
-            ),
-        )
+        return BudsResult.Success(BatteryFrame(left = levelOf(data[0]), right = levelOf(data[1])))
     }
 
     private fun levelOf(raw: Byte): BatteryLevel {
         val value = raw.toInt() and 0xFF
-        return if (value in 0..100) BatteryLevel.Known(percent = value, isCharging = null) else BatteryLevel.Unavailable
+        val percent = value and 0x7F
+        val charging = value and 0x80 != 0
+        return if (percent in 0..100) BatteryLevel.Known(percent = percent, isCharging = charging) else BatteryLevel.Unavailable
     }
 }

@@ -27,6 +27,10 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrame
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrameEncoder
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.MaestroChannel
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.PW_HDLC_CONTROL_UI
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.PwRpc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingFrame
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingFrameEncoder
@@ -57,6 +61,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -72,9 +77,9 @@ import kotlinx.coroutines.withTimeoutOrNull
  *
  * - **ANC**: no active query needed — the peer's own connect-time
  *   `Get`/`Notify` pair (DECISIONS.md ADR-021/ADR-022) is simply observed.
- * - **EQ**: no confirmed read opcode exists, so [eqProfile] resets to `null`
- *   ("unknown, not stale-and-trusted") on every fresh `Ready` transition,
- *   populated only once an actual DLCI 0x02 EQ frame is observed.
+ * - **EQ**: [eqProfile] resets to `null` ("unknown, not stale-and-trusted") on every fresh `Ready`
+ *   transition and is filled by the Connect sequence's `ReadSetting 4:16` (DECISIONS.md ADR-034); a failed
+ *   read or write is reported through [eqError] with its reason instead of being assumed to have worked.
  * - **Battery**: push-based via [hfpBatteryPercent] (HFP Option C) — no
  *   query, only listening.
  * - **Find My Buds**: no persisted state to reconcile.
@@ -105,6 +110,21 @@ class BudsRepositoryImpl(
 
     private val _messageStreamError = MutableStateFlow<BudsError?>(null)
     override val messageStreamError: Flow<BudsError?> = _messageStreamError
+
+    private val _eqError = MutableStateFlow<BudsError?>(null)
+    override val eqError: Flow<BudsError?> = _eqError
+
+    /** The pw_rpc channel the Buds announced for this connection (their unsolicited `GetSoftwareInfo`, ADR-034). */
+    private val _maestroChannelId = MutableStateFlow<Int?>(null)
+
+    /** Answers to our Maestro requests (an EQ value, or an empty/error result) — what a read/write waits for. */
+    private val _maestroReplies = MutableSharedFlow<MaestroReply>(extraBufferCapacity = 16)
+
+    /** One EQ read or write at a time, so a reply can only belong to the request that is waiting for it. */
+    private val eqMutex = Mutex()
+
+    @Volatile
+    private var eqReadJob: Job? = null
 
     /**
      * Serialises every use of the shared Message Stream channel (DLCI 0x04) — claim, action, release
@@ -162,6 +182,8 @@ class BudsRepositoryImpl(
                     timestampMillis = System.currentTimeMillis(),
                     onUnidentified = { _unidentifiedFrames.tryEmit(it) },
                     onMalformed = { BleLogger.logMalformedFrame(channelId, debugModeEnabledSnapshot) },
+                    // Always-on, payload-free (AGENTS.md §9): shows whether the Buds accept or reject a request.
+                    onRpcPacket = { BleLogger.logConnectionEvent(it.summary()) },
                 )
                 routed.forEach(::handleRoutedFrame)
             }
@@ -227,7 +249,21 @@ class BudsRepositoryImpl(
                 }
             }
 
-            is RoutedFrame.Eq -> _eqProfile.value = frame.frame.gains
+            // Field 16 is the *active* EQ (ADR-034); field 18 (the last saved custom curve) must never replace it.
+            is RoutedFrame.Eq -> {
+                if (!frame.frame.persist) {
+                    _eqProfile.value = frame.frame.gains
+                    _eqError.value = null
+                }
+                _maestroReplies.tryEmit(MaestroReply.Value(frame.frame))
+            }
+
+            is RoutedFrame.MaestroHello -> {
+                BleLogger.logConnectionEvent("Maestro channel announced by the Buds: ${frame.channelId}")
+                _maestroChannelId.value = frame.channelId
+            }
+
+            is RoutedFrame.RpcResult -> _maestroReplies.tryEmit(MaestroReply.Result(frame))
 
             // No persisted state (ARCHITECTURE.md §3.1's table); an ACK only releases a waiting tap.
             is RoutedFrame.Ring -> if (frame.frame is RingFrame.Ack) _ringAcks.tryEmit(Unit)
@@ -236,7 +272,7 @@ class BudsRepositoryImpl(
             // earlier Known value: a stale percentage must never linger once the Buds report a
             // regime we cannot read (AGENTS.md §5). The Case and the HFP field are untouched.
             is RoutedFrame.Battery -> _batteryStatus.update {
-                it.copy(left = frame.frame.left, right = frame.frame.right)
+                it.copy(left = frame.frame.left, right = frame.frame.right, case = frame.frame.case)
             }
         }
     }
@@ -248,6 +284,8 @@ class BudsRepositoryImpl(
         val device = bondedDeviceProvider()
             ?: return@withLock BudsResult.Failure(BudsError.PermissionDenied)
         _lastConnectionError.value = null
+        _eqError.value = null
+        _maestroChannelId.value = null // announced afresh by this connection's first Buds packet (ADR-034)
         connectionStateMachine.onConnectRequested()
         // ADR-032: the session is the MAESTRO channel only. The Message Stream channel (DLCI 0x04) is shared
         // with Google Play services' Fast Pair, so it is claimed on demand, never held by Connect.
@@ -263,6 +301,7 @@ class BudsRepositoryImpl(
                 // ADR-032 (agent detail): one short claim, started by this Connect tap, so the ANC mode
                 // and the battery the Buds push on DLCI 0x04 are known without a further tap.
                 launchInitialSnapshot()
+                launchInitialEqRead()
                 BudsResult.Success(Unit)
             }
             is BudsResult.Failure -> {
@@ -275,6 +314,7 @@ class BudsRepositoryImpl(
     override suspend fun disconnect(): BudsResult<Unit> {
         _lastConnectionError.value = null
         _messageStreamError.value = null
+        _eqError.value = null
         cancelClaimJobs()
         transport.disconnect()
         connectionStateMachine.onDisconnected()
@@ -306,12 +346,93 @@ class BudsRepositoryImpl(
     }
 
     override suspend fun setEqGains(gains: EqBandGains): BudsResult<Unit> {
+        if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
         val clamped = gains.clamped()
-        val payload = EqFrameEncoder.encode(EqFrame(clamped, persist = false))
-        val frame = Hdlc.encode(address = EQ_HDLC_ADDRESS, control = EQ_HDLC_CONTROL, payload = payload)
-        val result = transport.send(Dlci.MAESTRO, frame)
-        if (result is BudsResult.Success) _eqProfile.value = clamped
-        return result
+        return eqMutex.withLock {
+            val channel = when (val c = awaitMaestroChannel()) {
+                is BudsResult.Failure -> return@withLock eqFailed(c.error)
+                is BudsResult.Success -> c.value
+            }
+            val payload = EqFrameEncoder.encode(EqFrame(clamped, persist = false, channelId = channel.channelId))
+            val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, payload)
+            val (sent, reply) = sendAndAwait(_maestroReplies, EQ_WRITE_ACK_TIMEOUT_MS, { it.isResultFor(Maestro.METHOD_WRITE_SETTING) }) {
+                transport.send(Dlci.MAESTRO, wire)
+            }
+            when {
+                sent is BudsResult.Failure -> eqFailed(sent.error)
+                reply == null -> eqFailed(BudsError.Timeout)
+                reply is MaestroReply.Result && reply.result.isOk -> {
+                    _eqProfile.value = clamped
+                    _eqError.value = null
+                    BudsResult.Success(Unit)
+                }
+                reply is MaestroReply.Result -> eqFailed(
+                    BudsError.MaestroRejected("${PwRpc.typeName(reply.result.type)} ${PwRpc.statusName(reply.result.status)}"),
+                )
+                else -> eqFailed(BudsError.Unknown(IllegalStateException("unexpected reply to WriteSetting")))
+            }
+        }
+    }
+
+    override suspend fun refreshEq(): BudsResult<EqBandGains> {
+        if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
+        return readEq()
+    }
+
+    /**
+     * `ReadSetting 4:16` (DECISIONS.md ADR-034): waits for the Buds' channel announcement, sends the request on that
+     * channel, and waits for the value — or for an error result. Nothing is retried; a failure is reported with its reason.
+     * // TODO(verify): a fresh client may have to send other requests first (PROTOCOL.md §2.2a) — hardware re-test.
+     */
+    private suspend fun readEq(): BudsResult<EqBandGains> = eqMutex.withLock {
+        val channel = when (val c = awaitMaestroChannel()) {
+            is BudsResult.Failure -> return@withLock eqFailed(c.error)
+            is BudsResult.Success -> c.value
+        }
+        val request = Maestro.readSettingRequest(channel.channelId, Maestro.FIELD_EQ_ACTIVE)
+            ?: return@withLock eqFailed(BudsError.Unknown(IllegalStateException("EQ field not readable")))
+        val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(request))
+        val accept: (MaestroReply) -> Boolean = {
+            (it is MaestroReply.Value && !it.frame.persist) ||
+                (it is MaestroReply.Result && it.result.methodId == Maestro.METHOD_READ_SETTING && !it.result.isOk)
+        }
+        val (sent, reply) = sendAndAwait(_maestroReplies, EQ_READ_TIMEOUT_MS, accept) { transport.send(Dlci.MAESTRO, wire) }
+        when {
+            sent is BudsResult.Failure -> eqFailed(sent.error)
+            reply == null -> eqFailed(BudsError.Timeout)
+            reply is MaestroReply.Value -> {
+                BleLogger.logConnectionEvent("EQ read ok (channel ${channel.channelId})")
+                _eqProfile.value = reply.frame.gains
+                _eqError.value = null
+                BudsResult.Success(reply.frame.gains)
+            }
+            reply is MaestroReply.Result -> eqFailed(
+                BudsError.MaestroRejected("${PwRpc.typeName(reply.result.type)} ${PwRpc.statusName(reply.result.status)}"),
+            )
+            else -> eqFailed(BudsError.Unknown(IllegalStateException("unexpected reply to ReadSetting")))
+        }
+    }
+
+    /** The channel the Buds announced and its known request address — or the reason there is none (never guessed). */
+    private suspend fun awaitMaestroChannel(): BudsResult<MaestroChannel> {
+        val id = _maestroChannelId.value
+            ?: withTimeoutOrNull(MAESTRO_ANNOUNCE_WAIT_MS) { _maestroChannelId.filterNotNull().first() }
+            ?: return BudsResult.Failure(BudsError.MaestroChannelUnknown(null))
+        return MaestroChannel.forChannel(id)?.let { BudsResult.Success(it) }
+            ?: BudsResult.Failure(BudsError.MaestroChannelUnknown(id))
+    }
+
+    private fun <T> eqFailed(error: BudsError): BudsResult<T> {
+        BleLogger.logConnectionEvent("EQ request failed: ${eqErrorLogText(error)}")
+        _eqError.value = error
+        return BudsResult.Failure(error)
+    }
+
+    private fun eqErrorLogText(error: BudsError): String = when (error) {
+        is BudsError.MaestroChannelUnknown -> "no usable Maestro channel (announced: ${error.channelId})"
+        is BudsError.MaestroRejected -> "rejected by the Buds (${error.detail})"
+        BudsError.Timeout -> "no answer from the Buds"
+        else -> error::class.simpleName ?: "error"
     }
 
     override suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit> = setEqGains(preset.gains)
@@ -379,7 +500,15 @@ class BudsRepositoryImpl(
         snapshotJob = scope.launch { refreshAncMode(SNAPSHOT_TIMEOUT_MS) }
     }
 
+    /** Started by [connect] once the session is `Ready` (ADR-034); `internal` so a test can start it without a `BluetoothDevice`. */
+    internal fun launchInitialEqRead() {
+        eqReadJob?.cancel()
+        eqReadJob = scope.launch { readEq() }
+    }
+
     private fun cancelClaimJobs() {
+        eqReadJob?.cancel()
+        eqReadJob = null
         releaseJob?.cancel()
         releaseJob = null
         snapshotJob?.cancel()
@@ -395,8 +524,15 @@ class BudsRepositoryImpl(
         reply: SharedFlow<R>,
         timeoutMs: Long,
         send: suspend () -> BudsResult<T>,
+    ): Pair<BudsResult<T>, R?> = sendAndAwait(reply, timeoutMs, { true }, send)
+
+    private suspend fun <R, T> sendAndAwait(
+        reply: SharedFlow<R>,
+        timeoutMs: Long,
+        accept: (R) -> Boolean,
+        send: suspend () -> BudsResult<T>,
     ): Pair<BudsResult<T>, R?> = coroutineScope {
-        val waiter = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(timeoutMs) { reply.first() } }
+        val waiter = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(timeoutMs) { reply.first(accept) } }
         val result = send()
         if (result is BudsResult.Failure) {
             waiter.cancel()
@@ -420,17 +556,21 @@ class BudsRepositoryImpl(
         /** How long the channel stays claimed after an action so replies land, then it is released. */
         private const val MESSAGE_STREAM_LINGER_MS = 1_500L
 
-        // TODO(verify): PROTOCOL.md §2.2a — DLCI 0x02's HDLC Address field is
-        // per-connection-negotiated, not a small fixed set; every capture to date
-        // observed `0x0000` for the phone's own "Sent" EQ writes specifically
-        // (CAP-015 frames 2111/2165/2227), which is what this default reflects, but
-        // this project has no evidence for what a *different* session's negotiated
-        // address would be, or whether the peer accepts an address the app didn't
-        // itself negotiate via the (undocumented) pw_rpc channel-open exchange.
-        private const val EQ_HDLC_ADDRESS = 0x0000
+        /** How long a read/write waits for the Buds' channel announcement (their first Maestro packet). */
+        private const val MAESTRO_ANNOUNCE_WAIT_MS = 3_000L
 
-        // Control byte observed on every CAP-015 EQ "Sent" frame (2111/2165/2227) —
-        // PROJECT_RULES.md §8 rule 22's hardcoded-wire-literal exception.
-        private const val EQ_HDLC_CONTROL = 0x3b
+        /** How long a `ReadSetting` waits for its answer. Observed answers: ~50 ms (`CAP-015`/`CAP-036`). */
+        private const val EQ_READ_TIMEOUT_MS = 2_000L
+
+        /** How long a `WriteSetting` waits for its empty RESPONSE (`CAP-015`: ~50 ms after the request). */
+        private const val EQ_WRITE_ACK_TIMEOUT_MS = 1_500L
     }
+}
+
+/** What the Buds answered to one of our Maestro requests (DECISIONS.md ADR-034). */
+private sealed class MaestroReply {
+    data class Value(val frame: EqFrame) : MaestroReply()
+    data class Result(val result: RoutedFrame.RpcResult) : MaestroReply()
+
+    fun isResultFor(methodId: Int): Boolean = this is Result && result.methodId == methodId
 }

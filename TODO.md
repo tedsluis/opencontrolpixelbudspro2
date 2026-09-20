@@ -797,6 +797,25 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+- **Pairing/permissions fixes, Android-state mirroring, charging flag, EQ read, HFP diagnostic — 2026-09-20 (`ai-sessions/0041`,
+  `DECISIONS.md` ADR-033 update / ADR-034).** Done (**none hardware-verified**): in-app pairing no longer fails at "could not resolve the selected device"
+  (address upper-casing, association reuse/cleanup, distinct failure reasons), the runtime-permission flow exists (start + every resume; own states for
+  "not asked / denied / blocked"), the Connection screen mirrors Android's paired/connected state (`OsConnectionObserver`, `DeviceStatus`), the battery
+  decoder shows charging (`0bSVVVVVVV`), the EQ is read at Connect (`ReadSetting 4:16`) and write results are surfaced, `HfpBatteryReader` logs every
+  headset broadcast action. Closed by this: ADR-033's charging-flag decision, the EQ-read decision/ADR, the `07 34` census (never ACKed in 44 captures). **Open —
+  each needs the maintainer:**
+  (1) **remove `HfpBatteryReader`** (decided 2026-09-20, *after one confirming run*): the follow-up task is — remove `HfpBatteryReader`, its wiring in
+  `RepositoryModule` and the UI row; keep the protocol facts (ADR-015/023) and relabel `PROTOCOL.md`/`ARCHITECTURE.md` §4 Option C "wire-confirmed, not
+  app-consumable" — **only if the diagnostic log shows no HFP battery broadcast arrives** (if anything does, report it and stop);
+  (2) **automatic session connecting** — two variants, *neither decided nor built*: foreground-only auto-open when Android reports the Buds connected, or CDM
+  device-presence for the background case (costs in `ARCHITECTURE.md` §6.0b); needs its own ADR;
+  (3) **Case battery via DLCI 0x08** (ADR-014's message is the FACT source; unapproved proposal), **BLE Fast Pair battery advertisement** (ADR-006), **`SubscribeToSettingsChanges`** and every other DLCI 0x02 setting — all unapproved;
+  (4) **`LOGS-001`**: the deny-mode-drop capture is not yet in the folder (only the events skeleton) — analyse it when it is;
+  (5) hardware re-test of everything above (`ai-sessions/0041` RESULT, "Re-test instructions"), especially: does the Buds accept our EQ write on the mirrored
+  channel (the new `pw_rpc …` log lines say), does a fresh client get an answer to `ReadSetting` without sending other requests first, and does the Android-state
+  mirror follow a bud leaving the case;
+  (6) `AncFrameDecoder` still treats every Message Stream ACK (Group `0xFF`) as an ANC ACK (noted `ai-sessions/0040`); `BudsRepositoryImpl.connect()`'s glue (the
+  snapshot/EQ-read launches) and the Compose wording are not unit-tested (need a real `BluetoothDevice` / no Compose test infrastructure).
 - **On-demand Message Stream claiming, Battery Option B decoder, and two research items — 2026-09-19
   (`ai-sessions/0040`, `DECISIONS.md` ADR-032/ADR-033).** Done: the session is now the MAESTRO channel only; DLCI 0x04
   is claimed per user action (ANC tap, Refresh, Find tap, plus one snapshot at Connect) and released after 1.5 s

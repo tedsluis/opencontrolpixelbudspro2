@@ -32,13 +32,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
@@ -51,10 +53,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
  * not ship a UI action that specifically depends on that distinction being
  * settled.
  *
- * [gains] is nullable per ARCHITECTURE.md §3.1's table: EQ has no confirmed
- * read-on-reconnect opcode, so a fresh connection's value is genuinely
- * unknown — the UI says so, and never presents a default `0.0` quintet as if it
- * were a real reading.
+ * [gains] is nullable per ARCHITECTURE.md §3.1's table: it is `null` until the Connect-time
+ * `ReadSetting 4:16` answers (or if it failed) — the UI never presents a default `0.0` quintet as if it were a
+ * real reading.
  *
  * **`ai-sessions/0039`:** the controls are now shown *even while [gains] is
  * `null`*. Previously a `null` value replaced the whole screen with "change a
@@ -70,8 +71,10 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 fun EqScreen(
     connectionState: ConnectionState,
     gains: EqBandGains?,
+    eqError: BudsError?,
     onGainsChanged: (EqBandGains) -> Unit,
     onPresetSelected: (EqPreset) -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val enabled = connectionState.isReady()
@@ -83,17 +86,7 @@ fun EqScreen(
         ) {
             item { Text("Equalizer", style = MaterialTheme.typography.headlineSmall) }
             item { NotConnectedBanner(connectionState) }
-            if (gains == null) {
-                item {
-                    Text(
-                        "The Buds haven't reported their current EQ, and they don't send it when " +
-                            "this app connects. Pick a preset or move a slider — that sends all five " +
-                            "bands. The sliders below start from flat (0.0) and do NOT show what the " +
-                            "Buds are currently set to.",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
+            item { EqStatusNotice(connectionState, gains, eqError, onRefresh) }
             item { EqBandSlider("Upper treble", shown.upperTreble, enabled) { onGainsChanged(shown.copy(upperTreble = it)) } }
             item { EqBandSlider("Treble", shown.treble, enabled) { onGainsChanged(shown.copy(treble = it)) } }
             item { EqBandSlider("Mid", shown.mid, enabled) { onGainsChanged(shown.copy(mid = it)) } }
@@ -113,6 +106,29 @@ fun EqScreen(
 }
 
 /**
+ * `ai-sessions/0041`: the EQ is *read* from the Buds at Connect (`ReadSetting 4:16`, DECISIONS.md ADR-034), so the "unknown"
+ * wording only appears when that read failed — with the reason, never a generic message — and a failed write is reported the
+ * same way instead of being assumed to have worked.
+ */
+@Composable
+private fun EqStatusNotice(connectionState: ConnectionState, gains: EqBandGains?, eqError: BudsError?, onRefresh: () -> Unit) {
+    if (!connectionState.isReady()) return
+    if (eqError != null) {
+        Text(
+            (if (gains == null) "Couldn't read the Buds' current EQ. " else "The last EQ request failed. ") + eqError.userMessage(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
+        TextButton(onClick = onRefresh) { Text("Read EQ again") }
+    } else if (gains == null) {
+        Text(
+            "Reading the Buds' current EQ… The sliders below start from flat (0.0) until it arrives and do NOT yet show the Buds' setting.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}
+
+/**
  * [onValueChange] fires once per completed drag ([Slider]'s own
  * `onValueChangeFinished`), not per drag-frame — each call sends a real
  * frame over the RFCOMM `MAESTRO` channel (`BudsRepositoryImpl.setEqGains`),
@@ -125,7 +141,7 @@ fun EqScreen(
  */
 @Composable
 private fun EqBandSlider(label: String, value: Float, enabled: Boolean, onValueChange: (Float) -> Unit) {
-    var localValue by remember(value) { mutableStateOf(value) }
+    var localValue by remember(value) { mutableFloatStateOf(value) }
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label)

@@ -22,12 +22,19 @@
 package io.github.tedsluis.opencontrolpixelbuds.data
 
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.PW_HDLC_CONTROL_UI
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.PwRpc
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.RpcPacket
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionLoss
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
 import io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport
@@ -149,37 +156,210 @@ class BudsRepositoryImplTest {
         assertEquals(BudsError.Timeout, (result as BudsResult.Failure).error)
     }
 
-    @Test
-    fun `setEqGains sends the exact wire bytes matching CAP-015 frame 2165 and updates eqProfile`() = runTest {
-        val (repo, transport) = buildRepository(this)
-        advanceUntilIdle()
+    // ---- Maestro / EQ (DECISIONS.md ADR-034) ------------------------------------------------------
 
-        val gains = EqBandGains(upperTreble = 0f, treble = 0f, mid = 0f, bass = 3.0f, lowBass = 5.0f)
-        val result = repo.setEqGains(gains)
+    /** The Buds' unsolicited announcement of this connection's pw_rpc channel (real header, CAP-036 frame 1405 / CAP-015 frame 1879). */
+    private fun helloFrame(channel: Int, responseAddress: Int) = Hdlc.encode(
+        responseAddress,
+        PW_HDLC_CONTROL_UI,
+        PwRpc.encode(
+            RpcPacket(PwRpc.TYPE_RESPONSE, channel, Maestro.SERVICE_ID, Maestro.METHOD_GET_SOFTWARE_INFO, callId = PwRpc.CALL_ID_UNSOLICITED),
+        ),
+    )
+
+    private fun rpcFrame(responseAddress: Int, packet: RpcPacket) = Hdlc.encode(responseAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(packet))
+
+    private fun quintetPayload(gains: EqBandGains, field: Int = 16) =
+        io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrameEncoder.settingsPayload(
+            io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrame(gains, persist = field == 18, channelId = 0),
+        )
+
+    /** `advanceUntilIdle()` does not run the repository's `backgroundScope` collectors; `runCurrent()` does — a few rounds
+     * let an emitted frame travel collector -> reply flow -> waiting request. */
+    private fun TestScope.settle() = repeat(6) { runCurrent() }
+
+    private val heavyBass = EqBandGains(upperTreble = 0f, treble = 0f, mid = 0f, bass = 3.0f, lowBass = 5.0f)
+
+    @Test
+    fun `setEqGains on the announced channel sends CAP-015 frame 2165 byte for byte, waits for the ACK and updates eqProfile`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)) // channel 19 <-> request address 00 3b
+        transport.onSent = { _, _ -> transport.emit(Dlci.MAESTRO, hex("7e80a303080110131dea71de7d5e251d9a8c9e4c05e6d97e")) } // frame 2117
+        settle()
+
+        val result = repo.setEqGains(heavyBass)
         assertInstanceOf(BudsResult.Success::class.java, result)
 
         val sent = transport.sent.single()
         assertEquals(Dlci.MAESTRO, sent.first)
-        // CAP-015 frame 2165's own wire bytes, correlation byte 0x00 (this repository's default,
-        // not this capture's session-specific 0x13 — see BudsRepositoryImpl's own TODO(verify)).
         assertEquals(
-            "7e003b0310001dea71de7d5e251d9a8c9e2a1e221c8201190d0000a04015000040401d0000000025000000002d00000000",
-            sent.second.toHex().dropLast(10), // drop the CRC + trailing flag, which depend on the byte content above
+            "7e003b0310131dea71de7d5e251d9a8c9e2a1e221c8201190d0000a04015000040401d0000000025000000002d000000007b1bccbe7e",
+            sent.second.toHex(), // CAP-015 frame 2165, whole frame incl. CRC
         )
-        assertEquals(gains, repo.eqProfile.first())
+        assertEquals(heavyBass, repo.eqProfile.first())
+        assertNull(repo.eqError.first())
+    }
+
+    @Test
+    fun `setEqGains on another announced channel uses that channel and its address (24 - 80 3d)`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+        transport.emit(Dlci.MAESTRO, helloFrame(24, 13504))
+        transport.onSent = { _, _ -> transport.emit(Dlci.MAESTRO, rpcFrame(13504, RpcPacket(PwRpc.TYPE_RESPONSE, 24, Maestro.SERVICE_ID, Maestro.METHOD_WRITE_SETTING))) }
+        settle()
+
+        assertInstanceOf(BudsResult.Success::class.java, repo.setEqGains(heavyBass))
+        assertEquals("7e803d0310181dea71de7d5e25", transport.sent.single().second.toHex().take(26))
+    }
+
+    @Test
+    fun `setEqGains without any announcement sends nothing and reports why`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+
+        val result = repo.setEqGains(heavyBass)
+        assertEquals(BudsError.MaestroChannelUnknown(null), (result as BudsResult.Failure).error)
+        assertEquals(0, transport.sent.size)
+        assertNull(repo.eqProfile.value)
+        assertEquals(BudsError.MaestroChannelUnknown(null), repo.eqError.first())
+    }
+
+    @Test
+    fun `an announced channel with no known address sends nothing (never guessed)`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+        transport.emit(Dlci.MAESTRO, helloFrame(22, 0x28c0))
+        settle()
+
+        val result = repo.setEqGains(heavyBass)
+        assertEquals(BudsError.MaestroChannelUnknown(22), (result as BudsResult.Failure).error)
+        assertEquals(0, transport.sent.size)
+    }
+
+    @Test
+    fun `a rejected write is reported with the Buds' status and the profile is not updated`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0))
+        transport.onSent = { _, _ ->
+            transport.emit(Dlci.MAESTRO, rpcFrame(0x28c0, RpcPacket(PwRpc.TYPE_RESPONSE, 19, Maestro.SERVICE_ID, Maestro.METHOD_WRITE_SETTING, status = 5)))
+        }
+        settle()
+
+        val result = repo.setEqGains(heavyBass)
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), (result as BudsResult.Failure).error)
+        assertNull(repo.eqProfile.value)
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), repo.eqError.first())
+    }
+
+    @Test
+    fun `a write the Buds never answer is a Timeout, not an assumed success`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+        transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
+        settle()
+
+        val result = repo.setEqGains(heavyBass)
+        assertEquals(BudsError.Timeout, (result as BudsResult.Failure).error)
+        assertNull(repo.eqProfile.value)
+    }
+
+    @Test
+    fun `refreshEq sends CAP-036 frame 1523 and fills eqProfile from the real response (frame 1525)`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+        transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
+        transport.onSent = { _, _ ->
+            transport.emit(Dlci.MAESTRO, hex("7e00a5032a1e221c8201190dc0cccc3d15000000001da099993e25c0cc4c3e2dc0cc4c3e080110151dea71de7d5e2551aed0ae85b618ed7e"))
+        }
+        settle()
+
+        val result = repo.refreshEq()
+        assertInstanceOf(BudsResult.Success::class.java, result)
+        assertEquals("7e004b0310151dea71de7d5e2551aed0ae2a02201047eeadcf7e", transport.sent.single().second.toHex())
+        val gains = repo.eqProfile.first()!!
+        assertEquals(0.1f, gains.lowBass, 1e-4f)
+        assertEquals(0.3f, gains.mid, 1e-4f)
+        assertNull(repo.eqError.first())
+    }
+
+    @Test
+    fun `a failed read leaves the EQ unknown and says why`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0))
+        transport.onSent = { _, _ ->
+            // CAP-015 frame 1920's shape: a RESPONSE to ReadSetting carrying status UNKNOWN.
+            transport.emit(Dlci.MAESTRO, rpcFrame(0x28c0, RpcPacket(PwRpc.TYPE_RESPONSE, 19, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, status = 2)))
+        }
+        settle()
+
+        val result = repo.refreshEq()
+        assertEquals(BudsError.MaestroRejected("RESPONSE UNKNOWN"), (result as BudsResult.Failure).error)
+        assertNull(repo.eqProfile.value)
+        assertEquals(BudsError.MaestroRejected("RESPONSE UNKNOWN"), repo.eqError.first())
+    }
+
+    @Test
+    fun `the Connect-time read (launchInitialEqRead) waits for the announcement, then reads field 16 on that channel`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+        transport.onSent = { _, frame ->
+            // reply to whatever was sent with the requested quintet on the same channel
+            val rpc = (PwRpc.decode(Hdlc.decode(frame).let { (it as BudsResult.Success).value.payload }) as BudsResult.Success).value
+            assertEquals(Maestro.METHOD_READ_SETTING, rpc.methodId)
+            assertEquals("2010", rpc.payload.toHex()) // 4:16
+            transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_RESPONSE, rpc.channelId, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, quintetPayload(heavyBass))))
+        }
+        repo.launchInitialEqRead()
+        advanceTimeBy(1_000)
+        assertEquals(0, transport.sent.size) // nothing is sent until the Buds have announced their channel
+        transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
+        settle()
+
+        assertEquals(1, transport.sent.size)
+        assertEquals(heavyBass, repo.eqProfile.first())
+    }
+
+    @Test
+    fun `a stream update for the saved EQ (field 18) never replaces the active EQ`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        settle()
+        transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_SERVER_STREAM, 21, Maestro.SERVICE_ID, Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES, quintetPayload(heavyBass, 16))))
+        settle()
+        assertEquals(heavyBass, repo.eqProfile.value)
+
+        transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_SERVER_STREAM, 21, Maestro.SERVICE_ID, Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES, quintetPayload(EqBandGains.FLAT, 18))))
+        settle()
+        assertEquals(heavyBass, repo.eqProfile.value)
+    }
+
+    @Test
+    fun `every inbound pw_rpc packet is logged as structure only, always on (no payload, no bytes)`() = runTest {
+        val (_, transport) = buildRepository(this)
+        settle()
+        BleLogger.clear()
+        transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_WRITE_SETTING, status = 5)))
+        settle()
+
+        val log = BleLogger.exportLog()
+        assert("pw_rpc RESPONSE ch=21 method=WriteSetting status=NOT_FOUND" in log) { log }
     }
 
     @Test
     fun `EQ profile resets to unknown on every fresh Ready transition`() = runTest {
-        // driveToReady = false: a fresh machine starts at Disconnected, which is already
-        // "not Ready" — exactly what this test needs before it drives its own Ready transition
-        // below and checks that transition specifically causes the reset.
+        // driveToReady = false: a fresh machine starts at Disconnected, which is already "not Ready" — exactly what this test
+        // needs before it drives its own Ready transition and checks that transition specifically causes the reset.
         val connectionStateMachine = buildConnectionStateMachine(driveToReady = false)
         val (repo, transport) = buildRepository(this, connectionStateMachine = connectionStateMachine)
-        advanceUntilIdle()
+        settle()
 
-        repo.setEqGains(EqBandGains(1f, 1f, 1f, 1f, 1f))
-        assertEquals(EqBandGains(1f, 1f, 1f, 1f, 1f), repo.eqProfile.first())
+        val known = launch { repo.eqProfile.first { it != null } }
+        runCurrent()
+        transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_SERVER_STREAM, 21, Maestro.SERVICE_ID, Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES, quintetPayload(heavyBass))))
+        known.join()
+        assertEquals(heavyBass, repo.eqProfile.first())
 
         val job = launch { repo.eqProfile.first { it == null } }
         runCurrent()
@@ -443,29 +623,46 @@ class BudsRepositoryImplTest {
         job.join()
 
         val status = repo.batteryStatus.value
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(96, null), status.left)
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(95, null), status.right)
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(96, false), status.left)
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(95, false), status.right)
         assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Unavailable, status.case)
     }
 
     @Test
-    fun `a charging-regime battery frame replaces a known percentage with unavailable, never a stale value`() = runTest {
+    fun `a charging-regime battery frame shows the charging state and replaces the earlier value, the Case stays unavailable`() = runTest {
         val (repo, transport) = buildRepository(this)
         advanceUntilIdle()
-        val first = launch { repo.batteryStatus.first { it.left is io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known } }
+        val first = launch { repo.batteryStatus.first { it.left is BatteryLevel.Known } }
         runCurrent()
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "6464ff"))
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "6464ff")) // both in the ears, 100 %
         first.join()
+        assertEquals(BatteryLevel.Known(100, false), repo.batteryStatus.value.left)
 
-        val second = launch { repo.batteryStatus.first { it.left is io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Unavailable } }
+        val second = launch { repo.batteryStatus.first { (it.left as? BatteryLevel.Known)?.isCharging == true } }
         runCurrent()
-        // 0xe4 / 0xdd: the charging regime real logs show while the earbuds sit in the case. ADR-033
-        // does not interpret it, so it must read as unavailable — not keep showing the old 100 %.
+        // Real maintainer frame (2026-09-19): 0xe4 = 100 % charging, 0xdd = 93 % charging (ADR-033's 2026-09-20 update).
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "e4ddff"))
         second.join()
 
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Unavailable, repo.batteryStatus.value.left)
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Unavailable, repo.batteryStatus.value.right)
+        assertEquals(BatteryLevel.Known(100, true), repo.batteryStatus.value.left)
+        assertEquals(BatteryLevel.Known(93, true), repo.batteryStatus.value.right)
+        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case)
+    }
+
+    @Test
+    fun `a byte the decoder cannot read (0x7f = unknown) replaces a known value with unavailable, never a stale percentage`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        val first = launch { repo.batteryStatus.first { it.left is BatteryLevel.Known } }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "6464ff"))
+        first.join()
+        val second = launch { repo.batteryStatus.first { it.left is BatteryLevel.Unavailable } }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "7f64ff"))
+        second.join()
+        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.left)
+        assertEquals(BatteryLevel.Known(100, false), repo.batteryStatus.value.right)
     }
 
     @Test

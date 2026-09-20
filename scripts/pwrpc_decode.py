@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Decode the DLCI 0x02 pw_rpc conversation (Pigweed pw_hdlc + pw_rpc RpcPacket) in a btsnoop capture.
 
-Usage: scripts/pwrpc_decode.py <capture-btsnoop_hci.log>   (needs tshark on PATH)
+Usage (needs tshark on PATH):
+  scripts/pwrpc_decode.py <capture-btsnoop_hci.log>            list every pw_rpc packet with its frame number
+  scripts/pwrpc_decode.py --eq <capture> [<capture> ...]       EQ (qhr field 16/18) ReadSetting responses and
+                                                               WriteSetting requests, in capture order
+  scripts/pwrpc_decode.py --channels <capture> [<capture> ...] per capture: channel/HDLC address of the Buds' first
+                                                               unsolicited Maestro push vs. the phone's requests
 
 Why this exists (ai-sessions/0040, DESKRESEARCH_FINDINGS.md 2026-09-19): the 32-bit service/method
 IDs inside DLCI 0x02's constant frame prefix are the pw_rpc/pw_tokenizer 65599 hash of the names
@@ -29,7 +34,13 @@ def h65599(name: str) -> int:
 
 SERVICES = {h65599("maestro_pw.Maestro"): "maestro_pw.Maestro"}
 METHODS = {h65599(n): n for n in ("WriteSetting", "ReadSetting", "SubscribeToSettingsChanges", "GetSoftwareInfo")}
-TYPES = {0: "REQUEST", 1: "RESPONSE", 2: "CLIENT_ERROR", 3: "SERVER_ERROR", 5: "CANCEL", 7: "SERVER_STREAM"}
+# pw_rpc packet.proto PacketType. 0/1/7 are observed in the captures (REQUEST from the phone, RESPONSE and
+# SERVER_STREAM from the Buds); 2/4/5/8 are from the public proto (ai-sessions/0041 corrected an earlier table
+# that had 2/3/5 wrong).
+TYPES = {0: "REQUEST", 1: "RESPONSE", 2: "CLIENT_STREAM", 4: "CLIENT_ERROR", 5: "SERVER_ERROR",
+         7: "SERVER_STREAM", 8: "CLIENT_REQUEST_COMPLETION"}
+# pw_rpc Status codes seen in the captures (google.rpc.Code numbering).
+STATUS = {0: "OK", 1: "CANCELLED", 2: "UNKNOWN", 5: "NOT_FOUND", 9: "FAILED_PRECONDITION"}
 
 
 def varint(b, i):
@@ -99,7 +110,10 @@ def unescape(b):
     return bytes(o)
 
 
-def main(cap):
+def packets(cap):
+    """Yield (frame_number, hci_source, hdlc_address_hex, hdlc_control, rpc_fields) for every pw_hdlc frame on
+    RFCOMM DLCI 2 whose payload parses as an RpcPacket. The frame number is the btsnoop frame that carried the
+    frame's closing 0x7E flag."""
     rows = subprocess.run(
         ["tshark", "-r", cap, "-Y", "btrfcomm.dlci==2 && btrfcomm.frame_type==0xef", "-T", "fields",
          "-e", "frame.number", "-e", "bluetooth.src", "-e", "data.data"],
@@ -108,9 +122,10 @@ def main(cap):
     for r in rows:
         p = r.split("\t")
         if len(p) == 3 and p[2]:
-            streams.setdefault(p[1], bytearray()).extend(bytes.fromhex(p[2]))
-    for src, buf in streams.items():
-        print(f"== HCI source {src}: {len(buf)} bytes")
+            buf, marks = streams.setdefault(p[1], (bytearray(), []))
+            marks.append((len(buf), int(p[0])))
+            buf.extend(bytes.fromhex(p[2]))
+    for src, (buf, marks) in streams.items():
         begin = None
         for i, b in enumerate(buf):
             if b != 0x7E:
@@ -120,18 +135,80 @@ def main(cap):
                 j = 0
                 while j < len(u) and not u[j] & 1:  # pw_hdlc address: one-terminated varint
                     j += 1
-                pl = u[j + 2:-4]  # skip last address byte + control byte; drop CRC-32
-                pk = parse(pl)
-                if pk:
-                    d = {f: v for f, w, v in pk}
-                    svc = int.from_bytes(d[3], "little") if 3 in d else None
-                    met = int.from_bytes(d[4], "little") if 4 in d else None
-                    print(f"  {TYPES.get(d.get(1, 0), d.get(1))} ch={d.get(2)} "
-                          f"svc={SERVICES.get(svc, hex(svc) if svc else None)} "
-                          f"method={METHODS.get(met, hex(met) if met else None)} status={d.get(6)} "
-                          f"| {fmt(d[5]) if 5 in d else ''}")
+                if len(u) >= j + 6:
+                    pk = parse(u[j + 2:-4])  # skip last address byte + control byte; drop CRC-32
+                    if pk:
+                        frame = max((fn for off, fn in marks if off <= i), default=None)
+                        yield frame, src, u[:j + 1].hex(), u[j + 1], {f: v for f, w, v in pk}
             begin = i
 
 
+def describe(d):
+    svc = int.from_bytes(d[3], "little") if 3 in d else None
+    met = int.from_bytes(d[4], "little") if 4 in d else None
+    return (f"{TYPES.get(d.get(1, 0), d.get(1))} ch={d.get(2)} "
+            f"svc={SERVICES.get(svc, hex(svc) if svc else None)} "
+            f"method={METHODS.get(met, hex(met) if met else None)} "
+            f"status={STATUS.get(d.get(6, 0), d.get(6))} call_id={d.get(7)} "
+            f"| {fmt(d[5]) if 5 in d else ''}")
+
+
+def eq_quintet(payload):
+    """`4:{N:{1..5 float32}}` -> (N, [5 floats]) for N in (16, 18), else None."""
+    outer = parse(payload)
+    if not outer:
+        return None
+    for f, w, v in outer:
+        if f == 4 and w == 2:
+            inner = parse(v)
+            if inner and len(inner) == 1 and inner[0][0] in (16, 18) and inner[0][1] == 2:
+                vals = parse(inner[0][2])
+                if vals and len(vals) == 5 and all(w2 == 5 for _, w2, _ in vals):
+                    return inner[0][0], [round(struct.unpack("<f", v2)[0], 2) for _, _, v2 in vals]
+    return None
+
+
+def main_list(cap):
+    for frame, src, addr, control, d in packets(cap):
+        print(f"{frame:>6} addr={addr} ctl={control:02x} {describe(d)}")
+
+
+def main_eq(caps):
+    for cap in caps:
+        print(f"== {cap}")
+        for frame, src, addr, control, d in packets(cap):
+            met = int.from_bytes(d[4], "little") if 4 in d else None
+            q = eq_quintet(d[5]) if 5 in d else None
+            name = METHODS.get(met)
+            if q and name in ("ReadSetting", "WriteSetting"):
+                kind = {(0, "ReadSetting"): "read-resp?", (1, "ReadSetting"): "READ  <-", (0, "WriteSetting"): "WRITE ->"}.get(
+                    (d.get(1, 0), name), describe(d)[:20])
+                print(f"{frame:>6} ch={d.get(2)} addr={addr} {kind} field {q[0]}: {q[1]}")
+
+
+def main_channels(caps):
+    for cap in caps:
+        first, req, resp = None, collections.Counter(), collections.Counter()
+        for frame, src, addr, control, d in packets(cap):
+            svc = int.from_bytes(d[3], "little") if 3 in d else None
+            met = int.from_bytes(d[4], "little") if 4 in d else None
+            if svc not in SERVICES:
+                continue
+            kind = d.get(1, 0)
+            if first is None and METHODS.get(met) == "GetSoftwareInfo" and kind == 1 and d.get(7) == 0xFFFFFFFF:
+                first = (d.get(2), addr, frame)
+            if METHODS.get(met) in ("ReadSetting", "WriteSetting", "SubscribeToSettingsChanges"):
+                (req if kind == 0 else resp)[(d.get(2), addr)] += 1
+        if first or req:
+            top = req.most_common(1)[0][0][0] if req else None
+            print(f"{cap.split('/')[-1]}: first push (ch, addr, frame)={first} | requests (ch, addr)={dict(req)} "
+                  f"| most-used request channel == first-push channel: {top == (first[0] if first else None)}")
+
+
 if __name__ == "__main__":
-    main(sys.argv[1])
+    if sys.argv[1] == "--eq":
+        main_eq(sys.argv[2:])
+    elif sys.argv[1] == "--channels":
+        main_channels(sys.argv[2:])
+    else:
+        main_list(sys.argv[1])

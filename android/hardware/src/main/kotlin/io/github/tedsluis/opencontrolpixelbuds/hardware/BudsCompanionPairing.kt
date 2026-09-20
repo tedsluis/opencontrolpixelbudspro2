@@ -33,156 +33,261 @@ import android.content.IntentSender
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 
-/** Progress of the classic-bonding step that follows a CDM association
- * (`BudsCompanionPairing.observeBonding`'s own doc comment explains why this
- * step is separate from — and not automatically done by — CDM itself). */
-sealed class PairingState {
-    data object Bonding : PairingState()
-    data class Bonded(val deviceName: String?) : PairingState()
-    data class Failed(val reason: String) : PairingState()
-}
-
 /**
- * Wraps `CompanionDeviceManager` for first-time pairing per ARCHITECTURE.md
- * §9.0a's documented flow, and `getBondedDevices()` for already-paired
- * reconnection — `AGENTS.md` §7's only two sanctioned discovery paths. No
- * custom BLE scanning anywhere in this class.
+ * Wraps `CompanionDeviceManager` for first-time pairing per ARCHITECTURE.md §9.0a's documented flow, and
+ * `getBondedDevices()` for already-paired reconnection — `AGENTS.md` §7's only two sanctioned discovery paths. No custom
+ * BLE scanning anywhere in this class. Every decision (address normalisation, which association/bonded device, what a bond
+ * outcome means) lives in [PairingLogic] and is unit-tested; this class is the thin Android glue around it, and logs every
+ * step (always-on, no address — AGENTS.md §9/§13).
  *
- * // TODO(verify): the CDM `associate()` callback shape differs across API
- * // levels (a deprecated `PendingIntent`-based overload vs. the newer
- * // `Executor`+`Callback` overload) — this project's own floor is API 34
- * // (DECISIONS.md ADR-029), so only the newer overload is used here; not
- * // exercised against a real device/picker in this environment.
+ * // TODO(verify): the CDM `associate()` callback and picker are not exercised against a real device in this environment
+ * // — the maintainer re-test (b) in `ai-sessions/0041` confirms/refutes the fixes for the "could not resolve the selected
+ * // device" failure.
  */
 class BudsCompanionPairing(private val context: Context) {
 
     private val companionDeviceManager: CompanionDeviceManager? = context.getSystemService()
 
-    /** Already-bonded Buds Pro 2, if any — the reconnect path, no CDM/UI involved.
-     * `BLUETOOTH_CONNECT` is a runtime-revocable permission (AGENTS.md §2) — a
-     * missing/revoked grant is not a crash condition, it just means "no bonded
-     * device visible yet." */
-    fun bondedDevice(): BluetoothDevice? {
-        val adapter = context.getSystemService<BluetoothManager>()?.adapter ?: return null
-        return try {
-            adapter.bondedDevices?.firstOrNull { it.name?.contains("Pixel Buds", ignoreCase = true) == true }
-        } catch (e: SecurityException) {
-            null
+    /** This app's own CDM associations, as pure views ([PairingLogic.AssociationView]). Empty if CDM is unavailable. */
+    private fun associations(): List<Pair<AssociationInfo, PairingLogic.AssociationView>> =
+        companionDeviceManager?.myAssociations.orEmpty().map { info ->
+            info to PairingLogic.AssociationView(info.id, info.deviceMacAddress?.toString(), info.displayName?.toString())
         }
-    }
 
     /**
-     * Starts the CDM association flow (ARCHITECTURE.md §9.0a steps 1-4). The
-     * `IntentSender` [onPending] receives must be launched via an
-     * `ActivityResultLauncher` by the caller (`:ui`/`:app`, which owns the
-     * `ComponentActivity`) — this class has no Activity context of its own,
-     * matching `:hardware`'s role as a UI-independent layer.
-     *
-     * // TODO(verify): [NAME_PATTERN] filters CDM's own device picker to names
-     * // containing "Pixel Buds" (case-insensitive) — confirmed against the
-     * // maintainer's own real device, whose classic Bluetooth name starts
-     * // "Pixel Buds Pro 2" (ai-sessions/0036). Without this filter, CDM
-     * // offered arbitrary nearby Bluetooth devices one at a time instead of a
-     * // Pixel-Buds-only list — a real, hardware-confirmed defect, not a
-     * // hypothetical one.
+     * Looks for the already-bonded Buds — the reconnect path, no CDM picker involved. A missing `BLUETOOTH_CONNECT` grant is
+     * reported as [BondedLookup.PermissionMissing], **never** as "nothing bonded" (`ai-sessions/0041`: after clearing app
+     * data the old code swallowed the `SecurityException` and the app claimed "No Pixel Buds paired yet" while Android showed
+     * them connected). The device is identified by the address of this app's CDM association (a renamed device is still
+     * found); the name "Pixel Buds" is only a fallback.
      */
-    fun requestAssociation(
-        onPending: (IntentSender) -> Unit,
-        onCreated: (AssociationInfo) -> Unit,
-        onFailure: (CharSequence) -> Unit,
-    ) {
-        val manager = companionDeviceManager ?: return onFailure("CompanionDeviceManager unavailable")
-        val filter = BluetoothDeviceFilter.Builder()
-            .setNamePattern(NAME_PATTERN)
-            .build()
-        val request = AssociationRequest.Builder()
-            .addDeviceFilter(filter)
-            .setSingleDevice(true) // ARCHITECTURE.md §15: single-device support only for v1.
-            .build()
-
-        manager.associate(
-            request,
-            ContextCompat.getMainExecutor(context),
-            object : CompanionDeviceManager.Callback() {
-                override fun onAssociationPending(intentSender: IntentSender) = onPending(intentSender)
-                override fun onAssociationCreated(associationInfo: AssociationInfo) = onCreated(associationInfo)
-                override fun onFailure(error: CharSequence?) = onFailure(error ?: "association failed")
-            },
-        )
+    fun lookupBonded(): BondedLookup {
+        if (!BluetoothPermissions.hasConnect(context)) return BondedLookup.PermissionMissing
+        val adapter = context.getSystemService<BluetoothManager>()?.adapter ?: return BondedLookup.NoneBonded
+        val bonded = try {
+            adapter.bondedDevices.orEmpty().map { PairingLogic.BondedCandidate(it.address, safeName(it)) }
+        } catch (e: SecurityException) {
+            BleLogger.logConnectionEvent("Bonded-device lookup: permission revoked (${BleLogger.describe(e)})")
+            return BondedLookup.PermissionMissing
+        }
+        val associated = associations().mapNotNull { (_, view) -> view.address }.toSet()
+        val chosen = PairingLogic.chooseBonded(bonded, associated)
+        return if (chosen == null) BondedLookup.NoneBonded else BondedLookup.Found(chosen.address)
     }
 
-    /** Resolves a CDM [AssociationInfo] back to the `BluetoothDevice` it
-     * refers to, so [observeBonding] has something to call `createBond()` on. */
-    fun deviceForAssociation(info: AssociationInfo): BluetoothDevice? {
-        val mac = info.deviceMacAddress ?: return null
+    /** The bonded Buds' `BluetoothDevice`, or null (no permission and nothing bonded both read as null here — use
+     * [lookupBonded] when the difference matters). Used by the repository at Connect time. */
+    fun bondedDevice(): BluetoothDevice? {
+        val found = lookupBonded() as? BondedLookup.Found ?: return null
         val adapter = context.getSystemService<BluetoothManager>()?.adapter ?: return null
         return try {
-            adapter.getRemoteDevice(mac.toString())
+            adapter.getRemoteDevice(found.address)
         } catch (e: IllegalArgumentException) {
             null
         }
     }
 
     /**
-     * Starts classic Bluetooth bonding for [device] and reports progress.
+     * Starts the CDM association flow (ARCHITECTURE.md §9.0a steps 1-4) — **or reuses** this app's existing association for
+     * the Buds instead of creating a duplicate (`ai-sessions/0041`: every attempt used to add one, ids 26–34 in one afternoon's log). The
+     * `IntentSender` [onPending] receives must be launched via an `ActivityResultLauncher` by the caller (`:app`, which
+     * owns the `ComponentActivity`).
      *
-     * **`CompanionDeviceManager.associate()`'s own success callback
-     * (`onAssociationCreated`) does not pair the device** — CDM only grants
-     * this app permission to see/communicate with the device the user picked;
-     * actual Bluetooth bonding is a separate step this app must trigger
-     * itself (`ARCHITECTURE.md` §9.0a step 5's own documented sequence, which
-     * had never actually been wired to a real `createBond()` call until this
-     * fix — confirmed missing by a real "the app silently does nothing after
-     * I tap Allow" report on hardware, `ai-sessions/0036`).
+     * // TODO(verify): [NAME_PATTERN] filters CDM's own device picker to names containing "Pixel Buds" (case-insensitive) —
+     * // confirmed against the maintainer's real device (`ai-sessions/0036`).
+     */
+    fun requestAssociation(
+        onPending: (IntentSender) -> Unit,
+        onCreated: (AssociationInfo) -> Unit,
+        onFailure: (PairingFailure) -> Unit,
+    ) {
+        val manager = companionDeviceManager
+        if (manager == null) {
+            BleLogger.logConnectionEvent("Pairing: CompanionDeviceManager unavailable")
+            return onFailure(PairingFailure.CompanionUnavailable)
+        }
+        val existing = associations()
+        val reuse = PairingLogic.pickAssociation(existing.map { it.second })
+        if (reuse != null) {
+            BleLogger.logConnectionEvent("Pairing: reusing existing association (${existing.size} total) — no new picker")
+            existing.first { it.second.id == reuse.id }.first.let(onCreated)
+            return
+        }
+        val filter = BluetoothDeviceFilter.Builder().setNamePattern(NAME_PATTERN).build()
+        val request = AssociationRequest.Builder()
+            .addDeviceFilter(filter)
+            .setSingleDevice(true) // ARCHITECTURE.md §15: single-device support only for v1.
+            .build()
+        BleLogger.logConnectionEvent("Pairing: association requested (CDM picker)")
+        manager.associate(
+            request,
+            ContextCompat.getMainExecutor(context),
+            object : CompanionDeviceManager.Callback() {
+                override fun onAssociationPending(intentSender: IntentSender) = onPending(intentSender)
+                override fun onAssociationCreated(associationInfo: AssociationInfo) {
+                    BleLogger.logConnectionEvent("Pairing: association created")
+                    onCreated(associationInfo)
+                }
+
+                override fun onFailure(error: CharSequence?) {
+                    BleLogger.logConnectionEvent("Pairing: association failed (${error ?: "no reason given"})")
+                    onFailure(PairingFailure.AssociationFailed(error?.toString() ?: "association failed"))
+                }
+            },
+        )
+    }
+
+    /**
+     * Resolves a CDM [AssociationInfo] to the `BluetoothDevice` it refers to. Prefers `AssociationInfo.associatedDevice`
+     * (API 34); falls back to the address **upper-cased** — `MacAddress.toString()` is lower-case and
+     * `BluetoothAdapter.getRemoteDevice(String)` rejects lower-case (`ai-sessions/0041`, the "could not resolve the selected
+     * device" root cause). The reason for a null result is logged.
+     */
+    fun deviceForAssociation(info: AssociationInfo): BluetoothDevice? {
+        info.associatedDevice?.bluetoothDevice?.let {
+            BleLogger.logConnectionEvent("Pairing: device resolved from the association's own device")
+            return it
+        }
+        val address = PairingLogic.normalizeAddress(info.deviceMacAddress?.toString())
+        if (address == null) {
+            BleLogger.logConnectionEvent("Pairing: association has no usable Bluetooth address")
+            return null
+        }
+        val adapter = context.getSystemService<BluetoothManager>()?.adapter
+        if (adapter == null) {
+            BleLogger.logConnectionEvent("Pairing: no Bluetooth adapter")
+            return null
+        }
+        return try {
+            adapter.getRemoteDevice(address).also { BleLogger.logConnectionEvent("Pairing: device resolved from the association address") }
+        } catch (e: IllegalArgumentException) {
+            BleLogger.logConnectionEvent("Pairing: address rejected by the adapter (${BleLogger.describe(e)})")
+            null
+        }
+    }
+
+    /**
+     * Housekeeping decision (documented in ARCHITECTURE.md §9.0a): after an association for the Buds exists, older duplicate
+     * associations of *this app* for the **same address** (left by earlier attempts) are removed with `disassociate()`, the
+     * newest is kept. It touches only this app's own associations and only exact-address duplicates.
+     */
+    fun cleanUpDuplicateAssociations(keep: AssociationInfo) {
+        val manager = companionDeviceManager ?: return
+        val all = associations()
+        val keepView = all.firstOrNull { it.second.id == keep.id }?.second
+            ?: PairingLogic.AssociationView(keep.id, keep.deviceMacAddress?.toString(), keep.displayName?.toString())
+        val stale = PairingLogic.staleAssociationIds(all.map { it.second }, keepView)
+        stale.forEach { id ->
+            try {
+                manager.disassociate(id)
+            } catch (e: RuntimeException) {
+                BleLogger.logConnectionEvent("Pairing: could not remove a duplicate association (${BleLogger.describe(e)})")
+            }
+        }
+        if (stale.isNotEmpty()) BleLogger.logConnectionEvent("Pairing: removed ${stale.size} duplicate association(s)")
+    }
+
+    /**
+     * Starts classic Bluetooth bonding for [device] (unless it is already bonded or bonding) and reports progress.
+     *
+     * **`CompanionDeviceManager.associate()`'s own success callback does not pair the device** — CDM only grants this app
+     * permission to see it; bonding is a separate step (`ai-sessions/0036`). Already-bonded is success; a bond that falls
+     * back to `BOND_NONE` is classified by [PairingLogic.classifyBondEnd]; a bond that takes longer than
+     * [BOND_TIMEOUT_MS] ends with [PairingFailure.BondTimeout] (one bounded wait, not a retry loop).
      */
     fun observeBonding(device: BluetoothDevice): Flow<PairingState> = callbackFlow {
+        var sawBonding = false
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
                 if (intent?.action != BluetoothDevice.ACTION_BOND_STATE_CHANGED) return
-                val changedDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-                if (changedDevice?.address != device.address) return
-                when (intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1)) {
-                    BluetoothDevice.BOND_BONDED -> {
-                        // BLUETOOTH_CONNECT is runtime-revocable (AGENTS.md §2) — the bond itself
-                        // already succeeded by this point, so a missing grant here only costs the
-                        // display name, not the pairing outcome.
-                        val name = try {
-                            device.name
-                        } catch (e: SecurityException) {
-                            null
-                        }
-                        trySend(PairingState.Bonded(name))
+                val changed = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                if (changed?.address != device.address) return
+                when (PairingLogic.bondKind(intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1))) {
+                    PairingLogic.BondKind.BONDING -> {
+                        sawBonding = true
+                        BleLogger.logConnectionEvent("Pairing: bond state BONDING")
+                        trySend(PairingState.Bonding)
+                    }
+                    PairingLogic.BondKind.BONDED -> {
+                        BleLogger.logConnectionEvent("Pairing: bond state BONDED")
+                        trySend(PairingState.Bonded(safeName(device)))
                         close()
                     }
-                    BluetoothDevice.BOND_NONE -> {
-                        trySend(PairingState.Failed("Pairing was cancelled or rejected by the Buds."))
+                    PairingLogic.BondKind.NONE -> {
+                        val failure = PairingLogic.classifyBondEnd(sawBonding)
+                        BleLogger.logConnectionEvent("Pairing: bond state NONE — $failure")
+                        trySend(PairingState.Failed(failure))
                         close()
                     }
-                    // BOND_BONDING: already reported below, nothing new to say.
+                    null -> Unit
                 }
             }
         }
-        context.registerReceiver(receiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
+        ContextCompat.registerReceiver(context, receiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
 
-        trySend(PairingState.Bonding)
-        try {
-            if (!device.createBond()) {
-                trySend(PairingState.Failed("Could not start pairing."))
+        val kind = try {
+            PairingLogic.bondKind(device.bondState)
+        } catch (e: SecurityException) {
+            BleLogger.logConnectionEvent("Pairing: permission missing when reading the bond state")
+            trySend(PairingState.Failed(PairingFailure.PermissionMissing))
+            close()
+            null
+        }
+        if (!isClosedForSend) {
+            when (PairingLogic.actionFor(kind)) {
+                PairingLogic.BondAction.ALREADY_BONDED -> {
+                    BleLogger.logConnectionEvent("Pairing: already bonded — no createBond()")
+                    trySend(PairingState.Bonded(safeName(device)))
+                    close()
+                }
+                PairingLogic.BondAction.WAIT_FOR_BOND -> {
+                    BleLogger.logConnectionEvent("Pairing: bonding already in progress — waiting")
+                    sawBonding = true
+                    trySend(PairingState.Bonding)
+                }
+                PairingLogic.BondAction.START_BOND -> {
+                    BleLogger.logConnectionEvent("Pairing: createBond()")
+                    trySend(PairingState.Bonding)
+                    try {
+                        if (!device.createBond()) {
+                            trySend(PairingState.Failed(PairingFailure.CouldNotStartBond))
+                            close()
+                        }
+                    } catch (e: SecurityException) {
+                        trySend(PairingState.Failed(PairingFailure.PermissionMissing))
+                        close()
+                    }
+                }
+            }
+        }
+        if (!isClosedForSend) {
+            launch {
+                delay(BOND_TIMEOUT_MS)
+                BleLogger.logConnectionEvent("Pairing: bond timed out")
+                trySend(PairingState.Failed(PairingFailure.BondTimeout))
                 close()
             }
-        } catch (e: SecurityException) {
-            trySend(PairingState.Failed("Missing Bluetooth permission."))
-            close()
         }
 
         awaitClose { context.unregisterReceiver(receiver) }
     }
 
+    private fun safeName(device: BluetoothDevice): String? = try {
+        device.name
+    } catch (e: SecurityException) {
+        null // BLUETOOTH_CONNECT revoked: only the display name is lost (AGENTS.md §2).
+    }
+
     companion object {
         private val NAME_PATTERN: Pattern = Pattern.compile("(?i).*Pixel\\s*Buds.*")
+
+        /** Upper bound for the classic bond to complete once started. */
+        const val BOND_TIMEOUT_MS = 45_000L
     }
 }

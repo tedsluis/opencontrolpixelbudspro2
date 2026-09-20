@@ -53,6 +53,17 @@ sealed class BudsError {
     }
     data object UnsupportedFirmware : BudsError()
     data object PermissionDenied : BudsError()
+
+    /**
+     * The Buds did not announce which pw_rpc channel this connection uses (their unsolicited `GetSoftwareInfo`
+     * push, DECISIONS.md ADR-034) or announced one this app has no known HDLC address for. [channelId] is `null`
+     * when nothing was announced in time. Nothing is sent — the app never guesses a channel or an address.
+     */
+    data class MaestroChannelUnknown(val channelId: Int?) : BudsError()
+
+    /** The Buds answered a Maestro request with an error instead of accepting it; [detail] is structure only
+     * (e.g. `RESPONSE NOT_FOUND`), never payload bytes (AGENTS.md §9). */
+    data class MaestroRejected(val detail: String) : BudsError()
     data class Unknown(val cause: Throwable) : BudsError()
 }
 

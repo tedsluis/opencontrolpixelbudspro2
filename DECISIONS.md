@@ -1566,6 +1566,11 @@ motivated this).
   Option C (HFP) — but any implementation must treat `b1`'s value as unreliable/unknown while the
   Left earbud is reported charging, until the regime-change is separately investigated. Does not
   change the existing HFP-first priority ordering.
+- **Update (2026-09-20, `ai-sessions/0041`) — the "charging-state field-switch anomaly" is resolved.** The
+  maintainer accepted ADR-033's charging-flag proposal (see ADR-033's update): the anomaly was not a regime
+  change but the official Fast Pair encoding `0bSVVVVVVV` (bit 7 = charging, low 7 bits = level, `0x7F` =
+  unknown). `PROTOCOL.md` §4.3 Option B now records it as 🟢 FACT. The "unreliable while charging" caution in
+  the *Consequences* above no longer applies.
 
 ## ADR-032 — DLCI 0x04 (Message Stream) is a shared, on-demand channel: opened by the user's own ANC/Find/Connect action and released shortly after; loss of it is not a session loss
 
@@ -1614,6 +1619,13 @@ motivated this).
   `ARCHITECTURE.md` §2.1/§6.0b updated. `ConnectionState` itself is unchanged. This supersedes nothing in
   `DECISIONS.md`; it refines `ARCHITECTURE.md` §6.0b (which had recorded per-channel tolerance as "evaluated,
   not adopted") by replacing the all-or-nothing rule for the Message Stream channel only.
+- **Update (2026-09-20, `ai-sessions/0041`) — first hardware results for this ADR (maintainer-observed, real
+  hardware, 2026-09-19; no captured evidence — recorded as observations, not as FACT).** With Play services'
+  Nearby-devices permission allowed and the app already set up: (i) once *Connect* was tapped the session
+  **stayed** connected (no ~5 s flicker), i.e. the MAESTRO-only session model works; (ii) ANC switching works and
+  is audible; (iii) Find My Buds works and the sound **keeps repeating until Stop is pressed** — this answers the
+  open question in *What this does NOT settle* (ii): ringing **does** continue after the Message Stream socket is
+  released, so the 1.5 s linger is sufficient for Find. Still unverified: limit (iii) (occasional short windows).
 
 ## ADR-033 — Battery Option B: `Group 0x03 Code 0x03` decoder on DLCI 0x04 unblocked for implementation (percentage regime only)
 
@@ -1646,6 +1658,72 @@ motivated this).
 - **Consequences**: `:data` gains a Battery frame decoder, routed through `CodecRouter`, feeding
   `BatteryStatus.left`/`right`; `ARCHITECTURE.md` §5a's row for Battery Option B moves from "gated" to
   "implemented"; the HFP `hfpEarbud` field stays as-is. Nothing else in DLCI 0x04 Group 0x03 is unblocked.
+- **Update (2026-09-20, `ai-sessions/0041`) — the charging-flag proposal is ACCEPTED by the maintainer** (prompt
+  `0041` §1.1, and re-confirmed by the maintainer in the chat session itself, 2026-09-20; explicit approval per
+  `AGENTS.md` §6). Accepted reading: each of `b1` (Left) / `b2` (Right) is `0bSVVVVVVV` — `S` (bit 7) = charging, `V`
+  (low 7 bits) = level `0..100`, `V = 0x7F` = unknown; `b3 = 0xff` = unknown. Evidence (rule 4a — command and raw
+  bytes): `tshark -r CAP-009-btsnoop_hci.log -Y "btrfcomm.dlci==4 && frame.number>=26800 && frame.number<=28600 &&
+  data.data[0:4]==03:03:00:03" -T fields -e frame.number -e data.data` gives `b1` = `dd de df e0 e1 e2 e4` at frames
+  26852, 26907, 27020, 27195, 27377, 27581, 28563 (221 … 228) with `b2` constantly `58`; `b1 − 128` = 93 94 95 96 97
+  98 100, the Option E (DLCI 0x08) charging curve for the same earbud, including the skipped 99. Frame 1044 of the same
+  file, `03 03 00 03 60 5d ff`, is 96 % / 93 % not charging. **Scope of the acceptance:** it does **not** cover
+  decoding `b3` as the Case battery beyond "`0xff` = unknown"; the Case level stays "unavailable" here (the DLCI 0x08
+  Option E message, ADR-014, is the FACT source for the Case and is a separate, unapproved proposal). The
+  decoder is updated accordingly (`BatteryFrameDecoder`) and the Connection screen shows the charging state.
+
+## ADR-034 — DLCI 0x02 is pw_rpc `maestro_pw.Maestro`; a read-only `ReadSetting` path is unblocked (EQ fields 16/18); requests mirror the channel the Buds announce
+
+- **Date**: 2026-09-20
+- **Status**: Accepted (scope below)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0041`); the two FACT promotions, the read-path unblock and the
+  channel-mirroring rule are the maintainer's explicit approval — given in prompt `0041` §1.2 ("agrees to promote the two
+  `pw_rpc` proposals in `DESKRESEARCH_FINDINGS.md` (2026-09-19, proposals a and b) and to an ADR unblocking a `ReadSetting` read
+  path on DLCI 0x02") and re-confirmed by the maintainer in the chat session itself on 2026-09-20 (all three items, including
+  the channel-mirroring rule below), per `AGENTS.md` §6/§15. The prompt made the promotion subject to the evidence rule, so the
+  evidence check below was done **first**. Details marked "agent proposal" are the agent's, inside that approval, open to veto.
+- **Context**: `DESKRESEARCH_FINDINGS.md` (2026-09-19) found that DLCI 0x02's constant frame prefix is a Pigweed pw_rpc
+  `RpcPacket` header and that the official app reads every setting with `ReadSetting` at connect (`4:16` live EQ, `4:18` last
+  saved). It listed four open items; item 4 was "independent confirmation on a second capture". ADR-013/ADR-020 unblocked only
+  the generic write wrapper and the EQ write. The app's EQ writes were inaudible on the maintainer's phone (`ai-sessions/0041` §2).
+- **Evidence check (2026-09-20; commands and raw output in `DESKRESEARCH_FINDINGS.md`, entry 2026-09-20)**:
+  1. *Framing correction.* Every pw_hdlc frame in `CAP-015` has control byte `0x03` (304/304) and its address is a one-terminated
+     varint (`00 3b`, `80 a3`, `00 a5`, …). The `03` that `EqFrameEncoder` treated as the first payload byte is the HDLC control
+     byte, and the byte after `10` in `03 10 <n> 1d…` — which the codec called the "correlation byte" — is the RpcPacket
+     `channel_id` (tag `0x10`). The bytes on the wire were always right; the *names* were wrong, and `EqFrame.correlationByte`
+     defaulted to `0`, i.e. **channel 0**. Every capture uses channel 19, 21, 24 or 26.
+  2. *`ReadSetting` returns the current value — second-capture confirmation.* Across 52 captures, connect-time reads agree with the
+     **last write of the preceding capture** in three independent chains: `CAP-005` (frames 1321/1338 wrote `[5.0,−4.1,0,0,0]` to
+     fields 16 and 18) → `CAP-006` first reads (frames 936/974) `[5.0,−4.1,0,0,0]`; `CAP-015` (last writes `[0.1,0,0.3,0.2,0.2]`) →
+     `CAP-016` (frames 1945/1963) the same; `CAP-041` (last writes `[−6]*5`) → `CAP-042` (frames 897/903) `[−6]*5` — each a different
+     btsnoop file and connection (005→006 also a different `channel_id`, 19 → 21). Field 16 also equals a named preset
+     independently recorded from the official app's UI: `[−1,0,4,2,0]` = "Vocal boost" (`PROTOCOL.md` §4.2's preset table) in
+     15 consecutive captures on 2026-09-12…14 while field 18 stays at the last custom curve `[−6]*5` — 16 = the active EQ, 18 = the
+     last-saved custom EQ. **Not** verified: the value against a *screen recording*; only the cross-capture chains and the preset name.
+  3. *Channel/address rule.* In 43 of 43 captures that contain both, the channel of the Buds' first unsolicited `GetSoftwareInfo`
+     RESPONSE (`call_id 0xFFFFFFFF`) equals the channel most used by the phone's Maestro requests. Channel↔address pairs are constant:
+     19 ↔ request `00 3b` / response `80 a3`; 21 ↔ `00 4b` / `00 a5`; 24 ↔ `80 3d` / `80 d3`; 26 ↔ `80 4d` / `00 d5`.
+- **Decision**:
+  1. **Promoted to 🟢 FACT** (`PROTOCOL.md` §2.2a, §4.2): (a) DLCI 0x02 carries Pigweed pw_hdlc frames (control `0x03`, one-terminated
+     varint address) whose payload is a pw_rpc `RpcPacket` for service `maestro_pw.Maestro` (service/method ids equal the
+     65599 name hashes byte for byte); (b) `ReadSetting` with request payload `4:N` returns the current value of `qhr` field N as
+     `4:{N: …}` — for the EQ, N = 16 is the active quintet and N = 18 the last-saved custom quintet.
+  2. **A read-only `ReadSetting` path on DLCI 0x02 is unblocked** for `qhr` fields already at FACT identity, **EQ (16, 18) first**.
+     Nothing else is unblocked: no `SubscribeToSettingsChanges`, no other setting's read or write, no unnamed services
+     (`0x73d5d805`, `0xaf3a7737`, …).
+  3. **Channel/address selection for our own requests** (maintainer-approved 2026-09-20; the table is the agent's evidence-derived
+     detail): the client uses the `channel_id` of the Buds' first unsolicited `GetSoftwareInfo` packet of *this* connection and the
+     request address paired with it in the table above; for a channel not in the table it sends nothing and reports the specific
+     reason — it never guesses an address or a channel.
+  4. **Still open, handled conservatively** (agent proposal; each `// TODO(verify)` + a hardware re-test step): *what a fresh client
+     must send first* (the app sends nothing before its first read; if the Buds do not answer, the read fails with a reason — no retry
+     storm); *request/response matching* (responses omit `call_id`; the response's own `4:{N:…}` field identifies which read it
+     answers, and reads are issued one at a time); *whether writes are accepted with the mirrored channel* (the write's unary RESPONSE
+     status is surfaced; `CLIENT_ERROR`/`SERVER_ERROR`/`status ≠ OK` is shown to the user).
+- **Consequences**: `:data` gains a pw_rpc packet codec and a Maestro settings-read path; `EqFrame` carries `channelId` instead of the
+  misnamed correlation byte; the EQ screen shows the real EQ and only claims "unknown" when the read failed (with the reason). The
+  always-on log gains payload-free pw_rpc packet-structure lines (type, channel, method, status) so a rejected write is visible next
+  time. `ARCHITECTURE.md` §3.1/§5a are updated. **Not decided here:** the field-16-vs-18 *write* semantics (ADR-020's open item stands),
+  the gain unit, and any other DLCI 0x02 setting (`ARCHITECTURE.md` §5a still lists a consolidated unblock ADR as a proposal).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

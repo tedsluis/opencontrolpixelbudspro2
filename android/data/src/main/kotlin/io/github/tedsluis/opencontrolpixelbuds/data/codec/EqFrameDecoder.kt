@@ -24,87 +24,51 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 
 /**
- * Parses an already-[Hdlc]-decoded DLCI 0x02 payload into an [EqFrame]. Any
- * structural mismatch (short buffer, an unexpected field/wiretype, a length
- * that doesn't match the actual remaining bytes) is [BudsError.MalformedFrame],
- * never thrown — this decoder receives attacker/environment-controlled bytes,
- * not trusted input (AGENTS.md §11). A structurally valid DLCI 0x02 payload
- * whose outer field is neither 16 nor 18 (i.e. some *other* `libmaestro`
- * setting entirely, per ARCHITECTURE.md §5a's gating table) is *not* this
- * decoder's job to interpret — callers should route it to
- * `UnidentifiedFrame` rather than treat this decoder's `MalformedFrame` as
- * meaning "corrupt," since it may simply be a different, still-gated
- * setting.
+ * Reads an EQ quintet out of a Maestro settings payload (`4:{16|18:{5 x float32}}`, PROTOCOL.md §4.2) — the shape
+ * of a `WriteSetting` request, a `ReadSetting` response and a `SubscribeToSettingsChanges` stream message alike.
+ * Any structural mismatch (short buffer, an unexpected field/wiretype, a length that doesn't match the remaining
+ * bytes, an outer field other than 16/18, a non-finite float) is [BudsError.MalformedFrame], never thrown — this
+ * decoder receives attacker/environment-controlled bytes (AGENTS.md §11). A structurally valid payload for a
+ * *different* setting is not this decoder's job: callers route it to `UnidentifiedFrame`.
  */
 object EqFrameDecoder {
-    private const val PREFIX_LENGTH = 13
-    private const val FIELD5_TAG = (5 shl 3) or 2
     private const val FIELD4_TAG = (4 shl 3) or 2
     private const val BAND_COUNT = 5
     private const val BAND_BYTES = BAND_COUNT * 5
 
-    fun decode(payload: ByteArray): BudsResult<EqFrame> {
-        if (payload.size < PREFIX_LENGTH + 2) {
-            return BudsResult.Failure(BudsError.MalformedFrame(payload))
-        }
-        val correlationByte = payload[2].toInt() and 0xFF
-        var i = PREFIX_LENGTH
+    fun decode(packet: RpcPacket): BudsResult<EqFrame> = decodePayload(packet.payload, packet.channelId)
 
-        if ((payload[i].toInt() and 0xFF) != FIELD5_TAG) {
-            return BudsResult.Failure(BudsError.MalformedFrame(payload))
-        }
+    fun decodePayload(payload: ByteArray, channelId: Int): BudsResult<EqFrame> {
+        fun bad() = BudsResult.Failure(BudsError.MalformedFrame(payload))
+        var i = 0
+        if (payload.size < 2 || (payload[i].toInt() and 0xFF) != FIELD4_TAG) return bad()
         i++
-        val field5Len = payload.getOrNull(i)?.toInt()?.and(0xFF)
-            ?: return BudsResult.Failure(BudsError.MalformedFrame(payload))
+        val field4Len = payload[i].toInt() and 0xFF
         i++
-        if (i + field5Len != payload.size) {
-            return BudsResult.Failure(BudsError.MalformedFrame(payload))
-        }
+        if (field4Len >= 0x80 || i + field4Len != payload.size) return bad()
 
-        if (payload.getOrNull(i)?.toInt()?.and(0xFF) != FIELD4_TAG) {
-            return BudsResult.Failure(BudsError.MalformedFrame(payload))
-        }
-        i++
-        val field4Len = payload.getOrNull(i)?.toInt()?.and(0xFF)
-            ?: return BudsResult.Failure(BudsError.MalformedFrame(payload))
-        i++
-        val field4End = i + field4Len
-        if (field4End > payload.size) {
-            return BudsResult.Failure(BudsError.MalformedFrame(payload))
-        }
-
-        val (outerTag, afterOuterTag) = Varint.decode(payload, i)
-            ?: return BudsResult.Failure(BudsError.MalformedFrame(payload))
+        val (outerTag, afterOuterTag) = Varint.decode(payload, i) ?: return bad()
         i = afterOuterTag
         val outerField = outerTag shr 3
-        if ((outerTag and 0x7) != 2 || (outerField != 16 && outerField != 18)) {
-            return BudsResult.Failure(BudsError.MalformedFrame(payload))
-        }
+        if ((outerTag and 0x7) != 2 || outerField !in Maestro.READABLE_FIELDS) return bad()
 
-        val innerLen = payload.getOrNull(i)?.toInt()?.and(0xFF)
-            ?: return BudsResult.Failure(BudsError.MalformedFrame(payload))
+        val innerLen = payload.getOrNull(i)?.toInt()?.and(0xFF) ?: return bad()
         i++
-        if (innerLen != BAND_BYTES || i + innerLen != field4End) {
-            return BudsResult.Failure(BudsError.MalformedFrame(payload))
-        }
+        if (innerLen != BAND_BYTES || i + innerLen != payload.size) return bad()
 
         val bandValues = FloatArray(BAND_COUNT)
         for (band in 0 until BAND_COUNT) {
-            val tag = payload.getOrNull(i)?.toInt()?.and(0xFF)
-                ?: return BudsResult.Failure(BudsError.MalformedFrame(payload))
-            val fieldNum = tag shr 3
-            if ((tag and 0x7) != 5 || fieldNum != band + 1) {
-                return BudsResult.Failure(BudsError.MalformedFrame(payload))
-            }
+            val tag = payload.getOrNull(i)?.toInt()?.and(0xFF) ?: return bad()
+            if ((tag and 0x7) != 5 || (tag shr 3) != band + 1) return bad()
             i++
-            if (i + 4 > payload.size) {
-                return BudsResult.Failure(BudsError.MalformedFrame(payload))
-            }
+            if (i + 4 > payload.size) return bad()
             val bits = (payload[i].toInt() and 0xFF) or
                 ((payload[i + 1].toInt() and 0xFF) shl 8) or
                 ((payload[i + 2].toInt() and 0xFF) shl 16) or
                 ((payload[i + 3].toInt() and 0xFF) shl 24)
-            bandValues[band] = Float.fromBits(bits)
+            val value = Float.fromBits(bits)
+            if (!value.isFinite()) return bad()
+            bandValues[band] = value
             i += 4
         }
 
@@ -115,6 +79,6 @@ object EqFrameDecoder {
             bass = bandValues[1],
             lowBass = bandValues[0],
         )
-        return BudsResult.Success(EqFrame(gains, persist = outerField == 18, correlationByte = correlationByte))
+        return BudsResult.Success(EqFrame(gains, persist = outerField == Maestro.FIELD_EQ_SAVED, channelId = channelId))
     }
 }

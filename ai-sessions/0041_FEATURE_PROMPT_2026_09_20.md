@@ -4,7 +4,7 @@
 **Category:** FEATURE
 **Date:** 2026-09-20
 **Title:** Make pairing work from inside the app, show the true paired/connected state (mirroring Android, including when a bud is taken out of the case), implement the accepted battery charging flag, read the real EQ, find out why EQ writes are inaudible, add the HFP confirming diagnostic, and analyse the LOGS-001 capture
-**Status:** prompt only — not yet run
+**Status:** run 2026-09-20 — see `0041_FEATURE_RESULT_2026_09_20.md`
 
 ---
 

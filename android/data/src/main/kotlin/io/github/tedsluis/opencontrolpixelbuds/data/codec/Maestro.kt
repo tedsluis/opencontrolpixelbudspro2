@@ -1,0 +1,77 @@
+/*
+ * OpenControl for Pixel Buds Pro 2
+ * Copyright (C) 2026 Ted Sluis
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+package io.github.tedsluis.opencontrolpixelbuds.data.codec
+
+/**
+ * The pw_rpc service every DLCI 0x02 packet belongs to (`maestro_pw.Maestro`) and the four methods the captures
+ * name (PROTOCOL.md §2.2a, DECISIONS.md ADR-034). Ids are the 65599 name hashes — computed here, and
+ * asserted against the literals seen on the wire in `MaestroTest`.
+ */
+object Maestro {
+    val SERVICE_ID: Int = PwRpc.nameHash("maestro_pw.Maestro") // 0x7ede71ea
+    val METHOD_WRITE_SETTING: Int = PwRpc.nameHash("WriteSetting") // 0x9e8c9a1d
+    val METHOD_READ_SETTING: Int = PwRpc.nameHash("ReadSetting") // 0xaed0ae51
+    val METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES: Int = PwRpc.nameHash("SubscribeToSettingsChanges") // 0x2821adf5
+    val METHOD_GET_SOFTWARE_INFO: Int = PwRpc.nameHash("GetSoftwareInfo") // 0x7199fa44
+
+    /** `qhr` field numbers for the EQ (PROTOCOL.md §4.2, ADR-034): 16 = the active quintet, 18 = the last-saved custom one. */
+    const val FIELD_EQ_ACTIVE = 16
+    const val FIELD_EQ_SAVED = 18
+
+    /** The only settings a read may name (ADR-034 unblocks EQ 16/18 only). */
+    val READABLE_FIELDS: Set<Int> = setOf(FIELD_EQ_ACTIVE, FIELD_EQ_SAVED)
+
+    /**
+     * `ReadSetting` request for one `qhr` field: payload = protobuf `4:N` (`20 <N>`), byte-identical to
+     * `CAP-036` frame 1523 (`10 15 1d ea 71 de 7e 25 51 ae d0 ae 2a 02 20 10`). Returns null for a field ADR-034
+     * does not unblock — a caller can never send an arbitrary setting read.
+     */
+    fun readSettingRequest(channelId: Int, field: Int): RpcPacket? {
+        if (field !in READABLE_FIELDS) return null
+        return RpcPacket(
+            type = PwRpc.TYPE_REQUEST,
+            channelId = channelId,
+            serviceId = SERVICE_ID,
+            methodId = METHOD_READ_SETTING,
+            payload = byteArrayOf(0x20, field.toByte()),
+        )
+    }
+}
+
+/**
+ * The (channel id, request HDLC address) pairs seen in the captures (PROTOCOL.md §2.2a: 19 ↔ `00 3b`, 21 ↔ `00 4b`,
+ * 24 ↔ `80 3d`, 26 ↔ `80 4d`). The address is **not derived** from the channel — only tabulated — so a channel
+ * outside this table has no known address and [forChannel] returns null (ADR-034: never guess).
+ */
+data class MaestroChannel(val channelId: Int, val requestAddress: Int) {
+    companion object {
+        private val KNOWN = listOf(
+            MaestroChannel(19, 3712), // 00 3b
+            MaestroChannel(21, 4736), // 00 4b
+            MaestroChannel(24, 3904), // 80 3d
+            MaestroChannel(26, 4928), // 80 4d
+        ).associateBy { it.channelId }
+
+        fun forChannel(channelId: Int): MaestroChannel? = KNOWN[channelId]
+    }
+}
+
+/** HDLC control byte of every captured pw_hdlc frame (PROTOCOL.md §2.2a: 304 of 304 in `CAP-015`). */
+const val PW_HDLC_CONTROL_UI = 0x03

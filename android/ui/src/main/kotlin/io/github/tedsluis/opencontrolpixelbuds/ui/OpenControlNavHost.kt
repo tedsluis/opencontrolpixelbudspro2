@@ -40,11 +40,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
+import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 
@@ -90,12 +93,18 @@ private val TAB_DESTINATIONS = listOf(
 data class OpenControlActions(
     val onRequestEnableBluetooth: () -> Unit,
     val onPair: () -> Unit,
+    /** Shows the system permission prompt for Bluetooth (GrapheneOS: *Nearby devices*) and notifications. */
+    val onRequestPermissions: () -> Unit,
+    /** Opens this app's page in the system settings — the only way to grant a permission denied "permanently". */
+    val onOpenAppSettings: () -> Unit,
     val onConnect: () -> Unit,
     val onDisconnect: () -> Unit,
     val onAncModeSelected: (AncMode) -> Unit,
     val onRefreshAncMode: () -> Unit,
     val onEqGainsChanged: (EqBandGains) -> Unit,
     val onEqPresetSelected: (EqPreset) -> Unit,
+    /** Re-reads the Buds' active EQ (`ReadSetting 4:16`, DECISIONS.md ADR-034). */
+    val onRefreshEq: () -> Unit,
     val onRing: (RingTarget) -> Unit,
     val onStopRinging: () -> Unit,
     val onDebugModeChanged: (Boolean) -> Unit,
@@ -109,6 +118,10 @@ data class OpenControlUiState(
     val connectionState: ConnectionState,
     val bluetoothEnabled: Boolean,
     val hasBondedDevice: Boolean,
+    /** The top-level status derived from Android's Bluetooth state first, the app's own session second
+     * (`ai-sessions/0041`: mirror Android's settings). */
+    val deviceStatus: DeviceStatus,
+    val permissionState: PermissionState,
     /** `null` = no pairing attempt in progress/to report — a status line the Connection screen
      * shows while/after pairing (ARCHITECTURE.md §9.0a), so the maintainer's own "no message why
      * it didn't work" report (`ai-sessions/0036`) can't recur silently. */
@@ -118,11 +131,13 @@ data class OpenControlUiState(
     val lastConnectionError: BudsError?,
     /** Android itself reports the bonded Buds as connected to this phone (audio/HFP profiles) —
      * distinct from this app's own control channels being open (`ai-sessions/0039` §5). */
-    val osConnected: Boolean,
+    val androidLink: AndroidLink,
     /** Why the last action needing the shared Message Stream channel could not claim it (ADR-032). */
     val messageStreamError: BudsError?,
     val ancMode: AncMode?,
     val eqProfile: EqBandGains?,
+    /** Why the last EQ read/write failed (`null` = fine / not attempted) — ADR-034. */
+    val eqError: BudsError?,
     val batteryStatus: BatteryStatus,
     val unidentifiedFrames: List<UnidentifiedFrame>,
     val debugModeEnabled: Boolean,
@@ -170,14 +185,17 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
             composable(Routes.CONNECTION) {
                 ConnectionScreen(
                     connectionState = state.connectionState,
-                    bluetoothEnabled = state.bluetoothEnabled,
-                    hasBondedDevice = state.hasBondedDevice,
+                    deviceStatus = state.deviceStatus,
+                    androidLink = state.androidLink,
+                    permissionState = state.permissionState,
                     pairingStatusText = state.pairingStatusText,
                     lastConnectionError = state.lastConnectionError,
-                    osConnected = state.osConnected,
+                    messageStreamError = state.messageStreamError,
                     batteryStatus = state.batteryStatus,
                     onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
                     onPair = actions.onPair,
+                    onRequestPermissions = actions.onRequestPermissions,
+                    onOpenAppSettings = actions.onOpenAppSettings,
                     onConnect = actions.onConnect,
                     onDisconnect = actions.onDisconnect,
                     modifier = Modifier.padding(padding),
@@ -197,8 +215,10 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 EqScreen(
                     connectionState = state.connectionState,
                     gains = state.eqProfile,
+                    eqError = state.eqError,
                     onGainsChanged = actions.onEqGainsChanged,
                     onPresetSelected = actions.onEqPresetSelected,
+                    onRefresh = actions.onRefreshEq,
                     modifier = Modifier.padding(padding),
                 )
             }

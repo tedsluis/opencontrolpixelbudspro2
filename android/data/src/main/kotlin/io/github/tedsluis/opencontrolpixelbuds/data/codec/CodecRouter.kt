@@ -34,6 +34,18 @@ sealed class RoutedFrame {
     data class Eq(val frame: EqFrame) : RoutedFrame()
     data class Ring(val frame: RingFrame) : RoutedFrame()
     data class Battery(val frame: BatteryFrame) : RoutedFrame()
+
+    /** The Buds' unsolicited `GetSoftwareInfo` push announcing the pw_rpc channel of this connection (ADR-034). */
+    data class MaestroHello(val channelId: Int) : RoutedFrame()
+
+    /**
+     * The Buds' answer to one of *our* Maestro requests that carries no EQ value: the empty `RESPONSE` to a
+     * `WriteSetting`, or an error (`status != OK`, or a `CLIENT_ERROR`/`SERVER_ERROR` packet) for a read or write.
+     * [status] is `null` when the field is absent — OK on the wire (`CAP-015` frame 2117).
+     */
+    data class RpcResult(val channelId: Int, val methodId: Int, val type: Int, val status: Int?) : RoutedFrame() {
+        val isOk: Boolean get() = type == PwRpc.TYPE_RESPONSE && (status == null || status == 0)
+    }
 }
 
 /**
@@ -74,6 +86,7 @@ class CodecRouter {
         timestampMillis: Long,
         onUnidentified: (UnidentifiedFrame) -> Unit = {},
         onMalformed: (ByteArray) -> Unit = {},
+        onRpcPacket: (RpcPacket) -> Unit = {},
     ): List<RoutedFrame> {
         val routed = mutableListOf<RoutedFrame>()
 
@@ -82,17 +95,24 @@ class CodecRouter {
                 when (val decoded = Hdlc.decode(frame)) {
                     is BudsResult.Failure -> onMalformed(frame)
                     is BudsResult.Success -> {
-                        when (val eq = EqFrameDecoder.decode(decoded.value.payload)) {
-                            is BudsResult.Success -> routed += RoutedFrame.Eq(eq.value)
-                            is BudsResult.Failure -> onUnidentified(
+                        val payload = decoded.value.payload
+                        val unidentified = {
+                            onUnidentified(
                                 UnidentifiedFrame(
                                     channelId = channelId,
                                     group = null,
                                     code = null,
-                                    raw = decoded.value.payload,
+                                    raw = payload,
                                     timestampMillis = timestampMillis,
                                 ),
                             )
+                        }
+                        when (val rpc = PwRpc.decode(payload)) {
+                            is BudsResult.Failure -> unidentified()
+                            is BudsResult.Success -> {
+                                onRpcPacket(rpc.value)
+                                routeMaestro(rpc.value)?.let { routed += it } ?: unidentified()
+                            }
                         }
                     }
                 }
@@ -144,6 +164,35 @@ class CodecRouter {
 
         return routed
     }
+}
+
+/**
+ * Classifies one Maestro pw_rpc packet (ADR-034), or returns null when it is not something this app understands
+ * (other services, other methods, other settings) — the caller then reports it as an `UnidentifiedFrame`.
+ */
+internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
+    if (packet.serviceId != Maestro.SERVICE_ID) return null
+    val method = packet.methodId
+    if (method == Maestro.METHOD_GET_SOFTWARE_INFO && packet.type == PwRpc.TYPE_RESPONSE &&
+        packet.callId == PwRpc.CALL_ID_UNSOLICITED
+    ) {
+        return RoutedFrame.MaestroHello(packet.channelId)
+    }
+    val settingsMethod = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING ||
+        method == Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES
+    val carriesValue = packet.type == PwRpc.TYPE_RESPONSE || packet.type == PwRpc.TYPE_SERVER_STREAM
+    if (settingsMethod && carriesValue && packet.payload.isNotEmpty() &&
+        (packet.status == null || packet.status == 0)
+    ) {
+        val eq = EqFrameDecoder.decode(packet)
+        if (eq is BudsResult.Success) return RoutedFrame.Eq(eq.value)
+    }
+    val answersUs = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING
+    val isError = packet.type == PwRpc.TYPE_CLIENT_ERROR || packet.type == PwRpc.TYPE_SERVER_ERROR
+    if (answersUs && (packet.type == PwRpc.TYPE_RESPONSE || isError)) {
+        return RoutedFrame.RpcResult(packet.channelId, method, packet.type, packet.status)
+    }
+    return null
 }
 
 /** Splits a DLCI 0x02 byte stream on unescaped `0x7E` flags, per PROTOCOL.md

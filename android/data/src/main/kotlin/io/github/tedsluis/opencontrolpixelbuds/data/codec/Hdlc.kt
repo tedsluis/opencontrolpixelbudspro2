@@ -29,10 +29,15 @@ import java.util.zip.CRC32
  * 640/640 sub-frames across CAP-001/CAP-002/CAP-003, and re-verified against
  * this session's own CAP-015 fixtures, see [EqFrameDecoderTest]): flag `0x7E`
  * delimits every frame, `0x7D`-prefixed byte-stuffing escapes any literal
- * `0x7E`/`0x7D` in the body, followed by a LEB128-varint HDLC Address, a
- * 1-byte Control field, the payload, and a little-endian CRC-32
- * (IEEE 802.3/zlib polynomial) trailer over the unescaped Address+Control+
- * Payload.
+ * `0x7E`/`0x7D` in the body, followed by a pw_hdlc **address** — a variable-length
+ * integer, 7 bits per byte, low byte first, where the byte whose bit 0 is set is the *last*
+ * one (`00 3b` = 3712, `80 a3` = 10432) — a 1-byte Control field (always `0x03` in the
+ * captures), the payload (a pw_rpc `RpcPacket`, see [PwRpc]), and a little-endian CRC-32
+ * (IEEE 802.3/zlib polynomial) trailer over the unescaped Address+Control+Payload.
+ *
+ * `ai-sessions/0041` corrected an earlier reading of the same bytes (address `0x00`, control
+ * `0x3b`, payload starting `03`): the wire bytes are identical, but `3b` belongs to the
+ * address and `03` is the control byte (DECISIONS.md ADR-034).
  *
  * This is the shared transport layer only — it says nothing about what a
  * DLCI 0x02 payload's *content* means. Per ARCHITECTURE.md §5a, only EQ's
@@ -45,6 +50,7 @@ object Hdlc {
     private const val ESCAPE_XOR: Int = 0x20
     private const val CRC_LENGTH: Int = 4
 
+    /** [address] is the decoded pw_hdlc address value (not its raw bytes). */
     data class Frame(val address: Int, val control: Int, val payload: ByteArray) {
         override fun equals(other: Any?): Boolean =
             other is Frame && address == other.address && control == other.control &&
@@ -59,7 +65,7 @@ object Hdlc {
     }
 
     fun encode(address: Int, control: Int, payload: ByteArray): ByteArray {
-        val body = encodeLeb128(address) + control.toByte() + payload
+        val body = encodeAddress(address) + control.toByte() + payload
         val crc = crc32Le(body)
         return byteArrayOf(FLAG.toByte()) + escape(body + crc) + byteArrayOf(FLAG.toByte())
     }
@@ -92,7 +98,7 @@ object Hdlc {
             return BudsResult.Failure(BudsError.MalformedFrame(frame))
         }
 
-        val (address, afterAddress) = decodeLeb128(body, 0)
+        val (address, afterAddress) = decodeAddress(body, 0)
             ?: return BudsResult.Failure(BudsError.MalformedFrame(frame))
         if (afterAddress >= body.size) {
             return BudsResult.Failure(BudsError.MalformedFrame(frame))
@@ -145,29 +151,30 @@ object Hdlc {
         )
     }
 
-    private fun encodeLeb128(value: Int): ByteArray {
+    /** pw_hdlc address: 7 value bits per byte shifted left by one, low bits first; bit 0 of the last byte is 1. */
+    internal fun encodeAddress(value: Int): ByteArray {
         var v = value
         val out = ArrayList<Byte>(4)
         do {
-            var b = v and 0x7F
+            var b = (v and 0x7F) shl 1
             v = v ushr 7
-            if (v != 0) b = b or 0x80
+            if (v == 0) b = b or 1
             out.add(b.toByte())
         } while (v != 0)
         return out.toByteArray()
     }
 
-    /** Returns `(value, indexAfterVarint)`, or `null` if the buffer ends before a terminating byte. */
-    private fun decodeLeb128(data: ByteArray, start: Int): Pair<Int, Int>? {
+    /** Returns `(value, indexAfterAddress)`, or `null` if the buffer ends first or the address exceeds 4 bytes. */
+    internal fun decodeAddress(data: ByteArray, start: Int): Pair<Int, Int>? {
         var value = 0
         var shift = 0
         var i = start
         while (true) {
-            if (i >= data.size || shift >= 32) return null
+            if (i >= data.size || shift >= 28) return null
             val b = data[i].toInt() and 0xFF
-            value = value or ((b and 0x7F) shl shift)
+            value = value or (((b shr 1) and 0x7F) shl shift)
             i++
-            if (b and 0x80 == 0) return value to i
+            if (b and 1 == 1) return value to i
             shift += 7
         }
     }

@@ -67,16 +67,25 @@ class HfpBatteryReader(private val context: Context) {
 
         val eventReceiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
+                // Diagnostic (ai-sessions/0041, DECISIONS.md HFP-battery follow-up): the action *name* of every
+                // BluetoothHeadset broadcast this receiver gets — nothing else (no extras, no payload) — so a hardware run
+                // shows whether anything at all reaches the app.
+                intent?.action?.let { BleLogger.logConnectionEvent("HFP broadcast received: ${it.substringAfterLast('.')}") }
                 if (intent?.action != BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT) return
                 val cmd = intent.getStringExtra(BluetoothHeadset.EXTRA_VENDOR_SPECIFIC_HEADSET_EVENT_CMD)
                     ?: return
                 HfpAtParser.parseBiev(cmd)?.let { percent -> trySend(percent) }
             }
         }
-        context.registerReceiver(
-            eventReceiver,
-            IntentFilter(BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT),
-        )
+        val filter = IntentFilter().apply {
+            addAction(BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT)
+            // Diagnostic-only additions: connection/audio state changes prove the receiver itself works even if the
+            // (non-vendor-specific) AT+BIEV battery indicator never arrives.
+            addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED)
+            addAction(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)
+        }
+        context.registerReceiver(eventReceiver, filter)
+        BleLogger.logConnectionEvent("HFP receiver registered (${filter.countActions()} actions)")
 
         val serviceListener = object : BluetoothProfile.ServiceListener {
             override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
