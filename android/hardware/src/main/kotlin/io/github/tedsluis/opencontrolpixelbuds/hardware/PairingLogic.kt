@@ -88,6 +88,32 @@ object PairingLogic {
      */
     fun classifyBondEnd(sawBonding: Boolean): PairingFailure =
         if (sawBonding) PairingFailure.BondRejected else PairingFailure.NotInPairingMode
+
+    /**
+     * What the end of the bond wait means, given the bond state read **directly** from the stack at that moment (`null` = it
+     * could not be read): a bond that succeeded is never reported as a timeout, whether or not its
+     * `ACTION_BOND_STATE_CHANGED` broadcast ever reached us. Returns `null` for success, otherwise the failure to report.
+     *
+     * `ai-sessions/0042` (`LOGS-001`): `createBond()` at 17:17:48.024, the HCI log shows *Authentication Complete* at 17:17:49.121
+     * and Android listed the Buds as bonded, yet the app reported *"Pairing: bond timed out"* 45 s later because its
+     * (NOT_EXPORTED) receiver never saw the broadcast.
+     */
+    fun outcomeAtTimeout(currentBond: BondKind?): PairingFailure? =
+        if (currentBond == BondKind.BONDED) null else PairingFailure.BondTimeout
+
+    /**
+     * The raw text CDM reports when a second `associate()` starts while one is open ("More than one AssociationRequests are
+     * processing.") is **not** a failure of the attempt that is running — it is [PairingFailure.AlreadyInProgress] and must not
+     * replace the state of the first request. Anything else stays a plain [PairingFailure.AssociationFailed].
+     */
+    fun classifyAssociationError(message: String?): PairingFailure {
+        val text = message?.trim().orEmpty()
+        return if (text.contains("More than one AssociationRequest", ignoreCase = true)) {
+            PairingFailure.AlreadyInProgress
+        } else {
+            PairingFailure.AssociationFailed(text.ifEmpty { "association failed" })
+        }
+    }
 }
 
 /** Why a pairing attempt did not end in a bonded device — each has its own user-facing message (AGENTS.md §8). */
@@ -100,6 +126,9 @@ sealed class PairingFailure {
     data object NotInPairingMode : PairingFailure()
     data object BondRejected : PairingFailure()
     data object BondTimeout : PairingFailure()
+
+    /** A second pairing request while one is already open (double tap / re-entry) — ignored, the first request continues. */
+    data object AlreadyInProgress : PairingFailure()
 }
 
 /** Progress of a pairing attempt (association → resolve → bond). */

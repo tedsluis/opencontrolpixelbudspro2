@@ -114,6 +114,13 @@ enum class AndroidLine {
 
     /** This app's session is open while Android does not (yet) report the Buds connected — the session wins, say so. */
     NOT_REPORTED_WHILE_CONTROLLED,
+
+    /**
+     * Android's link state could not be read (no permission yet, no bonded device yet, or the observer has not answered) —
+     * **not** a claim that the Buds are disconnected (`ai-sessions/0042`: in the first hardware run the card said "not connected"
+     * for minutes while Android's panel showed the Buds active, because an unknown state was rendered as a negative).
+     */
+    UNKNOWN,
 }
 
 /** What the app-session line says — always secondary to [AndroidLine]. */
@@ -132,10 +139,18 @@ data class StatusCard(val android: AndroidLine, val session: SessionLine, val ac
  */
 fun statusCard(status: DeviceStatus, androidLink: AndroidLink, session: ConnectionState): StatusCard? {
     val failed = session is ConnectionState.Failed
-    val androidLine = if (androidLink == AndroidLink.CONNECTED) AndroidLine.CONNECTED else AndroidLine.NOT_CONNECTED
+    val androidLine = when (androidLink) {
+        AndroidLink.CONNECTED -> AndroidLine.CONNECTED
+        AndroidLink.NOT_CONNECTED -> AndroidLine.NOT_CONNECTED
+        AndroidLink.UNKNOWN -> AndroidLine.UNKNOWN
+    }
     return when (status) {
         DeviceStatus.ControlledByApp -> StatusCard(
-            if (androidLink == AndroidLink.CONNECTED) AndroidLine.CONNECTED else AndroidLine.NOT_REPORTED_WHILE_CONTROLLED,
+            when (androidLink) {
+                AndroidLink.CONNECTED -> AndroidLine.CONNECTED
+                AndroidLink.NOT_CONNECTED -> AndroidLine.NOT_REPORTED_WHILE_CONTROLLED
+                AndroidLink.UNKNOWN -> AndroidLine.UNKNOWN
+            },
             SessionLine.OPEN,
             CardAction.DISCONNECT,
         )
@@ -146,7 +161,7 @@ fun statusCard(status: DeviceStatus, androidLink: AndroidLink, session: Connecti
             if (failed) CardAction.RETRY else CardAction.CONNECT,
         )
         DeviceStatus.PairedNotConnected -> StatusCard(
-            AndroidLine.NOT_CONNECTED,
+            androidLine,
             if (failed) SessionLine.FAILED else SessionLine.NOT_OPEN,
             if (failed) CardAction.RETRY else CardAction.CONNECT,
         )

@@ -797,6 +797,19 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+- **`LOGS-001` analysis, mirror/bond fixes, decisions and features — 2026-09-20 (`ai-sessions/0042`).** Done (**none hardware-verified**): link observer flag + event-driven
+  re-reads, `AndroidLine.UNKNOWN`, bond outcome from the stack, pairing re-entry guard, why-did-the-session-end log lines, 1000-line buffer (RESULT §6); **decided by the
+  maintainer in chat and done:** `HfpBatteryReader` removed; **ADR-035** — Case battery from DLCI 0x08 by an on-demand, receive-only claim (`CaseBatteryFrameDecoder`,
+  Connect + *Refresh battery*, "last seen" marking); **ADR-036** written (DLCI 0x02 read-only `ReadSetting` unblock — **nothing implemented**); firmware line and "buds in the
+  case / out" line (passive); Find "ringing" state; ANC Quick Settings tile (no EQ preset export/import); no automatic session opening (mirror only); the HCI log stays local;
+  three PROTOCOL promotions (fresh client needs no opening message; write ack + persistence; dock-state second confirmation). **Open — hardware re-test (`ai-sessions/0042`
+  RESULT §12):** mirror follows Android within ~2 s; bond reported correctly; whether the Buds push the Case level **without** the phone-side `0e 04` (if not: the Case stays
+  "unavailable" with its reason and sending `0e 04` needs its own ADR); the tile on GrapheneOS; EQ audibility. **Debt found, not fixed:** (a) after a user disconnect in Android's
+  panel the app still says "Another app may have taken it over, or the Buds dropped it" (needs the link state at loss time); (b) the battery card shows no reading age except
+  the Case's "last seen"; (c) 🔴 why the Buds closed both RFCOMM channels at 17:21:16 (idle / periodic / second-host runs and a < 0.6 s re-claim series are the experiments,
+  RESULT §12 e); (d) 🔴 why Play services stopped re-claiming DLCI 4 after 17:18:53 (record its *Nearby devices* state next time); (e) the settings read-only UI and per-field decoders
+  under ADR-036; (f) fold the tightened capture checklist (RESULT §12) into `CAPTURE_BLUETOOTH_HCI_SNOOP.md` (maintainer procedure — proposal only); (g) `AGENTS.md` §5's HFP
+  paragraph would need a maintainer edit ("wire-confirmed, not consumable by the app; not implemented").
 - **Pairing/permissions fixes, Android-state mirroring, charging flag, EQ read, HFP diagnostic — 2026-09-20 (`ai-sessions/0041`,
   `DECISIONS.md` ADR-033 update / ADR-034).** Done (**none hardware-verified**): in-app pairing no longer fails at "could not resolve the selected device"
   (address upper-casing, association reuse/cleanup, distinct failure reasons), the runtime-permission flow exists (start + every resume; own states for

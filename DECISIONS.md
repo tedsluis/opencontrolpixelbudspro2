@@ -1282,6 +1282,11 @@ motivated this).
     for any dock-state-dependent UI feature, not solved by this update. Maintainer-approved
     2026-09-18 (this chat session, continuing `ai-sessions/0031`/`0032`'s own open item).
 
+- **Update (2026-09-20, `ai-sessions/0042`) — second confirmation, maintainer-approved in chat (2026-09-20, `AskUserQuestion` "Promoties": *"Dockstatus-byte (ADR-024) tweede bevestiging"*).**
+  `LOGS-001`, HCI + film: the connect-time `Notify` at 17:17:55.47 reads `01 e8 00 20` (both buds seated in the open case — film 17:17:53–17:19:03, `Settable-toggles` `0x00`) and the `Notify`
+  at 17:19:22.31 reads `01 e8 e8 08` (both buds out since ≈ 17:19:11 — the case empty on film, `0xe8`); every later `Notify` (17 more) reads `e8`. The finding is unchanged; the app
+  now shows it (a "Buds in the case / out" line, `AncFrame.Notify.settableToggles`: `0x00` → both in the case, `0xe8` → at least one out, anything else → not shown).
+
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 
 - **Date**: 2026-09-07
@@ -1724,6 +1729,65 @@ motivated this).
   always-on log gains payload-free pw_rpc packet-structure lines (type, channel, method, status) so a rejected write is visible next
   time. `ARCHITECTURE.md` §3.1/§5a are updated. **Not decided here:** the field-16-vs-18 *write* semantics (ADR-020's open item stands),
   the gain unit, and any other DLCI 0x02 setting (`ARCHITECTURE.md` §5a still lists a consolidated unblock ADR as a proposal).
+
+- **Update (2026-09-20, `ai-sessions/0042`) — two of the four open items are promoted to 🟢 FACT by the maintainer's explicit approval in the chat session
+  (2026-09-20, `AskUserQuestion` "Promoties": *"ReadSetting: geen openingsbericht nodig (4/4)"* and *"Write-ack: lege RESPONSE, status OK (12/12) + persisteert"*),
+  per `AGENTS.md` §6.** Evidence (`DESKRESEARCH_FINDINGS.md` 2026-09-20, second entry, Finding 6; `python3 scripts/pwrpc_decode.py <log>` on the `LOGS-001` HCI log,
+  kept locally): (a) **a fresh client needs no opening message** — in 4 of 4 connections the first thing the app sent on DLCI 0x02 was `ReadSetting 4:16`
+  (frames 1444, 3197, 3522, 4848), after the Buds' unsolicited `GetSoftwareInfo` (22, 102, 30 and 58 ms after the `UA`), and each was answered (frames 1455, 3202, 3558, 4855);
+  (b) **write acknowledgement** — 12 of 12 `WriteSetting` requests on the mirrored channel (ch 21 ×5, ch 19 ×7) were answered by an empty `RESPONSE` with status absent/OK
+  (e.g. frames 2169→2171, 4924→4927), no `CLIENT_ERROR`/`SERVER_ERROR`/`status ≠ OK` in 36 packets, and **the next connection's `ReadSetting` returned the last write**
+  (`[-2.00, 0, 2.00, 3.00, 5.00]`, frames 3202, 3558, 4855) — the Buds store what they acknowledge. **Still open, unchanged:** request/response matching for *concurrent*
+  requests (the app issues them one at a time), how the channel→address mapping is derived (only tabulated: 21 and 19 seen again, no new pair), and whether an EQ change is
+  *audible* (a camera microphone cannot record what is in the ears — the maintainer's listening test).
+
+## ADR-035 — DLCI 0x08 is claimed on demand for the Case battery: `Group 0x0e Code 0x01`, entry index 3; receive-only
+
+- **Date**: 2026-09-20
+- **Status**: Accepted (scope below)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0042`); the decision is the maintainer's, made in the chat session of 2026-09-20 (`AskUserQuestion`
+  "Case", options and pros/cons shown; chosen: *"ADR schrijven + on-demand claim"*), per `AGENTS.md` §6. Details marked "agent detail" are the agent's, inside that
+  approval, open to veto.
+- **Context**: ADR-014 promoted the identity of DLCI 0x08 `Group 0x0e Code 0x01` (entries index 1/2/3 = Left/Right/Case) to 🟢 FACT but stated no implementation
+  unblock, and `ARCHITECTURE.md` §5/§5a keep acting on a DLCI 0x08 Group/Code gated. `LOGS-001` (`DESKRESEARCH_FINDINGS.md` 2026-09-20, second entry, Findings 6 and 8) shows:
+  DLCI 0x04's `b3` is `0xff` in 60 of 60 frames (ADR-033: the Case cannot come from there); the Fast Pair BLE advertisement carries no `0x33`/`0x34` battery field in 54
+  distinct payloads; the Buds' GATT database has no Battery Service (`0x180f`); on DLCI 0x08 the Buds pushed 19 `0e 01` messages, the first (frame 1211) 165 ms after the
+  channel was opened (by Google Play services — the app never opens it), carrying Case `0x61` = 97 % in all 19 (`… 0a 06 08 61 10 01 18 03 …`). DLCI 0x08 is the SDP service
+  "GSND CONTROL", UUID `f8d1fbe4-7966-4334-8024-ff96c9330e15`, RFCOMM channel 4 (`PROTOCOL.md` §2.3, `CAP-033`).
+- **Options considered**: (a) do not implement — the Case stays "Battery unavailable"; (b) this decision — an ADR-032-style on-demand claim of DLCI 0x08, receive-only.
+- **Decision**:
+  1. The app may open DLCI 0x08 as an **on-demand channel** on the current connection (`BudsTransport.openChannel`), **only** on the user's own action: the Connect tap
+     (once, after the session is ready) and a *Refresh battery* tap. No background, periodic or automatic claim (`ARCHITECTURE.md` §6 is kept).
+  2. **Receive-only:** the app sends **nothing** on DLCI 0x08 — in particular not the phone-side `0e 04` "get" that Play services sends before the first push. Whether the Buds
+     push unrequested after the open is 🟡 HYPOTHESIS (later pushes came unrequested after ANC changes and bud removals, but the first push in the capture followed the
+     request) — the hardware re-test settles it; if they do not, the Case is reported unavailable with its reason, and sending `0e 04` needs its own ADR.
+  3. **Decode only** what ADR-014 promoted: `[Group:1][Code:1][Len:2 BE][Value]` frames; Group `0x0e` Code `0x01`; the entry with **index 3** (Case) → percentage `0..100`;
+     the entry's flag field (field 2) equal to `1` marks the reading **fresh**, a missing flag marks it **last seen** (ADR-014's own caveat: a stale Case value was
+     observed without the flag; in `LOGS-001` the flag is present on the pushes made while buds were in the case and absent afterwards) — a last-seen value is shown as
+     such, never as current; any other value is unavailable (`AGENTS.md` §5). Every other Group/Code on DLCI 0x08 stays an `UnidentifiedFrame`.
+  4. **Claim shape** (agent detail): claims are serialised with the Message Stream claims (one mutex), wait ≤ 2 s for the push, and release 1 s later so Play services can
+     take the channel back; a failed claim is reported per action (`BudsError.ChannelUnavailable(0x08)`) and leaves the session `Ready`. Loss of DLCI 0x08 is not a session
+     loss. Known limit, as in ADR-032: while Play services holds DLCI 0x08 (≈ 105 s, 50 s and 29 s stretches in `LOGS-001`) a claim collides and the stack's failure path
+     closes Play services' port; it re-opens it itself (≈ 1 s in the observed `DISC`/`SABM` pairs).
+  5. DLCI 0x04's `b3` remains undecoded and **no longer overwrites** the Case value (it read `0xff` = unknown on every claim).
+- **Consequences**: `:hardware` gets the `GSND_CONTROL` SDP UUID, `:data` a `CaseBatteryFrameDecoder`, a `Dlci.GSND_CONTROL` route in `CodecRouter` and a case claim in
+  `BudsRepositoryImpl`; `BatteryLevel.Known` gains `isStale`; the Connection screen shows the Case with its age and a *Refresh battery* action; `ARCHITECTURE.md` §5a's
+  Battery row is updated. Nothing here is hardware-verified. **Not decided:** any request on DLCI 0x08, any other Group/Code, the BLE advertisement route.
+
+## ADR-036 — DLCI 0x02: read-only `ReadSetting` unblocked for the `qhr` fields already at FACT identity (no writes, no subscription)
+
+- **Date**: 2026-09-20
+- **Status**: Accepted (scope below; **nothing is implemented by this ADR**)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0042`, `RESULT` §8); the decision is the maintainer's, made in the chat session of 2026-09-20 (`AskUserQuestion`
+  "Features", option *"Geconsolideerde DLCI 0x02 read-only ADR schrijven"* selected, the exact text having been offered in `RESULT` §8), per `AGENTS.md` §6.
+- **Context**: `ARCHITECTURE.md` §5a lists a consolidated unblock ADR as a proposal since `ai-sessions/0033`; ADR-013/ADR-020 unblocked only the generic write wrapper and the EQ write,
+  ADR-034 only `ReadSetting` for EQ fields 16/18. `LOGS-001` confirmed `ReadSetting` a fifth time (4/4 connections answered without any opening message, ADR-034's update).
+- **Decision**: **`ReadSetting 4:N` (read only — no `WriteSetting`, no `SubscribeToSettingsChanges`) is unblocked for `qhr` fields 4, 7, 11, 15, 17, 19, 22, 27, 28 and 2**, each *only*
+  for the value semantics already 🟢 in ADR-013/ADR-019/ADR-026 and `PROTOCOL.md` §4.5; a field whose semantics are not FACT is read and shown **raw in the Debug tab only**.
+  Requests use the channel the Buds announce and the request-address table of ADR-034; they are sequential, wait ≤ 3 s and are never retried in a loop; the firmware string
+  must be a version the app was verified against (`release_5.203`) — otherwise the app stays in the read-only Safe Mode of `ARCHITECTURE.md` §8.1.
+- **Consequences**: `Maestro.readSettingRequest` may learn the field list; a read-only "Settings" card and the per-field decoders are later work (each field's decoder needs real
+  bytes as fixtures). **Every write is a later, separate ADR.** No behaviour changes today.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

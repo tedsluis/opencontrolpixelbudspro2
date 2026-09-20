@@ -26,6 +26,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 object Dlci {
     const val MAESTRO: Int = 0x02
     const val FAST_PAIR_MESSAGE_STREAM: Int = 0x04
+
+    /** "GSND CONTROL" (PROTOCOL.md §2.3): only the Case battery push is decoded (DECISIONS.md ADR-035). */
+    const val GSND_CONTROL: Int = 0x08
 }
 
 /** One fully-decoded, recognized inbound frame, tagged by which feature it belongs to. */
@@ -35,8 +38,14 @@ sealed class RoutedFrame {
     data class Ring(val frame: RingFrame) : RoutedFrame()
     data class Battery(val frame: BatteryFrame) : RoutedFrame()
 
-    /** The Buds' unsolicited `GetSoftwareInfo` push announcing the pw_rpc channel of this connection (ADR-034). */
-    data class MaestroHello(val channelId: Int) : RoutedFrame()
+    /** The Case reading of a DLCI 0x08 `0e 01` push (ADR-035); Left/Right stay from [Battery]. */
+    data class CaseBattery(val frame: CaseBatteryFrame) : RoutedFrame()
+
+    /**
+     * The Buds' unsolicited `GetSoftwareInfo` push announcing the pw_rpc channel of this connection (ADR-034); [firmware] = the
+     * distinct firmware strings it carries (`ai-sessions/0042`), empty if the payload had another shape.
+     */
+    data class MaestroHello(val channelId: Int, val firmware: List<String> = emptyList()) : RoutedFrame()
 
     /**
      * The Buds' answer to one of *our* Maestro requests that carries no EQ value: the empty `RESPONSE` to a
@@ -67,6 +76,7 @@ sealed class RoutedFrame {
 class CodecRouter {
     private val maestroSplitter = HdlcFrameSplitter()
     private val messageStreamSplitter = MessageStreamFrameSplitter()
+    private val gsndSplitter = MessageStreamFrameSplitter() // DLCI 0x08 uses the same [Group][Code][Len:2BE][Value] framing (§2.3)
 
     /**
      * Feeds one inbound `(channelId, bytes)` chunk and returns every
@@ -159,6 +169,26 @@ class CodecRouter {
                 }
             }
 
+            Dlci.GSND_CONTROL -> for (frame in gsndSplitter.feed(bytes)) {
+                val decoded = CaseBatteryFrameDecoder.decode(frame)
+                if (decoded is BudsResult.Success) {
+                    routed += RoutedFrame.CaseBattery(decoded.value)
+                } else if (frame.size < 4) {
+                    onMalformed(frame)
+                } else {
+                    // Every other Group/Code on DLCI 0x08 stays unidentified (ADR-035: only the Case battery is understood).
+                    onUnidentified(
+                        UnidentifiedFrame(
+                            channelId = channelId,
+                            group = frame[0].toInt() and 0xFF,
+                            code = frame[1].toInt() and 0xFF,
+                            raw = frame,
+                            timestampMillis = timestampMillis,
+                        ),
+                    )
+                }
+            }
+
             else -> Unit // Out of this session's implementation scope (ARCHITECTURE.md §5a) — ignored.
         }
 
@@ -176,7 +206,7 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
     if (method == Maestro.METHOD_GET_SOFTWARE_INFO && packet.type == PwRpc.TYPE_RESPONSE &&
         packet.callId == PwRpc.CALL_ID_UNSOLICITED
     ) {
-        return RoutedFrame.MaestroHello(packet.channelId)
+        return RoutedFrame.MaestroHello(packet.channelId, SoftwareInfo.firmwareStrings(packet.payload))
     }
     val settingsMethod = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING ||
         method == Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES

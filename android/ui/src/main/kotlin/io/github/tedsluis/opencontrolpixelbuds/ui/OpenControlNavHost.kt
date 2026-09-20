@@ -44,7 +44,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
@@ -107,6 +109,8 @@ data class OpenControlActions(
     val onRefreshEq: () -> Unit,
     val onRing: (RingTarget) -> Unit,
     val onStopRinging: () -> Unit,
+    /** Re-reads the battery: a Message Stream claim (Left/Right) and a DLCI 0x08 claim (Case), DECISIONS.md ADR-033/ADR-035. */
+    val onRefreshBattery: () -> Unit,
     val onDebugModeChanged: (Boolean) -> Unit,
     /** Shares `BleLogger.exportLog()`'s current ring-buffer snapshot via the system share sheet —
      * local-only (AGENTS.md §9), the destination is the user's own choice, never an automatic
@@ -135,6 +139,14 @@ data class OpenControlUiState(
     /** Why the last action needing the shared Message Stream channel could not claim it (ADR-032). */
     val messageStreamError: BudsError?,
     val ancMode: AncMode?,
+    /** Why the Case battery could not be read by the last DLCI 0x08 claim (`null` = read / not attempted), ADR-035. */
+    val caseBatteryError: BudsError? = null,
+    /** Whether the earbuds sit in the case, from the last `Notify ANC state` (ADR-024). */
+    val dockState: DockState = DockState.UNKNOWN,
+    /** What the Buds announced at connect (firmware); `null` = nothing yet. */
+    val deviceInfo: DeviceInfo? = null,
+    /** The earbud a Find My Buds ring was started on and not yet stopped (`null` = none). */
+    val ringingTarget: RingTarget? = null,
     val eqProfile: EqBandGains?,
     /** Why the last EQ read/write failed (`null` = fine / not attempted) — ADR-034. */
     val eqError: BudsError?,
@@ -192,6 +204,10 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     lastConnectionError = state.lastConnectionError,
                     messageStreamError = state.messageStreamError,
                     batteryStatus = state.batteryStatus,
+                    caseBatteryError = state.caseBatteryError,
+                    dockState = state.dockState,
+                    deviceInfo = state.deviceInfo,
+                    onRefreshBattery = actions.onRefreshBattery,
                     onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
                     onPair = actions.onPair,
                     onRequestPermissions = actions.onRequestPermissions,
@@ -226,6 +242,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 FindMyBudsScreen(
                     connectionState = state.connectionState,
                     messageStreamError = state.messageStreamError,
+                    ringingTarget = state.ringingTarget,
                     onRing = actions.onRing,
                     onStop = actions.onStopRinging,
                     modifier = Modifier.padding(padding),

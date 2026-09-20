@@ -32,7 +32,21 @@ enum class AncMode(val wireBit: Int) {
     ACTIVE(0x08),
     ;
 
+    /**
+     * The mode a Quick Settings tap moves to (`ai-sessions/0042`): Noise cancelling → Transparent → Adaptive → Off → Noise
+     * cancelling. A fixed, documented order so the tile is predictable; an unknown current mode starts the cycle.
+     */
+    fun nextInTileCycle(): AncMode = when (this) {
+        ACTIVE -> TRANSPARENT
+        TRANSPARENT -> ADAPTIVE
+        ADAPTIVE -> OFF
+        OFF -> ACTIVE
+    }
+
     companion object {
         fun fromWireBit(bit: Int): AncMode? = entries.firstOrNull { it.wireBit == bit }
+
+        /** The next tile mode for a possibly unknown current one: unknown starts at [ACTIVE]. */
+        fun nextForTile(current: AncMode?): AncMode = current?.nextInTileCycle() ?: ACTIVE
     }
 }

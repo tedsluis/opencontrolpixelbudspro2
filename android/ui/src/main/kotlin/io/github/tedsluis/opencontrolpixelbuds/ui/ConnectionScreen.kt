@@ -43,7 +43,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.CardAction
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLine
@@ -70,6 +72,10 @@ fun ConnectionScreen(
     lastConnectionError: BudsError?,
     messageStreamError: BudsError?,
     batteryStatus: BatteryStatus,
+    caseBatteryError: BudsError?,
+    dockState: DockState,
+    deviceInfo: DeviceInfo?,
+    onRefreshBattery: () -> Unit,
     onRequestEnableBluetooth: () -> Unit,
     onPair: () -> Unit,
     onRequestPermissions: () -> Unit,
@@ -109,7 +115,10 @@ fun ConnectionScreen(
                     if (card != null) {
                         ConnectionStateCard(card, connectionState, lastConnectionError, messageStreamError, onConnect, onDisconnect)
                     }
-                    if (connectionState is ConnectionState.Ready) BatteryCard(batteryStatus)
+                    if (connectionState is ConnectionState.Ready) {
+                        BudsInfoCard(dockState, deviceInfo)
+                        BatteryCard(batteryStatus, caseBatteryError, onRefreshBattery)
+                    }
                 }
             }
 
@@ -182,6 +191,7 @@ private fun ConnectionStateCard(
                     AndroidLine.CONNECTED -> "Connected to this phone (Android)"
                     AndroidLine.NOT_CONNECTED -> "Paired — not connected to this phone"
                     AndroidLine.NOT_REPORTED_WHILE_CONTROLLED -> "Android doesn't show the Buds as connected (yet)"
+                    AndroidLine.UNKNOWN -> "Paired — Android's connection state isn't known (yet)"
                 },
                 style = MaterialTheme.typography.titleMedium,
             )
@@ -223,8 +233,29 @@ private fun ErrorExplanation(error: BudsError) {
     }
 }
 
+/** Dock state (ADR-024) and firmware (ADR-034's announcement) — both passive, nothing sent for them (`ai-sessions/0042`). */
 @Composable
-private fun BatteryCard(status: BatteryStatus) {
+private fun BudsInfoCard(dockState: DockState, deviceInfo: DeviceInfo?) {
+    val dock = dockLine(dockState)
+    val firmware = deviceInfo?.firmware?.takeIf { it.isNotEmpty() }?.joinToString(" / ")
+    if (dock == null && firmware == null) return
+    Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            dock?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+            firmware?.let { Text("Firmware: $it", style = MaterialTheme.typography.bodyLarge) }
+        }
+    }
+}
+
+/** The dock line, or `null` when the state is not known — never guessed (`AGENTS.md` §5's spirit, ADR-024). */
+internal fun dockLine(dockState: DockState): String? = when (dockState) {
+    DockState.BOTH_IN_CASE -> "Both earbuds are in the case (as of the last update)."
+    DockState.NOT_BOTH_IN_CASE -> "At least one earbud is out of the case (as of the last update)."
+    DockState.UNKNOWN -> null
+}
+
+@Composable
+private fun BatteryCard(status: BatteryStatus, caseBatteryError: BudsError?, onRefreshBattery: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Battery", style = MaterialTheme.typography.titleMedium)
@@ -236,14 +267,8 @@ private fun BatteryCard(status: BatteryStatus) {
             BatteryRow("Left", status.left)
             BatteryRow("Right", status.right)
             BatteryRow("Case", status.case)
-            if (status.left is BatteryLevel.Unavailable && status.right is BatteryLevel.Unavailable &&
-                status.hfpEarbud !is BatteryLevel.Unavailable
-            ) {
-                // HFP Option C reports one earbud without a confirmed side (BatteryStatus.hfpEarbud's own doc
-                // comment) — shown separately so it's never mistaken for a confirmed Left/Right reading, and hidden
-                // while it has no value (ai-sessions/0041: a permanent "unavailable" row was only confusing).
-                BatteryRow("One earbud (side unknown)", status.hfpEarbud)
-            }
+            if (status.case is BatteryLevel.Unavailable) caseBatteryError?.let { Text(caseErrorText(it), style = MaterialTheme.typography.bodySmall) }
+            TextButton(onClick = onRefreshBattery) { Text("Refresh battery") }
         }
     }
 }
@@ -251,7 +276,7 @@ private fun BatteryCard(status: BatteryStatus) {
 @Composable
 private fun BatteryRow(label: String, level: BatteryLevel) {
     val text = when (level) {
-        is BatteryLevel.Known -> "$label: ${level.percent}%" + if (level.isCharging == true) " (charging)" else ""
+        is BatteryLevel.Known -> batteryText(label, level)
         BatteryLevel.Unavailable -> "$label: Battery unavailable"
     }
     Text(text, style = MaterialTheme.typography.bodyLarge)
@@ -295,5 +320,19 @@ internal fun BudsError.technicalDetail(): String? = when (this) {
 internal fun channelLabel(channelId: Int): String = when (channelId) {
     0x02 -> "Maestro channel (equalizer)"
     0x04 -> "Message Stream channel (ANC, Find My Buds)"
+    0x08 -> "Case-battery channel"
     else -> "Bluetooth channel 0x%02x".format(channelId)
+}
+
+/** "Left: 97%", plus " (charging)" and, for a value the Buds did not mark fresh, " — last seen" (DECISIONS.md ADR-035). */
+internal fun batteryText(label: String, level: BatteryLevel.Known): String =
+    "$label: ${level.percent}%" + (if (level.isCharging == true) " (charging)" else "") + (if (level.isStale) " — last seen" else "")
+
+/** Why the Case could not be read (ADR-035) — the Case is on a different, shared channel than ANC/Find. */
+internal fun caseErrorText(error: BudsError): String = when (error) {
+    is BudsError.ChannelUnavailable ->
+        "The Case channel couldn't be opened — another app on this phone (for example Google Play services) may be using it. Try Refresh battery again."
+    BudsError.Timeout -> "The Buds didn't report the Case level (they may not send it while the case is closed or the buds are out)."
+    BudsError.ConnectionLost -> "The Case level can only be read while the app is connected."
+    else -> "The Case level couldn't be read."
 }

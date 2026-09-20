@@ -50,6 +50,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 private fun hex(s: String): ByteArray {
@@ -76,8 +77,7 @@ class BudsRepositoryImplTest {
     private fun buildRepository(
         scope: TestScope,
         connectionStateMachine: ConnectionStateMachine = buildConnectionStateMachine(),
-        hfpBatteryPercent: MutableSharedFlow<Int> = MutableSharedFlow(extraBufferCapacity = 8),
-    ): Triple<BudsRepositoryImpl, FakeBudsTransport, MutableSharedFlow<Int>> {
+    ): Pair<BudsRepositoryImpl, FakeBudsTransport> {
         val transport = FakeBudsTransport()
         // backgroundScope, not `scope` itself: BudsRepositoryImpl's init block launches
         // collectors that run for the component's whole lifetime by design (they observe
@@ -90,11 +90,10 @@ class BudsRepositoryImplTest {
             // No real BluetoothDevice needed — none of the tests below exercise connect() against
             // a bonded device (see the dedicated connect()-failure test instead).
             bondedDeviceProvider = { null },
-            hfpBatteryPercent = hfpBatteryPercent,
             debugModeEnabled = MutableStateFlow(false),
             scope = scope.backgroundScope,
         )
-        return Triple(repo, transport, hfpBatteryPercent)
+        return repo to transport
     }
 
     @Test
@@ -487,6 +486,153 @@ class BudsRepositoryImplTest {
         assertEquals("0401000100", transport.sent[1].second.toHex())
     }
 
+    // ---- Case battery on DLCI 0x08 (DECISIONS.md ADR-035), dock state (ADR-024), Find state, firmware (ai-sessions/0042) ----
+
+    // LOGS-001 frame 1211 (fresh, Case 97) and frame 2863 (no flag → last seen)
+    private val caseFresh = hex("0e0100230a210a03616c6c121a0a060864100118010a060864100118020a060861100118032001")
+    private val caseStale = hex("0e0100210a1f0a03616c6c12180a060864100118010a060864100118020a04086118032001")
+
+    /** `Notify ANC state` `01 e8 <settable> <mode>` — real values from LOGS-001 frames 1520 (`e8 00 20`) and 2782 (`e8 e8 08`). */
+    private fun ancNotify(settable: String, mode: String) = hex("08130004" + "01e8" + settable + mode)
+
+    @Test
+    fun `refreshBattery claims DLCI 0x04 then DLCI 0x08, reads the Case push, sends nothing on DLCI 0x08 and releases it after the linger`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        runCurrent() // start the repository's backgroundScope collectors before the first emit
+
+        val job = launch { repo.refreshBattery() }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20")) // answers the Get, so the Case claim starts
+        settle()
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.GSND_CONTROL), transport.openChannelCalls)
+
+        transport.emit(Dlci.GSND_CONTROL, caseFresh)
+        settle()
+        job.join()
+
+        assertEquals(BatteryLevel.Known(97, isCharging = null, isStale = false), repo.batteryStatus.value.case)
+        assertNull(repo.caseBatteryError.first())
+        assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent.filter { it.first == Dlci.GSND_CONTROL }, "ADR-035: receive-only")
+        assertEquals(true, transport.isChannelOpen(Dlci.GSND_CONTROL), "still claimed during the linger")
+        advanceTimeBy(1_100)
+        runCurrent()
+        assertEquals(false, transport.isChannelOpen(Dlci.GSND_CONTROL), "released so Play services can take it back")
+    }
+
+    @Test
+    fun `a last-seen Case value is kept and marked, and DLCI 0x04's b3 = ff never overwrites the Case`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        runCurrent() // start the repository's backgroundScope collectors before the first emit
+
+        transport.emit(Dlci.GSND_CONTROL, caseStale)
+        settle()
+        assertEquals(BatteryLevel.Known(97, null, isStale = true), repo.batteryStatus.value.case)
+
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "6464ff")) // real frame 2776: b3 = ff on every claim
+        settle()
+        assertEquals(BatteryLevel.Known(100, false), repo.batteryStatus.value.left)
+        assertEquals(BatteryLevel.Known(97, null, isStale = true), repo.batteryStatus.value.case, "the Case value survives a Left/Right update")
+    }
+
+    @Test
+    fun `a busy DLCI 0x08 is reported as the Case error, the session stays Ready and the Case stays unavailable`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        runCurrent() // start the repository's backgroundScope collectors before the first emit
+        val busy = BudsError.ChannelUnavailable(Dlci.GSND_CONTROL, "read failed, socket might closed")
+        transport.openChannelShouldFail = busy
+
+        repo.refreshBattery()
+
+        assertEquals(busy, repo.caseBatteryError.first())
+        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case)
+        assertInstanceOf(ConnectionState.Ready::class.java, repo.connectionState.first())
+    }
+
+    @Test
+    fun `no Case push within the wait is a timeout, never a made-up value`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        runCurrent() // start the repository's backgroundScope collectors before the first emit
+        val job = launch { repo.refreshBattery() }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20"))
+        settle()
+        advanceTimeBy(2_100) // CASE_PUSH_WAIT_MS
+        runCurrent()
+        job.join()
+
+        assertEquals(BudsError.Timeout, repo.caseBatteryError.first())
+        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case)
+    }
+
+    @Test
+    @DisplayName("ADR-024: the Notify's Settable-toggles byte is the dock state — 0x00 both in the case, 0xe8 not, anything else unknown")
+    fun `dock state follows the Notify byte`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        runCurrent() // start the repository's backgroundScope collectors before the first emit
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.UNKNOWN, repo.dockState.first())
+
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("00", "20")) // LOGS-001 frame 1520 (buds seated)
+        settle()
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.BOTH_IN_CASE, repo.dockState.first())
+
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "08")) // frame 2782 (buds out)
+        settle()
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.NOT_BOTH_IN_CASE, repo.dockState.first())
+
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("12", "08")) // an unconfirmed value is not guessed
+        settle()
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.UNKNOWN, repo.dockState.first())
+    }
+
+    @Test
+    fun `a ring is remembered until Stop succeeds, and a failed ring is never remembered`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        runCurrent() // start the repository's backgroundScope collectors before the first emit
+        assertNull(repo.ringingTarget.first())
+
+        repo.ringBud(RingTarget.RIGHT)
+        assertEquals(RingTarget.RIGHT, repo.ringingTarget.first())
+        repo.stopRinging()
+        assertNull(repo.ringingTarget.first())
+
+        transport.sendShouldFail = BudsError.ConnectionLost
+        repo.ringBud(RingTarget.LEFT)
+        assertNull(repo.ringingTarget.first(), "a ring whose command never left the phone is not claimed")
+    }
+
+    @Test
+    fun `the announcement's firmware becomes deviceInfo`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        runCurrent() // start the repository's backgroundScope collectors before the first emit
+        assertNull(repo.deviceInfo.first())
+
+        val entry = byteArrayOf(0x12, 13) + "release_5.203".toByteArray()
+        val group = byteArrayOf(0x0a, entry.size.toByte()) + entry
+        val payload = byteArrayOf(0x22, group.size.toByte()) + group
+        transport.emit(
+            Dlci.MAESTRO,
+            helloFrame(21, 0x00a5 shr 0).let {
+                Hdlc.encode(
+                    10496,
+                    PW_HDLC_CONTROL_UI,
+                    PwRpc.encode(
+                        RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_GET_SOFTWARE_INFO, payload, callId = PwRpc.CALL_ID_UNSOLICITED),
+                    ),
+                )
+            },
+        )
+        settle()
+
+        assertEquals(listOf("release_5.203"), repo.deviceInfo.first()?.firmware)
+    }
+
     // ---- on-demand Message Stream claim (DECISIONS.md ADR-032) ------------------------------------
 
     @Test
@@ -663,28 +809,6 @@ class BudsRepositoryImplTest {
         second.join()
         assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.left)
         assertEquals(BatteryLevel.Known(100, false), repo.batteryStatus.value.right)
-    }
-
-    @Test
-    fun `HFP battery pushes update batteryStatus hfpEarbud without fabricating a charging state`() = runTest {
-        val (repo, _, hfpBattery) = buildRepository(this)
-        advanceUntilIdle()
-
-        val job = launch {
-            repo.batteryStatus.first {
-                it.hfpEarbud is io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known
-            }
-        }
-        runCurrent()
-        hfpBattery.emit(88)
-        job.join()
-
-        val status = repo.batteryStatus.value
-        val level = status.hfpEarbud
-        assertInstanceOf(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known::class.java, level)
-        level as io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known
-        assertEquals(88, level.percent)
-        assertNull(level.isCharging)
     }
 
     @Test

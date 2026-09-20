@@ -92,7 +92,7 @@ class DeviceStatusTest {
         assertEquals(StatusCard(AndroidLine.CONNECTED, SessionLine.NOT_OPEN, CardAction.CONNECT), statusCard(DeviceStatus.ConnectedToPhone, AndroidLink.CONNECTED, closed))
         assertEquals(StatusCard(AndroidLine.CONNECTED, SessionLine.FAILED, CardAction.RETRY), statusCard(DeviceStatus.ConnectedToPhone, AndroidLink.CONNECTED, failed))
         assertEquals(StatusCard(AndroidLine.NOT_CONNECTED, SessionLine.NOT_OPEN, CardAction.CONNECT), statusCard(DeviceStatus.PairedNotConnected, AndroidLink.NOT_CONNECTED, closed))
-        assertEquals(StatusCard(AndroidLine.NOT_CONNECTED, SessionLine.NOT_OPEN, CardAction.CONNECT), statusCard(DeviceStatus.PairedNotConnected, AndroidLink.UNKNOWN, closed))
+        assertEquals(StatusCard(AndroidLine.UNKNOWN, SessionLine.NOT_OPEN, CardAction.CONNECT), statusCard(DeviceStatus.PairedNotConnected, AndroidLink.UNKNOWN, closed))
         assertEquals(StatusCard(AndroidLine.NOT_CONNECTED, SessionLine.FAILED, CardAction.RETRY), statusCard(DeviceStatus.PairedNotConnected, AndroidLink.NOT_CONNECTED, failed))
         assertEquals(StatusCard(AndroidLine.CONNECTED, SessionLine.OPEN, CardAction.DISCONNECT), statusCard(DeviceStatus.ControlledByApp, AndroidLink.CONNECTED, ConnectionState.Ready))
         assertEquals(
@@ -100,6 +100,32 @@ class DeviceStatusTest {
             statusCard(DeviceStatus.ControlledByApp, AndroidLink.NOT_CONNECTED, ConnectionState.Ready),
         )
         assertEquals(StatusCard(AndroidLine.CONNECTED, SessionLine.OPENING, CardAction.NONE), statusCard(DeviceStatus.Connecting, AndroidLink.CONNECTED, ConnectionState.Connecting))
+    }
+
+    @Test
+    @DisplayName("ai-sessions/0042: an unknown Android link is never rendered as a negative — 'not connected' / 'doesn't show connected' need a real NOT_CONNECTED")
+    fun `unknown link is not a negative claim`() {
+        // The first hardware run: the observer never re-evaluated after pairing, its state stayed UNKNOWN, and the card said
+        // "Android doesn't show the Buds as connected (yet)" (session open) and later "Paired — not connected to this phone"
+        // for minutes while Android's own panel showed the Buds active.
+        assertEquals(
+            StatusCard(AndroidLine.UNKNOWN, SessionLine.OPEN, CardAction.DISCONNECT),
+            statusCard(DeviceStatus.ControlledByApp, AndroidLink.UNKNOWN, ConnectionState.Ready),
+        )
+        assertEquals(
+            StatusCard(AndroidLine.UNKNOWN, SessionLine.OPENING, CardAction.NONE),
+            statusCard(DeviceStatus.Connecting, AndroidLink.UNKNOWN, ConnectionState.Connecting),
+        )
+        val failed = ConnectionState.Failed(BudsError.Timeout)
+        assertEquals(
+            StatusCard(AndroidLine.UNKNOWN, SessionLine.FAILED, CardAction.RETRY),
+            statusCard(DeviceStatus.PairedNotConnected, AndroidLink.UNKNOWN, failed),
+        )
+        // ...and a real NOT_CONNECTED still says so.
+        assertEquals(
+            StatusCard(AndroidLine.NOT_CONNECTED, SessionLine.NOT_OPEN, CardAction.CONNECT),
+            statusCard(DeviceStatus.PairedNotConnected, AndroidLink.NOT_CONNECTED, ConnectionState.Disconnected),
+        )
     }
 
     @Test

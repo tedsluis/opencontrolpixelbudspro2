@@ -31,7 +31,6 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsTransport
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
-import io.github.tedsluis.opencontrolpixelbuds.hardware.HfpBatteryReader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -72,14 +71,12 @@ object RepositoryModule {
         transport: BudsTransport,
         connectionStateMachine: ConnectionStateMachine,
         companionPairing: BudsCompanionPairing,
-        @ApplicationContext context: Context,
         debugSettingsStore: DebugSettingsStore,
         scope: CoroutineScope,
     ): BudsRepository = BudsRepositoryImpl(
         transport = transport,
         connectionStateMachine = connectionStateMachine,
         bondedDeviceProvider = companionPairing::bondedDevice,
-        hfpBatteryPercent = HfpBatteryReader(context).observeBievBatteryPercent(),
         debugModeEnabled = debugSettingsStore.debugModeEnabled,
         scope = scope,
     )

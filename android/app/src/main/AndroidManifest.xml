@@ -69,6 +69,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- ANC Quick Settings tile (ai-sessions/0042). android:permission is the permission the *binding caller* must hold
+             (only the system does); it is not a permission this app requests — the requested-permission set is unchanged
+             (AGENTS.md §2). The tile never opens the session and never starts a service; a tap while the app is not connected
+             opens the app. -->
+        <service
+            android:name="io.github.tedsluis.opencontrolpixelbuds.app.AncTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_anc_tile"
+            android:label="@string/tile_anc_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

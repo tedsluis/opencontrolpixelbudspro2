@@ -38,6 +38,8 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.RoutedFrame
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
+import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
@@ -80,14 +82,13 @@ import kotlinx.coroutines.withTimeoutOrNull
  * - **EQ**: [eqProfile] resets to `null` ("unknown, not stale-and-trusted") on every fresh `Ready`
  *   transition and is filled by the Connect sequence's `ReadSetting 4:16` (DECISIONS.md ADR-034); a failed
  *   read or write is reported through [eqError] with its reason instead of being assumed to have worked.
- * - **Battery**: push-based via [hfpBatteryPercent] (HFP Option C) — no
- *   query, only listening.
+ * - **Battery**: push-based — Left/Right from the Message Stream's `Group 0x03 Code 0x03` (ADR-033, each claim yields
+ *   a reading), the Case from an on-demand claim of DLCI 0x08 (ADR-035). HFP `AT+BIEV` is not consumed (removed
+ *   `ai-sessions/0042`: on the wire, but not deliverable to an app).
  * - **Find My Buds**: no persisted state to reconcile.
  *
- * [hfpBatteryPercent] is injected as a plain [Flow] so this class stays
- * unit-testable against a [io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport]
- * and scripted flows, per AGENTS.md §11 — no real `BluetoothHeadset` involved
- * in a test of this class. [connectionStateMachine] is the real, already
+ * This class stays unit-testable against a [io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport]
+ * and scripted flows, per AGENTS.md §11. [connectionStateMachine] is the real, already
  * independently-tested `:hardware` class (not just its `Flow`) — [connect]/
  * [disconnect] need to drive its transitions, not just observe them.
  * [bondedDeviceProvider] resolves the current bonded device lazily at
@@ -98,7 +99,6 @@ class BudsRepositoryImpl(
     private val transport: BudsTransport,
     private val connectionStateMachine: ConnectionStateMachine,
     private val bondedDeviceProvider: () -> BluetoothDevice?,
-    hfpBatteryPercent: Flow<Int>,
     debugModeEnabled: Flow<Boolean>,
     private val scope: CoroutineScope,
 ) : BudsRepository {
@@ -135,6 +135,7 @@ class BudsRepositoryImpl(
 
     @Volatile
     private var releaseJob: Job? = null
+    private var caseReleaseJob: Job? = null
 
     @Volatile
     private var snapshotJob: Job? = null
@@ -163,11 +164,33 @@ class BudsRepositoryImpl(
     private val _batteryStatus = MutableStateFlow(BatteryStatus())
     override val batteryStatus: StateFlow<BatteryStatus> = _batteryStatus
 
+    private val _caseBatteryError = MutableStateFlow<BudsError?>(null)
+    override val caseBatteryError: Flow<BudsError?> = _caseBatteryError
+
+    /** A Case reading arrived on DLCI 0x08 — what an on-demand Case claim waits for (ADR-035). */
+    private val _casePushes = MutableSharedFlow<BatteryLevel>(extraBufferCapacity = 8)
+
+    private val _dockState = MutableStateFlow(DockState.UNKNOWN)
+    override val dockState: Flow<DockState> = _dockState
+
+    private val _deviceInfo = MutableStateFlow<DeviceInfo?>(null)
+    override val deviceInfo: Flow<DeviceInfo?> = _deviceInfo
+
+    private val _ringingTarget = MutableStateFlow<RingTarget?>(null)
+    override val ringingTarget: Flow<RingTarget?> = _ringingTarget
+
     /** A Ring ACK arrived — what a Find My Buds tap waits for before the channel is released. */
     private val _ringAcks = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
 
     private val _unidentifiedFrames = MutableSharedFlow<UnidentifiedFrame>(extraBufferCapacity = 32)
     override val unidentifiedFrames: Flow<UnidentifiedFrame> = _unidentifiedFrames
+
+    /** Channel and time of the last inbound frame — only for the "why did the session end" log line (`ai-sessions/0042`). */
+    @Volatile
+    private var lastInboundChannel: Int? = null
+
+    @Volatile
+    private var lastInboundAtMillis: Long = 0L
 
     init {
         scope.launch {
@@ -175,6 +198,8 @@ class BudsRepositoryImpl(
         }
         scope.launch {
             transport.inbound.collect { (channelId, bytes) ->
+                lastInboundChannel = channelId
+                lastInboundAtMillis = System.currentTimeMillis()
                 BleLogger.logHexDump(channelId, bytes, debugModeEnabledSnapshot)
                 val routed = codecRouter.feed(
                     channelId,
@@ -186,13 +211,6 @@ class BudsRepositoryImpl(
                     onRpcPacket = { BleLogger.logConnectionEvent(it.summary()) },
                 )
                 routed.forEach(::handleRoutedFrame)
-            }
-        }
-        scope.launch {
-            hfpBatteryPercent.collect { percent ->
-                // Charging state is not confirmed by this mechanism (BatteryLevel's own doc
-                // comment) — never fabricated as true or false.
-                _batteryStatus.update { it.copy(hfpEarbud = BatteryLevel.Known(percent, isCharging = null)) }
             }
         }
         scope.launch {
@@ -219,6 +237,15 @@ class BudsRepositoryImpl(
             transport.connectionLost.collect { loss ->
                 val state = connectionStateMachine.state.value
                 if (state is ConnectionState.Ready || state is ConnectionState.Discovering) {
+                    val seen = lastInboundChannel
+                    BleLogger.logConnectionEvent(
+                        SessionDiagnostics.lossLine(
+                            loss.channelId,
+                            loss.detail,
+                            seen,
+                            if (seen == null) null else System.currentTimeMillis() - lastInboundAtMillis,
+                        ),
+                    )
                     _lastConnectionError.value = BudsError.ChannelLost(loss.channelId, loss.detail)
                     cancelClaimJobs()
                     connectionStateMachine.onDisconnected()
@@ -235,9 +262,13 @@ class BudsRepositoryImpl(
     private fun handleRoutedFrame(frame: RoutedFrame) {
         when (frame) {
             is RoutedFrame.Anc -> when (val anc = frame.frame) {
-                is AncFrame.Notify -> anc.currentMode?.let {
-                    _ancMode.tryEmit(it)
-                    _ancModeFresh.tryEmit(it)
+                is AncFrame.Notify -> {
+                    // ADR-024: the Settable-toggles byte is the dock state (0x00 both seated, 0xe8 otherwise).
+                    _dockState.value = DockState.fromSettableToggles(anc.settableToggles)
+                    anc.currentMode?.let {
+                        _ancMode.tryEmit(it)
+                        _ancModeFresh.tryEmit(it)
+                    }
                 }
                 is AncFrame.Set -> _ancMode.tryEmit(anc.mode)
                 is AncFrame.Get -> Unit
@@ -261,6 +292,7 @@ class BudsRepositoryImpl(
             is RoutedFrame.MaestroHello -> {
                 BleLogger.logConnectionEvent("Maestro channel announced by the Buds: ${frame.channelId}")
                 _maestroChannelId.value = frame.channelId
+                if (frame.firmware.isNotEmpty()) _deviceInfo.value = DeviceInfo(frame.firmware)
             }
 
             is RoutedFrame.RpcResult -> _maestroReplies.tryEmit(MaestroReply.Result(frame))
@@ -272,7 +304,16 @@ class BudsRepositoryImpl(
             // earlier Known value: a stale percentage must never linger once the Buds report a
             // regime we cannot read (AGENTS.md §5). The Case and the HFP field are untouched.
             is RoutedFrame.Battery -> _batteryStatus.update {
-                it.copy(left = frame.frame.left, right = frame.frame.right, case = frame.frame.case)
+                // Not `case`: b3 is 0xff on every claim (ADR-033, 60/60 in ai-sessions/0042) and must not overwrite the Case
+                // value read from DLCI 0x08 (ADR-035).
+                it.copy(left = frame.frame.left, right = frame.frame.right)
+            }
+
+            // ADR-035: only the Case, only from DLCI 0x08; a value the Buds did not mark fresh is kept as "last seen".
+            is RoutedFrame.CaseBattery -> {
+                _batteryStatus.update { it.copy(case = frame.frame.case) }
+                _caseBatteryError.value = null
+                _casePushes.tryEmit(frame.frame.case)
             }
         }
     }
@@ -286,6 +327,10 @@ class BudsRepositoryImpl(
         _lastConnectionError.value = null
         _eqError.value = null
         _maestroChannelId.value = null // announced afresh by this connection's first Buds packet (ADR-034)
+        _deviceInfo.value = null
+        _caseBatteryError.value = null
+        _ringingTarget.value = null // a new connection cannot know whether an earlier ring is still sounding
+        lastInboundChannel = null
         connectionStateMachine.onConnectRequested()
         // ADR-032: the session is the MAESTRO channel only. The Message Stream channel (DLCI 0x04) is shared
         // with Google Play services' Fast Pair, so it is claimed on demand, never held by Connect.
@@ -312,9 +357,13 @@ class BudsRepositoryImpl(
     }
 
     override suspend fun disconnect(): BudsResult<Unit> {
+        BleLogger.logConnectionEvent(SessionDiagnostics.userDisconnectLine(connectionStateMachine.state.value::class.simpleName ?: "?"))
         _lastConnectionError.value = null
         _messageStreamError.value = null
         _eqError.value = null
+        _caseBatteryError.value = null
+        _deviceInfo.value = null
+        _ringingTarget.value = null
         cancelClaimJobs()
         transport.disconnect()
         connectionStateMachine.onDisconnected()
@@ -438,15 +487,67 @@ class BudsRepositoryImpl(
     override suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit> = setEqGains(preset.gains)
 
     override suspend fun ringBud(target: RingTarget): BudsResult<Unit> = withMessageStream {
-        sendAndAwait(_ringAcks, ACK_WAIT_MS) {
+        val result = sendAndAwait(_ringAcks, ACK_WAIT_MS) {
             transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, RingFrameEncoder.encode(RingFrame.Start(target)))
         }.first
+        // The ring keeps sounding after the channel is released (`ai-sessions/0042`, heard on the recording), so this state stays
+        // until Stop succeeds — a failed send never claims a ring.
+        if (result is BudsResult.Success) _ringingTarget.value = target
+        result
     }
 
     override suspend fun stopRinging(): BudsResult<Unit> = withMessageStream {
-        sendAndAwait(_ringAcks, ACK_WAIT_MS) {
+        val result = sendAndAwait(_ringAcks, ACK_WAIT_MS) {
             transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, RingFrameEncoder.encode(RingFrame.Stop))
         }.first
+        if (result is BudsResult.Success) _ringingTarget.value = null
+        result
+    }
+
+    // ---- on-demand Case-battery channel (DECISIONS.md ADR-035) ----------------------------------
+
+    override suspend fun refreshBattery(): BudsResult<Unit> {
+        if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
+        val leftRight = refreshAncMode(GET_RESPONSE_TIMEOUT_MS) // a Message Stream claim yields the Left/Right battery burst (ADR-033)
+        val case = readCaseBattery()
+        return when {
+            leftRight is BudsResult.Failure -> BudsResult.Failure(leftRight.error)
+            else -> case
+        }
+    }
+
+    /**
+     * Claims DLCI 0x08 for one user action, waits for the Buds' `0e 01` push, and releases the channel [CASE_LINGER_MS] later
+     * (ADR-035). **Receive-only** — nothing is sent on this channel. Serialised with the Message Stream claims by [claimMutex];
+     * a failure is reported through [caseBatteryError], the session stays `Ready`.
+     * // TODO(verify): whether the Buds push without the phone-side `0e 04` request is a HYPOTHESIS — hardware re-test.
+     */
+    private suspend fun readCaseBattery(): BudsResult<Unit> {
+        if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
+        return claimMutex.withLock {
+            caseReleaseJob?.cancel()
+            caseReleaseJob = null
+            val result: BudsResult<Unit> = coroutineScope {
+                val waiter = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(CASE_PUSH_WAIT_MS) { _casePushes.first() } }
+                if (!transport.isChannelOpen(Dlci.GSND_CONTROL)) {
+                    val opened = transport.openChannel(Dlci.GSND_CONTROL, BudsSdpUuids.GSND_CONTROL)
+                    if (opened is BudsResult.Failure) {
+                        waiter.cancel()
+                        return@coroutineScope BudsResult.Failure(opened.error)
+                    }
+                }
+                if (waiter.await() == null) BudsResult.Failure(BudsError.Timeout) else BudsResult.Success(Unit)
+            }
+            _caseBatteryError.value = (result as? BudsResult.Failure)?.error
+            (result as? BudsResult.Failure)?.let {
+                BleLogger.logConnectionEvent("Case battery not read: ${it.error::class.simpleName}")
+            }
+            caseReleaseJob = scope.launch {
+                delay(CASE_LINGER_MS)
+                claimMutex.withLock { transport.closeChannel(Dlci.GSND_CONTROL) }
+            }
+            result
+        }
     }
 
     // ---- on-demand Message Stream channel (DECISIONS.md ADR-032) --------------------------------
@@ -497,7 +598,10 @@ class BudsRepositoryImpl(
 
     private fun launchInitialSnapshot() {
         snapshotJob?.cancel()
-        snapshotJob = scope.launch { refreshAncMode(SNAPSHOT_TIMEOUT_MS) }
+        snapshotJob = scope.launch {
+            refreshAncMode(SNAPSHOT_TIMEOUT_MS)
+            readCaseBattery() // ADR-035: the Connect tap also reads the Case, once, after the Message Stream claim
+        }
     }
 
     /** Started by [connect] once the session is `Ready` (ADR-034); `internal` so a test can start it without a `BluetoothDevice`. */
@@ -513,6 +617,8 @@ class BudsRepositoryImpl(
         releaseJob = null
         snapshotJob?.cancel()
         snapshotJob = null
+        caseReleaseJob?.cancel()
+        caseReleaseJob = null
     }
 
     /**
@@ -555,6 +661,12 @@ class BudsRepositoryImpl(
 
         /** How long the channel stays claimed after an action so replies land, then it is released. */
         private const val MESSAGE_STREAM_LINGER_MS = 1_500L
+
+        /** Wait for the Buds' Case push after DLCI 0x08 opened (observed: 165 ms in `LOGS-001`), ADR-035. */
+        private const val CASE_PUSH_WAIT_MS = 2_000L
+
+        /** How long DLCI 0x08 stays open after its push before it is released so Play services can take it back (ADR-035). */
+        private const val CASE_LINGER_MS = 1_000L
 
         /** How long a read/write waits for the Buds' channel announcement (their first Maestro packet). */
         private const val MAESTRO_ANNOUNCE_WAIT_MS = 3_000L

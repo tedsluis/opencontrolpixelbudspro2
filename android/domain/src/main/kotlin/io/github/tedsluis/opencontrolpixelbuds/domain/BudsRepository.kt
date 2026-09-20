@@ -50,6 +50,22 @@ interface BudsRepository {
     val batteryStatus: Flow<BatteryStatus>
 
     /**
+     * Why the Case battery could not be read by the last on-demand claim of DLCI 0x08 (`null` = it was read, or none was
+     * attempted this connection) — DECISIONS.md ADR-035. Distinct from [messageStreamError]: a different, shared channel.
+     */
+    val caseBatteryError: Flow<BudsError?>
+
+    /** Whether the earbuds sit in the case, from the last `Notify ANC state` (DECISIONS.md ADR-024) — [DockState.UNKNOWN] until one arrived. */
+    val dockState: Flow<DockState>
+
+    /** What the Buds announced at connect (firmware), or `null` before the announcement / after a disconnect. */
+    val deviceInfo: Flow<DeviceInfo?>
+
+    /** The earbud a Find My Buds ring was last started on and not yet stopped this connection (`null` = none) — the ring keeps sounding on
+     * the Buds after the channel is released (`ai-sessions/0042`: heard on the recording), so the UI must say so. */
+    val ringingTarget: Flow<RingTarget?>
+
+    /**
      * Why the last EQ read or write did not succeed (`null` = it did, or none was attempted this connection) —
      * shown on the EQ screen instead of silently assuming success (`ai-sessions/0041`, DECISIONS.md ADR-034).
      */
@@ -70,6 +86,12 @@ interface BudsRepository {
      * (pairing is a separate, prior step, `ai-sessions/0036`). */
     suspend fun connect(): BudsResult<Unit>
     suspend fun disconnect(): BudsResult<Unit>
+
+    /**
+     * Re-reads the battery on the user's request: a short Message Stream claim (Left/Right, ADR-033) and a short claim of
+     * DLCI 0x08 for the Case (ADR-035). Requires an open session.
+     */
+    suspend fun refreshBattery(): BudsResult<Unit>
 
     suspend fun setAncMode(mode: AncMode): BudsResult<Unit>
     suspend fun refreshAncMode(): BudsResult<AncMode>

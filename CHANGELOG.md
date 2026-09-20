@@ -24,6 +24,18 @@ mark v1.
   (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`).
 - Reference screenshots for the official app and web companion app.
 - `SECURITY.md`, `CONTRIBUTING.md`, `DESKRESEARCH_FINDINGS.md`.
+- **2026-09-20 (`ai-sessions/0042`): first hardware run (`LOGS-001`) analysed; Android-state mirror and bond reporting fixed.** The two camera films, HCI snoop log,
+  system log, app exports and screenshots were correlated frame by frame (`DESKRESEARCH_FINDINGS.md`, second 2026-09-20 entry). Findings: pairing, Connect, ANC
+  (4/4 taps), EQ read/write (all answered, writes persisted), Find (audible on the film's microphone) and battery with charging work; **the Connection card was wrong for
+  minutes** (the `RECEIVER_NOT_EXPORTED` link observer received no system broadcasts, and an unknown link was rendered as "not connected") and **a bond that succeeded in
+  1.1 s was reported as a 45 s timeout**. Fixed with tests: `RECEIVER_EXPORTED` for the protected Bluetooth broadcasts plus event-driven re-reads (resume, bond change,
+  session change), `AndroidLine.UNKNOWN`, the bond outcome read from the stack, a pairing re-entry guard (one tap had started two CDM requests 82 ms apart), a cancelled bond
+  timeout, one log line per link change with its trigger, "why did the session end" log lines (two of the three drops were the maintainer's own taps), a 1000-line
+  buffer. **Decided by the maintainer in chat and done in the same session:** `HfpBatteryReader` removed (`AT+BIEV` is on the wire but not deliverable to an app); the Case
+  battery is read from DLCI 0x08 by an on-demand, receive-only claim (**ADR-035**, `CaseBatteryFrameDecoder`; a value the Buds did not mark fresh is shown "last seen"); the
+  read-only DLCI 0x02 `ReadSetting` unblock is written as **ADR-036** (nothing implemented); a firmware line, a "buds in the case / out" line, a Find "ringing" state and an ANC
+  Quick Settings tile were added; automatic session opening was declined (the card mirrors Android). Three protocol items were promoted to FACT with the maintainer's chat approval
+  (`PROTOCOL.md` §2.2a, §4.1, §4.2; ADR-024/ADR-034 updates). 1357 tests, lint 0 errors, four guards mutation-checked. Nothing is hardware-verified.
 - **2026-09-20 (`ai-sessions/0041`): pairing/permission fixes, Android-state mirroring, charging flag, EQ read.** Fixed the in-app pairing failure
   "Could not resolve the selected device" (CDM's lower-case `MacAddress` was passed to `getRemoteDevice`, which requires upper-case; association reuse and
   duplicate clean-up, already-bonded is success, distinct bond-failure reasons); added the runtime-permission flow the app never had (its absence made a

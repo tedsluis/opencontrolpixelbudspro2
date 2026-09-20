@@ -106,4 +106,31 @@ class LinkEvaluationTest {
         assertEquals(listOf(AndroidLink.CONNECTED, AndroidLink.NOT_CONNECTED, AndroidLink.CONNECTED), seen)
         job.cancel()
     }
+
+    @Test
+    @DisplayName("ai-sessions/0042: one log line per CHANGE, naming the trigger — nothing when the state did not change")
+    fun `transition line is per change and names its trigger`() {
+        assertNull(LinkEvaluation.transitionLine(AndroidLink.CONNECTED, AndroidLink.CONNECTED, "CONNECTION_STATE_CHANGED", listOf(1, 2)))
+        assertNull(LinkEvaluation.transitionLine(null, null, "profile 2 bound", emptyList()))
+        assertEquals(
+            "Android link: PENDING -> UNKNOWN (trigger: profile 2 bound)",
+            LinkEvaluation.transitionLine(null, AndroidLink.UNKNOWN, "profile 2 bound", emptyList()),
+        )
+        assertEquals(
+            "Android link: NOT_CONNECTED -> CONNECTED (trigger: CONNECTION_STATE_CHANGED) via profiles [1, 2]",
+            LinkEvaluation.transitionLine(AndroidLink.NOT_CONNECTED, AndroidLink.CONNECTED, "CONNECTION_STATE_CHANGED", listOf(1, 2)),
+        )
+        // the old lines read "Android link (): ..." — the trigger was never part of the text
+        val line = LinkEvaluation.transitionLine(AndroidLink.CONNECTED, AndroidLink.NOT_CONNECTED, "ACL_DISCONNECTED", emptyList())!!
+        assertEquals("Android link: CONNECTED -> NOT_CONNECTED (trigger: ACL_DISCONNECTED)", line)
+    }
+
+    @Test
+    @DisplayName("the first hardware run: bonded only AFTER the observer started — the address is re-read, so a later evaluation flips UNKNOWN to CONNECTED")
+    fun `a bond that happens after the observer started is picked up by the next evaluation`() {
+        // At 17:17:31 nothing was bonded yet (no address): UNKNOWN. After the bond, the same proxies list the Buds.
+        val listed = mapOf(a2dp to listOf(buds), headset to listOf(buds), leAudio to emptyList<String>())
+        assertEquals(AndroidLink.UNKNOWN, LinkEvaluation.evaluate(null, true, requested, listed))
+        assertEquals(AndroidLink.CONNECTED, LinkEvaluation.evaluate(buds, true, requested, listed))
+    }
 }

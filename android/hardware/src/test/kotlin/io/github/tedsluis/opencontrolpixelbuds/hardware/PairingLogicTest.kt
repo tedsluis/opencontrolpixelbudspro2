@@ -111,4 +111,23 @@ class PairingLogicTest {
         assertEquals(PairingFailure.NotInPairingMode, PairingLogic.classifyBondEnd(sawBonding = false))
         assertEquals(PairingFailure.BondRejected, PairingLogic.classifyBondEnd(sawBonding = true))
     }
+
+    @Test
+    @DisplayName("ai-sessions/0042: a bond the stack reports as BONDED is never a timeout — even when its broadcast never arrived")
+    fun `a bonded device at the end of the wait is success not a timeout`() {
+        assertNull(PairingLogic.outcomeAtTimeout(BondKind.BONDED))
+        assertEquals(PairingFailure.BondTimeout, PairingLogic.outcomeAtTimeout(BondKind.BONDING))
+        assertEquals(PairingFailure.BondTimeout, PairingLogic.outcomeAtTimeout(BondKind.NONE))
+        assertEquals(PairingFailure.BondTimeout, PairingLogic.outcomeAtTimeout(null)) // unreadable: cannot claim success
+    }
+
+    @Test
+    @DisplayName("the raw CDM text for a second overlapping request is AlreadyInProgress, not a failure of the running request")
+    fun `overlapping association request is classified`() {
+        // Exactly what the first hardware run logged 82 ms after the first request.
+        assertEquals(PairingFailure.AlreadyInProgress, PairingLogic.classifyAssociationError("More than one AssociationRequests are processing."))
+        assertEquals(PairingFailure.AlreadyInProgress, PairingLogic.classifyAssociationError("  more than one associationrequests are processing "))
+        assertEquals(PairingFailure.AssociationFailed("User rejected"), PairingLogic.classifyAssociationError("User rejected"))
+        assertEquals(PairingFailure.AssociationFailed("association failed"), PairingLogic.classifyAssociationError(null))
+    }
 }

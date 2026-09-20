@@ -53,6 +53,20 @@ object LinkEvaluation {
         }
     }
 
+    /**
+     * The one always-on log line for a **change** of the Android-link state, or `null` when nothing changed (`ai-sessions/0042`).
+     * The old code logged every evaluation — three identical lines per profile bind, with an empty `()` where the trigger
+     * belonged — which used up a tenth of the 500-line ring buffer without saying why anything happened. [previous] `null` =
+     * nothing determined yet; [trigger] is the short broadcast/event name (never an address); [profiles] only matter for
+     * [AndroidLink.CONNECTED].
+     */
+    fun transitionLine(previous: AndroidLink?, current: AndroidLink?, trigger: String, profiles: List<Int>): String? {
+        if (previous == current) return null
+        fun name(link: AndroidLink?) = link?.name ?: "PENDING"
+        val via = if (current == AndroidLink.CONNECTED && profiles.isNotEmpty()) " via profiles $profiles" else ""
+        return "Android link: ${name(previous)} -> ${name(current)} (trigger: $trigger)$via"
+    }
+
     /** Names of the profiles that list the device, for the always-on log (no address). */
     fun connectedProfiles(bondedAddress: String?, connectedByProfile: Map<Int, Collection<String>>): List<Int> {
         val wanted = PairingLogic.normalizeAddress(bondedAddress) ?: return emptyList()

@@ -47,6 +47,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 fun FindMyBudsScreen(
     connectionState: ConnectionState,
     messageStreamError: BudsError?,
+    ringingTarget: RingTarget?,
     onRing: (RingTarget) -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
@@ -60,10 +61,25 @@ fun FindMyBudsScreen(
             Text("Find My Buds", style = MaterialTheme.typography.headlineSmall)
             NotConnectedBanner(connectionState)
             MessageStreamNotice(messageStreamError)
+            RingingNotice(ringingTarget, connectionState.isReady())
             Button(onClick = { onRing(RingTarget.LEFT) }, enabled = connectionState.isReady()) { Text("Ring Left") }
             Button(onClick = { onRing(RingTarget.RIGHT) }, enabled = connectionState.isReady()) { Text("Ring Right") }
             OutlinedButton(onClick = onStop, enabled = connectionState.isReady()) { Text("Stop") }
             MessageStreamHint()
         }
     }
+}
+
+/**
+ * What the app knows about a running ring (`ai-sessions/0042`): the ring keeps sounding on the Buds after the Message Stream channel is
+ * released (heard on the recording) until Stop is sent, so after a Ring tap the screen says so instead of showing nothing.
+ */
+@Composable
+internal fun RingingNotice(ringingTarget: RingTarget?, sessionReady: Boolean) {
+    if (ringingTarget == null) return
+    val side = if (ringingTarget == RingTarget.LEFT) "Left" else "Right"
+    Text(
+        if (sessionReady) "Ringing: $side earbud — tap Stop to end it." else "A ring was started on the $side earbud — reconnect and tap Stop to end it.",
+        style = MaterialTheme.typography.titleMedium,
+    )
 }

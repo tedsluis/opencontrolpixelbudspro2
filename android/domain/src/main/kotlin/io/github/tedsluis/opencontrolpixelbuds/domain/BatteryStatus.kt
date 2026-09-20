@@ -31,7 +31,11 @@ package io.github.tedsluis.opencontrolpixelbuds.domain
  * way a fabricated percentage would.
  */
 sealed class BatteryLevel {
-    data class Known(val percent: Int, val isCharging: Boolean?) : BatteryLevel()
+    /**
+     * @param isStale `true` when the Buds reported this value without marking it fresh — shown as "last seen", never as current
+     * (`ai-sessions/0042`, DECISIONS.md ADR-035: the Case value the Buds keep while they are out of the case).
+     */
+    data class Known(val percent: Int, val isCharging: Boolean?, val isStale: Boolean = false) : BatteryLevel()
     data object Unavailable : BatteryLevel()
 }
 
@@ -40,19 +44,10 @@ sealed class BatteryLevel {
  * [BatteryLevel.Unavailable] — a fresh [BudsRepository] must never start out
  * claiming a known value it hasn't actually received yet.
  *
- * [hfpEarbud] exists separately from [left]/[right] because HFP `AT+BIEV`
- * (Option C, this session's only implemented battery source) is confirmed
- * per-earbud, not aggregate (DECISIONS.md ADR-015) — but *which* physical
- * earbud it reports (a fixed side, or whichever is currently HFP-primary) is
- * still 🟡 HYPOTHESIS, unresolved across two sessions that each saw a
- * different side (PROTOCOL.md §4.3 Option C). Guessing a side would violate
- * AGENTS.md §5's "never fabricate a value" rule just as much as inventing a
- * percentage would — so this value is surfaced honestly as
- * "one earbud, side unknown" rather than forced into [left] or [right].
+ * (HFP `AT+BIEV`, which reports one earbud of unconfirmed side, is not consumed by the app any more — removed `ai-sessions/0042`.)
  */
 data class BatteryStatus(
     val left: BatteryLevel = BatteryLevel.Unavailable,
     val right: BatteryLevel = BatteryLevel.Unavailable,
     val case: BatteryLevel = BatteryLevel.Unavailable,
-    val hfpEarbud: BatteryLevel = BatteryLevel.Unavailable,
 )

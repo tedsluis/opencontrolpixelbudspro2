@@ -49,8 +49,11 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
+import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 import io.github.tedsluis.opencontrolpixelbuds.domain.deriveDeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.permissionStatus
@@ -66,6 +69,10 @@ import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingState
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlActions
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlNavHost
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlUiState
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -100,6 +107,16 @@ class MainActivity : ComponentActivity() {
         OsConnectionObserver(this) { (companionPairing.lookupBonded() as? BondedLookup.Found)?.address }
     }
 
+    /**
+     * Events on which Android's link state is re-read without waiting for a system broadcast (`ai-sessions/0042`): a resume, a
+     * change of the bonded device, a change of this app's own session. Event-driven, no timer.
+     */
+    private val linkRefresh = MutableSharedFlow<Unit>(extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /** Pairing progress, held here (not in a composable) so the picker's result callback below can reset it. */
+    private val pairingStateFlow = MutableStateFlow<PairingState?>(null)
+    private var bondingJob: Job? = null
+
     /** Whether a system permission prompt was already shown since this process started (see [permissionStatus]). */
     private var permissionsRequestedThisRun = false
     private val permissionStateFlow = MutableStateFlow(
@@ -118,7 +135,14 @@ class MainActivity : ComponentActivity() {
     // CompanionDeviceManager.Callback.onAssociationCreated (BudsCompanionPairing) — this launcher only presents the UI.
     private val pairingLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult(),
-    ) { /* no-op: onCreated/onFailure (BudsCompanionPairing) handle the actual outcome */ }
+    ) { result ->
+        // onCreated/onFailure (BudsCompanionPairing) handle the actual outcome. A dismissed picker delivers no callback at all:
+        // without this the "waiting for you to pick…" state and the in-flight guard would stay forever (ai-sessions/0042).
+        if (result.resultCode == RESULT_CANCELED && pairingStateFlow.value == PairingState.Requesting) {
+            companionPairing.cancelPendingAssociation()
+            pairingStateFlow.value = null
+        }
+    }
 
     private fun computePermissionState(): PermissionState {
         fun status(permission: String) = permissionStatus(
@@ -151,6 +175,45 @@ class MainActivity : ComponentActivity() {
         permissionLauncher.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.POST_NOTIFICATIONS))
     }
 
+    /**
+     * The pairing entry point behind "Pair a device". Re-entry guard (`ai-sessions/0042`): one tap started two CDM requests 82 ms
+     * apart and the second one's raw error was shown while the first picker was open — nothing new starts while a pairing runs.
+     */
+    private fun startPairing(scope: CoroutineScope, onBonded: () -> Unit) {
+        val running = pairingStateFlow.value
+        if (running == PairingState.Requesting || running == PairingState.Bonding) {
+            BleLogger.logConnectionEvent("Pairing: tap ignored — a pairing attempt is already in progress")
+            return
+        }
+        pairingStateFlow.value = PairingState.Requesting
+        companionPairing.requestAssociation(
+            onPending = { intentSender ->
+                pairingLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
+            },
+            onCreated = { associationInfo ->
+                // CDM's own success callback only grants this app permission to see the device — it does not pair it
+                // (BudsCompanionPairing.observeBonding's doc comment). Classic bonding is a separate step.
+                val device = companionPairing.deviceForAssociation(associationInfo)
+                if (device == null) {
+                    pairingStateFlow.value = PairingState.Failed(PairingFailure.DeviceNotResolved)
+                } else {
+                    companionPairing.cleanUpDuplicateAssociations(associationInfo)
+                    bondingJob?.cancel() // a newer pairing supersedes an older bond wait (and its timeout)
+                    bondingJob = scope.launch {
+                        companionPairing.observeBonding(device).collect { newState ->
+                            pairingStateFlow.value = newState
+                            if (newState is PairingState.Bonded) onBonded()
+                        }
+                    }
+                }
+            },
+            onFailure = { failure ->
+                // A rejected duplicate says nothing about the request that is still open — keep showing that one.
+                if (failure != PairingFailure.AlreadyInProgress) pairingStateFlow.value = PairingState.Failed(failure)
+            },
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         refreshPermissions("start")
@@ -165,20 +228,25 @@ class MainActivity : ComponentActivity() {
             val batteryStatus by budsRepository.batteryStatus.collectAsStateWithLifecycle(
                 initialValue = BatteryStatus(),
             )
+            val caseBatteryError by budsRepository.caseBatteryError
+                .collectAsStateWithLifecycle(initialValue = null as BudsError?)
+            val dockState by budsRepository.dockState.collectAsStateWithLifecycle(initialValue = DockState.UNKNOWN)
+            val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
+            val ringingTarget by budsRepository.ringingTarget.collectAsStateWithLifecycle(initialValue = null as RingTarget?)
             val lastConnectionError by budsRepository.lastConnectionError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val messageStreamError by budsRepository.messageStreamError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val permissionState by permissionStateFlow.collectAsStateWithLifecycle()
             // Re-created when the Bluetooth grant changes: the profile proxies can only be bound with the permission.
-            val androidLink by remember(permissionState.bluetoothConnect.isGranted) { osConnectionObserver.observe() }
+            val androidLink by remember(permissionState.bluetoothConnect.isGranted) { osConnectionObserver.observe(linkRefresh) }
                 .collectAsStateWithLifecycle(initialValue = AndroidLink.UNKNOWN)
             val bluetoothAdapterState by remember { bluetoothStateObserver.observe() }
                 .collectAsStateWithLifecycle(initialValue = BluetoothAdapterState.OFF)
             val debugModeEnabled by debugSettingsStore.debugModeEnabled.collectAsStateWithLifecycle(initialValue = false)
 
             var bondedLookup by remember { mutableStateOf(companionPairing.lookupBonded()) }
-            var pairingState by remember { mutableStateOf<PairingState?>(null) }
+            val pairingState by pairingStateFlow.collectAsStateWithLifecycle()
 
             // Pairing done outside this app entirely (Android's own Bluetooth settings) never fires any callback this
             // Activity owns — the only way to notice it is to re-check on every resume (ai-sessions/0036). The same resume
@@ -190,6 +258,7 @@ class MainActivity : ComponentActivity() {
                         refreshPermissions("resume")
                         if (permissionStateFlow.value.bluetoothConnect == PermissionStatus.NOT_REQUESTED) requestPermissions()
                         bondedLookup = companionPairing.lookupBonded()
+                        linkRefresh.tryEmit(Unit)
                     }
                 }
                 lifecycleOwner.lifecycle.addObserver(observer)
@@ -197,6 +266,9 @@ class MainActivity : ComponentActivity() {
             }
             // A grant given while the app is open (prompt or system settings) changes what "bonded" can be seen.
             LaunchedEffect(permissionState.bluetoothConnect) { bondedLookup = companionPairing.lookupBonded() }
+            // Android's link state is re-read when the bonded device or this app's own session changes — the live system
+            // broadcasts are not guaranteed on every device (ai-sessions/0042).
+            LaunchedEffect(bondedLookup, connectionState) { linkRefresh.tryEmit(Unit) }
 
             val unidentifiedFrames = remember { mutableStateOf(listOf<UnidentifiedFrame>()) }
             LaunchedEffect(Unit) {
@@ -250,6 +322,10 @@ class MainActivity : ComponentActivity() {
                 androidLink = androidLink,
                 messageStreamError = messageStreamError,
                 ancMode = ancMode,
+                caseBatteryError = caseBatteryError,
+                dockState = dockState,
+                deviceInfo = deviceInfo,
+                ringingTarget = ringingTarget,
                 eqProfile = eqProfile,
                 eqError = eqError,
                 batteryStatus = batteryStatus,
@@ -267,31 +343,7 @@ class MainActivity : ComponentActivity() {
                         BleLogger.logConnectionEvent("Enable-Bluetooth prompt refused: ${BleLogger.describe(e)}")
                     }
                 },
-                onPair = {
-                    pairingState = PairingState.Requesting
-                    companionPairing.requestAssociation(
-                        onPending = { intentSender ->
-                            pairingLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
-                        },
-                        onCreated = { associationInfo ->
-                            // CDM's own success callback only grants this app permission to see the device — it does not pair
-                            // it (BudsCompanionPairing.observeBonding's doc comment). Classic bonding is a separate step.
-                            val device = companionPairing.deviceForAssociation(associationInfo)
-                            if (device == null) {
-                                pairingState = PairingState.Failed(PairingFailure.DeviceNotResolved)
-                            } else {
-                                companionPairing.cleanUpDuplicateAssociations(associationInfo)
-                                scope.launch {
-                                    companionPairing.observeBonding(device).collect { newState ->
-                                        pairingState = newState
-                                        if (newState is PairingState.Bonded) bondedLookup = companionPairing.lookupBonded()
-                                    }
-                                }
-                            }
-                        },
-                        onFailure = { failure -> pairingState = PairingState.Failed(failure) },
-                    )
-                },
+                onPair = { startPairing(scope) { bondedLookup = companionPairing.lookupBonded() } },
                 onRequestPermissions = { requestPermissions() },
                 onOpenAppSettings = {
                     BleLogger.logConnectionEvent("Permissions: opening the app's system settings")
@@ -308,6 +360,7 @@ class MainActivity : ComponentActivity() {
                 onRefreshEq = { scope.launch { budsRepository.refreshEq() } },
                 onRing = { target -> scope.launch { budsRepository.ringBud(target) } },
                 onStopRinging = { scope.launch { budsRepository.stopRinging() } },
+                onRefreshBattery = { scope.launch { budsRepository.refreshBattery() } },
                 onDebugModeChanged = { enabled -> scope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
                 onExportLog = {
                     // Local-only hand-off to the system share sheet (AGENTS.md §9) — the user picks the destination, this app
@@ -352,4 +405,5 @@ internal fun PairingFailure.toUserMessage(): String = when (this) {
         "Pairing was cancelled or rejected. Tap Pair a device to try again (accept the pairing request on the phone)."
     PairingFailure.BondTimeout ->
         "Pairing took too long. Put the Buds back in pairing mode (open the case, hold the pair button for more than 3 seconds) and try again."
+    PairingFailure.AlreadyInProgress -> "A pairing request is already open — finish it in the system dialog first."
 }

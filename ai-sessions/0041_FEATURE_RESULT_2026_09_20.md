@@ -4,9 +4,11 @@
 **Category:** FEATURE
 **Date:** 2026-09-20
 **Title:** Make pairing work from inside the app, show the true paired/connected state (mirroring Android), implement the accepted battery charging flag, read the real EQ and find out why EQ writes were inaudible, add the HFP confirming diagnostic, and analyse the LOGS-001 capture
-**Status:** awaiting maintainer sign-off
+**Status:** complete
 
-> **Why "awaiting maintainer sign-off":** everything requested that the environment allows is done and verified by the full suite (1335 tests, 0 failures, lint 0 errors),
+> **Status update 2026-09-20 (`AI_SESSION_LOG_PROCEDURE.md` §4a):** closed by `ai-sessions/0042` — the maintainer's answers to `0042`'s checkpoint (given in the chat session, 2026-09-20) settled §7's proposals (HFP removed, automatic connecting declined — mirror only, Case/DLCI 0x02 as ADR-035/036) and `0042` analysed the `LOGS-001` capture §8 was waiting for. The original reasoning below is unchanged.
+>
+> **Why "awaiting maintainer sign-off" (as written then):** everything requested that the environment allows is done and verified by the full suite (1335 tests, 0 failures, lint 0 errors),
 > but (a) **nothing is hardware-verified** — every claim about behaviour on the phone is a HYPOTHESIS with a re-test step (§9); (b) `LOGS-001` held only the empty
 > events skeleton, so task 10's HCI analysis was **not** done (§8); (c) the HFP removal, automatic session connecting and other proposals in §7 need your decision.
 > Evidence is cited by timestamp and log line, never by evidence filename (standing rule).

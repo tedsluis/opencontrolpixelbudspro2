@@ -4,7 +4,7 @@
 **Category:** FEATURE
 **Date:** 2026-09-20
 **Title:** Full analysis of the `LOGS-001` evidence (videos → timestamped event log; logs/HCI/screenshots correlated with it), validation of the OpenControl app against that evidence, root-causing what went wrong during the capture and in the app, HFP verdict, extra-functionality proposals, fixes, and a Case-battery attempt — with maintainer checkpoints for every decision-gated item
-**Status:** prompt only — not yet run
+**Status:** run 2026-09-20 — see `ai-sessions/0042_FEATURE_RESULT_2026_09_20.md`
 
 ---
 

@@ -37,6 +37,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
 
 /**
@@ -53,6 +54,14 @@ import java.util.regex.Pattern
 class BudsCompanionPairing(private val context: Context) {
 
     private val companionDeviceManager: CompanionDeviceManager? = context.getSystemService()
+
+    /** True from `associate()` until CDM answers (created/failed) or the picker is cancelled — a second request is refused. */
+    private val associationInFlight = AtomicBoolean(false)
+
+    /** The picker was dismissed without a callback (`RESULT_CANCELED`): the next tap may start a new request. */
+    fun cancelPendingAssociation() {
+        if (associationInFlight.getAndSet(false)) BleLogger.logConnectionEvent("Pairing: picker dismissed — ready for a new request")
+    }
 
     /** This app's own CDM associations, as pure views ([PairingLogic.AssociationView]). Empty if CDM is unavailable. */
     private fun associations(): List<Pair<AssociationInfo, PairingLogic.AssociationView>> =
@@ -119,6 +128,12 @@ class BudsCompanionPairing(private val context: Context) {
             existing.first { it.second.id == reuse.id }.first.let(onCreated)
             return
         }
+        // `ai-sessions/0042`: one tap produced two associate() calls 82 ms apart; CDM rejected the second with the raw text
+        // "More than one AssociationRequests are processing." while the first picker was already on screen. Refuse re-entry.
+        if (!associationInFlight.compareAndSet(false, true)) {
+            BleLogger.logConnectionEvent("Pairing: request ignored — an association request is already open")
+            return onFailure(PairingFailure.AlreadyInProgress)
+        }
         val filter = BluetoothDeviceFilter.Builder().setNamePattern(NAME_PATTERN).build()
         val request = AssociationRequest.Builder()
             .addDeviceFilter(filter)
@@ -131,13 +146,17 @@ class BudsCompanionPairing(private val context: Context) {
             object : CompanionDeviceManager.Callback() {
                 override fun onAssociationPending(intentSender: IntentSender) = onPending(intentSender)
                 override fun onAssociationCreated(associationInfo: AssociationInfo) {
+                    associationInFlight.set(false)
                     BleLogger.logConnectionEvent("Pairing: association created")
                     onCreated(associationInfo)
                 }
 
                 override fun onFailure(error: CharSequence?) {
-                    BleLogger.logConnectionEvent("Pairing: association failed (${error ?: "no reason given"})")
-                    onFailure(PairingFailure.AssociationFailed(error?.toString() ?: "association failed"))
+                    val failure = PairingLogic.classifyAssociationError(error?.toString())
+                    BleLogger.logConnectionEvent("Pairing: association failed (${error ?: "no reason given"}) — $failure")
+                    // A rejected duplicate says nothing about the request that is still open: keep it in flight.
+                    if (failure != PairingFailure.AlreadyInProgress) associationInFlight.set(false)
+                    onFailure(failure)
                 }
             },
         )
@@ -229,7 +248,9 @@ class BudsCompanionPairing(private val context: Context) {
                 }
             }
         }
-        ContextCompat.registerReceiver(context, receiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+        // EXPORTED on purpose: ACTION_BOND_STATE_CHANGED is a protected system broadcast, and a NOT_EXPORTED receiver did not get it on
+        // the maintainer's phone (ai-sessions/0042) — a bond that succeeded in ~1 s was reported as a 45 s timeout.
+        ContextCompat.registerReceiver(context, receiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED), ContextCompat.RECEIVER_EXPORTED)
 
         val kind = try {
             PairingLogic.bondKind(device.bondState)
@@ -266,16 +287,35 @@ class BudsCompanionPairing(private val context: Context) {
                 }
             }
         }
-        if (!isClosedForSend) {
+        // One bounded wait (not a retry loop). At its end the stack's own answer wins over the broadcast we may never have
+        // received, and the wait is cancelled as soon as the flow ends or is superseded — a finished/replaced pairing must not
+        // report a timeout 45 s later.
+        val timeoutJob = if (!isClosedForSend) {
             launch {
                 delay(BOND_TIMEOUT_MS)
-                BleLogger.logConnectionEvent("Pairing: bond timed out")
-                trySend(PairingState.Failed(PairingFailure.BondTimeout))
+                val current = try {
+                    PairingLogic.bondKind(device.bondState)
+                } catch (e: SecurityException) {
+                    null
+                }
+                val failure = PairingLogic.outcomeAtTimeout(current)
+                if (failure == null) {
+                    BleLogger.logConnectionEvent("Pairing: no bond broadcast within ${BOND_TIMEOUT_MS / 1000} s, but the stack reports BONDED")
+                    trySend(PairingState.Bonded(safeName(device)))
+                } else {
+                    BleLogger.logConnectionEvent("Pairing: bond timed out (stack reports ${current ?: "an unreadable state"})")
+                    trySend(PairingState.Failed(failure))
+                }
                 close()
             }
+        } else {
+            null
         }
 
-        awaitClose { context.unregisterReceiver(receiver) }
+        awaitClose {
+            timeoutJob?.cancel()
+            context.unregisterReceiver(receiver)
+        }
     }
 
     private fun safeName(device: BluetoothDevice): String? = try {

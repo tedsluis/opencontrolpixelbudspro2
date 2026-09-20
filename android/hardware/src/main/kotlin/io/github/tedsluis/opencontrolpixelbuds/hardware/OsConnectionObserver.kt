@@ -35,6 +35,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 
 /**
  * Whether Android itself currently considers the bonded Buds *connected to this phone* (audio/hands-free/LE-audio profiles
@@ -47,12 +49,21 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * state). It registers when the flow is collected — the UI collects it only while visible — and unregisters on cancel. It
  * never opens a socket, claims a channel or starts a service; it is not scanning and discovers nothing.
  *
- * Every transition is logged (always-on, no address). The evaluation itself is [LinkEvaluation] (unit-tested); flapping is
- * smoothed by [settled].
+ * Every **change** is logged with its trigger (always-on, no address). The evaluation itself is [LinkEvaluation]
+ * (unit-tested); flapping is smoothed by [settled].
  *
- * // TODO(verify): not exercised against real hardware in this environment — the maintainer re-test (a)–(d) in
- * // `ai-sessions/0041` §"Re-test" confirms/refutes it. In particular whether a non-exported receiver receives these
- * // system broadcasts on GrapheneOS, and that the proxies list the Buds as soon as Android shows them connected.
+ * **`ai-sessions/0042` — why the first hardware run showed a stale card (`LOGS-001`, kept locally):** the receiver used to be
+ * registered `RECEIVER_NOT_EXPORTED`, and in that run it received **no** broadcast at all between 17:17:31 and 17:20:10 although
+ * the *unflagged* receiver of the (since removed) `HfpBatteryReader` received the very same `BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED`
+ * broadcasts (17:17:49.6 and 17:17:50.8) inside that window — the Buds were bonded, connected over HFP/A2DP and listed as
+ * "Actief" in Android's panel, while this card kept saying "Android doesn't show the Buds as connected (yet)". These are
+ * *protected* system broadcasts (only the system can send them), so the receiver is now registered `RECEIVER_EXPORTED`,
+ * which adds no attack surface. Because no broadcast is guaranteed on every device, the state is additionally re-read on
+ * every [refresh] event the caller supplies (resume, a bond change, a change of the app's own session) and whenever a
+ * profile proxy binds — still event-driven, no timer.
+ *
+ * // TODO(verify): the flag change is derived from the evidence above, not yet re-tested on the phone — the maintainer
+ * // re-test (a) in `ai-sessions/0042` confirms/refutes it (a card that follows Android within ~2 s, without a tap).
  */
 class OsConnectionObserver(
     private val context: Context,
@@ -61,9 +72,11 @@ class OsConnectionObserver(
     private val bondedAddress: () -> String?,
 ) {
 
-    fun observe(): Flow<AndroidLink> = callbackFlow {
+    /** @param refresh events on which the state is re-read without any broadcast (resume, bond change, session change). */
+    fun observe(refresh: Flow<Unit> = emptyFlow()): Flow<AndroidLink> = callbackFlow {
         val proxies = mutableMapOf<Int, BluetoothProfile>()
         val requested = mutableSetOf<Int>()
+        var lastLogged: AndroidLink? = null
 
         fun evaluate(reason: String) {
             val permissionOk = BluetoothPermissions.hasConnect(context)
@@ -80,10 +93,9 @@ class OsConnectionObserver(
             }
             val address = bondedAddress()
             val link = LinkEvaluation.evaluate(address, permissionOk, requested.toSet(), connectedByProfile)
-            BleLogger.logConnectionEvent(
-                "Android link (): ${link ?: "not yet known"}" +
-                    if (link == AndroidLink.CONNECTED) " via profiles ${LinkEvaluation.connectedProfiles(address, connectedByProfile)}" else "",
-            )
+            LinkEvaluation.transitionLine(lastLogged, link, reason, LinkEvaluation.connectedProfiles(address, connectedByProfile))
+                ?.let(BleLogger::logConnectionEvent)
+            lastLogged = link
             if (link != null) trySend(link)
         }
 
@@ -97,8 +109,11 @@ class OsConnectionObserver(
             addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
             addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         }
-        ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        // EXPORTED on purpose: all five actions are protected system broadcasts, and a NOT_EXPORTED receiver did not get them on
+        // the maintainer's phone (see the class comment). Nothing but the system can send these actions.
+        ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_EXPORTED)
         BleLogger.logConnectionEvent("Android link observer started")
+        launch { refresh.collect { evaluate("refresh") } }
 
         val listener = object : BluetoothProfile.ServiceListener {
             override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {

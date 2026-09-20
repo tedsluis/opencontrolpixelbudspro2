@@ -44,7 +44,8 @@ import java.util.Locale
  */
 object BleLogger {
     private const val TAG = "OpenControlBuds"
-    private const val RING_BUFFER_CAPACITY = 500
+    /** 1000 lines: a 7.5-minute hardware session filled 149 (46 of them chatty observer lines, `ai-sessions/0042`); 500 would wrap in ~25 minutes. */
+    private const val RING_BUFFER_CAPACITY = 1000
 
     private val ringBuffer = ArrayDeque<String>(RING_BUFFER_CAPACITY)
     private val timestampFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
