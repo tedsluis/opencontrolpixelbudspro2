@@ -35,6 +35,8 @@ ADR-033,adr,accepted,"Battery Option B Group 0x03 Code 0x03 decoder unblocked fo
 ADR-034,adr,accepted,"DLCI 0x02 is pw_rpc maestro_pw.Maestro; read-only ReadSetting path unblocked (EQ fields 16/18); requests mirror the channel the Buds announce",DECISIONS.md
 ADR-035,adr,accepted,"DLCI 0x08 is claimed on demand for the Case battery (Group 0x0e Code 0x01, entry index 3); receive-only",DECISIONS.md
 ADR-036,adr,accepted,"DLCI 0x02 read-only ReadSetting unblocked for the qhr fields already at FACT identity (no writes, no subscription; nothing implemented)",DECISIONS.md
+ADR-037,adr,accepted,"android/logs/LOGS-0xx gitignored-forever rule retired for full capture sessions specifically (moved to captures/CAP-NNN-* instead); ad hoc individual pulls stay gitignored",DECISIONS.md
+ADR-038,adr,accepted,"Case battery (ADR-035) on-demand claim of DLCI 0x08 extended with claim-on-tap contention handling against Google Play services, same pattern as DLCI 0x04",DECISIONS.md
 CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
@@ -93,6 +95,8 @@ CAP-055,capture,planned,"session date/status: *planned* — Group AQ (new), Nod/
 CAP-056,capture,planned,"session date/status: *planned* — Group AR (new), HOLD-005 ANC-rotation-checklist Left/Right split genuine re-run (CAP-045 never opened the checklist screen), added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-057,capture,planned,"session date/status: *planned* — Group AS (new), live GetSoftwareInfo/GetHardwareInfo correlation against the DLCI 0x02 connect-time burst, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-058,capture,planned,"session date/status: *planned* — Group AT (new), SDP-001 3rd attempt with an explicit on-device process-liveness check, maintainer-approved and added by ai-sessions/0031",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-059,capture,analyzed,"2026-09-20 17:16:59-17:22:29, Group AU (new) — first OpenControl-app hardware capture (Pixel 9a/GrapheneOS, ai-sessions/0041 build), reclassified from android/logs/LOGS-001 by ai-sessions/0043; PAIR-001, ANC-001-004, FIND-001/002 confirmed, EQP-006 partial",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-060,capture,analyzed,"2026-09-21 17:54:01-18:00:49, Group AV (new) — second OpenControl-app hardware capture (Pixel 9a/GrapheneOS, ai-sessions/0042 build), reclassified from android/logs/LOGS-002 by ai-sessions/0043; PAIR-001, PAIR-003, ANC-001-004, FIND-001/002 confirmed, EQP-005/006 partial",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md

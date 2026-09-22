@@ -71,6 +71,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 fun EqScreen(
     connectionState: ConnectionState,
     gains: EqBandGains?,
+    eqProfileUpdatedAt: Long?,
     eqError: BudsError?,
     onGainsChanged: (EqBandGains) -> Unit,
     onPresetSelected: (EqPreset) -> Unit,
@@ -86,7 +87,7 @@ fun EqScreen(
         ) {
             item { Text("Equalizer", style = MaterialTheme.typography.headlineSmall) }
             item { NotConnectedBanner(connectionState) }
-            item { EqStatusNotice(connectionState, gains, eqError, onRefresh) }
+            item { EqStatusNotice(connectionState, gains, eqProfileUpdatedAt, eqError, onRefresh) }
             item { EqBandSlider("Upper treble", shown.upperTreble, enabled) { onGainsChanged(shown.copy(upperTreble = it)) } }
             item { EqBandSlider("Treble", shown.treble, enabled) { onGainsChanged(shown.copy(treble = it)) } }
             item { EqBandSlider("Mid", shown.mid, enabled) { onGainsChanged(shown.copy(mid = it)) } }
@@ -111,7 +112,13 @@ fun EqScreen(
  * same way instead of being assumed to have worked.
  */
 @Composable
-private fun EqStatusNotice(connectionState: ConnectionState, gains: EqBandGains?, eqError: BudsError?, onRefresh: () -> Unit) {
+private fun EqStatusNotice(
+    connectionState: ConnectionState,
+    gains: EqBandGains?,
+    eqProfileUpdatedAt: Long?,
+    eqError: BudsError?,
+    onRefresh: () -> Unit,
+) {
     if (!connectionState.isReady()) return
     if (eqError != null) {
         Text(
@@ -125,6 +132,10 @@ private fun EqStatusNotice(connectionState: ConnectionState, gains: EqBandGains?
             "Reading the Buds' current EQ… The sliders below start from flat (0.0) until it arrives and do NOT yet show the Buds' setting.",
             style = MaterialTheme.typography.bodyMedium,
         )
+    } else {
+        formatUpdatedAt(eqProfileUpdatedAt)?.let {
+            Text("EQ updated: $it", style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
 

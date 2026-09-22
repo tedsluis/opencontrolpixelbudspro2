@@ -154,6 +154,16 @@ Connection screen (start destination)
   AndroidX/Compose-first library, no network/analytics/GMS dependency, the standard Compose-idiomatic
   way to implement a back-stack-aware multi-screen flow without hand-rolling one; avoids the
   main-activity-owned `when`-on-an-enum navigation anti-pattern for a graph this shaped.
+- **Swipe navigation (added `ai-sessions/0043`):** an `androidx.compose.foundation.pager.HorizontalPager`
+  (already on the classpath transitively via `compose-material3`/`compose-foundation`, no new dependency)
+  renders the five tabs' content and is kept in two-way sync with `navController`'s current destination —
+  a completed swipe calls the *same* `navController.navigate(...)` (`popUpTo`/`launchSingleTop`/
+  `restoreState`) a bottom-nav tap always used, so the single-top back-stack semantics this section
+  already describes (and `ai-sessions/0037`'s fix) apply identically regardless of which trigger changed
+  the tab. `NavHost` itself is kept as a zero-size, empty-composable back-stack holder — the pager owns
+  what's actually rendered. `OpenControlNavHost.kt`'s own doc comment has the exact mechanism.
+  // TODO(verify): the swipe gesture and the two-way sync are Android-framework/gesture behavior this
+  session could not exercise on a device or emulator.
 
 Dependency direction: `:ui → :domain ← :data → :hardware`. `:ui` depends on
 `:domain` to observe state and invoke use cases. `:data` depends on `:domain`
@@ -213,8 +223,14 @@ change state while this app is disconnected or backgrounded.
   (ANC mode, battery, EQ, touch-control config) rather than assuming the
   last-known `StateFlow` value still holds. This follows the Startup Handshake
   (§8) — the state query happens only after firmware verification succeeds.
-- Locally cached values are marked provisional/stale (§4's "last known: N min
-  ago" pattern) until reconciled against a fresh read.
+- Locally cached values are marked provisional/stale until reconciled against a fresh read. **Added
+  `ai-sessions/0043`:** each cached value's own wall-clock receive time is threaded alongside it as a
+  sibling `StateFlow<Long?>` (`ancModeUpdatedAt`, `eqProfileUpdatedAt`, `batteryStatusUpdatedAt`,
+  `dockStateUpdatedAt`, `BudsRepository.kt`), stamped only at the moment `BudsRepositoryImpl` actually
+  receives that value — never a ticking relative counter or a polling timer (§6, "nothing in this app
+  runs a fixed-interval timer loop" — a live "N seconds ago" display would need exactly that). The UI
+  shows this as an absolute time string (`"updated 14:32:07"`/`"last seen 14:32:07"`), replacing the
+  earlier bare "(last known)"/"— last seen" qualifiers that carried no time at all.
 - If a fresh read disagrees with the cached value, the fresh read wins
   unconditionally — the app never keeps showing (or acting on) its own stale
   assumption once the hardware has answered.
@@ -232,7 +248,7 @@ should not be assumed uniform):**
 | ANC | **Corrected `ai-sessions/0040`:** the connect-time `Get`/`Notify` pair (ADR-021/ADR-022) is the *official client's* own query — a client that sends nothing gets no ANC `Notify`. This app therefore sends its own `AncFrame.Get` during each Message Stream claim (the Connect-time snapshot, ANC Refresh, and each ANC tap's reply) and treats the value as last-known between claims (ADR-032). | 🟢 FACT for the `Get`/`Notify` pair; the per-claim use is ADR-032 |
 | EQ | No connect-time *push* exists for EQ, but the official app **reads** it — and so does this app since `ai-sessions/0041` (DECISIONS.md ADR-034, maintainer-approved 2026-09-20): the Connect sequence waits for the Buds' unsolicited `GetSoftwareInfo` announcement (which names this connection's pw_rpc channel), then sends `ReadSetting 4:16` (active EQ) on that channel and fills `eqProfile` from the answer; the EQ screen can re-read on demand. `eqProfile` is `null` only until that answer arrives or if it failed — `BudsRepository.eqError` then carries the reason (no announcement in time, a channel with no known address, an error status, a timeout). A write is only counted as done once the Buds' `RESPONSE` arrives (`status` absent/OK); anything else is surfaced, never assumed. Field 18 (last saved custom EQ) never replaces the active value. | 🟢 FACT (ADR-034: identification, `ReadSetting 4:N` semantics, three second-capture chains); 🟡 HYPOTHESIS for what a fresh client must send first and for request/response matching (handled conservatively, `// TODO(verify)`, hardware re-test) |
 | Battery (DLCI 0x04 Option B, **implemented `ai-sessions/0040`, ADR-033; charging flag `ai-sessions/0041`**) | Push-based: the Buds send three `Group 0x03 Code 0x03` frames within ~10 ms of the channel opening and again on every change — so each Message Stream claim yields a reading. Each of `b1`/`b2` is `0bSVVVVVVV`: `V` = 0–100 % and `S` = charging (maintainer-accepted 2026-09-20); `V = 0x7F`/`> 100` reads "unavailable"; `b3` (Case) is never decoded (it read `0xff` in 60/60 frames). **The Case comes from DLCI 0x08** (`Group 0x0e Code 0x01`, entry 3), read by a short **on-demand, receive-only claim** on the Connect tap and on *Refresh battery* (**ADR-035, `ai-sessions/0042`**); a value the Buds did not mark fresh is shown "last seen". | 🟢 FACT (ADR-031 identity, ADR-033 unblock + charging-flag update; ADR-014 identity + ADR-035 unblock for the Case) |
-| Battery (HFP, Option C) — **removed `ai-sessions/0042`** | Push-based on the wire (`AT+BIEV`/`AT+CIND`, ADR-015/023) but **not consumable by an app**: `LOGS-001` shows `AT+BIEV=2,100` seven times on the wire and **zero** vendor-specific events in the app's receiver (and the value is one earbud's, never the Case). `HfpBatteryReader` and its wiring were removed on the maintainer's decision (chat 2026-09-20); the wire facts stay. | 🟢 FACT on the wire; 🟢 not app-consumable (`DESKRESEARCH_FINDINGS.md` 2026-09-20, Finding 7) |
+| Battery (HFP, Option C) — **removed `ai-sessions/0042`** | Push-based on the wire (`AT+BIEV`/`AT+CIND`, ADR-015/023) but **not consumable by an app**: `CAP-059` shows `AT+BIEV=2,100` seven times on the wire and **zero** vendor-specific events in the app's receiver (and the value is one earbud's, never the Case). `HfpBatteryReader` and its wiring were removed on the maintainer's decision (chat 2026-09-20); the wire facts stay. | 🟢 FACT on the wire; 🟢 not app-consumable (`CAP-059-FINDINGS.md` §7) |
 | Find My Buds Left/Right | Fire-and-forget action, not persisted state — there is nothing to reconcile on reconnect (no "currently ringing" flag this app tracks across a reconnect boundary). | N/A |
 
 **Consequence for `:data`'s codec scope (updated `ai-sessions/0041`):** DLCI 0x02 is decoded as pw_hdlc → pw_rpc `RpcPacket`
@@ -383,7 +399,7 @@ summary), the current state is:
 | ANC (Get/Set/Notify) | DLCI 0x04, Group `0x08` | 🟢 FACT | ADR-009 (explicit "block lifted"), ADR-021/ADR-022/ADR-024 | **Implemented** (`AncFrameEncoder`/`AncFrameDecoder`, `:data`) |
 | Find My Buds Left/Right | DLCI 0x04, Group `0x04` Code `0x01` | 🟢 FACT | ADR-011 (explicit "implementation is unblocked") | **Implemented** (`RingFrameEncoder`/`RingFrameDecoder`, `:data`) — structurally complete, not hardware-verified (`ai-sessions/0033`) |
 | EQ | DLCI 0x02, pw_rpc `maestro_pw.Maestro` `WriteSetting`/`ReadSetting`, payload `4:{16\|18:{5×float32}}` | 🟢 FACT (pw_rpc identification and `ReadSetting` semantics per ADR-034; envelope, field-to-band mapping, ±6.0 clamp, presets per ADR-016) | ADR-020 (write), **ADR-034** (read-only `ReadSetting` for fields 16/18, channel mirroring) | **Implemented** (`PwRpc`, `Maestro`, `EqFrameEncoder`/`EqFrameDecoder`, `BudsRepositoryImpl.readEq`/`setEqGains`, `:data`) — write ACK and read answer are surfaced; not hardware-verified (`ai-sessions/0041`) |
-| Battery, Option C (HFP `AT+BIEV`/`AT+CIND`) — **removed `ai-sessions/0042`** (maintainer decision in chat, after the confirming run) | HFP AT-command channel | 🟢 FACT on the wire | None | **Removed** — wire-confirmed, not app-consumable (`LOGS-001`: 7 × `AT+BIEV` on the wire, 0 vendor events in the app) |
+| Battery, Option C (HFP `AT+BIEV`/`AT+CIND`) — **removed `ai-sessions/0042`** (maintainer decision in chat, after the confirming run) | HFP AT-command channel | 🟢 FACT on the wire | None | **Removed** — wire-confirmed, not app-consumable (`CAP-059`: 7 × `AT+BIEV` on the wire, 0 vendor events in the app) |
 | Battery, Option B (DLCI 0x04 `Group 0x03 Code 0x03`) | DLCI 0x04 | 🟢 FACT (message *identity*; ADR-031; charging flag, ADR-033's 2026-09-20 update) | **ADR-033** (`ai-sessions/0040`, maintainer-approved; charging flag accepted 2026-09-20) | **Implemented** (`BatteryFrameDecoder`, `:data`) — `0bSVVVVVVV` per earbud; the Case (`b3`) is not decoded there — it comes from DLCI 0x08 (ADR-014 identity, **ADR-035** unblock, `ai-sessions/0042`: on-demand receive-only claim, `CaseBatteryFrameDecoder`). Not hardware-verified. |
 | §4.5's other DLCI 0x02 settings (Touch & Hold, Head gestures, In-ear detection, Mono audio, Volume EQ, Volume Balance, Case sounds, Multipoint, Conversation Detection) | DLCI 0x02 | 🟢 FACT for several individual fields' number/semantic identity (ADR-019 and its Updates) | **None** — ADR-013 explicitly unblocks only the *generic* wrapper-building path, and ADR-019's own Consequences section states explicitly that it does **not** unblock `FrameEncoder`/`FrameDecoder` for DLCI 0x02 "generally," since the broader "this channel's Sent-direction payload carries `libmaestro` settings-write commands" HYPOTHESIS (ADR-018) was never itself promoted to FACT after being narrowed. No later ADR closed this gap the way ADR-020 explicitly did for EQ. | **Gated — not implemented.** A single consolidated ADR unblocking the fields already at FACT identity would close this. |
 | Find My Buds Case / "ring both" | — | — | ADR-027 | **Permanently out of scope**, not a gate to lift |
@@ -492,7 +508,7 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   every proxy has bound it reports *nothing* (never "not connected"); without `BLUETOOTH_CONNECT` it reports `UNKNOWN`; a "not connected" must persist
   1.5 s before it is shown (one bounded `transformLatest` delay per event, no timer loop) so a bud coming out of the case does not flicker. The derived
   status (`DeviceStatus`, `:domain`) puts Android's state first and the app's own session second; an open session is authoritative for "controlled".
-  **Corrected `ai-sessions/0042` (first hardware run, `LOGS-001`):** the receiver was registered `RECEIVER_NOT_EXPORTED` and received **no** system broadcast for
+  **Corrected `ai-sessions/0042` (first hardware run, `CAP-059`):** the receiver was registered `RECEIVER_NOT_EXPORTED` and received **no** system broadcast for
   minutes while an *unflagged* receiver in the same process received the same `BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED` (the actions are protected system
   broadcasts, so it is now `RECEIVER_EXPORTED` — nothing but the system can send them). It additionally re-reads the profile proxies on caller-supplied *refresh* events
   (resume, a change of the bonded device, a change of the app's own session) and on every proxy bind — still event-driven, no timer, still visibility-bound. An

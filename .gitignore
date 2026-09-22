@@ -10,9 +10,15 @@ local.properties
 .idea/
 
 # Maintainer's own device/app logs pulled while testing the app on real hardware (AGENTS.md §9 —
-# these can contain device identifiers and are never committed, distinct from the captures/ research
-# data ADR-010 exempts) — never tracked, and any of this project's own docs/commits must summarize
-# findings from a log directly rather than pointing back at a file here.
+# these can contain device identifiers). Narrowed scope, ai-sessions/0043 (2026-09-22): an ad hoc
+# individual debug-log/screenshot pull (not a full capture session) stays here, gitignored, never
+# committed, and any of this project's own docs/commits must summarize findings from it directly
+# rather than pointing back at a file here. A FULL hardware-capture session (recording + HCI snoop +
+# app debug export/logcat + system log, i.e. everything CAPTURE_BLUETOOTH_HCI_SNOOP.md's own
+# extraction step (§3) would call a capture) is moved to captures/CAP-NNN-*/ instead and committed
+# there like any other capture — see that document's intro for the "third capture purpose" this
+# covers (this project's own app under test, not the official app) and see DECISIONS.md ADR-037 for
+# the decision retiring the old "always gitignored" rule for full sessions specifically.
 android/logs/
 
 # Reverse-engineering workspace: the pulled APK(s), decompiled output (JADX/apktool), and

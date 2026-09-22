@@ -24,7 +24,7 @@ mark v1.
   (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`).
 - Reference screenshots for the official app and web companion app.
 - `SECURITY.md`, `CONTRIBUTING.md`, `DESKRESEARCH_FINDINGS.md`.
-- **2026-09-20 (`ai-sessions/0042`): first hardware run (`LOGS-001`) analysed; Android-state mirror and bond reporting fixed.** The two camera films, HCI snoop log,
+- **2026-09-20 (`ai-sessions/0042`): first hardware run (`CAP-059`) analysed; Android-state mirror and bond reporting fixed.** The two camera films, HCI snoop log,
   system log, app exports and screenshots were correlated frame by frame (`DESKRESEARCH_FINDINGS.md`, second 2026-09-20 entry). Findings: pairing, Connect, ANC
   (4/4 taps), EQ read/write (all answered, writes persisted), Find (audible on the film's microphone) and battery with charging work; **the Connection card was wrong for
   minutes** (the `RECEIVER_NOT_EXPORTED` link observer received no system broadcasts, and an unknown link was rendered as "not connected") and **a bond that succeeded in
@@ -36,6 +36,19 @@ mark v1.
   read-only DLCI 0x02 `ReadSetting` unblock is written as **ADR-036** (nothing implemented); a firmware line, a "buds in the case / out" line, a Find "ringing" state and an ANC
   Quick Settings tile were added; automatic session opening was declined (the card mirrors Android). Three protocol items were promoted to FACT with the maintainer's chat approval
   (`PROTOCOL.md` §2.2a, §4.1, §4.2; ADR-024/ADR-034 updates). 1357 tests, lint 0 errors, four guards mutation-checked. Nothing is hardware-verified.
+- **2026-09-22 (`ai-sessions/0043`): `CAP-059`/`CAP-060` migrated into `captures/` (ADR-037), `CAP-060` fully analysed, Case-battery contention fix, ANC tile
+  discoverability, "last known" replaced with real timestamps, swipe navigation between tabs.** Two full OpenControl hardware-capture sessions, previously kept
+  local-only under `android/logs/`, are now committed as `captures/CAP-059-…`/`CAP-060-…` (real device identifiers per ADR-010; a burned-in street-address overlay
+  on the `CAP-059` recordings was cropped out before commit, maintainer-reviewed). `CAP-060` (six connection drops, `Case battery not read: Timeout` 8/8) was
+  analysed end to end: three distinct drop mechanisms now characterized (Buds-initiated RFCOMM-only closure, a Settings-panel-triggered full disconnect, and a
+  third ACL-level pattern correlated with physical handling in 2 of 3 instances); the Buds push Case battery unprompted, confirmed 🟢 FACT (`PROTOCOL.md` §4.3
+  Option E) — the real blocker is DLCI 0x08 contention with Google Play services, not a missing request, so `readCaseBattery` now retries once on contention
+  (**ADR-038**); the per-earbud dock-state candidate (`Group 0x04 Code 0x12`) showed no correlation with handling in this capture (still 🔴 open); the ANC Quick
+  Settings tile's code was already correct — it was simply never added to the panel — so the app now offers `StatusBarManager.requestAddTileService()` and a
+  redrawn tile icon. Every "(last known)"/"last seen" qualifier is now an actual wall-clock timestamp, threaded through the same per-feature flows with no new
+  polling (`ancModeUpdatedAt`/`eqProfileUpdatedAt`/`batteryStatusUpdatedAt`/`dockStateUpdatedAt`). The five tabs now support left/right swipe navigation
+  (`HorizontalPager`) kept in sync with the bottom nav bar and the existing single-top back-stack semantics (`ai-sessions/0037`). A session-loss message that
+  stayed generic even when Android's own link state already explained the cause now uses that state. 1359 tests, lint 0 errors. Nothing is hardware-verified.
 - **2026-09-20 (`ai-sessions/0041`): pairing/permission fixes, Android-state mirroring, charging flag, EQ read.** Fixed the in-app pairing failure
   "Could not resolve the selected device" (CDM's lower-case `MacAddress` was passed to `getRemoteDevice`, which requires upper-case; association reuse and
   duplicate clean-up, already-bonded is success, distinct bond-failure reasons); added the runtime-permission flow the app never had (its absence made a

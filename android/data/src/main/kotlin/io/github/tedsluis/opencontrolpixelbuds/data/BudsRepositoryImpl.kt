@@ -158,11 +158,20 @@ class BudsRepositoryImpl(
      * genuinely fresh response rather than immediately observing [_ancMode]'s replay cache. */
     private val _ancModeFresh = MutableSharedFlow<AncMode>(extraBufferCapacity = 8)
 
+    private val _ancModeUpdatedAt = MutableStateFlow<Long?>(null)
+    override val ancModeUpdatedAt: StateFlow<Long?> = _ancModeUpdatedAt
+
     private val _eqProfile = MutableStateFlow<EqBandGains?>(null)
     override val eqProfile: StateFlow<EqBandGains?> = _eqProfile
 
+    private val _eqProfileUpdatedAt = MutableStateFlow<Long?>(null)
+    override val eqProfileUpdatedAt: StateFlow<Long?> = _eqProfileUpdatedAt
+
     private val _batteryStatus = MutableStateFlow(BatteryStatus())
     override val batteryStatus: StateFlow<BatteryStatus> = _batteryStatus
+
+    private val _batteryStatusUpdatedAt = MutableStateFlow<Long?>(null)
+    override val batteryStatusUpdatedAt: StateFlow<Long?> = _batteryStatusUpdatedAt
 
     private val _caseBatteryError = MutableStateFlow<BudsError?>(null)
     override val caseBatteryError: Flow<BudsError?> = _caseBatteryError
@@ -172,6 +181,32 @@ class BudsRepositoryImpl(
 
     private val _dockState = MutableStateFlow(DockState.UNKNOWN)
     override val dockState: Flow<DockState> = _dockState
+
+    private val _dockStateUpdatedAt = MutableStateFlow<Long?>(null)
+    override val dockStateUpdatedAt: StateFlow<Long?> = _dockStateUpdatedAt
+
+    /** Sibling helpers so every mutation of the value above also stamps its own [System.currentTimeMillis]
+     * timestamp, in one place (`ai-sessions/0043` Phase H) — never a polling timer, only recorded when a
+     * value is actually received. */
+    private fun emitAncMode(mode: AncMode) {
+        _ancMode.tryEmit(mode)
+        _ancModeUpdatedAt.value = System.currentTimeMillis()
+    }
+
+    private fun updateEqProfile(gains: EqBandGains?) {
+        _eqProfile.value = gains
+        _eqProfileUpdatedAt.value = if (gains == null) null else System.currentTimeMillis()
+    }
+
+    private fun updateBatteryStatus(transform: (BatteryStatus) -> BatteryStatus) {
+        _batteryStatus.update(transform)
+        _batteryStatusUpdatedAt.value = System.currentTimeMillis()
+    }
+
+    private fun updateDockState(state: DockState) {
+        _dockState.value = state
+        _dockStateUpdatedAt.value = System.currentTimeMillis()
+    }
 
     private val _deviceInfo = MutableStateFlow<DeviceInfo?>(null)
     override val deviceInfo: Flow<DeviceInfo?> = _deviceInfo
@@ -219,7 +254,7 @@ class BudsRepositoryImpl(
                     // ARCHITECTURE.md §3.1: EQ has no confirmed read opcode, so a fresh
                     // connection's cached value is unknown, not trusted, until a real frame
                     // arrives — never keep showing a stale pre-reconnect quintet.
-                    _eqProfile.value = null
+                    updateEqProfile(null)
                 }
             }
         }
@@ -264,13 +299,13 @@ class BudsRepositoryImpl(
             is RoutedFrame.Anc -> when (val anc = frame.frame) {
                 is AncFrame.Notify -> {
                     // ADR-024: the Settable-toggles byte is the dock state (0x00 both seated, 0xe8 otherwise).
-                    _dockState.value = DockState.fromSettableToggles(anc.settableToggles)
+                    updateDockState(DockState.fromSettableToggles(anc.settableToggles))
                     anc.currentMode?.let {
-                        _ancMode.tryEmit(it)
+                        emitAncMode(it)
                         _ancModeFresh.tryEmit(it)
                     }
                 }
-                is AncFrame.Set -> _ancMode.tryEmit(anc.mode)
+                is AncFrame.Set -> emitAncMode(anc.mode)
                 is AncFrame.Get -> Unit
                 // AncFrameDecoder accepts *every* Message Stream ACK (Group 0xFF), so the Buds' ACK of a
                 // Find My Buds Ring arrives here, not as RoutedFrame.Ring — tell them apart by the
@@ -283,7 +318,7 @@ class BudsRepositoryImpl(
             // Field 16 is the *active* EQ (ADR-034); field 18 (the last saved custom curve) must never replace it.
             is RoutedFrame.Eq -> {
                 if (!frame.frame.persist) {
-                    _eqProfile.value = frame.frame.gains
+                    updateEqProfile(frame.frame.gains)
                     _eqError.value = null
                 }
                 _maestroReplies.tryEmit(MaestroReply.Value(frame.frame))
@@ -303,7 +338,7 @@ class BudsRepositoryImpl(
             // ADR-033. A byte the decoder does not interpret arrives as Unavailable and *replaces* any
             // earlier Known value: a stale percentage must never linger once the Buds report a
             // regime we cannot read (AGENTS.md §5). The Case and the HFP field are untouched.
-            is RoutedFrame.Battery -> _batteryStatus.update {
+            is RoutedFrame.Battery -> updateBatteryStatus {
                 // Not `case`: b3 is 0xff on every claim (ADR-033, 60/60 in ai-sessions/0042) and must not overwrite the Case
                 // value read from DLCI 0x08 (ADR-035).
                 it.copy(left = frame.frame.left, right = frame.frame.right)
@@ -311,7 +346,7 @@ class BudsRepositoryImpl(
 
             // ADR-035: only the Case, only from DLCI 0x08; a value the Buds did not mark fresh is kept as "last seen".
             is RoutedFrame.CaseBattery -> {
-                _batteryStatus.update { it.copy(case = frame.frame.case) }
+                updateBatteryStatus { it.copy(case = frame.frame.case) }
                 _caseBatteryError.value = null
                 _casePushes.tryEmit(frame.frame.case)
             }
@@ -377,7 +412,7 @@ class BudsRepositoryImpl(
         // Optimistic update (ARCHITECTURE.md §3.1), applied only when the Buds did NOT answer in time:
         // if their Notify arrived it already set the real mode via handleRoutedFrame, and re-applying
         // the requested mode here would overwrite it (e.g. after a NAK). A failed send is never applied.
-        if (result is BudsResult.Success && notified == null) _ancMode.tryEmit(mode)
+        if (result is BudsResult.Success && notified == null) emitAncMode(mode)
         result
     }
 
@@ -411,7 +446,7 @@ class BudsRepositoryImpl(
                 sent is BudsResult.Failure -> eqFailed(sent.error)
                 reply == null -> eqFailed(BudsError.Timeout)
                 reply is MaestroReply.Result && reply.result.isOk -> {
-                    _eqProfile.value = clamped
+                    updateEqProfile(clamped)
                     _eqError.value = null
                     BudsResult.Success(Unit)
                 }
@@ -451,7 +486,7 @@ class BudsRepositoryImpl(
             reply == null -> eqFailed(BudsError.Timeout)
             reply is MaestroReply.Value -> {
                 BleLogger.logConnectionEvent("EQ read ok (channel ${channel.channelId})")
-                _eqProfile.value = reply.frame.gains
+                updateEqProfile(reply.frame.gains)
                 _eqError.value = null
                 BudsResult.Success(reply.frame.gains)
             }
@@ -520,23 +555,39 @@ class BudsRepositoryImpl(
      * Claims DLCI 0x08 for one user action, waits for the Buds' `0e 01` push, and releases the channel [CASE_LINGER_MS] later
      * (ADR-035). **Receive-only** — nothing is sent on this channel. Serialised with the Message Stream claims by [claimMutex];
      * a failure is reported through [caseBatteryError], the session stays `Ready`.
-     * // TODO(verify): whether the Buds push without the phone-side `0e 04` request is a HYPOTHESIS — hardware re-test.
+     *
+     * The Buds push `0e 01` without a phone-side request — confirmed, `CAP-060-FINDINGS.md` §2 (no longer a HYPOTHESIS). The
+     * actual blocker is DLCI 0x08 contention with Google Play services, the same mechanism ADR-032 already handles for the
+     * Message Stream channel: **if the channel closes out from under the wait** (another claimant bounced ours) the claim is
+     * retried **once**, mirroring [withMessageStream]'s "the failed attempt has just freed the port" retry (ADR-038).
      */
     private suspend fun readCaseBattery(): BudsResult<Unit> {
         if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
         return claimMutex.withLock {
             caseReleaseJob?.cancel()
             caseReleaseJob = null
-            val result: BudsResult<Unit> = coroutineScope {
-                val waiter = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(CASE_PUSH_WAIT_MS) { _casePushes.first() } }
-                if (!transport.isChannelOpen(Dlci.GSND_CONTROL)) {
-                    val opened = transport.openChannel(Dlci.GSND_CONTROL, BudsSdpUuids.GSND_CONTROL)
-                    if (opened is BudsResult.Failure) {
-                        waiter.cancel()
-                        return@coroutineScope BudsResult.Failure(opened.error)
+            var result: BudsResult<Unit> = BudsResult.Failure(BudsError.Timeout)
+            for (attempt in 1..2) {
+                result = coroutineScope {
+                    val waiter = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(CASE_PUSH_WAIT_MS) { _casePushes.first() } }
+                    if (!transport.isChannelOpen(Dlci.GSND_CONTROL)) {
+                        val opened = transport.openChannel(Dlci.GSND_CONTROL, BudsSdpUuids.GSND_CONTROL)
+                        if (opened is BudsResult.Failure) {
+                            waiter.cancel()
+                            return@coroutineScope BudsResult.Failure(opened.error)
+                        }
+                    }
+                    if (waiter.await() != null) {
+                        return@coroutineScope BudsResult.Success(Unit)
+                    }
+                    if (!transport.isChannelOpen(Dlci.GSND_CONTROL)) {
+                        BudsResult.Failure(BudsError.ChannelLost(Dlci.GSND_CONTROL, "closed while waiting for the Case push"))
+                    } else {
+                        BudsResult.Failure(BudsError.Timeout)
                     }
                 }
-                if (waiter.await() == null) BudsResult.Failure(BudsError.Timeout) else BudsResult.Success(Unit)
+                val diedUnderUs = result is BudsResult.Failure && (result as BudsResult.Failure).error is BudsError.ChannelLost
+                if (!diedUnderUs) break
             }
             _caseBatteryError.value = (result as? BudsResult.Failure)?.error
             (result as? BudsResult.Failure)?.let {

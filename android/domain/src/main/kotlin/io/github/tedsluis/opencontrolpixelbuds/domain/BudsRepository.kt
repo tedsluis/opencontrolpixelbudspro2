@@ -43,11 +43,24 @@ interface BudsRepository {
     val lastConnectionError: Flow<BudsError?>
     val ancMode: Flow<AncMode>
 
+    /** Wall-clock time ([System.currentTimeMillis]) the current [ancMode] value was received, or `null`
+     * before any value has arrived this app run (`ai-sessions/0043` Phase H — replaces a vague "last
+     * known" qualifier with an actual timestamp; recorded only at the moment a value is received, no
+     * polling). */
+    val ancModeUpdatedAt: Flow<Long?>
+
     /** `null` = no value read yet this connection (ARCHITECTURE.md §3.1): the Connect sequence reads it with
      * `ReadSetting 4:16` (ADR-034), so it stays `null` only until that answer arrives or if it failed — see [eqError]. */
     val eqProfile: Flow<EqBandGains?>
 
+    /** Wall-clock time the current [eqProfile] value was received; `null` when [eqProfile] is `null`. */
+    val eqProfileUpdatedAt: Flow<Long?>
+
     val batteryStatus: Flow<BatteryStatus>
+
+    /** Wall-clock time [batteryStatus] was last updated (any of Left/Right/Case), or `null` before any
+     * reading has arrived this app run. */
+    val batteryStatusUpdatedAt: Flow<Long?>
 
     /**
      * Why the Case battery could not be read by the last on-demand claim of DLCI 0x08 (`null` = it was read, or none was
@@ -57,6 +70,9 @@ interface BudsRepository {
 
     /** Whether the earbuds sit in the case, from the last `Notify ANC state` (DECISIONS.md ADR-024) — [DockState.UNKNOWN] until one arrived. */
     val dockState: Flow<DockState>
+
+    /** Wall-clock time [dockState] was last updated, or `null` before any `Notify` has arrived this app run. */
+    val dockStateUpdatedAt: Flow<Long?>
 
     /** What the Buds announced at connect (firmware), or `null` before the announcement / after a disconnect. */
     val deviceInfo: Flow<DeviceInfo?>

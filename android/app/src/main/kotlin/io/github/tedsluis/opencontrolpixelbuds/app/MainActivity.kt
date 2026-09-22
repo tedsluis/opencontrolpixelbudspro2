@@ -20,8 +20,11 @@
 package io.github.tedsluis.opencontrolpixelbuds.app
 
 import android.Manifest
+import android.app.StatusBarManager
 import android.bluetooth.BluetoothAdapter
+import android.content.ComponentName
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -43,6 +46,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.tedsluis.opencontrolpixelbuds.R
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
@@ -223,14 +227,18 @@ class MainActivity : ComponentActivity() {
             val connectionState by budsRepository.connectionState
                 .collectAsStateWithLifecycle(initialValue = ConnectionState.Disconnected)
             val ancMode by budsRepository.ancMode.collectAsStateWithLifecycle(initialValue = null)
+            val ancModeUpdatedAt by budsRepository.ancModeUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val eqProfile by budsRepository.eqProfile.collectAsStateWithLifecycle(initialValue = null)
+            val eqProfileUpdatedAt by budsRepository.eqProfileUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val eqError by budsRepository.eqError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val batteryStatus by budsRepository.batteryStatus.collectAsStateWithLifecycle(
                 initialValue = BatteryStatus(),
             )
+            val batteryStatusUpdatedAt by budsRepository.batteryStatusUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val caseBatteryError by budsRepository.caseBatteryError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val dockState by budsRepository.dockState.collectAsStateWithLifecycle(initialValue = DockState.UNKNOWN)
+            val dockStateUpdatedAt by budsRepository.dockStateUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
             val ringingTarget by budsRepository.ringingTarget.collectAsStateWithLifecycle(initialValue = null as RingTarget?)
             val lastConnectionError by budsRepository.lastConnectionError
@@ -322,13 +330,17 @@ class MainActivity : ComponentActivity() {
                 androidLink = androidLink,
                 messageStreamError = messageStreamError,
                 ancMode = ancMode,
+                ancModeUpdatedAt = ancModeUpdatedAt,
                 caseBatteryError = caseBatteryError,
                 dockState = dockState,
+                dockStateUpdatedAt = dockStateUpdatedAt,
                 deviceInfo = deviceInfo,
                 ringingTarget = ringingTarget,
                 eqProfile = eqProfile,
+                eqProfileUpdatedAt = eqProfileUpdatedAt,
                 eqError = eqError,
                 batteryStatus = batteryStatus,
+                batteryStatusUpdatedAt = batteryStatusUpdatedAt,
                 unidentifiedFrames = unidentifiedFrames.value,
                 debugModeEnabled = debugModeEnabled,
             )
@@ -355,6 +367,18 @@ class MainActivity : ComponentActivity() {
                 onDisconnect = { scope.launch { budsRepository.disconnect() } },
                 onAncModeSelected = { mode -> scope.launch { budsRepository.setAncMode(mode) } },
                 onRefreshAncMode = { scope.launch { budsRepository.refreshAncMode() } },
+                onRequestAddAncTile = {
+                    // Asks Android directly to add the tile (API 33+, this app's minSdk) instead of
+                    // requiring the user to find it themselves via Quick Settings' own edit screen
+                    // (`ai-sessions/0043`, `CAP-060-FINDINGS.md` §4). A user action only — never
+                    // called automatically on launch/connect (ARCHITECTURE.md §6).
+                    getSystemService(StatusBarManager::class.java)?.requestAddTileService(
+                        ComponentName(this, AncTileService::class.java),
+                        "ANC",
+                        Icon.createWithResource(this, R.drawable.ic_anc_tile),
+                        ContextCompat.getMainExecutor(this),
+                    ) { result -> BleLogger.logConnectionEvent("Add ANC tile request result: $result") }
+                },
                 onEqGainsChanged = { gains -> scope.launch { budsRepository.setEqGains(gains) } },
                 onEqPresetSelected = { preset -> scope.launch { budsRepository.applyEqPreset(preset) } },
                 onRefreshEq = { scope.launch { budsRepository.refreshEq() } },

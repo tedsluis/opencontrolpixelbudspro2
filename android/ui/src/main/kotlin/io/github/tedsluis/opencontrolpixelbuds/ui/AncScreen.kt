@@ -53,8 +53,10 @@ fun AncScreen(
     connectionState: ConnectionState,
     messageStreamError: BudsError?,
     ancMode: AncMode?,
+    ancModeUpdatedAt: Long?,
     onAncModeSelected: (AncMode) -> Unit,
     onRefreshAncMode: () -> Unit,
+    onRequestAddAncTile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
@@ -72,7 +74,11 @@ fun AncScreen(
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                text = "ANC mode (last known): ${ancMode?.name ?: "unknown"}",
+                text = when {
+                    ancMode == null -> "ANC mode: unknown"
+                    else -> "ANC mode: ${ancMode.name}" +
+                        (formatUpdatedAt(ancModeUpdatedAt)?.let { " (updated $it)" } ?: "")
+                },
                 style = MaterialTheme.typography.bodyLarge,
             )
             AncMode.entries.forEach { mode ->
@@ -81,6 +87,7 @@ fun AncScreen(
                 }
             }
             TextButton(onClick = onRefreshAncMode, enabled = connectionState.isReady()) { Text("Refresh") }
+            TextButton(onClick = onRequestAddAncTile) { Text("Add ANC Quick Settings tile") }
             MessageStreamHint()
         }
     }
@@ -94,8 +101,10 @@ private fun AncScreenPreview() {
             connectionState = ConnectionState.Ready,
             messageStreamError = null,
             ancMode = AncMode.ADAPTIVE,
+            ancModeUpdatedAt = System.currentTimeMillis(),
             onAncModeSelected = {},
             onRefreshAncMode = {},
+            onRequestAddAncTile = {},
         )
     }
 }

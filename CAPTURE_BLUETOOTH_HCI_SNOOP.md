@@ -17,6 +17,19 @@ Do the Pixel 7a capture first — it's the one that produces frames you can actu
 against `pbpctrl`'s documented commands. The Pixel 9a capture is a validation/baseline
 step, not a substitute.
 
+**A third purpose, added `ai-sessions/0043` (2026-09-22):** this project's own OpenControl app,
+running on the Pixel 9a (GrapheneOS), can itself be the thing under test — validating that a build
+behaves correctly against real hardware, not extracting new protocol knowledge from the official app.
+`CAP-059`/`CAP-060` are the first examples (see the Capture Index, §9). These captures follow the same
+capture/extraction/integrity discipline as the other two purposes, are registered in the Capture Index
+and `id_registry.csv` identically, and their `CAP-NNN-FINDINGS.md` files are held to the same evidence
+rules (`PROJECT_RULES.md` §1) — the only difference is *why* the capture was taken (app validation, not
+protocol discovery) and that Google Play services may be present and active (unlike the Pixel 9a's
+usual GMS-disabled/no-app validation role). A full hardware-capture session of this kind, once
+extracted, is committed to `captures/CAP-NNN-*` like any other — see `.gitignore`'s narrowed
+`android/logs/` scope note for what still stays local-only (ad hoc individual debug-log/screenshot
+pulls that are not a full capture session).
+
 ---
 
 ## 1. Prerequisites
@@ -1860,6 +1873,8 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-056` | *planned* | Pixel 7a | TBD | TBD | TBD | AR (new) | `HOLD-005` | Genuine re-run of the ANC-rotation-checklist Left/Right split (`CAP-045` never opened the checklist screen), with a mandatory on-camera anti-repeat safeguard, added `ai-sessions/0017` | — | — | planned |
 | `CAP-057` | *planned* | Pixel 7a | TBD | TBD | TBD | AS (new) | `FW-002`, `FW-003` (incidental) | Live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the DLCI 0x02 connect-time burst's 3-string sub-message, following this session's structural finding that it matches `qjm`/`qjr` (`GetHardwareInfo`) better than `qie` (`GetSoftwareInfo`), added `ai-sessions/0017` | — | — | planned |
 | `CAP-058` | *planned* | Pixel 7a | TBD | TBD | TBD | AT (new) | `SDP-001`, `SDP-002` (opportunistic, not attempted) | 3rd attempt at `SDP-001`'s UUID-branch isolation, adding an explicit on-device process-liveness check before the "Pair" tap per `CAP-044-FINDINGS.md` §5's own proposal; approved by the maintainer 2026-09-18, added `ai-sessions/0031` | — | — | planned |
+| `CAP-059` | 2026-09-20 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0041` commit `9fe4b70` | AU (new) | `PAIR-001`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-006` (partial) | App-validation run of the `0041` build — pairing, ANC cycling, Find, EQ, and root-causing three session drops with three distinct causes; reclassified from `android/logs/LOGS-001` by `ai-sessions/0043` (see the intro's third-purpose note) | — | `CAP-059-btsnoop_hci.log` | analyzed |
+| `CAP-060` | 2026-09-21 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0042` commit `1efa86b` | AV (new) | `PAIR-001`, `PAIR-003`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-005`/`006` (partial) | App-validation run of the `0042` build — six connection drops (three distinct mechanisms, one newly characterized), Case-battery DLCI 0x08 contention with GMS, dock-state and ANC-tile root-causing; reclassified from `android/logs/LOGS-002` by `ai-sessions/0043` (see the intro's third-purpose note) | — | `CAP-060-btsnoop_hci.log` | analyzed |
 
 **Column notes:**
 

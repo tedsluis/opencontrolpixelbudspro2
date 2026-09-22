@@ -797,17 +797,30 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
-- **`LOGS-001` analysis, mirror/bond fixes, decisions and features — 2026-09-20 (`ai-sessions/0042`).** Done (**none hardware-verified**): link observer flag + event-driven
+- **`CAP-059` analysis, mirror/bond fixes, decisions and features — 2026-09-20 (`ai-sessions/0042`).** Done (**hardware-verified by `ai-sessions/0043`/`CAP-060`, see below**): link observer flag + event-driven
   re-reads, `AndroidLine.UNKNOWN`, bond outcome from the stack, pairing re-entry guard, why-did-the-session-end log lines, 1000-line buffer (RESULT §6); **decided by the
   maintainer in chat and done:** `HfpBatteryReader` removed; **ADR-035** — Case battery from DLCI 0x08 by an on-demand, receive-only claim (`CaseBatteryFrameDecoder`,
   Connect + *Refresh battery*, "last seen" marking); **ADR-036** written (DLCI 0x02 read-only `ReadSetting` unblock — **nothing implemented**); firmware line and "buds in the
   case / out" line (passive); Find "ringing" state; ANC Quick Settings tile (no EQ preset export/import); no automatic session opening (mirror only); the HCI log stays local;
-  three PROTOCOL promotions (fresh client needs no opening message; write ack + persistence; dock-state second confirmation). **Open — hardware re-test (`ai-sessions/0042`
-  RESULT §12):** mirror follows Android within ~2 s; bond reported correctly; whether the Buds push the Case level **without** the phone-side `0e 04` (if not: the Case stays
-  "unavailable" with its reason and sending `0e 04` needs its own ADR); the tile on GrapheneOS; EQ audibility. **Debt found, not fixed:** (a) after a user disconnect in Android's
-  panel the app still says "Another app may have taken it over, or the Buds dropped it" (needs the link state at loss time); (b) the battery card shows no reading age except
-  the Case's "last seen"; (c) 🔴 why the Buds closed both RFCOMM channels at 17:21:16 (idle / periodic / second-host runs and a < 0.6 s re-claim series are the experiments,
-  RESULT §12 e); (d) 🔴 why Play services stopped re-claiming DLCI 4 after 17:18:53 (record its *Nearby devices* state next time); (e) the settings read-only UI and per-field decoders
+  three PROTOCOL promotions (fresh client needs no opening message; write ack + persistence; dock-state second confirmation). **Hardware re-test, `CAP-060` (`ai-sessions/0043`):**
+  ✅ mirror follows Android correctly once re-created (`CAP-060-EVENT-NOTES.md` 17:59:02, 17:59:42); ✅ bond reported correctly this run (no stray "bond timed out" line anywhere
+  in `CAP-060-debug-export.log`, unlike `CAP-059`); ✅ **the Buds DO push the Case level without the phone-side `0e 04`** — `CAP-060-FINDINGS.md` §2 found `Group 0x0e Code 0x01`
+  pushed ≥13 times unprompted throughout the session, to Google Play services (which already holds/re-claims DLCI 0x08) — the real blocker is **channel contention with GMS**, the
+  same mechanism as DLCI 0x04, not a missing request; **ADR-038 written and approved** (maintainer, chat 2026-09-22) — `readCaseBattery` now retries once when the channel
+  closes out from under the wait, and `PROTOCOL.md` §4.3 Option E records the "pushes without a request" finding as 🟢 FACT (same approval). Not hardware-verified. 🔴 still open: the tile's actual on-panel behaviour on
+  GrapheneOS (code/manifest reviewed, structurally correct, `CAP-060-FINDINGS.md` §4 — never bound in either capture because it was never manually added to Quick Settings) —
+  **addressed by `ai-sessions/0043`**: `AncTileService` is unchanged (it was already correct), but the app now calls `StatusBarManager.requestAddTileService()` (API 33+, a
+  button on the ANC screen) so the user can ask Android to add it directly instead of finding Quick Settings' own edit screen themselves, and the tile's icon was redrawn
+  (a recognizable ear+sound-wave glyph, `ic_anc_tile.xml`) in place of the original generic ring-and-dot; not hardware-verified this session. EQ
+  audibility (not assessable from logs/video). **Debt found, not fixed:** (a) after a user disconnect in Android's
+  panel the app said "Another app may have taken it over, or the Buds dropped it" regardless of cause — **fixed, `ai-sessions/0043`**: the message now checks Android's own
+  link state (`AndroidLink`) at display time and distinguishes an RFCOMM-only closure (link still shows connected) from a fuller link loss (Android shows disconnected too,
+  e.g. from its own Bluetooth settings) — see `ConnectionScreen.kt`'s `ErrorExplanation`/`userMessage()` doc comments for this fix's own stated limits (a live read, not a
+  snapshot taken at the moment of the drop); (b) the battery card shows no reading age except
+  the Case's "last seen" — **addressed by `ai-sessions/0043` Phase H** (timestamp replacing "last known"/"last seen" wording); (c) 🔴 why the Buds closed both RFCOMM channels —
+  `CAP-060` found 2 more instances of this exact phenomenon plus 3 new instances of a different, ACL-level drop pattern (`CAP-060-FINDINGS.md` §1); the idle/periodic/second-host
+  and <0.6s re-claim experiments (RESULT §12 e) were still not run as isolated, purpose-built tests; (d) 🔴 why Play services stopped re-claiming DLCI 4 after 17:18:53 in
+  `CAP-059` (its *Nearby devices* permission state was still not recorded in `CAP-060` either); (e) the settings read-only UI and per-field decoders
   under ADR-036; (f) fold the tightened capture checklist (RESULT §12) into `CAPTURE_BLUETOOTH_HCI_SNOOP.md` (maintainer procedure — proposal only); (g) `AGENTS.md` §5's HFP
   paragraph would need a maintainer edit ("wire-confirmed, not consumable by the app; not implemented").
 - **Pairing/permissions fixes, Android-state mirroring, charging flag, EQ read, HFP diagnostic — 2026-09-20 (`ai-sessions/0041`,
@@ -823,7 +836,7 @@ tracked task above.)_
   (2) **automatic session connecting** — two variants, *neither decided nor built*: foreground-only auto-open when Android reports the Buds connected, or CDM
   device-presence for the background case (costs in `ARCHITECTURE.md` §6.0b); needs its own ADR;
   (3) **Case battery via DLCI 0x08** (ADR-014's message is the FACT source; unapproved proposal), **BLE Fast Pair battery advertisement** (ADR-006), **`SubscribeToSettingsChanges`** and every other DLCI 0x02 setting — all unapproved;
-  (4) **`LOGS-001`**: the deny-mode-drop capture is not yet in the folder (only the events skeleton) — analyse it when it is;
+  (4) ~~**`LOGS-001`**: the deny-mode-drop capture is not yet in the folder (only the events skeleton) — analyse it when it is~~ **done** — reclassified as `CAP-059`, fully analysed `ai-sessions/0042`/`0043` (see `CAP-059-FINDINGS.md`);
   (5) hardware re-test of everything above (`ai-sessions/0041` RESULT, "Re-test instructions"), especially: does the Buds accept our EQ write on the mirrored
   channel (the new `pw_rpc …` log lines say), does a fresh client get an answer to `ReadSetting` without sending other requests first, and does the Android-state
   mirror follow a bud leaving the case;

@@ -72,8 +72,10 @@ fun ConnectionScreen(
     lastConnectionError: BudsError?,
     messageStreamError: BudsError?,
     batteryStatus: BatteryStatus,
+    batteryStatusUpdatedAt: Long?,
     caseBatteryError: BudsError?,
     dockState: DockState,
+    dockStateUpdatedAt: Long?,
     deviceInfo: DeviceInfo?,
     onRefreshBattery: () -> Unit,
     onRequestEnableBluetooth: () -> Unit,
@@ -113,11 +115,11 @@ fun ConnectionScreen(
                 else -> {
                     val card = statusCard(deviceStatus, androidLink, connectionState)
                     if (card != null) {
-                        ConnectionStateCard(card, connectionState, lastConnectionError, messageStreamError, onConnect, onDisconnect)
+                        ConnectionStateCard(card, connectionState, lastConnectionError, messageStreamError, androidLink, onConnect, onDisconnect)
                     }
                     if (connectionState is ConnectionState.Ready) {
-                        BudsInfoCard(dockState, deviceInfo)
-                        BatteryCard(batteryStatus, caseBatteryError, onRefreshBattery)
+                        BudsInfoCard(dockState, dockStateUpdatedAt, deviceInfo)
+                        BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, onRefreshBattery)
                     }
                 }
             }
@@ -180,6 +182,7 @@ private fun ConnectionStateCard(
     session: ConnectionState,
     lastConnectionError: BudsError?,
     messageStreamError: BudsError?,
+    androidLink: AndroidLink,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
@@ -207,10 +210,10 @@ private fun ConnectionStateCard(
                 SessionLine.NOT_OPEN -> {
                     Text("App control: not open yet — tap Connect to control the Buds from this app.")
                     // Never a bare "not open" after an unexpected drop (ai-sessions/0039): say why.
-                    lastConnectionError?.let { ErrorExplanation(it) }
+                    lastConnectionError?.let { ErrorExplanation(it, androidLink) }
                 }
                 SessionLine.OPENING -> Text("App control: connecting…")
-                SessionLine.FAILED -> (session as? ConnectionState.Failed)?.let { ErrorExplanation(it.error) }
+                SessionLine.FAILED -> (session as? ConnectionState.Failed)?.let { ErrorExplanation(it.error, androidLink) }
             }
             if (card.session == SessionLine.OPEN) messageStreamError?.let { MessageStreamNotice(it) }
             when (card.action) {
@@ -224,10 +227,17 @@ private fun ConnectionStateCard(
 }
 
 /** The plain-language message plus, when the error carries one, the raw technical detail in a
- * smaller line — so "why did it fail" is visible without exporting a log (ai-sessions/0039). */
+ * smaller line — so "why did it fail" is visible without exporting a log (ai-sessions/0039).
+ * [androidLink] sharpens a [BudsError.ChannelLost] message (`ai-sessions/0043`, `CAP-060-FINDINGS.md`
+ * §1): whether Android itself still reports the Buds connected at display time distinguishes an
+ * RFCOMM-only closure (the Buds/another app closed this app's own channel, audio unaffected) from a
+ * full link loss (Android disconnected too — e.g. a tap in Android's own Bluetooth settings, or the
+ * Buds going out of range). This reads Android's *current* link state, not a snapshot taken at the
+ * moment of the drop, so it can be wrong if the link state changed again before the user looks — still
+ * a strictly more specific answer than the generic message it replaces. */
 @Composable
-private fun ErrorExplanation(error: BudsError) {
-    Text(error.userMessage())
+private fun ErrorExplanation(error: BudsError, androidLink: AndroidLink) {
+    Text(error.userMessage(androidLink))
     error.technicalDetail()?.let {
         Text(it, style = MaterialTheme.typography.bodySmall)
     }
@@ -235,8 +245,8 @@ private fun ErrorExplanation(error: BudsError) {
 
 /** Dock state (ADR-024) and firmware (ADR-034's announcement) — both passive, nothing sent for them (`ai-sessions/0042`). */
 @Composable
-private fun BudsInfoCard(dockState: DockState, deviceInfo: DeviceInfo?) {
-    val dock = dockLine(dockState)
+private fun BudsInfoCard(dockState: DockState, dockStateUpdatedAt: Long?, deviceInfo: DeviceInfo?) {
+    val dock = dockLine(dockState, dockStateUpdatedAt)
     val firmware = deviceInfo?.firmware?.takeIf { it.isNotEmpty() }?.joinToString(" / ")
     if (dock == null && firmware == null) return
     Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
@@ -247,15 +257,19 @@ private fun BudsInfoCard(dockState: DockState, deviceInfo: DeviceInfo?) {
     }
 }
 
-/** The dock line, or `null` when the state is not known — never guessed (`AGENTS.md` §5's spirit, ADR-024). */
-internal fun dockLine(dockState: DockState): String? = when (dockState) {
-    DockState.BOTH_IN_CASE -> "Both earbuds are in the case (as of the last update)."
-    DockState.NOT_BOTH_IN_CASE -> "At least one earbud is out of the case (as of the last update)."
-    DockState.UNKNOWN -> null
+/** The dock line, or `null` when the state is not known — never guessed (`AGENTS.md` §5's spirit, ADR-024).
+ * `ai-sessions/0043` Phase H: an actual timestamp replaces the vague "as of the last update" qualifier. */
+internal fun dockLine(dockState: DockState, dockStateUpdatedAt: Long? = null): String? {
+    val updated = formatUpdatedAt(dockStateUpdatedAt)?.let { " (updated $it)" } ?: ""
+    return when (dockState) {
+        DockState.BOTH_IN_CASE -> "Both earbuds are in the case$updated."
+        DockState.NOT_BOTH_IN_CASE -> "At least one earbud is out of the case$updated."
+        DockState.UNKNOWN -> null
+    }
 }
 
 @Composable
-private fun BatteryCard(status: BatteryStatus, caseBatteryError: BudsError?, onRefreshBattery: () -> Unit) {
+private fun BatteryCard(status: BatteryStatus, batteryStatusUpdatedAt: Long?, caseBatteryError: BudsError?, onRefreshBattery: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Battery", style = MaterialTheme.typography.titleMedium)
@@ -264,9 +278,9 @@ private fun BatteryCard(status: BatteryStatus, caseBatteryError: BudsError?, onR
                     "\"Charging\" means the earbud reports it is charging.",
                 style = MaterialTheme.typography.bodySmall,
             )
-            BatteryRow("Left", status.left)
-            BatteryRow("Right", status.right)
-            BatteryRow("Case", status.case)
+            BatteryRow("Left", status.left, batteryStatusUpdatedAt)
+            BatteryRow("Right", status.right, batteryStatusUpdatedAt)
+            BatteryRow("Case", status.case, batteryStatusUpdatedAt)
             if (status.case is BatteryLevel.Unavailable) caseBatteryError?.let { Text(caseErrorText(it), style = MaterialTheme.typography.bodySmall) }
             TextButton(onClick = onRefreshBattery) { Text("Refresh battery") }
         }
@@ -274,16 +288,17 @@ private fun BatteryCard(status: BatteryStatus, caseBatteryError: BudsError?, onR
 }
 
 @Composable
-private fun BatteryRow(label: String, level: BatteryLevel) {
+private fun BatteryRow(label: String, level: BatteryLevel, updatedAt: Long?) {
     val text = when (level) {
-        is BatteryLevel.Known -> batteryText(label, level)
+        is BatteryLevel.Known -> batteryText(label, level, updatedAt)
         BatteryLevel.Unavailable -> "$label: Battery unavailable"
     }
     Text(text, style = MaterialTheme.typography.bodyLarge)
 }
 
-/** Distinct, actionable copy per [BudsError] case (AGENTS.md §8). */
-internal fun BudsError.userMessage(): String = when (this) {
+/** Distinct, actionable copy per [BudsError] case (AGENTS.md §8). [androidLink], when known, sharpens
+ * [BudsError.ChannelLost] (`ai-sessions/0043`, see [ErrorExplanation]'s doc comment). */
+internal fun BudsError.userMessage(androidLink: AndroidLink? = null): String = when (this) {
     BudsError.ConnectionLost -> "Connection lost."
     BudsError.Timeout -> "The Buds didn't respond in time."
     is BudsError.MalformedFrame -> "Received an unexpected response from the Buds."
@@ -292,9 +307,17 @@ internal fun BudsError.userMessage(): String = when (this) {
     is BudsError.ChannelUnavailable ->
         "Couldn't open the ${channelLabel(channelId)}. Another app on this phone — for example Google " +
             "Play services' Fast Pair — may already be using it. Wait a few seconds, then try again."
-    is BudsError.ChannelLost ->
-        "The ${channelLabel(channelId)} was closed. Another app may have taken it over, or the Buds " +
-            "dropped it. Tap Connect to reconnect."
+    is BudsError.ChannelLost -> when (androidLink) {
+        AndroidLink.CONNECTED ->
+            "The ${channelLabel(channelId)} was closed while Android still shows the Buds connected — likely " +
+                "another app on this phone (for example Google Play services) or the Buds themselves closed it. Tap Connect to reconnect."
+        AndroidLink.NOT_CONNECTED ->
+            "Android no longer shows the Buds connected to this phone — this may be a disconnect from Android's " +
+                "own Bluetooth settings, or the Buds went out of range. Tap Connect to reconnect."
+        AndroidLink.UNKNOWN, null ->
+            "The ${channelLabel(channelId)} was closed. Another app may have taken it over, or the Buds " +
+                "dropped it. Tap Connect to reconnect."
+    }
     is BudsError.MaestroChannelUnknown ->
         if (channelId == null) {
             "The Buds didn't announce their control channel in time, so nothing was sent."
@@ -324,9 +347,19 @@ internal fun channelLabel(channelId: Int): String = when (channelId) {
     else -> "Bluetooth channel 0x%02x".format(channelId)
 }
 
-/** "Left: 97%", plus " (charging)" and, for a value the Buds did not mark fresh, " — last seen" (DECISIONS.md ADR-035). */
-internal fun batteryText(label: String, level: BatteryLevel.Known): String =
-    "$label: ${level.percent}%" + (if (level.isCharging == true) " (charging)" else "") + (if (level.isStale) " — last seen" else "")
+/** "Left: 97%", plus " (charging)" and an actual timestamp — "last seen HH:mm:ss" for a value the Buds did not mark
+ * fresh (DECISIONS.md ADR-035), "updated HH:mm:ss" otherwise (`ai-sessions/0043` Phase H replaces the bare
+ * "— last seen" qualifier, which carried no time, with the actual wall-clock time the value was read). */
+internal fun batteryText(label: String, level: BatteryLevel.Known, updatedAt: Long? = null): String {
+    val time = formatUpdatedAt(updatedAt)
+    val suffix = when {
+        level.isStale && time != null -> " — last seen $time"
+        level.isStale -> " — last seen"
+        time != null -> " (updated $time)"
+        else -> ""
+    }
+    return "$label: ${level.percent}%" + (if (level.isCharging == true) " (charging)" else "") + suffix
+}
 
 /** Why the Case could not be read (ADR-035) — the Case is on a different, shared channel than ANC/Find. */
 internal fun caseErrorText(error: BudsError): String = when (error) {

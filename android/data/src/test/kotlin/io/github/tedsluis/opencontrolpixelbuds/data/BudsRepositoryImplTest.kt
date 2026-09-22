@@ -569,6 +569,59 @@ class BudsRepositoryImplTest {
     }
 
     @Test
+    fun `DLCI 0x08 closed out from under the wait by another claimant is retried once, and the retry can succeed (ADR-038)`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        runCurrent() // start the repository's backgroundScope collectors before the first emit
+
+        val job = launch { repo.refreshBattery() }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20")) // answers the Get, so the Case claim starts
+        settle()
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.GSND_CONTROL), transport.openChannelCalls)
+
+        // Another claimant (Google Play services) bounces the app's own DLCI 0x08 session before any push arrives.
+        transport.emitChannelClosed(Dlci.GSND_CONTROL)
+        advanceTimeBy(2_100) // CASE_PUSH_WAIT_MS elapses with no push
+        runCurrent()
+
+        // The retry reopens the channel — the second attempt gets the push.
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.GSND_CONTROL, Dlci.GSND_CONTROL), transport.openChannelCalls)
+        transport.emit(Dlci.GSND_CONTROL, caseFresh)
+        settle()
+        job.join()
+
+        assertEquals(BatteryLevel.Known(97, isCharging = null, isStale = false), repo.batteryStatus.value.case)
+        assertNull(repo.caseBatteryError.first())
+    }
+
+    @Test
+    fun `DLCI 0x08 closed out from under the wait on both attempts is reported as ChannelLost, never a made-up value (ADR-038)`() = runTest {
+        val (repo, transport) = buildRepository(this)
+        advanceUntilIdle()
+        runCurrent() // start the repository's backgroundScope collectors before the first emit
+
+        val job = launch { repo.refreshBattery() }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20"))
+        settle()
+
+        // First attempt: bounced.
+        transport.emitChannelClosed(Dlci.GSND_CONTROL)
+        advanceTimeBy(2_100)
+        runCurrent()
+        // Retry (second and last attempt): bounced again.
+        transport.emitChannelClosed(Dlci.GSND_CONTROL)
+        advanceTimeBy(2_100)
+        runCurrent()
+        job.join()
+
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.GSND_CONTROL, Dlci.GSND_CONTROL), transport.openChannelCalls)
+        assertEquals(BudsError.ChannelLost(Dlci.GSND_CONTROL, "closed while waiting for the Case push"), repo.caseBatteryError.first())
+        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case)
+    }
+
+    @Test
     @DisplayName("ADR-024: the Notify's Settable-toggles byte is the dock state — 0x00 both in the case, 0xe8 not, anything else unknown")
     fun `dock state follows the Notify byte`() = runTest {
         val (repo, transport) = buildRepository(this)

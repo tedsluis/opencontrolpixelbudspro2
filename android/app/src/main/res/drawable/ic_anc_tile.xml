@@ -1,12 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Generic ring-and-dot glyph for the ANC Quick Settings tile — drawn for this project, no third-party asset (AGENTS.md §12). -->
+<!-- ANC Quick Settings tile glyph, redrawn `ai-sessions/0043` for clearer at-a-glance meaning than the
+     original generic ring-and-dot (a maintainer report that the tile's purpose wasn't obvious at a
+     glance, CAP-060-FINDINGS.md §4) — a small filled ear/bud dot with concentric sound-wave arcs being
+     actively received/cancelled, read alongside the tile's own "ANC" label and its live subtitle
+     (current mode). Drawn for this project, no third-party asset (AGENTS.md §12). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- the ear/bud -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M12,3A9,9 0 1,0 12,21A9,9 0 1,0 12,3Z M12,6A6,6 0 1,1 12,18A6,6 0 1,1 12,6Z M12,10A2,2 0 1,0 12,14A2,2 0 1,0 12,10Z" />
+        android:pathData="M5,10A2,2 0 1,0 5,14A2,2 0 1,0 5,10Z" />
+    <!-- concentric sound-wave arcs, largest to smallest, open toward the ear -->
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M9.5,4.5 A9,9 0 0,1 9.5,19.5" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M8.7,7.8 A5.7,5.7 0 0,1 8.7,16.2" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M7.9,10.6 A2.9,2.9 0 0,1 7.9,13.4" />
 </vector>
