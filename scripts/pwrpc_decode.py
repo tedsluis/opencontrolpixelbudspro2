@@ -33,7 +33,10 @@ def h65599(name: str) -> int:
 
 
 SERVICES = {h65599("maestro_pw.Maestro"): "maestro_pw.Maestro"}
-METHODS = {h65599(n): n for n in ("WriteSetting", "ReadSetting", "SubscribeToSettingsChanges", "GetSoftwareInfo")}
+# The connect-time burst names (GetHardwareInfo, SubscribeRuntimeInfo, SetWallclock) were added 2026-09-24 (ai-sessions/0045,
+# PROTOCOL.md §6): names from the APK's maestro_pw.Maestro catalog, matched to the ids on the wire in CAP-036 frames 1404-1570.
+METHODS = {h65599(n): n for n in ("WriteSetting", "ReadSetting", "SubscribeToSettingsChanges", "GetSoftwareInfo",
+                                  "GetHardwareInfo", "SubscribeRuntimeInfo", "SetWallclock")}
 # pw_rpc packet.proto PacketType. 0/1/7 are observed in the captures (REQUEST from the phone, RESPONSE and
 # SERVER_STREAM from the Buds); 2/4/5/8 are from the public proto (ai-sessions/0041 corrected an earlier table
 # that had 2/3/5 wrong).

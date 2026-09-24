@@ -100,7 +100,23 @@ KNOWN_HISTORICAL_REFERENCES = {
     "-2.log",  # generic suffix-like mention of the second btsnoop log in CAP-047 prompt/result/notes
     "CAP-047-FINDINGS.md",  # referenced as pending/out-of-scope in CAP-047 videopass documentation
     "captures/CAP-047-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AL/CAP-047-EVENT-NOTES.md",  # old placeholder path referenced in CAP-047 prompt
+    # Added 2026-09-24 (ai-sessions/0045, 0044 finding GOV-11/CAP-3) — deliberate "renamed from"/"deleted" mentions:
+    "CAP-049-recordings.mp4",  # CAP-049's docs record the rename to CAP-049-recording.mp4 by name
+    "-recordings.mp4",         # same rename, suffix form
+    "CAP-040-btsnoop_hci-merged.log",  # CAP-040's docs say this temporary merge was created and not used/kept
+    "LOG-001-EVENTS.md",       # the maintainer's file deleted in the ai-sessions/0043 incident; the data-loss note names it
 }
+
+# Generic suffix-only mentions of a capture's own file types ("its `FINDINGS.md`", "the `-recording.mp4`") — prose about
+# the naming convention, not a reference to a specific file (added 2026-09-24, ai-sessions/0045).
+GENERIC_CAPTURE_SUFFIX_RE = re.compile(r"^-?(FINDINGS|EVENT-NOTES)\.md$|^-recordings?(-\d)?\.mp4$|^-btsnoop_hci(-\d|-combined)?\.log$|^-combined\.log$")
+
+# Ephemeral ffmpeg frame grabs (e.g. `w_76.4.png`, `t40.png`, `mid_362.png`) that capture analyses name when citing a video
+# frame; they were extracted to a scratch directory and never committed, by design (added 2026-09-24, ai-sessions/0045).
+EPHEMERAL_FRAME_RE = re.compile(r"^[A-Za-z]+[0-9]*_?[0-9]+(\.[0-9]+)?(_[0-9]+)?\.png$")
+
+# Directories that are never project documentation (tool virtualenvs, build output) — 0044 finding GOV-11.
+EXCLUDED_DIR_PARTS = {".git", ".venv", "venv", "node_modules", "build", ".gradle"}
 
 # Only lint cross-references to the project's own capture/doc artifacts —
 # source-code-shaped filenames (.kt, .toml, .xml, .proto, .java) describe the
@@ -121,7 +137,7 @@ IMAGE_RE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)\)")
 # this list if that section's prefix table changes.
 TEST_ID_PREFIXES = (
     "PAIR|ANC|CONV|MULTI|EQP|EQS|TOUCH|HEAD|HOLD|AUDIO|FW|FWUPD|INEAR|CASE|"
-    "FIND|OBS|BATT|LOUD|ADAPT|GATT|GFPS|CALL|APP"
+    "FIND|OBS|BATT|LOUD|ADAPT|GATT|GFPS|CALL|APP|GSND|SDP|PRIV|SPATIAL|LEAUDIO"
 )
 ID_RE = re.compile(
     rf"\b((?:CAP|ADR|{TEST_ID_PREFIXES})-\d{{3}})\b"
@@ -175,7 +191,7 @@ def all_markdown_files() -> list[Path]:
     return [
         p
         for p in REPO_ROOT.rglob("*.md")
-        if ".git" not in p.parts and "AUDIT_REPORT_" not in p.name
+        if not (EXCLUDED_DIR_PARTS & set(p.parts)) and "AUDIT_REPORT_" not in p.name
         # audit reports intentionally quote historical/mistaken references —
         # excluded from all three checks, not just the project-name one.
     ]
@@ -208,7 +224,7 @@ def load_gitignored_filenames() -> set[str]:
 
 def resolve_filename(name: str, referencing_file: Path) -> bool:
     """True if `name` resolves to a real file somewhere sensible in the repo."""
-    if name.startswith("/") or name.startswith("FS/"):
+    if name.startswith("/") or name.startswith("FS/") or name.startswith("./FS/"):
         # Device-side or bugreport-archive path (e.g. from CAPTURE_BLUETOOTH_HCI_SNOOP.md's
         # extraction instructions) — not a path in this repo at all.
         return True
@@ -216,6 +232,16 @@ def resolve_filename(name: str, referencing_file: Path) -> bool:
         return True
     if (referencing_file.parent / name).exists():
         return True
+    if "..." in name:
+        # An elided path such as `captures/CAP-036-.../CAP-036-FINDINGS.md` — resolves if the glob does.
+        if list(REPO_ROOT.glob(name.replace("...", "*"))):
+            return True
+    if "/" not in name or name.startswith("lambda_dispatcher_resolver/"):
+        # The reverse-engineering tools cite each other's SPEC.md/README.md/BACKLOG.md by a path relative to
+        # reverse-engineering/tools/ (added 2026-09-24).
+        tools = REPO_ROOT / "reverse-engineering" / "tools"
+        if (tools / name).exists() or list(tools.glob(f"*/{name}")):
+            return True
     if PLANNED_CAPTURE_PLACEHOLDER in str(referencing_file.parent):
         # A not-yet-captured session's EVENT-NOTES.md skeleton — its own
         # sibling log/video/FINDINGS.md are expected not to exist yet.
@@ -244,6 +270,8 @@ def check_filenames(files: list[Path]) -> list[str]:
                 PLACEHOLDER_FILENAME_RE.search(name)
                 or AI_SESSION_PLACEHOLDER_RE.match(name)
                 or GENERIC_LOG_FILENAME_RE.match(name)
+                or GENERIC_CAPTURE_SUFFIX_RE.match(name)
+                or EPHEMERAL_FRAME_RE.match(name)
                 or name in KNOWN_HISTORICAL_REFERENCES
                 or Path(name).name in gitignored
             ):
@@ -312,7 +340,16 @@ def main() -> int:
     known_ids = load_registry()
     files = all_markdown_files()
 
-    filename_errors = check_filenames(files)
+    all_filename_problems = check_filenames(files)
+    # Historical session logs (ai-sessions/, except the newest pair) are a record that is not rewritten later
+    # (AI_SESSION_LOG_PROCEDURE.md §4a) — capture folders get renamed after a session wrote a placeholder path, so a dead
+    # reference there is reported as information, not a failure (added 2026-09-24, ai-sessions/0045, 0044 finding GOV-11).
+    session_files = sorted(p.name for p in (REPO_ROOT / "ai-sessions").glob("[0-9][0-9][0-9][0-9]_*.md"))
+    newest = session_files[-1][:4] if session_files else None
+    def is_history(err: str) -> bool:
+        return err.startswith("ai-sessions/") and not err.startswith(f"ai-sessions/{newest}_")
+    history_notes = [e for e in all_filename_problems if is_history(e)]
+    filename_errors = [e for e in all_filename_problems if not is_history(e)]
     id_warnings = check_ids(files, known_ids)
     name_errors = check_old_project_name(files)
     footer_errors = check_footers(footer_files())
@@ -320,6 +357,9 @@ def main() -> int:
     if filename_errors:
         print("=== Dead filename references ===")
         print("\n".join(sorted(filename_errors)))
+    if history_notes:
+        print("\n=== Dead filename references in historical session logs (informational, not rewritten) ===")
+        print("\n".join(sorted(history_notes)))
     if id_warnings:
         print("\n=== Unregistered ID references (register in id_registry.csv, or fix the typo) ===")
         print("\n".join(sorted(set(id_warnings))))
