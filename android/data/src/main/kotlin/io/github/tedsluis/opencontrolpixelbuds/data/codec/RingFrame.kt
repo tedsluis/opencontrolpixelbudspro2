@@ -30,15 +30,14 @@ object RingMessageStream {
     const val GROUP: Int = 0x04
     const val CODE_RING: Int = 0x01
     const val VALUE_STOP: Int = 0x00
-    const val ACK_GROUP: Int = 0xFF
-    const val ACK_CODE: Int = 0x01
 }
 
 /**
  * One decoded/encodable Find My Buds Ring frame (Left/Right only —
- * ARCHITECTURE.md §5a/DECISIONS.md ADR-027: Case and "ring both" are
- * permanently out of scope, not merely unimplemented, so this type has no
- * representation for them at all).
+ * ARCHITECTURE.md §5a/DECISIONS.md ADR-027: Case and "ring both" are out of
+ * v1 scope, so this type has no representation for them at all). ADR-027's
+ * 2026-09-24 Update: the Device Action spec does define `0x03` = ring both,
+ * untested on this firmware; sending it needs its own ADR (`FIND-004`).
  */
 sealed class RingFrame {
     /** Seeker -> Provider. Modeled on `CAP-025` frames 2040/2131 (Start). */
@@ -48,19 +47,6 @@ sealed class RingFrame {
      * `CAP-025` frames 2120/2180 (Stop). */
     data object Stop : RingFrame()
 
-    /** Response to a [Start]/[Stop]. `CAP-025` observed two ACK variants for
-     * this command (an extra trailing byte on one of them, `CAP-025-FINDINGS.md`
-     * §3) — both are represented by [data]'s length, neither assumed fixed. */
-    data class Ack(val echoedGroup: Int, val echoedCode: Int, val data: ByteArray) : RingFrame() {
-        override fun equals(other: Any?): Boolean =
-            other is Ack && echoedGroup == other.echoedGroup && echoedCode == other.echoedCode &&
-                data.contentEquals(other.data)
-
-        override fun hashCode(): Int {
-            var result = echoedGroup
-            result = 31 * result + echoedCode
-            result = 31 * result + data.contentHashCode()
-            return result
-        }
-    }
+    // The ACK/NAK to a Start/Stop (`CAP-025` shows two ACK variants, with and without a trailing state byte) is decoded by
+    // MessageStreamReplyDecoder — one routed type for every command (0044 finding APP-3).
 }

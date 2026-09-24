@@ -25,7 +25,8 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 
 /**
  * DLCI 0x08 ("GSND CONTROL") private envelope `[Group:1][Code:1][Length:2 BE][Value]` (PROTOCOL.md §2.3), `Group 0x0e Code 0x01`:
- * the Buds' per-earbud + case battery push (DECISIONS.md ADR-014 — entry index 3 = Case; ADR-035 — receive-only claim).
+ * the Buds' per-earbud + case battery push (DECISIONS.md ADR-014 — entry index 3 = Case; ADR-035 — on-demand claim; ADR-039 — the
+ * claim sends the one `0e 04 00 00` request).
  */
 object GsndMessageStream {
     const val GROUP_BATTERY: Int = 0x0E
@@ -33,6 +34,15 @@ object GsndMessageStream {
 
     /** Entry index of the Case (ADR-014: 1 = Left, 2 = Right, 3 = Case). */
     const val CASE_INDEX: Int = 3
+
+    /**
+     * The zero-length request Google Play services sends before every post-open Case push (`CAP-059` ×3, `CAP-060` ×10, e.g.
+     * `CAP-060` frame 1979 `0e 04 00 00` → push 1993) — the only frame the app sends on DLCI 0x08 (DECISIONS.md ADR-039).
+     */
+    const val CODE_BATTERY_REQUEST: Int = 0x04
+
+    /** `0e 04 00 00` (ADR-039). A fresh array each call — callers may not share a mutable wire buffer. */
+    fun batteryRequest(): ByteArray = byteArrayOf(GROUP_BATTERY.toByte(), CODE_BATTERY_REQUEST.toByte(), 0x00, 0x00)
 }
 
 /** The Case reading of one `0e 01` push — [BatteryLevel.Known] (with `isStale` when the Buds did not mark it fresh) or unavailable. */
@@ -41,14 +51,14 @@ data class CaseBatteryFrame(val case: BatteryLevel)
 /**
  * Decodes one already-delimited DLCI 0x08 `0e 01` frame and returns **only** the Case (index 3) — Left/Right come from the Message
  * Stream (ADR-033). Any structural failure is [BudsError.MalformedFrame], never thrown (`AGENTS.md` §11: the bytes are
- * environment-controlled). Real fixtures (`LOGS-001`, frames 1211/2863/2928, `CaseBatteryFrameDecoderTest`):
+ * environment-controlled). Real fixtures (`CAP-059`, frames 1211/2863/2928, `CaseBatteryFrameDecoderTest`):
  * `0e 01 00 23 0a 21 0a 03 61 6c 6c 12 1a 0a 06 08 64 10 01 18 01 0a 06 08 64 10 01 18 02 0a 06 08 61 10 01 18 03 20 01` = Left 100,
  * Right 100, Case 0x61 = 97 (flag `10 01` present = fresh).
  *
  * Reading rule (ADR-035): value `0..100` → percentage; the entry's flag (field 2) equal to `1` marks it fresh, otherwise
  * `isStale = true` ("last seen"); any other value → [BatteryLevel.Unavailable]; no index-3 entry → malformed.
  *
- * // TODO(verify): the flag's meaning ("fresh") is ADR-014's 🟡 HYPOTHESIS, consistent with `LOGS-001` (present while the buds sat in
+ * // TODO(verify): the flag's meaning ("fresh") is ADR-014's 🟡 HYPOTHESIS, consistent with `CAP-059` (present while the buds sat in
  * // the case, absent afterwards) but with no ground-truth Case level on the film.
  */
 object CaseBatteryFrameDecoder {

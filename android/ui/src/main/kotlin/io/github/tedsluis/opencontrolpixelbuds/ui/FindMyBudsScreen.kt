@@ -39,9 +39,10 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 /**
  * Find My Buds screen (ARCHITECTURE.md §2.4/§6). **Left/Right only, by
  * design** — DECISIONS.md ADR-027 makes Case ring and "ring both
- * simultaneously" a permanent, deliberate v1 exclusion, not a placeholder for
- * future work, so this screen has no disabled-looking "Case"/"Both"
- * affordance that would imply a capability this project does not provide.
+ * simultaneously" a deliberate v1 exclusion, so this screen has no
+ * disabled-looking "Case"/"Both" affordance that would imply a capability this
+ * project does not provide. (ADR-027's 2026-09-24 Update: the spec's `0x03`
+ * "ring both" exists but is untested here; offering it needs its own ADR.)
  */
 @Composable
 fun FindMyBudsScreen(

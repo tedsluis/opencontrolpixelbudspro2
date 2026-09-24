@@ -29,13 +29,10 @@ import javax.inject.Singleton
 /**
  * Explicit state machine driving [ConnectionState] (ARCHITECTURE.md §2.1).
  *
- * // TODO(verify): only the `Disconnected -> Connecting -> Ready` shape for
- * // the classic BR/EDR link steps is 🟢 FACT (PROTOCOL.md §5.1). The
- * // `Discovering` step and the exact point at which "Ready" should fire
- * // relative to DLCI 0x04's own connect-time Get/Notify handshake
- * // (PROTOCOL.md §5.2) are still ⚪ ASSUMPTION — this class is intentionally
- * // a thin, honestly-scoped skeleton, not a claim that every transition
- * // below has been observed on the wire. See PROTOCOL.md §5.
+ * As built (DECISIONS.md ADR-032, ARCHITECTURE.md §2.1): `Ready` means "the MAESTRO channel (DLCI 0x02) is open" — the
+ * session; the Message Stream (DLCI 0x04) is claimed on demand afterwards and plays no part in these states. `Discovering`
+ * is a zero-length pass-through between `onLinkEstablished()` and `onReady()` (SDP resolution happens inside the socket
+ * open), kept only so the transition log reads the same as before. These are app states, not wire-observed ones.
  */
 @Singleton
 class ConnectionStateMachine @Inject constructor() {

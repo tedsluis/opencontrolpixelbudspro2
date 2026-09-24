@@ -123,15 +123,17 @@ class AncFrameDecoderTest {
         assertEquals(0xe8, setFrame.enabledModesMask)
         assertEquals(16, setFrame.reserved.size)
 
-        val ackResult = AncFrameDecoder.decode(hex(fixture.ackHex))
+        // The ACK is decoded by the shared Message Stream reply decoder (0044 APP-3), not the ANC decoder.
+        assertInstanceOf(BudsResult.Failure::class.java, AncFrameDecoder.decode(hex(fixture.ackHex)))
+        val ackResult = MessageStreamReplyDecoder.decode(hex(fixture.ackHex))
         assertInstanceOf(BudsResult.Success::class.java, ackResult)
         val ackFrame = (ackResult as BudsResult.Success).value
-        assertInstanceOf(AncFrame.Ack::class.java, ackFrame)
-        ackFrame as AncFrame.Ack
+        assertInstanceOf(MessageStreamReply.Ack::class.java, ackFrame)
+        ackFrame as MessageStreamReply.Ack
         assertEquals(0x08, ackFrame.echoedGroup)
         assertEquals(0x12, ackFrame.echoedCode)
-        // Echoed data: version, settable, enabled, mode — mode byte matches the Set's own.
-        assertEquals(fixture.mode.wireBit, ackFrame.data.last().toInt() and 0xFF)
+        // Echoed state: version, settable, enabled, mode — mode byte matches the Set's own.
+        assertEquals(fixture.mode.wireBit, ackFrame.state.last().toInt() and 0xFF)
     }
 
     @Test

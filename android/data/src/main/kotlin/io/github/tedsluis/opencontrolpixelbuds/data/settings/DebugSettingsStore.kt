@@ -33,15 +33,11 @@ private val Context.dataStore by preferencesDataStore(name = "opencontrol_settin
  * off by default, so verbose hex-dump logging never turns itself on across
  * an app restart without the user explicitly having enabled it.
  *
- * // TODO(verify): `ARCHITECTURE.md` §2/§9 describes this project's local
- * // persistence mechanism as "encrypted AndroidX DataStore." This
- * // implementation uses plain (unencrypted) `Preferences` DataStore — the
- * // one value stored here (a boolean toggle) carries no device identifiers
- * // or credentials, so encrypting it specifically wasn't judged worth the
- * // added `androidx.security.crypto` dependency this session, but the
- * // architecture's own documented intent is encryption-at-rest; a future
- * // session adding a genuinely sensitive value here (e.g. a cached EQ
- * // preset tied to account state, if that's ever added) should revisit this.
+ * Plain (unencrypted) `Preferences` DataStore on purpose: the one value
+ * stored here (a boolean toggle) carries no device identifier or credential.
+ * `ARCHITECTURE.md` §2/§9 and `AGENTS.md` §10 say "encrypted where
+ * applicable" — a future session adding a genuinely sensitive value here
+ * must encrypt it (wording aligned 2026-09-24, 0044 finding AR-3).
  */
 class DebugSettingsStore(private val context: Context) {
 

@@ -19,8 +19,6 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.ACK_CODE
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.ACK_GROUP
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.CODE_RING
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.GROUP
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.VALUE_STOP
@@ -35,10 +33,6 @@ object RingFrameEncoder {
     fun encode(frame: RingFrame): ByteArray = when (frame) {
         is RingFrame.Start -> header(GROUP, CODE_RING, 1) + byteArrayOf(frame.target.wireValue.toByte())
         is RingFrame.Stop -> header(GROUP, CODE_RING, 1) + byteArrayOf(VALUE_STOP.toByte())
-        is RingFrame.Ack -> {
-            val data = byteArrayOf(frame.echoedGroup.toByte(), frame.echoedCode.toByte()) + frame.data
-            header(ACK_GROUP, ACK_CODE, data.size) + data
-        }
     }
 
     private fun header(group: Int, code: Int, dataLength: Int): ByteArray = byteArrayOf(

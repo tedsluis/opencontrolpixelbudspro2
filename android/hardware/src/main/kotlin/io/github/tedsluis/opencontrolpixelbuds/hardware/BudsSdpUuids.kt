@@ -39,11 +39,8 @@ import java.util.UUID
  * - [GSND_CONTROL] (DLCI 0x08): `CAP-033`'s SDP browse, service name `"GSND CONTROL"`, RFCOMM channel 4 (`PROTOCOL.md` §2.3) — opened
  *   on demand for the Case battery only (`DECISIONS.md` ADR-035, `ai-sessions/0042`).
  *
- * // TODO(verify): both UUIDs are well-evidenced from capture data, but this
- * // is still the first real attempt to *open a socket* against either of
- * // them — no physical Pixel Buds Pro 2 is available in this environment to
- * // confirm `createRfcommSocketToServiceRecord()` actually connects
- * // (ARCHITECTURE.md §5a).
+ * Sockets to all three have been opened on real hardware: [MAESTRO] and [FAST_PAIR_MESSAGE_STREAM] in `CAP-059`/`CAP-060`
+ * (`RFCOMM channel 0x02/0x04 connected` in the debug exports), [GSND_CONTROL] in `CAP-060` (8 claims, `ai-sessions/0045` §3.1).
  */
 object BudsSdpUuids {
     val MAESTRO: UUID = UUID.fromString("25e97ff7-24ce-4c4c-8951-f764a708f7b5")

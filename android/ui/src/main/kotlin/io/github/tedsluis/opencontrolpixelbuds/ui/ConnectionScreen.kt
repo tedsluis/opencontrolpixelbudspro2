@@ -48,6 +48,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLine
 import io.github.tedsluis.opencontrolpixelbuds.domain.StatusCard
 import io.github.tedsluis.opencontrolpixelbuds.domain.statusCard
@@ -85,6 +86,8 @@ fun ConnectionScreen(
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
+    dockStateProvisional: Boolean = false,
+    safeMode: SafeModeState? = null,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
@@ -118,7 +121,8 @@ fun ConnectionScreen(
                         ConnectionStateCard(card, connectionState, lastConnectionError, messageStreamError, androidLink, onConnect, onDisconnect)
                     }
                     if (connectionState is ConnectionState.Ready) {
-                        BudsInfoCard(dockState, dockStateUpdatedAt, deviceInfo)
+                        safeMode?.let { SafeModeCard(it) }
+                        BudsInfoCard(dockState, dockStateUpdatedAt, dockStateProvisional, deviceInfo)
                         BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, onRefreshBattery)
                     }
                 }
@@ -243,10 +247,33 @@ private fun ErrorExplanation(error: BudsError, androidLink: AndroidLink) {
     }
 }
 
+/**
+ * Read-only Safe Mode (ARCHITECTURE.md §8.1, DECISIONS.md ADR-042): shown explicitly, never a silent limitation — what was detected and
+ * why the controls send nothing.
+ */
+@Composable
+private fun SafeModeCard(state: SafeModeState) {
+    Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Safe Mode — read-only", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+            Text(safeModeText(state), style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+internal fun safeModeText(state: SafeModeState): String {
+    val detected = listOfNotNull(
+        state.firmware?.takeIf { it.isNotEmpty() }?.let { "firmware ${it.joinToString(" / ")}" },
+        state.modelIdHex?.let { "Fast Pair model $it" },
+    ).joinToString(", ").ifEmpty { "nothing announced yet" }
+    return "${state.reason} This app only sends ANC, EQ and Find My Buds commands to the Pixel Buds Pro 2 firmware it was " +
+        "verified against, so those controls send nothing; battery, ANC state and EQ are still read. Detected: $detected."
+}
+
 /** Dock state (ADR-024) and firmware (ADR-034's announcement) — both passive, nothing sent for them (`ai-sessions/0042`). */
 @Composable
-private fun BudsInfoCard(dockState: DockState, dockStateUpdatedAt: Long?, deviceInfo: DeviceInfo?) {
-    val dock = dockLine(dockState, dockStateUpdatedAt)
+private fun BudsInfoCard(dockState: DockState, dockStateUpdatedAt: Long?, dockStateProvisional: Boolean, deviceInfo: DeviceInfo?) {
+    val dock = dockLine(dockState, dockStateUpdatedAt, dockStateProvisional)
     val firmware = deviceInfo?.firmware?.takeIf { it.isNotEmpty() }?.joinToString(" / ")
     if (dock == null && firmware == null) return
     Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
@@ -257,13 +284,18 @@ private fun BudsInfoCard(dockState: DockState, dockStateUpdatedAt: Long?, device
     }
 }
 
-/** The dock line, or `null` when the state is not known — never guessed (`AGENTS.md` §5's spirit, ADR-024).
- * `ai-sessions/0043` Phase H: an actual timestamp replaces the vague "as of the last update" qualifier. */
-internal fun dockLine(dockState: DockState, dockStateUpdatedAt: Long? = null): String? {
+/**
+ * The dock line, or `null` when the state is not known — never guessed (`AGENTS.md` §5's spirit, ADR-024). Worded as a derived
+ * reading (ADR-024's 2026-09-24 Update, maintainer-approved): the byte is the spec's "settable toggles" — which ANC modes the Buds let
+ * a phone switch — and "in the case" is inferred from it, with known exceptions; a reading from the first ~2 s of a claim is marked
+ * provisional. `ai-sessions/0043` Phase H: an actual timestamp replaces the vague "as of the last update" qualifier.
+ */
+internal fun dockLine(dockState: DockState, dockStateUpdatedAt: Long? = null, provisional: Boolean = false): String? {
     val updated = formatUpdatedAt(dockStateUpdatedAt)?.let { " (updated $it)" } ?: ""
+    val qualifier = if (provisional) " — provisional, read right after the channel opened" else ""
     return when (dockState) {
-        DockState.BOTH_IN_CASE -> "Both earbuds are in the case$updated."
-        DockState.NOT_BOTH_IN_CASE -> "At least one earbud is out of the case$updated."
+        DockState.BOTH_IN_CASE -> "Both earbuds seem to be in the case — the Buds report no switchable ANC modes$updated$qualifier."
+        DockState.NOT_BOTH_IN_CASE -> "At least one earbud seems to be out of the case — the Buds report switchable ANC modes$updated$qualifier."
         DockState.UNKNOWN -> null
     }
 }
@@ -302,8 +334,11 @@ internal fun BudsError.userMessage(androidLink: AndroidLink? = null): String = w
     BudsError.ConnectionLost -> "Connection lost."
     BudsError.Timeout -> "The Buds didn't respond in time."
     is BudsError.MalformedFrame -> "Received an unexpected response from the Buds."
-    BudsError.UnsupportedFirmware -> "This firmware version isn't recognized — running in read-only Safe Mode."
+    BudsError.UnsupportedFirmware ->
+        "Safe Mode: nothing was sent — the Buds' firmware or model isn't one this app was verified against (read-only)."
     BudsError.PermissionDenied -> "Bluetooth permission is required."
+    BudsError.NotPaired -> "No paired Pixel Buds found. Pair them first (Pair a device, or Android's Bluetooth settings)."
+    is BudsError.CommandRejected -> "The Buds refused the command ($detail)."
     is BudsError.ChannelUnavailable ->
         "Couldn't open the ${channelLabel(channelId)}. Another app on this phone — for example Google " +
             "Play services' Fast Pair — may already be using it. Wait a few seconds, then try again."

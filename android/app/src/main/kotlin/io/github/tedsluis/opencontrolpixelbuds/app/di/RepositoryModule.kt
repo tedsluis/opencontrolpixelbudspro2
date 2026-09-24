@@ -40,8 +40,8 @@ import javax.inject.Singleton
  * Wires `:data`'s `BudsRepositoryImpl` into the real `BudsRepository`
  * interface (ARCHITECTURE.md §2.1, DECISIONS.md ADR-001). [BudsTransport]
  * resolves to `RfcommBudsTransport` (`TransportModule.kt`, `ai-sessions/0037`
- * — the real transport is now the default, `FakeBudsTransport` stays only in
- * test source sets).
+ * — the real transport is now the default, `FakeBudsTransport` lives only in
+ * :hardware's test fixtures, never in the app).
  */
 @Module
 @InstallIn(SingletonComponent::class)

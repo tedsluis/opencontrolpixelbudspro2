@@ -58,6 +58,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
+import io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 import io.github.tedsluis.opencontrolpixelbuds.domain.deriveDeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.permissionStatus
@@ -66,7 +67,6 @@ import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothAdapterState
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothStateObserver
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BondedLookup
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
-import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsForegroundService
 import io.github.tedsluis.opencontrolpixelbuds.hardware.OsConnectionObserver
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingFailure
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingState
@@ -104,6 +104,14 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var debugSettingsStore: DebugSettingsStore
+
+    /**
+     * The application-lifetime scope (`RepositoryModule`). Every user action runs here, not in the composition's scope: a rotation or
+     * any other configuration change must not cancel a Connect or a claim half-way (0044 finding APP-4 — a cancelled Connect used to
+     * leave the state stuck at "Connecting" with no button, and a cancelled claim kept DLCI 0x04/0x08 from Play services).
+     */
+    @Inject
+    lateinit var applicationScope: CoroutineScope
 
     private val companionPairing by lazy { BudsCompanionPairing(this) }
     private val bluetoothStateObserver by lazy { BluetoothStateObserver(this) }
@@ -239,6 +247,8 @@ class MainActivity : ComponentActivity() {
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val dockState by budsRepository.dockState.collectAsStateWithLifecycle(initialValue = DockState.UNKNOWN)
             val dockStateUpdatedAt by budsRepository.dockStateUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
+            val dockStateProvisional by budsRepository.dockStateProvisional.collectAsStateWithLifecycle(initialValue = false)
+            val safeMode by budsRepository.safeMode.collectAsStateWithLifecycle(initialValue = null as SafeModeState?)
             val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
             val ringingTarget by budsRepository.ringingTarget.collectAsStateWithLifecycle(initialValue = null as RingTarget?)
             val lastConnectionError by budsRepository.lastConnectionError
@@ -285,31 +295,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // ARCHITECTURE.md §6.0a: :app's composition root is the documented owner of BudsForegroundService's start/stop
-            // lifecycle, bound to the same ConnectionState this screen already observes — started for any
-            // non-Disconnected/non-Failed state (all reachable only via a user-initiated Connect tap, no background
-            // reconnect exists), stopped once back at Disconnected or Failed.
-            var foregroundServiceActive by remember { mutableStateOf(false) }
-            LaunchedEffect(connectionState, ancMode) {
-                val isActive = connectionState != ConnectionState.Disconnected &&
-                    connectionState !is ConnectionState.Failed
-                if (isActive) {
-                    val statusText = when (connectionState) {
-                        ConnectionState.Connecting -> "Connecting…"
-                        ConnectionState.Discovering -> "Discovering services…"
-                        ConnectionState.Ready -> ancMode?.let { "Connected — ANC: ${it.name}" } ?: "Connected"
-                        else -> "Connecting…"
-                    }
-                    startForegroundService(
-                        Intent(this@MainActivity, BudsForegroundService::class.java)
-                            .putExtra(BudsForegroundService.EXTRA_STATUS_TEXT, statusText),
-                    )
-                    foregroundServiceActive = true
-                } else if (foregroundServiceActive) {
-                    stopService(Intent(this@MainActivity, BudsForegroundService::class.java))
-                    foregroundServiceActive = false
-                }
-            }
+            // The foreground service is driven from the application scope (OpenControlApplication), not from this lifecycle-bound
+            // UI state — so a session that ends while the app is in the background still stops it (0044 finding APP-6).
 
             val hasBondedDevice = bondedLookup is BondedLookup.Found
             val bluetoothEnabled = bluetoothAdapterState == BluetoothAdapterState.ON
@@ -334,6 +321,8 @@ class MainActivity : ComponentActivity() {
                 caseBatteryError = caseBatteryError,
                 dockState = dockState,
                 dockStateUpdatedAt = dockStateUpdatedAt,
+                dockStateProvisional = dockStateProvisional,
+                safeMode = safeMode,
                 deviceInfo = deviceInfo,
                 ringingTarget = ringingTarget,
                 eqProfile = eqProfile,
@@ -363,10 +352,10 @@ class MainActivity : ComponentActivity() {
                         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)),
                     )
                 },
-                onConnect = { scope.launch { budsRepository.connect() } },
-                onDisconnect = { scope.launch { budsRepository.disconnect() } },
-                onAncModeSelected = { mode -> scope.launch { budsRepository.setAncMode(mode) } },
-                onRefreshAncMode = { scope.launch { budsRepository.refreshAncMode() } },
+                onConnect = { applicationScope.launch { budsRepository.connect() } },
+                onDisconnect = { applicationScope.launch { budsRepository.disconnect() } },
+                onAncModeSelected = { mode -> applicationScope.launch { budsRepository.setAncMode(mode) } },
+                onRefreshAncMode = { applicationScope.launch { budsRepository.refreshAncMode() } },
                 onRequestAddAncTile = {
                     // Asks Android directly to add the tile (API 33+, this app's minSdk) instead of
                     // requiring the user to find it themselves via Quick Settings' own edit screen
@@ -379,13 +368,13 @@ class MainActivity : ComponentActivity() {
                         ContextCompat.getMainExecutor(this),
                     ) { result -> BleLogger.logConnectionEvent("Add ANC tile request result: $result") }
                 },
-                onEqGainsChanged = { gains -> scope.launch { budsRepository.setEqGains(gains) } },
-                onEqPresetSelected = { preset -> scope.launch { budsRepository.applyEqPreset(preset) } },
-                onRefreshEq = { scope.launch { budsRepository.refreshEq() } },
-                onRing = { target -> scope.launch { budsRepository.ringBud(target) } },
-                onStopRinging = { scope.launch { budsRepository.stopRinging() } },
-                onRefreshBattery = { scope.launch { budsRepository.refreshBattery() } },
-                onDebugModeChanged = { enabled -> scope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
+                onEqGainsChanged = { gains -> applicationScope.launch { budsRepository.setEqGains(gains) } },
+                onEqPresetSelected = { preset -> applicationScope.launch { budsRepository.applyEqPreset(preset) } },
+                onRefreshEq = { applicationScope.launch { budsRepository.refreshEq() } },
+                onRing = { target -> applicationScope.launch { budsRepository.ringBud(target) } },
+                onStopRinging = { applicationScope.launch { budsRepository.stopRinging() } },
+                onRefreshBattery = { applicationScope.launch { budsRepository.refreshBattery() } },
+                onDebugModeChanged = { enabled -> applicationScope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
                 onExportLog = {
                     // Local-only hand-off to the system share sheet (AGENTS.md §9) — the user picks the destination, this app
                     // never transmits it anywhere itself.

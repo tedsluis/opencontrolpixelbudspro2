@@ -32,8 +32,8 @@ import kotlin.random.Random
 
 /**
  * DLCI 0x08 Case battery (`Group 0x0e Code 0x01`, entry index 3; DECISIONS.md ADR-014/ADR-035) and the firmware strings of the
- * Buds' `GetSoftwareInfo` announcement (`ai-sessions/0042`). Fixtures are real bytes from the `LOGS-001` HCI log (frame numbers in
- * each test; the log itself is kept locally).
+ * Buds' `GetSoftwareInfo` announcement (`ai-sessions/0042`). Fixtures are real bytes from the `CAP-059` HCI log (formerly `LOGS-001`, committed under ADR-037;
+ * frame numbers in each test).
  */
 class CaseBatteryCodecTest {
 

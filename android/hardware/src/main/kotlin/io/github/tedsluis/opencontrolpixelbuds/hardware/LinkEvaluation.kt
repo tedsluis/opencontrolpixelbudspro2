@@ -56,7 +56,7 @@ object LinkEvaluation {
     /**
      * The one always-on log line for a **change** of the Android-link state, or `null` when nothing changed (`ai-sessions/0042`).
      * The old code logged every evaluation — three identical lines per profile bind, with an empty `()` where the trigger
-     * belonged — which used up a tenth of the 500-line ring buffer without saying why anything happened. [previous] `null` =
+     * belonged — which used up a tenth of the (then 500-line, now 1000-line) ring buffer without saying why anything happened. [previous] `null` =
      * nothing determined yet; [trigger] is the short broadcast/event name (never an address); [profiles] only matter for
      * [AndroidLink.CONNECTED].
      */

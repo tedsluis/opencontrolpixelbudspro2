@@ -22,7 +22,7 @@ package io.github.tedsluis.opencontrolpixelbuds.data.codec
 /**
  * Reads the firmware version strings out of the Buds' unsolicited `GetSoftwareInfo` push (`maestro_pw.Maestro`, DECISIONS.md ADR-034):
  * the payload is `4:{1:{1:<string> 2:<string>} 2:{…} 3:{…}}` where, in every capture so far, field 2 of each entry is the firmware
- * string (`release_5.203`, `LOGS-001` frame 1431: `72 65 6c 65 61 73 65 5f 35 2e 32 30 33`). Field 1 of each entry is an identifier
+ * string (`release_5.203`, `CAP-059` frame 1431: `72 65 6c 65 61 73 65 5f 35 2e 32 30 33`). Field 1 of each entry is an identifier
  * (a serial-number candidate, `PROTOCOL.md` §6) and is **never read out or logged** (`AGENTS.md` §9). Returns the *distinct* field-2
  * strings in order; empty when the payload is not of this shape — never throws.
  *

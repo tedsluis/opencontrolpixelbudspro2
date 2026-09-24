@@ -219,11 +219,75 @@ class CodecRouterTest {
     }
 
     @Test
-    @DisplayName("out-of-scope DLCIs (e.g. 0x08) are ignored, not guessed at")
-    fun `ignores channels outside this session's implementation scope`() {
+    @DisplayName("out-of-scope DLCIs (e.g. 0x0a, \"GSND AUDIO\") are ignored, not guessed at")
+    fun `ignores channels outside the implementation scope`() {
         val router = CodecRouter()
-        val routed = router.feed(0x08, byteArrayOf(1, 2, 3, 4, 5), timestampMillis = 0)
+        val routed = router.feed(0x0a, byteArrayOf(1, 2, 3, 4, 5), timestampMillis = 0)
         assertTrue(routed.isEmpty())
+    }
+
+    // ---- resynchronisation (0044 finding APP-2) -----------------------------------------------------------------------------
+
+    @ParameterizedTest
+    @MethodSource("randomChunks")
+    @DisplayName("liveness: after any garbage prefix, a reset (fresh claim) lets the next valid frame decode on that channel")
+    fun `a valid frame decodes after garbage and a reset`(input: Pair<Int, ByteArray>) {
+        val router = CodecRouter()
+        val channel = input.first
+        router.feed(channel, input.second, timestampMillis = 0) // whatever a torn-down claim left behind
+        router.reset(channel)
+        val (valid, check) = when (channel) {
+            Dlci.MAESTRO -> hex("7e00a5032a1e221c8201190dc0cccc3d15000000001da099993e25c0cc4c3e2dc0cc4c3e080110151dea71de7d5e2551aed0ae85b618ed7e") to
+                { r: List<RoutedFrame> -> r.any { it is RoutedFrame.Eq } } // CAP-036 frame 1525 (ReadSetting 4:16 RESPONSE)
+            Dlci.FAST_PAIR_MESSAGE_STREAM -> hex("0813000401e80020") to { r: List<RoutedFrame> -> r.any { it is RoutedFrame.Anc } } // CAP-036 1182
+            else -> hex("0e0100230a210a03616c6c121a0a060864100118010a060864100118020a060861100118032001") to
+                { r: List<RoutedFrame> -> r.any { it is RoutedFrame.CaseBattery } } // CAP-059 frame 1211
+        }
+        assertTrue(check(router.feed(channel, valid, timestampMillis = 1)), "channel 0x%02x did not recover".format(channel))
+    }
+
+    @Test
+    @DisplayName("without a reset, a partial frame left by a torn-down claim misaligns the next claim's frame — the defect APP-2 fixed")
+    fun `a leftover partial frame poisons the stream unless reset`() {
+        val leftover = hex("081300") // three bytes of a Notify, then the channel was taken away
+        val next = hex("0813000401e80040")
+        val poisoned = CodecRouter().apply { feed(Dlci.FAST_PAIR_MESSAGE_STREAM, leftover, 0) }
+        assertTrue(poisoned.feed(Dlci.FAST_PAIR_MESSAGE_STREAM, next, 1).none { it is RoutedFrame.Anc })
+
+        val clean = CodecRouter().apply { feed(Dlci.FAST_PAIR_MESSAGE_STREAM, leftover, 0); reset(Dlci.FAST_PAIR_MESSAGE_STREAM) }
+        assertEquals(AncMode.ADAPTIVE, ((clean.feed(Dlci.FAST_PAIR_MESSAGE_STREAM, next, 1).single() as RoutedFrame.Anc).frame as AncFrame.Notify).currentMode)
+    }
+
+    @Test
+    @DisplayName("a Message Stream header declaring more than the maximum length is dropped, not waited for (the stream stays alive)")
+    fun `an oversized declared length does not block the stream`() {
+        val router = CodecRouter()
+        val malformed = mutableListOf<ByteArray>()
+        router.feed(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813ffff01"), 0, onMalformed = { malformed += it })
+        assertEquals(1, malformed.size)
+        val routed = router.feed(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e80020"), 1)
+        assertEquals(AncMode.OFF, ((routed.single() as RoutedFrame.Anc).frame as AncFrame.Notify).currentMode)
+    }
+
+    @Test
+    @DisplayName("DLCI 0x02: a run of bytes longer than any frame without a flag is dropped, and the next flagged frame decodes")
+    fun `an unbounded HDLC run is dropped`() {
+        val router = CodecRouter()
+        val malformed = mutableListOf<ByteArray>()
+        router.feed(Dlci.MAESTRO, byteArrayOf(0x7E) + ByteArray(MAX_HDLC_FRAME_BYTES + 10) { 0x11 }, 0, onMalformed = { malformed += it })
+        assertEquals(1, malformed.size)
+        val frame = hex("7e00a5032a1e221c8201190dc0cccc3d15000000001da099993e25c0cc4c3e2dc0cc4c3e080110151dea71de7d5e2551aed0ae85b618ed7e")
+        assertTrue(router.feed(Dlci.MAESTRO, frame, 1).any { it is RoutedFrame.Eq })
+    }
+
+    @Test
+    @DisplayName("DLCI 0x04: ACK/NAK frames get their own routed type (CAP-001 frame 2041), and the Model ID too (CAP-059 frame 1049)")
+    fun `replies and the Model ID are routed as their own types`() {
+        val routed = CodecRouter().feed(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("ff010006081201e8e840" + "ff02000403081201" + "03010003da2db1"), 0)
+        assertEquals(3, routed.size)
+        assertEquals(MessageStreamReply.Ack(0x08, 0x12, hex("01e8e840")), (routed[0] as RoutedFrame.Reply).reply)
+        assertEquals(MessageStreamReply.Nak(0x03, 0x08, 0x12, hex("01")), (routed[1] as RoutedFrame.Reply).reply)
+        assertEquals("da2db1", (routed[2] as RoutedFrame.ModelId).frame.modelIdHex)
     }
 
     @ParameterizedTest

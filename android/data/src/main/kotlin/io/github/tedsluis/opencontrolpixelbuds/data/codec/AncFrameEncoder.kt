@@ -19,8 +19,6 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.ACK_CODE
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.ACK_GROUP
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.CODE_GET
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.CODE_NOTIFY
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.CODE_SET
@@ -58,11 +56,6 @@ object AncFrameEncoder {
                 frame.currentModeBit.toByte(),
             )
             header(GROUP, CODE_NOTIFY, data.size) + data
-        }
-
-        is AncFrame.Ack -> {
-            val data = byteArrayOf(frame.echoedGroup.toByte(), frame.echoedCode.toByte()) + frame.data
-            header(ACK_GROUP, ACK_CODE, data.size) + data
         }
     }
 

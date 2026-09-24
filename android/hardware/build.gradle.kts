@@ -22,6 +22,12 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+
+    // FakeBudsTransport lives in test fixtures, not the production source set (0044 finding APP-10): shared by this
+    // module's and :data's unit tests, never packaged into the app.
+    testFixtures {
+        enable = true
+    }
 }
 
 kotlin {
@@ -37,6 +43,9 @@ dependencies {
     // so it stays usable from a manual-DI consumer too (DECISIONS.md ADR-028 only
     // decided Hilt for :app's own composition root, not a hard dependency here).
     implementation(libs.javax.inject)
+
+    testFixturesImplementation(project(":domain"))
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.junit5.jupiter.api)
     testRuntimeOnly(libs.junit5.jupiter.engine)

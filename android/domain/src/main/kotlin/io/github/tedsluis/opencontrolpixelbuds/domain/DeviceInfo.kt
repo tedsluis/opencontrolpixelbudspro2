@@ -51,3 +51,10 @@ enum class DockState {
  * (`AGENTS.md` §9).
  */
 data class DeviceInfo(val firmware: List<String>)
+
+/**
+ * The app's read-only Safe Mode (ARCHITECTURE.md §8.1, DECISIONS.md ADR-042): active when the connected Buds' firmware is not in the
+ * verified allowlist or their Fast Pair Model ID is not the Pixel Buds Pro 2's. [firmware]/[modelIdHex] are what was detected
+ * (`null` = not seen), [reason] a short, user-readable explanation. Model IDs identify a *model*, not the user's unit.
+ */
+data class SafeModeState(val firmware: List<String>?, val modelIdHex: String?, val reason: String)

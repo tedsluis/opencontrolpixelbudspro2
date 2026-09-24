@@ -19,8 +19,6 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.ACK_CODE
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.ACK_GROUP
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.CODE_GET
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.CODE_NOTIFY
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream.CODE_SET
@@ -39,9 +37,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
  * a corrupted transmission), not trusted input (AGENTS.md §11).
  *
  * Fixtures this is verified against (see `AncFrameDecoderTest`): `CAP-001`
- * frames 2039/2041/2132/2134/2159/2162/2193/2195 and `CAP-006` frames
- * 1393/1398/1627/1630/1731/1735/1862/1864 (Set/Ack pairs), `CAP-036` frames
- * 1169/1182 (Get/Notify).
+ * frames 2039/2132/2159/2193 and `CAP-006` frames 1393/1627/1731/1862 (Set),
+ * `CAP-036` frames 1169/1182 (Get/Notify). ACK/NAK frames (Group `0xFF`) are
+ * [MessageStreamReplyDecoder]'s, not this decoder's.
  */
 object AncFrameDecoder {
 
@@ -85,14 +83,6 @@ object AncFrameDecoder {
                     ),
                 )
 
-            group == ACK_GROUP && code == ACK_CODE && data.size >= 2 ->
-                BudsResult.Success(
-                    AncFrame.Ack(
-                        echoedGroup = data[0].toInt() and 0xFF,
-                        echoedCode = data[1].toInt() and 0xFF,
-                        data = data.copyOfRange(2, data.size),
-                    ),
-                )
 
             else -> BudsResult.Failure(BudsError.MalformedFrame(bytes))
         }

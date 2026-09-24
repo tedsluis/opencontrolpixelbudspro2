@@ -20,9 +20,9 @@
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
 /**
- * The pw_rpc service every DLCI 0x02 packet belongs to (`maestro_pw.Maestro`) and the four methods the captures
+ * The pw_rpc service every DLCI 0x02 packet belongs to (`maestro_pw.Maestro`) and the methods the captures
  * name (PROTOCOL.md §2.2a, DECISIONS.md ADR-034). Ids are the 65599 name hashes — computed here, and
- * asserted against the literals seen on the wire in `MaestroTest`.
+ * asserted against the literals seen on the wire in `PwRpcTest`.
  */
 object Maestro {
     val SERVICE_ID: Int = PwRpc.nameHash("maestro_pw.Maestro") // 0x7ede71ea
@@ -30,6 +30,12 @@ object Maestro {
     val METHOD_READ_SETTING: Int = PwRpc.nameHash("ReadSetting") // 0xaed0ae51
     val METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES: Int = PwRpc.nameHash("SubscribeToSettingsChanges") // 0x2821adf5
     val METHOD_GET_SOFTWARE_INFO: Int = PwRpc.nameHash("GetSoftwareInfo") // 0x7199fa44
+
+    // The official app's connect-time burst (PROTOCOL.md §6, 🟢 FACT 2026-09-24, `CAP-036` frames 1404–1570). Names only, for the
+    // debug log's method column — this app never sends them (nothing unblocks them).
+    val METHOD_GET_HARDWARE_INFO: Int = PwRpc.nameHash("GetHardwareInfo") // 0x28eca5e3
+    val METHOD_SUBSCRIBE_RUNTIME_INFO: Int = PwRpc.nameHash("SubscribeRuntimeInfo") // 0xe61e8290
+    val METHOD_SET_WALLCLOCK: Int = PwRpc.nameHash("SetWallclock") // 0x673bed4e
 
     /** `qhr` field numbers for the EQ (PROTOCOL.md §4.2, ADR-034): 16 = the active quintet, 18 = the last-saved custom one. */
     const val FIELD_EQ_ACTIVE = 16

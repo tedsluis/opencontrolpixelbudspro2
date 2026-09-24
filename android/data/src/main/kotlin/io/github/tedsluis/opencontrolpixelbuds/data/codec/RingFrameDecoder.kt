@@ -19,8 +19,6 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.ACK_CODE
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.ACK_GROUP
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.CODE_RING
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.GROUP
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream.VALUE_STOP
@@ -62,14 +60,6 @@ object RingFrameDecoder {
                 }
             }
 
-            group == ACK_GROUP && code == ACK_CODE && data.size >= 2 ->
-                BudsResult.Success(
-                    RingFrame.Ack(
-                        echoedGroup = data[0].toInt() and 0xFF,
-                        echoedCode = data[1].toInt() and 0xFF,
-                        data = data.copyOfRange(2, data.size),
-                    ),
-                )
 
             else -> BudsResult.Failure(BudsError.MalformedFrame(bytes))
         }

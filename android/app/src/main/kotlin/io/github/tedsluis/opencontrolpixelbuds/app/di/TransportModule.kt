@@ -32,7 +32,7 @@ import javax.inject.Singleton
  * Binds [BudsTransport] to the real, `BluetoothSocket`-backed
  * [RfcommBudsTransport] (`ai-sessions/0037` — the maintainer now has a real
  * bonded Pixel Buds Pro 2 to test against; `FakeBudsTransport` stays wired
- * only in test source sets, never in the shipped app, per AGENTS.md §11).
+ * only in :hardware's test fixtures, never in the shipped app, per AGENTS.md §11).
  * The default socket factory uses `BluetoothDevice.createRfcommSocketToServiceRecord()`
  * directly — the standard Android RFCOMM-client pattern, no custom transport
  * logic beyond what `RfcommBudsTransport` itself already implements.

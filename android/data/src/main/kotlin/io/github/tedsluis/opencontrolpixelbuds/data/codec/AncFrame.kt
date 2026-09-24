@@ -31,8 +31,6 @@ object AncMessageStream {
     const val CODE_GET: Int = 0x11
     const val CODE_SET: Int = 0x12
     const val CODE_NOTIFY: Int = 0x13
-    const val ACK_GROUP: Int = 0xFF
-    const val ACK_CODE: Int = 0x01
 }
 
 /**
@@ -52,13 +50,11 @@ sealed class AncFrame {
      * constant the peer expects, not app configuration (PROJECT_RULES.md §8
      * rule 22's hardcoded-strings exception).
      *
-     * // TODO(verify): the 16-byte [reserved] field's real content is
-     * // undecoded — every captured official-app Set frame carries a
-     * // different, opaque value here (CAP-001/CAP-006 fixtures), and this
-     * // project has no evidence for what a compliant value should be. This
-     * // encoder zero-fills it by default; whether the Buds accept a
-     * // zero-filled reserved field has not been verified against real
-     * // hardware (none available in this environment). See PROTOCOL.md §4.1.
+     * [reserved] is bytes 8–23 of the frame. 🟡 HYPOTHESIS (strong, PROTOCOL.md §4.1, 2026-09-24): an 8-byte message nonce +
+     * 8-byte MAC per the Fast Pair MAC extension — the official app's frames carry a different, random-looking value every time
+     * (CAP-001/CAP-006 fixtures). This app cannot compute a MAC (it needs the account key Google Play services holds, ADR-008/025),
+     * so it zero-fills them; firmware `release_5.203` ACKs and applies such a Set (`CAP-059` 2768 → 2779 → 2782), 🟡 i.e. it does
+     * not verify the MAC. A firmware that does would answer with a NAK reason `0x03`, which the app reports as a failure.
      */
     data class Set(
         val mode: AncMode,
@@ -101,19 +97,5 @@ sealed class AncFrame {
         val currentMode: AncMode? get() = AncMode.fromWireBit(currentModeBit)
     }
 
-    /** Response to a [Set], per PROTOCOL.md §2.1's Message Stream ACK shape. */
-    data class Ack(val echoedGroup: Int, val echoedCode: Int, val data: ByteArray) : AncFrame() {
-        override fun equals(other: Any?): Boolean =
-            other is Ack &&
-                echoedGroup == other.echoedGroup &&
-                echoedCode == other.echoedCode &&
-                data.contentEquals(other.data)
-
-        override fun hashCode(): Int {
-            var result = echoedGroup
-            result = 31 * result + echoedCode
-            result = 31 * result + data.contentHashCode()
-            return result
-        }
-    }
+    // The ACK/NAK to a [Set] is decoded by MessageStreamReplyDecoder (one routed type for every command, 0044 finding APP-3).
 }

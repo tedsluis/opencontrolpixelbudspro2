@@ -14,9 +14,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission
-        android:name="android.permission.BLUETOOTH_SCAN"
-        android:usesPermissionFlags="neverForLocation" />
+    <!-- BLUETOOTH_SCAN is not declared (removed 2026-09-24, maintainer-approved, 0044 APP-13): nothing scans. Re-add it,
+         flagged neverForLocation (AGENTS.md §2), only with ADR-006's bounded battery-advertisement scan. -->
 
     <!-- CompanionDeviceManager.associate() (BudsCompanionPairing, AGENTS.md §7's sanctioned
          discovery path) throws IllegalStateException at call time, not at manifest-parse or

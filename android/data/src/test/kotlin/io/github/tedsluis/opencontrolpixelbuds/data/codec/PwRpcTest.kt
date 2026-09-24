@@ -40,6 +40,12 @@ class PwRpcTest {
         assertEquals(0xaed0ae51.toInt(), Maestro.METHOD_READ_SETTING)
         assertEquals(0x2821adf5, Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES)
         assertEquals(0x7199fa44, Maestro.METHOD_GET_SOFTWARE_INFO)
+        // The connect-time burst (PROTOCOL.md §6, CAP-036 frames 1404–1570), names for the debug log only.
+        assertEquals(0x28eca5e3, Maestro.METHOD_GET_HARDWARE_INFO)
+        assertEquals(0xe61e8290.toInt(), Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO)
+        assertEquals(0x673bed4e, Maestro.METHOD_SET_WALLCLOCK)
+        assertEquals("GetHardwareInfo", PwRpc.methodName(Maestro.SERVICE_ID, 0x28eca5e3))
+        assertEquals("Maestro/0x12345678", PwRpc.methodName(Maestro.SERVICE_ID, 0x12345678))
     }
 
     @Test

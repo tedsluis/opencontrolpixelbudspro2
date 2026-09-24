@@ -47,6 +47,7 @@ dependencies {
     // already-decided local-persistence mechanism (ARCHITECTURE.md §2/§9, "Encrypted DataStore").
     implementation(libs.datastore.preferences)
 
+    testImplementation(testFixtures(project(":hardware"))) // FakeBudsTransport (0044 APP-10)
     testImplementation(libs.junit5.jupiter.api)
     testImplementation(libs.junit5.jupiter.params)
     testRuntimeOnly(libs.junit5.jupiter.engine)

@@ -75,27 +75,27 @@ class RingFrameDecoderTest {
     @Test
     @DisplayName("CAP-025 frame 2044: 3-data-byte ACK variant")
     fun `decodes the longer Ack variant`() {
-        val result = RingFrameDecoder.decode(hex("ff010003040100"))
+        val result = MessageStreamReplyDecoder.decode(hex("ff010003040100"))
         assertInstanceOf(BudsResult.Success::class.java, result)
         val ack = (result as BudsResult.Success).value
-        assertInstanceOf(RingFrame.Ack::class.java, ack)
-        ack as RingFrame.Ack
+        assertInstanceOf(MessageStreamReply.Ack::class.java, ack)
+        ack as MessageStreamReply.Ack
         assertEquals(0x04, ack.echoedGroup)
         assertEquals(0x01, ack.echoedCode)
-        assertTrue(byteArrayOf(0x00).contentEquals(ack.data))
+        assertTrue(byteArrayOf(0x00).contentEquals(ack.state))
     }
 
     @Test
     @DisplayName("CAP-025 frame 2048: 2-data-byte ACK variant")
     fun `decodes the shorter Ack variant`() {
-        val result = RingFrameDecoder.decode(hex("ff0100020401"))
+        val result = MessageStreamReplyDecoder.decode(hex("ff0100020401"))
         assertInstanceOf(BudsResult.Success::class.java, result)
         val ack = (result as BudsResult.Success).value
-        assertInstanceOf(RingFrame.Ack::class.java, ack)
-        ack as RingFrame.Ack
+        assertInstanceOf(MessageStreamReply.Ack::class.java, ack)
+        ack as MessageStreamReply.Ack
         assertEquals(0x04, ack.echoedGroup)
         assertEquals(0x01, ack.echoedCode)
-        assertTrue(ack.data.isEmpty())
+        assertTrue(ack.state.isEmpty())
     }
 
     @Nested

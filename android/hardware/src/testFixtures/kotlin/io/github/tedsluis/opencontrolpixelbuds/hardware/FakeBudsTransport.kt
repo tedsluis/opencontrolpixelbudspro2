@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import java.util.UUID
 
 /**
- * Scripted [BudsTransport] for domain/data unit tests — no real
+ * Scripted [BudsTransport] for domain/data unit tests (test fixtures source set — never in the app, 0044 APP-10) — no real
  * `BluetoothSocket` involved (AGENTS.md §11). [connect]/[disconnect] are
  * trivial state flips, not real socket I/O — `RfcommBudsTransport` is the
  * real implementation, unit-tested only up to what doesn't require actual
@@ -51,6 +51,10 @@ class FakeBudsTransport : BudsTransport {
     /** Every [openChannel] call in order — lets a test assert claim/release behaviour. */
     val openChannelCalls = mutableListOf<Int>()
     val closeChannelCalls = mutableListOf<Int>()
+
+    /** Test hook: runs after every successful [openChannel], so a test can script what the Buds send on a fresh claim
+     * (e.g. the Model ID frame, DECISIONS.md ADR-042). */
+    var onOpenChannel: (suspend (channelId: Int) -> Unit)? = null
 
     /** When set, [openChannel] fails with this error (a busy Message Stream channel). */
     var openChannelShouldFail: BudsError? = null
@@ -89,6 +93,7 @@ class FakeBudsTransport : BudsTransport {
         if (!connected) return BudsResult.Failure(BudsError.ConnectionLost)
         openChannelShouldFail?.let { return BudsResult.Failure(it) }
         openChannels += channelId
+        onOpenChannel?.invoke(channelId)
         return BudsResult.Success(Unit)
     }
 

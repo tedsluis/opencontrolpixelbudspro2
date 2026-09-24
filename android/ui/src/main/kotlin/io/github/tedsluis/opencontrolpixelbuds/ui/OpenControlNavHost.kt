@@ -158,6 +158,10 @@ data class OpenControlUiState(
     val dockState: DockState = DockState.UNKNOWN,
     /** Wall-clock time [dockState] was last updated — `null` before any `Notify` arrived this app run. */
     val dockStateUpdatedAt: Long? = null,
+    /** [dockState] was read within ~2 s of a Message Stream claim opening (ADR-024: provisional). */
+    val dockStateProvisional: Boolean = false,
+    /** Non-null while the app is in read-only Safe Mode (ARCHITECTURE.md §8.1, ADR-042). */
+    val safeMode: io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState? = null,
     /** What the Buds announced at connect (firmware); `null` = nothing yet. */
     val deviceInfo: DeviceInfo? = null,
     /** The earbud a Find My Buds ring was started on and not yet stopped (`null` = none). */
@@ -266,6 +270,8 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     dockStateUpdatedAt = state.dockStateUpdatedAt,
                     deviceInfo = state.deviceInfo,
                     onRefreshBattery = actions.onRefreshBattery,
+                    dockStateProvisional = state.dockStateProvisional,
+                    safeMode = state.safeMode,
                     onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
                     onPair = actions.onPair,
                     onRequestPermissions = actions.onRequestPermissions,

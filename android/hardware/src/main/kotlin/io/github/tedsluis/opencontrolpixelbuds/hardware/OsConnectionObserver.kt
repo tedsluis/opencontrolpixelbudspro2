@@ -52,7 +52,7 @@ import kotlinx.coroutines.launch
  * Every **change** is logged with its trigger (always-on, no address). The evaluation itself is [LinkEvaluation]
  * (unit-tested); flapping is smoothed by [settled].
  *
- * **`ai-sessions/0042` — why the first hardware run showed a stale card (`LOGS-001`, kept locally):** the receiver used to be
+ * **`ai-sessions/0042` — why the first hardware run showed a stale card (`CAP-059`, formerly `LOGS-001`):** the receiver used to be
  * registered `RECEIVER_NOT_EXPORTED`, and in that run it received **no** broadcast at all between 17:17:31 and 17:20:10 although
  * the *unflagged* receiver of the (since removed) `HfpBatteryReader` received the very same `BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED`
  * broadcasts (17:17:49.6 and 17:17:50.8) inside that window — the Buds were bonded, connected over HFP/A2DP and listed as
@@ -62,8 +62,8 @@ import kotlinx.coroutines.launch
  * every [refresh] event the caller supplies (resume, a bond change, a change of the app's own session) and whenever a
  * profile proxy binds — still event-driven, no timer.
  *
- * // TODO(verify): the flag change is derived from the evidence above, not yet re-tested on the phone — the maintainer
- * // re-test (a) in `ai-sessions/0042` confirms/refutes it (a card that follows Android within ~2 s, without a tap).
+ * Hardware-verified in `CAP-060` (`ai-sessions/0043`): the card followed Android's own state once the observer was re-created
+ * (`CAP-060-EVENT-NOTES.md` 17:59:02, 17:59:42) — the flag change above is confirmed, no longer a `TODO(verify)`.
  */
 class OsConnectionObserver(
     private val context: Context,

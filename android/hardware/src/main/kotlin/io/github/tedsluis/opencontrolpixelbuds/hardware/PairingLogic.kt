@@ -94,7 +94,7 @@ object PairingLogic {
      * could not be read): a bond that succeeded is never reported as a timeout, whether or not its
      * `ACTION_BOND_STATE_CHANGED` broadcast ever reached us. Returns `null` for success, otherwise the failure to report.
      *
-     * `ai-sessions/0042` (`LOGS-001`): `createBond()` at 17:17:48.024, the HCI log shows *Authentication Complete* at 17:17:49.121
+     * `ai-sessions/0042` (`CAP-059`): `createBond()` at 17:17:48.024, the HCI log shows *Authentication Complete* at 17:17:49.121
      * and Android listed the Buds as bonded, yet the app reported *"Pairing: bond timed out"* 45 s later because its
      * (NOT_EXPORTED) receiver never saw the broadcast.
      */

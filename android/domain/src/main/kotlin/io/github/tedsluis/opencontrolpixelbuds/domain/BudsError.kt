@@ -51,8 +51,23 @@ sealed class BudsError {
 
         override fun hashCode(): Int = raw.contentHashCode()
     }
+    /**
+     * A write/control command was refused by the app's own Safe-Mode gate (ARCHITECTURE.md §8.1, DECISIONS.md ADR-042): the
+     * connected Buds' firmware is not one this app was verified against, has not been announced yet, or the Fast Pair Model ID is
+     * not the Pixel Buds Pro 2's. Nothing was sent.
+     */
     data object UnsupportedFirmware : BudsError()
     data object PermissionDenied : BudsError()
+
+    /** No bonded Pixel Buds was found (pairing is a separate, earlier step) — distinct from a missing permission (0044 APP-8). */
+    data object NotPaired : BudsError()
+
+    /**
+     * The Buds answered a Message Stream command with a NAK (Fast Pair acknowledgement spec): [reasonCode] as sent
+     * (`0x00` not supported, `0x01` device busy, `0x02` not allowed in the current state, `0x03` incorrect MAC, `0x04` redundant),
+     * [detail] its readable name. Nothing about the command is assumed to have happened.
+     */
+    data class CommandRejected(val reasonCode: Int, val detail: String) : BudsError()
 
     /**
      * The Buds did not announce which pw_rpc channel this connection uses (their unsolicited `GetSoftwareInfo`

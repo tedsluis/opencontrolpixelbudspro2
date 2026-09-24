@@ -38,7 +38,7 @@ object BatteryMessageStream {
  * One decoded "Battery updated" frame (ADR-031: `b1` = Left, `b2` = Right; ADR-033's 2026-09-20 update: each byte is
  * `0bSVVVVVVV`). `b3` (observed `0xff` = unknown) is deliberately not interpreted beyond that: the maintainer's
  * acceptance does not cover any other `b3` value as the Case battery, so [case] is always
- * [BatteryLevel.Unavailable] here (the DLCI 0x08 message, ADR-014, is the separate, unapproved Case source).
+ * [BatteryLevel.Unavailable] here — the Case comes from the separate DLCI 0x08 message ([CaseBatteryFrameDecoder], ADR-014/035/039).
  */
 data class BatteryFrame(
     val left: BatteryLevel,

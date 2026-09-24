@@ -27,8 +27,9 @@ import kotlinx.coroutines.flow.Flow
  * state, never the authority on it (ARCHITECTURE.md §3.1) — [ancMode] is
  * reconciled against a fresh read on every (re)connection, not assumed to
  * still hold across a reconnect. See ARCHITECTURE.md §3.1's per-feature table
- * for exactly how each Flow below is reconciled (push-based for battery,
- * query/response for ANC, provisional-until-an-unsolicited-update for EQ).
+ * for exactly how each Flow below is reconciled (push-based battery on each
+ * on-demand claim, a `Get`/`Notify` query per Message Stream claim for ANC,
+ * a `ReadSetting` at Connect for EQ).
  */
 interface BudsRepository {
     val connectionState: Flow<ConnectionState>
@@ -74,6 +75,16 @@ interface BudsRepository {
     /** Wall-clock time [dockState] was last updated, or `null` before any `Notify` has arrived this app run. */
     val dockStateUpdatedAt: Flow<Long?>
 
+    /**
+     * `true` while the current [dockState] was received within ~2 s of the Message Stream channel opening — DECISIONS.md ADR-024's
+     * 2026-09-18 consequence: such a first reading can be stale and self-corrects with a spontaneous re-Notify, so the UI marks it
+     * provisional; a later `Notify` in the same claim replaces it.
+     */
+    val dockStateProvisional: Flow<Boolean>
+
+    /** Non-null while the app is in read-only Safe Mode (ARCHITECTURE.md §8.1, DECISIONS.md ADR-042). */
+    val safeMode: Flow<SafeModeState?>
+
     /** What the Buds announced at connect (firmware), or `null` before the announcement / after a disconnect. */
     val deviceInfo: Flow<DeviceInfo?>
 
@@ -98,7 +109,7 @@ interface BudsRepository {
     val unidentifiedFrames: Flow<UnidentifiedFrame>
 
     /** Connects to the already-bonded Buds (ARCHITECTURE.md §9.0a step 6) —
-     * fails with [BudsError.PermissionDenied] if no bonded device exists yet
+     * fails with [BudsError.NotPaired] if no bonded device exists yet
      * (pairing is a separate, prior step, `ai-sessions/0036`). */
     suspend fun connect(): BudsResult<Unit>
     suspend fun disconnect(): BudsResult<Unit>

@@ -193,6 +193,9 @@ object PwRpc {
                 Maestro.METHOD_READ_SETTING -> "ReadSetting"
                 Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES -> "SubscribeToSettingsChanges"
                 Maestro.METHOD_GET_SOFTWARE_INFO -> "GetSoftwareInfo"
+                Maestro.METHOD_GET_HARDWARE_INFO -> "GetHardwareInfo"
+                Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO -> "SubscribeRuntimeInfo"
+                Maestro.METHOD_SET_WALLCLOCK -> "SetWallclock"
                 else -> "Maestro/0x%08x".format(methodId)
             }
         } else {

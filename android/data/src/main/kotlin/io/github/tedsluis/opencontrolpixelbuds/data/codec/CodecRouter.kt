@@ -34,6 +34,12 @@ object Dlci {
 /** One fully-decoded, recognized inbound frame, tagged by which feature it belongs to. */
 sealed class RoutedFrame {
     data class Anc(val frame: AncFrame) : RoutedFrame()
+
+    /** An ACK/NAK on the Message Stream, for whichever command it echoes (0044 finding APP-3). */
+    data class Reply(val reply: MessageStreamReply) : RoutedFrame()
+
+    /** The Model ID the Buds send on every Message Stream open (Safe-Mode gate, DECISIONS.md ADR-042). */
+    data class ModelId(val frame: ModelIdFrame) : RoutedFrame()
     data class Eq(val frame: EqFrame) : RoutedFrame()
     data class Ring(val frame: RingFrame) : RoutedFrame()
     data class Battery(val frame: BatteryFrame) : RoutedFrame()
@@ -69,14 +75,36 @@ sealed class RoutedFrame {
  * frames are length-prefixed (`[Group][Code][Len:2BE][Data]`, PROTOCOL.md
  * §2.1) — each channel therefore needs its own boundary-detection strategy,
  * matching ARCHITECTURE.md §5's "each per-DLCI codec is implemented
- * independently" rule. Only DLCI 0x02/0x04 are handled — any other channelId
- * is out of this session's implementation scope (ARCHITECTURE.md §5a) and is
- * ignored rather than guessed at.
+ * independently" rule. DLCI 0x02/0x04/0x08 are handled — any other channelId
+ * is out of scope (ARCHITECTURE.md §5a) and is ignored rather than guessed at.
+ *
+ * **Resynchronisation (0044 finding APP-2):** each channel's splitter is [reset] whenever that channel is opened, closed or
+ * lost, and every splitter drops its buffer when a frame would exceed its maximum size — so one frame cut off by a contended,
+ * torn-down on-demand channel (ADR-032/038) can never misalign the frames of a later claim. [feed] and [reset] are synchronised:
+ * the repository calls them from different coroutines.
  */
 class CodecRouter {
     private val maestroSplitter = HdlcFrameSplitter()
     private val messageStreamSplitter = MessageStreamFrameSplitter()
     private val gsndSplitter = MessageStreamFrameSplitter() // DLCI 0x08 uses the same [Group][Code][Len:2BE][Value] framing (§2.3)
+
+    /** Drops any partial frame buffered for [channelId] (a fresh open, a deliberate close, or a lost channel). */
+    @Synchronized
+    fun reset(channelId: Int) {
+        when (channelId) {
+            Dlci.MAESTRO -> maestroSplitter.reset()
+            Dlci.FAST_PAIR_MESSAGE_STREAM -> messageStreamSplitter.reset()
+            Dlci.GSND_CONTROL -> gsndSplitter.reset()
+        }
+    }
+
+    /** [reset] for every channel — a new connection starts with empty buffers. */
+    @Synchronized
+    fun resetAll() {
+        maestroSplitter.reset()
+        messageStreamSplitter.reset()
+        gsndSplitter.reset()
+    }
 
     /**
      * Feeds one inbound `(channelId, bytes)` chunk and returns every
@@ -90,6 +118,7 @@ class CodecRouter {
      * [BudsResult.Failure]s in [onMalformed] and dropped — never surfaced as
      * a crash (ARCHITECTURE.md §5).
      */
+    @Synchronized
     fun feed(
         channelId: Int,
         bytes: ByteArray,
@@ -101,7 +130,7 @@ class CodecRouter {
         val routed = mutableListOf<RoutedFrame>()
 
         when (channelId) {
-            Dlci.MAESTRO -> for (frame in maestroSplitter.feed(bytes)) {
+            Dlci.MAESTRO -> for (frame in maestroSplitter.feed(bytes, onMalformed)) {
                 when (val decoded = Hdlc.decode(frame)) {
                     is BudsResult.Failure -> onMalformed(frame)
                     is BudsResult.Success -> {
@@ -128,10 +157,20 @@ class CodecRouter {
                 }
             }
 
-            Dlci.FAST_PAIR_MESSAGE_STREAM -> for (frame in messageStreamSplitter.feed(bytes)) {
+            Dlci.FAST_PAIR_MESSAGE_STREAM -> for (frame in messageStreamSplitter.feed(bytes, onMalformed)) {
                 val group = frame.getOrNull(0)?.toInt()?.and(0xFF)
                 val code = frame.getOrNull(1)?.toInt()?.and(0xFF)
 
+                val replyResult = MessageStreamReplyDecoder.decode(frame)
+                if (replyResult is BudsResult.Success) {
+                    routed += RoutedFrame.Reply(replyResult.value)
+                    continue
+                }
+                val modelIdResult = ModelIdFrameDecoder.decode(frame)
+                if (modelIdResult is BudsResult.Success) {
+                    routed += RoutedFrame.ModelId(modelIdResult.value)
+                    continue
+                }
                 val ancResult = AncFrameDecoder.decode(frame)
                 if (ancResult is BudsResult.Success) {
                     routed += RoutedFrame.Anc(ancResult.value)
@@ -169,7 +208,7 @@ class CodecRouter {
                 }
             }
 
-            Dlci.GSND_CONTROL -> for (frame in gsndSplitter.feed(bytes)) {
+            Dlci.GSND_CONTROL -> for (frame in gsndSplitter.feed(bytes, onMalformed)) {
                 val decoded = CaseBatteryFrameDecoder.decode(frame)
                 if (decoded is BudsResult.Success) {
                     routed += RoutedFrame.CaseBattery(decoded.value)
@@ -229,11 +268,16 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
  * §2.2a's shared-flag HDLC convention (one frame's trailing flag doubles as
  * the next frame's leading flag). Returns each complete frame with both its
  * own leading and trailing flag byte, ready for [Hdlc.decode]. */
-internal class HdlcFrameSplitter {
+internal class HdlcFrameSplitter(private val maxFrameBytes: Int = MAX_HDLC_FRAME_BYTES) {
     private val buffer = ArrayList<Byte>()
     private var inFrame = false
 
-    fun feed(bytes: ByteArray): List<ByteArray> {
+    fun reset() {
+        buffer.clear()
+        inFrame = false
+    }
+
+    fun feed(bytes: ByteArray, onOverflow: (ByteArray) -> Unit = {}): List<ByteArray> {
         val frames = mutableListOf<ByteArray>()
         for (b in bytes) {
             if ((b.toInt() and 0xFF) == 0x7E) {
@@ -244,6 +288,11 @@ internal class HdlcFrameSplitter {
                 inFrame = true
             } else if (inFrame) {
                 buffer.add(b)
+                if (buffer.size > maxFrameBytes) {
+                    // No flag for longer than any real frame: garbage or a lost flag. Drop it and wait for the next flag.
+                    onOverflow(buffer.toByteArray())
+                    reset()
+                }
             }
             // Bytes arriving before the very first flag (stream not yet
             // resynced) are discarded, not buffered.
@@ -254,15 +303,24 @@ internal class HdlcFrameSplitter {
 
 /** Splits a DLCI 0x04 byte stream using the length-prefixed
  * `[Group:1][Code:1][Len:2BE][Data:Len]` framing (PROTOCOL.md §2.1). */
-internal class MessageStreamFrameSplitter {
+internal class MessageStreamFrameSplitter(private val maxDataBytes: Int = MAX_MESSAGE_STREAM_DATA_BYTES) {
     private val buffer = ArrayList<Byte>()
 
-    fun feed(bytes: ByteArray): List<ByteArray> {
+    fun reset() = buffer.clear()
+
+    fun feed(bytes: ByteArray, onOverflow: (ByteArray) -> Unit = {}): List<ByteArray> {
         buffer.addAll(bytes.toList())
         val frames = mutableListOf<ByteArray>()
         while (true) {
             if (buffer.size < 4) break
             val declaredLength = ((buffer[2].toInt() and 0xFF) shl 8) or (buffer[3].toInt() and 0xFF)
+            if (declaredLength > maxDataBytes) {
+                // A length no real frame has (a corrupted or misaligned header): waiting for it would block the stream until the
+                // app restarts. Drop the buffer; the next claim starts clean anyway (reset()).
+                onOverflow(buffer.toByteArray())
+                buffer.clear()
+                break
+            }
             val totalLength = 4 + declaredLength
             if (buffer.size < totalLength) break
             frames += buffer.subList(0, totalLength).toByteArray()
@@ -271,3 +329,13 @@ internal class MessageStreamFrameSplitter {
         return frames
     }
 }
+
+/**
+ * Largest accepted Message Stream data length (DLCI 0x04/0x08). The largest real frame in the captures is DLCI 0x08's
+ * `02 04 00 41` (65 data bytes, `CAP-060` frame 1316); the spec's length is a uint16, so 1024 leaves wide headroom without letting
+ * a corrupted header stall the stream.
+ */
+internal const val MAX_MESSAGE_STREAM_DATA_BYTES: Int = 1024
+
+/** Largest accepted unescaped pw_hdlc frame body between two flags (DLCI 0x02); real pw_rpc packets are well under 300 bytes. */
+internal const val MAX_HDLC_FRAME_BYTES: Int = 4096

@@ -36,6 +36,8 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.core)
+    // Not referenced by this module's code, but NOT dead (0044 finding APP-12, checked 2026-09-24): navigation-compose pulls
+    // lifecycle-viewmodel-compose 2.6.2 transitively; this direct dependency aligns it with the rest of lifecycle 2.8.6.
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.navigation.compose) // ARCHITECTURE.md §2.4: navigation structure.
     debugImplementation(libs.compose.ui.tooling)

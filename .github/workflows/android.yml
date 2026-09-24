@@ -1,0 +1,59 @@
+name: Android build and test
+
+# Builds and tests the app on every change under android/ (0044 audit finding GOV-10, added by ai-sessions/0045):
+# PROJECT_RULES.md rule 16 ("every merge to main must compile") and ARCHITECTURE.md §14 ("a CI/lint check should
+# assert [no INTERNET permission]") were not enforced by any workflow before this one. Actions are pinned to full
+# commit SHAs (tag in the trailing comment). This workflow is CI tooling only — it adds nothing to the app itself.
+
+on:
+  pull_request:
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: false
+
+      - name: No INTERNET permission in any manifest (AGENTS.md §1)
+        run: |
+          if grep -rIn --include=AndroidManifest.xml "android.permission.INTERNET" . ; then
+            echo "::error::INTERNET permission found — forbidden by AGENTS.md §1"
+            exit 1
+          fi
+          echo "No INTERNET permission declared."
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
+
+      - name: Build, unit tests and lint
+        run: ./gradlew --no-daemon assembleDebug testDebugUnitTest test lint
+
+      - name: No INTERNET permission in the merged manifest
+        run: |
+          merged=$(find app/build/intermediates -name AndroidManifest.xml -path "*merged_manifest*" | head -1)
+          test -n "$merged" || { echo "::error::merged manifest not found"; exit 1; }
+          if grep -n "android.permission.INTERNET" "$merged"; then
+            echo "::error::a dependency merged the INTERNET permission into $merged"
+            exit 1
+          fi
+          echo "Merged manifest ($merged) has no INTERNET permission."

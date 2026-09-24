@@ -34,9 +34,12 @@ import androidx.core.app.NotificationCompat
  * — started/stopped per ARCHITECTURE.md §6.0a's documented lifecycle, never
  * eagerly at process start and never restarted automatically
  * (`START_NOT_STICKY`, matching the "no aggressive background retry loops"
- * rule, ARCHITECTURE.md §6). `:app`'s composition root starts/stops this
- * service in response to `ConnectionStateMachine` transitions — this class
- * itself holds no Bluetooth logic, only the notification/lifecycle shell.
+ * rule, ARCHITECTURE.md §6). `:app`'s `OpenControlApplication` starts/stops this
+ * service from the application scope in response to `ConnectionState` changes, and
+ * re-sends the start intent to update the text (each `onStartCommand` re-posts the
+ * notification; the unused `updateStatus` was removed, 0044 APP-6) — this class
+ * itself holds no Bluetooth logic, only the notification/lifecycle shell. The status
+ * text never includes raw payload content (AGENTS.md §9).
  *
  * // TODO(verify): not exercised against a real foreground-service launch in
  * // this environment (no device/emulator run performed this session) —
@@ -52,15 +55,6 @@ class BudsForegroundService : Service() {
         // (API 29+) is unconditionally available — no version check needed.
         startForeground(NOTIFICATION_ID, buildNotification(statusText), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
         return START_NOT_STICKY
-    }
-
-    /** Updates the persistent notification's status line — e.g. current ANC
-     * mode once `Ready` (ARCHITECTURE.md §6.0a). Never includes raw payload
-     * content (AGENTS.md §9's logging-privacy rules apply to user-visible
-     * text too). */
-    fun updateStatus(statusText: String) {
-        val manager = getSystemService(NotificationManager::class.java)
-        manager?.notify(NOTIFICATION_ID, buildNotification(statusText))
     }
 
     private fun buildNotification(statusText: String): Notification {
