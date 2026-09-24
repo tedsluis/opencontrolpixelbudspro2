@@ -173,6 +173,7 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 > specifically (vs. some other Pigweed-RPC Google service) remains 🟡 HYPOTHESIS (strong) — no
 > Maestro-specific command content (an ANC/EQ write) has been decoded from it yet; see
 > `PROTOCOL.md` §2.2a/§2.3 for the full reasoning and what's still needed to close that gap.
+> *(Pointer 2026-09-24, `ai-sessions/0045`: these pw_hdlc address values come from a wrong byte split — the address is a one-terminated varint, e.g. `00 3b` = 3712, paired with the RpcPacket `channel_id`; see `PROTOCOL.md` §2.2a and `DECISIONS.md` ADR-034.)*
 
 **Protobuf framing evidence (🟢 FACT):** frame 1673's payload (channel 4, DLCI 0x08) is
 `09 03 00 00 03 01 00 1b 08 9f 03 10 de af a9 aa 0e 1a 10` + `"Europe/Amsterdam"` (16 ASCII

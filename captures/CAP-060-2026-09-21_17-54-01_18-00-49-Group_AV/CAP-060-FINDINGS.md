@@ -55,50 +55,57 @@ open-questions list did not anticipate (see §4 below).
 
 ## 2. Why was the Case battery status unavailable? (`ai-sessions/0043` question 2)
 
-**8/8 `Case battery not read: Timeout` — confirmed exhaustively** (`grep -c`, `CAP-060-debug-export.log`).
-Every one of the app's 8 attempts to claim DLCI 0x08 in this session either fails outright or is
-closed within milliseconds to a few seconds of opening — **zero successes**, matching the prompt's
-own spot-check.
+**8/8 `Case battery not read: Timeout`** (`grep -c "Case battery not read" CAP-060-debug-export.log` → 8). This capture ran the
+`ai-sessions/0042` build: a **receive-only** claim (ADR-035 item 2) with no retry.
 
-**But the Buds are not silent on DLCI 0x08 — they push `Group 0x0e Code 0x01` (Case battery)
-continuously throughout the entire session, to someone else.** `tshark -Y "btrfcomm.dlci==0x08 &&
-btrfcomm.frame_type==0xef"` shows a reassembled `Group 0x0e Code 0x01` payload
-(`0a21 0a03 616c6c 121a 0a0608641001 1801 0a0608641001 1802 0a060854100118032001` — Left 100, Right
-100, Case 0x54=84%) recurring at least 13 times across the full 408s, at 17:54:45.081, 17:54:59.025,
-17:55:25.057, 17:55:35.28, 17:56:08.797, 17:56:23.603, 17:59:05.800, 17:59:16.839, 17:59:24.998,
-17:59:48.977/17:59:57.207 (payload value updates to `0854180318012001` between these two — Case level
-changed), and 18:00:33.964 — see frames 1307/1308, 1653, 2309/2310, 2628, 2927/2928, 3064/3065,
-4853/4856, 5038/5041, 5167/5168, 5849/5856, 6091, 6857/6859. **None of these successful exchanges
-belong to the app's own on-demand claim** — cross-referencing against the app's own logged
-attempt/close timestamps (`CAP-060-debug-export.log`), every one of the app's 8 attempts is a
-separate, short-lived SABM/DISC pair (e.g. frames 1864→1870, opened 17:54:57.372, closed
-17:54:57.382 — **10ms** later, Buds-initiated `DISC`) that never overlaps with when these successful
-pushes land.
+**Every Case push that follows a channel open answers a phone-side `0e 04 00 00` request; the app's receive-only claims got
+none.** 🟢 FACT. Command: per-open reassembly of `tshark -r CAP-060-btsnoop_hci.log -Y "btrfcomm.dlci==8" -T fields -e frame.number
+-e frame.time_relative -e frame.p2p_dir -e btrfcomm.frame_type -e data.data` (each direction's `[Group][Code][Len:2BE][Value]` stream
+is rebuilt per `SABM`; script and full table in `ai-sessions/0045_MAINTENANCE_RESULT_2026_09_24.md` §3.1). Per open:
 
-**Who is the other party?** The first successful DLCI 0x08 session (frames 1223–1822, opened
-17:54:44.486, closed 17:54:56.579 — a full **12 seconds**, with 2 Case-battery pushes inside it) opens
-**before** the app's own first DLCI 0x08 attempt (which starts at 17:54:56.582, 3ms after that session
-closes) and before the app's `RFCOMM channel 0x08` log line ever appears. This process cannot be the
-app. Per this project's own established pattern for DLCI 0x04 (`CAP-059-FINDINGS.md` §4;
-`DECISIONS.md`'s prior contention findings), 🟡 **HYPOTHESIS, strong:** this is Google Play
-services'/Fast Pair's own DLCI 0x08 client, present and active throughout this capture (GMS was
-confirmed present on this phone — the app's DLCI 0x04 traffic also shows the same collision signature
-against a non-app opener, consistent with GMS's known behavior on DLCI 0x04).
+| `SABM` (t) | Opened by | Phone `0e 04` | First `0e 01` push | Channel ended |
+|---|---|---|---|---|
+| 1223 (38.689 s) | Play services | 1284 (+0.431 s) | 1307 (+0.595 s) | 1822, phone `DISC` (+12.09 s) |
+| 1864 (51.574 s) | **app**, attempt 2 | — | — | 1870, **Buds** `DISC` (+0.01 s) |
+| 1928 (52.942 s) | Play services | 1979 (+0.263 s) | 1993 (+0.286 s) | 2216 |
+| 2245 (78.295 s) | Play services | 2279 (+0.586 s; `04 15 00 00 0e 04 00 00`) | 2310 (+0.964 s) | 2498 |
+| 2520 (86.641 s) | **app**, attempt 2 | — | — | 2525, **Buds** `DISC` (+0.13 s) |
+| 2584 (88.729 s) | Play services | 2592 (+0.199 s, bundled) | 2628 (+0.755 s) | 3124 |
+| 3770 (213.085 s) | **app** | — | none; **zero** data frames | 3783, app release (+2.78 s) |
+| 4221 (277.014 s) | **app** | — | none; zero data frames | 4246, app release (+2.47 s) |
+| 4460 (294.878 s) | **app** | — | none; zero data frames | 4698, phone-side `DISC` (+1.85 s) |
+| 4792 (299.231 s) | Play services | 4830 (+0.591 s) | 4856 (+0.771 s) | 4948 |
+| 4975 (310.300 s) | Play services | 5015 (+0.542 s) | 5041 (+0.742 s) | 5084 |
+| 5139 (318.615 s) | Play services | 5149 (+0.238 s, bundled) | 5168 (+0.623 s) | 5226 |
+| 5262 (328.897 s) | Play services | — | none; zero data frames | ACL Disconnection Complete, frame 5277 |
+| 5449 (335.540 s) | **app** | — | none; zero data frames | 5749, phone-side `DISC` (+2.15 s) |
+| 5818 (342.729 s) | Play services | 5828 (+0.179 s, bundled) | 5856 (+0.610 s) | 5968 |
+| 5989 (348.652 s) | **app**, attempt 2 | — | — | 5996, **Buds** `DISC` (+0.13 s) |
+| 6058 (350.949 s) | Play services | 6068 (+0.170 s, bundled) | 6091 (+0.460 s) | — |
+| 6419 (383.865 s) | **app** | — | none; zero data frames | 6728, phone-side `DISC` (+2.04 s) |
+| 6789 (388.070 s) | Play services | 6833 (+0.069 s) | 6859 (+0.097 s) | — |
 
-**Direct answer to `DECISIONS.md` ADR-035's open item:** the question was "do the Buds push the Case
-level *without* the phone-side `0e 04` request?" — **this capture answers yes, 🟢 FACT**: nowhere in
-the successful DLCI 0x08 sessions above did the receiving party (GMS, not the app) send a `0e 04`
-request first; the Buds pushed `Group 0x0e Code 0x01` unprompted, repeatedly, on a roughly 10–30s
-interval, to whichever party held the channel. **The actual blocker is channel contention on DLCI
-0x08 with GMS, the same mechanism already characterized for DLCI 0x04** — not a missing request.
-Sending `0e 04` (ADR-035's speculated next step) would not fix this: the app's claims already
-establish a working DLCI 0x08 session in several instances (e.g. frames 1864/1866, 2520/2522) — they
-are torn down by the Buds within milliseconds regardless of what the app sends, consistent with the
-Buds' RFCOMM stack supporting only one active subscriber per DLCI and bouncing the newcomer when GMS
-already holds it. **This finding should be taken to the Phase F checkpoint as a proposal to supersede
-ADR-035's "send `0e 04`" framing with a contention-handling approach** (e.g. extending the
-already-approved claim-on-tap pattern, or a retry/backoff strategy informed by GMS's own observed
-re-claim interval) — not implemented here without maintainer sign-off (`AGENTS.md` §6).
+The app's opens are identified by its own log at the same wall-clock second ("RFCOMM channel 0x08 connected (attempt n/3)",
+`CAP-060-debug-export.log` lines 36, 62, 218, 300, 328, 356, 372, 403; each followed by "Case battery not read: Timeout"); the first
+open (1223) precedes the app's Connect (log line 17:54:54.609), so it is Play services'. The phone-side `DISC`s at 1822, 2498 and 5968
+coincide with the app's failed *first* attempts (log lines 35, 61, 371): the stack's failure path closed Play services' port
+(ADR-032's mechanism), after which the app's second attempt connected and was closed by the Buds 10–130 ms later.
+
+- 🟢 FACT: **all 10 payload-carrying Play-services opens** send `0e 04 00 00` before the first `0e 01`, which follows it by 23 ms–0.38 s.
+  (`CAP-059` agrees: 3/3, `CAP-059-FINDINGS.md`.)
+- 🟢 FACT: **all 8 app claims** (which send nothing) received **no** `0e 01`: 5 held the channel open 1.85–2.78 s with zero data frames,
+  3 were closed by a Buds-side `DISC` within 0.13 s.
+- 🟢 FACT: unrequested pushes exist, but only 10 s–2 min into a long-held Play-services channel: 1653, 2196, 2760, 2928, 3065, 3099,
+  4938, 5080, 5196 (payload e.g. 1993 `0e 01 00 23 0a 21 0a 03 61 6c 6c 12 1a 0a 06 08 64 10 01 18 01 0a 06 08 64 10 01 18 02 0a 06 08 54
+  10 01 18 03 20 01` = Left 100, Right 100, Case `0x54` = 84 %).
+- 🟡 HYPOTHESIS: sending `0e 04 00 00` on the app's own claim is sufficient to get the post-open push (it always precedes the push here;
+  not yet tested from the app). Implemented by `DECISIONS.md` ADR-039; hardware re-test in `ai-sessions/0045`.
+- 🔴 OPEN QUESTION: why the Buds closed the app's second attempt within 0.13 s three times (always right after the stack had closed Play
+  services' port).
+
+**Answer to ADR-035's open item** ("do the Buds push the Case level without the phone-side `0e 04`?"): **not after an open** — the post-open
+push the app depends on follows `0e 04` every time; only later, spontaneous pushes on a long-held channel come without it. Contention with
+Play services is real (the retry of ADR-038 addresses it) but is not the reason the receive-only claims failed.
 
 ## 3. Why can't you see which bud is docked? (`ai-sessions/0043` question 3)
 

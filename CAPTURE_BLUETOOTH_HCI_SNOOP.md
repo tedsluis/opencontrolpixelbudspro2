@@ -1158,7 +1158,8 @@ See `CAP-041-EVENT-NOTES.md` for the full procedure and preparation checklist.
 differs and also plausibly matches a known settings-value shape (e.g. a 5-band float quintet,
 `PROTOCOL.md` §4.2) is a strong candidate for a `libmaestro`-side state read-back; a byte-for-byte
 match despite genuinely different settings is a clean negative. See `CAP-041-EVENT-NOTES.md`'s
-Decode/Analysis checklist.
+Decode/Analysis checklist. **Outcome (pointer, 2026-09-24):** content-level clean negative (`CAP-041-FINDINGS.md` §8); the burst itself
+is now identified — it includes a `ReadSetting` sweep of fields 1–32 (`PROTOCOL.md` §6).
 
 #### Group AI — Long pure-idle bracket for the periodic DLCI 0x02/0x04/0x08/HFP push cadence (occasional, added 2026-09-05)
 
@@ -1421,7 +1422,11 @@ safeguard, named as such, referencing `CAP-045` by name as the reason for the ex
 distinguishable wire patterns (inner field position, correlation-ID pattern, or a confirmed
 video-to-frame 1:1 timing correlation good enough to assign each frame to a side by elimination)?
 
-#### Group AS — Live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the connect-time burst (occasional, added 2026-09-13, `ai-sessions/0017`)
+#### Group AS — Live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the connect-time burst (occasional, added 2026-09-13, `ai-sessions/0017`) — **withdrawn 2026-09-24**
+
+> **Withdrawn (2026-09-24, `ai-sessions/0045`, maintainer-approved):** the RPC question is answered from existing `CAP-036` bytes —
+> frame 1423 is `GetHardwareInfo` (method id = 65599 hash of the APK's method name), see `PROTOCOL.md` §6. `CAP-057` will not be
+> captured. Text below kept as history.
 
 **Purpose:** `PROTOCOL.md` §6's serial-number candidate (`CAP-036` frame 1423, three length-14
 strings inside DLCI 0x02's connect-time burst) was re-traced this session
@@ -1871,10 +1876,10 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-054` | *planned* | Pixel 7a | TBD | TBD | TBD | AP (new) | `BATT-002`, `BATT-003` | Connection-free Battery Notification scan bracketing a single-bud insertion/removal event (per the Fast Pair spec's own "optional" trigger condition), added `ai-sessions/0017` | — | — | planned |
 | `CAP-055` | *planned* | Pixel 7a | TBD | TBD | TBD | AQ (new) | `HEAD-002`, `HEAD-003` | Nod/Shake head gestures performed while an actual incoming call/notification is active, camera angled to also capture the gesture itself, added `ai-sessions/0017` | — | — | planned |
 | `CAP-056` | *planned* | Pixel 7a | TBD | TBD | TBD | AR (new) | `HOLD-005` | Genuine re-run of the ANC-rotation-checklist Left/Right split (`CAP-045` never opened the checklist screen), with a mandatory on-camera anti-repeat safeguard, added `ai-sessions/0017` | — | — | planned |
-| `CAP-057` | *planned* | Pixel 7a | TBD | TBD | TBD | AS (new) | `FW-002`, `FW-003` (incidental) | Live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the DLCI 0x02 connect-time burst's 3-string sub-message, following this session's structural finding that it matches `qjm`/`qjr` (`GetHardwareInfo`) better than `qie` (`GetSoftwareInfo`), added `ai-sessions/0017` | — | — | planned |
+| `CAP-057` | *withdrawn* | Pixel 7a | — | — | — | AS (new) | `FW-002`, `FW-003` (incidental) | Live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the DLCI 0x02 connect-time burst's 3-string sub-message, following this session's structural finding that it matches `qjm`/`qjr` (`GetHardwareInfo`) better than `qie` (`GetSoftwareInfo`), added `ai-sessions/0017`. **Withdrawn 2026-09-24** (`ai-sessions/0045`): answered from `CAP-036`'s own bytes, `PROTOCOL.md` §6 | — | — | withdrawn |
 | `CAP-058` | *planned* | Pixel 7a | TBD | TBD | TBD | AT (new) | `SDP-001`, `SDP-002` (opportunistic, not attempted) | 3rd attempt at `SDP-001`'s UUID-branch isolation, adding an explicit on-device process-liveness check before the "Pair" tap per `CAP-044-FINDINGS.md` §5's own proposal; approved by the maintainer 2026-09-18, added `ai-sessions/0031` | — | — | planned |
-| `CAP-059` | 2026-09-20 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0041` commit `9fe4b70` | AU (new) | `PAIR-001`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-006` (partial) | App-validation run of the `0041` build — pairing, ANC cycling, Find, EQ, and root-causing three session drops with three distinct causes; reclassified from `android/logs/LOGS-001` by `ai-sessions/0043` (see the intro's third-purpose note) | — | `CAP-059-btsnoop_hci.log` | analyzed |
-| `CAP-060` | 2026-09-21 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0042` commit `1efa86b` | AV (new) | `PAIR-001`, `PAIR-003`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-005`/`006` (partial) | App-validation run of the `0042` build — six connection drops (three distinct mechanisms, one newly characterized), Case-battery DLCI 0x08 contention with GMS, dock-state and ANC-tile root-causing; reclassified from `android/logs/LOGS-002` by `ai-sessions/0043` (see the intro's third-purpose note) | — | `CAP-060-btsnoop_hci.log` | analyzed |
+| `CAP-059` | 2026-09-20 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0041` commit `9fe4b70` | AU (new) | `PAIR-001`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-006` (partial) | App-validation run of the `0041` build — pairing, ANC cycling, Find, EQ, and root-causing three session drops with three distinct causes; reclassified from `android/logs/LOGS-001` by `ai-sessions/0043` (see the intro's third-purpose note) | — (no bugreport archive kept; the log is the raw, untruncated `btsnoop_hci.log`, `CAP-059-EVENT-NOTES.md`) | `CAP-059-btsnoop_hci.log` | analyzed |
+| `CAP-060` | 2026-09-21 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0042` commit `1efa86b` | AV (new) | `PAIR-001`, `PAIR-003`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-005`/`006` (partial) | App-validation run of the `0042` build — six connection drops (three distinct mechanisms, one newly characterized), Case-battery failure (**corrected 2026-09-24**: every post-open push answers Play services' `0e 04`; the app's receive-only claims got none — `CAP-060-FINDINGS.md` §2, ADR-039), dock-state and ANC-tile root-causing; reclassified from `android/logs/LOGS-002` by `ai-sessions/0043` (see the intro's third-purpose note) | — (no bugreport archive kept; raw, untruncated `btsnoop_hci.log`, `CAP-060-EVENT-NOTES.md`) | `CAP-060-btsnoop_hci.log` | analyzed |
 
 **Column notes:**
 

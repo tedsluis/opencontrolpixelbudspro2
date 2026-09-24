@@ -447,9 +447,8 @@ $ tshark -r CAP-036-btsnoop_hci.log -Y "bthci_acl.chandle==0x0005 and btrfcomm.d
 ```
 
 Decodes to three Group `0x03` ("Device Information") messages back-to-back:
-- `Code 0x0a`, 8-byte value `1f4d16b60963f13d` — still 🔴 unresolved/unassigned in the official
-  spec's own code table (`CAP-002-FINDINGS.md` §3), rotates every session, consistent with prior
-  observations.
+- `Code 0x0a`, 8-byte value `1f4d16b60963f13d` — the Fast Pair MAC extension's session nonce, 🟢 FACT since 2026-09-24
+  (`PROTOCOL.md` §0.1 Update, `ai-sessions/0045`, maintainer-approved); fresh on every Message Stream open, as observed here.
 - `Code 0x01` = **"Model ID"**, value `da2db1` — **identical** to every other session checked this
   pass (`CAP-001`, `CAP-002`, `CAP-010`) — a constant, registered Fast Pair Model ID, per
   `CAP-002-FINDINGS.md` §3's original 🟢 FACT (spec-worked-example match).

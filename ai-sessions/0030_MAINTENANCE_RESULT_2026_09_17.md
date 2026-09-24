@@ -4,7 +4,10 @@
 **Category:** MAINTENANCE
 **Date:** 2026-09-17
 **Title:** Verify whether `TODO.md`'s "Recommended priority order" section's claimed next step (the `MaestroDeviceSettingsProviderService` 6-case-ID→`qhr`-field trace) is still actually open — it appears, from this prompt's own authoring-session research, to already be fully closed since 2026-09-08 — correct `TODO.md` if so, then build and work through a worklist of every other genuinely still-open, non-capture-dependent lead across `TODO.md`/`PROTOCOL.md`/`REVERSE_ENGINEERING.md`/`DECISIONS.md`
-**Status:** partial — resumed
+**Status:** complete
+
+> **Status updated 2026-09-24** (`ai-sessions/0045`, 2026-09-24, per `AI_SESSION_LOG_PROCEDURE.md` §4a; 0044 finding S-4): the interrupted worklist
+> was resumed and finished by `ai-sessions/0031` (its Phase 1, "Resume `0030`'s worklist" — all 4 seeded items traced, `done`).
 
 ## Phase status table
 

@@ -53,6 +53,13 @@ consistent with `ai-sessions/0043`'s Phase 0 finding.
 
 ## Event Timeline
 
+> **Correction note (2026-09-24, `ai-sessions/0045`, maintainer-approved in chat 2026-09-24):** the rows below describing DLCI 0x08 as
+> "contention" and Play services' pushes as unprompted predate a per-open re-derivation. Every push within 1 s of a Play-services open
+> answers that open's phone-side `0e 04 00 00` (e.g. 1307 answers 1284); of the app's 8 receive-only claims, 3 were closed by the Buds
+> within 0.13 s while Play services held the channel (17:54:58 and 17:55:33 are two of them) and 5 were held 1.85–2.78 s with **zero**
+> data (17:57:40 onward) — those Timeouts are "no request sent", not contention. Per-open table: `CAP-060-FINDINGS.md` §2; consequence:
+> `DECISIONS.md` ADR-039. The rows themselves are kept as written.
+
 Times are `wall-clock (local)`. Test-IDs are assigned only where independently confirmed by wire +
 video/log evidence together.
 

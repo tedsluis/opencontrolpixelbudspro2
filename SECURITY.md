@@ -11,6 +11,14 @@ malfunctioning peer, or a corrupted transmission, could send malformed
 frames). See `AGENTS.md` §11's fuzz-testing requirement for how this is
 addressed in code.
 
+What the code does about it (added 2026-09-24, `ai-sessions/0045`): every decoder returns
+`MalformedFrame`/`UnidentifiedFrame` instead of throwing; the per-channel frame splitters are reset
+whenever a channel opens, closes or is lost, and cap a single frame (1024 data bytes on the Message
+Stream channels, 4096 bytes for a pw_hdlc frame), so one corrupted length field cannot stall later
+frames; and ANC, Find My Buds and EQ writes are only sent to a device that announced the verified
+firmware and the Pixel Buds Pro 2's Fast Pair Model ID (`DECISIONS.md` ADR-042). A report that one of these can be
+bypassed is in scope.
+
 Out of scope: the reverse-engineering research itself (`REVERSE_ENGINEERING.md`,
 `captures/`) is not a security-sensitive artifact — it documents protocol
 *behavior*, not a vulnerability in Google's software.

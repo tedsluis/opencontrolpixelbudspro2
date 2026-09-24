@@ -6,6 +6,14 @@
 **Title:** Reclassify the two full `LOGS-00x` hardware-capture sets as `captures/CAP-059`/`CAP-060`, fully analyse `CAP-060`, root-cause four specific app questions with evidence, review the app's architecture, and implement approved fixes/features (Case battery, ANC tile, tab-swipe navigation, "last known" → timestamp)
 **Status:** complete
 
+> **Annotated 2026-09-24** (`ai-sessions/0045`, 2026-09-24, 0044 findings 0043-1…0043-6): this session's history is kept as written; the
+> corrections are elsewhere. 0043-1: the "Case battery pushed unprompted" 🟢 FACT was wrong in its essential point (every post-open push
+> answers a phone-side `0e 04`) — corrected with maintainer approval in `PROTOCOL.md` §4.3 Option E and `CAP-060-FINDINGS.md` §2,
+> ADR-038 Update, ADR-039. 0043-2: the `.txt`/`.png`/`.jpg` capture files were not in Git LFS — fixed (`.gitattributes`). 0043-3: `0042`'s
+> Status and its re-test items are handled in 0045. 0043-4: "the app never showed a stale value as current" is at best 🟡 — ACK routing
+> (APP-3) and dock state (APP-5) were such paths, now fixed. 0043-5: the re-test instructions below are in §9, not §8. 0043-6: the
+> `AGENTS.md` §0 note ADR-037 mentions was never written — ADR-037 Update.
+
 ---
 
 ## 0. Plain-language answers, up front

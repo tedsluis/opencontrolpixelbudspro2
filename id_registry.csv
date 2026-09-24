@@ -7,7 +7,7 @@ ADR-005,adr,accepted,"Device discovery via CompanionDeviceManager, no continuous
 ADR-006,adr,accepted,"Bounded exception to the no-BLE-scanning rule, for the Fast Pair Battery Notification only",DECISIONS.md
 ADR-007,adr,accepted,"`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Groups are capture scenarios, not tests; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the test/behavior catalog",DECISIONS.md
 ADR-008,adr,accepted,"Fast Pair Account Linking, Ownership Transfer, and the Accessory Non-Owner Service are out of scope",DECISIONS.md
-ADR-009,adr,accepted,"ANC command channel confirmed as Fast Pair Message Stream (DLCI 0x04); `FrameEncoder` implementation blocked pending `CAP-006`",DECISIONS.md
+ADR-009,adr,accepted,"ANC command channel confirmed as Fast Pair Message Stream (DLCI 0x04); FrameEncoder block pending CAP-006 lifted 2026-08-15 (see ADR Update)",DECISIONS.md
 ADR-010,adr,accepted,"PROJECT_RULES.md rule 19 does not apply to the maintainer's own captures under captures/",DECISIONS.md
 ADR-011,adr,accepted,"Find My Buds Left/Right confirmed as Fast Pair Message Stream Action (DLCI 0x04, Group 0x04, Code 0x01)",DECISIONS.md
 ADR-012,adr,accepted,"Wire-baseline firmware version confirmed as release_5.203 (DLCI 0x08, Group 0x03, Code 0x02)",DECISIONS.md
@@ -22,67 +22,71 @@ ADR-020,adr,accepted,"EQ FrameEncoder/FrameDecoder implementation explicitly unb
 ADR-021,adr,accepted,"Get ANC state (0x11) opcode identity confirmed on the wire for the first time (DLCI 0x04, CAP-036); trigger-reliability and screen-open negative result explicitly NOT promoted",DECISIONS.md
 ADR-022,adr,accepted,"Get ANC state (0x11) trigger-reliability promoted to FACT: 17 occurrences across 10 independent captures (CAP-006/010/016/019-025/036), zero misses",DECISIONS.md
 ADR-023,adr,accepted,"Retroactive sign-off: Option C (HFP battery) confirmed independent of GMS/app (CAP-004/CAP-033) and confirmed working on GrapheneOS (CAP-035)",DECISIONS.md
-ADR-024,adr,accepted,"Notify ANC state Settable-toggles byte confirmed as a dock-state indicator (0x00=both earbuds docked, 0xe8=otherwise), video-verified 5/5 samples across CAP-010/016/021/025/036",DECISIONS.md
-ADR-025,adr,accepted,"Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only",DECISIONS.md
+ADR-024,adr,accepted,"Notify ANC state Settable-toggles byte as a dock-state indicator (0x00=both earbuds docked, 0xe8=otherwise): 7/7 video-verified, later updates record counter-examples (CAP-048/CAP-047) and the spec meaning ('settable toggles', 2026-09-24)",DECISIONS.md
+ADR-025,adr,accepted,"Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implemented independently from wire evidence only ('clean-room' wording corrected 2026-09-24)",DECISIONS.md
 ADR-026,adr,accepted,"Volume Balance (qhr field 17) range and Left/Right polarity confirmed: +-100, +100=Left, -100=Right",DECISIONS.md
-ADR-027,adr,accepted,"Find My Buds Case/'both simultaneously': ship v1 with Left/Right ring only, no local fallback",DECISIONS.md
+ADR-027,adr,accepted,"Find My Buds Case/'both simultaneously': ship v1 with Left/Right ring only (premise narrowed 2026-09-24: spec 0x03 'ring both' untested)",DECISIONS.md
 ADR-028,adr,accepted,"Dependency injection: Hilt",DECISIONS.md
 ADR-029,adr,accepted,"Minimum supported Android API level: API 34 (Android 14)",DECISIONS.md
 ADR-030,adr,accepted,"Cross-Transport Key Derivation (CTKD) confirmed as a third bonding path, gated on a pre-existing LE link",DECISIONS.md
 ADR-031,adr,accepted,"Battery Option B's Group 0x03 Code 0x03 message confirmed as the Fast Pair 'Battery updated' notification (while discharging)",DECISIONS.md
 ADR-032,adr,accepted,"DLCI 0x04 (Message Stream) is a shared on-demand channel: claimed by the user's own ANC/Find/Connect action and released after a short linger; its loss is not a session loss",DECISIONS.md
-ADR-033,adr,accepted,"Battery Option B Group 0x03 Code 0x03 decoder unblocked for implementation (percentage regime only; charging-flag reading is an unaccepted proposal)",DECISIONS.md
+ADR-033,adr,accepted,"Battery Option B Group 0x03 Code 0x03 decoder unblocked for implementation; charging-flag reading (0bSVVVVVVV) accepted 2026-09-20",DECISIONS.md
 ADR-034,adr,accepted,"DLCI 0x02 is pw_rpc maestro_pw.Maestro; read-only ReadSetting path unblocked (EQ fields 16/18); requests mirror the channel the Buds announce",DECISIONS.md
-ADR-035,adr,accepted,"DLCI 0x08 is claimed on demand for the Case battery (Group 0x0e Code 0x01, entry index 3); receive-only",DECISIONS.md
+ADR-035,adr,accepted,"DLCI 0x08 is claimed on demand for the Case battery (Group 0x0e Code 0x01, entry index 3); item 2 'receive-only' superseded by ADR-039",DECISIONS.md
 ADR-036,adr,accepted,"DLCI 0x02 read-only ReadSetting unblocked for the qhr fields already at FACT identity (no writes, no subscription; nothing implemented)",DECISIONS.md
 ADR-037,adr,accepted,"android/logs/LOGS-0xx gitignored-forever rule retired for full capture sessions specifically (moved to captures/CAP-NNN-* instead); ad hoc individual pulls stay gitignored",DECISIONS.md
-ADR-038,adr,accepted,"Case battery (ADR-035) on-demand claim of DLCI 0x08 extended with claim-on-tap contention handling against Google Play services, same pattern as DLCI 0x04",DECISIONS.md
-CAP-001,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-002,capture,captured,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-003,capture,captured,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-004,capture,captured,"session date/status: 2026-08-11",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-005,capture,captured,"session date/status: 2026-08-15",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-006,capture,captured,"session date/status: 2026-08-15",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-007,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-008,capture,captured,"session date/status: 2026-08-26",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+ADR-038,adr,accepted,"Case battery (ADR-035) claim of DLCI 0x08 retries once on contention, same pattern as DLCI 0x04 (premise corrected 2026-09-24, see ADR-039)",DECISIONS.md
+ADR-039,adr,accepted,"The on-demand DLCI 0x08 Case claim sends the zero-length 0e 04 00 00 request (supersedes ADR-035 item 2, amends ADR-038's premise)",DECISIONS.md
+ADR-040,adr,accepted,"HFP battery (Option C) is wire-confirmed but not consumable by an app on Android 14+; the app route is removed",DECISIONS.md
+ADR-041,adr,accepted,"The wire codec is hand-written; no protobuf runtime and no .proto build inputs",DECISIONS.md
+ADR-042,adr,accepted,"Startup Handshake / Safe Mode implemented as a firmware + Model ID write gate",DECISIONS.md
+CAP-001,capture,analyzed,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-002,capture,analyzed,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-003,capture,analyzed,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-004,capture,analyzed,"session date/status: 2026-08-11",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-005,capture,analyzed,"session date/status: 2026-08-15",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-006,capture,analyzed,"session date/status: 2026-08-15",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-007,capture,analyzed,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-008,capture,analyzed,"session date/status: 2026-08-26",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-009,capture,analyzed,"session date/status: 2026-08-23 — BATT-006 resolved, see ADR-015",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-010,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-011,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-010,capture,analyzed,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-011,capture,analyzed,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-012,capture,analyzed,"session date/status: 2026-08-26",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-013,capture,analyzed,"session date/status: 2026-08-26 — partial: pre-clearing-action window not captured",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-014,capture,analyzed,"session date/status: 2026-08-27 — handle↔UUID mapping still open, see CAP-014-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-015,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-016,capture,captured,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-017,capture,captured,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-015,capture,analyzed,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-016,capture,analyzed,"session date/status: 2026-08-18",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-017,capture,analyzed,"session date/status: 2026-08-16",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-018,capture,analyzed,"session date/status: 2026-09-12",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-019,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-020,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-021,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-022,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-023,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-024,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-025,capture,captured,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-019,capture,analyzed,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-020,capture,analyzed,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-021,capture,analyzed,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-022,capture,analyzed,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-023,capture,analyzed,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-024,capture,analyzed,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-025,capture,analyzed,"session date/status: 2026-08-21",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-026,capture,analyzed,"session date/status: 2026-09-12",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-027,capture,2026-08-30,"session date/status: 2026-08-30 — Group N, touch gestures (TOUCH-002-TOUCH-007), analyzed",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-027,capture,analyzed,"session date/status: 2026-08-30 — Group N, touch gestures (TOUCH-002-TOUCH-007), analyzed",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-028,capture,analyzed,"session date/status: 2026-09-12",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-029,capture,analyzed,"session date/status: 2026-09-12",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-030,capture,planned,"session date/status: *planned*",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-031,capture,captured,"session date/status: 2026-08-27 — analyzed, PROPOSAL — pending maintainer approval; third attempt at CAP-013's original intent (logging started before the clearing action itself), still did not achieve it — see CAP-031-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-032,capture,captured,"session date/status: 2026-08-27 — analyzed, PROPOSAL — pending maintainer approval; fourth attempt at CAP-013/CAP-031's original intent, succeeded (raw-path extraction, no truncation) — primary CAP-001-FINDINGS.md §6 question answered for this session (no pre-Forget BLE link/valid link key found) — see CAP-032-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-033,capture,2026-08-30,"session date/status: 2026-08-30 — Group AA, SDP UUID branch isolation (SDP-001/SDP-002), analyzed, isolation not fully clean",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-034,capture,2026-09-01,"session date/status: 2026-09-01 — Group W (4th attempt), resolved the 0x0c0X/0x0f2X GATT handle/UUID mapping and the full 15-service GATT profile, maintainer sign-off obtained",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-035,capture,2026-09-02,"session date/status: 2026-09-02 — Group AB, DLCI 0x08/0x0a/0x06/0x12 GMS-dependence check (GSND-001), maintainer sign-off obtained",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-036,capture,2026-09-04,"analyzed — Group AC, settings-state read-back isolation (OBS-004), Pixel 7a + official app + GMS enabled; split outcome: query found on reconnect (DLCI 0x04 Get ANC state), clean negative on settings-screen-open",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-037,capture,2026-09-06,"Group AD, purpose-built OBS-004 repeat, analyzed — ran 34 reconnects not 5, 26/26 Get/Notify pairs fire (largest ADR-022 replication on file), 26/26 Settable-toggles match dock state (ADR-024)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-038,capture,2026-09-06,"Group AE, realistic reconnect trigger (OBS-005), analyzed — documented Window 2 not verifiably executed (no video/wire evidence); first reconnect's Notify ANC state read docked immediately after case-removal, unreconciled tension with ADR-024",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-039,capture,2026-09-06,"Group AF, Settable-toggles Set-vs-Get fixed dock state (OBS-006), analyzed — 10 same-session samples (4 Set + 6 Get) all match, confirms ADR-024 trigger-independence; documented 1-Set/1-Get plan was actually 4 taps/6 reconnects",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-040,capture,2026-09-06,"Group AG, DLCI 0x08 unmapped Get-shaped codes (PRIV-001), analyzed — .log.last is CAP-039 leftover, not this session; app's own Connect/Disconnect buttons produce zero wire signal, invalidating the intended correlation bracket (N=1 per code)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-041,capture,2026-09-06,"Group AH, DLCI 0x02 connect-burst vs. non-default settings (OBS-007), analyzed — 3 wire-confirmed reconnects (not 4 planned), burst length/shape invariant across settings states, byte-level content diff still pending",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-042,capture,2026-09-06,"Group AI, long idle bracket for cross-channel push cadence (OBS-002), analyzed — .log.last is CAP-041 leftover, not this session (~37m39s true duration); push recurs only twice, HFP drops out of the near-lockstep sync entirely",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-031,capture,analyzed,"session date/status: 2026-08-27 — analyzed, PROPOSAL — pending maintainer approval; third attempt at CAP-013's original intent (logging started before the clearing action itself), still did not achieve it — see CAP-031-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-032,capture,analyzed,"session date/status: 2026-08-27 — analyzed, PROPOSAL — pending maintainer approval; fourth attempt at CAP-013/CAP-031's original intent, succeeded (raw-path extraction, no truncation) — primary CAP-001-FINDINGS.md §6 question answered for this session (no pre-Forget BLE link/valid link key found) — see CAP-032-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-033,capture,analyzed,"session date/status: 2026-08-30 — Group AA, SDP UUID branch isolation (SDP-001/SDP-002), analyzed, isolation not fully clean",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-034,capture,analyzed,"session date/status: 2026-09-01 — Group W (4th attempt), resolved the 0x0c0X/0x0f2X GATT handle/UUID mapping and the full 15-service GATT profile, maintainer sign-off obtained",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-035,capture,analyzed,"session date/status: 2026-09-02 — Group AB, DLCI 0x08/0x0a/0x06/0x12 GMS-dependence check (GSND-001), maintainer sign-off obtained",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-036,capture,analyzed,"analyzed — Group AC, settings-state read-back isolation (OBS-004), Pixel 7a + official app + GMS enabled; split outcome: query found on reconnect (DLCI 0x04 Get ANC state), clean negative on settings-screen-open",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-037,capture,analyzed,"Group AD, purpose-built OBS-004 repeat, analyzed — ran 34 reconnects not 5, 26/26 Get/Notify pairs fire (largest ADR-022 replication on file), 26/26 Settable-toggles match dock state (ADR-024)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-038,capture,analyzed,"Group AE, realistic reconnect trigger (OBS-005), analyzed — documented Window 2 not verifiably executed (no video/wire evidence); first reconnect's Notify ANC state read docked immediately after case-removal, unreconciled tension with ADR-024",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-039,capture,analyzed,"Group AF, Settable-toggles Set-vs-Get fixed dock state (OBS-006), analyzed — 10 same-session samples (4 Set + 6 Get) all match, confirms ADR-024 trigger-independence; documented 1-Set/1-Get plan was actually 4 taps/6 reconnects",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-040,capture,analyzed,"Group AG, DLCI 0x08 unmapped Get-shaped codes (PRIV-001), analyzed — .log.last is CAP-039 leftover, not this session; app's own Connect/Disconnect buttons produce zero wire signal, invalidating the intended correlation bracket (N=1 per code)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-041,capture,analyzed,"Group AH, DLCI 0x02 connect-burst vs. non-default settings (OBS-007), analyzed — 3 wire-confirmed reconnects (not 4 planned), burst length/shape invariant across settings states, byte-level content diff still pending",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-042,capture,analyzed,"Group AI, long idle bracket for cross-channel push cadence (OBS-002), analyzed — .log.last is CAP-041 leftover, not this session (~37m39s true duration); push recurs only twice, HFP drops out of the near-lockstep sync entirely",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-043,capture,analyzed,"session date/status: 2026-09-13 — Group Q (repeat), clean connection-free repeat of the Battery Notification BLE scan (BATT-002/BATT-003); isolation genuinely clean, second confirmed non-match against Option A's layout, closes CAP-011-FINDINGS.md §4",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-044,capture,analyzed,"session date/status: 2026-09-13 — Group AA (repeat, 2nd attempt); Force-stop-before-Forget order fixed and step 3 executed, but a different isolation gap remains (no confirmed force-stop before the Pair tap); default UUID absent a 5th time, still SDP-001 HYPOTHESIS",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-045,capture,analyzed,"session date/status: 2026-09-12 — procedure not run as planned, see CAP-045-FINDINGS.md",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-046,capture,analyzed,"session date/status: 2026-09-12 — polarity resolved, proposal awaiting sign-off",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-046,capture,analyzed,"session date/status: 2026-09-12 — polarity resolved, promoted to FACT (ADR-026)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-047,capture,analyzed,"session date/status: 2026-09-14, analyzed — Group AL (new), CAP-021 DLCI 0x0a burst trigger purpose-built hypothesis test, Trigger candidate 3 only (charge-state change) — clean negative",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-048,capture,analyzed,"session date/status: 2026-09-12 — CAP-037 anomaly resolved, ADR-024 counter-example found",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-049,capture,analyzed,"session date/status: 2026-09-12 — cycling did not reproduce, clean negative",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
@@ -93,7 +97,7 @@ CAP-053,capture,planned,"session date/status: *planned* — Group AO (new), EQ o
 CAP-054,capture,planned,"session date/status: *planned* — Group AP (new), connection-free Battery Notification scan bracketing a single-bud insertion/removal event, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-055,capture,planned,"session date/status: *planned* — Group AQ (new), Nod/Shake head gestures performed while an active call/notification exists, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-056,capture,planned,"session date/status: *planned* — Group AR (new), HOLD-005 ANC-rotation-checklist Left/Right split genuine re-run (CAP-045 never opened the checklist screen), added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-057,capture,planned,"session date/status: *planned* — Group AS (new), live GetSoftwareInfo/GetHardwareInfo correlation against the DLCI 0x02 connect-time burst, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-057,capture,withdrawn,"session date/status: *withdrawn 2026-09-24* — Group AS (live GetSoftwareInfo/GetHardwareInfo correlation) made unnecessary: the connect-time burst's RPCs were identified from existing CAP-036 bytes (ai-sessions/0045, PROTOCOL.md §6)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-058,capture,planned,"session date/status: *planned* — Group AT (new), SDP-001 3rd attempt with an explicit on-device process-liveness check, maintainer-approved and added by ai-sessions/0031",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-059,capture,analyzed,"2026-09-20 17:16:59-17:22:29, Group AU (new) — first OpenControl-app hardware capture (Pixel 9a/GrapheneOS, ai-sessions/0041 build), reclassified from android/logs/LOGS-001 by ai-sessions/0043; PAIR-001, ANC-001-004, FIND-001/002 confirmed, EQP-006 partial",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-060,capture,analyzed,"2026-09-21 17:54:01-18:00:49, Group AV (new) — second OpenControl-app hardware capture (Pixel 9a/GrapheneOS, ai-sessions/0042 build), reclassified from android/logs/LOGS-002 by ai-sessions/0043; PAIR-001, PAIR-003, ANC-001-004, FIND-001/002 confirmed, EQP-005/006 partial",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
@@ -189,3 +193,6 @@ GSND-001,test,catalogued,"Whether DLCI 0x08 (GSND CONTROL)/0x0a (GSND AUDIO)/0x0
 SDP-001,test,catalogued,"Which RFCOMM/SDP UUID(s) gbm.java's channel selector sees via OS-only pairing (app force-stopped) vs. after the app's own fetchUuidsWithSdp() re-fetch",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 SDP-002,test,catalogued,"Whether a firmware OTA update changes which of the two internal-RFCOMM-socket SDP UUIDs (gbm/fzd, ADR-018) the Buds/case advertise (opportunistic)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 PRIV-001,test,catalogued,"Semantic decode, via correlation not guessing, of DLCI 0x08's unmapped zero-length Get-shaped Sent frames (05 0c/04 02/04 04/04 11/04 13/04 15/0e 04)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+ANC-005,test,declined,"Candidate ID proposed in CAP-051-FINDINGS.md §5 (DLCI 0x02 qhr field-13 vs DLCI 0x04 ANC correlation) — declined 2026-09-18 as redundant with TOUCH-007 (ai-sessions/0021/0031); registered so references resolve",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+SPATIAL-001,test,catalogued,"Spatial audio / head tracking via the Buds' Android head-tracker HID sensor (#AndroidHeadTracker#) — OS-handled, read-only information at most (added 2026-09-24, ai-sessions/0045)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
+LEAUDIO-001,test,catalogued,"LE Audio service set on the Buds' LE link (0x1849/0x184c/0x1855/0x1858/0x185b) — OS-handled, read-only information at most (added 2026-09-24, ai-sessions/0045)",TESTPLAN_BLUETOOTH_HCI_SNOOP.md

@@ -1,5 +1,6 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group A repeat, logging started before any prior association (`CAP-031`)
 
+**Status:** ✅ Captured and analyzed 2026-08-27 — see `CAP-031-FINDINGS.md`. *(Status line added 2026-09-24, `ai-sessions/0045`: this file had none, unlike every other analyzed capture.)*
 
 
 ## Log Metadata

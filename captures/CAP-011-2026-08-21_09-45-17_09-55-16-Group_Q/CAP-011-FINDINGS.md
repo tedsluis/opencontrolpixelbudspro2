@@ -274,6 +274,7 @@ decoding what the three numbers mean.
   established decode, per `CAP-001-FINDINGS.md` §2, is for a *different* content shape — device
   serial + firmware string — and reconciling the two wasn't attempted here). Recorded as a raw
   byte-pattern observation only, not a claim about DLCI 0x02's structure.
+  *(Pointer 2026-09-24, `ai-sessions/0045`: these pw_hdlc address values come from a wrong byte split — the address is a one-terminated varint, e.g. `00 3b` = 3712, paired with the RpcPacket `channel_id`; see `PROTOCOL.md` §2.2a and `DECISIONS.md` ADR-034.)*
 
 **Recorded in `PROTOCOL.md` §4.3** as Option E, promoted to 🟢 FACT 2026-08-23 (`DECISIONS.md`
 ADR-014) for the index→Left/Right/Case mapping, per the maintainer sign-off obtained under

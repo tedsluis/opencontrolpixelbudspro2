@@ -50,7 +50,7 @@ document wins, unless the project owner explicitly and knowingly deviates from i
     the resulting interpretation. This lets anyone re-run the same command
     against the same bytes and independently verify the conclusion, rather
     than having to trust a stated result on faith.
-    **Clarification (2026-08-23, closing an ambiguity `AUDIT_REPORT_2026-08-22.md`
+    **Clarification (2026-08-23, closing an ambiguity `AUDIT_REPORT_2026-08-22.md` (retired; see `CHANGELOG.md` 2026-08-22/23)
     flagged):** when `PROTOCOL.md` restates a finding that already originates
     from a compliant `CAP-NNN-FINDINGS.md` (command + hex present there), a
     frame-number-and-file pointer in `PROTOCOL.md`'s own text satisfies this

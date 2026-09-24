@@ -201,6 +201,12 @@ motivated this).
   device discovery) remains fully covered by the original ban in `AGENTS.md`
   §7 and would need its own, separate decision; it is not opened up by this
   ADR.
+- **Update (2026-09-24, `ai-sessions/0045`, maintainer-approved in chat 2026-09-24):** bound (c)'s justification is
+  corrected, not the bound itself. "The advertisement's own visibility window (~8–20s)" has **no** basis in the Fast Pair
+  specification: the live `batterynotification` page (fetched 2026-09-08 and again 2026-09-24) contains no trigger, cadence
+  or display-duration statement at all, and `PROTOCOL.md` §4.3 Option A already downgraded the 8 s/20 s figures to an
+  unlocated 🟡 HYPOTHESIS. The ~8–20 s time-box stays as **this project's own choice** (short enough to be clearly bounded,
+  long enough to catch an advertisement), not as a spec citation. `AGENTS.md` §7 is corrected the same way.
 
 ## ADR-007 — `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Groups are capture scenarios, not tests; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the test/behavior catalog
 
@@ -289,7 +295,7 @@ motivated this).
   instead of silently expanding scope (`AGENTS.md` §15's "never silently
   expand scope" rule).
 
-## ADR-009 — ANC command channel confirmed as Fast Pair Message Stream (DLCI 0x04); `FrameEncoder` implementation blocked pending `CAP-006`
+## ADR-009 — ANC command channel confirmed as Fast Pair Message Stream (DLCI 0x04); `FrameEncoder` implementation blocked pending `CAP-006` (block lifted 2026-08-15, see Update)
 
 - **Date**: 2026-08-15
 - **Status**: Accepted
@@ -579,7 +585,7 @@ motivated this).
 
 ## ADR-015 — `BATT-006` resolved: `AT+CIND` `battchg` confirmed a stale single snapshot; `AT+BIEV` confirmed per-earbud (Right), not a fixed-aggregate/fixed-cadence indicator
 
-- **Date**: 2026-08-2x
+- **Date**: 2026-08-23 (was written "2026-08-2x"; resolved 2026-09-24, `ai-sessions/0045`, from commit `76c482e`, 2026-08-23, which introduced this ADR)
 - **Status**: Accepted
 - **Context**: `BATT-006` (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, added 2026-08-14) asked whether
   `AT+CIND?`'s `battchg` or `AT+BIEV=2`'s HF Indicator #2 (or neither) tracks a real battery-level
@@ -630,6 +636,8 @@ motivated this).
   missed ~6–7s beat as a liveness signal — `AGENTS.md` §5 updated accordingly. Does not resolve
   DLCI `0x04`/BLE-scan HYPOTHESES noted above; those need their own follow-up before any further
   promotion.
+- **Update (2026-09-24, `ai-sessions/0045`):** the *implementation* consequences above (a battery UI relying on HFP) are superseded
+  by ADR-040 — HFP battery is not consumable by an app on Android 14+ and the app route was removed. The FACTs above stand.
 
 ## ADR-016 — Retroactive sign-off: EQ field-to-band mapping/gain-clamp/preset quintets, and four `CAP-016` hardware-behavior FACTs
 
@@ -1170,6 +1178,8 @@ motivated this).
   (HFP) as a mechanism that does not depend on Google Play Services or the companion app being
   installed/running, and functions on GrapheneOS specifically — directly relevant to this
   project's Zero-GMS goal (`AGENTS.md` §1) and its GrapheneOS target platform (`AGENTS.md` §2).
+- **Update (2026-09-24, `ai-sessions/0045`):** the Consequence that the battery priority order "can rely on Option C" is superseded
+  by ADR-040 (the wire behaviour is unchanged; an app cannot receive it). The two FACTs stand.
 
 ## ADR-024 — "Notify ANC state" `Settable-toggles` byte confirmed as a dock-state indicator: `0x00` when both earbuds are seated in the case, `0xe8` otherwise
 
@@ -1287,6 +1297,13 @@ motivated this).
   at 17:19:22.31 reads `01 e8 e8 08` (both buds out since ≈ 17:19:11 — the case empty on film, `0xe8`); every later `Notify` (17 more) reads `e8`. The finding is unchanged; the app
   now shows it (a "Buds in the case / out" line, `AncFrame.Notify.settableToggles`: `0x00` → both in the case, `0xe8` → at least one out, anything else → not shown).
 
+- **Update (2026-09-24, `ai-sessions/0045`, maintainer-approved in chat 2026-09-24) — the spec meaning of the byte, stated next to the behavioural reading.** Google's
+  Hearable Controls page (fetched 2026-09-24) names byte 2 of `Notify ANC state` **"Settable toggles"**: *"Any or all of the UI toggle bits above may also be set here, to indicate
+  which are currently enabled."* So the byte says which ANC modes the Buds currently let a Seeker switch; "both earbuds are in the case" is this project's **derived** reading of
+  `0x00` (no mode switchable), 🟢 FACT as a correlation (the samples above) but with ≥ 5 documented counter-examples (`CAP-048` ×2, `CAP-047` ×3, `CAP-038`). The decision above is
+  unchanged. **Consequences, now implemented:** the app words the line as a derived reading ("Both earbuds seem to be in the case — the Buds report no switchable ANC modes") and
+  applies the 2026-09-18 consequence: a value received within ~2 s of a (re)open is shown as provisional, and during a claim's linger the last `Notify` wins.
+
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 
 - **Date**: 2026-09-07
@@ -1382,6 +1399,11 @@ motivated this).
   readings match the pre-existing wire-derived HYPOTHESIS labels exactly, with no naming-equivalence
   gap of the kind that kept fields 12/22/27 at field-number-only status. See `PROTOCOL.md`
   §4.5.2/§4.5.6 and `REVERSE_ENGINEERING.md`'s `qhr` entry (2026-09-08 update) for the full evidence.
+- **Update (2026-09-24, `ai-sessions/0045`, maintainer-approved in chat 2026-09-24) — wording correction, decision unchanged.** The title and the first Consequence say
+  DLCI 0x04/0x08 work proceeds "clean-room". That word is wrong for this project: `AGENTS.md` §12 bans the clean-room claim and ADR-002's 2026-08-15 Update retired it,
+  because this project decompiles the official APK. Read it as: **"an independent implementation, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair
+  specification) only — no companion-app or GMS code is used as a reference for these two channels."** The decision (GMS reverse-engineering out of scope) is unchanged; the
+  title is left as written (history), and `PROJECT.md`, `ARCHITECTURE.md` §5 and `TODO.md` use the corrected wording.
 
 ## ADR-026 — Volume Balance (`qhr` field 17) range and Left/Right polarity confirmed: ±100, `+100`=Left, `-100`=Right
 
@@ -1447,6 +1469,12 @@ motivated this).
   closed scope decision rather than an open research question. `:app`'s eventual Find My Buds UI
   screen should offer Left/Right controls only, with no "Case"/"both" affordance implying a
   capability this project does not provide.
+- **Update (2026-09-24, `ai-sessions/0045`, maintainer-approved in chat 2026-09-24):** the premise above
+  ("no local mechanism exists") is narrowed: the official app routes Case/"both" through Find Hub, but
+  Google's Device Action spec (`…/extensions/deviceaction`, fetched 2026-09-24) defines Ring value `0x03` =
+  "ring both left and right" on the local Message Stream — never sent by this project, 🔴 untested on this
+  firmware. The Case has no spec value. The v1 scope decision (Left/Right only) is unchanged; a test is
+  tracked as `FIND-004` in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`/`TODO.md`. Sending `0x03` needs its own ADR.
 
 ## ADR-028 — Dependency injection: Hilt
 
@@ -1576,6 +1604,8 @@ motivated this).
   change but the official Fast Pair encoding `0bSVVVVVVV` (bit 7 = charging, low 7 bits = level, `0x7F` =
   unknown). `PROTOCOL.md` §4.3 Option B now records it as 🟢 FACT. The "unreliable while charging" caution in
   the *Consequences* above no longer applies.
+- **Update (2026-09-24, `ai-sessions/0045`):** "Does not change the existing HFP-first priority ordering" is superseded by ADR-040:
+  HFP is not an app source; Option B (Left/Right) and Option E (Case, ADR-035/039) are the implemented battery sources.
 
 ## ADR-032 — DLCI 0x04 (Message Stream) is a shared, on-demand channel: opened by the user's own ANC/Find/Connect action and released shortly after; loss of it is not a session loss
 
@@ -1773,6 +1803,8 @@ motivated this).
 - **Consequences**: `:hardware` gets the `GSND_CONTROL` SDP UUID, `:data` a `CaseBatteryFrameDecoder`, a `Dlci.GSND_CONTROL` route in `CodecRouter` and a case claim in
   `BudsRepositoryImpl`; `BatteryLevel.Known` gains `isStale`; the Connection screen shows the Case with its age and a *Refresh battery* action; `ARCHITECTURE.md` §5a's
   Battery row is updated. Nothing here is hardware-verified. **Not decided:** any request on DLCI 0x08, any other Group/Code, the BLE advertisement route.
+- **Update (2026-09-24, `ai-sessions/0045`):** item 2 ("receive-only") is **superseded by ADR-039** — the claim now sends the one zero-length
+  `0e 04 00 00` request, because every post-open push in `CAP-059`/`CAP-060` answered that request and no receive-only claim ever got a push.
 
 ## ADR-036 — DLCI 0x02: read-only `ReadSetting` unblocked for the `qhr` fields already at FACT identity (no writes, no subscription)
 
@@ -1822,6 +1854,11 @@ motivated this).
 - **Consequences**: `.gitignore`'s `android/logs/` comment block is narrowed to state this distinction explicitly; `AGENTS.md` §0's history note and
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s intro gain the "third capture purpose" language (see that document). This does not change ADR-010's own scope (real
   identifiers in `captures/CAP-NNN-*` — this ADR is about *which* sessions reach that location, not what may be retained once there).
+- **Update (2026-09-24, `ai-sessions/0045`, maintainer-approved in chat 2026-09-24) — two reference corrections, decision unchanged.** (1) The Context and
+  Consequences cite "`AGENTS.md` §0's project-history header" / "`AGENTS.md` §0's history note" as gaining the third-capture-purpose language. No such note exists
+  and `AGENTS.md` was not changed by `ai-sessions/0043` (`git log -- AGENTS.md`); the language went to `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s intro and `.gitignore` only.
+  Read both references as those two files. (2) Option 1 cites "the `PROJECT_RULES.md` §8 preamble's conflict-recording requirement"; that requirement is in the
+  document's own preamble (`PROJECT_RULES.md`, lines 8–10), not §8.
 
 ## ADR-038 — Case battery (ADR-035) on-demand claim of DLCI 0x08 gets the same claim-on-tap contention handling as DLCI 0x04 (ADR-032)
 
@@ -1858,6 +1895,103 @@ motivated this).
   retry-then-succeed and retry-then-still-fail paths using `FakeBudsTransport`. Not hardware-verified by this change alone —
   a future capture bracketing the fix would confirm the retry actually improves the real-world success rate against a live
   GMS incumbent, not just against the fake transport's simulated contention.
+- **Update (2026-09-24, `ai-sessions/0045`, maintainer-approved in chat 2026-09-24):** the Context's premise — "the Buds push unprompted … sending `0e 04` would not
+  have helped" and "the blocker is contention, not a missing request" — is **contradicted** by a full re-derivation of `CAP-060` (and `CAP-059`): every push
+  within 1 s of an open follows a phone-side `0e 04` (13/13 Play-services opens), and the app's 8 receive-only claims got none (5 held the channel 1.85–2.78 s
+  with zero data; 3 were closed by the Buds within 0.13 s). See `PROTOCOL.md` §4.3 Option E's 2026-09-24 correction and `ai-sessions/0045` §3.1. The retry
+  decided here stays (it handles a real contention case); **ADR-039** adds the missing request.
+
+## ADR-039 — The on-demand DLCI 0x08 Case claim sends the zero-length `0e 04 00 00` request
+
+- **Date**: 2026-09-24
+- **Status**: Accepted
+- **Note on process**: drafted by an AI agent (`ai-sessions/0045`); the decision is the maintainer's, given in the chat session of 2026-09-24
+  (`AskUserQuestion`, question "P2", option *"ADR-039 + bouwen (Recommended)"*, with this ADR's draft shown in the question), per `AGENTS.md` §6.
+- **Context**: ADR-035 made the Case claim receive-only and said that if the Buds did not push unrequested, "sending `0e 04` needs its own ADR";
+  `ai-sessions/0042` §12(h) predicted exactly that outcome. ADR-038 then concluded from `CAP-060` that the push comes without a request and that the
+  blocker was contention. A full re-derivation (`ai-sessions/0045` §3.1; command: per-open reassembly of `tshark -r <log> -Y "btrfcomm.dlci==8"`)
+  shows the opposite for the push the app depends on: in `CAP-059` (3 opens) and `CAP-060` (10 payload-carrying Play-services opens) **every** first
+  `0e 01` push follows a phone-side `0e 04 00 00` on that open, 23 ms–0.38 s later (e.g. `CAP-060` 1979→1993, 4830→4856, 6833→6859); the app's 8
+  receive-only claims got **no** push (5 held the channel open 1.85–2.78 s with zero data — frames 3770–3783, 4221–4246, 4460–4698, 5449–5749,
+  6419–6728; 3 were closed by a Buds-side `DISC` within 0.13 s — 1864/1870, 2520/2525, 5989/5996). Unrequested pushes occur only 10 s–2 min into a
+  long-held channel. Every Play-services open also sends six other zero-length frames (`05 0c`, `04 02`, `04 04`, `04 11`, `04 13`, `04 15`,
+  `PRIV-001`) whose meaning is unknown; only `0e 04` sits in the same Group as the Case message.
+- **Options considered**: (a) keep receive-only — the Case stays unreadable except by chance; (b) remove the Case feature; (c) send exactly the one
+  request Play services sends before every observed post-open push — chosen.
+- **Decision**:
+  1. **Supersedes ADR-035 item 2** (receive-only). On each on-demand DLCI 0x08 claim (the Connect tap and *Refresh battery*, unchanged triggers) the
+     app sends exactly **one** `0e 04 00 00` after the channel is open, then waits ≤ 2 s for the `0e 01` push. **Nothing else** is ever sent on
+     DLCI 0x08 (not the other six `PRIV-001` frames, no other Group/Code).
+  2. **Amends ADR-038's premise** (see its 2026-09-24 Update); its one retry when the channel is closed out from under the wait stays.
+  3. The Message Stream claim's release linger (ADR-032) is ended before DLCI 0x08 is claimed, so the app never holds both shared channels at once.
+  4. Decoding is unchanged (ADR-035 item 3: index 3 only, fresh flag).
+- **What this ADR does NOT settle**: that `0e 04` is *sufficient* for this app's claim (🟡 HYPOTHESIS — the evidence is that it always precedes the
+  push, not a controlled test); what `0e 04` means beyond "precedes the Case push" (🔴); the six other frames. A hardware re-test with an HCI
+  capture bracket settles the first (`ai-sessions/0045` re-test list).
+- **Consequences**: `BudsRepositoryImpl.readCaseBattery` sends the request; a regression test uses the real `CAP-060` bytes (request `0e 04 00 00`,
+  frame 1979; push frame 1993). `PROTOCOL.md` §4.3 Option E and `ARCHITECTURE.md` §6.0b are updated.
+
+## ADR-040 — HFP battery (Option C) is wire-confirmed but not consumable by an app on Android 14+; the app route is removed
+
+- **Date**: 2026-09-24 (records a decision the maintainer made in chat on 2026-09-20, `ai-sessions/0042` §11 "HFP → Verwijderen")
+- **Status**: Accepted
+- **Note on process**: drafted by an AI agent (`ai-sessions/0045`); the removal itself was decided by the maintainer in chat on 2026-09-20; recording it
+  as this ADR, and editing `AGENTS.md` §5 to match, was approved by the maintainer in chat on 2026-09-24 (`AskUserQuestion` "P4", option *"ADR + AGENTS.md
+  §5 aanpassen (Recommended)"*), per `AGENTS.md` §6 and `PROJECT_RULES.md` rules 8–9.
+- **Context**: ADR-015/023 record 🟢 FACTs about `AT+BIEV`/`AT+CIND` on the wire, and ADR-015/023/031's Consequences relied on HFP as an app battery
+  source ("HFP-first ordering"). `CAP-059` shows the Buds sending `AT+BIEV=2,100` seven times (frames 1216, 2624, 2631, 2685, 2694, 3077, 3097) while
+  the app's receiver, registered the whole run, got six `CONNECTION_STATE_CHANGED` and **zero** `ACTION_VENDOR_SPECIFIC_HEADSET_EVENT`; the value is one
+  earbud's, never the Case (ADR-015). `ai-sessions/0042` removed `HfpBatteryReader` on the maintainer's word, but no ADR recorded it.
+- **Decision**: HFP battery is **not an app source** in this project. The wire FACTs of ADR-015/023 stand unchanged. The implementation-relevant
+  Consequences of ADR-015, ADR-023 and ADR-031 that assume an HFP battery source are **superseded**. Battery comes from DLCI 0x04 Option B (Left/Right,
+  ADR-031/033) and DLCI 0x08 Option E (Case, ADR-035/039). Reopen only if a device is shown to deliver `AT+BIEV` to an app through a public API (a
+  hidden-API route stays banned, `AGENTS.md` §3).
+- **Consequences**: `AGENTS.md` §5's battery paragraph and `ARCHITECTURE.md` §4 state HFP as "wire-confirmed, not consumable by an app; not
+  implemented". No code change (already removed).
+
+## ADR-041 — The wire codec is hand-written; no protobuf runtime and no `.proto` build inputs
+
+- **Date**: 2026-09-24
+- **Status**: Accepted
+- **Note on process**: drafted by an AI agent (`ai-sessions/0045`); approved by the maintainer in chat on 2026-09-24 (`AskUserQuestion` "P5", option *"ADR +
+  §14 + AGENTS §4 (Recommended)"*), which also instructed the matching dated note in `AGENTS.md` §4, per `AGENTS.md` §6.
+- **Context**: `AGENTS.md` §4 and `ARCHITECTURE.md` §14 require `protobuf-kotlin-lite` via the Gradle protobuf plugin with `.proto` files under
+  `data/src/main/proto/`. `pbtk` cannot extract this APK's schemas (`TODO.md` Phase 2: its extractor needs per-class `mergeFrom` switch code that this
+  APK's `newMessageInfo` codegen never emits); the schemas were recovered by `scripts/decode_rawmessageinfo.py` instead (ADR-019). The app has always
+  decoded protobuf by hand (`data/…/codec/Varint.kt`, `PwRpc.kt`, `CaseBatteryFrame.kt`'s `Proto`, `EqFrame*`), each decoder bounded and fuzzed
+  (`AGENTS.md` §11). The deviation was never recorded.
+- **Options considered**: (a) introduce the protobuf plugin with hand-written `.proto` files — a large change whose schemas would themselves be
+  hand-reconstructed (what `AGENTS.md` §13 warns against as a *source* of truth); (b) record the hand-written codec as the decision — chosen.
+- **Decision**: the wire codec stays hand-written Kotlin with no protobuf runtime dependency. Schemas recovered from the APK are **documentation**
+  (`REVERSE_ENGINEERING.md`), not build inputs. Each hand decoder only reads fields whose number and type are evidenced (`PROTOCOL.md`), never throws
+  on hostile input, and is covered by real-capture fixtures plus a fuzz test. The `protobuf-kotlin-lite` rule in `AGENTS.md` §4 applies if and when a
+  `.proto` build input is ever introduced (it would still have to be `-lite`).
+- **Consequences**: `ARCHITECTURE.md` §2/§14 and `PROTOCOL.md` §3 describe the hand-written codec; `AGENTS.md` §4 gains a dated note pointing here.
+  No code change.
+
+## ADR-042 — Startup Handshake / Safe Mode is implemented as a firmware + Model ID write gate
+
+- **Date**: 2026-09-24
+- **Status**: Accepted
+- **Note on process**: drafted by an AI agent (`ai-sessions/0045`); the design is the maintainer's choice in chat on 2026-09-24 (`AskUserQuestion` "APP-1 / AR-1",
+  option *"Firmware + Model ID gate (Recommended)"*). Recorded as an ADR because `PROJECT_RULES.md` rule 8 requires an architecture choice to be recorded
+  before it is implemented.
+- **Context**: `ARCHITECTURE.md` §8.1 designs a Startup Handshake with a read-only Safe Mode for unverified firmware; `README.md`'s bricking disclaimer,
+  ADR-012's Consequence and ADR-036's Decision rely on it; `ai-sessions/0044` (AR-1/APP-1) found it was never built — `BudsError.UnsupportedFirmware` was
+  produced nowhere, and every write was sent regardless of firmware or device model. `PairingLogic.chooseBonded` falls back to any bonded device whose
+  name contains "Pixel Buds" when no CDM association exists, so another Pixel Buds model could receive Pro 2 writes (`PROJECT.md` non-goal: never assume
+  another model is identical).
+- **Decision**:
+  1. **Firmware.** The firmware strings in the Buds' unsolicited `GetSoftwareInfo` announcement of the current connection (DLCI 0x02, ADR-034) must all be
+     in the verified allowlist — today exactly `release_5.203` (ADR-012). An unknown or not-yet-announced firmware ⇒ no write.
+  2. **Model ID.** For commands on DLCI 0x04 (ANC Set, Ring/Stop) the Device Information `03 01` of that same claim must read `da 2d b1` (`PROTOCOL.md`
+     §0.1); a claim without a Model ID frame, or with another value, sends no command. EQ writes (DLCI 0x02) are gated on the firmware (item 1), and are
+     additionally refused if a Model ID other than `da 2d b1` has been seen on this connection.
+  3. A refused write returns `BudsError.UnsupportedFirmware`; the Connection screen shows a **Safe Mode** card with the detected firmware and Model ID
+     and why controls are unavailable. Reads (ANC Get, battery, EQ `ReadSetting`, Case) continue.
+  4. The allowlist is a code constant; adding a firmware version is a code change reviewed against a capture of that firmware.
+- **Consequences**: after a Buds firmware update the app turns read-only until the allowlist is extended (deliberate, conservative — `ARCHITECTURE.md`
+  §8.1's own rationale). ADR-012/036's dependency on §8.1 is now met. `README.md`'s disclaimer may cite Safe Mode again.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

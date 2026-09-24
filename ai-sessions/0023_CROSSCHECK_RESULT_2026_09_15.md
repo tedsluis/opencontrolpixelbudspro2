@@ -6,6 +6,10 @@
 **Title:** Deep, non-sampled cross-validation of `CAP-047` (Group AL), `CAP-050` (Group AG repeat), and `CAP-051` (Group AM) against the decompiled companion APK
 **Status:** partial — resumed
 
+> **Annotated 2026-09-24** (`ai-sessions/0045`, 2026-09-24, 0044 finding S-4): left at `partial — resumed` on purpose. The maintainer sign-off
+> below was obtained, and the leads were carried into `ai-sessions/0024`'s open-question inventory and `0025`'s tooling, but no later
+> session resumed this file's own unfinished angles as such, so §4a's condition for `complete` is not met.
+
 > **Maintainer sign-off obtained 2026-09-16** (same chat session, continued from this prompt): the
 > five headline proposals in this file's own "Summary for the maintainer" section below were
 > reviewed and explicitly accepted for recording at 🟡 HYPOTHESIS level (not promoted to FACT, no

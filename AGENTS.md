@@ -124,6 +124,11 @@ order:
   firmware/library version it was extracted from, so payload changes across
   Buds firmware updates can be tracked (see `ARCHITECTURE.md` §8, Firmware
   Compatibility, and `PROTOCOL.md` §5).
+- **Note (2026-09-24, maintainer-approved in chat, `DECISIONS.md` ADR-041):** no
+  `.proto` build input exists today — `pbtk` cannot extract this APK's schemas, and
+  the app's wire codec is hand-written Kotlin with no protobuf runtime. Recovered
+  schemas are documentation (`REVERSE_ENGINEERING.md`), not build inputs. The rules
+  in this section apply if and when a `.proto` build input is introduced.
 
 ## 5. Android Bluetooth Stack vs. Linux BlueZ (CRITICAL)
 
@@ -161,6 +166,12 @@ order:
   - If none of the documented mechanisms are available for a given
     Android/OEM combination, the UI must show "Battery unavailable" rather
     than a fabricated value. Never guess or interpolate a battery percentage.
+  - **Note (2026-09-24, maintainer-approved in chat, `DECISIONS.md` ADR-040):** the
+    HFP mechanism above (`AT+BIEV`/`AT+CIND`) is wire-confirmed but **not consumable
+    by an app on Android 14+** (no vendor-specific event reaches the app); it is not
+    implemented. The implemented sources are the Message Stream "Battery updated"
+    message (Left/Right, ADR-031/033) and DLCI 0x08's `Group 0x0e Code 0x01` (Case,
+    ADR-035/039).
 
 ## 6. libmaestro / libgfps Implementation Rules
 
@@ -237,10 +248,12 @@ order:
     explicit "refresh battery" action, or as a side effect of a CDM-driven
     reconnection already in progress) — never a periodic timer running from a
     `ForegroundService` or `WorkManager` job.
-  - **Time-boxed.** The scan stops itself after a short, fixed timeout on the
-    order of the advertisement's own visibility window (~8–20s per the Fast
-    Pair spec) or as soon as the expected advertisement is received, whichever
-    comes first — never left running indefinitely.
+  - **Time-boxed.** The scan stops itself after a short, fixed timeout of
+    roughly 8–20 s — a project choice, not a spec value (corrected 2026-09-24,
+    maintainer-approved, `DECISIONS.md` ADR-006 Update: the Fast Pair
+    `batterynotification` page states no visibility window) — or as soon as the
+    expected advertisement is received, whichever comes first — never left
+    running indefinitely.
   - **Tied to app visibility.** The scan stops immediately if the app leaves
     the foreground before the timeout elapses.
   - This exception covers *only* battery-notification observation of an

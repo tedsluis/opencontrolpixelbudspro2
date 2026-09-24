@@ -10,7 +10,7 @@ only with maintainer sign-off per `AGENTS.md` §6). Every claim below carries a 
 - ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
-**Sign-off status (updated 2026-08-2x):** the maintainer reviewed 5 proposals from this file and
+**Sign-off status (updated 2026-08-23 (was "2026-08-2x"; date from commit `76c482e`)):** the maintainer reviewed 5 proposals from this file and
 approved all 5 (`AGENTS.md` §6). §1–§5's core `BATT-006` resolution and §3's per-earbud/cadence
 revisions are now recorded in `PROTOCOL.md` §4.3 Option C and `DECISIONS.md` `ADR-015`. §6's two
 Option E addenda, §7's DLCI `0x04` candidate (Option B), and §4's BLE-scan candidate (Option A)
@@ -261,7 +261,7 @@ pass's dead-end (an unrelated `0x0044` `ATT` `Handle Value Notification` burst a
 ~37s after the R change — now understood to be too late and not the right lead). Proposed
 verifying experiment: repeat with the BLE side captured at full detail (no snaplen truncation) and
 decode the Fast Pair Service Data's Account Key Filter against this device's known account key, to
-confirm attribution before this can move past HYPOTHESIS. **Maintainer-approved 2026-08-2x and now
+confirm attribution before this can move past HYPOTHESIS. **Maintainer-approved 2026-08-23 (was "2026-08-2x"; date from commit `76c482e`) and now
 recorded in `PROTOCOL.md` §4.3 Option A at this same HYPOTHESIS level (`AGENTS.md` §6).**
 
 ## 5. Answer to `BATT-006`
@@ -323,7 +323,7 @@ case (~19:52:15), its Option-E-reported value climbs monotonically — 93→94�
 28698's timeline — matching the on-screen "94%→100%" note (`CAP-009-EVENT-NOTES.md`, 20:00:01) with
 far finer granularity than the maintainer's periodic manual checks could capture.
 
-**New observations, maintainer-approved 2026-08-2x and now recorded as an addendum to
+**New observations, maintainer-approved 2026-08-23 (was "2026-08-2x"; date from commit `76c482e`) and now recorded as an addendum to
 `PROTOCOL.md` §4.3 Option E (`AGENTS.md` §6):**
 
 1. **Two distinct "Case unknown" encodings, differing only by flag-field presence.** For the
@@ -407,7 +407,7 @@ the L-charging event**, i.e. itself evidence, not noise. 🟡 **HYPOTHESIS:** wh
 field switches to reporting something else — a charge-cycle/session counter, a raw ADC sample, or
 similar — rather than continuing to report a percentage; not decoded further here.
 
-**Candidate identification, maintainer-approved 2026-08-2x and now recorded in `PROTOCOL.md`
+**Candidate identification, maintainer-approved 2026-08-23 (was "2026-08-2x"; date from commit `76c482e`) and now recorded in `PROTOCOL.md`
 (`AGENTS.md` §6):** `PROTOCOL.md` §4.3 Option B describes the official Fast Pair Message Stream's
 "Device Information" group as having a firmware-version code (`0x09`, confirmed) and an *expected
 but not-yet-confirmed* battery code in the same group. DLCI `0x04` in this project's captures is

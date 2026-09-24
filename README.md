@@ -3,15 +3,13 @@
 An independent, open-source Android app to fully control the **Google Pixel Buds
 Pro 2** without the official Pixel Buds app or Google Play Services.
 
-> **Status:** protocol reconstruction is mature, and a v1 Android app now exists end to end for
-> every genuinely FACT-and-implementation-unblocked feature. ANC mode switching, Find My Buds
-> (Left/Right), the equalizer, and battery reporting (via HFP) are all implemented — codec, hardware
-> transport, repository, and UI — and 1232 unit tests pass (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md`).
-> A real, building debug APK exists (`./gradlew assembleDebug`). **What this does *not* mean**: none
-> of it has been run against real Pixel Buds Pro 2 hardware or a real Android device/emulator in the
-> environment this was built in — see "Building and installing" below and `ai-sessions/0033`'s own
-> Phase 8 capability table for a precise, feature-by-feature compiles/unit-tested/hardware-verified
-> breakdown before you trust any of this against your own earbuds.
+> **Status (2026-09-24):** protocol reconstruction is mature and a v1 Android app exists end to end. ANC mode switching,
+> Find My Buds (Left/Right), the equalizer (read and write), battery (Left/Right with charging, and the Case), a Quick
+> Settings ANC tile and a read-only **Safe Mode** for unverified firmware are implemented and unit-tested (1533 tests,
+> `ai-sessions/0045`). Two hardware runs exist (`CAP-059`, `CAP-060`): pairing, Connect, ANC, EQ read/write, Find and
+> Left/Right battery worked; the Case battery did not (fixed on paper by `DECISIONS.md` ADR-039, not yet re-tested). Battery
+> via HFP was removed — it is not deliverable to an app (ADR-040). **Everything changed after `CAP-060` is unverified on
+> hardware** — see the re-test list in `ai-sessions/0045_MAINTENANCE_RESULT_2026_09_24.md` before trusting it with your earbuds.
 
 > ## ⚠️ Disclaimer: hardware risk
 >
@@ -22,10 +20,11 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > supports. Use this project's findings and any future app build **at your own
 > risk**, against hardware you're prepared to lose.
 >
-> Mitigations this project takes seriously (see `ARCHITECTURE.md` §8.1's Startup
-> Handshake / Safe Mode fallback for the app-level design, and
-> `AGENTS.md`/`PROJECT_RULES.md` for the evidence-before-implementation
-> discipline) reduce but do **not** eliminate this risk. If something does go
+> Mitigations this project takes seriously — the app's read-only Safe Mode, which refuses every write unless
+> the Buds announce a firmware version this app was verified against (`release_5.203`) and the Pixel Buds Pro 2's
+> Fast Pair Model ID (`ARCHITECTURE.md` §8.1, `DECISIONS.md` ADR-042; implemented 2026-09-24, not yet exercised on
+> hardware), and the evidence-before-implementation discipline in `AGENTS.md`/`PROJECT_RULES.md` — reduce but do
+> **not** eliminate this risk. If something does go
 > wrong, see `WORKSTATION_PREPARATIONS.md`'s Disaster Recovery section for the
 > hardware-level factory-reset procedure.
 
@@ -49,41 +48,25 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-09-18)
+## Current state (2026-09-24)
 
-- **Captures:** 58 registered sessions (`CAP-001`–`CAP-058`), most analyzed and 10 still
-  planned — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index. A full, independent,
-  non-sampled re-derivation of every finding from an earlier full-catalog review found the core
-  protocol-decode content held up with zero errors (`ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md`).
-- **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed
-  (`v1.0.955078536-10253511`) — see `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's own
-  transport code was not found anywhere in it (`DECISIONS.md` ADR-025) — both channels are
-  implemented from wire-capture evidence alone, not by decompiled-code cross-reference.
-- **Decisions:** 29 recorded architecture/protocol decisions (`DECISIONS.md`), every
-  🟢 FACT promotion in `PROTOCOL.md` traceable to an explicit maintainer sign-off. The three
-  previously-open architecture questions are now all decided: dependency injection is **Hilt**
-  (ADR-028), minimum supported Android API is **34/Android 14**, matching compile/target SDK
-  (ADR-029), and Find My Buds for the Case/"both simultaneously" is an explicit, permanent v1
-  non-goal (ADR-027, Zero-GMS scope limit — see `PROJECT.md`).
-- **Confirmed and implementation-ready:** ANC/Transparency/Adaptive mode switching,
-  Find My Buds (Left/Right), battery reporting (HFP), the equalizer's live-write
-  path, touch-controls top-level toggle and press-and-hold assignment, mono audio,
-  multipoint, volume EQ, volume balance (including its Left/Right polarity, ADR-026),
-  and the "Bud return" case sound.
-- **Still open:** touch-controls' head-gestures and ANC-mode-rotation sub-features,
-  in-ear detection, EQ preset persistence semantics, and per-component
-  serial-number reading.
-- **App development (`ai-sessions/0033`, 2026-09-18)** — see [`android/`](./android): five Gradle
-  modules (`:app`, `:ui`, `:domain`, `:data`, `:hardware`), a Hilt-wired `:app` composition root, and
-  ANC/EQ/Find-My-Buds-Left-Right `FrameEncoder`/`FrameDecoder` pairs plus HFP battery parsing all
-  implemented and unit-tested against real, `tshark`-extracted capture bytes (1232 tests, 0
-  failures; `./gradlew assembleDebug testDebugUnitTest test lint` all pass). A Compose UI with 5
-  screens (Connection, ANC, EQ, Find My Buds, Debug) is wired to a real `BudsRepositoryImpl`. **Not
-  yet done:** the underlying `BluetoothSocket` transport, `CompanionDeviceManager` pairing flow, and
-  foreground service are implemented but **not verified against real hardware** (no physical Buds or
-  Android device in the build environment) — see `TODO.md` Phase 4/5 and
-  `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 8's capability table for the exact,
-  feature-by-feature breakdown.
+- **Captures:** 60 registered sessions (`CAP-001`–`CAP-060`): 52 analyzed, 7 planned, 1 withdrawn (`CAP-057`) — see
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`/`CAP-060` are the first captures of this project's own app.
+- **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
+  `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
+  independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
+- **Decisions:** 42 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has an explicit maintainer sign-off.
+- **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
+  (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x08, ADR-035/039), dock state
+  (ADR-024), firmware line, ANC Quick Settings tile, Safe Mode (ADR-042).
+- **Protocol-known but not built:** read-only display of the other settings (touch & hold, multipoint, mono audio, volume EQ, volume
+  balance, case sounds, in-ear detection — reads unblocked by ADR-036, writes gated per field); the BLE battery advertisement (never
+  matched on the wire).
+- **Still open (protocol):** head-gestures field 29, the ANC-rotation checklist's Left/Right split, EQ field 16-vs-18 save semantics,
+  DLCI 0x08's own identity, why the Buds sometimes close the RFCOMM channels — see `PROTOCOL.md` §6.
+- **App code:** [`android/`](./android) — five Gradle modules (`:app`, `:ui`, `:domain`, `:data`, `:hardware`), Hilt; every codec is
+  unit-tested against real capture bytes and fuzzed; CI builds, tests and lints every change and asserts no `INTERNET` permission
+  (`.github/workflows/android.yml`).
 
 ## Building and installing the debug APK
 
@@ -108,24 +91,22 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 older OS version. **Permissions the app requests, and why** (AGENTS.md §2, each declared with its
 own justification comment in `android/app/src/main/AndroidManifest.xml` and
 `android/hardware/src/main/AndroidManifest.xml`): `BLUETOOTH_CONNECT` (RFCOMM socket I/O against the
-paired Buds), `BLUETOOTH_SCAN` (flagged `neverForLocation` — this app never does device-discovery
-scanning), `POST_NOTIFICATIONS`/`FOREGROUND_SERVICE`/`FOREGROUND_SERVICE_CONNECTED_DEVICE` (the
-persistent connection-status notification while connected). No `INTERNET` permission, ever
+paired Buds), `POST_NOTIFICATIONS`/`FOREGROUND_SERVICE`/`FOREGROUND_SERVICE_CONNECTED_DEVICE` (the
+persistent connection-status notification while connected). `BLUETOOTH_SCAN` is not requested: nothing scans (it would
+return, flagged `neverForLocation`, only with the bounded battery-advertisement scan of ADR-006). No `INTERNET` permission, ever
 (AGENTS.md §1) — verify this yourself with `aapt dump permissions android/app/build/outputs/apk/debug/app-debug.apk`
 if you want to check before installing.
 
-To also run the full test suite and static analysis (matching what `ai-sessions/0033` verified
-before producing the APK above):
+To also run the full test suite and static analysis (what CI runs on every change):
 
 ```bash
 ./gradlew assembleDebug testDebugUnitTest test lint
 ```
 
-**Before testing against real hardware**, read `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md`
-Phase 8's capability table — it states plainly, feature by feature, what's only compiled-and-tested
-versus what (nothing, as of that session) has been confirmed working against a real Pixel Buds Pro
-2. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means
-"safe against your earbuds" — it means the wire bytes match known-good captures, nothing more.
+**Before testing against real hardware**, read the re-test list in the latest `ai-sessions/` RESULT
+(`ai-sessions/0045_MAINTENANCE_RESULT_2026_09_24.md`) — it says, item by item, what was seen working on hardware and what is only
+unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
+earbuds" — it means the wire bytes match known-good captures, nothing more.
 
 ## Approach
 

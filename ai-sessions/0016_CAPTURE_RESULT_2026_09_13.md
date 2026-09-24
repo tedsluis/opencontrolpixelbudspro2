@@ -4,7 +4,11 @@
 **Category:** CAPTURE
 **Date:** 2026-09-13
 **Title:** Full video+log re-analysis and FINDINGS for CAP-043 (Group Q repeat, BATT-002/BATT-003) and CAP-044 (Group AA repeat, SDP-001/SDP-002)
-**Status:** awaiting maintainer sign-off
+**Status:** complete
+
+> **Status updated 2026-09-24** (`ai-sessions/0045`, 2026-09-24, per `AI_SESSION_LOG_PROCEDURE.md` §4a; 0044 finding S-3): this file's one open
+> proposal (the `CAP-044-FINDINGS.md` §5 procedure fix for `SDP-001`) was approved by the maintainer on 2026-09-18 as capture Group AT
+> (`CAP-058`, `ai-sessions/0031`; `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AT). `INDEX.md` already said `complete`.
 
 ## Phase status
 

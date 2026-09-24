@@ -291,7 +291,8 @@ directions answered explicitly:**
   across the whole day (frames 1004, 1826, 17610, 18895, 21195, 49251, 49538 in that file's own
   numbering — frame 49251 is the one `CAP-002` §3 calls "frame 1267" under the sliced-file
   numbering it used for analysis). Every single occurrence is a single, complete, 47-byte RFCOMM
-  UIH frame carrying all five TLV messages in the burst together (`03 0a 00 08 <8B>` + `03 01 00 03
+  UIH frame carrying all five TLV messages in the burst together (`03 0a 00 08 <8B>` — the session nonce, 🟢 FACT since 2026-09-24,
+  `PROTOCOL.md` §0.1 — + `03 01 00 03
   <3B>` + `03 02 00 06 <6B>` + `03 09 00 0a "Revision 6"` + `07 10 00 00` = 12+7+10+14+4 = 47,
   matching `btrfcomm.len` exactly). `bthci_acl.pb_flag` for frame 49251's underlying ACL packet is
   `2` (complete PDU) with no `continuation_to`/`reassembled_in` — confirmed via

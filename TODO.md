@@ -1,7 +1,7 @@
 # TODO.md
 
 Open tasks, grouped by phase. Check items off and move completed major items
-to `CHANGELOG.md` (see `PROJECT_RULES.md` §6, rule 13, on technical debt
+to `CHANGELOG.md` (see `PROJECT_RULES.md` §6, rule 15, on technical debt
 tracking).
 
 ## Recommended priority order (added 2026-08-23)
@@ -23,12 +23,10 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      Behavior) — a genuine Zero-GMS scope trade-off, not a research gap; no capture or static
      analysis can resolve this, only a maintainer product decision can.~~ **Resolved 2026-09-13: ship
      v1 with Left/Right ring only** (`DECISIONS.md` ADR-027, `PROJECT.md` non-goals).
-2. **Start Phase 4 app development, ANC-first:** ANC, Find My Buds Left/Right
-   (`DECISIONS.md` ADR-011), and EQ (`DECISIONS.md` ADR-020) are all fully 🟢 FACT *and*
-   implementation-unblocked — ANC remains the recommended starting point (`DECISIONS.md` ADR-009):
-   building it end-to-end (transport → framing → UI) is the cheapest way to prove the whole
-   architecture works. Battery via HFP (`PROTOCOL.md` §4.3 Option C, also already 🟢 FACT) is the
-   natural second target — together they cover most of `PROJECT.md`'s "Definition of done (v1)".
+2. ~~**Start Phase 4 app development, ANC-first.**~~ **Done** (`ai-sessions/0013`–`0045`): ANC, EQ, Find My Buds Left/Right, battery
+   (Left/Right via DLCI 0x04, ADR-033; Case via DLCI 0x08, ADR-035/039) and the Safe-Mode write gate (ADR-042) are implemented.
+   Battery via HFP was removed — wire-confirmed but not consumable by an app (ADR-040). The remaining v1 gap is hardware verification
+   (the re-test list in the latest `ai-sessions/` RESULT) and a first release.
 3. **Phase 2 (APK reverse engineering) — updated 2026-08-30, no longer 0% done.** APK pulled,
    JADX/apktool-decompiled, and multiple `§4` keyword-search/follow-up passes done
    (`REVERSE_ENGINEERING.md`'s growing class-entry list, 30+ entries as of the last pass), and
@@ -93,9 +91,8 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
    connected to this Buds unit and fully resolved the `0x0c0X`/`0x0f2X` handle↔UUID mapping (see
    `PROTOCOL.md` §6, §4.3 Option D) — this bullet's own "untried" framing is now stale and removed.
 5. **Targeted research follow-ups**, lowest priority, tracked at their source per this file's
-   "Open questions" section: the `CAP-021` DLCI 0x0a burst trigger and the DLCI 0x02 AES-128
-   hypothesis (`PROTOCOL.md` §6) — the latter is only really testable once Phase 2 above provides
-   a pw_rpc/protobuf schema to check against. **Added 2026-08-28
+   "Open questions" section: the `CAP-021` DLCI 0x0a burst trigger (`PROTOCOL.md` §6). (The DLCI 0x02 AES-128 hypothesis is closed:
+   the Sent blocks decode as plaintext pw_rpc, ADR-034.) **Added 2026-08-28
    (2026-08-28 project-wide audit, Phase 5), three specific new-capture ideas, none yet designed
    in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`:**
    - `HOLD-005`'s Left/Right ANC-rotation-checklist split (`PROTOCOL.md` §6) — a purpose-built
@@ -143,12 +140,12 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      isolating all three (Save tap / navigate-away / genuine slider-release only) is proposed as
      `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AO (planned `CAP-053`). See
      `REVERSE_ENGINEERING.md`'s `qjw` entry and `PROTOCOL.md` §4.2/§6.
-   - **Added 2026-09-03 (audit finding):** re-verify `PROTOCOL.md` §4.3 Option A's "shown ≥8s,
+   - **Closed 2026-09-08 (`ai-sessions/0003`), re-confirmed 2026-09-24 (`ai-sessions/0045`: the page states no timing at all):** ~~re-verify `PROTOCOL.md` §4.3 Option A's "shown ≥8s,
      auto-hidden after 20s" Battery Notification visibility-timing claim directly against the
      official Fast Pair spec pages (a 2026-09-03 re-check found no such text on the
      `batterynotification` extension page specifically — downgraded to 🟡 HYPOTHESIS pending this
      check; the detail may live on a different spec page not checked yet, e.g. the base Message
-     Stream spec).
+     Stream spec).~~
    - **Added 2026-09-08 (`ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4, prompt
      `0002`), closed 2026-09-08 (`ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 1):**
      traced `MaestroDeviceSettingsProviderService`'s 6 case IDs to their exact accessor call —
@@ -295,11 +292,8 @@ lower priority than finishing ANC/Battery/EQ):**
       `CAP-017`, a fresh-GATT-client-app path not originally in this row's
       scope — 137 live discovery frames, full 15-service GATT profile
       recovered. **`CAP-014` (2026-08-27) fixed that session's snaplen truncation but still
-      did not close the mapping** — the `0x0f2a`/`0x0c0X` handle→UUID mapping remains open
-      (`CAP-014-FINDINGS.md` §4/§8): 3 attempts now, and `pm clear com.android.bluetooth`/the
-      Pixel 9a — Group W's own actual candidate methods — remain untried in all of them. That
-      combination (proven snaplen fix + an actually-untried cache-busting method) is the clear
-      next step.
+      did not close the mapping** at the time (`CAP-014-FINDINGS.md` §4/§8). **Closed 2026-09-01 by `CAP-034`**
+      (`pm clear com.android.bluetooth` on a never-connected Pixel 9a): the full handle↔UUID mapping is 🟢 FACT (`PROTOCOL.md` §6).
 - [x] **`CAP-016` (Group U re-run) — case/bud-removal hardware events.**
       **Synced into `PROTOCOL.md` 2026-08-18** — promotes 3 🟢 FACTs (§5/§7):
       Buds-initiated reconnect on bud removal, ACL disconnect the instant
@@ -322,9 +316,7 @@ lower priority than finishing ANC/Battery/EQ):**
 **Next, still important but behind the above:**
 
 - [x] **Capture the "Play sound on Left/Right earbud" (Find My Buds) action —
-      done, `CAP-025` (2026-08-21).** Left/Right confirmed 🟡 HYPOTHESIS
-      (strong), video-correlated, proposed for `PROTOCOL.md` §4.4 promotion
-      to 🟢 FACT pending maintainer sign-off. **New finding:** Case/"both"
+      done, `CAP-025` (2026-08-21).** Left/Right promoted to 🟢 FACT 2026-08-23 (`DECISIONS.md` ADR-011). **New finding:** Case/"both"
       route through a separate Find Hub/Find-My-Device-Network mechanism
       with no local wire command — possibly a Zero-GMS hard limit, flagged
       to the maintainer in `PROTOCOL.md` §6 (Behavior) and
@@ -356,14 +348,14 @@ lower priority than finishing ANC/Battery/EQ):**
       already has its own row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index; listed here
       only so this file's priority ordering covers them too, not as a duplicate description):
       `CAP-018` (Group Y, `0x0044` BLE-notification-burst isolation), and the still-uncaptured main
-      run-through remainder — `CAP-026` (Group L, passive observation). **`CAP-027` (Group N, touch
+      run-through remainder — `CAP-026` (Group L, passive observation; **analyzed 2026-09-12**, `id_registry.csv`). **`CAP-027` (Group N, touch
       gestures) is done, 2026-08-30** — see `CAP-027-FINDINGS.md`. **`CAP-028` (Group O, head
       gestures) run 2026-09-12 — inconclusive**: zero wire-visible traffic during the claimed
       gesture window, but no active call/notification existed for a gesture to act on, so this
       cannot distinguish "functionally inert, as expected" from "gesture not triggered." Re-verified
       across the full log 2026-09-13, same clean negative (`ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md`
       Phase 3) — a correctly-scoped repeat with an active call/notification is designed as Group AQ
-      (planned `CAP-055`). Still to do: `CAP-029` (Group P, Conversation Detection voice trigger + the optional,
+      (planned `CAP-055`). `CAP-029` is **analyzed 2026-09-12** (Conversation Detection, `PROTOCOL.md` §6). Still to do from its original Group P scope: (Conversation Detection voice trigger + the optional,
       destructive factory-reset comparison + the still-open shorter-press pairing-mode question),
       and `CAP-030` (Group Q items #19–20, Loud Noise Protection/Adaptive Audio, needs firmware
       ≥4.467 — worth double-checking this against the project's `release_5.203` baseline first,
@@ -565,10 +557,8 @@ lower priority than finishing ANC/Battery/EQ):**
       the public `protobuf` runtime source): `qjc`/`qja` (5-alternative oneof), `qhr` (38 fields,
       all field-type/reference info recovered), and `nqx` (`pw_rpc.RpcPacket`, 7 fields) all
       decoded and cross-correlated against real wire bytes (`CAP-020` frames 1741/1935). See
-      `DECISIONS.md` ADR-019 (maintainer sign-off obtained) for the accepted findings. **Not fully
-      closed:** only `qhr` fields 4, 7, 12 (field-number only), and 29 have been wire-cross-checked
-      so far — fields 11, 15, 17, 19, 22, 27, 28 are confirmed on the wire but not yet run through
-      this same method (tracked in this file's "Targeted research follow-ups" section).
+      `DECISIONS.md` ADR-019 (maintainer sign-off obtained) for the accepted findings. Fields 11, 15, 17, 19, 22, 27, 28 were
+      run through the same method later (closed 2026-09-03/08, ADR-019 Updates). No `.proto` build input exists by decision (ADR-041).
 - [x] **DLCI 0x02 channel-ownership question — resolved 2026-08-30 (narrow promotion).**
       `DECISIONS.md` ADR-018 (Option 2, maintainer-approved): DLCI 0x02 confirmed 🟢 FACT as the
       companion app's own internal RFCOMM channel (SDP UUID `25e97ff7-...` = RFCOMM channel 1 =
@@ -594,7 +584,7 @@ lower priority than finishing ANC/Battery/EQ):**
       0x04's Fast Pair Message Stream or DLCI 0x08's private envelope anywhere in the companion app's
       own decompiled code — both appear to be implemented inside Google Play Services itself. The
       resulting scope question (should this project decompile GMS to close that gap?) is now decided:
-      **no.** DLCI 0x04/0x08 `FrameEncoder`/`FrameDecoder` work proceeds clean-room, from wire-capture
+      **no.** DLCI 0x04/0x08 `FrameEncoder`/`FrameDecoder` work proceeds independently (not "clean-room" — ADR-025's 2026-09-24 Update), from wire-capture
       evidence alone (plus, for DLCI 0x04, the public Fast Pair spec) — the same method already used
       for ANC/Find My Buds/EQ, none of which ever needed a companion-app code cross-reference. No
       further APK-search effort should be spent trying to locate DLCI 0x04/0x08 transport code in this
@@ -641,8 +631,9 @@ lower priority than finishing ANC/Battery/EQ):**
       for the full analysis). **Still open**: steps 4/6 (the Message Stream/`libmaestro` handshake's
       own internal content ordering beyond channel-open timing, and user-triggered-command timing) —
       not attempted this pass.
-- [ ] **Bring the first command to full 🟢 FACT status — updated 2026-09-09, ANC and battery Option C
-      already done; only battery Option A remains, and that item is capture-blocked.** ANC
+- [ ] **Bring the first command to full 🟢 FACT status — updated 2026-09-24:** ANC, battery Option B (ADR-031/033) and the Case message
+      (ADR-014) are FACT and implemented; Option C is FACT on the wire but not app-consumable (ADR-040). Only battery Option A remains, and
+      that item is capture-blocked. **Original 2026-09-09 text:** ANC
       (`PROTOCOL.md` §4.1) reached full FACT status 2026-08-12 (see the checked item immediately
       below). Battery via HFP (`PROTOCOL.md` §4.3 Option C) is also already 🟢 FACT
       (`DECISIONS.md` ADR-015/ADR-023). Only battery Option A (the Fast Pair BLE Battery
@@ -693,10 +684,8 @@ lower priority than finishing ANC/Battery/EQ):**
       `RingFrameEncoder`/`RingFrameDecoder` (DLCI 0x04, `CAP-025` fixtures) all tested against real
       `tshark`-extracted fixture bytes, plus a `CodecRouter` doing per-DLCI stream buffering/frame-
       boundary detection (HDLC-flag-delimited for 0x02, length-prefixed for 0x04) that didn't exist
-      in code before this session. Battery Option C's `HfpAtParser` (`:hardware`) also implemented
-      and tested. Battery Option B and §4.5's other DLCI 0x02 settings remain unimplemented — **not
-      a gap, a deliberate gate**: neither carries an explicit implementation-unblock ADR (see
-      `ARCHITECTURE.md` §5a's re-derivation and its own `PROPOSAL —` note).
+      in code before this session. (Later: `HfpAtParser` removed with HFP, ADR-040; Battery Option B implemented, ADR-033;
+      the other DLCI 0x02 settings have a read-only unblock, ADR-036, not yet built.)
 - [x] **Implement `BudsTransport` (RFCOMM primary, secondary GATT for case/charging characteristics)
       and `ConnectionStateMachine` — `RfcommBudsTransport`'s per-DLCI multiplexing done 2026-09-18**
       (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 4), resolving the `2026-09-13` `//
@@ -711,7 +700,7 @@ lower priority than finishing ANC/Battery/EQ):**
       `FakeBudsTransport`.
 - [x] **First working end-to-end connection + battery status shown in the UI — UI-complete, not
       hardware-verified, 2026-09-18** (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phases 5-6).
-      HFP Option C (`PROTOCOL.md` §4.3 Option C) is wired end-to-end from `HfpBatteryReader` through
+      (Historical — HFP was later removed, ADR-040; battery now comes from DLCI 0x04/0x08.) HFP Option C was wired end-to-end from `HfpBatteryReader` through
       `BudsRepositoryImpl` to `ConnectionScreen`'s battery card — but `MainActivity`'s `onConnect`/
       `onDisconnect` actions are still placeholders (no real device to connect to in this
       environment) and `HfpBatteryReader`'s actual broadcast delivery is itself unverified (see its
@@ -784,7 +773,8 @@ lower priority than finishing ANC/Battery/EQ):**
       the ring-buffer snapshot to the system share sheet (`Intent.ACTION_SEND`, local-only per
       AGENTS.md §9 — the destination is the user's own choice, never a network call this app makes
       itself).
-- [ ] **PROPOSAL, added 2026-09-18** (`ai-sessions/0033`, `ARCHITECTURE.md` §5a): a consolidated
+- [x] **Decided 2026-09-20 as `DECISIONS.md` ADR-036 (read-only `ReadSetting` for fields 2, 4, 7, 11, 15, 17, 19, 22, 27, 28 — no writes); the read-only
+      Settings UI is open work (Known technical debt below).** PROPOSAL, added 2026-09-18 (`ai-sessions/0033`, `ARCHITECTURE.md` §5a): a consolidated
       `DECISIONS.md` ADR explicitly unblocking DLCI 0x02's generic settings-write `FrameEncoder`/
       `FrameDecoder` for the fields already at full/category-level FACT identity (touch controls,
       multipoint, volume EQ, volume balance, mono audio, in-ear detection, case sounds — fields 2,
@@ -793,141 +783,43 @@ lower priority than finishing ANC/Battery/EQ):**
 
 ## Known technical debt
 
-_(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 13. Every
+_(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
-- **`CAP-059` analysis, mirror/bond fixes, decisions and features — 2026-09-20 (`ai-sessions/0042`).** Done (**hardware-verified by `ai-sessions/0043`/`CAP-060`, see below**): link observer flag + event-driven
-  re-reads, `AndroidLine.UNKNOWN`, bond outcome from the stack, pairing re-entry guard, why-did-the-session-end log lines, 1000-line buffer (RESULT §6); **decided by the
-  maintainer in chat and done:** `HfpBatteryReader` removed; **ADR-035** — Case battery from DLCI 0x08 by an on-demand, receive-only claim (`CaseBatteryFrameDecoder`,
-  Connect + *Refresh battery*, "last seen" marking); **ADR-036** written (DLCI 0x02 read-only `ReadSetting` unblock — **nothing implemented**); firmware line and "buds in the
-  case / out" line (passive); Find "ringing" state; ANC Quick Settings tile (no EQ preset export/import); no automatic session opening (mirror only); the HCI log stays local;
-  three PROTOCOL promotions (fresh client needs no opening message; write ack + persistence; dock-state second confirmation). **Hardware re-test, `CAP-060` (`ai-sessions/0043`):**
-  ✅ mirror follows Android correctly once re-created (`CAP-060-EVENT-NOTES.md` 17:59:02, 17:59:42); ✅ bond reported correctly this run (no stray "bond timed out" line anywhere
-  in `CAP-060-debug-export.log`, unlike `CAP-059`); ✅ **the Buds DO push the Case level without the phone-side `0e 04`** — `CAP-060-FINDINGS.md` §2 found `Group 0x0e Code 0x01`
-  pushed ≥13 times unprompted throughout the session, to Google Play services (which already holds/re-claims DLCI 0x08) — the real blocker is **channel contention with GMS**, the
-  same mechanism as DLCI 0x04, not a missing request; **ADR-038 written and approved** (maintainer, chat 2026-09-22) — `readCaseBattery` now retries once when the channel
-  closes out from under the wait, and `PROTOCOL.md` §4.3 Option E records the "pushes without a request" finding as 🟢 FACT (same approval). Not hardware-verified. 🔴 still open: the tile's actual on-panel behaviour on
-  GrapheneOS (code/manifest reviewed, structurally correct, `CAP-060-FINDINGS.md` §4 — never bound in either capture because it was never manually added to Quick Settings) —
-  **addressed by `ai-sessions/0043`**: `AncTileService` is unchanged (it was already correct), but the app now calls `StatusBarManager.requestAddTileService()` (API 33+, a
-  button on the ANC screen) so the user can ask Android to add it directly instead of finding Quick Settings' own edit screen themselves, and the tile's icon was redrawn
-  (a recognizable ear+sound-wave glyph, `ic_anc_tile.xml`) in place of the original generic ring-and-dot; not hardware-verified this session. EQ
-  audibility (not assessable from logs/video). **Debt found, not fixed:** (a) after a user disconnect in Android's
-  panel the app said "Another app may have taken it over, or the Buds dropped it" regardless of cause — **fixed, `ai-sessions/0043`**: the message now checks Android's own
-  link state (`AndroidLink`) at display time and distinguishes an RFCOMM-only closure (link still shows connected) from a fuller link loss (Android shows disconnected too,
-  e.g. from its own Bluetooth settings) — see `ConnectionScreen.kt`'s `ErrorExplanation`/`userMessage()` doc comments for this fix's own stated limits (a live read, not a
-  snapshot taken at the moment of the drop); (b) the battery card shows no reading age except
-  the Case's "last seen" — **addressed by `ai-sessions/0043` Phase H** (timestamp replacing "last known"/"last seen" wording); (c) 🔴 why the Buds closed both RFCOMM channels —
-  `CAP-060` found 2 more instances of this exact phenomenon plus 3 new instances of a different, ACL-level drop pattern (`CAP-060-FINDINGS.md` §1); the idle/periodic/second-host
-  and <0.6s re-claim experiments (RESULT §12 e) were still not run as isolated, purpose-built tests; (d) 🔴 why Play services stopped re-claiming DLCI 4 after 17:18:53 in
-  `CAP-059` (its *Nearby devices* permission state was still not recorded in `CAP-060` either); (e) the settings read-only UI and per-field decoders
-  under ADR-036; (f) fold the tightened capture checklist (RESULT §12) into `CAPTURE_BLUETOOTH_HCI_SNOOP.md` (maintainer procedure — proposal only); (g) `AGENTS.md` §5's HFP
-  paragraph would need a maintainer edit ("wire-confirmed, not consumable by the app; not implemented").
-- **Pairing/permissions fixes, Android-state mirroring, charging flag, EQ read, HFP diagnostic — 2026-09-20 (`ai-sessions/0041`,
-  `DECISIONS.md` ADR-033 update / ADR-034).** Done (**none hardware-verified**): in-app pairing no longer fails at "could not resolve the selected device"
-  (address upper-casing, association reuse/cleanup, distinct failure reasons), the runtime-permission flow exists (start + every resume; own states for
-  "not asked / denied / blocked"), the Connection screen mirrors Android's paired/connected state (`OsConnectionObserver`, `DeviceStatus`), the battery
-  decoder shows charging (`0bSVVVVVVV`), the EQ is read at Connect (`ReadSetting 4:16`) and write results are surfaced, `HfpBatteryReader` logs every
-  headset broadcast action. Closed by this: ADR-033's charging-flag decision, the EQ-read decision/ADR, the `07 34` census (never ACKed in 44 captures). **Open —
-  each needs the maintainer:**
-  (1) **remove `HfpBatteryReader`** (decided 2026-09-20, *after one confirming run*): the follow-up task is — remove `HfpBatteryReader`, its wiring in
-  `RepositoryModule` and the UI row; keep the protocol facts (ADR-015/023) and relabel `PROTOCOL.md`/`ARCHITECTURE.md` §4 Option C "wire-confirmed, not
-  app-consumable" — **only if the diagnostic log shows no HFP battery broadcast arrives** (if anything does, report it and stop);
-  (2) **automatic session connecting** — two variants, *neither decided nor built*: foreground-only auto-open when Android reports the Buds connected, or CDM
-  device-presence for the background case (costs in `ARCHITECTURE.md` §6.0b); needs its own ADR;
-  (3) **Case battery via DLCI 0x08** (ADR-014's message is the FACT source; unapproved proposal), **BLE Fast Pair battery advertisement** (ADR-006), **`SubscribeToSettingsChanges`** and every other DLCI 0x02 setting — all unapproved;
-  (4) ~~**`LOGS-001`**: the deny-mode-drop capture is not yet in the folder (only the events skeleton) — analyse it when it is~~ **done** — reclassified as `CAP-059`, fully analysed `ai-sessions/0042`/`0043` (see `CAP-059-FINDINGS.md`);
-  (5) hardware re-test of everything above (`ai-sessions/0041` RESULT, "Re-test instructions"), especially: does the Buds accept our EQ write on the mirrored
-  channel (the new `pw_rpc …` log lines say), does a fresh client get an answer to `ReadSetting` without sending other requests first, and does the Android-state
-  mirror follow a bud leaving the case;
-  (6) `AncFrameDecoder` still treats every Message Stream ACK (Group `0xFF`) as an ANC ACK (noted `ai-sessions/0040`); `BudsRepositoryImpl.connect()`'s glue (the
-  snapshot/EQ-read launches) and the Compose wording are not unit-tested (need a real `BluetoothDevice` / no Compose test infrastructure).
-- **On-demand Message Stream claiming, Battery Option B decoder, and two research items — 2026-09-19
-  (`ai-sessions/0040`, `DECISIONS.md` ADR-032/ADR-033).** Done: the session is now the MAESTRO channel only; DLCI 0x04
-  is claimed per user action (ANC tap, Refresh, Find tap, plus one snapshot at Connect) and released after 1.5 s
-  (`BudsRepositoryImpl.withMessageStream`, `RfcommBudsTransport.openChannel/closeChannel`); the battery decoder is
-  live for the percentage regime. **Not hardware-verified.** Open, all needing the maintainer:
-  (1) **accept or reject ADR-033's charging-flag proposal** (bit 7 = charging; CAP-009's 221→228 vs Option E's 93→100);
-  (2) **EQ read** — promote the `pw_rpc` identification / `ReadSetting` reading (`DESKRESEARCH_FINDINGS.md` 2026-09-19) and
-  write an ADR unblocking a *read* path on DLCI 0x02, then a debug-only `ReadSetting 4:16` experiment; open sub-questions there
-  (what a fresh client must send first, channel id 19 vs 21, request/response matching);
-  (3) **HFP battery** — confirm with `dumpsys bluetooth_manager`, then decide remove/keep/relabel (`HfpBatteryReader`);
-  (4) **a `btsnoop` capture of the deny-mode drop** (both RFCOMM channels closed by the Buds after 89 s; cause unknown) in the
-  `captures/CAP-NNN-…` convention, plus a check of whether the official app answers the periodic `07 34` SASS message;
-  (5) **BLE Fast Pair battery advertisement** (ADR-006's bounded exception) as the channel-independent battery source;
-  (6) verify on hardware whether **Find My Buds keeps ringing after the Message Stream socket is released** (else lengthen the Find hold).
-- **Found and left, `ai-sessions/0040`:** `AncFrameDecoder` accepts every Message Stream ACK (Group `0xFF`), so a Ring ACK arrives as
-  `AncFrame.Ack` — worked around by the echoed Group/Code in `BudsRepositoryImpl`; a cleaner fix is to give ACKs their own routed type.
-- **Connect flicker, zombie sockets, empty EQ tab, app-vs-OS state mismatch — found and fixed
-  2026-09-19 (`ai-sessions/0039`), from the maintainer's real-hardware test of `ai-sessions/0038`'s
-  build.** Root-caused with Bluetooth-stack log evidence (`ai-sessions/0039_FEATURE_RESULT_2026_09_19.md`
-  §2): Android allows one RFCOMM connection per (device, channel) and its failure path closes the
-  incumbent too; the contenders were Google Play services' Fast Pair event stream (Message Stream, DLCI
-  0x04) **and this app's own leaked sockets** (`connectionLost` never closed the surviving channel).
-  Fixed and regression-tested: teardown of every socket on any loss, the failing socket closed on a failed
-  connect, at-most-one loss per connection and none from a replaced one, EOF/failed-write now reported,
-  bounded in-tap retry for fast collisions, the underlying reason kept (`BudsError.ChannelUnavailable`/
-  `ChannelLost`) and shown, connect mutex, ANC/EQ/Find controls disabled while not `Ready`, EQ controls
-  shown even while the value is unknown (they were unreachable), an informational "Android shows your
-  Buds as connected" hint (`OsConnectionObserver`). **Not hardware-verified.** Deliberately left
-  (each needs a maintainer decision, `ai-sessions/0039` §8): per-channel tolerance/"degraded" state
-  (contention is DLCI 0x04-only; DLCI 0x02 was never contested), auto-reconnect / auto-connect on launch
-  (contradicts `ARCHITECTURE.md` §6 and would ping-pong with Play services), lazily opening the Message
-  Stream. **The Play-services contention itself cannot be removed from this app's side.**
-- **Small items found in the same session, not fixed:** `BudsRepositoryImpl.connect()` returns
-  `PermissionDenied` ("Bluetooth permission is required") when merely no bonded device exists —
-  misleading copy; `BudsCompanionPairing.bondedDevice()` matches by the substring "Pixel Buds" in the
-  device *name*, so a user-renamed device would not be found; every failed connect attempt starts and
-  stops `BudsForegroundService` within ~160 ms (a notification flash, `ARCHITECTURE.md` §6.0a's own rule).
-  Also untested by design (no Compose/instrumented test infrastructure yet): the `ai-sessions/0039` UI
-  changes, `OsConnectionObserver`, and `BudsRepositoryImpl.connect()`'s success/failure mapping.
-- **No peer-disconnect detection, found and fixed 2026-09-18 (`ai-sessions/0038`).** Found via an
-  audit of `BudsRepository`'s API surface after `ai-sessions/0037`'s real-Connect work, not a
-  maintainer report. `BudsTransport.connected` was a plain, unobserved `Boolean` — if the peer
-  dropped the link (range loss, an OS-triggered socket teardown) rather than the user tapping
-  Disconnect, `RfcommBudsTransport`'s reader coroutine caught the resulting `IOException` and
-  flipped its own `connected` flag privately, but nothing ever told `ConnectionStateMachine`, so the
-  UI would have kept showing `Ready` for a connection that had actually already died —
-  `ConnectionStateMachine.onDisconnected()`'s own doc comment already documented this exact case as
-  "a normal, expected transition," it had just never been wired end-to-end. Fixed: a new
-  `BudsTransport.connectionLost: Flow<Unit>`, emitted only when the reader coroutine's own `isActive`
-  is still true at the `IOException` (distinguishing a genuine peer/range-loss drop from the
-  `IOException` this app's own `disconnect()` deliberately causes by closing the socket out from
-  under an in-flight blocking read) — `BudsRepositoryImpl` now collects it and calls
-  `connectionStateMachine.onDisconnected()`. Unit-tested via `FakeBudsTransport.emitConnectionLost()`.
-- **Two implemented-but-unreachable repository methods, found and fixed 2026-09-18
-  (`ai-sessions/0038`).** `BudsRepository.refreshAncMode()` (manual ANC re-query, unit-tested since
-  `ai-sessions/0033`) had no UI affordance anywhere — `AncScreen` now has a "Refresh" button. Also
-  found in the same audit: `EqScreen`'s sliders called `onGainsChanged` (a real DLCI 0x02 wire write,
-  `BudsRepositoryImpl.setEqGains`) from `Slider`'s continuous `onValueChange` callback instead of the
-  once-per-drag `onValueChangeFinished`, which would have sent one RFCOMM frame per pixel of drag
-  movement — fixed with a local `remember(value)`-keyed slider value that only calls `onGainsChanged`
-  when the drag completes.
-- **Bottom-nav back-stack asymmetry (Debug tab), found and fixed 2026-09-18
-  (`ai-sessions/0037`).** A real maintainer report: switching between tabs, then
-  using the system back gesture, could land on the Debug tab unexpectedly
-  instead of the tab actually being navigated to. Root cause: `OpenControlNavHost`
-  special-cased the Debug `NavigationBarItem` with a plain `navController.navigate()`
-  call, while the other four tabs used the `popUpTo(start){saveState} +
-  launchSingleTop + restoreState` pattern — the asymmetry let Debug accumulate
-  duplicate back-stack entries the other four's `popUpTo`/`saveState` handling
-  never touched. Fixed by merging all five destinations into one
-  `TAB_DESTINATIONS` list using identical navigation mechanics; Debug stays
-  visually distinct only in never showing as "selected." Also fixed in the same
-  pass: `iconFor()` had no `Routes.DEBUG` branch, so Debug silently fell through
-  to the generic `else -> Icons.Filled.Settings` case (same icon as
-  Connection/ANC) — now maps to `Icons.Filled.Info` explicitly.
-- **Capture extraction path matters, added 2026-08-28.** Four captures (`CAP-012`, `CAP-013`,
-  `CAP-017`, `CAP-031`) lost significant byte-level payload content to severe ACL truncation from
-  the `btsnooz.py`-from-bugreport fallback path (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 4); the
-  one session extracted via the raw `btsnoop_hci.log` path instead (`CAP-032`) came out fully
-  untruncated. Always check §3 step 3 (the raw file) first and prefer it whenever present — see
-  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3's own PROPOSAL note for the full detail.
-  **Verified 2026-08-30 (audit pass):** a `frame.cap_len == frame.len` sweep
-  across all 29 non-`planned` captures confirms these exact 4 are the only ones affected —
-  `CAP-017` is a filename-invisible case (named `-btsnoop_hci.log`, not `-btsnooz_hci.log`, despite
-  being truncated by a different mechanism, a phone-side snaplen setting) — no further
-  silently-truncated log exists among the remaining 25.
+**Restructured 2026-09-24 (`ai-sessions/0045`, 0044 finding T-2):** this section now lists **open** items only. The resolved history
+that used to sit here (sessions `0037`–`0043`: back-stack fix, unreachable methods, peer-disconnect detection, connect flicker, on-demand
+Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` and each session's RESULT file. Removed as stale: the
+2026-09-22 claim that the Buds push the Case level without the phone-side `0e 04` — re-derived and corrected in `ai-sessions/0045`
+(`PROTOCOL.md` §4.3 Option E correction, `DECISIONS.md` ADR-038 Update, ADR-039).
+
+- **Hardware re-test of everything not yet run on the Buds** — `ai-sessions/0045` RESULT "Re-test instructions" (supersedes the
+  `0041`/`0042`/`0043` lists): Case battery with the `0e 04` request (ADR-039), ANC ACK/NAK reporting, the Safe Mode card (ADR-042), dock
+  state "provisional" wording, the ANC tile's on-panel behaviour on GrapheneOS, EQ audibility, and whether Find keeps ringing after the
+  Message Stream socket is released (`ai-sessions/0040`).
+- **Ring "both" (`0x03`) untested on the wire** (ADR-027 Update 2026-09-24, `FIND-004`): the spec defines it, this project has never sent it (not implemented; sending it needs its own ADR) and no capture shows it.
+- **Hearable Controls MAC not enforced?** (`PROTOCOL.md` §4.1, 🟡): the ANC Set is sent without a session-nonce MAC and was ACKed in the
+  captures; a firmware that starts enforcing it would NAK with reason `0x03`, which the app now reports — verification test in §4.1.
+- 🔴 **Why the Buds close both RFCOMM channels** (`CAP-059`/`CAP-060-FINDINGS.md` §1): the idle / periodic / second-host / <0.6 s re-claim
+  experiments (`ai-sessions/0042` RESULT §12 e) have not been run as isolated tests.
+- 🔴 **Why Play services stopped re-claiming DLCI 0x04 after 17:18:53 in `CAP-059`** — its *Nearby devices* permission state was not
+  recorded in `CAP-060` either; record it in the next capture.
+- **ADR-036 read-only settings UI** (`ReadSetting` per-field decoders on DLCI 0x02): unblocked, nothing implemented.
+- **Fold the tightened capture checklist** (`ai-sessions/0042` RESULT §12) into `CAPTURE_BLUETOOTH_HCI_SNOOP.md` — maintainer procedure,
+  proposal only.
+- **Undecided, each needs its own ADR:** automatic session connecting (foreground-only on Android's connect, or CDM device presence —
+  `ARCHITECTURE.md` §6.0b); per-channel "degraded" state; the BLE Fast Pair battery advertisement (ADR-006's bounded exception);
+  `SubscribeToSettingsChanges` and other DLCI 0x02 settings beyond ADR-036.
+- **Remaining battery time** (Fast Pair Device Information code `0x04`, 0044 SYN-1): defined by the spec, never seen on the wire —
+  🔴 whether the Buds send it at all; check the next captures' DLCI 0x04 opens.
+- **Spatial audio / LE Audio visibility** (`SPATIAL-001`, `LEAUDIO-001`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §4b): 🔴 candidates, not captured.
+- **Notification flash on a failed connect:** `OpenControlApplication` starts `BudsForegroundService` at `Connecting` and stops it on
+  `Failed`, so a connect that fails fast still posts and removes the notification (`ARCHITECTURE.md` §6.0a).
+- **Not unit-testable with the current test setup** (no Compose / instrumented tests): the Compose wording, `OsConnectionObserver`,
+  `BudsForegroundService`/`AncTileService`, and the `BluetoothDevice`-dependent part of `BudsRepositoryImpl.connect()`.
+- **Capture extraction path matters** (added 2026-08-28, verified 2026-08-30): `CAP-012`, `CAP-013`, `CAP-017`, `CAP-031` lost payload
+  bytes to ACL truncation on the `btsnooz.py`-from-bugreport path (`CAP-017` via a phone-side snaplen, despite its `-btsnoop_hci.log`
+  name); always prefer the raw `btsnoop_hci.log` (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 3).
 
 ## Open questions
 

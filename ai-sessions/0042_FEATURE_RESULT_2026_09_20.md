@@ -4,7 +4,13 @@
 **Category:** FEATURE
 **Date:** 2026-09-20
 **Title:** Full analysis of the `LOGS-001` evidence (two camera films → timestamped events file; HCI snoop log, system log, app debug export, app logcat and screenshots correlated with it), validation of the app against it, fixes for what the evidence proved broken, and decision-ready proposals
-**Status:** awaiting maintainer sign-off
+**Status:** complete
+
+> **Status updated 2026-09-24** (`ai-sessions/0045`, 2026-09-24, per `AI_SESSION_LOG_PROCEDURE.md` §4a; 0044 findings S-5 and 0043-3): the
+> maintainer's approvals are the chat answers quoted below (2026-09-20), from which ADR-035/036 were written; the hardware re-test ran as
+> `CAP-060` (`ai-sessions/0043`). §12's items (a)–(j) are answered one by one in `ai-sessions/0045_MAINTENANCE_RESULT_2026_09_24.md`
+> ("0042 re-test items"); the Case-battery item (h) came out as the "Timeout every time" branch and led to ADR-039. What is still
+> untested is carried in 0045's re-test instructions.
 
 > **Why "awaiting maintainer sign-off":** Phases A–D are done — you answered the checkpoint in chat (§11) and everything you approved is built — but **nothing is hardware-verified**: every fix and feature is unit-tested and mutation-checked, its effect on the phone is a HYPOTHESIS with a re-test step (§12). Evidence is cited by timestamp, frame number and log line — never by evidence file name (standing rule).
 > **Approvals (chat, 2026-09-20):** HFP → remove; session → mirror only; Case → ADR + on-demand claim; features → firmware line, in-case line, Find state, **ANC tile only** (no EQ preset export/import) and the DLCI 0x02 read-only ADR; capture → keep local; promotions → three (§4). ADR-035 and ADR-036 were written from the drafted text after those answers (`AGENTS.md` §6).

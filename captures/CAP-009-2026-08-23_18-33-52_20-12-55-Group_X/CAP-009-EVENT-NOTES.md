@@ -1,6 +1,6 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group X, Battery-level discrepancy bracket (`CAP-009`)
 
-**Status: repeated, independent re-analysis (2026-08-2x).** A first pass over this capture was
+**Status: repeated, independent re-analysis (2026-08-23 (was "2026-08-2x"; date from commit `76c482e`)).** A first pass over this capture was
 limited to checking the wire log around timestamps the maintainer had already noted by hand, which
 risks only confirming what was already seen rather than finding what was missed. This version
 corrects that: an independent video timeline was built first (per-10-second contact-sheet pass over
@@ -258,7 +258,7 @@ numbering happens to match several prior sessions', but that is not guaranteed i
 
 ## Next steps
 
-- [x] Maintainer sign-off obtained 2026-08-2x on all 5 proposals from this re-analysis (`BATT-006`
+- [x] Maintainer sign-off obtained 2026-08-23 (was "2026-08-2x"; date from commit `76c482e`) on all 5 proposals from this re-analysis (`BATT-006`
       resolution incl. the per-earbud/cadence revision, the two Option E addenda, the DLCI `0x04`
       candidate for Option B, and the BLE-scan candidate for Option A) — recorded in `PROTOCOL.md`
       §4.3 Options A/B/C/E and `DECISIONS.md` `ADR-015`; see `CAP-009-FINDINGS.md`'s updated banner.

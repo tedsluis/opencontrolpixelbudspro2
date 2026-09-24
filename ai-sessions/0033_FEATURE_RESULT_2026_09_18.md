@@ -9,6 +9,10 @@
 §5a) is open for maintainer review, and every feature in Phase 8's capability table is explicitly
 not yet hardware-verified (no physical Pixel Buds Pro 2 available in this environment)
 
+> **Annotated 2026-09-24** (`ai-sessions/0045`, 2026-09-24, 0044 finding S-5): still `awaiting maintainer sign-off`, because the consolidated DLCI
+> 0x02 settings-*write* unblock proposal is still open — ADR-034 and ADR-036 unblocked only reads. The features have since run on hardware
+> (`CAP-059`, `CAP-060`); what they showed is recorded in `ai-sessions/0042`, `0043` and `0045`.
+
 ---
 
 ## Phase status table

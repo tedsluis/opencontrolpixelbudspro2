@@ -12,24 +12,25 @@ API. Unlike the Linux `qzed/pbpctrl` project, which uses the BlueZ stack and the
 UPower subsystem via AVRCP, this Android application talks directly to the
 native Android Bluetooth stack (Fluoride/Babel).
 
-Communication happens over two transports:
+Communication happens over up to three transports (RFCOMM is the only one the app uses today):
 
 - **Bluetooth RFCOMM** (`BluetoothSocket`, classic SPP-style channel) — the
   **primary** transport. Three DLCIs coexist on it, each with independent
   framing (`PROTOCOL.md` §2.3, `CodecRouter` in §5 below): DLCI 0x04 (official
-  Fast Pair Message Stream, 🟢 FACT), DLCI 0x02 (Pigweed `pw_hdlc`, 🟡
-  HYPOTHESIS that this is specifically `libmaestro`), and DLCI 0x08 (a private
-  envelope whose protocol identity is 🔴 still open).
-- **Bluetooth GATT** (`BluetoothGatt` / `BluetoothGattCallback`) — a
-  **secondary** transport for BLE characteristics exposed by the earbuds'
-  case/charging state, where applicable (e.g. a standard Battery Service
-  `0x180F`, per `PROTOCOL.md` §4.3 Option D).
-- **Bluetooth HID** — 🟡 HYPOTHESIS, added 2026-08-14, not yet functionally investigated.
-  `CAP-002-FINDINGS.md` §6 observed HID-Control and HID-Interrupt L2CAP channels opened during
-  SDP (frames 837–869), alongside an "Input device" toggle in the official app's Device details
-  screen. Plausible role: touch/head gestures surfaced as generic HID reports rather than
-  proprietary RFCOMM traffic — not confirmed, no HID report content has been captured or decoded.
-  Not treated as a confirmed transport for this app's own use until decoded.
+  Fast Pair Message Stream, 🟢 FACT), DLCI 0x02 (Pigweed `pw_hdlc` carrying pw_rpc
+  `maestro_pw.Maestro`, 🟢 FACT since `DECISIONS.md` ADR-034), and DLCI 0x08 ("GSND
+  CONTROL", a private envelope whose protocol identity is 🔴 still open; only its
+  Case-battery message is used, ADR-035/039).
+- **Bluetooth GATT** (`BluetoothGatt` / `BluetoothGattCallback`) — a possible
+  **secondary** transport (e.g. a standard Battery Service `0x180F`, `PROTOCOL.md` §4.3
+  Option D, whose presence is contested). Not built — no v1 feature needs it.
+- **Bluetooth HID** — not a transport for this app. `CAP-002-FINDINGS.md` §6 observed HID-Control and
+  HID-Interrupt L2CAP channels during SDP; `CAP-016-FINDINGS.md` §10 decoded HID Feature Report 2 to
+  `#AndroidHeadTracker#`, the description string of Android's standard head-tracker HID sensor used by
+  spatial audio (`source.android.com/docs/core/interaction/sensors/head-tracker-hid-protocol`). 🟡
+  HYPOTHESIS (strong): Android itself consumes it; no control feature of this app routes through HID.
+  §15's question is closed on that basis (maintainer-approved 2026-09-24, `ai-sessions/0045`); tracked
+  as `SPATIAL-001`.
 
 Compile/target/minimum SDK: **API 34 (Android 14)** — decided 2026-09-13, `DECISIONS.md` ADR-029;
 see §15's "already decided" list. Primary reference OS: GrapheneOS, with compatibility maintained
@@ -38,15 +39,14 @@ for stock AOSP-based ROMs.
 ```
 ┌──────────────────────────────────────────────────────┐
 │  :ui  (Jetpack Compose, Material 3)                   │
-│  - Screens, Composables                               │
-│  - ViewModels (MVVM)                                  │
+│  - Screens, Composables (state hoisted in :app's      │
+│    MainActivity — no ViewModel class, see §2)         │
 └──────────────────────┬─────────────────────────────────┘
                         │ observes StateFlow<BudsUiState>
 ┌──────────────────────▼─────────────────────────────────┐
 │  :domain                                              │
-│  - Use cases (ToggleAncUseCase, ReadBatteryUseCase,   │
-│    UpdateEqUseCase, ...)                              │
 │  - Domain models (ConnectionState, AncMode, ...)      │
+│    (no use-case classes — see §2)                     │
 │  - BudsRepository interface                            │
 └──────────────────────┬─────────────────────────────────┘
                         │ implementation
@@ -54,7 +54,8 @@ for stock AOSP-based ROMs.
 │  :data                                                │
 │  - BudsRepositoryImpl                                  │
 │  - CodecRouter (per-DLCI FrameEncoder/FrameDecoder:     │
-│    0x02 EQ, 0x04 ANC/Ring implemented; 0x08 not yet)    │
+│    0x02 EQ, 0x04 ANC/Ring/battery/ACK, 0x08 Case)       │
+│  - SafeModeGate (§8.1, ADR-042)                         │
 │  - DataStore (Debug Mode toggle — as built; see §2's    │
 │    Data Layer note for the encryption-scope disclosure) │
 └──────────────────────┬─────────────────────────────────┘
@@ -82,7 +83,7 @@ enforced by the build graph, not just by convention:
 :app            -> wires everything together, hosts MainActivity, DI graph
 :ui             -> Jetpack Compose screens, Material 3, ViewModels
 :domain         -> use cases, StateFlow-based state holders, sealed error/result types
-:data           -> Protobuf/Maestro serializer, frame envelope (de)coder, DataStore prefs
+:data           -> hand-written pw_rpc/Message Stream codecs (ADR-041), frame envelope (de)coder, DataStore prefs
 :hardware       -> BluetoothManager, GATT/RFCOMM sockets, ForegroundService
 ```
 
@@ -185,30 +186,28 @@ These components are deliberately isolated from the rest of the app so that:
 | Component | Layer | Responsibility |
 |---|---|---|
 | `BudsTransport` | `:hardware` (interface consumed by `:data`) | Abstracts the underlying RFCOMM `BluetoothSocket` (primary) and, where applicable, `BluetoothGatt` (secondary — case/charging characteristics). Upper layers see only `send(channelId: Int, frame: ByteArray)` / an inbound `Flow<Pair<channelId: Int, frame: ByteArray>>`, never raw Android BT types. `channelId` addresses one of the three coexisting RFCOMM DLCIs (`PROTOCOL.md` §2.3) — it is not optional, since the three channels have independent framing and cannot share one send/receive path. `connectionLost` (added `ai-sessions/0038`, hardened `ai-sessions/0039`) emits at most once per connection, only after every socket of that connection is closed; `openChannel`/`closeChannel`/`channelClosed` (added `ai-sessions/0040`, ADR-032) manage the shared on-demand DLCI 0x04 channel — see §6.0b. |
-| `ConnectionStateMachine` | `:hardware` | Explicit state machine (`Disconnected → Connecting → Discovering → Ready → ...`) driving `ConnectionState`. States and transitions must match what's actually observed in captures — see the connection lifecycle in `PROTOCOL.md` §5, which is still an ⚪ ASSUMPTION pending a full end-to-end capture. |
+| `ConnectionStateMachine` | `:hardware` | Explicit state machine (`Disconnected → Connecting → Discovering → Ready → ...`) driving `ConnectionState`. **As built (ADR-032):** `Ready` = "the MAESTRO channel (DLCI 0x02) is open"; `Discovering` is a zero-length pass-through (SDP resolution happens inside the socket open). These are app states, not wire-observed ones (`PROTOCOL.md` §5). |
 | `CodecRouter` (per-DLCI `FrameEncoder` / `FrameDecoder`) | `:data` | Routes each inbound `(channelId, bytes)` pair from `BudsTransport` to the codec for that DLCI, and routes each outbound command to the codec for whichever DLCI it belongs on. See §5 for the three channels and their framing. Pure Kotlin, no Android dependencies — fully unit-testable against fixed byte-array fixtures, per `AGENTS.md` §11. Each per-DLCI codec is implemented independently, gated on that DLCI's own framing reaching 🟢 FACT confidence (see §5's implementation gate) — one DLCI's codec is never blocked on another's. |
 | `BudsRepository` / `BudsRepositoryImpl` | interface in `:domain`, implementation in `:data` | Translates protocol-level events into domain models, exposed as `Flow`/`StateFlow` to the domain layer. |
 
 ## 3. Dataflow (Command Pipeline)
 
-Example: **"Activate Transparency Mode"**
+Example: **"Activate Transparency Mode"** (as built, rewritten 2026-09-24 — the earlier `BudsScreen`/`BudsViewModel`/
+`ToggleAncUseCase`/`MaestroSerializer` example described classes that never existed; ANC is a Message Stream byte frame, not protobuf):
 
-1. **UI Event** — user taps "Transparency" in `BudsScreen.kt`.
-2. **Domain Intent** — `BudsViewModel.onAncModeSelected(AncMode.TRANSPARENCY)`
-   invokes `ToggleAncUseCase`, which calls `BudsRepository`.
-3. **Serialization** — `:data`'s `MaestroSerializer` builds
-   `Maestro.AncCommand.newBuilder().setMode(TRANSPARENCY).build().toByteArray()`.
-4. **Framing** — `CodecRouter` picks the `FrameEncoder` for the DLCI this
-   command belongs on (per `PROTOCOL.md` §2.3 — see §5) and wraps the
-   protobuf bytes in that channel's envelope.
-5. **Transmission** — `:hardware`'s `BudsTransport.send(channelId: Int, frame:
-   ByteArray)` writes to the `BluetoothSocket` `OutputStream` on
-   `Dispatchers.IO`.
-6. **Acknowledgement / State Update** — an inbound frame (or timeout) resolves
-   a pending coroutine `Deferred`; on success, `MutableStateFlow<AncMode>` is
-   updated via `BudsRepositoryImpl`, which Compose observes and recomposes
-   automatically. On failure, a `BudsError` propagates up (§7) and the UI shows
-   a retry affordance instead of silently failing.
+1. **UI Event** — the user taps "Transparency" in `AncScreen` (`:ui`), which calls the hoisted `OpenControlActions.onAncModeSelected`.
+2. **Action** — `:app`'s `MainActivity` launches `BudsRepository.setAncMode(TRANSPARENT)` in the **application scope** (a
+   configuration change cannot cancel it, 0044 APP-4).
+3. **Claim** — `BudsRepositoryImpl.withMessageStream` claims DLCI 0x04 on demand (ADR-032): the channel's splitter is reset, the
+   claim waits for the Buds' Model ID.
+4. **Safe-Mode gate** — `SafeModeGate` checks the announced firmware and this claim's Model ID (§8.1, ADR-042); if either is not
+   verified, nothing is sent and `UnsupportedFirmware` is returned.
+5. **Encoding** — `AncFrameEncoder` builds `08 12 00 14 01 e8 e8 80 <16 bytes>` (`PROTOCOL.md` §4.1).
+6. **Transmission** — `RfcommBudsTransport.send(0x04, frame)` writes to the socket on `Dispatchers.IO`.
+7. **Acknowledgement / State Update** — `CodecRouter` routes the Buds' ACK (`ff 01 …`) or NAK (`ff 02 …`) as a `RoutedFrame.Reply`
+   and their `Notify` as `RoutedFrame.Anc`: an ACK applies the requested mode, a `Notify` applies the Buds' own mode, a NAK is
+   `BudsError.CommandRejected` and no answer within 1 s is `BudsError.Timeout` — in both failure cases the previous mode stays. The
+   channel is released 1.5 s later.
 
 ### 3.1 State Reconciliation (Hardware Is the Source of Truth)
 
@@ -220,9 +219,9 @@ change state while this app is disconnected or backgrounded.
 
 - **On every (re)connection**, before trusting or displaying any locally
   cached value, the app queries the actual current state from the hardware
-  (ANC mode, battery, EQ, touch-control config) rather than assuming the
-  last-known `StateFlow` value still holds. This follows the Startup Handshake
-  (§8) — the state query happens only after firmware verification succeeds.
+  (ANC mode, battery, EQ) rather than assuming the
+  last-known `StateFlow` value still holds. Reads run regardless of firmware; the Startup Handshake
+  (§8.1, ADR-042) gates **writes** only.
 - Locally cached values are marked provisional/stale until reconciled against a fresh read. **Added
   `ai-sessions/0043`:** each cached value's own wall-clock receive time is threaded alongside it as a
   sibling `StateFlow<Long?>` (`ancModeUpdatedAt`, `eqProfileUpdatedAt`, `batteryStatusUpdatedAt`,
@@ -245,9 +244,9 @@ should not be assumed uniform):**
 
 | Feature | Reconciliation mechanism on (re)connect | Confidence |
 |---|---|---|
-| ANC | **Corrected `ai-sessions/0040`:** the connect-time `Get`/`Notify` pair (ADR-021/ADR-022) is the *official client's* own query — a client that sends nothing gets no ANC `Notify`. This app therefore sends its own `AncFrame.Get` during each Message Stream claim (the Connect-time snapshot, ANC Refresh, and each ANC tap's reply) and treats the value as last-known between claims (ADR-032). | 🟢 FACT for the `Get`/`Notify` pair; the per-claim use is ADR-032 |
+| ANC | **Corrected `ai-sessions/0040`:** the connect-time `Get`/`Notify` pair (ADR-021/ADR-022) is the *official client's* own query — a client that sends nothing gets no ANC `Notify`. This app therefore sends its own `AncFrame.Get` during each Message Stream claim (the Connect-time snapshot, ANC Refresh, and each ANC tap's reply) and treats the value as last-known between claims (ADR-032). **A `Set` is only counted once answered (2026-09-24):** ACK → requested mode, `Notify` → the Buds' mode, NAK/no answer → failure, previous mode kept. The dock line from the same `Notify` is marked provisional within ~2 s of the claim opening (ADR-024). | 🟢 FACT for the `Get`/`Notify` pair; the per-claim use is ADR-032 |
 | EQ | No connect-time *push* exists for EQ, but the official app **reads** it — and so does this app since `ai-sessions/0041` (DECISIONS.md ADR-034, maintainer-approved 2026-09-20): the Connect sequence waits for the Buds' unsolicited `GetSoftwareInfo` announcement (which names this connection's pw_rpc channel), then sends `ReadSetting 4:16` (active EQ) on that channel and fills `eqProfile` from the answer; the EQ screen can re-read on demand. `eqProfile` is `null` only until that answer arrives or if it failed — `BudsRepository.eqError` then carries the reason (no announcement in time, a channel with no known address, an error status, a timeout). A write is only counted as done once the Buds' `RESPONSE` arrives (`status` absent/OK); anything else is surfaced, never assumed. Field 18 (last saved custom EQ) never replaces the active value. | 🟢 FACT (ADR-034: identification, `ReadSetting 4:N` semantics, three second-capture chains); 🟡 HYPOTHESIS for what a fresh client must send first and for request/response matching (handled conservatively, `// TODO(verify)`, hardware re-test) |
-| Battery (DLCI 0x04 Option B, **implemented `ai-sessions/0040`, ADR-033; charging flag `ai-sessions/0041`**) | Push-based: the Buds send three `Group 0x03 Code 0x03` frames within ~10 ms of the channel opening and again on every change — so each Message Stream claim yields a reading. Each of `b1`/`b2` is `0bSVVVVVVV`: `V` = 0–100 % and `S` = charging (maintainer-accepted 2026-09-20); `V = 0x7F`/`> 100` reads "unavailable"; `b3` (Case) is never decoded (it read `0xff` in 60/60 frames). **The Case comes from DLCI 0x08** (`Group 0x0e Code 0x01`, entry 3), read by a short **on-demand, receive-only claim** on the Connect tap and on *Refresh battery* (**ADR-035, `ai-sessions/0042`**); a value the Buds did not mark fresh is shown "last seen". | 🟢 FACT (ADR-031 identity, ADR-033 unblock + charging-flag update; ADR-014 identity + ADR-035 unblock for the Case) |
+| Battery (DLCI 0x04 Option B, **implemented `ai-sessions/0040`, ADR-033; charging flag `ai-sessions/0041`**) | Push-based: the Buds send three `Group 0x03 Code 0x03` frames within ~10 ms of the channel opening and again on every change — so each Message Stream claim yields a reading. Each of `b1`/`b2` is `0bSVVVVVVV`: `V` = 0–100 % and `S` = charging (maintainer-accepted 2026-09-20); `V = 0x7F`/`> 100` reads "unavailable"; `b3` (Case) is never decoded (it read `0xff` in 60/60 frames). **The Case comes from DLCI 0x08** (`Group 0x0e Code 0x01`, entry 3), read by a short **on-demand claim** on the Connect tap and on *Refresh battery* (**ADR-035**) that sends the one `0e 04 00 00` request (**ADR-039**, 2026-09-24 — every post-open push in `CAP-059`/`CAP-060` answered it); a value the Buds did not mark fresh is shown "last seen". | 🟢 FACT (ADR-031 identity, ADR-033 unblock + charging-flag update; ADR-014 identity + ADR-035/039 for the Case) |
 | Battery (HFP, Option C) — **removed `ai-sessions/0042`** | Push-based on the wire (`AT+BIEV`/`AT+CIND`, ADR-015/023) but **not consumable by an app**: `CAP-059` shows `AT+BIEV=2,100` seven times on the wire and **zero** vendor-specific events in the app's receiver (and the value is one earbud's, never the Case). `HfpBatteryReader` and its wiring were removed on the maintainer's decision (chat 2026-09-20); the wire facts stay. | 🟢 FACT on the wire; 🟢 not app-consumable (`CAP-059-FINDINGS.md` §7) |
 | Find My Buds Left/Right | Fire-and-forget action, not persisted state — there is nothing to reconcile on reconnect (no "currently ringing" flag this app tracks across a reconnect boundary). | N/A |
 
@@ -258,47 +257,23 @@ read request may be built is superseded by ADR-034.
 
 ## 4. Battery Status Logic (Android Fallback)
 
-Android has no equivalent of Linux's BlueZ/UPower/AVRCP battery reporting, so
-this layer uses Android-native fallbacks, in priority order (aligned with
-`PROTOCOL.md` §4.3):
+Android has no equivalent of Linux's BlueZ/UPower/AVRCP battery reporting, so this layer uses Android-native mechanisms. **As built
+(rewritten 2026-09-24, `ai-sessions/0045`; `PROTOCOL.md` §4.3's "current state" note is the protocol side):**
 
-0. **Worth checking first, cheapest — generic OS battery broadcast:**
-   register a `BroadcastReceiver` for `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED`
-   (API 31+) or the legacy `android.bluetooth.device.action.BATTERY_LEVEL_CHANGED`
-   intent. This costs nothing to implement (no scan permission, no RFCOMM
-   connection) and may already surface whatever the OS's own Bluetooth stack
-   derives from options 1–4 below — but whether it actually fires for this
-   device is unconfirmed (⚪ ASSUMPTION), so it supplements rather than
-   replaces the confirmed options that follow. If it works reliably in
-   testing, it can be promoted above option 1.
-1. **Primary — Fast Pair Battery Notification (BLE advertisement):** parse the
-   officially specified 3-byte (L/R/Case) payload from the BLE advertisement.
-   No active connection required. Implement observation of this advertisement
-   per the bounded scanning policy in §9.1 — filtered, foreground-triggered,
-   time-boxed; never a continuous background scan.
-2. **Secondary — RFCOMM Fast Pair Message Stream "Device Information":** once
-   connected, read battery via the Message Stream, if/once the exact battery
-   message code is confirmed (`PROTOCOL.md` §4.3 Option B).
-3. **Tertiary — HFP AT commands (confirmed active on the wire, `PROTOCOL.md` §4.3 Option
-   C) — *not implemented since `ai-sessions/0042`: not deliverable to an app, removed*:** `BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT`, parsing the
-   standard `AT+BIEV` HF Indicator #2 (Battery Level) and/or `AT+CIND`
-   `battchg` events surfaced by the HFP profile proxy — **not** Apple's
-   `AT+IPHONEACCEV`/`AT+XAPL` (an earlier, incorrect assumption; those are
-   iPhone-vendor-specific commands the Buds Pro 2 do not use). Unlike Options
-   0/A/B, this mechanism **pushes periodically** (~6–7s) rather than only on
-   change — see `PROTOCOL.md` §4.3 for the event-driven-vs-periodic split.
-4. **Last resort — GATT:** if the earbuds expose a standard `Battery Service
-   (0x180F)` GATT characteristic for the case, read it directly via
-   `BluetoothGatt.readCharacteristic()`.
+- **Implemented — Message Stream "Battery updated"** (DLCI 0x04 `03 03`, Option B, ADR-031/033): Left/Right with the charging flag,
+  pushed on every Message Stream claim.
+- **Implemented — DLCI 0x08 `0e 01`** (Option E, ADR-014/035/039): the Case, read by a short on-demand claim that sends `0e 04 00 00`.
+- **Not built — BLE Battery Notification advertisement** (Option A, bounded scan per §9.1/ADR-006): it has never matched on the wire
+  (`CAP-011`, `CAP-043`, `CAP-059`); the spec says a Provider should not advertise battery data all the time. `BLUETOOTH_SCAN` is not
+  even declared until this is built.
+- **Not an app source — HFP `AT+BIEV`/`AT+CIND`** (Option C): wire-confirmed, but no vendor-specific event reaches an app on
+  Android 14+ (`CAP-059`); removed, **ADR-040**. It does **not** push periodically for the whole session (ADR-015: a settling burst,
+  then irregular).
+- **Not built — generic OS broadcast** (Option 0, ⚪ untested) and **GATT Battery Service** (Option D, contested).
 
-If none of the above report a value, the UI shows "Battery unavailable" — the
-app never fabricates or carries over a stale percentage silently; stale values
-are visually marked ("last known: 3 min ago").
-
-> Note: this priority order changed from an earlier assumption of a
-> proprietary `libmaestro` query being primary — see `PROTOCOL.md` §4.3
-> for the reasoning (the Fast Pair mechanisms are officially specified and, for
-> the BLE advertisement option, require no active connection at all).
+If no source reports a value, the UI shows "Battery unavailable" — the app never fabricates or carries over a percentage silently; every
+value carries the wall-clock time it was received (`"updated 14:32:07"` / `"last seen 14:32:07"`, §3.1), never a relative "N min ago"
+(which would need a ticking timer, §6).
 
 ## 5. Protocol Framing & the Three-DLCI Reality (`CodecRouter`, Data Layer Detail)
 
@@ -316,28 +291,21 @@ DLCI 0x04 — official Fast Pair Message Stream framing (🟢 FACT, spec-verifie
 Carries Device Information, SASS, and the Hearable Controls extension
 (Get/Set/Notify ANC state) — see `PROTOCOL.md` §4.1.
 
-DLCI 0x02 — Pigweed `pw_hdlc` framing (🟢 FACT for the framing itself; 🟡
-HYPOTHESIS that this is specifically `libmaestro`):
-+------+-------------------------+---------+-------------------+------+
-| Flag | Address (LEB128 varint) | Control | Payload (protobuf)| Flag |
-+------+-------------------------+---------+-------------------+------+
-**Address field is per-connection-negotiated, not a small fixed set — do not
-hardcode it.** `0x00`/`0xD180` were the first two addresses observed, but a
-2026-08-17 cross-capture pass (`DESKRESEARCH_FINDINGS.md`, `PROTOCOL.md` §2.2a/§6)
-found two more pairs (`0x1e80`/`0x2680` Sent, answered by `0xe980` Rcvd)
-appearing at connection-(re)open/channel-bounce events and carrying the same
-content as the original pair. `FrameDecoder` for this DLCI must treat the
-Address field as dynamically assigned per connection/reconnect, not match
-against a fixed allowlist of known values. Payload content only partly decoded
-(device serial + firmware on the Rcvd side) — see `PROTOCOL.md` §2.2a.
+DLCI 0x02 — Pigweed `pw_hdlc` framing carrying pw_rpc `maestro_pw.Maestro` (🟢 FACT, ADR-034):
++------+------------------------------------+-------------+--------------------------+-----------+------+
+| Flag | Address (one-terminated varint)    | Control 03  | RpcPacket (pw_rpc proto) | CRC-32 LE | Flag |
++------+------------------------------------+-------------+--------------------------+-----------+------+
+**The address pairs with the RpcPacket `channel_id` the Buds announce per connection (ADR-034's table: 19 ↔ `00 3b`,
+21 ↔ `00 4b`, 24 ↔ `80 3d`, 26 ↔ `80 4d`) — never hardcoded, never guessed; an unknown channel sends nothing.** (The earlier
+"`0x00`/`0xD180`/`0x1e80`/`0x2680`/`0xe980`" addresses were a wrong byte split, corrected in `PROTOCOL.md` §2.2a.)
 
-DLCI 0x08 — private `[Group][Code][Length][Value]` envelope (🟢 FACT that
-it's a real, decodable envelope; 🔴 OPEN QUESTION what protocol it belongs to):
+DLCI 0x08 — private `[Group][Code][Length][Value]` envelope ("GSND CONTROL"; 🟢 FACT that it's a real, decodable
+envelope; 🔴 OPEN QUESTION what protocol it belongs to):
 +-----------+----------------+--------------+-------------------+
 | Group (1B)| Code (1B)      | Length (2B)  | Value (variable)  |
 +-----------+----------------+--------------+-------------------+
-Structurally decodable, but Group/Code meanings are largely unmapped — see
-`PROTOCOL.md` §2.3.
+Only `0e 01` (battery, index 3 = Case) is decoded and only `0e 04 00 00` is ever sent (ADR-035/039); every other
+Group/Code is an `UnidentifiedFrame` — see `PROTOCOL.md` §2.3/§4.3 Option E.
 ```
 
 - **Routing (outbound):** for each command, `CodecRouter` selects the
@@ -352,7 +320,9 @@ Structurally decodable, but Group/Code meanings are largely unmapped — see
   hands the inner bytes to the matching deserializer.
 - Any framing mismatch (bad magic/group, length overrun, checksum failure)
   yields a `BudsError.MalformedFrame` — logged locally and dropped, never
-  surfaced as a crash. This is distinct from a **structurally valid** frame
+  surfaced as a crash. **Resynchronisation (2026-09-24, 0044 APP-2):** a channel's buffer is reset whenever that
+  channel is opened, closed or lost, and dropped when a frame would exceed its maximum size (1024 data bytes for
+  DLCI 0x04/0x08, 4096 for DLCI 0x02) — a frame cut off by a torn-down on-demand claim can never misalign a later one. This is distinct from a **structurally valid** frame
   whose Group/Code isn't recognized (most of DLCI 0x08 today): that case does
   not fail to parse, it fails to be *understood* — see §7's
   `UnidentifiedFrame`, which is routed to a Debug UI instead of being dropped
@@ -372,27 +342,28 @@ FACT and implementable; DLCI 0x08's envelope shape is 🟢 FACT and its codec is
 implementable, but *acting on* payloads whose Group/Code is unmapped is not —
 those surface as `UnidentifiedFrame` instead (§7).
 
-**No decompiled reference exists for DLCI 0x04/0x08, by design, not by gap.** Exhaustive review of
+**No decompiled reference exists for DLCI 0x04/0x08, by design, not by gap** (wording corrected 2026-09-24: "clean-room" is ruled
+out for this project by `AGENTS.md` §12 — see ADR-025's 2026-09-24 Update). Exhaustive review of
 the companion app's own decompiled source found no code anywhere constructing or parsing DLCI 0x04's
 Fast Pair Message Stream frames or DLCI 0x08's private envelope — both appear to be implemented
 entirely inside Google Play Services rather than the companion app itself, and GMS reverse-engineering
 is explicitly out of scope for this project (`DECISIONS.md` ADR-025). This is not a blocker: this
 project's own evidentiary chain for DLCI 0x04 has never depended on companion-app code — every 🟢 FACT
 promotion for it traces to wire captures matched against the official, public Fast Pair specification
-alone (`PROTOCOL.md` §4.1), and `FrameEncoder`/`FrameDecoder` for ANC (ADR-009), Find My Buds
-Left/Right (ADR-011), and EQ (ADR-020) were all already implemented this same way, with zero APK code
-cross-reference. `FrameEncoder`/`FrameDecoder` work for DLCI 0x04/0x08 proceeds **clean-room, from
-capture evidence only** — this is the proven, already-practiced method for these channels, not a
-workaround for an "impossibility."
+alone (`PROTOCOL.md` §4.1), and `FrameEncoder`/`FrameDecoder` for ANC (ADR-009) and Find My Buds
+Left/Right (ADR-011) were implemented this way, with zero APK code cross-reference. (EQ is DLCI 0x02 and
+its identification did use APK analysis — ADR-019, ADR-034 — so it is not an example here.)
+`FrameEncoder`/`FrameDecoder` work for DLCI 0x04/0x08 proceeds **independently, from capture evidence
+(and, for DLCI 0x04, the public spec) only** — the proven, already-practiced method for these channels.
 
-### 5a. Implementation-ready feature summary (refreshed `ai-sessions/0033`, 2026-09-18)
+### 5a. Implementation-ready feature summary (refreshed `ai-sessions/0033`, 2026-09-18; re-derived through ADR-042, 2026-09-24)
 
 The per-channel gate above tells you whether a *channel's framing* can be coded against. It does not,
 by itself, tell you whether a *specific command* on that channel may be implemented — `AGENTS.md` §6
 requires a command's own FACT determination **and** an explicit implementation-unblock statement in a
 `DECISIONS.md` ADR, and those two things are tracked per command, not per channel. Re-derived directly
-from `PROTOCOL.md` + every `DECISIONS.md` ADR through ADR-031 (not assumed from an earlier session's
-summary), the current state is:
+from `PROTOCOL.md` + every `DECISIONS.md` ADR through ADR-042 (not assumed from an earlier session's
+summary), the current state is (every write below additionally passes the Safe-Mode gate, §8.1/ADR-042):
 
 | Feature | Channel | FACT status | Unblock ADR | Implementation status |
 |---|---|---|---|---|
@@ -400,22 +371,17 @@ summary), the current state is:
 | Find My Buds Left/Right | DLCI 0x04, Group `0x04` Code `0x01` | 🟢 FACT | ADR-011 (explicit "implementation is unblocked") | **Implemented** (`RingFrameEncoder`/`RingFrameDecoder`, `:data`) — structurally complete, not hardware-verified (`ai-sessions/0033`) |
 | EQ | DLCI 0x02, pw_rpc `maestro_pw.Maestro` `WriteSetting`/`ReadSetting`, payload `4:{16\|18:{5×float32}}` | 🟢 FACT (pw_rpc identification and `ReadSetting` semantics per ADR-034; envelope, field-to-band mapping, ±6.0 clamp, presets per ADR-016) | ADR-020 (write), **ADR-034** (read-only `ReadSetting` for fields 16/18, channel mirroring) | **Implemented** (`PwRpc`, `Maestro`, `EqFrameEncoder`/`EqFrameDecoder`, `BudsRepositoryImpl.readEq`/`setEqGains`, `:data`) — write ACK and read answer are surfaced; not hardware-verified (`ai-sessions/0041`) |
 | Battery, Option C (HFP `AT+BIEV`/`AT+CIND`) — **removed `ai-sessions/0042`** (maintainer decision in chat, after the confirming run) | HFP AT-command channel | 🟢 FACT on the wire | None | **Removed** — wire-confirmed, not app-consumable (`CAP-059`: 7 × `AT+BIEV` on the wire, 0 vendor events in the app) |
-| Battery, Option B (DLCI 0x04 `Group 0x03 Code 0x03`) | DLCI 0x04 | 🟢 FACT (message *identity*; ADR-031; charging flag, ADR-033's 2026-09-20 update) | **ADR-033** (`ai-sessions/0040`, maintainer-approved; charging flag accepted 2026-09-20) | **Implemented** (`BatteryFrameDecoder`, `:data`) — `0bSVVVVVVV` per earbud; the Case (`b3`) is not decoded there — it comes from DLCI 0x08 (ADR-014 identity, **ADR-035** unblock, `ai-sessions/0042`: on-demand receive-only claim, `CaseBatteryFrameDecoder`). Not hardware-verified. |
-| §4.5's other DLCI 0x02 settings (Touch & Hold, Head gestures, In-ear detection, Mono audio, Volume EQ, Volume Balance, Case sounds, Multipoint, Conversation Detection) | DLCI 0x02 | 🟢 FACT for several individual fields' number/semantic identity (ADR-019 and its Updates) | **None** — ADR-013 explicitly unblocks only the *generic* wrapper-building path, and ADR-019's own Consequences section states explicitly that it does **not** unblock `FrameEncoder`/`FrameDecoder` for DLCI 0x02 "generally," since the broader "this channel's Sent-direction payload carries `libmaestro` settings-write commands" HYPOTHESIS (ADR-018) was never itself promoted to FACT after being narrowed. No later ADR closed this gap the way ADR-020 explicitly did for EQ. | **Gated — not implemented.** A single consolidated ADR unblocking the fields already at FACT identity would close this. |
-| Find My Buds Case / "ring both" | — | — | ADR-027 | **Permanently out of scope**, not a gate to lift |
+| Battery, Option B (DLCI 0x04 `Group 0x03 Code 0x03`) | DLCI 0x04 | 🟢 FACT (message *identity*; ADR-031; charging flag, ADR-033's 2026-09-20 update) | **ADR-033** (`ai-sessions/0040`, maintainer-approved; charging flag accepted 2026-09-20) | **Implemented** (`BatteryFrameDecoder`, `:data`) — `0bSVVVVVVV` per earbud; the Case (`b3`) is not decoded there — it comes from DLCI 0x08 (ADR-014 identity, **ADR-035** unblock, **ADR-039** `0e 04` request: on-demand claim, `CaseBatteryFrameDecoder`). Left/Right hardware-seen in `CAP-059`; the Case with the request not yet hardware-verified. |
+| §4.5's other DLCI 0x02 settings (Touch & Hold, Head gestures, In-ear detection, Mono audio, Volume EQ, Volume Balance, Case sounds, Multipoint, Conversation Detection) | DLCI 0x02 | 🟢 FACT for several individual fields' number/semantic identity (ADR-019 and its Updates) | **ADR-036** — read-only `ReadSetting` for fields 2, 4, 7, 11, 15, 17, 19, 22, 27, 28 (no writes, no subscription) | **Reads unblocked, not built** (a read-only Settings card and per-field decoders need real bytes as fixtures — the official app's connect burst already reads fields 1–32, `PROTOCOL.md` §6). **Writes gated** — each needs its own ADR. |
+| Safe Mode / Startup Handshake | DLCI 0x02 announcement + DLCI 0x04 Model ID | 🟢 FACT (firmware string ADR-012/034; Model ID `PROTOCOL.md` §0.1) | **ADR-042** | **Implemented** (`SafeModeGate`, `:data`; Safe Mode card, `:ui`) |
+| Find My Buds Case / "ring both" | — | — | ADR-027 (premise narrowed 2026-09-24: spec `0x03` "ring both" untested) | **Out of scope**; sending `0x03` needs its own ADR |
 
 This table is this project's authoritative implementation-readiness list until superseded by a new ADR
 — a future session should re-derive it from `DECISIONS.md` directly rather than copying it forward
 uncritically, the same discipline this refresh itself applied.
 
-**PROPOSAL — awaiting maintainer decision, surfaced by this refresh, not decided here:** the §4.5
-settings row above represents nine real, user-visible features (per `PROJECT.md`'s v1 functional-scope
-checklist: touch controls/head gestures, in-ear detection status, etc.) whose individual field mappings
-are already 🟢 FACT, blocked from implementation only by a missing umbrella ADR, not by any remaining
-protocol uncertainty. Recommended next step: a single `DECISIONS.md` ADR, modeled on `ADR-020`'s own
-EQ precedent, explicitly unblocking DLCI 0x02's generic settings-write `FrameEncoder`/`FrameDecoder` for
-the specific fields already at full or category-level FACT identity (4, 7, 11, 15, 17, 19, 22, 27, 28,
-2) — left for the maintainer to review and approve, per `AGENTS.md` §6; not committed by this session.
+**Resolved 2026-09-20:** the consolidated-ADR PROPOSAL `ai-sessions/0033` recorded here became **ADR-036** (read-only; writes
+remain gated per field).
 
 ## 6. Bluetooth Resilience & GrapheneOS Degradation
 
@@ -428,7 +394,7 @@ physical link as inherently unstable:
   treated as a normal transition.
 - **Graceful Degradation:** an `IOException` from the socket (OS-triggered
   teardown, range loss, peer disconnect) is caught, `ConnectionState` moves to
-  `DISCONNECTED`, and all in-flight ViewModel event-observation coroutines
+  `DISCONNECTED`, and all in-flight claim/read coroutines of the repository
   (see below) are cancelled to avoid leaks or crash loops.
 - **Re-connection Strategy:** user-initiated reconnection only — no aggressive
   background retry loops, both to respect battery and to avoid the
@@ -462,8 +428,10 @@ persistent, low-priority notification. Concretely, for this app:
   automatically (`START_NOT_STICKY`) — matching the "no aggressive background retry loops" rule (§6).
 - **Ownership**: lives in `:hardware` alongside `BudsTransport`/`ConnectionStateMachine` (§2's module
   table already lists it there) — `:ui`/`:domain` only observe `ConnectionState`, they never start or
-  stop the service directly; `:app`'s composition root binds the service's own lifecycle to the same
-  Hilt-provided `ConnectionStateMachine` singleton so there is exactly one source of truth.
+  stop the service directly. **As built (2026-09-24, 0044 APP-6):** `:app`'s `OpenControlApplication` drives it from the
+  **application scope** over the repository's `ConnectionState` (+ ANC mode for the text) — so a session that ends while
+  the app is in the background still stops it (the earlier composable, bound to the UI lifecycle, missed that). The text
+  is updated by re-sending the start intent; a refused background start is logged, never a crash.
 
 ### 6.0b Connection-lifecycle rules for the RFCOMM transport (added `ai-sessions/0039`)
 
@@ -478,9 +446,16 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   Message Stream channel (DLCI 0x04) and re-opens it whenever it drops — so this app and Play services
   can knock each other off it. This app cannot prevent that (it must not touch Play services, `AGENTS.md`
   §1); it can only avoid contending with **itself** and report honestly.
-- **A connection is one unit.** Any channel's loss (read failure, EOF, failed write) closes *all* of that
-  connection's sockets before `BudsTransport.connectionLost` emits — a surviving socket stays "open" in the
-  stack and makes the next `connect()` collide with this app's own leftover.
+  *External check (2026-09-24, `ai-sessions/0045`):* the Bluetooth RFCOMM specification (Part F:1 §5.4, "DLCI allocation with
+  RFCOMM server channels") says the DLCI is formed from the server channel and the session's direction bit and "is thereafter
+  used for all packets in both directions between the endpoints", and §2.3.2 gives each multiplexer session its own L2CAP
+  channel, with multiple sessions described for connections to *different* devices — so all apps on the phone share one session,
+  and one DLC per DLCI, towards the Buds. That the stack's failure path also closes the incumbent is Android behaviour, evidenced
+  by the system log only (`ai-sessions/0039` §2.4), not by the spec.
+- **A connection is one unit** — *for the session channels opened by `connect()`* (superseded for the on-demand DLCI
+  0x04/0x08 channels by ADR-032, see the per-channel bullet below). Any session channel's loss (read failure, EOF, failed
+  write) closes *all* of that connection's sockets before `BudsTransport.connectionLost` emits — a surviving socket stays
+  "open" in the stack and makes the next `connect()` collide with this app's own leftover.
 - **At most one loss report per connection**, and none from a connection already replaced by a newer
   `connect()` or ended by `disconnect()`; `ConnectionStateMachine.onDisconnected()` is idempotent;
   `BudsRepositoryImpl` acts on a loss only while `Discovering`/`Ready`.
@@ -510,7 +485,10 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   status (`DeviceStatus`, `:domain`) puts Android's state first and the app's own session second; an open session is authoritative for "controlled".
   **Corrected `ai-sessions/0042` (first hardware run, `CAP-059`):** the receiver was registered `RECEIVER_NOT_EXPORTED` and received **no** system broadcast for
   minutes while an *unflagged* receiver in the same process received the same `BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED` (the actions are protected system
-  broadcasts, so it is now `RECEIVER_EXPORTED` — nothing but the system can send them). It additionally re-reads the profile proxies on caller-supplied *refresh* events
+  broadcasts, so it is now `RECEIVER_EXPORTED` — nothing but the system can send them). Matches Android's own guidance (checked
+  2026-09-24, developer.android.com "Broadcasts overview"): some system broadcasts come "from highly privileged apps, such as Bluetooth and
+  telephony, that … don't run under the system's unique process ID", and a `RECEIVER_NOT_EXPORTED` receiver gets "some system broadcasts …
+  but not broadcasts from the highly privileged apps". It additionally re-reads the profile proxies on caller-supplied *refresh* events
   (resume, a change of the bonded device, a change of the app's own session) and on every proxy bind — still event-driven, no timer, still visibility-bound. An
   **unknown** link (`AndroidLink.UNKNOWN`: no permission, no bonded address yet, no answer) has its own card line (`AndroidLine.UNKNOWN`, "Paired — Android's connection
   state isn't known (yet)") and is never rendered as "not connected". Transitions are logged once per change with their trigger; every session end is logged with its
@@ -518,8 +496,10 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   state is read directly from the stack at the end of the 45 s wait, that wait is cancelled when the flow ends, and a second `associate()` while one is open is refused
   (`PairingFailure.AlreadyInProgress`).
 - **On-demand channels, three of them (`ai-sessions/0042`).** Besides the MAESTRO session (DLCI 0x02) and the Message Stream (DLCI 0x04, ADR-032) the app may claim
-  **DLCI 0x08 ("GSND CONTROL")** for the Case battery (**ADR-035**): only on the Connect tap and on *Refresh battery*, **receive-only** (nothing is sent on it), serialised with the
-  Message Stream claims by one mutex, ≤ 2 s wait for the push, released 1 s later; a failed claim is `caseBatteryError`, not a session loss. The Quick Settings ANC tile
+  **DLCI 0x08 ("GSND CONTROL")** for the Case battery (**ADR-035**): only on the Connect tap and on *Refresh battery*; since **ADR-039** (2026-09-24) the claim ends any
+  lingering Message Stream claim first and sends exactly one `0e 04 00 00` (nothing else), serialised with the Message Stream claims by one mutex, ≤ 2 s wait for the
+  push, one retry if the channel is closed out from under the wait (ADR-038), released 1 s later; a failed claim is `caseBatteryError`, not a session loss.
+  Every claim/release is wrapped so a cancelled tap still releases the channel (0044 APP-4). The Quick Settings ANC tile
   (`AncTileService`) is a user tap like the ANC screen's: it switches the mode only while the session is `Ready` and otherwise opens the app — it never connects and never starts
   a service. **Decided (maintainer, chat 2026-09-20): no automatic session opening — the Connection card mirrors Android (read-only) and Connect stays a tap;** the foreground and
   CDM-presence variants above stay unbuilt proposals.
@@ -554,14 +534,18 @@ A shared sealed hierarchy (`:domain`) is used across layers instead of raw
 exceptions crossing module boundaries:
 
 ```kotlin
-sealed class BudsError {
+sealed class BudsError {   // as built, domain/…/BudsError.kt (updated 2026-09-24)
     data object ConnectionLost : BudsError()
     data class ChannelUnavailable(val channelId: Int, val detail: String?) : BudsError() // socket open failed (`ai-sessions/0039`)
     data class ChannelLost(val channelId: Int, val detail: String?) : BudsError()        // open channel died (`ai-sessions/0039`)
     data object Timeout : BudsError()
     data class MalformedFrame(val raw: ByteArray) : BudsError()
-    data object UnsupportedFirmware : BudsError()
+    data object UnsupportedFirmware : BudsError()    // a write refused by the Safe-Mode gate (§8.1, ADR-042)
     data object PermissionDenied : BudsError()
+    data object NotPaired : BudsError()              // no bonded Buds (0044 APP-8)
+    data class CommandRejected(val reasonCode: Int, val detail: String) : BudsError() // a Message Stream NAK (0044 APP-3)
+    data class MaestroChannelUnknown(val channelId: Int?) : BudsError() // no/unknown pw_rpc channel announced (ADR-034)
+    data class MaestroRejected(val detail: String) : BudsError()        // pw_rpc error status (ADR-034)
     data class Unknown(val cause: Throwable) : BudsError()
 }
 ```
@@ -583,7 +567,7 @@ data class UnidentifiedFrame(
     val group: Int?,
     val code: Int?,
     val raw: ByteArray,
-    val timestamp: Instant,
+    val timestampMillis: Long,   // as built (was `timestamp: Instant` in the design)
 )
 ```
 
@@ -600,12 +584,19 @@ evidence-based reverse-engineering principle in `AGENTS.md` §6/`PROJECT_RULES.m
 
 Because `libmaestro`'s wire format can change across Pixel Buds firmware
 revisions, each `.proto` file and each entry in `PROTOCOL.md` carries the
-firmware/library version it was verified against. `UnsupportedFirmware` (§7)
-is returned when an inbound frame doesn't match any known schema version,
-rather than attempting a best-effort parse that could misreport battery/ANC
-state.
+firmware/library version it was verified against. **As built (ADR-042):** `UnsupportedFirmware` (§7) is
+returned when a *write* is refused by the Safe-Mode gate below; an inbound frame that matches no known shape is
+`MalformedFrame`/`UnidentifiedFrame`, never a best-effort parse that could misreport battery/ANC state.
 
 ### 8.1 Startup Handshake
+
+> **Implemented 2026-09-24 (`DECISIONS.md` ADR-042, maintainer-approved design; `SafeModeGate`, `BudsRepositoryImpl.writeGate`).**
+> The firmware strings come from the Buds' unsolicited `GetSoftwareInfo` on DLCI 0x02 (every connection, 22–102 ms after the open);
+> the allowlist is `{release_5.203}`. Message Stream commands (ANC Set, Ring/Stop) additionally require the Pixel Buds Pro 2's Fast
+> Pair Model ID (`da 2d b1`) on the same claim; EQ writes are refused if a different Model ID was seen. Reads are never gated. A refused
+> write returns `UnsupportedFirmware`, sends nothing, and the Connection screen shows a Safe Mode card with the detected firmware and
+> Model ID. The design text below stays as written; where it says "read the firmware first", the app waits (bounded) for the Buds'
+> own announcement instead of sending a request.
 
 Before sending any state-changing command on a new connection, the app reads
 the firmware version string first (via DLCI 0x02's Rcvd block or DLCI 0x04's
@@ -645,7 +636,7 @@ of firmware versions this app has been verified against.
 Concrete hand-off from CDM's OS-owned picker to `:hardware`'s own `BudsTransport`, since Phase 4/6 need
 this sequence explicit rather than inferred from ADR-005's decision alone:
 
-1. **UI trigger** — the Connection/Pairing screen (§2.4 below) shows a "Pair a device" affordance when
+1. **UI trigger** — the Connection/Pairing screen (§2.4 above) shows a "Pair a device" affordance when
    `BluetoothAdapter.getBondedDevices()` (already-paired path) yields no Buds Pro 2. Tapping it is the
    user-visible trigger CDM itself requires — never invoked automatically on app start.
 2. **`CompanionDeviceManager.associate(AssociationRequest, ...)`**, built with a
@@ -678,10 +669,11 @@ this sequence explicit rather than inferred from ADR-005's decision alone:
 7. **Reconnection** (every subsequent app launch/Bluetooth toggle) skips steps 1–4 entirely —
    `BluetoothAdapter.getBondedDevices()` already has the device, so the app goes directly to step 5's
    bonding check (normally a no-op, since the link key is already stored) and step 6.
-- **Local state persistence:** user preferences (custom EQ profiles, last
-  known battery) are stored via encrypted AndroidX DataStore. Nothing is ever
-  transmitted off-device (see `AGENTS.md` §1 and §9 for the enforcement
-  rules).
+- **Local state persistence:** as built, only the Debug-mode switch is stored (plain AndroidX DataStore Preferences —
+  one non-sensitive boolean, §2). Future user data (e.g. custom EQ profiles) would use DataStore, **encrypted where
+  applicable** (`AGENTS.md` §10); no EQ or battery value is persisted (the hardware is the source of truth, §3.1).
+  Nothing is ever transmitted off-device (see `AGENTS.md` §1 and §9 for the enforcement rules). (Aligned 2026-09-24,
+  0044 AR-3 — this bullet used to say "encrypted DataStore for custom EQ profiles and last-known battery".)
 - **Threat model summary:** the app assumes a privacy-conscious user on a
   hardened OS; it minimizes fingerprintable behavior (no continuous scanning
   for device *discovery*), minimizes permissions, and keeps all diagnostic
@@ -746,16 +738,18 @@ undecided (see §15's "Already decided, not open" list, updated to match).
 
 ## 13. Testing Strategy
 
-- **Unit tests** (`:data`): `CodecRouter` (protobuf (de)serialization and
-  per-DLCI frame envelope encode/decode) and domain-layer use cases, using fixed
-  byte-array fixtures — no real hardware required, no Android dependencies
-  needed (pure Kotlin + JUnit5/Kotest, per `AGENTS.md` §11).
-- **Unit tests** (`:domain`): ViewModels/use-cases tested against a fake
-  `BudsTransport` implementation that emits scripted frames/errors.
-- **Instrumented tests** (`:hardware`, optional/manual): `GattConnectionManager`/
-  RFCOMM socket handling against a local BLE mock/simulator where possible;
-  otherwise a manual test plan (see `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`) against
-  real hardware, since no real earbuds are available in a CI runner.
+As built (rewritten 2026-09-24, 0044 AR-2):
+
+- **Unit tests** (`:data`): every codec (`CodecRouter`, ANC/Ring/Battery/Case/Model-ID/ACK-NAK/pw_rpc/HDLC/EQ) against real
+  `tshark`-extracted capture bytes, fuzz/property tests (random and truncated input never throws; a valid frame decodes after a
+  garbage prefix and a reset), `SafeModeGate`, and `BudsRepositoryImpl` against `FakeBudsTransport` (in `:hardware`'s **test
+  fixtures**, never in the app) — pure JVM, JUnit 5 + Kotest assertions.
+- **Unit tests** (`:hardware`): `RfcommBudsTransport` with scripted sockets, `ConnectionStateMachine`, pairing/link logic.
+- **Unit tests** (`:domain`): pure domain logic (status derivation, tile cycle). There are no ViewModels or use cases to test.
+- **CI** (`.github/workflows/android.yml`, 2026-09-24): builds, runs all unit tests and lint, and asserts no `INTERNET` permission
+  in any manifest and in the merged manifest.
+- **Hardware**: a manual test plan (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, the re-test lists in `ai-sessions/`), since no earbuds exist
+  in a CI runner. No GATT client exists to test.
 - Per `AGENTS.md` §11, any bug fix tied to a specific malformed/unexpected
   frame adds a regression test with that exact byte sequence (device
   identifiers redacted first).
@@ -764,23 +758,28 @@ undecided (see §15's "Already decided, not open" list, updated to match).
 
 - Kotlin + Jetpack Compose BOM, Gradle version catalog (`libs.versions.toml`)
   for pinned dependency versions.
-- `protobuf-kotlin-lite` via the Gradle Protobuf plugin, `.proto` sources
-  under `data/src/main/proto/`.
-- No `INTERNET` permission anywhere in any module's manifest; a CI/lint check
-  should assert this remains true (see `AGENTS.md` §1).
+- **No protobuf runtime, no `.proto` build inputs** (`DECISIONS.md` ADR-041, 2026-09-24): the wire codec is hand-written
+  Kotlin; schemas recovered from the APK are documentation. (`protobuf-kotlin-lite` via the Gradle plugin applies only
+  if a `.proto` build input is ever introduced — `AGENTS.md` §4.)
+- No `INTERNET` permission anywhere in any module's manifest; asserted by CI (`.github/workflows/android.yml`) on every
+  change under `android/` (see `AGENTS.md` §1).
 
 ## 15. Open Architecture Questions
 
 > Move to `DECISIONS.md` once decided, following the ADR template.
 
-**Re-checked `ai-sessions/0033` (2026-09-18):** the HID-surface question below is confirmed still the
+**Re-checked `ai-sessions/0045` (2026-09-24):** the HID question below is closed; no architecture question is open.
+**Earlier, `ai-sessions/0033` (2026-09-18):** the HID-surface question below is confirmed still the
 only genuinely open *architecture* question — no new one surfaced during this session's Phase 1 refresh.
 A related but distinct gap *was* found (the missing consolidated implementation-unblock ADR for DLCI
 0x02's individual §4.5 settings) — that is a protocol/decision-gate matter, not an architecture
 question, so it is tracked as a `PROPOSAL —` note in §5a above and in
 `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md`, not added here.
 
-- [ ] Added 2026-08-14: is the observed Bluetooth HID surface (§1) architecturally relevant to
+- [x] **Closed 2026-09-24 (maintainer-approved in chat, `ai-sessions/0045`):** the HID surface is Android's standard
+      head-tracker HID sensor (`#AndroidHeadTracker#`, `CAP-016-FINDINGS.md` §10; spatial audio), 🟡 HYPOTHESIS (strong) that
+      Android itself consumes it — no control feature of this app routes through HID, so `BudsTransport`/`CodecRouter` need no
+      HID path. Tracked as `SPATIAL-001` for completeness. Original item: Added 2026-08-14: is the observed Bluetooth HID surface (§1) architecturally relevant to
       `:hardware`/`BudsTransport` — i.e. does any control feature this app needs actually route
       through HID reports rather than RFCOMM/GATT — or is it exclusively used by parts of the
       official app/OS this project doesn't need to replicate? Unresolved; no HID report content
@@ -789,8 +788,8 @@ question, so it is tracked as a `PROPOSAL —` note in §5a above and in
       would need an equivalent HID report decoder — this is a real, not cosmetic, change to both
       components, which is why this item stays open rather than being assumed away.
 
-> Already decided, not open: persistent settings storage (encrypted AndroidX
-> DataStore — see §2 and `AGENTS.md` §10); state management approach
+> Already decided, not open: persistent settings storage (AndroidX DataStore, encrypted where
+> applicable — see §2/§9 and `AGENTS.md` §10); state management approach
 > (`StateFlow`/`SharedFlow` only — see §11); passive BLE scanning policy for
 > the Fast Pair Battery Notification (bounded exception — see §9.1,
 > `DECISIONS.md` ADR-006); **single-device support only for v1** — the app

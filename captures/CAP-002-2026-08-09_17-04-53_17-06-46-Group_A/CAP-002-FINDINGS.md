@@ -262,7 +262,11 @@ pages directly (not a search-summary), specifically
   buds' actual firmware build. **Open question, unchanged:** cross-check against the app's own
   displayed firmware version (visible under "More settings" in the app, not captured in this
   session) in a future capture.
-- **Code `0x0a` (8-byte rotating value) — still 🔴 OPEN QUESTION, now spec-confirmed unassigned.**
+- **Code `0x0a` (8-byte rotating value) — 🟢 FACT (2026-09-24): the Fast Pair MAC extension's "session nonce".** Resolved by
+  `ai-sessions/0045` (maintainer-approved in chat 2026-09-24; `PROTOCOL.md` §0.1 Update): Google's Fast Pair MAC extension page
+  (`developers.google.com/nearby/fast-pair/specifications/extensions/mac`) defines Device Information code `0x0A` as the 8-byte session
+  nonce the Provider sends when a Message Stream opens, and every one of the 19 DLCI 0x04 opens checked carries a fresh one. The text below
+  is the original 2026-08-10/12 reasoning, kept as history — it looked only at the `deviceinformation` page, which does not list `0x0A`.
   The fetched `deviceinformation` page's code table runs `0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
   0x07 (deprecated), 0x08, 0x09, 0x0B` — **`0x0A` is not listed at all**. This isn't a gap in our
   research; the code is genuinely absent from the documented table we retrieved. Either it's an
@@ -395,7 +399,8 @@ pages directly (not a search-summary), specifically
 > original 2026-08-10 research), this strengthens rather than resolves the open question: `0x0A`
 > looks like a genuinely reserved or deliberately-unpublished code specifically within the Device
 > Information group, not a documented cross-group convention — consistent with, but not proof of,
-> it being an intentionally undocumented/private field Google chose not to publish. Left at 🔴 OPEN
+> it being an intentionally undocumented/private field Google chose not to publish. *(Superseded 2026-09-24: the MAC extension page, not
+> searched here, defines it — see the 🟢 FACT bullet above.)* Left at 🔴 OPEN
 > QUESTION, now on a more thoroughly checked basis.
 
 ## 4. No RFCOMM traffic during app setup — resolved: it moves to BLE/GATT (🟢 FACT)
@@ -595,7 +600,7 @@ this document already clears that bar:
   full evidence. Promotes `PROTOCOL.md` §2.2's framing placeholder to FACT for this channel.
 
 **Not ready yet (needs more evidence before promotion):**
-- Code `0x0a`'s meaning (§3) — genuinely undocumented in the spec page retrieved; the 2026-08-12
+- ~~Code `0x0a`'s meaning (§3)~~ — **resolved 2026-09-24: session nonce, 🟢 FACT (see §3).** Original note: genuinely undocumented in the spec page retrieved; the 2026-08-12
   addendum rules out two candidate explanations (simple counter; simple function of the
   co-occurring BLE address) but does not resolve the actual meaning — still needs a more complete
   spec source or its own targeted investigation.

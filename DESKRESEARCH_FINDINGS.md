@@ -103,6 +103,7 @@ Status legend (consistent with `PROTOCOL.md` §0):
   (9856), both Sent-direction (phone→Buds), always control byte `0x03`, always appearing together
   within milliseconds of each other. A matching Rcvd-direction (Buds→phone) address, `0xe980`
   (59776), answers them.
+  *(Pointer 2026-09-24, `ai-sessions/0045`: these pw_hdlc address values come from a wrong byte split — the address is a one-terminated varint, e.g. `00 3b` = 3712, paired with the RpcPacket `channel_id`; see `PROTOCOL.md` §2.2a and `DECISIONS.md` ADR-034.)*
 
   These three addresses are **absent from `CAP-001`, `CAP-002`, `CAP-003`, `CAP-006`, and the
   11:42 `CAP-010` session entirely** (all five show only the two already-documented addresses,
@@ -805,7 +806,8 @@ implemented this session); the connection-free BLE Fast Pair advertisement (ADR-
 `PROTOCOL.md` §4.3 Option A) is the next source that does not depend on who holds a channel. The HFP row and
 `HfpBatteryReader` are left in place (they cost nothing and show "unavailable" honestly) — removing them, or
 re-labelling Option C in `PROTOCOL.md`/`ARCHITECTURE.md` §4 as "wire-confirmed, not app-consumable", is a
-maintainer decision (proposal, `AGENTS.md` §6).
+maintainer decision (proposal, `AGENTS.md` §6). *(Later, noted 2026-09-24: the maintainer decided removal; `ai-sessions/0042` removed
+`HfpBatteryReader`, and `DECISIONS.md` ADR-040 records it.)*
 
 ### 2026-09-20 — Second-capture confirmation of `ReadSetting`, the pw_hdlc/pw_rpc framing correction, the channel rule, and the periodic `07 34` census (`ai-sessions/0041`)
 

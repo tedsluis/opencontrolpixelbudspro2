@@ -146,6 +146,7 @@ FACT (reproducible, script above + raw hex above).
 
 **Address `0x0000`** = phone→Buds direction, **`0xd180`/53632** = Buds→phone — both already
 documented in `PROTOCOL.md` §2.2a, reconfirmed here.
+*(Pointer 2026-09-24, `ai-sessions/0045`: these pw_hdlc address values come from a wrong byte split — the address is a one-terminated varint, e.g. `00 3b` = 3712, paired with the RpcPacket `channel_id`; see `PROTOCOL.md` §2.2a and `DECISIONS.md` ADR-034.)*
 
 ## 4. Analysis: `EQS-004` (Slider: Bass)
 

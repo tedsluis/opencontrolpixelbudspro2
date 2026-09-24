@@ -10,10 +10,17 @@ version(s) have been pulled/analyzed, and
 procedure — including the current, `DECISIONS.md` ADR-017 AI-assistance
 boundary for this kind of work).
 
-> **Status:** no analysis session has been logged yet — this document currently
-> defines the structure and workflow. Populate the sections below as findings
-> come in, one class/finding at a time, following `PROJECT_RULES.md` §1
-> (FACT / HYPOTHESIS / ASSUMPTION) and §3.
+> **Status (updated 2026-09-24, `ai-sessions/0045`):** populated — static analysis of
+> `v1.0.955078536-10253511` since 2026-08-30, continued in logged sessions `ai-sessions/0001`–`0031`
+> (`ai-sessions/INDEX.md`). New findings are added one class/finding at a time, following
+> `PROJECT_RULES.md` §1 (FACT / HYPOTHESIS / ASSUMPTION) and §3. *(This line used to say "no analysis
+> session has been logged yet".)*
+>
+> **Note (2026-09-24, `ai-sessions/0045`, maintainer-approved in chat 2026-09-24):** the 17 🟡 entries
+> marked "(2026-08-30, follow-up pass)" or "(2026-08-30, Tier 2 follow-up pass)" were written by AI
+> passes the maintainer requested, before session logging began. No per-entry maintainer relevance
+> decision is recorded for them (`DECISIONS.md` ADR-017 §2). Read them as candidate leads until they
+> are reviewed. Entries from `ai-sessions/0024`–`0031` were signed off in `0026`/`0028`/`0029`/`0031`.
 
 **Non-destructive-update convention:** this document follows the same
 convention `CAP-NNN-FINDINGS.md` files use (`PROJECT_RULES.md` §3 rule 9a) —
@@ -822,6 +829,7 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     values — but this reading (one socket, N logical channels multiplexed via the Address field) was
     not independently checked against `gbb`/`gbc`/`fuu.java`'s own socket-selection wiring this pass
     (`fuu.java:37-60`, the factory that constructs `fut`, was opened but not traced further).
+    *(Pointer 2026-09-24, `ai-sessions/0045`: these pw_hdlc address values come from a wrong byte split — the address is a one-terminated varint, e.g. `00 3b` = 3712, paired with the RpcPacket `channel_id`; see `PROTOCOL.md` §2.2a and `DECISIONS.md` ADR-034.)*
 - **Open questions (remaining)**: whether `gbb`/`gbc` (the objects `fuu.java`'s factory passes into
   `fut`'s constructor) tie specifically to the one already-documented Pigweed-internal-socket UUID
   (ADR-018), or whether a different/second `gbd`-based construction path exists for some other

@@ -1,6 +1,12 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AS (new), Live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the connect-time burst (`CAP-057`)
 
-**Status:** 🔲 **Not yet captured — skeleton only.** Fill in every `TBD` below after recording,
+**Status:** ⛔ **Withdrawn 2026-09-24 (`ai-sessions/0045`, maintainer-approved in chat) — never to be captured.** The question
+this capture was designed for is answered from existing bytes: decoding `CAP-036`'s connect-time burst with `scripts/pwrpc_decode.py`
+and the 65599 hashes of the APK's `maestro_pw.Maestro` method names shows frame 1423 is the **`GetHardwareInfo`** RESPONSE (method id
+`0x28eca5e3`) carrying the three component serials (`PROTOCOL.md` §6, 🟢 FACT). Which serial belongs to which component stays 🟡; a
+screen-transcription check could still settle that, but no capture is planned for it. The skeleton below is kept as history.
+
+**Original status:** 🔲 **Not yet captured — skeleton only.** Fill in every `TBD` below after recording,
 per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), and
 `PROJECT_RULES.md` rule 11/14 (reproducibility metadata). Once reviewed, rename this folder from
 the placeholder `CAP-057-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AS` to the actual session

@@ -59,7 +59,7 @@ it later — once merged, that history is difficult to fully scrub.
 
 Same rules as everywhere else in this project (`PROJECT_RULES.md` §1):
 
-- Every claim is labeled 🟢 FACT / 🟡 HYPOTHESIS / ⚪ ASSUMPTION — never stated
+- Every claim is labeled 🟢 FACT / 🟡 HYPOTHESIS / ⚪ ASSUMPTION / 🔴 OPEN QUESTION — never stated
   as more confident than the evidence supports.
 - Include capture metadata: firmware version, Android version, official app
   version (if used), capture method (`PROJECT_RULES.md` §4).

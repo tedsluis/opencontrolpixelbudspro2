@@ -36,12 +36,15 @@ To be finalized based on what is actually found in the protocol. Candidate
 features offered by the official app (it still needs to be verified which of
 these run over local BLE/RFCOMM versus over the cloud/a Google account):
 
-- [ ] Read battery status (case, left, right)
-- [ ] Switch Active Noise Cancelling / Transparency / Adaptive mode
-- [ ] Configure equalizer / sound profile (presets and custom bands)
-- [ ] Configure touch controls and head gestures
-- [ ] Read firmware version and serial numbers per component
-- [ ] "Find my Buds" functionality (play sound on left/right/case)
+> **Status (2026-09-24):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
+> says so. The authoritative per-feature state (and its unblocking ADR) is `ARCHITECTURE.md` §5a.
+
+- [x] Read battery status (left, right: DLCI 0x04, ADR-033; case: DLCI 0x08, ADR-035/039)
+- [x] Switch Active Noise Cancelling / Transparency / Adaptive mode (ADR-009)
+- [x] Configure equalizer / sound profile (presets and custom bands) (ADR-020/034)
+- [ ] Configure touch controls and head gestures (field identities 🟢, reads unblocked by ADR-036 but not built; writes gated)
+- [~] Read firmware version and serial numbers per component (firmware shown; serial numbers not read)
+- [x] "Find my Buds" functionality — Left/Right only (ADR-011); Case/"both" out of scope (ADR-027)
 - [ ] In-ear detection status
 - [ ] Manage multipoint connections
 - [ ] Case sound settings (earbuds replaced, other notifications)
@@ -75,9 +78,10 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
 - No reverse-engineering of Google Play Services' own Fast Pair/Nearby module. DLCI 0x04's Fast
   Pair Message Stream and DLCI 0x08's private envelope appear to be implemented entirely inside
   GMS rather than the companion app itself (no trace of either transport was found anywhere in the
-  companion app's decompiled source) — this project implements both channels clean-room, from
+  companion app's decompiled source) — this project implements both channels independently, from
   wire-capture evidence (and, for DLCI 0x04, the public Fast Pair specification) alone, the same
-  method already used for every confirmed command (see `DECISIONS.md` ADR-025).
+  method already used for every confirmed command (see `DECISIONS.md` ADR-025 and its 2026-09-24
+  wording Update — not "clean-room", which `AGENTS.md` §12 rules out for this project).
 - No distribution of the original Google APK or any part of it.
 - No telemetry, analytics, or crash reporting of any kind, and no `INTERNET`
   permission in the app (see `AGENTS.md` §1).
@@ -104,7 +108,7 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
 Without Google Play Services installed, the app can:
 
 1. Connect to the Pixel Buds Pro 2 over Bluetooth (RFCOMM/BLE).
-2. At minimum, read and change battery status and ANC/Transparency mode.
+2. At minimum, read battery status and change the ANC/Transparency mode.
 3. Remain stable across multiple connect/disconnect cycles.
 4. Be documented and reproducible for other contributors, with every protocol
    claim traceable to a capture, a code reference, or a logged experiment.
