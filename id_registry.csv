@@ -103,6 +103,7 @@ CAP-058,capture,planned,"session date/status: *planned* — Group AT (new), SDP-
 CAP-059,capture,analyzed,"2026-09-20 17:16:59-17:22:29, Group AU (new) — first OpenControl-app hardware capture (Pixel 9a/GrapheneOS, ai-sessions/0041 build), reclassified from android/logs/LOGS-001 by ai-sessions/0043; PAIR-001, ANC-001-004, FIND-001/002 confirmed, EQP-006 partial",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-060,capture,analyzed,"2026-09-21 17:54:01-18:00:49, Group AV (new) — second OpenControl-app hardware capture (Pixel 9a/GrapheneOS, ai-sessions/0042 build), reclassified from android/logs/LOGS-002 by ai-sessions/0043; PAIR-001, PAIR-003, ANC-001-004, FIND-001/002 confirmed, EQP-005/006 partial",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-061,capture,analyzed,"2026-09-24 17:24:59-17:31:14, Group AW (new) — first hardware run of the ai-sessions/0045 build (Pixel 9a/GrapheneOS); Safe Mode root cause (announcement parser), Case claim refuted, dock-line counter-example; PAIR-001, PAIR-003, CASE-003/004/005/006, BATT-004 confirmed; ANC/FIND/EQ attempted, nothing sent",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-062,capture,planned,"2026-09-25 — APP_TESTPLAN.md run of the ai-sessions/0046 build (Pixel 9a/GrapheneOS); files in captures/CAP-062/, analysis by ai-sessions/0047",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
