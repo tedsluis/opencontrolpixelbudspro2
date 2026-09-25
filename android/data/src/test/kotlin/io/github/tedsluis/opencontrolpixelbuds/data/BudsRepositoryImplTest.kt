@@ -21,6 +21,7 @@
 
 package io.github.tedsluis.opencontrolpixelbuds.data
 
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap061
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
@@ -104,7 +105,9 @@ class BudsRepositoryImplTest {
         if (verified) {
             transport.onOpenChannel = { channel -> if (channel == Dlci.FAST_PAIR_MESSAGE_STREAM) transport.emit(channel, MODEL_ID_PRO_2) }
             transport.onSent = { channel, frame -> autoAck(transport, channel, frame) }
-            transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_5.203"))
+            // The real announcement (CAP-061 frame 1508, serial redacted) — not a hand-made one: the synthetic shape without the fixed64
+            // field 5 hid the parser defect that put the verified Buds in Safe Mode on hardware (ai-sessions/0046).
+            transport.emit(Dlci.MAESTRO, Cap061.announcementFrame())
             settle()
         }
         return repo to transport
@@ -119,10 +122,13 @@ class BudsRepositoryImplTest {
         }
     }
 
+    /** The real announcement's layout (CAP-061 frame 1508: 3 entries, fixed64 field 5, field 6) with only the firmware string swapped. */
     private fun helloWithFirmware(channel: Int, responseAddress: Int, firmware: String): ByteArray {
-        val entry = byteArrayOf(0x12, firmware.length.toByte()) + firmware.toByteArray()
-        val group = byteArrayOf(0x0a, entry.size.toByte()) + entry
-        val payload = byteArrayOf(0x22, group.size.toByte()) + group
+        val serial = byteArrayOf(0x0a, 10) + "0000000000".toByteArray()
+        val entry = serial + byteArrayOf(0x12, firmware.length.toByte()) + firmware.toByteArray()
+        val one = byteArrayOf(entry.size.toByte()) + entry
+        val entries = byteArrayOf(0x0a) + one + byteArrayOf(0x12) + one + byteArrayOf(0x1a) + one
+        val payload = byteArrayOf(0x22, entries.size.toByte()) + entries + hex("2934293fc2f6cbd81a" + "3000")
         return Hdlc.encode(
             responseAddress,
             PW_HDLC_CONTROL_UI,
@@ -339,11 +345,14 @@ class BudsRepositoryImplTest {
         val (repo, transport) = buildRepository(verified = false)
         settle()
         transport.onSent = { _, frame ->
-            // reply to whatever was sent with the requested quintet on the same channel
+            // reply to the read with the requested quintet on the same channel; the runtime-info subscription (ADR-043) gets no reply here
             val rpc = (PwRpc.decode(Hdlc.decode(frame).let { (it as BudsResult.Success).value.payload }) as BudsResult.Success).value
-            assertEquals(Maestro.METHOD_READ_SETTING, rpc.methodId)
-            assertEquals("2010", rpc.payload.toHex()) // 4:16
-            transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_RESPONSE, rpc.channelId, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, quintetPayload(heavyBass))))
+            if (rpc.methodId == Maestro.METHOD_READ_SETTING) {
+                assertEquals("2010", rpc.payload.toHex()) // 4:16
+                transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_RESPONSE, rpc.channelId, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, quintetPayload(heavyBass))))
+            } else {
+                assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, rpc.methodId)
+            }
         }
         repo.launchInitialEqRead()
         advanceTimeBy(1_000)
@@ -351,7 +360,7 @@ class BudsRepositoryImplTest {
         transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
         settle()
 
-        assertEquals(1, transport.sent.size)
+        assertEquals(2, transport.sent.size, "the EQ read, then the runtime-info subscription (ADR-043)")
         assertEquals(heavyBass, repo.eqProfile.first())
     }
 
@@ -525,142 +534,79 @@ class BudsRepositoryImplTest {
         assertEquals("0401000100", transport.sent[1].second.toHex())
     }
 
-    // ---- Case battery on DLCI 0x08 (DECISIONS.md ADR-035), dock state (ADR-024), Find state, firmware (ai-sessions/0042) ----
-
-    // CAP-059 frame 1211 (fresh, Case 97) and frame 2863 (no flag → last seen)
-    private val caseFresh = hex("0e0100230a210a03616c6c121a0a060864100118010a060864100118020a060861100118032001")
-    private val caseStale = hex("0e0100210a1f0a03616c6c12180a060864100118010a060864100118020a04086118032001")
+    // ---- Case battery from the runtime-info stream (DECISIONS.md ADR-043), dock state (ADR-024), Find state, firmware ----
 
     /** `Notify ANC state` `01 e8 <settable> <mode>` — real values from CAP-059 frames 1520 (`e8 00 20`) and 2782 (`e8 e8 08`). */
     private fun ancNotify(settable: String, mode: String) = hex("08130004" + "01e8" + settable + mode)
 
-    @Test
-    fun `refreshBattery ends the DLCI 0x04 claim, claims DLCI 0x08, sends exactly one 0e 04 00 00, reads the Case push and releases it after the linger`() = runTest {
-        val (repo, transport) = buildRepository()
-        settle()
-        runCurrent() // start the repository's backgroundScope collectors before the first emit
+    /** Real `SubscribeRuntimeInfo` SERVER_STREAM packets (ai-sessions/0046): CAP-041 frame 782 (Case 79) and CAP-050 frame 1163 (no Case entry). */
+    private val runtimeInfoWithCase = hex("2a2510ce829bba8734180032120a04084f10011204086410021a04086410023a06080110011800080710151dea71de7e2590821ee6")
+    private val runtimeInfoWithoutCase = hex("2a1f10a584ae8a8a341800320c1204082510011a04082d10013a06080010001800080710151dea71de7e2590821ee6")
 
+    @Test
+    fun `refreshBattery claims only the Message Stream and never opens DLCI 0x08 (ADR-043)`() = runTest {
+        val (repo, transport) = buildRepository()
         val job = launch { repo.refreshBattery() }
         runCurrent()
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20")) // answers the Get, so the Case claim starts
-        settle()
-        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.GSND_CONTROL), transport.openChannelCalls)
-        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.closeChannelCalls, "ADR-039: the Message Stream is released before DLCI 0x08 is claimed")
-        assertEquals(false, transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM))
-
-        transport.emit(Dlci.GSND_CONTROL, caseFresh)
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "08"))
         settle()
         job.join()
 
-        assertEquals(BatteryLevel.Known(97, isCharging = null, isStale = false), repo.batteryStatus.value.case)
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.openChannelCalls)
+        assertEquals(emptyList<Int>(), transport.sent.map { it.first }.filter { it == Dlci.GSND_CONTROL })
+    }
+
+    @Test
+    @DisplayName("Connect: EQ read, then exactly one SubscribeRuntimeInfo, byte-identical to the official app's CAP-036 frame 1410 (ADR-043)")
+    fun `the Connect-time sequence subscribes to runtime info once, after the EQ read`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.onSent = { ch, frame ->
+            if (ch == Dlci.MAESTRO) {
+                val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+                if (rpc.methodId == Maestro.METHOD_READ_SETTING) {
+                    transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, quintetPayload(heavyBass))))
+                }
+            }
+        }
+        repo.launchInitialEqRead()
+        settle()
+
+        val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
+        assertEquals(2, maestro.size)
+        assertEquals("7e004b0310151dea71de7d5e2590821ee66654bfab7e", maestro[1])
+        assertEquals(heavyBass, repo.eqProfile.first())
+    }
+
+    @Test
+    @DisplayName("runtime info: CAP-041 frame 782 sets the Case (79 %); CAP-050 frame 1163 (no Case entry) makes it unavailable; b3 = ff never overwrites it")
+    fun `the Case follows the runtime-info stream`() = runTest {
+        val (repo, transport) = buildRepository()
+
+        transport.emit(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, runtimeInfoWithCase))
+        settle()
+        assertEquals(BatteryLevel.Known(79, null, false), repo.batteryStatus.value.case)
         assertNull(repo.caseBatteryError.first())
-        // ADR-039: exactly the one request Play services sends (CAP-060 frame 1979), nothing else on DLCI 0x08.
-        assertEquals(listOf("0e040000"), transport.sent.filter { it.first == Dlci.GSND_CONTROL }.map { it.second.toHex() })
-        assertEquals(true, transport.isChannelOpen(Dlci.GSND_CONTROL), "still claimed during the linger")
-        advanceTimeBy(1_100)
-        runCurrent()
-        assertEquals(false, transport.isChannelOpen(Dlci.GSND_CONTROL), "released so Play services can take it back")
+
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "6464ff")) // real CAP-059 frame 2776: b3 = ff on every claim
+        settle()
+        assertEquals(BatteryLevel.Known(79, null, false), repo.batteryStatus.value.case, "a Left/Right update never touches the Case")
+
+        transport.emit(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, runtimeInfoWithoutCase))
+        settle()
+        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case, "never carried over (AGENTS.md §5)")
     }
 
     @Test
-    fun `a last-seen Case value is kept and marked, and DLCI 0x04's b3 = ff never overwrites the Case`() = runTest {
-        val (repo, transport) = buildRepository()
-        settle()
-        runCurrent() // start the repository's backgroundScope collectors before the first emit
-
-        transport.emit(Dlci.GSND_CONTROL, caseStale)
-        settle()
-        assertEquals(BatteryLevel.Known(97, null, isStale = true), repo.batteryStatus.value.case)
-
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "6464ff")) // real frame 2776: b3 = ff on every claim
-        settle()
-        assertEquals(BatteryLevel.Known(100, false), repo.batteryStatus.value.left)
-        assertEquals(BatteryLevel.Known(97, null, isStale = true), repo.batteryStatus.value.case, "the Case value survives a Left/Right update")
-    }
-
-    @Test
-    fun `a busy DLCI 0x08 is reported as the Case error, the session stays Ready and the Case stays unavailable`() = runTest {
-        val (repo, transport) = buildRepository()
-        settle()
-        runCurrent() // start the repository's backgroundScope collectors before the first emit
-        val busy = BudsError.ChannelUnavailable(Dlci.GSND_CONTROL, "read failed, socket might closed")
-        transport.openChannelShouldFail = busy
-
-        repo.refreshBattery()
-
-        assertEquals(busy, repo.caseBatteryError.first())
-        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case)
-        assertInstanceOf(ConnectionState.Ready::class.java, repo.connectionState.first())
-    }
-
-    @Test
-    fun `no Case push within the wait is a timeout, never a made-up value`() = runTest {
-        val (repo, transport) = buildRepository()
-        settle()
-        runCurrent() // start the repository's backgroundScope collectors before the first emit
-        val job = launch { repo.refreshBattery() }
+    fun `without an announced channel the runtime-info request is not sent and the Case error says why`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        repo.launchInitialEqRead()
+        advanceTimeBy(3_100) // MAESTRO_ANNOUNCE_WAIT_MS for the EQ read …
         runCurrent()
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20"))
-        settle()
-        advanceTimeBy(2_100) // CASE_PUSH_WAIT_MS
-        runCurrent()
-        job.join()
-
-        assertEquals(BudsError.Timeout, repo.caseBatteryError.first())
-        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case)
-    }
-
-    @Test
-    fun `DLCI 0x08 closed out from under the wait by another claimant is retried once, and the retry can succeed (ADR-038)`() = runTest {
-        val (repo, transport) = buildRepository()
-        settle()
-        runCurrent() // start the repository's backgroundScope collectors before the first emit
-
-        val job = launch { repo.refreshBattery() }
-        runCurrent()
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20")) // answers the Get, so the Case claim starts
-        settle()
-        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.GSND_CONTROL), transport.openChannelCalls)
-
-        // Another claimant (Google Play services) bounces the app's own DLCI 0x08 session before any push arrives.
-        transport.emitChannelClosed(Dlci.GSND_CONTROL)
-        advanceTimeBy(2_100) // CASE_PUSH_WAIT_MS elapses with no push
+        advanceTimeBy(3_100) // … and for the subscription
         runCurrent()
 
-        // The retry reopens the channel — the second attempt gets the push.
-        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.GSND_CONTROL, Dlci.GSND_CONTROL), transport.openChannelCalls)
-        transport.emit(Dlci.GSND_CONTROL, caseFresh)
-        settle()
-        job.join()
-
-        assertEquals(BatteryLevel.Known(97, isCharging = null, isStale = false), repo.batteryStatus.value.case)
-        assertNull(repo.caseBatteryError.first())
-    }
-
-    @Test
-    fun `DLCI 0x08 closed out from under the wait on both attempts is reported as ChannelLost, never a made-up value (ADR-038)`() = runTest {
-        val (repo, transport) = buildRepository()
-        settle()
-        runCurrent() // start the repository's backgroundScope collectors before the first emit
-
-        val job = launch { repo.refreshBattery() }
-        runCurrent()
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20"))
-        settle()
-
-        // First attempt: bounced.
-        transport.emitChannelClosed(Dlci.GSND_CONTROL)
-        advanceTimeBy(2_100)
-        runCurrent()
-        // Retry (second and last attempt): bounced again.
-        transport.emitChannelClosed(Dlci.GSND_CONTROL)
-        advanceTimeBy(2_100)
-        runCurrent()
-        job.join()
-
-        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.GSND_CONTROL, Dlci.GSND_CONTROL), transport.openChannelCalls)
-        assertEquals(BudsError.ChannelLost(Dlci.GSND_CONTROL, "closed while waiting for the Case push"), repo.caseBatteryError.first())
-        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case)
+        assertEquals(0, transport.sent.size)
+        assertEquals(BudsError.MaestroChannelUnknown(null), repo.caseBatteryError.first())
     }
 
     @Test
@@ -702,30 +648,21 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    fun `the announcement's firmware becomes deviceInfo`() = runTest {
+    @DisplayName("CAP-061 frame 1508 (real bytes): the announcement's firmware becomes deviceInfo and clears the Safe Mode gate")
+    fun `the real announcement's firmware becomes deviceInfo and unlocks writes`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
+        transport.onOpenChannel = { ch -> if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM) transport.emit(ch, MODEL_ID_PRO_2) }
+        transport.onSent = { ch, frame -> if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM && frame.toHex().startsWith("0812")) transport.emit(ch, hex("ff010006081201e8e808")) }
         settle()
-        runCurrent() // start the repository's backgroundScope collectors before the first emit
         assertNull(repo.deviceInfo.first())
 
-        val entry = byteArrayOf(0x12, 13) + "release_5.203".toByteArray()
-        val group = byteArrayOf(0x0a, entry.size.toByte()) + entry
-        val payload = byteArrayOf(0x22, group.size.toByte()) + group
-        transport.emit(
-            Dlci.MAESTRO,
-            helloFrame(21, 0x00a5 shr 0).let {
-                Hdlc.encode(
-                    10496,
-                    PW_HDLC_CONTROL_UI,
-                    PwRpc.encode(
-                        RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_GET_SOFTWARE_INFO, payload, callId = PwRpc.CALL_ID_UNSOLICITED),
-                    ),
-                )
-            },
-        )
+        transport.emit(Dlci.MAESTRO, Cap061.announcementFrame())
         settle()
 
         assertEquals(listOf("release_5.203"), repo.deviceInfo.first()?.firmware)
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE), "the verified firmware must not be in Safe Mode")
+        assertEquals("08120014" + "01e8e808", transport.sent.single().second.toHex().take(16), "the ANC Set left the phone")
+        assertNull(repo.safeMode.first())
     }
 
     // ---- on-demand Message Stream claim (DECISIONS.md ADR-032) ------------------------------------

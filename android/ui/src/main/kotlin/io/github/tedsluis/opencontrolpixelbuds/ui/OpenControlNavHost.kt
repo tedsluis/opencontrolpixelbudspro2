@@ -52,7 +52,6 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
-import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
@@ -152,14 +151,8 @@ data class OpenControlUiState(
     /** Wall-clock time (epoch millis) [ancMode] was last updated — `null` before any value arrived this
      * app run (`ai-sessions/0043` Phase H). */
     val ancModeUpdatedAt: Long? = null,
-    /** Why the Case battery could not be read by the last DLCI 0x08 claim (`null` = read / not attempted), ADR-035. */
+    /** Why the Case level could not be requested this connection (`null` = requested / not yet), ADR-043. */
     val caseBatteryError: BudsError? = null,
-    /** Whether the earbuds sit in the case, from the last `Notify ANC state` (ADR-024). */
-    val dockState: DockState = DockState.UNKNOWN,
-    /** Wall-clock time [dockState] was last updated — `null` before any `Notify` arrived this app run. */
-    val dockStateUpdatedAt: Long? = null,
-    /** [dockState] was read within ~2 s of a Message Stream claim opening (ADR-024: provisional). */
-    val dockStateProvisional: Boolean = false,
     /** Non-null while the app is in read-only Safe Mode (ARCHITECTURE.md §8.1, ADR-042). */
     val safeMode: io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState? = null,
     /** What the Buds announced at connect (firmware); `null` = nothing yet. */
@@ -266,11 +259,8 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     batteryStatus = state.batteryStatus,
                     batteryStatusUpdatedAt = state.batteryStatusUpdatedAt,
                     caseBatteryError = state.caseBatteryError,
-                    dockState = state.dockState,
-                    dockStateUpdatedAt = state.dockStateUpdatedAt,
                     deviceInfo = state.deviceInfo,
                     onRefreshBattery = actions.onRefreshBattery,
-                    dockStateProvisional = state.dockStateProvisional,
                     safeMode = state.safeMode,
                     onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
                     onPair = actions.onPair,

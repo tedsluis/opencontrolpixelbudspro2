@@ -48,4 +48,22 @@ internal object Varint {
             shift += 7
         }
     }
+
+    /**
+     * Like [decode], for protobuf's full 64-bit varints (at most 10 bytes) — e.g. the millisecond timestamp in the Buds'
+     * `SubscribeRuntimeInfo` stream (`2:1788496592578`, `CAP-036` frame 1421), which [decode] rejects as oversized.
+     */
+    fun decodeLong(data: ByteArray, start: Int): Pair<Long, Int>? {
+        var value = 0L
+        var shift = 0
+        var i = start
+        while (true) {
+            if (i >= data.size || shift >= 64) return null
+            val b = data[i].toInt() and 0xFF
+            value = value or ((b and 0x7F).toLong() shl shift)
+            i++
+            if (b and 0x80 == 0) return value to i
+            shift += 7
+        }
+    }
 }

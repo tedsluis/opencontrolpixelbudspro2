@@ -27,7 +27,6 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrame
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrameEncoder
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.GsndMessageStream
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.MaestroChannel
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.MessageStreamAck
@@ -40,7 +39,6 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingFrameEncoder
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RoutedFrame
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
-import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
@@ -91,8 +89,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  *   `Ready`, and filled by the Connect sequence's `ReadSetting 4:16` (DECISIONS.md ADR-034); a failed
  *   read or write is reported through [eqError] with its reason instead of being assumed to have worked.
  * - **Battery**: push-based — Left/Right from the Message Stream's `Group 0x03 Code 0x03` (ADR-033, each claim yields
- *   a reading), the Case from an on-demand claim of DLCI 0x08 that sends the one `0e 04 00 00` request (ADR-035/039).
- *   HFP `AT+BIEV` is not consumed (ADR-040).
+ *   a reading), the Case from the `SubscribeRuntimeInfo` stream on the session channel, requested once per Connect (ADR-043;
+ *   DLCI 0x08 is no longer opened). HFP `AT+BIEV` is not consumed (ADR-040).
  * - **Safe Mode** (ARCHITECTURE.md §8.1, ADR-042): every write/control command passes [SafeModeGate] first.
  * - **Find My Buds**: no persisted state to reconcile.
  *
@@ -146,7 +144,6 @@ class BudsRepositoryImpl(
 
     @Volatile
     private var releaseJob: Job? = null
-    private var caseReleaseJob: Job? = null
 
     @Volatile
     private var snapshotJob: Job? = null
@@ -186,9 +183,6 @@ class BudsRepositoryImpl(
 
     private val _caseBatteryError = MutableStateFlow<BudsError?>(null)
     override val caseBatteryError: Flow<BudsError?> = _caseBatteryError
-
-    /** A Case reading arrived on DLCI 0x08 — what an on-demand Case claim waits for (ADR-035). */
-    private val _casePushes = MutableSharedFlow<BatteryLevel>(extraBufferCapacity = 8)
 
     private val _dockState = MutableStateFlow(DockState.UNKNOWN)
     override val dockState: Flow<DockState> = _dockState
@@ -401,11 +395,13 @@ class BudsRepositoryImpl(
                 it.copy(left = frame.frame.left, right = frame.frame.right)
             }
 
-            // ADR-035: only the Case, only from DLCI 0x08; a value the Buds did not mark fresh is kept as "last seen".
-            is RoutedFrame.CaseBattery -> {
-                updateBatteryStatus { it.copy(case = frame.frame.case) }
+            // ADR-035's DLCI 0x08 decode stays in the codec, but the app no longer opens that channel (ADR-043) — nothing arrives here.
+            is RoutedFrame.CaseBattery -> Unit
+
+            // ADR-043: the Case from the runtime-info stream; a packet without the Case entry reads "unavailable", never carried over.
+            is RoutedFrame.RuntimeInfoCase -> {
+                updateBatteryStatus { it.copy(case = frame.case) }
                 _caseBatteryError.value = null
-                _casePushes.tryEmit(frame.frame.case)
             }
         }
     }
@@ -675,89 +671,43 @@ class BudsRepositoryImpl(
         }
     }
 
-    // ---- on-demand Case-battery channel (DECISIONS.md ADR-035) ----------------------------------
+    // ---- battery ---------------------------------------------------------------------------------
 
+    /**
+     * Left/Right: one Message Stream claim yields the Buds' battery burst (ADR-033). The Case is not requested here: it arrives on its
+     * own from the runtime-info stream subscribed at Connect (ADR-043), which the app does not poll.
+     */
     override suspend fun refreshBattery(): BudsResult<Unit> {
         if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
-        val leftRight = refreshAncMode(GET_RESPONSE_TIMEOUT_MS) // a Message Stream claim yields the Left/Right battery burst (ADR-033)
-        val case = readCaseBattery()
-        return when {
-            leftRight is BudsResult.Failure -> BudsResult.Failure(leftRight.error)
-            else -> case
+        return when (val leftRight = refreshAncMode(GET_RESPONSE_TIMEOUT_MS)) {
+            is BudsResult.Failure -> BudsResult.Failure(leftRight.error)
+            is BudsResult.Success -> BudsResult.Success(Unit)
         }
     }
 
     /**
-     * Claims DLCI 0x08 for one user action, sends the one `0e 04 00 00` request (DECISIONS.md ADR-039), waits for the Buds' `0e 01`
-     * push and releases the channel [CASE_LINGER_MS] later (ADR-035). Serialised with the Message Stream claims by [claimMutex]; a
-     * failure is reported through [caseBatteryError], the session stays `Ready`.
-     *
-     * Why the request: every post-open push in `CAP-059`/`CAP-060` answered Play services' `0e 04`, and none of the app's 8
-     * receive-only claims got a push (`CAP-060-FINDINGS.md` §2). Contention is real too: **if the channel closes out from under the
-     * wait** (another claimant bounced ours) the claim is retried **once** (ADR-038). The Message Stream's release linger is ended
-     * first, so the app never holds both shared channels at once (ADR-039 item 3, 0044 APP-9).
+     * `SubscribeRuntimeInfo` (DECISIONS.md ADR-043): one request per Connect on the channel the Buds announced, with its ADR-034 address —
+     * nothing is sent without an announced, known channel. The Buds then push `SERVER_STREAM` packets by themselves; only their Case entry
+     * is read ([RoutedFrame.RuntimeInfoCase]). A failure to send is reported through [caseBatteryError].
      */
-    private suspend fun readCaseBattery(): BudsResult<Unit> {
-        if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
-        return claimMutex.withLock {
-            caseReleaseJob?.cancel()
-            caseReleaseJob = null
-            releaseMessageStreamNow()
-            var result: BudsResult<Unit> = BudsResult.Failure(BudsError.Timeout)
-            try {
-                for (attempt in 1..2) {
-                    result = coroutineScope {
-                        val waiter = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(CASE_PUSH_WAIT_MS) { _casePushes.first() } }
-                        if (!transport.isChannelOpen(Dlci.GSND_CONTROL)) {
-                            codecRouter.reset(Dlci.GSND_CONTROL)
-                            val opened = transport.openChannel(Dlci.GSND_CONTROL, BudsSdpUuids.GSND_CONTROL)
-                            if (opened is BudsResult.Failure) {
-                                waiter.cancel()
-                                return@coroutineScope BudsResult.Failure(opened.error)
-                            }
-                        }
-                        val sent = transport.send(Dlci.GSND_CONTROL, GsndMessageStream.batteryRequest())
-                        if (sent is BudsResult.Failure) {
-                            waiter.cancel()
-                            return@coroutineScope BudsResult.Failure(
-                                (sent.error as? BudsError.ChannelLost) ?: BudsError.ChannelLost(Dlci.GSND_CONTROL, "request not sent"),
-                            )
-                        }
-                        if (waiter.await() != null) {
-                            return@coroutineScope BudsResult.Success(Unit)
-                        }
-                        if (!transport.isChannelOpen(Dlci.GSND_CONTROL)) {
-                            BudsResult.Failure(BudsError.ChannelLost(Dlci.GSND_CONTROL, "closed while waiting for the Case push"))
-                        } else {
-                            BudsResult.Failure(BudsError.Timeout)
-                        }
-                    }
-                    val diedUnderUs = result is BudsResult.Failure && (result as BudsResult.Failure).error is BudsError.ChannelLost
-                    if (!diedUnderUs) break
-                }
-                _caseBatteryError.value = (result as? BudsResult.Failure)?.error
-                (result as? BudsResult.Failure)?.let {
-                    BleLogger.logConnectionEvent("Case battery not read: ${it.error::class.simpleName}")
-                }
-            } finally {
-                // Always released — also when the tap's coroutine is cancelled mid-wait (0044 APP-4).
-                caseReleaseJob = scope.launch {
-                    delay(CASE_LINGER_MS)
-                    claimMutex.withLock { transport.closeChannel(Dlci.GSND_CONTROL) }
-                }
+    private suspend fun subscribeRuntimeInfo(): BudsResult<Unit> = eqMutex.withLock {
+        val channel = when (val c = awaitMaestroChannel()) {
+            is BudsResult.Failure -> {
+                _caseBatteryError.value = c.error
+                return@withLock BudsResult.Failure(c.error)
             }
-            result
+            is BudsResult.Success -> c.value
         }
-    }
-
-    /** Ends a lingering Message Stream claim immediately (caller holds [claimMutex]). */
-    private suspend fun releaseMessageStreamNow() {
-        releaseJob?.cancel()
-        releaseJob = null
-        if (transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM)) {
-            transport.closeChannel(Dlci.FAST_PAIR_MESSAGE_STREAM)
-            codecRouter.reset(Dlci.FAST_PAIR_MESSAGE_STREAM)
-            _modelIdThisClaim.value = null
+        val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(Maestro.subscribeRuntimeInfoRequest(channel.channelId)))
+        when (val sent = transport.send(Dlci.MAESTRO, wire)) {
+            is BudsResult.Failure -> {
+                _caseBatteryError.value = sent.error
+                sent
+            }
+            is BudsResult.Success -> {
+                BleLogger.logConnectionEvent("Runtime info requested (channel ${channel.channelId})")
+                BudsResult.Success(Unit)
+            }
         }
     }
 
@@ -824,14 +774,19 @@ class BudsRepositoryImpl(
         snapshotJob?.cancel()
         snapshotJob = scope.launch {
             refreshAncMode(SNAPSHOT_TIMEOUT_MS)
-            readCaseBattery() // ADR-035: the Connect tap also reads the Case, once, after the Message Stream claim
         }
     }
 
-    /** Started by [connect] once the session is `Ready` (ADR-034); `internal` so a test can start it without a `BluetoothDevice`. */
+    /**
+     * Started by [connect] once the session is `Ready` (ADR-034): the EQ read, then the one runtime-info subscription (ADR-043) — both
+     * wait for the Buds' channel announcement. `internal` so a test can start it without a `BluetoothDevice`.
+     */
     internal fun launchInitialEqRead() {
         eqReadJob?.cancel()
-        eqReadJob = scope.launch { readEq() }
+        eqReadJob = scope.launch {
+            readEq()
+            subscribeRuntimeInfo()
+        }
     }
 
     private fun cancelClaimJobs() {
@@ -841,8 +796,6 @@ class BudsRepositoryImpl(
         releaseJob = null
         snapshotJob?.cancel()
         snapshotJob = null
-        caseReleaseJob?.cancel()
-        caseReleaseJob = null
     }
 
     /**
@@ -885,12 +838,6 @@ class BudsRepositoryImpl(
 
         /** How long the channel stays claimed after an action so replies land, then it is released. */
         private const val MESSAGE_STREAM_LINGER_MS = 1_500L
-
-        /** Wait for the Buds' Case push after DLCI 0x08 opened (observed: 165 ms in `CAP-059`), ADR-035. */
-        private const val CASE_PUSH_WAIT_MS = 2_000L
-
-        /** How long DLCI 0x08 stays open after its push before it is released so Play services can take it back (ADR-035). */
-        private const val CASE_LINGER_MS = 1_000L
 
         /** How long a read/write waits for the Buds' channel announcement (their first Maestro packet). */
         private const val MAESTRO_ANNOUNCE_WAIT_MS = 3_000L

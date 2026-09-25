@@ -25,8 +25,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 
 /**
  * DLCI 0x08 ("GSND CONTROL") private envelope `[Group:1][Code:1][Length:2 BE][Value]` (PROTOCOL.md §2.3), `Group 0x0e Code 0x01`:
- * the Buds' per-earbud + case battery push (DECISIONS.md ADR-014 — entry index 3 = Case; ADR-035 — on-demand claim; ADR-039 — the
- * claim sends the one `0e 04 00 00` request).
+ * the Buds' per-earbud + case battery push (DECISIONS.md ADR-014 — entry index 3 = Case). The app no longer opens DLCI 0x08
+ * (ADR-043 supersedes the on-demand claim of ADR-035/038/039: its `0e 04 00 00` got no answer in `CAP-061`, 8 of 8); the decoder stays,
+ * routed and fuzz-tested, for any frame that still arrives on that channel. The app's Case source is [RuntimeInfoDecoder].
  */
 object GsndMessageStream {
     const val GROUP_BATTERY: Int = 0x0E
@@ -34,15 +35,6 @@ object GsndMessageStream {
 
     /** Entry index of the Case (ADR-014: 1 = Left, 2 = Right, 3 = Case). */
     const val CASE_INDEX: Int = 3
-
-    /**
-     * The zero-length request Google Play services sends before every post-open Case push (`CAP-059` ×3, `CAP-060` ×10, e.g.
-     * `CAP-060` frame 1979 `0e 04 00 00` → push 1993) — the only frame the app sends on DLCI 0x08 (DECISIONS.md ADR-039).
-     */
-    const val CODE_BATTERY_REQUEST: Int = 0x04
-
-    /** `0e 04 00 00` (ADR-039). A fresh array each call — callers may not share a mutable wire buffer. */
-    fun batteryRequest(): ByteArray = byteArrayOf(GROUP_BATTERY.toByte(), CODE_BATTERY_REQUEST.toByte(), 0x00, 0x00)
 }
 
 /** The Case reading of one `0e 01` push — [BatteryLevel.Known] (with `isStale` when the Buds did not mark it fresh) or unavailable. */
@@ -99,9 +91,14 @@ object CaseBatteryFrameDecoder {
 
 /**
  * Minimal protobuf wire reader shared by the small read-only decoders: varint (wire type 0) and length-delimited (wire type 2)
- * fields; anything else, or any truncation, makes the whole message unreadable (`null`).
+ * fields are read; fixed64 (wire type 1) and fixed32 (wire type 5) fields are **skipped** by their fixed size and returned with no
+ * value — "the wire type tells the parser how big the payload after it is. This allows old parsers to skip over new fields they don't
+ * understand" (protobuf.dev encoding guide). The Buds' `GetSoftwareInfo` announcement carries such a field (field 5, tag `0x29`, in 140 of
+ * 140 announcements, `CAP-061-FINDINGS.md` §1); rejecting it made every firmware read empty and Safe Mode refuse every write. Groups
+ * (wire types 3/4, deprecated) and any truncation still make the whole message unreadable (`null`).
  */
 internal object Proto {
+    /** One field; for a skipped fixed-width field both [varint] and [bytes] are `null`. */
     class Field(val number: Int, val varint: Int?, val bytes: ByteArray?)
 
     fun fields(data: ByteArray): List<Field>? {
@@ -114,8 +111,9 @@ internal object Proto {
             if (number == 0) return null
             when (tag and 0x7) {
                 0 -> {
-                    val (v, next) = Varint.decode(data, i) ?: return null
-                    out += Field(number, v, null)
+                    // 64-bit varints are legal (a timestamp in the runtime-info stream, ADR-043); only values that fit an Int are exposed.
+                    val (v, next) = Varint.decodeLong(data, i) ?: return null
+                    out += Field(number, if (v in 0L..Int.MAX_VALUE.toLong()) v.toInt() else null, null)
                     i = next
                 }
                 2 -> {
@@ -124,9 +122,18 @@ internal object Proto {
                     out += Field(number, null, data.copyOfRange(next, next + len))
                     i = next + len
                 }
+                1, 5 -> {
+                    val size = if (tag and 0x7 == 1) FIXED64_SIZE else FIXED32_SIZE
+                    if (i + size > data.size) return null
+                    out += Field(number, null, null)
+                    i += size
+                }
                 else -> return null
             }
         }
         return out
     }
+
+    private const val FIXED64_SIZE = 8
+    private const val FIXED32_SIZE = 4
 }

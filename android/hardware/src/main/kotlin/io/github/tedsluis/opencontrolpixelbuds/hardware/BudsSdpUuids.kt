@@ -36,14 +36,10 @@ import java.util.UUID
  * - [FAST_PAIR_MESSAGE_STREAM] (DLCI 0x04): `CAP-033-FINDINGS.md` §3's SDP
  *   browse, service name `"GFPS RFCOMM"`, RFCOMM channel 2.
  *
- * - [GSND_CONTROL] (DLCI 0x08): `CAP-033`'s SDP browse, service name `"GSND CONTROL"`, RFCOMM channel 4 (`PROTOCOL.md` §2.3) — opened
- *   on demand for the Case battery only (`DECISIONS.md` ADR-035, `ai-sessions/0042`).
- *
- * Sockets to all three have been opened on real hardware: [MAESTRO] and [FAST_PAIR_MESSAGE_STREAM] in `CAP-059`/`CAP-060`
- * (`RFCOMM channel 0x02/0x04 connected` in the debug exports), [GSND_CONTROL] in `CAP-060` (8 claims, `ai-sessions/0045` §3.1).
+ * Sockets to both have been opened on real hardware (`CAP-059`–`CAP-061`, `RFCOMM channel 0x02/0x04 connected` in the debug exports).
+ * DLCI 0x08 ("GSND CONTROL", `f8d1fbe4-7966-4334-8024-ff96c9330e15`, `CAP-033`) is no longer opened by the app (`DECISIONS.md` ADR-043).
  */
 object BudsSdpUuids {
     val MAESTRO: UUID = UUID.fromString("25e97ff7-24ce-4c4c-8951-f764a708f7b5")
     val FAST_PAIR_MESSAGE_STREAM: UUID = UUID.fromString("df21fe2c-2515-4fdb-8886-f12c4d67927c")
-    val GSND_CONTROL: UUID = UUID.fromString("f8d1fbe4-7966-4334-8024-ff96c9330e15")
 }

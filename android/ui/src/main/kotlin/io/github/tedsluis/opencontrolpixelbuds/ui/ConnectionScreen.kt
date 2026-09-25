@@ -45,7 +45,6 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.CardAction
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
-import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState
@@ -75,8 +74,6 @@ fun ConnectionScreen(
     batteryStatus: BatteryStatus,
     batteryStatusUpdatedAt: Long?,
     caseBatteryError: BudsError?,
-    dockState: DockState,
-    dockStateUpdatedAt: Long?,
     deviceInfo: DeviceInfo?,
     onRefreshBattery: () -> Unit,
     onRequestEnableBluetooth: () -> Unit,
@@ -86,7 +83,6 @@ fun ConnectionScreen(
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
-    dockStateProvisional: Boolean = false,
     safeMode: SafeModeState? = null,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
@@ -122,7 +118,7 @@ fun ConnectionScreen(
                     }
                     if (connectionState is ConnectionState.Ready) {
                         safeMode?.let { SafeModeCard(it) }
-                        BudsInfoCard(dockState, dockStateUpdatedAt, dockStateProvisional, deviceInfo)
+                        BudsInfoCard(deviceInfo)
                         BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, onRefreshBattery)
                     }
                 }
@@ -270,33 +266,18 @@ internal fun safeModeText(state: SafeModeState): String {
         "verified against, so those controls send nothing; battery, ANC state and EQ are still read. Detected: $detected."
 }
 
-/** Dock state (ADR-024) and firmware (ADR-034's announcement) — both passive, nothing sent for them (`ai-sessions/0042`). */
+/**
+ * The firmware the Buds announced (ADR-034) — passive, nothing sent for it. No dock sentence any more: the `Notify` byte it was derived
+ * from read "both in the case" with one earbud out in `CAP-061` (DECISIONS.md ADR-024 Update 2026-09-24, `ai-sessions/0046`); each
+ * earbud's "(charging)" on the battery lines stays.
+ */
 @Composable
-private fun BudsInfoCard(dockState: DockState, dockStateUpdatedAt: Long?, dockStateProvisional: Boolean, deviceInfo: DeviceInfo?) {
-    val dock = dockLine(dockState, dockStateUpdatedAt, dockStateProvisional)
-    val firmware = deviceInfo?.firmware?.takeIf { it.isNotEmpty() }?.joinToString(" / ")
-    if (dock == null && firmware == null) return
+private fun BudsInfoCard(deviceInfo: DeviceInfo?) {
+    val firmware = deviceInfo?.firmware?.takeIf { it.isNotEmpty() }?.joinToString(" / ") ?: return
     Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            dock?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-            firmware?.let { Text("Firmware: $it", style = MaterialTheme.typography.bodyLarge) }
+            Text("Firmware: $firmware", style = MaterialTheme.typography.bodyLarge)
         }
-    }
-}
-
-/**
- * The dock line, or `null` when the state is not known — never guessed (`AGENTS.md` §5's spirit, ADR-024). Worded as a derived
- * reading (ADR-024's 2026-09-24 Update, maintainer-approved): the byte is the spec's "settable toggles" — which ANC modes the Buds let
- * a phone switch — and "in the case" is inferred from it, with known exceptions; a reading from the first ~2 s of a claim is marked
- * provisional. `ai-sessions/0043` Phase H: an actual timestamp replaces the vague "as of the last update" qualifier.
- */
-internal fun dockLine(dockState: DockState, dockStateUpdatedAt: Long? = null, provisional: Boolean = false): String? {
-    val updated = formatUpdatedAt(dockStateUpdatedAt)?.let { " (updated $it)" } ?: ""
-    val qualifier = if (provisional) " — provisional, read right after the channel opened" else ""
-    return when (dockState) {
-        DockState.BOTH_IN_CASE -> "Both earbuds seem to be in the case — the Buds report no switchable ANC modes$updated$qualifier."
-        DockState.NOT_BOTH_IN_CASE -> "At least one earbud seems to be out of the case — the Buds report switchable ANC modes$updated$qualifier."
-        DockState.UNKNOWN -> null
     }
 }
 
@@ -306,14 +287,16 @@ private fun BatteryCard(status: BatteryStatus, batteryStatusUpdatedAt: Long?, ca
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Battery", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Read from the Buds when the app last reached their Message Stream (at Connect and after each ANC / Find action). " +
-                    "\"Charging\" means the earbud reports it is charging.",
+                "Left/Right: read from the Buds when the app last reached their Message Stream (at Connect, Refresh and each ANC / " +
+                    "Find action); \"charging\" means the earbud reports it is charging. Case: sent by the Buds on their own after Connect.",
                 style = MaterialTheme.typography.bodySmall,
             )
             BatteryRow("Left", status.left, batteryStatusUpdatedAt)
             BatteryRow("Right", status.right, batteryStatusUpdatedAt)
             BatteryRow("Case", status.case, batteryStatusUpdatedAt)
-            if (status.case is BatteryLevel.Unavailable) caseBatteryError?.let { Text(caseErrorText(it), style = MaterialTheme.typography.bodySmall) }
+            if (status.case is BatteryLevel.Unavailable) {
+                Text(caseBatteryError?.let(::caseErrorText) ?: CASE_NOT_REPORTED, style = MaterialTheme.typography.bodySmall)
+            }
             TextButton(onClick = onRefreshBattery) { Text("Refresh battery") }
         }
     }
@@ -396,11 +379,8 @@ internal fun batteryText(label: String, level: BatteryLevel.Known, updatedAt: Lo
     return "$label: ${level.percent}%" + (if (level.isCharging == true) " (charging)" else "") + suffix
 }
 
-/** Why the Case could not be read (ADR-035) — the Case is on a different, shared channel than ANC/Find. */
-internal fun caseErrorText(error: BudsError): String = when (error) {
-    is BudsError.ChannelUnavailable ->
-        "The Case channel couldn't be opened — another app on this phone (for example Google Play services) may be using it. Try Refresh battery again."
-    BudsError.Timeout -> "The Buds didn't report the Case level (they may not send it while the case is closed or the buds are out)."
-    BudsError.ConnectionLost -> "The Case level can only be read while the app is connected."
-    else -> "The Case level couldn't be read."
-}
+/** No Case value yet on this connection, or the Buds' last runtime-info packet carried none (DECISIONS.md ADR-043) — never guessed. */
+internal const val CASE_NOT_REPORTED: String = "The Buds haven't reported the Case level on this connection."
+
+/** Why the Case level was not requested (ADR-043: one runtime-info request per Connect, on the channel the Buds announced). */
+internal fun caseErrorText(error: BudsError): String = "The Case level couldn't be requested: ${error.userMessage()}"

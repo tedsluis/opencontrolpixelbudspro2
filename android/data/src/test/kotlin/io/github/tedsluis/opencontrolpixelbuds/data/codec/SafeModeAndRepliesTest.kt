@@ -69,12 +69,6 @@ class SafeModeAndRepliesTest {
     }
 
     @Test
-    @DisplayName("DLCI 0x08 request (ADR-039) is exactly CAP-060 frame 1979's 0e 04 00 00")
-    fun `the case battery request bytes`() {
-        assertEquals("0e040000", GsndMessageStream.batteryRequest().joinToString("") { "%02x".format(it) })
-    }
-
-    @Test
     fun `Safe Mode gate - verified firmware and the Pro 2 model id are allowed`() {
         assertEquals(SafeModeGate.Verdict.Allowed, SafeModeGate.evaluate(listOf("release_5.203"), "da2db1", requireModelId = true))
         assertEquals(SafeModeGate.Verdict.Allowed, SafeModeGate.evaluate(listOf("release_5.203"), null, requireModelId = false))

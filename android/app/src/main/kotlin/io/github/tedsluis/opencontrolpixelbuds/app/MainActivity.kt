@@ -28,6 +28,7 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
@@ -54,7 +55,6 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
-import io.github.tedsluis.opencontrolpixelbuds.domain.DockState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
@@ -245,9 +245,6 @@ class MainActivity : ComponentActivity() {
             val batteryStatusUpdatedAt by budsRepository.batteryStatusUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val caseBatteryError by budsRepository.caseBatteryError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
-            val dockState by budsRepository.dockState.collectAsStateWithLifecycle(initialValue = DockState.UNKNOWN)
-            val dockStateUpdatedAt by budsRepository.dockStateUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
-            val dockStateProvisional by budsRepository.dockStateProvisional.collectAsStateWithLifecycle(initialValue = false)
             val safeMode by budsRepository.safeMode.collectAsStateWithLifecycle(initialValue = null as SafeModeState?)
             val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
             val ringingTarget by budsRepository.ringingTarget.collectAsStateWithLifecycle(initialValue = null as RingTarget?)
@@ -319,9 +316,6 @@ class MainActivity : ComponentActivity() {
                 ancMode = ancMode,
                 ancModeUpdatedAt = ancModeUpdatedAt,
                 caseBatteryError = caseBatteryError,
-                dockState = dockState,
-                dockStateUpdatedAt = dockStateUpdatedAt,
-                dockStateProvisional = dockStateProvisional,
                 safeMode = safeMode,
                 deviceInfo = deviceInfo,
                 ringingTarget = ringingTarget,
@@ -366,7 +360,11 @@ class MainActivity : ComponentActivity() {
                         "ANC",
                         Icon.createWithResource(this, R.drawable.ic_anc_tile),
                         ContextCompat.getMainExecutor(this),
-                    ) { result -> BleLogger.logConnectionEvent("Add ANC tile request result: $result") }
+                    ) { result ->
+                        BleLogger.logConnectionEvent("Add ANC tile request result: $result")
+                        // `CAP-061`: the result was 1 (already added) and the screen showed nothing — say what happened.
+                        Toast.makeText(this, ancTileResultText(result), Toast.LENGTH_LONG).show()
+                    }
                 },
                 onEqGainsChanged = { gains -> applicationScope.launch { budsRepository.setEqGains(gains) } },
                 onEqPresetSelected = { preset -> applicationScope.launch { budsRepository.applyEqPreset(preset) } },
@@ -419,4 +417,17 @@ internal fun PairingFailure.toUserMessage(): String = when (this) {
     PairingFailure.BondTimeout ->
         "Pairing took too long. Put the Buds back in pairing mode (open the case, hold the pair button for more than 3 seconds) and try again."
     PairingFailure.AlreadyInProgress -> "A pairing request is already open — finish it in the system dialog first."
+}
+
+/**
+ * The outcome of `StatusBarManager.requestAddTileService` in words (developer.android.com `StatusBarManager`, checked 2026-09-24:
+ * `TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED` = 1 "the tile was already added and the user was not prompted", `…_TILE_ADDED` = 2,
+ * `…_TILE_NOT_ADDED` = 0; errors are 1000–1005).
+ */
+internal fun ancTileResultText(result: Int): String = when (result) {
+    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED -> "The ANC tile was added to Quick Settings."
+    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
+        "The ANC tile is already in Quick Settings — open Quick Settings fully and swipe through its pages, or edit it to move the tile."
+    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED -> "The ANC tile was not added."
+    else -> "Android could not add the ANC tile (code $result)."
 }

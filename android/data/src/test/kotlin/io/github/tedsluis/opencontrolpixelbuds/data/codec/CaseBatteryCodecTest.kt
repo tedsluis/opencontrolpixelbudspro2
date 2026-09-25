@@ -97,6 +97,12 @@ class CaseBatteryCodecTest {
             CaseBatteryFrameDecoder.decode(bytes)
             SoftwareInfo.firmwareStrings(bytes)
         }
+        val announcement = Cap061.announcementPayload()
+        for (cut in announcement.indices) SoftwareInfo.firmwareStrings(announcement.copyOfRange(0, cut))
+        repeat(500) {
+            val mutated = announcement.copyOf().also { b -> b[random.nextInt(b.size)] = random.nextInt(256).toByte() }
+            SoftwareInfo.firmwareStrings(mutated)
+        }
         for (cut in fresh.indices) CaseBatteryFrameDecoder.decode(fresh.copyOfRange(0, cut))
         repeat(500) {
             val mutated = fresh.copyOf().also { b -> b[random.nextInt(b.size)] = random.nextInt(256).toByte() }
@@ -155,6 +161,37 @@ class CaseBatteryCodecTest {
         // a non-printable "firmware" is rejected
         val bad = lenDelimited(0x22, lenDelimited(0x0a, lenDelimited(0x12, byteArrayOf(0x01, 0x02))))
         assertTrue(SoftwareInfo.firmwareStrings(bad).isEmpty())
+    }
+
+    // ---- the real announcement (CAP-061 frame 1508, ai-sessions/0046) ------------------------------------------------------
+
+    @Test
+    @DisplayName("CAP-061 frame 1508: the real announcement (with its fixed64 field 5) yields release_5.203 — the Safe Mode input")
+    fun `the real announcement's firmware is read despite its fixed64 field`() {
+        assertEquals(listOf("release_5.203"), SoftwareInfo.firmwareStrings(Cap061.announcementPayload()))
+    }
+
+    @Test
+    @DisplayName("CAP-061 frame 1508 through the router: MaestroHello(21, [release_5.203])")
+    fun `the router puts the real announcement's firmware on the hello`() {
+        val routed = CodecRouter().feed(Dlci.MAESTRO, Cap061.announcementFrame(), timestampMillis = 0)
+        assertEquals(RoutedFrame.MaestroHello(21, listOf("release_5.203")), routed.single())
+    }
+
+    @Test
+    fun `fixed64 and fixed32 fields are skipped by size, not treated as unreadable`() {
+        // `29 <8 bytes>` (field 5, wire type 1) as in CAP-061 frame 1508, then `35 <4 bytes>` (field 6, wire type 5), then a varint.
+        val fields = Proto.fields(hex("2934293fc2f6cbd81a" + "3501020304" + "3805"))
+        assertEquals(listOf(5, 6, 7), fields?.map { it.number })
+        assertEquals(listOf(null, null, 5), fields?.map { it.varint })
+        assertTrue(fields!!.take(2).all { it.bytes == null })
+    }
+
+    @Test
+    fun `a truncated fixed-width field or a group still makes the message unreadable`() {
+        assertEquals(null, Proto.fields(hex("2934293fc2f6cbd8"))) // fixed64 cut to 7 bytes
+        assertEquals(null, Proto.fields(hex("35010203"))) // fixed32 cut to 3 bytes
+        assertEquals(null, Proto.fields(hex("0b0c"))) // wire type 3 (start group)
     }
 
     @Test
