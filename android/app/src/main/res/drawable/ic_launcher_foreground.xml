@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher icon foreground (ai-sessions/0050, APP-01, maintainer-approved in chat 2026-09-25): the project's own ANC tile glyph
+     (ic_anc_tile.xml, drawn for this project, no Google/Pixel asset — AGENTS.md §12), inset so it sits inside the adaptive icon's safe zone. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_anc_tile"
+    android:inset="30%" />

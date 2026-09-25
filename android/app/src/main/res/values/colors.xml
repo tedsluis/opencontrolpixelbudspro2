@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launcher icon background (ai-sessions/0050, APP-01): a plain colour, no third-party asset (AGENTS.md §12). -->
+    <color name="ic_launcher_background">#FF0B5C63</color>
+</resources>

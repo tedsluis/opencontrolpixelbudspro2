@@ -90,7 +90,7 @@ import javax.inject.Inject
  * interface, `RepositoryModule.kt`), [companionPairing]/[bluetoothStateObserver]/[osConnectionObserver] (`:hardware`), and
  * [debugSettingsStore] (`:data`) — into `:ui`'s [OpenControlNavHost].
  *
- * State hoisting lives here rather than in a dedicated ViewModel class (ARCHITECTURE.md §2.4): collecting flows directly in
+ * State hoisting lives here rather than in a dedicated ViewModel class (ARCHITECTURE.md §2, UI Layer; `ai-sessions/0033` Phase 6): collecting flows directly in
  * this Activity, matching `ai-sessions/0013`'s pattern, was judged sufficient.
  *
  * **`ai-sessions/0041`:**
