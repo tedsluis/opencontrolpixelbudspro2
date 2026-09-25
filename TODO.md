@@ -24,7 +24,7 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      analysis can resolve this, only a maintainer product decision can.~~ **Resolved 2026-09-13: ship
      v1 with Left/Right ring only** (`DECISIONS.md` ADR-027, `PROJECT.md` non-goals).
 2. ~~**Start Phase 4 app development, ANC-first.**~~ **Done** (`ai-sessions/0013`–`0045`): ANC, EQ, Find My Buds Left/Right, battery
-   (Left/Right via DLCI 0x04, ADR-033; Case via DLCI 0x08, ADR-035/039) and the Safe-Mode write gate (ADR-042) are implemented.
+   (Left/Right via DLCI 0x04, ADR-033; Case via DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043) and the Safe-Mode write gate (ADR-042) are implemented.
    Battery via HFP was removed — wire-confirmed but not consumable by an app (ADR-040). The remaining v1 gap is hardware verification
    (the re-test list in the latest `ai-sessions/` RESULT) and a first release.
 3. **Phase 2 (APK reverse engineering) — updated 2026-08-30, no longer 0% done.** APK pulled,
@@ -793,17 +793,21 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
 2026-09-22 claim that the Buds push the Case level without the phone-side `0e 04` — re-derived and corrected in `ai-sessions/0045`
 (`PROTOCOL.md` §4.3 Option E correction, `DECISIONS.md` ADR-038 Update, ADR-039).
 
-- **Hardware re-test of everything not yet run on the Buds** — `ai-sessions/0045` RESULT "Re-test instructions" (supersedes the
-  `0041`/`0042`/`0043` lists): Case battery with the `0e 04` request (ADR-039), ANC ACK/NAK reporting, the Safe Mode card (ADR-042), dock
-  state "provisional" wording, the ANC tile's on-panel behaviour on GrapheneOS, EQ audibility, and whether Find keeps ringing after the
-  Message Stream socket is released (`ai-sessions/0040`).
+- **Hardware re-test of everything not yet run on the Buds** — `ai-sessions/0046` RESULT "Re-test instructions" (supersedes `0045` §9): the
+  announcement parser fix (no Safe Mode on `release_5.203`, ANC/EQ/Find actually sent), ANC ACK/NAK reporting, the Case from
+  `SubscribeRuntimeInfo` (ADR-043), the dock line gone, the ANC-tile result message, EQ audibility, Find ringing after the release, and the
+  0045 items (E) "not paired" and (F) "taps survive the screen" that `CAP-061` did not run.
+- 🔴 **When the Buds include the Case entry (6.1) in `SubscribeRuntimeInfo`** (`PROTOCOL.md` §4.3 Option F): absent in 29 captures; the app shows
+  "unavailable" then. A capture with the buds in/out of the case and the lid open/closed settles it.
+- 🟡 **Who owns DLCI 0x08/0x0a** (`CAP-061-FINDINGS.md` §2): the Google app's Assistant-on-headphones service is the lead; test with the Google app
+  disabled.
 - **Ring "both" (`0x03`) untested on the wire** (ADR-027 Update 2026-09-24, `FIND-004`): the spec defines it, this project has never sent it (not implemented; sending it needs its own ADR) and no capture shows it.
 - **Hearable Controls MAC not enforced?** (`PROTOCOL.md` §4.1, 🟡): the ANC Set is sent without a session-nonce MAC and was ACKed in the
   captures; a firmware that starts enforcing it would NAK with reason `0x03`, which the app now reports — verification test in §4.1.
 - 🔴 **Why the Buds close both RFCOMM channels** (`CAP-059`/`CAP-060-FINDINGS.md` §1): the idle / periodic / second-host / <0.6 s re-claim
   experiments (`ai-sessions/0042` RESULT §12 e) have not been run as isolated tests.
-- 🔴 **Why Play services stopped re-claiming DLCI 0x04 after 17:18:53 in `CAP-059`** — its *Nearby devices* permission state was not
-  recorded in `CAP-060` either; record it in the next capture.
+- 🔴 **Why Play services stops re-claiming DLCI 0x04** (after 17:18:53 in `CAP-059`, after 17:27:01 in `CAP-061`) — its *Nearby devices*
+  permission state was not recorded in `CAP-060`/`CAP-061` either; record it in the next capture.
 - **ADR-036 read-only settings UI** (`ReadSetting` per-field decoders on DLCI 0x02): unblocked, nothing implemented.
 - **Fold the tightened capture checklist** (`ai-sessions/0042` RESULT §12) into `CAPTURE_BLUETOOTH_HCI_SNOOP.md` — maintainer procedure,
   proposal only.

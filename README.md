@@ -48,17 +48,18 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-09-24)
+## Current state (2026-09-25)
 
-- **Captures:** 60 registered sessions (`CAP-001`–`CAP-060`): 52 analyzed, 7 planned, 1 withdrawn (`CAP-057`) — see
-  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`/`CAP-060` are the first captures of this project's own app.
+- **Captures:** 61 registered sessions (`CAP-001`–`CAP-061`): 53 analyzed, 7 planned, 1 withdrawn (`CAP-057`) — see
+  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-061` are captures of this project's own app; `CAP-061` found
+  why the 0045 build stayed in Safe Mode on the verified firmware (fixed in `ai-sessions/0046`, not yet re-tested on hardware).
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 42 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has an explicit maintainer sign-off.
+- **Decisions:** 43 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has an explicit maintainer sign-off.
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
-  (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x08, ADR-035/039), dock state
-  (ADR-024), firmware line, ANC Quick Settings tile, Safe Mode (ADR-042).
+  (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
+  firmware line, ANC Quick Settings tile, Safe Mode (ADR-042).
 - **Protocol-known but not built:** read-only display of the other settings (touch & hold, multipoint, mono audio, volume EQ, volume
   balance, case sounds, in-ear detection — reads unblocked by ADR-036, writes gated per field); the BLE battery advertisement (never
   matched on the wire).

@@ -60,7 +60,7 @@ above it.
 
 | Firmware version | Known protocol-relevant differences | Source |
 |---|---|---|
-| `release_5.203` | `ADAPTIVE` ANC mode present; 5-band EQ; L/R/Case independent battery reporting (L/R via DLCI 0x04 Option B, Case via DLCI 0x08 Option E — §4.3; the BLE Battery Notification, Option A, has never matched; wording corrected 2026-09-24) | `[VERIFIED-LOCAL]` (Screenshot UI analysis, 2026-07-30) |
+| `release_5.203` | `ADAPTIVE` ANC mode present; 5-band EQ; L/R/Case independent battery reporting (L/R via DLCI 0x04 Option B, Case via DLCI 0x02 Option F since ADR-043 — DLCI 0x08 Option E carries it too — §4.3; the BLE Battery Notification, Option A, has never matched; wording corrected 2026-09-24) | `[VERIFIED-LOCAL]` (Screenshot UI analysis, 2026-07-30) |
 
 > **Note (2026-08-14) — four different version-like strings are now documented across captures;
 > not yet reconciled into a single confirmed firmware version.** Listed here explicitly, each with
@@ -360,6 +360,11 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
   message — in 4 of 4 connections of `CAP-059` the first packet the phone sent on DLCI 0x02 was `ReadSetting 4:16` (frames 1444, 3197, 3522,
   4848; `python3 scripts/pwrpc_decode.py <log>`), after the Buds' unsolicited `GetSoftwareInfo` (22, 102, 30, 58 ms after the `UA`, frames 1420→1431, 3177→3190, 3503→3512,
   4827→4843), and it was answered (1455, 3202, 3558, 4855). What the *official* app's requests to the unnamed services are for stays 🔴 OPEN.
+- **Update (2026-09-24, `ai-sessions/0046`, maintainer-approved in chat 2026-09-24) — the announcement's structure, 🟢 FACT.** The unsolicited
+  `GetSoftwareInfo` payload is `4:{1:{1:<serial> 2:<firmware>} 2:{…} 3:{…}} 5:<fixed64> 6:<varint>` in **140 of 140** announcements across 44 captures
+  (`python3 scripts/pwrpc_decode.py <log>` prints `… 5:raw 6:0` for each), field 5 = `34 29 3f c2 f6 cb d8 1a` (tag `0x29`, wire type 1) in
+  `CAP-001`/`CAP-036`/`CAP-050`/`CAP-061`. 🔴 meaning of fields 5 and 6. A reader must skip wire type 1 — the app's reader did not, so its firmware list was
+  always empty and Safe Mode (ADR-042) refused every write on the verified firmware (`CAP-061-FINDINGS.md` §1, raw bytes of frame 1508 there).
 
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
@@ -623,6 +628,10 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   **Update (2026-09-20, `ai-sessions/0042`; second confirmation, maintainer-approved in chat, `DECISIONS.md` ADR-024's update):** `CAP-059` — `Notify` `01 e8 00 20` at
   17:17:55.47 with both buds seated in the open case (film) and `01 e8 e8 08` at 17:19:22.31 with both buds out (film); all 17 later `Notify` frames read `e8`. The app now
   shows this as a "Buds in the case / out" line.
+  **Update (2026-09-24, `ai-sessions/0046`, maintainer-approved in chat, `DECISIONS.md` ADR-024's Update):** `CAP-061` frame 5560 reads `0x00` while one bud was
+  still in the hand (seated 0.6–0.8 s later on film) and the same claim's battery frame 5557 says that bud is not charging — a premature `0x00`, a 6th
+  counter-example. The app no longer shows a dock sentence; the per-earbud charging flag (§4.3 Option B) tracked all 5 dock changes of that session (🟡 as a
+  general rule). `CAP-061` frame 3197 also reads `e8` with only the Left bud seated (🟡: which bud is docked may matter).
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -779,8 +788,9 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
 ### 4.3 Battery status (Left / Right / Case)
 
 > **Current state (2026-09-24, `ai-sessions/0045`) — read this first; the paragraph below is the 2026-08 framing, kept as history.** Implemented:
-> **Option B** (Left/Right, DLCI 0x04 `03 03`, ADR-031/033, charging flag accepted) and **Option E** (Case, DLCI 0x08 `0e 01`, ADR-014/035, with the
-> `0e 04` request of ADR-039). **Option A** has never matched on the wire (`CAP-011`, `CAP-043`, `CAP-059`) and is not built. **Option C** (HFP) is
+> **Option B** (Left/Right, DLCI 0x04 `03 03`, ADR-031/033, charging flag accepted) and **Option F** (Case, DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043,
+> 2026-09-24). **Option E** (DLCI 0x08 `0e 01`) is a FACT source but the app no longer claims DLCI 0x08: its `0e 04` request got no answer in `CAP-061`
+> (ADR-039 Update). **Option A** has never matched on the wire (`CAP-011`, `CAP-043`, `CAP-059`) and is not built. **Option C** (HFP) is
 > wire-confirmed but not consumable by an app on Android 14+ and was removed (ADR-040). **Option D** (GATT Battery Service) is contested: present in
 > `CAP-034`'s nRF-Connect discovery, absent from the phone's own LE link in `CAP-059` (see Option D's 2026-09-24 note). **Option 0** is untested.
 > HFP does **not** push "periodically throughout the session" — `CAP-009` shows a settling burst then irregular pushes (ADR-015, §C below).
@@ -1121,6 +1131,14 @@ event-observation coroutines.
   3099, 4938, 5080, 5196). Several frames the 2026-09-22 text listed as "unprompted" (1307, 2310, 5041, 5168, 5856) answer a request. The "contention, not a
   missing request" conclusion does not hold for the post-open push. Command and per-open table: `ai-sessions/0045_MAINTENANCE_RESULT_2026_09_24.md` §3.1 /
   `CAP-060-FINDINGS.md` §2. Consequence: `DECISIONS.md` ADR-039 (the claim sends `0e 04 00 00`).
+- **Update (2026-09-24, `ai-sessions/0046`, maintainer-approved in chat 2026-09-24, `DECISIONS.md` ADR-039 Update / ADR-043):** the app's own `0e 04 00 00`
+  got **no answer** in `CAP-061` — 8 of 8 held claims (frames 4343 … 5776, zero Buds frames on those opens); 12 further app opens were closed by a Buds-side
+  `DISC` 10–198 ms after the `SABM`, each right after the app's failed first attempt had closed the other owner's channel. The other opener's 7 opens all got
+  the push (68 %), but it sends a whole burst first (`05 0c`, `04 02`, `04 04`, `04 11`, `04 13`, `04 15`, `0e 04`, `09 03`, `03 01`, …). The ADR-039
+  sufficiency HYPOTHESIS is refuted; the app no longer opens DLCI 0x08 (ADR-043). 🟡 HYPOTHESIS: in `CAP-061` the other owner of DLCI 0x08/0x0a is the Google
+  app's Assistant-on-headphones service ("Bisto"), not Play services — Android stopped `…googlequicksearchbox/…bisto.interactor.BistoRealService` at
+  15:27:24.371 UTC and the phone closed DLCI 0x08 and 0x0a 91 ms later (3908/3909), never reopened (`CAP-061-FINDINGS.md` §2). Test: a capture with the Google
+  app disabled.
 - **Status**: 🟢 **FACT, promoted 2026-08-23** (maintainer sign-off obtained per `AGENTS.md` §6;
   see `DECISIONS.md` ADR-014) for the **index=1/2/3 → Left/Right/Case mapping**, based on the
   3-independent-session cross-check below. `CAP-011`'s own stale idx=3 reading and the burst's
@@ -1207,6 +1225,23 @@ event-observation coroutines.
     either wire step, consistent with the UI smoothing or delaying this relative to the raw value.
     Not verified further; proposed as a concrete follow-up (a case-insertion bracket with tighter
     video sampling).
+
+#### Option F — DLCI 0x02 `maestro_pw.Maestro/SubscribeRuntimeInfo` (the app's Case source since ADR-043)
+
+- **Status**: 🟢 **FACT, promoted 2026-09-24** (`ai-sessions/0046`, maintainer-approved in chat 2026-09-24): entry 6.1, field 1 of the stream is the **Case
+  battery %**.
+- **Request**: `SubscribeRuntimeInfo` (method `0xe61e8290`) with an **empty** payload on the announced channel — the official app's `CAP-036` frame 1410
+  `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 90 82 1e e6 66 54 bf ab 7e`. **Answer**: `SERVER_STREAM` packets, repeated by the Buds on their own (e.g. `CAP-036`
+  1421, 2009, 2048), payload `2:<epoch ms> 3:0 6:{1:{1:<case %> 2:…} 2:{1:<n> 2:…} 3:{1:<n> 2:…}} 7:{1:… 2:… 3:…}` — e.g. `CAP-041` frame 782
+  `2a 25 10 ce 82 9b ba 87 34 18 00 32 12 0a 04 08 4f 10 01 12 04 08 64 10 02 1a 04 08 64 10 02 3a 06 08 01 10 01 18 00` = Case 79 %.
+- **Evidence**: entry 6.1 equals the DLCI 0x08 Case value (Option E, ADR-014) of the same capture in **13 of 13** captures that carry both: `CAP-001` 62,
+  `CAP-002` 62, `CAP-003` 38, `CAP-010` 42, `CAP-014` 49, `CAP-016` 100, `CAP-032` 57, `CAP-036` 100, `CAP-037` 87, `CAP-038` 85, `CAP-041` 79, `CAP-044` 84,
+  `CAP-048` 95. Commands: `python3 scripts/pwrpc_decode.py <log> | grep SubscribeRuntimeInfo` against the first index-3 entry of the `0e 01` frames from
+  `tshark -r <log> -Y "btrfcomm.dlci==8 && btrfcomm.len>0" -T fields -e frame.number -e data.data` (`CAP-061-FINDINGS.md` §2a).
+- 🔴 **Open**: when entry 6.1 is present (absent in 29 captures, e.g. `CAP-005`, `CAP-009`, `CAP-050` `2:… 3:0 6:{2:{1:37 2:1} 3:{1:45 2:1}}`); what 6.2/6.3,
+  the entries' field 2 and field 7 mean.
+- **Sent to**: DLCI 0x02 (the app's own session channel, ADR-032 — never contended in any capture). Implemented by `DECISIONS.md` ADR-043; not
+  hardware-verified.
 
 **Implementation priority (superseded 2026-09-24 — see the "Current state" note at the top of §4.3: B and E are implemented, A unmatched, C removed
 (ADR-040), D contested; "already-periodic HFP" below is wrong per ADR-015):** 0 (cheap to rule in/out) → A → B → C → D (see
@@ -1925,6 +1960,9 @@ leaving them buried in prose elsewhere.
       "Google-internal," not toward any specific alternative owner) but does not resolve DLCI 0x08's
       identity, which remains 🔴 open. **Maintainer sign-off obtained 2026-09-16** (chat session
       continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS as written above.
+      **Update (2026-09-24, `ai-sessions/0046`) — a runtime owner lead, 🟡 HYPOTHESIS (one correlation):** in `CAP-061` the phone closed DLCI 0x08 and 0x0a
+      91 ms after Android stopped the Google app's Assistant-on-headphones service (`BistoRealService`, "app idle"), and nothing reopened them — see §4.3
+      Option E's 2026-09-24 (`0046`) update.
 - [ ] Added 2026-08-14: EQ's opcode/channel is explicitly **not** assumed to sit alongside ANC's
       (DLCI 0x04 Group `0x08`) — that assumption held only while ANC's own channel was unresolved.
       See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T (new top-priority capture target) and §4.2
@@ -3104,6 +3142,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-19/20 | **Backfilled 2026-09-24 (rows were missing).** `ai-sessions/0040`: DLCI 0x04 made an on-demand channel (ADR-032, no protocol change); Battery Option B decoder unblocked (ADR-033). `ai-sessions/0041`: **§4.3 Option B charging flag** `0bSVVVVVVV` promoted to 🟢 FACT (ADR-033's update); **§2.2a/§4.2** DLCI 0x02 = pw_rpc `maestro_pw.Maestro` and `ReadSetting 4:N` semantics promoted to 🟢 FACT (ADR-034) | Claude (AI); maintainer-approved (prompt `0041` §1 and chat 2026-09-20) |
 | 2026-09-22 | **Backfilled 2026-09-24.** `ai-sessions/0043`: **§4.3 Option E** "the Buds push `0e 01` without a phone-side `0e 04`" recorded as 🟢 FACT — **this row records a claim that was later corrected** (2026-09-24 row below): it holds only for pushes 10 s+ into a long-held channel, not for the post-open push | Claude (AI; drafted by a runaway subagent, `ai-sessions/0043` §1); maintainer-approved in chat 2026-09-22 |
 | 2026-09-24 | **`ai-sessions/0045` — processing the `ai-sessions/0044` audit, all promotions/corrections maintainer-approved in chat 2026-09-24.** **§4.3 Option E** corrected: every post-open `0e 01` push answers a phone-side `0e 04` (13/13), receive-only claims got none (8/8) → `DECISIONS.md` ADR-039. **§0.1** Device Information `0x0A` = session nonce 🟢 FACT (MAC spec + 19/19 opens). **§4.1** bytes 8–23 of `Set` = message nonce + MAC 🟡, "MAC not enforced by `release_5.203`" 🟡 + risk note. **§6** the DLCI 0x02 connect burst identified (`GetSoftwareInfo`, `SubscribeToSettingsChanges`, `SubscribeRuntimeInfo`, `GetHardwareInfo`, `SetWallclock`, `ReadSetting` sweep) 🟢 FACT; `CAP-057` withdrawn. **§5.2** the "mid-connection bounce" is a fresh ACL connection → 6 of 7, stays 🟡. Mechanical: stale status lines, §6 check-offs with pointers, §4.3 current-state note, Option A trigger sentence relabelled (not on the spec page), Option D two-LE-views note, "polling" wording, dates | Claude (AI), maintenance task; maintainer-approved in chat 2026-09-24 |
+| 2026-09-24 | **`ai-sessions/0046` — `CAP-061`, maintainer-approved in chat 2026-09-24.** **§2.2a** the firmware announcement's structure (fields 4/5 fixed64/6, 140/140) 🟢 FACT — the cause of the app's Safe Mode on the verified firmware. **§4.3 Option F** (new) `SubscribeRuntimeInfo` entry 6.1 = Case battery % 🟢 FACT (13/13) → `DECISIONS.md` ADR-043. **§4.3 Option E** the app's `0e 04`-only claim got no answer (8/8): ADR-039's sufficiency hypothesis refuted; 🟡 the other DLCI 0x08/0x0a owner may be the Google app's Assistant-headphones service. **§4.1** a premature Settable `0x00` with one bud out (frame 5560), ADR-024 Update; the app no longer shows a dock sentence | Claude (AI), capture-analysis + fix task; maintainer-approved in chat 2026-09-24 |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

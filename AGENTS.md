@@ -170,8 +170,9 @@ order:
     HFP mechanism above (`AT+BIEV`/`AT+CIND`) is wire-confirmed but **not consumable
     by an app on Android 14+** (no vendor-specific event reaches the app); it is not
     implemented. The implemented sources are the Message Stream "Battery updated"
-    message (Left/Right, ADR-031/033) and DLCI 0x08's `Group 0x0e Code 0x01` (Case,
-    ADR-035/039).
+    message (Left/Right, ADR-031/033) and DLCI 0x02's `SubscribeRuntimeInfo` entry 6.1
+    (Case, ADR-043 — maintainer-approved in chat 2026-09-25, `ai-sessions/0046`; the
+    DLCI 0x08 claim of ADR-035/039 is withdrawn).
 
 ## 6. libmaestro / libgfps Implementation Rules
 

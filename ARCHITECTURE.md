@@ -19,8 +19,8 @@ Communication happens over up to three transports (RFCOMM is the only one the ap
   framing (`PROTOCOL.md` §2.3, `CodecRouter` in §5 below): DLCI 0x04 (official
   Fast Pair Message Stream, 🟢 FACT), DLCI 0x02 (Pigweed `pw_hdlc` carrying pw_rpc
   `maestro_pw.Maestro`, 🟢 FACT since `DECISIONS.md` ADR-034), and DLCI 0x08 ("GSND
-  CONTROL", a private envelope whose protocol identity is 🔴 still open; only its
-  Case-battery message is used, ADR-035/039).
+  CONTROL", a private envelope whose protocol identity is 🔴 still open; the app no longer
+  opens it — ADR-043 moved the Case battery to DLCI 0x02's `SubscribeRuntimeInfo` stream).
 - **Bluetooth GATT** (`BluetoothGatt` / `BluetoothGattCallback`) — a possible
   **secondary** transport (e.g. a standard Battery Service `0x180F`, `PROTOCOL.md` §4.3
   Option D, whose presence is contested). Not built — no v1 feature needs it.
@@ -54,7 +54,7 @@ for stock AOSP-based ROMs.
 │  :data                                                │
 │  - BudsRepositoryImpl                                  │
 │  - CodecRouter (per-DLCI FrameEncoder/FrameDecoder:     │
-│    0x02 EQ, 0x04 ANC/Ring/battery/ACK, 0x08 Case)       │
+│    0x02 EQ/Case, 0x04 ANC/Ring/battery/ACK)            │
 │  - SafeModeGate (§8.1, ADR-042)                         │
 │  - DataStore (Debug Mode toggle — as built; see §2's    │
 │    Data Layer note for the encryption-scope disclosure) │
@@ -244,9 +244,9 @@ should not be assumed uniform):**
 
 | Feature | Reconciliation mechanism on (re)connect | Confidence |
 |---|---|---|
-| ANC | **Corrected `ai-sessions/0040`:** the connect-time `Get`/`Notify` pair (ADR-021/ADR-022) is the *official client's* own query — a client that sends nothing gets no ANC `Notify`. This app therefore sends its own `AncFrame.Get` during each Message Stream claim (the Connect-time snapshot, ANC Refresh, and each ANC tap's reply) and treats the value as last-known between claims (ADR-032). **A `Set` is only counted once answered (2026-09-24):** ACK → requested mode, `Notify` → the Buds' mode, NAK/no answer → failure, previous mode kept. The dock line from the same `Notify` is marked provisional within ~2 s of the claim opening (ADR-024). | 🟢 FACT for the `Get`/`Notify` pair; the per-claim use is ADR-032 |
+| ANC | **Corrected `ai-sessions/0040`:** the connect-time `Get`/`Notify` pair (ADR-021/ADR-022) is the *official client's* own query — a client that sends nothing gets no ANC `Notify`. This app therefore sends its own `AncFrame.Get` during each Message Stream claim (the Connect-time snapshot, ANC Refresh, and each ANC tap's reply) and treats the value as last-known between claims (ADR-032). **A `Set` is only counted once answered (2026-09-24):** ACK → requested mode, `Notify` → the Buds' mode, NAK/no answer → failure, previous mode kept. The `Notify`'s Settable byte is kept as `dockState` in the repository but **no longer shown** (ADR-024 Update 2026-09-24: a premature `0x00` with one bud out in `CAP-061`). | 🟢 FACT for the `Get`/`Notify` pair; the per-claim use is ADR-032 |
 | EQ | No connect-time *push* exists for EQ, but the official app **reads** it — and so does this app since `ai-sessions/0041` (DECISIONS.md ADR-034, maintainer-approved 2026-09-20): the Connect sequence waits for the Buds' unsolicited `GetSoftwareInfo` announcement (which names this connection's pw_rpc channel), then sends `ReadSetting 4:16` (active EQ) on that channel and fills `eqProfile` from the answer; the EQ screen can re-read on demand. `eqProfile` is `null` only until that answer arrives or if it failed — `BudsRepository.eqError` then carries the reason (no announcement in time, a channel with no known address, an error status, a timeout). A write is only counted as done once the Buds' `RESPONSE` arrives (`status` absent/OK); anything else is surfaced, never assumed. Field 18 (last saved custom EQ) never replaces the active value. | 🟢 FACT (ADR-034: identification, `ReadSetting 4:N` semantics, three second-capture chains); 🟡 HYPOTHESIS for what a fresh client must send first and for request/response matching (handled conservatively, `// TODO(verify)`, hardware re-test) |
-| Battery (DLCI 0x04 Option B, **implemented `ai-sessions/0040`, ADR-033; charging flag `ai-sessions/0041`**) | Push-based: the Buds send three `Group 0x03 Code 0x03` frames within ~10 ms of the channel opening and again on every change — so each Message Stream claim yields a reading. Each of `b1`/`b2` is `0bSVVVVVVV`: `V` = 0–100 % and `S` = charging (maintainer-accepted 2026-09-20); `V = 0x7F`/`> 100` reads "unavailable"; `b3` (Case) is never decoded (it read `0xff` in 60/60 frames). **The Case comes from DLCI 0x08** (`Group 0x0e Code 0x01`, entry 3), read by a short **on-demand claim** on the Connect tap and on *Refresh battery* (**ADR-035**) that sends the one `0e 04 00 00` request (**ADR-039**, 2026-09-24 — every post-open push in `CAP-059`/`CAP-060` answered it); a value the Buds did not mark fresh is shown "last seen". | 🟢 FACT (ADR-031 identity, ADR-033 unblock + charging-flag update; ADR-014 identity + ADR-035/039 for the Case) |
+| Battery (DLCI 0x04 Option B, **implemented `ai-sessions/0040`, ADR-033; charging flag `ai-sessions/0041`**) | Push-based: the Buds send three `Group 0x03 Code 0x03` frames within ~10 ms of the channel opening and again on every change — so each Message Stream claim yields a reading. Each of `b1`/`b2` is `0bSVVVVVVV`: `V` = 0–100 % and `S` = charging (maintainer-accepted 2026-09-20); `V = 0x7F`/`> 100` reads "unavailable"; `b3` (Case) is never decoded (it read `0xff` in 60/60 frames). **The Case comes from DLCI 0x02** (**ADR-043**, 2026-09-24): after the Connect-time EQ read the app sends one `SubscribeRuntimeInfo` request on the announced channel; the Buds then push `SERVER_STREAM` packets by themselves and entry 6.1 field 1 is the Case % — a packet without that entry reads "unavailable". *Refresh battery* re-reads Left/Right only. The DLCI 0x08 claim of ADR-035/038/039 is withdrawn (its `0e 04` got no answer in `CAP-061`, 8/8). | 🟢 FACT (ADR-031 identity, ADR-033 unblock + charging-flag update; `PROTOCOL.md` §4.3 Option F + ADR-043 for the Case) |
 | Battery (HFP, Option C) — **removed `ai-sessions/0042`** | Push-based on the wire (`AT+BIEV`/`AT+CIND`, ADR-015/023) but **not consumable by an app**: `CAP-059` shows `AT+BIEV=2,100` seven times on the wire and **zero** vendor-specific events in the app's receiver (and the value is one earbud's, never the Case). `HfpBatteryReader` and its wiring were removed on the maintainer's decision (chat 2026-09-20); the wire facts stay. | 🟢 FACT on the wire; 🟢 not app-consumable (`CAP-059-FINDINGS.md` §7) |
 | Find My Buds Left/Right | Fire-and-forget action, not persisted state — there is nothing to reconcile on reconnect (no "currently ringing" flag this app tracks across a reconnect boundary). | N/A |
 
@@ -262,7 +262,8 @@ Android has no equivalent of Linux's BlueZ/UPower/AVRCP battery reporting, so th
 
 - **Implemented — Message Stream "Battery updated"** (DLCI 0x04 `03 03`, Option B, ADR-031/033): Left/Right with the charging flag,
   pushed on every Message Stream claim.
-- **Implemented — DLCI 0x08 `0e 01`** (Option E, ADR-014/035/039): the Case, read by a short on-demand claim that sends `0e 04 00 00`.
+- **Implemented — DLCI 0x02 `SubscribeRuntimeInfo`** (Option F, ADR-043): the Case, pushed by the Buds after one request per Connect.
+- **No longer used — DLCI 0x08 `0e 01`** (Option E, ADR-014): a FACT source, but the app's claim got no answer (`CAP-061`); ADR-043 withdrew it.
 - **Not built — BLE Battery Notification advertisement** (Option A, bounded scan per §9.1/ADR-006): it has never matched on the wire
   (`CAP-011`, `CAP-043`, `CAP-059`); the spec says a Provider should not advertise battery data all the time. `BLUETOOTH_SCAN` is not
   even declared until this is built.
@@ -304,8 +305,8 @@ envelope; 🔴 OPEN QUESTION what protocol it belongs to):
 +-----------+----------------+--------------+-------------------+
 | Group (1B)| Code (1B)      | Length (2B)  | Value (variable)  |
 +-----------+----------------+--------------+-------------------+
-Only `0e 01` (battery, index 3 = Case) is decoded and only `0e 04 00 00` is ever sent (ADR-035/039); every other
-Group/Code is an `UnidentifiedFrame` — see `PROTOCOL.md` §2.3/§4.3 Option E.
+The app no longer opens DLCI 0x08 (ADR-043); the codec still decodes `0e 01` (index 3 = Case) for any frame that arrives
+and reports every other Group/Code as an `UnidentifiedFrame` — see `PROTOCOL.md` §2.3/§4.3 Option E.
 ```
 
 - **Routing (outbound):** for each command, `CodecRouter` selects the
@@ -371,7 +372,8 @@ summary), the current state is (every write below additionally passes the Safe-M
 | Find My Buds Left/Right | DLCI 0x04, Group `0x04` Code `0x01` | 🟢 FACT | ADR-011 (explicit "implementation is unblocked") | **Implemented** (`RingFrameEncoder`/`RingFrameDecoder`, `:data`) — structurally complete, not hardware-verified (`ai-sessions/0033`) |
 | EQ | DLCI 0x02, pw_rpc `maestro_pw.Maestro` `WriteSetting`/`ReadSetting`, payload `4:{16\|18:{5×float32}}` | 🟢 FACT (pw_rpc identification and `ReadSetting` semantics per ADR-034; envelope, field-to-band mapping, ±6.0 clamp, presets per ADR-016) | ADR-020 (write), **ADR-034** (read-only `ReadSetting` for fields 16/18, channel mirroring) | **Implemented** (`PwRpc`, `Maestro`, `EqFrameEncoder`/`EqFrameDecoder`, `BudsRepositoryImpl.readEq`/`setEqGains`, `:data`) — write ACK and read answer are surfaced; not hardware-verified (`ai-sessions/0041`) |
 | Battery, Option C (HFP `AT+BIEV`/`AT+CIND`) — **removed `ai-sessions/0042`** (maintainer decision in chat, after the confirming run) | HFP AT-command channel | 🟢 FACT on the wire | None | **Removed** — wire-confirmed, not app-consumable (`CAP-059`: 7 × `AT+BIEV` on the wire, 0 vendor events in the app) |
-| Battery, Option B (DLCI 0x04 `Group 0x03 Code 0x03`) | DLCI 0x04 | 🟢 FACT (message *identity*; ADR-031; charging flag, ADR-033's 2026-09-20 update) | **ADR-033** (`ai-sessions/0040`, maintainer-approved; charging flag accepted 2026-09-20) | **Implemented** (`BatteryFrameDecoder`, `:data`) — `0bSVVVVVVV` per earbud; the Case (`b3`) is not decoded there — it comes from DLCI 0x08 (ADR-014 identity, **ADR-035** unblock, **ADR-039** `0e 04` request: on-demand claim, `CaseBatteryFrameDecoder`). Left/Right hardware-seen in `CAP-059`; the Case with the request not yet hardware-verified. |
+| Battery, Option B (DLCI 0x04 `Group 0x03 Code 0x03`) | DLCI 0x04 | 🟢 FACT (message *identity*; ADR-031; charging flag, ADR-033's 2026-09-20 update) | **ADR-033** (`ai-sessions/0040`, maintainer-approved; charging flag accepted 2026-09-20) | **Implemented** (`BatteryFrameDecoder`, `:data`) — `0bSVVVVVVV` per earbud; the Case (`b3`) is not decoded there. Left/Right hardware-seen in `CAP-059`–`CAP-061`. |
+| Battery, Case (Option F, DLCI 0x02 `SubscribeRuntimeInfo` entry 6.1) | DLCI 0x02 | 🟢 FACT (`PROTOCOL.md` §4.3 Option F, 2026-09-24) | **ADR-043** (one request per Connect; supersedes the DLCI 0x08 claim of ADR-035/038/039) | **Implemented** (`Maestro.subscribeRuntimeInfoRequest`, `RuntimeInfoDecoder`, `:data`) — not hardware-verified (`ai-sessions/0046`). |
 | §4.5's other DLCI 0x02 settings (Touch & Hold, Head gestures, In-ear detection, Mono audio, Volume EQ, Volume Balance, Case sounds, Multipoint, Conversation Detection) | DLCI 0x02 | 🟢 FACT for several individual fields' number/semantic identity (ADR-019 and its Updates) | **ADR-036** — read-only `ReadSetting` for fields 2, 4, 7, 11, 15, 17, 19, 22, 27, 28 (no writes, no subscription) | **Reads unblocked, not built** (a read-only Settings card and per-field decoders need real bytes as fixtures — the official app's connect burst already reads fields 1–32, `PROTOCOL.md` §6). **Writes gated** — each needs its own ADR. |
 | Safe Mode / Startup Handshake | DLCI 0x02 announcement + DLCI 0x04 Model ID | 🟢 FACT (firmware string ADR-012/034; Model ID `PROTOCOL.md` §0.1) | **ADR-042** | **Implemented** (`SafeModeGate`, `:data`; Safe Mode card, `:ui`) |
 | Find My Buds Case / "ring both" | — | — | ADR-027 (premise narrowed 2026-09-24: spec `0x03` "ring both" untested) | **Out of scope**; sending `0x03` needs its own ADR |
@@ -495,10 +497,9 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   cause (`SessionDiagnostics`: the user's Disconnect tap, or the lost channel plus the age of the last inbound frame). The pairing bond receiver got the same flag, the bond
   state is read directly from the stack at the end of the 45 s wait, that wait is cancelled when the flow ends, and a second `associate()` while one is open is refused
   (`PairingFailure.AlreadyInProgress`).
-- **On-demand channels, three of them (`ai-sessions/0042`).** Besides the MAESTRO session (DLCI 0x02) and the Message Stream (DLCI 0x04, ADR-032) the app may claim
-  **DLCI 0x08 ("GSND CONTROL")** for the Case battery (**ADR-035**): only on the Connect tap and on *Refresh battery*; since **ADR-039** (2026-09-24) the claim ends any
-  lingering Message Stream claim first and sends exactly one `0e 04 00 00` (nothing else), serialised with the Message Stream claims by one mutex, ≤ 2 s wait for the
-  push, one retry if the channel is closed out from under the wait (ADR-038), released 1 s later; a failed claim is `caseBatteryError`, not a session loss.
+- **One on-demand channel (since `ai-sessions/0046`).** Besides the MAESTRO session (DLCI 0x02) the app claims only the Message Stream (DLCI 0x04, ADR-032).
+  The DLCI 0x08 Case claim of ADR-035/038/039 (`ai-sessions/0042`–`0045`) is **withdrawn by ADR-043**: in `CAP-061` its `0e 04` got no answer (8/8), the Buds closed 12
+  further opens within 10–198 ms, and each contended claim closed the other owner's channel. The Case now arrives on the session channel (§3.1).
   Every claim/release is wrapped so a cancelled tap still releases the channel (0044 APP-4). The Quick Settings ANC tile
   (`AncTileService`) is a user tap like the ANC screen's: it switches the mode only while the session is `Ready` and otherwise opens the app — it never connects and never starts
   a service. **Decided (maintainer, chat 2026-09-20): no automatic session opening — the Connection card mirrors Android (read-only) and Connect stays a tap;** the foreground and
@@ -597,6 +598,9 @@ returned when a *write* is refused by the Safe-Mode gate below; an inbound frame
 > write returns `UnsupportedFirmware`, sends nothing, and the Connection screen shows a Safe Mode card with the detected firmware and
 > Model ID. The design text below stays as written; where it says "read the firmware first", the app waits (bounded) for the Buds'
 > own announcement instead of sending a request.
+> **Corrected 2026-09-24 (`ai-sessions/0046`, `CAP-061`):** the announcement's payload carries a fixed64 field 5 (wire type 1); the reader returned nothing
+> for it, so the gate refused every write on the verified firmware. `Proto.fields` now skips fixed64/fixed32 fields and the tests use the real bytes of
+> `CAP-061` frame 1508 (`Cap061Fixtures.kt`).
 
 Before sending any state-changing command on a new connection, the app reads
 the firmware version string first (via DLCI 0x02's Rcvd block or DLCI 0x04's

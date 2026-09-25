@@ -1304,6 +1304,12 @@ motivated this).
   unchanged. **Consequences, now implemented:** the app words the line as a derived reading ("Both earbuds seem to be in the case — the Buds report no switchable ANC modes") and
   applies the 2026-09-18 consequence: a value received within ~2 s of a (re)open is shown as provisional, and during a claim's linger the last `Notify` wins.
 
+- **Update (2026-09-24, `ai-sessions/0046`, maintainer-approved in chat 2026-09-24, `AskUserQuestion` "Dock line", option *"Remove the dock
+  line (Recommended)"*):** `CAP-061` frame 5560 reads Settable `0x00` while one bud was out (film t ≈ 359.7 s; the Left bud was seated only
+  0.6–0.8 s later) and the same claim's battery frame 5557 said that bud was not charging — a **premature** `0x00`, a 6th counter-example to the
+  derived "both in the case" reading (`CAP-061-FINDINGS.md` §4). The finding (a correlation) stands; the app no longer shows a sentence derived
+  from this byte. The per-earbud "(charging)" state on the battery lines stays.
+
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 
 - **Date**: 2026-09-07
@@ -1774,7 +1780,7 @@ motivated this).
 ## ADR-035 — DLCI 0x08 is claimed on demand for the Case battery: `Group 0x0e Code 0x01`, entry index 3; receive-only
 
 - **Date**: 2026-09-20
-- **Status**: Accepted (scope below)
+- **Status**: Accepted (scope below); items 1–2 superseded by ADR-043 (2026-09-24)
 - **Note on process**: drafted by an AI agent (`ai-sessions/0042`); the decision is the maintainer's, made in the chat session of 2026-09-20 (`AskUserQuestion`
   "Case", options and pros/cons shown; chosen: *"ADR schrijven + on-demand claim"*), per `AGENTS.md` §6. Details marked "agent detail" are the agent's, inside that
   approval, open to veto.
@@ -1805,6 +1811,9 @@ motivated this).
   Battery row is updated. Nothing here is hardware-verified. **Not decided:** any request on DLCI 0x08, any other Group/Code, the BLE advertisement route.
 - **Update (2026-09-24, `ai-sessions/0045`):** item 2 ("receive-only") is **superseded by ADR-039** — the claim now sends the one zero-length
   `0e 04 00 00` request, because every post-open push in `CAP-059`/`CAP-060` answered that request and no receive-only claim ever got a push.
+
+- **Update (2026-09-24, `ai-sessions/0046`):** items 1–2 (the on-demand DLCI 0x08 claim) are **superseded by ADR-043** — the app no longer
+  opens DLCI 0x08; the Case comes from DLCI 0x02 `SubscribeRuntimeInfo`. Item 3's decode rule stays as history (the decoder remains in the codec).
 
 ## ADR-036 — DLCI 0x02: read-only `ReadSetting` unblocked for the `qhr` fields already at FACT identity (no writes, no subscription)
 
@@ -1863,7 +1872,7 @@ motivated this).
 ## ADR-038 — Case battery (ADR-035) on-demand claim of DLCI 0x08 gets the same claim-on-tap contention handling as DLCI 0x04 (ADR-032)
 
 - **Date**: 2026-09-22
-- **Status**: Accepted
+- **Status**: Superseded by ADR-043 (2026-09-24)
 - **Note on process**: drafted by an AI agent (`ai-sessions/0043`). **Process deviation, self-flagged**: same as ADR-037 — this ADR's text, and the matching
   code change in `BudsRepositoryImpl.readCaseBattery`, were written by a runaway background subagent before maintainer sign-off, and its original citation here
   falsely claimed a specific `AskUserQuestion` exchange that never took place. That fabricated citation is corrected by this edit. What actually happened: the
@@ -1901,10 +1910,13 @@ motivated this).
   with zero data; 3 were closed by the Buds within 0.13 s). See `PROTOCOL.md` §4.3 Option E's 2026-09-24 correction and `ai-sessions/0045` §3.1. The retry
   decided here stays (it handles a real contention case); **ADR-039** adds the missing request.
 
+- **Update (2026-09-24, `ai-sessions/0046`):** superseded by ADR-043 — the retry has nothing left to retry (the app no longer opens DLCI 0x08).
+  `CAP-061` also showed the retry's second attempt closed by the Buds within 10–198 ms in 6 of 6 contended claims (`CAP-061-FINDINGS.md` §2).
+
 ## ADR-039 — The on-demand DLCI 0x08 Case claim sends the zero-length `0e 04 00 00` request
 
 - **Date**: 2026-09-24
-- **Status**: Accepted
+- **Status**: Accepted; item 1 superseded by ADR-043 (2026-09-24) — its sufficiency hypothesis refuted by `CAP-061`
 - **Note on process**: drafted by an AI agent (`ai-sessions/0045`); the decision is the maintainer's, given in the chat session of 2026-09-24
   (`AskUserQuestion`, question "P2", option *"ADR-039 + bouwen (Recommended)"*, with this ADR's draft shown in the question), per `AGENTS.md` §6.
 - **Context**: ADR-035 made the Case claim receive-only and said that if the Buds did not push unrequested, "sending `0e 04` needs its own ADR";
@@ -1930,6 +1942,11 @@ motivated this).
   capture bracket settles the first (`ai-sessions/0045` re-test list).
 - **Consequences**: `BudsRepositoryImpl.readCaseBattery` sends the request; a regression test uses the real `CAP-060` bytes (request `0e 04 00 00`,
   frame 1979; push frame 1993). `PROTOCOL.md` §4.3 Option E and `ARCHITECTURE.md` §6.0b are updated.
+
+- **Update (2026-09-24, `ai-sessions/0046`, maintainer-approved in chat 2026-09-24 together with ADR-043):** the `0e 04`-only claim got no answer in
+  `CAP-061` (8/8 held claims, frames 4343, 4438, 4614, 5001, 5222, 5427, 5593, 5776, zero Buds frames on those opens); the sufficiency HYPOTHESIS
+  above is **refuted**; see `CAP-061-FINDINGS.md` §2. Item 1 (the request) is superseded by ADR-043; the evidence that every post-open push of the
+  *other* opener follows its `0e 04` stands (7/7 again in `CAP-061`), but that opener sends a whole burst first (`05 0c`, `04 02`, …).
 
 ## ADR-040 — HFP battery (Option C) is wire-confirmed but not consumable by an app on Android 14+; the app route is removed
 
@@ -1992,6 +2009,33 @@ motivated this).
   4. The allowlist is a code constant; adding a firmware version is a code change reviewed against a capture of that firmware.
 - **Consequences**: after a Buds firmware update the app turns read-only until the allowlist is extended (deliberate, conservative — `ARCHITECTURE.md`
   §8.1's own rationale). ADR-012/036's dependency on §8.1 is now met. `README.md`'s disclaimer may cite Safe Mode again.
+
+## ADR-043 — The Case battery comes from DLCI 0x02 `SubscribeRuntimeInfo`; the DLCI 0x08 claim is withdrawn
+
+- **Date**: 2026-09-24
+- **Status**: Accepted (maintainer, chat 2026-09-24, `ai-sessions/0046`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0046`); the decision is the maintainer's, given in the chat session of 2026-09-24
+  (`AskUserQuestion` "Case", option *"Runtime info, drop 0x08 (Recommended)"*, with this text in the preview), together with the 🟢 FACT
+  promotion of `SubscribeRuntimeInfo` entry 6.1 = Case battery % (question "FACT", *"Promote to 🟢 FACT (Recommended)"*, `PROTOCOL.md` §4.3
+  Option F), per `AGENTS.md` §6.
+- **Context**: `CAP-061` (the first hardware run of the ADR-039 build): the app's DLCI 0x08 claims got no Buds frame in 20 of 20 opens — 12 closed
+  by the Buds within 10–198 ms, 8 held 2–5 s after sending exactly `0e 04 00 00` with zero answer — and each contended claim closed the other
+  owner's channel (🟡 the Google app's Assistant-headphones service, `CAP-061-FINDINGS.md` §2). The official app's DLCI 0x02 connect burst
+  subscribes to `maestro_pw.Maestro/SubscribeRuntimeInfo` with an empty request; its stream's entry 6.1 equals the DLCI 0x08 Case value in 13 of 13
+  captures that contain both (§2a). DLCI 0x02 is the app's own session channel (ADR-032), never contended in any capture.
+- **Options considered**: (a) this decision; (b) drop DLCI 0x08 and show the Case as unavailable; (c) keep the DLCI 0x08 claim as it is; (d) send
+  `05 0c` + `0e 04` on DLCI 0x08 as an experiment.
+- **Decision**:
+  1. Once per Connect, after the Buds' channel announcement, the app sends one `SubscribeRuntimeInfo` REQUEST (`maestro_pw.Maestro`, method
+     `0xe61e8290`, empty payload, the announced channel and its ADR-034 address — `CAP-036` frame 1410's shape). Nothing else new.
+  2. From the `SERVER_STREAM` packets it decodes only entry 6.1 field 1 (Case %, 0..100). Absent entry → Case "unavailable". Other fields are
+     not interpreted.
+  3. The app no longer opens DLCI 0x08: supersedes ADR-035 items 1–2, ADR-038 and ADR-039 item 1 (their decode/evidence stay history).
+  4. Pushes arrive by themselves while the session is open; no polling.
+- **Consequences**: `:data` gains `Maestro.subscribeRuntimeInfoRequest`, `RuntimeInfoDecoder`, `RoutedFrame.RuntimeInfoCase` and a 64-bit varint
+  reader (the stream's field 2 is an epoch-ms timestamp); `BudsRepositoryImpl` subscribes after the Connect-time EQ read and drops
+  `readCaseBattery`; "Refresh battery" re-reads Left/Right only. The Case is "unavailable" whenever the Buds' packets carry no entry 6.1 (absent in
+  29 captures — 🔴 when it is present). Not hardware-verified: the re-test in `ai-sessions/0046` settles it.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

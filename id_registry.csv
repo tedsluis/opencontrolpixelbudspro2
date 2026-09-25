@@ -33,14 +33,15 @@ ADR-031,adr,accepted,"Battery Option B's Group 0x03 Code 0x03 message confirmed 
 ADR-032,adr,accepted,"DLCI 0x04 (Message Stream) is a shared on-demand channel: claimed by the user's own ANC/Find/Connect action and released after a short linger; its loss is not a session loss",DECISIONS.md
 ADR-033,adr,accepted,"Battery Option B Group 0x03 Code 0x03 decoder unblocked for implementation; charging-flag reading (0bSVVVVVVV) accepted 2026-09-20",DECISIONS.md
 ADR-034,adr,accepted,"DLCI 0x02 is pw_rpc maestro_pw.Maestro; read-only ReadSetting path unblocked (EQ fields 16/18); requests mirror the channel the Buds announce",DECISIONS.md
-ADR-035,adr,accepted,"DLCI 0x08 is claimed on demand for the Case battery (Group 0x0e Code 0x01, entry index 3); item 2 'receive-only' superseded by ADR-039",DECISIONS.md
+ADR-035,adr,accepted,"DLCI 0x08 is claimed on demand for the Case battery (Group 0x0e Code 0x01, entry index 3); item 2 superseded by ADR-039, items 1-2 superseded by ADR-043",DECISIONS.md
 ADR-036,adr,accepted,"DLCI 0x02 read-only ReadSetting unblocked for the qhr fields already at FACT identity (no writes, no subscription; nothing implemented)",DECISIONS.md
 ADR-037,adr,accepted,"android/logs/LOGS-0xx gitignored-forever rule retired for full capture sessions specifically (moved to captures/CAP-NNN-* instead); ad hoc individual pulls stay gitignored",DECISIONS.md
-ADR-038,adr,accepted,"Case battery (ADR-035) claim of DLCI 0x08 retries once on contention, same pattern as DLCI 0x04 (premise corrected 2026-09-24, see ADR-039)",DECISIONS.md
-ADR-039,adr,accepted,"The on-demand DLCI 0x08 Case claim sends the zero-length 0e 04 00 00 request (supersedes ADR-035 item 2, amends ADR-038's premise)",DECISIONS.md
+ADR-038,adr,superseded,"Case battery (ADR-035) claim of DLCI 0x08 retries once on contention (premise corrected by ADR-039); superseded by ADR-043",DECISIONS.md
+ADR-039,adr,accepted,"The on-demand DLCI 0x08 Case claim sends the zero-length 0e 04 00 00 request; item 1 superseded by ADR-043 (refuted by CAP-061)",DECISIONS.md
 ADR-040,adr,accepted,"HFP battery (Option C) is wire-confirmed but not consumable by an app on Android 14+; the app route is removed",DECISIONS.md
 ADR-041,adr,accepted,"The wire codec is hand-written; no protobuf runtime and no .proto build inputs",DECISIONS.md
 ADR-042,adr,accepted,"Startup Handshake / Safe Mode implemented as a firmware + Model ID write gate",DECISIONS.md
+ADR-043,adr,accepted,"The Case battery comes from DLCI 0x02 SubscribeRuntimeInfo (entry 6.1); the DLCI 0x08 claim is withdrawn (supersedes ADR-035 items 1-2, ADR-038, ADR-039 item 1)",DECISIONS.md
 CAP-001,capture,analyzed,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,analyzed,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,analyzed,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
@@ -101,6 +102,7 @@ CAP-057,capture,withdrawn,"session date/status: *withdrawn 2026-09-24* — Group
 CAP-058,capture,planned,"session date/status: *planned* — Group AT (new), SDP-001 3rd attempt with an explicit on-device process-liveness check, maintainer-approved and added by ai-sessions/0031",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-059,capture,analyzed,"2026-09-20 17:16:59-17:22:29, Group AU (new) — first OpenControl-app hardware capture (Pixel 9a/GrapheneOS, ai-sessions/0041 build), reclassified from android/logs/LOGS-001 by ai-sessions/0043; PAIR-001, ANC-001-004, FIND-001/002 confirmed, EQP-006 partial",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-060,capture,analyzed,"2026-09-21 17:54:01-18:00:49, Group AV (new) — second OpenControl-app hardware capture (Pixel 9a/GrapheneOS, ai-sessions/0042 build), reclassified from android/logs/LOGS-002 by ai-sessions/0043; PAIR-001, PAIR-003, ANC-001-004, FIND-001/002 confirmed, EQP-005/006 partial",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-061,capture,analyzed,"2026-09-24 17:24:59-17:31:14, Group AW (new) — first hardware run of the ai-sessions/0045 build (Pixel 9a/GrapheneOS); Safe Mode root cause (announcement parser), Case claim refuted, dock-line counter-example; PAIR-001, PAIR-003, CASE-003/004/005/006, BATT-004 confirmed; ANC/FIND/EQ attempted, nothing sent",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 ANC-001,test,catalogued,"ANC → Off",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-002,test,catalogued,"ANC → Noise Cancellation",TESTPLAN_BLUETOOTH_HCI_SNOOP.md
 ANC-003,test,catalogued,"ANC → Adaptive",TESTPLAN_BLUETOOTH_HCI_SNOOP.md

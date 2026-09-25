@@ -114,6 +114,18 @@ mark v1.
   connect-burst RPCs. 0044's coverage gaps closed (capture folders, session history per §4a, remaining Kotlin/tests, RFCOMM and
   `RECEIVER_EXPORTED` checked against official texts; ADR-017 note in `REVERSE_ENGINEERING.md`, maintainer-approved). 1533 tests, lint 0 errors.
   Nothing is hardware-verified — re-test instructions in `ai-sessions/0045_MAINTENANCE_RESULT_2026_09_24.md`.
+- **2026-09-24 (`ai-sessions/0046`): `CAP-061` (the 0045 build's first hardware run) analysed end to end; Safe Mode, Case and dock-line
+  defects root-caused and fixed; ADR-043.** Video (every frame scanned for privacy; clock offset measured at both ends), HCI log (every Buds
+  packet classified, DLCI 0x02/0x04/0x08 decoded per open), debug export, logcat and system log correlated (`CAP-061-EVENT-NOTES.md`,
+  `CAP-061-FINDINGS.md`). **Safe Mode / ANC / EQ / Find:** the Buds' firmware announcement carries a fixed64 field (140/140 announcements, 44
+  captures); the app's protobuf reader rejected it, so the firmware list was always empty and the ADR-042 gate refused every write on the
+  verified firmware — nothing was ever sent. Fixed (`Proto.fields` skips fixed64/fixed32), tests now use the real `CAP-061` frame 1508 (serial
+  redacted). **Case:** the app's DLCI 0x08 claim with `0e 04` got no answer (20/20 opens) and knocked the other client off the channel; with the
+  maintainer's approval the Case now comes from DLCI 0x02 `SubscribeRuntimeInfo` entry 6.1 (🟢 FACT, 13/13 captures; **ADR-043**, supersedes the
+  0x08 claim of ADR-035/038/039; ADR-039 Update). **Dock line** removed (a premature "both in the case" with one bud out, ADR-024 Update); the
+  ANC-tile button now says what Android answered. `PROTOCOL.md`: announcement structure 🟢, Option F 🟢, Option E refutation, 🟡 the Google app's
+  Assistant-headphones service as the other DLCI 0x08/0x0a owner. Tests `:data` 1480 / `:hardware` 49 / `:domain` 11, lint clean except the 2 old
+  `:app` warnings, three mutation checks caught. Not hardware-verified — re-test instructions in `ai-sessions/0046_FEATURE_RESULT_2026_09_24.md`.
 ### Fixed
 
 - **2026-09-18 (`ai-sessions/0034`): a crash-on-launch in the v1 app, found by the maintainer on

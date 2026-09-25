@@ -1503,6 +1503,16 @@ and passive behavior:
 
 Pull the bugreport (§3) the same way.
 
+#### Group AW — OpenControl-app re-test of the `ai-sessions/0045` build (captured 2026-09-24 as `CAP-061`, added by `ai-sessions/0046`)
+
+A validation run of this project's own app (the third capture purpose, see the intro), exercising `ai-sessions/0045` RESULT §9's re-test items
+(A)–(H). Actions and their Test-IDs: pair from the app (CDM) [`PAIR-001`]; Connect / Disconnect / Connect again [`PAIR-003`]; open the case lid
+[`CASE-003`], remove the Right and the Left bud [`CASE-005`, `CASE-004`], put both back and close the lid [`CASE-006`]; *Refresh battery* in every dock
+state [`BATT-004`] (item A, Case); each ANC mode [`ANC-001`–`ANC-004`] (item B); watch for the Safe Mode card (item C) and the dock line (item D);
+Find My Buds Left/Right/Stop [`FIND-001`, `FIND-002`] and an EQ slider/preset change [`EQS-001`, `EQP-*`] (item H); the ANC-tile button (item H).
+Items (E) "not paired" and (F) "taps survive the screen" were not run in `CAP-061`. Checklist: phone clock with seconds on film, HCI snoop on and
+Bluetooth off/on on film, the build commit, Play services' *Nearby devices* permission state, all exports within 1 minute of the last action.
+
 ### 4.3 Hardware Actions (either phone)
 
 **Source:** `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` sections 2 (User Actions via the Case & Buds) and 4
@@ -1880,6 +1890,7 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-058` | *planned* | Pixel 7a | TBD | TBD | TBD | AT (new) | `SDP-001`, `SDP-002` (opportunistic, not attempted) | 3rd attempt at `SDP-001`'s UUID-branch isolation, adding an explicit on-device process-liveness check before the "Pair" tap per `CAP-044-FINDINGS.md` §5's own proposal; approved by the maintainer 2026-09-18, added `ai-sessions/0031` | — | — | planned |
 | `CAP-059` | 2026-09-20 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0041` commit `9fe4b70` | AU (new) | `PAIR-001`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-006` (partial) | App-validation run of the `0041` build — pairing, ANC cycling, Find, EQ, and root-causing three session drops with three distinct causes; reclassified from `android/logs/LOGS-001` by `ai-sessions/0043` (see the intro's third-purpose note) | — (no bugreport archive kept; the log is the raw, untruncated `btsnoop_hci.log`, `CAP-059-EVENT-NOTES.md`) | `CAP-059-btsnoop_hci.log` | analyzed |
 | `CAP-060` | 2026-09-21 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0042` commit `1efa86b` | AV (new) | `PAIR-001`, `PAIR-003`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-005`/`006` (partial) | App-validation run of the `0042` build — six connection drops (three distinct mechanisms, one newly characterized), Case-battery failure (**corrected 2026-09-24**: every post-open push answers Play services' `0e 04`; the app's receive-only claims got none — `CAP-060-FINDINGS.md` §2, ADR-039), dock-state and ANC-tile root-causing; reclassified from `android/logs/LOGS-002` by `ai-sessions/0043` (see the intro's third-purpose note) | — (no bugreport archive kept; raw, untruncated `btsnoop_hci.log`, `CAP-060-EVENT-NOTES.md`) | `CAP-060-btsnoop_hci.log` | analyzed |
+| `CAP-061` | 2026-09-24 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0045` code (`android/` of `5ade05e` = `964fa91`) | AW (new) | `PAIR-001`, `PAIR-003`, `CASE-003`–`CASE-006`, `BATT-004`; `ANC-001`–`004`, `FIND-001`/`002`, `EQS-001`, `EQP-*` attempted (nothing sent) | First hardware run of the `0045` build — Safe Mode on the verified firmware (the announcement's fixed64 field 5 made the firmware list empty), the DLCI 0x08 `0e 04` claim unanswered 20/20 (ADR-043 moves the Case to `SubscribeRuntimeInfo`), a premature "both in the case" (ADR-024 Update); `CAP-061-FINDINGS.md` | — (no bugreport archive; raw, untruncated `btsnoop_hci.log`, `CAP-061-EVENT-NOTES.md`) | `CAP-061-btsnoop_hci.log` | analyzed |
 
 **Column notes:**
 
