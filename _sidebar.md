@@ -201,3 +201,6 @@
   - **CAP-060 (Group AV)**
     - [CAP-060-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-060-2026-09-21_17-54-01_18-00-49-Group_AV/CAP-060-EVENT-NOTES.md)
     - [CAP-060-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-060-2026-09-21_17-54-01_18-00-49-Group_AV/CAP-060-FINDINGS.md)
+  - **CAP-061 (Group AW)**
+    - [CAP-061-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-061-2026-09-24_17-24-59_17-31-14-Group_AW/CAP-061-EVENT-NOTES.md)
+    - [CAP-061-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-061-2026-09-24_17-24-59_17-31-14-Group_AW/CAP-061-FINDINGS.md)
