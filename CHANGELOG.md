@@ -136,6 +136,18 @@ mark v1.
   built); the runtime-info stream's per-bud fields tell which bud is charging in the case (🟢 FACT, 401/403 packets, 45 captures; ADR-043 Update
   unblocks the decode and a dated last-seen Case). Defects found: the ring notice is cleared by Disconnect (I4), a stale session-loss message.
   Prioritised improvement list I-1 … I-10 in the RESULT.
+- **2026-09-25 (`ai-sessions/0048`): the `0047` improvements built (app), with real `CAP-062` bytes as fixtures; no protocol or ADR change.**
+  I-1 (**ADR-044** as built): the app re-opens its session by itself while visible and Android shows the Buds connected — 1.5 s after a session loss,
+  when Android's link comes back, on resume and at app start; one attempt per event, never in the background, off after a Disconnect tap until the next
+  Connect; the re-open repeats the Connect sequence (incl. the DLCI 0x04 snapshot); no second automatic re-open within 10 s of one. I-3: no ANC `Set`
+  (not even a claim) while the Buds' `Notify` reads Settable `0x00`; the ANC buttons and the tile say "ANC can only be changed while you wear the
+  Buds". I-4/I-8: per-bud "charging in the case" / "not charging" from the runtime-info stream (6.x field 2, 7.x fallback, 6.x wins — `CAP-062` frame
+  4500), newest charging report of either source wins, each with its own time. I-5: a packet without the Case entry keeps the Case as "last seen
+  HH:MM:SS" (in memory only). I-6: the ring notice survives Disconnect ("may still be ringing" after a reconnect). I-7: the loss text follows
+  Android's link *around* the loss (`classifySessionLoss`; the socket detail is identical for all 11 `CAP-062` losses) — never "likely another app".
+  `OsConnectionObserver` now emits every reading (display debounced by the screen). Tests: `:data` 1509, `:hardware` 49, `:domain` 17; five mutation
+  checks caught. `CAP-062` FINDINGS §7.2 / EVENT-NOTES corrected in place (the stale text lasted ≈ 1.5 s, film t = 240.5 s, not until t = 256 s).
+  `APP_TESTPLAN.md` updated (C1, C3, C8, C9, E1–E5, F8, G3, G4, I4). Not hardware-verified — Group AY plan in the RESULT.
 ### Fixed
 
 - **2026-09-18 (`ai-sessions/0034`): a crash-on-launch in the v1 app, found by the maintainer on

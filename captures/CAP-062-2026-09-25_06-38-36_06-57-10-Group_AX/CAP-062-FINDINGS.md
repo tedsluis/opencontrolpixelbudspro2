@@ -206,9 +206,10 @@ consent (I-5).
    tap Stop" branch; `connect()` clears it again (`:424`).
 2. 🟢 **Stale session-loss wording.** After the ACL drop at 06:42:35.113 the screen said "The Maestro channel (equalizer) was closed while Android
    still shows the Buds connected — likely another app …" (film t=238.5 s) although Android had lost the link; the Android link turned
-   `NOT_CONNECTED` 116 ms after the loss line (export 101–103) and the text only changed later (t=256 s). 🟡 HYPOTHESIS: the wording is chosen
-   from the Android link state at the moment of the loss and not re-evaluated promptly. The "likely another app" guess is also wrong for the 7
-   Buds-side `DISC`s of §3.
+   `NOT_CONNECTED` 116 ms after the RFCOMM loss line and 109 ms after the "Session lost" line (export 100–103) and the text changed ≈ 1.5 s after the loss (film t = 240.5 s, overlay 06:42:36, already
+   "Android no longer shows the Buds connected …"; frames at t = 239/240.5/242/245 s, `ai-sessions/0048` §4). 🟢 FACT (film + export): the wording was
+   chosen from the link state shown on screen, which passes a "not connected" only after the 1.5 s debounce of `OsConnectionObserver`, so the text
+   named a link state older than the loss for ≈ 1.5 s. The "likely another app" guess is also wrong for the 7 Buds-side `DISC`s of §3.
 3. 🟢 **ANC controls stay enabled while the Buds report no switchable mode** (Settable `00` in the claim's own `Notify`), so the user gets a
    refusal after 1–2 s instead of an explanation up front (§2).
 4. 🟢 **The Case line says "The Buds haven't reported the Case level on this connection"** even right after the Buds did report it on this

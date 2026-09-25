@@ -1,7 +1,9 @@
 # APP_TESTPLAN.md — Functional test plan for the OpenControl for Pixel Buds app
 
 **Purpose:** one run through **every function of the app** on real hardware (Pixel 9a / GrapheneOS + Pixel Buds Pro 2), with a place to
-record the result of each test. Written 2026-09-25 against the app as committed in `7498cbc` (`ai-sessions/0046`). This is a *user-level*
+record the result of each test. Written 2026-09-25 against the app as committed in `7498cbc` (`ai-sessions/0046`); **updated 2026-09-25 for the
+`ai-sessions/0048` build** (automatic foreground re-open ADR-044: C1, C3, C8, C9, E3–E5, G4; ANC only while worn: F8, G3; loss wording: C8; per-bud
+charging and last-seen Case: E2–E5; ring notice: I4). This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
 
@@ -48,15 +50,15 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| C1 | Buds paired, taken out of the case (or case open). Look at the Connection tab before tapping anything. | "Connected to this phone (Android)" and "App control: not open yet — tap Connect …" | — (the app opens nothing by itself) | | |
+| C1 | Buds paired, taken out of the case (or case open). Open the app (fresh start, no Disconnect tapped in this run). | "Connected to this phone (Android)", then **by itself** "App control: connecting…" → "ready" (ADR-044, `ai-sessions/0048`) | DLCI 0x02 opened by the app without a tap, only while the app is on screen | | |
 | C2 | Tap **Connect**. | "App control: connecting…" → "App control: ready"; a **Firmware: release_5.203** line; **no** "Safe Mode — read-only" card; a notification "OpenControl for Pixel Buds" | DLCI 0x02 opened; the Buds announce their channel; the app reads the EQ and requests runtime info | | |
-| C3 | Tap **Disconnect**. | "App control: not open yet …"; the notification disappears | the app closes DLCI 0x02 | | |
+| C3 | Tap **Disconnect**. | "App control: not open yet …"; the notification disappears; it **stays** closed (no automatic re-open after a Disconnect tap, also not on resume or when Android reconnects) | the app closes DLCI 0x02; no app `SABM` on 0x02 afterwards until C4 | | |
 | C4 | Tap **Connect** again. | ready again within a few seconds | as C2 | | |
 | C5 | Tap **Connect** twice quickly. | one session, no error | one DLCI 0x02 open | | |
 | C6 | Disconnect the Buds in **Android's** Bluetooth panel (tap the Buds' row). | "Android no longer shows the Buds connected …" with **Connect**; no crash | ACL disconnect | | |
 | C7 | Reconnect in Android's panel, then **Connect** in the app. | ready again | | | |
-| C8 | Put both buds in the case and close the lid. | The session ends with a clear message ("Paired — not connected to this phone …"); no crash | ACL disconnect | | |
-| C9 | Take them out again, open the app, **Connect**. | ready again | | | |
+| C8 | Put both buds in the case, lid open, then close the lid. | Within seconds the Buds close the session; the card names the cause: "The Buds closed the app's channel (…)" or "Android no longer shows the Buds connected …" — **never** "likely another app"; with the lid open the app may re-open by itself (a bud docked: charging in the case); after the lid is closed: "Paired — not connected to this phone"; no crash | Buds `DISC` 0x02 and/or ACL disconnect; at most one app `SABM` 0x02 per event | | |
+| C9 | Take them out again (lid open), keep the app on screen; do **not** tap Connect. | ready again **by itself** once Android shows the Buds connected (one attempt; if it fails, a message and a Connect/Retry button) | one app `SABM` 0x02 per event (link back / Buds `DISC` + ≈ 1.5 s) | | |
 | C10 | Swipe left/right between the tabs, and use the bottom bar. | Both change the tab; Back does not jump to Debug | — | | |
 
 ## D. Safe Mode and firmware (after the `ai-sessions/0046` fix)
@@ -70,11 +72,11 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| E1 | Buds in the case, lid open, **Connect**. | Left and Right with a % and "(charging)", each with "(updated HH:MM:SS)" | DLCI 0x04: three `03 03 …` frames | | |
-| E2 | Same moment: the **Case** line. | A Case % (compare with Android's Bluetooth panel / the Buds' LED) **or** "The Buds haven't reported the Case level on this connection." — never a made-up value | DLCI 0x02 `SubscribeRuntimeInfo` stream; **no app activity on DLCI 0x08** | | |
-| E3 | Take the **Right** bud out; tap **Refresh battery**. | Right loses "(charging)", Left keeps it; the times update | DLCI 0x04 claim, battery `e4 64 ff`-style | | |
-| E4 | Take the **Left** bud out too; **Refresh battery**. | Neither shows "(charging)" | | | |
-| E5 | Put both back; **Refresh battery**. | Both "(charging)" again | | | |
+| E1 | Buds in the case, lid open, app on screen (it connects by itself; else **Connect**). | Left and Right each "NN% (updated HH:MM:SS) — charging in the case (HH:MM:SS)" | DLCI 0x04: three `03 03 …` frames; DLCI 0x02 stream with 6.2/6.3 field 2 = 2 | | |
+| E2 | Same moment: the **Case** line. | "Case: NN% (updated HH:MM:SS)" (compare with Android's Bluetooth panel / the Buds' LED) **or**, if never reported since the app started, "Not reported yet — the Buds send the Case level only while a bud is charging in the case." — never a made-up value | DLCI 0x02 `SubscribeRuntimeInfo` stream; **no app activity on DLCI 0x08** | | |
+| E3 | Take the **Right** bud out (app on screen). Do **not** tap anything, then tap **Refresh battery**. | Before the tap already: Right "— not charging (out of the case) (HH:MM:SS)", Left "— charging in the case"; the session may be closed and re-opened by itself (≈ 1.5 s); after Refresh the % times update | a stream packet with 6.3 field 2 = 1; then the DLCI 0x04 claim, battery `e4 64 ff`-style | | |
+| E4 | Take the **Left** bud out too. | Both "not charging"; Case "NN% — last seen HH:MM:SS (no bud charging in the case)" | a stream packet without entry 6.1 | | |
+| E5 | Put both back (lid open). | Both "charging in the case", Case current again — by itself (automatic re-open if the Buds closed the session) | Buds `DISC` 0x02 → app `SABM` 0x02 ≈ 1.5 s later (unless the ACL dropped first) | | |
 | E6 | Wait a few minutes with the app open (buds in the case, lid open). | The Case line updates by itself if the Buds send a new value — the app does **not** poll | only Buds-initiated stream packets | | |
 | E7 | Check there is **no** dock sentence ("…seem to be in the case") anywhere. | No such sentence (removed in `ai-sessions/0046`) | — | | |
 
@@ -89,7 +91,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | F5 | Change the mode with a **press-and-hold on a bud**, then tap **Refresh**. | The screen shows the bud's new mode | `08 11` → `08 13` | | |
 | F6 | Tap two modes very quickly after each other. | The last one wins, no error or hang | two `Set`s, in order | | |
 | F7 | Tap a mode and switch to another app immediately; come back after 5 s. | The mode was still applied; no stuck "claiming" state | the channel is released (`DISC`) | | |
-| F8 | With the buds **in the case** (lid open, Connected): tap a mode. | Either applied, or a clear message ("The Buds refused the command (…)" / "didn't respond in time") — never a wrong mode shown as done | ACK / NAK `ff 02 …` | | |
+| F8 | With the buds **not in your ears** (in the case, or on the table), Connected: look at the ANC tab. | Mode buttons **disabled** with "ANC can only be changed while you wear the Buds. Tap Refresh to check again."; Refresh stays enabled; put one bud in an ear, tap Refresh → enabled | **no** `08 12` and no DLCI 0x04 claim for a mode tap; Refresh = `08 11` → `08 13` | | |
 
 ## G. ANC Quick Settings tile
 
@@ -97,8 +99,8 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 |---|---|---|---|---|---|
 | G1 | ANC tab: tap **Add ANC Quick Settings tile**. | A message: "added", "already in Quick Settings …" or "not added" | — | | |
 | G2 | Open Quick Settings fully and find the **ANC** tile (swipe through the pages, or edit). | The tile "ANC" is there; its subtitle shows the current mode when connected, "Open the app" when not | — | | |
-| G3 | Connected: tap the tile repeatedly. | Cycles ACTIVE → TRANSPARENT → ADAPTIVE → OFF → ACTIVE; audible each time; the ANC tab agrees | one `Set` per tap | | |
-| G4 | **Not** connected: tap the tile. | The tile says "Open the app"; tapping opens the app; it does **not** connect by itself | nothing | | |
+| G3 | Connected, Buds **worn**: tap the tile repeatedly. Then take them out and tap once more. | Worn: cycles ACTIVE → TRANSPARENT → ADAPTIVE → OFF → ACTIVE, audible; the ANC tab agrees. Not worn: subtitle "Only while worn", a tap shows "ANC can only be changed while you wear the Buds." | one `Set` per tap while worn; none while not worn | | |
+| G4 | **Not** connected: tap the tile. | The tile says "Open the app"; tapping opens the app; the app then connects by itself if Android shows the Buds connected (ADR-044) — the tile itself never connects | nothing from the tile | | |
 
 ## H. Equalizer
 
@@ -118,7 +120,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | I1 | Buds out of your ears, Find tab: **Ring Left**. | "Ringing: Left earbud — tap Stop to end it."; the **Left** bud rings and keeps ringing | `04 01 00 01 02` → ACK | | |
 | I2 | Tap **Stop**. | The notice disappears; the ringing stops | `04 01 00 01 00` → ACK | | |
 | I3 | **Ring Right**, then **Stop**. | The **Right** bud rings, then stops | `… 01` / `… 00` | | |
-| I4 | Ring Left, then **Disconnect** before Stop. | "A ring was started on the Left earbud — reconnect and tap Stop to end it." | | | |
+| I4 | Ring Left, then **Disconnect** before Stop; then **Connect** and **Stop**. | After Disconnect: "A ring was started on the Left earbud — reconnect and tap Stop to end it."; after Connect: "… before the app reconnected — it may still be ringing. Tap Stop to end it."; after Stop: the notice disappears and the ring stops | `04 01 00 01 02` → ACK; later `04 01 00 01 00` → ACK | | |
 
 ## J. Notification / foreground service
 

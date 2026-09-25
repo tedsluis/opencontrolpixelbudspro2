@@ -793,10 +793,9 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
 2026-09-22 claim that the Buds push the Case level without the phone-side `0e 04` — re-derived and corrected in `ai-sessions/0045`
 (`PROTOCOL.md` §4.3 Option E correction, `DECISIONS.md` ADR-038 Update, ADR-039).
 
-- **Build the `ai-sessions/0047` improvements (maintainer's choice, all four groups):** I-3 disable ANC with an explanation while the Buds report
-  Settable `0x00`; I-6 keep the ring notice after Disconnect (APP_TESTPLAN I4 fails); I-7 fix the session-loss wording; I-4 show which bud is
-  charging in the case from the runtime-info stream and I-5 keep the last Case value with its time (ADR-043 Update); I-1 automatic foreground
-  re-open of the session (**ADR-044**) and I-8 charging from the stream. Details, tests and effort: `ai-sessions/0047` RESULT §11.
+- **Hardware re-test of the `ai-sessions/0048` build (Group AY):** the automatic re-open (ADR-044), ANC disabled while not worn, per-bud
+  "charging in the case", the last-seen Case, the loss wording and the ring notice — step list with HCI brackets in
+  `ai-sessions/0048_FEATURE_RESULT_2026_09_25.md` §9. (The 0047 build item is done, `ai-sessions/0048`.)
 - **Next capture (Group AY):** I-9 Find with both buds docked (does a docked bud ring?), an EQ write while docked, the one-bud-in-an-ear test of
   "Settable `0x00` = not worn" (ADR-024 Update), and the APP_TESTPLAN steps not run in `CAP-062` (A5, B4, C5, F5–F7, H5, J4, K1–K5, L3, 0045 (E)/(F));
   record the build hash and Play services' *Nearby devices* state.
@@ -814,14 +813,16 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
 - **ADR-036 read-only settings UI** (`ReadSetting` per-field decoders on DLCI 0x02): unblocked, nothing implemented.
 - **Fold the tightened capture checklist** (`ai-sessions/0042` RESULT §12) into `CAPTURE_BLUETOOTH_HCI_SNOOP.md` — maintainer procedure,
   proposal only.
-- **Undecided, each needs its own ADR:** automatic session connecting (foreground-only on Android's connect, or CDM device presence —
-  `ARCHITECTURE.md` §6.0b); per-channel "degraded" state; the BLE Fast Pair battery advertisement (ADR-006's bounded exception);
+- **Undecided, each needs its own ADR:** a *background* session via CDM device presence (`ARCHITECTURE.md` §6.0b; the foreground variant is
+  ADR-044, built in `ai-sessions/0048`); per-channel "degraded" state; the BLE Fast Pair battery advertisement (ADR-006's bounded exception);
   `SubscribeToSettingsChanges` and other DLCI 0x02 settings beyond ADR-036.
 - **Remaining battery time** (Fast Pair Device Information code `0x04`, 0044 SYN-1): defined by the spec, never seen on the wire —
   🔴 whether the Buds send it at all; check the next captures' DLCI 0x04 opens.
 - **Spatial audio / LE Audio visibility** (`SPATIAL-001`, `LEAUDIO-001`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §4b): 🔴 candidates, not captured.
 - **Notification flash on a failed connect:** `OpenControlApplication` starts `BudsForegroundService` at `Connecting` and stops it on
   `Failed`, so a connect that fails fast still posts and removes the notification (`ARCHITECTURE.md` §6.0a).
+- **ADR-044's success path is unit-tested only through `SessionReopenerTest`** (a scripted re-open): `BudsRepositoryImpl.connect()` needs a real
+  `BluetoothDevice`, so the repository tests count attempts at the bonded-device lookup. The hardware step in `ai-sessions/0048` §9 closes it.
 - **Not unit-testable with the current test setup** (no Compose / instrumented tests): the Compose wording, `OsConnectionObserver`,
   `BudsForegroundService`/`AncTileService`, and the `BluetoothDevice`-dependent part of `BudsRepositoryImpl.connect()`.
 - **Capture extraction path matters** (added 2026-08-28, verified 2026-08-30): `CAP-012`, `CAP-013`, `CAP-017`, `CAP-031` lost payload

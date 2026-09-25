@@ -7,9 +7,10 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > Find My Buds (Left/Right), the equalizer (read and write), battery (Left/Right with charging, and the Case), a Quick
 > Settings ANC tile and a read-only **Safe Mode** for unverified firmware are implemented and unit-tested. The third hardware
 > run (`CAP-062`, `ai-sessions/0047`) confirmed them on the Buds: ANC works while the Buds are worn (they refuse it otherwise),
-> EQ writes persist, Find rings until Stop, the Case level appears while a bud is in the case. Known gaps: the Buds close the
-> app's session on every wear/dock change and the app waits for a Connect tap (automatic re-open decided as ADR-044, not yet
-> built); which bud is in the case is not yet shown. Battery via HFP is not deliverable to an app (ADR-040).
+> EQ writes persist, Find rings until Stop, the Case level appears while a bud is in the case. Since `ai-sessions/0048` (not yet
+> hardware-verified) the app re-opens its session by itself while it is on screen (ADR-044) — the Buds close it on every wear/dock
+> change — shows per bud "charging in the case", keeps the last Case level with its time, and disables ANC while the Buds are not
+> worn. Battery via HFP is not deliverable to an app (ADR-040).
 
 > ## ⚠️ Disclaimer: hardware risk
 >

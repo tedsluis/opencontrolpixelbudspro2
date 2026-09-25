@@ -39,7 +39,7 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
 > **Status (2026-09-24):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
 > says so. The authoritative per-feature state (and its unblocking ADR) is `ARCHITECTURE.md` §5a.
 
-- [x] Read battery status (left, right: DLCI 0x04, ADR-033; case: DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043)
+- [x] Read battery status (left, right: DLCI 0x04, ADR-033; case and per-bud "charging in the case": DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043 and its Update)
 - [x] Switch Active Noise Cancelling / Transparency / Adaptive mode (ADR-009)
 - [x] Configure equalizer / sound profile (presets and custom bands) (ADR-020/034)
 - [ ] Configure touch controls and head gestures (field identities 🟢, reads unblocked by ADR-036 but not built; writes gated)
