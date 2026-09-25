@@ -104,6 +104,9 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 
 ## H. Equalizer
 
+Buds **in your ears** for H2–H4, and **say aloud** what you hear at each step (the film records it) — audibility has never been recorded so far
+(`PROTOCOL.md` §4.2; `ai-sessions/0050` UX-01).
+
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
 | H1 | EQ tab right after Connect. | The five sliders show the Buds' current EQ (compare with the official app if available); "EQ updated: HH:MM:SS" | `ReadSetting 4:16` + answer | | |

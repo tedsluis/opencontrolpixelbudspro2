@@ -315,6 +315,10 @@ order:
 - Any bug fix tied to a specific malformed/unexpected frame should add a
   regression test with that exact byte sequence (redact any real device
   identifiers first).
+- **Fixtures are real bytes** (added 2026-09-25, maintainer-approved in chat, `ai-sessions/0050` TST-01). Codec and repository tests use
+  byte sequences extracted from a capture (`tshark` / `scripts/pwrpc_decode.py`), with the frame number and the command in a comment. A
+  hand-built byte array is allowed only as a clearly labelled supplementary structural test next to real fixtures (`ai-sessions/0046`: a
+  synthetic announcement without field 5 hid the parser defect that put the verified Buds in Safe Mode).
 - **Fuzz testing:** `CodecRouter`'s per-DLCI `FrameDecoder`s (`ARCHITECTURE.md`
   §5) must have a fuzz/property-based test (random and mutated byte
   sequences, truncated frames, oversized length fields, invalid checksums)

@@ -93,8 +93,9 @@ enforced by the build graph, not just by convention:
   (`OpenControlActions`, §2.4) — **as actually built (`ai-sessions/0033`),
   `:ui` holds no ViewModel and no Hilt dependency at all**; state hoisting and
   the `BudsRepository` calls that back these callbacks live in `:app`'s
-  `MainActivity` instead (see §2.4's own note on why, and
-  `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 6). The diagram above
+  `MainActivity` instead (why: `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 6 — a
+  scope-bounded choice matching `ai-sessions/0013`'s `AncScreen` pattern; §2.4 describes the navigation, not this choice — pointer
+  corrected 2026-09-25, `ai-sessions/0050` F-1). The diagram above
   still shows "ViewModels (MVVM)" as the general intended shape for this
   layer — a future session adding a dedicated `:ui`-hosted ViewModel class
   would be extending this pattern, not correcting a mistake in it.
@@ -166,10 +167,12 @@ Connection screen (start destination)
   // TODO(verify): the swipe gesture and the two-way sync are Android-framework/gesture behavior this
   session could not exercise on a device or emulator.
 
-Dependency direction: `:ui → :domain ← :data → :hardware`. `:ui` depends on
+Dependency direction: `:ui → :domain ← :data → :hardware → :domain`. `:ui` depends on
 `:domain` to observe state and invoke use cases. `:data` depends on `:domain`
 (to implement `BudsRepository`) and on `:hardware` (to consume `BudsTransport`
-— see §2.1). `:domain` imports nothing from the other three; no module
+— see §2.1). `:hardware` depends on `:domain` for the shared result/error and link types (`BudsResult`, `BudsError`,
+`AndroidLink`; `hardware/build.gradle.kts` — added to this sentence 2026-09-25, `ai-sessions/0050` F-2). `:domain` imports nothing from the other
+four; no module
 imports "backwards" against these arrows. `:app` is the composition root: it
 depends on all four and wires concrete implementations to interfaces via DI
 (§10).

@@ -797,7 +797,8 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
   "charging in the case", the last-seen Case, the loss wording and the ring notice — step list with HCI brackets in
   `ai-sessions/0048_FEATURE_RESULT_2026_09_25.md` §9. (The 0047 build item is done, `ai-sessions/0048`.)
 - **Next capture (Group AY):** I-9 Find with both buds docked (does a docked bud ring?), an EQ write while docked, the one-bud-in-an-ear test of
-  "Settable `0x00` = not worn" (ADR-024 Update), and the APP_TESTPLAN steps not run in `CAP-062` (A5, B4, C5, F5–F7, H5, J4, K1–K5, L3, 0045 (E)/(F));
+  "Settable `0x00` = not worn" (ADR-024 Update), **EQ audibility** (say aloud what you hear at each preset and at the ±6 extremes, APP_TESTPLAN
+  H2–H4 — never recorded so far, `PROTOCOL.md` §4.2 "not established"; `ai-sessions/0050` UX-01), and the APP_TESTPLAN steps not run in `CAP-062` (A5, B4, C5, F5–F7, H5, J4, K1–K5, L3, 0045 (E)/(F));
   record the build hash and Play services' *Nearby devices* state.
 - 🔴 **Runtime-info stream:** what field 3 and 7.3 mean; whether field 2 means "in the case" or only "charging" (`PROTOCOL.md` §4.3 Option F; the
   per-bud correlation is 🟢 since 2026-09-25).

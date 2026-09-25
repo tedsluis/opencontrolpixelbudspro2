@@ -148,6 +148,12 @@ mark v1.
   `OsConnectionObserver` now emits every reading (display debounced by the screen). Tests: `:data` 1509, `:hardware` 49, `:domain` 17; five mutation
   checks caught. `CAP-062` FINDINGS §7.2 / EVENT-NOTES corrected in place (the stale text lasted ≈ 1.5 s, film t = 240.5 s, not until t = 256 s).
   `APP_TESTPLAN.md` updated (C1, C3, C8, C9, E1–E5, F8, G3, G4, I4). Not hardware-verified — Group AY plan in the RESULT.
+- **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
+  by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
+  flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.
+  Applied: an adaptive launcher icon from the project's own ANC glyph (clears lint `MissingApplicationIcon`), a binding "fixtures are real bytes"
+  rule in `AGENTS.md` §11, an EQ-audibility step for Group AY (`TODO.md`, `APP_TESTPLAN.md` §H), and two documentation defects found by the cross
+  checks (`ARCHITECTURE.md` §2: a dangling "§2.4 note" pointer, also in `MainActivity.kt`, and the missing `:hardware → :domain` dependency).
 ### Fixed
 
 - **2026-09-18 (`ai-sessions/0034`): a crash-on-launch in the v1 app, found by the maintainer on
