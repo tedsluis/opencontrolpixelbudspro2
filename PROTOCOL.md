@@ -632,6 +632,10 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   still in the hand (seated 0.6–0.8 s later on film) and the same claim's battery frame 5557 says that bud is not charging — a premature `0x00`, a 6th
   counter-example. The app no longer shows a dock sentence; the per-earbud charging flag (§4.3 Option B) tracked all 5 dock changes of that session (🟡 as a
   general rule). `CAP-061` frame 3197 also reads `e8` with only the Left bud seated (🟡: which bud is docked may matter).
+  **Update (2026-09-25, `ai-sessions/0047`, maintainer-approved in chat, `DECISIONS.md` ADR-024's Update):** `CAP-062` — 🟢 FACT: a `Set` while the
+  Buds' `Notify` reads Settable `0x00` is NAKed `ff 02 00 03 02 08 12` (reason `0x02`, "Not allowed due to current state", 10/10); with `0xe8` it is
+  ACKed (6/6; 35/35 in `CAP-001`/`002`/`006`/`039`/`051`/`059`/`060`). `0x00` also occurred with both buds lying **outside** the case. 🟡 HYPOTHESIS
+  (strong): `0x00` = no bud worn (`CAP-062-FINDINGS.md` §2).
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -1238,10 +1242,20 @@ event-observation coroutines.
   `CAP-002` 62, `CAP-003` 38, `CAP-010` 42, `CAP-014` 49, `CAP-016` 100, `CAP-032` 57, `CAP-036` 100, `CAP-037` 87, `CAP-038` 85, `CAP-041` 79, `CAP-044` 84,
   `CAP-048` 95. Commands: `python3 scripts/pwrpc_decode.py <log> | grep SubscribeRuntimeInfo` against the first index-3 entry of the `0e 01` frames from
   `tshark -r <log> -Y "btrfcomm.dlci==8 && btrfcomm.len>0" -T fields -e frame.number -e data.data` (`CAP-061-FINDINGS.md` §2a).
-- 🔴 **Open**: when entry 6.1 is present (absent in 29 captures, e.g. `CAP-005`, `CAP-009`, `CAP-050` `2:… 3:0 6:{2:{1:37 2:1} 3:{1:45 2:1}}`); what 6.2/6.3,
-  the entries' field 2 and field 7 mean.
-- **Sent to**: DLCI 0x02 (the app's own session channel, ADR-032 — never contended in any capture). Implemented by `DECISIONS.md` ADR-043; not
-  hardware-verified.
+- 🔴 **Open** (narrowed 2026-09-25, see the per-bud bullet below): what field 3 and 7.3 mean; whether field 2 means "in the case" or "charging".
+  (Before 2026-09-25 this item read: when entry 6.1 is present, absent in 29 captures, e.g. `CAP-050` `2:… 3:0 6:{2:{1:37 2:1} 3:{1:45 2:1}}`.)
+- **Sent to**: DLCI 0x02 (the app's own session channel, ADR-032 — never contended in any capture). Implemented by `DECISIONS.md` ADR-043; hardware-verified in `CAP-062`
+  (Case 60 % = the DLCI 0x08 value of the same capture, a 14th agreement).
+- **Per-bud fields — 🟢 FACT (2026-09-25, `ai-sessions/0047`, maintainer-approved in chat 2026-09-25):**
+  - entry 6.2 = Left bud, 6.3 = Right bud (field 1 = %);
+  - their field 2 is `2` exactly when that bud's charging bit (`0bSVVVVVVV`, ADR-033) is set, `1` otherwise — 401/403 stream packets vs the nearest
+    DLCI 0x04 battery frame (±3 s), 45 captures;
+  - field 7.2 = Left, 7.1 = Right, `1` = charging (397/403);
+  - entry 6.1 (Case) is present exactly when at least one bud is charging (397/403; `CAP-062` 22/22 vs film).
+  - 🟡 "charging" = "in the case" (untested with an empty case). The Buds push a packet when a bud is seated or removed (`CAP-062` 3760, 7033, 7118).
+  Evidence and command: `CAP-062-FINDINGS.md` §4 (raw frame 7033); the cross-capture check runs `scripts/pwrpc_decode.py` and a per-packet
+  comparison with `tshark … -Y "btrfcomm.len>0" … data.data` matches of `03 03 00 03 <L> <R> ff` (`ai-sessions/0047` RESULT). Decode unblocked by
+  ADR-043's 2026-09-25 Update.
 
 **Implementation priority (superseded 2026-09-24 — see the "Current state" note at the top of §4.3: B and E are implemented, A unmatched, C removed
 (ADR-040), D contested; "already-periodic HFP" below is wrong per ADR-015):** 0 (cheap to rule in/out) → A → B → C → D (see
@@ -1963,6 +1977,8 @@ leaving them buried in prose elsewhere.
       **Update (2026-09-24, `ai-sessions/0046`) — a runtime owner lead, 🟡 HYPOTHESIS (one correlation):** in `CAP-061` the phone closed DLCI 0x08 and 0x0a
       91 ms after Android stopped the Google app's Assistant-on-headphones service (`BistoRealService`, "app idle"), and nothing reopened them — see §4.3
       Option E's 2026-09-24 (`0046`) update.
+      **Update (2026-09-25, `ai-sessions/0047`, 🟡):** `CAP-062` — 4 of 4 `BistoRealService` stops are followed 31–298 ms later by the phone's `DISC` of
+      DLCI 0x08 and 0x0a, and two service starts precede a 0x08 `SABM` (291, 689 ms) — 5 of 5 with `CAP-061` (`CAP-062-FINDINGS.md` §6).
 - [ ] Added 2026-08-14: EQ's opcode/channel is explicitly **not** assumed to sit alongside ANC's
       (DLCI 0x04 Group `0x08`) — that assumption held only while ANC's own channel was unresolved.
       See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T (new top-priority capture target) and §4.2
@@ -3033,6 +3049,9 @@ leaving them buried in prose elsewhere.
       no Disconnection Complete between them) coincides with the app showing "Connecting…" and the
       case appearing closed on video. 🟡 HYPOTHESIS, not confirmed: a closed case may impede reliable
       classic-link establishment — plausible, not verified against any documented mechanism.
+- [ ] **Added 2026-09-25, `CAP-062-FINDINGS.md` §3/§5:** the Buds close DLCI 0x02 (ACL up) within seconds of every wear/dock change seen (a bud out
+      of the case, both into the case, out of / into the ears — 7 of 14 session ends); seating the first bud did not (2/2). 🟡 a deliberate session
+      reset. 🔴 whether a bud in the case rings on `04 01` (never sent while docked). 🔴 whether the Buds accept an EQ write while docked.
 - [ ] **Added 2026-09-06, `CAP-039-FINDINGS.md` §6 (Group AF, `OBS-006`):** across a single
       ~6-minute session, the classic ACL connection to the Buds disconnected and reconnected 5
       times with no clearly camera-visible trigger for most of them (4 of 5 disconnects locally
@@ -3143,6 +3162,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-22 | **Backfilled 2026-09-24.** `ai-sessions/0043`: **§4.3 Option E** "the Buds push `0e 01` without a phone-side `0e 04`" recorded as 🟢 FACT — **this row records a claim that was later corrected** (2026-09-24 row below): it holds only for pushes 10 s+ into a long-held channel, not for the post-open push | Claude (AI; drafted by a runaway subagent, `ai-sessions/0043` §1); maintainer-approved in chat 2026-09-22 |
 | 2026-09-24 | **`ai-sessions/0045` — processing the `ai-sessions/0044` audit, all promotions/corrections maintainer-approved in chat 2026-09-24.** **§4.3 Option E** corrected: every post-open `0e 01` push answers a phone-side `0e 04` (13/13), receive-only claims got none (8/8) → `DECISIONS.md` ADR-039. **§0.1** Device Information `0x0A` = session nonce 🟢 FACT (MAC spec + 19/19 opens). **§4.1** bytes 8–23 of `Set` = message nonce + MAC 🟡, "MAC not enforced by `release_5.203`" 🟡 + risk note. **§6** the DLCI 0x02 connect burst identified (`GetSoftwareInfo`, `SubscribeToSettingsChanges`, `SubscribeRuntimeInfo`, `GetHardwareInfo`, `SetWallclock`, `ReadSetting` sweep) 🟢 FACT; `CAP-057` withdrawn. **§5.2** the "mid-connection bounce" is a fresh ACL connection → 6 of 7, stays 🟡. Mechanical: stale status lines, §6 check-offs with pointers, §4.3 current-state note, Option A trigger sentence relabelled (not on the spec page), Option D two-LE-views note, "polling" wording, dates | Claude (AI), maintenance task; maintainer-approved in chat 2026-09-24 |
 | 2026-09-24 | **`ai-sessions/0046` — `CAP-061`, maintainer-approved in chat 2026-09-24.** **§2.2a** the firmware announcement's structure (fields 4/5 fixed64/6, 140/140) 🟢 FACT — the cause of the app's Safe Mode on the verified firmware. **§4.3 Option F** (new) `SubscribeRuntimeInfo` entry 6.1 = Case battery % 🟢 FACT (13/13) → `DECISIONS.md` ADR-043. **§4.3 Option E** the app's `0e 04`-only claim got no answer (8/8): ADR-039's sufficiency hypothesis refuted; 🟡 the other DLCI 0x08/0x0a owner may be the Google app's Assistant-headphones service. **§4.1** a premature Settable `0x00` with one bud out (frame 5560), ADR-024 Update; the app no longer shows a dock sentence | Claude (AI), capture-analysis + fix task; maintainer-approved in chat 2026-09-24 |
+| 2026-09-25 | **`ai-sessions/0047` — `CAP-062`, maintainer-approved in chat 2026-09-25.** **§4.3 Option F** per-bud fields (6.2/6.3 field 2, 7.1/7.2, 6.1 presence) 🟢 FACT (401/403, 45 captures); Option F hardware-verified. **§4.1** a `Set` is NAKed (reason `0x02`) iff Settable = `0x00` (🟢 for `CAP-062`), `0x00` = not worn 🟡 (ADR-024 Update). §6 notes: the Buds close DLCI 0x02 on wear/dock changes (🟡 deliberate), DLCI 0x08/0x0a owner = Google app Assistant-headphones service (5/5, 🟡) | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-25 |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

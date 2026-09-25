@@ -126,6 +126,16 @@ mark v1.
   ANC-tile button now says what Android answered. `PROTOCOL.md`: announcement structure 🟢, Option F 🟢, Option E refutation, 🟡 the Google app's
   Assistant-headphones service as the other DLCI 0x08/0x0a owner. Tests `:data` 1480 / `:hardware` 49 / `:domain` 11, lint clean except the 2 old
   `:app` warnings, three mutation checks caught. Not hardware-verified — re-test instructions in `ai-sessions/0046_FEATURE_RESULT_2026_09_24.md`.
+- **2026-09-25 (`ai-sessions/0047`): `CAP-062` (the `APP_TESTPLAN.md` run of the 0046 build) analysed end to end; no app change; ADR-044.**
+  Video (every frame scanned for privacy, kept unblurred on the maintainer's choice; clock offset measured at both ends; audio used for the ring),
+  HCI log (every Buds packet classified, DLCI 0x02/0x04/0x08 decoded per open), debug export, logcat and system log correlated
+  (`CAP-062-EVENT-NOTES.md`, `CAP-062-FINDINGS.md`). The 0046 fixes hold on hardware (R1–R7: firmware line, ANC/EQ/Find sent and answered, Case
+  from `SubscribeRuntimeInfo` = 60 %, no DLCI 0x08 activity). The maintainer's five observations answered: ANC is refused by the Buds (NAK `0x02`)
+  whenever their `Notify` reports no settable mode — not worn, also outside the case (ADR-024 Update, 🟡); the app's session is closed by the Buds
+  on every wear/dock change while Android stays connected (7 of 14 ends) — **ADR-044**: re-open automatically while the app is visible (not yet
+  built); the runtime-info stream's per-bud fields tell which bud is charging in the case (🟢 FACT, 401/403 packets, 45 captures; ADR-043 Update
+  unblocks the decode and a dated last-seen Case). Defects found: the ring notice is cleared by Disconnect (I4), a stale session-loss message.
+  Prioritised improvement list I-1 … I-10 in the RESULT.
 ### Fixed
 
 - **2026-09-18 (`ai-sessions/0034`): a crash-on-launch in the v1 app, found by the maintainer on

@@ -503,7 +503,9 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   Every claim/release is wrapped so a cancelled tap still releases the channel (0044 APP-4). The Quick Settings ANC tile
   (`AncTileService`) is a user tap like the ANC screen's: it switches the mode only while the session is `Ready` and otherwise opens the app — it never connects and never starts
   a service. **Decided (maintainer, chat 2026-09-20): no automatic session opening — the Connection card mirrors Android (read-only) and Connect stays a tap;** the foreground and
-  CDM-presence variants above stay unbuilt proposals.
+  CDM-presence variants above stay unbuilt proposals. **Superseded for the foreground by ADR-044 (maintainer, chat 2026-09-25, `ai-sessions/0047`):** while the app is visible
+  and Android reports the Buds connected, the app re-opens the MAESTRO session by itself after a Buds-side `DISC`, when Android's link comes back and
+  on resume (one attempt per event, no loop; a Disconnect tap turns it off) — not yet built. The background (CDM-presence) variant stays a proposal.
 - **Deferred proposals (not decided, not implemented — need a maintainer decision and an ADR):** *automatic session connecting* would have to be either
   (a) **foreground-only** — when the app is visible and Android reports the Buds connected, open the MAESTRO session without a tap (needs a decision that a
   visible app may connect by itself, i.e. amending the "user-initiated only" rule above; no new permission or service), or (b) **background, via CDM

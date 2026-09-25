@@ -3,13 +3,13 @@
 An independent, open-source Android app to fully control the **Google Pixel Buds
 Pro 2** without the official Pixel Buds app or Google Play Services.
 
-> **Status (2026-09-24):** protocol reconstruction is mature and a v1 Android app exists end to end. ANC mode switching,
+> **Status (2026-09-25):** protocol reconstruction is mature and a v1 Android app exists end to end. ANC mode switching,
 > Find My Buds (Left/Right), the equalizer (read and write), battery (Left/Right with charging, and the Case), a Quick
-> Settings ANC tile and a read-only **Safe Mode** for unverified firmware are implemented and unit-tested (1533 tests,
-> `ai-sessions/0045`). Two hardware runs exist (`CAP-059`, `CAP-060`): pairing, Connect, ANC, EQ read/write, Find and
-> Left/Right battery worked; the Case battery did not (fixed on paper by `DECISIONS.md` ADR-039, not yet re-tested). Battery
-> via HFP was removed — it is not deliverable to an app (ADR-040). **Everything changed after `CAP-060` is unverified on
-> hardware** — see the re-test list in `ai-sessions/0045_MAINTENANCE_RESULT_2026_09_24.md` before trusting it with your earbuds.
+> Settings ANC tile and a read-only **Safe Mode** for unverified firmware are implemented and unit-tested. The third hardware
+> run (`CAP-062`, `ai-sessions/0047`) confirmed them on the Buds: ANC works while the Buds are worn (they refuse it otherwise),
+> EQ writes persist, Find rings until Stop, the Case level appears while a bud is in the case. Known gaps: the Buds close the
+> app's session on every wear/dock change and the app waits for a Connect tap (automatic re-open decided as ADR-044, not yet
+> built); which bud is in the case is not yet shown. Battery via HFP is not deliverable to an app (ADR-040).
 
 > ## ⚠️ Disclaimer: hardware risk
 >

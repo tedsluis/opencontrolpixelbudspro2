@@ -1513,6 +1513,15 @@ Find My Buds Left/Right/Stop [`FIND-001`, `FIND-002`] and an EQ slider/preset ch
 Items (E) "not paired" and (F) "taps survive the screen" were not run in `CAP-061`. Checklist: phone clock with seconds on film, HCI snoop on and
 Bluetooth off/on on film, the build commit, Play services' *Nearby devices* permission state, all exports within 1 minute of the last action.
 
+#### Group AX — `APP_TESTPLAN.md` run of the `ai-sessions/0046` build (captured 2026-09-25 as `CAP-062`, added by `ai-sessions/0047`)
+
+A validation run of this project's own app following `APP_TESTPLAN.md`: sections A (start, permissions, Bluetooth), B (pairing from the app), C
+(Connect/Disconnect, Android's own disconnect/reconnect, re-dock), D (firmware / no Safe Mode), E (battery and Case in every dock state), F (ANC,
+worn and not worn), G (Quick Settings tile), H (EQ read/write/persistence), I (Find My Buds, incl. Disconnect while ringing), J (notification) and
+L (Debug mode, export). Not run: A5, B4, C5, F5–F7, H5, J4, K1–K5, L3, and 0046's R8. Test-IDs: [`PAIR-001`], [`PAIR-003`], [`CASE-004`]–[`CASE-006`],
+[`BATT-004`], [`ANC-001`]–[`ANC-004`], [`FIND-001`], [`FIND-002`], [`EQS-001`], [`EQP-*`]. Checklist additions for the next run: record the build hash
+(P1) and Play services' *Nearby devices* state (P4); for the Find-in-case question dock both buds, reconnect and ring once (`CAP-062-FINDINGS.md` §5).
+
 ### 4.3 Hardware Actions (either phone)
 
 **Source:** `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` sections 2 (User Actions via the Case & Buds) and 4
@@ -1891,6 +1900,7 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-059` | 2026-09-20 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0041` commit `9fe4b70` | AU (new) | `PAIR-001`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-006` (partial) | App-validation run of the `0041` build — pairing, ANC cycling, Find, EQ, and root-causing three session drops with three distinct causes; reclassified from `android/logs/LOGS-001` by `ai-sessions/0043` (see the intro's third-purpose note) | — (no bugreport archive kept; the log is the raw, untruncated `btsnoop_hci.log`, `CAP-059-EVENT-NOTES.md`) | `CAP-059-btsnoop_hci.log` | analyzed |
 | `CAP-060` | 2026-09-21 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0042` commit `1efa86b` | AV (new) | `PAIR-001`, `PAIR-003`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-005`/`006` (partial) | App-validation run of the `0042` build — six connection drops (three distinct mechanisms, one newly characterized), Case-battery failure (**corrected 2026-09-24**: every post-open push answers Play services' `0e 04`; the app's receive-only claims got none — `CAP-060-FINDINGS.md` §2, ADR-039), dock-state and ANC-tile root-causing; reclassified from `android/logs/LOGS-002` by `ai-sessions/0043` (see the intro's third-purpose note) | — (no bugreport archive kept; raw, untruncated `btsnoop_hci.log`, `CAP-060-EVENT-NOTES.md`) | `CAP-060-btsnoop_hci.log` | analyzed |
 | `CAP-061` | 2026-09-24 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0045` code (`android/` of `5ade05e` = `964fa91`) | AW (new) | `PAIR-001`, `PAIR-003`, `CASE-003`–`CASE-006`, `BATT-004`; `ANC-001`–`004`, `FIND-001`/`002`, `EQS-001`, `EQP-*` attempted (nothing sent) | First hardware run of the `0045` build — Safe Mode on the verified firmware (the announcement's fixed64 field 5 made the firmware list empty), the DLCI 0x08 `0e 04` claim unanswered 20/20 (ADR-043 moves the Case to `SubscribeRuntimeInfo`), a premature "both in the case" (ADR-024 Update); `CAP-061-FINDINGS.md` | — (no bugreport archive; raw, untruncated `btsnoop_hci.log`, `CAP-061-EVENT-NOTES.md`) | `CAP-061-btsnoop_hci.log` | analyzed |
+| `CAP-062` | 2026-09-25 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0046` code (`7498cbc`, identified by log wording; hash not recorded) | AX (new) | `PAIR-001`, `PAIR-003`, `CASE-004`–`CASE-006`, `BATT-004`, `ANC-001`–`004`, `FIND-001`/`002`, `EQS-001`, `EQP-*` (Clarity) | `APP_TESTPLAN.md` run of the `0046` build — R1–R7 confirmed; ANC `Set` NAKed (`0x02`) iff the Buds report no settable mode (not worn, ADR-024 Update); the Buds close DLCI 0x02 on every wear/dock change (ADR-044); per-bud fields of `SubscribeRuntimeInfo` (🟢, `PROTOCOL.md` §4.3 Option F); I4 ring notice defect; `CAP-062-FINDINGS.md` | — (no bugreport archive; raw, untruncated `btsnoop_hci.log`, `CAP-062-EVENT-NOTES.md`) | `CAP-062-btsnoop_hci.log` | analyzed |
 
 **Column notes:**
 

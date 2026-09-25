@@ -793,12 +793,15 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
 2026-09-22 claim that the Buds push the Case level without the phone-side `0e 04` — re-derived and corrected in `ai-sessions/0045`
 (`PROTOCOL.md` §4.3 Option E correction, `DECISIONS.md` ADR-038 Update, ADR-039).
 
-- **Hardware re-test of everything not yet run on the Buds** — `ai-sessions/0046` RESULT "Re-test instructions" (supersedes `0045` §9): the
-  announcement parser fix (no Safe Mode on `release_5.203`, ANC/EQ/Find actually sent), ANC ACK/NAK reporting, the Case from
-  `SubscribeRuntimeInfo` (ADR-043), the dock line gone, the ANC-tile result message, EQ audibility, Find ringing after the release, and the
-  0045 items (E) "not paired" and (F) "taps survive the screen" that `CAP-061` did not run.
-- 🔴 **When the Buds include the Case entry (6.1) in `SubscribeRuntimeInfo`** (`PROTOCOL.md` §4.3 Option F): absent in 29 captures; the app shows
-  "unavailable" then. A capture with the buds in/out of the case and the lid open/closed settles it.
+- **Build the `ai-sessions/0047` improvements (maintainer's choice, all four groups):** I-3 disable ANC with an explanation while the Buds report
+  Settable `0x00`; I-6 keep the ring notice after Disconnect (APP_TESTPLAN I4 fails); I-7 fix the session-loss wording; I-4 show which bud is
+  charging in the case from the runtime-info stream and I-5 keep the last Case value with its time (ADR-043 Update); I-1 automatic foreground
+  re-open of the session (**ADR-044**) and I-8 charging from the stream. Details, tests and effort: `ai-sessions/0047` RESULT §11.
+- **Next capture (Group AY):** I-9 Find with both buds docked (does a docked bud ring?), an EQ write while docked, the one-bud-in-an-ear test of
+  "Settable `0x00` = not worn" (ADR-024 Update), and the APP_TESTPLAN steps not run in `CAP-062` (A5, B4, C5, F5–F7, H5, J4, K1–K5, L3, 0045 (E)/(F));
+  record the build hash and Play services' *Nearby devices* state.
+- 🔴 **Runtime-info stream:** what field 3 and 7.3 mean; whether field 2 means "in the case" or only "charging" (`PROTOCOL.md` §4.3 Option F; the
+  per-bud correlation is 🟢 since 2026-09-25).
 - 🟡 **Who owns DLCI 0x08/0x0a** (`CAP-061-FINDINGS.md` §2): the Google app's Assistant-on-headphones service is the lead; test with the Google app
   disabled.
 - **Ring "both" (`0x03`) untested on the wire** (ADR-027 Update 2026-09-24, `FIND-004`): the spec defines it, this project has never sent it (not implemented; sending it needs its own ADR) and no capture shows it.

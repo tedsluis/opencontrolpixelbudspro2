@@ -1310,6 +1310,13 @@ motivated this).
   derived "both in the case" reading (`CAP-061-FINDINGS.md` §4). The finding (a correlation) stands; the app no longer shows a sentence derived
   from this byte. The per-earbud "(charging)" state on the battery lines stays.
 
+- **Update (2026-09-25, `ai-sessions/0047`, maintainer-approved in chat 2026-09-25, `AskUserQuestion` "Settable", option *"ADR-024 Update + 🟡
+  (Recommended)"*):** `CAP-062` — Settable `0x00` with both buds on the table **outside** the case (5 NAKs, film t = 402–438 s) as well as in the
+  case; `0xe8` only when worn. 🟢 FACT (`CAP-062`): a `Set` while Settable = `0x00` is NAKed with reason `0x02` "Not allowed due to current state"
+  (10/10, `ff 02 00 03 02 08 12`, e.g. frame 5998), every `Set` with `0xe8` is ACKed (6/6; 35/35 in earlier captures). 🟡 HYPOTHESIS (strong):
+  `0x00` = no bud worn, not "docked"; it explains the `CAP-047`/`CAP-048`/`CAP-061` counter-examples. Test: one bud in an ear, one on the table.
+  The decision above is unchanged (`CAP-062-FINDINGS.md` §2).
+
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 
 - **Date**: 2026-09-07
@@ -2036,6 +2043,35 @@ motivated this).
   reader (the stream's field 2 is an epoch-ms timestamp); `BudsRepositoryImpl` subscribes after the Connect-time EQ read and drops
   `readCaseBattery`; "Refresh battery" re-reads Left/Right only. The Case is "unavailable" whenever the Buds' packets carry no entry 6.1 (absent in
   29 captures — 🔴 when it is present). Not hardware-verified: the re-test in `ai-sessions/0046` settles it.
+- **Update (2026-09-25, `ai-sessions/0047`, maintainer-approved in chat 2026-09-25, `AskUserQuestion` "ADRs", option *"Record both
+  (Recommended)"*):** hardware-verified in `CAP-062` (Case 60 % = the DLCI 0x08 value; no app activity on DLCI 0x08). Item 2 is widened. Besides
+  6.1 (Case %) the app may decode, per `PROTOCOL.md` §4.3 Option F's 2026-09-25 FACT: 6.2/6.3 field 2 (Left/Right charging, 2 = yes) and 7.1/7.2;
+  shown as "charging in the case" per bud. A packet without 6.1 no longer blanks the Case: the last value stays with "last seen HH:MM:SS"
+  (`AGENTS.md` §5: a dated last-seen value, never a fabricated one). Nothing new is sent.
+
+## ADR-044 — Re-open the MAESTRO session automatically while the app is visible
+
+- **Date**: 2026-09-25
+- **Status**: Accepted (maintainer, chat 2026-09-25, `ai-sessions/0047`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0047`); the decision is the maintainer's, given in the chat session of 2026-09-25
+  (`AskUserQuestion` "Session", option *"ADR-044 foreground re-open (Recommended)"*, with this text in the preview, and "ADRs", option *"Record both
+  (Recommended)"*), per `AGENTS.md` §6. Not yet implemented.
+- **Context**: `CAP-062` (`CAP-062-FINDINGS.md` §3): 7 of 14 app sessions were ended by a Buds-side `DISC` on DLCI 0x02 with the classic link up
+  and Android still "Connected" — each within seconds of a wear/dock change (a bud out of the case, both into the case, out of / into the ears).
+  The other RFCOMM clients re-open by themselves (the Google app's DLCI 0x08/0x0a within ≈ 1 s; Android re-creates the ACL on lid-open); the app
+  waited for a Connect tap by the 2026-09-20 decision "no automatic session opening" (`ARCHITECTURE.md` §6.0b), which the maintainer observed as
+  "the app keeps getting disconnected".
+- **Options considered**: (a) keep Connect as a tap; (b) this decision, foreground only; (c) (b) plus a background session via CDM device presence
+  (a `CompanionDeviceService`, a new permission, GrapheneOS risk).
+- **Decision**: Re-open the MAESTRO session automatically while the app is visible. Supersedes the 2026-09-20 decision "no automatic session
+  opening" (`ARCHITECTURE.md` §6.0b) for the foreground only; amends §6 "user-initiated reconnection only".
+  1. While the app is in the foreground and Android reports the Buds connected, the app opens DLCI 0x02 (a) 1–2 s after a Buds-side `DISC` with
+     the ACL up, (b) when Android's link comes back, (c) on resume. One attempt per event, no loop, no timer.
+  2. The user's Disconnect tap turns this off until the next Connect tap.
+  3. No background activity; no new permission or service.
+- **Consequences**: `BudsRepositoryImpl`'s loss handling and `:app`'s visibility/`OsConnectionObserver` events gain a bounded re-open;
+  `ARCHITECTURE.md` §6/§6.0b are updated when it is built. Each re-open repeats the Connect sequence (DLCI 0x02 open, `ReadSetting 4:16`,
+  `SubscribeRuntimeInfo`; the DLCI 0x04 snapshot claim, ADR-032). Option (c) stays an unbuilt proposal.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
