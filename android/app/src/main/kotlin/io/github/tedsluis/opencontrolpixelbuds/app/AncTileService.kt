@@ -26,6 +26,8 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.tedsluis.opencontrolpixelbuds.R
+import android.widget.Toast
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
@@ -50,6 +52,9 @@ import javax.inject.Inject
  * The cycle is fixed and documented ([AncMode.nextInTileCycle]): Noise cancelling → Transparent → Adaptive → Off. No new permission:
  * `BIND_QUICK_SETTINGS_TILE` is required *of the caller that binds this service* (only the system), not requested by the app.
  *
+ * **I-3 (`ai-sessions/0048`):** while the Buds' last `Notify` reported Settable `0x00` ([AncAvailability.NOT_ALLOWED]) the subtitle says
+ * "Only while worn" and a tap shows the reason instead of sending (the Buds would NAK it, `CAP-062` 4/4 tile taps with the buds docked).
+ *
  * // TODO(verify): not exercised on a phone — whether GrapheneOS shows/keeps the tile and that the tap works with the app in the
  * // background (`ai-sessions/0042` §12 re-test).
  */
@@ -71,16 +76,21 @@ class AncTileService : TileService() {
     @Volatile
     private var latestMode: AncMode? = null
 
+    @Volatile
+    private var latestAvailability: AncAvailability = AncAvailability.UNKNOWN
+
     override fun onStartListening() {
         super.onStartListening()
         listenJob?.cancel()
         listenJob = listenScope.launch {
-            combine(repository.connectionState, repository.ancMode) { session, mode -> session to mode }
-                .collect { (session, mode) ->
-                    latestSession = session
-                    latestMode = mode
-                    render()
-                }
+            combine(repository.connectionState, repository.ancMode, repository.ancAvailability) { session, mode, availability ->
+                Triple(session, mode, availability)
+            }.collect { (session, mode, availability) ->
+                latestSession = session
+                latestMode = mode
+                latestAvailability = availability
+                render()
+            }
         }
         render()
     }
@@ -99,7 +109,7 @@ class AncTileService : TileService() {
     override fun onClick() {
         super.onClick()
         if (latestSession !is ConnectionState.Ready) {
-            // Never connect from the tile: open the app, where Connect stays the user's tap.
+            // Never connect from the tile: open the app (which may re-open the session itself while visible, ADR-044).
             val open = PendingIntent.getActivity(
                 this,
                 0,
@@ -107,6 +117,11 @@ class AncTileService : TileService() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
             startActivityAndCollapse(open)
+            return
+        }
+        if (latestAvailability == AncAvailability.NOT_ALLOWED) {
+            BleLogger.logConnectionEvent("ANC tile tapped while the Buds allow no ANC change — nothing sent")
+            Toast.makeText(this, "ANC can only be changed while you wear the Buds.", Toast.LENGTH_LONG).show()
             return
         }
         val next = AncMode.nextForTile(latestMode)
@@ -122,6 +137,7 @@ class AncTileService : TileService() {
         tile.icon = Icon.createWithResource(this, R.drawable.ic_anc_tile)
         tile.subtitle = when {
             !ready -> "Open the app"
+            latestAvailability == AncAvailability.NOT_ALLOWED -> "Only while worn"
             latestMode == null -> "Tap to switch"
             else -> latestMode.toString().lowercase().replaceFirstChar { it.uppercase() }
         }

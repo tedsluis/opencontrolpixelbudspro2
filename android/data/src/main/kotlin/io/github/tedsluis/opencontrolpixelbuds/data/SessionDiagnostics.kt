@@ -19,6 +19,8 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data
 
+import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
+
 /**
  * The always-on, payload-free, address-free log lines that say **why a session ended** (`ai-sessions/0042`). In the first hardware
  * run three sessions ended and the app log said nothing before the state change: one was the user's own *Disconnect* tap
@@ -35,6 +37,13 @@ object SessionDiagnostics {
             "last inbound frame was on channel 0x%02x, %d ms earlier".format(lastInboundChannel, lastInboundAgeMillis)
         }
         return "Session lost: channel 0x%02x closed (%s); %s; not a user disconnect".format(channelId, detail ?: "no detail", last)
+    }
+
+    /** What Android's link state says about the last loss (`ai-sessions/0048` I-7): the socket detail alone cannot tell (`CAP-062`, 11 of 11 identical). */
+    fun lossCauseLine(cause: SessionLossCause): String = "Session loss cause: " + when (cause) {
+        SessionLossCause.ANDROID_LINK_LOST -> "Android's link to the Buds went down around the loss"
+        SessionLossCause.BUDS_CLOSED_CHANNEL -> "Android still showed the Buds connected right after the loss — the Buds closed the channel"
+        SessionLossCause.UNDETERMINED -> "undetermined (no reading of Android's link close to the loss)"
     }
 
     /** A session ended because the user tapped *Disconnect* — [stateName] is the session state at that moment. */

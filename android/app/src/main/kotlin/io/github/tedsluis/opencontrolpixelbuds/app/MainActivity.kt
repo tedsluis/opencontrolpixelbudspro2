@@ -46,9 +46,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.tedsluis.opencontrolpixelbuds.R
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
@@ -57,8 +59,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
-import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
+import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
 import io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState
+import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 import io.github.tedsluis.opencontrolpixelbuds.domain.deriveDeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.permissionStatus
@@ -70,6 +73,7 @@ import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
 import io.github.tedsluis.opencontrolpixelbuds.hardware.OsConnectionObserver
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingFailure
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingState
+import io.github.tedsluis.opencontrolpixelbuds.hardware.settled
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlActions
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlNavHost
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlUiState
@@ -94,7 +98,9 @@ import javax.inject.Inject
  *   requested with `RequestMultiplePermissions` (the app used to *declare* them but never ask, so after clearing app data every
  *   Bluetooth call was silently denied). Their state, including "blocked", is its own [PermissionState].
  * - The Connection screen's status mirrors Android's own Bluetooth state ([OsConnectionObserver], collected only while the UI is
- *   visible); this Activity never opens a session by itself — Connect stays a user tap (ARCHITECTURE.md §6).
+ *   visible). **Since `ai-sessions/0048` (DECISIONS.md ADR-044):** this Activity reports its visibility (resume/stop) and every reading of
+ *   Android's link to the repository, which re-opens the session by itself while the app is visible and Android reports the Buds connected —
+ *   one attempt per event, never in the background; a Disconnect tap switches it off until the next Connect tap.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -124,6 +130,9 @@ class MainActivity : ComponentActivity() {
      * change of the bonded device, a change of this app's own session. Event-driven, no timer.
      */
     private val linkRefresh = MutableSharedFlow<Unit>(extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /** The latest raw reading of Android's link (`OsConnectionObserver`); the screen shows it debounced ([settled]). */
+    private val latestLink = MutableStateFlow(AndroidLink.UNKNOWN)
 
     /** Pairing progress, held here (not in a composable) so the picker's result callback below can reset it. */
     private val pairingStateFlow = MutableStateFlow<PairingState?>(null)
@@ -236,6 +245,7 @@ class MainActivity : ComponentActivity() {
                 .collectAsStateWithLifecycle(initialValue = ConnectionState.Disconnected)
             val ancMode by budsRepository.ancMode.collectAsStateWithLifecycle(initialValue = null)
             val ancModeUpdatedAt by budsRepository.ancModeUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
+            val ancAvailability by budsRepository.ancAvailability.collectAsStateWithLifecycle(initialValue = AncAvailability.UNKNOWN)
             val eqProfile by budsRepository.eqProfile.collectAsStateWithLifecycle(initialValue = null)
             val eqProfileUpdatedAt by budsRepository.eqProfileUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val eqError by budsRepository.eqError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
@@ -247,14 +257,28 @@ class MainActivity : ComponentActivity() {
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val safeMode by budsRepository.safeMode.collectAsStateWithLifecycle(initialValue = null as SafeModeState?)
             val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
-            val ringingTarget by budsRepository.ringingTarget.collectAsStateWithLifecycle(initialValue = null as RingTarget?)
+            val ringing by budsRepository.ringing.collectAsStateWithLifecycle(initialValue = null as RingNotice?)
             val lastConnectionError by budsRepository.lastConnectionError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
+            val lastLossCause by budsRepository.lastLossCause.collectAsStateWithLifecycle(initialValue = null as SessionLossCause?)
             val messageStreamError by budsRepository.messageStreamError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val permissionState by permissionStateFlow.collectAsStateWithLifecycle()
-            // Re-created when the Bluetooth grant changes: the profile proxies can only be bound with the permission.
-            val androidLink by remember(permissionState.bluetoothConnect.isGranted) { osConnectionObserver.observe(linkRefresh) }
+            // Re-created when the Bluetooth grant changes: the profile proxies can only be bound with the permission. Collected only while the
+            // UI is at least STARTED (visibility-bound, ARCHITECTURE.md §6.0b). Every reading goes to the repository (the loss cause, I-7, and the
+            // re-open rule, ADR-044 — `ai-sessions/0048`); the screen shows the debounced value ([settled]) so a bud coming out of the case does
+            // not flicker the card.
+            val lifecycleOwnerForLink = LocalLifecycleOwner.current
+            val linkReadings = remember(permissionState.bluetoothConnect.isGranted) { osConnectionObserver.observe(linkRefresh) }
+            LaunchedEffect(linkReadings, lifecycleOwnerForLink) {
+                lifecycleOwnerForLink.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    linkReadings.collect { link ->
+                        latestLink.value = link
+                        budsRepository.onAndroidLink(link)
+                    }
+                }
+            }
+            val androidLink by remember { latestLink.settled(OsConnectionObserver.NOT_CONNECTED_SETTLE_MS) }
                 .collectAsStateWithLifecycle(initialValue = AndroidLink.UNKNOWN)
             val bluetoothAdapterState by remember { bluetoothStateObserver.observe() }
                 .collectAsStateWithLifecycle(initialValue = BluetoothAdapterState.OFF)
@@ -274,6 +298,11 @@ class MainActivity : ComponentActivity() {
                         if (permissionStateFlow.value.bluetoothConnect == PermissionStatus.NOT_REQUESTED) requestPermissions()
                         bondedLookup = companionPairing.lookupBonded()
                         linkRefresh.tryEmit(Unit)
+                        // ADR-044 (c): visible again — the session may be re-opened once Android reports the Buds connected.
+                        budsRepository.onAppVisible(true)
+                    } else if (event == Lifecycle.Event.ON_STOP) {
+                        // Not visible any more: no automatic re-open in the background (ADR-044 item 3).
+                        budsRepository.onAppVisible(false)
                     }
                 }
                 lifecycleOwner.lifecycle.addObserver(observer)
@@ -311,14 +340,16 @@ class MainActivity : ComponentActivity() {
                 permissionState = permissionState,
                 pairingStatusText = pairingState?.toUserMessage(),
                 lastConnectionError = lastConnectionError,
+                lastLossCause = lastLossCause,
                 androidLink = androidLink,
                 messageStreamError = messageStreamError,
                 ancMode = ancMode,
                 ancModeUpdatedAt = ancModeUpdatedAt,
+                ancAvailability = ancAvailability,
                 caseBatteryError = caseBatteryError,
                 safeMode = safeMode,
                 deviceInfo = deviceInfo,
-                ringingTarget = ringingTarget,
+                ringing = ringing,
                 eqProfile = eqProfile,
                 eqProfileUpdatedAt = eqProfileUpdatedAt,
                 eqError = eqError,

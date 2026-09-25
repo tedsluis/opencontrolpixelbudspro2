@@ -70,6 +70,12 @@ sealed class BudsError {
     data class CommandRejected(val reasonCode: Int, val detail: String) : BudsError()
 
     /**
+     * An ANC `Set` was not sent because the Buds' last `Notify ANC state` reported no switchable mode (Settable `0x00`) — they NAK a `Set` then
+     * (reason `0x02`, `CAP-062` 10/10; DECISIONS.md ADR-024 Update 2026-09-25). A Refresh or a later `Notify` re-reads it (`ai-sessions/0048` I-3).
+     */
+    data object AncNotAllowed : BudsError()
+
+    /**
      * The Buds did not announce which pw_rpc channel this connection uses (their unsolicited `GetSoftwareInfo`
      * push, DECISIONS.md ADR-034) or announced one this app has no known HDLC address for. [channelId] is `null`
      * when nothing was announced in time. Nothing is sent — the app never guesses a channel or an address.

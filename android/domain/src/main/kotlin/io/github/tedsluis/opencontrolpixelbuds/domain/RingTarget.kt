@@ -35,3 +35,11 @@ enum class RingTarget(val wireValue: Int) {
         fun fromWireValue(value: Int): RingTarget? = entries.firstOrNull { it.wireValue == value }
     }
 }
+
+/**
+ * A Find My Buds ring this app started and has not yet seen stopped (`ai-sessions/0048`, I-6). The ring keeps sounding on the Buds after the
+ * Message Stream channel is released and after Disconnect (`CAP-062`: heard until Stop, `CAP-062-FINDINGS.md` §5), so only an ACKed Stop — or a
+ * new Ring — ends it. [fromEarlierSession] = the ring was started before the current session opened: the app cannot know whether it has stopped
+ * by itself since, so the screen says it *may* still be ringing.
+ */
+data class RingNotice(val target: RingTarget, val fromEarlierSession: Boolean = false)

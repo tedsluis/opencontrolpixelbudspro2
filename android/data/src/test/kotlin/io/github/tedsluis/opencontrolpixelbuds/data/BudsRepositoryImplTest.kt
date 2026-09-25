@@ -22,6 +22,7 @@
 package io.github.tedsluis.opencontrolpixelbuds.data
 
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap061
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap062
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
@@ -29,11 +30,16 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.PW_HDLC_CONTROL_UI
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.PwRpc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RpcPacket
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
+import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
+import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingReading
+import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingSource
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
+import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionLoss
@@ -84,6 +90,8 @@ class BudsRepositoryImplTest {
         scope: TestScope = this,
         connectionStateMachine: ConnectionStateMachine = buildConnectionStateMachine(),
         verified: Boolean = true,
+        /** Called on every connect attempt that reaches the bonded-device lookup (a re-open attempt, ADR-044, counts here). */
+        onConnectAttempt: () -> Unit = {},
     ): Pair<BudsRepositoryImpl, FakeBudsTransport> {
         val transport = FakeBudsTransport()
         // backgroundScope, not `scope` itself: BudsRepositoryImpl's init block launches
@@ -96,7 +104,7 @@ class BudsRepositoryImplTest {
             connectionStateMachine = connectionStateMachine,
             // No real BluetoothDevice needed — none of the tests below exercise connect() against
             // a bonded device (see the dedicated connect()-failure test instead).
-            bondedDeviceProvider = { null },
+            bondedDeviceProvider = { onConnectAttempt(); null },
             debugModeEnabled = MutableStateFlow(false),
             scope = scope.backgroundScope,
             clock = { scope.testScheduler.currentTime },
@@ -578,22 +586,89 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("runtime info: CAP-041 frame 782 sets the Case (79 %); CAP-050 frame 1163 (no Case entry) makes it unavailable; b3 = ff never overwrites it")
+    @DisplayName("runtime info: CAP-041 frame 782 sets the Case (79 %); CAP-050 frame 1163 (no Case entry) keeps it as last seen; b3 = ff never overwrites it")
     fun `the Case follows the runtime-info stream`() = runTest {
         val (repo, transport) = buildRepository()
-
+        advanceTimeBy(5_000)
         transport.emit(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, runtimeInfoWithCase))
         settle()
-        assertEquals(BatteryLevel.Known(79, null, false), repo.batteryStatus.value.case)
+        assertEquals(BatteryLevel.Known(79, null, false, receivedAtMillis = 5_000), repo.batteryStatus.value.case)
         assertNull(repo.caseBatteryError.first())
 
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "6464ff")) // real CAP-059 frame 2776: b3 = ff on every claim
         settle()
-        assertEquals(BatteryLevel.Known(79, null, false), repo.batteryStatus.value.case, "a Left/Right update never touches the Case")
+        assertEquals(BatteryLevel.Known(79, null, false, receivedAtMillis = 5_000), repo.batteryStatus.value.case, "a Left/Right update never touches the Case")
 
+        advanceTimeBy(7_000)
         transport.emit(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, runtimeInfoWithoutCase))
         settle()
-        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case, "never carried over (AGENTS.md §5)")
+        assertEquals(
+            BatteryLevel.Known(79, null, isStale = true, receivedAtMillis = 5_000),
+            repo.batteryStatus.value.case,
+            "I-5: last seen, with the time it was last reported — never presented as current (AGENTS.md §5)",
+        )
+    }
+
+    // ---- I-4 / I-5 / I-8 (ai-sessions/0048): the CAP-062 stream, in the order it arrived -----------------------------------------
+
+    @Test
+    @DisplayName("I-4/I-5: CAP-062 3760 -> 4845 -> 7033 -> 7118: per-bud charging follows each push; the Case stays 60 % last seen after 7118")
+    fun `per-bud charging and the last-seen Case from the CAP-062 stream`() = runTest {
+        val (repo, transport) = buildRepository()
+        suspend fun push(frame: String) = transport.emit(Dlci.MAESTRO, hex(frame))
+        val left = { repo.batteryStatus.value.leftCharging }
+        val right = { repo.batteryStatus.value.rightCharging }
+
+        advanceTimeBy(1_000); push(Cap062.STREAM_RIGHT_3760); settle()
+        assertEquals(ChargingReading(false, 1_000, ChargingSource.RUNTIME_INFO), left())
+        assertEquals(ChargingReading(true, 1_000, ChargingSource.RUNTIME_INFO), right())
+        assertEquals(BatteryLevel.Known(60, null, false, 1_000), repo.batteryStatus.value.case)
+
+        advanceTimeBy(1_000); push(Cap062.STREAM_BOTH_4845); settle()
+        assertEquals(true, left()?.charging); assertEquals(true, right()?.charging)
+
+        advanceTimeBy(1_000); push(Cap062.STREAM_LEFT_7033); settle()
+        assertEquals(ChargingReading(true, 3_000, ChargingSource.RUNTIME_INFO), left())
+        assertEquals(ChargingReading(false, 3_000, ChargingSource.RUNTIME_INFO), right())
+        assertEquals(BatteryLevel.Known(60, null, false, 3_000), repo.batteryStatus.value.case)
+
+        advanceTimeBy(9_846); push(Cap062.STREAM_NONE_7118); settle()
+        assertEquals(false, left()?.charging); assertEquals(false, right()?.charging)
+        assertEquals(BatteryLevel.Known(60, null, isStale = true, receivedAtMillis = 3_000), repo.batteryStatus.value.case)
+        assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent, "nothing is requested for any of it (no polling, no new request)")
+    }
+
+    @Test
+    @DisplayName("I-8: the newest charging report wins — a DLCI 0x04 frame (64 e4) after the stream, then the stream (7033) again")
+    fun `charging follows the newest of the stream and the Message Stream`() = runTest {
+        val (repo, transport) = buildRepository()
+        advanceTimeBy(1_000); transport.emit(Dlci.MAESTRO, hex(Cap062.STREAM_BOTH_4845)); settle()
+        assertEquals(true, repo.batteryStatus.value.rightCharging?.charging)
+
+        advanceTimeBy(1_000); transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0303000364" + "64ff")); settle() // CAP-062 4532: neither charging
+        assertEquals(ChargingReading(false, 2_000, ChargingSource.MESSAGE_STREAM), repo.batteryStatus.value.rightCharging)
+        assertEquals(BatteryLevel.Known(100, false, false, 2_000), repo.batteryStatus.value.right, "the percentage keeps its own DLCI 0x04 time")
+
+        advanceTimeBy(1_000); transport.emit(Dlci.MAESTRO, hex(Cap062.STREAM_LEFT_7033)); settle()
+        assertEquals(ChargingReading(true, 3_000, ChargingSource.RUNTIME_INFO), repo.batteryStatus.value.leftCharging)
+        assertEquals(BatteryLevel.Known(100, false, false, 2_000), repo.batteryStatus.value.left, "the stream never changes a percentage")
+    }
+
+    @Test
+    fun `before any Case report the Case is unavailable, a stream without 6_1 does not invent one (I-5)`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Cap062.STREAM_NONE_2782)); settle()
+        assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case)
+    }
+
+    @Test
+    fun `the last-seen Case survives a Disconnect, marked last seen, kept in memory only (I-5)`() = runTest {
+        val (repo, transport) = buildRepository()
+        advanceTimeBy(1_000); transport.emit(Dlci.MAESTRO, hex(Cap062.STREAM_BOTH_4845)); settle()
+        repo.disconnect()
+        val case = repo.batteryStatus.value.case as BatteryLevel.Known
+        assertEquals(60, case.percent)
+        assertEquals(1_000L, case.receivedAtMillis)
     }
 
     @Test
@@ -610,24 +685,24 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("ADR-024: the Notify's Settable-toggles byte is the dock state — 0x00 both in the case, 0xe8 not, anything else unknown")
-    fun `dock state follows the Notify byte`() = runTest {
+    @DisplayName("I-3 / ADR-024: the Notify's Settable-toggles byte — 0x00 not allowed, non-zero allowed, unknown before any Notify")
+    fun `ANC availability follows the Notify byte`() = runTest {
         val (repo, transport) = buildRepository()
         settle()
         runCurrent() // start the repository's backgroundScope collectors before the first emit
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.UNKNOWN, repo.dockState.first())
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.UNKNOWN, repo.ancAvailability.first())
 
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("00", "20")) // CAP-059 frame 1520 (buds seated)
         settle()
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.BOTH_IN_CASE, repo.dockState.first())
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.NOT_ALLOWED, repo.ancAvailability.first())
 
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "08")) // frame 2782 (buds out)
         settle()
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.NOT_BOTH_IN_CASE, repo.dockState.first())
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.ALLOWED, repo.ancAvailability.first())
 
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("12", "08")) // an unconfirmed value is not guessed
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("12", "08")) // any non-zero value re-enables (I-3)
         settle()
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.UNKNOWN, repo.dockState.first())
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.ALLOWED, repo.ancAvailability.first())
     }
 
     @Test
@@ -635,16 +710,273 @@ class BudsRepositoryImplTest {
         val (repo, transport) = buildRepository()
         settle()
         runCurrent() // start the repository's backgroundScope collectors before the first emit
-        assertNull(repo.ringingTarget.first())
+        assertNull(repo.ringing.first())
 
         repo.ringBud(RingTarget.RIGHT)
-        assertEquals(RingTarget.RIGHT, repo.ringingTarget.first())
+        assertEquals(RingNotice(RingTarget.RIGHT), repo.ringing.first())
         repo.stopRinging()
-        assertNull(repo.ringingTarget.first())
+        assertNull(repo.ringing.first())
 
         transport.sendShouldFail = BudsError.ConnectionLost
         repo.ringBud(RingTarget.LEFT)
-        assertNull(repo.ringingTarget.first(), "a ring whose command never left the phone is not claimed")
+        assertNull(repo.ringing.first(), "a ring whose command never left the phone is not claimed")
+    }
+
+    // ---- I-3 (ai-sessions/0048): no ANC Set while the Buds report Settable 0x00 -----------------------------------------------------
+
+    @Test
+    @DisplayName("I-3: after CAP-062 frame 6000 (Settable 00) a Set sends nothing and claims nothing; after frame 8706 (e8) it is sent again")
+    fun `no Set while the Buds allow no ANC change`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e80020")) // frame 6000
+        settle()
+
+        val refused = repo.setAncMode(AncMode.TRANSPARENT)
+
+        assertEquals(BudsError.AncNotAllowed, (refused as BudsResult.Failure).error)
+        assertEquals(emptyList<Int>(), transport.openChannelCalls, "not even a claim of DLCI 0x04")
+        assertEquals(0, transport.sent.size)
+        assertNull(repo.messageStreamError.first(), "not a channel problem")
+
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e8e840")) // frame 8706
+        settle()
+        transport.onSent = { ch, frame -> if (frame.toHex().startsWith("0812")) transport.emit(ch, hex("ff010006081201e8e840")) } // frame 8705
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ADAPTIVE))
+        assertEquals("0812001401e8e840" + "00".repeat(16), transport.sent.single().second.toHex()) // frame 8694
+    }
+
+    @Test
+    @DisplayName("I-3: unknown (no Notify yet) stays enabled; the Buds' NAK (frame 5998) + Notify 00 (6000) is reported, then further Sets are held back")
+    fun `unknown is enabled and a NAK still reports as before`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.onSent = { ch, frame ->
+            if (frame.toHex().startsWith("0812")) {
+                transport.emit(ch, hex("ff020003020812")) // frame 5998
+                transport.emit(ch, hex("0813000401e80020")) // frame 6000
+            }
+        }
+
+        val first = repo.setAncMode(AncMode.TRANSPARENT)
+
+        assertEquals(BudsError.CommandRejected(0x02, "not allowed in the current state"), (first as BudsResult.Failure).error)
+        assertEquals(1, transport.sent.size, "the first Set was sent: nothing was known yet")
+        settle()
+        assertEquals(BudsError.AncNotAllowed, (repo.setAncMode(AncMode.ADAPTIVE) as BudsResult.Failure).error)
+        assertEquals(1, transport.sent.size, "the second one was not")
+    }
+
+    @Test
+    fun `a Refresh re-reads the byte and re-enables the Set (I-3)`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e80020"))
+        settle()
+        val refresh = launch { repo.refreshAncMode() }
+        runCurrent()
+        assertEquals("08110000", transport.sent.single().second.toHex(), "Refresh is still sent while not allowed")
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e8e840"))
+        refresh.join()
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.ALLOWED, repo.ancAvailability.first())
+    }
+
+    // ---- I-7 (ai-sessions/0048): the loss cause follows Android's link around the loss ------------------------------------------
+
+    private val socketEof = "IOException: bt socket closed, read return: -1" // CAP-062: identical for every loss (11/11)
+
+    @Test
+    @DisplayName("I-7, CAP-062 06:42:35 ordering: the link was CONNECTED before the loss, NOT_CONNECTED 109 ms after it -> Android link lost")
+    fun `the 06h42m35 ordering never shows the stale connected reading`() = runTest {
+        val (repo, transport) = buildRepository()
+        repo.onAndroidLink(AndroidLink.CONNECTED) // an old reading, before the loss
+        advanceTimeBy(28_000)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        assertEquals(SessionLossCause.UNDETERMINED, repo.lastLossCause.first(), "a reading older than the loss is not used")
+
+        advanceTimeBy(109)
+        repo.onAndroidLink(AndroidLink.NOT_CONNECTED)
+        assertEquals(SessionLossCause.ANDROID_LINK_LOST, repo.lastLossCause.first())
+    }
+
+    @Test
+    @DisplayName("I-7, a Buds-side DISC with the link up (CAP-062 frame 5313): the refresh right after the loss still reads CONNECTED")
+    fun `a peer DISC with the link up is the Buds closing the channel`() = runTest {
+        val (repo, transport) = buildRepository()
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        advanceTimeBy(6_000)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        advanceTimeBy(15)
+        repo.onAndroidLink(AndroidLink.CONNECTED) // the re-evaluation the session change triggers
+        assertEquals(SessionLossCause.BUDS_CLOSED_CHANNEL, repo.lastLossCause.first())
+
+        advanceTimeBy(3_000) // both buds into the case: the ACL drop follows 3.0 s later (CAP-062 06:46:04 -> 06:46:07)
+        repo.onAndroidLink(AndroidLink.NOT_CONNECTED)
+        assertEquals(SessionLossCause.BUDS_CLOSED_CHANNEL, repo.lastLossCause.first(), "the Buds closed it first")
+    }
+
+    @Test
+    fun `the user's own Disconnect leaves no loss to explain (I-7 case c)`() = runTest {
+        val (repo, transport) = buildRepository()
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        assertEquals(SessionLossCause.BUDS_CLOSED_CHANNEL, repo.lastLossCause.first())
+        repo.disconnect()
+        assertNull(repo.lastLossCause.first())
+        assertNull(repo.lastConnectionError.first())
+    }
+
+    // ---- I-1 (ai-sessions/0048, DECISIONS.md ADR-044): automatic foreground re-open -----------------------------------------------
+    // connect() needs a real BluetoothDevice, which a JVM test cannot build: every attempt stops at the bonded-device lookup (NotPaired), which
+    // is exactly what these tests count. The success-path rules (the chain guard) are in SessionReopenerTest.
+
+    private suspend fun TestScope.reopenHarness(): Triple<BudsRepositoryImpl, FakeBudsTransport, () -> Int> {
+        var attempts = 0
+        val (repo, transport) = buildRepository(onConnectAttempt = { attempts++ })
+        return Triple(repo, transport, { attempts })
+    }
+
+    @Test
+    @DisplayName("I-1 (a): a Buds-side DISC with the link up while visible -> exactly one re-open, 1.5 s later")
+    fun `a peer DISC while visible re-opens once after the delay`() = runTest {
+        val (repo, transport, attempts) = reopenHarness()
+        repo.onAppVisible(true)
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        assertEquals(0, attempts(), "a session is open: nothing to do")
+
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        advanceTimeBy(1_400); runCurrent()
+        assertEquals(0, attempts(), "not before the delay")
+        advanceTimeBy(200); runCurrent()
+        assertEquals(1, attempts())
+        advanceTimeBy(60_000); runCurrent()
+        assertEquals(1, attempts(), "one attempt per event — no loop, no retry")
+        assertEquals(BudsError.NotPaired, repo.lastConnectionError.first(), "a failed re-open is reported")
+    }
+
+    @Test
+    fun `no re-open when Android's link is down after the delay (an ACL drop), then one when it comes back (I-1 b)`() = runTest {
+        val (repo, transport, attempts) = reopenHarness()
+        repo.onAppVisible(true)
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        advanceTimeBy(109); repo.onAndroidLink(AndroidLink.NOT_CONNECTED)
+        advanceTimeBy(5_000); runCurrent()
+        assertEquals(0, attempts())
+
+        repo.onAndroidLink(AndroidLink.CONNECTED) // Android re-creates the ACL on lid-open (CAP-062 frame 7226)
+        runCurrent()
+        assertEquals(1, attempts())
+        repo.onAndroidLink(AndroidLink.CONNECTED); runCurrent()
+        assertEquals(1, attempts(), "a repeated CONNECTED reading is not a new event")
+    }
+
+    @Test
+    fun `none after the user's Disconnect, until the next Connect tap (I-1 item 2)`() = runTest {
+        val (repo, _, attempts) = reopenHarness()
+        repo.onAppVisible(true)
+        repo.disconnect()
+        repo.onAndroidLink(AndroidLink.NOT_CONNECTED); repo.onAndroidLink(AndroidLink.CONNECTED)
+        repo.onAppVisible(false); repo.onAppVisible(true); repo.onAndroidLink(AndroidLink.CONNECTED)
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(0, attempts())
+
+        repo.connect() // the user's tap (counts once itself) re-enables it
+        assertEquals(1, attempts())
+        repo.onAndroidLink(AndroidLink.NOT_CONNECTED); repo.onAndroidLink(AndroidLink.CONNECTED); runCurrent()
+        assertEquals(2, attempts(), "enabled again")
+    }
+
+    @Test
+    fun `none while backgrounded - a loss, the delay, a link change (I-1 item 3)`() = runTest {
+        val (repo, transport, attempts) = reopenHarness()
+        repo.onAppVisible(true)
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        repo.onAppVisible(false)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        repo.onAndroidLink(AndroidLink.NOT_CONNECTED); repo.onAndroidLink(AndroidLink.CONNECTED)
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(0, attempts())
+    }
+
+    @Test
+    fun `going to the background during the delay cancels the pending re-open`() = runTest {
+        val (repo, transport, attempts) = reopenHarness()
+        repo.onAppVisible(true)
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        advanceTimeBy(700)
+        repo.onAppVisible(false)
+        advanceTimeBy(5_000); runCurrent()
+        assertEquals(0, attempts())
+    }
+
+    @Test
+    @DisplayName("I-1 (c): resume -> one open, once Android's link is read as connected (the pre-background reading is not trusted)")
+    fun `resume opens once`() = runTest {
+        val machine = buildConnectionStateMachine(driveToReady = false)
+        var attempts = 0
+        val (repo, _) = buildRepository(connectionStateMachine = machine, onConnectAttempt = { attempts++ })
+        repo.onAndroidLink(AndroidLink.CONNECTED) // a reading taken before the app was visible
+        repo.onAppVisible(false)
+        repo.onAppVisible(true) // resume: the old reading was forgotten
+        runCurrent()
+        assertEquals(0, attempts)
+        repo.onAndroidLink(AndroidLink.CONNECTED) // the observer's first reading after resume
+        runCurrent()
+        assertEquals(1, attempts)
+        repo.onAppVisible(true); runCurrent() // a second resume with the session still closed (the attempt failed): one more event, one more attempt
+        assertEquals(2, attempts)
+    }
+
+    @Test
+    fun `a reading taken between start and resume opens on resume`() = runTest {
+        val machine = buildConnectionStateMachine(driveToReady = false)
+        var attempts = 0
+        val (repo, _) = buildRepository(connectionStateMachine = machine, onConnectAttempt = { attempts++ })
+        repo.onAndroidLink(AndroidLink.CONNECTED) // ON_START: the observer's first reading, not yet visible
+        repo.onAppVisible(true) // ON_RESUME
+        runCurrent()
+        assertEquals(1, attempts)
+    }
+
+    // ---- I-6 (ai-sessions/0048): the ring notice survives Disconnect -------------------------------------------------------------
+
+    @Test
+    @DisplayName("I-6: CAP-062 frame 9772 (Ring Left) ACKed by 9783; Disconnect keeps the notice (the ring sounded on until Stop); an ACKed Stop clears it")
+    fun `a ring notice survives Disconnect and is cleared only by an ACKed Stop`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.onSent = { ch, frame -> if (frame.toHex() == "0401000102" || frame.toHex() == "0401000100") transport.emit(ch, hex("ff010003040100")) } // 9783
+        assertEquals(BudsResult.Success(Unit), repo.ringBud(RingTarget.LEFT))
+        assertEquals("0401000102", transport.sent.single().second.toHex()) // CAP-062 frame 9772
+        assertEquals(RingNotice(RingTarget.LEFT), repo.ringing.first())
+
+        repo.disconnect()
+
+        assertEquals(RingNotice(RingTarget.LEFT, fromEarlierSession = true), repo.ringing.first(), "kept: the app cannot know it stopped")
+    }
+
+    @Test
+    fun `a session loss keeps the ring notice, marked as from an earlier session (I-6)`() = runTest {
+        val (repo, transport) = buildRepository()
+        repo.ringBud(RingTarget.RIGHT)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, "IOException: bt socket closed, read return: -1"))
+        assertEquals(RingNotice(RingTarget.RIGHT, fromEarlierSession = true), repo.ringing.first())
+    }
+
+    @Test
+    fun `after a reconnect an ACKed Stop clears the notice, a new Ring replaces it (I-6)`() = runTest {
+        val machine = buildConnectionStateMachine()
+        val (repo, transport) = buildRepository(connectionStateMachine = machine)
+        repo.ringBud(RingTarget.LEFT)
+        repo.disconnect()
+        transport.connected = true
+        machine.onConnectRequested(); machine.onLinkEstablished(); machine.onReady() // the reconnect (connect() itself needs a BluetoothDevice)
+        transport.openChannels.clear()
+        transport.emit(Dlci.MAESTRO, Cap061.announcementFrame()) // a new session announces its firmware again
+        settle()
+        repo.ringBud(RingTarget.RIGHT)
+        assertEquals(RingNotice(RingTarget.RIGHT), repo.ringing.first(), "a new Ring of the other side replaces the old notice")
+        repo.stopRinging()
+        assertNull(repo.ringing.first())
     }
 
     @Test
@@ -803,8 +1135,8 @@ class BudsRepositoryImplTest {
         job.join()
 
         val status = repo.batteryStatus.value
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(96, false), status.left)
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(95, false), status.right)
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(96, false, receivedAtMillis = 0), status.left)
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Known(95, false, receivedAtMillis = 0), status.right)
         assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel.Unavailable, status.case)
     }
 
@@ -816,7 +1148,7 @@ class BudsRepositoryImplTest {
         runCurrent()
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "6464ff")) // both in the ears, 100 %
         first.join()
-        assertEquals(BatteryLevel.Known(100, false), repo.batteryStatus.value.left)
+        assertEquals(BatteryLevel.Known(100, false, receivedAtMillis = 0), repo.batteryStatus.value.left)
 
         val second = launch { repo.batteryStatus.first { (it.left as? BatteryLevel.Known)?.isCharging == true } }
         runCurrent()
@@ -824,8 +1156,8 @@ class BudsRepositoryImplTest {
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "e4ddff"))
         second.join()
 
-        assertEquals(BatteryLevel.Known(100, true), repo.batteryStatus.value.left)
-        assertEquals(BatteryLevel.Known(93, true), repo.batteryStatus.value.right)
+        assertEquals(BatteryLevel.Known(100, true, receivedAtMillis = 0), repo.batteryStatus.value.left)
+        assertEquals(BatteryLevel.Known(93, true, receivedAtMillis = 0), repo.batteryStatus.value.right)
         assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.case)
     }
 
@@ -842,7 +1174,7 @@ class BudsRepositoryImplTest {
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("03030003" + "7f64ff"))
         second.join()
         assertEquals(BatteryLevel.Unavailable, repo.batteryStatus.value.left)
-        assertEquals(BatteryLevel.Known(100, false), repo.batteryStatus.value.right)
+        assertEquals(BatteryLevel.Known(100, false, receivedAtMillis = 0), repo.batteryStatus.value.right)
     }
 
     @Test
@@ -899,7 +1231,7 @@ class BudsRepositoryImplTest {
         val result = repo.ringBud(RingTarget.LEFT)
 
         assertEquals(BudsError.CommandRejected(0x01, "device busy"), (result as BudsResult.Failure).error)
-        assertNull(repo.ringingTarget.first())
+        assertNull(repo.ringing.first())
     }
 
     @Test
@@ -1006,26 +1338,26 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    fun `a dock reading within 2 s of the claim is provisional, a later one in the same claim is not (ADR-024, APP-5)`() = runTest {
+    fun `a Settable reading within 2 s of the claim is provisional, a later one in the same claim is not (ADR-024, APP-5)`() = runTest {
         val (repo, transport) = buildRepository()
         transport.onSent = null
         val tap = launch { repo.refreshAncMode() }
         runCurrent() // the claim opens at virtual t = 0
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("00", "20")) // the connect-time answer: "both in the case"
         tap.join()
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.BOTH_IN_CASE, repo.dockState.first())
-        assertEquals(true, repo.dockStateProvisional.first())
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.NOT_ALLOWED, repo.ancAvailability.first())
+        assertEquals(true, repo.ancAvailabilityProvisional.first())
 
         advanceTimeBy(1_200) // a spontaneous re-Notify 1.2 s later (CAP-047 frame 3996's pattern) — still inside the linger
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20"))
         settle()
-        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.DockState.NOT_BOTH_IN_CASE, repo.dockState.first(), "the last value wins")
-        assertEquals(true, repo.dockStateProvisional.first())
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.ALLOWED, repo.ancAvailability.first(), "the last value wins")
+        assertEquals(true, repo.ancAvailabilityProvisional.first())
 
         advanceTimeBy(1_000) // 2.2 s after the open
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20"))
         settle()
-        assertEquals(false, repo.dockStateProvisional.first())
+        assertEquals(false, repo.ancAvailabilityProvisional.first())
     }
 }
 

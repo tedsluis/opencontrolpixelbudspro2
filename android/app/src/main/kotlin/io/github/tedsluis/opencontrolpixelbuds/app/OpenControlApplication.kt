@@ -40,9 +40,9 @@ import javax.inject.Inject
  * **Why here and not in `MainActivity` (0044 finding APP-6):** the service used to be started/stopped from a composable over
  * lifecycle-bound state, so a session that ended while the app was in the background was never observed — the service kept running
  * with a stale "Connected — ANC: …" notification until the app came back. It is now driven from the application-lifetime scope, over
- * the same `ConnectionState` the repository publishes: started for any non-`Disconnected`/non-`Failed` state (reachable only through
- * the user's own Connect tap — no background connect exists, ARCHITECTURE.md §6), its text updated while it runs, stopped at
- * `Disconnected`/`Failed`. Nothing here connects, retries or polls.
+ * the same `ConnectionState` the repository publishes: started for any non-`Disconnected`/non-`Failed` state (reachable through the
+ * user's own Connect tap, or ADR-044's automatic re-open, which runs only while the app is visible — no background connect exists,
+ * ARCHITECTURE.md §6), its text updated while it runs, stopped at `Disconnected`/`Failed`. Nothing here connects, retries or polls.
  */
 @HiltAndroidApp
 class OpenControlApplication : Application() {

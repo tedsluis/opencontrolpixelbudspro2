@@ -42,6 +42,24 @@ interface BudsRepository {
      * [ConnectionState.Failed] instead, not through this flow.
      */
     val lastConnectionError: Flow<BudsError?>
+
+    /**
+     * Why the last session loss happened, as far as Android's link state around it shows ([classifySessionLoss], `ai-sessions/0048` I-7) —
+     * `null` when [lastConnectionError] has nothing to explain. Re-evaluated whenever a new [onAndroidLink] reading arrives.
+     */
+    val lastLossCause: Flow<SessionLossCause?>
+
+    /**
+     * One reading of Android's own link state for the bonded Buds (`OsConnectionObserver`, forwarded by `:app` while the UI is visible). Used for
+     * [lastLossCause] and — DECISIONS.md ADR-044 — to decide whether the session may be re-opened by itself. Never opens anything by itself.
+     */
+    fun onAndroidLink(link: AndroidLink)
+
+    /**
+     * The app's UI became visible (`true`, on resume) or not (`false`, on stop) — DECISIONS.md ADR-044: the session is re-opened by itself only while
+     * visible and Android reports the Buds connected (after a session loss, when Android's link comes back, on resume); never in the background.
+     */
+    fun onAppVisible(visible: Boolean)
     val ancMode: Flow<AncMode>
 
     /** Wall-clock time ([System.currentTimeMillis]) the current [ancMode] value was received, or `null`
@@ -64,23 +82,26 @@ interface BudsRepository {
     val batteryStatusUpdatedAt: Flow<Long?>
 
     /**
-     * Why the Case battery could not be read by the last on-demand claim of DLCI 0x08 (`null` = it was read, or none was
-     * attempted this connection) — DECISIONS.md ADR-035. Distinct from [messageStreamError]: a different, shared channel.
+     * Why the Case battery could not be requested: the one `SubscribeRuntimeInfo` request per Connect was not sent (`null` = it was, or a packet
+     * arrived) — DECISIONS.md ADR-043 (the DLCI 0x08 claim of ADR-035 is withdrawn).
      */
     val caseBatteryError: Flow<BudsError?>
 
-    /** Whether the earbuds sit in the case, from the last `Notify ANC state` (DECISIONS.md ADR-024) — [DockState.UNKNOWN] until one arrived. */
-    val dockState: Flow<DockState>
+    /**
+     * Whether the Buds currently allow an ANC `Set`, from the last `Notify ANC state`'s Settable byte ([AncAvailability], `ai-sessions/0048` I-3) —
+     * [AncAvailability.UNKNOWN] until one arrived on this connection. While [AncAvailability.NOT_ALLOWED], [setAncMode] sends nothing.
+     */
+    val ancAvailability: Flow<AncAvailability>
 
-    /** Wall-clock time [dockState] was last updated, or `null` before any `Notify` has arrived this app run. */
-    val dockStateUpdatedAt: Flow<Long?>
+    /** Wall-clock time [ancAvailability] was last updated, or `null` before any `Notify` has arrived this connection. */
+    val ancAvailabilityUpdatedAt: Flow<Long?>
 
     /**
-     * `true` while the current [dockState] was received within ~2 s of the Message Stream channel opening — DECISIONS.md ADR-024's
-     * 2026-09-18 consequence: such a first reading can be stale and self-corrects with a spontaneous re-Notify, so the UI marks it
-     * provisional; a later `Notify` in the same claim replaces it.
+     * `true` while the current [ancAvailability] was received within ~2 s of the Message Stream channel opening — DECISIONS.md ADR-024's
+     * 2026-09-18 consequence: such a first reading can be stale and self-corrects with a spontaneous re-Notify; a later `Notify` in the same
+     * claim replaces it.
      */
-    val dockStateProvisional: Flow<Boolean>
+    val ancAvailabilityProvisional: Flow<Boolean>
 
     /** Non-null while the app is in read-only Safe Mode (ARCHITECTURE.md §8.1, DECISIONS.md ADR-042). */
     val safeMode: Flow<SafeModeState?>
@@ -88,9 +109,10 @@ interface BudsRepository {
     /** What the Buds announced at connect (firmware), or `null` before the announcement / after a disconnect. */
     val deviceInfo: Flow<DeviceInfo?>
 
-    /** The earbud a Find My Buds ring was last started on and not yet stopped this connection (`null` = none) — the ring keeps sounding on
-     * the Buds after the channel is released (`ai-sessions/0042`: heard on the recording), so the UI must say so. */
-    val ringingTarget: Flow<RingTarget?>
+    /** The earbud a Find My Buds ring was last started on and not yet stopped (`null` = none) — the ring keeps sounding on the Buds after the
+     * channel is released and after Disconnect (`ai-sessions/0042`, `CAP-062`), so the UI must say so. Kept across Disconnect/Connect; cleared
+     * only by an ACKed Stop (or replaced by a new Ring) — `ai-sessions/0048` I-6. */
+    val ringing: Flow<RingNotice?>
 
     /**
      * Why the last EQ read or write did not succeed (`null` = it did, or none was attempted this connection) —
@@ -108,18 +130,21 @@ interface BudsRepository {
     val messageStreamError: Flow<BudsError?>
     val unidentifiedFrames: Flow<UnidentifiedFrame>
 
-    /** Connects to the already-bonded Buds (ARCHITECTURE.md §9.0a step 6) —
+    /** The user's Connect tap: connects to the already-bonded Buds (ARCHITECTURE.md §9.0a step 6) —
      * fails with [BudsError.NotPaired] if no bonded device exists yet
-     * (pairing is a separate, prior step, `ai-sessions/0036`). */
+     * (pairing is a separate, prior step, `ai-sessions/0036`). Re-enables the automatic re-open of ADR-044. */
     suspend fun connect(): BudsResult<Unit>
+
+    /** The user's Disconnect tap. Switches the automatic re-open of ADR-044 off until the next [connect]. */
     suspend fun disconnect(): BudsResult<Unit>
 
     /**
-     * Re-reads the battery on the user's request: a short Message Stream claim (Left/Right, ADR-033) and a short claim of
-     * DLCI 0x08 for the Case (ADR-035). Requires an open session.
+     * Re-reads Left/Right on the user's request: a short Message Stream claim (ADR-033). The Case and each bud's charging state arrive by
+     * themselves on the runtime-info stream (ADR-043 and its 2026-09-25 Update) — nothing is requested for them. Requires an open session.
      */
     suspend fun refreshBattery(): BudsResult<Unit>
 
+    /** ANC `Set` (ADR-009). Fails with [BudsError.AncNotAllowed] and sends nothing while [ancAvailability] is [AncAvailability.NOT_ALLOWED]. */
     suspend fun setAncMode(mode: AncMode): BudsResult<Unit>
     suspend fun refreshAncMode(): BudsResult<AncMode>
 

@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-/** The ANC Quick Settings tile's fixed cycle, and the dock-state byte mapping (`ai-sessions/0042`). */
+/** The ANC Quick Settings tile's fixed cycle, and the ANC-availability byte mapping (`ai-sessions/0042`). */
 class TileCycleTest {
 
     @Test
@@ -46,10 +46,10 @@ class TileCycleTest {
     }
 
     @Test
-    @DisplayName("dock state: only the two confirmed bytes (ADR-024) are interpreted")
-    fun `dock state mapping`() {
-        assertEquals(DockState.BOTH_IN_CASE, DockState.fromSettableToggles(0x00))
-        assertEquals(DockState.NOT_BOTH_IN_CASE, DockState.fromSettableToggles(0xE8))
-        for (other in listOf(0x01, 0x08, 0x20, 0x7F, 0xFF)) assertEquals(DockState.UNKNOWN, DockState.fromSettableToggles(other), "0x%02x".format(other))
+    @DisplayName("I-3: Settable 0x00 (CAP-062 frame 6000) = not allowed; any non-zero value (frame 8706: 0xe8) = allowed")
+    fun `ANC availability mapping`() {
+        assertEquals(AncAvailability.NOT_ALLOWED, AncAvailability.fromSettableToggles(0x00))
+        assertEquals(AncAvailability.ALLOWED, AncAvailability.fromSettableToggles(0xE8))
+        for (other in listOf(0x01, 0x08, 0x20, 0x7F, 0xFF)) assertEquals(AncAvailability.ALLOWED, AncAvailability.fromSettableToggles(other), "0x%02x".format(other))
     }
 }

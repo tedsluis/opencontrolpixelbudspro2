@@ -19,7 +19,6 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
-import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 
@@ -48,8 +47,8 @@ sealed class RoutedFrame {
     /** The Case reading of a DLCI 0x08 `0e 01` push (ADR-035); Left/Right stay from [Battery]. */
     data class CaseBattery(val frame: CaseBatteryFrame) : RoutedFrame()
 
-    /** The Case reading of a DLCI 0x02 `SubscribeRuntimeInfo` stream packet (DECISIONS.md ADR-043) — the app's Case source. */
-    data class RuntimeInfoCase(val case: BatteryLevel) : RoutedFrame()
+    /** A DLCI 0x02 `SubscribeRuntimeInfo` stream packet (DECISIONS.md ADR-043 and its 2026-09-25 Update): the Case and each bud's charging state. */
+    data class RuntimeInfo(val info: io.github.tedsluis.opencontrolpixelbuds.data.codec.RuntimeInfo) : RoutedFrame()
 
     /**
      * The Buds' unsolicited `GetSoftwareInfo` push announcing the pw_rpc channel of this connection (ADR-034); [firmware] = the
@@ -260,12 +259,12 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
         val eq = EqFrameDecoder.decode(packet)
         if (eq is BudsResult.Success) return RoutedFrame.Eq(eq.value)
     }
-    // ADR-043: the runtime-info stream the app subscribes to once per Connect; only the Case entry is read.
+    // ADR-043 (+ its 2026-09-25 Update): the runtime-info stream the app subscribes to once per Connect; the Case and each bud's charging state.
     if (method == Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO &&
         (packet.type == PwRpc.TYPE_SERVER_STREAM || packet.type == PwRpc.TYPE_RESPONSE) &&
         (packet.status == null || packet.status == 0) && packet.payload.isNotEmpty()
     ) {
-        RuntimeInfoDecoder.caseBattery(packet.payload)?.let { return RoutedFrame.RuntimeInfoCase(it) }
+        RuntimeInfoDecoder.decode(packet.payload)?.let { return RoutedFrame.RuntimeInfo(it) }
     }
     val answersUs = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING
     val isError = packet.type == PwRpc.TYPE_CLIENT_ERROR || packet.type == PwRpc.TYPE_SERVER_ERROR

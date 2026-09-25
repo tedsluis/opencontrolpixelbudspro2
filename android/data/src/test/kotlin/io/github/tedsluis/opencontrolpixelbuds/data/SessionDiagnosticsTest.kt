@@ -19,6 +19,7 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data
 
+import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.DisplayName
@@ -50,5 +51,15 @@ class SessionDiagnosticsTest {
     fun `user disconnect line`() {
         assertEquals("Session ended by the user's Disconnect tap (was Ready)", SessionDiagnostics.userDisconnectLine("Ready"))
         assertFalse(SessionDiagnostics.userDisconnectLine("Ready").contains("lost"))
+    }
+
+    @Test
+    @DisplayName("I-7: the cause line never guesses another app, and says when nothing could be determined")
+    fun `loss cause lines`() {
+        assertEquals(
+            "Session loss cause: Android still showed the Buds connected right after the loss — the Buds closed the channel",
+            SessionDiagnostics.lossCauseLine(SessionLossCause.BUDS_CLOSED_CHANNEL),
+        )
+        for (cause in SessionLossCause.entries) assertFalse(SessionDiagnostics.lossCauseLine(cause).contains("another app"))
     }
 }

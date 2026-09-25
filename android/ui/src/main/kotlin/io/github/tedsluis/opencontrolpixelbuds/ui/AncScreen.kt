@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
@@ -47,6 +48,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
  * re-query for the case that pair is ever missed or the value looks stale
  * (`ai-sessions/0038` — this method existed and was unit-tested since
  * `ai-sessions/0033` but had no UI affordance to actually reach it).
+ *
+ * **I-3 (`ai-sessions/0048`):** while [ancAvailability] is [AncAvailability.NOT_ALLOWED] (the Buds' last `Notify` reported Settable `0x00`) the
+ * mode buttons are disabled with [ANC_NOT_ALLOWED_TEXT] and nothing is sent; **Refresh** stays enabled — it re-reads the byte.
  */
 @Composable
 fun AncScreen(
@@ -54,6 +58,7 @@ fun AncScreen(
     messageStreamError: BudsError?,
     ancMode: AncMode?,
     ancModeUpdatedAt: Long?,
+    ancAvailability: AncAvailability,
     onAncModeSelected: (AncMode) -> Unit,
     onRefreshAncMode: () -> Unit,
     onRequestAddAncTile: () -> Unit,
@@ -81,8 +86,12 @@ fun AncScreen(
                 },
                 style = MaterialTheme.typography.bodyLarge,
             )
+            val notAllowed = ancAvailability == AncAvailability.NOT_ALLOWED
+            if (connectionState.isReady() && notAllowed) {
+                Text(ANC_NOT_ALLOWED_TEXT + " Tap Refresh to check again.", style = MaterialTheme.typography.bodyMedium)
+            }
             AncMode.entries.forEach { mode ->
-                Button(onClick = { onAncModeSelected(mode) }, enabled = connectionState.isReady()) {
+                Button(onClick = { onAncModeSelected(mode) }, enabled = connectionState.isReady() && !notAllowed) {
                     Text(mode.name)
                 }
             }
@@ -102,6 +111,7 @@ private fun AncScreenPreview() {
             messageStreamError = null,
             ancMode = AncMode.ADAPTIVE,
             ancModeUpdatedAt = System.currentTimeMillis(),
+            ancAvailability = AncAvailability.ALLOWED,
             onAncModeSelected = {},
             onRefreshAncMode = {},
             onRequestAddAncTile = {},

@@ -20,28 +20,26 @@
 package io.github.tedsluis.opencontrolpixelbuds.domain
 
 /**
- * Whether the earbuds sit in the case, as the Buds report it in every `Notify ANC state` message
- * (`Settable-toggles` byte; DECISIONS.md ADR-024, second confirmation `ai-sessions/0042`). Only as fresh as the last Message
- * Stream claim (ADR-032).
+ * Whether the Buds currently let this app switch the ANC mode — the `Settable toggles` byte of their last `Notify ANC state` (Hearable Controls
+ * spec: "to indicate which are currently enabled"). Replaces the earlier `DockState` (`ai-sessions/0048`, I-3): DECISIONS.md ADR-024's
+ * 2026-09-25 Update records 🟢 (`CAP-062`) that a `Set` while the byte reads `0x00` is NAKed with reason `0x02` "Not allowed due to current state"
+ * (10/10) and every `Set` with `0xe8` is ACKed (6/6), and 🟡 (strong) that `0x00` means **no bud worn** — not "in the case". Only as fresh as the
+ * last Message Stream claim (ADR-032).
  */
-enum class DockState {
-    /** Not reported yet, or a value outside the two confirmed ones — never guessed. */
+enum class AncAvailability {
+    /** No `Notify` yet on this connection — the controls stay enabled (the Buds' own answer remains the authority). */
     UNKNOWN,
 
-    /** `Settable-toggles == 0x00`: both earbuds are seated in the case. */
-    BOTH_IN_CASE,
+    /** `Settable toggles` is non-zero (`0xe8` in every sample): a `Set` is accepted. */
+    ALLOWED,
 
-    /** `Settable-toggles == 0xe8`: at least one earbud is out of the case. */
-    NOT_BOTH_IN_CASE,
+    /** `Settable toggles == 0x00`: the Buds refuse a `Set` (NAK `0x02`); this app sends none. */
+    NOT_ALLOWED,
     ;
 
     companion object {
-        /** The confirmed byte values only (ADR-024); anything else is [UNKNOWN]. */
-        fun fromSettableToggles(byte: Int): DockState = when (byte) {
-            0x00 -> BOTH_IN_CASE
-            0xE8 -> NOT_BOTH_IN_CASE
-            else -> UNKNOWN
-        }
+        /** `0x00` → [NOT_ALLOWED]; any other value → [ALLOWED] (a `Notify` with a non-zero value re-enables, `ai-sessions/0048`). */
+        fun fromSettableToggles(byte: Int): AncAvailability = if (byte == 0x00) NOT_ALLOWED else ALLOWED
     }
 }
 

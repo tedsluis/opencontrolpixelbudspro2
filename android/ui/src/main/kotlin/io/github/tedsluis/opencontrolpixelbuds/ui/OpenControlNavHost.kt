@@ -118,7 +118,7 @@ data class OpenControlActions(
     val onRefreshEq: () -> Unit,
     val onRing: (RingTarget) -> Unit,
     val onStopRinging: () -> Unit,
-    /** Re-reads the battery: a Message Stream claim (Left/Right) and a DLCI 0x08 claim (Case), DECISIONS.md ADR-033/ADR-035. */
+    /** Re-reads Left/Right: a Message Stream claim (DECISIONS.md ADR-033); the Case and charging come from the runtime-info stream (ADR-043). */
     val onRefreshBattery: () -> Unit,
     val onDebugModeChanged: (Boolean) -> Unit,
     /** Shares `BleLogger.exportLog()`'s current ring-buffer snapshot via the system share sheet —
@@ -142,6 +142,8 @@ data class OpenControlUiState(
     /** Why the last session ended unexpectedly (`null` = nothing to explain) — shown under
      * "Disconnected" so an unexpected drop is never a bare state change (`ai-sessions/0039`). */
     val lastConnectionError: BudsError?,
+    /** Why the last session loss happened as far as Android's link shows (`ai-sessions/0048` I-7); `null` = nothing to explain. */
+    val lastLossCause: io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause? = null,
     /** Android itself reports the bonded Buds as connected to this phone (audio/HFP profiles) —
      * distinct from this app's own control channels being open (`ai-sessions/0039` §5). */
     val androidLink: AndroidLink,
@@ -151,14 +153,17 @@ data class OpenControlUiState(
     /** Wall-clock time (epoch millis) [ancMode] was last updated — `null` before any value arrived this
      * app run (`ai-sessions/0043` Phase H). */
     val ancModeUpdatedAt: Long? = null,
+    /** Whether the Buds currently allow an ANC `Set` (`ai-sessions/0048` I-3). */
+    val ancAvailability: io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability =
+        io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.UNKNOWN,
     /** Why the Case level could not be requested this connection (`null` = requested / not yet), ADR-043. */
     val caseBatteryError: BudsError? = null,
     /** Non-null while the app is in read-only Safe Mode (ARCHITECTURE.md §8.1, ADR-042). */
     val safeMode: io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState? = null,
     /** What the Buds announced at connect (firmware); `null` = nothing yet. */
     val deviceInfo: DeviceInfo? = null,
-    /** The earbud a Find My Buds ring was started on and not yet stopped (`null` = none). */
-    val ringingTarget: RingTarget? = null,
+    /** The Find My Buds ring this app started and has not seen stopped (`null` = none) — kept across Disconnect (I-6). */
+    val ringing: io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice? = null,
     val eqProfile: EqBandGains?,
     /** Wall-clock time [eqProfile] was last updated — `null` when [eqProfile] is `null`. */
     val eqProfileUpdatedAt: Long? = null,
@@ -261,6 +266,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     caseBatteryError = state.caseBatteryError,
                     deviceInfo = state.deviceInfo,
                     onRefreshBattery = actions.onRefreshBattery,
+                    lastLossCause = state.lastLossCause,
                     safeMode = state.safeMode,
                     onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
                     onPair = actions.onPair,
@@ -274,6 +280,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     messageStreamError = state.messageStreamError,
                     ancMode = state.ancMode,
                     ancModeUpdatedAt = state.ancModeUpdatedAt,
+                    ancAvailability = state.ancAvailability,
                     onAncModeSelected = actions.onAncModeSelected,
                     onRefreshAncMode = actions.onRefreshAncMode,
                     onRequestAddAncTile = actions.onRequestAddAncTile,
@@ -290,7 +297,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 Routes.FIND_MY_BUDS -> FindMyBudsScreen(
                     connectionState = state.connectionState,
                     messageStreamError = state.messageStreamError,
-                    ringingTarget = state.ringingTarget,
+                    ringing = state.ringing,
                     onRing = actions.onRing,
                     onStop = actions.onStopRinging,
                 )

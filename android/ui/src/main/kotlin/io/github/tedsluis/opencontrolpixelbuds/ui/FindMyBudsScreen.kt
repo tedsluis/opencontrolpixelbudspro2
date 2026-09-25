@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 
 /**
@@ -48,7 +49,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 fun FindMyBudsScreen(
     connectionState: ConnectionState,
     messageStreamError: BudsError?,
-    ringingTarget: RingTarget?,
+    ringing: RingNotice?,
     onRing: (RingTarget) -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
@@ -62,7 +63,7 @@ fun FindMyBudsScreen(
             Text("Find My Buds", style = MaterialTheme.typography.headlineSmall)
             NotConnectedBanner(connectionState)
             MessageStreamNotice(messageStreamError)
-            RingingNotice(ringingTarget, connectionState.isReady())
+            RingingNotice(ringing, connectionState.isReady())
             Button(onClick = { onRing(RingTarget.LEFT) }, enabled = connectionState.isReady()) { Text("Ring Left") }
             Button(onClick = { onRing(RingTarget.RIGHT) }, enabled = connectionState.isReady()) { Text("Ring Right") }
             OutlinedButton(onClick = onStop, enabled = connectionState.isReady()) { Text("Stop") }
@@ -73,14 +74,20 @@ fun FindMyBudsScreen(
 
 /**
  * What the app knows about a running ring (`ai-sessions/0042`): the ring keeps sounding on the Buds after the Message Stream channel is
- * released (heard on the recording) until Stop is sent, so after a Ring tap the screen says so instead of showing nothing.
+ * released — and after Disconnect (`CAP-062`) — until Stop is sent, so after a Ring tap the screen says so instead of showing nothing. A ring
+ * from an earlier session *may* have stopped by itself; the app cannot know, so it says "may still be ringing" (`ai-sessions/0048` I-6).
  */
 @Composable
-internal fun RingingNotice(ringingTarget: RingTarget?, sessionReady: Boolean) {
-    if (ringingTarget == null) return
-    val side = if (ringingTarget == RingTarget.LEFT) "Left" else "Right"
-    Text(
-        if (sessionReady) "Ringing: $side earbud — tap Stop to end it." else "A ring was started on the $side earbud — reconnect and tap Stop to end it.",
-        style = MaterialTheme.typography.titleMedium,
-    )
+internal fun RingingNotice(ringing: RingNotice?, sessionReady: Boolean) {
+    if (ringing == null) return
+    Text(ringingNoticeText(ringing, sessionReady), style = MaterialTheme.typography.titleMedium)
+}
+
+internal fun ringingNoticeText(ringing: RingNotice, sessionReady: Boolean): String {
+    val side = if (ringing.target == RingTarget.LEFT) "Left" else "Right"
+    return when {
+        !sessionReady -> "A ring was started on the $side earbud — reconnect and tap Stop to end it."
+        ringing.fromEarlierSession -> "A ring was started on the $side earbud before the app reconnected — it may still be ringing. Tap Stop to end it."
+        else -> "Ringing: $side earbud — tap Stop to end it."
+    }
 }

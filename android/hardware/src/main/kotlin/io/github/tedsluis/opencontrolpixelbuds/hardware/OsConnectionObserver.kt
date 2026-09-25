@@ -34,7 +34,6 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
@@ -50,7 +49,9 @@ import kotlinx.coroutines.launch
  * never opens a socket, claims a channel or starts a service; it is not scanning and discovers nothing.
  *
  * Every **change** is logged with its trigger (always-on, no address). The evaluation itself is [LinkEvaluation]
- * (unit-tested); flapping is smoothed by [settled].
+ * (unit-tested). **Since `ai-sessions/0048`** the flow emits *every* evaluation (a reading), not only changes and not debounced: the repository needs
+ * a reading taken after a session loss to tell a Buds-side close from a lost link (I-7), and the re-open rule of DECISIONS.md ADR-044 needs the
+ * current state, not one 1.5 s old. The screen still smooths flapping by applying [settled] itself.
  *
  * **`ai-sessions/0042` — why the first hardware run showed a stale card (`CAP-059`, formerly `LOGS-001`):** the receiver used to be
  * registered `RECEIVER_NOT_EXPORTED`, and in that run it received **no** broadcast at all between 17:17:31 and 17:20:10 although
@@ -143,10 +144,10 @@ class OsConnectionObserver(
             proxies.clear()
             BleLogger.logConnectionEvent("Android link observer stopped")
         }
-    }.distinctUntilChanged().settled(NOT_CONNECTED_SETTLE_MS)
+    }
 
     companion object {
-        /** A "not connected" must persist this long before it is shown — a bud coming out of the case flaps. */
+        /** A "not connected" must persist this long before it is **shown** ([settled], applied by the screen) — a bud coming out of the case flaps. */
         const val NOT_CONNECTED_SETTLE_MS = 1_500L
     }
 }
