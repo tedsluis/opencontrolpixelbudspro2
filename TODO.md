@@ -796,6 +796,16 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
 - **Hardware re-test of the `ai-sessions/0048` build (Group AY):** the automatic re-open (ADR-044), ANC disabled while not worn, per-bud
   "charging in the case", the last-seen Case, the loss wording and the ring notice — step list with HCI brackets in
   `ai-sessions/0048_FEATURE_RESULT_2026_09_25.md` §9. (The 0047 build item is done, `ai-sessions/0048`.)
+- **Next FEATURE session (maintainer's choice, `ai-sessions/0051` §20 — before the Group AY capture):** (1) record the approved texts of `0051`
+  §19: D-1 (`PROTOCOL.md` §4.5.1/§4.5.3/§4.5.7/§6 status corrections — the OFF writes `CAP-019` 1720 and `CAP-020` 1995 on film, balance persistence,
+  `FE2C1238…` = Find Hub "Beacon actions", the `qht` bit-order conflict), D-2 (ADR-043 Update: *Refresh battery* re-sends one `SubscribeRuntimeInfo`),
+  D-3 (a new ADR, the next free number: `WriteSetting` for fields 17, 19, 22, 4, 7; field 12 stays gated); (2) EQ presets in 2 rows (3 + 2); (3) the Refresh fix of
+  `0051` §9 (a Refresh inside the 1.5 s linger gets no battery burst); (4) read-only settings (ADR-036) and balance/mono/conversation detection/touch
+  controls/press-and-hold per bud under that new ADR. Unit tests with the capture frames named in `0051` §7–§15.
+- **Next capture (Group AY), additions from `ai-sessions/0051` §19:** two *Refresh battery* taps within 1 s (a second DLCI 0x04 burst?); both buds
+  docked, idle 2 min, Refresh → is the re-sent `SubscribeRuntimeInfo` answered?; the new settings writes (balance, mono, conversation detection,
+  touch controls) with an HCI bracket each; the Group AR ANC-list re-run (planned `CAP-056`): untick only Adaptive on "Customize left", check
+  "Customize right" on film, then only Transparency — settles which `qht` bit is which (`0051` F-6) and whether the list is shared.
 - **Next capture (Group AY):** I-9 Find with both buds docked (does a docked bud ring?), an EQ write while docked, the one-bud-in-an-ear test of
   "Settable `0x00` = not worn" (ADR-024 Update), **EQ audibility** (say aloud what you hear at each preset and at the ±6 extremes, APP_TESTPLAN
   H2–H4 — never recorded so far, `PROTOCOL.md` §4.2 "not established"; `ai-sessions/0050` UX-01), and the APP_TESTPLAN steps not run in `CAP-062` (A5, B4, C5, F5–F7, H5, J4, K1–K5, L3, 0045 (E)/(F));
