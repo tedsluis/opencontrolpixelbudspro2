@@ -1372,6 +1372,15 @@ implementation gate.
 - **Evidence**: `CAP-019-FINDINGS.md` §3 (`[VERIFIED-LOCAL]`, 2026-08-21, frame 1808);
   `REVERSE_ENGINEERING.md`'s `qhr` entry; `DECISIONS.md` ADR-019.
 - **Verified with experiment**: `CAP-019` (2026-08-21), single OFF→ON sample.
+- **Update (2026-09-26, `ai-sessions/0052`, maintainer-approved in chat 2026-09-26, `AskUserQuestion` "D-1", input approved in `ai-sessions/0051` §20) — OFF direction captured; the label equivalence is 🟢 FACT.**
+  `CAP-019` frame 1720 (07:36:28.596, phone → Buds) `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 b0 01 00 22 5f c3 b7 7e` =
+  `WriteSetting 4:{22:0}` on channel 21 → empty `RESPONSE` status OK, frame 1731 (`7e 00 a5 03 08 01 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 03 6d 4e d8 7e`),
+  mirrored on `SubscribeToSettingsChanges` in frame 1730. Film (`ffmpeg -ss <t> -i CAP-019-recording.mp4 -frames:v 1`, t = 36…42 s, overlay
+  07:36:26…07:36:32, checked by eye): the official Sound screen's **"Conversation detection"** switch is ON at 07:36:26–28, a finger taps it at 07:36:29,
+  it reads OFF from 07:36:30. Together with frame 1808 `4:{22:1}` (the ON tap, 07:36:41, answered OK by 1813) the UI switch "Conversation detection"
+  writes field 22 in **both directions** — the equivalence of `qhr` field 22 ("Speech Detection" in the code) with this UI label is 🟢 **FACT**.
+  Commands: `python3 scripts/pwrpc_decode.py CAP-019-btsnoop_hci.log`; `tshark -r CAP-019-btsnoop_hci.log -Y "btrfcomm.len>0 && (frame.number==1720 ||
+  frame.number==1731)" -T fields -e frame.number -e frame.time -e data.data`. The Status line above is history; `CAP-019-FINDINGS.md` states the current reading.
 
 #### 4.5.2 Multipoint Bluetooth
 
@@ -1452,6 +1461,17 @@ implementation gate.
   updates); `DECISIONS.md` ADR-019.
 - **Verified with experiment**: `CAP-020` (top-level toggle), `CAP-021` (press-and-hold + checklist),
   both 2026-08-21.
+- **Update (2026-09-26, `ai-sessions/0052`, maintainer-approved in chat 2026-09-26, `AskUserQuestion` "D-1", input approved in `ai-sessions/0051` §20) — "Use touch controls" OFF direction captured, 🟢 FACT for both directions.** `CAP-020`
+  frame 1995 (07:47:20.097) `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 04 22 02 20 00 53 90 8d 4b 7e` = `WriteSetting 4:{4:0}` (channel 21)
+  → empty `RESPONSE` status OK in frame 2005 (with the mirrored `SubscribeToSettingsChanges` `4:{4:0}`). Film (t = 63…69 s, overlay 07:47:17…07:47:23,
+  checked by eye): "Use touch controls" ON at 07:47:17–19, a finger taps it at 07:47:20, OFF from 07:47:21. The "🔴 Not yet tested in the OFF direction"
+  above is history. Command: as for §4.5.1's 2026-09-26 Update, on `CAP-020`.
+- **Update (2026-09-26, `ai-sessions/0052`, maintainer-approved in chat 2026-09-26, `AskUserQuestion` "D-1", input approved in `ai-sessions/0051` §20) — the `qht` bit-order conflict, recorded as 🔴 OPEN QUESTION (not resolved).** The app's own code
+  maps field 12's four booleans as **1 = Noise cancellation, 2 = Off, 3 = Transparency, 4 = Adaptive**: `qht.java:31`'s `RawMessageInfo` lists fields 1–4
+  as Java fields `c, d, e, f`; `hgj.java` writes `c` for `anc_preference_key_on` (line 216, `aJ()`), `d` for `…_off` (245, `aI()`), `e` for `…_txp` (274,
+  `aK()`) and `f` for `…_adaptive` (303, `aH()`) — getters at `hgj.java:66–96`, keys set at 115–126. The 🟡 reading in the rotation-checklist bullet above
+  (field order = on-screen order, 3 = Adaptive, 4 = Transparency) disagrees for fields 3 and 4. Neither is promoted; field 12 stays out of every read/write
+  (ADR-036, ADR-045). Settles it: the Group AR re-run (untick only Adaptive, then only Transparency, one `WriteSetting 4:{12:{…}}` per tap).
 
 #### 4.5.4 Head gestures
 
@@ -1569,6 +1589,11 @@ implementation gate.
   entry; `DECISIONS.md` ADR-019/ADR-026.
 - **Verified with experiment**: `CAP-022` (2026-08-21) — a single continuous drag. `CAP-046`
   (2026-09-12) — isolated discrete extreme-position samples, video-correlated (Group AK).
+- **Update (2026-09-26, `ai-sessions/0052`, maintainer-approved in chat 2026-09-26, `AskUserQuestion` "D-1", input approved in `ai-sessions/0051` §20) — persistence across a reconnect, 🟢 FACT.** In three pairs of consecutive captures the
+  first `ReadSetting 4:17` of the later capture returns the last `WriteSetting 4:{17:n}` of the earlier one: `CAP-022` frame 2099 `17:10` → `CAP-023`
+  frame 1047 `17:10`; `CAP-041` frame 2294 `17:199` → `CAP-042` frame 900 `17:199`; `CAP-046` frame 1957 `17:2` → `CAP-048` frame 1319 `17:2` (no capture lies
+  between the members of each pair). Command: `python3 scripts/pwrpc_decode.py <log> | grep -E '4:\{?17'` on the six logs. The "🔴 … persistence across a
+  disconnect/reconnect" in the Status line above is history; intermediate-position scaling stays 🔴.
 
 #### 4.5.8 Case sounds
 
@@ -2171,6 +2196,11 @@ leaving them buried in prose elsewhere.
       database is published only as a bulk PDF/YAML download, not a searchable web page — checking
       either UUID against it directly (rather than via search) is a possible further step, not
       completed this pass.
+      **Update (2026-09-26, `ai-sessions/0052`, maintainer-approved in chat 2026-09-26, `AskUserQuestion` "D-1", input approved in `ai-sessions/0051` §20) — `FE2C1238…` named, 🟢 FACT.** Google's Find Hub Network extension page
+      (`developers.google.com/nearby/fast-pair/specifications/extensions/fmdn`, fetched 2026-09-26), Table 1 "Fast Pair Service characteristics for
+      FHN": *"Beacon actions | No | Read, write and notify | `FE2C1238-8366-4814-8EB0-01DE32100BEA`"* (columns: characteristic, Encrypted,
+      Permissions, UUID). Handle `0x0c13` is the FHN **Beacon actions** characteristic (out of scope to use: FHN is account/owner-key mediated,
+      ADR-008/027). The "Unknown Service" (`109b862f-…`) stays 🔴.
 - [ ] **Added 2026-08-21, `CAP-019`–`CAP-024`:** what do DLCI 0x02's confirmed inner field numbers
       (§4.5's `field4`=touch controls, `field11`=Multipoint, `field15`=Volume EQ, `field17`=Volume
       balance, `field19`=Mono audio, `field22`=Conversation Detection, `field27`/`field28`=Case
@@ -2254,6 +2284,8 @@ leaving them buried in prose elsewhere.
       persist locally on the earbuds across a disconnect/reconnect, as
       `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1's `AUDIO-003` row claims from the app's own on-screen
       text? Not tested — `CAP-022` only captured the write itself, no reconnect cycle.
+      **Answered 2026-09-26 (`ai-sessions/0052`, maintainer-approved in chat): yes, 🟢 FACT — three consecutive-capture chains, see §4.5.7's
+      2026-09-26 Update.**
 - [ ] **Added 2026-08-21, `CAP-021-FINDINGS.md` §4a:** DLCI 0x0a (RFCOMM channel 5) — silent
       (channel-control frames only, zero payload) in every capture that has checked it before or
       since (`CAP-001`/`CAP-002`/`CAP-005`/`CAP-006`/`CAP-007`/`CAP-016`,
@@ -3163,6 +3195,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-24 | **`ai-sessions/0045` — processing the `ai-sessions/0044` audit, all promotions/corrections maintainer-approved in chat 2026-09-24.** **§4.3 Option E** corrected: every post-open `0e 01` push answers a phone-side `0e 04` (13/13), receive-only claims got none (8/8) → `DECISIONS.md` ADR-039. **§0.1** Device Information `0x0A` = session nonce 🟢 FACT (MAC spec + 19/19 opens). **§4.1** bytes 8–23 of `Set` = message nonce + MAC 🟡, "MAC not enforced by `release_5.203`" 🟡 + risk note. **§6** the DLCI 0x02 connect burst identified (`GetSoftwareInfo`, `SubscribeToSettingsChanges`, `SubscribeRuntimeInfo`, `GetHardwareInfo`, `SetWallclock`, `ReadSetting` sweep) 🟢 FACT; `CAP-057` withdrawn. **§5.2** the "mid-connection bounce" is a fresh ACL connection → 6 of 7, stays 🟡. Mechanical: stale status lines, §6 check-offs with pointers, §4.3 current-state note, Option A trigger sentence relabelled (not on the spec page), Option D two-LE-views note, "polling" wording, dates | Claude (AI), maintenance task; maintainer-approved in chat 2026-09-24 |
 | 2026-09-24 | **`ai-sessions/0046` — `CAP-061`, maintainer-approved in chat 2026-09-24.** **§2.2a** the firmware announcement's structure (fields 4/5 fixed64/6, 140/140) 🟢 FACT — the cause of the app's Safe Mode on the verified firmware. **§4.3 Option F** (new) `SubscribeRuntimeInfo` entry 6.1 = Case battery % 🟢 FACT (13/13) → `DECISIONS.md` ADR-043. **§4.3 Option E** the app's `0e 04`-only claim got no answer (8/8): ADR-039's sufficiency hypothesis refuted; 🟡 the other DLCI 0x08/0x0a owner may be the Google app's Assistant-headphones service. **§4.1** a premature Settable `0x00` with one bud out (frame 5560), ADR-024 Update; the app no longer shows a dock sentence | Claude (AI), capture-analysis + fix task; maintainer-approved in chat 2026-09-24 |
 | 2026-09-25 | **`ai-sessions/0047` — `CAP-062`, maintainer-approved in chat 2026-09-25.** **§4.3 Option F** per-bud fields (6.2/6.3 field 2, 7.1/7.2, 6.1 presence) 🟢 FACT (401/403, 45 captures); Option F hardware-verified. **§4.1** a `Set` is NAKed (reason `0x02`) iff Settable = `0x00` (🟢 for `CAP-062`), `0x00` = not worn 🟡 (ADR-024 Update). §6 notes: the Buds close DLCI 0x02 on wear/dock changes (🟡 deliberate), DLCI 0x08/0x0a owner = Google app Assistant-headphones service (5/5, 🟡) | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-25 |
+| 2026-09-26 | **`ai-sessions/0052` — status corrections D-1 of `ai-sessions/0051`, maintainer-approved in chat 2026-09-26.** **§4.5.1** OFF write `CAP-019` 1720 on film → "Conversation detection" = field 22 🟢 FACT. **§4.5.3** "Use touch controls" OFF write `CAP-020` 1995 on film, both directions 🟢; the `qht` code bit order (3 = Transparency, 4 = Adaptive) vs the 🟡 on-screen order recorded as 🔴 open. **§4.5.7/§6** balance persists across a reconnect 🟢 (three chains). **§6** `FE2C1238…` = FHN "Beacon actions" 🟢 (official page) | Claude (AI), feature task; maintainer-approved in chat 2026-09-26 |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

@@ -88,6 +88,22 @@ interface BudsRepository {
     val caseBatteryError: Flow<BudsError?>
 
     /**
+     * The DLCI 0x02 settings as the Buds reported them on this connection ([BudsSettings]; ADR-036 reads at Connect, ADR-045 acknowledged
+     * writes), each with its receive time. Reset to "not read" at every Connect.
+     */
+    val settings: Flow<BudsSettings>
+
+    /** Why the last settings read or write did not succeed (`null` = it did, or none was attempted this connection) — `ai-sessions/0052`. */
+    val settingsError: Flow<BudsError?>
+
+    /**
+     * Why the last *Refresh battery* produced no new Left/Right reading (`null` = it did, or none was attempted this connection) —
+     * [BudsError.NoNewBatteryReading] when the claim worked but the Buds sent no battery frame, otherwise the claim's own error
+     * (`ai-sessions/0052`).
+     */
+    val batteryRefreshError: Flow<BudsError?>
+
+    /**
      * Whether the Buds currently allow an ANC `Set`, from the last `Notify ANC state`'s Settable byte ([AncAvailability], `ai-sessions/0048` I-3) —
      * [AncAvailability.UNKNOWN] until one arrived on this connection. While [AncAvailability.NOT_ALLOWED], [setAncMode] sends nothing.
      */
@@ -139,8 +155,10 @@ interface BudsRepository {
     suspend fun disconnect(): BudsResult<Unit>
 
     /**
-     * Re-reads Left/Right on the user's request: a short Message Stream claim (ADR-033). The Case and each bud's charging state arrive by
-     * themselves on the runtime-info stream (ADR-043 and its 2026-09-25 Update) — nothing is requested for them. Requires an open session.
+     * Re-reads Left/Right on the user's request: a **fresh** Message Stream claim (ADR-033) — a channel still open from an earlier claim is
+     * released and opened again, because the Buds send their battery burst only when the channel opens (`ai-sessions/0052`). No burst ⇒
+     * [BudsError.NoNewBatteryReading] in [batteryRefreshError], values unchanged. Each bud's charging state and the Case arrive on the runtime-info
+     * stream (ADR-043); since ADR-043's 2026-09-26 Update a Refresh also sends one `SubscribeRuntimeInfo` request (no retry). Requires an open session.
      */
     suspend fun refreshBattery(): BudsResult<Unit>
 
@@ -153,6 +171,16 @@ interface BudsRepository {
 
     suspend fun setEqGains(gains: EqBandGains): BudsResult<Unit>
     suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit>
+
+    // ---- DLCI 0x02 settings writes (DECISIONS.md ADR-045) — one `WriteSetting` per call, through the Safe-Mode gate (ADR-042); the value in
+    // [settings] changes only on the Buds' empty RESPONSE with status OK, otherwise the previous value stays and [settingsError] says why.
+
+    /** Volume balance −100 … +100, **+100 = Left** (ADR-026); clamped. */
+    suspend fun setVolumeBalance(value: Int): BudsResult<Unit>
+    suspend fun setMonoAudio(on: Boolean): BudsResult<Unit>
+    suspend fun setConversationDetection(on: Boolean): BudsResult<Unit>
+    suspend fun setTouchControls(on: Boolean): BudsResult<Unit>
+    suspend fun setPressAndHold(bud: Bud, action: HoldAction): BudsResult<Unit>
 
     suspend fun ringBud(target: RingTarget): BudsResult<Unit>
     suspend fun stopRinging(): BudsResult<Unit>

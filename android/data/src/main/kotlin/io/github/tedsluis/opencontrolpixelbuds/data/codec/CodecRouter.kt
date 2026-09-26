@@ -41,6 +41,9 @@ sealed class RoutedFrame {
     /** The Model ID the Buds send on every Message Stream open (Safe-Mode gate, DECISIONS.md ADR-042). */
     data class ModelId(val frame: ModelIdFrame) : RoutedFrame()
     data class Eq(val frame: EqFrame) : RoutedFrame()
+
+    /** A non-EQ setting value (`4:{N: …}`, ADR-036/045) from a `ReadSetting` answer or the settings-change stream (`ai-sessions/0052`). */
+    data class Setting(val value: SettingValue) : RoutedFrame()
     data class Ring(val frame: RingFrame) : RoutedFrame()
     data class Battery(val frame: BatteryFrame) : RoutedFrame()
 
@@ -258,6 +261,7 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
     ) {
         val eq = EqFrameDecoder.decode(packet)
         if (eq is BudsResult.Success) return RoutedFrame.Eq(eq.value)
+        SettingsCodec.decode(packet.payload)?.let { return RoutedFrame.Setting(it) }
     }
     // ADR-043 (+ its 2026-09-25 Update): the runtime-info stream the app subscribes to once per Connect; the Case and each bud's charging state.
     if (method == Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO &&

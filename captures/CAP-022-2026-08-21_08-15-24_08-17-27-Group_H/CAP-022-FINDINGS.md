@@ -181,8 +181,10 @@ entry). **Not confirmed:** the value's full scale/range beyond these 7 samples, 
 (L/R) increasing/decreasing values represent — 1fps video sampling only captured 3 checkpoints
 against 7 wire values, insufficient to map specific values to specific slider positions; the
 zigzag correction narrows but does not resolve this. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s note that
-this setting is stored **locally on the earbuds** (persistent, works across devices) was **not**
-tested this session — no disconnect/reconnect cycle was captured to confirm persistence.
+this setting is stored **locally on the earbuds** holds across a reconnect: the next capture's first read returns this capture's last write: `CAP-022` frame 2099 `4:{17:10}` → `CAP-023` frame 1047 `ReadSetting` answer
+`4:{17:10}` (the next capture, 6 min later) — 🟢 FACT together with two further chains (`CAP-041`→`CAP-042`, `CAP-046`→`CAP-048`), `PROTOCOL.md`
+§4.5.7's 2026-09-26 Update (maintainer-approved in chat, `ai-sessions/0052`). (Range and polarity: ±100, +100 = Left,
+ADR-026 / `CAP-046`.)
 
 ## 6. Cross-command structural comparison
 
@@ -215,15 +217,13 @@ HYPOTHESIS, unaffected by this update.
   against video timing, each with at least 2 samples (except `AUDIO-003`, which has 7 samples from
   one continuous gesture).
 - **Recommended next step:** a capture that pauses at each Balance slider extreme (rather than a
-  continuous drag) would let the value range/direction be read directly; a disconnect/reconnect
-  after setting Balance would test the "persists on the earbud" claim.
+  continuous drag) would let the value range/direction be read directly (done: `CAP-046`, ADR-026). Persistence is settled (§5).
 
 ## 8. Open Questions
 
 - 🔴 `field 17`'s (Volume balance) numeric range and L/R direction — not resolved by a continuous
   drag alone. → copied to `PROTOCOL.md` §6.
-- 🔴 Does Volume balance actually persist locally on the earbuds across a disconnect/reconnect, as
-  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1 claims? Not tested this session. → copied to `PROTOCOL.md` §6.
+- Answered: Volume balance persists across a reconnect (🟢, §5, `PROTOCOL.md` §4.5.7 2026-09-26 Update).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-022-2026-08-21_08-15-24_08-17-27-Group_H/CAP-022-FINDINGS

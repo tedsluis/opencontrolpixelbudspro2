@@ -48,7 +48,7 @@ $ tshark -r CAP-020-btsnoop_hci.log -Y "btrfcomm.len>0 and frame.time_epoch>1787
     -e btrfcomm.direction -e data.data
 ```
 
-## 3. Analysis: `TOUCH-001` ("Use touch controls" OFF→ON)
+## 3. Analysis: `TOUCH-001` ("Use touch controls" OFF→ON→OFF)
 
 Video shows the toggle in its OFF (unchecked) state through video t=29s, a finger tap on the
 toggle at t=30s, and the toggle confirmed ON (checked, purple) by t=32s — wall clock **07:46:44**.
@@ -102,11 +102,13 @@ and 1753 (07:46:45.142917, `Rcvd`, the standard connection-serial/firmware echo 
 prior channel-(re)open in this capture, per `PROTOCOL.md` §2.2a). DLCI 0x04 and DLCI 0x0c carried
 no data in this window.
 
-**Status:** 🟡 **HYPOTHESIS** — frame 1741 is the `TOUCH-001` command, on tight (<1s) timing
-correlation with the video-observed tap and toggle-state change, with a verified CRC-32 and a
-mechanically-decoded protobuf tag structure. Not 🟢 FACT: no official Fast Pair extension documents
-this Group/field numbering (checked against the extension pages already consulted for §4.1/§4.4 of
-`PROTOCOL.md` — none cover touch controls), and this is a single capture/single sample.
+**The OFF tap** — film (`ffmpeg -ss <t> -i CAP-020-recording.mp4 -frames:v 1`, t = 63…69 s, checked by eye, `ai-sessions/0052`): the toggle is
+ON at 07:47:17–19, a finger taps it at 07:47:20, OFF from 07:47:21. Frame **1995** (07:47:20.097043, phone → Buds, channel 21):
+`7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 04 22 02 20 00 53 90 8d 4b 7e` = `WriteSetting 4:{4:0}`
+(`python3 scripts/pwrpc_decode.py CAP-020-btsnoop_hci.log`); frame 2005 carries the empty `RESPONSE` status OK and the mirrored `4:{4:0}`.
+
+**Status:** 🟢 **FACT** — `qhr` field 4 = "Use touch controls" (ADR-019, app code + frame 1741) in **both directions**: 1741 `4:{4:1}` and 1995
+`4:{4:0}`, each on film and acknowledged (`PROTOCOL.md` §4.5.3, 2026-09-26 Update, maintainer-approved in chat, `ai-sessions/0052`).
 
 ## 4. Analysis: `HEAD-001` ("Use head gestures" OFF→ON)
 
@@ -158,7 +160,7 @@ head gestures) captured on three different days — evidence the outer nesting i
 infrastructure, while each setting supplies its own inner field number/value. **Not confirmed:**
 what `field 4` vs. `field 29` represent (a per-setting/per-message-type ID?), or whether `1`/`2`
 are enable-flags specific to each setting or share a common enum — no second on/off cycle was
-captured this session (both toggles went OFF→ON only), and no official spec covers this. Flagged as
+captured for head gestures (touch controls went OFF→ON→OFF, head gestures OFF→ON only), and no official spec covers this. Flagged as
 open (§6 below), not guessed further.
 
 **Checked and ruled out — DLCI 0x08 Group `0x04` Code `0x16`:** this code's value (`08 01`/`08 02`)
@@ -179,10 +181,8 @@ this coincidence.
   inner content. **Promoted 2026-08-23** (`PROTOCOL.md` §4.5's shared preamble, `DECISIONS.md`
   ADR-013) to 🟢 FACT as a named, general-purpose envelope shape, after the pattern held across
   6 independent captures with no counter-example.
-- **Recommended next step:** a repeat capture toggling each setting back OFF (this session only
-  exercised OFF→ON for both) would (a) confirm whether `field 4`/`field 29`'s value flips to `0`
-  for "off" (supporting a simple enable-flag reading) or whether an entirely different field
-  appears, and (b) give a second independent sample before this crosses to 🟢 FACT.
+- Touch controls' OFF write is in this capture (frame 1995, `4:{4:0}`). **Recommended next step:** toggle head gestures back OFF in a future
+  capture to see whether `field 29`'s value becomes `0`.
 - **State left behind:** this session leaves Head gestures enabled (ON), which is a required
   prerequisite for the planned Group O captures (`HEAD-002`/`HEAD-003`) — already tracked in
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index row for `CAP-020`, noted here too since a
@@ -192,8 +192,7 @@ this coincidence.
 
 - 🔴 What do inner field numbers `4` (touch controls) and `29` (head gestures) represent inside the
   DLCI 0x02 `field 5{ field 4{...} }` wrapper — a per-setting message-type ID, a field-within-a-
-  larger-schema position, or something else? Not derivable from this single-direction (OFF→ON
-  only) capture. → copied to `PROTOCOL.md` §6.
+  larger-schema position, or something else? → copied to `PROTOCOL.md` §6; answered for field 4 (and 7, 12) by the `qhr` schema, §8.
 - 🔴 Does the same `field 5{ field 4{...} }` wrapper generalize to *every* `libmaestro` setting
   (§4.5's whole remaining list), or only to some? → copied to `PROTOCOL.md` §6.
 

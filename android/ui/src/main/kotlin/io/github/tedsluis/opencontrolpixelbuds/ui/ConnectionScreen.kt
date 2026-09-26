@@ -87,6 +87,7 @@ fun ConnectionScreen(
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
     safeMode: SafeModeState? = null,
+    batteryRefreshError: BudsError? = null,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
@@ -122,7 +123,7 @@ fun ConnectionScreen(
                     if (connectionState is ConnectionState.Ready) {
                         safeMode?.let { SafeModeCard(it) }
                         BudsInfoCard(deviceInfo)
-                        BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, onRefreshBattery)
+                        BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, batteryRefreshError, onRefreshBattery)
                     }
                 }
             }
@@ -281,7 +282,13 @@ private fun BudsInfoCard(deviceInfo: DeviceInfo?) {
 }
 
 @Composable
-private fun BatteryCard(status: BatteryStatus, batteryStatusUpdatedAt: Long?, caseBatteryError: BudsError?, onRefreshBattery: () -> Unit) {
+private fun BatteryCard(
+    status: BatteryStatus,
+    batteryStatusUpdatedAt: Long?,
+    caseBatteryError: BudsError?,
+    batteryRefreshError: BudsError?,
+    onRefreshBattery: () -> Unit,
+) {
     Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Battery", style = MaterialTheme.typography.titleMedium)
@@ -296,7 +303,12 @@ private fun BatteryCard(status: BatteryStatus, batteryStatusUpdatedAt: Long?, ca
             if (status.case is BatteryLevel.Unavailable) {
                 Text(caseBatteryError?.let(::caseErrorText) ?: CASE_NOT_REPORTED, style = MaterialTheme.typography.bodySmall)
             }
+            // `ai-sessions/0052`: a Refresh that brought no new reading says so — the times above are then the old ones.
+            batteryRefreshError?.let {
+                Text(it.userMessage(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
             TextButton(onClick = onRefreshBattery) { Text("Refresh battery") }
+            Text(CASE_REFRESH_NOTE, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -313,6 +325,7 @@ internal fun BudsError.userMessage(lossCause: SessionLossCause? = null): String 
     BudsError.NotPaired -> "No paired Pixel Buds found. Pair them first (Pair a device, or Android's Bluetooth settings)."
     is BudsError.CommandRejected -> "The Buds refused the command ($detail)."
     BudsError.AncNotAllowed -> ANC_NOT_ALLOWED_TEXT
+    BudsError.NoNewBatteryReading -> NO_NEW_BATTERY_READING_TEXT
     is BudsError.ChannelUnavailable ->
         "Couldn't open the ${channelLabel(channelId)}. Another app on this phone — for example Google " +
             "Play services' Fast Pair — may already be using it. Wait a few seconds, then try again."
@@ -410,6 +423,13 @@ internal fun batteryText(label: String, level: BatteryLevel.Known, updatedAt: Lo
  * Update — 🟡 "not worn", never "in the case" (`CAP-062`: `0x00` also with both buds on the table).
  */
 internal const val ANC_NOT_ALLOWED_TEXT: String = "ANC can only be changed while you wear the Buds."
+
+/** `ai-sessions/0052`: a Refresh whose claim brought no `03 03` frame — nothing new is shown. */
+internal const val NO_NEW_BATTERY_READING_TEXT: String = "No new battery reading from the Buds — try again."
+
+/** Next to the Refresh button (`ai-sessions/0052`): the Case line keeps its own time; the Buds report it only while a bud is in the case (🟢 for "charging",
+ * PROTOCOL.md §4.3 Option F). */
+internal const val CASE_REFRESH_NOTE: String = "The Buds report the Case level only while a bud is in the case."
 
 /** No Case value has been reported since the app started (I-5: a reported value stays as "last seen") — never guessed. */
 internal const val CASE_NOT_REPORTED: String =

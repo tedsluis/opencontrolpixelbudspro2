@@ -43,6 +43,7 @@ ADR-041,adr,accepted,"The wire codec is hand-written; no protobuf runtime and no
 ADR-042,adr,accepted,"Startup Handshake / Safe Mode implemented as a firmware + Model ID write gate",DECISIONS.md
 ADR-043,adr,accepted,"The Case battery comes from DLCI 0x02 SubscribeRuntimeInfo (entry 6.1); the DLCI 0x08 claim is withdrawn (supersedes ADR-035 items 1-2, ADR-038, ADR-039 item 1)",DECISIONS.md
 ADR-044,adr,accepted,"Re-open the MAESTRO session automatically while the app is visible (supersedes the 2026-09-20 no-automatic-session decision for the foreground)",DECISIONS.md
+ADR-045,adr,accepted,"DLCI 0x02 WriteSetting unblocked for qhr fields 17, 19, 22, 4 and 7 (balance, mono, conversation detection, touch controls, press-and-hold); field 12 stays gated",DECISIONS.md
 CAP-001,capture,analyzed,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,analyzed,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,analyzed,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

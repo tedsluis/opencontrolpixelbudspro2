@@ -29,6 +29,12 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.PW_HDLC_CONTROL_UI
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.PwRpc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RpcPacket
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings036
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.SettingsWrites
+import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
+import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
+import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
@@ -348,28 +354,111 @@ class BudsRepositoryImplTest {
         assertEquals(BudsError.MaestroRejected("RESPONSE UNKNOWN"), repo.eqError.first())
     }
 
+    /** The official Buds of `CAP-036`: every `ReadSetting 4:N` on channel 21 is answered with that sweep's real frame (Settings036). */
+    private fun answerReadsLikeCap036(transport: FakeBudsTransport) {
+        transport.onSent = { ch, frame ->
+            if (ch == Dlci.MAESTRO) {
+                val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+                if (rpc.methodId == Maestro.METHOD_READ_SETTING) {
+                    Settings036.ANSWERS[rpc.payload[1].toInt()]?.let { transport.emit(Dlci.MAESTRO, hex(it)) }
+                }
+            }
+        }
+    }
+
+    /** The field (`4:N`) of every `ReadSetting` the app sent, in order, and the method of every DLCI 0x02 request. */
+    private fun FakeBudsTransport.maestroRequests() = sent.filter { it.first == Dlci.MAESTRO }.map {
+        (PwRpc.decode((Hdlc.decode(it.second) as BudsResult.Success).value.payload) as BudsResult.Success).value
+    }
+
     @Test
     fun `the Connect-time read (launchInitialEqRead) waits for the announcement, then reads field 16 on that channel`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
         settle()
-        transport.onSent = { _, frame ->
-            // reply to the read with the requested quintet on the same channel; the runtime-info subscription (ADR-043) gets no reply here
-            val rpc = (PwRpc.decode(Hdlc.decode(frame).let { (it as BudsResult.Success).value.payload }) as BudsResult.Success).value
-            if (rpc.methodId == Maestro.METHOD_READ_SETTING) {
-                assertEquals("2010", rpc.payload.toHex()) // 4:16
-                transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_RESPONSE, rpc.channelId, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, quintetPayload(heavyBass))))
-            } else {
-                assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, rpc.methodId)
-            }
-        }
+        answerReadsLikeCap036(transport)
         repo.launchInitialEqRead()
         advanceTimeBy(1_000)
         assertEquals(0, transport.sent.size) // nothing is sent until the Buds have announced their channel
         transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
         settle()
 
-        assertEquals(2, transport.sent.size, "the EQ read, then the runtime-info subscription (ADR-043)")
-        assertEquals(heavyBass, repo.eqProfile.first())
+        val requests = transport.maestroRequests()
+        assertEquals("2010", requests.first().payload.toHex(), "4:16 first")
+        assertEquals(8, requests.size, "the EQ read, six settings reads (ADR-036), then the runtime-info subscription (ADR-043)")
+        assertEquals(0.3f, repo.eqProfile.first()!!.mid, 1e-4f) // CAP-036 frame 1525
+    }
+
+    @Test
+    @DisplayName("Connect reads 2, 4, 7, 17, 19, 22 byte-identical to CAP-036 1445 … 1538 and fills the settings from 1447 … 1540, with their time")
+    fun `the Connect-time settings reads`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        answerReadsLikeCap036(transport)
+        transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
+        settle()
+        advanceTimeBy(4_000)
+        repo.launchInitialEqRead()
+        settle()
+
+        val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
+        assertEquals(
+            listOf(Settings036.READ_2_REQ, Settings036.READ_4_REQ, Settings036.READ_7_REQ, Settings036.READ_17_REQ, Settings036.READ_19_REQ, Settings036.READ_22_REQ),
+            maestro.subList(1, 7),
+        )
+        assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().last().methodId)
+        assertEquals(
+            BudsSettings(
+                inEarDetection = SettingReading(true, 4_000),
+                touchControls = SettingReading(true, 4_000),
+                holdLeft = SettingReading(HoldAction.NOISE_CONTROL, 4_000),
+                holdRight = SettingReading(HoldAction.NOISE_CONTROL, 4_000),
+                volumeBalance = SettingReading(5, 4_000),
+                monoAudio = SettingReading(false, 4_000),
+                conversationDetection = SettingReading(true, 4_000),
+            ),
+            repo.settings.value,
+        )
+        assertNull(repo.settingsError.first())
+        assertEquals(emptyList<Int>(), transport.maestroRequests().filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }.filter { it == 12 })
+    }
+
+    @Test
+    fun `an unanswered or rejected settings read leaves that field not read, says why, is not retried, and the sequence goes on`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        transport.onSent = { ch, frame ->
+            val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+            if (ch == Dlci.MAESTRO && rpc.methodId == Maestro.METHOD_READ_SETTING) {
+                when (val field = rpc.payload[1].toInt()) {
+                    4 -> transport.emit(Dlci.MAESTRO, hex(Settings036.READ_REJECTED_1441)) // a real rejected read (status UNKNOWN)
+                    17 -> Unit // no answer
+                    else -> Settings036.ANSWERS[field]?.let { transport.emit(Dlci.MAESTRO, hex(it)) }
+                }
+            }
+        }
+        transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
+        settle()
+        repo.launchInitialEqRead()
+        settle()
+        advanceTimeBy(2_100) // SETTING_READ_TIMEOUT_MS for field 17
+        settle()
+
+        val reads = transport.maestroRequests().filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }
+        assertEquals(listOf(16, 2, 4, 7, 17, 19, 22), reads, "one pass, nothing retried")
+        assertNull(repo.settings.value.touchControls)
+        assertNull(repo.settings.value.volumeBalance)
+        assertEquals(true, repo.settings.value.conversationDetection?.value)
+        assertEquals(BudsError.Timeout, repo.settingsError.first(), "the last reason")
+        assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().last().methodId)
+    }
+
+    @Test
+    fun `a new connect resets the settings to not read`() = runTest {
+        val machine = buildConnectionStateMachine(driveToReady = false)
+        val (repo, transport) = buildRepository(connectionStateMachine = machine)
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_22_RESP))
+        settle()
+        assertEquals(true, repo.settings.value.conversationDetection?.value)
+        repo.connect() // stops at NotPaired, after the reset
+        assertEquals(BudsSettings(), repo.settings.value)
     }
 
     @Test
@@ -568,21 +657,15 @@ class BudsRepositoryImplTest {
     @DisplayName("Connect: EQ read, then exactly one SubscribeRuntimeInfo, byte-identical to the official app's CAP-036 frame 1410 (ADR-043)")
     fun `the Connect-time sequence subscribes to runtime info once, after the EQ read`() = runTest {
         val (repo, transport) = buildRepository()
-        transport.onSent = { ch, frame ->
-            if (ch == Dlci.MAESTRO) {
-                val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
-                if (rpc.methodId == Maestro.METHOD_READ_SETTING) {
-                    transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, quintetPayload(heavyBass))))
-                }
-            }
-        }
+        answerReadsLikeCap036(transport)
         repo.launchInitialEqRead()
         settle()
 
         val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
-        assertEquals(2, maestro.size)
-        assertEquals("7e004b0310151dea71de7d5e2590821ee66654bfab7e", maestro[1])
-        assertEquals(heavyBass, repo.eqProfile.first())
+        assertEquals(8, maestro.size, "EQ read, six settings reads, the subscription")
+        assertEquals(1, maestro.count { it == "7e004b0310151dea71de7d5e2590821ee66654bfab7e" })
+        assertEquals("7e004b0310151dea71de7d5e2590821ee66654bfab7e", maestro.last())
+        assertEquals(0.3f, repo.eqProfile.first()!!.mid, 1e-4f)
     }
 
     @Test
@@ -677,10 +760,13 @@ class BudsRepositoryImplTest {
         repo.launchInitialEqRead()
         advanceTimeBy(3_100) // MAESTRO_ANNOUNCE_WAIT_MS for the EQ read …
         runCurrent()
+        advanceTimeBy(3_100) // … for the settings reads …
+        runCurrent()
         advanceTimeBy(3_100) // … and for the subscription
         runCurrent()
 
         assertEquals(0, transport.sent.size)
+        assertEquals(BudsError.MaestroChannelUnknown(null), repo.settingsError.first())
         assertEquals(BudsError.MaestroChannelUnknown(null), repo.caseBatteryError.first())
     }
 
@@ -776,6 +862,205 @@ class BudsRepositoryImplTest {
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e8e840"))
         refresh.join()
         assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.ALLOWED, repo.ancAvailability.first())
+    }
+
+    // ---- settings writes (DECISIONS.md ADR-045, ai-sessions/0052) ---------------------------------------------------------------------
+
+    /** The Buds ACK every WriteSetting with the real empty RESPONSE of that channel (`CAP-022` 1629 on 19, `CAP-019` 1731 on 21). */
+    private fun ackWrites(transport: FakeBudsTransport, channel: Int) {
+        val ack = if (channel == 19) SettingsWrites.ACK_CH19_1629 else SettingsWrites.ACK_CH21_1731
+        transport.onSent = { ch, frame ->
+            val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+            if (ch == Dlci.MAESTRO && rpc.methodId == Maestro.METHOD_WRITE_SETTING) transport.emit(Dlci.MAESTRO, hex(ack))
+        }
+    }
+
+    @Test
+    @DisplayName("ADR-045 on channel 19: balance −100 = CAP-022 1922, mono = 1621/1823, press-and-hold = CAP-021 1895/3619/4315/4976; ACK 1629 applies each with its time")
+    fun `settings writes on channel 19 are byte-identical and applied on the ACK`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
+        ackWrites(transport, 19)
+        advanceTimeBy(2_000)
+
+        assertEquals(BudsResult.Success(Unit), repo.setVolumeBalance(-100))
+        assertEquals(SettingReading(-100, 2_000, changedByApp = true), repo.settings.value.volumeBalance)
+        assertEquals(BudsResult.Success(Unit), repo.setMonoAudio(true))
+        assertEquals(BudsResult.Success(Unit), repo.setMonoAudio(false))
+        assertEquals(BudsResult.Success(Unit), repo.setPressAndHold(Bud.LEFT, HoldAction.ASSISTANT))
+        assertEquals(BudsResult.Success(Unit), repo.setPressAndHold(Bud.RIGHT, HoldAction.ASSISTANT))
+        assertEquals(BudsResult.Success(Unit), repo.setPressAndHold(Bud.LEFT, HoldAction.NOISE_CONTROL))
+        assertEquals(BudsResult.Success(Unit), repo.setPressAndHold(Bud.RIGHT, HoldAction.NOISE_CONTROL))
+
+        assertEquals(
+            listOf(
+                SettingsWrites.BALANCE_DRAG[0].first, SettingsWrites.MONO_ON_1621, SettingsWrites.MONO_OFF_1823,
+                SettingsWrites.HOLD_LEFT_ASSISTANT_1895, SettingsWrites.HOLD_RIGHT_ASSISTANT_3619,
+                SettingsWrites.HOLD_LEFT_ANC_4315, SettingsWrites.HOLD_RIGHT_ANC_4976,
+            ),
+            transport.sent.map { it.second.toHex() },
+            "one write per call, byte for byte",
+        )
+        assertEquals(SettingReading(false, 2_000, true), repo.settings.value.monoAudio)
+        assertEquals(SettingReading(HoldAction.NOISE_CONTROL, 2_000, true), repo.settings.value.holdLeft)
+        assertEquals(SettingReading(HoldAction.NOISE_CONTROL, 2_000, true), repo.settings.value.holdRight)
+        assertNull(repo.settingsError.first())
+    }
+
+    @Test
+    @DisplayName("ADR-045 on channel 21: conversation detection OFF = CAP-019 1720, touch controls OFF = CAP-020 1995; ACK 1731")
+    fun `settings writes on channel 21 are byte-identical`() = runTest {
+        val (repo, transport) = buildRepository() // the CAP-061 announcement: channel 21
+        ackWrites(transport, 21)
+
+        assertEquals(BudsResult.Success(Unit), repo.setConversationDetection(false))
+        assertEquals(BudsResult.Success(Unit), repo.setTouchControls(false))
+        assertEquals(BudsResult.Success(Unit), repo.setTouchControls(true))
+
+        assertEquals(
+            listOf(SettingsWrites.CONV_OFF_1720, SettingsWrites.TOUCH_OFF_1995, SettingsWrites.TOUCH_ON_1741),
+            transport.sent.map { it.second.toHex() },
+        )
+        assertEquals(false, repo.settings.value.conversationDetection?.value)
+        assertEquals(true, repo.settings.value.touchControls?.value)
+    }
+
+    @Test
+    fun `a write the Buds never answer is a Timeout and the value read at Connect stays`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_19_RESP)); settle() // read: mono off
+        val read = repo.settings.value.monoAudio
+        transport.onSent = null
+
+        val result = repo.setMonoAudio(true)
+
+        assertEquals(BudsError.Timeout, (result as BudsResult.Failure).error)
+        assertEquals(1, transport.sent.size, "sent once, never retried")
+        assertEquals(read, repo.settings.value.monoAudio, "never optimistic")
+        assertEquals(BudsError.Timeout, repo.settingsError.first())
+    }
+
+    @Test
+    @DisplayName("an error status keeps the previous value and shows the reason (supplementary: hand-built RESPONSE with status 5 — no capture has a rejected write)")
+    fun `a rejected write keeps the previous value`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_22_RESP)); settle()
+        transport.onSent = { _, _ ->
+            transport.emit(Dlci.MAESTRO, rpcFrame(10496, RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_WRITE_SETTING, status = 5)))
+        }
+
+        val result = repo.setConversationDetection(false)
+
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), (result as BudsResult.Failure).error)
+        assertEquals(true, repo.settings.value.conversationDetection?.value)
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), repo.settingsError.first())
+    }
+
+    @Test
+    fun `Safe Mode refuses every settings write and sends nothing (ADR-042)`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_6.000"))
+        settle()
+
+        for (r in listOf(
+            repo.setVolumeBalance(40), repo.setMonoAudio(true), repo.setConversationDetection(true),
+            repo.setTouchControls(false), repo.setPressAndHold(Bud.LEFT, HoldAction.ASSISTANT),
+        )) assertEquals(BudsError.UnsupportedFirmware, (r as BudsResult.Failure).error)
+        assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent)
+        assertEquals(BudsSettings(), repo.settings.value)
+    }
+
+    @Test
+    fun `no settings write while the session is not Ready`() = runTest {
+        val (repo, transport) = buildRepository(connectionStateMachine = buildConnectionStateMachine(driveToReady = false))
+        assertEquals(BudsError.ConnectionLost, (repo.setMonoAudio(true) as BudsResult.Failure).error)
+        assertEquals(0, transport.sent.size)
+    }
+
+    // ---- Refresh battery (ai-sessions/0052): always a fresh claim; no burst is said, never suggested ------------------------------------
+
+    /** The Buds of the CAP-062 06:46:29 Refresh: on every open the Model ID and the battery burst (frame 7106), a `Get` answered by 7110. */
+    private fun scriptRefreshBuds(transport: FakeBudsTransport, burst: Boolean = true) {
+        transport.onOpenChannel = { ch ->
+            if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM) {
+                transport.emit(ch, MODEL_ID_PRO_2)
+                if (burst) transport.emit(ch, hex(Cap062.BATTERY_BURST_7106))
+            }
+        }
+        transport.onSent = { ch, frame -> if (frame.toHex() == Cap062.GET_ANC_7098) transport.emit(ch, hex(Cap062.NOTIFY_7110)) }
+    }
+
+    @Test
+    @DisplayName("Refresh inside the linger: the lingering claim is released and a new one opened; CAP-062 burst 7106 stamps the new time")
+    fun `a Refresh with the channel still open releases it and claims afresh`() = runTest {
+        val (repo, transport) = buildRepository()
+        scriptRefreshBuds(transport)
+        advanceTimeBy(1_000)
+        assertEquals(BudsResult.Success(Unit), repo.refreshBattery())
+        assertEquals(BatteryLevel.Known(100, true, receivedAtMillis = 1_000), repo.batteryStatus.value.left)
+        assertEquals(true, transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM), "lingering")
+
+        advanceTimeBy(600) // inside the 1.5 s linger
+        assertEquals(BudsResult.Success(Unit), repo.refreshBattery())
+
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.FAST_PAIR_MESSAGE_STREAM), transport.openChannelCalls, "a second SABM, not a reused claim")
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.closeChannelCalls, "the lingering claim was released first")
+        assertEquals(BatteryLevel.Known(100, true, receivedAtMillis = 1_600), repo.batteryStatus.value.left)
+        assertEquals(BatteryLevel.Known(100, false, receivedAtMillis = 1_600), repo.batteryStatus.value.right)
+        assertNull(repo.batteryRefreshError.first())
+    }
+
+    @Test
+    @DisplayName("ADR-043 Update: each Refresh sends exactly one SubscribeRuntimeInfo, byte-identical to CAP-062 2777; no answer changes nothing")
+    fun `a Refresh re-subscribes to runtime info once`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)) // channel 19, as in CAP-062
+        advanceTimeBy(1_000); transport.emit(Dlci.MAESTRO, hex(Cap062.STREAM_BOTH_4845)); settle() // a Case value with its time
+        scriptRefreshBuds(transport)
+        val case = repo.batteryStatus.value.case
+
+        repo.refreshBattery(); settle()
+        advanceTimeBy(5_000)
+        repo.refreshBattery(); settle()
+        advanceTimeBy(5_000); settle()
+
+        val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
+        assertEquals(listOf(Cap062.SUBSCRIBE_RUNTIME_INFO_2777, Cap062.SUBSCRIBE_RUNTIME_INFO_2777), maestro, "one per Refresh, nothing else, no retry")
+        assertEquals(case, repo.batteryStatus.value.case, "no answer: the Case keeps its value and its time")
+        assertNull(repo.caseBatteryError.first())
+    }
+
+    @Test
+    fun `a Refresh whose claim brings no battery frame says so and keeps the old values and times`() = runTest {
+        val (repo, transport) = buildRepository()
+        scriptRefreshBuds(transport)
+        advanceTimeBy(1_000)
+        repo.refreshBattery()
+        scriptRefreshBuds(transport, burst = false)
+        advanceTimeBy(5_000) // the first claim is released by now
+
+        val result = repo.refreshBattery()
+
+        assertEquals(BudsError.NoNewBatteryReading, (result as BudsResult.Failure).error)
+        assertEquals(BudsError.NoNewBatteryReading, repo.batteryRefreshError.first())
+        assertEquals(BatteryLevel.Known(100, true, receivedAtMillis = 1_000), repo.batteryStatus.value.left, "no new time is suggested")
+    }
+
+    @Test
+    fun `a Refresh whose claim fails reports the claim's error and changes no value`() = runTest {
+        val (repo, transport) = buildRepository()
+        scriptRefreshBuds(transport)
+        advanceTimeBy(1_000)
+        repo.refreshBattery()
+        advanceTimeBy(5_000)
+        val busy = BudsError.ChannelUnavailable(Dlci.FAST_PAIR_MESSAGE_STREAM, "busy")
+        transport.openChannelShouldFail = busy
+
+        val result = repo.refreshBattery()
+
+        assertEquals(busy, (result as BudsResult.Failure).error)
+        assertEquals(busy, repo.batteryRefreshError.first())
+        assertEquals(BatteryLevel.Known(100, true, receivedAtMillis = 1_000), repo.batteryStatus.value.left)
     }
 
     // ---- I-7 (ai-sessions/0048): the loss cause follows Android's link around the loss ------------------------------------------

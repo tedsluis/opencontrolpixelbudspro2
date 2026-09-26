@@ -22,11 +22,11 @@ package io.github.tedsluis.opencontrolpixelbuds.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -39,6 +39,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
@@ -95,16 +96,45 @@ fun EqScreen(
             item { EqBandSlider("Low bass", shown.lowBass, enabled) { onGainsChanged(shown.copy(lowBass = it)) } }
 
             item { Text("Presets", style = MaterialTheme.typography.titleMedium) }
-            items(EqPreset.entries) { preset ->
-                AssistChip(
-                    onClick = { onPresetSelected(preset) },
-                    enabled = enabled,
-                    label = { Text(preset.name.replace('_', ' ')) },
-                )
+            item { EqPresetRows(enabled, onPresetSelected) }
+        }
+    }
+}
+
+/**
+ * The presets in rows of three (`ai-sessions/0052`, the maintainer's choice "2 rijen: 3 + 2"): `[HEAVY BASS] [LIGHT BASS] [BALANCED]` /
+ * `[VOCAL BOOST] [CLARITY]`. One [Row] per chunk with equal-width chips — not `FlowRow`, which is `@ExperimentalLayoutApi` in the pinned
+ * `foundation-layout` 1.7.0 (`ai-sessions/0051` §11). A smaller label style keeps "VOCAL BOOST" on one line in a third of a 360 dp screen.
+ */
+@Composable
+private fun EqPresetRows(enabled: Boolean, onPresetSelected: (EqPreset) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        EqPreset.entries.chunked(PRESETS_PER_ROW).forEach { row ->
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { preset ->
+                    AssistChip(
+                        onClick = { onPresetSelected(preset) },
+                        enabled = enabled,
+                        modifier = Modifier.weight(1f),
+                        label = {
+                            Text(
+                                preset.name.replace('_', ' '),
+                                style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        },
+                    )
+                }
+                // The short last row keeps the same chip width as the full ones.
+                repeat(PRESETS_PER_ROW - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
 }
+
+private const val PRESETS_PER_ROW = 3
 
 /**
  * `ai-sessions/0041`: the EQ is *read* from the Buds at Connect (`ReadSetting 4:16`, DECISIONS.md ADR-034), so the "unknown"

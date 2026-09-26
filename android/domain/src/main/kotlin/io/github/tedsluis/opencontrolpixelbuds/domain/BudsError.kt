@@ -76,6 +76,13 @@ sealed class BudsError {
     data object AncNotAllowed : BudsError()
 
     /**
+     * *Refresh battery* reached the Message Stream but the Buds sent no "Battery updated" (`03 03`) frame on that claim (`ai-sessions/0052`): the
+     * Left/Right values and their times are unchanged — the screen must not suggest a new reading. The Buds send the frame on every fresh open
+     * (120 of 120 app opens, `ai-sessions/0051` §9).
+     */
+    data object NoNewBatteryReading : BudsError()
+
+    /**
      * The Buds did not announce which pw_rpc channel this connection uses (their unsolicited `GetSoftwareInfo`
      * push, DECISIONS.md ADR-034) or announced one this app has no known HDLC address for. [channelId] is `null`
      * when nothing was announced in time. Nothing is sent — the app never guesses a channel or an address.

@@ -42,13 +42,27 @@ object Maestro {
     const val FIELD_EQ_ACTIVE = 16
     const val FIELD_EQ_SAVED = 18
 
-    /** The only settings a read may name (ADR-034 unblocks EQ 16/18 only). */
-    val READABLE_FIELDS: Set<Int> = setOf(FIELD_EQ_ACTIVE, FIELD_EQ_SAVED)
+    /** The EQ quintet fields (the only ones [EqFrameDecoder] reads). */
+    val EQ_FIELDS: Set<Int> = setOf(FIELD_EQ_ACTIVE, FIELD_EQ_SAVED)
+
+    /**
+     * The only settings a read may name: EQ 16/18 (ADR-034) and — `ai-sessions/0052`, ADR-036 — 2 (in-ear detection setting), 4 (touch
+     * controls), 7 (press-and-hold), 17 (balance), 19 (mono), 22 (conversation detection). Not 11, 15, 27, 28 (allowed by ADR-036, not asked
+     * for) and never 12 (not in ADR-036; its bit order is disputed, PROTOCOL.md §4.5.3).
+     */
+    val READABLE_FIELDS: Set<Int> = EQ_FIELDS + setOf(
+        SettingsCodec.FIELD_IN_EAR_DETECTION,
+        SettingsCodec.FIELD_TOUCH_CONTROLS,
+        SettingsCodec.FIELD_PRESS_AND_HOLD,
+        SettingsCodec.FIELD_VOLUME_BALANCE,
+        SettingsCodec.FIELD_MONO_AUDIO,
+        SettingsCodec.FIELD_CONVERSATION_DETECTION,
+    )
 
     /**
      * `ReadSetting` request for one `qhr` field: payload = protobuf `4:N` (`20 <N>`), byte-identical to
-     * `CAP-036` frame 1523 (`10 15 1d ea 71 de 7e 25 51 ae d0 ae 2a 02 20 10`). Returns null for a field ADR-034
-     * does not unblock — a caller can never send an arbitrary setting read.
+     * `CAP-036` frame 1523 (`10 15 1d ea 71 de 7e 25 51 ae d0 ae 2a 02 20 10`) and, for the settings, frames 1445/1451/1457/1526/1532/1538.
+     * Returns null for a field not in [READABLE_FIELDS] — a caller can never send an arbitrary setting read.
      */
     fun readSettingRequest(channelId: Int, field: Int): RpcPacket? {
         if (field !in READABLE_FIELDS) return null

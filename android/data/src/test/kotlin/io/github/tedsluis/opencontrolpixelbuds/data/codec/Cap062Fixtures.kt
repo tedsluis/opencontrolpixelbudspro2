@@ -52,6 +52,24 @@ internal object Cap062 {
     /** Frame 9783: ACK of a Ring. */
     const val RING_ACK = "ff010003040100"
 
+    // ---- the *Refresh battery* claim at 06:46:29 (`ai-sessions/0052`; debug export lines 308–314) ----
+    // `tshark -r CAP-062-btsnoop_hci.log -Y 'bthci_acl.chandle==0x000b && btrfcomm.dlci==4 && frame.time >= "2026-09-25 06:46:29" &&
+    //  frame.time <= "2026-09-25 06:46:31.5"' -T fields -e frame.number -e frame.time -e frame.p2p_dir -e btrfcomm.frame_type -e data.data`:
+    // SABM 7088, UA 7090, app `08 11 00 00` 7098, Device Information 7101, burst 7106 + 7109 (two frames in one RFCOMM payload), Notify 7110.
+
+    /** Frame 2777 (06:41:07.121), app → Buds on DLCI 0x02, channel 19: the Connect-time `SubscribeRuntimeInfo` REQUEST (ADR-043) — the bytes a
+     *  Refresh re-sends (ADR-043 Update 2026-09-26). Answered by the stream packet 2782 ([STREAM_NONE_2782]). */
+    const val SUBSCRIBE_RUNTIME_INFO_2777 = "7e003b0310131dea71de7d5e2590821ee6602d65a97e"
+
+    /** Frame 7098, app → Buds: `Get ANC state`. */
+    const val GET_ANC_7098 = "08110000"
+
+    /** Frame 7106: "Battery updated" — Left `e4` = 100 % charging, Right `64` = 100 % not charging, Case byte `ff`. */
+    const val BATTERY_BURST_7106 = "03030003e464ff"
+
+    /** Frame 7110: the Notify answering 7098 — Settable `00`, mode OFF. */
+    const val NOTIFY_7110 = "0813000401e80020"
+
     // ---- DLCI 0x02 `SubscribeRuntimeInfo` SERVER_STREAM packets, whole pw_hdlc frames (flags, escapes and CRC as on the wire) ----
 
     /** Frame 2782 (ch 19, 06:41:07): `3:0 6:{2:{1:100 2:1} 3:{1:100 2:1}} 7:{1:0 2:0 3:0}` — no bud charging, no Case entry. */

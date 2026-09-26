@@ -2049,6 +2049,14 @@ motivated this).
   shown as "charging in the case" per bud. A packet without 6.1 no longer blanks the Case: the last value stays with "last seen HH:MM:SS"
   (`AGENTS.md` §5: a dated last-seen value, never a fabricated one). Nothing new is sent.
 
+- **Update (2026-09-26, `ai-sessions/0052`, maintainer-approved in chat 2026-09-26, `AskUserQuestion` "ADRs", option *"D-2 Refresh re-subscribes"*,
+  input approved in `ai-sessions/0051` §20 — draft D-2 there):** *Refresh battery* additionally sends **one** `SubscribeRuntimeInfo` REQUEST — the
+  Connect-time bytes of item 1 (`CAP-062` frame 2777 `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 60 2d 65 a9 7e` on channel 19) — on the announced
+  channel while the session is open. Nothing else new. No answer within 1 s ⇒ nothing is retried and the Case stays as it was, with its own time
+  (`AGENTS.md` §5). Why: while the buds sit in the case the stream is silent between dock changes (`CAP-062` 06:46:57–06:48:52), so the Case % and its time
+  go stale; whether the Buds answer a second subscription on an open channel is 🔴 untested (no capture ever carried one — `ai-sessions/0051` §6: 141
+  requests in 44 captures, one per connection). Hardware-verify in Group AY before relying on it; if it is never answered, withdraw it.
+
 ## ADR-044 — Re-open the MAESTRO session automatically while the app is visible
 
 - **Date**: 2026-09-25
@@ -2072,6 +2080,36 @@ motivated this).
 - **Consequences**: `BudsRepositoryImpl`'s loss handling and `:app`'s visibility/`OsConnectionObserver` events gain a bounded re-open;
   `ARCHITECTURE.md` §6/§6.0b are updated when it is built. Each re-open repeats the Connect sequence (DLCI 0x02 open, `ReadSetting 4:16`,
   `SubscribeRuntimeInfo`; the DLCI 0x04 snapshot claim, ADR-032). Option (c) stays an unbuilt proposal.
+
+## ADR-045 — DLCI 0x02: `WriteSetting` unblocked for `qhr` fields 17, 19, 22, 4 and 7 (balance, mono, conversation detection, touch controls, press-and-hold)
+
+- **Date**: 2026-09-26
+- **Status**: Accepted (maintainer, chat 2026-09-26, `ai-sessions/0052`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0051` §19, draft D-3); approved as input for this session by the maintainer in chat on
+  2026-09-26 (`ai-sessions/0051` §20, "D-3 settings-write ADR") and re-confirmed in this session's chat (`AskUserQuestion` "ADRs", option *"D-3 ADR-045
+  writes"*, with this text in the preview), per `AGENTS.md` §6. Fields 22 and 4 depend on the `PROTOCOL.md` §4.5.1/§4.5.3 2026-09-26 Updates (D-1(a)/(b)),
+  approved in the same chat.
+- **Context**: ADR-036 unblocked `ReadSetting` for the `qhr` fields at FACT identity and said "every write is a later, separate ADR". The official app's
+  writes to these fields are all acknowledged: fields 17/19 30 of 30, fields 2/4/7/12/22 36 of 36 (`ai-sessions/0051` §7, §15), each by an empty `RESPONSE`
+  status OK and mirrored on `SubscribeToSettingsChanges`. The EQ write path (ADR-020/034) already establishes the envelope, the channel rule and the
+  acknowledgement (ADR-034 Update, 12/12 of the app's own writes).
+- **Options considered**: (a) keep writes gated (read-only settings only); (b) this decision, for the five fields whose value semantics are 🟢 in both
+  directions; (c) (b) plus field 12 (the ANC-mode list) — rejected: its bit order is disputed (`PROTOCOL.md` §4.5.3 2026-09-26 Update, 🔴).
+- **Decision**: `WriteSetting` (`maestro_pw.Maestro`, payload `4:{N: …}`) is unblocked for:
+  1. **17** — Volume balance, `sint32` (zigzag) −100 … +100, +100 = Left, −100 = Right (ADR-026); e.g. `CAP-022` frame 1922 `4:{17:199}` (= −100).
+  2. **19** — Mono audio, 0/1 (`CAP-022` 1621 `4:{19:1}`, 1823 `4:{19:0}`).
+  3. **22** — Conversation detection, 0/1 (`CAP-019` 1720 `4:{22:0}`, 1808 `4:{22:1}`).
+  4. **4** — Use touch controls, 0/1 (`CAP-020` 1741 `4:{4:1}`, 1995 `4:{4:0}`).
+  5. **7** — press-and-hold action per bud, `7{1|2:{4:{1:5|6}}}` (1 = Left, 2 = Right; 5 = Active noise control, 6 = Digital assistant; `CAP-021`
+     1895/3619/4315/4976).
+
+  Each request is byte-identical to the official app's captured write for the same channel; it goes on the channel the Buds announced with its ADR-034
+  address, passes the Safe-Mode gate (ADR-042), is sent once per user action, and counts as done only on the empty `RESPONSE` with status OK — otherwise
+  the previous value stays and the reason is shown. The current value is read at Connect (ADR-036) and shown with its receive time. **Field 12 stays
+  read- and write-gated.** No `SubscribeToSettingsChanges`.
+- **Consequences**: `:data` gains a settings codec (`4:{N:varint}`, zigzag for 17, field 7's nested shape) and one write per field in
+  `BudsRepositoryImpl`; `Maestro.READABLE_FIELDS` gains 2, 4, 7, 17, 19, 22 (ADR-036); the UI shows the values with their time. Audibility (balance, mono)
+  and conversation detection's behaviour are not established by this ADR — the Group AY re-test.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

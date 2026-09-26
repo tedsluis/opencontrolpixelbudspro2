@@ -50,7 +50,7 @@ object EqFrameDecoder {
         val (outerTag, afterOuterTag) = Varint.decode(payload, i) ?: return bad()
         i = afterOuterTag
         val outerField = outerTag shr 3
-        if ((outerTag and 0x7) != 2 || outerField !in Maestro.READABLE_FIELDS) return bad()
+        if ((outerTag and 0x7) != 2 || outerField !in Maestro.EQ_FIELDS) return bad()
 
         val innerLen = payload.getOrNull(i)?.toInt()?.and(0xFF) ?: return bad()
         i++

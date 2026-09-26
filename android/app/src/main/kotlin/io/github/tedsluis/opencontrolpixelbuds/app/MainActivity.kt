@@ -255,6 +255,7 @@ class MainActivity : ComponentActivity() {
             val batteryStatusUpdatedAt by budsRepository.batteryStatusUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val caseBatteryError by budsRepository.caseBatteryError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
+            val batteryRefreshError by budsRepository.batteryRefreshError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val safeMode by budsRepository.safeMode.collectAsStateWithLifecycle(initialValue = null as SafeModeState?)
             val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
             val ringing by budsRepository.ringing.collectAsStateWithLifecycle(initialValue = null as RingNotice?)
@@ -347,6 +348,7 @@ class MainActivity : ComponentActivity() {
                 ancModeUpdatedAt = ancModeUpdatedAt,
                 ancAvailability = ancAvailability,
                 caseBatteryError = caseBatteryError,
+                batteryRefreshError = batteryRefreshError,
                 safeMode = safeMode,
                 deviceInfo = deviceInfo,
                 ringing = ringing,

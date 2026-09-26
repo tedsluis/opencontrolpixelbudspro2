@@ -90,8 +90,9 @@ read directly.
 
 - [x] Identify which DLCI/channel carries each command frame. → DLCI 0x02 for all three.
 - [x] For `AUDIO-003`: confirm the persistent-write claim (survives disconnect/reconnect)? →
-      **Not tested this session** — no disconnect/reconnect cycle was captured. Flagged as an
-      open follow-up, not assumed either way.
+      **Yes** — no reconnect in this session, but the next capture's first read returns this capture's last write: `CAP-022` frame 2099 `4:{17:10}` → `CAP-023` frame 1047 `ReadSetting` answer
+      `4:{17:10}` (the next capture, 6 min later) — 🟢 FACT together with two further chains (`CAP-041`→`CAP-042`, `CAP-046`→`CAP-048`), `PROTOCOL.md`
+      §4.5.7's 2026-09-26 Update (maintainer-approved in chat, `ai-sessions/0052`).
 - [x] Compare structure against `PROTOCOL.md` §2's envelope hypotheses. → Matches the DLCI 0x02
       HDLC/CRC-32 `field5{field4{...}}` envelope exactly.
 

@@ -31,8 +31,8 @@ adjacent controls.
 
 **Actual session shape (video-confirmed):** t=0–~28s is Bluetooth reconnect + app navigation
 (quick-settings → connect → open app → briefly detour into system audio volume, not part of either
-Test-ID) → "Device details". Both settings were found **OFF** at the start and switched **ON**
-once each (a single isolated OFF→ON transition per Test-ID, not a second opposite-direction repeat).
+Test-ID) → "Device details". Conversation detection was found **ON**, switched **OFF** at 07:36:29 and back **ON** at 07:36:41 (both
+taps on film, each with its own DLCI 0x02 write — frames 1720 and 1808); Multipoint was found **OFF** and switched **ON** once.
 
 ## Event Timeline
 
@@ -40,6 +40,7 @@ once each (a single isolated OFF→ON transition per Test-ID, not a second oppos
 |---|---|---|---|---|
 | 07:35:50 | Video start | — | — | Video first frame |
 | 07:35:5x–07:36:2x | Bluetooth reconnect; app opened; brief detour into system "Sound" (media volume) screen, then "Device details" → "Sound" (the Buds' own sound screen, distinct from the system one) | User (App) | — | Connection/handshake burst on DLCI 0x02/0x04/0x08, matches `CAP-004-FINDINGS.md` §5a's known one-time capability shape |
+| **07:36:29** (tap; ON at 07:36:26–28, OFF on-screen from 07:36:30) | **Toggle 'Conversation detection' ON→OFF**, same screen | User (App) | `CONV-001` | **Frame 1720** (DLCI 0x02, phone → Buds, 07:36:28.595706) `WriteSetting 4:{22:0}` → empty `RESPONSE` status OK frame 1731 (07:36:29.166794), mirrored in 1730 — see `CAP-019-FINDINGS.md` §3 |
 | **07:36:41** (tap; confirmed ON on-screen 07:36:42) | **Toggle 'Conversation detection' OFF→ON**, under Device details → Sound → Audio intelligence | User (App) | `CONV-001` | **Frame 1808** (DLCI 0x02, `Sent`/ctrl `0x4b`, 07:36:40.238522) — see §Decode. Rcvd echo: frames 1812 (07:36:40.322594), 1813 (07:36:40.323574) |
 | 07:36:5x–07:37:5x | Navigate back to Device details → "More settings" | User (App) | — | No RFCOMM data (navigation only) |
 | **~07:38:01.6** (wire write; on-screen toggle transition visible at t≈132s/07:38:02, confirmed ON by 07:38:03) | **Toggle 'Multipoint' OFF→ON**, under Device details → More settings | User (App) | `MULTI-001` | **Frame 2293** (DLCI 0x02, `Sent`/ctrl `0x4b`, 07:38:01.609130) — see §Decode. Rcvd echo: frame 2295 (07:38:01.640548). **Also triggers a Fast Pair Message Stream SASS burst** on DLCI 0x04 (Group `0x07`, frames 2296–2319, 07:38:01.641–07:38:02.047) — see §Decode. |

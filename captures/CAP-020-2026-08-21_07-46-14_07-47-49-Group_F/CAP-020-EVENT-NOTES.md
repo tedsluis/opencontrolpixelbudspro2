@@ -31,9 +31,8 @@ it ON at the end, satisfying that dependency.
 **Actual session shape (video-confirmed):** t=0–24s is Bluetooth reconnect (Bluetooth was off at
 video start) and app navigation (Bluetooth quick-settings → connect → open Pixel Buds app →
 "Device details" → "Controls and gestures"), not itself part of either Test-ID. Both toggles were
-found **already OFF** at the start of this session and were switched **ON** once each — a single
-isolated action per toggle, matching the Group's "on/off" framing as one directional transition
-captured this session (not a second, opposite-direction repeat).
+found **already OFF** at the start of this session and were switched **ON** once each; "Use touch controls" was then switched **OFF**
+again at 07:47:20 (on film, frame 1995 — re-checked `ai-sessions/0052`).
 
 ## Event Timeline
 
@@ -44,7 +43,8 @@ captured this session (not a second, opposite-direction repeat).
 | 07:46:2x–07:46:44 | Navigate: connect device row → open Pixel Buds app → "Device details" → "Controls and gestures" | User (App) | — | No RFCOMM data traffic (navigation only, no query) |
 | **07:46:44** (video t=30s, tap seen mid-transition; confirmed ON by t=32s) | **Toggle 'Use touch controls' OFF→ON** | User (App) | `TOUCH-001` | **Frame 1741** (DLCI 0x02, Sent, 07:46:44.850477) — see §Decode below. ACK/Rcvd echo: frames 1749 (07:46:45.106282), 1750/1751 (DLCI 0x08, 07:46:45.140–.142, one-time capability strings — coincidental, part of a channel-reopen burst, not touch-controls-specific), 1753 (07:46:45.142917) |
 | 07:47:00 (video t=46s tap; "Optimize head gestures" info dialog shown 07:47:01–07:47:03; final ON confirmed on-screen 07:47:04) | **Toggle 'Use head gestures' OFF→ON** | User (App) | `HEAD-001` | **Frame 1935** (DLCI 0x02, Sent, 07:47:00.005060) — see §Decode below. ACK/Rcvd echo: frames 1939 (07:47:00.441100), 1942 (07:47:00.444725). The wire write precedes the on-screen "Optimize head gestures" explainer dialog by ~1s and has no separate wire action tied to the dialog's dismissal — the dialog is client-side-only. |
-| 07:46:56–07:47:49 | Screen remains on "Controls and gestures" with both toggles ON; one incidental, non-navigating tap near the "Left/Active noise control" row around video t=63–66s (07:47:17–20) produces no visible screen change | User (App, incidental) | — | No corresponding DLCI 0x02/0x04/0x08 data frame found in that window — consistent with a tap that didn't register as a state change |
+| 07:46:56–07:47:19 | Screen remains on "Controls and gestures" with both toggles ON | — | — | — |
+| **07:47:20** (tap; ON at 07:47:17–19, OFF on-screen from 07:47:21) | **Toggle 'Use touch controls' ON→OFF** | User (App) | `TOUCH-001` | **Frame 1995** (DLCI 0x02, phone → Buds, 07:47:20.097043) `WriteSetting 4:{4:0}` → empty `RESPONSE` status OK + mirrored `4:{4:0}`, frame 2005 (07:47:20.629698) — see `CAP-020-FINDINGS.md` §3 |
 | 07:47:49 | Video end | — | — | Video last frame |
 
 ## Decode (DLCI 0x02, `libmaestro` Pigweed `pw_hdlc` channel, `PROTOCOL.md` §2.2a)

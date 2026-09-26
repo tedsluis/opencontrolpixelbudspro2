@@ -59,15 +59,21 @@ not reproduced in full here) — this is HFP's standard Service Level Connection
 custom settings-toggle channel. Rules this DLCI out as carrying app-specific behavior; not
 investigated further.
 
-## 3. Analysis: `CONV-001` (Conversation detection OFF→ON)
+## 3. Analysis: `CONV-001` (Conversation detection ON→OFF→ON)
 
 **Location correction against the planned-row assumption:** Conversation detection is not a
 top-level Device-details item — it is under **Device details → Sound → Audio intelligence**.
 
-Video: toggle OFF at t=44–50s, finger tap at t=51s (07:36:41), confirmed ON (purple, checkmark)
-by t=52s (07:36:42).
+Video: toggle ON at t=36–38s (07:36:26–28), finger tap at t=39s (07:36:29), OFF from t=40s (07:36:30) through t=50s; finger tap at
+t=51s (07:36:41), confirmed ON (purple, checkmark) by t=52s (07:36:42). (Frames extracted with `ffmpeg -ss <t> -i CAP-019-recording.mp4
+-frames:v 1` at t = 36…42 s and checked by eye, `ai-sessions/0052`.)
 
-One `Sent`-direction (ctrl `0x4b`) DLCI 0x02 frame lands in this exact window — frame **1808**,
+**The OFF tap** — frame **1720** (`07:36:28.595706`, phone → Buds), channel 21:
+`7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 b0 01 00 22 5f c3 b7 7e` — `python3 scripts/pwrpc_decode.py CAP-019-btsnoop_hci.log`
+reads `REQUEST ch=21 maestro_pw.Maestro/WriteSetting | 4:{22:0}`; the Buds answer with an empty `RESPONSE` status OK in frame 1731
+(`7e 00 a5 03 08 01 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 03 6d 4e d8 7e`) and mirror `4:{22:0}` on `SubscribeToSettingsChanges` in frame 1730.
+
+**The ON tap** — one `Sent`-direction (ctrl `0x4b`) DLCI 0x02 frame lands in this exact window — frame **1808**,
 `07:36:40.238522` (~0.8s before the video-visible tap, well within this project's established
 timing-heuristic tolerance, `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 step 3):
 
@@ -108,8 +114,9 @@ Decoded from offset 13: `field=5 wt=LD len=5 { field=4 wt=LD len=3 { field=22 wt
 Rcvd echo: frames 1812 (07:36:40.322594), 1813 (07:36:40.323574) — same shape as every other
 DLCI 0x02 write's echo in this project (`CAP-020-FINDINGS.md` §3/§4).
 
-**Status:** 🟡 **HYPOTHESIS** — frame 1808 is the `CONV-001` command, on tight timing correlation
-and a verified CRC-32/protobuf-tag decode. Single capture, no official spec coverage.
+**Status:** 🟢 **FACT** (`PROTOCOL.md` §4.5.1, 2026-09-26 Update, maintainer-approved in chat, `ai-sessions/0052`): the UI switch
+"Conversation detection" writes `qhr` field 22 in both directions — frame 1720 `4:{22:0}` (OFF) and frame 1808 `4:{22:1}` (ON), each on film,
+each acknowledged by an empty `RESPONSE` status OK (1731, 1813).
 
 ## 4. Analysis: `MULTI-001` (Multipoint OFF→ON)
 
@@ -184,13 +191,14 @@ value `2` — 🟡 HYPOTHESIS (strengthened by a 4th and 5th data point, still n
 wrapper is a general-purpose `libmaestro` settings-write envelope, with each setting owning its own
 inner field number. **Not confirmed:** whether the field number is a stable per-setting identifier
 across firmware versions/sessions, or whether value `2` for head gestures specifically means
-something beyond "enabled" (e.g. a sub-mode). No second OFF cycle was captured for any of these
-four settings yet.
+something beyond "enabled" (e.g. a sub-mode). OFF writes were captured for conversation detection (this capture, frame 1720 `4:{22:0}`)
+and touch controls (`CAP-020` frame 1995 `4:{4:0}`); not for Multipoint or head gestures.
 
 ## 6. Conclusions & Next Steps
 
-- Both `CONV-001` and `MULTI-001` isolate cleanly to a single DLCI 0x02 `Sent` frame, verified
-  CRC-32, within ~1s of the video-confirmed action — 🟡 HYPOTHESIS level.
+- `CONV-001` isolates to one DLCI 0x02 write per tap (1720 OFF, 1808 ON), both on film and acknowledged — 🟢 FACT (`PROTOCOL.md` §4.5.1).
+  `MULTI-001` isolates to a single write (frame 2293), verified CRC-32, within ~1s of the video-confirmed action — its field identity is 🟢
+  by ADR-019/025 (code), the OFF direction is not captured.
 - **New, higher-confidence finding:** Multipoint's DLCI 0x02 write is immediately followed by a
   DLCI 0x04 Group `0x07` (SASS) negotiation burst containing an ASCII `"in-use"` string — the first
   content-level, action-correlated data for this previously only structurally-identified Message
