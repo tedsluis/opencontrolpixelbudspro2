@@ -759,7 +759,9 @@ undecided (see §15's "Already decided, not open" list, updated to match).
 
 - A light logging abstraction (e.g. `BleLogger`) writes to `Logcat` and,
   optionally, to a local in-app ring buffer for an "Export debug log" feature
-  — never off-device (see `AGENTS.md` §9). This is essential because BLE
+  — never off-device (see `AGENTS.md` §9). **As built (2026-09-27):** the ring buffer keeps the last 20,000 lines and the export is written
+  whole to a file the user picks in Android's own "save as" dialog (Storage Access Framework, `ACTION_CREATE_DOCUMENT` — no permission); the
+  earlier share-sheet hand-off was cut at 65,536 bytes by the receiving app (`CAP-063-debug-export.log`). This is essential because BLE
   timing issues are often only reproducible with full logs.
 - **Always safe to log:** connection state transitions, MTU value, connection
   parameters.

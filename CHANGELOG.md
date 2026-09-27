@@ -159,6 +159,12 @@ mark v1.
   a new tab "Controls") — each value with its time, changed only on the Buds' OK. `SettingsCodec` byte-identical to the official writes (real
   fixtures from `CAP-019`–`022`/`036`/`062`), fuzzed. Tests: `:data` 1536, `:hardware` 49, `:domain` 17; six mutation checks caught.
   `ARCHITECTURE.md` §2.4 corrected ("5 presets"). New capture skeleton `CAP-063` (Group AY, Pixel 9a). Not hardware-verified.
+- **2026-09-27: debug export no longer cut at 64 KiB; `CAP-063` video timeline; prompt 0053.** The `CAP-063` debug export ended mid-line at exactly
+  65,536 bytes (the share-sheet `EXTRA_TEXT` hand-off truncated it); "Export debug log" now writes the whole log to a file the user picks in Android's
+  "save as" dialog (Storage Access Framework, no permission), and the ring buffer keeps 20,000 lines (was 1,000); `BleLoggerTest` added. `.gitattributes`:
+  `captures/**/*.log.last` goes to LFS. `CAP-063-EVENT-NOTES.md`: a first timeline from the film (1 fps, zoomed frames; the film's audio track is
+  empty), a step-mapping table (skipped/repeated steps) and open points; the planned procedure kept as Appendix A. New prompt
+  `ai-sessions/0053_CAPTURE_PROMPT_2026_09_27.md` for the full analysis.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

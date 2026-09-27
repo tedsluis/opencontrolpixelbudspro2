@@ -178,7 +178,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
 | L1 | Debug tab: switch **Debug mode** on. | "Unidentified frames (n)" list grows during use | — | | |
-| L2 | Tap **Export debug log**, share it to yourself (e.g. Files). | The log opens; it has the connection lines with times; with Debug mode on also hex lines; **no** full Buds address | — | | |
+| L2 | Tap **Export debug log**, pick a folder and file name in Android's "save as" dialog. | "Debug log saved (N lines)."; the file holds the **whole** log (not cut at 64 KiB — `CAP-063`), connection lines with times; with Debug mode on also hex lines; **no** full Buds address | — | | |
 | L3 | Debug mode off, export again. | No hex lines | — | | |
 
 ---
