@@ -44,8 +44,11 @@ import java.util.Locale
  */
 object BleLogger {
     private const val TAG = "OpenControlBuds"
-    /** 1000 lines: a 7.5-minute hardware session filled 149 (46 of them chatty observer lines, `ai-sessions/0042`); 500 would wrap in ~25 minutes. */
-    private const val RING_BUFFER_CAPACITY = 1000
+    /**
+     * 20,000 lines (≈ 2–3 MB with Debug mode's hex lines, memory only). Was 1,000: the 27-minute `CAP-063` session with Debug mode on had filled
+     * 746 lines by 16:18:29 (where its shared export was cut at 65,536 bytes) — a longer session would have wrapped it.
+     */
+    const val RING_BUFFER_CAPACITY = 20_000
 
     private val ringBuffer = ArrayDeque<String>(RING_BUFFER_CAPACITY)
     private val timestampFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)

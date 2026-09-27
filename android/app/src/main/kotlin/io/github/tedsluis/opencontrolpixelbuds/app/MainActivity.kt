@@ -81,10 +81,12 @@ import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlNavHost
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlUiState
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -165,6 +167,41 @@ class MainActivity : ComponentActivity() {
             companionPairing.cancelPendingAssociation()
             pairingStateFlow.value = null
         }
+    }
+
+    /**
+     * "Export debug log" (`ARCHITECTURE.md` §12, AGENTS.md §9 — local only): the system's own "save as" dialog (Storage Access Framework,
+     * `ACTION_CREATE_DOCUMENT` — no permission, no dependency) and the **whole** ring buffer written to the file the user picks. It replaced a
+     * share-sheet `EXTRA_TEXT` hand-off whose receiving app cut the text at exactly 65,536 bytes, mid-line (`CAP-063-debug-export.log`). The
+     * snapshot is taken at the tap, so the file holds the log as it was when the user asked for it.
+     */
+    private var pendingLogExport: String? = null
+
+    private val logExportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        val text = pendingLogExport
+        pendingLogExport = null
+        if (uri == null || text == null) return@registerForActivityResult
+        applicationScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray(Charsets.UTF_8)) }
+                        ?: error("no output stream")
+                }
+            }
+            val lines = text.count { it == '\n' } + 1
+            val message = result.fold(
+                onSuccess = { "Debug log saved ($lines lines)." },
+                onFailure = { "The debug log could not be saved: ${BleLogger.describe(it)}" },
+            )
+            BleLogger.logConnectionEvent(if (result.isSuccess) "Debug log exported ($lines lines)" else message)
+            withContext(Dispatchers.Main) { Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show() }
+        }
+    }
+
+    private fun startLogExport() {
+        pendingLogExport = BleLogger.exportLog()
+        val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date())
+        logExportLauncher.launch("opencontrol-debug-$stamp.txt")
     }
 
     private fun computePermissionState(): PermissionState {
@@ -418,16 +455,7 @@ class MainActivity : ComponentActivity() {
                 onStopRinging = { applicationScope.launch { budsRepository.stopRinging() } },
                 onRefreshBattery = { applicationScope.launch { budsRepository.refreshBattery() } },
                 onDebugModeChanged = { enabled -> applicationScope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
-                onExportLog = {
-                    // Local-only hand-off to the system share sheet (AGENTS.md §9) — the user picks the destination, this app
-                    // never transmits it anywhere itself.
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, BleLogger.exportLog())
-                        putExtra(Intent.EXTRA_TITLE, "OpenControl debug log")
-                    }
-                    startActivity(Intent.createChooser(shareIntent, "Export debug log"))
-                },
+                onExportLog = { startLogExport() },
             )
 
             MaterialTheme {

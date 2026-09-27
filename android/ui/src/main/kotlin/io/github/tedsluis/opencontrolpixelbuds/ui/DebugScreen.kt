@@ -63,10 +63,10 @@ fun DebugScreen(
                 Switch(checked = debugModeEnabled, onCheckedChange = onDebugModeChanged)
             }
 
-            // Local-only (AGENTS.md §9) — hands the ring-buffer snapshot to the system share
-            // sheet, the destination is the user's own choice, never a network call this app
-            // makes itself.
+            // Local-only (AGENTS.md §9) — the system's "save as" dialog writes the whole ring buffer to a file the user picks
+            // (`ai-sessions/0052` follow-up: the old share-sheet hand-off was cut at 64 KiB); never a network call this app makes itself.
             Button(onClick = onExportLog) { Text("Export debug log") }
+            Text("Saves the log (up to the last 20,000 lines) as a text file.", style = MaterialTheme.typography.bodySmall)
 
             HorizontalDivider()
 
