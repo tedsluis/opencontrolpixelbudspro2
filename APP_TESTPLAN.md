@@ -3,7 +3,8 @@
 **Purpose:** one run through **every function of the app** on real hardware (Pixel 9a / GrapheneOS + Pixel Buds Pro 2), with a place to
 record the result of each test. Written 2026-09-25 against the app as committed in `7498cbc` (`ai-sessions/0046`); **updated 2026-09-25 for the
 `ai-sessions/0048` build** (automatic foreground re-open ADR-044: C1, C3, C8, C9, E3–E5, G4; ANC only while worn: F8, G3; loss wording: C8; per-bud
-charging and last-seen Case: E2–E5; ring notice: I4). This is a *user-level*
+charging and last-seen Case: E2–E5; ring notice: I4); **updated 2026-09-26 for the `ai-sessions/0052` build** (the EQ tab is "Sound", a new
+"Controls" tab, presets in two rows: H0; *Refresh battery* on a fresh claim: E8, E9; settings read and written: sections M and N). This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
 
@@ -79,6 +80,8 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | E5 | Put both back (lid open). | Both "charging in the case", Case current again — by itself (automatic re-open if the Buds closed the session) | Buds `DISC` 0x02 → app `SABM` 0x02 ≈ 1.5 s later (unless the ACL dropped first) | | |
 | E6 | Wait a few minutes with the app open (buds in the case, lid open). | The Case line updates by itself if the Buds send a new value — the app does **not** poll | only Buds-initiated stream packets | | |
 | E7 | Check there is **no** dock sentence ("…seem to be in the case") anywhere. | No such sentence (removed in `ai-sessions/0046`) | — | | |
+| E8 | Buds worn, nothing done for ≥ 10 s: **Refresh battery**, then **Refresh battery twice within 1 s**. | Each Refresh stamps new "(updated …)" times, or says "No new battery reading from the Buds — try again." — never an old time shown as new; below the button "The Buds report the Case level only while a bud is in the case." (`ai-sessions/0052`) | one `SABM` 0x04 per Refresh (a lingering claim is released first: `DISC` → `SABM`), each followed by `03 03 …`; one `SubscribeRuntimeInfo` on DLCI 0x02 per Refresh | | |
+| E9 | Both buds in the case, lid open, idle 2 minutes, then **Refresh battery**. | The Case updates (the Buds answered the re-subscription) or keeps its old value and time — say which | app `SubscribeRuntimeInfo` → a `SERVER_STREAM` within 1 s, or none (ADR-043 Update, untested) | | |
 
 ## F. Noise control (ANC screen)
 
@@ -102,19 +105,45 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | G3 | Connected, Buds **worn**: tap the tile repeatedly. Then take them out and tap once more. | Worn: cycles ACTIVE → TRANSPARENT → ADAPTIVE → OFF → ACTIVE, audible; the ANC tab agrees. Not worn: subtitle "Only while worn", a tap shows "ANC can only be changed while you wear the Buds." | one `Set` per tap while worn; none while not worn | | |
 | G4 | **Not** connected: tap the tile. | The tile says "Open the app"; tapping opens the app; the app then connects by itself if Android shows the Buds connected (ADR-044) — the tile itself never connects | nothing from the tile | | |
 
-## H. Equalizer
+## H. Equalizer (tab "Sound" since `ai-sessions/0052`)
 
 Buds **in your ears** for H2–H4, and **say aloud** what you hear at each step (the film records it) — audibility has never been recorded so far
 (`PROTOCOL.md` §4.2; `ai-sessions/0050` UX-01).
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| H1 | EQ tab right after Connect. | The five sliders show the Buds' current EQ (compare with the official app if available); "EQ updated: HH:MM:SS" | `ReadSetting 4:16` + answer | | |
+| H0 | Look at the presets. | Two rows: `[HEAVY BASS] [LIGHT BASS] [BALANCED]` / `[VOCAL BOOST] [CLARITY]`, equal widths, no label cut off | — | | |
+| H1 | Sound tab right after Connect. | The five sliders show the Buds' current EQ (compare with the official app if available); "EQ updated: HH:MM:SS" | `ReadSetting 4:16` + answer | | |
 | H2 | Tap each preset: **Heavy bass, Light bass, Balanced, Vocal boost, Clarity**. | The sliders move to the preset; audible difference | one `WriteSetting` per tap, each answered `OK` | | |
 | H3 | Drag **Upper treble** up and release. | The slider stays; audible | one `WriteSetting` (on release, not per pixel) | | |
 | H4 | Drag each other band (Treble, Mid, Bass, Low bass) once. | as H3 | | | |
 | H5 | Tap **Read EQ again**. | The sliders show the value just written | `ReadSetting` | | |
 | H6 | Disconnect, Connect, open EQ. | The last written EQ is read back (it is stored in the Buds) | | | |
+
+## M. Sound settings (tab "Sound", below the presets — `ai-sessions/0052`, DECISIONS.md ADR-045)
+
+Buds **in your ears**, a stereo test file playing; say aloud what you hear. A value changes on screen only after the Buds accepted it ("changed
+HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <reason>" and the old value stays.
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| M1 | Right after Connect: read Balance, Mono audio and Conversation detection. | Each shows the Buds' value with "read HH:MM:SS" (or "Not read from the Buds yet") | `ReadSetting 4:17`, `4:19`, `4:22` + answers | | |
+| M2 | Drag **Balance** fully to **L**, release. | "Left 100 · changed …"; sound in the left ear | `WriteSetting 4:{17:200}` → empty `RESPONSE` | | |
+| M3 | Balance fully to **R**; then about halfway left; then the centre. | "Right 100", "Left NN", "Centre" | `4:{17:199}`, `4:{17:2·NN}`, `4:{17:0}` | | |
+| M4 | **Mono audio** on, then off. | switch follows after the Buds' OK; both ears play both channels while on | `4:{19:1}`, `4:{19:0}` | | |
+| M5 | **Conversation detection** off, then on; with it on, speak for 5 s (ANC on). | switch follows; say what the Buds do while you speak | `4:{22:0}`, `4:{22:1}` | | |
+| M6 | Disconnect, Connect, open Sound. | The last written values are read back ("read …") | the `ReadSetting` answers = the last writes | | |
+
+## N. Controls (tab "Controls" — `ai-sessions/0052`, DECISIONS.md ADR-045)
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| N1 | Right after Connect: open Controls. | "Use touch controls" with its value and time; "Press and hold" Left / Right: Noise control or Digital assistant; "In-ear detection (setting): on/off — read-only; not whether a bud is worn" | `ReadSetting 4:4`, `4:7`, `4:2` + answers | | |
+| N2 | **Use touch controls** off; tap a bud (music playing). Then on; tap again. | Off: the tap does nothing; on: the tap pauses/plays | `4:{4:0}`, `4:{4:1}` | | |
+| N3 | **Left: Digital assistant**, press-and-hold the Left bud; then **Left: Noise control**, hold again. | the chip follows after the Buds' OK; say what the phone/Buds do | `4:{7:{1:{4:{1:6}}}}`, `…{1:5}` | | |
+| N4 | The same for **Right**. | as N3 | `4:{7:{2:{4:{1:6}}}}`, `…{1:5}` | | |
+| N5 | Disconnect, Connect, open Controls. | the written values are read back | the `ReadSetting` answers | | |
+| N6 | Safe Mode (only if a Safe Mode card shows): tap any setting. | "The setting was not changed: Safe Mode: nothing was sent …" | nothing sent | | |
 
 ## I. Find My Buds
 
@@ -172,14 +201,16 @@ Buds **in your ears** for H2–H4, and **say aloud** what you hear at each step 
 | B Pairing | 4 | | | | |
 | C Connection | 10 | | | | |
 | D Safe Mode / firmware | 2 | | | | |
-| E Battery | 7 | | | | |
+| E Battery | 9 | | | | |
 | F ANC | 8 | | | | |
 | G ANC tile | 4 | | | | |
-| H EQ | 6 | | | | |
+| H EQ | 7 | | | | |
 | I Find My Buds | 4 | | | | |
 | J Notification | 4 | | | | |
 | K Robustness | 5 | | | | |
 | L Debug | 3 | | | | |
+| M Sound settings | 6 | | | | |
+| N Controls | 6 | | | | |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/APP_TESTPLAN.md - https://tedsluis.github.io/opencontrolpixelbudspro2/APP_TESTPLAN

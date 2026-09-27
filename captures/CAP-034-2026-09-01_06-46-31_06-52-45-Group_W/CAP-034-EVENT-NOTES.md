@@ -143,9 +143,8 @@ since `CAP-002` — see `CAP-034-FINDINGS.md` §4 for the complete table.
 
 ## Open Questions
 
-- 🔴 `FE2C1238-8366-4814-8EB0-01DE32100BEA` (handle `0x0c12`/`0x0c13`, Notify+Write+Read) has no
-  confirmed official name — checked against the Fast Pair base spec, the Message Stream extension,
-  and the Personalized Name extension; none document this UUID. See `CAP-034-FINDINGS.md` §4/§8.
+- ✅ `FE2C1238-8366-4814-8EB0-01DE32100BEA` (handle `0x0c12`/`0x0c13`, Notify+Write+Read) = Find Hub Network **Beacon actions**
+  (FHN extension page, Table 1, fetched 2026-09-26; `PROTOCOL.md` §6 2026-09-26 Update, `ai-sessions/0052`). See `CAP-034-FINDINGS.md` §4/§8.
 - 🔴 Why nRF Connect's pre-bond reads/subscribes on the Fast Pair characteristics fail locally
   (`Exception occurred`, 1ms after the call, zero wire traffic) — plausibly an Android
   GATT_BUSY-style local rejection from firing requests without awaiting callbacks, not confirmed.

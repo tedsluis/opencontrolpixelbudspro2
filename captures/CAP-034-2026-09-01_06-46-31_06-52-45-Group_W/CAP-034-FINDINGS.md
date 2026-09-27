@@ -239,7 +239,7 @@ big-endian notation.) Plus frames 3415, 3417 (`0x0c0e..0x0c13` continuation) and
 | `0x0c0b` | **`0x0c0c`** | `0x0c0d` | Notify, Write | `fe2c1237-8366-4814-8eb0-01de32100bea` | **Additional Data** |
 | `0x0c0e` | `0x0c0f` | — | Read | `0x2A26` (standard 16-bit) | Firmware Revision String (a **second**, standard-UUID copy of this characteristic, distinct from `0x0f2a`'s copy under Device Information) |
 | `0x0c10` | `0x0c11` | — | Read | `fe2c1239-8366-4814-8eb0-01de32100bea` | **Message Stream PSM Characteristic** |
-| `0x0c12` | **`0x0c13`** | `0x0c14` | Notify, Write, Read | `fe2c1238-8366-4814-8eb0-01de32100bea` | not found in any spec page checked — see §8 |
+| `0x0c12` | **`0x0c13`** | `0x0c14` | Notify, Write, Read | `fe2c1238-8366-4814-8eb0-01de32100bea` | **Beacon actions** (Find Hub Network extension) — see below |
 
 **Names verified against the official spec, fetched live (not from training-data recall) — quoted
 verbatim:**
@@ -252,8 +252,8 @@ verbatim:**
   Seeker to read the PSM value, and then establish secure L2CAP connection by the PSM value."
 - `developers.google.com/nearby/fast-pair/specifications/extensions/personalizedname`: confirms
   Personalized Name reuses the Additional Data characteristic (`FE2C1237…`), not a new UUID.
-- `FE2C1238-8366-4814-8EB0-01DE32100BEA` (handle `0x0c13`) does **not** appear on any of the three
-  pages checked above — genuinely unnamed by this pass, not guessed at (§8).
+- `FE2C1238-8366-4814-8EB0-01DE32100BEA` (handle `0x0c13`) does not appear on the three pages above; it is the Find Hub Network
+  **Beacon actions** — Google's Find Hub Network extension page (`developers.google.com/nearby/fast-pair/specifications/extensions/fmdn`, fetched 2026-09-26), Table 1: *"Beacon actions | No | Read, write and notify | `FE2C1238-8366-4814-8EB0-01DE32100BEA`"* (🟢 FACT, `PROTOCOL.md` §6 2026-09-26 Update, maintainer-approved in chat, `ai-sessions/0052`). Using it is out of scope (FHN is account/owner-key mediated, ADR-008/027).
 
 **This directly, finally resolves the byte-shape hypotheses `CAP-010-FINDINGS.md` §3 and
 `CAP-014-FINDINGS.md` §4c could only characterize structurally:**
@@ -266,7 +266,8 @@ verbatim:**
 - `0x0c13`/`0x0c14`'s distinct 9/10/32-byte shapes with a leading `0x01` byte, already flagged in
   `CAP-010-FINDINGS.md` §3 as "possibly a structurally distinct characteristic from the Key-based
   Pairing pair" — **confirmed structurally distinct**: it is UUID `FE2C1238…`, not part of the
-  Key-based-Pairing/Passkey/Account-Key/Additional-Data quartet at all, still unnamed (§8).
+  Key-based-Pairing/Passkey/Account-Key/Additional-Data quartet at all: it is FHN **Beacon actions** (above). What its 9/10/32-byte
+  payloads mean was not decoded (out of scope).
 
 ### 4.3 Video cross-check — independent confirmation from nRF Connect's own UUID database (🟢 FACT)
 
@@ -479,14 +480,8 @@ cross-check.
 
 ## 8. Open questions remaining after this session
 
-- 🔴 `FE2C1238-8366-4814-8EB0-01DE32100BEA` (handle `0x0c12`/`0x0c13`, Notify+Write+Read) has no
-  confirmed official name. Checked live against the Fast Pair base characteristics spec, the Message
-  Stream extension (`bledevice#message_stream_PSM`), and the Personalized Name extension — none
-  document this UUID. Its byte-shape characterization from `CAP-010`/`CAP-014` (leading `0x01` byte,
-  9/10/32-byte payloads) still stands unconnected to any spec name. A further spec page (e.g. a
-  Beacon Actions or other extension not yet checked) or an APK static-analysis pass
-  (`REVERSE_ENGINEERING.md`) could resolve this; not attempted further here per this session's scope
-  (BLE/GATT capture analysis, not APK analysis).
+- ✅ Answered: `FE2C1238-8366-4814-8EB0-01DE32100BEA` (handle `0x0c12`/`0x0c13`) = Find Hub Network **Beacon actions** — Google's Find Hub Network extension page (`developers.google.com/nearby/fast-pair/specifications/extensions/fmdn`, fetched 2026-09-26), Table 1: *"Beacon actions | No | Read, write and notify | `FE2C1238-8366-4814-8EB0-01DE32100BEA`"* (🟢 FACT, `PROTOCOL.md` §6 2026-09-26 Update, maintainer-approved in chat, `ai-sessions/0052`). Its
+  payloads (leading `0x01`, 9/10/32 bytes, `CAP-010`/`CAP-014`) are not decoded — out of scope (ADR-008/027).
 - 🔴 Why nRF Connect's pre-bond Fast Pair reads/subscribes fail locally with a ~1ms exception and
   zero wire traffic (§6b) — flagged as a HYPOTHESIS (local API-misuse pattern), not confirmed.
 - 🔴 "Unknown Service" (`109b862f-50e3-45cc-8ea1-ac62de4846d1`)'s own purpose remains unidentified —
@@ -501,8 +496,8 @@ capture (🟢 FACT, §4), on the strength of the primary 06:47:42.147–45.490 d
 independently corroborated by the video's own nRF-Connect-rendered UUID names (§4.3).** Stated
 plainly, not hedged beyond what the data supports: `0x0c00`–`0x0c14` is the Google Fast Pair Service
 (`0xFE2C`) with all 5 spec-defined characteristics (Model ID, Key-based Pairing, Passkey, Account
-Key, Additional Data) plus the Message Stream PSM characteristic and one still-unnamed
-`FE2C1238…` characteristic; `0x0f20`–`0x0f2a` is the standard Device Information Service; `0x0f30`–
+Key, Additional Data) plus the Message Stream PSM characteristic and the Find Hub Network **Beacon actions**
+characteristic (`FE2C1238…`, named 2026-09-26, `PROTOCOL.md` §6); `0x0f20`–`0x0f2a` is the standard Device Information Service; `0x0f30`–
 `0x0f33` is the standard Battery Service. The reconnect window (§3) contributes no independent
 second confirmation — this capture's resolution rests on one discovery pass, not two, and that pass
 is judged sufficient because it is a full, genuine `0x0001..0xffff` walk with an untruncated log and

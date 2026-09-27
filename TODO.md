@@ -685,7 +685,7 @@ lower priority than finishing ANC/Battery/EQ):**
       `tshark`-extracted fixture bytes, plus a `CodecRouter` doing per-DLCI stream buffering/frame-
       boundary detection (HDLC-flag-delimited for 0x02, length-prefixed for 0x04) that didn't exist
       in code before this session. (Later: `HfpAtParser` removed with HFP, ADR-040; Battery Option B implemented, ADR-033;
-      the other DLCI 0x02 settings have a read-only unblock, ADR-036, not yet built.)
+      the other DLCI 0x02 settings: reads (ADR-036) and writes of 17/19/22/4/7 (ADR-045) built `ai-sessions/0052`, `SettingsCodec`.)
 - [x] **Implement `BudsTransport` (RFCOMM primary, secondary GATT for case/charging characteristics)
       and `ConnectionStateMachine` — `RfcommBudsTransport`'s per-DLCI multiplexing done 2026-09-18**
       (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 4), resolving the `2026-09-13` `//
@@ -796,16 +796,24 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
 - **Hardware re-test of the `ai-sessions/0048` build (Group AY):** the automatic re-open (ADR-044), ANC disabled while not worn, per-bud
   "charging in the case", the last-seen Case, the loss wording and the ring notice — step list with HCI brackets in
   `ai-sessions/0048_FEATURE_RESULT_2026_09_25.md` §9. (The 0047 build item is done, `ai-sessions/0048`.)
-- **Next FEATURE session (maintainer's choice, `ai-sessions/0051` §20 — before the Group AY capture):** (1) record the approved texts of `0051`
+- [x] **Done 2026-09-26/27 (`ai-sessions/0052`):** D-1/D-2/D-3 recorded (`PROTOCOL.md` 2026-09-26 Updates, ADR-043 Update, ADR-045); EQ presets
+  3 + 2; *Refresh battery* on a fresh claim + "No new battery reading" + one re-subscription per Refresh; settings read at Connect (2, 4, 7, 17, 19,
+  22) and written (17, 19, 22, 4, 7) — tabs "Sound" and "Controls". Not hardware-verified: the next capture is `CAP-063` (skeleton with every step:
+  `captures/CAP-063-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AY/CAP-063-EVENT-NOTES.md`). The item below is kept as the record of what was asked.
+- ~~**Next FEATURE session (maintainer's choice, `ai-sessions/0051` §20 — before the Group AY capture):**~~ (1) record the approved texts of `0051`
   §19: D-1 (`PROTOCOL.md` §4.5.1/§4.5.3/§4.5.7/§6 status corrections — the OFF writes `CAP-019` 1720 and `CAP-020` 1995 on film, balance persistence,
   `FE2C1238…` = Find Hub "Beacon actions", the `qht` bit-order conflict), D-2 (ADR-043 Update: *Refresh battery* re-sends one `SubscribeRuntimeInfo`),
   D-3 (a new ADR, the next free number: `WriteSetting` for fields 17, 19, 22, 4, 7; field 12 stays gated); (2) EQ presets in 2 rows (3 + 2); (3) the Refresh fix of
   `0051` §9 (a Refresh inside the 1.5 s linger gets no battery burst); (4) read-only settings (ADR-036) and balance/mono/conversation detection/touch
   controls/press-and-hold per bud under that new ADR. Unit tests with the capture frames named in `0051` §7–§15.
-- **Next capture (Group AY), additions from `ai-sessions/0051` §19:** two *Refresh battery* taps within 1 s (a second DLCI 0x04 burst?); both buds
+- **Next capture (Group AY, `CAP-063` on the Pixel 9a — every step, with the `ai-sessions/0052` settings and Refresh steps, is in the skeleton
+  `CAP-063-EVENT-NOTES.md`), additions from `ai-sessions/0051` §19:** two *Refresh battery* taps within 1 s (a second DLCI 0x04 burst?); both buds
   docked, idle 2 min, Refresh → is the re-sent `SubscribeRuntimeInfo` answered?; the new settings writes (balance, mono, conversation detection,
   touch controls) with an HCI bracket each; the Group AR ANC-list re-run (planned `CAP-056`): untick only Adaptive on "Customize left", check
   "Customize right" on film, then only Transparency — settles which `qht` bit is which (`0051` F-6) and whether the list is shared.
+- **Group AR (`CAP-056`, Pixel 7a, official app) additions from `0051` F-6:** untick only Adaptive on "Customize left", check "Customize right" on
+  film, then only Transparency — settles the `qht` bit order (`PROTOCOL.md` §4.5.3 2026-09-26 Update, 🔴) and whether the list is shared; see
+  `CAP-063-EVENT-NOTES.md` §8. Only after that can field 12 get a read/write ADR.
 - **Next capture (Group AY):** I-9 Find with both buds docked (does a docked bud ring?), an EQ write while docked, the one-bud-in-an-ear test of
   "Settable `0x00` = not worn" (ADR-024 Update), **EQ audibility** (say aloud what you hear at each preset and at the ±6 extremes, APP_TESTPLAN
   H2–H4 — never recorded so far, `PROTOCOL.md` §4.2 "not established"; `ai-sessions/0050` UX-01), and the APP_TESTPLAN steps not run in `CAP-062` (A5, B4, C5, F5–F7, H5, J4, K1–K5, L3, 0045 (E)/(F));

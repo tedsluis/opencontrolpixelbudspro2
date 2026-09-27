@@ -148,6 +148,17 @@ mark v1.
   `OsConnectionObserver` now emits every reading (display debounced by the screen). Tests: `:data` 1509, `:hardware` 49, `:domain` 17; five mutation
   checks caught. `CAP-062` FINDINGS §7.2 / EVENT-NOTES corrected in place (the stale text lasted ≈ 1.5 s, film t = 240.5 s, not until t = 256 s).
   `APP_TESTPLAN.md` updated (C1, C3, C8, C9, E1–E5, F8, G3, G4, I4). Not hardware-verified — Group AY plan in the RESULT.
+- **2026-09-26/27 (`ai-sessions/0052`): `0051`'s approved proposals recorded, then the settings, the Refresh fix and the EQ layout built.**
+  Maintainer-approved in chat 2026-09-26: `PROTOCOL.md` §4.5.1 — "Conversation detection" = `qhr` field 22 🟢 (OFF write `CAP-019` 1720 on film);
+  §4.5.3 — "Use touch controls" both directions 🟢 (`CAP-020` 1995 on film) and the `qht` bit-order conflict recorded as 🔴; §4.5.7/§6 — balance
+  persists across a reconnect 🟢 (three chains); §6 — `FE2C1238…` = Find Hub "Beacon actions" 🟢. ADR-043 Update (*Refresh battery* re-sends one
+  `SubscribeRuntimeInfo`); **ADR-045** (`WriteSetting` for fields 17, 19, 22, 4, 7; field 12 gated). `CAP-019`/`020`/`022` findings rewritten in place.
+  App: EQ presets in two rows (3 + 2); *Refresh battery* always on a fresh Message Stream claim (the Buds send the battery burst only on an open) with
+  "No new battery reading from the Buds — try again." when none arrives, and a Case note; settings read at Connect (2, 4, 7, 17, 19, 22) and written
+  (balance, mono, conversation detection on the tab renamed "Sound"; touch controls, press-and-hold per bud, the in-ear detection setting read-only on
+  a new tab "Controls") — each value with its time, changed only on the Buds' OK. `SettingsCodec` byte-identical to the official writes (real
+  fixtures from `CAP-019`–`022`/`036`/`062`), fuzzed. Tests: `:data` 1536, `:hardware` 49, `:domain` 17; six mutation checks caught.
+  `ARCHITECTURE.md` §2.4 corrected ("5 presets"). New capture skeleton `CAP-063` (Group AY, Pixel 9a). Not hardware-verified.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

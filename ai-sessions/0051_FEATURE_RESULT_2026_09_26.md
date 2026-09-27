@@ -4,7 +4,7 @@
 **Category:** FEATURE
 **Date:** 2026-09-26
 **Title:** Answer, with evidence from the code, the captures, the protocol documents, the decisions and official documentation, the maintainer's eleven questions about the OpenControl for Pixel Buds app; no app change in this session
-**Status:** awaiting maintainer sign-off
+**Status:** complete (its proposals D-1/D-2/D-3 were approved in chat 2026-09-26 and recorded by `ai-sessions/0052` — `PROTOCOL.md` 2026-09-26 Updates, ADR-043 Update, ADR-045)
 
 ## Progress
 
