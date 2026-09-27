@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -38,17 +39,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
+import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
+import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
+import kotlin.math.roundToInt
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 
 /**
- * EQ screen (ARCHITECTURE.md §2.4/§6): 5 band sliders within the confirmed
- * ±6.0 range (DECISIONS.md ADR-016) plus the confirmed presets. No "Save as
+ * The "Sound" tab (was "EQ"; ARCHITECTURE.md §2.4/§6): 5 band sliders within the confirmed
+ * ±6.0 range (DECISIONS.md ADR-016) plus the confirmed presets, and — `ai-sessions/0052`, ADR-045 —
+ * below them volume balance, mono audio and conversation detection. No "Save as
  * preset" affordance — PROTOCOL.md §4.2's field-16-vs-18 semantics remain
  * 🟡 HYPOTHESIS (DECISIONS.md ADR-020's own scope note), so this session does
  * not ship a UI action that specifically depends on that distinction being
@@ -78,6 +85,11 @@ fun EqScreen(
     onPresetSelected: (EqPreset) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
+    settings: BudsSettings = BudsSettings(),
+    settingsError: SettingsFailure? = null,
+    onVolumeBalanceChanged: (Int) -> Unit = {},
+    onMonoAudioChanged: (Boolean) -> Unit = {},
+    onConversationDetectionChanged: (Boolean) -> Unit = {},
 ) {
     val enabled = connectionState.isReady()
     val shown = gains ?: EqBandGains.FLAT
@@ -86,8 +98,9 @@ fun EqScreen(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            item { Text("Equalizer", style = MaterialTheme.typography.headlineSmall) }
+            item { Text("Sound", style = MaterialTheme.typography.headlineSmall) }
             item { NotConnectedBanner(connectionState) }
+            item { Text("Equalizer", style = MaterialTheme.typography.titleMedium) }
             item { EqStatusNotice(connectionState, gains, eqProfileUpdatedAt, eqError, onRefresh) }
             item { EqBandSlider("Upper treble", shown.upperTreble, enabled) { onGainsChanged(shown.copy(upperTreble = it)) } }
             item { EqBandSlider("Treble", shown.treble, enabled) { onGainsChanged(shown.copy(treble = it)) } }
@@ -97,6 +110,23 @@ fun EqScreen(
 
             item { Text("Presets", style = MaterialTheme.typography.titleMedium) }
             item { EqPresetRows(enabled, onPresetSelected) }
+
+            // `ai-sessions/0052` (DECISIONS.md ADR-045): below the presets, as the prompt and the maintainer's layout choice put them.
+            item { HorizontalDivider() }
+            if (enabled) item { SettingsFailureNotice(settingsError) }
+            item { BalanceSlider(settings.volumeBalance, enabled, onVolumeBalanceChanged) }
+            item {
+                SettingSwitchRow("Mono audio", "Same sound in both ears", settings.monoAudio, enabled, onMonoAudioChanged)
+            }
+            item {
+                SettingSwitchRow(
+                    "Conversation detection",
+                    "Switch from noise cancellation to transparency when you talk",
+                    settings.conversationDetection,
+                    enabled,
+                    onConversationDetectionChanged,
+                )
+            }
         }
     }
 }
@@ -165,6 +195,38 @@ private fun EqStatusNotice(
     } else {
         formatUpdatedAt(eqProfileUpdatedAt)?.let {
             Text("EQ updated: $it", style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+/**
+ * Volume balance (`qhr` field 17, ADR-026/045). The wire's +100 is **Left**, so the slider runs from Left (its left end) to Right: slider position =
+ * −value. One write per completed drag, as the EQ sliders; the text is the Buds' value ("Left 40 · read 14:32:07"), not the finger position, once
+ * the drag ended — if the write is refused the slider snaps back to the Buds' value.
+ */
+@Composable
+private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onChange: (Int) -> Unit) {
+    val buds = reading?.value ?: 0
+    var position by remember(reading) { mutableFloatStateOf(-buds.toFloat()) }
+    Column {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Balance")
+            Text(
+                if (reading == null) SETTING_NOT_READ else "${balanceText(buds)} · ${settingTime(reading)}",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("L")
+            Slider(
+                value = position,
+                onValueChange = { position = it },
+                onValueChangeFinished = { onChange(-position.roundToInt()) },
+                enabled = enabled,
+                valueRange = -100f..100f,
+                modifier = Modifier.weight(1f),
+            )
+            Text("R")
         }
     }
 }

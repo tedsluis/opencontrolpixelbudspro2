@@ -45,6 +45,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.SettingValue
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.SettingsCodec
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
+import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.LinkReading
@@ -226,8 +227,8 @@ class BudsRepositoryImpl(
     private val _settings = MutableStateFlow(BudsSettings())
     override val settings: StateFlow<BudsSettings> = _settings
 
-    private val _settingsError = MutableStateFlow<BudsError?>(null)
-    override val settingsError: Flow<BudsError?> = _settingsError
+    private val _settingsError = MutableStateFlow<SettingsFailure?>(null)
+    override val settingsError: Flow<SettingsFailure?> = _settingsError
 
     private val _batteryRefreshError = MutableStateFlow<BudsError?>(null)
     override val batteryRefreshError: Flow<BudsError?> = _batteryRefreshError
@@ -842,7 +843,7 @@ class BudsRepositoryImpl(
 
     private fun settingFailed(error: BudsError): BudsResult<Unit> {
         BleLogger.logConnectionEvent("Setting write failed: ${eqErrorLogText(error)}")
-        _settingsError.value = error
+        _settingsError.value = SettingsFailure(error, write = true)
         return BudsResult.Failure(error)
     }
 
@@ -1061,7 +1062,7 @@ class BudsRepositoryImpl(
     private suspend fun readSettings(): Unit = eqMutex.withLock {
         val channel = when (val c = awaitMaestroChannel()) {
             is BudsResult.Failure -> {
-                _settingsError.value = c.error
+                _settingsError.value = SettingsFailure(c.error, write = false)
                 return@withLock
             }
             is BudsResult.Success -> c.value
@@ -1082,7 +1083,7 @@ class BudsRepositoryImpl(
             }
             if (error != null) {
                 BleLogger.logConnectionEvent("Setting read failed (field $field): ${eqErrorLogText(error)}")
-                _settingsError.value = error
+                _settingsError.value = SettingsFailure(error, write = false)
                 if (sent is BudsResult.Failure) return@withLock // the session is going away: nothing more to read
             }
         }

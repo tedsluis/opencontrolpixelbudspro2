@@ -39,6 +39,9 @@ enum class HoldAction(val wire: Int) {
     }
 }
 
+/** Why the last settings read ([write] = `false`) or write ([write] = `true`) failed — the screen words the two differently (`ai-sessions/0052`). */
+data class SettingsFailure(val error: BudsError, val write: Boolean)
+
 /** Which bud a per-bud setting is for (`qhr` field 7: 1 = Left, 2 = Right). */
 enum class Bud { LEFT, RIGHT }
 

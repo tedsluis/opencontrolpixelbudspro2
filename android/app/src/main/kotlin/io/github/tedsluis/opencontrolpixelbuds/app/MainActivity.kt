@@ -55,6 +55,8 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
+import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
@@ -255,6 +257,8 @@ class MainActivity : ComponentActivity() {
             val batteryStatusUpdatedAt by budsRepository.batteryStatusUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val caseBatteryError by budsRepository.caseBatteryError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
+            val settings by budsRepository.settings.collectAsStateWithLifecycle(initialValue = BudsSettings())
+            val settingsError by budsRepository.settingsError.collectAsStateWithLifecycle(initialValue = null as SettingsFailure?)
             val batteryRefreshError by budsRepository.batteryRefreshError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val safeMode by budsRepository.safeMode.collectAsStateWithLifecycle(initialValue = null as SafeModeState?)
             val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
@@ -355,6 +359,8 @@ class MainActivity : ComponentActivity() {
                 eqProfile = eqProfile,
                 eqProfileUpdatedAt = eqProfileUpdatedAt,
                 eqError = eqError,
+                settings = settings,
+                settingsError = settingsError,
                 batteryStatus = batteryStatus,
                 batteryStatusUpdatedAt = batteryStatusUpdatedAt,
                 unidentifiedFrames = unidentifiedFrames.value,
@@ -402,6 +408,12 @@ class MainActivity : ComponentActivity() {
                 onEqGainsChanged = { gains -> applicationScope.launch { budsRepository.setEqGains(gains) } },
                 onEqPresetSelected = { preset -> applicationScope.launch { budsRepository.applyEqPreset(preset) } },
                 onRefreshEq = { applicationScope.launch { budsRepository.refreshEq() } },
+                // DECISIONS.md ADR-045 (`ai-sessions/0052`): one write per completed gesture, in the application scope (0044 APP-4).
+                onVolumeBalanceChanged = { v -> applicationScope.launch { budsRepository.setVolumeBalance(v) } },
+                onMonoAudioChanged = { on -> applicationScope.launch { budsRepository.setMonoAudio(on) } },
+                onConversationDetectionChanged = { on -> applicationScope.launch { budsRepository.setConversationDetection(on) } },
+                onTouchControlsChanged = { on -> applicationScope.launch { budsRepository.setTouchControls(on) } },
+                onPressAndHoldChanged = { bud, action -> applicationScope.launch { budsRepository.setPressAndHold(bud, action) } },
                 onRing = { target -> applicationScope.launch { budsRepository.ringBud(target) } },
                 onStopRinging = { applicationScope.launch { budsRepository.stopRinging() } },
                 onRefreshBattery = { applicationScope.launch { budsRepository.refreshBattery() } },

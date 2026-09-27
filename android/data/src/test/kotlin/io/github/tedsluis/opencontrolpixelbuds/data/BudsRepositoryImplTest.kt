@@ -417,7 +417,7 @@ class BudsRepositoryImplTest {
             ),
             repo.settings.value,
         )
-        assertNull(repo.settingsError.first())
+        assertNull(repo.settingsError.first()?.error)
         assertEquals(emptyList<Int>(), transport.maestroRequests().filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }.filter { it == 12 })
     }
 
@@ -446,7 +446,7 @@ class BudsRepositoryImplTest {
         assertNull(repo.settings.value.touchControls)
         assertNull(repo.settings.value.volumeBalance)
         assertEquals(true, repo.settings.value.conversationDetection?.value)
-        assertEquals(BudsError.Timeout, repo.settingsError.first(), "the last reason")
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure(BudsError.Timeout, write = false), repo.settingsError.first(), "the last reason, a read")
         assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().last().methodId)
     }
 
@@ -766,7 +766,7 @@ class BudsRepositoryImplTest {
         runCurrent()
 
         assertEquals(0, transport.sent.size)
-        assertEquals(BudsError.MaestroChannelUnknown(null), repo.settingsError.first())
+        assertEquals(BudsError.MaestroChannelUnknown(null), repo.settingsError.first()?.error)
         assertEquals(BudsError.MaestroChannelUnknown(null), repo.caseBatteryError.first())
     }
 
@@ -904,7 +904,7 @@ class BudsRepositoryImplTest {
         assertEquals(SettingReading(false, 2_000, true), repo.settings.value.monoAudio)
         assertEquals(SettingReading(HoldAction.NOISE_CONTROL, 2_000, true), repo.settings.value.holdLeft)
         assertEquals(SettingReading(HoldAction.NOISE_CONTROL, 2_000, true), repo.settings.value.holdRight)
-        assertNull(repo.settingsError.first())
+        assertNull(repo.settingsError.first()?.error)
     }
 
     @Test
@@ -937,7 +937,7 @@ class BudsRepositoryImplTest {
         assertEquals(BudsError.Timeout, (result as BudsResult.Failure).error)
         assertEquals(1, transport.sent.size, "sent once, never retried")
         assertEquals(read, repo.settings.value.monoAudio, "never optimistic")
-        assertEquals(BudsError.Timeout, repo.settingsError.first())
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure(BudsError.Timeout, write = true), repo.settingsError.first())
     }
 
     @Test
@@ -953,7 +953,7 @@ class BudsRepositoryImplTest {
 
         assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), (result as BudsResult.Failure).error)
         assertEquals(true, repo.settings.value.conversationDetection?.value)
-        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), repo.settingsError.first())
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), repo.settingsError.first()?.error)
     }
 
     @Test

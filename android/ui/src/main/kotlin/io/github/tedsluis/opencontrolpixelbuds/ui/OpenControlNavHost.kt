@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Notifications
@@ -63,6 +64,7 @@ private object Routes {
     const val CONNECTION = "connection"
     const val ANC = "anc"
     const val EQ = "eq"
+    const val CONTROLS = "controls"
     const val FIND_MY_BUDS = "find_my_buds"
     const val DEBUG = "debug"
 }
@@ -85,7 +87,10 @@ private data class TabDestination(val route: String, val label: String)
 private val TAB_DESTINATIONS = listOf(
     TabDestination(Routes.CONNECTION, "Connection"),
     TabDestination(Routes.ANC, "ANC"),
-    TabDestination(Routes.EQ, "EQ"),
+    // `ai-sessions/0052`: the EQ tab also holds balance, mono and conversation detection, so it is labelled "Sound"; touch controls and
+    // press-and-hold have their own "Controls" tab (the maintainer's choice in chat 2026-09-26).
+    TabDestination(Routes.EQ, "Sound"),
+    TabDestination(Routes.CONTROLS, "Controls"),
     TabDestination(Routes.FIND_MY_BUDS, "Find"),
     TabDestination(Routes.DEBUG, "Debug"),
 )
@@ -118,6 +123,12 @@ data class OpenControlActions(
     val onRefreshEq: () -> Unit,
     val onRing: (RingTarget) -> Unit,
     val onStopRinging: () -> Unit,
+    /** DLCI 0x02 settings writes (DECISIONS.md ADR-045, `ai-sessions/0052`) — each one `WriteSetting`, applied only on the Buds' OK. */
+    val onVolumeBalanceChanged: (Int) -> Unit = {},
+    val onMonoAudioChanged: (Boolean) -> Unit = {},
+    val onConversationDetectionChanged: (Boolean) -> Unit = {},
+    val onTouchControlsChanged: (Boolean) -> Unit = {},
+    val onPressAndHoldChanged: (io.github.tedsluis.opencontrolpixelbuds.domain.Bud, io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction) -> Unit = { _, _ -> },
     /** Re-reads Left/Right: a Message Stream claim (DECISIONS.md ADR-033); the Case and charging come from the runtime-info stream (ADR-043). */
     val onRefreshBattery: () -> Unit,
     val onDebugModeChanged: (Boolean) -> Unit,
@@ -171,6 +182,10 @@ data class OpenControlUiState(
     val eqProfileUpdatedAt: Long? = null,
     /** Why the last EQ read/write failed (`null` = fine / not attempted) — ADR-034. */
     val eqError: BudsError?,
+    /** The DLCI 0x02 settings as the Buds reported them (ADR-036/045, `ai-sessions/0052`). */
+    val settings: io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings = io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings(),
+    /** Why the last settings read or write failed (`null` = fine / not attempted). */
+    val settingsError: io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure? = null,
     val batteryStatus: BatteryStatus,
     /** Wall-clock time [batteryStatus] was last updated — `null` before any reading arrived this app run. */
     val batteryStatusUpdatedAt: Long? = null,
@@ -296,6 +311,18 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     onGainsChanged = actions.onEqGainsChanged,
                     onPresetSelected = actions.onEqPresetSelected,
                     onRefresh = actions.onRefreshEq,
+                    settings = state.settings,
+                    settingsError = state.settingsError,
+                    onVolumeBalanceChanged = actions.onVolumeBalanceChanged,
+                    onMonoAudioChanged = actions.onMonoAudioChanged,
+                    onConversationDetectionChanged = actions.onConversationDetectionChanged,
+                )
+                Routes.CONTROLS -> ControlsScreen(
+                    connectionState = state.connectionState,
+                    settings = state.settings,
+                    settingsError = state.settingsError,
+                    onTouchControlsChanged = actions.onTouchControlsChanged,
+                    onPressAndHoldChanged = actions.onPressAndHoldChanged,
                 )
                 Routes.FIND_MY_BUDS -> FindMyBudsScreen(
                     connectionState = state.connectionState,
@@ -319,6 +346,7 @@ private fun iconFor(route: String) = when (route) {
     Routes.CONNECTION -> Icons.Filled.Settings
     Routes.ANC -> Icons.Filled.Settings
     Routes.EQ -> Icons.AutoMirrored.Filled.List
+    Routes.CONTROLS -> Icons.Filled.Build
     Routes.FIND_MY_BUDS -> Icons.Filled.Notifications
     Routes.DEBUG -> Icons.Filled.Info
     else -> Icons.Filled.Settings

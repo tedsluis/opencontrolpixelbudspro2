@@ -94,7 +94,7 @@ interface BudsRepository {
     val settings: Flow<BudsSettings>
 
     /** Why the last settings read or write did not succeed (`null` = it did, or none was attempted this connection) — `ai-sessions/0052`. */
-    val settingsError: Flow<BudsError?>
+    val settingsError: Flow<SettingsFailure?>
 
     /**
      * Why the last *Refresh battery* produced no new Left/Right reading (`null` = it did, or none was attempted this connection) —
