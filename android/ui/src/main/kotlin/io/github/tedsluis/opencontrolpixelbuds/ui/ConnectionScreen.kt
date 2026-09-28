@@ -351,6 +351,14 @@ internal fun channelLostMessage(channelId: Int, lossCause: SessionLossCause?): S
     SessionLossCause.ANDROID_LINK_LOST ->
         "Android no longer shows the Buds connected to this phone — after a disconnect in Android's own Bluetooth settings, with both buds " +
             "in the case, or out of range. Tap Connect to reconnect."
+    // `ai-sessions/0054` I-2 (the maintainer's wording, chat 2026-09-28): the loss happened while the app was not on screen and was read on return —
+    // "up" says nothing about who closed the channel (the Buds, or a link drop that came back while the app was away).
+    SessionLossCause.ANDROID_LINK_DOWN_ON_RETURN ->
+        "Android no longer showed the Buds connected when you returned to the app — the connection ended while the app was in the background " +
+            "(for example both buds in the case, or out of range). Tap Connect to reconnect."
+    SessionLossCause.ANDROID_LINK_UP_ON_RETURN ->
+        "The app's channel was closed while the app was in the background; Android showed the Buds connected when you returned. The app " +
+            "reopens its channel by itself while it is on screen, or tap Connect."
     SessionLossCause.UNDETERMINED, null -> "The ${channelLabel(channelId)} was closed. Tap Connect to reconnect."
 }
 
@@ -376,6 +384,8 @@ internal fun channelLabel(channelId: Int): String = when (channelId) {
 /**
  * One bud's line (`ai-sessions/0048` I-4/I-8): the percentage with the time DLCI 0x04 reported it, then the newest charging report of either
  * source with **its own** time — "charging in the case" (🟡: charging is FACT, "in the case" is not, PROTOCOL.md §4.3 Option F) or "not charging".
+ * **`ai-sessions/0054` I-4** (the maintainer's wording, chat 2026-09-28): right after a Connect the previous connection's parts read
+ * "Left: 100% — last seen 16:00:17 — charging in the case (16:00:17, last connection)" until the Buds report them again.
  */
 internal fun budLine(label: String, level: BatteryLevel, charging: ChargingReading?, fallbackUpdatedAt: Long? = null): String {
     val percent = when (level) {
@@ -383,8 +393,13 @@ internal fun budLine(label: String, level: BatteryLevel, charging: ChargingReadi
         BatteryLevel.Unavailable -> "$label: Battery unavailable"
     }
     val chargingPart = charging?.let {
-        val time = formatUpdatedAt(it.atMillis)?.let { t -> " ($t)" } ?: ""
-        (if (it.charging) " — charging in the case" else " — not charging (out of the case)") + time
+        val time = formatUpdatedAt(it.atMillis)
+        val stamp = when {
+            it.fromEarlierSession -> " (" + (time?.let { t -> "$t, " } ?: "") + "last connection)"
+            time != null -> " ($time)"
+            else -> ""
+        }
+        (if (it.charging) " — charging in the case" else " — not charging (out of the case)") + stamp
     } ?: ""
     return percent + chargingPart
 }

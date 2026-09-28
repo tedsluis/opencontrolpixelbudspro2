@@ -73,5 +73,20 @@ enum class ChargingSource {
 /**
  * Whether one bud reported that it is charging, and when (`ai-sessions/0048` I-4/I-8). Both sources are 🟢 for "charging"; that a charging bud
  * sits in the case is 🟡 (PROTOCOL.md §4.3 Option F) — the UI words it "charging in the case". The newest report wins, whichever source.
+ *
+ * @param fromEarlierSession `true` from a Connect until the Buds report this bud's charging state again on the new connection (`ai-sessions/0054`
+ * I-4: `CAP-063` showed the previous session's "charging in the case (16:00:17)" for ≈ 2 s after the 16:01:02 Connect, as if current).
  */
-data class ChargingReading(val charging: Boolean, val atMillis: Long, val source: ChargingSource)
+data class ChargingReading(val charging: Boolean, val atMillis: Long, val source: ChargingSource, val fromEarlierSession: Boolean = false)
+
+/**
+ * The previous connection's values, marked as such at a Connect (`ai-sessions/0048` I-5 for the Case, `ai-sessions/0054` I-4 for each bud): a
+ * percentage becomes "last seen", a charging report "from the last connection" — each until the Buds report it again. Nothing is dropped or invented.
+ */
+fun BatteryStatus.markedFromEarlierSession(): BatteryStatus = copy(
+    left = (left as? BatteryLevel.Known)?.copy(isStale = true) ?: left,
+    right = (right as? BatteryLevel.Known)?.copy(isStale = true) ?: right,
+    case = (case as? BatteryLevel.Known)?.copy(isStale = true) ?: case,
+    leftCharging = leftCharging?.copy(fromEarlierSession = true),
+    rightCharging = rightCharging?.copy(fromEarlierSession = true),
+)

@@ -105,7 +105,8 @@ interface BudsRepository {
 
     /**
      * Whether the Buds currently allow an ANC `Set`, from the last `Notify ANC state`'s Settable byte ([AncAvailability], `ai-sessions/0048` I-3) —
-     * [AncAvailability.UNKNOWN] until one arrived on this connection. While [AncAvailability.NOT_ALLOWED], [setAncMode] sends nothing.
+     * [AncAvailability.UNKNOWN] until one arrived on this connection. While [AncAvailability.NOT_ALLOWED], [setAncMode] first asks the Buds again
+     * (`ai-sessions/0054` I-1).
      */
     val ancAvailability: Flow<AncAvailability>
 
@@ -162,7 +163,11 @@ interface BudsRepository {
      */
     suspend fun refreshBattery(): BudsResult<Unit>
 
-    /** ANC `Set` (ADR-009). Fails with [BudsError.AncNotAllowed] and sends nothing while [ancAvailability] is [AncAvailability.NOT_ALLOWED]. */
+    /**
+     * ANC `Set` (ADR-009), on a Message Stream claim (ADR-032). While [ancAvailability] is [AncAvailability.NOT_ALLOWED] the claim first sends the
+     * `Get` (`ai-sessions/0054` I-1): the `Set` follows in the same claim only if the Buds' `Notify` now allows it; otherwise it fails with
+     * [BudsError.AncNotAllowed] and nothing more is sent.
+     */
     suspend fun setAncMode(mode: AncMode): BudsResult<Unit>
     suspend fun refreshAncMode(): BudsResult<AncMode>
 

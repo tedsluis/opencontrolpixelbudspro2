@@ -285,6 +285,7 @@ class MainActivity : ComponentActivity() {
             val ancMode by budsRepository.ancMode.collectAsStateWithLifecycle(initialValue = null)
             val ancModeUpdatedAt by budsRepository.ancModeUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val ancAvailability by budsRepository.ancAvailability.collectAsStateWithLifecycle(initialValue = AncAvailability.UNKNOWN)
+            val ancAvailabilityUpdatedAt by budsRepository.ancAvailabilityUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val eqProfile by budsRepository.eqProfile.collectAsStateWithLifecycle(initialValue = null)
             val eqProfileUpdatedAt by budsRepository.eqProfileUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val eqError by budsRepository.eqError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
@@ -388,6 +389,7 @@ class MainActivity : ComponentActivity() {
                 ancMode = ancMode,
                 ancModeUpdatedAt = ancModeUpdatedAt,
                 ancAvailability = ancAvailability,
+                ancAvailabilityUpdatedAt = ancAvailabilityUpdatedAt,
                 caseBatteryError = caseBatteryError,
                 batteryRefreshError = batteryRefreshError,
                 safeMode = safeMode,

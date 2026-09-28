@@ -202,7 +202,8 @@ private fun EqStatusNotice(
 /**
  * Volume balance (`qhr` field 17, ADR-026/045). The wire's +100 is **Left**, so the slider runs from Left (its left end) to Right: slider position =
  * −value. One write per completed drag, as the EQ sliders; the text is the Buds' value ("Left 40 · read 14:32:07"), not the finger position, once
- * the drag ended — if the write is refused the slider snaps back to the Buds' value.
+ * the drag ended — if the write is refused the slider snaps back to the Buds' value. **`ai-sessions/0054` I-3:** a release within ±3 of the centre
+ * writes 0 ("Centre", [BudsSettings.snapBalance]) and the knob jumps to the middle — 201 positions on a narrow track made 0 practically unreachable (`CAP-063`).
  */
 @Composable
 private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onChange: (Int) -> Unit) {
@@ -221,7 +222,11 @@ private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onCha
             Slider(
                 value = position,
                 onValueChange = { position = it },
-                onValueChangeFinished = { onChange(-position.roundToInt()) },
+                onValueChangeFinished = {
+                    val value = BudsSettings.snapBalance(-position.roundToInt())
+                    position = -value.toFloat()
+                    onChange(value)
+                },
                 enabled = enabled,
                 valueRange = -100f..100f,
                 modifier = Modifier.weight(1f),

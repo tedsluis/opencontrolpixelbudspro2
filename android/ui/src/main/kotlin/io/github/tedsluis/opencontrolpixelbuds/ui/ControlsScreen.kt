@@ -69,6 +69,7 @@ fun ControlsScreen(
             SettingSwitchRow("Use touch controls", null, settings.touchControls, enabled, onTouchControlsChanged)
             HorizontalDivider()
             Text("Press and hold", style = MaterialTheme.typography.titleMedium)
+            Text(DIGITAL_ASSISTANT_NOTE, style = MaterialTheme.typography.bodySmall)
             HoldRow("Left", settings.holdLeft, enabled) { onPressAndHoldChanged(Bud.LEFT, it) }
             HoldRow("Right", settings.holdRight, enabled) { onPressAndHoldChanged(Bud.RIGHT, it) }
             HorizontalDivider()
@@ -96,6 +97,15 @@ private fun HoldRow(label: String, reading: SettingReading<HoldAction>?, enabled
         if (reading != null) Text(settingTime(reading), style = MaterialTheme.typography.bodySmall)
     }
 }
+
+/**
+ * `ai-sessions/0054` I-5 (the maintainer's wording, chat 2026-09-28). In `CAP-063` a "Digital assistant" hold reached nothing on the phone — no HFP
+ * `AT+BVRA`, no media command — while the Google app's headphone-assistant service had been stopped by Android (🟡 strong: that service serves it over
+ * DLCI 0x08/0x0a, `CAP-063-FINDINGS.md` §7). The app does not detect an assistant app (reading the assistant role needs a privileged permission).
+ */
+internal const val DIGITAL_ASSISTANT_NOTE: String =
+    "Digital assistant needs an assistant app on this phone that supports headphones (for example the Google app). " +
+        "Without one, holding the bud may only play a tone."
 
 internal fun inEarDetectionText(reading: SettingReading<Boolean>?): String {
     val value = when (reading?.value) {

@@ -29,7 +29,9 @@ import io.github.tedsluis.opencontrolpixelbuds.R
 import android.widget.Toast
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +40,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -52,8 +55,9 @@ import javax.inject.Inject
  * The cycle is fixed and documented ([AncMode.nextInTileCycle]): Noise cancelling → Transparent → Adaptive → Off. No new permission:
  * `BIND_QUICK_SETTINGS_TILE` is required *of the caller that binds this service* (only the system), not requested by the app.
  *
- * **I-3 (`ai-sessions/0048`):** while the Buds' last `Notify` reported Settable `0x00` ([AncAvailability.NOT_ALLOWED]) the subtitle says
- * "Only while worn" and a tap shows the reason instead of sending (the Buds would NAK it, `CAP-062` 4/4 tile taps with the buds docked).
+ * **I-1 (`ai-sessions/0054`, replaces `0048` I-3's "tap sends nothing"):** while the Buds' last `Notify` reported Settable `0x00`
+ * ([AncAvailability.NOT_ALLOWED]) the subtitle says "Only while worn"; a tap goes to [BudsRepository.setAncMode] like any other, which first asks the
+ * Buds again in its claim and switches only if they now allow it — if they still refuse, a toast says so (the maintainer's choice, chat 2026-09-28).
  *
  * // TODO(verify): not exercised on a phone — whether GrapheneOS shows/keeps the tile and that the tap works with the app in the
  * // background (`ai-sessions/0042` §12 re-test).
@@ -119,15 +123,19 @@ class AncTileService : TileService() {
             startActivityAndCollapse(open)
             return
         }
-        if (latestAvailability == AncAvailability.NOT_ALLOWED) {
-            BleLogger.logConnectionEvent("ANC tile tapped while the Buds allow no ANC change — nothing sent")
-            Toast.makeText(this, "ANC can only be changed while you wear the Buds.", Toast.LENGTH_LONG).show()
-            return
-        }
         val next = AncMode.nextForTile(latestMode)
-        BleLogger.logConnectionEvent("ANC tile tapped: ${latestMode ?: "unknown"} -> $next")
+        BleLogger.logConnectionEvent(
+            "ANC tile tapped: ${latestMode ?: "unknown"} -> $next" +
+                if (latestAvailability == AncAvailability.NOT_ALLOWED) " (the Buds last allowed no change: the tap checks again first)" else "",
+        )
         // The application scope, not this service's: the claim outlives the tile's short lifetime (the release job is the repository's).
-        applicationScope.launch { repository.setAncMode(next) }
+        val appContext = applicationContext
+        applicationScope.launch {
+            val result = repository.setAncMode(next)
+            if ((result as? BudsResult.Failure)?.error == BudsError.AncNotAllowed) {
+                withContext(Dispatchers.Main) { Toast.makeText(appContext, ANC_NOT_ALLOWED_TOAST, Toast.LENGTH_LONG).show() }
+            }
+        }
     }
 
     private fun render() {
@@ -143,5 +151,10 @@ class AncTileService : TileService() {
         }
         tile.state = if (ready && latestMode != null && latestMode != AncMode.OFF) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.updateTile()
+    }
+
+    private companion object {
+        /** The same sentence as the ANC screen's (`ANC_NOT_ALLOWED_TEXT` in `:ui`, `ai-sessions/0048`), shown when a tap's re-check is refused. */
+        const val ANC_NOT_ALLOWED_TOAST = "ANC can only be changed while you wear the Buds."
     }
 }

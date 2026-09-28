@@ -69,5 +69,15 @@ data class BudsSettings(
     companion object {
         /** ADR-026: the wire range of the balance. */
         val BALANCE_RANGE = -100..100
+
+        /**
+         * `ai-sessions/0054` I-3 (the maintainer's choice in chat 2026-09-28, "Snap within ±3"): a released balance within this distance of the centre is
+         * written as 0 ("Centre"). `CAP-063`: 12 releases near the centre landed on −11, −10, −4, −1, −1, −2, +11, +7, −6, +3, −4, −1 (frames 5180 … 5245, zigzag-decoded) —
+         * never 0 on a 201-step slider; 5 of them are within ±3.
+         */
+        const val BALANCE_CENTRE_SNAP = 3
+
+        /** The value a released balance slider writes: 0 within ±[BALANCE_CENTRE_SNAP], otherwise itself, clamped to [BALANCE_RANGE]. */
+        fun snapBalance(value: Int): Int = if (kotlin.math.abs(value) <= BALANCE_CENTRE_SNAP) 0 else value.coerceIn(BALANCE_RANGE)
     }
 }

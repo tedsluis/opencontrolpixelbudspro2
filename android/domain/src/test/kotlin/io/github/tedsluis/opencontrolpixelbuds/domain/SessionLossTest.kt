@@ -82,4 +82,49 @@ class SessionLossTest {
         assertEquals(SessionLossCause.UNDETERMINED, classifySessionLoss(loss, listOf(LinkReading(AndroidLink.CONNECTED, loss + 60_000))), "minutes later")
         assertEquals(SessionLossCause.UNDETERMINED, classifySessionLoss(loss, listOf(LinkReading(AndroidLink.UNKNOWN, loss + 10))))
     }
+
+    // ---- I-2 (ai-sessions/0054): a loss while the app was not on screen is decided by the first reading on return -------------------------------
+    // CAP-063-debug-export.log: line 526 16:13:07.841 CONNECTED (the last reading logged before, readings are logged on change), 586 16:15:21.408
+    // "Android link observer stopped" (the app left), 589 16:15:22.008 "Session lost", 592 16:15:25.013 observer started, 593 16:15:25.062 NOT_CONNECTED.
+
+    @Test
+    @DisplayName("CAP-063 16:15:22.008: loss while hidden, first reading on return NOT_CONNECTED 3.05 s later -> link down on return")
+    fun `CAP-063 background loss is the link down, read on return`() {
+        val loss = t("16:15:22.008")
+        val readings = listOf(LinkReading(AndroidLink.CONNECTED, t("16:13:07.841")), LinkReading(AndroidLink.NOT_CONNECTED, t("16:15:25.062")))
+        assertEquals(SessionLossCause.ANDROID_LINK_DOWN_ON_RETURN, classifySessionLoss(loss, readings, lossWhileHidden = true))
+        assertEquals(SessionLossCause.UNDETERMINED, classifySessionLoss(loss, readings), "while visible the 0048 windows still apply (3.05 s is outside)")
+    }
+
+    @Test
+    fun `a CONNECTED first reading on return is the link up on return, not a claim about who closed the channel`() {
+        val loss = t("16:15:22.008")
+        val readings = listOf(LinkReading(AndroidLink.CONNECTED, t("16:15:25.062")), LinkReading(AndroidLink.NOT_CONNECTED, t("16:15:40.000")))
+        assertEquals(SessionLossCause.ANDROID_LINK_UP_ON_RETURN, classifySessionLoss(loss, readings, lossWhileHidden = true), "the first one decides")
+    }
+
+    @Test
+    fun `a reading older than the loss is never used, also not on return`() {
+        val loss = t("16:15:22.008")
+        val older = listOf(LinkReading(AndroidLink.CONNECTED, t("16:13:07.841")), LinkReading(AndroidLink.NOT_CONNECTED, t("16:15:19.500")))
+        assertEquals(SessionLossCause.UNDETERMINED, classifySessionLoss(loss, older, lossWhileHidden = true), "nothing after the loss yet")
+        assertEquals(
+            SessionLossCause.ANDROID_LINK_UP_ON_RETURN,
+            classifySessionLoss(loss, older + LinkReading(AndroidLink.CONNECTED, t("16:16:30.000")), lossWhileHidden = true),
+            "the NOT_CONNECTED 2.5 s before the loss is outside rule 1 and older than the loss",
+        )
+    }
+
+    @Test
+    fun `on return an unknown link claims nothing, and a reading within the 0048 windows keeps its 0048 cause`() {
+        val loss = 100_000L
+        assertEquals(SessionLossCause.UNDETERMINED, classifySessionLoss(loss, listOf(LinkReading(AndroidLink.UNKNOWN, loss + 60_000)), lossWhileHidden = true))
+        // CAP-063 #9 (export 641 observer stopped 16:16:04.440, 644 loss 16:16:05.580, 648 CONNECTED 16:16:06.182): hidden, but the reading came 602 ms
+        // after the loss — the 0048 rule 2 keeps "the Buds closed the channel" (export 649, FINDINGS §6).
+        val hiddenLoss = t("16:16:05.580")
+        assertEquals(
+            SessionLossCause.BUDS_CLOSED_CHANNEL,
+            classifySessionLoss(hiddenLoss, listOf(LinkReading(AndroidLink.CONNECTED, t("16:16:06.182"))), lossWhileHidden = true),
+        )
+    }
 }

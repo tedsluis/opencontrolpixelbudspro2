@@ -167,6 +167,8 @@ data class OpenControlUiState(
     /** Whether the Buds currently allow an ANC `Set` (`ai-sessions/0048` I-3). */
     val ancAvailability: io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability =
         io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.UNKNOWN,
+    /** When the Buds last reported [ancAvailability] — shown as "(checked HH:MM:SS)" while it reads not allowed (`ai-sessions/0054` I-1). */
+    val ancAvailabilityUpdatedAt: Long? = null,
     /** Why the last *Refresh battery* brought no new reading (`null` = it did / none yet), `ai-sessions/0052`. */
     val batteryRefreshError: BudsError? = null,
     /** Why the Case level could not be requested this connection (`null` = requested / not yet), ADR-043. */
@@ -299,6 +301,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     ancMode = state.ancMode,
                     ancModeUpdatedAt = state.ancModeUpdatedAt,
                     ancAvailability = state.ancAvailability,
+                    ancAvailabilityUpdatedAt = state.ancAvailabilityUpdatedAt,
                     onAncModeSelected = actions.onAncModeSelected,
                     onRefreshAncMode = actions.onRefreshAncMode,
                     onRequestAddAncTile = actions.onRequestAddAncTile,

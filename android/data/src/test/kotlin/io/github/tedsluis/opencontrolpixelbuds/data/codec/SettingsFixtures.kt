@@ -120,6 +120,13 @@ internal object SettingsWrites {
     /** Frame 1629: the empty `RESPONSE` status OK (channel 19; identical bytes in 1835, 1927, 1950, … 2104 and `CAP-021` 1905 …). */
     const val ACK_CH19_1629 = "7e80a303080110131dea71de7d5e251d9a8c9e4c05e6d97e"
 
+    /**
+     * `CAP-046` (channel 19) frame 1873 (2026-09-12 17:05:09.216, the official app's centre-return sample of Group AK): `WriteSetting 4:{17:0}` —
+     * the only real `17:0` write in any capture (`ai-sessions/0054`: `pwrpc_decode.py` over every capture's HCI log, `grep WriteSetting | grep
+     * '4:{17:0}'`). Answered by frame 1878, the empty `RESPONSE` status OK, byte-identical to [ACK_CH19_1629].
+     */
+    const val BALANCE_CENTRE_1873 = "7e003b0310131dea71de7d5e251d9a8c9e2a0522038801004a2d0abb7e"
+
     /** Frames 1922, 1944, 2019, 2039, 2056, 2073, 2099: the balance drag, `4:{17:n}` → value after zigzag decoding. */
     val BALANCE_DRAG: List<Pair<String, Int>> = listOf(
         "7e003b0310131dea71de7d5e251d9a8c9e2a0622048801c701bcfac4347e" to -100, // 1922, 17:199

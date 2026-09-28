@@ -23,6 +23,7 @@ package io.github.tedsluis.opencontrolpixelbuds.data
 
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap061
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap062
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap063
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
@@ -35,6 +36,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
@@ -737,6 +739,57 @@ class BudsRepositoryImplTest {
         assertEquals(BatteryLevel.Known(100, false, false, 2_000), repo.batteryStatus.value.left, "the stream never changes a percentage")
     }
 
+    // ---- I-4 (ai-sessions/0054): at Connect the previous connection's per-bud lines are marked until the Buds report again ------------------------
+    // CAP-063: 16:00:17 both docked (DLCI 0x04 2756 `e4 e4`, stream 2723 both charging, Case 36); Connect 16:01:02.42 with both buds out; the first
+    // new reports are the battery burst 3046 (16:01:03.872, `64 64`) and the stream 3059 (16:01:04.208, neither charging). Virtual 0 = 16:00:17.184.
+
+    private suspend fun TestScope.previousSessionOf2723(transport: FakeBudsTransport) {
+        transport.emit(Dlci.MAESTRO, hex(Cap063.STREAM_BOTH_CHARGING_2723)) // 16:00:17.184
+        advanceTimeBy(130); transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap063.BATTERY_BOTH_CHARGING_2756)) // 16:00:17.315
+        settle()
+    }
+
+    @Test
+    @DisplayName("I-4: Connect marks both buds' % 'last seen' and charging 'last connection'; CAP-063 3046 then 3059 make them current again")
+    fun `the previous connection's per-bud lines are marked until the new reports`() = runTest {
+        val (repo, transport) = buildRepository(connectionStateMachine = buildConnectionStateMachine(driveToReady = false))
+        previousSessionOf2723(transport)
+        assertEquals(ChargingReading(true, 130, ChargingSource.MESSAGE_STREAM), repo.batteryStatus.value.leftCharging)
+
+        advanceTimeBy(45_105)
+        repo.connect() // 16:01:02.42 (stops at the bonded-device lookup in a JVM test — the marking has happened)
+
+        val marked = repo.batteryStatus.value
+        assertEquals(BatteryLevel.Known(100, true, isStale = true, receivedAtMillis = 130), marked.left)
+        assertEquals(BatteryLevel.Known(100, true, isStale = true, receivedAtMillis = 130), marked.right)
+        assertEquals(ChargingReading(true, 130, ChargingSource.MESSAGE_STREAM, fromEarlierSession = true), marked.leftCharging)
+        assertEquals(ChargingReading(true, 130, ChargingSource.MESSAGE_STREAM, fromEarlierSession = true), marked.rightCharging)
+        assertEquals(BatteryLevel.Known(36, null, isStale = true, receivedAtMillis = 0), marked.case, "the Case as in 0048 I-5")
+
+        advanceTimeBy(1_452); transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap063.BATTERY_NONE_CHARGING_3046)); settle() // 16:01:03.872
+        assertEquals(BatteryLevel.Known(100, false, receivedAtMillis = 46_687), repo.batteryStatus.value.left)
+        assertEquals(ChargingReading(false, 46_687, ChargingSource.MESSAGE_STREAM), repo.batteryStatus.value.rightCharging)
+
+        advanceTimeBy(336); transport.emit(Dlci.MAESTRO, hex(Cap063.STREAM_NONE_CHARGING_3059)); settle() // 16:01:04.208
+        assertEquals(ChargingReading(false, 47_023, ChargingSource.RUNTIME_INFO), repo.batteryStatus.value.leftCharging)
+        assertEquals(BatteryLevel.Known(36, null, isStale = true, receivedAtMillis = 0), repo.batteryStatus.value.case, "no 6.1: still last seen")
+    }
+
+    @Test
+    @DisplayName("I-4: a Connect whose first report is the stream (3059) clears the charging mark at once; the % stays 'last seen' until DLCI 0x04 reports")
+    fun `a stream-first Connect clears the charging mark`() = runTest {
+        val (repo, transport) = buildRepository(connectionStateMachine = buildConnectionStateMachine(driveToReady = false))
+        previousSessionOf2723(transport)
+        advanceTimeBy(45_105); repo.connect()
+
+        advanceTimeBy(1_000); transport.emit(Dlci.MAESTRO, hex(Cap063.STREAM_NONE_CHARGING_3059)); settle()
+
+        val status = repo.batteryStatus.value
+        assertEquals(ChargingReading(false, 46_235, ChargingSource.RUNTIME_INFO), status.leftCharging)
+        assertEquals(ChargingReading(false, 46_235, ChargingSource.RUNTIME_INFO), status.rightCharging)
+        assertEquals(BatteryLevel.Known(100, true, isStale = true, receivedAtMillis = 130), status.left, "each value keeps its own staleness and time")
+    }
+
     @Test
     fun `before any Case report the Case is unavailable, a stream without 6_1 does not invent one (I-5)`() = runTest {
         val (repo, transport) = buildRepository()
@@ -808,47 +861,126 @@ class BudsRepositoryImplTest {
         assertNull(repo.ringing.first(), "a ring whose command never left the phone is not claimed")
     }
 
-    // ---- I-3 (ai-sessions/0048): no ANC Set while the Buds report Settable 0x00 -----------------------------------------------------
+    // ---- I-1 (ai-sessions/0054): a tap while the Buds last said "not allowed" re-checks with the claim's Get (reverses 0048 I-3) -------------
 
-    @Test
-    @DisplayName("I-3: after CAP-062 frame 6000 (Settable 00) a Set sends nothing and claims nothing; after frame 8706 (e8) it is sent again")
-    fun `no Set while the Buds allow no ANC change`() = runTest {
-        val (repo, transport) = buildRepository()
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e80020")) // frame 6000
+    /** The Buds of `CAP-063`: the app's `Get` is answered by [getAnswer]; an ANC `Set` ADAPTIVE (4233) by its ACK (4241), ACTIVE (4497) by 4508. */
+    private fun answerLikeCap063(transport: FakeBudsTransport, getAnswer: String?) {
+        transport.onSent = { ch, frame ->
+            when (frame.toHex()) {
+                Cap063.GET_ANC -> getAnswer?.let { transport.emit(ch, hex(it)) }
+                Cap063.SET_ADAPTIVE_4233 -> transport.emit(ch, hex(Cap063.ACK_ADAPTIVE_4241))
+                Cap063.SET_ACTIVE_4497 -> transport.emit(ch, hex(Cap063.ACK_ACTIVE_4508))
+            }
+        }
+    }
+
+    private suspend fun TestScope.notAllowedFrom4774(transport: FakeBudsTransport, repo: BudsRepositoryImpl) {
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap063.NOTIFY_SETTABLE_00_4774)) // 16:06:11.245, buds on the table
         settle()
-
-        val refused = repo.setAncMode(AncMode.TRANSPARENT)
-
-        assertEquals(BudsError.AncNotAllowed, (refused as BudsResult.Failure).error)
-        assertEquals(emptyList<Int>(), transport.openChannelCalls, "not even a claim of DLCI 0x04")
-        assertEquals(0, transport.sent.size)
-        assertNull(repo.messageStreamError.first(), "not a channel problem")
-
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e8e840")) // frame 8706
-        settle()
-        transport.onSent = { ch, frame -> if (frame.toHex().startsWith("0812")) transport.emit(ch, hex("ff010006081201e8e840")) } // frame 8705
-        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ADAPTIVE))
-        assertEquals("0812001401e8e840" + "00".repeat(16), transport.sent.single().second.toHex()) // frame 8694
+        assertEquals(AncAvailability.NOT_ALLOWED, repo.ancAvailability.first())
     }
 
     @Test
-    @DisplayName("I-3: unknown (no Notify yet) stays enabled; the Buds' NAK (frame 5998) + Notify 00 (6000) is reported, then further Sets are held back")
-    fun `unknown is enabled and a NAK still reports as before`() = runTest {
+    @DisplayName("I-1 (a): NOT_ALLOWED from CAP-063 4774; a tap claims once, sends Get, the Notify is 4184 (e8) -> one Set = 4233 in that claim, applied on ACK 4241")
+    fun `a disabled tap re-checks and sends the Set when the Buds now allow it`() = runTest {
+        val (repo, transport) = buildRepository()
+        notAllowedFrom4774(transport, repo)
+        answerLikeCap063(transport, getAnswer = Cap063.NOTIFY_SETTABLE_E8_4184)
+
+        val result = repo.setAncMode(AncMode.ADAPTIVE)
+
+        assertEquals(BudsResult.Success(Unit), result)
+        assertEquals(listOf(Cap063.GET_ANC, Cap063.SET_ADAPTIVE_4233), transport.sent.map { it.second.toHex() }, "Get, then exactly one Set")
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.openChannelCalls, "both in one claim")
+        assertEquals(AncMode.ADAPTIVE, repo.ancMode.first(), "applied on the ACK")
+        assertEquals(AncAvailability.ALLOWED, repo.ancAvailability.first())
+        assertNull(repo.messageStreamError.first())
+    }
+
+    @Test
+    @DisplayName("I-1 (b): the claim's Notify reads 00 again (4774) -> no Set, AncNotAllowed, still NOT_ALLOWED, not a channel error")
+    fun `a disabled tap sends no Set when the Buds still refuse`() = runTest {
+        val (repo, transport) = buildRepository()
+        notAllowedFrom4774(transport, repo)
+        answerLikeCap063(transport, getAnswer = Cap063.NOTIFY_SETTABLE_00_4774)
+        advanceTimeBy(5_000)
+
+        val result = repo.setAncMode(AncMode.ADAPTIVE)
+
+        assertEquals(BudsError.AncNotAllowed, (result as BudsResult.Failure).error)
+        assertEquals(listOf(Cap063.GET_ANC), transport.sent.map { it.second.toHex() }, "the Get only — nothing more")
+        assertEquals(AncAvailability.NOT_ALLOWED, repo.ancAvailability.first())
+        assertEquals(5_000L, repo.ancAvailabilityUpdatedAt.value, "the re-check's answer is stamped: the screen's \"(checked …)\" moves")
+        assertNull(repo.messageStreamError.first(), "the Buds' answer, not a channel problem")
+        advanceTimeBy(1_600); runCurrent()
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.closeChannelCalls, "the claim is released as always")
+    }
+
+    @Test
+    @DisplayName("I-1 (c): a claim that cannot open reports its error and sends nothing; a Get the Buds never answer is a Timeout without a Set")
+    fun `a failed re-check claim sends no Set`() = runTest {
+        val (repo, transport) = buildRepository()
+        notAllowedFrom4774(transport, repo)
+        val busy = BudsError.ChannelUnavailable(Dlci.FAST_PAIR_MESSAGE_STREAM, "read failed, socket might closed")
+        transport.openChannelShouldFail = busy
+
+        assertEquals(busy, (repo.setAncMode(AncMode.ADAPTIVE) as BudsResult.Failure).error)
+        assertEquals(0, transport.sent.size)
+        assertEquals(busy, repo.messageStreamError.first())
+
+        transport.openChannelShouldFail = null
+        answerLikeCap063(transport, getAnswer = null)
+        assertEquals(BudsError.Timeout, (repo.setAncMode(AncMode.ADAPTIVE) as BudsResult.Failure).error)
+        assertEquals(listOf(Cap063.GET_ANC), transport.sent.map { it.second.toHex() })
+        assertEquals(AncAvailability.NOT_ALLOWED, repo.ancAvailability.first())
+    }
+
+    @Test
+    @DisplayName("I-1 (d): the tile's tap (AncMode.nextForTile of the shown mode OFF -> ACTIVE) takes the same path: Get, Notify 4184, Set = 4497, ACK 4508")
+    fun `the tile tap re-checks the same way`() = runTest {
+        val (repo, transport) = buildRepository()
+        notAllowedFrom4774(transport, repo)
+        answerLikeCap063(transport, getAnswer = Cap063.NOTIFY_SETTABLE_E8_4184)
+        val next = AncMode.nextForTile(repo.ancMode.first()) // AncTileService.onClick: the mode after the one shown (OFF, from 4774)
+        assertEquals(AncMode.ACTIVE, next)
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(next))
+        assertEquals(listOf(Cap063.GET_ANC, Cap063.SET_ACTIVE_4497), transport.sent.map { it.second.toHex() })
+    }
+
+    @Test
+    @DisplayName("I-1 (e): ALLOWED (CAP-063 4184) and UNKNOWN send the Set directly as before — no Get first (CAP-063 4233 had none either)")
+    fun `allowed and unknown taps are unchanged`() = runTest {
+        val (repo, transport) = buildRepository()
+        answerLikeCap063(transport, getAnswer = null)
+        assertEquals(AncAvailability.UNKNOWN, repo.ancAvailability.first())
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE))
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap063.NOTIFY_SETTABLE_E8_4184)); settle()
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ADAPTIVE))
+
+        assertEquals(listOf(Cap063.SET_ACTIVE_4497, Cap063.SET_ADAPTIVE_4233), transport.sent.map { it.second.toHex() })
+    }
+
+    @Test
+    @DisplayName("I-1 with CAP-062 bytes: a NAK (5998) + Notify 00 (6000) on an unknown state; the next tap re-checks (6000 again) and sends no second Set")
+    fun `after a NAK the next tap re-checks instead of sending`() = runTest {
         val (repo, transport) = buildRepository()
         transport.onSent = { ch, frame ->
-            if (frame.toHex().startsWith("0812")) {
-                transport.emit(ch, hex("ff020003020812")) // frame 5998
-                transport.emit(ch, hex("0813000401e80020")) // frame 6000
+            when {
+                frame.toHex().startsWith("0812") -> {
+                    transport.emit(ch, hex("ff020003020812")) // frame 5998
+                    transport.emit(ch, hex("0813000401e80020")) // frame 6000
+                }
+                frame.toHex() == Cap063.GET_ANC -> transport.emit(ch, hex("0813000401e80020")) // 6000's bytes: still not worn
             }
         }
 
         val first = repo.setAncMode(AncMode.TRANSPARENT)
 
         assertEquals(BudsError.CommandRejected(0x02, "not allowed in the current state"), (first as BudsResult.Failure).error)
-        assertEquals(1, transport.sent.size, "the first Set was sent: nothing was known yet")
         settle()
         assertEquals(BudsError.AncNotAllowed, (repo.setAncMode(AncMode.ADAPTIVE) as BudsResult.Failure).error)
-        assertEquals(1, transport.sent.size, "the second one was not")
+        assertEquals(listOf("0812", "0811"), transport.sent.map { it.second.toHex().take(4) }, "one Set, then only the re-check's Get")
     }
 
     @Test
@@ -905,6 +1037,20 @@ class BudsRepositoryImplTest {
         assertEquals(SettingReading(HoldAction.NOISE_CONTROL, 2_000, true), repo.settings.value.holdLeft)
         assertEquals(SettingReading(HoldAction.NOISE_CONTROL, 2_000, true), repo.settings.value.holdRight)
         assertNull(repo.settingsError.first()?.error)
+    }
+
+    @Test
+    @DisplayName("I-3: a centred balance (BudsSettings.snapBalance of a release at Left 2) is CAP-046 frame 1873 byte for byte; ACK 1878 shows 'Centre'")
+    fun `a snapped balance writes 17_0 like the official app`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle() // CAP-046 ran on channel 19
+        ackWrites(transport, 19) // 1878 = the channel's empty RESPONSE (identical to CAP-022 1629)
+        advanceTimeBy(3_000)
+
+        assertEquals(BudsResult.Success(Unit), repo.setVolumeBalance(BudsSettings.snapBalance(2)))
+
+        assertEquals(listOf(SettingsWrites.BALANCE_CENTRE_1873), transport.sent.map { it.second.toHex() })
+        assertEquals(SettingReading(0, 3_000, changedByApp = true), repo.settings.value.volumeBalance)
     }
 
     @Test
@@ -1106,6 +1252,51 @@ class BudsRepositoryImplTest {
         repo.disconnect()
         assertNull(repo.lastLossCause.first())
         assertNull(repo.lastConnectionError.first())
+    }
+
+    // ---- I-2 (ai-sessions/0054): a loss while the app was not on screen is re-classified from the first reading on return ---------------------
+    // CAP-063-debug-export.log: 526 16:13:07.841 CONNECTED; 586 16:15:21.408 observer stopped (the app left); 589 16:15:22.008 loss (ACL 0x13, both
+    // buds seated); 592 16:15:25.013 observer started (back); 593 16:15:25.062 NOT_CONNECTED. Virtual time: 0 = 16:13:07.841.
+
+    @Test
+    @DisplayName("I-2, CAP-063 16:15:22: hidden at the loss, undetermined until the first reading on return (NOT_CONNECTED, 3.05 s later) -> link down on return")
+    fun `a background loss is decided by the reading taken on return`() = runTest {
+        val (repo, transport) = buildRepository()
+        repo.onAppVisible(true)
+        repo.onAndroidLink(AndroidLink.CONNECTED) // 16:13:07.841
+        advanceTimeBy(133_567); repo.onAppVisible(false) // 16:15:21.408
+        advanceTimeBy(600)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof)) // 16:15:22.008
+        assertEquals(SessionLossCause.UNDETERMINED, repo.lastLossCause.first(), "no reading can come while the app is away")
+
+        advanceTimeBy(3_005); repo.onAppVisible(true) // ≈ 16:15:25.013
+        assertEquals(SessionLossCause.UNDETERMINED, repo.lastLossCause.first(), "the older CONNECTED reading is not used")
+        advanceTimeBy(49); repo.onAndroidLink(AndroidLink.NOT_CONNECTED) // 16:15:25.062
+        assertEquals(SessionLossCause.ANDROID_LINK_DOWN_ON_RETURN, repo.lastLossCause.first())
+    }
+
+    @Test
+    @DisplayName("I-2: a loss while visible whose deciding reading never came before the app left is also read on return (CONNECTED -> link up on return)")
+    fun `leaving before a deciding reading defers the cause to the return`() = runTest {
+        val (repo, transport) = buildRepository()
+        repo.onAppVisible(true)
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        advanceTimeBy(10_000)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        advanceTimeBy(300); repo.onAppVisible(false) // gone before any reading
+        advanceTimeBy(60_000); repo.onAppVisible(true)
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        assertEquals(SessionLossCause.ANDROID_LINK_UP_ON_RETURN, repo.lastLossCause.first(), "a minute later: said to be read on return")
+    }
+
+    @Test
+    fun `a loss while visible with no reading at all stays undetermined (the 0048 rule, unchanged)`() = runTest {
+        val (repo, transport) = buildRepository()
+        repo.onAppVisible(true)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        advanceTimeBy(60_000)
+        repo.onAndroidLink(AndroidLink.NOT_CONNECTED)
+        assertEquals(SessionLossCause.UNDETERMINED, repo.lastLossCause.first(), "while visible a reading a minute later says nothing about the loss")
     }
 
     // ---- I-1 (ai-sessions/0048, DECISIONS.md ADR-044): automatic foreground re-open -----------------------------------------------

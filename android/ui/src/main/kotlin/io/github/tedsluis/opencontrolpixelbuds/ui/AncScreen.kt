@@ -49,8 +49,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
  * (`ai-sessions/0038` — this method existed and was unit-tested since
  * `ai-sessions/0033` but had no UI affordance to actually reach it).
  *
- * **I-3 (`ai-sessions/0048`):** while [ancAvailability] is [AncAvailability.NOT_ALLOWED] (the Buds' last `Notify` reported Settable `0x00`) the
- * mode buttons are disabled with [ANC_NOT_ALLOWED_TEXT] and nothing is sent; **Refresh** stays enabled — it re-reads the byte.
+ * **I-1 (`ai-sessions/0054`, replaces `0048` I-3's disabled buttons):** while [ancAvailability] is [AncAvailability.NOT_ALLOWED] (the Buds' last `Notify`
+ * reported Settable `0x00`) the mode buttons **stay enabled** under [ancNotAllowedLine] with the time the Buds last answered ([ancAvailabilityUpdatedAt]):
+ * a tap first asks the Buds again and switches only if they now allow it; a refused re-check changes only that time. **Refresh** re-reads it too.
  */
 @Composable
 fun AncScreen(
@@ -63,6 +64,7 @@ fun AncScreen(
     onRefreshAncMode: () -> Unit,
     onRequestAddAncTile: () -> Unit,
     modifier: Modifier = Modifier,
+    ancAvailabilityUpdatedAt: Long? = null,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
@@ -86,12 +88,11 @@ fun AncScreen(
                 },
                 style = MaterialTheme.typography.bodyLarge,
             )
-            val notAllowed = ancAvailability == AncAvailability.NOT_ALLOWED
-            if (connectionState.isReady() && notAllowed) {
-                Text(ANC_NOT_ALLOWED_TEXT + " Tap Refresh to check again.", style = MaterialTheme.typography.bodyMedium)
+            if (connectionState.isReady() && ancAvailability == AncAvailability.NOT_ALLOWED) {
+                Text(ancNotAllowedLine(ancAvailabilityUpdatedAt), style = MaterialTheme.typography.bodyMedium)
             }
             AncMode.entries.forEach { mode ->
-                Button(onClick = { onAncModeSelected(mode) }, enabled = connectionState.isReady() && !notAllowed) {
+                Button(onClick = { onAncModeSelected(mode) }, enabled = connectionState.isReady()) {
                     Text(mode.name)
                 }
             }
@@ -101,6 +102,13 @@ fun AncScreen(
         }
     }
 }
+
+/**
+ * I-1 (`ai-sessions/0054`, the maintainer's wording in chat 2026-09-28): "ANC can only be changed while you wear the Buds (checked 16:06:11). Tapping a mode
+ * checks again first." — the time is when the Buds last answered; without one the parenthesis is left out.
+ */
+internal fun ancNotAllowedLine(checkedAt: Long?): String =
+    ANC_NOT_ALLOWED_TEXT.removeSuffix(".") + (formatUpdatedAt(checkedAt)?.let { " (checked $it)" } ?: "") + ". Tapping a mode checks again first."
 
 @Preview(showBackground = true)
 @Composable

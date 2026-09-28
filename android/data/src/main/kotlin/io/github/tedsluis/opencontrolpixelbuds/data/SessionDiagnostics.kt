@@ -43,6 +43,8 @@ object SessionDiagnostics {
     fun lossCauseLine(cause: SessionLossCause): String = "Session loss cause: " + when (cause) {
         SessionLossCause.ANDROID_LINK_LOST -> "Android's link to the Buds went down around the loss"
         SessionLossCause.BUDS_CLOSED_CHANNEL -> "Android still showed the Buds connected right after the loss — the Buds closed the channel"
+        SessionLossCause.ANDROID_LINK_DOWN_ON_RETURN -> "the loss happened while the app was not visible; on return Android's link was down"
+        SessionLossCause.ANDROID_LINK_UP_ON_RETURN -> "the loss happened while the app was not visible; on return Android showed the Buds connected"
         SessionLossCause.UNDETERMINED -> "undetermined (no reading of Android's link close to the loss)"
     }
 

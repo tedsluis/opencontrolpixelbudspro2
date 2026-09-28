@@ -33,7 +33,7 @@ enum class AncAvailability {
     /** `Settable toggles` is non-zero (`0xe8` in every sample): a `Set` is accepted. */
     ALLOWED,
 
-    /** `Settable toggles == 0x00`: the Buds refuse a `Set` (NAK `0x02`); this app sends none. */
+    /** `Settable toggles == 0x00`: the Buds refuse a `Set` (NAK `0x02`); a tap first re-reads the byte and sends a `Set` only if it changed (`ai-sessions/0054` I-1). */
     NOT_ALLOWED,
     ;
 

@@ -33,7 +33,20 @@ enum class SessionLossCause {
      * at a bud going into or out of the case or an ear). */
     BUDS_CLOSED_CHANNEL,
 
-    /** No reading of Android's link close enough to the loss (the app was not on screen, or no permission) — nothing is claimed. */
+    /**
+     * `ai-sessions/0054` I-2: the loss happened while the app was not on screen, and the first reading after it — taken when the app came back —
+     * showed the Buds **not** connected. Read on return, not at the loss (`CAP-063` 16:15:22: the ACL dropped with both buds in the case, the first
+     * reading came 3.05 s later).
+     */
+    ANDROID_LINK_DOWN_ON_RETURN,
+
+    /**
+     * `ai-sessions/0054` I-2: as [ANDROID_LINK_DOWN_ON_RETURN], but Android showed the Buds connected on return. Who closed the channel — the Buds, or a
+     * link drop that came back while the app was away — cannot be told from a reading taken this late, so nothing more is claimed.
+     */
+    ANDROID_LINK_UP_ON_RETURN,
+
+    /** No reading of Android's link close enough to the loss (no permission, or the app has not been back on screen since) — nothing is claimed. */
     UNDETERMINED,
 }
 
@@ -49,19 +62,31 @@ data class LinkReading(val link: AndroidLink, val atMillis: Long)
  * 1. A "not connected" reading from [LINK_LOST_BEFORE_MS] before to [LINK_LOST_AFTER_MS] after the loss → [SessionLossCause.ANDROID_LINK_LOST].
  * 2. Otherwise the **first** reading taken at or after the loss (within [FRESH_READING_MS]) decides: connected → [SessionLossCause.BUDS_CLOSED_CHANNEL],
  *    not connected → [SessionLossCause.ANDROID_LINK_LOST]. A reading older than the loss is never used for this.
- * 3. Otherwise [SessionLossCause.UNDETERMINED].
+ * 3. `ai-sessions/0054` I-2 — only when [lossWhileHidden] (the loss happened while the app was not on screen, or the app left before a deciding reading
+ *    came): the first reading taken at or after the loss decides, however late — readings exist only while the app is on screen again, so it is the
+ *    reading taken on return: not connected → [SessionLossCause.ANDROID_LINK_DOWN_ON_RETURN], connected → [SessionLossCause.ANDROID_LINK_UP_ON_RETURN].
+ * 4. Otherwise [SessionLossCause.UNDETERMINED].
  *
- * Pure and re-evaluated whenever a new reading arrives, so the text follows the evidence without any timer (ARCHITECTURE.md §6).
+ * A reading older than the loss is never used by rules 2–3. Pure and re-evaluated whenever a new reading arrives, so the text follows the evidence
+ * without any timer (ARCHITECTURE.md §6).
  */
-fun classifySessionLoss(lossAtMillis: Long, readings: Collection<LinkReading>): SessionLossCause {
+fun classifySessionLoss(lossAtMillis: Long, readings: Collection<LinkReading>, lossWhileHidden: Boolean = false): SessionLossCause {
     val linkLost = readings.any {
         it.link == AndroidLink.NOT_CONNECTED && it.atMillis in (lossAtMillis - LINK_LOST_BEFORE_MS)..(lossAtMillis + LINK_LOST_AFTER_MS)
     }
     if (linkLost) return SessionLossCause.ANDROID_LINK_LOST
     val first = readings.filter { it.atMillis in lossAtMillis..(lossAtMillis + FRESH_READING_MS) }.minByOrNull { it.atMillis }
-    return when (first?.link) {
-        AndroidLink.CONNECTED -> SessionLossCause.BUDS_CLOSED_CHANNEL
-        AndroidLink.NOT_CONNECTED -> SessionLossCause.ANDROID_LINK_LOST
+    when (first?.link) {
+        AndroidLink.CONNECTED -> return SessionLossCause.BUDS_CLOSED_CHANNEL
+        AndroidLink.NOT_CONNECTED -> return SessionLossCause.ANDROID_LINK_LOST
+        AndroidLink.UNKNOWN -> return SessionLossCause.UNDETERMINED
+        null -> Unit
+    }
+    if (!lossWhileHidden) return SessionLossCause.UNDETERMINED
+    val onReturn = readings.filter { it.atMillis >= lossAtMillis }.minByOrNull { it.atMillis }
+    return when (onReturn?.link) {
+        AndroidLink.NOT_CONNECTED -> SessionLossCause.ANDROID_LINK_DOWN_ON_RETURN
+        AndroidLink.CONNECTED -> SessionLossCause.ANDROID_LINK_UP_ON_RETURN
         AndroidLink.UNKNOWN, null -> SessionLossCause.UNDETERMINED
     }
 }

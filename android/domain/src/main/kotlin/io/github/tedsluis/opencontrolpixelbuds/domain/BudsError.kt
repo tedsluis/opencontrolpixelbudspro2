@@ -70,8 +70,8 @@ sealed class BudsError {
     data class CommandRejected(val reasonCode: Int, val detail: String) : BudsError()
 
     /**
-     * An ANC `Set` was not sent because the Buds' last `Notify ANC state` reported no switchable mode (Settable `0x00`) — they NAK a `Set` then
-     * (reason `0x02`, `CAP-062` 10/10; DECISIONS.md ADR-024 Update 2026-09-25). A Refresh or a later `Notify` re-reads it (`ai-sessions/0048` I-3).
+     * An ANC `Set` was not sent because the Buds' `Notify ANC state` — the one the tap's own claim asked for (`ai-sessions/0054` I-1) — reported no
+     * switchable mode (Settable `0x00`); they NAK a `Set` then (reason `0x02`, `CAP-062` 10/10; DECISIONS.md ADR-024 Update 2026-09-25).
      */
     data object AncNotAllowed : BudsError()
 
