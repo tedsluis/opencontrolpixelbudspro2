@@ -42,11 +42,11 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
 - [x] Read battery status (left, right: DLCI 0x04, ADR-033; case and per-bud "charging in the case": DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043 and its Update)
 - [x] Switch Active Noise Cancelling / Transparency / Adaptive mode (ADR-009)
 - [x] Configure equalizer / sound profile (presets and custom bands) (ADR-020/034)
-- [~] Configure touch controls and head gestures — "Use touch controls" and press-and-hold per bud built (read + write, ADR-036/045, `ai-sessions/0052`); the ANC-mode list (field 12) and head gestures not built
+- [~] Configure touch controls and head gestures — "Use touch controls" and press-and-hold per bud built (read + write, ADR-036/045, `ai-sessions/0052`); the press-and-hold ANC-mode list built (field 12, read + write, ADR-046, `ai-sessions/0056`); head gestures not built
 - [x] Volume balance, mono audio, conversation detection (read + write, ADR-036/045, `ai-sessions/0052`)
 - [~] Read firmware version and serial numbers per component (firmware shown; serial numbers not read)
 - [x] "Find my Buds" functionality — Left/Right only (ADR-011); Case/"both" out of scope (ADR-027)
-- [ ] In-ear detection status
+- [ ] In-ear detection status — the in-ear detection **setting** is read and written (field 2, ADR-047, `ai-sessions/0056`); whether a bud is worn is not shown
 - [ ] Manage multipoint connections
 - [ ] Case sound settings (earbuds replaced, other notifications)
 

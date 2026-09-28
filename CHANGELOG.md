@@ -187,6 +187,12 @@ mark v1.
   no Left/Right field in the write 🟢 (one list 🟡); "In-ear detection" = `qhr` field 2 🟢 (5 filmed taps + the Buds' SASS capability bit 4); with it off the
   phone does not pause, the Buds still close DLCI 0x02 and send no ANC `Notify` on wear changes; §6 notes (phone-side pause without AVRCP pass-through 🟡, DLCI
   0x08 `04 05` wear value 🟡, field-13 mirror 🟡). New ADR-046 (field 12 read + write) and ADR-047 (field 2 write); ADR-019/024/036/045 dated Updates. No app change.
+- **2026-09-28 (`ai-sessions/0056`): the press-and-hold ANC-mode list (field 12, ADR-046) and the "In-ear detection" switch (field 2, ADR-047) built.** Controls tab:
+  "Modes for press and hold (both buds)" — read at Connect, four boxes shown while a bud's press and hold is Noise control, one `WriteSetting` with all four
+  booleans per tap, never fewer than two ("At least two modes must stay selected."); "In-ear detection" is a switch with a note on what "off" changes. Also (the
+  maintainer's choice): a setting not read yet is disabled (U-1) and a tap during a re-open says so (U-2). Real fixtures: `CAP-056` 1529/1531, 1689…1843, 1502, 2173/4048,
+  2849/3627, and — found in this session — channel-21 field-12 frames in `CAP-041` 2176/2192/2198 and `CAP-036` 1514/1516. `:data` 1564, `:domain` 25 tests; 7
+  mutations caught. `CAP-064` skeleton section VII; `APP_TESTPLAN.md` C12, N1, N7–N11. Not hardware-verified.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

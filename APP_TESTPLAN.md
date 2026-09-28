@@ -5,7 +5,9 @@ record the result of each test. Written 2026-09-25 against the app as committed 
 `ai-sessions/0048` build** (automatic foreground re-open ADR-044: C1, C3, C8, C9, E3–E5, G4; ANC only while worn: F8, G3; loss wording: C8; per-bud
 charging and last-seen Case: E2–E5; ring notice: I4); **updated 2026-09-26 for the `ai-sessions/0052` build** (the EQ tab is "Sound", a new
 "Controls" tab, presets in two rows: H0; *Refresh battery* on a fresh claim: E8, E9; settings read and written: sections M and N); **updated 2026-09-28 for the `ai-sessions/0054` build** (a tap on a disabled ANC mode checks again: F8, G3; the loss wording after
-returning to the app: C11; balance snaps to "Centre": M3; the previous connection's per-bud lines marked at Connect: E10; the Digital-assistant note: N3).
+returning to the app: C11; balance snaps to "Centre": M3; the previous connection's per-bud lines marked at Connect: E10; the Digital-assistant note: N3);
+**updated 2026-09-28 for the `ai-sessions/0056` build** (the press-and-hold ANC-mode list, field 12: N1, N7–N9; the "In-ear detection" switch, field 2: N1, N10, N11;
+a setting not read yet is disabled: N1; a tap during a re-open: C12).
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -64,6 +66,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | C9 | Take them out again (lid open), keep the app on screen; do **not** tap Connect. | ready again **by itself** once Android shows the Buds connected (one attempt; if it fails, a message and a Connect/Retry button) | one app `SABM` 0x02 per event (link back / Buds `DISC` + ≈ 1.5 s) | | |
 | C10 | Swipe left/right between the tabs, and use the bottom bar. | Both change the tab; Back does not jump to Debug | — | | |
 | C11 | Connected, buds out, lid open: press **Home**; put **both** buds into the case (the link drops while the app is away); wait 10 s; return to the app. | "Android no longer showed the Buds connected when you returned to the app — the connection ended while the app was in the background (…). Tap Connect to reconnect." — not the undetermined "The Maestro channel (equalizer) was closed" (`ai-sessions/0054` I-2) | ACL disconnect while the app is not visible; no app `SABM` 0x02 while away | | |
+| C12 | Right after the Buds closed the app's channel (a bud out of an ear, app on screen), tap a setting on Controls within ~2 s, before "ready". | "The setting was not changed: The app's channel is being reopened — try again in a moment."; the switch unchanged; after "ready" nothing is sent by itself | no `WriteSetting` for that tap (nothing queued) | | |
 
 ## D. Safe Mode and firmware (after the `ai-sessions/0046` fix)
 
@@ -142,12 +145,17 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| N1 | Right after Connect: open Controls. | "Use touch controls" with its value and time; "Press and hold" Left / Right: Noise control or Digital assistant; "In-ear detection (setting): on/off — read-only; not whether a bud is worn" | `ReadSetting 4:4`, `4:7`, `4:2` + answers | | |
+| N1 | Right after Connect: open Controls. | "Use touch controls" with its value and time; "Press and hold" Left / Right: Noise control or Digital assistant; while a bud is on Noise control "Modes for press and hold (both buds)" with four boxes (Noise cancellation / Off / Adaptive / Transparency) and "read HH:MM:SS"; the "In-ear detection" switch with "Pauses audio when you take a bud out and resumes it when you put it back.", the note "With it off, audio does not pause …" and its time. A switch/box whose value was not read is greyed | `ReadSetting 4:4`, `4:7`, `4:12`, `4:2` + answers | | |
 | N2 | **Use touch controls** off; tap a bud (music playing). Then on; tap again. | Off: the tap does nothing; on: the tap pauses/plays | `4:{4:0}`, `4:{4:1}` | | |
 | N3 | **Left: Digital assistant**, press-and-hold the Left bud; then **Left: Noise control**, hold again. | the chip follows after the Buds' OK; say what the phone/Buds do; under "Press and hold" the note "Digital assistant needs an assistant app on this phone that supports headphones (…). Without one, holding the bud may only play a tone." (`ai-sessions/0054` I-5) | `4:{7:{1:{4:{1:6}}}}`, `…{1:5}` | | |
 | N4 | The same for **Right**. | as N3 | `4:{7:{2:{4:{1:6}}}}`, `…{1:5}` | | |
 | N5 | Disconnect, Connect, open Controls. | the written values are read back | the `ReadSetting` answers | | |
 | N6 | Safe Mode (only if a Safe Mode card shows): tap any setting. | "The setting was not changed: Safe Mode: nothing was sent …" | nothing sent | | |
+| N7 | Untick **Adaptive** in the mode list; then long-press a bud three times (say what you hear). | Adaptive unticked after the Buds' OK ("changed …"); the presses cycle Noise cancellation → Off → Transparency only | `WriteSetting 4:{12:{1:1 2:1 3:1 4:0}}` → empty `RESPONSE` | | |
+| N8 | Untick modes until two are left; try to untick one more. | the last two boxes greyed, "At least two modes must stay selected."; nothing changes | one write per allowed untick; **nothing** for the refused one | | |
+| N9 | Set both buds to **Digital assistant**; then one back to **Noise control**. Tick the modes back afterwards. | the mode list disappears, then reappears | only the `4:{7:…}` writes, then the `4:{12:…}` ones | | |
+| N10 | **In-ear detection** off; with music playing take a bud out and put it back. | switch off after the OK; the music does **not** pause | `WriteSetting 4:{2:0}` → OK | | |
+| N11 | **In-ear detection** on; take a bud out and put it back. | switch on after the OK; the music pauses and resumes | `4:{2:1}` → OK | | |
 
 ## I. Find My Buds
 
@@ -203,7 +211,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 |---|---|---|---|---|---|
 | A Start / permissions / Bluetooth | 6 | | | | |
 | B Pairing | 4 | | | | |
-| C Connection | 11 | | | | |
+| C Connection | 12 | | | | |
 | D Safe Mode / firmware | 2 | | | | |
 | E Battery | 10 | | | | |
 | F ANC | 8 | | | | |
@@ -214,7 +222,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | K Robustness | 5 | | | | |
 | L Debug | 3 | | | | |
 | M Sound settings | 6 | | | | |
-| N Controls | 6 | | | | |
+| N Controls | 11 | | | | |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/APP_TESTPLAN.md - https://tedsluis.github.io/opencontrolpixelbudspro2/APP_TESTPLAN

@@ -13,6 +13,8 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > `ai-sessions/0054` (not yet hardware-verified, next run `CAP-064`) addressed that run's findings: a tap on a disabled ANC mode now checks
 > again with the Buds, a session loss in the background is explained on return, the balance snaps to "Centre", the previous connection's
 > battery lines are marked right after Connect, and "Digital assistant" carries a note that it needs an assistant app that supports headphones.
+> `ai-sessions/0056` (not yet hardware-verified, `CAP-064` section VII) adds the press-and-hold ANC-mode list ("Modes for press and hold", ADR-046) and makes
+> "In-ear detection" a switch (ADR-047).
 > Battery via HFP is not deliverable to an app (ADR-040).
 
 > ## ⚠️ Disclaimer: hardware risk

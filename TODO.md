@@ -826,7 +826,9 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
   indicator (wish 12a).
 - [x] **Done 2026-09-28 (`ai-sessions/0055`): label promoted from `CAP-056` film (5/5 + SASS bit 4), behaviour with it off recorded, ADR-047 accepted.** — was: **Prepare the draft in-ear-detection-write ADR (in-ear detection writable, field 2; draft in `ai-sessions/0053` §6):** first the label promotion from film
   (`CAP-056` W2/W5, or `CAP-024` 1850/1912); 🔴 what OHD off does to the Buds' `DISC` on wear changes (ADR-044) and to Settable — `CAP-056` W1/W3/W4.
-- **Next FEATURE session (maintainer's choice, chat 2026-09-28, `ai-sessions/0055`):** build the "Modes for press and hold" list (field 12, ADR-046: read at
+- [x] **Done 2026-09-28 (`ai-sessions/0056`): the list and the switch built (plus U-1 not-read = disabled, U-2 re-open wording), `CAP-064` section VII written;
+  not hardware-verified — the next capture is `CAP-064` (Group AZ); the Pixel 7a "open Customize right" check is a separate later capture.** — was:
+  **Next FEATURE session (maintainer's choice, chat 2026-09-28, `ai-sessions/0055`):** build the "Modes for press and hold" list (field 12, ADR-046: read at
   Connect, four checkboxes shown once for both buds, never fewer than two, fixtures `CAP-056` 1689/1725/1786/1815/1843 and read 1531) and the "In-ear detection"
   switch (field 2, ADR-047: fixtures `CAP-056` 2173/4048 ch 19, 2849/3627 ch 21, read 1502; the note on what "off" changes); add to the `CAP-064` (Group AZ)
   skeleton: untick Adaptive + long-press cycle on film, in-ear detection off + an ANC Refresh with no bud worn (Settable?), and "open Customize right while a mode
@@ -852,7 +854,8 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
   experiments (`ai-sessions/0042` RESULT §12 e) have not been run as isolated tests.
 - 🔴 **Why Play services stops re-claiming DLCI 0x04** (after 17:18:53 in `CAP-059`, after 17:27:01 in `CAP-061`) — its *Nearby devices*
   permission state was not recorded in `CAP-060`/`CAP-061` either; record it in the next capture.
-- **ADR-036 read-only settings UI** (`ReadSetting` per-field decoders on DLCI 0x02): unblocked, nothing implemented.
+- [x] **ADR-036 settings UI** — built in `ai-sessions/0052` (reads 2, 4, 7, 17, 19, 22) and `0056` (12); 11, 15, 27, 28 are unblocked for reading but not asked for
+  (line corrected `ai-sessions/0056`; it said "nothing implemented").
 - **Fold the tightened capture checklist** (`ai-sessions/0042` RESULT §12) into `CAPTURE_BLUETOOTH_HCI_SNOOP.md` — maintainer procedure,
   proposal only.
 - **Undecided, each needs its own ADR:** a *background* session via CDM device presence (`ARCHITECTURE.md` §6.0b; the foreground variant is
