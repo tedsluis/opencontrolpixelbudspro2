@@ -1825,6 +1825,13 @@ the first time against every one of its 20 real discriminators + default branch.
   encounter later). Not capture-correlated — `qjg` belongs to the `qjn`/"presto" schema, which per the
   `qjn` entry's structural finding is very likely a different product than this project's own Buds
   Pro 2, so no capture in this project's possession is expected to exercise it at all.
+- **Update (2026-09-28, `ai-sessions/0055`, maintainer-approved in chat 2026-09-28) — `qht`'s field order settled on film and wire.** `CAP-056`
+  (Group AR): unticking "Adaptive" writes `qht` field 4 = 0 (frames 1815/1959), "Transparency" field 3 = 0 (1843/1991), "Noise cancellation" field 1
+  (1689/1891), "Off" field 2 (1786/1928) — confirming this entry's code reading (`qht.java:31` fields 1–4 → Java `c,d,e,f`; `hgj.java:216–331`: `c` = On,
+  `d` = Off, `e` = Transparency, `f` = Adaptive) and refuting the on-screen-order reading of `PROTOCOL.md` §4.5.3. The "ANC gesture loop" is the per-bud
+  "Active noise control" checklist (film). `hgj.java:214` passes the fragment's `argument_is_left_bud` only to `hgi` (analytics page id 22/23,
+  `hgi.java:50–53`); the `qht` write carries no side. `hgj.java:165–168`: the app keeps at least two modes selected. 🟢 FACT for the order and the name
+  (`PROTOCOL.md` §4.5.3 2026-09-28 Update, `DECISIONS.md` ADR-019 Update / ADR-046); one shared list on the Buds stays 🟡.
 
 ### `defpackage.qjo` / `defpackage.qju` — 2×`MESSAGE` wrapper messages (possible Left/Right or two-part containers)
 

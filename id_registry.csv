@@ -43,7 +43,9 @@ ADR-041,adr,accepted,"The wire codec is hand-written; no protobuf runtime and no
 ADR-042,adr,accepted,"Startup Handshake / Safe Mode implemented as a firmware + Model ID write gate",DECISIONS.md
 ADR-043,adr,accepted,"The Case battery comes from DLCI 0x02 SubscribeRuntimeInfo (entry 6.1); the DLCI 0x08 claim is withdrawn (supersedes ADR-035 items 1-2, ADR-038, ADR-039 item 1)",DECISIONS.md
 ADR-044,adr,accepted,"Re-open the MAESTRO session automatically while the app is visible (supersedes the 2026-09-20 no-automatic-session decision for the foreground)",DECISIONS.md
-ADR-045,adr,accepted,"DLCI 0x02 WriteSetting unblocked for qhr fields 17, 19, 22, 4 and 7 (balance, mono, conversation detection, touch controls, press-and-hold); field 12 stays gated",DECISIONS.md
+ADR-045,adr,accepted,"DLCI 0x02 WriteSetting unblocked for qhr fields 17, 19, 22, 4 and 7 (balance, mono, conversation detection, touch controls, press-and-hold); field 12 stays gated (superseded for field 12 by ADR-046)",DECISIONS.md
+ADR-046,adr,accepted,"DLCI 0x02 ReadSetting and WriteSetting unblocked for qhr field 12 (press-and-hold ANC-mode list; bit order 1 NC, 2 Off, 3 Transparency, 4 Adaptive; one list for both buds)",DECISIONS.md
+ADR-047,adr,accepted,"DLCI 0x02 WriteSetting unblocked for qhr field 2 (In-ear detection)",DECISIONS.md
 CAP-001,capture,analyzed,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-002,capture,analyzed,"session date/status: 2026-08-09",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-003,capture,analyzed,"session date/status: 2026-08-10",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
@@ -99,7 +101,7 @@ CAP-052,capture,planned,"session date/status: *planned* — Group AN (new), CAP-
 CAP-053,capture,planned,"session date/status: *planned* — Group AO (new), EQ outer field 16-vs-18 drag-and-release-without-Save isolation, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-054,capture,planned,"session date/status: *planned* — Group AP (new), connection-free Battery Notification scan bracketing a single-bud insertion/removal event, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-055,capture,planned,"session date/status: *planned* — Group AQ (new), Nod/Shake head gestures performed while an active call/notification exists, added by ai-sessions/0017",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
-CAP-056,capture,planned,"session date/status: *planned* — Group AR (new), HOLD-005 ANC-rotation-checklist Left/Right split genuine re-run (CAP-045 never opened the checklist screen), added by ai-sessions/0017; plus the qht bit-order steps of ai-sessions/0051 F-6 and, since ai-sessions/0054, the W-12b in-ear-detection-off steps (skeleton section Additions)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
+CAP-056,capture,2026-09-28,"analyzed — Group AR, Pixel 7a, official app: HOLD-005 (qht bit order 1 NC / 2 Off / 3 Transparency / 4 Adaptive, no Left/Right field in the write) and W-12b in-ear detection on/off (field 2 on film, SASS bit 4, no pause with it off, Buds still DISC DLCI 0x02); ai-sessions/0055",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-057,capture,withdrawn,"session date/status: *withdrawn 2026-09-24* — Group AS (live GetSoftwareInfo/GetHardwareInfo correlation) made unnecessary: the connect-time burst's RPCs were identified from existing CAP-036 bytes (ai-sessions/0045, PROTOCOL.md §6)",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-058,capture,planned,"session date/status: *planned* — Group AT (new), SDP-001 3rd attempt with an explicit on-device process-liveness check, maintainer-approved and added by ai-sessions/0031",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9
 CAP-059,capture,analyzed,"2026-09-20 17:16:59-17:22:29, Group AU (new) — first OpenControl-app hardware capture (Pixel 9a/GrapheneOS, ai-sessions/0041 build), reclassified from android/logs/LOGS-001 by ai-sessions/0043; PAIR-001, ANC-001-004, FIND-001/002 confirmed, EQP-006 partial",CAPTURE_BLUETOOTH_HCI_SNOOP.md §9

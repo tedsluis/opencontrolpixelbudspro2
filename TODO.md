@@ -811,7 +811,8 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
   docked, idle 2 min, Refresh → is the re-sent `SubscribeRuntimeInfo` answered?; the new settings writes (balance, mono, conversation detection,
   touch controls) with an HCI bracket each; the Group AR ANC-list re-run (planned `CAP-056`): untick only Adaptive on "Customize left", check
   "Customize right" on film, then only Transparency — settles which `qht` bit is which (`0051` F-6) and whether the list is shared.
-- **Group AR (`CAP-056`, Pixel 7a, official app) additions from `0051` F-6:** untick only Adaptive on "Customize left", check "Customize right" on
+- [x] **Done 2026-09-28 in `CAP-056` (`ai-sessions/0055`): bit order 1 NC / 2 Off / 3 Transparency / 4 Adaptive 🟢, no side field 🟢, one list 🟡 (the
+  "check Customize right" step was skipped); ADR-046 unblocks field 12.** — was: **Group AR (`CAP-056`, Pixel 7a, official app) additions from `0051` F-6:** untick only Adaptive on "Customize left", check "Customize right" on
   film, then only Transparency — settles the `qht` bit order (`PROTOCOL.md` §4.5.3 2026-09-26 Update, 🔴) and whether the list is shared; see
   `CAP-063-EVENT-NOTES.md` §8. Only after that can field 12 get a read/write ADR.
 - [x] **Done 2026-09-28 (`ai-sessions/0054`) —** I-1 (a disabled ANC tap re-checks with the claim's `Get`, `Set` only on Settable non-zero), I-2 (a loss
@@ -819,12 +820,19 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
   note), I-4 (the previous connection's per-bud lines marked at Connect) — real `CAP-063` bytes (4774, 4184, 4233/4241, 4497/4508, 2723/2756, 3046/3059,
   export 586–593) and `CAP-046` 1873 (`17:0`). **Not hardware-verified:** the next capture is `CAP-064` (Group AZ, skeleton
   `captures/CAP-064-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AZ/CAP-064-EVENT-NOTES.md`, which also carries AY-3 and the `APP_TESTPLAN.md` steps `CAP-063` skipped).
-- **Next captures (maintainer's choice, chat 2026-09-28):** Group AR (`CAP-056`, Pixel 7a) **first** for the ANC-mode checkboxes (field 12, wish 11) —
+- **Next captures (maintainer's choice, chat 2026-09-28; Group AR done as `CAP-056`, `ai-sessions/0055`):** Group AR (`CAP-056`, Pixel 7a) **first** for the ANC-mode checkboxes (field 12, wish 11) —
   its skeleton now also holds the W-12b in-ear-detection-off steps (the maintainer's request in chat 2026-09-28, `ai-sessions/0054`); then `CAP-064`
   (Group AZ, Pixel 9a) with **AY-3** (one bud visibly in an ear, the other on the table, `08 11` each time) for "Settable `0x00` = no bud worn" and a "worn"
   indicator (wish 12a).
-- **Prepare the draft in-ear-detection-write ADR (in-ear detection writable, field 2; draft in `ai-sessions/0053` §6):** first the label promotion from film
+- [x] **Done 2026-09-28 (`ai-sessions/0055`): label promoted from `CAP-056` film (5/5 + SASS bit 4), behaviour with it off recorded, ADR-047 accepted.** — was: **Prepare the draft in-ear-detection-write ADR (in-ear detection writable, field 2; draft in `ai-sessions/0053` §6):** first the label promotion from film
   (`CAP-056` W2/W5, or `CAP-024` 1850/1912); 🔴 what OHD off does to the Buds' `DISC` on wear changes (ADR-044) and to Settable — `CAP-056` W1/W3/W4.
+- **Next FEATURE session (maintainer's choice, chat 2026-09-28, `ai-sessions/0055`):** build the "Modes for press and hold" list (field 12, ADR-046: read at
+  Connect, four checkboxes shown once for both buds, never fewer than two, fixtures `CAP-056` 1689/1725/1786/1815/1843 and read 1531) and the "In-ear detection"
+  switch (field 2, ADR-047: fixtures `CAP-056` 2173/4048 ch 19, 2849/3627 ch 21, read 1502; the note on what "off" changes); add to the `CAP-064` (Group AZ)
+  skeleton: untick Adaptive + long-press cycle on film, in-ear detection off + an ANC Refresh with no bud worn (Settable?), and "open Customize right while a mode
+  is unticked on the left" on a Pixel 7a run if one is made (one list?).
+- 🔴 **Open from `CAP-056`:** what makes the Buds close DLCI 0x02 on a wear change; the pause route with GSND closed (Google app disabled); DLCI 0x08 `04 05`/`04 16`
+  meaning; Settable with in-ear detection off and no bud worn — `PROTOCOL.md` §6.
 - **ANC tile after re-wearing (`ai-sessions/0054`, known limit):** the tile's next mode is computed from the mode shown (OFF while not worn → ACTIVE), so the
   first tap after re-wearing may set the mode the Buds already report; harmless (the ACK applies it), not changed.
 - 🔴 **Android did not re-create the ACL after an ADR-016 drop with the lid open** in `CAP-063` (unlike `CAP-062`) — `PROTOCOL.md` §6.

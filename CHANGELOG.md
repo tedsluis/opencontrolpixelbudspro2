@@ -181,6 +181,12 @@ mark v1.
   "Digital assistant". Nothing new on the wire (the ANC `Get` moved into one shared call site). Tests with real `CAP-063`/`CAP-046` bytes:
   `:data` 1546, `:hardware` 51, `:domain` 23; six mutation checks caught. New capture skeleton `CAP-064` (Group AZ, Pixel 9a: I-1…I-5, AY-3, the
   skipped `APP_TESTPLAN.md` steps); the W-12b in-ear-detection-off steps added to `CAP-056` (Group AR) on the maintainer's request. Not hardware-verified.
+- **2026-09-28 (`ai-sessions/0055`): `CAP-056` (Group AR, Pixel 7a, official app) analysed — the ANC-mode checklist and in-ear detection.** Folder
+  renamed to `CAP-056-2026-09-28_17-30-53_17-35-58-Group_AR` (overlay clock), mp4 mode 644; the film is committed unchanged (maintainer's choice). Approved in
+  chat: `qht` bit order 1 Noise cancellation / 2 Off / 3 Transparency / 4 Adaptive 🟢 (the on-screen-order reading refuted), the checklist = "ANC gesture loop" 🟢,
+  no Left/Right field in the write 🟢 (one list 🟡); "In-ear detection" = `qhr` field 2 🟢 (5 filmed taps + the Buds' SASS capability bit 4); with it off the
+  phone does not pause, the Buds still close DLCI 0x02 and send no ANC `Notify` on wear changes; §6 notes (phone-side pause without AVRCP pass-through 🟡, DLCI
+  0x08 `04 05` wear value 🟡, field-13 mirror 🟡). New ADR-046 (field 12 read + write) and ADR-047 (field 2 write); ADR-019/024/036/045 dated Updates. No app change.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

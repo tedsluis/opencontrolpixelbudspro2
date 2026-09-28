@@ -1014,6 +1014,15 @@ motivated this).
     HYPOTHESIS — the same kind of gap that kept fields 12/22/27 at category/field-number-level
     identity rather than full semantic identity. Promoted for field-number/category-level identity
     only; the specific "In-ear detection" label equivalence remains 🟡 HYPOTHESIS.
+- Update (2026-09-28, `ai-sessions/0055`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Field 12", option *"Promote both (Recommended)"*, and
+  "Field 2", option *"Promote label + behaviour (Recommended)"*): the two naming gaps this ADR left open are closed by film + wire evidence (dimension (b) of the
+  2026-09-03 note — the code name now reconciled with the UI).
+  - **Field 12:** the per-bud "Active noise control" checklist ("Press and hold to cycle between the selected active noise control modes") writes field 12 in
+    `CAP-056` (16 filmed taps, 16 writes, OK) — it **is** the code's "ANC gesture loop"; bit order 1 = Noise cancellation, 2 = Off, 3 = Transparency, 4 = Adaptive
+    (frames 1815/1959, 1843/1991), matching `qht.java:31`/`hgj.java:216–331`. 🟢 FACT (`PROTOCOL.md` §4.5.3 2026-09-28 Update).
+  - **Field 2:** the switch "In-ear detection" writes field 2 in both directions on film (`CAP-056` 2173/2849/3627/4048/4344, byte-identical to `CAP-024`
+    1912/1850), and the Buds' Fast Pair SASS capability bit 4 ("on-head detection is turned on") follows it 5/5 — the "In-ear detection" = "CATEGORY_OHD" label
+    equivalence is 🟢 FACT (`PROTOCOL.md` §4.5.5 2026-09-28 Update).
 
 ## ADR-020 — EQ `FrameEncoder`/`FrameDecoder` implementation explicitly unblocked
 
@@ -1320,6 +1329,11 @@ motivated this).
 - **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities", option *"Settable = worn (🟡)
   steun"*):** `CAP-063` — 22 `Notify` frames, 0 counter-examples to the 🟡 "`0x00` = no bud worn", including `00` with both buds in the hand (9094). Stays
   🟡: the one-bud-worn test (AY-3) was not run. The decision above is unchanged (`CAP-063-FINDINGS.md` §3).
+
+- **Update (2026-09-28, `ai-sessions/0055`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notes", option *"§4.1: Settable 00 support"*):** `CAP-056` 3940
+  reads `00` with both buds held in the hands and in-ear detection **on** — one more sample, 0 counter-examples; stays 🟡. With in-ear detection **off** no `Notify` was
+  taken while no bud was worn, and the Buds sent no `Notify` at all on wear changes (🔴 whether the byte still drops to `00` then). The decision above is unchanged
+  (`CAP-056-FINDINGS.md` §4).
 
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 
@@ -1840,6 +1854,8 @@ motivated this).
   must be a version the app was verified against (`release_5.203`) — otherwise the app stays in the read-only Safe Mode of `ARCHITECTURE.md` §8.1.
 - **Consequences**: `Maestro.readSettingRequest` may learn the field list; a read-only "Settings" card and the per-field decoders are later work (each field's decoder needs real
   bytes as fixtures). **Every write is a later, separate ADR.** No behaviour changes today.
+- **Update (2026-09-28, `ai-sessions/0055`):** field 12 is added to the readable fields by ADR-046 (its semantics reached 🟢 FACT in `PROTOCOL.md` §4.5.3's
+  2026-09-28 Update).
 
 ## ADR-037 — `android/logs/LOGS-0xx`'s "always gitignored" rule retired for full capture sessions specifically; ad hoc pulls unaffected
 
@@ -2119,6 +2135,50 @@ motivated this).
 - **Consequences**: `:data` gains a settings codec (`4:{N:varint}`, zigzag for 17, field 7's nested shape) and one write per field in
   `BudsRepositoryImpl`; `Maestro.READABLE_FIELDS` gains 2, 4, 7, 17, 19, 22 (ADR-036); the UI shows the values with their time. Audibility (balance, mono)
   and conversation detection's behaviour are not established by this ADR — the Group AY re-test.
+- **Update (2026-09-28, `ai-sessions/0055`):** "Field 12 stays read- and write-gated" is superseded by **ADR-046** (field 12 read + write); field 2's write is
+  added by **ADR-047**. The five fields above are unchanged.
+
+
+## ADR-046 — DLCI 0x02: `ReadSetting` and `WriteSetting` unblocked for `qhr` field 12 (the press-and-hold ANC-mode list)
+
+- **Date**: 2026-09-28
+- **Status**: Accepted (maintainer, chat 2026-09-28, `ai-sessions/0055`)
+- **Note on process**: drafted by an AI agent (`CAP-056-FINDINGS.md` §8, draft D-A); the decision is the maintainer's, given in the chat session of 2026-09-28
+  (`AskUserQuestion` "ADRs", option *"D-A field 12 read+write"*, with this text in the preview), per `AGENTS.md` §6. Depends on the `PROTOCOL.md` §4.5.3
+  2026-09-28 Update (bit order, name), approved in the same chat.
+- **Context**: ADR-036 and ADR-045 kept field 12 read- and write-gated because its bit order was disputed (`PROTOCOL.md` §4.5.3 2026-09-26 Update, 🔴). `CAP-056`
+  settles it on film and wire: 1 = Noise cancellation, 2 = Off, 3 = Transparency, 4 = Adaptive (frames 1815/1959, 1843/1991), matching `qht.java:31` and
+  `hgj.java:216–331`; 16 of 16 official writes acknowledged by an empty `RESPONSE` status OK and mirrored on `SubscribeToSettingsChanges`. The write carries no
+  Left/Right field (🟢); one shared list is 🟡 (the film test was not run).
+- **Options considered**: (a) keep gated; (b) read only; (c) read + write, one list for both buds — chosen; (d) one list per bud — rejected: the wire has no side field.
+- **Decision**: `ReadSetting 4:12` and `WriteSetting 4:{12:{1:b 2:b 3:b 4:b}}` (`maestro_pw.Maestro`) are unblocked. All four booleans are always sent; the request is
+  byte-identical to the official app's for the same state on channel 19 (`CAP-056` 1689 `4:{12:{1:0 2:1 3:1 4:1}}`, 1815 `4:{12:{1:1 2:1 3:1 4:0}}`, 1843
+  `4:{12:{1:1 2:1 3:0 4:1}}`, 1725 all set) and otherwise uses the announced channel with its ADR-034 address; it passes the Safe-Mode gate (ADR-042), is sent once per
+  user tap, and counts as done only on the empty `RESPONSE` status OK — otherwise the previous state stays and the reason is shown. The app never leaves fewer than two
+  modes selected (the official app's rule, `hgj.java:165–168`). The list is shown once, for both buds.
+- **Consequences**: the settings codec gains field 12 (encode and decode); `Maestro.READABLE_FIELDS` gains 12 (amends ADR-036); a "Modes for press and hold" list on
+  "Controls". Hardware re-test: untick Adaptive → `4:{12:{1:1 2:1 3:1 4:0}}` → OK; a long press then cycles Noise cancellation → Off → Transparency only (`Notify`
+  modes `08`, `20`, `80`). If a capture shows separate per-bud lists, this ADR is superseded.
+
+## ADR-047 — DLCI 0x02: `WriteSetting` unblocked for `qhr` field 2 (In-ear detection)
+
+- **Date**: 2026-09-28
+- **Status**: Accepted (maintainer, chat 2026-09-28, `ai-sessions/0055`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0053` §6, updated as `CAP-056-FINDINGS.md` §8 draft D-B); the decision is the maintainer's, given in the
+  chat session of 2026-09-28 (`AskUserQuestion` "ADRs", option *"D-B field 2 write"*, with this text in the preview), per `AGENTS.md` §6. Depends on the
+  `PROTOCOL.md` §4.5.5 2026-09-28 Update (label equivalence), approved in the same chat.
+- **Context**: field 2 is read at Connect (ADR-036) but not writable. `CAP-056`: the switch "In-ear detection" writes `4:{2:0|1}` (5 of 5 filmed taps — 2173, 2849,
+  3627, 4048, 4344 — byte-identical to `CAP-024` 1912/1850 on channel 19), each acknowledged OK, and the Buds' SASS capability bit 4 ("on-head detection is turned on")
+  follows it 5 of 5. With it off the phone did not pause on removal (0 of 6), the Buds still closed DLCI 0x02 on wear changes (2923, 3260, 4168) and reported no ANC
+  change on wear changes; the Settable byte with it off and no bud worn is untested (🔴).
+- **Options considered**: (a) keep read-only; (b) writable — chosen.
+- **Decision**: `WriteSetting 4:{2:v}`, v ∈ {0, 1}, byte-identical to `CAP-056` 2173/4048 (channel 19) or 3627/2849 (channel 21) for the announced channel (ADR-034),
+  through the Safe-Mode gate (ADR-042), once per tap, applied only on the empty `RESPONSE` status OK; the current value is read at Connect (ADR-036) and shown with its
+  time.
+- **Consequences**: the "In-ear detection" setting on "Controls" becomes a switch, with the note that with it off audio does not pause when a bud is taken out and the
+  "only while worn" ANC check may not apply. ADR-044's re-open is unchanged (the Buds still close DLCI 0x02 with it off). Hardware re-test: OpenControl writes
+  `4:{2:0}` → OK + SASS `07 11 … b0 00`; a bud out → no `PlaybackStatusChanged`; `4:{2:1}` → OK + SASS `… b8 00`; plus a `Get` (ANC Refresh) with it off and no bud
+  worn to settle the Settable byte.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

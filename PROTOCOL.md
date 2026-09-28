@@ -640,6 +640,9 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   frames, 0 counter-examples to "Settable `0x00` = no bud worn" — `00` with both buds in the case (1389, 2761, 6635, 8032, 8461), on the table (4774,
   10844, 11116) and **in the hand** right after leaving the case (9094); `e8` only with at least one bud off film (3050, 4184, 5923, …). The one-bud-worn
   test (AY-3, one bud visibly in an ear) was not run. `CAP-063-FINDINGS.md` §3.
+  **Update (2026-09-28, `ai-sessions/0055`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notes") — supporting evidence, no status change (stays 🟡).** `CAP-056`
+  frame 3940 (17:35:28.123) `08 13 00 04 01 e8 00 20` — Settable `00` while both buds were held in the hands (film 17:35:22–28) with in-ear detection **on**; every other
+  `Notify` of the capture reads `e8` with at least one bud worn. With in-ear detection **off** no `Notify` was taken while no bud was worn (🔴). `CAP-056-FINDINGS.md` §4.
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -1491,6 +1494,19 @@ implementation gate.
   `aK()`) and `f` for `…_adaptive` (303, `aH()`) — getters at `hgj.java:66–96`, keys set at 115–126. The 🟡 reading in the rotation-checklist bullet above
   (field order = on-screen order, 3 = Adaptive, 4 = Transparency) disagrees for fields 3 and 4. Neither is promoted; field 12 stays out of every read/write
   (ADR-036, ADR-045). Settles it: the Group AR re-run (untick only Adaptive, then only Transparency, one `WriteSetting 4:{12:{…}}` per tap).
+- **Update (2026-09-28, `ai-sessions/0055`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Field 12", option *"Promote both (Recommended)"*, and "Lists", option *"FACT no side, list 🟡 (Recommended)"*) — the `qht` bit order and the checklist's name, 🟢 FACT; the Left/Right write, 🟢 FACT; one shared list, 🟡.**
+  `CAP-056` (Group AR, official app on the Pixel 7a, film + HCI): 16 filmed taps on the "Active noise control" checklist of "Customize left" and "Customize right",
+  16 `WriteSetting 4:{12:{…}}`, 16 empty `RESPONSE`s status OK. Unticking **Adaptive** clears boolean **4** (frames 1815 left, 1959 right —
+  `7e003b0310131dea71de7d5e251d9a8c9e2a0c220a62080801100118012000da27927c7e` = `4:{12:{1:1 2:1 3:1 4:0}}`), **Transparency** clears boolean **3** (1843, 1991 —
+  `…2a0c220a620808011001180020017b7d5d570a7e` = `4:{12:{1:1 2:1 3:0 4:1}}`), Noise cancellation boolean 1 (1689, 1891), Off boolean 2 (1786, 1928). The bit order is
+  **1 = Noise cancellation, 2 = Off, 3 = Transparency, 4 = Adaptive** — the app code's (`qht.java:31`, `hgj.java:216–331`) — 🟢 **FACT**; the on-screen-order 🟡 in the
+  rotation-checklist bullet above is **refuted**. The screen that writes field 12 carries the footnote "Press and hold to cycle between the selected active noise control
+  modes"; the code logs the same field as "ANC gesture loop" (`hgj.java:164`, `fxb.java` case 12): the "ANC-mode rotation checklist" **is** `qht`'s "ANC gesture loop" —
+  🟢 **FACT** (ADR-019 Update 2026-09-28). The write carries **no Left/Right field** — the "Customize right" writes are byte-identical to the "Customize left" writes (1891 =
+  1689, 1959 = 1815, 1991 = 1843) — 🟢 **FACT**; that the Buds keep **one shared list** stays 🟡 HYPOTHESIS (strong: wire + one `qht` in the read, 1531, + one builder
+  in the code) because the film test (open "Customize right" while a mode is unticked on the left) was not run. Byte-identical to `CAP-021` 5237/5247/5255. The code
+  keeps at least two modes selected (`hgj.java:165–168`, not exercised on film). Command: `python3 scripts/pwrpc_decode.py CAP-056-btsnoop_hci.log`. Implementation:
+  ADR-046. Evidence: `CAP-056-FINDINGS.md` §1–§2.
 
 #### 4.5.4 Head gestures
 
@@ -1530,6 +1546,17 @@ implementation gate.
   `REVERSE_ENGINEERING.md`'s `qhr`/`MaestroDeviceSettingsProviderService` entries; `DECISIONS.md`
   ADR-019 Update.
 - **Verified with experiment**: `CAP-024` (2026-08-21), both directions sampled.
+- **Update (2026-09-28, `ai-sessions/0055`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Field 2", option *"Promote label + behaviour (Recommended)"*) — "In-ear detection" = `qhr` field 2, 🟢 FACT; behaviour with it off, 🟢 for `CAP-056`.**
+  `CAP-056`: five filmed taps on the switch labelled "In-ear detection — Earbuds automatically play audio when in and pause audio when out" wrote the new position each
+  time — `4:{2:1}` 2173 (`7e003b0310131dea71de7d5e251d9a8c9e2a0422021001067a3a8b7e`, = `CAP-024` 1912), `4:{2:0}` 2849 (channel 21), `4:{2:1}` 3627 (ch 21), `4:{2:0}` 4048
+  (= `CAP-024` 1850), `4:{2:1}` 4344/4361 — each acknowledged OK. Independently, the Buds' own Fast Pair Audio-switch (SASS) "Notify capability" `07 11 00 04 01 02 <flags>`
+  on DLCI 0x04 follows the setting: flags `b8 00` after every ON (2176, 3630, 4425), `b0 00` after every OFF (2852, 4052) and at connect with the setting off (1053, read
+  `4:{2:0}` 1502) — Google's SASS page (developers.google.com/nearby/fast-pair/specifications/extensions/sass, fetched 2026-09-28): *"Bit 4: 1, if on-head detection is turned on;
+  0, otherwise (does not support on-head detection or on-head detection is disabled)"*. The label equivalence (the 🟡 in the Status line above) is 🟢 **FACT**.
+  **With it off (🟢 for `CAP-056`):** the phone's playback status did not change at any of 6 wear changes (with it on: Paused/Playing at 6 of 6); the Buds still closed
+  DLCI 0x02 (and 0x04) at wear changes (2923, 3260, 4168 — so ADR-044's re-open is still triggered); the Buds sent no `Notify ANC state` and no field-13 change on wear
+  changes (with it on: mode `0x40` on removal, `0x08` on re-insertion). 🔴 the Settable byte with it off and no bud worn (not sampled). Evidence: `CAP-056-FINDINGS.md`
+  §3–§4. Implementation: ADR-047.
 
 #### 4.5.5a Mono audio
 
@@ -3159,6 +3186,18 @@ leaving them buried in prose elsewhere.
 - [ ] **Added 2026-09-28, `CAP-063-FINDINGS.md` §6:** 🔴 after an ADR-016 ACL drop with the lid open, Android did **not** re-create the ACL by itself
       (6378 → nothing until a user action 11 s later; 7566 → 27 s), whereas `CAP-062` 7226 did within 12 ms. Also 🟡: putting the buds into the ears
       did not close DLCI 0x02 here (16:06:48), unlike `CAP-062` (1/1).
+- [ ] **Added 2026-09-28, `CAP-056-FINDINGS.md` §4 (maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notes"):** 🟡 with a GSND client holding
+      DLCI 0x08 (Pixel 7a, official app setup) the in-ear pause/resume is the **phone's** own AVRCP `PlaybackStatusChanged` (e.g. 2268 Paused, 2326 Playing) with
+      **no** AVRCP pass-through from the Buds (none in the whole capture), each 100–170 ms after a DLCI 0x08 `04 05` push; `CAP-063` (GSND closed) had Buds PAUSE
+      pass-through instead. Test: the same removal with the Google app disabled. 🔴 what makes the Buds close DLCI 0x02 on a wear change: in `CAP-056` 2 of 3
+      clusters with in-ear detection on and 3 of 3 with it off, the first removal with it on (17:33:46) without a `DISC`.
+- [ ] **Added 2026-09-28, `CAP-056-FINDINGS.md` §4:** 🟡 DLCI 0x08 `Group 0x04 Code 0x05` tracks wear while in-ear detection is on — `08 06` both worn, `08 04` /
+      `08 05` one bud out (a different value per side of the head), `08 03` both out — and reads `08 01` whenever in-ear detection is off (2253, 2318, 2453, 3687,
+      2854, 4099); this conflicts in part with `CAP-050` §4 (`03` docked, `04` both on the table). 🔴 `Group 0x04 Code 0x16` flips `01`→`02` when both buds leave the
+      ears and back, with in-ear detection on or off (3689/3985, 4103/4167) — meaning open (`CAP-050`: `02` docked).
+- [ ] **Added 2026-09-28, `CAP-056-FINDINGS.md` §4:** 🟡 `SubscribeToSettingsChanges 4:{13:n}` (field 13, `qhs` ANC state) mirrors the `Notify ANC state` mode on wear
+      changes with in-ear detection on — `13:4` with `0x40` (2257/2259), `13:2` with `0x08` (2322/2324), and a read of `13:0` with no bud worn (3870) — matching
+      `qhs.java`'s `ANC_STATE_ADAPTIVE(4)`, `ANC_STATE_ACTIVE(2)`, `ANC_STATE_UNKNOWN(0)`.
 
 ### Resolved
 
@@ -3233,6 +3272,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-25 | **`ai-sessions/0047` — `CAP-062`, maintainer-approved in chat 2026-09-25.** **§4.3 Option F** per-bud fields (6.2/6.3 field 2, 7.1/7.2, 6.1 presence) 🟢 FACT (401/403, 45 captures); Option F hardware-verified. **§4.1** a `Set` is NAKed (reason `0x02`) iff Settable = `0x00` (🟢 for `CAP-062`), `0x00` = not worn 🟡 (ADR-024 Update). §6 notes: the Buds close DLCI 0x02 on wear/dock changes (🟡 deliberate), DLCI 0x08/0x0a owner = Google app Assistant-headphones service (5/5, 🟡) | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-25 |
 | 2026-09-26 | **`ai-sessions/0052` — status corrections D-1 of `ai-sessions/0051`, maintainer-approved in chat 2026-09-26.** **§4.5.1** OFF write `CAP-019` 1720 on film → "Conversation detection" = field 22 🟢 FACT. **§4.5.3** "Use touch controls" OFF write `CAP-020` 1995 on film, both directions 🟢; the `qht` code bit order (3 = Transparency, 4 = Adaptive) vs the 🟡 on-screen order recorded as 🔴 open. **§4.5.7/§6** balance persists across a reconnect 🟢 (three chains). **§6** `FE2C1238…` = FHN "Beacon actions" 🟢 (official page) | Claude (AI), feature task; maintainer-approved in chat 2026-09-26 |
 | 2026-09-28 | **`ai-sessions/0053` — `CAP-063`, maintainer-approved in chat 2026-09-28.** **§4.3 Option F** a second `SubscribeRuntimeInfo` on an open channel is answered (8/8) 🟢; the stream also pushes while docked and idle (with `AT+BIEV`) 🟢 for `CAP-063`. **§4.1** Settable = worn: supporting evidence, stays 🟡. **§4.2/§4.4/§4.5.5a/§4.5.7** audibility and the docked ring recorded as the maintainer's observations. **§6** conversation detection = AVRCP 🟡, Digital assistant via GSND 🟡, no ACL re-creation after an ADR-016 drop 🔴 | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-28 |
+| 2026-09-28 | **`ai-sessions/0055` — `CAP-056` (Group AR), maintainer-approved in chat 2026-09-28.** **§4.5.3** `qht` bit order 1 NC / 2 Off / 3 Transparency / 4 Adaptive 🟢 (on-screen-order 🟡 refuted); checklist = "ANC gesture loop" 🟢; no Left/Right field in the write 🟢, one shared list 🟡 → ADR-046. **§4.5.5** "In-ear detection" = field 2 🟢 (film 5/5 + SASS bit 4); behaviour with it off 🟢 for `CAP-056` → ADR-047. **§4.1** Settable `00` support (stays 🟡). **§6** pause route 🟡, DLCI 0x02 `DISC` trigger 🔴, DLCI 0x08 `04 05` 🟡 / `04 16` 🔴, field-13 mirror 🟡 | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-28 |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL
