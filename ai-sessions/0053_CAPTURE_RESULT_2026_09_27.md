@@ -161,7 +161,7 @@ public voice-recognition route is the HFP voice-recognition AT command (`AT+BVRA
 - **"Notities"** (multi-select): **"Hoorbaarheid als observatie, §6: AVRCP/assistent/ACL (🟡/🔴), Stream pusht ook docked (🟢), Settable = worn (🟡) steun"**.
 - **"Volgende"**: **"I-1, I-2, I-3, I-5, I-4 (Recommended)"** — this includes the maintainer's OK to reverse the `0048` I-3 "claim nothing while
   NOT_ALLOWED" for a user tap (I-1); `ARCHITECTURE.md` §3.1 is updated when it is built.
-- **"Wensen"** (multi-select): **"Group AR eerst (wens 11) (Recommended), ADR-046 voorbereiden (wens 12), AY-3-capture (wens 12a)"** — the draft keeps no
+- **"Wensen"** (multi-select): **"Group AR eerst (wens 11) (Recommended), [the in-ear ADR draft] voorbereiden (wens 12), AY-3-capture (wens 12a)"** (the option label named a number; it is omitted here because it is not registered) — the draft keeps no
   number until it is written (the number was not registered; `lint_docs.py`).
 - Phase 0 (asked 2026-09-27): privacy **"Onveranderd laten (Recommended)"**; migration **"Ja, zo uitvoeren (Recommended)"**.
 
