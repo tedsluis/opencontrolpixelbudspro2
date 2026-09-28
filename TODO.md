@@ -814,15 +814,19 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
 - **Group AR (`CAP-056`, Pixel 7a, official app) additions from `0051` F-6:** untick only Adaptive on "Customize left", check "Customize right" on
   film, then only Transparency — settles the `qht` bit order (`PROTOCOL.md` §4.5.3 2026-09-26 Update, 🔴) and whether the list is shared; see
   `CAP-063-EVENT-NOTES.md` §8. Only after that can field 12 get a read/write ADR.
-- **Next FEATURE session (maintainer's choice, chat 2026-09-28, `ai-sessions/0053` §6/§7), in this order:** I-1 a disabled ANC tap re-checks with a
-  normal claim (`08 11`, then `08 12` only on Settable `e8` — reverses the `0048` I-3 "claim nothing", approved in chat); I-2 re-classify a loss that
-  happened while the app was not visible from the next link reading; I-3 balance snaps to "Centre"; I-5 a note under "Press and hold" explaining
-  "Digital assistant"; I-4 mark the previous connection's per-bud lines until the first new report. Fixtures: `CAP-063` 4774, 4184, 4233/4241,
-  3046/3059, export 586–593.
-- **Next captures (maintainer's choice, chat 2026-09-28):** Group AR (`CAP-056`, Pixel 7a) **first** for the ANC-mode checkboxes (field 12, wish 11);
-  **AY-3** (one bud visibly in an ear, the other on the table, `08 11` each time) for "Settable `0x00` = no bud worn" and a "worn" indicator (wish 12a).
-- **Prepare the draft in-ear-detection-write ADR (in-ear detection writable, field 2; draft in `ai-sessions/0053` §6):** first the label promotion from `CAP-024` 1850/1912 on film;
-  🔴 what OHD off does to the Buds' `DISC` on wear changes (ADR-044) and to Settable — test in the same capture.
+- [x] **Done 2026-09-28 (`ai-sessions/0054`) —** I-1 (a disabled ANC tap re-checks with the claim's `Get`, `Set` only on Settable non-zero), I-2 (a loss
+  while the app was not visible is worded from the first link reading on return), I-3 (balance snaps to "Centre" within ±3), I-5 (the Digital-assistant
+  note), I-4 (the previous connection's per-bud lines marked at Connect) — real `CAP-063` bytes (4774, 4184, 4233/4241, 4497/4508, 2723/2756, 3046/3059,
+  export 586–593) and `CAP-046` 1873 (`17:0`). **Not hardware-verified:** the next capture is `CAP-064` (Group AZ, skeleton
+  `captures/CAP-064-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AZ/CAP-064-EVENT-NOTES.md`, which also carries AY-3 and the `APP_TESTPLAN.md` steps `CAP-063` skipped).
+- **Next captures (maintainer's choice, chat 2026-09-28):** Group AR (`CAP-056`, Pixel 7a) **first** for the ANC-mode checkboxes (field 12, wish 11) —
+  its skeleton now also holds the W-12b in-ear-detection-off steps (the maintainer's request in chat 2026-09-28, `ai-sessions/0054`); then `CAP-064`
+  (Group AZ, Pixel 9a) with **AY-3** (one bud visibly in an ear, the other on the table, `08 11` each time) for "Settable `0x00` = no bud worn" and a "worn"
+  indicator (wish 12a).
+- **Prepare the draft in-ear-detection-write ADR (in-ear detection writable, field 2; draft in `ai-sessions/0053` §6):** first the label promotion from film
+  (`CAP-056` W2/W5, or `CAP-024` 1850/1912); 🔴 what OHD off does to the Buds' `DISC` on wear changes (ADR-044) and to Settable — `CAP-056` W1/W3/W4.
+- **ANC tile after re-wearing (`ai-sessions/0054`, known limit):** the tile's next mode is computed from the mode shown (OFF while not worn → ACTIVE), so the
+  first tap after re-wearing may set the mode the Buds already report; harmless (the ACK applies it), not changed.
 - 🔴 **Android did not re-create the ACL after an ADR-016 drop with the lid open** in `CAP-063` (unlike `CAP-062`) — `PROTOCOL.md` §6.
 - [x] **Done in `CAP-063`:** docked ring (ACKed), EQ/mono writes while docked (OK), audibility recorded as observations; the one-bud-in-an-ear test was
   **not** run (see the capture item above). **Next capture (Group AY):** I-9 Find with both buds docked (does a docked bud ring?), an EQ write while docked, the one-bud-in-an-ear test of

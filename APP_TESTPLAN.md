@@ -4,7 +4,9 @@
 record the result of each test. Written 2026-09-25 against the app as committed in `7498cbc` (`ai-sessions/0046`); **updated 2026-09-25 for the
 `ai-sessions/0048` build** (automatic foreground re-open ADR-044: C1, C3, C8, C9, E3–E5, G4; ANC only while worn: F8, G3; loss wording: C8; per-bud
 charging and last-seen Case: E2–E5; ring notice: I4); **updated 2026-09-26 for the `ai-sessions/0052` build** (the EQ tab is "Sound", a new
-"Controls" tab, presets in two rows: H0; *Refresh battery* on a fresh claim: E8, E9; settings read and written: sections M and N). This is a *user-level*
+"Controls" tab, presets in two rows: H0; *Refresh battery* on a fresh claim: E8, E9; settings read and written: sections M and N); **updated 2026-09-28 for the `ai-sessions/0054` build** (a tap on a disabled ANC mode checks again: F8, G3; the loss wording after
+returning to the app: C11; balance snaps to "Centre": M3; the previous connection's per-bud lines marked at Connect: E10; the Digital-assistant note: N3).
+This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
 
@@ -61,6 +63,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | C8 | Put both buds in the case, lid open, then close the lid. | Within seconds the Buds close the session; the card names the cause: "The Buds closed the app's channel (…)" or "Android no longer shows the Buds connected …" — **never** "likely another app"; with the lid open the app may re-open by itself (a bud docked: charging in the case); after the lid is closed: "Paired — not connected to this phone"; no crash | Buds `DISC` 0x02 and/or ACL disconnect; at most one app `SABM` 0x02 per event | | |
 | C9 | Take them out again (lid open), keep the app on screen; do **not** tap Connect. | ready again **by itself** once Android shows the Buds connected (one attempt; if it fails, a message and a Connect/Retry button) | one app `SABM` 0x02 per event (link back / Buds `DISC` + ≈ 1.5 s) | | |
 | C10 | Swipe left/right between the tabs, and use the bottom bar. | Both change the tab; Back does not jump to Debug | — | | |
+| C11 | Connected, buds out, lid open: press **Home**; put **both** buds into the case (the link drops while the app is away); wait 10 s; return to the app. | "Android no longer showed the Buds connected when you returned to the app — the connection ended while the app was in the background (…). Tap Connect to reconnect." — not the undetermined "The Maestro channel (equalizer) was closed" (`ai-sessions/0054` I-2) | ACL disconnect while the app is not visible; no app `SABM` 0x02 while away | | |
 
 ## D. Safe Mode and firmware (after the `ai-sessions/0046` fix)
 
@@ -82,6 +85,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | E7 | Check there is **no** dock sentence ("…seem to be in the case") anywhere. | No such sentence (removed in `ai-sessions/0046`) | — | | |
 | E8 | Buds worn, nothing done for ≥ 10 s: **Refresh battery**, then **Refresh battery twice within 1 s**. | Each Refresh stamps new "(updated …)" times, or says "No new battery reading from the Buds — try again." — never an old time shown as new; below the button "The Buds report the Case level only while a bud is in the case." (`ai-sessions/0052`) | one `SABM` 0x04 per Refresh (a lingering claim is released first: `DISC` → `SABM`), each followed by `03 03 …`; one `SubscribeRuntimeInfo` on DLCI 0x02 per Refresh | | |
 | E9 | Both buds in the case, lid open, idle 2 minutes, then **Refresh battery**. | The Case updates (the Buds answered the re-subscription) or keeps its old value and time — say which | app `SubscribeRuntimeInfo` → a `SERVER_STREAM` within 1 s, or none (ADR-043 Update, untested) | | |
+| E10 | Both buds in the case (lines say "charging in the case"): **Disconnect**, take both out, **Connect**; watch the lines for 3 s. | First "Left: NN% — last seen HH:MM:SS — charging in the case (HH:MM:SS, last connection)" (the previous connection's values), then within ≈ 2 s the new "not charging (out of the case)" lines with new times (`ai-sessions/0054` I-4) | the new connection's stream packet and battery burst | | |
 
 ## F. Noise control (ANC screen)
 
@@ -94,7 +98,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | F5 | Change the mode with a **press-and-hold on a bud**, then tap **Refresh**. | The screen shows the bud's new mode | `08 11` → `08 13` | | |
 | F6 | Tap two modes very quickly after each other. | The last one wins, no error or hang | two `Set`s, in order | | |
 | F7 | Tap a mode and switch to another app immediately; come back after 5 s. | The mode was still applied; no stuck "claiming" state | the channel is released (`DISC`) | | |
-| F8 | With the buds **not in your ears** (in the case, or on the table), Connected: look at the ANC tab. | Mode buttons **disabled** with "ANC can only be changed while you wear the Buds. Tap Refresh to check again."; Refresh stays enabled; put one bud in an ear, tap Refresh → enabled | **no** `08 12` and no DLCI 0x04 claim for a mode tap; Refresh = `08 11` → `08 13` | | |
+| F8 | With the buds **not in your ears** (in the case, or on the table), Connected: look at the ANC tab; tap a mode; then put the buds in your ears and tap a mode again. | "ANC can only be changed while you wear the Buds (checked HH:MM:SS). Tapping a mode checks again first."; the mode buttons stay **enabled** (`ai-sessions/0054` I-1). Not worn: the tap changes nothing but the checked time; worn: the tap switches the mode | not worn: one claim, `08 11` → `08 13 … 00 …`, **no** `08 12`; worn: one claim, `08 11` → `08 13 … e8 …` → `08 12` → ACK | | |
 
 ## G. ANC Quick Settings tile
 
@@ -102,7 +106,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 |---|---|---|---|---|---|
 | G1 | ANC tab: tap **Add ANC Quick Settings tile**. | A message: "added", "already in Quick Settings …" or "not added" | — | | |
 | G2 | Open Quick Settings fully and find the **ANC** tile (swipe through the pages, or edit). | The tile "ANC" is there; its subtitle shows the current mode when connected, "Open the app" when not | — | | |
-| G3 | Connected, Buds **worn**: tap the tile repeatedly. Then take them out and tap once more. | Worn: cycles ACTIVE → TRANSPARENT → ADAPTIVE → OFF → ACTIVE, audible; the ANC tab agrees. Not worn: subtitle "Only while worn", a tap shows "ANC can only be changed while you wear the Buds." | one `Set` per tap while worn; none while not worn | | |
+| G3 | Connected, Buds **worn**: tap the tile repeatedly. Then take them out and tap once more. | Worn: cycles ACTIVE → TRANSPARENT → ADAPTIVE → OFF → ACTIVE, audible; the ANC tab agrees. Not worn: subtitle "Only while worn"; a tap checks again first and shows "ANC can only be changed while you wear the Buds." if the Buds still refuse; after putting them back in, a tap switches (`ai-sessions/0054` I-1) | one `Set` per tap while worn; while not worn one claim with `08 11` → `08 13 … 00 …` and no `08 12` | | |
 | G4 | **Not** connected: tap the tile. | The tile says "Open the app"; tapping opens the app; the app then connects by itself if Android shows the Buds connected (ADR-044) — the tile itself never connects | nothing from the tile | | |
 
 ## H. Equalizer (tab "Sound" since `ai-sessions/0052`)
@@ -129,7 +133,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 |---|---|---|---|---|---|
 | M1 | Right after Connect: read Balance, Mono audio and Conversation detection. | Each shows the Buds' value with "read HH:MM:SS" (or "Not read from the Buds yet") | `ReadSetting 4:17`, `4:19`, `4:22` + answers | | |
 | M2 | Drag **Balance** fully to **L**, release. | "Left 100 · changed …"; sound in the left ear | `WriteSetting 4:{17:200}` → empty `RESPONSE` | | |
-| M3 | Balance fully to **R**; then about halfway left; then the centre. | "Right 100", "Left NN", "Centre" | `4:{17:199}`, `4:{17:2·NN}`, `4:{17:0}` | | |
+| M3 | Balance fully to **R**; then about halfway left; then back near the centre and release. | "Right 100", "Left NN", "Centre" — a release within ±3 of the middle snaps to "Centre" (`ai-sessions/0054` I-3); Left/Right 4 stays 4 | `4:{17:199}`, `4:{17:2·NN}`, `4:{17:0}` | | |
 | M4 | **Mono audio** on, then off. | switch follows after the Buds' OK; both ears play both channels while on | `4:{19:1}`, `4:{19:0}` | | |
 | M5 | **Conversation detection** off, then on; with it on, speak for 5 s (ANC on). | switch follows; say what the Buds do while you speak | `4:{22:0}`, `4:{22:1}` | | |
 | M6 | Disconnect, Connect, open Sound. | The last written values are read back ("read …") | the `ReadSetting` answers = the last writes | | |
@@ -140,7 +144,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 |---|---|---|---|---|---|
 | N1 | Right after Connect: open Controls. | "Use touch controls" with its value and time; "Press and hold" Left / Right: Noise control or Digital assistant; "In-ear detection (setting): on/off — read-only; not whether a bud is worn" | `ReadSetting 4:4`, `4:7`, `4:2` + answers | | |
 | N2 | **Use touch controls** off; tap a bud (music playing). Then on; tap again. | Off: the tap does nothing; on: the tap pauses/plays | `4:{4:0}`, `4:{4:1}` | | |
-| N3 | **Left: Digital assistant**, press-and-hold the Left bud; then **Left: Noise control**, hold again. | the chip follows after the Buds' OK; say what the phone/Buds do | `4:{7:{1:{4:{1:6}}}}`, `…{1:5}` | | |
+| N3 | **Left: Digital assistant**, press-and-hold the Left bud; then **Left: Noise control**, hold again. | the chip follows after the Buds' OK; say what the phone/Buds do; under "Press and hold" the note "Digital assistant needs an assistant app on this phone that supports headphones (…). Without one, holding the bud may only play a tone." (`ai-sessions/0054` I-5) | `4:{7:{1:{4:{1:6}}}}`, `…{1:5}` | | |
 | N4 | The same for **Right**. | as N3 | `4:{7:{2:{4:{1:6}}}}`, `…{1:5}` | | |
 | N5 | Disconnect, Connect, open Controls. | the written values are read back | the `ReadSetting` answers | | |
 | N6 | Safe Mode (only if a Safe Mode card shows): tap any setting. | "The setting was not changed: Safe Mode: nothing was sent …" | nothing sent | | |
@@ -199,9 +203,9 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 |---|---|---|---|---|---|
 | A Start / permissions / Bluetooth | 6 | | | | |
 | B Pairing | 4 | | | | |
-| C Connection | 10 | | | | |
+| C Connection | 11 | | | | |
 | D Safe Mode / firmware | 2 | | | | |
-| E Battery | 9 | | | | |
+| E Battery | 10 | | | | |
 | F ANC | 8 | | | | |
 | G ANC tile | 4 | | | | |
 | H EQ | 7 | | | | |

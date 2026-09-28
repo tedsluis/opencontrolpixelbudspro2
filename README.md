@@ -10,7 +10,9 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > itself while it is on screen (ADR-044), shows per bud "charging in the case" and the last Case level with its time, disables ANC while
 > the Buds are not worn, and reads and changes volume balance, mono audio, conversation detection, touch controls and the press-and-hold
 > action per bud (tabs "Sound" and "Controls", ADR-045) — every change accepted by the Buds; *Refresh battery* always gets a fresh reading.
-> Known gaps: ANC stays disabled after re-wearing until Refresh, and "Digital assistant" does nothing without an assistant service.
+> `ai-sessions/0054` (not yet hardware-verified, next run `CAP-064`) addressed that run's findings: a tap on a disabled ANC mode now checks
+> again with the Buds, a session loss in the background is explained on return, the balance snaps to "Centre", the previous connection's
+> battery lines are marked right after Connect, and "Digital assistant" carries a note that it needs an assistant app that supports headphones.
 > Battery via HFP is not deliverable to an app (ADR-040).
 
 > ## ⚠️ Disclaimer: hardware risk

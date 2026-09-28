@@ -172,6 +172,15 @@ mark v1.
   §4.3 Option F — a second `SubscribeRuntimeInfo` is answered (8/8) 🟢, the stream also pushes while docked 🟢 (`CAP-063`); ADR-043 Update; ADR-024
   Update (supporting evidence, stays 🟡); audibility and the docked ring recorded as observations; §6 notes (conversation detection = AVRCP 🟡,
   Digital assistant via GSND 🟡, no ACL re-creation 🔴). Improvement list and next steps in the RESULT; the film stays unblurred (maintainer's choice).
+- **2026-09-28 (`ai-sessions/0054`): the `CAP-063` improvements I-1, I-2, I-3, I-5, I-4 built (the maintainer's choices and texts in chat).** I-1: a tap
+  on a disabled ANC mode (screen or tile) does one ordinary claim — `Get`, then the `Set` in the same claim only if the Buds' `Notify` now reads Settable
+  non-zero; the buttons stay enabled with "(checked HH:MM:SS). Tapping a mode checks again first." — reverses `0048` I-3's "claim nothing" for a user tap
+  (confirmed in chat). I-2: a session loss while the app was not on screen is worded from the first reading of Android's link on return (two new
+  causes; `CAP-063` 16:15:22). I-3: the balance snaps to "Centre" within ±3 (`17:0` = `CAP-046` frame 1873). I-4: at Connect the previous
+  connection's per-bud lines read "last seen … (…, last connection)" until the Buds report again. I-5: a note under "Press and hold" about
+  "Digital assistant". Nothing new on the wire (the ANC `Get` moved into one shared call site). Tests with real `CAP-063`/`CAP-046` bytes:
+  `:data` 1546, `:hardware` 51, `:domain` 23; six mutation checks caught. New capture skeleton `CAP-064` (Group AZ, Pixel 9a: I-1…I-5, AY-3, the
+  skipped `APP_TESTPLAN.md` steps); the W-12b in-ear-detection-off steps added to `CAP-056` (Group AR) on the maintainer's request. Not hardware-verified.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

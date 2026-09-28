@@ -46,6 +46,28 @@ write — unlike `HOLD-001`–`HOLD-004`. `CAP-045` did not answer this; this Gr
 3. Navigate to the **Right** earbud's own rotation checklist (video-confirm the screen again, per
    step 1's safeguard) and repeat step 2.
 
+## Additions (planned after `CAP-063`)
+
+**(A) The `qht` bit order and one-list-or-two (`ai-sessions/0051` F-6):** the four steps of `CAP-063-EVENT-NOTES.md` Appendix A.8 — untick **only
+Adaptive** on "Customize left", open "Customize right" on film (still ticked there?), re-tick, then untick **only Transparency** and re-tick; one
+`WriteSetting 4:{12:{…}}` per tap is expected. They settle `PROTOCOL.md` §4.5.3's 2026-09-26 🔴 (code: 3 = Transparency, 4 = Adaptive; on-screen reading: the
+reverse).
+
+**(B) In-ear detection OFF (W-12b; added by `ai-sessions/0054` on the maintainer's request in chat 2026-09-28: "make W-12b in-ear detection off part of
+`CAP-056`").** Why: `ai-sessions/0053` §6 drafts an "in-ear detection write" ADR (field 2, not numbered, **not accepted**); before it two things need evidence —
+(1) the label "In-ear detection" = `qhr` field 2 ("CATEGORY_OHD", 🟢 category only, `PROTOCOL.md` §4.5.5) **on film**, as D-1(a) did for field 22; (2) 🔴 what
+the Buds do with it OFF: do they still close DLCI 0x02 on wear changes (the trigger of ADR-044's re-open), still report Settable `00`/`e8` (the ANC rule of
+`ai-sessions/0054` I-1), still pause the media when a bud comes out? The official app on the **Pixel 7a** writes it (the app cannot); the Pixel 9a's Bluetooth
+**off**. Keep your **ears visible on film** for W1/W3/W4, and have music playing.
+
+| Step | Pre-state | Action | Expected on the wire | Time | Result / notes |
+|---|---|---|---|---|---|
+| W1 | in-ear detection **on** (as read in every capture so far), both buds worn, music playing | Take the **Right** bud out **on film**, wait 10 s, put it back | baseline: AVRCP PAUSE/PLAY from the Buds; a Buds `DISC` of DLCI 0x02 (the official app's session) or not; a `Notify` Settable byte if the official app claims DLCI 0x04 | | |
+| W2 | same | Device details → More settings → **In-ear detection: OFF** — the switch and the finger visible on film | `WriteSetting 4:{2:0}` → empty `RESPONSE` status OK (as `CAP-024` 1850/1912) | | |
+| W3 | OFF, both worn | Repeat W1 (Right out on film, 10 s, back) | does the pause still happen? a `DISC` of DLCI 0x02? | | |
+| W4 | OFF | Both buds out onto the table **on film**, wait 10 s; open the official app's noise-control screen; then both back in the ears | Settable `00` or `e8` in any `Notify` while on the table / worn | | |
+| W5 | OFF | **In-ear detection: ON** again, on film | `WriteSetting 4:{2:1}` → `RESPONSE` OK | | |
+
 ## Event Timeline
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
@@ -73,6 +95,9 @@ write — unlike `HOLD-001`–`HOLD-004`. `CAP-045` did not answer this; this Gr
       structurally related press-and-hold-cycle Notify)?
 - [ ] Record the result plainly either way — this directly closes `PROTOCOL.md` §6's open item on
       this question.
+- [ ] (A) Which bit clears for Adaptive vs Transparency; whether "Customize right" shows the change made on "Customize left".
+- [ ] (B) W2/W5: the field-2 writes against the filmed switch (the label promotion needs the maintainer's approval in chat); W1 vs W3: pause, Buds `DISC`
+      of DLCI 0x02 and Settable with in-ear detection on vs off — the evidence the draft in-ear-detection-write ADR (`ai-sessions/0053` §6) waits for.
 
 ## Next steps after filling this in
 
