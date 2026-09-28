@@ -210,3 +210,5 @@
   - **CAP-063 (Group AY)**
     - [CAP-063-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-063-2026-09-27_15-57-33_16-25-03-Group_AY/CAP-063-EVENT-NOTES.md)
     - [CAP-063-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-063-2026-09-27_15-57-33_16-25-03-Group_AY/CAP-063-FINDINGS.md)
+  - **CAP-064 (Group AZ)** _(planned)_
+    - [CAP-064-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-064-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AZ/CAP-064-EVENT-NOTES.md)
