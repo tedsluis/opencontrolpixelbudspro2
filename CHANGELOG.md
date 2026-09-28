@@ -165,6 +165,13 @@ mark v1.
   `captures/**/*.log.last` goes to LFS. `CAP-063-EVENT-NOTES.md`: a first timeline from the film (1 fps, zoomed frames; the film's audio track is
   empty), a step-mapping table (skipped/repeated steps) and open points; the planned procedure kept as Appendix A. New prompt
   `ai-sessions/0053_CAPTURE_PROMPT_2026_09_27.md` for the full analysis.
+- **2026-09-28 (`ai-sessions/0053`): `CAP-063` (Group AY) analysed — the hardware re-test of the `0048`/`0052` builds.** Folder renamed to
+  `captures/CAP-063-2026-09-27_15-57-33_16-25-03-Group_AY/` (film first frame 15:57:33); `CAP-063-EVENT-NOTES.md` rewritten in phone time with HCI/log
+  evidence (clock: phone = overlay + 1.4 s), `CAP-063-FINDINGS.md` new. Nothing refuted: ADR-044's re-open held in all 14 session ends; 90 settings
+  reads and 46 writes answered OK, byte-identical to the fixtures; a docked bud ACKs a ring. Maintainer-approved in chat 2026-09-28: `PROTOCOL.md`
+  §4.3 Option F — a second `SubscribeRuntimeInfo` is answered (8/8) 🟢, the stream also pushes while docked 🟢 (`CAP-063`); ADR-043 Update; ADR-024
+  Update (supporting evidence, stays 🟡); audibility and the docked ring recorded as observations; §6 notes (conversation detection = AVRCP 🟡,
+  Digital assistant via GSND 🟡, no ACL re-creation 🔴). Improvement list and next steps in the RESULT; the film stays unblurred (maintainer's choice).
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

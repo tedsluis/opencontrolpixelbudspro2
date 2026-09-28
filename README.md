@@ -3,16 +3,15 @@
 An independent, open-source Android app to fully control the **Google Pixel Buds
 Pro 2** without the official Pixel Buds app or Google Play Services.
 
-> **Status (2026-09-27):** protocol reconstruction is mature and a v1 Android app exists end to end. ANC mode switching,
+> **Status (2026-09-28):** protocol reconstruction is mature and a v1 Android app exists end to end. ANC mode switching,
 > Find My Buds (Left/Right), the equalizer (read and write), battery (Left/Right with charging, and the Case), a Quick
-> Settings ANC tile and a read-only **Safe Mode** for unverified firmware are implemented and unit-tested. The third hardware
-> run (`CAP-062`, `ai-sessions/0047`) confirmed them on the Buds: ANC works while the Buds are worn (they refuse it otherwise),
-> EQ writes persist, Find rings until Stop, the Case level appears while a bud is in the case. Since `ai-sessions/0048` (not yet
-> hardware-verified) the app re-opens its session by itself while it is on screen (ADR-044) — the Buds close it on every wear/dock
-> change — shows per bud "charging in the case", keeps the last Case level with its time, and disables ANC while the Buds are not
-> worn. Since `ai-sessions/0052` (not yet hardware-verified) it also reads and changes volume balance, mono audio, conversation detection, touch
-> controls and the press-and-hold action per bud (tabs "Sound" and "Controls", ADR-045), and *Refresh battery* always gets a fresh reading. Battery
-> via HFP is not deliverable to an app (ADR-040).
+> Settings ANC tile and a read-only **Safe Mode** for unverified firmware are implemented and unit-tested. The fourth hardware
+> run (`CAP-063`, `ai-sessions/0053`) confirmed the `ai-sessions/0048` and `0052` builds on the Buds: the app re-opens its session by
+> itself while it is on screen (ADR-044), shows per bud "charging in the case" and the last Case level with its time, disables ANC while
+> the Buds are not worn, and reads and changes volume balance, mono audio, conversation detection, touch controls and the press-and-hold
+> action per bud (tabs "Sound" and "Controls", ADR-045) — every change accepted by the Buds; *Refresh battery* always gets a fresh reading.
+> Known gaps: ANC stays disabled after re-wearing until Refresh, and "Digital assistant" does nothing without an assistant service.
+> Battery via HFP is not deliverable to an app (ADR-040).
 
 > ## ⚠️ Disclaimer: hardware risk
 >

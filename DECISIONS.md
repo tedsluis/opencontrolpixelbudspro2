@@ -1317,6 +1317,10 @@ motivated this).
   `0x00` = no bud worn, not "docked"; it explains the `CAP-047`/`CAP-048`/`CAP-061` counter-examples. Test: one bud in an ear, one on the table.
   The decision above is unchanged (`CAP-062-FINDINGS.md` §2).
 
+- **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities", option *"Settable = worn (🟡)
+  steun"*):** `CAP-063` — 22 `Notify` frames, 0 counter-examples to the 🟡 "`0x00` = no bud worn", including `00` with both buds in the hand (9094). Stays
+  🟡: the one-bud-worn test (AY-3) was not run. The decision above is unchanged (`CAP-063-FINDINGS.md` §3).
+
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 
 - **Date**: 2026-09-07
@@ -2056,6 +2060,11 @@ motivated this).
   (`AGENTS.md` §5). Why: while the buds sit in the case the stream is silent between dock changes (`CAP-062` 06:46:57–06:48:52), so the Case % and its time
   go stale; whether the Buds answer a second subscription on an open channel is 🔴 untested (no capture ever carried one — `ai-sessions/0051` §6: 141
   requests in 44 captures, one per connection). Hardware-verify in Group AY before relying on it; if it is never answered, withdraw it.
+
+- **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "FACT P-1", option *"Promoveren
+  (Recommended)"*, with this text in the preview):** the re-subscription of the 2026-09-26 Update is hardware-verified — `CAP-063`, 8 of 8 answered by a
+  `SERVER_STREAM` within 19–355 ms (3863→3870 … 8417→8426), including both buds docked after 93 s idle. It stays; `PROTOCOL.md` §4.3 Option F records the
+  FACT.
 
 ## ADR-044 — Re-open the MAESTRO session automatically while the app is visible
 

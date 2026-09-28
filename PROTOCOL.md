@@ -636,6 +636,10 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   Buds' `Notify` reads Settable `0x00` is NAKed `ff 02 00 03 02 08 12` (reason `0x02`, "Not allowed due to current state", 10/10); with `0xe8` it is
   ACKed (6/6; 35/35 in `CAP-001`/`002`/`006`/`039`/`051`/`059`/`060`). `0x00` also occurred with both buds lying **outside** the case. 🟡 HYPOTHESIS
   (strong): `0x00` = no bud worn (`CAP-062-FINDINGS.md` §2).
+  **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities") — supporting evidence, no status change (stays 🟡).** `CAP-063`: 22 `Notify`
+  frames, 0 counter-examples to "Settable `0x00` = no bud worn" — `00` with both buds in the case (1389, 2761, 6635, 8032, 8461), on the table (4774,
+  10844, 11116) and **in the hand** right after leaving the case (9094); `e8` only with at least one bud off film (3050, 4184, 5923, …). The one-bud-worn
+  test (AY-3, one bud visibly in an ear) was not run. `CAP-063-FINDINGS.md` §3.
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -785,6 +789,9 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   `captures/CAP-005-2026-08-15_15-02-31_15-03-45-Group_T/CAP-005-FINDINGS.md` (first candidate
   format, single-band sample), `captures/CAP-015-2026-08-18_06-11-06_06-17-40-Group_T/CAP-015-FINDINGS.md`
   (all-5-bands confirmation, range, preset table).
+- **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities") — audibility recorded as the maintainer's observation, not a FACT.** In
+  `CAP-063` the maintainer heard a clear difference for the presets and bands (5 of 5 app writes answered OK: 2374, 6009, 6017, 6026, 8633); the film has
+  no audio track, so this is not wire- or film-verified.
 - **Verified with experiment**: Group T, two independent sessions — `CAP-005` (2026-08-15,
   single Bass slider) and `CAP-015` (2026-08-18, 5 presets + all 5 sliders, 3 passes each) — see
   both FINDINGS.md files above.
@@ -1257,6 +1264,16 @@ event-observation coroutines.
   comparison with `tshark … -Y "btrfcomm.len>0" … data.data` matches of `03 03 00 03 <L> <R> ff` (`ai-sessions/0047` RESULT). Decode unblocked by
   ADR-043's 2026-09-25 Update.
 
+- **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "FACT P-1") — a second subscription is answered, 🟢 FACT.** A second
+  `SubscribeRuntimeInfo` REQUEST on an already subscribed, open DLCI 0x02 channel is answered by a `SERVER_STREAM` packet: 8 of 8 in `CAP-063` (3863→3870,
+  4066→4078, 4143→4152, 6057→6064, 6107→6114, 6195→6202, 6239→6249, 8417→8426; 19–355 ms), including both buds docked after 93 s idle (8426, Case 34).
+  Command: `python3 scripts/pwrpc_decode.py CAP-063-btsnoop_hci.log | grep SubscribeRuntimeInfo`; raw request e.g. frame 8417 on channel 19 =
+  `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 60 2d 65 a9 7e` (`CAP-062` 2777's bytes).
+- **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities") — the stream is not silent while docked, 🟢 FACT for `CAP-063`.** With both buds
+  docked and nothing done, the Buds pushed the (unchanged) stream at 16:17:18, 16:17:28, 16:18:18, 16:18:28 (8165, 8200, 8306, 8380), each within
+  2–40 ms of an `AT+BIEV=2,100` (8169, 8201, 8307, 8381). `CAP-062-FINDINGS.md` §4's "nothing between changes" (06:46:57–06:48:52) holds for that
+  capture only, not as a rule. `CAP-063-FINDINGS.md` §4.
+
 **Implementation priority (superseded 2026-09-24 — see the "Current state" note at the top of §4.3: B and E are implemented, A unmatched, C removed
 (ADR-040), D contested; "already-periodic HFP" below is wrong per ADR-015):** 0 (cheap to rule in/out) → A → B → C → D (see
 `ARCHITECTURE.md` §4; A–D's order reflects official-spec confidence and
@@ -1307,6 +1324,8 @@ option (C), even though its per-earbud content is now FACT-confirmed.
   explicitly **out of scope** for this project's own app unless a future capture or protocol change
   finds a genuine local (non-GMS-mediated) mechanism, which no evidence to date suggests exists. See
   `PROJECT.md`'s non-goals for the corresponding scope statement.
+- **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities"):** `CAP-063` — a Ring Left with **both buds docked** (lid open) is ACKed
+  (8518 `04 01 00 01 02` → 8520 `ff 01 00 03 04 01 00`, echo 8521; Stop 8598 → 8600). That the bud rang is the maintainer's observation (no audio on film).
 - **Evidence**: official Fast Pair Message Stream spec worked example; `CAP-025-FINDINGS.md` §3–§7
   (`[VERIFIED-LOCAL]`, 2026-08-21) — video-confirmed taps, 4 action/response pairs (2 starts, 2
   stops), cross-validated against ANC's confirmed envelope.
@@ -1528,6 +1547,9 @@ implementation gate.
   `REVERSE_ENGINEERING.md`'s `qhr` entry; `DECISIONS.md` ADR-019.
 - **Verified with experiment**: `CAP-022` (2026-08-21), both directions sampled.
 
+- **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities"):** the app's mono writes (5 of 5 OK in `CAP-063`) were audible to the
+  maintainer — an observation, not film-verified (no audio track).
+
 #### 4.5.6 Volume EQ
 
 - **Feature confirmed present**: toggle at the bottom of Device details → Sound → Equalizer (not
@@ -1594,6 +1616,9 @@ implementation gate.
   frame 1047 `17:10`; `CAP-041` frame 2294 `17:199` → `CAP-042` frame 900 `17:199`; `CAP-046` frame 1957 `17:2` → `CAP-048` frame 1319 `17:2` (no capture lies
   between the members of each pair). Command: `python3 scripts/pwrpc_decode.py <log> | grep -E '4:\{?17'` on the six logs. The "🔴 … persistence across a
   disconnect/reconnect" in the Status line above is history; intermediate-position scaling stays 🔴.
+
+- **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities"):** the app's balance writes (20 of 20 OK in `CAP-063`, incl. `17:104` = Left
+  52) were audible to the maintainer — an observation, not film-verified; intermediate-position scaling stays 🔴.
 
 #### 4.5.8 Case sounds
 
@@ -3124,6 +3149,17 @@ leaving them buried in prose elsewhere.
       the pause is driven by a mechanism this project hasn't identified, or whether the documented
       "switches to Transparency" behavior simply didn't trigger this time (ANC was already Adaptive).
 
+- [ ] **Added 2026-09-28, `CAP-063-FINDINGS.md` §7 (maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities"):** 🟡 conversation detection pauses and resumes the media with
+      ordinary AVRCP pass-through commands from the Buds (PAUSE 5389 at 16:09:22.952, PLAY 5433 at 16:09:30.364 while the maintainer spoke) — a tap
+      sends identical frames, so the wire alone does not separate them (unlike `CAP-029` §2, where no media was playing). Test: hands visible on film.
+- [ ] **Added 2026-09-28, `CAP-063-FINDINGS.md` §7:** 🟡 (strong) the "Digital assistant" press-and-hold is served over GSND (DLCI 0x08/0x0a) by the
+      Google app's Assistant-headphones service (`BistoRealService`), not by HFP voice recognition: no `AT+BVRA` in either direction during the hold
+      tests (16:10:36–16:12:09), while Android had stopped that service and the phone had closed DLCI 0x08/0x0a (2572/2573, 373 ms after the stop).
+      Bisto stop → phone `DISC` DLCI 0x08/0x0a: 4 of 4 in `CAP-063`, 9 of 9 with `CAP-061`/`CAP-062`. Test: the Google app disabled vs enabled.
+- [ ] **Added 2026-09-28, `CAP-063-FINDINGS.md` §6:** 🔴 after an ADR-016 ACL drop with the lid open, Android did **not** re-create the ACL by itself
+      (6378 → nothing until a user action 11 s later; 7566 → 27 s), whereas `CAP-062` 7226 did within 12 ms. Also 🟡: putting the buds into the ears
+      did not close DLCI 0x02 here (16:06:48), unlike `CAP-062` (1/1).
+
 ### Resolved
 
 - [x] **UI-baseline firmware version** for the test device — `release_5.203`,
@@ -3196,6 +3232,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-24 | **`ai-sessions/0046` — `CAP-061`, maintainer-approved in chat 2026-09-24.** **§2.2a** the firmware announcement's structure (fields 4/5 fixed64/6, 140/140) 🟢 FACT — the cause of the app's Safe Mode on the verified firmware. **§4.3 Option F** (new) `SubscribeRuntimeInfo` entry 6.1 = Case battery % 🟢 FACT (13/13) → `DECISIONS.md` ADR-043. **§4.3 Option E** the app's `0e 04`-only claim got no answer (8/8): ADR-039's sufficiency hypothesis refuted; 🟡 the other DLCI 0x08/0x0a owner may be the Google app's Assistant-headphones service. **§4.1** a premature Settable `0x00` with one bud out (frame 5560), ADR-024 Update; the app no longer shows a dock sentence | Claude (AI), capture-analysis + fix task; maintainer-approved in chat 2026-09-24 |
 | 2026-09-25 | **`ai-sessions/0047` — `CAP-062`, maintainer-approved in chat 2026-09-25.** **§4.3 Option F** per-bud fields (6.2/6.3 field 2, 7.1/7.2, 6.1 presence) 🟢 FACT (401/403, 45 captures); Option F hardware-verified. **§4.1** a `Set` is NAKed (reason `0x02`) iff Settable = `0x00` (🟢 for `CAP-062`), `0x00` = not worn 🟡 (ADR-024 Update). §6 notes: the Buds close DLCI 0x02 on wear/dock changes (🟡 deliberate), DLCI 0x08/0x0a owner = Google app Assistant-headphones service (5/5, 🟡) | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-25 |
 | 2026-09-26 | **`ai-sessions/0052` — status corrections D-1 of `ai-sessions/0051`, maintainer-approved in chat 2026-09-26.** **§4.5.1** OFF write `CAP-019` 1720 on film → "Conversation detection" = field 22 🟢 FACT. **§4.5.3** "Use touch controls" OFF write `CAP-020` 1995 on film, both directions 🟢; the `qht` code bit order (3 = Transparency, 4 = Adaptive) vs the 🟡 on-screen order recorded as 🔴 open. **§4.5.7/§6** balance persists across a reconnect 🟢 (three chains). **§6** `FE2C1238…` = FHN "Beacon actions" 🟢 (official page) | Claude (AI), feature task; maintainer-approved in chat 2026-09-26 |
+| 2026-09-28 | **`ai-sessions/0053` — `CAP-063`, maintainer-approved in chat 2026-09-28.** **§4.3 Option F** a second `SubscribeRuntimeInfo` on an open channel is answered (8/8) 🟢; the stream also pushes while docked and idle (with `AT+BIEV`) 🟢 for `CAP-063`. **§4.1** Settable = worn: supporting evidence, stays 🟡. **§4.2/§4.4/§4.5.5a/§4.5.7** audibility and the docked ring recorded as the maintainer's observations. **§6** conversation detection = AVRCP 🟡, Digital assistant via GSND 🟡, no ACL re-creation after an ADR-016 drop 🔴 | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-28 |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

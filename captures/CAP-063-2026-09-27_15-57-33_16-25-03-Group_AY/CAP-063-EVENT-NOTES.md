@@ -1,9 +1,16 @@
 # Event Notes: OpenControl for Pixel Buds on Pixel 9a (GrapheneOS) — Group AY, hardware re-test of the `ai-sessions/0048` and `ai-sessions/0052` builds (`CAP-063`)
 
-**Status:** 🟡 **Video pass done (1 fps over the whole film, zoomed single frames for every screen text quoted) — correlation with the HCI log
-and the other logs not yet done.** Timeline written 2026-09-27 from the film only; the HCI/log correlation, the frame numbers and
-`CAP-063-FINDINGS.md` are the work of `ai-sessions/0053`. The procedure the maintainer followed (the skeleton written before the capture) is kept
-unchanged as **Appendix A**; this part records what was **actually** done — the maintainer skipped some steps and repeated others.
+**Status:** 🟢 **Video pass + full log analysis complete** (`ai-sessions/0053`). See `CAP-063-FINDINGS.md` for the wire-level analysis, the commands
+and raw bytes, and the answers to the maintainer's twelve observations. The procedure the maintainer followed (the skeleton written before the
+capture) is kept unchanged as **Appendix A**; the timeline below records what was **actually** done — the maintainer skipped some steps and
+repeated others. The first video-only draft of this timeline (2026-09-27) was re-checked row by row; its corrections are listed in
+`ai-sessions/0053_CAPTURE_RESULT_2026_09_27.md` §3.
+
+**Purpose (maintainer, chat 2026-09-26/27):** the hardware re-test of `ai-sessions/0048` §9 (AY-0 … AY-12), `ai-sessions/0051` §19 (AY-13, AY-14)
+and `ai-sessions/0052` §9 (settings reads/writes, Refresh on a fresh claim, re-subscription). The maintainer reported afterwards twelve observations
+and three wishes (the prompt `ai-sessions/0053` §1.4): Find, EQ, balance/mono, conversation detection, connect by itself, battery, in/out of the case,
+connect/disconnect, ANC (app and long press), touch controls, press-and-hold/Digital assistant — wishes: show the lid and in-ear state, choose the
+ANC modes the hold cycles through, make in-ear detection writable.
 
 ## Log Metadata
 
@@ -12,226 +19,259 @@ unchanged as **Appendix A**; this part records what was **actually** done — th
 |    Capture ID    |                      `CAP-063`                     |
 |      Group(s)    |                        AY                          |
 |       Date       |                    2026-09-27                      |
-| Firmware version | `release_5.203` — shown on screen ("Firmware: release_5.203", film 15:58:15); wire check pending |
-|   Test device    | Pixel 9a, GrapheneOS, Android 17 `CP2A.260805.005` (logcat/system log header `google/tegu/tegu:17/CP2A.260805.005/2026091901`). Bluetooth list also shows a "Charge 6" speaker (connected) and a "Niro" (saved) — another device's traffic may be in the HCI log |
-| Build under test | the `ai-sessions/0052` build (commit hash not written down, skeleton P1): its log wording is present — "Settings read (channel 21)" (debug export line 28, 15:58:15.392), "Runtime info re-requested on Refresh (channel 19)" (line 206), "Setting 17 written (channel 21)" (line 357); the UI has the tabs Sound and Controls on film |
-| Play services *Nearby devices* (P4) | not recorded |
-| Video file       | `CAP-063-recording.mp4`: 1650.15 s, H.264 1280×720 rotation −90 (portrait), 49,253 frames (≈ 29.85 fps). **The audio track is empty** (`Audio: none, 0 channels`, handler "SoundHandle", no decodable codec) — what the maintainer heard (rings, EQ, balance, mono, conversation detection) is **not** on the film. Burned-in overlay `Sep 27, 2026 HH:MM:SS`, timestamp only: first frame 15:57:34, last 16:25:03 |
-| Log file         | `CAP-063-btsnoop_hci.log` — `capinfos`: 11,615 packets, "Packet size limit: (not set)" (raw path), 2026-09-27 15:57:40.614–16:26:58.325 |
-| Earlier log      | `CAP-063-btsnoop_hci.log.last` — 961 packets, 15:56:10.981–15:57:16.332: **before** the film (ends 18 s before its first frame); the Bluetooth off/on at the start of the session rotated the snoop log. Kept as evidence of the pre-session state |
-| App debug export | `CAP-063-debug-export.log`: 746 lines, 15:57:55.706–16:18:29.012; **cut at exactly 65,536 bytes, mid-line** (the last line ends `… 7e 80 a3 03 2a 1e 18 00 32`) — the share-sheet hand-off of the old export truncated it; nothing after 16:18:29 (the last 6.5 minutes of the session) is in it. Fixed in the app 2026-09-27 (save as a file, 20,000-line buffer) |
-| App logcat       | `CAP-063-OpenControl-for-Pixel-Buds-log-a5f9783708f6.txt` (UTC; offset to be measured) |
-| System log       | `CAP-063-System-log-6cf0a8a3bd50.txt` (≈ 14 MB) |
-| Clock offsets    | **Provisional (to be measured in `0053`):** phone clock ≈ film overlay + 1 s — the Disconnect tap seen at overlay 16:00:08 is logged 16:00:10.163 (export line 43), the Connect tap at 16:00:15 → 16:00:16.592 (line 45), the loss message on screen at 16:02:05 → "Session lost" 16:02:06.167 (line 125). The minute changes at the start/end (skeleton S0/Z2) were not filmed. Times below are **film overlay** times |
-| Buds             | `04:00:6e:cf:6e:07` (same unit as every capture; also visible in Android's device-details screen at 16:17:10–13). Which slot is which bud, from the app's own charging lines: the **upper** slot holds the **Right** bud (16:15:47–52: upper bud out → "Right … not charging") — confirm from the wire |
+| Firmware version | 🟢 `release_5.203` — in every DLCI 0x02 announcement (e.g. HCI frame 1261; debug export line 17) and on screen ("Firmware: release_5.203", film overlay 15:58:15) |
+|   Test device    | Pixel 9a, GrapheneOS, Android 17 `CP2A.260805.005` (logcat header `google/tegu/tegu:17/CP2A.260805.005/2026091901`). App: OpenControl for Pixel Buds — the `ai-sessions/0052` build (`94e4fb1` or later): wording that exists only from that build on — "Settings read (channel 21)" (export line 28), "Runtime info re-requested on Refresh (channel 19)" (line 206), "Setting 17 written (channel 21)" (line 357), "Message Stream still claimed from an earlier action: released for a fresh claim" (line 568) — and six `ReadSetting`s after every EQ read (15 of 15 Connects). The commit hash was not written down (P1). The app's data had been cleared (first-start permission prompts on film). Google Play services and the Google app present. Play services' *Nearby devices* permission: **not recorded** (P4). Other Bluetooth devices: a "Charge 6" speaker (connected, Android's list) and a "Niro" (saved); the only other device in the HCI log is an LE device `c8:cc:a8:e7:48:93` (handle `0x0040`) |
+| Video file       | `CAP-063-recording.mp4`: 1650.15 s, H.264 1280×720 rotation −90 (portrait), 49,253 video packets (≈ 29.85 fps). **Audio track empty** (stream 0 "Audio: none, 0 channels"; `ffmpeg -i CAP-063-recording.mp4 -map 0:a -f null -` → "no decoder found for: none") — every sound is the maintainer's observation. Burned-in overlay `Sep 27, 2026 HH:MM:SS`, timestamp only: **first frame 15:57:33**, last frame 16:25:03 |
+| Log file         | `CAP-063-btsnoop_hci.log` — `capinfos`: 11,615 packets, "Packet size limit: (not set)" (raw path), 2026-09-27 15:57:40.614170–16:26:58.325151; 0 `cap_len≠len`; one out-of-order pair |
+| Earlier log      | `CAP-063-btsnoop_hci.log.last` — 961 packets, 15:56:10.981–15:57:16.332: an HCI Reset and the other LE device only (no Buds traffic); it ends 18 s before the film's first frame (the Bluetooth off/on rotated the log). Context only |
+| App debug export | `CAP-063-debug-export.log`: 746 lines, 15:57:55.706–16:18:29.012, Debug mode on at ≈ 15:58:23 (film), first hex line 15:58:31.308 (line 33) — the connect-time frames of 15:58:15 are not hex-logged; **cut at exactly 65,536 bytes, mid-line** by the old share-sheet export (fixed in `800555d`); the 1,000-line buffer did not wrap. 16:18:29–16:23:50 is covered by the HCI log only |
+| App logcat       | `CAP-063-OpenControl-for-Pixel-Buds-log-a5f9783708f6.txt` (453 lines; lifecycle events from 13:55:01 UTC; `OpenControlBuds` lines only 14:23:50.493–14:25:38.403 UTC) |
+| System log       | `CAP-063-System-log-6cf0a8a3bd50.txt` (129,188 lines; the session window 13:57:30–14:27:10 UTC is covered) |
+| Clock offsets    | **Film ↔ phone, measured at start-half and end** (5 fps crops of the status bar against the overlay): the phone's minute flips 16:05→16:06 at t = 504.8 s, 0.6 s into overlay second 16:05:58 (which begins at t ≈ 504.1 s); 16:23→16:24 at t = 1584.8 s, again 0.6 s into overlay :58. So **phone clock = overlay + 1.4 s (±0.2 s), no drift**; overlay = 15:57:33 + ≈ t. (The skeleton's S0/Z2 minute changes were not filmed; the draft's "≈ +1 s" is superseded.) **Logcat / system log (UTC) = phone − 2 h 00 min 00.0 s** (logcat 14:24:21.283 "Session ended by the user's Disconnect tap" ↔ HCI phone `DISC` DLCI 0x02 frame 10981 at 16:24:21.290). HCI timestamps and the debug export are phone local time |
+| Buds (partial, `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` (same unit as every capture). Classic ACL handle `0x000b` (HCI Connection Complete frame 810, reused by every reconnect), LE handle `0x0042` (LE Connection Complete frame 692, closed by the phone 15:58:39.857, frame 2180). **Pre-filter:** `bluetooth.addr` is empty with this encapsulation — every command filters `bthci_acl.chandle==0x000b`. **Slots:** the **upper** slot holds the **Right** bud (stream frame 7059, 16:15:51.551: 6.3.2 → 1 as the upper bud leaves; 7439, 16:16:10.762: → 2 as it is re-seated) |
 
-## Capture-integrity pre-flight (partial)
+## Capture-integrity pre-flight
 
 ```
-$ capinfos CAP-063-btsnoop_hci.log         → 11,615 packets, limit (not set), 15:57:40.614170 – 16:26:58.325151
-$ capinfos CAP-063-btsnoop_hci.log.last    → 961 packets, 15:56:10.981016 – 15:57:16.331589
-$ ffprobe CAP-063-recording.mp4            → 1650.152 s; stream 0 audio "none, 0 channels"; stream 1 h264 1280x720, 49,253 frames
-$ wc -c CAP-063-debug-export.log           → 65536 (last line cut)
-$ sha256sum (prefixes)  1e86f191… btsnoop_hci.log   946bb87b… .log.last   0afcebce… debug-export   533fa333… logcat
-                        8f9e1d65… recording.mp4     e22c8948… System-log
+$ capinfos CAP-063-btsnoop_hci.log
+File encapsulation:  Bluetooth H4 with linux header
+Packet size limit:   file hdr: (not set)
+Number of packets:   11 k   (Interface #0: Number of packets = 11615)
+Earliest packet time: 2026-09-27 15:57:40.614170
+Latest packet time:   2026-09-27 16:26:58.325151
+
+$ tshark -r CAP-063-btsnoop_hci.log -T fields -e frame.number -e frame.cap_len -e frame.len -e frame.time_epoch \
+  | awk '$2!=$3{c++} {if(NR>1 && $4<p) o++; p=$4} END{print "mismatches:",c+0,"out-of-order:",o+0}'
+mismatches: 0 out-of-order: 1
+
+$ sha256sum *   (identical before and after the move into this folder, `sha256sum -c`)
+11e86f19…ffb39  CAP-063-btsnoop_hci.log            d946bb87…b0d55  CAP-063-btsnoop_hci.log.last
+60afcebc…ff770  CAP-063-debug-export.log           c533fa33…51fa   CAP-063-OpenControl-for-Pixel-Buds-log-a5f9783708f6.txt
+f8f9e1d6…a185   CAP-063-recording.mp4              4e22c894…394c   CAP-063-System-log-6cf0a8a3bd50.txt
+$ wc -c CAP-063-debug-export.log  →  65536
 ```
-Still to do in `0053`: `cap_len ≠ len` and out-of-order checks, full hashes.
 
 ## Video review method
 
-- 1 frame per second over the whole film (`ffmpeg -i CAP-063-recording.mp4 -vf "fps=1,scale=240:-2,tile=8x3"`, 69 contact sheets of 24 s), every
-  sheet looked at; every screen text quoted below read on a zoomed single frame (`ffmpeg -ss <t> -i … -frames:v 1 -vf crop=…`, t = overlay −
-  15:57:34). Transitions are to ≈ 1 s; the HCI log will narrow them.
-- **Privacy — personal data on film:** the notification shade with legible third-party names and message previews (WhatsApp, LinkedIn, e-mail) at
-  ≈ 15:57:43–44, 16:06:26, 16:06:39, 16:12:57–58, 16:16:48–49, 16:23:09–10; the Spotify media card ("Back To Black – Amy Winehouse") in Quick
-  Settings at 16:06:28–38; Android's device-details screen showing the Buds' Bluetooth address at 16:17:10–13 (covered by ADR-010 for this
-  project's own captures). **No address overlay** from the camera. To be decided by the maintainer before committing (as for `CAP-062`).
-- The film shows the phone and the case only: **when the buds are in the ears or in a hand off-frame, the film cannot tell** — such states are
-  inferred from the app's screen and marked so.
+- **Every frame, for privacy and screen state:** all 49,253 frames were decoded (`ffmpeg -fps_mode passthrough -vf crop=400:840:100:380,scale=50:105
+  -pix_fmt gray`) and classified: frames not matching the app's own screen layout (bright page + bottom navigation bar) were grouped into 130
+  segments ≥ 0.3 s and sampled every 1.5 s plus each segment's middle — 523 frames on 18 contact sheets, all viewed. **Personal data found:** the
+  notification shade with legible third-party names and messages (WhatsApp group and contact names, LinkedIn, Volkskrant) and the maintainer's own
+  e-mail address in a "Health" notification at overlay 15:57:43–44 (t ≈ 10.2–10.7 s), 16:06:24–39 (t ≈ 531–546 s), 16:12:55–57 (t ≈ 923–924 s),
+  16:16:47 (t ≈ 1154 s, blurred) and 16:23:10–35 (t ≈ 1537–1562 s, partly behind the Bluetooth dialog); a LinkedIn notification behind the Bluetooth
+  dialog at t = 0–9 s; the Spotify media card in Quick Settings; Android's device-details screen with the Buds' Bluetooth address at overlay
+  16:17:09–12 (covered by ADR-010). **No camera address overlay.** The maintainer chose to keep the film **unblurred** (chat 2026-09-27,
+  `ai-sessions/0053`; it was already committed and pushed in `ceaf05a`).
+- **Content:** the draft's 1 fps pass over the whole film (69 contact sheets) was re-checked; transitions a claim depends on were narrowed with 1–5 fps
+  crops (the clock flips, 16:02:03–16:03:33 case slot, 16:05:20–27 ANC tap, 16:09:18–29 conversation detection, 16:15:50–16:16:32 dock sequence,
+  first/last frame).
+- The film shows the phone and the case only: **when the buds are in the ears or in a hand off frame, the film cannot tell** — such states are marked
+  "off film". The audio track is empty.
 
-## Event Timeline (film overlay time; ≈ +1 s = phone time)
+## Event Timeline
 
-"Step" = the skeleton step (Appendix A) the action corresponds to; "rep." = a repetition; "var." = done differently. Evidence columns (HCI frames,
-log lines) are filled in by `ai-sessions/0053`.
+Times are **phone local time** (HCI / debug export); film-only events are overlay + 1.4 s, to ±1 s. Frame numbers are HCI frames of
+`CAP-063-btsnoop_hci.log` (handle `0x000b` unless stated); "export N" is line N of `CAP-063-debug-export.log`. "Step" = the skeleton step
+(Appendix A); "var." = done differently, "rep." = repeated. Test IDs: `APP_TESTPLAN.md`; registry Test-IDs in brackets.
 
-| Time (film) | Action / what the screen shows | Actor | Step | Notes |
+| Time (phone) | Action / event | Actor | Step / test | Evidence |
 |---|---|---|---|---|
-| 15:57:34–37 | Film starts in Quick Settings, Bluetooth dialog "Bluetooth staat uit"; Bluetooth switched **on** (≈ 15:57:36) | User (Android) | S1 var. (Bluetooth on from Quick Settings, not from the app) | the S0 minute change and the spoken hash are not on film |
-| 15:57:43–44 | Notification shade | User | — | privacy |
-| 15:57:46–53 | OpenControl opened; *Nearby devices* → Toestaan; notifications → Toestaan | User | A3/A4 | the app's data had been cleared (permissions asked again) |
-| 15:57:54–55 | "Bluetooth permission needed", then "No Pixel Buds Pro 2 paired yet" + **Pair a device** | App | B1 | the Buds were not bonded at the start (the Bluetooth list at 15:57:36 has no Pixel Buds) |
-| 15:57:58–15:58:05 | Case lid opened (both buds seated, LED) | User | — | |
-| 15:58:06 | Heads-up "Google Play services needs to sh…" (GmsCompat) | OS | — | as in `CAP-062` |
-| 15:58:07–10 | **Pair a device** → CDM "Zoeken naar een apparaat" → "Toestaan … Pixel Buds Pro 2 van Ted" → Toestaan | User / OS | B2/B3 | |
-| 15:58:11–14 | "Pairing… keep the Buds close" → "Connected to this phone (Android)" → **by itself** "connecting…" → "ready" (15:58:14) | App | AY-0 var. (buds in the case, lid open) | debug export 13–14: Connecting 15:58:14.568, DLCI 0x02 connected .941 |
-| 15:58:15 | Connection: "Firmware: release_5.203", **no Safe Mode card**; Left/Right "100% (updated 15:58:15) — charging in the case (15:58:15)", "Case: 37% (updated 15:58:15)" | App | B1 (skeleton) / D1 | |
-| 15:58:21–22 | Debug tab: **Debug mode on** | User | S3 | |
-| 15:58:44–46 | ANC tab: "ANC mode: OFF (updated 15:58:15)", buttons disabled, "ANC can only be changed while you wear the Buds. Tap Refresh to check again." | App | F8 | buds in the case |
-| 15:58:47–59 | Sound tab: "EQ updated: 15:58:15", Upper treble 5.0 / Treble 3.0 / Mid 2.0 / Bass −5.9 / Low bass −2.8; presets in two rows, no label cut off; Balance "Right 4 · read 15:58:15", Mono **on** (read 15:58:15), Conversation detection **on** (read 15:58:15) | App | B2, H0 | the original values of the skeleton's table (§2): Balance Right 4, Mono on, Conversation detection on |
-| 15:59:24–26 | **LIGHT BASS** tapped with both buds docked → "EQ updated 15:59:26", 0 / 0 / 0 / −1.5 / −5.0 | User / App | AY-2 (early) | an EQ write while docked, accepted on screen |
-| 15:59:29–30 | Controls: "Use touch controls" on, Left/Right "Noise control", "In-ear detection (setting): on — read-only …", all "read 15:58:15" | App | B2 | originals: touch on, hold L/R Noise control, in-ear on |
-| 15:59:34–52 | Tab tour by **swiping** (Find, Debug, Find, Controls, Sound, ANC, Connection) | User | B3 (C10) | |
-| 15:59:52 | Connection: charging (15:59:49), "Case: 36% (updated 15:59:49)" | App | E6 | a runtime-info push while docked, no user action |
-| 16:00:08–09 | **Disconnect** → "App control: not open yet" | User | C5 part 1 | export 43: 16:00:10.163 |
-| 16:00:15–16 | **Connect** → ready; L/R (updated 16:00:17), Case 36% (updated 16:00:17) | User | C5 part 2 (one tap, not two quickly — check the wire) | export 45–46 |
-| 16:00:28–29 | **Disconnect** → not open yet | User | AY-9 | export 80 |
-| 16:00:30–52 | Upper (Right) bud taken out (16:00:30–33), then the lower (Left) (16:00:50–52); lid open, case empty; the app **stays** "not open yet" | User | AY-9 ✓ (no re-open after a Disconnect tap) | buds off film afterwards |
-| 16:00:59–16:01:02 | **Connect** → ready. For ≈ 2 s the old lines stay ("charging in the case (16:00:17)"), then "Left/Right 100% (updated 16:01:03) — not charging (out of the case) (16:01:04)", "Case: 36% — last seen 16:00:17 (no bud charging in the case)" | User / App | C4, E4 | the 2 s of stale "charging" after Connect is a finding to check |
-| 16:01:14 | ANC tab: "ANC mode: ACTIVE (updated 16:01:03)", buttons **enabled** | App | — | buds out of the case (worn? not on film) |
-| 16:01:16–33 | Tab tour (Sound, Controls, Find, Debug "Unidentified frames (16)", Find, Controls, Sound) | User | B3 rep. | |
-| 16:02:02–05 | Connection; a bud put back in the **lower** slot (16:02:05–09); screen "not open yet — **The Buds closed the app's channel** (this happens when a bud goes in or out of the case or an ear). Android still shows the Buds connected; the app reopens its channel by itself …" + "IOException: bt socket closed, read return: -1" | Buds / App | AY-7 var. | export 125: Session lost 16:02:06.167 |
-| 16:02:07 | **Ready again by itself** | App | ADR-044 (a) ✓ | export 130–131 (1.5 s later) |
-| 16:02:09–25 | One bud seated (lower slot): the screen shows **both** buds "not charging (out of the case) (16:02:09)" and the Case "last seen 16:00:17" | App | E3 ✗? | ⚠ a bud is in the case on film but not "charging in the case" on screen — check the stream packets (0053) |
-| 16:02:25–26 | **Disconnect** → not open yet | User | AY-9 rep. | export 164 |
-| 16:02:28–36 | The seated bud taken out and re-seated (lower slot); app stays closed | User | AY-9 rep. ✓ | |
-| 16:02:52–57 | Recents, home screen (folder "Luisteren"), back to the app: still "not open yet" | User | AY-9 ✓ (also not on resume) | |
-| 16:03:02–04 | **Connect** → ready; L/R "not charging (out of the case) (16:03:06)", Case last seen 16:00:17 | User | C4 rep. | ⚠ a bud is still seated (lower slot) on film |
-| 16:03:14–17 | The seated bud taken out and laid **left of the case** | User | — | |
-| 16:03:34 | Charging lines re-stamped (16:03:34) | App | — | a push |
-| 16:03:44–48 | **Refresh battery** → "updated 16:03:48" | User | AY-13a | export 206: "Runtime info re-requested on Refresh (channel 19)" |
-| 16:03:50–16:04:02 | The bud on the table picked up/moved; "The Buds closed the app's channel …" (16:03:59) → ready **by itself** (16:04:01–02), updated 16:04:03 | Buds / App | AY-5 var. ✓ | export 218–224 |
-| 16:04:11–17 | **Refresh battery** → updated 16:04:17 | User | AY-13a rep. | export 257 |
-| 16:04:20–26 | Both buds off film (put in the ears); push 16:04:24; **Refresh battery** 16:04:25–26 → updated 16:04:32 | User | AY-13a rep. | export 272 |
-| 16:04:37 | ANC tab: "ACTIVE (updated 16:04:32)", enabled | App | — | worn |
-| 16:04:39–44 | **ADAPTIVE** → "ADAPTIVE (updated 16:04:42)"; **OFF** → "OFF (updated 16:04:44)" | User | F6 var. (≈ 2 s apart, not "immediately") | |
-| 16:05:25–28 | ANC **Refresh** → "ANC mode: ACTIVE (updated 16:05:28)" — changed from OFF without an app tap | User / Buds | F5 ✓ (the press-and-hold on a bud itself is off film) | the maintainer's observation 9 |
-| 16:05:46–48 | Android volume panel | User | — | |
-| 16:06:04–07 | Both buds taken **out of the ears** and laid on the table; ANC tab "Not connected to the Buds …", "Connection: Disconnected" | User / Buds | AY-4 | export 311: Session lost 16:06:08.077 |
-| 16:06:08–12 | "Still connecting…" → ready **by itself** → "ANC mode: OFF (updated 16:06:11)", buttons disabled + "ANC can only be changed while you wear the Buds." | App | AY-4 ✓ / F8 ✓ | |
-| 16:06:20–21 | Tap on the disabled ADAPTIVE: nothing | User | AY-4 ✓ | |
-| 16:06:24–38 | Quick Settings (shade visible 16:06:26), **ANC tile** tapped ≈ 16:06:28 → toast "ANC can only be changed while you wear the Buds." (16:06:29–38) | User / App | AY-4 tile ✓ | privacy; Spotify card |
-| 16:06:39–41 | Notification shade; back to the app | User | — | privacy |
-| 16:06:47 | Both buds picked up (then in the ears, off film) | User | D0 | |
-| 16:06:57–16:07:12 | Connection "not charging (16:06:54)"; ANC still OFF (16:06:11) disabled; Sound tab: EQ = Light bass (read 16:06:10), Balance Right 4, Mono on, Conversation detection on (read 16:06:11) | App | — | ⚠ ANC stays disabled after the buds are back in the ears until a Refresh (no claim since) |
-| 16:07:14–16 | **Balance → L** → "Left 100 · changed 16:07:16" | User | D1 | export 357 |
-| 16:07:19–22 | **Balance → R** → "Right 100 · changed 16:07:22" | User | D2 | export 360 |
-| 16:07:30–32 | **Balance ≈ halfway left** → "Left 52 · changed 16:07:32" | User | D3 | export 363 |
-| 16:07:41–16:08:00 | Several drags toward the centre: "Right 4 · changed 16:07:49", …, "Right 1 · changed 16:08:00" — **exact centre (0) never reached** | User | D4 rep. (✗ "Centre") | ⚠ export 366–399: **12 writes of field 17 in 17 s** (e.g. 16:07:48.609, 49.718, 51.940, 52.333) — more writes than completed drags visible on film? check |
-| 16:08:04–06 | **Mono off** → changed 16:08:06 | User | D6 (D5 skipped: mono was already on) | export 404 |
-| 16:08:19–20 | **Conversation detection off** → changed 16:08:20 | User | D7 part 1 | export 407 |
-| ≈ 16:08:29–30 | **Conversation detection on** → changed 16:08:30 | User | D7 part 2 | export 410 |
-| 16:08:49–56 | Home → folder "Luisteren" → Spotify "Amy Winehouse Mix", **play** → back to OpenControl (Sound tab) | User | P10 var. (music, not a stereo test file) | music from here |
-| 16:08:58–16:09:10 | Balance again: "Right 100 · changed 16:09:00", "Left 96 · 16:09:04", "Right 11 · 16:09:08", "Right 4 · 16:09:10" | User | D1–D4 rep. (with music) | export 417–429 |
-| 16:09:11–14 | **Mono on** → changed 16:09:12; **Mono off** → changed 16:09:14 | User | D5, D6 rep. | export 432/435 |
-| 16:09:16–20 | **Conversation detection off** → 16:09:17; **on** → 16:09:20 | User | D7 rep. | export 438/441 |
-| 16:09:21–36 | Sound tab idle, music playing | User | D7 (talking — not on film, no audio) | observation 4 |
-| 16:09:37–41 | Controls: **Use touch controls off** → changed 16:09:41 | User | D8 | export 446 |
-| 16:09:41–57 | (bud taps off film) | User | D8 | observation 10 |
-| ≈ 16:09:58–59 | **Use touch controls on** → changed 16:09:59 | User | D9 | export 451 |
-| 16:10:34–36 | **Left: Digital assistant** → changed 16:10:36 | User | D10 | export 454 |
-| 16:10:47–48 | **Left: Noise control** → changed 16:10:48 | User | D11 | export 457 |
-| 16:10:54–55 | **Left: Digital assistant** → changed 16:10:55 | User | D10 rep. | export 460 |
-| 16:11:22–24 | **Right: Digital assistant** → changed 16:11:24 | User | D12 part 1 | export 463 |
-| 16:11:33–16:12:09 | Further press-and-hold chip taps, ending with **both Noise control** (export 466 16:11:34.847 and later lines — the exact sequence from the export/HCI) | User | D11/D12 rep. | 16:11:35–37 volume panel |
-| 16:12:28–32 | **Disconnect**, **Connect** → ready | User | D13 part 1 | |
-| 16:12:37–45 | Sound: Balance Right 4, Mono off, Conversation detection on; Controls: touch on, L/R Noise control, in-ear on — all "read 16:12:3x" | App | D13 ✓ (read back) | |
-| 16:12:57–16:13:06 | Notification shade (privacy), Recents → Spotify → back | User | — | |
-| 16:13:15–17 | **HEAVY BASS** → EQ updated 16:13:17 | User | H2 (one preset only) | |
-| 16:13:21–24 | **Upper treble** dragged to +5.2 → updated 16:13:24 | User | H3 (not to +6, no −6) | |
-| 16:13:28–32 | **Low bass** dragged to −5.7 → updated 16:13:32 | User | H4 (−6 only) | |
-| 16:13:46–57 | Scroll; finger on the screen | User | H5 — "Read EQ again" not shown (no error) → not run | |
-| 16:13:58 | Connection: L/R (updated 16:12:34) | App | — | |
-| 16:14:04–07 | **Refresh battery** → updated 16:14:07 | User | AY-13b part 1 | |
-| ≈ 16:14:08–10 | **Refresh battery** again → updated 16:14:10 | User | AY-13b var. (≈ 2–3 s apart, not < 1 s) | no "No new battery reading" on screen |
-| 16:14:48–51 | **Refresh battery** → updated 16:14:51 | User | AY-13 rep. | debug export ends 16:18:29 — the rest only in HCI/logcat |
-| 16:15:07–19 | Case picked up; **both buds put in the case** (both seated by ≈ 16:15:19); screen dims/off 16:15:14–23 | User | AY-7 var. (both at once) | |
-| 16:15:24 | "Paired — not connected to this phone … The Maestro channel (equalizer) was closed. Tap Connect to reconnect." | App | AY-6 var. | ⚠ loss cause "undetermined" wording, while the ACL dropped (ADR-016) — check the link readings (screen was off) |
-| 16:15:32–38 | **Connect** (Android not connected): connecting → ready (16:15:36), "Android doesn't show the Buds as connected (yet)" → "Connected to this phone (Android)" (16:15:38); L/R charging in the case (16:15:38), Case 36% (updated 16:15:37) | User / App | C7-like | the app's socket created the ACL, as in `CAP-062` |
-| 16:15:47–52 | Upper (Right) bud taken out → "Right … not charging (out of the case) (16:15:52)", Left "charging in the case (16:15:51)" | User / App | E3 ✓ / AY-7 | slot ↔ bud established here |
-| 16:15:53–55 | Lower (Left) bud taken out → both not charging; "Case: 36% — last seen 16:15:52 (no bud charging in the case)" | User / App | E4 ✓ | |
-| 16:15:57–16:16:04 | Screen off (phone locked) | User | AY-10 var. | |
-| 16:16:05–07 | Unlocked: app "connecting…" → ready **by itself** (resume) | App | ADR-044 (c) ✓ | |
-| 16:16:08–11 | Right bud back in the upper slot → "Right … charging in the case (16:16:11)", "Case: 36% (updated 16:16:11)" | User / App | AY-7 ✓ | |
-| 16:16:25–30 | Case 36% (16:16:25); Left bud seated (lower slot) → "Left … charging in the case (16:16:30)", Case 34% (16:16:30) | User / App | AY-7 ✓ | |
-| 16:16:32–35 | Case handled; "not open yet — **Android no longer shows the Buds connected** to this phone — after a disconnect in Android's own Bluetooth settings, with both buds in the case, or out of range. Tap Connect to reconnect." | Buds / App | AY-6 ✓ (ACL drop, no re-open while the link is down) | |
-| 16:16:48–53 | Notification shade (privacy); QS Bluetooth: "Pixel Buds Pro 2 van Ted — Opgeslagen" | User | — | |
-| 16:17:01–06 | Buds row tapped → "Verbinding maken…" → "Actief. Batterijniveau 100%" (buds docked, lid open) | User (Android) | AY-6 / AY-8b var. | |
-| 16:17:10–13 | Android's device-details screen (shows the Bluetooth address) | User | — | privacy (ADR-010) |
-| 16:17:14 | App **ready by itself** (link back): L/R charging in the case (16:17:06), Case 34% (updated 16:17:06) | App | ADR-044 (b) ✓ | |
-| 16:17:18 / 16:17:28 / 16:18:18 / 16:18:29 | Charging/Case re-stamped (pushes while docked and idle) | Buds | E6 ✓ | |
-| 16:17:20–16:18:38 | Idle, both docked, lid open (≈ 80 s, not 2 min) | User | AY-14 var. | |
-| 16:18:38–40 | **Refresh battery** → L/R and "Case: 34% (updated 16:18:40)" | User / App | AY-14 | the Case time moved at the Refresh — answered re-subscription? (HCI; the export ends 16:18:29) |
-| 16:18:45–47 | Find tab: **Ring Left** with both buds **docked** (lid open) → "Ringing: Left earbud — tap Stop to end it." | User / App | AY-1 | ring audible? not on film (no audio) — maintainer's observation |
-| 16:19:07–08 | **Stop** → the notice disappears | User | AY-1 | |
-| 16:19:14–24 | Sound tab; **BALANCED** tapped while docked → Treble −1.0, Mid 1.0, Bass 0.5, Low bass −3.5 | User / App | AY-2 ✓ | |
-| 16:19:34–37 | **Mono on** (changed 16:19:35), **off** (16:19:37) while docked | User / App | AY-2b ✓ | |
-| 16:19:44–46 | **Lid closed** (both docked); 16:19:47 the Sound controls grey out | User | C8 | |
-| 16:20:05 | Connection: "Paired — not connected … Android no longer shows the Buds connected …" | App | C8 ✓ | |
-| 16:20:12–13 | **Lid opened** (both docked); app unchanged (Android not reconnected) through 16:20:21 | User | — | |
-| 16:20:22–26 | Right, then Left bud taken out; app **connecting by itself** (16:20:25) → ready (16:20:26); L "charging (16:20:27)", R not → both "not charging (16:20:28)"; "Case: 33% — last seen 16:20:28" | User / App | C9 ✓, E4 ✓ | |
-| 16:20:28–16:21:01 | Buds laid on the table, then picked up (one stays left of the case from 16:21:00; the other off film) | User | — | |
-| 16:21:21 | **Home** (app in the background) | User | AY-10 / J4 | |
-| 16:21:47–57 | Screen off, unlock, Recents → OpenControl: still **ready**, "not charging (16:21:56)" | User / App | AY-10 var. (no session loss happened while in the background) | |
-| 16:22:02–59 | **Home** again, ≈ 57 s in the background (screen off 16:22:27–34) | User | J4 var. (≈ 1 min, not 2) | |
-| 16:22:59–16:23:01 | Back via Recents: still **ready**; re-stamps 16:22:19 / 16:23:06 | App | J4 ✓ | |
-| 16:23:09–13 | Notification shade (privacy); QS Bluetooth: tap "Pixel Buds Pro 2 … Actief" → **disconnect in Android** → "Opgeslagen" | User (Android) | AY-8 | the app is hidden behind the dialog for 20 s — its text during AY-8 is not on film |
-| 16:23:34–39 | Buds row tapped again → "Verbinding maken…" → app **ready by itself** (16:23:38–39), updated 16:23:37 | User / App | AY-8b ✓ | |
-| 16:23:46–52 | Both buds laid on the table; "The Buds closed the app's channel …" (16:23:49) → connecting → ready **by itself** (16:23:52), updated 16:23:53 | User / Buds / App | AY-5 var. ✓ | |
-| 16:24:12–13 | Find: **Ring Left** → "Ringing: Left earbud — tap Stop to end it." (buds on the table) | User / App | AY-11 part 1 | |
-| 16:24:19–20 | Connection: **Disconnect** → not open yet | User | AY-11 part 2 | |
-| 16:24:31–35 | Find tab: "Not connected to the Buds …" + "**A ring was started on the Left earbud — reconnect and tap Stop to end it.**" | App | AY-11 ✓ (the `0048` I-6 fix, `CAP-062` I4 ✗ fixed) | |
-| 16:24:37–38 | **Connect** → ready | User | AY-11 part 3 | |
-| 16:24:40 | Find: "**A ring was started on the Left earbud before the app reconnected — it may still be ringing. Tap Stop to end it.**" | App | AY-11 ✓ | |
-| 16:24:42–43 | **Stop** → the notice disappears | User | AY-11 part 4 | ring stop audible? not on film |
-| 16:25:02–03 | Debug tab: "Unidentified frames (163)"; film ends | User | — | |
+| 15:57:34–15:57:38 | Film starts in Quick Settings, dialog "Bluetooth staat uit"; Bluetooth switched **on** there | User (Android) | S1 var., A1/A2 var. | film 15:57:33–37; HCI log starts 15:57:40.614; `.last` ends 15:57:16.332 |
+| 15:57:45 | Notification shade | User | — | film (privacy) |
+| 15:57:47–55 | OpenControl opened: *Nearby devices* → Toestaan; notifications → Toestaan | User | A3, A4 | film; export 1–3 (observer 15:57:55.7) |
+| 15:57:55–57 | "Bluetooth permission needed", then "No Pixel Buds Pro 2 paired yet" + **Pair a device** — the Buds had been forgotten | App | B1 | film; the `.last` log has no Buds traffic |
+| 15:57:59–15:58:06 | Case lid opened (both buds seated, LED) | User | [`CASE-003`] | film |
+| 15:58:07 | Heads-up "Google Play services needs to sh…" (GmsCompat) | OS | — | film |
+| 15:58:09–15:58:14 | **Pair a device** → CDM "Zoeken naar een apparaat" → "Toestaan … Pixel Buds Pro 2 van Ted" → Toestaan; bond; LE link 692, classic Create Connection 763 → Connection Complete 810 (`0x000b`) | User / OS | B2, B3 [`PAIR-001`] | export 4–10; HCI 692, 763, 810 |
+| 15:58:14.3 | HFP (DLCI 0x0c) set up by the phone: `AT+BRSF` … `AT+BIEV=2,100` | OS | — | 1019 `SABM` 0x0c, 1051–1186 |
+| 15:58:14.54–15:58:15.4 | **Opened by itself:** link CONNECTED → "Automatic re-open (ADR-044, trigger: LINK_BACK)" → app `SABM` DLCI 0x02 (1226) → announcement ch 21 (1261) → `ReadSetting 4:16` (1267 → 1279 `[-2.83,-5.89,2,3,5]`) → `4:2 4:4 4:7 4:17 4:19 4:22` (1293…1339: 1, 1, L/R 5, 7 = Right 4, 1, 1) → `SubscribeRuntimeInfo` (1340 → 1342: Case 37, L/R charging) | App | AY-0 var. (buds in the open case, right after pairing) [`PAIR-003`] | export 11–21; film "ready" 15:58:15 |
+| 15:58:15.0–15:58:17.4 | Snapshot claim: attempt 1 collides with Play services' fresh DLCI 0x04 open (1275; phone `DISC` 1320), attempt 2 (1369): `08 11` 1379 → `03 03 00 03 e4 e4 ff` ×3, `Notify 01 e8 00 20` (1389); released 1548 | App / Play services | D1 | export 19, 22, 23 |
+| 15:58:16 | Connection: "Firmware: release_5.203", no Safe Mode card; Left/Right "100% (updated 15:58:15) — charging in the case", "Case: 37% (updated 15:58:15)" | App | D1, E1, E2 [`BATT-004`] | film 15:58:15 |
+| 15:58:16.6–16.7 | The Google app opens DLCI 0x0a/0x08 (1441/1470); Play services re-opens DLCI 0x04 (1708: `03 08`, `07 10`, `06 01`) and holds it until 16:00:16.8 | Google app / Play services | — | HCI; system log 13:58:30.336 UTC "Waited long enough for … BistoRealService" |
+| 15:58:23 | Debug tab: **Debug mode on** | User | S3, L1 | film 15:58:21–22 |
+| 15:58:39.9 | The phone closes the LE link (Disconnect 2178 → 2180, `0x16`) after 58 Fast Pair Key-based Pairing writes, each "Error 0x81" | Play services | — | HCI (out of scope, ADR-008) |
+| 15:58:46–47 | ANC tab: "ANC mode: OFF (updated 15:58:15)", buttons disabled, "ANC can only be changed while you wear the Buds. Tap Refresh to check again." | App | F8 | film |
+| 15:58:48–16:00 | Sound tab: "EQ updated 15:58:15", 5.0 / 3.0 / 2.0 / −5.9 / −2.8; presets in two rows, no label cut off; Balance "Right 4 · read 15:58:15", Mono **on**, Conversation detection **on** | App | B2, H0, H1, M1 | film; = the reads above |
+| 15:59:25.6 | **LIGHT BASS** with both buds docked → `WriteSetting 4:{16:[-5,-1.5,0,0,0]}` (2374) → `RESPONSE` OK (2380); "EQ updated 15:59:26" | User / App | AY-2 (early) [`EQP-003`] | film 15:59:24–26 |
+| 15:59:30–31 | Controls: "Use touch controls" on, Left/Right "Noise control", "In-ear detection (setting): on — read-only …", all "read 15:58:15" | App | B2, N1 | film |
+| 15:59:35–53 | Tab tour by **swiping** (Find, Debug, Find, Controls, Sound, ANC, Connection) | User | B3 / C10 | film |
+| 15:59:30.8 / 39.8 / 49.7 | Stream pushes while docked (2404, 2462, 2515; Case 37 → 36), each with `03 03` on Play services' DLCI 0x04 and `AT+BIEV=2,100` | Buds | E6 | film 15:59:52 "Case: 36% (updated 15:59:49)" |
+| 16:00:00.36 | Android stops the Google app's `BistoRealService` ("app idle", 13:59:59.985 UTC); the phone closes DLCI 0x08/0x0a 373 ms later (2572/2573); closed until 16:15:39 | OS / Google app | — | system log; HCI |
+| 16:00:10.16 | **Disconnect** → "App control: not open yet" | User | C3 | export 43; phone `DISC` 0x02 2628; film 16:00:08–09 |
+| 16:00:16.59–16:00:18.9 | **Connect** (one tap) → one app `SABM` 0x02 (2670); reads; stream 2723; claim attempt 1 closes Play services' DLCI 0x04 (2699), attempt 2 (2742): `e4 e4`, `Notify 00 20` | User / App | C4, C5 var. (one tap, one `SABM`) | export 45–79; film 16:00:15–16 |
+| 16:00:29.94 | **Disconnect** | User | AY-9 | export 80; 2837 |
+| 16:00:31–16:00:53 | Upper (**Right**) bud taken out (≈ 16:00:31–34), then the lower (**Left**) (≈ 16:00:51–53); lid open, case empty; buds off film; `AT+BIEV` 2849/2940; the app **stays** "not open yet" | User | AY-9 ✓ [`CASE-005`, `CASE-004`] | film; no app `SABM` 0x02 until 2980 |
+| 16:01:02.42 | **Connect** → ready (2980); claim 3022: battery `64 64` (3046), `Notify e8 e8 08` (3050); stream 3059 without 6.1 → "Left/Right 100% (updated 16:01:03) — not charging (out of the case) (16:01:04)", "Case: 36% — last seen 16:00:17 …" — for ≈ 2 s before that the previous session's "charging in the case (16:00:17)" lines stay | User / App | C4, E4 | export 82–124; film 16:01:00–05 |
+| 16:01:15 | ANC tab "ACTIVE (updated 16:01:03)", buttons enabled (buds off film — worn) | App | — | film |
+| 16:01:17–34 | Tab tour (Debug "Unidentified frames (16)") | User | B3 rep. | film |
+| 16:01:03–16:02:09 | ANC mode `08` → `40` **without an app `Set`** (3050 → 3376) | Buds (🟡 press-and-hold) | (F5-like, not identifiable) | FINDINGS §3 |
+| 16:02:06.15 | Buds `DISC` DLCI 0x02 (3285) as a bud comes from the hand/ear onto the **lower** slot (film: resting on the slot 16:02:06–16:02:16) — screen "The Maestro channel (equalizer) was closed …" for < 1 s, then "The Buds closed the app's channel …" | Buds / App | AY-7 var. | export 125–128; film t = 271 s |
+| 16:02:07.68–16:02:09.5 | **Re-open by itself** (AFTER_LOSS, 1.5 s): `SABM` 3309, ch 19, reads, stream 3386 (**no bud charging**), claim 3348: `64 64`, `Notify e8 e8 40` | App | ADR-044 (a) ✓ | export 129–164 |
+| 16:02:10–26 | Screen: both buds "not charging (out of the case) (16:02:09)", Case "last seen 16:00:17" while a bud lies on the lower slot — **the Buds' own report** (stream 3386, battery 3369) | App | E3 — app correct, bud not charging | FINDINGS §4 |
+| 16:02:27.15 | **Disconnect** | User | AY-9 rep. | export 164; 3443 |
+| 16:02:17–16:02:31 | The bud taken off the slot and laid back on it (film 16:02:16 off, 16:02:29 on); app stays closed | User | AY-9 rep. ✓ | film; no app `SABM` |
+| 16:02:53–58 | Recents, home screen, back to the app: still "not open yet" | User | AY-9 ✓ (also on resume) | export 166–169; film |
+| 16:03:04.18 | **Connect** → ready (3610); stream 3687 no bud charging; claim: `64 64`, `Notify e8 e8 40` (3678) | User | C4 rep. | export 170–205 |
+| 16:03:16–18 | The bud taken off the slot and laid **left of the case** (on film until ≈ 16:04:01); the other off film | User | — | film |
+| 16:03:34.36 | Stream push (3809) with `AT+BIEV` (3810) | Buds | E6 | film "(16:03:34)" |
+| 16:03:47.03 | **Refresh battery** → fresh claim `SABM` 3889: burst `64 64` (3905), `Notify e8 e8 40` (3909, one bud on the table, the other off film); **one** `SubscribeRuntimeInfo` (3863) → answered 3870 (+263 ms) | User / App | AY-13a [`BATT-004`] | export 206–217; film 16:03:44–48 |
+| 16:04:00.28 | Buds `DISC` 0x02 (3927) as the table bud is picked up (to an ear, off film) → re-open 1.5 s later (3949) | Buds / App | AY-5 var. ✓ | export 218–256; film 16:03:50–16:04:02 |
+| 16:04:16.34 | **Refresh battery** → 4091/4107, re-subscription 4066 → 4078 | User | AY-13a rep. | export 257 |
+| 16:04:22–26 | Both buds off film (in the ears); stream + `AT+BIEV` 4121/4122, 4128/4129 | User / Buds | — | film |
+| 16:04:31.71 | **Refresh battery** → 4164/4180, `Notify e8 e8 08` (4184); re-subscription 4143 → 4152 | User | AY-13a rep. | export 272 |
+| 16:04:42.50 / 16:04:43.87 | ANC tab: **ADAPTIVE** → `Set 40` (4233) → ACK 4241, `Notify` 4244; **OFF** 1.37 s later → `Set 20` (4249) → ACK 4251 | User / App | F6 var. ✓ [`ANC-003`, `ANC-001`] | film 16:04:39–44 |
+| 16:04:54.95 / 16:05:01.39 | AVRCP PLAY (4284) / PAUSE (4329) from the Buds | Buds (tap or in-ear) | — | HCI |
+| 16:05:26–27.97 | ANC tab: **ACTIVE tapped** (film overlay 16:05:24–25; not a Refresh) → claim 4485, `Set 08` (4497) → ACK 4508 → "ANC mode: ACTIVE (updated 16:05:28)" | User / App | F4 [`ANC-002`] (the draft's "F5 Refresh" corrected) | film t = 468–474 s; no `08 11` in the claim |
+| 16:05:47 | Android volume panel; AVRCP VolumeChanged 33 % (4586) | User | — | film |
+| 16:06:05–08 | Both buds taken **out of the ears** and laid on the table → Buds `DISC` 0x02 (4684, 16:06:08.05) | User / Buds | AY-5 var. [`INEAR-004`] | export 311; film 16:06:04–07 |
+| 16:06:09.59–16:06:12.8 | Re-open by itself (4707); claim: `64 64`, **`Notify 01 e8 00 20`** (4774) → "ANC mode: OFF (updated 16:06:11)", buttons disabled + "ANC can only be changed while you wear the Buds." | App | AY-4 ✓, F8 ✓ | export 315–349; film 16:06:08–12 |
+| 16:06:21–22 | Tap on the disabled ADAPTIVE: nothing | User | AY-4 ✓ | film; no DLCI 0x04 `SABM` |
+| 16:06:26–40 | Quick Settings (shade 16:06:27), **ANC tile** → toast "ANC can only be changed while you wear the Buds." | User / App | AY-4 ✓, G3 | export 350 (16:06:30.286 "… nothing sent"); film (privacy) |
+| 16:06:40–42 | Notification shade; back to the app | User | — | film (privacy) |
+| 16:06:48 | Both buds picked up (then into the ears, off film) — **no** Buds `DISC` follows | User | D0 [`INEAR-002/003`] | film; next Buds `DISC` only 16:15 |
+| 16:06:58–16:07:13 | ANC still "OFF (16:06:11)" and **disabled** although worn (no claim since); Sound tab: EQ Light bass (read 16:06:10), Balance Right 4, Mono on, CD on | App | — | FINDINGS §3 defect |
+| 16:07:16.05 | **Balance → L**: `4:{17:200}` (5090) → OK (5092) → "Left 100 · changed 16:07:16" | User / App | D1, M2 [`AUDIO-003`] | export 357 |
+| 16:07:22.20 | **Balance → R**: `4:{17:199}` (5095) → OK | User | D2, M3 | export 360 |
+| 16:07:32.45 | **Balance ≈ halfway left**: `4:{17:104}` = Left 52 (5129) → OK | User | D3, M3 | export 363 |
+| 16:07:43–16:08:00 | Twelve short touches near the centre: `17:21, 19, 7, 1, 1, 3, 22, 14, 11, 6, 7, 1` (5180 … 5245), all OK — "Centre" never reached | User | D4 rep. (✗ "Centre") | export 366–399 |
+| 16:08:06.90 | **Mono off**: `4:{19:0}` (5261) → OK | User | D6 (D5 skipped: already on) [`AUDIO-001`] | export 404 |
+| 16:08:20.45 / 16:08:30.21 | **Conversation detection off** (5280) / **on** (5294), each OK | User | D7, M5 [`CONV-001`] | export 407, 410 |
+| 16:08:50–58 | Home → "Luisteren" → Spotify, **play** (AVRCP PlaybackStatus Playing 5319) → back to Sound | User | P10 var. (music, not a stereo test file) | film; export 411–414 |
+| 16:09:00–16:09:11 | Balance again: `17:199` (Right 100), `192` (Left 96), `72` (Left 36), `21` (Right 11), `7` (Right 4) — all OK | User | D1–D4 rep. | export 417–429 |
+| 16:09:12.36 / 16:09:14.91 | **Mono on** (5371) / **off** (5375), OK | User | D5, D6 rep. | export 432/435 |
+| 16:09:17.88 / 16:09:20.82 | **Conversation detection off** (5381) / **on** (5386), OK | User | D7 rep. | export 438/441 |
+| 16:09:22.95 / 16:09:30.36 | AVRCP **PAUSE** (5389) / **PLAY** (5433) from the Buds while the maintainer talks (off film; no hand near the phone on film) | Buds (🟡 conversation detection) | D7 / M5 [`CONV-002`] | FINDINGS §7 |
+| 16:09:41.03 | **Use touch controls off**: `4:{4:0}` (5471) → OK | User | D8, N2 [`TOUCH-001`] | export 446 |
+| 16:09:41–16:09:59 | Bud taps (off film): **no** AVRCP pass-through from the Buds | User / Buds | D8 ✓ [`TOUCH-002`] | HCI (none between 5437 and 5496) |
+| 16:09:58.99 | **Use touch controls on**: `4:{4:1}` (5490) → OK; taps → PAUSE 16:10:11.23 (5496), PLAY 16:10:15.13 (5532) | User / Buds | D9, N2 | export 451 |
+| 16:10:36.36 | **Left: Digital assistant**: `7{1:{4:{1:6}}}` (5654) → OK | User | D10, N3 [`HOLD-002`] | export 454 |
+| 16:10:48.45 / 16:10:55.28 | **Left: Noise control** (5684) / **Digital assistant** (5690) | User | D11, D10 rep. [`HOLD-001`] | export 457/460 |
+| 16:11:23.97 / 16:11:34.76 | **Right: Digital assistant** (5711) / **Noise control** (5722) | User | D12, N4 [`HOLD-004`, `HOLD-003`] | export 463/466 |
+| 16:11:36.17 | AVRCP VolumeChanged 26 % from the Buds (a volume gesture), volume panel on film | Buds | — | 5725; system log 14:11:36.251 UTC |
+| 16:11:44.18 | AVRCP PAUSE (5733) | Buds | — | HCI |
+| 16:11:49–16:12:10 | Hold chips: L Noise control (5770), R Assistant (5781), L Assistant (5786), L Noise control (5796), R Noise control (5803) — ends **both Noise control**; press-and-holds off film; no `AT+BVRA`, no GSND channel open (FINDINGS §7) | User | D10–D12 rep. | export 469–481 |
+| 16:12:30.17 / 16:12:32.33 | **Disconnect**, **Connect** → ready (5855); reads 5874…5929 = the last writes; claim `Notify e8 e8 08` (5923) | User | D13 ✓, M6, N5 [`PAIR-003`] | export 482–522; film 16:12:37–45 "read 16:12:3x" |
+| 16:12:58–16:13:08 | Notification shade (privacy), Recents → Spotify → back | User | — | film; export 523–526 |
+| 16:13:17.86 | **HEAVY BASS**: `4:{16:[5,3,0,0,0]}` (6009) → OK | User | H2 partly [`EQP-002`] | film 16:13:16–18 |
+| 16:13:24.35 | **Upper treble** released at +5.23 (6017) → OK | User | H3 var. [`EQS-001`] | film |
+| 16:13:31.92 | **Low bass** released at −5.71 (6026) → OK | User | H4 var. [`EQS-005`] | film |
+| 16:13:47–59 | Scroll; "Read EQ again" not shown (no error) | User | H5 not run | film |
+| 16:14:06.85 | **Refresh battery** → claim 6079 (burst 6094), re-subscription 6057 → 6064 | User | AY-13b part 1 | export 535 |
+| 16:14:09.92 | **Refresh battery** again (3.07 s later, after the linger) → 6128/6143, 6107 → 6114 | User | AY-13b var. | export 546 |
+| 16:14:49.92 / 16:14:50.72 | **Refresh battery twice, 0.79 s apart** → claim 6216 (burst 6232), "still claimed … released for a fresh claim", `DISC` 6240, fresh `SABM` 6263 (burst 6281); two re-subscriptions 6195/6239, answered 6202/6249 | User / App | **AY-13b ✓** | export 557–579 |
+| 16:15:08.60 | AVRCP PAUSE (6301) as the buds come out of the ears | Buds | [`INEAR-004`] | HCI |
+| 16:15:08–16:15:21 | Case picked up; **Left** seated first (stream 6338, 16:15:14.895: 6.2.2 = 2, Case 36), then Right; screen dims/off | User | AY-7 var. (both at once) [`CASE-006`] | film 16:15:07–19 |
+| 16:15:21.995 | ACL `Disconnection Complete` `0x13` (6378) — both seated (ADR-016); the app, not visible (observer stopped 16:15:21.408), shows "The Maestro channel (equalizer) was closed. Tap Connect to reconnect." (loss cause undetermined) | Buds / App | AY-6 var. | export 586–593; film 16:15:24; FINDINGS §6 #8 |
+| 16:15:25–33 | Android does **not** reconnect by itself (no Create Connection) | OS | — | HCI |
+| 16:15:33.85 | **Connect** (Android not connected): the app's socket creates the ACL (Create Connection 6490 → 6493) → ready (6573); reads; stream 6658 both charging, Case 36; `Notify 00 20` (6635); Android "Connected" 16:15:38.86 | User / App | C7-like, E5 | export 594–628; film 16:15:33–39 |
+| 16:15:38.65 | The Buds open HFP on DLCI 0x09 (6769, Buds-initiated); the Google app re-opens DLCI 0x0a/0x08 (6919/6947) | Buds / Google app | — | system log 14:15:37.389 UTC Bisto started |
+| 16:15:48–53 | Upper (**Right**) bud out → stream 7059 (16:15:51.551): 6.3.2 = 1, 7.1 = 0 → "Right … not charging (16:15:52)", Left charging | User / App | E3 ✓, AY-7 [`CASE-005`] | film 16:15:47–52 |
+| 16:15:54–56 | Lower (**Left**) out → stream 7112 (16:15:54.748) without 6.1 → both not charging, "Case: 36% — last seen 16:15:52 …" | User / App | E4 ✓ [`CASE-004`] | film 16:15:53–55 |
+| 16:15:58–16:16:05 | Phone locked (screen off); buds off film | User | AY-10 var. | film; export 641 (observer stopped 16:16:04.440) |
+| 16:16:05.56 | Buds `DISC` 0x02 (7175) while the app is not visible; the phone also closes DLCI 0x08/0x0a (7187/7188) | Buds | AY-10 ✓ (accidental) | export 644 |
+| 16:16:06.21–16:16:10 | On return: re-open (LINK_BACK) — one `SABM` 7350; stream 7433 both out; claim `Notify e8 e8 40` (7420; buds off film) | App | ADR-044 (c) ✓ | export 647–690; film 16:16:05–07 |
+| 16:16:09.5–10.8 | **Right** re-seated (upper) → stream 7439: 6.3.2 = 2, Case 36 → "Right … charging in the case (16:16:11)" | User / App | AY-7 ✓ | film 16:16:08–11 |
+| 16:16:25.6 / 16:16:30.5 | Stream 7513 (Case 36), 7555 (Case **34**), Left still in the hand → screen "Left … not charging (16:16:30)", "Case: 34% (updated 16:16:30)" | Buds / App | — (the draft's "Left charging 16:16:30" corrected) | film t = 1133–1138 s |
+| 16:16:33–34 | **Left** seated (lower) | User | AY-7 [`CASE-006`] | film 16:16:31–32 |
+| 16:16:35.89 | ACL `0x13` (7566) — second bud seated; "Android no longer shows the Buds connected …" | Buds / App | AY-6 ✓ | export 694–699 |
+| 16:16:49–54 | Notification shade (privacy); QS Bluetooth: "Pixel Buds Pro 2 van Ted — Opgeslagen" | User | — | film |
+| 16:17:02.69 | Buds row tapped → Create Connection 7611 → 7613 → "Actief. Batterijniveau 100%" | User (Android) | AY-8b var. | film 16:17:01–06 |
+| 16:17:05.83 | **Re-open by itself** (LINK_BACK, 7810); stream 8082 both charging, Case 34; `Notify 00 20` (8032) | App | ADR-044 (b) ✓ | export 700–735 |
+| 16:17:10–14 | Android's device-details screen (shows the Bluetooth address) | User | — | film (ADR-010) |
+| 16:17:18 / 28, 16:18:18 / 29 | Stream pushes while docked and idle, each with `AT+BIEV` (8165/8169, 8200/8201, 8306/8307, 8380/8381) | Buds | E6 ✓ | film (times re-stamped) |
+| 16:17:21–16:18:40 | Idle, both docked, lid open (≈ 93 s, not 2 min) | User | AY-14 var. | film |
+| 16:18:40.33 | **Refresh battery** → re-subscription 8417 → **answered** 8426 (+194 ms, Case 34) → "Case: 34% (updated 16:18:40)"; claim 8439: `e4 e4`, `Notify 00 20` | User / App | **AY-14 ✓ (answered)**, E9 | film 16:18:38–40 |
+| 16:18:48.22 | Find: **Ring Left**, both docked → `04 01 00 01 02` (8518) → ACK `ff 01 00 03 04 01 00` (8520) + echo (8521); "Ringing: Left earbud …" | User / App | **AY-1** [`FIND-001`] | film 16:18:45–47 |
+| 16:19:09.49 | **Stop** → `04 01 00 01 00` (8598) → ACK (8600) | User | AY-1 | film 16:19:07–08 |
+| 16:19:25.86 | **BALANCED** while docked → `4:{16:[-3.5,0.5,1,-1,2.5]}` (8633) → OK | User | **AY-2 ✓** [`EQP-004`] | film 16:19:14–24 |
+| 16:19:36.09 / 16:19:37.80 | **Mono on** (8662) / **off** (8668) while docked → OK | User | **AY-2b ✓** | film 16:19:34–37 |
+| 16:19:46–48 | **Lid closed** (both docked) → ACL `0x13` (8687, 16:19:48.16) | User / Buds | C8 ✓ [`CASE-006`] | film 16:19:44–46 |
+| 16:20:06 | "Paired — not connected … Android no longer shows the Buds connected …" | App | C8 ✓ | film |
+| 16:20:14–15 | **Lid opened** (both docked): nothing on any channel; Buds' LE adverts resume (FINDINGS §8) | User | [`CASE-003`] | film 16:20:12–13 |
+| 16:20:24–26 | Right, then Left taken out → the Buds page the phone (Connect Request 8754, 16:20:25.84) → ACL (8758) → app `SABM` 9035 (16:20:27.495) by itself; streams 9116/9247; `Notify 00 20` (9094, buds in the hand) | User / Buds / App | C9 ✓, E4 ✓ [`CASE-005`, `CASE-004`] | film 16:20:22–28 |
+| 16:20:29–16:21:02 | Buds on the table, then picked up (one stays left of the case from ≈ 16:21:01) | User | — | film |
+| 16:21:22 | **Home** (app in the background) | User | AY-10 / J4 | film |
+| 16:21:49.0 | Bisto stopped (14:21:48.847 UTC) → the phone closes DLCI 0x08/0x0a (9617/9618) | OS | — | system log; HCI |
+| 16:21:48–58 | Screen off, unlock, Recents → OpenControl: still **ready** | User / App | AY-10 var. (no loss while in the background) | film |
+| 16:22:03–16:23:00 | **Home** again, ≈ 57 s (screen off 16:22:28–35) | User | J4 var. (≈ 1 min) | film |
+| 16:23:00–02 | Back: still ready | App | J4 ✓ | film |
+| 16:23:10–14 | Notification shade (privacy); QS Bluetooth: "Pixel Buds Pro 2 … Actief" tapped → **disconnect in Android**: phone `DISC` HFP DLCI 0x09 (10001, 16:23:14.29) → ACL `0x13` (10030, 16:23:15.72) → "Opgeslagen" | User (Android) | AY-8 [`PAIR-003`] | film 16:23:09–13 |
+| 16:23:35–40 | Buds row tapped again → Create Connection 10075 → ACL 10077 → app **ready by itself** (10247, 16:23:37.62); `Notify e8 e8 40` (10379) | User / App | AY-8b ✓ | film 16:23:34–39 |
+| 16:23:47–50 | Both buds laid on the table → Buds `DISC` (10644, 16:23:50.48) → re-open 1.5 s later (10776) | User / Buds / App | AY-5 var. ✓ | logcat 14:23:50.493–14:23:52.019 UTC; film 16:23:46–52 |
+| 16:24:14.19 | Find: **Ring Left** (buds on the table) → 10951 → ACK 10959 + echo 10962 | User / App | AY-11 part 1 [`FIND-001`] | film 16:24:12–13 |
+| 16:24:21.28 | **Disconnect** (10981) | User | AY-11 part 2 | logcat 14:24:21.283 UTC |
+| 16:24:32–36 | Find tab: "Not connected …" + "A ring was started on the Left earbud — reconnect and tap Stop to end it." | App | AY-11 ✓, I4 ✓ | film 16:24:31–35 |
+| 16:24:38.68 | **Connect** → ready (11043); claim 11087 `Notify 00 20` | User | AY-11 part 3 | logcat 14:24:38.680 UTC |
+| 16:24:41 | Find: "A ring was started on the Left earbud before the app reconnected — it may still be ringing. Tap Stop to end it." | App | AY-11 ✓ | film 16:24:40 |
+| 16:24:44.13 | **Stop** → `04 01 00 01 00` (11167) → ACK (11178) + echo; the notice disappears | User / App | AY-11 part 4 | film 16:24:42–43 |
+| 16:24:58.35 | Bisto stopped (14:24:58.323 UTC) → DLCI 0x08/0x0a closed (11223/11224) | OS | — | system log; HCI |
+| 16:25:03–04 | Debug tab: "Unidentified frames (163)"; film ends | User | — | film |
+| 16:25:38 (logcat) … 16:26:58 | App stopped (observer stopped 14:25:38.385 UTC); ACL `0x13` 11543 at 16:26:33.94; HCI log ends; the export was saved off film (file dated 16:40) | — | L2 (off film) | logcat; HCI |
 
 ## Step mapping (skeleton Appendix A → what happened)
 
-| Step | Result |
-|---|---|
-| S0 (minute change, spoken hash) | **skipped** |
-| S1/S2 (Bluetooth off → app "disabled" → Enable) | **done differently** — Bluetooth switched on in Quick Settings before the app was opened; the app's "Bluetooth is disabled" screen not shown |
-| S3 Debug mode on | done 15:58:21 |
-| (not planned) B1–B3 pairing from the app | done 15:57:54–15:58:14 (the Buds had been forgotten; the app's data cleared) |
-| AY-0 connect by itself | done differently (buds in the case, lid open, right after pairing) — ready by itself 15:58:14 |
-| B1/B2/B3 (skeleton) | done 15:58:15–15:59:52 |
-| C5 double Connect | done differently (one tap) — check the wire |
-| AY-9, C4 | done, repeated (16:00:28 … 16:03:04) |
-| AY-3a–c (one bud worn) | **skipped** |
-| F6 | done differently (two taps ≈ 2 s apart) |
-| F7 | **not identifiable** / skipped |
-| F5 | done (16:05:25) |
-| AY-4 | done (16:06:04–38), app and tile |
-| D0 | done 16:06:47 |
-| D1–D4 | done, repeated (16:07:14–16:08:00 and 16:08:58–16:09:10); "Centre" never reached |
-| D5 | skipped the first time (mono already on); done 16:09:11 |
-| D6, D7 | done, repeated |
-| D8, D9 | done (16:09:40, 16:09:58) |
-| D10–D12 | done, repeated (16:10:34–16:12:09) |
-| D13 | done (16:12:28–45) |
-| H2 | partly (Heavy bass only; Light bass/Balanced were tapped at other times: 15:59:25, 16:19:24) |
-| H3/H4 | partly (Upper treble +5.2, Low bass −5.7; no ±6 pair) |
-| H5 | not run ("Read EQ again" only appears after an error) |
-| AY-13a | done, repeated (16:03:44, 16:04:11, 16:04:25, 16:14:04, 16:14:48) |
-| AY-13b | done differently (≈ 2–3 s apart, not < 1 s) |
-| AY-7 | done (16:15:07–16:16:30), plus variants (16:02:05, 16:02:36) |
-| AY-6 | done (16:15:24, 16:16:35) |
-| AY-14 | done differently (≈ 80 s idle, not 2 min) |
-| AY-1, AY-2, AY-2b | done (16:18:46, 16:19:24, 16:19:35) |
-| C8 | done (16:19:44) |
-| C9 | done (16:20:25) |
-| AY-5 | done differently (buds from the table / out of the ears: 16:03:59, 16:06:07, 16:23:49) |
-| AY-10 | done differently (no session loss happened while in the background; resume re-open at 16:16:05 after a lock) |
-| J4 | done differently (≈ 1 min) |
-| AY-8, AY-8b | done (16:23:11–39); the app's text during AY-8 hidden by the dialog |
-| AY-11 | done (16:24:12–43) ✓ |
-| K4, K1, K2, K3, K5 | **skipped** |
-| L2, L3 | export done **off film** (the file is dated 16:40); L3 not identifiable |
-| A5, (E), B4 | **skipped** |
-| Z1 restore | **not done** — at the end Balance Right 4 ✓ (original), Mono **off** (was on), Conversation detection on ✓, EQ Balanced (was 5/3/2/−5.9/−2.8), touch/hold as original |
-| Z2 minute change | **skipped** |
+| Step | Result | Evidence |
+|---|---|---|
+| S0 minute change, spoken hash | **skipped** | film |
+| S1/S2 Bluetooth off → app "disabled" → Enable | **done differently** (Bluetooth on in Quick Settings first) | film 15:57:33–37 |
+| S3 Debug mode on | done | film 15:58:21 |
+| (not planned) pairing from the app B1–B3 | done | export 4–10 |
+| AY-0 | done differently (right after pairing, buds docked) ✓ | export 11–14 |
+| B1, B2, B3 | done ✓ | film 15:58:15–15:59:52 |
+| C5 | done differently (one tap) — one `SABM` ✓ | 2670 |
+| AY-9 | done, repeated ✓ | 2837→2980, 3443→3610 |
+| C4 | done, repeated ✓ | 2980, 3610 |
+| AY-3a/b/c | **skipped** | — |
+| F6 | done differently (1.37 s apart) ✓ | 4233/4249 |
+| F7 | **skipped** | — |
+| F5 | **not identifiable** (three mode changes without an app `Set`, gestures off film; the 16:05:26 action was an ACTIVE tap) | FINDINGS §3 |
+| AY-4 | done ✓ (buttons + tile) | 4774; export 350 |
+| D0 | done | film 16:06:47 |
+| D1–D4 | done, repeated; D4 ✗ "Centre" never shown | 5090 … 5368 |
+| D5, D6 | D5 skipped once (already on), then done; repeated ✓ | 5261, 5371, 5375 |
+| D7 | done, repeated ✓; speaking → AVRCP PAUSE/PLAY (🟡) | 5280/5294/5381/5386; 5389/5433 |
+| D8, D9 | done ✓ | 5471, 5490 |
+| D10–D12 | done, repeated ✓ (writes); the phone's reaction to an assistant hold: nothing on the wire | 5654 … 5803 |
+| D13 | done ✓ | 5874–5929 |
+| H2 | partly (Heavy bass; Light bass and Balanced at other times) | 6009, 2374, 8633 |
+| H3, H4 | partly (+5.23, −5.71; no ±6 pair) | 6017, 6026 |
+| H5 | not run (button not shown) | film |
+| AY-13a | done, repeated (5×) ✓ | export 206, 257, 272, 535, 546 |
+| AY-13b | done ✓ (16:14:49.9/50.7, 0.79 s) | export 557–568 |
+| AY-7 | done differently (both at once, 16:15:08–21), then per bud (16:15:48–16:16:34) ✓ | stream 6338 … 7555 |
+| AY-6 | done ✓ (16:15:22, 16:16:35) | 6378, 7566 |
+| AY-14 | done differently (≈ 93 s idle) ✓ answered | 8417 → 8426 |
+| AY-1, AY-2, AY-2b | done ✓ | 8518, 8633, 8662/8668 |
+| C8 | done ✓ | 8687 |
+| C9 | done ✓ | 8754 → 9035 |
+| AY-5 | done differently (3×: from the table, out of the ears, onto the table) ✓ | 3927, 4684, 10644 |
+| AY-10 | done differently: the planned background loss did not happen at 16:21; an accidental one at 16:16:05 during a screen lock ✓ | 7175 → export 650 |
+| J4 | done differently (≈ 1 min) ✓ | film |
+| AY-8, AY-8b | done ✓ | 10001/10030, 10075 → 10247 |
+| AY-11 | done ✓ | 10951 … 11178 |
+| K4, K1, K2, K3, K5 | **skipped** | — |
+| L2 | done off film (file dated 16:40) | the export file |
+| L3 | **skipped / not identifiable** | — |
+| A5, (E), B4 | **skipped** | — |
+| Z1 restore | **not done**: at the end Balance Right 4 ✓ (original), Mono **off** (was on), Conversation detection on ✓, EQ Balanced (was 5/3/2/−5.9/−2.8), touch and hold as original | 16:24:40 reads (logcat/HCI 11043 …) |
+| Z2 minute change | **skipped** | film |
 
-## Open points for the analysis (`ai-sessions/0053`)
+**Traceability (`AGENTS.md` §13.7):** every `APP_TESTPLAN.md` test the skeleton names — A5, B4, C5, F5–F7, H5, J4, K1–K5, L3, (E), (F) — and every
+`0048` §9 AY-0 … AY-12 and `0051` §19 AY-13/AY-14 step appears above with a result or an explicit "skipped" / "not identifiable". Registry Test-IDs
+exercised: `PAIR-001`, `PAIR-003`, `CASE-003`–`CASE-006`, `BATT-004`, `ANC-001`–`ANC-003` (`ANC-004` Transparency not tapped), `FIND-001`, `EQP-002`–
+`EQP-004`, `EQS-001`, `EQS-005`, `CONV-001`, `CONV-002` (🟡), `TOUCH-001`, `TOUCH-002` (🟡, off film), `HOLD-001`–`HOLD-004` (writes), `AUDIO-001`,
+`AUDIO-003`, `INEAR-004` (🟡). Not exercised: `FIND-002`, `EQP-005`/`006`, `EQS-002`–`004`, `AUDIO-002`, `HOLD-005`, `INEAR-001`.
 
-- Every row: HCI frames, debug-export lines (until 16:18:29), logcat/system-log lines, and the measured clock offset.
-- ⚠ 16:02:09–16:03:34: a bud seated in the lower slot while the app shows both "not charging" — stream contents?
-- ⚠ 16:01:02: ≈ 2 s of stale "charging in the case" lines after Connect.
-- ⚠ 16:07:41–16:08:00: 12 balance writes in 17 s — one per completed drag, or more?
-- ⚠ 16:15:24: the "was closed" (undetermined cause) wording for an ACL drop with the screen off.
-- ⚠ 16:06:57–16:07:12: ANC disabled after the buds went back into the ears, until a claim.
-- AY-14 / 16:18:40: was the re-sent `SubscribeRuntimeInfo` answered?
-- AY-1: `04 01` while docked — ACK or NAK? (no audio on the film)
-- The empty audio track: the maintainer's observations about sound (rings, EQ, balance, mono, conversation detection) stand as observations.
+## Analysis checklist
+
+- [x] Integrity pre-flight, hashes, audio check.
+- [x] Pre-filter by handle `0x000b` / `0x0042`; the other LE device `0x0040` excluded.
+- [x] Clock offsets measured at two minute flips (phone = overlay + 1.4 s); logcat/system log − 2 h.
+- [x] DLCI 0x02 decoded in full (`pwrpc_decode.py`); every request byte-compared with `SettingsFixtures.kt`.
+- [x] DLCI 0x04 per-claim table (29 app claims, every one with a `03 03` burst); AY-13b two claims.
+- [x] "Refuted if" list applied (FINDINGS §1): nothing refuted.
+- [x] Session-end table (FINDINGS §6); protocol correlation (FINDINGS §10).
+- [x] Registry Test-IDs referenced above; the Capture Index row, Group AY and `id_registry.csv` are updated by `ai-sessions/0053`.
 
 ---
 
@@ -265,7 +305,7 @@ log lines) are filled in by `ai-sessions/0053`.
 | App debug export | `CAP-063-debug-export.log` (Debug mode on from …) |
 | App logcat       | `CAP-063-OpenControl-for-Pixel-Buds-log-<id>.txt` |
 | System log       | `CAP-063-System-log-<id>.txt` |
-| Events file      | `CAP-063-events.txt` (your own time + action notes, P6) |
+| Events file      | CAP-063-events.txt (your own time + action notes, P6) — not provided for this run |
 | Clock offsets    | Film ↔ phone: minute change filmed at start (`__:__`) and end (`__:__`) — measured in the analysis |
 
 ---
@@ -503,5 +543,6 @@ its anti-repeat safeguard (the checklist screen visible on film before the first
 4. One `WriteSetting 4:{12:{…}}` per tap is expected; which bit clears for Adaptive vs Transparency settles the `qht` order (code: 3 = Transparency,
    4 = Adaptive; on-screen reading: the reverse) — `PROTOCOL.md` §4.5.3 2026-09-26 Update.
 
+
 ---
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-063-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AY/CAP-063-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-063-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AY/CAP-063-EVENT-NOTES
+https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-063-2026-09-27_15-57-33_16-25-03-Group_AY/CAP-063-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-063-2026-09-27_15-57-33_16-25-03-Group_AY/CAP-063-EVENT-NOTES
