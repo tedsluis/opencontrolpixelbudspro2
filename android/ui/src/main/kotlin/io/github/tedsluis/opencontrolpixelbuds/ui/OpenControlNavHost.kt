@@ -129,6 +129,10 @@ data class OpenControlActions(
     val onConversationDetectionChanged: (Boolean) -> Unit = {},
     val onTouchControlsChanged: (Boolean) -> Unit = {},
     val onPressAndHoldChanged: (io.github.tedsluis.opencontrolpixelbuds.domain.Bud, io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction) -> Unit = { _, _ -> },
+    /** Ticks/unticks one mode of the press-and-hold ANC-mode list (ADR-046, `ai-sessions/0056`). */
+    val onAncModeSelectedChanged: (AncMode, Boolean) -> Unit = { _, _ -> },
+    /** The "In-ear detection" switch (ADR-047, `ai-sessions/0056`). */
+    val onInEarDetectionChanged: (Boolean) -> Unit = {},
     /** Re-reads Left/Right: a Message Stream claim (DECISIONS.md ADR-033); the Case and charging come from the runtime-info stream (ADR-043). */
     val onRefreshBattery: () -> Unit,
     val onDebugModeChanged: (Boolean) -> Unit,
@@ -326,6 +330,8 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                     settingsError = state.settingsError,
                     onTouchControlsChanged = actions.onTouchControlsChanged,
                     onPressAndHoldChanged = actions.onPressAndHoldChanged,
+                    onAncModeSelectedChanged = actions.onAncModeSelectedChanged,
+                    onInEarDetectionChanged = actions.onInEarDetectionChanged,
                 )
                 Routes.FIND_MY_BUDS -> FindMyBudsScreen(
                     connectionState = state.connectionState,

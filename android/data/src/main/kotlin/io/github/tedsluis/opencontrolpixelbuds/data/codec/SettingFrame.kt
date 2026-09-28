@@ -19,18 +19,19 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
 import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
 
 /**
  * One non-EQ `qhr` setting value, as a `ReadSetting` answer carries it and as a `WriteSetting` request sends it: payload `4:{N: …}`
- * (PROTOCOL.md §4.5, ADR-013/019/034). Only the fields ADR-036 lets the app read are modelled; only [Flag] (4, 19, 22), [Balance] (17) and
- * [PressAndHold] (7) are ever written (ADR-045). Field 12 has no representation on purpose.
+ * (PROTOCOL.md §4.5, ADR-013/019/034). Only the fields ADR-036/046 let the app read are modelled; [Flag] (2 — ADR-047; 4, 19, 22), [Balance] (17),
+ * [PressAndHold] (7) — ADR-045 — and [AncModes] (12, ADR-046) are the only values ever written.
  */
 sealed class SettingValue {
     abstract val field: Int
 
-    /** A 0/1 setting: 2 in-ear detection (read only), 4 touch controls, 19 mono audio, 22 conversation detection. */
+    /** A 0/1 setting: 2 in-ear detection, 4 touch controls, 19 mono audio, 22 conversation detection. */
     data class Flag(override val field: Int, val on: Boolean) : SettingValue()
 
     /** Field 17, `sint32` (zigzag) −100 … +100, +100 = Left (ADR-026). */
@@ -45,17 +46,24 @@ sealed class SettingValue {
     data class PressAndHold(val left: HoldAction?, val right: HoldAction?) : SettingValue() {
         override val field: Int get() = SettingsCodec.FIELD_PRESS_AND_HOLD
     }
+
+    /** Field 12, `12{1:b 2:b 3:b 4:b}` — the press-and-hold ANC-mode list (`qht`; 1 NC, 2 Off, 3 Transparency, 4 Adaptive — PROTOCOL.md §4.5.3, ADR-046). */
+    data class AncModes(val list: AncModeList) : SettingValue() {
+        override val field: Int get() = SettingsCodec.FIELD_ANC_MODE_LIST
+    }
 }
 
 /**
  * Encoder/decoder for [SettingValue] (hand-written, DECISIONS.md ADR-041). The encoder is byte-identical to the official app's writes for the same
- * channel (`SettingsCodecTest`: `CAP-019` 1720/1808, `CAP-020` 1741/1995, `CAP-021` 1895/3619/4315/4976, `CAP-022` 1621/1823/1922…2099). The
+ * channel (`SettingsCodecTest`: `CAP-019` 1720/1808, `CAP-020` 1741/1995, `CAP-021` 1895/3619/4315/4976, `CAP-022` 1621/1823/1922…2099, `CAP-056`
+ * 1689/1725/1786/1815/1843/2173/4048/2849/3627, `CAP-041` 2176/2192). The
  * decoder never throws and returns `null` for anything that is not exactly one readable field of the expected shape (AGENTS.md §11).
  */
 object SettingsCodec {
     const val FIELD_IN_EAR_DETECTION = 2
     const val FIELD_TOUCH_CONTROLS = 4
     const val FIELD_PRESS_AND_HOLD = 7
+    const val FIELD_ANC_MODE_LIST = 12
     const val FIELD_VOLUME_BALANCE = 17
     const val FIELD_MONO_AUDIO = 19
     const val FIELD_CONVERSATION_DETECTION = 22
@@ -63,8 +71,8 @@ object SettingsCodec {
     /** The 0/1 fields the decoder reads (ADR-036). */
     private val FLAG_FIELDS = setOf(FIELD_IN_EAR_DETECTION, FIELD_TOUCH_CONTROLS, FIELD_MONO_AUDIO, FIELD_CONVERSATION_DETECTION)
 
-    /** The 0/1 fields a write may name (ADR-045) — not 2. */
-    val WRITABLE_FLAG_FIELDS: Set<Int> = setOf(FIELD_TOUCH_CONTROLS, FIELD_MONO_AUDIO, FIELD_CONVERSATION_DETECTION)
+    /** The 0/1 fields a write may name: 4, 19, 22 (ADR-045) and 2 (ADR-047). */
+    val WRITABLE_FLAG_FIELDS: Set<Int> = setOf(FIELD_IN_EAR_DETECTION, FIELD_TOUCH_CONTROLS, FIELD_MONO_AUDIO, FIELD_CONVERSATION_DETECTION)
 
     private const val FIELD4 = 4
     private const val WIRETYPE_VARINT = 0
@@ -73,6 +81,10 @@ object SettingsCodec {
     private const val QJU_RIGHT = 2
     private const val QIK_ACTION = 4
     private const val QHO_VALUE = 1
+    private const val QHT_NOISE_CANCELLATION = 1
+    private const val QHT_OFF = 2
+    private const val QHT_TRANSPARENCY = 3
+    private const val QHT_ADAPTIVE = 4
 
     /**
      * The `WriteSetting` request for one bud's press-and-hold action (ADR-045): `4:{7:{1|2:{4:{1:<5|6>}}}}` — one bud per write, as the official
@@ -93,7 +105,20 @@ object SettingsCodec {
         return writeRequest(channelId, tag(FIELD_VOLUME_BALANCE, WIRETYPE_VARINT) + Varint.encode(zigzag))
     }
 
-    /** `WriteSetting 4:{N:0|1}` for a field in [WRITABLE_FLAG_FIELDS] (ADR-045); `null` for any other field — nothing else can be written. */
+    /**
+     * `WriteSetting 4:{12:{1:b 2:b 3:b 4:b}}` (ADR-046): all four booleans, always, in field order — byte-identical to the official app's writes for the same
+     * list (`CAP-056` 1689/1725/1786/1815/1843 on channel 19, `CAP-041` 2176/2192 on channel 21). `null` when fewer than [AncModeList.MIN_SELECTED] are ticked:
+     * such a list can never be sent (the official app's rule, `hgj.java:165–168`).
+     */
+    fun ancModeListRequest(channelId: Int, list: AncModeList): RpcPacket? {
+        if (!list.isValid) return null
+        fun flag(field: Int, on: Boolean) = tag(field, WIRETYPE_VARINT) + Varint.encode(if (on) 1 else 0)
+        val qht = flag(QHT_NOISE_CANCELLATION, list.noiseCancellation) + flag(QHT_OFF, list.off) +
+            flag(QHT_TRANSPARENCY, list.transparency) + flag(QHT_ADAPTIVE, list.adaptive)
+        return writeRequest(channelId, tag(FIELD_ANC_MODE_LIST, WIRETYPE_LEN) + len(qht) + qht)
+    }
+
+    /** `WriteSetting 4:{N:0|1}` for a field in [WRITABLE_FLAG_FIELDS] (ADR-045/047); `null` for any other field — nothing else can be written. */
     fun flagRequest(channelId: Int, field: Int, on: Boolean): RpcPacket? {
         if (field !in WRITABLE_FLAG_FIELDS) return null
         return writeRequest(channelId, tag(field, WIRETYPE_VARINT) + Varint.encode(if (on) 1 else 0))
@@ -130,8 +155,37 @@ object SettingsCodec {
                 if (value in -100..100) SettingValue.Balance(value) else null
             }
             FIELD_PRESS_AND_HOLD -> decodePressAndHold(f.bytes ?: return null)
+            FIELD_ANC_MODE_LIST -> decodeAncModes(f.bytes ?: return null)
             else -> null
         }
+    }
+
+    /**
+     * `qht`: exactly the four booleans 1–4, each once, each 0 or 1 — the only shape in any capture (`qht` has presence bits, so a `false` is sent as `0`,
+     * never omitted: `CAP-056` 1531/1689, `CAP-036` 1516). Anything else (a missing, repeated or unknown field, another value) is not interpreted.
+     */
+    private fun decodeAncModes(qht: ByteArray): SettingValue.AncModes? {
+        val fields = Proto.fields(qht) ?: return null
+        if (fields.size != 4) return null
+        val byNumber = fields.associateBy { it.number }
+        if (byNumber.keys != setOf(QHT_NOISE_CANCELLATION, QHT_OFF, QHT_TRANSPARENCY, QHT_ADAPTIVE)) return null
+        fun flag(n: Int): Boolean? {
+            val f = byNumber.getValue(n)
+            if (f.bytes != null) return null
+            return when (f.varint) {
+                0 -> false
+                1 -> true
+                else -> null
+            }
+        }
+        return SettingValue.AncModes(
+            AncModeList(
+                noiseCancellation = flag(QHT_NOISE_CANCELLATION) ?: return null,
+                off = flag(QHT_OFF) ?: return null,
+                transparency = flag(QHT_TRANSPARENCY) ?: return null,
+                adaptive = flag(QHT_ADAPTIVE) ?: return null,
+            ),
+        )
     }
 
     private fun decodePressAndHold(qju: ByteArray): SettingValue.PressAndHold? {

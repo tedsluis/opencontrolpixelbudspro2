@@ -83,6 +83,24 @@ sealed class BudsError {
     data object NoNewBatteryReading : BudsError()
 
     /**
+     * A change of the press-and-hold ANC-mode list was refused by the app itself: it would leave fewer than [AncModeList.MIN_SELECTED] modes ticked (the
+     * official app's rule, `hgj.java:165–168`; DECISIONS.md ADR-046). Nothing was sent.
+     */
+    data object AncModeListTooShort : BudsError()
+
+    /**
+     * A change of the press-and-hold ANC-mode list was refused because the list was not read from the Buds on this connection: every write carries all
+     * four booleans (ADR-046), so the other three must be the Buds' own values, never guessed (AGENTS.md §5). Nothing was sent.
+     */
+    data object AncModeListNotRead : BudsError()
+
+    /**
+     * A settings write was tapped while the session is being (re)opened — ADR-044's automatic re-open, or a Connect in progress (`ai-sessions/0056` U-2;
+     * `CAP-056`: 3.3 s between the Buds' `DISC` 4168 and the re-open 4304). Nothing was sent and nothing is queued.
+     */
+    data object SessionOpening : BudsError()
+
+    /**
      * The Buds did not announce which pw_rpc channel this connection uses (their unsolicited `GetSoftwareInfo`
      * push, DECISIONS.md ADR-034) or announced one this app has no known HDLC address for. [channelId] is `null`
      * when nothing was announced in time. Nothing is sent — the app never guesses a channel or an address.

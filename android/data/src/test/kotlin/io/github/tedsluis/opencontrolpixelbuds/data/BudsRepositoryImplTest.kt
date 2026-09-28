@@ -32,12 +32,14 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.PwRpc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RpcPacket
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings036
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.SettingsWrites
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings056
 import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
@@ -386,12 +388,12 @@ class BudsRepositoryImplTest {
 
         val requests = transport.maestroRequests()
         assertEquals("2010", requests.first().payload.toHex(), "4:16 first")
-        assertEquals(8, requests.size, "the EQ read, six settings reads (ADR-036), then the runtime-info subscription (ADR-043)")
+        assertEquals(9, requests.size, "the EQ read, seven settings reads (ADR-036, ADR-046), then the runtime-info subscription (ADR-043)")
         assertEquals(0.3f, repo.eqProfile.first()!!.mid, 1e-4f) // CAP-036 frame 1525
     }
 
     @Test
-    @DisplayName("Connect reads 2, 4, 7, 17, 19, 22 byte-identical to CAP-036 1445 … 1538 and fills the settings from 1447 … 1540, with their time")
+    @DisplayName("Connect reads 2, 4, 7, 12, 17, 19, 22 byte-identical to CAP-036 1445 … 1538 and fills the settings from 1447 … 1540, with their time")
     fun `the Connect-time settings reads`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
         answerReadsLikeCap036(transport)
@@ -403,8 +405,11 @@ class BudsRepositoryImplTest {
 
         val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
         assertEquals(
-            listOf(Settings036.READ_2_REQ, Settings036.READ_4_REQ, Settings036.READ_7_REQ, Settings036.READ_17_REQ, Settings036.READ_19_REQ, Settings036.READ_22_REQ),
-            maestro.subList(1, 7),
+            listOf(
+                Settings036.READ_2_REQ, Settings036.READ_4_REQ, Settings036.READ_7_REQ, Settings056.READ_12_REQ_CH21_1514,
+                Settings036.READ_17_REQ, Settings036.READ_19_REQ, Settings036.READ_22_REQ,
+            ),
+            maestro.subList(1, 8),
         )
         assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().last().methodId)
         assertEquals(
@@ -413,6 +418,7 @@ class BudsRepositoryImplTest {
                 touchControls = SettingReading(true, 4_000),
                 holdLeft = SettingReading(HoldAction.NOISE_CONTROL, 4_000),
                 holdRight = SettingReading(HoldAction.NOISE_CONTROL, 4_000),
+                ancModeList = SettingReading(AncModeList(noiseCancellation = true, off = false, transparency = true, adaptive = true), 4_000), // 1516
                 volumeBalance = SettingReading(5, 4_000),
                 monoAudio = SettingReading(false, 4_000),
                 conversationDetection = SettingReading(true, 4_000),
@@ -420,7 +426,7 @@ class BudsRepositoryImplTest {
             repo.settings.value,
         )
         assertNull(repo.settingsError.first()?.error)
-        assertEquals(emptyList<Int>(), transport.maestroRequests().filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }.filter { it == 12 })
+        assertEquals(listOf(12), transport.maestroRequests().filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }.filter { it == 12 }, "read once (ADR-046)")
     }
 
     @Test
@@ -444,7 +450,7 @@ class BudsRepositoryImplTest {
         settle()
 
         val reads = transport.maestroRequests().filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }
-        assertEquals(listOf(16, 2, 4, 7, 17, 19, 22), reads, "one pass, nothing retried")
+        assertEquals(listOf(16, 2, 4, 7, 12, 17, 19, 22), reads, "one pass, nothing retried")
         assertNull(repo.settings.value.touchControls)
         assertNull(repo.settings.value.volumeBalance)
         assertEquals(true, repo.settings.value.conversationDetection?.value)
@@ -664,7 +670,7 @@ class BudsRepositoryImplTest {
         settle()
 
         val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
-        assertEquals(8, maestro.size, "EQ read, six settings reads, the subscription")
+        assertEquals(9, maestro.size, "EQ read, seven settings reads (field 12 added, ADR-046), the subscription")
         assertEquals(1, maestro.count { it == "7e004b0310151dea71de7d5e2590821ee66654bfab7e" })
         assertEquals("7e004b0310151dea71de7d5e2590821ee66654bfab7e", maestro.last())
         assertEquals(0.3f, repo.eqProfile.first()!!.mid, 1e-4f)
@@ -1121,6 +1127,176 @@ class BudsRepositoryImplTest {
         val (repo, transport) = buildRepository(connectionStateMachine = buildConnectionStateMachine(driveToReady = false))
         assertEquals(BudsError.ConnectionLost, (repo.setMonoAudio(true) as BudsResult.Failure).error)
         assertEquals(0, transport.sent.size)
+    }
+
+    // ---- the press-and-hold ANC-mode list (field 12, ADR-046) and the in-ear detection switch (field 2, ADR-047) — ai-sessions/0056 -------------
+
+    /** The Buds ACK every WriteSetting with the real empty RESPONSE of `CAP-056` (1697 on channel 19, 2855 on channel 21). */
+    private fun ackWrites056(transport: FakeBudsTransport, channel: Int) {
+        val ack = if (channel == 19) Settings056.ACK_CH19_1697 else Settings056.ACK_CH21_2855
+        transport.onSent = { ch, frame ->
+            val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+            if (ch == Dlci.MAESTRO && rpc.methodId == Maestro.METHOD_WRITE_SETTING) transport.emit(Dlci.MAESTRO, hex(ack))
+        }
+    }
+
+    private val allModes = AncModeList(noiseCancellation = true, off = true, transparency = true, adaptive = true)
+
+    @Test
+    @DisplayName("F12 (a)/(b)/(e), channel 19: read 1531 (all four), then the CAP-056 tap sequence 1689, 1725, 1786, 1725 (=1802), 1815, 1725 (=1830), 1843 byte for byte, each applied on ACK 1697")
+    fun `the ANC-mode list taps of CAP-056 are byte-identical and applied only on the OK`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
+        transport.emit(Dlci.MAESTRO, hex(Settings056.READ_12_RESP_ALL_1531)); settle()
+        assertEquals(SettingReading(allModes, 0), repo.settings.value.ancModeList)
+        ackWrites056(transport, 19)
+        advanceTimeBy(5_000)
+
+        for ((mode, selected) in listOf(
+            AncMode.ACTIVE to false, AncMode.ACTIVE to true, AncMode.OFF to false, AncMode.OFF to true,
+            AncMode.ADAPTIVE to false, AncMode.ADAPTIVE to true, AncMode.TRANSPARENT to false,
+        )) assertEquals(BudsResult.Success(Unit), repo.setAncModeSelected(mode, selected), "$mode $selected")
+
+        assertEquals(
+            listOf(
+                Settings056.WRITE_NC_OFF_1689, Settings056.WRITE_ALL_1725, Settings056.WRITE_OFF_OFF_1786, Settings056.WRITE_ALL_1725,
+                Settings056.WRITE_ADAPTIVE_OFF_1815, Settings056.WRITE_ALL_1725, Settings056.WRITE_TRANSPARENCY_OFF_1843,
+            ),
+            transport.sent.map { it.second.toHex() },
+            "one write per tap, all four booleans every time",
+        )
+        assertEquals(SettingReading(allModes.with(AncMode.TRANSPARENT, false), 5_000, changedByApp = true), repo.settings.value.ancModeList)
+        assertNull(repo.settingsError.first()?.error)
+    }
+
+    @Test
+    @DisplayName("F12 (d), channel 21: read CAP-036 1516 {1 0 1 1}; unticking Adaptive = CAP-041 2198 {1 0 1 0}, OK 2855; unticking one more is refused, nothing sent")
+    fun `the list never goes below two modes`() = runTest {
+        val (repo, transport) = buildRepository() // the CAP-061 announcement: channel 21
+        transport.emit(Dlci.MAESTRO, hex(Settings056.READ_12_RESP_OFF_UNTICKED_1516)); settle()
+        ackWrites056(transport, 21)
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncModeSelected(AncMode.ADAPTIVE, false))
+        assertEquals(listOf(Settings056.WRITE_TWO_LEFT_CH21_2198), transport.sent.map { it.second.toHex() })
+        val two = repo.settings.value.ancModeList
+
+        for (mode in listOf(AncMode.ACTIVE, AncMode.TRANSPARENT)) {
+            assertEquals(BudsError.AncModeListTooShort, (repo.setAncModeSelected(mode, false) as BudsResult.Failure).error)
+        }
+        assertEquals(1, transport.sent.size, "nothing sent for a refused untick")
+        assertEquals(two, repo.settings.value.ancModeList)
+        assertEquals(BudsError.AncModeListTooShort, repo.settingsError.first()?.error)
+        // Ticking a mode back is allowed (two or more stay ticked): one more write.
+        assertEquals(BudsResult.Success(Unit), repo.setAncModeSelected(AncMode.ADAPTIVE, true))
+        assertEquals(2, transport.sent.size)
+    }
+
+    @Test
+    @DisplayName("F12 on channel 21 with real CAP-041 bytes: Adaptive off = 2192, Transparency off (from all) = 2176")
+    fun `ANC-mode list writes on channel 21`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings056.READ_12_RESP_OFF_UNTICKED_1516)); settle()
+        ackWrites056(transport, 21)
+        assertEquals(BudsResult.Success(Unit), repo.setAncModeSelected(AncMode.OFF, true)) // {1 1 1 1}
+        assertEquals(BudsResult.Success(Unit), repo.setAncModeSelected(AncMode.ADAPTIVE, false)) // {1 1 1 0}
+        assertEquals(BudsResult.Success(Unit), repo.setAncModeSelected(AncMode.ADAPTIVE, true)) // {1 1 1 1}
+        assertEquals(BudsResult.Success(Unit), repo.setAncModeSelected(AncMode.TRANSPARENT, false)) // {1 1 0 1}
+        val sent = transport.sent.map { it.second.toHex() }
+        assertEquals(Settings056.WRITE_ADAPTIVE_OFF_CH21_2192, sent[1])
+        assertEquals(Settings056.WRITE_TRANSPARENCY_OFF_CH21_2176, sent[3])
+        assertEquals(sent[0], sent[2], "the same list, the same bytes")
+    }
+
+    @Test
+    fun `an ANC-mode list not read on this connection is never written (the other three would be guessed)`() = runTest {
+        val (repo, transport) = buildRepository()
+        ackWrites056(transport, 21)
+        assertEquals(BudsError.AncModeListNotRead, (repo.setAncModeSelected(AncMode.ADAPTIVE, false) as BudsResult.Failure).error)
+        assertEquals(0, transport.sent.size)
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure(BudsError.AncModeListNotRead, write = true), repo.settingsError.first())
+    }
+
+    @Test
+    @DisplayName("F12 (e): no RESPONSE -> Timeout, the read list stays; an error status (supplementary, hand-built status 5) -> the reason, list unchanged")
+    fun `a failed ANC-mode list write keeps the previous list`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
+        transport.emit(Dlci.MAESTRO, hex(Settings056.READ_12_RESP_ALL_1531)); settle()
+        val read = repo.settings.value.ancModeList
+        transport.onSent = null
+
+        assertEquals(BudsError.Timeout, (repo.setAncModeSelected(AncMode.ADAPTIVE, false) as BudsResult.Failure).error)
+        assertEquals(listOf(Settings056.WRITE_ADAPTIVE_OFF_1815), transport.sent.map { it.second.toHex() }, "sent once, never retried")
+        assertEquals(read, repo.settings.value.ancModeList, "never optimistic")
+
+        transport.onSent = { _, _ ->
+            transport.emit(Dlci.MAESTRO, rpcFrame(0x28c0, RpcPacket(PwRpc.TYPE_RESPONSE, 19, Maestro.SERVICE_ID, Maestro.METHOD_WRITE_SETTING, status = 5)))
+        }
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), (repo.setAncModeSelected(AncMode.ADAPTIVE, false) as BudsResult.Failure).error)
+        assertEquals(read, repo.settings.value.ancModeList)
+    }
+
+    @Test
+    fun `the Buds' own settings-change push (CAP-056 1696) is their report of the list`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings056.PUSH_NC_OFF_1696)); settle()
+        assertEquals(allModes.with(AncMode.ACTIVE, false), repo.settings.value.ancModeList?.value)
+        assertEquals(false, repo.settings.value.ancModeList?.changedByApp)
+    }
+
+    @Test
+    @DisplayName("F2 (ADR-047): read 1502 = off; channel 19 on/off = CAP-056 2173 / 4048 with ACK 1697 (2179/4056), applied with the time")
+    fun `the in-ear detection switch on channel 19`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
+        transport.emit(Dlci.MAESTRO, hex(Settings056.READ_2_RESP_OFF_1502)); settle()
+        assertEquals(SettingReading(false, 0), repo.settings.value.inEarDetection)
+        ackWrites056(transport, 19)
+        advanceTimeBy(7_000)
+
+        assertEquals(BudsResult.Success(Unit), repo.setInEarDetection(true))
+        assertEquals(SettingReading(true, 7_000, changedByApp = true), repo.settings.value.inEarDetection)
+        assertEquals(BudsResult.Success(Unit), repo.setInEarDetection(false))
+        assertEquals(SettingReading(false, 7_000, changedByApp = true), repo.settings.value.inEarDetection)
+        assertEquals(listOf(Settings056.WRITE_INEAR_ON_2173, Settings056.WRITE_INEAR_OFF_4048), transport.sent.map { it.second.toHex() })
+    }
+
+    @Test
+    @DisplayName("F2 on channel 21: CAP-056 3627 / 2849 with ACK 2855; no answer -> Timeout and the value stays")
+    fun `the in-ear detection switch on channel 21`() = runTest {
+        val (repo, transport) = buildRepository()
+        ackWrites056(transport, 21)
+        assertEquals(BudsResult.Success(Unit), repo.setInEarDetection(true))
+        assertEquals(BudsResult.Success(Unit), repo.setInEarDetection(false))
+        assertEquals(listOf(Settings056.WRITE_INEAR_ON_CH21_3627, Settings056.WRITE_INEAR_OFF_CH21_2849), transport.sent.map { it.second.toHex() })
+        val before = repo.settings.value.inEarDetection
+        transport.onSent = null
+        assertEquals(BudsError.Timeout, (repo.setInEarDetection(true) as BudsResult.Failure).error)
+        assertEquals(before, repo.settings.value.inEarDetection)
+        assertEquals(false, before?.value)
+    }
+
+    @Test
+    fun `Safe Mode refuses the ANC-mode list and the in-ear detection writes and sends nothing (ADR-042)`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_6.000"))
+        transport.emit(Dlci.MAESTRO, hex(Settings056.READ_12_RESP_OFF_UNTICKED_1516))
+        settle()
+        assertEquals(BudsError.UnsupportedFirmware, (repo.setAncModeSelected(AncMode.ADAPTIVE, false) as BudsResult.Failure).error)
+        assertEquals(BudsError.UnsupportedFirmware, (repo.setInEarDetection(true) as BudsResult.Failure).error)
+        assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent)
+    }
+
+    @Test
+    @DisplayName("U-2: a settings tap while the session is being (re)opened -> SessionOpening, nothing sent, nothing queued")
+    fun `a settings write during a re-open says so and sends nothing`() = runTest {
+        val machine = buildConnectionStateMachine(driveToReady = false).also { it.onConnectRequested() } // Connecting
+        val (repo, transport) = buildRepository(connectionStateMachine = machine)
+        assertEquals(BudsError.SessionOpening, (repo.setInEarDetection(true) as BudsResult.Failure).error)
+        assertEquals(BudsError.SessionOpening, (repo.setMonoAudio(true) as BudsResult.Failure).error)
+        machine.onLinkEstablished(); machine.onReady(); settle()
+        advanceTimeBy(5_000); settle()
+        assertEquals(0, transport.sent.count { it.first == Dlci.MAESTRO && it.second.toHex().contains("1d9a8c9e2a") }, "no write went out later (no queue)")
     }
 
     // ---- Refresh battery (ai-sessions/0052): always a fresh claim; no burst is said, never suggested ------------------------------------

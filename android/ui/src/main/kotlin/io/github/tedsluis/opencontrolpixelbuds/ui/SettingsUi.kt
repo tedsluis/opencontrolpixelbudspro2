@@ -78,7 +78,8 @@ internal fun SettingsFailureNotice(failure: SettingsFailure?) {
 
 /**
  * One on/off setting: title, an explanatory subtitle, the Buds' value with its time. The switch shows the Buds' value; a tap asks for the other
- * value and the switch moves only once the Buds acknowledged it.
+ * value and the switch moves only once the Buds acknowledged it. `ai-sessions/0056` U-1: while the value is not read the switch is disabled — it would
+ * otherwise show an "off" the Buds never reported and a tap would write "on" blind (AGENTS.md §5).
  */
 @Composable
 internal fun SettingSwitchRow(
@@ -101,7 +102,7 @@ internal fun SettingSwitchRow(
         Switch(
             checked = reading?.value ?: false,
             onCheckedChange = { onChange(it) },
-            enabled = enabled,
+            enabled = enabled && reading != null,
         )
     }
 }

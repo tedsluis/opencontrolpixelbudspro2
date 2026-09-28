@@ -47,13 +47,14 @@ object Maestro {
 
     /**
      * The only settings a read may name: EQ 16/18 (ADR-034) and — `ai-sessions/0052`, ADR-036 — 2 (in-ear detection setting), 4 (touch
-     * controls), 7 (press-and-hold), 17 (balance), 19 (mono), 22 (conversation detection). Not 11, 15, 27, 28 (allowed by ADR-036, not asked
-     * for) and never 12 (not in ADR-036; its bit order is disputed, PROTOCOL.md §4.5.3).
+     * controls), 7 (press-and-hold), 17 (balance), 19 (mono), 22 (conversation detection); since `ai-sessions/0056` 12 (the press-and-hold ANC-mode list,
+     * ADR-046 amending ADR-036; request = `CAP-056` frame 1529 on channel 19, `CAP-036` 1514 on 21). Not 11, 15, 27, 28 (allowed by ADR-036, not asked for).
      */
     val READABLE_FIELDS: Set<Int> = EQ_FIELDS + setOf(
         SettingsCodec.FIELD_IN_EAR_DETECTION,
         SettingsCodec.FIELD_TOUCH_CONTROLS,
         SettingsCodec.FIELD_PRESS_AND_HOLD,
+        SettingsCodec.FIELD_ANC_MODE_LIST,
         SettingsCodec.FIELD_VOLUME_BALANCE,
         SettingsCodec.FIELD_MONO_AUDIO,
         SettingsCodec.FIELD_CONVERSATION_DETECTION,

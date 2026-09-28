@@ -453,6 +453,9 @@ class MainActivity : ComponentActivity() {
                 onConversationDetectionChanged = { on -> applicationScope.launch { budsRepository.setConversationDetection(on) } },
                 onTouchControlsChanged = { on -> applicationScope.launch { budsRepository.setTouchControls(on) } },
                 onPressAndHoldChanged = { bud, action -> applicationScope.launch { budsRepository.setPressAndHold(bud, action) } },
+                // DECISIONS.md ADR-046 / ADR-047 (`ai-sessions/0056`): one write per tap, in the application scope.
+                onAncModeSelectedChanged = { mode, selected -> applicationScope.launch { budsRepository.setAncModeSelected(mode, selected) } },
+                onInEarDetectionChanged = { on -> applicationScope.launch { budsRepository.setInEarDetection(on) } },
                 onRing = { target -> applicationScope.launch { budsRepository.ringBud(target) } },
                 onStopRinging = { applicationScope.launch { budsRepository.stopRinging() } },
                 onRefreshBattery = { applicationScope.launch { budsRepository.refreshBattery() } },

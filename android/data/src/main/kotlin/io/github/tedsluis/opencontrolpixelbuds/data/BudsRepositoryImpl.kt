@@ -348,6 +348,7 @@ class BudsRepositoryImpl(
                     holdLeft = value.left?.let { SettingReading(it, atMillis, changedByApp) } ?: s.holdLeft,
                     holdRight = value.right?.let { SettingReading(it, atMillis, changedByApp) } ?: s.holdRight,
                 )
+                is SettingValue.AncModes -> s.copy(ancModeList = SettingReading(value.list, atMillis, changedByApp))
             }
         }
     }
@@ -830,7 +831,7 @@ class BudsRepositoryImpl(
 
     override suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit> = setEqGains(preset.gains)
 
-    // ---- settings writes (DECISIONS.md ADR-045) --------------------------------------------------------------------------------
+    // ---- settings writes (DECISIONS.md ADR-045, ADR-046, ADR-047) --------------------------------------------------------------------------------
 
     override suspend fun setVolumeBalance(value: Int): BudsResult<Unit> {
         val v = value.coerceIn(BudsSettings.BALANCE_RANGE)
@@ -847,23 +848,57 @@ class BudsRepositoryImpl(
         SettingValue.PressAndHold(left = action.takeIf { bud == Bud.LEFT }, right = action.takeIf { bud == Bud.RIGHT }),
     ) { SettingsCodec.pressAndHoldRequest(it, bud, action) }
 
+    override suspend fun setInEarDetection(on: Boolean) = writeFlag(SettingsCodec.FIELD_IN_EAR_DETECTION, on)
+
+    /**
+     * ADR-046: the new list is built from the one the Buds last reported — inside the Maestro lock, so a second tap cannot build on a value the first tap's
+     * write has not been acknowledged for yet — and refused (nothing sent) when unread or when fewer than two modes would stay ticked.
+     */
+    override suspend fun setAncModeSelected(mode: AncMode, selected: Boolean): BudsResult<Unit> = writeSetting(
+        prepare = {
+            val current = _settings.value.ancModeList?.value
+            val next = current?.with(mode, selected)
+            when {
+                next == null -> BudsResult.Failure(BudsError.AncModeListNotRead)
+                !next.isValid -> BudsResult.Failure(BudsError.AncModeListTooShort)
+                else -> BudsResult.Success(SettingValue.AncModes(next))
+            }
+        },
+        request = { channelId, value -> SettingsCodec.ancModeListRequest(channelId, (value as SettingValue.AncModes).list) },
+    )
+
     private suspend fun writeFlag(field: Int, on: Boolean): BudsResult<Unit> =
         writeSetting(SettingValue.Flag(field, on)) { SettingsCodec.flagRequest(it, field, on) }
+
+    private suspend fun writeSetting(value: SettingValue, request: (channelId: Int) -> RpcPacket?): BudsResult<Unit> =
+        writeSetting(prepare = { BudsResult.Success(value) }, request = { channelId, _ -> request(channelId) })
 
     /**
      * One `WriteSetting` (ADR-045) on the announced channel with its ADR-034 address, after the Safe-Mode gate (ADR-042). The value is applied
      * only on the Buds' empty `RESPONSE` with status OK — never optimistically; an error status, no answer within [EQ_WRITE_ACK_TIMEOUT_MS] or a
      * refused gate keeps the previous value and puts the reason in [settingsError]. Serialised with every other Maestro request ([eqMutex]).
      */
-    private suspend fun writeSetting(value: SettingValue, request: (channelId: Int) -> RpcPacket?): BudsResult<Unit> {
-        if (connectionStateMachine.state.value !is ConnectionState.Ready) return settingFailed(BudsError.ConnectionLost)
+    private suspend fun writeSetting(
+        prepare: () -> BudsResult<SettingValue>,
+        request: (channelId: Int, value: SettingValue) -> RpcPacket?,
+    ): BudsResult<Unit> {
+        when (connectionStateMachine.state.value) {
+            is ConnectionState.Ready -> Unit
+            // U-2 (`ai-sessions/0056`): the session is being (re)opened (ADR-044 or a Connect) — say so; nothing is sent and nothing is queued.
+            is ConnectionState.Connecting, is ConnectionState.Discovering -> return settingFailed(BudsError.SessionOpening)
+            else -> return settingFailed(BudsError.ConnectionLost)
+        }
         return eqMutex.withLock {
+            val value = when (val p = prepare()) {
+                is BudsResult.Failure -> return@withLock settingFailed(p.error)
+                is BudsResult.Success -> p.value
+            }
             val channel = when (val c = awaitMaestroChannel()) {
                 is BudsResult.Failure -> return@withLock settingFailed(c.error)
                 is BudsResult.Success -> c.value
             }
             writeGate(requireModelIdOfClaim = false)?.let { return@withLock settingFailed(it) }
-            val packet = request(channel.channelId)
+            val packet = request(channel.channelId, value)
                 ?: return@withLock settingFailed(BudsError.Unknown(IllegalStateException("setting ${value.field} is not writable")))
             val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(packet))
             val (sent, reply) = sendAndAwait(_maestroReplies, EQ_WRITE_ACK_TIMEOUT_MS, { it.isResultFor(Maestro.METHOD_WRITE_SETTING) }) {
@@ -1196,11 +1231,12 @@ class BudsRepositoryImpl(
         /** How long a `ReadSetting` waits for its answer. Observed answers: ~50 ms (`CAP-015`/`CAP-036`). */
         private const val EQ_READ_TIMEOUT_MS = 2_000L
 
-        /** The Connect-time settings reads (ADR-036), in the official app's sweep order (`CAP-036` 1445 … 1538). */
+        /** The Connect-time settings reads (ADR-036, ADR-046), in the official app's sweep order (`CAP-036` 1445 … 1538). */
         private val SETTING_READ_ORDER = listOf(
             SettingsCodec.FIELD_IN_EAR_DETECTION,
             SettingsCodec.FIELD_TOUCH_CONTROLS,
             SettingsCodec.FIELD_PRESS_AND_HOLD,
+            SettingsCodec.FIELD_ANC_MODE_LIST, // ADR-046; between 7 and 17 as in the official sweep (`CAP-036` 1457 → 1514 → 1526)
             SettingsCodec.FIELD_VOLUME_BALANCE,
             SettingsCodec.FIELD_MONO_AUDIO,
             SettingsCodec.FIELD_CONVERSATION_DETECTION,

@@ -19,6 +19,8 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
 import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
@@ -83,23 +85,109 @@ class SettingsCodecTest {
     }
 
     @Test
-    fun `nothing but the ADR-045 flag fields can be written - not 2, not 12`() {
-        assertNull(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_IN_EAR_DETECTION, true))
+    fun `only the ADR-045 and ADR-047 flag fields can be written as a flag - not 12, not 11`() {
+        assertEquals(setOf(2, 4, 19, 22), SettingsCodec.WRITABLE_FLAG_FIELDS)
         assertNull(SettingsCodec.flagRequest(21, 12, true))
         assertNull(SettingsCodec.flagRequest(21, 11, true))
+    }
+
+    // ---- field 2, the "In-ear detection" switch (ADR-047, ai-sessions/0056) ----
+
+    @Test
+    @DisplayName("in-ear detection: CAP-056 2173 (4:{2:1}) / 4048 (4:{2:0}) on channel 19 and 3627 / 2849 on channel 21, byte for byte")
+    fun inEarDetectionWrites() {
+        assertEquals(Settings056.WRITE_INEAR_ON_2173, wire(SettingsCodec.flagRequest(19, SettingsCodec.FIELD_IN_EAR_DETECTION, true)!!))
+        assertEquals(Settings056.WRITE_INEAR_OFF_4048, wire(SettingsCodec.flagRequest(19, SettingsCodec.FIELD_IN_EAR_DETECTION, false)!!))
+        assertEquals(Settings056.WRITE_INEAR_ON_CH21_3627, wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_IN_EAR_DETECTION, true)!!))
+        assertEquals(Settings056.WRITE_INEAR_OFF_CH21_2849, wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_IN_EAR_DETECTION, false)!!))
+    }
+
+    @Test
+    fun `the CAP-056 read 1502 decodes to in-ear detection off, and its OK responses 2179 (= 1697) and 2855 are OK results`() {
+        assertEquals(RoutedFrame.Setting(SettingValue.Flag(2, false)), route(Settings056.READ_2_RESP_OFF_1502))
+        for (ack in listOf(Settings056.ACK_CH19_1697, Settings056.ACK_CH21_2855)) {
+            val r = route(ack) as RoutedFrame.RpcResult
+            assertEquals(Maestro.METHOD_WRITE_SETTING, r.methodId)
+            assertEquals(true, r.isOk)
+        }
+    }
+
+    // ---- field 12, the press-and-hold ANC-mode list (ADR-046, ai-sessions/0056) ----
+
+    private val all = AncModeList(noiseCancellation = true, off = true, transparency = true, adaptive = true)
+
+    @Test
+    @DisplayName("field 12 on channel 19: CAP-056 1689 / 1725 / 1786 / 1815 / 1843 byte for byte (incl. CRC)")
+    fun ancModeListWritesCh19() {
+        assertEquals(Settings056.WRITE_NC_OFF_1689, wire(SettingsCodec.ancModeListRequest(19, all.with(AncMode.ACTIVE, false))!!))
+        assertEquals(Settings056.WRITE_ALL_1725, wire(SettingsCodec.ancModeListRequest(19, all)!!))
+        assertEquals(Settings056.WRITE_OFF_OFF_1786, wire(SettingsCodec.ancModeListRequest(19, all.with(AncMode.OFF, false))!!))
+        assertEquals(Settings056.WRITE_ADAPTIVE_OFF_1815, wire(SettingsCodec.ancModeListRequest(19, all.with(AncMode.ADAPTIVE, false))!!))
+        assertEquals(Settings056.WRITE_TRANSPARENCY_OFF_1843, wire(SettingsCodec.ancModeListRequest(19, all.with(AncMode.TRANSPARENT, false))!!))
+    }
+
+    @Test
+    @DisplayName("the bit order (PROTOCOL.md §4.5.3 2026-09-28): unticking Adaptive clears boolean 4 (1815), Transparency boolean 3 (1843)")
+    fun ancModeListBitOrder() {
+        fun payload(frame: String) = (PwRpc.decode((Hdlc.decode(hex(frame)) as BudsResult.Success).value.payload) as BudsResult.Success).value.payload
+        val adaptiveOff = SettingsCodec.ancModeListRequest(19, all.with(AncMode.ADAPTIVE, false))!!.payload.toHex()
+        val transparencyOff = SettingsCodec.ancModeListRequest(19, all.with(AncMode.TRANSPARENT, false))!!.payload.toHex()
+        assertEquals("220a6208080110011801" + "2000", adaptiveOff, "12:{1:1 2:1 3:1 4:0}")
+        assertEquals("220a620808011001" + "1800" + "2001", transparencyOff, "12:{1:1 2:1 3:0 4:1}")
+        assertEquals(payload(Settings056.WRITE_ADAPTIVE_OFF_1815).toHex(), adaptiveOff)
+        assertEquals(payload(Settings056.WRITE_TRANSPARENCY_OFF_1843).toHex(), transparencyOff)
+    }
+
+    @Test
+    @DisplayName("field 12 on channel 21: the real CAP-041 frames 2192 (Adaptive off), 2176 (Transparency off), 2198 (two ticked) — no hand-built frame needed")
+    fun ancModeListWritesCh21() {
+        assertEquals(Settings056.WRITE_ADAPTIVE_OFF_CH21_2192, wire(SettingsCodec.ancModeListRequest(21, all.with(AncMode.ADAPTIVE, false))!!))
+        assertEquals(Settings056.WRITE_TRANSPARENCY_OFF_CH21_2176, wire(SettingsCodec.ancModeListRequest(21, all.with(AncMode.TRANSPARENT, false))!!))
+        val two = AncModeList(noiseCancellation = true, off = false, transparency = true, adaptive = false)
+        assertEquals(Settings056.WRITE_TWO_LEFT_CH21_2198, wire(SettingsCodec.ancModeListRequest(21, two)!!))
+    }
+
+    @Test
+    fun `a list with fewer than two modes ticked cannot be encoded at all (hgj_java 165-168)`() {
+        val one = AncModeList(noiseCancellation = true, off = false, transparency = false, adaptive = false)
+        assertNull(SettingsCodec.ancModeListRequest(19, one))
+        assertNull(SettingsCodec.ancModeListRequest(21, one.with(AncMode.ACTIVE, false)))
+    }
+
+    @Test
+    @DisplayName("field 12 decodes: the read 1531 (all four), the CAP-036 read 1516 (Off unticked), the push 1696 and every write back to its list")
+    fun ancModeListDecodes() {
+        assertEquals(RoutedFrame.Setting(SettingValue.AncModes(all)), route(Settings056.READ_12_RESP_ALL_1531))
+        assertEquals(RoutedFrame.Setting(SettingValue.AncModes(all.with(AncMode.OFF, false))), route(Settings056.READ_12_RESP_OFF_UNTICKED_1516))
+        assertEquals(RoutedFrame.Setting(SettingValue.AncModes(all.with(AncMode.ACTIVE, false))), route(Settings056.PUSH_NC_OFF_1696))
+        fun payload(frame: String) = (PwRpc.decode((Hdlc.decode(hex(frame)) as BudsResult.Success).value.payload) as BudsResult.Success).value.payload
+        assertEquals(SettingValue.AncModes(all.with(AncMode.ADAPTIVE, false)), SettingsCodec.decode(payload(Settings056.WRITE_ADAPTIVE_OFF_1815)))
+        assertEquals(SettingValue.AncModes(all.with(AncMode.TRANSPARENT, false)), SettingsCodec.decode(payload(Settings056.WRITE_TRANSPARENCY_OFF_1843)))
+    }
+
+    @Test
+    @DisplayName("supplementary structural (hand-built, labelled): a field-12 shape other than the four booleans 1-4, each 0/1 once, is not interpreted")
+    fun ancModeListOtherShapes() {
+        assertNull(SettingsCodec.decode(hex("2209620808011001180120")), "a declared length longer than the bytes")
+        assertNull(SettingsCodec.decode(hex("22086206080110011801")), "only three booleans")
+        assertNull(SettingsCodec.decode(hex("220c620a08011001180120012801")), "a fifth field")
+        assertNull(SettingsCodec.decode(hex("220a62080801100118012002")), "a boolean with value 2")
+        assertNull(SettingsCodec.decode(hex("220a62080801080118012001")), "field 1 twice, field 2 missing")
     }
 
     // ---- reads ----
 
     @Test
-    @DisplayName("ReadSetting requests byte-identical to CAP-036 1445/1451/1457/1526/1532/1538 (channel 21); field 12 is never readable")
+    @DisplayName("ReadSetting requests byte-identical to CAP-036 1445/1451/1457/1514/1526/1532/1538 (channel 21) and CAP-056 1529 (channel 19)")
     fun readRequests() {
         val expected = mapOf(
             2 to Settings036.READ_2_REQ, 4 to Settings036.READ_4_REQ, 7 to Settings036.READ_7_REQ,
             17 to Settings036.READ_17_REQ, 19 to Settings036.READ_19_REQ, 22 to Settings036.READ_22_REQ,
         )
         for ((field, frame) in expected) assertEquals(frame, wire(Maestro.readSettingRequest(21, field)!!), "field $field")
-        assertNull(Maestro.readSettingRequest(21, 12))
+        // ADR-046: field 12 is readable — CAP-036 frame 1514 (channel 21) and CAP-056 frame 1529 (channel 19), byte for byte.
+        assertEquals(Settings056.READ_12_REQ_CH21_1514, wire(Maestro.readSettingRequest(21, 12)!!))
+        assertEquals(Settings056.READ_12_REQ_CH19, wire(Maestro.readSettingRequest(19, 12)!!))
         assertNull(Maestro.readSettingRequest(21, 11))
     }
 
@@ -165,7 +253,8 @@ class SettingsCodecTest {
         val random = java.util.Random(52)
         val frames = Settings036.ANSWERS.values + SettingsWrites.BALANCE_DRAG.map { it.first } + listOf(
             SettingsWrites.CONV_OFF_1720, SettingsWrites.TOUCH_OFF_1995, SettingsWrites.HOLD_LEFT_ANC_4315, SettingsWrites.MONO_ON_1621,
-            Settings036.READ_REJECTED_1441,
+            Settings036.READ_REJECTED_1441, Settings056.READ_12_RESP_ALL_1531, Settings056.READ_12_RESP_OFF_UNTICKED_1516,
+            Settings056.PUSH_NC_OFF_1696, Settings056.WRITE_ADAPTIVE_OFF_1815, Settings056.WRITE_INEAR_ON_2173,
         )
         repeat(3_000) {
             val bytes = ByteArray(random.nextInt(40)).also(random::nextBytes)

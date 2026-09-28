@@ -326,6 +326,9 @@ internal fun BudsError.userMessage(lossCause: SessionLossCause? = null): String 
     is BudsError.CommandRejected -> "The Buds refused the command ($detail)."
     BudsError.AncNotAllowed -> ANC_NOT_ALLOWED_TEXT
     BudsError.NoNewBatteryReading -> NO_NEW_BATTERY_READING_TEXT
+    BudsError.AncModeListTooShort -> ANC_MODE_LIST_MIN_TEXT
+    BudsError.AncModeListNotRead -> "The list of modes has not been read from the Buds on this connection, so nothing was sent."
+    BudsError.SessionOpening -> SESSION_OPENING_TEXT
     is BudsError.ChannelUnavailable ->
         "Couldn't open the ${channelLabel(channelId)}. Another app on this phone — for example Google " +
             "Play services' Fast Pair — may already be using it. Wait a few seconds, then try again."

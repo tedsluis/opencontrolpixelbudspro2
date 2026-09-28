@@ -75,6 +75,7 @@ internal object Settings036 {
     /** The answers by field, for a scripted Buds. */
     val ANSWERS: Map<Int, String> = mapOf(
         2 to READ_2_RESP, 4 to READ_4_RESP, 7 to READ_7_RESP, 16 to READ_16_RESP, 17 to READ_17_RESP, 19 to READ_19_RESP, 22 to READ_22_RESP,
+        12 to Settings056.READ_12_RESP_OFF_UNTICKED_1516, // the same sweep's field-12 answer (frame 1516, request 1514) — ai-sessions/0056
     )
 }
 

@@ -177,8 +177,9 @@ interface BudsRepository {
     suspend fun setEqGains(gains: EqBandGains): BudsResult<Unit>
     suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit>
 
-    // ---- DLCI 0x02 settings writes (DECISIONS.md ADR-045) — one `WriteSetting` per call, through the Safe-Mode gate (ADR-042); the value in
-    // [settings] changes only on the Buds' empty RESPONSE with status OK, otherwise the previous value stays and [settingsError] says why.
+    // ---- DLCI 0x02 settings writes (DECISIONS.md ADR-045, ADR-046, ADR-047) — one `WriteSetting` per call, through the Safe-Mode gate (ADR-042); the
+    // value in [settings] changes only on the Buds' empty RESPONSE with status OK, otherwise the previous value stays and [settingsError] says why. A tap
+    // while the session is being (re)opened fails with [BudsError.SessionOpening] — nothing is sent or queued.
 
     /** Volume balance −100 … +100, **+100 = Left** (ADR-026); clamped. */
     suspend fun setVolumeBalance(value: Int): BudsResult<Unit>
@@ -186,6 +187,16 @@ interface BudsRepository {
     suspend fun setConversationDetection(on: Boolean): BudsResult<Unit>
     suspend fun setTouchControls(on: Boolean): BudsResult<Unit>
     suspend fun setPressAndHold(bud: Bud, action: HoldAction): BudsResult<Unit>
+
+    /**
+     * Ticks or unticks [mode] in the press-and-hold ANC-mode list (`qhr` field 12, ADR-046): one write carrying **all four** booleans — the other three as
+     * the Buds last reported them. Refused before anything is sent when the list was not read on this connection ([BudsError.AncModeListNotRead]) or
+     * when fewer than two modes would stay ticked ([BudsError.AncModeListTooShort]).
+     */
+    suspend fun setAncModeSelected(mode: AncMode, selected: Boolean): BudsResult<Unit>
+
+    /** The "In-ear detection" setting (`qhr` field 2, ADR-047): `WriteSetting 4:{2:0|1}`. */
+    suspend fun setInEarDetection(on: Boolean): BudsResult<Unit>
 
     suspend fun ringBud(target: RingTarget): BudsResult<Unit>
     suspend fun stopRinging(): BudsResult<Unit>

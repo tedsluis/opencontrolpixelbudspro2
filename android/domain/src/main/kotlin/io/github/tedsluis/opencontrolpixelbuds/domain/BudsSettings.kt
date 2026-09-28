@@ -46,13 +46,53 @@ data class SettingsFailure(val error: BudsError, val write: Boolean)
 enum class Bud { LEFT, RIGHT }
 
 /**
- * The DLCI 0x02 settings this app reads (DECISIONS.md ADR-036) and — for all but [inEarDetection] — may write (ADR-045). Every field is `null` until
+ * The press-and-hold ANC-mode list (`qhr` field 12 = `qht`, "ANC gesture loop"; PROTOCOL.md §4.5.3 2026-09-28 Update, DECISIONS.md ADR-046): which noise-control
+ * modes a press and hold cycles through. One list for both buds — the write carries no side (🟢), that the Buds keep one list is 🟡. Wire booleans
+ * 1 = [noiseCancellation], 2 = [off], 3 = [transparency], 4 = [adaptive] (🟢, `CAP-056` 1815/1843).
+ */
+data class AncModeList(
+    val noiseCancellation: Boolean,
+    val off: Boolean,
+    val transparency: Boolean,
+    val adaptive: Boolean,
+) {
+    val selectedCount: Int get() = listOf(noiseCancellation, off, transparency, adaptive).count { it }
+
+    /** At least [MIN_SELECTED] modes are ticked — the official app's rule (`hgj.java:165–168`), enforced by this app before anything is sent. */
+    val isValid: Boolean get() = selectedCount >= MIN_SELECTED
+
+    fun isSelected(mode: AncMode): Boolean = when (mode) {
+        AncMode.ACTIVE -> noiseCancellation
+        AncMode.OFF -> off
+        AncMode.TRANSPARENT -> transparency
+        AncMode.ADAPTIVE -> adaptive
+    }
+
+    /** The same list with [mode] ticked or unticked (the other three unchanged). */
+    fun with(mode: AncMode, selected: Boolean): AncModeList = when (mode) {
+        AncMode.ACTIVE -> copy(noiseCancellation = selected)
+        AncMode.OFF -> copy(off = selected)
+        AncMode.TRANSPARENT -> copy(transparency = selected)
+        AncMode.ADAPTIVE -> copy(adaptive = selected)
+    }
+
+    /** Whether unticking [mode] would leave fewer than [MIN_SELECTED] — then the box cannot be unticked (`ai-sessions/0056`, "Box disabled + line"). */
+    fun isLocked(mode: AncMode): Boolean = isSelected(mode) && selectedCount <= MIN_SELECTED
+
+    companion object {
+        const val MIN_SELECTED = 2
+    }
+}
+
+/**
+ * The DLCI 0x02 settings this app reads (DECISIONS.md ADR-036, ADR-046) and may write (ADR-045, ADR-046, ADR-047). Every field is `null` until
  * the Buds reported it on this connection (read at Connect, then an acknowledged write) — never a default presented as the Buds' value (AGENTS.md §5).
- * Field 12 (the ANC-mode list) is deliberately absent: its bit order is disputed (PROTOCOL.md §4.5.3, 2026-09-26 Update).
  */
 data class BudsSettings(
-    /** `qhr` field 2, the in-ear detection **setting** (🟢 category identity, ADR-019 Update) — not whether a bud is worn. Read-only. */
+    /** `qhr` field 2, the "In-ear detection" **setting** (🟢 label, PROTOCOL.md §4.5.5 2026-09-28 Update) — not whether a bud is worn. Writable (ADR-047). */
     val inEarDetection: SettingReading<Boolean>? = null,
+    /** `qhr` field 12, the press-and-hold ANC-mode list (ADR-046). */
+    val ancModeList: SettingReading<AncModeList>? = null,
     /** `qhr` field 4, "Use touch controls" (🟢 both directions). */
     val touchControls: SettingReading<Boolean>? = null,
     /** `qhr` field 7, press-and-hold action of the Left bud. */
