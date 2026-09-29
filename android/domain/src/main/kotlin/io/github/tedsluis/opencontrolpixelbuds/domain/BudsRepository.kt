@@ -174,6 +174,14 @@ interface BudsRepository {
     /** Reads the Buds' active EQ (`ReadSetting 4:16`, ADR-034) and updates [eqProfile]. Requires an open session. */
     suspend fun refreshEq(): BudsResult<EqBandGains>
 
+    /**
+     * Re-reads the DLCI 0x02 settings on the user's request — a pull on "Sound" or "Controls" (`ai-sessions/0057` D-11): the Connect-time `ReadSetting` pass
+     * once more, with the same fields in the same order (2, 4, 7, 12, 17, 19, 22), sequential, each waiting ≤ 2 s, never retried (ADR-036). Requires an open
+     * session — otherwise nothing is sent and [BudsError.ConnectionLost] is returned. A field that is not answered keeps its last value with its own time; the
+     * reason is in [settingsError]. Reads are not gated by Safe Mode (ADR-042).
+     */
+    suspend fun refreshSettings(): BudsResult<Unit>
+
     suspend fun setEqGains(gains: EqBandGains): BudsResult<Unit>
     suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit>
 

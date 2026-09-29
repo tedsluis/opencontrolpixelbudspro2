@@ -458,6 +458,72 @@ class BudsRepositoryImplTest {
         assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().last().methodId)
     }
 
+    // ---- D-11 (ai-sessions/0057): the settings re-read on a user pull (Sound / Controls) -------------------------------------------------------------------
+
+    /** The seven `ReadSetting` requests of the official `CAP-036` sweep on channel 21 (frames 1445, 1451, 1457, 1514, 1526, 1532, 1538), in order. */
+    private val cap036SettingReads = listOf(
+        Settings036.READ_2_REQ, Settings036.READ_4_REQ, Settings036.READ_7_REQ, Settings056.READ_12_REQ_CH21_1514,
+        Settings036.READ_17_REQ, Settings036.READ_19_REQ, Settings036.READ_22_REQ,
+    )
+
+    @Test
+    @DisplayName("D-11: a pull re-reads 2, 4, 7, 12, 17, 19, 22 byte-identical to CAP-036 1445 … 1538 — nothing else — and stamps the answers (1447 … 1540) with the new time")
+    fun `refreshSettings re-reads the Connect-time fields once, in order, and nothing else`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        answerReadsLikeCap036(transport)
+        transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
+        settle()
+        advanceTimeBy(5_000)
+
+        val result = repo.refreshSettings()
+
+        assertEquals(BudsResult.Success(Unit), result)
+        assertEquals(cap036SettingReads, transport.sent.map { (ch, frame) -> assertEquals(Dlci.MAESTRO, ch); frame.toHex() }, "exactly the seven reads, in order")
+        assertEquals(SettingReading(true, 5_000), repo.settings.value.inEarDetection) // 1447
+        assertEquals(SettingReading(5, 5_000), repo.settings.value.volumeBalance) // 1528: zigzag 10 = +5
+        assertEquals(SettingReading(true, 5_000), repo.settings.value.conversationDetection) // 1540
+        assertNull(repo.settingsError.first())
+    }
+
+    @Test
+    fun `refreshSettings sends nothing while the session is not Ready`() = runTest {
+        val (repo, transport) = buildRepository(connectionStateMachine = buildConnectionStateMachine(driveToReady = false))
+        answerReadsLikeCap036(transport)
+
+        assertEquals(BudsResult.Failure(BudsError.ConnectionLost), repo.refreshSettings())
+        assertEquals(0, transport.sent.size)
+        assertEquals(BudsSettings(), repo.settings.value)
+    }
+
+    @Test
+    fun `an unanswered field in a re-read keeps its earlier value and time, is not retried, and the pass goes on`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        answerReadsLikeCap036(transport)
+        transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
+        settle()
+        advanceTimeBy(1_000)
+        repo.refreshSettings() // first pass at t = 1 000: every field answered
+        transport.sent.clear()
+        // Second pass at t = 5 000: the Buds do not answer field 17 (balance); every other field is answered with its CAP-036 frame.
+        transport.onSent = { ch, frame ->
+            val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+            val field = rpc.payload[1].toInt()
+            if (ch == Dlci.MAESTRO && rpc.methodId == Maestro.METHOD_READ_SETTING && field != 17) {
+                Settings036.ANSWERS[field]?.let { transport.emit(Dlci.MAESTRO, hex(it)) }
+            }
+        }
+        advanceTimeBy(4_000)
+
+        val result = repo.refreshSettings()
+
+        assertEquals(BudsResult.Failure(BudsError.Timeout), result)
+        assertEquals(cap036SettingReads, transport.sent.map { it.second.toHex() }, "one pass, field 17 not retried")
+        assertEquals(SettingReading(5, 1_000), repo.settings.value.volumeBalance, "the earlier value with its own time")
+        assertEquals(SettingReading(true, 5_000), repo.settings.value.inEarDetection)
+        assertEquals(SettingReading(true, 7_000), repo.settings.value.conversationDetection, "read after field 17's 2 s wait")
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure(BudsError.Timeout, write = false), repo.settingsError.first())
+    }
+
     @Test
     fun `a new connect resets the settings to not read`() = runTest {
         val machine = buildConnectionStateMachine(driveToReady = false)

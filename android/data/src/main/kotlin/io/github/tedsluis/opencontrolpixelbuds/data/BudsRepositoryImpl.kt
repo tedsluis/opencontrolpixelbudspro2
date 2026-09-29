@@ -774,6 +774,17 @@ class BudsRepositoryImpl(
     }
 
     /**
+     * `ai-sessions/0057` D-11: the Connect-time settings pass ([readSettings], unchanged) once more on a user pull — nothing is sent while the session is not
+     * `Ready` (as [refreshEq]); the last failure is cleared first, as at Connect, so [settingsError] then says only what this pass could not read.
+     */
+    override suspend fun refreshSettings(): BudsResult<Unit> {
+        if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
+        _settingsError.value = null
+        readSettings()
+        return _settingsError.value?.let { BudsResult.Failure(it.error) } ?: BudsResult.Success(Unit)
+    }
+
+    /**
      * `ReadSetting 4:16` (DECISIONS.md ADR-034): waits for the Buds' channel announcement, sends the request on that
      * channel, and waits for the value — or for an error result. Nothing is retried; a failure is reported with its reason.
      * // TODO(verify): a fresh client may have to send other requests first (PROTOCOL.md §2.2a) — hardware re-test.
