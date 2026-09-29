@@ -15,6 +15,8 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > battery lines are marked right after Connect, and "Digital assistant" carries a note that it needs an assistant app that supports headphones.
 > `ai-sessions/0056` (not yet hardware-verified, `CAP-064` section VII) adds the press-and-hold ANC-mode list ("Modes for press and hold", ADR-046) and makes
 > "In-ear detection" a switch (ADR-047).
+> `ai-sessions/0057` (not yet hardware-verified, `CAP-064` section VIII) gives the app a Material 3 look: a top bar with the Debug action, five tabs, a
+> graphical battery (Left | Case | Right), times and details behind an (i) on each card, pull down to refresh or reconnect, dark mode and wallpaper colours.
 > Battery via HFP is not deliverable to an app (ADR-040).
 
 > ## ⚠️ Disclaimer: hardware risk

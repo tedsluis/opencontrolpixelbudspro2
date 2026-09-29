@@ -187,6 +187,14 @@ mark v1.
   no Left/Right field in the write 🟢 (one list 🟡); "In-ear detection" = `qhr` field 2 🟢 (5 filmed taps + the Buds' SASS capability bit 4); with it off the
   phone does not pause, the Buds still close DLCI 0x02 and send no ANC `Notify` on wear changes; §6 notes (phone-side pause without AVRCP pass-through 🟡, DLCI
   0x08 `04 05` wear value 🟡, field-13 mirror 🟡). New ADR-046 (field 12 read + write) and ADR-047 (field 2 write); ADR-019/024/036/045 dated Updates. No app change.
+- **2026-09-29 (`ai-sessions/0057`): Material 3 UI overhaul, within the maintainer's decisions of 2026-09-29.** A top app bar "OpenControl" with a
+  Debug action (Debug is no longer a bottom tab — restoring `ARCHITECTURE.md` §2.4's design), five tabs, own Kotlin icons (Material Symbols, Apache-2.0,
+  plus an own Case icon), an app theme (dynamic colour, dark mode), a graphical battery (Left | Case | Right, bars, bolt; "Battery unavailable" without a
+  bar), the times and state words behind an (i) dialog on each card with a dot + dimmed value when not current, pull to refresh / reconnect on every tab,
+  and `BudsRepository.refreshSettings()` (the Connect-time settings pass once more on a pull on Sound/Controls — the only `:data` change, 3 tests with
+  `CAP-036` bytes, 3/3 mutations caught). Slider knobs no longer stay at an unacknowledged value (F-1). Field-12 list, Digital assistant, in-ear switch,
+  mono/conversation detection on Sound kept as built. New test-only dependencies for `:ui` (Compose UI test + Robolectric 4.13, JUnit 4.13.2) with 9 tests.
+  `APP_TESTPLAN.md` section O, `CAP-064` section VIII. Not hardware-verified. No `PROTOCOL.md`/`DECISIONS.md` change.
 - **2026-09-28 (`ai-sessions/0056`): the press-and-hold ANC-mode list (field 12, ADR-046) and the "In-ear detection" switch (field 2, ADR-047) built.** Controls tab:
   "Modes for press and hold (both buds)" — read at Connect, four boxes shown while a bud's press and hold is Noise control, one `WriteSetting` with all four
   booleans per tap, never fewer than two ("At least two modes must stay selected."); "In-ear detection" is a switch with a note on what "off" changes. Also (the

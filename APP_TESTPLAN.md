@@ -7,7 +7,11 @@ charging and last-seen Case: E2–E5; ring notice: I4); **updated 2026-09-26 for
 "Controls" tab, presets in two rows: H0; *Refresh battery* on a fresh claim: E8, E9; settings read and written: sections M and N); **updated 2026-09-28 for the `ai-sessions/0054` build** (a tap on a disabled ANC mode checks again: F8, G3; the loss wording after
 returning to the app: C11; balance snaps to "Centre": M3; the previous connection's per-bud lines marked at Connect: E10; the Digital-assistant note: N3);
 **updated 2026-09-28 for the `ai-sessions/0056` build** (the press-and-hold ANC-mode list, field 12: N1, N7–N9; the "In-ear detection" switch, field 2: N1, N10, N11;
-a setting not read yet is disabled: N1; a tap during a re-open: C12).
+a setting not read yet is disabled: N1; a tap during a re-open: C12); **updated 2026-09-29 for the `ai-sessions/0057` build** (Material 3 overhaul: top app
+bar with a Debug action and five tabs, the (i) details dialogs, the graphical battery, pull to refresh / reconnect, the settings re-read, the app theme —
+**section O**). **Since `0057` every time and state word the older rows expect "on screen" ("updated / read / changed HH:MM:SS", "last seen …",
+"… last connection", "Not read from the Buds yet") is in that card's (i) dialog** — tap (i) to check it; the main surface shows the value, and a dot on the (i)
+plus a dimmed value (battery) or a disabled control (settings) when it is not current. Debug (L) is opened with the bug icon in the top bar, not a tab.
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -193,6 +197,24 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | L2 | Tap **Export debug log**, pick a folder and file name in Android's "save as" dialog. | "Debug log saved (N lines)."; the file holds the **whole** log (not cut at 64 KiB — `CAP-063`), connection lines with times; with Debug mode on also hex lines; **no** full Buds address | — | | |
 | L3 | Debug mode off, export again. | No hex lines | — | | |
 
+## O. Material 3 overhaul (`ai-sessions/0057`)
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| O1 | Start the app; look at the top and the bottom. | Top bar "OpenControl" with a bug icon on the right; bottom bar with **five** tabs Connection, ANC, Sound, Controls, Find (own icons); no Debug tab | — | | |
+| O2 | Swipe left through all tabs and back; tap each tab. | The selected tab follows swipe and tap | — | | |
+| O3 | Tap the bug icon; then the ← arrow; again the bug icon, then **system back**. | Debug fills the screen (title "Debug", ←, no bottom bar); ← and back return to the tab you came from | — | | |
+| O4 | Ready, both buds in the case: Connection tab. | Status card in the theme's accent colour with a check icon and "App control: ready"; Battery card with three columns Left \| Case \| Right, icon, %, a bar, a bolt on a charging bud | — | | |
+| O5 | Tap the Battery card's (i). | A dialog with the explanation, the full Left/Right/Case lines **with the same times as the debug log**, the Case note and "Firmware: …"; "Close" and back close it | — | | |
+| O6 | Take both buds out (E4's state). | Case column dimmed, a dot on the Battery (i); TalkBack (if used) reads "Battery: Details — not current"; the (i) says "last seen HH:MM:SS" | stream packet without 6.1 | | |
+| O7 | Make a part unavailable (e.g. right after the app starts, before any report). | "Battery unavailable" in that column and **no** bar | — | | |
+| O8 | Pull down on **Connection**, **Find**, **ANC**, **Sound**, **Controls** (Ready), one at a time, ≥ 5 s apart; write down each time. | A spinner while it runs, gone when done; Connection/Find: new battery times in the (i) or the "No new battery reading" line; ANC: the (i) time moves; Sound/Controls: the "read HH:MM:SS" times in the (i) move | Connection/Find: one DLCI 0x04 claim with `03 03` (+ one `SubscribeRuntimeInfo`); ANC: one claim `08 11` → `08 13`; Sound: `ReadSetting 4:16`, then **exactly** `4:2, 4:4, 4:7, 4:12, 4:17, 4:19, 4:22` in that order; Controls: exactly those seven reads, **nothing else** | | |
+| O9 | **Disconnect**; pull down on any tab. Then Bluetooth off and pull; then Bluetooth on. | After Disconnect: the app connects (as the Connect button); with Bluetooth off: Android's own "enable Bluetooth" prompt — never a new dialog, never nothing | `SABM` DLCI 0x02 after the first pull | | |
+| O10 | While "App control: connecting…", pull. | The spinner ends at once; nothing else happens | nothing extra | | |
+| O11 | Sound: drag an EQ band and the balance while the write is refused (e.g. in Safe Mode, or right after a Disconnect before the tap). | While the finger is down the knob follows it; after release it returns to the Buds' value and stays there; the error line says why | no write, or a write with no OK | | |
+| O12 | ANC tab. | Four large buttons (2 × 2); the Buds' mode is the filled one with a check; with no bud worn the sentence "ANC can only be changed while you wear the Buds. Tapping a mode checks again first." (its time is in the (i)) | — | | |
+| O13 | Android Settings → Display → Dark theme on, then off; change the wallpaper colours. | The app follows dark/light and the wallpaper colours; all text readable in both | — | | |
+
 ---
 
 ## After the run (within 1 minute of the last action)
@@ -223,6 +245,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | L Debug | 3 | | | | |
 | M Sound settings | 6 | | | | |
 | N Controls | 11 | | | | |
+| O Material 3 overhaul | 13 | | | | |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/APP_TESTPLAN.md - https://tedsluis.github.io/opencontrolpixelbudspro2/APP_TESTPLAN

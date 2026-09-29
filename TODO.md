@@ -826,6 +826,11 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
   indicator (wish 12a).
 - [x] **Done 2026-09-28 (`ai-sessions/0055`): label promoted from `CAP-056` film (5/5 + SASS bit 4), behaviour with it off recorded, ADR-047 accepted.** — was: **Prepare the draft in-ear-detection-write ADR (in-ear detection writable, field 2; draft in `ai-sessions/0053` §6):** first the label promotion from film
   (`CAP-056` W2/W5, or `CAP-024` 1850/1912); 🔴 what OHD off does to the Buds' `DISC` on wear changes (ADR-044) and to Settable — `CAP-056` W1/W3/W4.
+- [x] **Done 2026-09-29 (`ai-sessions/0057`): Material 3 UI overhaul built** — top bar + Debug action, five tabs, (i) details dialogs with a non-text
+  not-current marker, graphical battery, own Kotlin icons (Material Symbols, Apache-2.0), pull to refresh / reconnect, `refreshSettings()` (D-11), app theme
+  (F-2), slider honesty (F-1), Compose UI tests (Robolectric); not hardware-verified — `APP_TESTPLAN.md` section O and `CAP-064` section VIII.
+- [ ] **Open (`ai-sessions/0057`):** F-3 (grey out Sound/Controls in Safe Mode) was offered and **not** chosen — revisit only if a Safe-Mode run shows the
+  per-tap refusal is confusing. `TopAppBar`/`PullToRefreshBox` are `@ExperimentalMaterial3Api` in `material3` 1.3.0 — re-check the two opt-ins on the next BOM bump.
 - [x] **Done 2026-09-28 (`ai-sessions/0056`): the list and the switch built (plus U-1 not-read = disabled, U-2 re-open wording), `CAP-064` section VII written;
   not hardware-verified — the next capture is `CAP-064` (Group AZ); the Pixel 7a "open Customize right" check is a separate later capture.** — was:
   **Next FEATURE session (maintainer's choice, chat 2026-09-28, `ai-sessions/0055`):** build the "Modes for press and hold" list (field 12, ADR-046: read at

@@ -9,7 +9,9 @@ checks again with a normal claim; **I-2** a session loss that happened while the
 connection"; **I-5** the note under "Press and hold" — plus **AY-3** (skipped in `CAP-063`): one bud **visibly** in an ear, the other **visibly** on the table,
 the test of "Settable `0x00` = no bud worn" (`DECISIONS.md` ADR-024 Update, 🟡) — and the `APP_TESTPLAN.md` steps `CAP-063` skipped (F7, K1–K5, L3, A5, B4,
 (E)). **Added by `ai-sessions/0056`:** the re-test of that session's build — the "Modes for press and hold (both buds)" list (`qhr` field 12, ADR-046) and the
-"In-ear detection" switch (field 2, ADR-047) in OpenControl, with a long-press cycle on film and the in-ear-detection-off checks (section VII, AZ-1 … AZ-6).
+"In-ear detection" switch (field 2, ADR-047) in OpenControl, with a long-press cycle on film and the in-ear-detection-off checks (section VII, AZ-1 … AZ-6). **Added by `ai-sessions/0057`** (the maintainer's choice
+"CAP-064 section VIII", 2026-09-29): the Material 3 overhaul of that session — top-bar Debug and back, the (i) details, pull to refresh / reconnect on every tab,
+and the one new use of a known request: the settings re-read on a pull (section VIII, AZ-9 … AZ-14).
 
 **Not in this session (the maintainer's choice, chat 2026-09-28):** the "Digital assistant via GSND" check (`CAP-063-FINDINGS.md` §7) was not chosen. The official
 app's W-12b steps were run in `CAP-056` (Group AR, Pixel 7a); since `ai-sessions/0056` OpenControl can write field 2 itself, so section VII repeats the key checks
@@ -23,7 +25,7 @@ app's W-12b steps were run in `CAP-056` (Group AR, Pixel 7a); since `ai-sessions
 | Item | Value |
 |---|---|
 | Phone | **Pixel 9a, GrapheneOS** (Settings → About phone → build number: `__________`) |
-| App under test | **OpenControl for Pixel Buds**, debug APK of the commit that completes `ai-sessions/0056` (it contains the `0054` build). Commit hash: `__________` (`git log -1 --format=%H`) — **also say it aloud on film** (P1) |
+| App under test | **OpenControl for Pixel Buds**, debug APK of the commit that completes `ai-sessions/0057` (it contains the `0054` and `0056` builds). Commit hash: `__________` (`git log -1 --format=%H`) — **also say it aloud on film** (P1) |
 | Official Pixel Buds app | **Not used.** Pixel 7a: **Bluetooth off** for the whole session (multipoint would add a second phone's traffic) |
 | Other Bluetooth devices | Watch, car, speaker: off or out of range; write down anything that connects anyway (`CAP-063`: a "Charge 6" speaker was connected) |
 | Buds | Pixel Buds Pro 2, firmware `release_5.203` (the app shows it; anything else is Safe Mode — stop and report) |
@@ -165,6 +167,23 @@ reaches Adaptive (then the Buds do not follow the list — ADR-046 would need a 
 **Not `CAP-064` — a later Pixel 7a capture with the official app (outside this Pixel 9a/GrapheneOS scope):** open "Customize left", untick one mode (e.g.
 Adaptive), go back, open **"Customize right"** on film — does it show Adaptive unticked (one shared list, the 🟡 of `PROTOCOL.md` §4.5.3) or ticked (two lists — then
 ADR-046 is superseded)? Record it as its own capture ID when it is run.
+
+### VIII. Material 3 overhaul, pull to refresh and the settings re-read (`ai-sessions/0057`)
+
+Pre-state: ready, both buds worn, music playing. Wait ≥ 5 s between pulls and **say each pull aloud** with the tab name. The detailed screen checks are
+`APP_TESTPLAN.md` section O; this section is what the **HCI log** must show.
+
+| Step | Pre-state | Action | Expected on screen | Expected on the wire | Time | Result / notes |
+|---|---|---|---|---|---|---|
+| AZ-9 | Controls tab | **Pull down** once | spinner, then the (i) "read HH:MM:SS" times move | DLCI 0x02 exactly **seven** `ReadSetting` requests `4:2, 4:4, 4:7, 4:12, 4:17, 4:19, 4:22` in that order, each answered before the next (≤ 2 s), **nothing else** from the app (no write, no `SubscribeRuntimeInfo`, no DLCI 0x04 claim) | | |
+| AZ-10 | Sound tab | **Pull down** once | spinner; EQ and settings times in the (i) move | `ReadSetting 4:16` first, then the same seven reads, in order, nothing else | | |
+| AZ-11 | Connection tab, then Find tab | **Pull down** on each | new battery times or "No new battery reading…" | per pull: one DLCI 0x04 claim (`SABM` → `03 03 …` → `08 11`/`08 13`) released ≈ 1.5 s later, and one `SubscribeRuntimeInfo` on DLCI 0x02 — as a *Refresh battery* tap (E8) | | |
+| AZ-12 | ANC tab | **Pull down** | the (i) "updated" time moves | one DLCI 0x04 claim with `08 11` → `08 13`, as the Refresh button | | |
+| AZ-13 | — | **Disconnect**, then pull on Controls | the app connects | `SABM` DLCI 0x02, then the normal Connect sequence (EQ read, the seven reads, subscription, the snapshot claim) — once | | |
+| AZ-14 | ready | Bug icon → Debug → system back; tap a few (i)s | Debug full screen, back to the tab; dialogs open/close | **nothing** on any channel | | |
+
+**Refuted if (section VIII):** a pull sends anything other than its tab's action; a read is repeated in the same pass (a retry) or out of order; a pull
+sends anything while the app is still connecting; opening Debug or an (i) puts anything on the wire.
 
 ### Z. Restore
 

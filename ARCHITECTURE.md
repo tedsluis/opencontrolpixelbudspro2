@@ -146,6 +146,14 @@ Connection screen (start destination)
      developer-facing surface, not part of ordinary use)
 ```
 
+**As built since `ai-sessions/0057`** (the maintainer's decisions in chat 2026-09-29): a Material 3 top app bar titled "OpenControl" and a bottom
+navigation bar with exactly five tabs — **Connection, ANC, Sound, Controls, Find** (Android's guidance: "three to five destinations of equal importance").
+Debug is reached only through the top app bar's bug action, as a full-screen destination outside the five tabs; back returns to the tab it was opened from.
+(From `ai-sessions/0037` to `0056` Debug was a sixth bottom tab, contrary to the tree above; `0057` restored the documented design.) Every tab can be pulled
+down: while the session is `Ready` a pull runs that tab's existing refresh (Connection and Find: *Refresh battery*; ANC: Refresh; Sound: "Read EQ again" then
+the settings re-read; Controls: the settings re-read), otherwise the action of the Connection screen's own button in that state (Connect/Retry, Enable
+Bluetooth, Allow, Pair) — once per pull, never automatically. The times and state words of each card are in its (i) details dialog (§3.1).
+
 - **Connection screen** is always the start destination — every other screen assumes `ConnectionState
   == Ready`; navigating to ANC/EQ/Find My Buds while not connected is not offered (the Connection
   screen's own UI is what surfaces `BudsError` states and the GrapheneOS Bluetooth-disabled prompt,
@@ -154,8 +162,9 @@ Connection screen (start destination)
   controls (the EQ alone is 5 sliders + 5 presets, shown in two rows of 3 + 2 — "Last saved" is not a preset in the app; corrected
   `ai-sessions/0052`, `0051` F-5) that combining them would fight the "every implemented
   function is clearly displayed and operable" goal this whole build session is scoped against. **Since `ai-sessions/0052`** (the maintainer's
-  choice in chat 2026-09-26) the EQ tab is labelled **"Sound"** and also holds balance, mono and conversation detection; a sixth tab
-  **"Controls"** holds touch controls, press-and-hold and the in-ear detection setting (tabs: Connection, ANC, Sound, Controls, Find, Debug). **Since `ai-sessions/0056`**
+  choice in chat 2026-09-26) the EQ tab is labelled **"Sound"** and also holds balance, mono and conversation detection; a fifth tab
+  **"Controls"** holds touch controls, press-and-hold and the in-ear detection setting (tabs: Connection, ANC, Sound, Controls, Find — Debug moved to the top
+  app bar in `ai-sessions/0057`). **Since `ai-sessions/0056`**
   (the maintainer's choices in chat 2026-09-28) it also holds "Modes for press and hold (both buds)" — four boxes, shown only while a bud's press and hold is
   Noise control, the last two ticked boxes disabled with "At least two modes must stay selected." — and "In-ear detection" is a switch with a note on what "off"
   changes; a setting not read from the Buds yet is disabled.
@@ -239,14 +248,18 @@ change state while this app is disconnected or backgrounded.
   receives that value — never a ticking relative counter or a polling timer (§6, "nothing in this app
   runs a fixed-interval timer loop" — a live "N seconds ago" display would need exactly that). The UI
   shows this as an absolute time string (`"updated 14:32:07"`/`"last seen 14:32:07"`), replacing the
-  earlier bare "(last known)"/"— last seen" qualifiers that carried no time at all.
+  earlier bare "(last known)"/"— last seen" qualifiers that carried no time at all. **Since `ai-sessions/0057`** (the
+  maintainer's decision D-7, chat 2026-09-29): the times and state words are shown in each card's (i) details, from the same
+  helpers; on the main surface a stale, unread or earlier-session value is dimmed and its card's (i) carries a dot (and the
+  description "Details — not current"), and a setting not read yet keeps its control disabled. "Battery unavailable" and every
+  error text stay on the main surface.
 - If a fresh read disagrees with the cached value, the fresh read wins
   unconditionally — the app never keeps showing (or acting on) its own stale
   assumption once the hardware has answered.
-- A user-initiated write (e.g. toggling ANC) optimistically updates local
-  state for responsiveness, but that optimistic update is provisional until
-  the acknowledgement in step 6 above confirms it — same rule, applied to the
-  single-command case.
+- A user-initiated write (e.g. toggling ANC) changes the shown value only when the Buds answer it (step 7 above: ACK / `Notify`
+  for ANC, the empty `RESPONSE` status OK for DLCI 0x02 writes) — no optimistic update (corrected 2026-09-29, `ai-sessions/0057`
+  F-4: the earlier text described an optimistic update the app has not made since 2026-09-24). A slider follows the finger only
+  while it is down; after release it shows the Buds' value until they acknowledge the new one (`ai-sessions/0057` F-1).
 
 **Per-feature reconciliation mechanism (added `ai-sessions/0033`, since this session's `BudsRepositoryImpl`
 must implement this concretely for every v1 feature, not just ANC — the mechanism differs by feature and
@@ -260,7 +273,9 @@ should not be assumed uniform):**
 opened again, because the Buds send the `03 03` burst only on an open; no burst ⇒ "No new battery reading from the Buds — try again.", values and
 times unchanged) and it also re-sends one `SubscribeRuntimeInfo` (ADR-043 Update 2026-09-26; no wait, no retry). **Since `ai-sessions/0048` (ADR-043 Update):** the same stream's 6.2/6.3 field 2 (fallback 7.2/7.1) gives each bud's charging state, shown as "charging in the case" with its own time; the newest charging report of either source wins (I-8); a packet without 6.1 keeps the last Case value as "last seen HH:MM:SS" (I-5, in memory only, marked last seen after a reconnect). The DLCI 0x08 claim of ADR-035/038/039 is withdrawn (its `0e 04` got no answer in `CAP-061`, 8/8). | 🟢 FACT (ADR-031 identity, ADR-033 unblock + charging-flag update; `PROTOCOL.md` §4.3 Option F + ADR-043 for the Case) |
 | Battery (HFP, Option C) — **removed `ai-sessions/0042`** | Push-based on the wire (`AT+BIEV`/`AT+CIND`, ADR-015/023) but **not consumable by an app**: `CAP-059` shows `AT+BIEV=2,100` seven times on the wire and **zero** vendor-specific events in the app's receiver (and the value is one earbud's, never the Case). `HfpBatteryReader` and its wiring were removed on the maintainer's decision (chat 2026-09-20); the wire facts stay. | 🟢 FACT on the wire; 🟢 not app-consumable (`CAP-059-FINDINGS.md` §7) |
-| DLCI 0x02 settings (`ai-sessions/0052`, `0056`) | Read at Connect: after the EQ read and before `SubscribeRuntimeInfo`, one `ReadSetting 4:N` each for fields 2, 4, 7, 12, 17, 19, 22 (ADR-036, ADR-046), sequential, ≤ 2 s each, never retried; the values are reset to "not read" at every Connect and shown with "read HH:MM:SS". Writes (ADR-045: 17, 19, 22, 4, 7; ADR-046: 12; ADR-047: 2) are applied only on the Buds' empty `RESPONSE` status OK ("changed HH:MM:SS"); an error status or no answer keeps the previous value and shows the reason. **Field 12** always carries all four booleans, built from the list the Buds last reported (unread ⇒ refused), and a list with fewer than two modes is refused before anything is sent. A tap while the session is being (re)opened is refused with "The app's channel is being reopened — try again in a moment." (nothing queued). | 🟢 FACT for the field identities and the write acknowledgement (ADR-019/026/034/045/046/047, `PROTOCOL.md` §4.5 2026-09-26/28 Updates); not hardware-verified |
+| DLCI 0x02 settings (`ai-sessions/0052`, `0056`) | Read at Connect: after the EQ read and before `SubscribeRuntimeInfo`, one `ReadSetting 4:N` each for fields 2, 4, 7, 12, 17, 19, 22 (ADR-036, ADR-046), sequential, ≤ 2 s each, never retried; the values are reset to "not read" at every Connect and shown with "read HH:MM:SS". The same pass runs once
+more on a user pull on "Sound" or "Controls" (`refreshSettings`, `ai-sessions/0057` D-11 — same fields, order and timeout; nothing sent unless `Ready`; a field
+not answered keeps its last value and time). Writes (ADR-045: 17, 19, 22, 4, 7; ADR-046: 12; ADR-047: 2) are applied only on the Buds' empty `RESPONSE` status OK ("changed HH:MM:SS"); an error status or no answer keeps the previous value and shows the reason. **Field 12** always carries all four booleans, built from the list the Buds last reported (unread ⇒ refused), and a list with fewer than two modes is refused before anything is sent. A tap while the session is being (re)opened is refused with "The app's channel is being reopened — try again in a moment." (nothing queued). | 🟢 FACT for the field identities and the write acknowledgement (ADR-019/026/034/045/046/047, `PROTOCOL.md` §4.5 2026-09-26/28 Updates); not hardware-verified |
 | Find My Buds Left/Right | An action, not persisted state. **Since `ai-sessions/0048` (I-6):** the ring this app started is remembered in memory across Disconnect/Connect (it keeps sounding until Stop, `CAP-062`) and cleared only by an ACKed Stop or replaced by a new Ring; after a reconnect it is shown as "may still be ringing" — the app cannot know. | N/A |
 
 **Consequence for `:data`'s codec scope (updated `ai-sessions/0041`):** DLCI 0x02 is decoded as pw_hdlc → pw_rpc `RpcPacket`
