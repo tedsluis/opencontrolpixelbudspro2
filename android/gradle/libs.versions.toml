@@ -13,6 +13,9 @@ datastorePreferences = "1.1.1"
 junit5 = "5.11.0"
 kotest = "5.9.1"
 javaxInject = "1"
+# `ai-sessions/0057` (the maintainer's choice at the checkpoint): `:ui` Compose UI tests on the JVM — test-only, never in the app.
+junit4 = "4.13.2"
+robolectric = "4.13"
 
 [libraries]
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -39,6 +42,10 @@ junit5-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-eng
 junit5-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit5" }
 kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject" }
+compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

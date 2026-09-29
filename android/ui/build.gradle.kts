@@ -21,6 +21,11 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // `ai-sessions/0057`: Compose UI tests run on the JVM under Robolectric (they need the merged resources/manifest).
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 kotlin {
@@ -41,4 +46,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.navigation.compose) // ARCHITECTURE.md §2.4: navigation structure.
     debugImplementation(libs.compose.ui.tooling)
+
+    // `ai-sessions/0057` (the maintainer's choice at the checkpoint, AGENTS.md §10): Compose UI tests on the JVM. Test-only — nothing here reaches the APK.
+    // `ui-test-junit4` drives composables; `ui-test-manifest` supplies the empty activity the test rule starts (as `testImplementation`, not the documented
+    // `debugImplementation`, so it never enters the debug APK's manifest); Robolectric runs the tests without a device; JUnit 4 is the runner Robolectric
+    // needs. None of them brings a network, analytics or ads dependency (`./gradlew :ui:dependencies`, checked in the 0057 RESULT).
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.junit4)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.compose.ui.test.manifest)
 }
