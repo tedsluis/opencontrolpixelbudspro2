@@ -28,8 +28,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -66,34 +66,55 @@ fun ControlsScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Controls", style = MaterialTheme.typography.headlineSmall)
             NotConnectedBanner(connectionState)
             if (enabled) SettingsFailureNotice(settingsError)
 
-            SettingSwitchRow("Use touch controls", null, settings.touchControls, enabled, onTouchControlsChanged)
-            HorizontalDivider()
-            Text("Press and hold", style = MaterialTheme.typography.titleMedium)
-            Text(DIGITAL_ASSISTANT_NOTE, style = MaterialTheme.typography.bodySmall)
-            HoldRow("Left", settings.holdLeft, enabled) { onPressAndHoldChanged(Bud.LEFT, it) }
-            HoldRow("Right", settings.holdRight, enabled) { onPressAndHoldChanged(Bud.RIGHT, it) }
-            if (showAncModeList(settings)) {
-                HorizontalDivider()
-                AncModeListSection(settings.ancModeList, enabled, onAncModeSelectedChanged)
+            // `ai-sessions/0057`: one card per group; each card's (i) has its settings' "read / changed HH:MM:SS" lines ([settingTime]) and a dot while one of
+            // them is not read from the Buds yet. Functionally unchanged (D-1 … D-4).
+            SettingsCard("Touch controls", listOf("Use touch controls: ${settingTime(settings.touchControls)}"), enabled && settings.touchControls == null) {
+                SettingSwitchRow("Use touch controls", null, settings.touchControls, enabled, onTouchControlsChanged)
             }
-            HorizontalDivider()
-            SettingSwitchRow("In-ear detection", IN_EAR_DETECTION_SUBTITLE, settings.inEarDetection, enabled, onInEarDetectionChanged)
-            Text(IN_EAR_DETECTION_OFF_NOTE, style = MaterialTheme.typography.bodySmall)
+            SettingsCard("Press and hold", pressAndHoldDetailLines(settings), enabled && pressAndHoldNotRead(settings)) {
+                Text(DIGITAL_ASSISTANT_NOTE, style = MaterialTheme.typography.bodySmall)
+                HoldRow("Left", settings.holdLeft, enabled) { onPressAndHoldChanged(Bud.LEFT, it) }
+                HoldRow("Right", settings.holdRight, enabled) { onPressAndHoldChanged(Bud.RIGHT, it) }
+                if (showAncModeList(settings)) AncModeListSection(settings.ancModeList, enabled, onAncModeSelectedChanged)
+            }
+            SettingsCard("In-ear detection", listOf("In-ear detection: ${settingTime(settings.inEarDetection)}"), enabled && settings.inEarDetection == null) {
+                SettingSwitchRow("In-ear detection", IN_EAR_DETECTION_SUBTITLE, settings.inEarDetection, enabled, onInEarDetectionChanged)
+                Text(IN_EAR_DETECTION_OFF_NOTE, style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
+
+@Composable
+private fun SettingsCard(title: String, detailLines: List<String>, notCurrent: Boolean, content: @Composable () -> Unit) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            CardTitle(title, detailLines, notCurrent)
+            content()
+        }
+    }
+}
+
+/** The press-and-hold card's (i): each bud's action with its time and, while shown, the ANC-mode list's time — the lines this card showed before `0057`. */
+internal fun pressAndHoldDetailLines(settings: BudsSettings): List<String> = listOfNotNull(
+    "Left: " + (settings.holdLeft?.let { "${holdActionText(it.value)} · ${settingTime(it)}" } ?: SETTING_NOT_READ),
+    "Right: " + (settings.holdRight?.let { "${holdActionText(it.value)} · ${settingTime(it)}" } ?: SETTING_NOT_READ),
+    if (showAncModeList(settings)) "$ANC_MODE_LIST_TITLE: ${settingTime(settings.ancModeList)}" else null,
+)
+
+private fun pressAndHoldNotRead(settings: BudsSettings): Boolean =
+    settings.holdLeft == null || settings.holdRight == null || (showAncModeList(settings) && settings.ancModeList == null)
 
 /** One bud's press-and-hold action: the Buds' value is the selected chip; a tap on the other one writes it (ADR-045). */
 @Composable
 private fun HoldRow(label: String, reading: SettingReading<HoldAction>?, enabled: Boolean, onSelect: (HoldAction) -> Unit) {
     Column {
-        Text("$label: ${reading?.value?.let(::holdActionText) ?: SETTING_NOT_READ}", style = MaterialTheme.typography.bodyLarge)
+        Text(label, style = MaterialTheme.typography.bodyLarge) // the selected chip is the Buds' value; "not read" and the time are in the (i)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             HoldAction.entries.forEach { action ->
                 FilterChip(
@@ -104,7 +125,6 @@ private fun HoldRow(label: String, reading: SettingReading<HoldAction>?, enabled
                 )
             }
         }
-        if (reading != null) Text(settingTime(reading), style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -169,6 +189,5 @@ private fun AncModeListSection(reading: SettingReading<AncModeList>?, enabled: B
         if (list != null && list.selectedCount <= AncModeList.MIN_SELECTED) {
             Text(ANC_MODE_LIST_MIN_TEXT, style = MaterialTheme.typography.bodySmall)
         }
-        Text(settingTime(reading), style = MaterialTheme.typography.bodySmall)
     }
 }

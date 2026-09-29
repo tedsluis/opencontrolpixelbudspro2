@@ -33,7 +33,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -78,7 +77,9 @@ import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingState
 import io.github.tedsluis.opencontrolpixelbuds.hardware.settled
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlActions
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlNavHost
+import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlTheme
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlUiState
+import io.github.tedsluis.opencontrolpixelbuds.ui.PullAction
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -462,9 +463,31 @@ class MainActivity : ComponentActivity() {
                 onDebugModeChanged = { enabled -> applicationScope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
                 onExportLog = { startLogExport() },
             )
+            // `ai-sessions/0057` D-10: a pull runs the one existing action `pullActionFor` chose — the same repository call or system prompt its button makes —
+            // once, in the application scope; the returned job lets the pull indicator end when the repository has answered. Nothing is retried or scheduled.
+            val actionsWithPull = actions.copy(
+                onPull = { action ->
+                    when (action) {
+                        PullAction.REFRESH_BATTERY -> applicationScope.launch { budsRepository.refreshBattery() }
+                        PullAction.REFRESH_ANC -> applicationScope.launch { budsRepository.refreshAncMode() }
+                        // "Read EQ again", then the settings re-read (D-11) — one after the other, never in parallel.
+                        PullAction.REFRESH_SOUND -> applicationScope.launch {
+                            budsRepository.refreshEq()
+                            budsRepository.refreshSettings()
+                        }
+                        PullAction.REFRESH_SETTINGS -> applicationScope.launch { budsRepository.refreshSettings() }
+                        PullAction.CONNECT -> applicationScope.launch { budsRepository.connect() }
+                        PullAction.ENABLE_BLUETOOTH -> { actions.onRequestEnableBluetooth(); null }
+                        PullAction.REQUEST_PERMISSIONS -> { actions.onRequestPermissions(); null }
+                        PullAction.OPEN_APP_SETTINGS -> { actions.onOpenAppSettings(); null }
+                        PullAction.PAIR -> { actions.onPair(); null }
+                        PullAction.NOTHING -> null
+                    }
+                },
+            )
 
-            MaterialTheme {
-                OpenControlNavHost(state = state, actions = actions)
+            OpenControlTheme {
+                OpenControlNavHost(state = state, actions = actionsWithPull)
             }
         }
     }

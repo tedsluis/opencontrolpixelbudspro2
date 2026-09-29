@@ -21,13 +21,21 @@ package io.github.tedsluis.opencontrolpixelbuds.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,6 +43,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLine
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
@@ -94,12 +105,11 @@ fun ConnectionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("OpenControl for Pixel Buds", style = MaterialTheme.typography.headlineSmall)
-
+            // `ai-sessions/0057`: the app's name is the top app bar's title now — no second title here.
             when (deviceStatus) {
                 DeviceStatus.BluetoothOff -> {
                     Text("Bluetooth is disabled.", style = MaterialTheme.typography.bodyLarge)
@@ -122,8 +132,8 @@ fun ConnectionScreen(
                     }
                     if (connectionState is ConnectionState.Ready) {
                         safeMode?.let { SafeModeCard(it) }
-                        BudsInfoCard(deviceInfo)
-                        BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, batteryRefreshError, onRefreshBattery)
+                        // `ai-sessions/0057`: the firmware line (formerly its own card) is in the battery card's (i) details.
+                        BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, batteryRefreshError, deviceInfo, onRefreshBattery)
                     }
                 }
             }
@@ -141,7 +151,7 @@ fun ConnectionScreen(
  */
 @Composable
 private fun PermissionPanel(status: PermissionStatus, onRequest: () -> Unit, onOpenSettings: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+    Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Bluetooth permission needed", style = MaterialTheme.typography.titleMedium)
             Text(
@@ -190,7 +200,20 @@ private fun ConnectionStateCard(
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+    // `ai-sessions/0057` (D-6/D-9): an ElevatedCard; while the app's session is open its container is the theme's `primaryContainer` **and** the session line
+    // carries a check icon; a failed attempt uses `errorContainer` with its specific text — never colour alone (WCAG 1.4.1), never a generic message.
+    val colors = when (card.session) {
+        SessionLine.OPEN -> CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        SessionLine.FAILED -> CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        )
+        else -> CardDefaults.elevatedCardColors()
+    }
+    ElevatedCard(modifier = Modifier.fillMaxWidth(), colors = colors) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // Line 1 — Android's own view, the same as its Bluetooth settings.
             Text(
@@ -210,7 +233,10 @@ private fun ConnectionStateCard(
             }
             // Line 2 — this app's own control session, secondary.
             when (card.session) {
-                SessionLine.OPEN -> Text("App control: ready")
+                SessionLine.OPEN -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Filled.CheckCircle, contentDescription = null, modifier = Modifier.size(20.dp)) // decorative: the text says it
+                    Text("App control: ready")
+                }
                 SessionLine.NOT_OPEN -> {
                     Text("App control: not open yet — tap Connect to control the Buds from this app.")
                     // Never a bare "not open" after an unexpected drop (ai-sessions/0039): say why.
@@ -249,9 +275,15 @@ private fun ErrorExplanation(error: BudsError, lossCause: SessionLossCause?) {
  */
 @Composable
 private fun SafeModeCard(state: SafeModeState) {
-    Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ),
+    ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Safe Mode — read-only", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+            Text("Safe Mode — read-only", style = MaterialTheme.typography.titleMedium)
             Text(safeModeText(state), style = MaterialTheme.typography.bodyMedium)
         }
     }
@@ -267,48 +299,95 @@ internal fun safeModeText(state: SafeModeState): String {
 }
 
 /**
- * The firmware the Buds announced (ADR-034) — passive, nothing sent for it. No dock sentence any more: the `Notify` byte it was derived
- * from read "both in the case" with one earbud out in `CAP-061` (DECISIONS.md ADR-024 Update 2026-09-24, `ai-sessions/0046`); each
- * earbud's "(charging)" on the battery lines stays.
+ * The firmware the Buds announced (ADR-034) — passive, nothing sent for it; `null` when nothing is announced. No dock sentence any more: the `Notify` byte it
+ * was derived from read "both in the case" with one earbud out in `CAP-061` (DECISIONS.md ADR-024 Update 2026-09-24, `ai-sessions/0046`). Since
+ * `ai-sessions/0057` it is a line of the battery card's (i) details.
  */
-@Composable
-private fun BudsInfoCard(deviceInfo: DeviceInfo?) {
-    val firmware = deviceInfo?.firmware?.takeIf { it.isNotEmpty() }?.joinToString(" / ") ?: return
-    Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Firmware: $firmware", style = MaterialTheme.typography.bodyLarge)
-        }
-    }
-}
+internal fun firmwareLine(deviceInfo: DeviceInfo?): String? =
+    deviceInfo?.firmware?.takeIf { it.isNotEmpty() }?.joinToString(" / ")?.let { "Firmware: $it" }
 
+/** The battery card's explanation (`ai-sessions/0052`), shown in its (i) details since `ai-sessions/0057`. */
+internal const val BATTERY_EXPLANATION: String =
+    "Left/Right %: read from the Buds when the app last reached their Message Stream (at Connect, Refresh and each ANC / Find " +
+        "action). Charging and the Case: sent by the Buds on their own whenever a bud goes into or out of the case."
+
+/**
+ * The battery card's (i) lines (`ai-sessions/0057` D-7): the explanation, then **the same lines the card showed before** — [budLine] for Left and Right,
+ * [caseLine] — with every time, "last seen" and "last connection", then [CASE_REFRESH_NOTE] and the firmware.
+ */
+internal fun batteryDetailLines(status: BatteryStatus, batteryStatusUpdatedAt: Long?, deviceInfo: DeviceInfo?): List<String> = listOfNotNull(
+    BATTERY_EXPLANATION,
+    budLine("Left", status.left, status.leftCharging, batteryStatusUpdatedAt),
+    budLine("Right", status.right, status.rightCharging, batteryStatusUpdatedAt),
+    caseLine(status.case, batteryStatusUpdatedAt),
+    CASE_REFRESH_NOTE,
+    firmwareLine(deviceInfo),
+)
+
+/** A value on the battery card is not current: a last-seen percentage, or a charging report from the last connection (D-7's marker). */
+internal fun isNotCurrent(level: BatteryLevel, charging: ChargingReading? = null): Boolean =
+    (level as? BatteryLevel.Known)?.isStale == true || charging?.fromEarlierSession == true
+
+/**
+ * The graphical battery (`ai-sessions/0057` D-8, the maintainer's choice "As shown"): three columns Left | Case | Right. A known value shows its percentage
+ * and a determinate bar; "Battery unavailable" shows **no** bar (never an empty or 0 % bar, AGENTS.md §5). A bud reported charging gets the bolt ("charging",
+ * read aloud) and a `tertiary` bar; not charging and unknown charging (`null`) both show no bolt — unknown is never presented as "not charging" (the (i) has
+ * the exact line). A value that is not current is dimmed and the card's (i) carries the dot. The Case's error / "not reported yet" line and a failed
+ * Refresh stay visible under the columns.
+ */
 @Composable
 private fun BatteryCard(
     status: BatteryStatus,
     batteryStatusUpdatedAt: Long?,
     caseBatteryError: BudsError?,
     batteryRefreshError: BudsError?,
+    deviceInfo: DeviceInfo?,
     onRefreshBattery: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Battery", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Left/Right %: read from the Buds when the app last reached their Message Stream (at Connect, Refresh and each ANC / Find " +
-                    "action). Charging and the Case: sent by the Buds on their own whenever a bud goes into or out of the case.",
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Text(budLine("Left", status.left, status.leftCharging, batteryStatusUpdatedAt), style = MaterialTheme.typography.bodyLarge)
-            Text(budLine("Right", status.right, status.rightCharging, batteryStatusUpdatedAt), style = MaterialTheme.typography.bodyLarge)
-            Text(caseLine(status.case, batteryStatusUpdatedAt), style = MaterialTheme.typography.bodyLarge)
+    val notCurrent = isNotCurrent(status.left, status.leftCharging) || isNotCurrent(status.right, status.rightCharging) || isNotCurrent(status.case)
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            CardTitle("Battery", batteryDetailLines(status, batteryStatusUpdatedAt, deviceInfo), notCurrent)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                BatteryColumn("Left", OpenControlIcons.Earbud, status.left, status.leftCharging, Modifier.weight(1f))
+                BatteryColumn("Case", OpenControlIcons.Case, status.case, null, Modifier.weight(1f))
+                BatteryColumn("Right", OpenControlIcons.Earbud, status.right, status.rightCharging, Modifier.weight(1f))
+            }
             if (status.case is BatteryLevel.Unavailable) {
                 Text(caseBatteryError?.let(::caseErrorText) ?: CASE_NOT_REPORTED, style = MaterialTheme.typography.bodySmall)
             }
-            // `ai-sessions/0052`: a Refresh that brought no new reading says so — the times above are then the old ones.
+            // `ai-sessions/0052`: a Refresh that brought no new reading says so — the times in the (i) are then the old ones.
             batteryRefreshError?.let {
                 Text(it.userMessage(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
-            TextButton(onClick = onRefreshBattery) { Text("Refresh battery") }
-            Text(CASE_REFRESH_NOTE, style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = onRefreshBattery, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("Refresh battery") }
+        }
+    }
+}
+
+@Composable
+private fun BatteryColumn(label: String, icon: ImageVector, level: BatteryLevel, charging: ChargingReading?, modifier: Modifier = Modifier) {
+    val isCharging = charging?.charging == true
+    Column(
+        modifier = modifier.alpha(if (isNotCurrent(level, charging)) NOT_CURRENT_ALPHA else 1f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(32.dp)) // decorative: the label names the part
+        Text(label, style = MaterialTheme.typography.labelLarge)
+        when (level) {
+            is BatteryLevel.Known -> {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("${level.percent}%", style = MaterialTheme.typography.titleLarge)
+                    if (isCharging) Icon(OpenControlIcons.Charging, contentDescription = "charging", modifier = Modifier.size(20.dp))
+                }
+                LinearProgressIndicator(
+                    progress = { level.percent.coerceIn(0, 100) / 100f },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = if (isCharging) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
+                )
+            }
+            BatteryLevel.Unavailable -> Text("Battery unavailable", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
         }
     }
 }

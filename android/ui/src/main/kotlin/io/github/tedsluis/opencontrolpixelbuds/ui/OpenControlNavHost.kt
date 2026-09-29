@@ -19,33 +19,33 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.ui
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.compose.composable
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
@@ -58,6 +58,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
+import kotlinx.coroutines.Job
 
 /** Route constants (ARCHITECTURE.md §2.4). */
 private object Routes {
@@ -69,30 +70,22 @@ private object Routes {
     const val DEBUG = "debug"
 }
 
-private data class TabDestination(val route: String, val label: String)
+private data class TabDestination(val route: String, val label: String, val icon: ImageVector, val pullTab: PullTab)
 
 /**
- * Every bottom-nav destination, **including** Debug — all five use identical
- * single-top-tab navigation semantics (`popUpTo(start){saveState} +
- * launchSingleTop + restoreState`). Debug used to be special-cased with a
- * plain `navigate()` call, which let it accumulate duplicate back-stack
- * entries never covered by the other tabs' `popUpTo`/`saveState` handling —
- * a real, reproducible bug (not just a style choice) confirmed by a
- * maintainer report of tabs "disappearing" behind Debug after navigating
- * with the system back gesture (`ai-sessions/0037`). Debug stays visually
- * distinct only in that it's never *highlighted* as the current primary
- * destination (AGENTS.md §6/§9 — it's a developer surface, not part of
- * ordinary use) — see [selected] below.
+ * The five bottom-nav tabs (ARCHITECTURE.md §2.4; `ai-sessions/0057` D-6, Android's guidance "three to five destinations of equal importance"), all with
+ * the same single-top navigation (`popUpTo(start){saveState} + launchSingleTop + restoreState`, `ai-sessions/0037`). **Debug is not a tab any more** — it is
+ * the top app bar's action and its own destination ([Routes.DEBUG]), as §2.4 always required ("never shown in the main bottom/side navigation"); system back
+ * returns from it to the tab it was opened from (the maintainer's choice "Full screen + back", 2026-09-29).
  */
 private val TAB_DESTINATIONS = listOf(
-    TabDestination(Routes.CONNECTION, "Connection"),
-    TabDestination(Routes.ANC, "ANC"),
+    TabDestination(Routes.CONNECTION, "Connection", OpenControlIcons.Connection, PullTab.CONNECTION),
+    TabDestination(Routes.ANC, "ANC", OpenControlIcons.NoiseControl, PullTab.ANC),
     // `ai-sessions/0052`: the EQ tab also holds balance, mono and conversation detection, so it is labelled "Sound"; touch controls and
     // press-and-hold have their own "Controls" tab (the maintainer's choice in chat 2026-09-26).
-    TabDestination(Routes.EQ, "Sound"),
-    TabDestination(Routes.CONTROLS, "Controls"),
-    TabDestination(Routes.FIND_MY_BUDS, "Find"),
-    TabDestination(Routes.DEBUG, "Debug"),
+    TabDestination(Routes.EQ, "Sound", OpenControlIcons.Sound, PullTab.SOUND),
+    TabDestination(Routes.CONTROLS, "Controls", OpenControlIcons.Controls, PullTab.CONTROLS),
+    TabDestination(Routes.FIND_MY_BUDS, "Find", OpenControlIcons.Find, PullTab.FIND),
 )
 
 /**
@@ -140,6 +133,11 @@ data class OpenControlActions(
      * local-only (AGENTS.md §9), the destination is the user's own choice, never an automatic
      * network call this app makes itself. */
     val onExportLog: () -> Unit,
+    /**
+     * A pull (swipe down) on a tab (`ai-sessions/0057` D-10): runs the one existing action [PullAction] names and returns the job it launched in the
+     * application scope — `null` when it only opened a system prompt or did nothing — so the pull indicator lasts exactly as long as the action.
+     */
+    val onPull: (PullAction) -> Job? = { null },
 )
 
 data class OpenControlUiState(
@@ -200,24 +198,17 @@ data class OpenControlUiState(
 )
 
 /**
- * Top-level navigation graph (ARCHITECTURE.md §2.4). A single bottom
- * navigation bar covers all five destinations, including Debug — kept out of
- * the *ordinary* flow only by never being shown as "selected" (see
- * [TAB_DESTINATIONS]'s own doc comment for why it still needs the same
- * navigation mechanics as the primary four, not a visually separate entry
- * point as originally designed).
+ * Top-level navigation (ARCHITECTURE.md §2.4). A [Scaffold] with a top app bar ("OpenControl", the Debug action) and a bottom bar with the five tabs.
  *
- * **`ai-sessions/0043` Phase H — swipe between tabs.** A [HorizontalPager] sits inside the [NavHost]'s
- * single [Routes.CONNECTION]/[Routes.ANC]/.../[Routes.DEBUG] destinations are still reached through the
- * *same* `navController.navigate(...)` call the bottom bar always used (`navigateToTab` below) — a
- * swipe that settles on a new page just calls it with that page's route, so the single-top back-stack
- * semantics this file's own doc comment already describes (`ai-sessions/0037`'s fix) apply identically
- * whether the tab changed by a tap or a swipe. The pager's own page index is kept in sync the other way
- * too: a tap (or a system-back navigation) changes [NavHost]'s current destination, and a
- * [LaunchedEffect] scrolls the pager to match. // TODO(verify): swipe gesture feel and the two-way sync
- * are Android-framework/gesture behavior this session could not exercise on a device or emulator — see
- * `ai-sessions/0043_FEATURE_RESULT_2026_09_22.md`'s re-test instructions.
+ * **`ai-sessions/0043` Phase H — swipe between tabs.** A [HorizontalPager] renders the tabs; a swipe that settles on a new page calls the *same*
+ * `navController.navigate(...)` a bottom-nav tap uses (`navigateToTab`), so the single-top back-stack semantics (`ai-sessions/0037`) apply identically
+ * whether the tab changed by a tap or a swipe, and a tap (or a system-back navigation) scrolls the pager to match. [NavHost] itself is a zero-size, empty
+ * back-stack holder — the one source of truth for "which destination", including system back. **`ai-sessions/0057`:** Debug is a destination of that same
+ * graph outside the pager: while it is current the pager is replaced by [DebugScreen] and the top bar shows a back arrow; back pops it. Every tab sits in a
+ * [PullToRefresh] whose action is [pullActionFor] (D-10). // TODO(verify): swipe, pull and back are gesture behaviour this session could not exercise on a
+ * device — `APP_TESTPLAN.md` (updated for `ai-sessions/0057`).
  */
+@OptIn(ExperimentalMaterial3Api::class) // TopAppBar is experimental in the resolved material3 1.3.0 — approved at the 0057 checkpoint.
 @Composable
 fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
     val navController = rememberNavController()
@@ -233,18 +224,20 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    val inDebug = currentDestination?.hierarchy?.any { it.route == Routes.DEBUG } == true
     val currentIndex = TAB_DESTINATIONS.indexOfFirst { d -> currentDestination?.hierarchy?.any { it.route == d.route } == true }
         .coerceAtLeast(0)
 
-    // A tap or a system-back navigation changed the current destination: keep the pager's page in sync.
-    LaunchedEffect(currentIndex) {
-        if (pagerState.currentPage != currentIndex) pagerState.scrollToPage(currentIndex)
+    // A tap or a system-back navigation changed the current tab: keep the pager's page in sync (not while Debug is shown).
+    LaunchedEffect(currentIndex, inDebug) {
+        if (!inDebug && pagerState.currentPage != currentIndex) pagerState.scrollToPage(currentIndex)
     }
-    // A completed swipe (the pager settles on a new page): drive the exact same navigation call a
-    // bottom-nav tap uses, so back-stack semantics never depend on which trigger changed the tab.
+    // A completed swipe (the pager settles on a new page): drive the exact same navigation call a bottom-nav tap uses, so back-stack semantics never
+    // depend on which trigger changed the tab.
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.collect { settled ->
             val destination = navController.currentBackStackEntry?.destination
+            if (destination?.hierarchy?.any { it.route == Routes.DEBUG } == true) return@collect
             val liveIndex = TAB_DESTINATIONS.indexOfFirst { d -> destination?.hierarchy?.any { it.route == d.route } == true }
                 .coerceAtLeast(0)
             if (settled != liveIndex) navigateToTab(settled)
@@ -252,111 +245,129 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(if (inDebug) "Debug" else "OpenControl") },
+                navigationIcon = {
+                    if (inDebug) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                },
+                actions = {
+                    if (!inDebug) {
+                        IconButton(onClick = { navController.navigate(Routes.DEBUG) { launchSingleTop = true } }) {
+                            Icon(OpenControlIcons.Debug, contentDescription = "Debug")
+                        }
+                    }
+                },
+            )
+        },
         bottomBar = {
-            NavigationBar {
-                TAB_DESTINATIONS.forEachIndexed { index, destination ->
-                    NavigationBarItem(
-                        // Debug is never shown as "selected," per AGENTS.md §6/§9 — a developer
-                        // surface, not one of the app's ordinary tabs — even though it now uses
-                        // the exact same navigation mechanics as the primary four.
-                        selected = currentIndex == index && destination.route != Routes.DEBUG,
-                        onClick = { navigateToTab(index) },
-                        icon = { Icon(iconFor(destination.route), contentDescription = destination.label) },
-                        label = { Text(destination.label) },
-                    )
+            if (!inDebug) {
+                NavigationBar {
+                    TAB_DESTINATIONS.forEachIndexed { index, destination ->
+                        NavigationBarItem(
+                            selected = currentIndex == index,
+                            onClick = { navigateToTab(index) },
+                            icon = { Icon(destination.icon, contentDescription = destination.label) },
+                            label = { Text(destination.label) },
+                        )
+                    }
                 }
             }
         },
     ) { padding ->
-        // The pager owns the visible content; NavHost (below, zero-size) exists solely to keep the
-        // proven single-top back-stack machinery (`ai-sessions/0037`) as the one source of truth for
-        // "which tab," including system-back handling — the pager only ever mirrors it (see above).
         NavHost(navController = navController, startDestination = Routes.CONNECTION, modifier = Modifier.size(0.dp)) {
             TAB_DESTINATIONS.forEach { destination -> composable(destination.route) { } }
+            composable(Routes.DEBUG) { }
         }
-        HorizontalPager(state = pagerState, modifier = Modifier.padding(padding)) { page ->
-            when (TAB_DESTINATIONS[page].route) {
-                Routes.CONNECTION -> ConnectionScreen(
-                    connectionState = state.connectionState,
-                    deviceStatus = state.deviceStatus,
-                    androidLink = state.androidLink,
-                    permissionState = state.permissionState,
-                    pairingStatusText = state.pairingStatusText,
-                    lastConnectionError = state.lastConnectionError,
-                    messageStreamError = state.messageStreamError,
-                    batteryStatus = state.batteryStatus,
-                    batteryStatusUpdatedAt = state.batteryStatusUpdatedAt,
-                    caseBatteryError = state.caseBatteryError,
-                    deviceInfo = state.deviceInfo,
-                    onRefreshBattery = actions.onRefreshBattery,
-                    lastLossCause = state.lastLossCause,
-                    safeMode = state.safeMode,
-                    batteryRefreshError = state.batteryRefreshError,
-                    onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
-                    onPair = actions.onPair,
-                    onRequestPermissions = actions.onRequestPermissions,
-                    onOpenAppSettings = actions.onOpenAppSettings,
-                    onConnect = actions.onConnect,
-                    onDisconnect = actions.onDisconnect,
-                )
-                Routes.ANC -> AncScreen(
-                    connectionState = state.connectionState,
-                    messageStreamError = state.messageStreamError,
-                    ancMode = state.ancMode,
-                    ancModeUpdatedAt = state.ancModeUpdatedAt,
-                    ancAvailability = state.ancAvailability,
-                    ancAvailabilityUpdatedAt = state.ancAvailabilityUpdatedAt,
-                    onAncModeSelected = actions.onAncModeSelected,
-                    onRefreshAncMode = actions.onRefreshAncMode,
-                    onRequestAddAncTile = actions.onRequestAddAncTile,
-                )
-                Routes.EQ -> EqScreen(
-                    connectionState = state.connectionState,
-                    gains = state.eqProfile,
-                    eqProfileUpdatedAt = state.eqProfileUpdatedAt,
-                    eqError = state.eqError,
-                    onGainsChanged = actions.onEqGainsChanged,
-                    onPresetSelected = actions.onEqPresetSelected,
-                    onRefresh = actions.onRefreshEq,
-                    settings = state.settings,
-                    settingsError = state.settingsError,
-                    onVolumeBalanceChanged = actions.onVolumeBalanceChanged,
-                    onMonoAudioChanged = actions.onMonoAudioChanged,
-                    onConversationDetectionChanged = actions.onConversationDetectionChanged,
-                )
-                Routes.CONTROLS -> ControlsScreen(
-                    connectionState = state.connectionState,
-                    settings = state.settings,
-                    settingsError = state.settingsError,
-                    onTouchControlsChanged = actions.onTouchControlsChanged,
-                    onPressAndHoldChanged = actions.onPressAndHoldChanged,
-                    onAncModeSelectedChanged = actions.onAncModeSelectedChanged,
-                    onInEarDetectionChanged = actions.onInEarDetectionChanged,
-                )
-                Routes.FIND_MY_BUDS -> FindMyBudsScreen(
-                    connectionState = state.connectionState,
-                    messageStreamError = state.messageStreamError,
-                    ringing = state.ringing,
-                    onRing = actions.onRing,
-                    onStop = actions.onStopRinging,
-                )
-                Routes.DEBUG -> DebugScreen(
-                    debugModeEnabled = state.debugModeEnabled,
-                    onDebugModeChanged = actions.onDebugModeChanged,
-                    unidentifiedFrames = state.unidentifiedFrames,
-                    onExportLog = actions.onExportLog,
-                )
+        if (inDebug) {
+            DebugScreen(
+                debugModeEnabled = state.debugModeEnabled,
+                onDebugModeChanged = actions.onDebugModeChanged,
+                unidentifiedFrames = state.unidentifiedFrames,
+                onExportLog = actions.onExportLog,
+                modifier = Modifier.padding(padding),
+            )
+        } else {
+            HorizontalPager(state = pagerState, modifier = Modifier.padding(padding)) { page ->
+                val tab = TAB_DESTINATIONS[page]
+                PullToRefresh(onPull = { actions.onPull(pullActionFor(tab.pullTab, state.deviceStatus, state.connectionState)) }) {
+                    TabContent(tab.route, state, actions)
+                }
             }
         }
     }
 }
 
-private fun iconFor(route: String) = when (route) {
-    Routes.CONNECTION -> Icons.Filled.Settings
-    Routes.ANC -> Icons.Filled.Settings
-    Routes.EQ -> Icons.AutoMirrored.Filled.List
-    Routes.CONTROLS -> Icons.Filled.Build
-    Routes.FIND_MY_BUDS -> Icons.Filled.Notifications
-    Routes.DEBUG -> Icons.Filled.Info
-    else -> Icons.Filled.Settings
+@Composable
+private fun TabContent(route: String, state: OpenControlUiState, actions: OpenControlActions) {
+    when (route) {
+        Routes.CONNECTION -> ConnectionScreen(
+            connectionState = state.connectionState,
+            deviceStatus = state.deviceStatus,
+            androidLink = state.androidLink,
+            permissionState = state.permissionState,
+            pairingStatusText = state.pairingStatusText,
+            lastConnectionError = state.lastConnectionError,
+            messageStreamError = state.messageStreamError,
+            batteryStatus = state.batteryStatus,
+            batteryStatusUpdatedAt = state.batteryStatusUpdatedAt,
+            caseBatteryError = state.caseBatteryError,
+            deviceInfo = state.deviceInfo,
+            onRefreshBattery = actions.onRefreshBattery,
+            lastLossCause = state.lastLossCause,
+            safeMode = state.safeMode,
+            batteryRefreshError = state.batteryRefreshError,
+            onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
+            onPair = actions.onPair,
+            onRequestPermissions = actions.onRequestPermissions,
+            onOpenAppSettings = actions.onOpenAppSettings,
+            onConnect = actions.onConnect,
+            onDisconnect = actions.onDisconnect,
+        )
+        Routes.ANC -> AncScreen(
+            connectionState = state.connectionState,
+            messageStreamError = state.messageStreamError,
+            ancMode = state.ancMode,
+            ancModeUpdatedAt = state.ancModeUpdatedAt,
+            ancAvailability = state.ancAvailability,
+            ancAvailabilityUpdatedAt = state.ancAvailabilityUpdatedAt,
+            onAncModeSelected = actions.onAncModeSelected,
+            onRefreshAncMode = actions.onRefreshAncMode,
+            onRequestAddAncTile = actions.onRequestAddAncTile,
+        )
+        Routes.EQ -> EqScreen(
+            connectionState = state.connectionState,
+            gains = state.eqProfile,
+            eqProfileUpdatedAt = state.eqProfileUpdatedAt,
+            eqError = state.eqError,
+            onGainsChanged = actions.onEqGainsChanged,
+            onPresetSelected = actions.onEqPresetSelected,
+            onRefresh = actions.onRefreshEq,
+            settings = state.settings,
+            settingsError = state.settingsError,
+            onVolumeBalanceChanged = actions.onVolumeBalanceChanged,
+            onMonoAudioChanged = actions.onMonoAudioChanged,
+            onConversationDetectionChanged = actions.onConversationDetectionChanged,
+        )
+        Routes.CONTROLS -> ControlsScreen(
+            connectionState = state.connectionState,
+            settings = state.settings,
+            settingsError = state.settingsError,
+            onTouchControlsChanged = actions.onTouchControlsChanged,
+            onPressAndHoldChanged = actions.onPressAndHoldChanged,
+            onAncModeSelectedChanged = actions.onAncModeSelectedChanged,
+            onInEarDetectionChanged = actions.onInEarDetectionChanged,
+        )
+        Routes.FIND_MY_BUDS -> FindMyBudsScreen(
+            connectionState = state.connectionState,
+            messageStreamError = state.messageStreamError,
+            ringing = state.ringing,
+            onRing = actions.onRing,
+            onStop = actions.onStopRinging,
+        )
+    }
 }

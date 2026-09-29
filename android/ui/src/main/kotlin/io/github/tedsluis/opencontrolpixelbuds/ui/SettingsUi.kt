@@ -77,9 +77,9 @@ internal fun SettingsFailureNotice(failure: SettingsFailure?) {
 }
 
 /**
- * One on/off setting: title, an explanatory subtitle, the Buds' value with its time. The switch shows the Buds' value; a tap asks for the other
- * value and the switch moves only once the Buds acknowledged it. `ai-sessions/0056` U-1: while the value is not read the switch is disabled — it would
- * otherwise show an "off" the Buds never reported and a tap would write "on" blind (AGENTS.md §5).
+ * One on/off setting: title and an explanatory subtitle; the switch shows the Buds' value; a tap asks for the other value and the switch moves only once the
+ * Buds acknowledged it. `ai-sessions/0056` U-1: while the value is not read the switch is disabled — it would otherwise show an "off" the Buds never reported
+ * and a tap would write "on" blind (AGENTS.md §5). `ai-sessions/0057` D-7: the "read / changed HH:MM:SS" line is in the card's (i) ([settingTime]).
  */
 @Composable
 internal fun SettingSwitchRow(
@@ -97,7 +97,6 @@ internal fun SettingSwitchRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            Text(settingTime(reading), style = MaterialTheme.typography.bodySmall)
         }
         Switch(
             checked = reading?.value ?: false,

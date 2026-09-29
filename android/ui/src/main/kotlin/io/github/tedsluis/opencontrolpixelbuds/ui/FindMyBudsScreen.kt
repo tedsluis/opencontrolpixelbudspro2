@@ -22,8 +22,13 @@ package io.github.tedsluis.opencontrolpixelbuds.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -44,6 +49,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
  * disabled-looking "Case"/"Both" affordance that would imply a capability this
  * project does not provide. (ADR-027's 2026-09-24 Update: the spec's `0x03`
  * "ring both" exists but is untested here; offering it needs its own ADR.)
+ * **`ai-sessions/0057`:** tonal Ring buttons and an outlined Stop; the ringing notice stays visible, the channel explanation is in the card's (i).
  */
 @Composable
 fun FindMyBudsScreen(
@@ -54,20 +60,25 @@ fun FindMyBudsScreen(
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val ready = connectionState.isReady()
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Find My Buds", style = MaterialTheme.typography.headlineSmall)
             NotConnectedBanner(connectionState)
             MessageStreamNotice(messageStreamError)
-            RingingNotice(ringing, connectionState.isReady())
-            Button(onClick = { onRing(RingTarget.LEFT) }, enabled = connectionState.isReady()) { Text("Ring Left") }
-            Button(onClick = { onRing(RingTarget.RIGHT) }, enabled = connectionState.isReady()) { Text("Ring Right") }
-            OutlinedButton(onClick = onStop, enabled = connectionState.isReady()) { Text("Stop") }
-            MessageStreamHint()
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    CardTitle("Find My Buds", listOf(MESSAGE_STREAM_HINT_TEXT))
+                    RingingNotice(ringing, ready)
+                    val buttonModifier = Modifier.fillMaxWidth().height(56.dp)
+                    FilledTonalButton(onClick = { onRing(RingTarget.LEFT) }, enabled = ready, modifier = buttonModifier) { Text("Ring Left") }
+                    FilledTonalButton(onClick = { onRing(RingTarget.RIGHT) }, enabled = ready, modifier = buttonModifier) { Text("Ring Right") }
+                    OutlinedButton(onClick = onStop, enabled = ready, modifier = buttonModifier) { Text("Stop") }
+                }
+            }
         }
     }
 }

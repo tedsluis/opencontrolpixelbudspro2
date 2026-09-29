@@ -70,13 +70,9 @@ internal fun MessageStreamNotice(error: BudsError?, modifier: Modifier = Modifie
     }
 }
 
-/** One-line explanation of what a tap on these screens does to the shared channel (ADR-032). */
-@Composable
-internal fun MessageStreamHint(modifier: Modifier = Modifier) {
-    Text(
-        text = "Each action briefly claims the Buds' Message Stream channel. Another app that uses it " +
-            "(for example Google Play services' Fast Pair) may lose it for a moment.",
-        style = MaterialTheme.typography.bodySmall,
-        modifier = modifier,
-    )
-}
+/**
+ * What a tap on the ANC / Find screens does to the shared channel (ADR-032) — shown in those screens' (i) details since `ai-sessions/0057` (the proposal's
+ * "hide the 'Each action briefly claims…' text behind an Info icon").
+ */
+internal const val MESSAGE_STREAM_HINT_TEXT: String = "Each action briefly claims the Buds' Message Stream channel. Another app that uses it " +
+    "(for example Google Play services' Fast Pair) may lose it for a moment."

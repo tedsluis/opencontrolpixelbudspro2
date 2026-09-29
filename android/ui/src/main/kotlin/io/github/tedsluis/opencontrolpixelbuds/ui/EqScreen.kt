@@ -28,7 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -36,7 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -96,40 +96,61 @@ fun EqScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { Text("Sound", style = MaterialTheme.typography.headlineSmall) }
             item { NotConnectedBanner(connectionState) }
-            item { Text("Equalizer", style = MaterialTheme.typography.titleMedium) }
-            item { EqStatusNotice(connectionState, gains, eqProfileUpdatedAt, eqError, onRefresh) }
-            item { EqBandSlider("Upper treble", shown.upperTreble, enabled) { onGainsChanged(shown.copy(upperTreble = it)) } }
-            item { EqBandSlider("Treble", shown.treble, enabled) { onGainsChanged(shown.copy(treble = it)) } }
-            item { EqBandSlider("Mid", shown.mid, enabled) { onGainsChanged(shown.copy(mid = it)) } }
-            item { EqBandSlider("Bass", shown.bass, enabled) { onGainsChanged(shown.copy(bass = it)) } }
-            item { EqBandSlider("Low bass", shown.lowBass, enabled) { onGainsChanged(shown.copy(lowBass = it)) } }
-
-            item { Text("Presets", style = MaterialTheme.typography.titleMedium) }
-            item { EqPresetRows(enabled, onPresetSelected) }
-
-            // `ai-sessions/0052` (DECISIONS.md ADR-045): below the presets, as the prompt and the maintainer's layout choice put them.
-            item { HorizontalDivider() }
-            if (enabled) item { SettingsFailureNotice(settingsError) }
-            item { BalanceSlider(settings.volumeBalance, enabled, onVolumeBalanceChanged) }
             item {
-                SettingSwitchRow("Mono audio", "Same sound in both ears", settings.monoAudio, enabled, onMonoAudioChanged)
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // `ai-sessions/0057` D-7: "EQ updated: HH:MM:SS" is in the (i); the dot marks an EQ not read from the Buds yet.
+                        CardTitle("Equalizer", eqDetailLines(eqProfileUpdatedAt), notCurrent = enabled && gains == null)
+                        EqStatusNotice(connectionState, gains, eqError, onRefresh)
+                        EqBandSlider("Upper treble", shown.upperTreble, enabled) { onGainsChanged(shown.copy(upperTreble = it)) }
+                        EqBandSlider("Treble", shown.treble, enabled) { onGainsChanged(shown.copy(treble = it)) }
+                        EqBandSlider("Mid", shown.mid, enabled) { onGainsChanged(shown.copy(mid = it)) }
+                        EqBandSlider("Bass", shown.bass, enabled) { onGainsChanged(shown.copy(bass = it)) }
+                        EqBandSlider("Low bass", shown.lowBass, enabled) { onGainsChanged(shown.copy(lowBass = it)) }
+                        Text("Presets", style = MaterialTheme.typography.titleSmall)
+                        EqPresetRows(enabled, onPresetSelected)
+                    }
+                }
             }
+            // `ai-sessions/0052` (DECISIONS.md ADR-045): below the EQ, as the prompt and the maintainer's layout choice put them.
             item {
-                SettingSwitchRow(
-                    "Conversation detection",
-                    "Switch from noise cancellation to transparency when you talk",
-                    settings.conversationDetection,
-                    enabled,
-                    onConversationDetectionChanged,
-                )
+                val readings = listOf(settings.volumeBalance, settings.monoAudio, settings.conversationDetection)
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CardTitle("Balance and audio", soundSettingsDetailLines(settings), notCurrent = enabled && readings.any { it == null })
+                        if (enabled) SettingsFailureNotice(settingsError)
+                        BalanceSlider(settings.volumeBalance, enabled, onVolumeBalanceChanged)
+                        SettingSwitchRow("Mono audio", "Same sound in both ears", settings.monoAudio, enabled, onMonoAudioChanged)
+                        SettingSwitchRow(
+                            "Conversation detection",
+                            "Switch from noise cancellation to transparency when you talk",
+                            settings.conversationDetection,
+                            enabled,
+                            onConversationDetectionChanged,
+                        )
+                    }
+                }
             }
         }
     }
 }
+
+/** The EQ card's (i): "EQ updated: HH:MM:SS" — the line the card showed before `ai-sessions/0057` — or, before any read, where the value comes from. */
+internal fun eqDetailLines(eqProfileUpdatedAt: Long?): List<String> = listOf(
+    formatUpdatedAt(eqProfileUpdatedAt)?.let { "EQ updated: $it" } ?: EQ_NOT_READ_DETAIL,
+)
+
+internal const val EQ_NOT_READ_DETAIL: String = "The EQ is read from the Buds at Connect and with \"Read EQ again\"; it has not been read on this connection yet."
+
+/** The settings card's (i) on Sound: each setting's own time line ([settingTime]); the balance with its value, as the row showed it before `ai-sessions/0057`. */
+internal fun soundSettingsDetailLines(settings: BudsSettings): List<String> = listOf(
+    "Balance: " + (settings.volumeBalance?.let { "${balanceText(it.value)} · ${settingTime(it)}" } ?: SETTING_NOT_READ),
+    "Mono audio: ${settingTime(settings.monoAudio)}",
+    "Conversation detection: ${settingTime(settings.conversationDetection)}",
+)
 
 /**
  * The presets in rows of three (`ai-sessions/0052`, the maintainer's choice "2 rijen: 3 + 2"): `[HEAVY BASS] [LIGHT BASS] [BALANCED]` /
@@ -175,7 +196,6 @@ private const val PRESETS_PER_ROW = 3
 private fun EqStatusNotice(
     connectionState: ConnectionState,
     gains: EqBandGains?,
-    eqProfileUpdatedAt: Long?,
     eqError: BudsError?,
     onRefresh: () -> Unit,
 ) {
@@ -192,42 +212,36 @@ private fun EqStatusNotice(
             "Reading the Buds' current EQ… The sliders below start from flat (0.0) until it arrives and do NOT yet show the Buds' setting.",
             style = MaterialTheme.typography.bodyMedium,
         )
-    } else {
-        formatUpdatedAt(eqProfileUpdatedAt)?.let {
-            Text("EQ updated: $it", style = MaterialTheme.typography.bodySmall)
-        }
     }
+    // `ai-sessions/0057`: "EQ updated: HH:MM:SS" is in the card's (i) ([eqDetailLines]).
 }
 
 /**
  * Volume balance (`qhr` field 17, ADR-026/045). The wire's +100 is **Left**, so the slider runs from Left (its left end) to Right: slider position =
- * −value. One write per completed drag, as the EQ sliders; the text is the Buds' value ("Left 40 · read 14:32:07"), not the finger position, once
- * the drag ended — if the write is refused the slider snaps back to the Buds' value. **`ai-sessions/0054` I-3:** a release within ±3 of the centre
- * writes 0 ("Centre", [BudsSettings.snapBalance]) and the knob jumps to the middle — 201 positions on a narrow track made 0 practically unreachable (`CAP-063`).
+ * −value. One write per completed drag, as the EQ sliders; the text is the Buds' value ("Left 40"), not the finger position. **`ai-sessions/0054` I-3:** a
+ * release within ±3 of the centre writes 0 ("Centre", [BudsSettings.snapBalance]). **`ai-sessions/0057` F-1:** the knob follows the finger only while it is
+ * down; on release it shows the Buds' value again and moves only when they acknowledge the write — a refused or unanswered write leaves it where the Buds
+ * are (it used to stay at the finger position). Not read from the Buds yet ⇒ disabled (U-1's rule; the time is in the card's (i)).
  */
 @Composable
 private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onChange: (Int) -> Unit) {
     val buds = reading?.value ?: 0
-    var position by remember(reading) { mutableFloatStateOf(-buds.toFloat()) }
+    var dragPosition by remember { mutableStateOf<Float?>(null) }
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Balance")
-            Text(
-                if (reading == null) SETTING_NOT_READ else "${balanceText(buds)} · ${settingTime(reading)}",
-                style = MaterialTheme.typography.bodySmall,
-            )
+            if (reading != null) Text(balanceText(buds), style = MaterialTheme.typography.bodySmall)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("L")
             Slider(
-                value = position,
-                onValueChange = { position = it },
+                value = dragPosition ?: -buds.toFloat(),
+                onValueChange = { dragPosition = it },
                 onValueChangeFinished = {
-                    val value = BudsSettings.snapBalance(-position.roundToInt())
-                    position = -value.toFloat()
-                    onChange(value)
+                    dragPosition?.let { onChange(BudsSettings.snapBalance(-it.roundToInt())) }
+                    dragPosition = null
                 },
-                enabled = enabled,
+                enabled = enabled && reading != null,
                 valueRange = -100f..100f,
                 modifier = Modifier.weight(1f),
             )
@@ -237,28 +251,26 @@ private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onCha
 }
 
 /**
- * [onValueChange] fires once per completed drag ([Slider]'s own
- * `onValueChangeFinished`), not per drag-frame — each call sends a real
- * frame over the RFCOMM `MAESTRO` channel (`BudsRepositoryImpl.setEqGains`),
- * so wiring it to the continuous `onValueChange` callback instead would have
- * spammed a wire write per pixel of drag movement. [localValue] tracks the
- * drag smoothly in the meantime and re-syncs from [value] whenever it
- * changes for a reason other than this slider's own drag (a preset tap, or a
- * real Notify frame arriving) — `remember(value)`'s own re-keying handles
- * that, since [value] never itself changes mid-drag (`ai-sessions/0038`).
+ * [onValueChange] fires once per completed drag ([Slider]'s own `onValueChangeFinished`), not per drag-frame — each call sends a real frame over the RFCOMM
+ * `MAESTRO` channel (`BudsRepositoryImpl.setEqGains`). **`ai-sessions/0057` F-1:** the knob and its number follow the finger only while it is down
+ * ([dragValue]); after release they show [value] — the Buds' EQ — again, so a refused or unanswered write never leaves a gain on screen the Buds did not take.
  */
 @Composable
 private fun EqBandSlider(label: String, value: Float, enabled: Boolean, onValueChange: (Float) -> Unit) {
-    var localValue by remember(value) { mutableFloatStateOf(value) }
+    var dragValue by remember { mutableStateOf<Float?>(null) }
+    val shown = dragValue ?: value
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label)
-            Text("%.1f".format(localValue))
+            Text("%.1f".format(shown))
         }
         Slider(
-            value = localValue,
-            onValueChange = { localValue = it },
-            onValueChangeFinished = { onValueChange(localValue) },
+            value = shown,
+            onValueChange = { dragValue = it },
+            onValueChangeFinished = {
+                dragValue?.let(onValueChange)
+                dragValue = null
+            },
             enabled = enabled,
             valueRange = EqBandGains.RANGE.start..EqBandGains.RANGE.endInclusive,
         )
