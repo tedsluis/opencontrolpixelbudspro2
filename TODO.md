@@ -789,6 +789,23 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+**Open after `ai-sessions/0060` (added 2026-10-01):**
+- **Next FEATURE session (the maintainer's choice, chat 2026-10-01):** (1) ANC **`Get` before every `Set`** in one claim (no `Set` if that claim's `Notify` reads
+  `00`) and the wording "The Buds don't allow changing noise control right now (usually because no bud is in an ear). Tapping a mode checks again first." —
+  fixture `CAP-064` 3433/3440/3443 (`CAP-064-FINDINGS.md` §9 items 2–3); (2) a **settings menu behind a gear icon** in place of the top bar's bug icon, with three
+  tabs: **Settings** (dark mode On / Off / System), **Debug** (today's Debug screen: Debug mode switch, Export debug log, unidentified frames), **Info** (the Buds'
+  and the Case's firmware, the app's build number). Open points for that session: which entry of the `GetSoftwareInfo` announcement is the Case (`PROTOCOL.md`
+  §2.2a); how the build number/commit is put into the APK without the network (a Gradle `BuildConfig` field from `git`); dark-mode persistence in the existing
+  DataStore. Optional: one loss-cause log line instead of three (§9 item 5).
+- **Analyse `CAP-065`** (Group BA) — run by the maintainer before 2026-10-01 (a `zip/` folder is in its placeholder folder, untracked), not yet analysed.
+- **Run `CAP-066`** (Group BB, skeleton by `ai-sessions/0060`): the real I-1 path, Settable `00` timing, ANC-002/004 in the app, the I-4 (i) words, balance restore.
+- 🔴 **Why Android re-paged the docked Buds 3.4 ms after an ACL drop at 10:17:27 but not at 10:15:55** (`CAP-064-FINDINGS.md` §1a) — the system log has no
+  Bluetooth-process lines; a bug report's `btsnoop`-side logs or `dumpsys bluetooth_manager` right after a drop would show the reason.
+- **`scripts/lint_docs.py` exits 1 on one entry** — `ai-sessions/0060_CAPTURE_PROMPT_2026_10_01.md` names the pre-rename `CAP-064` folder (a prompt is not
+  rewritten); it becomes informational once the next session pair exists. Re-check after `0061`.
+- **Auto-connect on lid-open** — not possible from any event the app sees (`CAP-064-FINDINGS.md` §1); options (wording, one page on resume, CDM presence) recorded,
+  the maintainer chose "Nothing now" (chat 2026-10-01).
+
 **Open after `ai-sessions/0059` (added 2026-09-30):**
 - **Open proposals from capture FINDINGS (each needs the maintainer, `AGENTS.md` §6):** `CAP-008` §5/§4 — promote eSCO/mSBC establishment and
   `CALL-001`'s wire/video correlation to `PROTOCOL.md`; `CAP-026` item 3 — the short/no-flag Case form (🔴, `PROTOCOL.md` §4.3 Option E);
@@ -838,7 +855,7 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
   while the app was not visible is worded from the first link reading on return), I-3 (balance snaps to "Centre" within ±3), I-5 (the Digital-assistant
   note), I-4 (the previous connection's per-bud lines marked at Connect) — real `CAP-063` bytes (4774, 4184, 4233/4241, 4497/4508, 2723/2756, 3046/3059,
   export 586–593) and `CAP-046` 1873 (`17:0`). **Not hardware-verified:** the next capture is `CAP-064` (Group AZ, skeleton
-  `captures/CAP-064-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AZ/CAP-064-EVENT-NOTES.md`, which also carries AY-3 and the `APP_TESTPLAN.md` steps `CAP-063` skipped).
+  `captures/CAP-064-2026-10-01_10-04-14_10-29-28-Group_AZ/CAP-064-EVENT-NOTES.md`, which also carries AY-3 and the `APP_TESTPLAN.md` steps `CAP-063` skipped).
 - **Next captures (maintainer's choice, chat 2026-09-28; Group AR done as `CAP-056`, `ai-sessions/0055`):** Group AR (`CAP-056`, Pixel 7a) **first** for the ANC-mode checkboxes (field 12, wish 11) —
   its skeleton now also holds the W-12b in-ear-detection-off steps (the maintainer's request in chat 2026-09-28, `ai-sessions/0054`); then `CAP-064`
   (Group AZ, Pixel 9a) with **AY-3** (one bud visibly in an ear, the other on the table, `08 11` each time) for "Settable `0x00` = no bud worn" and a "worn"

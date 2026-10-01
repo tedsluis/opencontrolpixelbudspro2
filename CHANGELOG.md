@@ -210,6 +210,12 @@ mark v1.
   connection-state transitions, the ANC tile's first value, `UnreadableAnswer` for an undecodable read, a write quarantine after a timed-out
   `WriteSetting`, EQ sliders off until read, `SessionOpening` on the EQ tab, `AppUiSession` (pairing and Debug list survive a rotation), one clock,
   0 Kotlin warnings — real-capture fixtures, 6/6 mutations caught. `CAP-065` (Group BA) skeleton for the hardware re-test. Not hardware-verified.
+- **2026-10-01 (`ai-sessions/0060`): `CAP-064` (Group AZ) analysed** — film (every second, audio included), HCI log, debug export, logcat and system log.
+  The "no automatic connect when the case is opened" observation is qualified: opening the lid with both buds docked starts no Bluetooth connection, so ADR-044
+  has no event; the app re-opened by itself on 4 of 4 link-backs. AY-3: one worn bud ⇒ Settable `e8`; `e8` also with no bud worn (in-ear detection off; ≈ 28 s
+  with it on) — ADR-049 Update; the Buds follow OpenControl's field-12 list (ADR-046 Update); OpenControl's field-2 writes behave as the official app's (ADR-047
+  Update); `PROTOCOL.md` §4.1/§4.5.3/§4.5.5 dated Updates. Folder renamed to `CAP-064-2026-10-01_10-04-14_10-29-28-Group_AZ`; `CAP-066` (Group BB) skeleton for the
+  leftovers. No app change.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

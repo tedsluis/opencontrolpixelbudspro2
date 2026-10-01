@@ -677,6 +677,12 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   **Update (2026-09-28, `ai-sessions/0055`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notes") — supporting evidence, no status change (stays 🟡).** `CAP-056`
   frame 3940 (17:35:28.123) `08 13 00 04 01 e8 00 20` — Settable `00` while both buds were held in the hands (film 17:35:22–28) with in-ear detection **on**; every other
   `Notify` of the capture reads `e8` with at least one bud worn. With in-ear detection **off** no `Notify` was taken while no bud was worn (🔴). `CAP-056-FINDINGS.md` §4.
+  **Update (2026-10-01, `ai-sessions/0060`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-049", option *"Update as drafted (Recommended)"*;
+  `DECISIONS.md` ADR-049 Update).** `CAP-064` (OpenControl, ears on film; message-level parse of DLCI 0x04/0x05 on handle `0x000b`, `CAP-064-FINDINGS.md` §3):
+  one bud worn ⇒ `e8` (AY-3a 4103 `08 13 00 04 01 e8 e8 20`, Left on the table; AY-3b 4533 `… 01 e8 e8 40`, Right on the table); in-ear detection **off** ⇒
+  `e8` with both buds on the table (10394, 10600 `08 13 00 04 01 e8 e8 20`) — the 🔴 above is answered; in-ear detection **on** ⇒ `e8` for ≈ 28 s with both buds
+  on the table (2299, 2542, 2699, 2759) and an ANC `Set` ACKed in that state (2687 → 2698). Every `00` of the capture came with no bud worn (incl. 5591, one
+  docked / one loose). 🟡 HYPOTHESIS (strong): "`00` ⇒ no bud worn"; the converse "no bud worn ⇒ `00`" is **refuted** as a rule.
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -1557,6 +1563,11 @@ implementation gate.
   in the code) because the film test (open "Customize right" while a mode is unticked on the left) was not run. Byte-identical to `CAP-021` 5237/5247/5255. The code
   keeps at least two modes selected (`hgj.java:165–168`, not exercised on film). Command: `python3 scripts/pwrpc_decode.py CAP-056-btsnoop_hci.log`. Implementation:
   ADR-046. Evidence: `CAP-056-FINDINGS.md` §1–§2.
+- **Update (2026-10-01, `ai-sessions/0060`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-046/047", option *"Record both (Recommended)"*) —
+  the Buds follow the list, 🟢 for `CAP-064`.** After OpenControl's `WriteSetting 4:{12:{1:1 2:1 3:1 4:0}}` (frame 9684, OK 9688; Adaptive unticked) six long
+  presses gave `Notify` modes `80` (9737), `08` (9750), `20` (9762), `80` (9776), `08` (9785), `20` (9793) — never `40`; the cycle order is Transparency →
+  Noise cancellation → Off. Command: the message-level parse of `tshark -r CAP-064-btsnoop_hci.log -Y "bthci_acl.chandle==0x000b && btrfcomm.dlci==5"
+  -T fields -e frame.number -e data.data` (`CAP-064-FINDINGS.md` §3). One shared list stays 🟡.
 
 #### 4.5.4 Head gestures
 
@@ -1607,6 +1618,10 @@ implementation gate.
   DLCI 0x02 (and 0x04) at wear changes (2923, 3260, 4168 — so ADR-044's re-open is still triggered); the Buds sent no `Notify ANC state` and no field-13 change on wear
   changes (with it on: mode `0x40` on removal, `0x08` on re-insertion). 🔴 the Settable byte with it off and no bud worn (not sampled). Evidence: `CAP-056-FINDINGS.md`
   §3–§4. Implementation: ADR-047.
+- **Update (2026-10-01, `ai-sessions/0060`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-046/047", option *"Record both (Recommended)"*) —
+  OpenControl's writes behave as the official app's, 🟢 for `CAP-064`.** `4:{2:0}` (9922) → OK → SASS `07 11 00 04 01 02 b0 00` (9927); `4:{2:1}` (10817) → OK →
+  `… b8 00` (10822). With it off: no AVRCP pause on a bud removal during playback (none between frames 10047 and 10494), the Buds still `DISC` the MAESTRO
+  channel on wear changes (10102, 10309), and the Settable byte reads `e8` with no bud worn (10394, 10600 — the 🔴 above is answered). `CAP-064-FINDINGS.md` §2–§3.
 
 #### 4.5.5a Mono audio
 
@@ -3344,6 +3359,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-28 | **`ai-sessions/0053` — `CAP-063`, maintainer-approved in chat 2026-09-28.** **§4.3 Option F** a second `SubscribeRuntimeInfo` on an open channel is answered (8/8) 🟢; the stream also pushes while docked and idle (with `AT+BIEV`) 🟢 for `CAP-063`. **§4.1** Settable = worn: supporting evidence, stays 🟡. **§4.2/§4.4/§4.5.5a/§4.5.7** audibility and the docked ring recorded as the maintainer's observations. **§6** conversation detection = AVRCP 🟡, Digital assistant via GSND 🟡, no ACL re-creation after an ADR-016 drop 🔴 | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-28 |
 | 2026-09-28 | **`ai-sessions/0055` — `CAP-056` (Group AR), maintainer-approved in chat 2026-09-28.** **§4.5.3** `qht` bit order 1 NC / 2 Off / 3 Transparency / 4 Adaptive 🟢 (on-screen-order 🟡 refuted); checklist = "ANC gesture loop" 🟢; no Left/Right field in the write 🟢, one shared list 🟡 → ADR-046. **§4.5.5** "In-ear detection" = field 2 🟢 (film 5/5 + SASS bit 4); behaviour with it off 🟢 for `CAP-056` → ADR-047. **§4.1** Settable `00` support (stays 🟡). **§6** pause route 🟡, DLCI 0x02 `DISC` trigger 🔴, DLCI 0x08 `04 05` 🟡 / `04 16` 🔴, field-13 mirror 🟡 | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-28 |
 | 2026-09-30 | **`ai-sessions/0059` — processing the `ai-sessions/0058` audit, all status changes maintainer-approved in chat 2026-09-30.** **§4.1** Settable byte: ADR-049 supersedes ADR-024's "dock state" (🟢 `0x00` ⇒ NAK 10/10, non-zero ⇒ ACK 40/40; 🟡 `0x00` ⇔ no bud worn). **§4.3 Option 0** 🟢 not public API (`@SystemApi`). **§2.2a** "LEB128" corrected to one-terminated varint; the other pw_rpc services named (🟢); "1779298694" = `UpdateHelperService.GetRunningVersion`, not a serial (🟢); request address derivable from the channel (🟡); "type 4" = `CLIENT_ERROR`. **§6** HID = Android head-tracker sensor (🟢, `CAP-033` 1355 descriptor); CONV-002's AVRCP negative corrected (invalid filter); several answered items ticked with pointers; Group-A repeat PROPOSAL markers approved as recorded; superseded markers resolved. **§4.3 Option F** `CAP-002` 62 → 57 (own window); `CAP-043` is connection-free; implemented sources B and **F**. **§7** two rows aligned with the as-built error model | Claude (AI), maintenance task; maintainer-approved in chat 2026-09-30 |
+| 2026-10-01 | **`ai-sessions/0060` — `CAP-064` (Group AZ), maintainer-approved in chat 2026-10-01.** **§4.1** Settable: one worn bud ⇒ `e8` (AY-3, 2/2); in-ear detection off ⇒ `e8` with none worn; in-ear on ⇒ `e8` ≈ 28 s with both buds on the table and a `Set` ACKed — 🟡 now "`00` ⇒ no bud worn", the converse refuted (ADR-049 Update). **§4.5.3** the Buds follow OpenControl's field-12 list (six long presses, never `40`) 🟢 for `CAP-064`. **§4.5.5** OpenControl's field-2 writes behave as in `CAP-056` (SASS bit 4, no pause, `DISC` on wear changes); Settable with it off and no bud worn = `e8` (🔴 answered). |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

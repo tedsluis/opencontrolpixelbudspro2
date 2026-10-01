@@ -3,21 +3,22 @@
 An independent, open-source Android app to fully control the **Google Pixel Buds
 Pro 2** without the official Pixel Buds app or Google Play Services.
 
-> **Status (2026-09-28):** protocol reconstruction is mature and a v1 Android app exists end to end. ANC mode switching,
+> **Status (2026-10-01):** protocol reconstruction is mature and a v1 Android app exists end to end. ANC mode switching,
 > Find My Buds (Left/Right), the equalizer (read and write), battery (Left/Right with charging, and the Case), a Quick
 > Settings ANC tile and a read-only **Safe Mode** for unverified firmware are implemented and unit-tested. The fourth hardware
 > run (`CAP-063`, `ai-sessions/0053`) confirmed the `ai-sessions/0048` and `0052` builds on the Buds: the app re-opens its session by
 > itself while it is on screen (ADR-044), shows per bud "charging in the case" and the last Case level with its time, disables ANC while
 > the Buds are not worn, and reads and changes volume balance, mono audio, conversation detection, touch controls and the press-and-hold
 > action per bud (tabs "Sound" and "Controls", ADR-045) — every change accepted by the Buds; *Refresh battery* always gets a fresh reading.
-> `ai-sessions/0054` (not yet hardware-verified, next run `CAP-064`) addressed that run's findings: a tap on a disabled ANC mode now checks
+> `ai-sessions/0054` (hardware-run in `CAP-064`, `ai-sessions/0060`) addressed that run's findings: a tap on a disabled ANC mode now checks
 > again with the Buds, a session loss in the background is explained on return, the balance snaps to "Centre", the previous connection's
 > battery lines are marked right after Connect, and "Digital assistant" carries a note that it needs an assistant app that supports headphones.
-> `ai-sessions/0056` (not yet hardware-verified, `CAP-064` section VII) adds the press-and-hold ANC-mode list ("Modes for press and hold", ADR-046) and makes
+> `ai-sessions/0056` (hardware-verified in `CAP-064`: the Buds follow the list, the switch works) adds the press-and-hold ANC-mode list ("Modes for press and hold", ADR-046) and makes
 > "In-ear detection" a switch (ADR-047).
-> `ai-sessions/0057` (not yet hardware-verified, `CAP-064` section VIII) gives the app a Material 3 look: a top bar with the Debug action, five tabs, a
+> `ai-sessions/0057` (in use in `CAP-064`; its pull-to-refresh checks are in `CAP-065`) gives the app a Material 3 look: a top bar with the Debug action, five tabs, a
 > graphical battery (Left | Case | Right), times and details behind an (i) on each card, pull down to refresh or reconnect, dark mode and wallpaper colours.
-> Battery via HFP is not deliverable to an app (ADR-040).
+> Battery via HFP is not deliverable to an app (ADR-040). `CAP-064` (`ai-sessions/0060`): the app connects by itself when a bud leaves the case,
+> not when the lid is opened with both buds inside — the Buds start no connection then; tap Connect.
 
 > ## ⚠️ Disclaimer: hardware risk
 >
@@ -56,10 +57,10 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-09-30)
+## Current state (2026-10-01)
 
-- **Captures:** 65 registered sessions (`CAP-001`–`CAP-065`): 56 analyzed, 7 planned (among them `CAP-064` and `CAP-065`, the hardware re-tests of
-  `ai-sessions/0057` and `0059`), 2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-063`
+- **Captures:** 66 registered sessions (`CAP-001`–`CAP-066`): 57 analyzed, 7 planned (among them `CAP-065`, run but not yet analysed, and `CAP-066`,
+  the `CAP-064` leftovers), 2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-064`
   are captures of this project's own app; the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented

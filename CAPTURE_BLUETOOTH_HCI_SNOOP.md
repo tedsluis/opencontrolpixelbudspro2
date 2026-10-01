@@ -1556,13 +1556,19 @@ For the next run: AY-3 with the worn bud visible on film; record the build hash 
 
 #### Group AZ — wear and settings re-test of the `ai-sessions/0054` and `0056` builds (planned as `CAP-064`, skeleton by `ai-sessions/0054`/`0056`)
 
-Pixel 9a / GrapheneOS, OpenControl. The skeleton `captures/CAP-064-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AZ/CAP-064-EVENT-NOTES.md` holds every step with its
+Pixel 9a / GrapheneOS, OpenControl. The skeleton `captures/CAP-064-2026-10-01_10-04-14_10-29-28-Group_AZ/CAP-064-EVENT-NOTES.md` holds every step with its
 expected screen and HCI bracket: I (a disabled ANC tap re-checks with a normal claim, `0054` I-1; AY-3 one bud visibly worn — the ADR-049 🟡), II (the
 loss wording after returning, I-2), III (balance "Centre", I-3), IV (the previous connection's per-bud lines, I-4), V (the Digital-assistant note, I-5) and
 VII (the field-12 "Modes for press and hold" list and the field-2 in-ear detection switch, ADR-046/047, a long-press cycle on film, Settable with in-ear
 detection off). Test-IDs: [`ANC-001`]–[`ANC-004`], [`INEAR-001`]–[`INEAR-004`], [`HOLD-001`]–[`HOLD-005`], [`CASE-004`]–[`CASE-006`], [`BATT-004`],
 [`AUDIO-003`], [`PAIR-003`]. Added to this plan by `ai-sessions/0059` (A58-CAP-08/SES-04; the maintainer's split of 2026-09-30 moved the old sections VI and VIII
 to Group BA).
+
+**Run as `CAP-064` (2026-10-01, analysed by `ai-sessions/0060`):** done with the ears on film; the order changed and several steps were done differently (step
+mapping in `CAP-064-EVENT-NOTES.md`). Results (`CAP-064-FINDINGS.md`): the app re-opened by itself every time Android's link came up (4/4), but opening the lid
+with both buds docked starts no Bluetooth connection — the "does not connect when the case is opened" observation (§1); AY-3 one worn bud ⇒ `e8`; `e8` with no
+bud worn with in-ear detection off, and for ≈ 28 s with it on (ADR-049 Update); the Buds follow OpenControl's field-12 list (never `40`); the I-1 path was not
+entered (the app's reading was `e8`) and the tile's direct `Set` was NAKed once. Leftovers moved to Group BB (`CAP-066`).
 
 #### Group BA — robustness, UI and the `ai-sessions/0059` fixes (planned as `CAP-065`, skeleton by `ai-sessions/0059`)
 
@@ -1572,6 +1578,14 @@ byte with one bud docked and one loose, and both loose, ears visible (ADR-049 �
 Left bud out, then only the Right: which channel do the Buds announce?); the `APP_TESTPLAN.md` robustness steps moved from `CAP-064` (F7, K1–K5, L2/L3,
 destructive last: A5, (E), B4); and the Material 3 pull-to-refresh checks moved from `CAP-064` (the old AZ-9 … AZ-14, now BA-…). Test-IDs: [`ANC-001`]–
 [`ANC-004`], [`PAIR-001`], [`PAIR-003`], [`CASE-004`]–[`CASE-006`], [`BATT-004`], [`EQS-001`], [`EQP-002`], [`AUDIO-001`], [`AUDIO-003`], [`HOLD-001`], [`INEAR-001`].
+
+#### Group BB — the `CAP-064` leftovers (planned as `CAP-066`, skeleton by `ai-sessions/0060`)
+
+Pixel 9a / GrapheneOS, OpenControl. The skeleton `captures/CAP-066-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BB/CAP-066-EVENT-NOTES.md` holds: the real I-1 disabled-tap
+path (the app first reads Settable `00`, then a mode tap and the tile); when the Settable byte reads `00` (Refresh over two minutes, buds straight from the case vs
+after wearing; one docked / one loose); Noise cancellation and Transparency tapped in OpenControl; the battery (i) dialog within 2 s of a Connect; the balance
+restored to Right 4. The maintainer's choice in chat 2026-10-01 (`CAP-065` had already been run). Test-IDs: [`ANC-001`]–[`ANC-004`], [`INEAR-002`]–[`INEAR-004`],
+[`CASE-004`]–[`CASE-006`], [`BATT-004`], [`AUDIO-003`], [`PAIR-003`].
 
 ### 4.3 Hardware Actions (either phone)
 
@@ -1964,8 +1978,9 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-061` | 2026-09-24 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0045` code (`android/` of `5ade05e` = `964fa91`) | AW (new) | `PAIR-001`, `PAIR-003`, `CASE-003`–`CASE-006`, `BATT-004`; `ANC-001`–`004`, `FIND-001`/`002`, `EQS-001`, `EQP-*` attempted (nothing sent) | First hardware run of the `0045` build — Safe Mode on the verified firmware (the announcement's fixed64 field 5 made the firmware list empty), the DLCI 0x08 `0e 04` claim unanswered 20/20 (ADR-043 moves the Case to `SubscribeRuntimeInfo`), a premature "both in the case" (ADR-024 Update); `CAP-061-FINDINGS.md` | — (no bugreport archive; raw, untruncated `btsnoop_hci.log`, `CAP-061-EVENT-NOTES.md`) | `CAP-061-btsnoop_hci.log` | analyzed |
 | `CAP-062` | 2026-09-25 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0046` code (`7498cbc`, identified by log wording; hash not recorded) | AX (new) | `PAIR-001`, `PAIR-003`, `CASE-004`–`CASE-006`, `BATT-004`, `ANC-001`–`004`, `FIND-001`/`002`, `EQS-001`, `EQP-*` (Clarity) | `APP_TESTPLAN.md` run of the `0046` build — R1–R7 confirmed; ANC `Set` NAKed (`0x02`) iff the Buds report no settable mode (not worn, ADR-024 Update); the Buds close DLCI 0x02 on every wear/dock change (ADR-044); per-bud fields of `SubscribeRuntimeInfo` (🟢, `PROTOCOL.md` §4.3 Option F); I4 ring notice defect; `CAP-062-FINDINGS.md` | — (no bugreport archive; raw, untruncated `btsnoop_hci.log`, `CAP-062-EVENT-NOTES.md`) | `CAP-062-btsnoop_hci.log` | analyzed |
 | `CAP-063` | 2026-09-27 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0052` build (`94e4fb1` or later, identified by log wording; hash not recorded) | AY (new) | `PAIR-001`, `PAIR-003`, `CASE-003`–`CASE-006`, `BATT-004`, `ANC-001`–`003`, `FIND-001`, `EQP-002`–`004`, `EQS-001`, `EQS-005`, `CONV-001`/`002`, `TOUCH-001`/`002`, `HOLD-001`–`004`, `AUDIO-001`, `AUDIO-003`, `INEAR-004` | Hardware re-test of the `0048`/`0052` builds — nothing refuted; ADR-044 re-open held in all 14 session ends; settings 90 reads / 46 writes OK, byte-identical to the fixtures; a second `SubscribeRuntimeInfo` is answered (8/8, 🟢); a docked bud ACKs a ring; ANC stays disabled after re-wearing (app defect); Digital assistant: nothing on the wire (GSND closed); `CAP-063-FINDINGS.md` | — (no bugreport archive; raw, untruncated `btsnoop_hci.log`, plus `.log.last`; debug export cut at 64 KiB) | `CAP-063-btsnoop_hci.log` | analyzed |
-| `CAP-064` | *planned* | Pixel 9a | 17 | `release_5.203` | OpenControl, the commit that completes `ai-sessions/0059` | AZ (new) | `ANC-001`–`004`, `INEAR-001`–`004`, `HOLD-001`–`005`, `CASE-004`–`006`, `BATT-004`, `AUDIO-003`, `PAIR-003` | Wear and settings re-test of the `0054`/`0056` builds (I-1 … I-5, AY-3 one bud worn, the field-12 list and the in-ear switch); skeleton `CAP-064-EVENT-NOTES.md` (sections VI/VIII moved to `CAP-065` on the maintainer's choice, 2026-09-30) | — | — | planned |
+| `CAP-064` | 2026-10-01 | Pixel 9a | 17 (`CP3A.260905.009`) | `release_5.203` | OpenControl, ≥ the `ai-sessions/0057` build with the `0056` writes, installed 16 min after `b65085a` (hash not recorded) | AZ (new) | `ANC-001`, `ANC-003`, `INEAR-001`–`004`, `HOLD-001`–`005`, `CASE-004`–`006`, `BATT-004`, `AUDIO-003`, `PAIR-003` (`ANC-002`/`004` only via long presses) | Wear and settings re-test of the `0054`/`0056`/`0059` builds, ears on film: lid-open with docked buds brings no link (the auto-connect observation qualified), 4/4 LINK_BACK re-opens; AY-3 one worn ⇒ `e8`; `e8` with none worn (in-ear off; 28 s with it on); AZ-3 never `40`; I-1c tile NAK on a stale `e8`; `CAP-064-EVENT-NOTES.md`, `CAP-064-FINDINGS.md` (`ai-sessions/0060`) | `CAP-064-EVENT-NOTES.md` | `CAP-064-FINDINGS.md` | analyzed |
 | `CAP-065` | *planned* | Pixel 9a | 17 | `release_5.203` | OpenControl, the commit that completes `ai-sessions/0059` | BA (new) | `ANC-001`–`004`, `PAIR-001`, `PAIR-003`, `CASE-004`–`006`, `BATT-004`, `EQS-001`, `EQP-002`, `AUDIO-001`, `AUDIO-003`, `HOLD-001`, `INEAR-001` | The `0059` app fixes on hardware, Settable with one bud docked / one loose (ADR-049 🟡), lead L-1 (announced channel per bud), the robustness steps and the pull-to-refresh checks moved from `CAP-064`; skeleton `CAP-065-EVENT-NOTES.md` | — | — | planned |
+| `CAP-066` | *planned* | Pixel 9a | 17 | `release_5.203` | OpenControl, the latest commit under `android/` | BB (new) | `ANC-001`–`004`, `INEAR-002`–`004`, `CASE-004`–`006`, `BATT-004`, `AUDIO-003`, `PAIR-003` | The `CAP-064` leftovers: the real I-1 path, Settable `00` timing, ANC-002/004 in the app, the I-4 (i) words, balance restore; skeleton `CAP-066-EVENT-NOTES.md` (`ai-sessions/0060`) | — | — | planned |
 
 **Column notes:**
 

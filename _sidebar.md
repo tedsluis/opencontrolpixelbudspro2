@@ -211,7 +211,10 @@
   - **CAP-063 (Group AY)**
     - [CAP-063-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-063-2026-09-27_15-57-33_16-25-03-Group_AY/CAP-063-EVENT-NOTES.md)
     - [CAP-063-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-063-2026-09-27_15-57-33_16-25-03-Group_AY/CAP-063-FINDINGS.md)
-  - **CAP-064 (Group AZ)** _(planned)_
-    - [CAP-064-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-064-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AZ/CAP-064-EVENT-NOTES.md)
+  - **CAP-064 (Group AZ)**
+    - [CAP-064-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-064-2026-10-01_10-04-14_10-29-28-Group_AZ/CAP-064-EVENT-NOTES.md)
+    - [CAP-064-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-064-2026-10-01_10-04-14_10-29-28-Group_AZ/CAP-064-FINDINGS.md)
   - **CAP-065 (Group BA)** _(planned)_
     - [CAP-065-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-065-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BA/CAP-065-EVENT-NOTES.md)
+  - **CAP-066 (Group BB)** _(planned)_
+    - [CAP-066-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-066-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BB/CAP-066-EVENT-NOTES.md)

@@ -2227,6 +2227,12 @@ motivated this).
   "Controls". Hardware re-test: untick Adaptive → `4:{12:{1:1 2:1 3:1 4:0}}` → OK; a long press then cycles Noise cancellation → Off → Transparency only (`Notify`
   modes `08`, `20`, `80`). If a capture shows separate per-bud lists, this ADR is superseded.
 
+- **Update (2026-10-01, `ai-sessions/0060`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-046/047", option *"Record both (Recommended)"*) — hardware re-test
+  passed.** `CAP-064` (OpenControl on the Pixel 9a): unticking Adaptive wrote `4:{12:{1:1 2:1 3:1 4:0}}` (frame 9684, byte-identical to `CAP-041` 2192 on
+  channel 21) → `RESPONSE` OK (9688); six long presses on the Right bud then gave `Notify` modes `80, 08, 20, 80, 08, 20` (9737–9793) — **never `40`**: the
+  Buds follow the list OpenControl wrote. Unticking a second mode left two boxes greyed with the "at least two" note and a tap on them sent nothing (9849 →
+  9899). One shared list for both buds stays 🟡 (not tested). `CAP-064-FINDINGS.md` §2–§3. The decision is unchanged.
+
 ## ADR-047 — DLCI 0x02: `WriteSetting` unblocked for `qhr` field 2 (In-ear detection)
 
 - **Date**: 2026-09-28
@@ -2246,6 +2252,12 @@ motivated this).
   "only while worn" ANC check may not apply. ADR-044's re-open is unchanged (the Buds still close DLCI 0x02 with it off). Hardware re-test: OpenControl writes
   `4:{2:0}` → OK + SASS `07 11 … b0 00`; a bud out → no `PlaybackStatusChanged`; `4:{2:1}` → OK + SASS `… b8 00`; plus a `Get` (ANC Refresh) with it off and no bud
   worn to settle the Settable byte.
+
+- **Update (2026-10-01, `ai-sessions/0060`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-046/047", option *"Record both (Recommended)"*) — hardware re-test
+  passed; the 🔴 of the Context answered.** `CAP-064`: `4:{2:0}` (9922, = `CAP-056` 2849) and `4:{2:1}` (10817, = `CAP-056` 3627) → OK; the Buds' SASS
+  capability `07 11 00 04 01 02 b0 00` (9927) / `… b8 00` (10822) follows each within 1 ms; with it off a bud taken out while music played caused **no**
+  AVRCP pause (none between 10047 and 10494), the Buds still closed the session on wear changes (`DISC` 10102, 10309 — ADR-044's re-open unchanged), and the
+  **Settable byte read `e8` with both buds on the table** (10394, 10600; ears on film). `CAP-064-FINDINGS.md` §2–§3. The decision is unchanged.
 
 
 ## ADR-048 — The UI layer holds no ViewModel: state is hoisted in `:app`'s `MainActivity` and application-scoped holders
@@ -2299,6 +2311,11 @@ motivated this).
 - **Consequences**: no code change — the app already reads the byte only as "allowed / not allowed" (`AncAvailability`, `ai-sessions/0048`/`0054`).
   `PROTOCOL.md` §4.1's bullet is retitled; code comments that still say "dock state" (`AncFrame.kt`) are corrected; capture files that call `0x00` "both
   docked" 🟢 get a status banner (A58-CAP-04).
+- **Update (2026-10-01, `ai-sessions/0060`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-049", option *"Update as drafted (Recommended)"*):**
+  `CAP-064` (ears on film): one worn bud ⇒ `e8` (AY-3a 4103, AY-3b 4533); in-ear detection off ⇒ `e8` with no bud worn (10394, 10600); in-ear detection on:
+  `e8` for ≈ 28 s with both buds on the table (2299, 2542, 2699, 2759) and a `Set` ACKed (2698). Every `00` of the capture came with no bud worn (incl. 5591,
+  one docked/one loose). **Item 3 now reads:** 🟡 HYPOTHESIS (strong) "`00` ⇒ no bud worn"; the converse "no bud worn ⇒ `00`" is refuted (`CAP-064-FINDINGS.md`
+  §3). Items 1, 2 and 4 are unchanged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
