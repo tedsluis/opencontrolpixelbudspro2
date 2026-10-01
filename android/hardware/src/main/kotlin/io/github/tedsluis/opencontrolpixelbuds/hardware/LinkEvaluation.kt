@@ -20,6 +20,7 @@
 package io.github.tedsluis.opencontrolpixelbuds.hardware
 
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -80,6 +81,7 @@ object LinkEvaluation {
  * [AndroidLink.CONNECTED]/[AndroidLink.UNKNOWN] passes immediately. One bounded delay per event — no timer loop,
  * nothing runs while nothing changes (ARCHITECTURE.md §6).
  */
+@OptIn(ExperimentalCoroutinesApi::class) // transformLatest
 fun Flow<AndroidLink>.settled(notConnectedDelayMs: Long): Flow<AndroidLink> =
     distinctUntilChanged().transformLatest { link ->
         if (link == AndroidLink.NOT_CONNECTED) delay(notConnectedDelayMs)

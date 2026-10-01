@@ -33,12 +33,13 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.ancTileState
+import io.github.tedsluis.opencontrolpixelbuds.domain.ancTileStates
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -59,8 +60,9 @@ import javax.inject.Inject
  * ([AncAvailability.NOT_ALLOWED]) the subtitle says "Only while worn"; a tap goes to [BudsRepository.setAncMode] like any other, which first asks the
  * Buds again in its claim and switches only if they now allow it — if they still refuse, a toast says so (the maintainer's choice, chat 2026-09-28).
  *
- * // TODO(verify): not exercised on a phone — whether GrapheneOS shows/keeps the tile and that the tap works with the app in the
- * // background (`ai-sessions/0042` §12 re-test).
+ * Shown, kept and tapped on GrapheneOS in `CAP-062` (R7) and `CAP-063` (J1–J4). **`ai-sessions/0059` (A58-APP-01):** the state comes from
+ * [ancTileStates], which starts the ANC mode at `null` — before, `combine` waited for the first ANC report of the process and the tile could say
+ * "Open the app" while the session was `Ready`.
  */
 @AndroidEntryPoint
 class AncTileService : TileService() {
@@ -87,12 +89,10 @@ class AncTileService : TileService() {
         super.onStartListening()
         listenJob?.cancel()
         listenJob = listenScope.launch {
-            combine(repository.connectionState, repository.ancMode, repository.ancAvailability) { session, mode, availability ->
-                Triple(session, mode, availability)
-            }.collect { (session, mode, availability) ->
-                latestSession = session
-                latestMode = mode
-                latestAvailability = availability
+            ancTileStates(repository.connectionState, repository.ancMode, repository.ancAvailability).collect { state ->
+                latestSession = if (state.ready) ConnectionState.Ready else ConnectionState.Disconnected
+                latestMode = state.mode
+                latestAvailability = state.availability
                 render()
             }
         }
@@ -140,16 +140,11 @@ class AncTileService : TileService() {
 
     private fun render() {
         val tile = qsTile ?: return
-        val ready = latestSession is ConnectionState.Ready
+        val state = ancTileState(latestSession, latestMode, latestAvailability)
         tile.label = "ANC"
         tile.icon = Icon.createWithResource(this, R.drawable.ic_anc_tile)
-        tile.subtitle = when {
-            !ready -> "Open the app"
-            latestAvailability == AncAvailability.NOT_ALLOWED -> "Only while worn"
-            latestMode == null -> "Tap to switch"
-            else -> latestMode.toString().lowercase().replaceFirstChar { it.uppercase() }
-        }
-        tile.state = if (ready && latestMode != null && latestMode != AncMode.OFF) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+        tile.subtitle = state.subtitle
+        tile.state = if (state.active) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.updateTile()
     }
 

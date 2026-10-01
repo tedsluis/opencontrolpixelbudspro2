@@ -125,7 +125,7 @@ class BudsRepositoryImpl(
     private val bondedDeviceProvider: () -> BluetoothDevice?,
     debugModeEnabled: Flow<Boolean>,
     private val scope: CoroutineScope,
-    /** Wall clock for the provisional dock-state rule (ADR-024), the loss cause (I-7) and the re-open rules (ADR-044); a test passes its virtual clock. */
+    /** Wall clock for the provisional Settable rule (ADR-049, which superseded ADR-024's dock-state reading), the loss cause (I-7) and the re-open rules (ADR-044); a test passes its virtual clock. */
     private val clock: () -> Long = System::currentTimeMillis,
     /** Whether ADR-044's automatic re-open is on before the first Connect/Disconnect tap of this process. */
     autoReopenInitially: Boolean = true,
@@ -174,6 +174,14 @@ class BudsRepositoryImpl(
 
     @Volatile
     private var eqReadJob: Job? = null
+
+    /**
+     * A58-APP-04 (`ai-sessions/0059`, ADR-045 Update 2026-09-30): until this time (the injected [clock]) no Maestro request is sent — set when a `WriteSetting`
+     * got no answer within [EQ_WRITE_ACK_TIMEOUT_MS]. pw_rpc answers carry no `call_id` to match on, so a late answer to that write must not be taken as the
+     * answer to the next one; it arrives while nothing waits and is dropped (logged in [handleRoutedFrame]).
+     */
+    @Volatile
+    private var writeQuarantineUntil: Long = Long.MIN_VALUE
 
     /**
      * Serialises every use of the shared Message Stream channel (DLCI 0x04) — claim, action, release
@@ -292,17 +300,17 @@ class BudsRepositoryImpl(
      * value is actually received. */
     private fun emitAncMode(mode: AncMode) {
         _ancMode.tryEmit(mode)
-        _ancModeUpdatedAt.value = System.currentTimeMillis()
+        _ancModeUpdatedAt.value = clock()
     }
 
     private fun updateEqProfile(gains: EqBandGains?) {
         _eqProfile.value = gains
-        _eqProfileUpdatedAt.value = if (gains == null) null else System.currentTimeMillis()
+        _eqProfileUpdatedAt.value = if (gains == null) null else clock()
     }
 
     private fun updateBatteryStatus(transform: (BatteryStatus) -> BatteryStatus) {
         _batteryStatus.update(transform)
-        _batteryStatusUpdatedAt.value = System.currentTimeMillis()
+        _batteryStatusUpdatedAt.value = clock()
     }
 
     private fun updateAncAvailability(availability: AncAvailability) {
@@ -409,12 +417,12 @@ class BudsRepositoryImpl(
         scope.launch {
             transport.inbound.collect { (channelId, bytes) ->
                 lastInboundChannel = channelId
-                lastInboundAtMillis = System.currentTimeMillis()
+                lastInboundAtMillis = clock()
                 BleLogger.logHexDump(channelId, bytes, debugModeEnabledSnapshot)
                 val routed = codecRouter.feed(
                     channelId,
                     bytes,
-                    timestampMillis = System.currentTimeMillis(),
+                    timestampMillis = clock(),
                     onUnidentified = { _unidentifiedFrames.tryEmit(it) },
                     onMalformed = { BleLogger.logMalformedFrame(channelId, debugModeEnabledSnapshot) },
                     // Always-on, payload-free (AGENTS.md §9): shows whether the Buds accept or reject a request.
@@ -451,7 +459,7 @@ class BudsRepositoryImpl(
                             loss.channelId,
                             loss.detail,
                             seen,
-                            if (seen == null) null else System.currentTimeMillis() - lastInboundAtMillis,
+                            if (seen == null) null else clock() - lastInboundAtMillis,
                         ),
                     )
                     _lastConnectionError.value = BudsError.ChannelLost(loss.channelId, loss.detail)
@@ -529,7 +537,13 @@ class BudsRepositoryImpl(
                 }
             }
 
-            is RoutedFrame.RpcResult -> _maestroReplies.tryEmit(MaestroReply.Result(frame))
+            is RoutedFrame.RpcResult -> {
+                if (frame.methodId == Maestro.METHOD_WRITE_SETTING && clock() < writeQuarantineUntil) {
+                    // A58-APP-04: the late answer to a write that already timed out — nothing waits for it, it is dropped (no payload logged).
+                    BleLogger.logConnectionEvent("Late WriteSetting answer dropped (its write had already timed out)")
+                }
+                _maestroReplies.tryEmit(MaestroReply.Result(frame))
+            }
 
             // ADR-036/045 (`ai-sessions/0052`): a setting the Buds reported — a read answer (or a settings-change push). Applied with its receive time.
             is RoutedFrame.Setting -> {
@@ -739,7 +753,12 @@ class BudsRepositoryImpl(
     }
 
     override suspend fun setEqGains(gains: EqBandGains): BudsResult<Unit> {
-        if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
+        when (connectionStateMachine.state.value) {
+            is ConnectionState.Ready -> Unit
+            // As writeSetting's U-2 (`ai-sessions/0056`; 0058 A58-APP-08): a re-open says so on the EQ tab; nothing is sent and nothing is queued.
+            is ConnectionState.Connecting, is ConnectionState.Discovering -> return eqFailed(BudsError.SessionOpening)
+            else -> return BudsResult.Failure(BudsError.ConnectionLost)
+        }
         val clamped = gains.clamped()
         return eqMutex.withLock {
             val channel = when (val c = awaitMaestroChannel()) {
@@ -749,12 +768,16 @@ class BudsRepositoryImpl(
             writeGate(requireModelIdOfClaim = false)?.let { return@withLock eqFailed(it) }
             val payload = EqFrameEncoder.encode(EqFrame(clamped, persist = false, channelId = channel.channelId))
             val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, payload)
+            awaitWriteQuarantine()
             val (sent, reply) = sendAndAwait(_maestroReplies, EQ_WRITE_ACK_TIMEOUT_MS, { it.isResultFor(Maestro.METHOD_WRITE_SETTING) }) {
                 transport.send(Dlci.MAESTRO, wire)
             }
             when {
                 sent is BudsResult.Failure -> eqFailed(sent.error)
-                reply == null -> eqFailed(BudsError.Timeout)
+                reply == null -> {
+                    startWriteQuarantine()
+                    eqFailed(BudsError.Timeout)
+                }
                 reply is MaestroReply.Result && reply.result.isOk -> {
                     updateEqProfile(clamped)
                     _eqError.value = null
@@ -787,7 +810,8 @@ class BudsRepositoryImpl(
     /**
      * `ReadSetting 4:16` (DECISIONS.md ADR-034): waits for the Buds' channel announcement, sends the request on that
      * channel, and waits for the value — or for an error result. Nothing is retried; a failure is reported with its reason.
-     * // TODO(verify): a fresh client may have to send other requests first (PROTOCOL.md §2.2a) — hardware re-test.
+     * A fresh client needs no opening message: the app's request was answered at every Connect of `CAP-062`/`CAP-063`
+     * (`CAP-059-FINDINGS.md`; `ai-sessions/0058` A58-APP-07).
      */
     private suspend fun readEq(): BudsResult<EqBandGains> = eqMutex.withLock {
         val channel = when (val c = awaitMaestroChannel()) {
@@ -797,14 +821,17 @@ class BudsRepositoryImpl(
         val request = Maestro.readSettingRequest(channel.channelId, Maestro.FIELD_EQ_ACTIVE)
             ?: return@withLock eqFailed(BudsError.Unknown(IllegalStateException("EQ field not readable")))
         val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(request))
+        // An OK answer that is not a decodable EQ value ends the wait too (A58-APP-03): reported as unreadable, not as "no answer".
         val accept: (MaestroReply) -> Boolean = {
             (it is MaestroReply.Value && !it.frame.persist) ||
-                (it is MaestroReply.Result && it.result.methodId == Maestro.METHOD_READ_SETTING && !it.result.isOk)
+                (it is MaestroReply.Result && it.result.methodId == Maestro.METHOD_READ_SETTING)
         }
+        awaitWriteQuarantine()
         val (sent, reply) = sendAndAwait(_maestroReplies, EQ_READ_TIMEOUT_MS, accept) { transport.send(Dlci.MAESTRO, wire) }
         when {
             sent is BudsResult.Failure -> eqFailed(sent.error)
             reply == null -> eqFailed(BudsError.Timeout)
+            reply is MaestroReply.Result && reply.result.isOk -> eqFailed(BudsError.UnreadableAnswer)
             reply is MaestroReply.Value -> {
                 BleLogger.logConnectionEvent("EQ read ok (channel ${channel.channelId})")
                 updateEqProfile(reply.frame.gains)
@@ -827,6 +854,21 @@ class BudsRepositoryImpl(
             ?: BudsResult.Failure(BudsError.MaestroChannelUnknown(id))
     }
 
+    /** Waits out a running write quarantine (A58-APP-04) — one bounded delay, called inside [eqMutex] right before a Maestro request is sent. */
+    private suspend fun awaitWriteQuarantine() {
+        val until = writeQuarantineUntil
+        val now = clock()
+        if (now < until) { // compare first: `until - now` would overflow while `until` is still Long.MIN_VALUE
+            val remaining = until - now
+            BleLogger.logConnectionEvent("Maestro request held ${remaining} ms: an earlier WriteSetting got no answer (its late answer must not be taken as this one's)")
+            delay(remaining)
+        }
+    }
+
+    private fun startWriteQuarantine() {
+        writeQuarantineUntil = clock() + EQ_WRITE_ACK_TIMEOUT_MS
+    }
+
     private fun <T> eqFailed(error: BudsError): BudsResult<T> {
         BleLogger.logConnectionEvent("EQ request failed: ${eqErrorLogText(error)}")
         _eqError.value = error
@@ -837,6 +879,7 @@ class BudsRepositoryImpl(
         is BudsError.MaestroChannelUnknown -> "no usable Maestro channel (announced: ${error.channelId})"
         is BudsError.MaestroRejected -> "rejected by the Buds (${error.detail})"
         BudsError.Timeout -> "no answer from the Buds"
+        BudsError.UnreadableAnswer -> "answered with a value this app cannot read (raw bytes: Debug mode hex dump only)"
         else -> error::class.simpleName ?: "error"
     }
 
@@ -912,12 +955,16 @@ class BudsRepositoryImpl(
             val packet = request(channel.channelId, value)
                 ?: return@withLock settingFailed(BudsError.Unknown(IllegalStateException("setting ${value.field} is not writable")))
             val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(packet))
+            awaitWriteQuarantine()
             val (sent, reply) = sendAndAwait(_maestroReplies, EQ_WRITE_ACK_TIMEOUT_MS, { it.isResultFor(Maestro.METHOD_WRITE_SETTING) }) {
                 transport.send(Dlci.MAESTRO, wire)
             }
             when {
                 sent is BudsResult.Failure -> settingFailed(sent.error)
-                reply == null -> settingFailed(BudsError.Timeout)
+                reply == null -> {
+                    startWriteQuarantine()
+                    settingFailed(BudsError.Timeout)
+                }
                 reply is MaestroReply.Result && reply.result.isOk -> {
                     applySetting(value, clock(), changedByApp = true)
                     _settingsError.value = null
@@ -1045,6 +1092,7 @@ class BudsRepositoryImpl(
             is BudsResult.Success -> c.value
         }
         val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(Maestro.subscribeRuntimeInfoRequest(channel.channelId)))
+        awaitWriteQuarantine()
         when (val sent = transport.send(Dlci.MAESTRO, wire)) {
             is BudsResult.Failure -> {
                 if (!fromRefresh) _caseBatteryError.value = sent.error
@@ -1089,7 +1137,7 @@ class BudsRepositoryImpl(
             try {
                 for (attempt in 1..2) {
                     if (!transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM)) {
-                        // A new claim: empty buffer, no Model ID yet, and the reference point for the provisional dock state.
+                        // A new claim: empty buffer, no Model ID yet, and the reference point for the provisional Settable reading (ADR-049).
                         codecRouter.reset(Dlci.FAST_PAIR_MESSAGE_STREAM)
                         _modelIdThisClaim.value = null
                         messageStreamOpenedAt = clock()
@@ -1161,14 +1209,18 @@ class BudsRepositoryImpl(
         for (field in SETTING_READ_ORDER) {
             val request = Maestro.readSettingRequest(channel.channelId, field) ?: continue
             val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(request))
+            // A58-APP-03 (`ai-sessions/0059`): an OK `ReadSetting` answer whose value the codec rejects arrives as an OK [MaestroReply.Result] — it ends
+            // the wait at once as [BudsError.UnreadableAnswer] (the field stays "not read") instead of a 2 s `Timeout` that would say the Buds did not answer.
             val accept: (MaestroReply) -> Boolean = {
                 (it is MaestroReply.Setting && it.value.field == field) ||
-                    (it is MaestroReply.Result && it.result.methodId == Maestro.METHOD_READ_SETTING && !it.result.isOk)
+                    (it is MaestroReply.Result && it.result.methodId == Maestro.METHOD_READ_SETTING)
             }
+            awaitWriteQuarantine()
             val (sent, reply) = sendAndAwait(_maestroReplies, SETTING_READ_TIMEOUT_MS, accept) { transport.send(Dlci.MAESTRO, wire) }
             val error = when {
                 sent is BudsResult.Failure -> sent.error
                 reply == null -> BudsError.Timeout
+                reply is MaestroReply.Result && reply.result.isOk -> BudsError.UnreadableAnswer
                 reply is MaestroReply.Result -> BudsError.MaestroRejected("${PwRpc.typeName(reply.result.type)} ${PwRpc.statusName(reply.result.status)}")
                 else -> null
             }

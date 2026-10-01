@@ -40,9 +40,9 @@ import java.util.zip.CRC32
  * address and `03` is the control byte (DECISIONS.md ADR-034).
  *
  * This is the shared transport layer only — it says nothing about what a
- * DLCI 0x02 payload's *content* means. Per ARCHITECTURE.md §5a, only EQ's
- * payload content is implementation-unblocked on this channel today; every
- * other DLCI 0x02 setting stays gated pending a consolidated unblock ADR.
+ * DLCI 0x02 payload's *content* means. Which settings may be read or written
+ * on this channel is decided per setting (ARCHITECTURE.md §5a; EQ ADR-034,
+ * settings ADR-045/046/047), not here.
  */
 object Hdlc {
     private const val FLAG: Int = 0x7E

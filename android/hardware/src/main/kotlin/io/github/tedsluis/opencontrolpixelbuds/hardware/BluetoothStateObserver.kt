@@ -54,10 +54,18 @@ class BluetoothStateObserver(private val context: Context) {
         }
         context.registerReceiver(receiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
 
-        val adapter = context.getSystemService<BluetoothManager>()?.adapter
-        trySend(if (adapter?.isEnabled == true) BluetoothAdapterState.ON else BluetoothAdapterState.OFF)
+        trySend(current())
 
         awaitClose { context.unregisterReceiver(receiver) }
+    }
+
+    /**
+     * The adapter state now, read synchronously — the UI's initial value, so the first frame does not show "Bluetooth is disabled" before [observe]'s first
+     * value arrives (`ai-sessions/0058` A58-APP-08).
+     */
+    fun current(): BluetoothAdapterState {
+        val adapter = context.getSystemService<BluetoothManager>()?.adapter
+        return if (adapter?.isEnabled == true) BluetoothAdapterState.ON else BluetoothAdapterState.OFF
     }
 
     private fun mapState(state: Int): BluetoothAdapterState = when (state) {

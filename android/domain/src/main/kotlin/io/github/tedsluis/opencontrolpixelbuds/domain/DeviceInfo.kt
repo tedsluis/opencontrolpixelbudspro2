@@ -45,8 +45,8 @@ enum class AncAvailability {
 
 /**
  * What the Buds announce about themselves when a session opens (their unsolicited `GetSoftwareInfo`, DECISIONS.md ADR-034):
- * the distinct firmware version strings, e.g. `release_5.203`. Identifiers such as serial numbers are deliberately not carried
- * (`AGENTS.md` §9).
+ * the distinct firmware version strings, e.g. `release_5.203`. The entries' version numbers (`PROTOCOL.md` §2.2a, L-5) and the
+ * component serials (`GetHardwareInfo`, `AGENTS.md` §9) are not carried.
  */
 data class DeviceInfo(val firmware: List<String>)
 

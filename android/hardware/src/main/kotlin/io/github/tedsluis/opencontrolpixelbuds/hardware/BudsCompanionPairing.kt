@@ -32,6 +32,7 @@ import android.content.IntentFilter
 import android.content.IntentSender
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -220,6 +221,7 @@ class BudsCompanionPairing(private val context: Context) {
      * back to `BOND_NONE` is classified by [PairingLogic.classifyBondEnd]; a bond that takes longer than
      * [BOND_TIMEOUT_MS] ends with [PairingFailure.BondTimeout] (one bounded wait, not a retry loop).
      */
+    @OptIn(DelicateCoroutinesApi::class) // isClosedForSend: only a guard against sending after close(), never a synchronisation point
     fun observeBonding(device: BluetoothDevice): Flow<PairingState> = callbackFlow {
         var sawBonding = false
         val receiver = object : BroadcastReceiver() {

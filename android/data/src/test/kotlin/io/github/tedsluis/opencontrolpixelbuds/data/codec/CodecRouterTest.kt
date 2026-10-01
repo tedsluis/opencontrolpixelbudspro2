@@ -141,7 +141,7 @@ class CodecRouterTest {
         assertTrue((routed[1] as RoutedFrame.RpcResult).isOk)
     }
 
-    // Real frames (CAP-036 / CAP-015; the GetSoftwareInfo tail is the real header with the serial-carrying payload left out).
+    // Real frames (CAP-036 / CAP-015; the GetSoftwareInfo tail is the real header with the payload — its version-number field 1 — left out).
     private val readResponse16 =
         "7e00a5032a1e221c8201190dc0cccc3d15000000001da099993e25c0cc4c3e2dc0cc4c3e080110151dea71de7d5e2551aed0ae85b618ed7e"
     private val writeAck2117 = "7e80a303080110131dea71de7d5e251d9a8c9e4c05e6d97e"

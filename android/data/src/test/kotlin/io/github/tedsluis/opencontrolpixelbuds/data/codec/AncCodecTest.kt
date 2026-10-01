@@ -145,8 +145,8 @@ class AncFrameDecoderTest {
     }
 
     @Test
-    @DisplayName("CAP-036 frame 1182: Notify ANC state, Settable=0x00 (dock state, DECISIONS.md ADR-024)")
-    fun `decodes the Notify ANC state frame with dock-state settable byte`() {
+    @DisplayName("CAP-036 frame 1182: Notify ANC state, Settable=0x00 (a Set would be NAKed, DECISIONS.md ADR-049)")
+    fun `decodes the Notify ANC state frame with settable byte 0x00`() {
         val result = AncFrameDecoder.decode(hex("0813000401e80020"))
         assertInstanceOf(BudsResult.Success::class.java, result)
         val frame = (result as BudsResult.Success).value

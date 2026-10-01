@@ -75,6 +75,26 @@ class ConnectionStateMachineTest {
         assertEquals(ConnectionState.Disconnected, sm.state.value)
     }
 
+    /**
+     * `ai-sessions/0059` (A58-APP-05): `connect()` calls [ConnectionStateMachine.onReady] while a socket reader may report a loss from an IO thread at the
+     * same moment. Whatever the order, the loss must win: either Ready first and then the loss, or the loss first and then a refused Ready (Disconnected is
+     * not a state Ready may follow). A read-then-write transition lets a Ready computed from the stale Discovering overwrite the loss — this test runs both
+     * calls on two threads released by one barrier, many times, and requires Disconnected every time.
+     */
+    @Test
+    fun `a loss racing onReady always ends Disconnected`() {
+        repeat(3_000) { round ->
+            val sm = ConnectionStateMachine()
+            sm.onConnectRequested()
+            sm.onLinkEstablished()
+            val barrier = java.util.concurrent.CyclicBarrier(2)
+            val ready = Thread { barrier.await(); sm.onReady() }
+            val loss = Thread { barrier.await(); sm.onDisconnected() }
+            ready.start(); loss.start(); ready.join(); loss.join()
+            assertEquals(ConnectionState.Disconnected, sm.state.value, "round $round")
+        }
+    }
+
     @Test
     fun `BleLogger describe redacts any Bluetooth address embedded in an exception message`() {
         val described = BleLogger.describe(java.io.IOException("connect to 04:00:6e:cf:6e:07 failed"))

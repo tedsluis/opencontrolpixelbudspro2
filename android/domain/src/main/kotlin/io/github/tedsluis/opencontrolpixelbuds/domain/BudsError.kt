@@ -71,7 +71,7 @@ sealed class BudsError {
 
     /**
      * An ANC `Set` was not sent because the Buds' `Notify ANC state` — the one the tap's own claim asked for (`ai-sessions/0054` I-1) — reported no
-     * switchable mode (Settable `0x00`); they NAK a `Set` then (reason `0x02`, `CAP-062` 10/10; DECISIONS.md ADR-024 Update 2026-09-25).
+     * switchable mode (Settable `0x00`); they NAK a `Set` then (reason `0x02`, `CAP-062` 10/10; DECISIONS.md ADR-049).
      */
     data object AncNotAllowed : BudsError()
 
@@ -95,10 +95,17 @@ sealed class BudsError {
     data object AncModeListNotRead : BudsError()
 
     /**
-     * A settings write was tapped while the session is being (re)opened — ADR-044's automatic re-open, or a Connect in progress (`ai-sessions/0056` U-2;
+     * A settings or EQ write (the EQ since `ai-sessions/0059`) was tapped while the session is being (re)opened — ADR-044's automatic re-open, or a Connect in progress (`ai-sessions/0056` U-2;
      * `CAP-056`: 3.3 s between the Buds' `DISC` 4168 and the re-open 4304). Nothing was sent and nothing is queued.
      */
     data object SessionOpening : BudsError()
+
+    /**
+     * The Buds answered a `ReadSetting` with status OK, but with a value this app cannot decode (e.g. a press-and-hold action other than 5/6, a field-12
+     * list without all four booleans) — `ai-sessions/0059`, A58-APP-03. The value stays "not read"; the read ends at once instead of waiting for a
+     * `Timeout` that would wrongly say the Buds did not answer. The raw bytes are only in Debug mode's hex dump (AGENTS.md §9).
+     */
+    data object UnreadableAnswer : BudsError()
 
     /**
      * The Buds did not announce which pw_rpc channel this connection uses (their unsolicited `GetSoftwareInfo`

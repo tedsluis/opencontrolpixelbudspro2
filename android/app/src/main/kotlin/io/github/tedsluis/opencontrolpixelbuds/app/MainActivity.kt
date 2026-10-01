@@ -38,7 +38,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -63,7 +62,6 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
 import io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
-import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 import io.github.tedsluis.opencontrolpixelbuds.domain.deriveDeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.permissionStatus
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
@@ -83,7 +81,6 @@ import io.github.tedsluis.opencontrolpixelbuds.ui.PullAction
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -124,6 +121,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var applicationScope: CoroutineScope
 
+    /** Pairing progress, the bonding observation and the unidentified frames — outside the Activity (ADR-048 item 2, A58-APP-08). */
+    @Inject
+    lateinit var uiSession: AppUiSession
+
+    // The system picker (associate) and the bonded lookup stay on this Activity-context instance; the bonding wait runs on the application-context
+    // singleton in [AppUiSession] (A58-APP-08), so a rotation no longer cancels it.
     private val companionPairing by lazy { BudsCompanionPairing(this) }
     private val bluetoothStateObserver by lazy { BluetoothStateObserver(this) }
     private val osConnectionObserver by lazy {
@@ -139,9 +142,8 @@ class MainActivity : ComponentActivity() {
     /** The latest raw reading of Android's link (`OsConnectionObserver`); the screen shows it debounced ([settled]). */
     private val latestLink = MutableStateFlow(AndroidLink.UNKNOWN)
 
-    /** Pairing progress, held here (not in a composable) so the picker's result callback below can reset it. */
-    private val pairingStateFlow = MutableStateFlow<PairingState?>(null)
-    private var bondingJob: Job? = null
+    /** Pairing progress — in [AppUiSession] so a rotation keeps it (and the picker's result callback below can reset it). */
+    private val pairingStateFlow get() = uiSession.pairingState
 
     /** Whether a system permission prompt was already shown since this process started (see [permissionStatus]). */
     private var permissionsRequestedThisRun = false
@@ -240,7 +242,7 @@ class MainActivity : ComponentActivity() {
      * The pairing entry point behind "Pair a device". Re-entry guard (`ai-sessions/0042`): one tap started two CDM requests 82 ms
      * apart and the second one's raw error was shown while the first picker was open — nothing new starts while a pairing runs.
      */
-    private fun startPairing(scope: CoroutineScope, onBonded: () -> Unit) {
+    private fun startPairing() {
         val running = pairingStateFlow.value
         if (running == PairingState.Requesting || running == PairingState.Bonding) {
             BleLogger.logConnectionEvent("Pairing: tap ignored — a pairing attempt is already in progress")
@@ -259,13 +261,9 @@ class MainActivity : ComponentActivity() {
                     pairingStateFlow.value = PairingState.Failed(PairingFailure.DeviceNotResolved)
                 } else {
                     companionPairing.cleanUpDuplicateAssociations(associationInfo)
-                    bondingJob?.cancel() // a newer pairing supersedes an older bond wait (and its timeout)
-                    bondingJob = scope.launch {
-                        companionPairing.observeBonding(device).collect { newState ->
-                            pairingStateFlow.value = newState
-                            if (newState is PairingState.Bonded) onBonded()
-                        }
-                    }
+                    // Application-scoped (A58-APP-08): a rotation during pairing no longer cancels the bond wait. `Bonded` re-reads the bonded lookup
+                    // below (LaunchedEffect on the pairing state), not through a callback into this Activity.
+                    uiSession.startBonding(device)
                 }
             },
             onFailure = { failure ->
@@ -279,8 +277,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         refreshPermissions("start")
         setContent {
-            val scope = rememberCoroutineScope()
-
             val connectionState by budsRepository.connectionState
                 .collectAsStateWithLifecycle(initialValue = ConnectionState.Disconnected)
             val ancMode by budsRepository.ancMode.collectAsStateWithLifecycle(initialValue = null)
@@ -325,11 +321,12 @@ class MainActivity : ComponentActivity() {
             val androidLink by remember { latestLink.settled(OsConnectionObserver.NOT_CONNECTED_SETTLE_MS) }
                 .collectAsStateWithLifecycle(initialValue = AndroidLink.UNKNOWN)
             val bluetoothAdapterState by remember { bluetoothStateObserver.observe() }
-                .collectAsStateWithLifecycle(initialValue = BluetoothAdapterState.OFF)
+                .collectAsStateWithLifecycle(initialValue = remember { bluetoothStateObserver.current() })
             val debugModeEnabled by debugSettingsStore.debugModeEnabled.collectAsStateWithLifecycle(initialValue = false)
 
             var bondedLookup by remember { mutableStateOf(companionPairing.lookupBonded()) }
             val pairingState by pairingStateFlow.collectAsStateWithLifecycle()
+            LaunchedEffect(pairingState) { if (pairingState is PairingState.Bonded) bondedLookup = companionPairing.lookupBonded() }
 
             // Pairing done outside this app entirely (Android's own Bluetooth settings) never fires any callback this
             // Activity owns — the only way to notice it is to re-check on every resume (ai-sessions/0036). The same resume
@@ -358,12 +355,8 @@ class MainActivity : ComponentActivity() {
             // broadcasts are not guaranteed on every device (ai-sessions/0042).
             LaunchedEffect(bondedLookup, connectionState) { linkRefresh.tryEmit(Unit) }
 
-            val unidentifiedFrames = remember { mutableStateOf(listOf<UnidentifiedFrame>()) }
-            LaunchedEffect(Unit) {
-                budsRepository.unidentifiedFrames.collect { frame ->
-                    unidentifiedFrames.value = (unidentifiedFrames.value + frame).takeLast(200)
-                }
-            }
+            // ADR-048 item 2 (A58-APP-08): kept in [AppUiSession], so a rotation no longer empties the Debug list.
+            val unidentifiedFrames by uiSession.unidentifiedFrames.collectAsStateWithLifecycle()
 
             // The foreground service is driven from the application scope (OpenControlApplication), not from this lifecycle-bound
             // UI state — so a session that ends while the app is in the background still stops it (0044 finding APP-6).
@@ -403,7 +396,7 @@ class MainActivity : ComponentActivity() {
                 settingsError = settingsError,
                 batteryStatus = batteryStatus,
                 batteryStatusUpdatedAt = batteryStatusUpdatedAt,
-                unidentifiedFrames = unidentifiedFrames.value,
+                unidentifiedFrames = unidentifiedFrames,
                 debugModeEnabled = debugModeEnabled,
             )
 
@@ -417,7 +410,7 @@ class MainActivity : ComponentActivity() {
                         BleLogger.logConnectionEvent("Enable-Bluetooth prompt refused: ${BleLogger.describe(e)}")
                     }
                 },
-                onPair = { startPairing(scope) { bondedLookup = companionPairing.lookupBonded() } },
+                onPair = { startPairing() },
                 onRequestPermissions = { requestPermissions() },
                 onOpenAppSettings = {
                     BleLogger.logConnectionEvent("Permissions: opening the app's system settings")

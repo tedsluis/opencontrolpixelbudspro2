@@ -139,9 +139,9 @@ class CaseBatteryCodecTest {
         lenDelimited(0x0a, serialLike.toByteArray()) + lenDelimited(0x12, firmware.toByteArray())
 
     @Test
-    @DisplayName("frame 1431: the announcement carries `release_5.203` three times — shown once; the serial-like field 1 is never read")
+    @DisplayName("frame 1431: the announcement carries `release_5.203` three times — shown once; field 1 (a version number, L-5) is never read")
     fun `firmware strings are distinct and the identifier is not read`() {
-        val entry = softwareInfoEntry("0000000000", "release_5.203") // the real serial-like value is deliberately not a fixture
+        val entry = softwareInfoEntry("0000000000", "release_5.203") // field 1 (once read as a serial; a version number, L-5) left out of the fixture
         val payload = lenDelimited(0x22, lenDelimited(0x0a, entry) + lenDelimited(0x12, entry) + lenDelimited(0x1a, entry))
         assertEquals(listOf("release_5.203"), SoftwareInfo.firmwareStrings(payload))
     }

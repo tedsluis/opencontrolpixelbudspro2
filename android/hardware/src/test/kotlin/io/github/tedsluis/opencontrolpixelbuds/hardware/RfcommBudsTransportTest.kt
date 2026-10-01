@@ -28,6 +28,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.delay
@@ -148,7 +149,23 @@ class RfcommBudsTransportTest {
         fastFailureThresholdMs = fastThresholdMs,
     )
 
-    private fun <T> blocking(block: suspend CoroutineScope.() -> T): T = runBlocking { withTimeout(10_000) { block() } }
+    /**
+     * Real time on purpose: the transport's readers block in `read()` on [ioDispatcher] threads, which virtual time cannot advance.
+     * `ai-sessions/0057` saw two 10 s timeouts here under a parallel gate; `ai-sessions/0059` (A58-APP-06) did not reproduce them
+     * (200 executions under full CPU load, no reader thread left behind by any test), so on a timeout this prints every thread's
+     * stack — the next occurrence names what was blocked.
+     */
+    private fun <T> blocking(block: suspend CoroutineScope.() -> T): T = runBlocking {
+        try {
+            withTimeout(10_000) { block() }
+        } catch (e: TimeoutCancellationException) {
+            Thread.getAllStackTraces().forEach { (thread, stack) ->
+                System.err.println("--- ${thread.name} (${thread.state})")
+                stack.forEach { System.err.println("    at $it") }
+            }
+            throw e
+        }
+    }
 
     private suspend fun awaitUntil(what: String, condition: () -> Boolean) {
         withTimeout(5_000) { while (!condition()) delay(5) }

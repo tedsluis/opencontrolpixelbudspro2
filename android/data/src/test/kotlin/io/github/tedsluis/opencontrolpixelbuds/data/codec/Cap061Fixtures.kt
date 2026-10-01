@@ -25,10 +25,10 @@ package io.github.tedsluis.opencontrolpixelbuds.data.codec
  * [ANNOUNCEMENT_RPC_PACKET] is HCI frame 1508 — the Buds' unsolicited `GetSoftwareInfo` RESPONSE on DLCI 0x02, channel 21 — HDLC-unescaped,
  * between the control byte `03` and the CRC. Derivation (`ai-sessions/0046`): `tshark -r CAP-061-btsnoop_hci.log -Y "frame.number==1508"
  * -T fields -e data.data`, split on `7e`, unescape `7d x` → `x ^ 0x20`; the CRC-32 of the unescaped `00 a5 03 …` equals the frame's own
- * `e8 a9 58 66`. **Redacted (`AGENTS.md` §11):** the 10-digit serial in each of the three entries (field 1) is replaced by `0000000000`
+ * `e8 a9 58 66`. **Redacted (`AGENTS.md` §11):** the 10-digit field 1 of each of the three entries (once read as a serial; a running-version number, `PROTOCOL.md` §2.2a L-5) is replaced by `0000000000`
  * (same length); every other byte is the wire's own, including field 5 — tag `0x29`, wire type 1 (fixed64) — whose value
  * `34 29 3f c2 f6 cb d8 1a` is identical in `CAP-001`/`CAP-036`/`CAP-050`/`CAP-061` and is already in the committed captures.
- * Structure: `2a 64` (payload) { `22 57` field 4 {3 × `{1: serial, 2: "release_5.203"}`}, `29 <8 bytes>` field 5, `30 00` field 6 },
+ * Structure: `2a 64` (payload) { `22 57` field 4 {3 × `{1: version number, 2: "release_5.203"}`}, `29 <8 bytes>` field 5, `30 00` field 6 },
  * `08 01` RESPONSE, `10 15` channel 21, service `maestro_pw.Maestro`, method `GetSoftwareInfo`, `38 ff ff ff ff 0f` call id 0xFFFFFFFF.
  */
 internal object Cap061 {

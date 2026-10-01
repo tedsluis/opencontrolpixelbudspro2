@@ -64,22 +64,30 @@ class ConnectionStateMachine @Inject constructor() {
         // Already Disconnected: nothing to transition to — logging/re-emitting would only produce
         // the duplicate "Disconnected -> Disconnected" lines `ai-sessions/0039` found (two sockets'
         // readers each reporting the same loss).
-        if (_state.value is ConnectionState.Disconnected) return
-        BleLogger.logConnectionEvent("ConnectionState: ${_state.value::class.simpleName} -> Disconnected")
-        _state.value = ConnectionState.Disconnected
+        transition(from = { it !is ConnectionState.Disconnected }) { ConnectionState.Disconnected }
     }
 
     fun onError(error: BudsError) {
-        BleLogger.logConnectionEvent("ConnectionState: ${_state.value::class.simpleName} -> Failed(${error::class.simpleName})")
-        _state.value = ConnectionState.Failed(error)
+        transition(from = { true }, label = { "Failed(${error::class.simpleName})" }) { ConnectionState.Failed(error) }
     }
 
-    private inline fun transition(from: (ConnectionState) -> Boolean, next: () -> ConnectionState) {
-        val current = _state.value
-        if (from(current)) {
+    /**
+     * One atomic transition (`ai-sessions/0059`, A58-APP-05): the check and the write are a single compare-and-set, so a loss reported from a socket
+     * reader's IO thread cannot be overwritten by a `Ready` computed from the state before it (read → loss → write). Logged after it took effect.
+     */
+    private inline fun transition(
+        from: (ConnectionState) -> Boolean,
+        label: (ConnectionState) -> String = { it::class.simpleName ?: "?" },
+        next: () -> ConnectionState,
+    ) {
+        while (true) {
+            val current = _state.value
+            if (!from(current)) return
             val nextState = next()
-            BleLogger.logConnectionEvent("ConnectionState: ${current::class.simpleName} -> ${nextState::class.simpleName}")
-            _state.value = nextState
+            if (_state.compareAndSet(current, nextState)) {
+                BleLogger.logConnectionEvent("ConnectionState: ${current::class.simpleName} -> ${label(nextState)}")
+                return
+            }
         }
     }
 }

@@ -74,6 +74,10 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
  * a complete quintet and a slider move sends all five bands, so neither needs a
  * known starting value — the sliders simply start from flat and the screen says
  * plainly that this is *not* the Buds' current setting.
+ *
+ * **`ai-sessions/0059` (A58-APP-02, the maintainer's choice "Disable until read", chat 2026-09-30):** the five sliders are **disabled** until the EQ has
+ * been read — one band dragged from the flat start would write the four untouched bands as 0.0, values the Buds never reported (the same rule as every
+ * other unread setting, U-1). The presets stay enabled: a preset is a full quintet and assumes nothing.
  */
 @Composable
 fun EqScreen(
@@ -92,6 +96,7 @@ fun EqScreen(
     onConversationDetectionChanged: (Boolean) -> Unit = {},
 ) {
     val enabled = connectionState.isReady()
+    val slidersEnabled = enabled && gains != null // A58-APP-02: no slider write from an assumed starting quintet
     val shown = gains ?: EqBandGains.FLAT
     Surface(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -105,11 +110,11 @@ fun EqScreen(
                         // `ai-sessions/0057` D-7: "EQ updated: HH:MM:SS" is in the (i); the dot marks an EQ not read from the Buds yet.
                         CardTitle("Equalizer", eqDetailLines(eqProfileUpdatedAt), notCurrent = enabled && gains == null)
                         EqStatusNotice(connectionState, gains, eqError, onRefresh)
-                        EqBandSlider("Upper treble", shown.upperTreble, enabled) { onGainsChanged(shown.copy(upperTreble = it)) }
-                        EqBandSlider("Treble", shown.treble, enabled) { onGainsChanged(shown.copy(treble = it)) }
-                        EqBandSlider("Mid", shown.mid, enabled) { onGainsChanged(shown.copy(mid = it)) }
-                        EqBandSlider("Bass", shown.bass, enabled) { onGainsChanged(shown.copy(bass = it)) }
-                        EqBandSlider("Low bass", shown.lowBass, enabled) { onGainsChanged(shown.copy(lowBass = it)) }
+                        EqBandSlider("Upper treble", shown.upperTreble, slidersEnabled) { onGainsChanged(shown.copy(upperTreble = it)) }
+                        EqBandSlider("Treble", shown.treble, slidersEnabled) { onGainsChanged(shown.copy(treble = it)) }
+                        EqBandSlider("Mid", shown.mid, slidersEnabled) { onGainsChanged(shown.copy(mid = it)) }
+                        EqBandSlider("Bass", shown.bass, slidersEnabled) { onGainsChanged(shown.copy(bass = it)) }
+                        EqBandSlider("Low bass", shown.lowBass, slidersEnabled) { onGainsChanged(shown.copy(lowBass = it)) }
                         Text("Presets", style = MaterialTheme.typography.titleSmall)
                         EqPresetRows(enabled, onPresetSelected)
                     }
@@ -209,7 +214,7 @@ private fun EqStatusNotice(
         TextButton(onClick = onRefresh) { Text("Read EQ again") }
     } else if (gains == null) {
         Text(
-            "Reading the Buds' current EQ… The sliders below start from flat (0.0) until it arrives and do NOT yet show the Buds' setting.",
+            "Reading the Buds' current EQ… The sliders are off until it arrives; a preset can be chosen now.",
             style = MaterialTheme.typography.bodyMedium,
         )
     }

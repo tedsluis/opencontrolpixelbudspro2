@@ -41,9 +41,7 @@ import androidx.core.app.NotificationCompat
  * itself holds no Bluetooth logic, only the notification/lifecycle shell. The status
  * text never includes raw payload content (AGENTS.md §9).
  *
- * // TODO(verify): not exercised against a real foreground-service launch in
- * // this environment (no device/emulator run performed this session) —
- * // compiles and follows the documented shape only.
+ * Exercised on hardware: started and stopped with the session throughout `CAP-063` (`ai-sessions/0058` A58-APP-07).
  */
 class BudsForegroundService : Service() {
 

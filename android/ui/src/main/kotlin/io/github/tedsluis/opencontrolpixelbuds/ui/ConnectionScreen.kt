@@ -408,6 +408,7 @@ internal fun BudsError.userMessage(lossCause: SessionLossCause? = null): String 
     BudsError.AncModeListTooShort -> ANC_MODE_LIST_MIN_TEXT
     BudsError.AncModeListNotRead -> "The list of modes has not been read from the Buds on this connection, so nothing was sent."
     BudsError.SessionOpening -> SESSION_OPENING_TEXT
+    BudsError.UnreadableAnswer -> "The Buds answered with a value this app cannot read."
     is BudsError.ChannelUnavailable ->
         "Couldn't open the ${channelLabel(channelId)}. Another app on this phone — for example Google " +
             "Play services' Fast Pair — may already be using it. Wait a few seconds, then try again."
@@ -459,7 +460,7 @@ internal fun BudsError.technicalDetail(): String? = when (this) {
 internal fun channelLabel(channelId: Int): String = when (channelId) {
     0x02 -> "Maestro channel (equalizer)"
     0x04 -> "Message Stream channel (ANC, Find My Buds)"
-    0x08 -> "Case-battery channel"
+    0x08 -> "GSND control channel (not opened by this app, ADR-043)"
     else -> "Bluetooth channel 0x%02x".format(channelId)
 }
 

@@ -129,9 +129,9 @@ data class OpenControlActions(
     /** Re-reads Left/Right: a Message Stream claim (DECISIONS.md ADR-033); the Case and charging come from the runtime-info stream (ADR-043). */
     val onRefreshBattery: () -> Unit,
     val onDebugModeChanged: (Boolean) -> Unit,
-    /** Shares `BleLogger.exportLog()`'s current ring-buffer snapshot via the system share sheet —
-     * local-only (AGENTS.md §9), the destination is the user's own choice, never an automatic
-     * network call this app makes itself. */
+    /** Saves `BleLogger.exportLog()`'s current ring-buffer snapshot through the system save dialog
+     * (`CreateDocument`) — local-only (AGENTS.md §9), the destination is the user's own choice, never an
+     * automatic network call this app makes itself. */
     val onExportLog: () -> Unit,
     /**
      * A pull (swipe down) on a tab (`ai-sessions/0057` D-10): runs the one existing action [PullAction] names and returns the job it launched in the

@@ -59,8 +59,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -123,7 +125,7 @@ class BudsRepositoryImplTest {
         if (verified) {
             transport.onOpenChannel = { channel -> if (channel == Dlci.FAST_PAIR_MESSAGE_STREAM) transport.emit(channel, MODEL_ID_PRO_2) }
             transport.onSent = { channel, frame -> autoAck(transport, channel, frame) }
-            // The real announcement (CAP-061 frame 1508, serial redacted) — not a hand-made one: the synthetic shape without the fixed64
+            // The real announcement (CAP-061 frame 1508, field-1 version number redacted) — not a hand-made one: the synthetic shape without the fixed64
             // field 5 hid the parser defect that put the verified Buds in Safe Mode on hardware (ai-sessions/0046).
             transport.emit(Dlci.MAESTRO, Cap061.announcementFrame())
             settle()
@@ -458,6 +460,41 @@ class BudsRepositoryImplTest {
         assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().last().methodId)
     }
 
+    /**
+     * A58-APP-03 (`ai-sessions/0059`): an answered but undecodable `ReadSetting` ends the wait at once as [BudsError.UnreadableAnswer], not as a 2 s
+     * `Timeout`. **Supplementary, hand-built:** the real `CAP-036` frame 1462 (`4:{7:{1:{4:{1:5}} 2:{4:{1:5}}}}`, both buds Active noise control) with both
+     * action values changed from 5 to 7 (no such action) and the HDLC frame re-encoded (new CRC); the real 1462 itself is decoded by the test above.
+     */
+    @Test
+    fun `an answered but undecodable settings read is UnreadableAnswer at once, not a Timeout, and the pass goes on`() = runTest {
+        val real = (Hdlc.decode(hex(Settings036.READ_7_RESP)) as BudsResult.Success).value
+        val mutatedPayload = hex(real.payload.toHex().replace("2202080512042202080508", "2202080712042202080708"))
+        val mutated = Hdlc.encode(real.address, real.control, mutatedPayload)
+        val (repo, transport) = buildRepository(verified = false)
+        transport.onSent = { ch, frame ->
+            val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+            if (ch == Dlci.MAESTRO && rpc.methodId == Maestro.METHOD_READ_SETTING) {
+                when (val field = rpc.payload[1].toInt()) {
+                    7 -> transport.emit(Dlci.MAESTRO, mutated)
+                    else -> Settings036.ANSWERS[field]?.let { transport.emit(Dlci.MAESTRO, hex(it)) }
+                }
+            }
+        }
+        transport.emit(Dlci.MAESTRO, helloFrame(21, 10496))
+        settle()
+        val start = currentTime
+        repo.launchInitialEqRead()
+        settle()
+
+        val reads = transport.maestroRequests().filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }
+        assertEquals(listOf(16, 2, 4, 7, 12, 17, 19, 22), reads, "the pass went on without waiting")
+        assertEquals(start, currentTime, "no timeout was waited for")
+        assertNull(repo.settings.value.holdLeft)
+        assertNull(repo.settings.value.holdRight)
+        assertEquals(5, repo.settings.value.volumeBalance?.value, "the next fields were read")
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure(BudsError.UnreadableAnswer, write = false), repo.settingsError.first())
+    }
+
     // ---- D-11 (ai-sessions/0057): the settings re-read on a user pull (Sound / Controls) -------------------------------------------------------------------
 
     /** The seven `ReadSetting` requests of the official `CAP-036` sweep on channel 21 (frames 1445, 1451, 1457, 1514, 1526, 1532, 1538), in order. */
@@ -705,7 +742,7 @@ class BudsRepositoryImplTest {
         assertEquals("0401000100", transport.sent[1].second.toHex())
     }
 
-    // ---- Case battery from the runtime-info stream (DECISIONS.md ADR-043), dock state (ADR-024), Find state, firmware ----
+    // ---- Case battery from the runtime-info stream (DECISIONS.md ADR-043), the Settable byte (ADR-049), Find state, firmware ----
 
     /** `Notify ANC state` `01 e8 <settable> <mode>` — real values from CAP-059 frames 1520 (`e8 00 20`) and 2782 (`e8 e8 08`). */
     private fun ancNotify(settable: String, mode: String) = hex("08130004" + "01e8" + settable + mode)
@@ -1158,6 +1195,34 @@ class BudsRepositoryImplTest {
         assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure(BudsError.Timeout, write = true), repo.settingsError.first())
     }
 
+    /**
+     * A58-APP-04 (`ai-sessions/0059`, ADR-045 Update 2026-09-30): a write that timed out may still be answered late, and pw_rpc answers carry no `call_id`.
+     * The next request waits until 1.5 s after that timeout; the late answer (the real `CAP-019` frame 1731, channel 21's empty `RESPONSE` OK) lands in that
+     * window, nobody takes it, and the next write — never answered here — is a `Timeout`, not a success borrowed from the first write's answer.
+     */
+    @Test
+    fun `a late answer to a timed-out write is not taken by the next write (write quarantine)`() = runTest {
+        val (repo, transport) = buildRepository() // the CAP-061 announcement: channel 21
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_19_RESP)); settle() // read: mono off
+        val read = repo.settings.value.monoAudio
+        val sentAt = mutableListOf<Long>()
+        transport.onSent = { _, _ -> sentAt += currentTime } // the Buds answer nothing in time
+        val start = currentTime
+
+        val first = repo.setMonoAudio(true) // no answer within 1.5 s
+        assertEquals(BudsError.Timeout, (first as BudsResult.Failure).error)
+        val second = async { repo.setMonoAudio(false) } // a new tap 0.1 s later
+        advanceTimeBy(100); runCurrent()
+        assertEquals(1, transport.sent.size, "the next request is held, not sent")
+        advanceTimeBy(400); runCurrent()
+        transport.emit(Dlci.MAESTRO, hex(SettingsWrites.ACK_CH21_1731)) // the first write's late answer, 2.0 s after it was sent
+        runCurrent()
+
+        assertEquals(BudsError.Timeout, (second.await() as BudsResult.Failure).error, "the late answer was not borrowed")
+        assertEquals(listOf(start, start + 3_000), sentAt, "the second write left only when the quarantine ended (1.5 s timeout + 1.5 s)")
+        assertEquals(read, repo.settings.value.monoAudio, "never applied")
+    }
+
     @Test
     @DisplayName("an error status keeps the previous value and shows the reason (supplementary: hand-built RESPONSE with status 5 — no capture has a rejected write)")
     fun `a rejected write keeps the previous value`() = runTest {
@@ -1360,6 +1425,18 @@ class BudsRepositoryImplTest {
         val (repo, transport) = buildRepository(connectionStateMachine = machine)
         assertEquals(BudsError.SessionOpening, (repo.setInEarDetection(true) as BudsResult.Failure).error)
         assertEquals(BudsError.SessionOpening, (repo.setMonoAudio(true) as BudsResult.Failure).error)
+        machine.onLinkEstablished(); machine.onReady(); settle()
+        advanceTimeBy(5_000); settle()
+        assertEquals(0, transport.sent.count { it.first == Dlci.MAESTRO && it.second.toHex().contains("1d9a8c9e2a") }, "no write went out later (no queue)")
+    }
+
+    @Test
+    @DisplayName("0058 A58-APP-08: an EQ change while the session is being (re)opened -> SessionOpening on the EQ tab, nothing sent, nothing queued")
+    fun `an EQ write during a re-open says so and sends nothing`() = runTest {
+        val machine = buildConnectionStateMachine(driveToReady = false).also { it.onConnectRequested() } // Connecting
+        val (repo, transport) = buildRepository(connectionStateMachine = machine)
+        assertEquals(BudsError.SessionOpening, (repo.setEqGains(heavyBass) as BudsResult.Failure).error)
+        assertEquals(BudsError.SessionOpening, repo.eqError.first())
         machine.onLinkEstablished(); machine.onReady(); settle()
         advanceTimeBy(5_000); settle()
         assertEquals(0, transport.sent.count { it.first == Dlci.MAESTRO && it.second.toHex().contains("1d9a8c9e2a") }, "no write went out later (no queue)")

@@ -83,8 +83,9 @@ sealed class AncFrame {
 
     /**
      * Provider -> Seeker, periodic/on-change status report. [settableToggles]
-     * is confirmed as a dock-state indicator: `0x00` when both earbuds are
-     * seated in the case, `0xe8` otherwise (DECISIONS.md ADR-024).
+     * (DECISIONS.md ADR-049, superseding ADR-024): `0x00` ⇒ a Set is NAKed, non-zero
+     * ⇒ ACKed (🟢); both buds docked ⇒ `0x00` (🟢); `0x00` ⇔ "no bud worn" is 🟡. Not a
+     * dock-state indicator (withdrawn).
      * [currentModeBit] may not match any known [AncMode] one-hot bit; callers
      * should treat a null [currentMode] as "unrecognized," never crash.
      */

@@ -90,8 +90,9 @@ object Maestro {
 
 /**
  * The (channel id, request HDLC address) pairs seen in the captures (PROTOCOL.md §2.2a: 19 ↔ `00 3b`, 21 ↔ `00 4b`,
- * 24 ↔ `80 3d`, 26 ↔ `80 4d`). The address is **not derived** from the channel — only tabulated — so a channel
- * outside this table has no known address and [forChannel] returns null (ADR-034: never guess).
+ * 24 ↔ `80 3d`, 26 ↔ `80 4d`). The address is derivable from the channel (PROTOCOL.md §2.2a, 2026-09-30 Update: 🟡, the
+ * APK's mapping reproduces all 4 observed values) but only the observed pairs are used — a channel outside this table has no
+ * confirmed address and [forChannel] returns null (ADR-034: never guess).
  */
 data class MaestroChannel(val channelId: Int, val requestAddress: Int) {
     companion object {
