@@ -162,16 +162,21 @@ $ tshark -r CAP-044-btsnoop_hci.log -Y "bthci_evt.code==0x03 and bthci_evt.bd_ad
 2194  13:01:01.96   2204  13:01:07.09   3268  13:06:50.60   3644  13:07:29.24
 3982  13:08:05.64
 
-$ tshark -r CAP-044-btsnoop_hci.log -Y "btrfcomm.frame_type==0x3f"   # DISC (channel close)
-(zero results)
+$ tshark -r CAP-044-btsnoop_hci.log -Y "btrfcomm.frame_type==0x2f || btrfcomm.frame_type==0x43" \
+    -T fields -e frame.number -e frame.time -e btrfcomm.dlci -e frame.p2p_dir     # SABM (0x2f) and DISC (0x43)
+4129 13:08:09.307 0x00 0 SABM · 4143 .323 0x0c SABM · 4276 .518 0x08 SABM · 4331 .576 0x0a SABM · 4411 .708 0x04 SABM
+4515 13:08:10.659 0x02 0 SABM
+4795 13:08:12.739 0x04 0 DISC      <- the phone closes the Message Stream once, inside the setup burst
+4898 13:08:18.133 0x04 0 SABM      <- and re-opens it 5.4 s later
+(exit 0; nothing after 4898. `DISC` is frame type 0x43 — a filter on 0x3f matches no RFCOMM frame type at all)
 ```
 
 The classic ACL connection that forms at **13:08:05.64** (the one immediately preceding the
 successful bonding+SDP browse) is the **last** Connection-Complete event in the entire 850.3s log —
 there is no reconnect afterward, all the way through the log's end (13:13:18.78, 4m40s past video
-end). **Every RFCOMM channel that opens during the 13:08:09–13:08:18 SDP/setup burst (DLCI
-`0x00`/`0x02`/`0x04`/`0x08`/`0x0a`/`0x0c`) stays open for the rest of the log — zero `DISC` (channel
-close) frames appear anywhere.** Force-stopping the companion app's UI process (~13:10:16–21, §1)
+end). **Every RFCOMM channel that is open at the end of the 13:08:09–13:08:18 SDP/setup burst (DLCI
+`0x00`/`0x02`/`0x04`/`0x08`/`0x0a`/`0x0c`) stays open for the rest of the log** — the only `DISC` in the whole log is the phone's close of DLCI
+`0x04` at 13:08:12.739 (frame 4795) inside that burst, re-opened at 13:08:18.133 (4898); none after it. Force-stopping the companion app's UI process (~13:10:16–21, §1)
 does **not** tear down these RFCOMM channels or the underlying classic ACL link — consistent with
 those channels being owned by the OS Bluetooth stack / Google Play services rather than the
 foreground app process. **Consequently, step 3's app reopen (~13:10:24) attaches to an

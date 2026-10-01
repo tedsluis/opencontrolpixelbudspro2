@@ -1,5 +1,7 @@
 # Findings: `CAP-038` (Group AE — realistic physical reconnect trigger vs. system-Bluetooth-toggle reconnect, `OBS-005`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the Settable byte's current reading is ADR-049 — the §4 title's "dock state" FACT and the §3 tension are covered there (🟡 `0x00` ⇔ no bud worn).
+
 Standardized, evidence-based extraction from `CAP-038-btsnoop_hci.log` + `CAP-038-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every claim below
 carries a status per `PROJECT_RULES.md` §1:
@@ -224,6 +226,8 @@ deskresearch pass could decode these frames against the known `field5{field4{...
   this session (checked, none found distinct from the channels already covered above).
 
 ## 9. Conclusions — awaiting maintainer sign-off for anything beyond factual record
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** done — the three 🔴 items are in `PROTOCOL.md` §6; the press-and-hold 🟡 was confirmed by `CAP-051`; the Settable tension is part of ADR-049.
 
 **Confirmed by this session's own evidence (factual record):**
 - The originally-documented Event Timeline is materially wrong about session length and Window

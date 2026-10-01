@@ -104,18 +104,18 @@ not silently reconciled.**
 | `07:07:57.896` | Notify: Current `0x40` = Adaptive | App (Auto) | — | frame 1416 |
 | `~07:07:43`–`46` | Rapid ~300-frame DLCI 0x02 write burst (consistent with an EQ slider drag — see Decode/Analysis §, bonus) | User (App) | — | frames 1203–1362 (representative) |
 | `07:08:11.861` | Disconnection Complete, chandle `0x0005`, reason `0x16` (Terminated by Local Host) | User (OS)/App | `PAIR-003` | frame 1628 |
-| `07:08:29.642`/`.979` | Reconnect #2 — chandle `0x0006`; DLCI 0x04 Get/Notify, Current `0x40` (still Adaptive) | App/OS (Auto) | `OBS-006` (Get #2) | frames 1939/1967 |
+| `07:08:25.794`; `07:08:29.785`/`.980` | Reconnect #2 — chandle `0x0006` (Connect Complete 1711); DLCI 0x04 Get/Notify, Current `0x40` (still Adaptive) | App/OS (Auto) | `OBS-006` (Get #2) | frames 1951/1967 |
 | `07:08:51.455` | Disconnection Complete, chandle `0x0006`, reason `0x16` | User (OS)/App | `PAIR-003` | frame 2461 |
-| `07:09:04.052`/`.459` | Reconnect #3 — chandle `0x0007`; Get/Notify, Current `0x40` (still Adaptive) | App/OS (Auto) | `OBS-006` (Get #3) | frames 2766/2821 |
+| `07:09:01.366`; `07:09:04.239`/`.459` | Reconnect #3 — chandle `0x0007` (Connect Complete 2523); Get/Notify, Current `0x40` (still Adaptive) | App/OS (Auto) | `OBS-006` (Get #3) | frames 2792/2821 |
 | `07:09:16.651`/`.795` | **Tap 2** — Set → Notify Current `0x08` (Noise cancellation) | User (App) | `ANC`-family | frames 3194/3197 |
 | `07:09:30.824` | Disconnection Complete, chandle `0x0007`, reason `0x16` | User (OS)/App | `PAIR-003` | frame 3298 |
-| `07:09:42.452`/`.873` | Reconnect #4 — chandle `0x0008`; Get/Notify, Current `0x08` (still NC) | App/OS (Auto) | `OBS-006` (Get #4) | frames 3586/3624 |
+| `07:09:38.914`; `07:09:42.584`/`.873` | Reconnect #4 — chandle `0x0008` (Connect Complete 3369); Get/Notify, Current `0x08` (still NC) | App/OS (Auto) | `OBS-006` (Get #4) | frames 3602/3624 |
 | `07:09:57.168`/`.399` | **Tap 3** — Set → Notify Current `0x40` (Adaptive) | User (App) | `ANC`-family | frames 4153/4161 |
 | `07:10:11.215` | Disconnection Complete, chandle `0x0008`, reason `0x16` | User (OS)/App | `PAIR-003` | frame 4312 |
-| `07:10:25.025`/`.079` | Reconnect #5 — chandle `0x0009`; Get/Notify, Current `0x40` (still Adaptive) | App/OS (Auto) | `OBS-006` (Get #5) | frames 4648/4692 |
+| `07:10:24.477`; `07:10:25.062`/`.080` | Reconnect #5 — chandle `0x0009` (Connect Complete 4406); Get/Notify, Current `0x40` (still Adaptive) | App/OS (Auto) | `OBS-006` (Get #5) | frames 4675/4692 |
 | `07:10:43.569`/`.913` | **Tap 4** — Set → Notify Current `0x08` (Noise cancellation) | User (App) | `ANC`-family | frames 5089/5095 |
 | `07:10:53.223` | Disconnection Complete, chandle `0x0009`, reason `0x13` (Remote User Terminated — the one disconnect NOT locally-initiated) | Buds (Auto)? | `PAIR-003` | frame 5184 |
-| `07:11:04.637`/`.662` | Reconnect #6 — chandle `0x000a`; Get/Notify, Current `0x08` (still NC) | App/OS (Auto) | `OBS-006` (Get #6) | frames 5462/5496 |
+| `07:11:04.170`; `07:11:04.652`/`.662` | Reconnect #6 — chandle `0x000a` (Connect Complete 5260); Get/Notify, Current `0x08` (still NC) | App/OS (Auto) | `OBS-006` (Get #6) | frames 5481/5496 |
 | `07:11:36` | Device details screen, "Noise cancellation" selected, L:98%/Case:85%/R:100% still shown (video-confirmed, `t260.png`) | — | — | — |
 | `~07:11:43` | Video ends (ffprobe duration 265.62s; 07:07:17+265.62s) — log continues to `07:13:40.082` with idle BLE advertising only, nothing further of interest | — | — | frame 6184 (log end) |
 

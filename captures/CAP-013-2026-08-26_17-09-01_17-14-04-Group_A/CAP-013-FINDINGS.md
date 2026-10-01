@@ -134,8 +134,8 @@ Representative hex (first bytes only, per §1's truncation):
 658  17:11:50.2798  len=44  data=0e 02
 661  17:11:50.2874  len=53  data=0e 01
 735  17:11:51.3920  len=27  data=08 80 7d
-1423 17:12:40.2590  len=43  data=0e 02 00
-1425 17:12:40.2623  len=52  data=0e 01 00
+1423 17:14:20.2590  len=43  data=0e 02 00
+1425 17:14:20.2623  len=52  data=0e 01 00
 ```
 
 `Group 0x0e Code 0x01`/`0x02` traffic (per `ADR-014`, the confirmed per-earbud+case battery push) is
@@ -166,7 +166,7 @@ earlier captures. This is a new, previously unrecorded observation — flagged h
 to test directly (e.g. repeat Group A and note precisely when each permission screen is dismissed
 relative to DLCI 0x02's `SABM`), not treated as confirmed from one occurrence.
 
-**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §5), PROPOSAL — pending maintainer approval:** `CAP-031` measured the same timing directly and found DLCI `0x02` opening only 1.64s
+**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §5), approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`):** `CAP-031` measured the same timing directly and found DLCI `0x02` opening only 1.64s
 after DLCI `0x00`, within the initial multiplexer burst and ~20s before that session's first
 app-permission "Allow" tap. This session's own 61s delay does not reproduce — best read as a
 single-session artifact (e.g. a transient scheduling/negotiation delay on this specific run) rather
@@ -183,7 +183,7 @@ be a Buds-side private address, per this session's zero-creativity rule. Plausib
 own GATT-side private address per Fast Pair's typical design; an unrelated nearby device) are not
 distinguished by the evidence in hand.
 
-**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §6), PROPOSAL — pending maintainer approval:** `CAP-031` scanned its full log for any `LE Enhanced Connection Complete` beyond the
+**Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §6), approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`):** `CAP-031` scanned its full log for any `LE Enhanced Connection Complete` beyond the
 main Buds link and found exactly one, resolving cleanly to the Buds' own public address — zero
 occurrences of this session's `43:8a:82:03:4b:f2` (or `CAP-016`'s `4f:25:00:85:9a:b1`). One clean
 negative data point against a *recurring* pattern, but this address's own identity remains 🔴 OPEN —
@@ -229,9 +229,9 @@ not resolved by another session's absence of the phenomenon.
   its log's first frame lands 66s after its own Forget tap** (`CAP-031-FINDINGS.md` §0). The primary
   question remains 🔴 OPEN after three attempts; a fourth is proposed in
   `CAP-031-FINDINGS.md` §8 (verify snoop-log *content* freshness, not just file size, immediately
-  before the clearing action) — PROPOSAL, pending maintainer approval.
+  before the clearing action) — approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`).
 
-  > **Update (2026-08-27), PROPOSAL — pending maintainer approval:** the fourth attempt,
+  > **Update (2026-08-27), approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`):** the fourth attempt,
   > `CAP-032`, succeeded — extracted via the raw BTSnoop file path (not the `btsnooz.py` fallback
   > this capture and `CAP-031` used), its log genuinely covers the pre-Forget window (first frame
   > ~58s before the Forget tap). For that session, no BLE link or valid classic link key existed for

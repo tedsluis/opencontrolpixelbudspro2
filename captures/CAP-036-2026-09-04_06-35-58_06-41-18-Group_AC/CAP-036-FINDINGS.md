@@ -1,5 +1,7 @@
 # Findings: `CAP-036` (Group AC — settings-state read-back on (re)connect and on settings-screen open, `OBS-004`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the DLCI 0x02 connect burst is decoded (🟢, `PROTOCOL.md` §6 2026-09-24: `GetSoftwareInfo`, `SubscribeRuntimeInfo`, `GetHardwareInfo`, `SetWallclock`, `ReadSetting` sweep); the "2-field sub-message" is Option F (ADR-043); Settable: ADR-049.
+
 **✅ Maintainer sign-off obtained 2026-09-04, per `AGENTS.md` §6/§15.** The "Get ANC state" (`0x11`)
 opcode's *identity* (Group/Code values, direction, zero-length structure, real-observed-on-wire
 status) is promoted to 🟢 FACT in `PROTOCOL.md` §4.1, recorded in `DECISIONS.md` ADR-021. The
@@ -179,6 +181,7 @@ Relevant rows (direction: `0`=Sent, `1`=Rcvd):
   a full-log search finds exactly one `08 11` frame and one `08 13` frame in the entire session:
 
 ```
+$ tshark -r CAP-036-btsnoop_hci.log -Y "btrfcomm.len>0" -T fields -e frame.number -e btrfcomm.dlci -e data.data > cap036_rfcomm_full.tsv   # scratch file, not kept
 $ grep -c "0811" cap036_rfcomm_full.tsv   # 1 occurrence (frame 1169)
 $ grep -c "0813" cap036_rfcomm_full.tsv   # 1 occurrence (frame 1182)
 $ grep -c "0812" cap036_rfcomm_full.tsv   # 0 occurrences (no Set ANC state anywhere — consistent with "nothing touched")
@@ -335,6 +338,8 @@ conclusions.
   no fresh pairing/bonding traffic (no `IO Capability`/SSP exchange observed on this chandle).
 
 ## 10. Conclusions & downstream updates — ⏳ awaiting maintainer sign-off for the proposed items
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** all applied (see the ✅ block) — this heading's "awaiting" is history.
 
 **Confirmed, at the strength the evidence actually supports — not overstated:**
 - DLCI 0x04's "Get ANC state" (`0x11`) query — documented since `PROTOCOL.md` §4.1 was written,
@@ -537,8 +542,10 @@ HDLC-unescaped, CRC-32 (IEEE 802.3/zlib) **verified valid** (`17504948` received
 calculated, little-endian) — a genuine, well-formed `pw_hdlc` frame, addr=0, ctrl=`0xa5`. Payload
 (54 bytes): `032a2510f3d8ddd58634180032120a04086410011204086410021a04086410023a06080110011800080710151dea71de7e2590821ee6`.
 Field 5 (`2a`, len 37) contains a nested field 6 (`32`, len 18) with **three repeated 4-byte
-sub-messages** — `0a 04 08 64 10 01`, `12 04 08 64 10 01`, `1a 04 08 64 10 02` — each decoding to
-`[tag1=0x64(100), tag2=0x01 or 0x02]`.
+sub-messages** — `0a 04 08 64 10 01`, `12 04 08 64 10 02`, `1a 04 08 64 10 02` — each decoding to
+`[tag1=0x64(100), tag2=0x01 or 0x02]`. This is the `SubscribeRuntimeInfo` stream (method `0xe61e8290`, the bytes `25 90 82 1e e6` above):
+entry 6.1 = Case, 6.2 = Left, 6.3 = Right, field 1 = %, field 2 = 2 while that bud charges (`PROTOCOL.md` §4.3 Option F, 🟢 ADR-043 and its
+2026-09-25 Update).
 
 **Explicitly not claimed as a match for Option E's battery-triple:** Option E's confirmed shape
 (`PROTOCOL.md` §4.3 Option E) is `[value, flag, index]` — **3** fields per entry. This structure

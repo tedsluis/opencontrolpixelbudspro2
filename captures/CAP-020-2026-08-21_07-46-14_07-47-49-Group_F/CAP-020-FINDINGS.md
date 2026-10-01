@@ -96,10 +96,10 @@ constant, session-independent prefix — see §5):
     [off 17] field=4 wt=varint value=1
 ```
 
-Immediately followed by the Buds' echo/ACK burst on the same DLCI: frames 1749 (07:46:45.106282,
-`Rcvd`, echoes the same `field 5{field 4{...}}` shape back with the request's own prefix appended)
-and 1753 (07:46:45.142917, `Rcvd`, the standard connection-serial/firmware echo also seen at every
-prior channel-(re)open in this capture, per `PROTOCOL.md` §2.2a). DLCI 0x04 and DLCI 0x0c carried
+Immediately followed by the Buds' answers on the same DLCI (`python3 scripts/pwrpc_decode.py CAP-020-btsnoop_hci.log`): frame 1749
+(07:46:45.106282, `Rcvd`) is a `SubscribeToSettingsChanges` `SERVER_STREAM` packet carrying the new value `4:{4:1}` (the settings-change mirror),
+and frame 1753 (07:46:45.142917, `Rcvd`) holds the `WriteSetting` `RESPONSE` with an empty payload, status OK — the write's acknowledgement (ADR-034) —
+plus a second `4:{4:1}` mirror packet. DLCI 0x04 and DLCI 0x0c carried
 no data in this window.
 
 **The OFF tap** — film (`ffmpeg -ss <t> -i CAP-020-recording.mp4 -frames:v 1`, t = 63…69 s, checked by eye, `ai-sessions/0052`): the toggle is

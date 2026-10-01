@@ -1,5 +1,7 @@
 # Findings: `CAP-001` (Group Z pipeline-validation capture)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): DLCI 0x08 `0e 01` is not a one-time capability blob: it is the per-bud + Case battery push (ADR-014, Option E), recurring; DLCI 0x02 is pw_rpc `maestro_pw.Maestro` (ADR-034); the "serial" `1779298694` is the firmware's running-version number (`PROTOCOL.md` §2.2a 2026-09-30).
+
 Standardized, evidence-based extraction from `CAP-001-btsnoop_hci.log` + `CAP-001-recording.mp4`, staged here
 for later promotion directly into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every
 claim below carries a status per `PROJECT_RULES.md` §1:
@@ -160,10 +162,10 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 > ```
 > This resolves the byte-length hypothesis (ruled out above, correctly) and the CRC/FCS hypothesis
 > (left "inconclusive" above) in one step: byte 1 (`0x3b`/`0x4b`/`0xa5`/etc.) is not a length byte
-> at all — decoding byte 0 as an HDLC-standard LEB128 varint **Address** field (per Pigweed's own
+> at all — decoding byte 0 as a varint **Address** field (one-terminated LSB varint, not LEB128 — corrected 2026-09-30, `ai-sessions/0059`) (per Pigweed's own
 > pw_hdlc spec) shows it terminates at 1 byte (`0x00`) for most frames, with the *next* byte being
 > a single-byte **Control** field (`0x3b`/`0x4b` for phone→Buds, `0xa5` for Buds→phone) — and a
-> second, 3-byte LEB128 address (`0xD180` = 53632, Buds→phone only, control `0x08`/`0x2a`) appears
+> second, 3-byte varint address (`0xD180` = 53632, Buds→phone only, control `0x08`/`0x2a`) appears
 > in a minority of frames, plausibly a second multiplexed pw_rpc channel. **The trailing bytes are
 > a genuine CRC-32 FCS, not a raw data tail or an unconfirmed algorithm.** This is now 🟢 FACT for
 > the framing mechanism (see `PROTOCOL.md` §2.2a for the full field-by-field table and
@@ -275,11 +277,11 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
 > raw frames) place it on **Channel 2/DLCI 0x04** — §2's table was correct, this bullet's channel
 > label was not; flagged here rather than silently fixed. Second, and substantively: `CAP-002`'s
 > `CAP-002-btsnoop_hci.log` is the same shared, non-restarted buffer as this capture's (see that file's own
-> header), so it contains many more hours of the same traffic. Filtering the *whole* shared log for
-> the exact byte pattern `e8 e8` (`tshark -r CAP-001-btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "e8:e8"'`)
-> returns 26 frames spanning 08:51:29–08:52:02 (this session's own window, same frames this bullet
-> already found) — no further occurrences later in the ~8h20m buffer, so the exchange itself is
-> tied to this session's activity window, not a background heartbeat that runs all day. Precisely
+> header), so it contains many more hours of the same traffic. The exact byte pattern `e8 e8`:
+> `tshark -r CAP-001-btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains e8:e8'` → **19** frames, 1895 (08:51:30.034) … 2223
+> (08:52:02.117) — this session's own window; the same filter on the whole shared buffer, `tshark -r CAP-002-btsnoop_hci.log …` → **26**
+> frames — these 19 plus 7 later ones up to 21294 (12:13:16.697), on the Buds' later connections that day. So the exchange is not confined to this
+> session's window; it recurs when the Message Stream carries ANC traffic again (🟡 for the "when"). Precisely
 > decoded, every frame in this exchange fits the confirmed `[Group][Code][Length:2B-BE][Value]`
 > Message Stream envelope (`PROTOCOL.md` §2.1), on a **previously undocumented Group `0x08`**:
 > ```

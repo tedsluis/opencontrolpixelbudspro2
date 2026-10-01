@@ -1,5 +1,7 @@
 # Findings: `CAP-039` (Group AF — `Settable-toggles` byte: Set-tap vs. reconnect-Get, fixed dock state, `OBS-006`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): `03 03 …` is 🟢 "Battery updated" (ADR-031/033); the ~300-frame DLCI 0x02 burst is the official app's `ReadSetting` sweep (`PROTOCOL.md` §6 2026-09-24); Settable: ADR-049.
+
 Standardized, evidence-based extraction from `CAP-039-btsnoop_hci.log` + `CAP-039-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every claim below
 carries a status per `PROJECT_RULES.md` §1:
@@ -48,11 +50,11 @@ $ tshark -r CAP-039-btsnoop_hci.log -Y "bthci_evt.bd_addr==04:00:6e:cf:6e:07 and
   -T fields -e frame.number -e frame.time -e bthci_evt.connection_handle
 653   2026-09-06T07:07:34.090967+0200  0x0002   (BLE)
 683   2026-09-06T07:07:35.110759+0200  0x0005   (classic ACL)
-1939  2026-09-06T07:08:29.641790+0200  0x0006
-2766  2026-09-06T07:09:04.052094+0200  0x0007
-3586  2026-09-06T07:09:42.452317+0200  0x0008
-4648  2026-09-06T07:10:25.024896+0200  0x0009
-5462  2026-09-06T07:11:04.636795+0200  0x000a
+1711  2026-09-06T07:08:25.794177+0200  0x0006
+2523  2026-09-06T07:09:01.366166+0200  0x0007
+3369  2026-09-06T07:09:38.914402+0200  0x0008
+4406  2026-09-06T07:10:24.476988+0200  0x0009
+5260  2026-09-06T07:11:04.170356+0200  0x000a
 ```
 Seven Connection Complete events for the Buds' address: one initial BLE+classic pair (`0x0002`/
 `0x0005`), then **five further classic reconnects** on chandles `0x0006`–`0x000a`. Disconnection
@@ -151,10 +153,10 @@ frame 1228 body: 004b0310151d5d6c251c25c533379a2a06080110001800
   -> after the constant correlation-ID prefix (03 10 15 1d ...): 2a 06 08 01 10 00 18 00
      = field5(len6){ field1=1, field2=0, field3=0 }  -- NOT the field5{field4{...}} settings
        envelope shape (`DECISIONS.md` ADR-013) — a different, flatter 3-field structure.
-frame 1265 body: 004b0310151dea71de7e2551aed0ae2a022001
-  -> tail: 2a 02 20 01 = field5(len2){ field4=1 }  -- a single incrementing varint, consistent
-     with an RPC sequence/correlation counter (the burst's own trailing byte increments
-     0x00,0x01,0x02,...,0x20 across ~32 frames in ~3 seconds), not a settings value.
+frame 1265 body: 004b0310151dea71de7e2551aed0ae2a022002
+  -> a pw_rpc `ReadSetting` REQUEST (method 0xaed0ae51, channel 21), payload `2a 02 20 02` = `4:2` — the official app's connect-time
+     `ReadSetting` sweep of `qhr` fields 1…32 (`PROTOCOL.md` §6, 2026-09-24 burst item; ADR-034): the "incrementing trailing byte" is the
+     field number being read, not a counter (`python3 scripts/pwrpc_decode.py CAP-039-btsnoop_hci.log`).
 ```
 
 **Corrected from an initial working guess:** the burst's rapid, quasi-monotonic value stream
@@ -193,6 +195,8 @@ duration. Strengthens, does not promote, the existing HYPOTHESIS.
   disconnect/reconnect cycles (4 locally-initiated, 1 remote-terminated) — see §1/§2.
 
 ## 7. Conclusions — awaiting maintainer sign-off for anything beyond factual record
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** the 10-sample Settable fold is superseded by ADR-049; the Option B data point is superseded (Option B 🟢, ADR-031/033); both 🔴 items are in `PROTOCOL.md` §6 (the "~300-frame burst" is the official app's connect-time `ReadSetting` sweep, §6 2026-09-24).
 
 **Confirmed by this session's own evidence (factual record, no promotion needed — restates
 already-FACT `DECISIONS.md` ADR-024 with new same-session evidence):**

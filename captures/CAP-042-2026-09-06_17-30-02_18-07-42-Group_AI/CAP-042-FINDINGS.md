@@ -1,5 +1,7 @@
 # Findings: `CAP-042` (Group AI — long pure-idle bracket for the periodic DLCI 0x02/0x04/0x08/HFP push cadence, `OBS-002`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): Settable: ADR-049; the DLCI 0x02 periodic push is the `SubscribeRuntimeInfo` stream (Option F).
+
 Standardized, evidence-based extraction from `CAP-042-btsnoop_hci.log` + `CAP-042-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Status legend:
 
@@ -246,6 +248,8 @@ as a whole.
   (§2) — directly read off the wire.
 - DLCI 0x02/0x04/0x08's mutual near-lockstep timing continuing to hold within each push cluster at
   this longer timescale (§3, first half) — a direct observation.
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** done — recorded at 🟡/🔴 in `PROTOCOL.md` §6 (`CAP-042` items).
 
 **Proposed, awaiting maintainer sign-off (do NOT treat as settled):**
 - 🟡 That the push cadence is fundamentally sparser/slower than `CAP-036`'s sample suggested, and

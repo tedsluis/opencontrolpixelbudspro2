@@ -173,7 +173,7 @@ browse gives both channels an on-the-wire **service name** ("GSND CONTROL" and "
 respectively) and a UUID, for the first time — a concrete new lead, not a full resolution: knowing
 a channel is *named* "GSND CONTROL" does not by itself reveal its Group/Code semantics, and
 "GSND"'s expansion is not determinable from this evidence alone. Per `AGENTS.md` §6, this is
-recorded here as a 🟡 **HYPOTHESIS awaiting maintainer review**, not committed as a `PROTOCOL.md`
+recorded here as a 🟡 **HYPOTHESIS** (as in `PROTOCOL.md` §2.3/§6; marker resolved 2026-09-30, maintainer, chat, `ai-sessions/0059`), not committed as a `PROTOCOL.md`
 promotion or a `DECISIONS.md` entry — see §7's recommended next step for how to close it out.
 Similarly, this SDP record independently corroborates — from wire-visible service-name strings
 rather than only APK static analysis — `DECISIONS.md` ADR-018's finding that DLCI 0x02 is the
@@ -216,8 +216,7 @@ recorded here as `not attempted` rather than forced or left silently blank.
 ## 7. Open questions
 
 - 🔴 What do "GSND CONTROL" (DLCI 0x08) and "GSND AUDIO" (DLCI 0x0a) actually stand for/do? (§3) —
-  proposed as a lead for `PROTOCOL.md` §2.3/§6 and `CAP-021-FINDINGS.md` §4a, pending maintainer
-  review; not committed as a promotion.
+  recorded as a 🟡 lead in `PROTOCOL.md` §2.3/§6 (and `CAP-021-FINDINGS.md` §4a); not a promotion.
 - 🔴 "DEBUG APP" (channel 3, DLCI 0x06) and "BTIS" (channel 9, DLCI 0x12): neither showed any
   traffic in this session, so nothing beyond their SDP-advertised name/UUID/channel is known. Not
   previously documented anywhere in this project's `.md` files (checked via grep before writing

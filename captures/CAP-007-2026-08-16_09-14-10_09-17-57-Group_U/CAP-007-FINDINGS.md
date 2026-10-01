@@ -141,10 +141,10 @@ saw it exactly once, at exactly the first frame after the longest silence in the
 consistent with either reading.
 
 **Direction, 🟢 FACT:** all 18 value-bearing frames are **Rcvd** (Buds→Phone) — i.e. this is the
-Buds pushing data, not the phone querying it. The phone does send a handful of zero-length
-"placeholder" frames referencing the same Group/Code (e.g. `04 12 00 00`, embedded inside a larger
-Sent burst, frame 1426 at 09:15:39.212, immediately after DLCI 0x08 reopens — see §3.3) — these are
-0-length Get/subscribe-shaped requests, never carrying the real value themselves. Searching the
+Buds pushing data, not the phone querying it. The phone sends zero-length Get-shaped frames on the same DLCI right
+after it reopens — frame 1426 (09:15:39.248, Sent) carries `05 0c 00 00`, `04 02 00 00`, `04 04 00 00`, `04 11 00 00`, `04 13 00 00`,
+`04 15 00 00`, `0e 04 00 00` (`tshark -r CAP-007-btsnoop_hci.log -Y "frame.number==1426" -T fields -e data.data`) — **not** a `04 12` request;
+no Sent frame carries Code `0x12` at all. Searching the
 **entire log** for any *Sent* frame containing a non-placeholder `04 12 00 04...` pattern returns
 **zero** matches — none of the 18 real-value pushes above were immediately preceded by a matching
 phone-side query. This directly answers Group U's own research question:
@@ -269,7 +269,7 @@ bounce**, not about in-ear/out-of-case sensing at all.
   value seen at a resumption boundary) at irregular ~1–12s intervals; 🔴 still unresolved what
   real-world condition the value itself encodes — not confirmed to be in-ear state, not confirmed
   to be a simple counter (a true free-running counter would not go fully silent for ~184s, §3.2)."
-  Awaiting maintainer sign-off before editing `PROTOCOL.md` directly.
+  *(Done: the event-driven-and-autonomous behaviour was promoted with `CAP-016` — `DECISIONS.md` ADR-016 item 7, `PROTOCOL.md` §6 Resolved; the value's meaning stays 🔴.)*
 
 ## 5. Conclusions & Next Steps
 

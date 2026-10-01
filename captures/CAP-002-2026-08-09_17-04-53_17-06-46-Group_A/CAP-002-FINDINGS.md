@@ -1,5 +1,7 @@
 # Findings: `CAP-002` (Group A fresh-pairing capture)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the shared buffer's first 2,663 frames are `CAP-001`'s (ADR-018 2026-09-30 Update); DLCI 0x08 `0e 01` = battery push (ADR-014); DLCI 0x02 = pw_rpc `maestro_pw.Maestro` (ADR-034); ANC/EQ channels are settled (ADR-009/034).
+
 Standardized, evidence-based extraction from `CAP-002-btsnoop_hci.log` + `CAP-002-recording.mp4`, staged here
 for later promotion directly into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
 on `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-FINDINGS.md` (`CAP-001`). Every claim below
@@ -21,7 +23,9 @@ numbering, not the frame numbers `tshark`/Wireshark report against the actual
 buffer) — add a constant offset of `+47984` to translate a frame number cited below into the
 current file's own numbering (e.g. this document's "frame 1578" = the current file's frame 49562;
 independently confirmed via two more citation pairs in this same file, `ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md`
-Finding 6).** **Video:** `CAP-002-recording.mp4` (114.2s, 17:04:53–17:06:46 local, on-screen
+Finding 6).** The rule above holds for frame numbers ≤ 1,877; any larger number in
+this file (e.g. 17233, 17610, 48642, 49024, 49136) is already the stored file's own numbering. The stored file's first 2,663 frames are `CAP-001`'s
+(`PROTOCOL.md` §2.2a, `DECISIONS.md` ADR-018 2026-09-30 Update). **Video:** `CAP-002-recording.mp4` (114.2s, 17:04:53–17:06:46 local, on-screen
 wall-clock overlay). **Devices:** phone `Google_7e:ca:81` (Pixel 7a, `E8:D5:2B:7E:CA:81`,
 BD_ADDR partially visible on-screen in this capture — same phone as `CAP-001`), peer
 `Google_cf:6e:07` (`04:00:6E:CF:6E:07`, the Buds/case — confirmed the **same physical device** as
@@ -82,22 +86,21 @@ negotiated per-connection, not fixed per profile. Future findings should key off
 *content/structure*, not channel number, and any reference to "channel N" should always be
 paired with the DLCI and a content description, not treated as a persistent label.
 
-**DLCI 0x03/0x05, checked and ruled out as unrelated to the Buds (added 2026-08-20):** the full,
-shared, non-restarted log also contains DLCI 0x03 (162 frames) and DLCI 0x05 (44 frames) traffic
-— neither appears in the table above because neither falls inside this session's actual window.
-Per `AGENTS.md` §13's CLI-hygiene rule (always pre-filter by the target device before drawing a
-conclusion), checked the ACL handle carrying this traffic:
+**DLCI 0x03/0x05 — an earlier Buds session in the shared buffer, outside this capture's window.** The full, shared, non-restarted log also contains DLCI 0x03 (162
+frames) and DLCI 0x05 (44 frames) traffic — neither appears in the table above because neither falls inside this session's actual window. It rides on ACL
+handle `0x0001`, and that handle **is the Buds**:
 ```
 tshark -r CAP-002-btsnoop_hci.log -Y "(btrfcomm.dlci==0x03 or btrfcomm.dlci==0x05) and btrfcomm.len>0" -T fields -e bthci_acl.chandle
 # -> 0x0001 (every frame)
-tshark -r CAP-002-btsnoop_hci.log -Y 'bthci_evt.code==0x03 and frame.time>="2026-08-09 17:04:00" and frame.time<="2026-08-09 17:07:00"' -T fields -e frame.number -e bthci_evt.bd_addr -e bthci_evt.connection_handle
-# -> 48642  04:00:6e:cf:6e:07  0x000b   (the Buds' actual handle this session)
+tshark -r CAP-002-btsnoop_hci.log -Y "frame.number==17233 || frame.number==17610" -T fields -e frame.number -e frame.time -e bthci_evt.bd_addr -e bthci_evt.connection_handle -e btrfcomm.dlci -e data.data
+# -> 17233  11:31:58.929  <Buds BD_ADDR>      0x0001                 (Connect Complete: handle 0x0001 = the Buds' BD_ADDR)
+# -> 17610  11:32:00.445                               0x05  030a0008…03010003da2db1…0309000a5265766973696f6e2036
 ```
-🟢 **FACT:** DLCI 0x03/0x05's traffic (timestamped ~11:32, hours outside this session's
-17:04:35–17:07:05 window) rides on ACL handle `0x0001`, not the Buds' `0x000b` — it belongs to a
-**different, unattributed device** incidentally present in this shared buffer, the same class of
-artifact as `CAP-004`'s incidental Fitbit traffic (`CAP-004-FINDINGS.md` §1). Not a gap in this
-capture's DLCI coverage — closed, not left open.
+🟢 **FACT:** DLCI 0x03/0x05 (≈ 11:32, hours before this session's 17:04:35–17:07:05 window) is **the Buds' own traffic** on an earlier connection
+(handle `0x0001`): frame 17610 is the Message Stream Device Information burst — session nonce `03 0a`, Model ID `03 01 … da 2d b1`, `03 09 … "Revision 6"` —
+on DLCI 0x05, i.e. the Message Stream on the other RFCOMM direction bit that session (`PROTOCOL.md` §2.3; DLCI numbers are session-local,
+`CAP-038-FINDINGS.md` §3). This session's own connection is handle `0x000b` (Connect Complete frame 48642, full-file numbering). Not a gap in this capture's
+DLCI coverage.
 
 ## 2a. 2026-08-12 follow-up: channel-4/DLCI-0x08 burst fully decoded (resolves §2's 🔴 OPEN QUESTION row)
 

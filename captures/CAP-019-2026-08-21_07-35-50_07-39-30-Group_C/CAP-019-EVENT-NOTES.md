@@ -121,9 +121,9 @@ that wrapper being general-purpose, not feature-specific. Running field-number t
 `07 11 00 04 01 02 b8 00` (Code `0x11`), `07 21 00 00` (Code `0x21`),
 `07 41 00 16 69 6e 2d 75 73 65 ...` (Code `0x41`, len `0x16`=22, value starts with ASCII
 `69 6e 2d 75 73 65` = `"in-use"`), `07 40 00 11 ...` / `07 42 00 11 ...` (Codes `0x40`/`0x42`, both
-len 17, opaque), `07 34 00 0c 01 ...` (Code `0x34`, len 12, opaque, recurs 3× across this burst
-and again at 07:38:06 outside any action window — likely a periodic/keepalive SASS code, not
-Multipoint-specific), ACKs `ff 01 00 03 07 40 00` / `ff 01 00 03 07 42 00` /
+len 17, opaque), `07 34 00 0c 01 ...` (Code `0x34`, len 12, opaque — 15× across the whole log, a periodic SASS code, not
+Multipoint-specific; Codes `0x11`/`0x40`/`0x41`/`0x42` also run at connect (785–807) and at 07:39:13 (2487–2496), only `0x21` is unique to this
+burst — FINDINGS §4), ACKs `ff 01 00 03 07 40 00` / `ff 01 00 03 07 42 00` /
 `ff 01 00 08 07 41 69 6e 2d 75 73 65`. **This directly confirms
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s own Group C hint** ("Multipoint may trigger an SDP/connection
 update, not just an RFCOMM command") — Multipoint activates SASS (Smart Audio Source Switching)

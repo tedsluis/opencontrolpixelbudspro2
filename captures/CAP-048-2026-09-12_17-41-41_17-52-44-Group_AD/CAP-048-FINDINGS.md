@@ -1,5 +1,7 @@
 # CAP-048: Dock-state anomaly with an open ACL, repeat of `CAP-037` (Group AD, `OBS-004`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): Settable: ADR-049 (frame 11939 reads `e8` with both buds loose — an open sample for its 🟡, re-check in `CAP-065`).
+
 Standardized, evidence-based extraction from `CAP-048-btsnoop_hci.log` + `CAP-048-recording.mp4`,
 staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `PROJECT_RULES.md` §1:
 
@@ -182,6 +184,8 @@ against any documented mechanism, and not decoded further per `AGENTS.md` §13.6
 - Two genuine, video-confirmed instances where `Settable-toggles` reads "docked" while the case is
   visibly empty — a real counter-example to a simple reading of ADR-024, reported plainly.
 - A new, unexplained connection-retry burst, plausibly (not confirmed) linked to a closed case.
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–4 done (`PROTOCOL.md` §6, ADR-024 Update 2026-09-13 — now superseded by ADR-049 —, `OBS-004` evidence).
 
 **Proposed (⏳ awaiting maintainer sign-off, per `AGENTS.md` §6/§15 — these are proposals, not
 promotions):**

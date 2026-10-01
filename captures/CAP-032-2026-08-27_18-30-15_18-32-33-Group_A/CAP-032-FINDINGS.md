@@ -46,7 +46,7 @@ genuinely covers the pre-Forget window.**
   Corrections section).
 
 **Extraction-path hypothesis (leading list item 6, this session's brief) — 🟡 supported by this one
-data point, PROPOSAL awaiting maintainer sign-off for promotion.** The pattern across four captures
+data point, approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`).** The pattern across four captures
 now: `CAP-012`, `CAP-013`, `CAP-031` were all extracted via the `btsnooz.py` bugreport-text fallback
 (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 4), all three ended up severely ACL-truncated, and all
 three were named with a "z". `CAP-032` was extracted via the raw-file path (`CAPTURE_BLUETOOTH_HCI_SNOOP.md`
@@ -122,7 +122,7 @@ contradicting or invalidating `CAP-001`'s result (a different session, different
 shows that the residual-state condition `CAP-001` observed is **not universal** — a clean
 counter-example now exists. `CAP-001`'s own session-specific puzzle (why *that* session had residual
 state) remains independently open. Framing and promotion into `PROTOCOL.md`/`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
-proposed in §8 below — **PROPOSAL, pending maintainer approval** per `AGENTS.md` §6/§15.
+proposed in §8 below — **approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`)** per `AGENTS.md` §6/§15.
 
 ## 1. `Delete Stored Link Key` at the Forget tap — 🟢 FACT, byte-level
 
@@ -199,8 +199,9 @@ Unlike `CAP-013`/`CAP-031` (both capped at ~15 bytes), every DLCI `0x08` frame t
   `03 02 00 3f 08 06 10 01 22 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 2a 00 30 e6 01 38 00 4a 07
   37 31 33 66 38 35 35 50 00 60 b1 db e8 06 70 02 78 01 a8 01 01 b0 01 01 ba 01 02 01 02 c0 01 01
   c8 01 01` — protobuf field `0x22 0d` decodes to the ASCII string `release_5.203` (firmware
-  baseline, matching `ADR-012`'s confirmed wire value) and field `0x4a 07` to `7133f855`-prefixed
-  serial fragment, consistent with `CAP-001`'s serial `1779298694`/`ADR-012` evidence chain.
+  baseline, matching `ADR-012`'s confirmed wire value) and field `0x4a 07` to the 7-byte ASCII string
+  `713f855` (`37 31 33 66 38 35 35`) — meaning not identified (🔴). (The ten digits `1779298694` elsewhere are the firmware's running-version
+  number, `UpdateHelperService.GetRunningVersion` — `PROTOCOL.md` §2.2a 2026-09-30 Update — not a serial.)
 - **Capability identifier (`Group 0x0e Code 0x02`, frame 1415, 18:31:29.030698):**
   `0e 02 00 1a 0a 18 67 6f 6f 67 6c 65 2d 70 69 78 65 6c 2d 62 75 64 73 2d 70 72 6f 2d 76 31` —
   protobuf field `0x0a 18` decodes to the ASCII string `google-pixel-buds-pro-v1`, the confirmed
@@ -302,7 +303,7 @@ recurrence of either of theirs.
 - **Conclusion:** 🟢 **CONFIRMED** — the pre-clearing-action window is captured for the first time in
   four attempts. Given that coverage, the primary question itself is answerable for this session:
   🟢 **no prior BLE link or valid classic link key existed for the Buds before the Forget tap**
-  (§0.3). PROPOSAL — pending maintainer approval for how this is reflected in
+  (§0.3). approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`) — reflected in
   `PROTOCOL.md`/`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (§8).
 
 **Test B — secondary `PAIR-004` question (fresh SSP vs. reused key after Forget)**
@@ -331,7 +332,7 @@ recurrence of either of theirs.
   with `cap_len == len` (§0.1).
 - **Conclusion:** 🟡 **Supported, one data point on the "raw" side after three on the "btsnooz"
   side** — consistent with the hypothesis, not yet independently isolated (no single session has
-  been extracted via *both* paths for a direct controlled comparison). PROPOSAL — pending maintainer approval for promoting this into a documented warning in
+  been extracted via *both* paths for a direct controlled comparison). approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`) — now a documented warning in
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 (§8 below).
 
 ## 8. Other open questions raised by this capture / proposed next steps

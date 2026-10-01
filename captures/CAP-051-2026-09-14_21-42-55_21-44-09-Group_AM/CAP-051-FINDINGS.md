@@ -190,6 +190,8 @@ Per `ai-sessions/0023_CROSSCHECK_PROMPT_2026_09_15.md` Phase 1: traced `fye.a(qh
 
 ## 5. Conclusions & proposed downstream updates — awaiting maintainer sign-off for proposed items
 
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–3 done (`PROTOCOL.md` §6 field-13 item, `TOUCH-007` row); 4 declined 2026-09-18 (as written).
+
 **Recorded as this session's own factual result (no sign-off needed, per `AGENTS.md` §15 — direct
 observations, not FACT promotions to `PROTOCOL.md`):**
 - The log is confirmed raw-path/untruncated (§0), settling `CAP-051-EVENT-NOTES.md`'s own

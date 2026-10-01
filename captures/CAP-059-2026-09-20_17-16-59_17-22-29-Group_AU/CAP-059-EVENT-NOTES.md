@@ -73,7 +73,7 @@ unassigned rather than guessed.
 | 17:18:33.046 | App logs `Pairing: bond timed out` — contradicts the already-successful 17:17:49.121 bond; no `bond state` line logged at all. | App (defect) | `PAIR-001` | §3 |
 | 17:18:35.842 / :50.48 / :51.90 / 17:19:03.219 | Find My Buds: Left ring start, Right ring start, (a repeat), Stop — all 4 ACKed on the wire; ringing audible on the camera mic (3.0s-interval tone bursts) starting ≈3.1s after each command and continuing past the Message Stream socket's own release. | User (app) | `FIND-001`, `FIND-002` | §6, frames 2310/2491/2506/2600 |
 | ~17:19:03–22 | Both earbuds removed from the case (video-confirmed); battery-claim field on DLCI 4 transitions from `e4 e4 ff` (both seated/charging) to `64 64 ff` (both out, unplugged). | User (hardware) | — | §6, frames 1056–2595 vs. 2776–4882 |
-| 17:19:21–33 | ANC cycled through all four modes: Off → Active → Adaptive → Transparency (UI-confirmed on film, byte values `20`/`08`/`40`/`80` on the wire, Notify follows Set by 0.26s each time). | User (app) | `ANC-001`, `ANC-002`, `ANC-003`, `ANC-004` | §6, frames 2768–3001 |
+| 17:19:21–33 | ANC cycled through all four modes: Active → Off → Adaptive → Transparency (UI-confirmed on film; Sets 2768 `08`, 2843 `20`, 2908 `40`, 2982 `80` on the wire, Notify follows Set by 0.26s each time). | User (app) | `ANC-001`, `ANC-002`, `ANC-003`, `ANC-004` | §6, frames 2768–3001 |
 | 17:19:43 | User taps **Disconnect** in-app. | User (app) | — | §1 row 1, frame 3068 |
 | 17:19:45.720 | `ConnectionState: Ready -> Disconnected`. | App | — | §1 |
 | ~17:20:13–15 | User taps the Buds' row in Android's own Bluetooth settings panel (off-camera tap, on-camera state flip "Actief"→"Opgeslagen"); Android tears down HFP then the ACL. | User (Android Settings) | — | §1 row 2, frame 3390 |
@@ -104,9 +104,6 @@ unassigned rather than guessed.
       Evidence columns with a pointer to `CAP-059` — done.
 - [x] Folder already named with its actual session date/start-time/end-time
       (`CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU`).
-
----
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU/CAP-059-EVENT-NOTES.md
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU/CAP-059-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU/CAP-059-EVENT-NOTES

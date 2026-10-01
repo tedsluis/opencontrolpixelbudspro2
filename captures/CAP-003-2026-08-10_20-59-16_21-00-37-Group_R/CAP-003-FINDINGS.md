@@ -1,5 +1,7 @@
 # Findings: `CAP-003` (Group R forced-GATT-rediscovery capture)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the `0x0c0X`/`0x0f2X` handle↔UUID map is 🟢 (`CAP-034`, `PROTOCOL.md` §6): `0x0f28` = Device Information Serial Number String, `0x0f2a` = Firmware Revision String.
+
 Standardized, evidence-based extraction from `CAP-003-btsnoop_hci.log` + `CAP-003-recording.mp4`, staged here
 for later promotion directly into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
 on `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-FINDINGS.md` (`CAP-001`). Every claim below

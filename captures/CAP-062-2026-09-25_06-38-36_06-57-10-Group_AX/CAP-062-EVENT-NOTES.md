@@ -117,9 +117,9 @@ Times are phone local time (HCI / debug export). "Claim" = the app's on-demand D
 | 06:51:40.4 / 06:51:43.1 | **Disconnect**, **Connect** → `ReadSetting` returns `[-5.8, -5.96, -6, -6, 6]` (9314); the EQ tab shows it ("EQ updated 06:51:44"). | User (app) | H6 | film t=782–790; export 527–549 |
 | ≈ 06:52:02–06:52:05.2 | Buds taken **out of the ears** and laid on the table → Buds `DISC` 0x02 (9362). EQ tab "Not connected to the Buds. Controls are disabled". | User (hardware) / Buds | — | film t=808–811; export 550–552 |
 | 06:52:19.7 | **Connect** → ready; `Notify … e8 00 20` (not worn). | User (app) | — | film t=822–826; export 553–575 |
-| 06:52:33.9 | **Ring Left**: `04 01 00 01 02` (9541) → `ff 01 00 03 04 01 00` (9552) + the Buds echo `04 01 00 01 02` (9553); "Ringing: Left earbud — tap Stop to end it." | User (app) / Buds | I1 [`FIND-002`] (R4) | film t=837–839; export 576–584 |
+| 06:52:33.9 | **Ring Left**: `04 01 00 01 02` (9541) → `ff 01 00 03 04 01 00` (9552) + the Buds echo `04 01 00 01 02` (9553); "Ringing: Left earbud — tap Stop to end it." | User (app) / Buds | I1 [`FIND-001`] (R4) | film t=837–839; export 576–584 |
 | 06:52:46.7 | **Stop**: `04 01 00 01 00` ×2 (9607, 9617), ACKs; the loud ring bursts on the audio track stop at t≈852 s. | User (app) | I2 | film t=850; audio RMS; export 585–594 |
-| 06:52:52.7 / 06:53:07.7 | **Ring Right** (`… 01`, 9660) → ACK; **Stop** (`… 00`, 9723) → ACK. | User (app) | I3 [`FIND-001`] | film t=856–871; export 595–612 |
+| 06:52:52.7 / 06:53:07.7 | **Ring Right** (`… 01`, 9660) → ACK; **Stop** (`… 00`, 9723) → ACK. | User (app) | I3 [`FIND-002`] | film t=856–871; export 595–612 |
 | 06:53:11.7 | **Ring Left** (9772) → ACK; "Ringing: Left earbud". | User (app) | I4 | film t=875; export 613–621 |
 | 06:53:20.4 | **Disconnect** while ringing: the Find tab shows "Not connected to the Buds. Controls are disabled" — **not** the expected "A ring was started on the Left earbud — reconnect and tap Stop to end it."; the ring **keeps sounding** (3 s bursts on the audio track t ≈ 888.5–913 s). | User (app) | I4 (**fails**) | film t=884.5, 892 (full res); audio RMS; export 622–623 |
 | 06:53:42.6 / 06:53:47.5 | **Connect**, then **Stop** → `04 01 00 01 00` (9942) → ACK; the audio bursts stop (t ≈ 913.2 s = 06:53:50.1). | User (app) | I4 | film t=906–911; export 624–653; audio |

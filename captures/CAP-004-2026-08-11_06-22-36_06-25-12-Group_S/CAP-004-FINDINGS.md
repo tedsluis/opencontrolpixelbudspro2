@@ -1,5 +1,7 @@
 # Findings: `CAP-004` (Group S — GMS disabled / no Pixel Buds app)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): DLCI 0x08 `0e 01` recurs (battery push, ADR-014); the `0x0c0X`/`0x0f2X` map is 🟢 (`CAP-034`); CTKD is 🟢 (ADR-030); ANC/EQ channels are settled (ADR-009/034).
+
 Standardized, evidence-based extraction from `CAP-004-btsnoop_hci.log` + `CAP-004-recording.mp4`, staged here
 for later promotion directly into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled
 on `captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-FINDINGS.md` (`CAP-001`). Every claim below
@@ -296,7 +298,8 @@ directions answered explicitly:**
   <3B>` + `03 02 00 06 <6B>` + `03 09 00 0a "Revision 6"` + `07 10 00 00` = 12+7+10+14+4 = 47,
   matching `btrfcomm.len` exactly). `bthci_acl.pb_flag` for frame 49251's underlying ACL packet is
   `2` (complete PDU) with no `continuation_to`/`reassembled_in` — confirmed via
-  `tshark -r CAP-004-btsnoop_hci.log -Y "frame.number==49251" -e bthci_acl.pb_flag -e bthci_acl.continuation_to -e bthci_acl.reassembled_in`.
+  `tshark -r CAP-002-btsnoop_hci.log -Y "frame.number==49251" -T fields -e bthci_acl.pb_flag -e bthci_acl.continuation_to -e bthci_acl.reassembled_in`
+  (frame 49251 is in `CAP-002`'s log, 17:05:36.516, DLCI 0x04 — `CAP-004`'s own log has 2,921 frames).
   **Negative result, itself a finding per the project's evidence rules:** this specific burst does
   not fragment across packets in any of the 7 independent occurrences checked.
 - This file's own §4b content (`google-pixel-buds-pro-v1`, `Europe/Amsterdam`, on channel
@@ -742,7 +745,7 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
 
   **Update 2026-08-26 (`CAP-012`):** the clean repeat happened — see §8 item 4's own update above.
   Result confirms the hypothesis (classic SSP without an early BLE link, CTKD with one), but per
-  `AGENTS.md` §6 this is recorded in `PROTOCOL.md` §5.1 as a PROPOSAL awaiting maintainer sign-off
+  `AGENTS.md` §6 this was recorded in `PROTOCOL.md` §5.1 as a proposal; promoted to 🟢 FACT 2026-09-18 (`DECISIONS.md` ADR-030, `CAP-012`/`CAP-014`)
   for promotion to 🟢 FACT, not committed as settled by either capture's findings file alone.
 - Groups `0x05`/`0x09`'s identity (§5) — search results kept redirecting to Device Information
   (Group `0x03`) codes `0x05`/`0x06`/`0x09` instead of confirming standalone groups; **not a

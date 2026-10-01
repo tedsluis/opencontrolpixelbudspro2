@@ -25,7 +25,7 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 **Decision on item 16 (`CASE-007`):** run — this session performs the full 30s factory-reset hold, per
 video/wire evidence below.
 
-## 2. `CONV-002` — media visibly pauses, but zero wire-visible signal accompanies it (🟢 FACT, clean negative)
+## 2. `CONV-002` — media visibly pauses; no Buds command accompanies it, only the phone's own AVRCP status (🟢 FACT for the wire; 🟡 for the cause)
 
 Video: Spotify plays "Amy Winehouse Best Of" at `t=20` (overlay `07:54:14`, play/pause icon showing
 pause-bars, i.e. actively playing); by `t=22` (`07:54:16`) the icon has flipped to a play-triangle
@@ -44,12 +44,25 @@ $ tshark -r CAP-029-btsnoop_hci.log -Y 'btrfcomm.dlci==4 and btrfcomm.len>0 and 
 **No `0x12` Set / `0x13` Notify ANC-state frame occurs anywhere near the pause (checked the full
 `07:54:00`–`07:54:30` window, and separately the entire pre-reset session `07:53:51`–`07:54:55`) —
 the ANC mode never changes from the connect-time `Adaptive` reading.** Also checked and ruled out:
-no AVRCP/AVCTP traffic anywhere in this window (`avctp or avrcp` filter, 0 rows) and no DLCI 0x02
-write (no `field5{field4{...}}` settings-write shape appears). The only RFCOMM activity in the exact
+no AVRCP pass-through from the Buds and no DLCI 0x02 write (no `field5{field4{...}}` settings-write shape appears). AVRCP carries only the
+phone's own play-status notifications to the Buds:
+```
+$ tshark -r CAP-029-btsnoop_hci.log -Y 'btavctp or btavrcp' -T fields -e frame.number -e frame.time -e frame.p2p_dir -e _ws.col.Info
+(26 frames; the play-status changes:)
+1518  07:54:10.791  0  Changed - RegisterNotification - PlaybackStatusChanged - PlayStatus: Playing
+1593  07:54:17.670  0  Changed - RegisterNotification - PlaybackStatusChanged - PlayStatus: Paused     <- the pause on screen
+1713  07:54:32.809  0  … PlayStatus: Playing
+1910  07:54:43.070  0  … PlayStatus: Paused
+$ tshark -r CAP-029-btsnoop_hci.log -Y 'btavrcp.opcode==0x7c' | wc -l     # AV/C pass-through (a PAUSE/PLAY key from the Buds)
+0            (exit 0; positive control: the same filter finds CAP-063 frame 5389, "Rcvd Pass Through: Control - PAUSE")
+```
+(The filter `avctp or avrcp` is not valid in tshark — it exits with status 4, *"avctp" is not a valid protocol or protocol field*; the dissector names
+are `btavctp`/`btavrcp`.) The only RFCOMM activity in the exact
 pause window (`07:54:14`–`07:54:17`) is routine zero-length DLCI-0x02 flow-control `UIH` frames at
 roughly 1-per-second — background keepalive, not a data payload.
 
-**Conclusion:** this capture is a clean negative for a wire-visible Conversation-Detection command.
+**Conclusion:** no Buds-side command accompanies the pause — no ANC Set/Notify, no settings write, no AVRCP pass-through; the only wire signal is the
+phone's own `PlaybackStatusChanged` → Paused (1593, phone → Buds), i.e. the player paused and told the Buds so.
 Either (a) the "switch to Transparency" behavior `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s own note
 describes did not actually trigger this time (ANC was already Adaptive, which functionally already
 lets outside sound through — a plausible reason no mode switch was needed), or (b) the media-pause
@@ -124,7 +137,7 @@ classic connection. This is normal, expected behavior, not a hidden second "forg
 
 ## 7. Test-ID traceability
 
-- **`CONV-002`**: exercised — clean negative, see §2.
+- **`CONV-002`**: exercised — no Buds command; the phone's AVRCP status shows the pause (1593), see §2.
 - **`CASE-007`**: exercised — confirms established pattern, see §3.
 - **`PAIR-002`**: exercised — fresh SSP confirmed, see §4.
 - **`CASE-008`**: **not exercised** this session, see §5.
@@ -137,6 +150,8 @@ classic connection. This is normal, expected behavior, not a hidden second "forg
 - The factory reset and subsequent re-pair both reproduce this project's already-established
   patterns cleanly.
 - `CASE-008` was not attempted; the draft's claimed final "forget" did not occur.
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1 done (`PROTOCOL.md` §6 `CAP-029` item, corrected 2026-09-30 for the AVRCP filter); 2 done (`CONV-002` row); 3 **still open** (`CASE-008`).
 
 **Proposed (⏳ awaiting maintainer sign-off, per `AGENTS.md` §6/§15):**
 1. `PROTOCOL.md` §6 (Behavior) — add a new 🔴 open question: does Conversation Detection's

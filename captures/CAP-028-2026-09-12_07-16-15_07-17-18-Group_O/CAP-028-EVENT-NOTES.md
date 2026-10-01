@@ -31,7 +31,7 @@ or are purely on-device given they only act on an already-active call/notificati
   gestures) before starting this Group's actions — record how/when this was confirmed. **If it was
   not already enabled in a separate prior session (`CAP-020`), enable it now as this session's own
   first logged step** (see Procedure step 0 below) rather than assuming it's already on.
-- Firmware note (documentation only, not currently a blocker): `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §6
+- Firmware note (documentation only, not currently a blocker): `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §6
   states Head Gestures require firmware ≥4.467, a version scheme distinct from this project's own
   confirmed wire-baseline `"release_5.203"` — `PROTOCOL.md` §0.1's `XC-03` note leaves the numeric
   relationship between the two schemes unreconciled, but also confirms this isn't currently

@@ -28,7 +28,7 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 session (2026-08-21), specifically as this Group's own precondition. This session does not re-toggle
 it (no `field5{field4{field29=...}}` write appears anywhere in this log's DLCI 0x02 traffic — checked,
 see §4). The wire's own connect-time "Notify ANC state" reads `Settable-toggles=0xe8` (undocked, per
-`DECISIONS.md` ADR-024) at `06:16:21.742` (frame 765) — confirming the Buds were **not** seated in the
+`DECISIONS.md` ADR-024) at `07:16:21.742` (frame 765) — confirming the Buds were **not** seated in the
 case at connect time, consistent with being worn for this Group's physical-gesture test. **The video
 itself cannot independently confirm this** — the camera frames the phone/case on a table, and whether
 the earbuds are visibly seated in the case's two charging cavities is genuinely ambiguous at this
@@ -124,6 +124,8 @@ never physically performed" — both produce the identical, silent wire signatur
   window; no AVRCP traffic; no SCO/eSCO call anywhere in the log.
 - A second, unrelated LE connection (Heart Rate service signature, matching `CAP-018`) coincidentally
   overlaps the same window with substantial ATT traffic — not Buds-attributable.
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1 done (`HEAD-002`/`HEAD-003` evidence; repeat designed as Group AQ, `CAP-055`); 2 done (`PROTOCOL.md` §6 `CAP-028` item).
 
 **Proposed (⏳ awaiting maintainer sign-off, per `AGENTS.md` §6/§15):**
 1. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `HEAD-002`/`HEAD-003` rows — record this inconclusive result

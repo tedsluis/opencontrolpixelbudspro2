@@ -156,7 +156,7 @@ then parsed each `[Group:1][Code:1][Length:2BE][Value]` envelope's `Value` as ne
 (field = tag>>3, wiretype = tag&7), per `PROTOCOL.md` §2.1's envelope shape reused on this private
 DLCI. **`Group 0x0e Code 0x01` (35-byte value) occurs exactly 4 times in this ~17.5-minute log**,
 always immediately preceded (1–2ms) by `Group 0x0e Code 0x02` (26 bytes) — the already-documented
-`"google-pixel-buds-pro-v1"` capability string (`AGENTS.md` §15's hardcoded-string exception;
+`"google-pixel-buds-pro-v1"` capability string (`PROJECT_RULES.md` rule 22's hardcoded-strings exception;
 first seen `CAP-001`). Full 4 occurrences, decoded:
 
 ```

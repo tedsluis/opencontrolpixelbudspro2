@@ -133,7 +133,7 @@ session (same-direction offset as independently observed in `CAP-027`, this proj
       still requires explicit maintainer sign-off (`AGENTS.md` §6) — write it up as a proposal, do
       not commit it as settled. — N/A this session (`SDP-001`'s own result stays 🟡 HYPOTHESIS,
       not promoted); the DLCI 0x08/"GSND CONTROL" SDP-identity lead in `CAP-033-FINDINGS.md` §5 is
-      written up as an explicit proposal awaiting maintainer review, not committed.
+      written up as a 🟡 lead, recorded as such in `PROTOCOL.md` §2.3/§6 (marker resolved 2026-09-30, `ai-sessions/0059`).
 - [ ] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
       actual session date/start-time/end-time. **Not needed** — the folder name already embeds the
       actual date/start/end (`2026-08-30_15-17-03_15-19-52`), it never used the literal

@@ -1,5 +1,7 @@
 # Findings: `CAP-050` (Group AG repeat — DLCI 0x08's unmapped Get-shaped codes vs. a known-changing value, `PRIV-001`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): `0e 04` precedes every post-open Case push (🟢, `PROTOCOL.md` §4.3 Option E 2026-09-24); Settable: ADR-049.
+
 Standardized, evidence-based extraction from `CAP-050-btsnoop_hci.log` + `CAP-050-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every claim below
 carries a status per `PROJECT_RULES.md` §1:
@@ -282,6 +284,8 @@ resolved by ordinary — not wrong-orientation — dock/undock actions).
   incidental confirmation of continued battery tracking through the session; not separately analyzed.
 
 ## 8. Conclusions & proposed downstream updates — awaiting maintainer sign-off for proposed items
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–4 done (`PROTOCOL.md` §6 `PRIV-001` item, maintainer sign-off 2026-09-16; `PRIV-001` row; §9 row).
 
 **Recorded as this session's own factual result (no sign-off needed, per `AGENTS.md` §15 — direct
 observations, not FACT promotions to `PROTOCOL.md`):**

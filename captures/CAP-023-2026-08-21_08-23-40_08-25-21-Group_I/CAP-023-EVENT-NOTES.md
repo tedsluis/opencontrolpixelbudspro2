@@ -78,8 +78,8 @@ identical** to the string already documented on DLCI 0x08's private envelope (Gr
 `0x02`, per `CAP-004-FINDINGS.md` §5a's Task 2 and `CAP-002-FINDINGS.md` §2a) — not merely a
 plausible reading anymore, but a same-session, on-screen-confirmed match. `"Revision 6"` (DLCI
 0x04's official Message Stream Device Information field) does **not** appear anywhere on this
-screen or in this session's log at all — the app's own UI does not surface that string as "the
-firmware version" the user sees.
+screen — the app's own UI does not surface that string as "the firmware version" the user sees. It is in this session's log, in the
+connect-time DLCI 0x04 Device Information burst (frame 730, 08:23:45.772; FINDINGS §3).
 
 **Not fully resolved:** whether `"Revision 6"` still means something else (a protocol/schema
 revision number, per `CAP-002-FINDINGS.md` §3's original reading) remains open — this capture

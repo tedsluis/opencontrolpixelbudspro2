@@ -80,7 +80,7 @@ video/log evidence together.
 | 17:56:36.558–17:56:58.494 | ANC cycled 6 times: Transparency(`80`)→Adaptive(`40`)→Off(`20`)→Active(`08`)→Transparency(`80`)→Adaptive(`40`) — each `Set`/`Notify` pair on DLCI 4. | User (app) | `ANC-001`, `ANC-002`, `ANC-003`, `ANC-004` | debug export lines 121–180 |
 | 17:57:11 | Maintainer switches to Spotify. | User | — | video `t=190s` |
 | 17:57:38.283–17:57:41.658 | Reconnect after `PAIR-003`-style drop (see Drop 2 below is later — this is a routine app-triggered reconnect cycle continuing the session); DLCI 0x08 opened and released cleanly this time (no Timeout logged for this cycle alone, but a further Timeout follows immediately at 17:57:40.645). | App | — | debug export lines 201–221 |
-| 17:57:45.421–17:58:06.476 | EQ screen used: 13 `WriteSetting` calls in ~21s (video `t=228s` shows the Presets row, finger over Vocal Boost/Clarity) — a preset-tapping sequence, not isolated single-slider drags (see `CAP-060-FINDINGS.md` §5 for why individual `EQS-*`/`EQP-*` Test-IDs are not claimed with confidence). | User (app) | `EQP-005`/`EQP-006` (🟡 — preset area confirmed on video, exact preset(s) not disambiguated) | debug export lines 222–253; frame `t=228.5s` |
+| 17:57:45.421–17:58:06.476 | EQ screen used: 13 `WriteSetting` calls in ~21s (video `t=228s` shows the Presets row, finger over Vocal Boost/Clarity) — a preset-tapping sequence, not isolated single-slider drags (the film does not show which preset(s) were tapped, so individual `EQS-*`/`EQP-*` Test-IDs are not claimed with confidence). | User (app) | `EQP-005`/`EQP-006` (🟡 — preset area confirmed on video, exact preset(s) not disambiguated) | debug export lines 222–253; frame `t=228.5s` |
 | 17:57:29.912 | **Drop 2 (non-user):** Buds `DISC` on DLCI 0x02 only (DLCI 4 already on-demand-released at the time); ACL stays up. | Hardware (Buds) | — | frames 3651/3652 |
 | 17:58:37.339 | **User's own Disconnect tap** — phone-initiated `DISC` on DLCI 0x02, confirmed on the wire (dir=0). | User (app) | — | frame 4116 (dir=0, `DISC`); debug export line 281 |
 | 17:58:41.172 | Reconnect. | App | `PAIR-003` | debug export lines 283–286 |
@@ -116,9 +116,6 @@ video/log evidence together.
 - [x] Update `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s relevant Test-ID rows' Evidence columns — done.
 - [x] Folder already named with its actual session date/start-time/end-time
       (`CAP-060-2026-09-21_17-54-01_18-00-49-Group_AV`).
-
----
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-060-2026-09-21_17-54-01_18-00-49-Group_AV/CAP-060-EVENT-NOTES.md
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-060-2026-09-21_17-54-01_18-00-49-Group_AV/CAP-060-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-060-2026-09-21_17-54-01_18-00-49-Group_AV/CAP-060-EVENT-NOTES

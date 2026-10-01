@@ -194,10 +194,10 @@ for this capture's purpose).
   its own `moov` sample tables). Worth a note for the maintainer's own recording workflow (e.g.,
   whether the recorder app was force-stopped rather than stopped normally) — not a protocol
   finding, but noted here since it materially affected this capture's analysis effort.
-- **DLCI 0x0c traffic (50 frames this session, added 2026-08-20)** — present in this log but out
-  of scope for this capture's ANC-focused purpose, not analyzed here. Already well-characterized
-  from other captures as the `0x0c0X` Key-based-Pairing-shaped cluster (`CAP-002-FINDINGS.md` §4/§7,
-  `CAP-004-FINDINGS.md` §6, `CAP-010-FINDINGS.md` §3) — this note exists only so a future reader
+- **DLCI 0x0c traffic (50 frames this session)** — present in this log but out
+  of scope for this capture's ANC-focused purpose, not analyzed here. DLCI 0x0c is RFCOMM server channel 6, the HFP (Hands-Free) channel of this
+  session (`PROTOCOL.md` §4.3 Option C — `AT+BIEV`/`AT+CIND`); it is unrelated to the GATT handle cluster `0x0c0X` of the Fast Pair Service
+  (`CAP-034-FINDINGS.md` §4), which only shares the digits — this note exists only so a future reader
   can tell "not analyzed" from "nothing there" without re-deriving it.
 
 ---

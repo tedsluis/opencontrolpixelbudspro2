@@ -232,7 +232,7 @@ Raw HCI command/event bytes, via `tshark -r CAP-008-btsnoop_hci.log -Y "frame.nu
   10 00 02 02 00 00 01 01 00 00 0d 00 88 03 02
 
 1656 (Synchronous Connection Complete event, opcode 0x2c, status 0x00 = success,
-      new sync connection handle 0x0005, peer BD_ADDR 6e:cf:6e:07:00:05 (reversed on the wire),
+      new sync connection handle 0x0005, peer BD_ADDR = the Buds' address (redacted here; on the wire little-endian after the handle, event bytes `04 2c 11 00 05 00 <6 address bytes> 02 …`),
       link type 0x02 = eSCO):
   04 2c 11 00 05 00 07 6e cf 6e 00 04 02 0c 04 3c
   00 3c 00 05
@@ -370,8 +370,8 @@ noted for a future capture if that data point is wanted.
 
 1. Promote §5 (eSCO/mSBC establishment) and §4 (`CALL-001` wire/video correlation) to
    `PROTOCOL.md` — these clear the FACT bar (frame numbers, byte-level command
-   parameters, cross-checked against two independent calls) — pending maintainer
-   sign-off per `AGENTS.md` §6.
+   parameters, cross-checked against two independent calls) — not promoted yet: a promotion needs the maintainer's sign-off
+   (`AGENTS.md` §6); listed as an open proposal in `TODO.md` (2026-09-30, `ai-sessions/0059`). `CALL-001`'s evidence points here.
 2. A capture with a deliberate mid-call audio-route switch (Group V's optional step 2)
    would show whether that produces any additional wire signal beyond the
    already-documented AVDTP/eSCO lifecycle.

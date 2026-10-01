@@ -154,13 +154,15 @@ the DLCI 0x02 write:
 ```
 
 Read as the official Message Stream envelope (`PROTOCOL.md` §2.1: `[Group:1][Code:1][Len:2BE][Value]`),
-Code `0x41`'s value starts with ASCII `69 6e 2d 75 73 65` = **`"in-use"`**. Code `0x34` (len 12,
-opaque) recurs a 3rd time at 07:38:06.191 (frame 2326) outside any action window this session,
-alongside the same DLCI 0x08 one-time-capability-shaped burst seen at connection open
-(`CAP-004-FINDINGS.md` §5a) — 🟡 HYPOTHESIS: Code `0x34` is a periodic/keepalive SASS code, not
-Multipoint-specific, while Codes `0x11`/`0x21`/`0x40`/`0x41`/`0x42` appear **only** in this one
-Multipoint-triggered burst and nowhere else in the session — 🟡 HYPOTHESIS (stronger): these five
-codes are genuinely Multipoint-triggered SASS negotiation, not coincidental.
+Code `0x41`'s value starts with ASCII `69 6e 2d 75 73 65` = **`"in-use"`**. Across the whole log (a message-level parse of every DLCI 0x04 payload, `[Group][Code][Len][Value]` per frame, from
+`tshark -r CAP-019-btsnoop_hci.log -Y "btrfcomm.dlci==4 && btrfcomm.len>0" -T fields -e frame.number -e frame.time -e frame.p2p_dir -e data.data`):
+Code `0x34` ×15 (Buds → phone; 762 at 07:35:58.541 … 2505 at 07:39:13.962, also in the idle stretches between); Codes `0x11`/`0x40`/`0x41`/`0x42`
+three times each in a connect-time burst (785–807, 07:35:58.58–.63, incl. `07 41 00 16 69 6e 2d 75 73 65 …` "in-use"), in this Multipoint burst
+(2296–2304) and again at 07:39:13.886–.927 (2487–2496); `0x42` once more at 1879 (07:36:59.881); Code `0x21` only once, 2301, in this burst; Code
+`0x10` three times, all at connect (758/785/802). Frame 2326 (07:38:06.191) is an ANC `Notify` (`08 13 00 04 01 e8 e8 08`), not a SASS code.
+🟡 HYPOTHESIS: `0x34` is a periodic SASS message, not Multipoint-specific. The `0x11`/`0x40`/`0x41`/`0x42` exchange is **not** Multipoint-specific
+either — it also runs at connect and at 07:39:13; only `0x21` is unique to this burst. 🟡: the Multipoint toggle triggers one more round of the
+same SASS exchange (plus `0x21`), not a Multipoint-only message set.
 
 **Directly confirms `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group C's own hint** ("Multipoint may trigger
 an SDP/connection update, not just an RFCOMM command") — this is the first capture to correlate

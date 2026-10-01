@@ -1,5 +1,7 @@
 # CAP-009: HFP `AT+CIND`/`AT+BIEV` Cross-Check Over a Natural Battery Discharge (Group X, `BATT-006`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): `Group 0x03 Code 0x03` is 🟢 the Fast Pair "Battery updated" message (ADR-031) with the charging flag `0bSVVVVVVV` (ADR-033) — the "candidate"/"regime change" wording below is superseded.
+
 Standardized, evidence-based extraction from `CAP-009-btsnoop_hci.log`, staged here per
 `PROJECT_RULES.md` §2 (recorded first in this file, promoted to `PROTOCOL.md` only afterwards, and
 only with maintainer sign-off per `AGENTS.md` §6). Every claim below carries a status per

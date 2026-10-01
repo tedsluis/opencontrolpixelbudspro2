@@ -1,5 +1,7 @@
 # CAP-026: Passive/automatic observation windows (Group L, `BATT-001`, `OBS-001`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): `03 03 …` is 🟢 "Battery updated" (ADR-031/033).
+
 Standardized, evidence-based extraction from `CAP-026-btsnoop_hci.log` + `CAP-026-recording.mp4`,
 staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `PROJECT_RULES.md` §1:
 
@@ -135,6 +137,8 @@ then relaunch, not just navigating to a settings screen within an already-open a
 - The Case field's connect-time value (95) does not match the on-screen 93% shown throughout the
   rest of the video — a further instance of the short/no-flag-form-may-be-stale pattern.
 - App force-close+reopen (connection never dropped) produces zero DLCI 0x02/0x04/0x08 traffic.
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–2 done (`BATT-001`/`OBS-001` evidence cells); 3 **still open** — the short/no-flag Case form stays 🔴 in `PROTOCOL.md` §4.3 Option E (listed in `TODO.md`).
 
 **Proposed (⏳ awaiting maintainer sign-off, per `AGENTS.md` §6/§15):**
 1. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `BATT-001` row — mark as wire-correlated, pointer to this file.

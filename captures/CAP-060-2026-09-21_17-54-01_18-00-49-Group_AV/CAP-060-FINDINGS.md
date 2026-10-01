@@ -1,5 +1,7 @@
 # Findings: `CAP-060` (Group AV — second hardware run of the `ai-sessions/0042` build; four maintainer questions answered)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the "push without `0e 04`" FACT was narrowed 2026-09-24 (`PROTOCOL.md` §4.3 Option E: every post-open push follows a `0e 04`); Settable "both docked" → ADR-049; the app no longer opens DLCI 0x08 (ADR-043).
+
 Standardized, evidence-based extraction from `CAP-060-btsnoop_hci.log`, `CAP-060-recording.mp4`,
 `CAP-060-debug-export.log`, `CAP-060-OpenControl-for-Pixel-Buds-log-c574d45537fa.txt` (app logcat),
 and `CAP-060-System-log-62cb790b4007.txt` (Android system log), per `ai-sessions/0043`.
@@ -188,9 +190,6 @@ not an area GrapheneOS is known to modify, but this is not independently confirm
 checkpoint (`ai-sessions/0043_FEATURE_RESULT_2026_09_22.md`).
 
 **Promoted to `PROTOCOL.md`:** nothing yet from this capture.
-
----
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-060-2026-09-21_17-54-01_18-00-49-Group_AV/CAP-060-FINDINGS.md
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-060-2026-09-21_17-54-01_18-00-49-Group_AV/CAP-060-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-060-2026-09-21_17-54-01_18-00-49-Group_AV/CAP-060-FINDINGS

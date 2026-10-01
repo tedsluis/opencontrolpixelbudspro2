@@ -1,5 +1,7 @@
 # CAP-022: Audio & Volume Settings (Group H)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): field 15 (Volume EQ) is 🟢 (ADR-025 Update 2026-09-08); fields 17/19 🟢 (ADR-019/026); balance persists across a reconnect 🟢 (`PROTOCOL.md` §4.5.7).
+
 Standardized, evidence-based extraction from `CAP-022-btsnoop_hci.log` + `CAP-022-recording.mp4`,
 staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `PROJECT_RULES.md` §1:
 

@@ -1,5 +1,7 @@
 # CAP-046: Volume balance (`field 17`) scale/direction (Group AK, `AUDIO-003`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the ±100 range and polarity are 🟢 (ADR-026).
+
 Standardized, evidence-based extraction from `CAP-046-btsnoop_hci.log` + `CAP-046-recording.mp4`,
 staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `PROJECT_RULES.md` §1:
 
@@ -120,6 +122,8 @@ this question (does the field scale linearly at non-extreme positions?) remains 
 - 8 `field17` writes, zigzag-decoded, 3 extreme positions video-confirmed.
 - `field19` (Mono audio) fires in exact lockstep with every Balance-extreme/center transition.
 - Only 2 of the draft's claimed 4 samples actually occurred.
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–2 done (ADR-026, `PROTOCOL.md` §4.5.7/§6); 3 recorded at 🟡 in ADR-026's scope note; 4 done (`AUDIO-003` evidence).
 
 **Proposed (⏳ awaiting maintainer sign-off, per `AGENTS.md` §6/§15):**
 1. `PROTOCOL.md` §4.5.7 — **correct the Left/Right polarity**: positive zigzag = Left, negative =

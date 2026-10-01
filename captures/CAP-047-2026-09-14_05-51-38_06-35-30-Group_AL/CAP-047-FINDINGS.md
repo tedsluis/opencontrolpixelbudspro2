@@ -1,5 +1,7 @@
 # Findings: `CAP-047` (Group AL — `CAP-021`'s DLCI 0x0a burst trigger, Trigger candidate 3 only)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): Settable: ADR-049 — "both docked" below is the superseded ADR-024 wording; the swapped-slot reading stands as an observation.
+
 Standardized, evidence-based extraction from `CAP-047-btsnoop_hci.log` (Recording 1),
 `CAP-047-btsnoop_hci-2.log` (Recording 2), `CAP-047-btsnoop_hci.log.last` (resolved below as
 out-of-scope), `CAP-047-recording.mp4`, and `CAP-047-recording-2.mp4`, staged here for later
@@ -136,9 +138,13 @@ the top slot from each other — but swap attempt #2's own case-visual frames sh
 actively lifted/tilted/handled by hand at the moment the Right bolt appears (`f_017.png`,
 `06:33:53`), unlike swap attempt #3's static, table-resting framing, so a slot-identity inference
 from this single frame is not reliable. Not resolved here — reported as an honest observation per
-`AGENTS.md` §13.6, not force-fit into a specific bud-identity claim. Cross-referencing this against
-the wire's own per-earbud data (§5 below) does not resolve it either, since DLCI 0x08's Option E
-battery-triple mechanism (`PROTOCOL.md` §4.3) never fires in either in-scope log (checked, see §5).
+`AGENTS.md` §13.6, not force-fit into a specific bud-identity claim. The wire's per-earbud data does not resolve it either. DLCI 0x08's
+Option E push (`PROTOCOL.md` §4.3) fires in both logs — `tshark -r <log> -Y 'btrfcomm.dlci==0x08 && data.data[0:2]==0e:01'` → recording 1's log:
+1291 … 3202 (11 frames, 05:51:46–06:13:13); recording 2's log (`CAP-047-btsnoop_hci-2.log`): 1017 (06:33:13.632), 1772 (06:33:50.264), 1826
+(06:33:53.602), 1834 (06:33:53.840), 1949 (06:33:57.598) — but every one reads Left 100 / Right 100 (flag 1) and Case 78; Option E carries no
+per-bud charging bit, so it cannot say which bud sits where. Its Case entry gains the flag field from 1826 (06:33:53.602), the moment of first
+contact (ADR-014's flag observation). The DLCI 0x02 runtime-info stream's only packet in the window (1788, 06:33:50.758) still shows no bud
+charging (`6:{2:{1:100 2:1} 3:{1:100 2:1}}`, `scripts/pwrpc_decode.py`), and none follows before the channel changes (2004).
 
 ## 2. Connection lifecycle and per-connection DLCI role mapping (🟢 FACT)
 
@@ -416,6 +422,8 @@ this write-up does not imply one exists. Trigger candidates 1 (app backgrounded/
 proposal.
 
 ## 9. Conclusions and proposed downstream updates — ⏳ awaiting maintainer sign-off for every proposed item
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–3 done (`PROTOCOL.md` §6 items, ADR-024 Update 2026-09-18); 4 **still open** (a swapped-slot Test-ID, listed in `TODO.md`); 5 **still open** (trigger candidates 1–2).
 
 **Confirmed this session (no sign-off needed — negative results and direct observations, not FACT
 promotions of new protocol semantics):**

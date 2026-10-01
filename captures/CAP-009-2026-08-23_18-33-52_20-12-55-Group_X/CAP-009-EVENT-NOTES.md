@@ -62,7 +62,7 @@ ways before filtering on it:
    (`bthci_evt.code==0x03`) are all for `04:00:6e:cf:6e:07` (3 occurrences — see Methodology).
 2. **Device-capability string, raw byte search (not a dissector filter — see note below).** The
    literal ASCII string `google-pixel-buds-pro-v1` (the wire-confirmed capability identifier
-   already documented since `CAP-001`, per `AGENTS.md` §15's hardcoded-string exception) occurs
+   already documented since `CAP-001`, per `PROJECT_RULES.md` rule 22's hardcoded-strings exception) occurs
    **75 times** in the raw log file, always as part of DLCI `0x08` traffic on the same connection
    handle as (1):
 

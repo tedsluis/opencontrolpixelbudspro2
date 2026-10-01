@@ -72,7 +72,7 @@ bud/case events.
 | 06:09:52 | Video ends (152.16s after start) | System | `GATT-002` | Video frame `t=151` (`j_151.png`, overlay `06:09:51`). |
 | 06:10:09.976–06:10:10.008 | **A *second*, unrelated LE connection forms** — `LE Extended Create Connection`/`Enhanced Connection Complete` to address `40:a8:ef:16:bb:35` (chandle `0x0004`) — **not** the Buds' own classic address, and **not video-covered** (20s after the video ends) | Buds/Case or unrelated device (Auto) | `GATT-002` | Log frames 1580/1589 — see Findings §3 for why this is attributed to an unrelated nearby device, not the Buds. |
 | 06:10:10.034–06:10:10.409 | Full bidirectional GATT primary-service discovery on chandle `0x0004`: GAP/GATT/Device Information, two "Unknown" 128-bit-UUID services (handles `0x0040–0x0045` and `0x0050–0x0054`), and a standard **Heart Rate** service (`0x180D`) | System ↔ peer | — | Log frames 1607–1690 (full walk); Heart Rate response at frame 1663. |
-| 06:10:12.474–06:10:12.9 (approx.) | The `0x0044` `Handle Value Notification` burst (23 frames, chandle `0x0004`) — same shape/marker (`a9fe`) as `CAP-016-FINDINGS.md` §11's original burst | Peer device (Auto) | `GATT-002` | Log frames 1929–2028 (full range); see Findings §3. |
+| 06:10:12.474–06:11:00.457 | The `0x0044` `Handle Value Notification` burst (23 frames, chandle `0x0004`) — same shape/marker (`a9fe`) as `CAP-016-FINDINGS.md` §11's original burst | Peer device (Auto) | `GATT-002` | Log frames 1929–2089 (full range: `tshark -Y "btatt.opcode==0x1b && btatt.handle==0x0044"`); see Findings §3. |
 
 **Note on the draft's original timestamps:** the hand-filled draft (06:07:21 "confirmed off", 06:08:26
 toggle, 06:08:27 "link forms", 06:09:46 window end) was off by roughly a minute on the toggle/connect

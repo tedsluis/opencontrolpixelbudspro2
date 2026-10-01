@@ -10,7 +10,7 @@ carries a status per `PROJECT_RULES.md` §1:
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-027` · **Date:** 2026-08-30 · **Firmware:** `release_5.203` (🟢 confirmed
-on-wire, DLCI 0x08 private envelope, 6 occurrences in this log) · **Phone:** Pixel 7a (⚪
+on-wire: 3 frames on the DLCI 0x08 private envelope — 845, 862, 875 — and the DLCI 0x02 `GetSoftwareInfo` announcement, frame 904, which carries the string 3×; `tshark -r CAP-027-btsnoop_hci.log -Y 'frame contains "release_5.203"' -T fields -e frame.number -e btrfcomm.dlci`) · **Phone:** Pixel 7a (⚪
 ASSUMPTION, not screen-confirmed this session) · **Log file:** `CAP-027-btsnoop_hci.log` (3,474
 packets, 2026-08-30 15:44:22.07–15:51:47.04 local/+0200 — wider than the video) · **Video:**
 `CAP-027-recording.mp4` (233.77s, 15:45:14–15:49:07 local, on-screen wall-clock overlay) · **Buds

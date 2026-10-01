@@ -143,7 +143,8 @@ $ tshark -r CAP-018-btsnoop_hci.log -Y "btatt.handle==0x0044 and btatt.opcode==0
 1934  2026-09-12T06:10:12.558115+0200  0x0004
 ...   (23 total, all chandle 0x0004)
 ```
-23 frames, matching `CAP-016-FINDINGS.md` §11's original count exactly. Frame 1934's payload
+23 frames (1929, 06:10:12.474 … 2089, 06:11:00.457). `CAP-016` has **73** frames on the same filter (1032 … 2082); 23 is the number of `CAP-016`'s
+frames that carry the `0xfea9` marker (`CAP-016-FINDINGS.md` §11) — a coincidence of counts, not the same count. Frame 1934's payload
 (`...ff115755a9fe0003a9fe...`) contains the same recurring `a9 fe` (`0xfea9`) byte-pair marker that
 capture reported.
 
@@ -197,6 +198,8 @@ further external fetch was needed or performed for this specific identification.
 
 ## 8. Conclusions & proposed downstream updates — proposals only, awaiting maintainer sign-off
 
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1 done (`PROTOCOL.md` §6 `0x0044` item records this capture); 2 done (§6 item "CAP-018 §3 ~64 s reconnect"); 3 done (`GATT-002` evidence); 4 done (§9 row analyzed).
+
 **Recorded as this session's own factual result (no sign-off needed, purely descriptive):**
 - Full video review confirms zero bud/case contact for the entire 152.16s recording.
 - The `0x0044` burst (23 frames, chandle `0x0004`) rides a connection this session's own GATT
@@ -216,7 +219,7 @@ promotions):**
 2. A new 🔴 open question for `PROTOCOL.md` §6: what causes the classic reconnect to take ~64s in this
    session, when other captures typically complete within a few seconds of the Bluetooth toggle?
 3. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-002` row — Evidence column pointer to this file.
-4. `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 — `CAP-018` row status update (this file's own Step L).
+4. `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 — `CAP-018` row status update.
 
 ## 9. Open Questions
 

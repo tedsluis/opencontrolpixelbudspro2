@@ -63,8 +63,8 @@ $ tshark -r CAP-040-btsnoop_hci.log -Y "bthci_evt.bd_addr==04:00:6e:cf:6e:07 and
 646   2026-09-06T07:28:12.076671000+0200   0x0002
 ```
 
-**Every finding below uses only this main, unmerged log.** `CAP-040-btsnoop_hci-merged.log` was
-created per this task's Guardrail 5 instruction but is explicitly **not** used as evidence —
+**Every finding below uses only this main, unmerged log.** `CAP-040-btsnoop_hci-merged.log` (a scratch
+merge with `CAP-039`'s log, not kept in the repository) was created per this task's Guardrail 5 instruction but is explicitly **not** used as evidence —
 treating it as one continuous CAP-040 session would misattribute CAP-039's own traffic to CAP-040.
 
 ## 1. Connection topology this session — the App's own "Connect"/"Disconnect" buttons produce zero wire signal (🟢 FACT, major correction to this session's own procedure notes)
@@ -177,9 +177,9 @@ Frame 980, 07:28:12.857467, Sent:
 
 Decoded as consecutive `[Group:1][Code:1][Len:2BE=0000]` zero-length Gets: `05 0c 00 00`,
 `04 02 00 00`, `04 04 00 00`, `04 11 00 00`, `04 13 00 00`, `04 15 00 00`, `0e 04 00 00` — matching
-`CAP-036-FINDINGS.md` §5's shape exactly — followed in the same frame by the already-documented
-`Group 0x03 Code 0x02` firmware string (`ADR-012`) and the `Europe/Amsterdam` capability blob
-(`0x01 00 1b 08 a0 03 10 9a 8a c1 a9 07 1a 10 <"Europe/Amsterdam"> 09 03 00 00`).
+`CAP-036-FINDINGS.md` §5's shape exactly — followed in the same (Sent) frame by `03 01 00 1b 08 a0 03 10 9a 8a c1 a9 07 1a 10
+<"Europe/Amsterdam">` (Group `0x03` Code `0x01`, 27 bytes, the phone's time zone) and a zero-length `09 03 00 00` — no firmware string in this frame
+(`tshark -r CAP-040-btsnoop_hci.log -Y "frame.number==980" -T fields -e data.data`).
 
 **Because DLCI 0x08 never reopens for the rest of the session (§1), none of these 7 codes recur —
 there is no second, third, ... occurrence to compare against a bracketed dock-state change.** The
@@ -195,6 +195,7 @@ anything about what these codes mean.
 -documented content from `CAP-036-FINDINGS.md` §5/§12.2 and `PROTOCOL.md` §4.3 Option E):
 
 ```
+$ tshark -r CAP-040-btsnoop_hci.log -Y "btrfcomm.dlci==0x08 && btrfcomm.len>0" -T fields -E separator='|' -e frame.number -e frame.time -e frame.p2p_dir -e data.data > dlci08_all.tsv   # scratch file, not kept
 $ awk -F'|' '{print substr($4,1,8)}' dlci08_all.tsv | sort | uniq -c | sort -rn
      26 04030004   <- Group 0x04 Code 0x03 (Option E cross-check, field3=Right%, PROTOCOL.md §4.3)
      22 0e02001a   <- Group 0x0e Code 0x02, constant "google-pixel-buds-pro-v1" capability string
@@ -231,7 +232,7 @@ $ grep -E "6243|6270" dlci08_all.tsv
 6270|2026-09-06T07:54:29.613584000+0200|1|0e0100230a210a03616c6c121a0a060864100118010a060864100118020a060855100118032001
 ```
 Frame 6243's Left entry is `0a07 08ff01 1001 1801` — a 7-byte sub-message (one byte longer than the
-usual 6, because `0xff` zigzags to a 2-byte varint `ff 01`) decoding to `value=255, flag=1, idx=1`.
+usual 6, because 255 needs a 2-byte varint, `ff 01`) decoding to `value=255, flag=1, idx=1`.
 Frame 6270 (1.27s later) reads `value=100, flag=1, idx=1`.
 
 **This single sentinel-then-100 transition falls exactly inside the video-confirmed real docking
@@ -256,6 +257,8 @@ one session — not proposed for promotion.
   family, not a dedicated `BATT-00x` test.
 
 ## 6. Conclusions & proposed downstream updates — ⏳ awaiting maintainer sign-off for every proposed item
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–3 done (`PROTOCOL.md` §6 `CAP-040` items; codes narrowed by `CAP-050`); 4–5 done (`PRIV-001` evidence, §9 row).
 
 **Recorded as this session's own factual result (no sign-off needed, per `AGENTS.md` §15 — these
 are observations, not FACT promotions to `PROTOCOL.md`):**

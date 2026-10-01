@@ -1,6 +1,10 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AN (new), `CAP-041` Case%-change bracket (`CAP-052`)
 
-**Status:** 🔲 **Not yet captured — skeleton only.** Fill in every `TBD` below after recording,
+**Status:** ⛔ **Withdrawn 2026-09-30 — not to be run** (maintainer, chat, `ai-sessions/0059`): the question is answered by `SubscribeRuntimeInfo`
+entry 6.1 = Case % (`PROTOCOL.md` §4.3 Option F, 🟢, ADR-043; hardware-verified `CAP-062`, followed 37 → 33 % in `CAP-063`). The skeleton below is kept as
+the record of the plan.
+
+**Original status:** 🔲 Not yet captured — skeleton only. Fill in every `TBD` below after recording,
 per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), and
 `PROJECT_RULES.md` rule 11/14 (reproducibility metadata). Once reviewed, rename this folder from
 the placeholder `CAP-052-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AN` to the actual session

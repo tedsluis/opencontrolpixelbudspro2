@@ -33,21 +33,22 @@ a 50k-packet file with `editcap -A/-B`, which is avoidable overhead.
 
 ## Event Timeline
 
-Timestamps are the video's own on-screen wall-clock overlay (1fps sampling, refined to
+**Frame numbers** in this file are the stored `CAP-002-btsnoop_hci.log`'s own numbering (the full ~8h20m shared buffer; its first 2,663 frames are
+`CAP-001`'s — `CAP-002-FINDINGS.md` header). Timestamps are the video's own on-screen wall-clock overlay (1fps sampling, refined to
 sub-second precision around each tap by extracting additional frames at the exact second); the
 log uses the same wall clock (+0200), directly comparable.
 
 | Time | Action / Event | Initiator | Test-ID | Evidence in `CAP-002-btsnoop_hci.log` |
 |---|---|---|---|---|
 | 17:04:53 | Start video recording. "Pair new device" screen already open, phone's own address shown (`E8:D5:2B:7E:CA:81`); list shows unrelated nearby devices (TV, DoorLocker) | User (App) | — | Ongoing `Extended Inquiry Result` events from before this window (inquiry already running) |
-| 17:05:02 | Case opened, LED lit; more nearby devices appear in list over time (laptop, vuart:ktunnel) but not the Buds yet | User (Hardware) | `CASE-001` | — |
-| 17:05:22 | "Pixel Buds Pro 2 van Ted" now visible in the device list | App (Auto) | — | `Extended Inquiry Result` at 17:05:21.79 (frame 526) — the Buds' inquiry response reached the phone shortly before this |
+| 17:05:02 | Case opened, LED lit; more nearby devices appear in list over time (laptop, vuart:ktunnel) but not the Buds yet | User (Hardware) | `CASE-003` | — |
+| 17:05:22 | "Pixel Buds Pro 2 van Ted" now visible in the device list | App (Auto) | — | `Extended Inquiry Result` at 17:05:21.79 (frame 48510) — the Buds' inquiry response reached the phone shortly before this |
 | 17:05:26 | Tap **"Pixel Buds Pro 2 van Ted"** in the list; row shows "Pairing..." | User (App) | `PAIR-001` | `Delete Stored Link Key` (17:05:26.717) → `Create Connection` (17:05:26.724) — confirms this is a deliberate fresh-pairing flow, not a reconnect |
 | 17:05:27 | (log-only — happens between visible frames) | — | — | `Connect Complete` (17:05:27.146, status `0x00`) → `Link Key Request` → **`Link Key Request Negative Reply`** (no stored key) → `IO Capability Request/Reply/Response` — Secure Simple Pairing begins |
 | 17:05:28–33 | **"Pair with Pixel Buds Pro 2 van Ted?"** dialog appears with a **"Also allow access to contacts and call history"** toggle (off by default) | App (Auto) | — | — |
 | 17:05:30–32 | Tap the **contacts/call-history toggle** to turn it ON (not present in the original draft's notes) | User (App) | — | — |
 | 17:05:33 | Tap **Pair** | User (App) | `PAIR-001` | `Simple Pairing Complete` (17:05:33.608) → `Link Key Notification` (new key stored, 17:05:33.622) → `Authentication Complete` → `Set Connection Encryption` → `Encryption Change` (17:05:33.721) |
-| 17:05:34–48 | (not directly visible — app UI transitioning) | — | `PAIR-001` | Large SDP/L2CAP service-enumeration burst (Audio Sink, AVRCP, HFP, HID-Control, HID-Interrupt, generic RFCOMM — frames 726–1231); RFCOMM channels opened: **6 (labeled "Hands-Free" by Wireshark)**, 4, 5, 1, 2 (frames 908–1254); channel 2 closed then reopened (frames 1486–1543) |
+| 17:05:34–48 | (not directly visible — app UI transitioning) | — | `PAIR-001` | Large SDP/L2CAP service-enumeration burst (Audio Sink, AVRCP, HFP, HID-Control, HID-Interrupt, generic RFCOMM — frames 48710–49215); RFCOMM channels opened: **6 (labeled "Hands-Free" by Wireshark)**, 4, 5, 1, 2 (frames 48892–49238); channel 2 closed then reopened (frames 49470–49527) |
 | 17:05:53 | Notification banner: **"Pixel Buds Pro 2 van Ted connected — Left 100% Case 57% Right 100%"** | App (Auto) | — | Lags the actual technical connection (complete by ~17:05:48) by ~5–15s — UI/notification delay, not a protocol event |
 | 17:05:51–17:06:03 | **"Save device to ted.sluis@gmail.com..."** dialog shown (Fast Pair account-linking prompt) | App (Auto) | `GFPS-001` | No further RFCOMM activity during this window — this step appears to be cloud/GMS-side, not locally observable |
 | 17:06:04 | Tap **Save** | User (App) | `GFPS-002` | No corresponding local Bluetooth traffic — consistent with this being an account-linking (cloud) action |

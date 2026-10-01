@@ -1,5 +1,7 @@
 # Findings: `CAP-063` (Group AY — hardware re-test of the `ai-sessions/0048` and `ai-sessions/0052` builds; the maintainer's twelve observations answered)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): field 12's bit order is 🟢 (ADR-046, `CAP-056`) — the 🔴 below is history; Settable: ADR-049.
+
 Standardized, evidence-based extraction from `CAP-063-btsnoop_hci.log`, `CAP-063-recording.mp4`, `CAP-063-debug-export.log`,
 `CAP-063-OpenControl-for-Pixel-Buds-log-a5f9783708f6.txt` (app logcat), `CAP-063-System-log-6cf0a8a3bd50.txt` and, as context only,
 `CAP-063-btsnoop_hci.log.last`, per `ai-sessions/0053`. The timeline these findings refer to is `CAP-063-EVENT-NOTES.md`.
@@ -260,7 +262,7 @@ Runtime-info stream (`SubscribeRuntimeInfo`, `3:0 6:{1:{1:case 2:1} 2:{1:L 2:1|2
 
 | Channel / protocol | What the app does | What the Buds answer | Goes well | Goes wrong / to improve |
 |---|---|---|---|---|
-| **DLCI 0x02 pw_rpc** (`maestro_pw.Maestro`, ch 19/21) | per Connect: wait for `GetSoftwareInfo`, `ReadSetting 4:16`, six settings reads, `SubscribeRuntimeInfo`; writes 16/17/19/22/4/7; one re-subscription per Refresh | announcement, `RESPONSE` status OK 166 of 166 (15 announcements, 105 reads, 46 writes), stream on dock changes and with `AT+BIEV` | 15/15 announcements, 0 errors, re-subscription answered 8/8 | the Buds `DISC` it on some wear changes (6 of 14 ends), not on putting buds in the ears |
+| **DLCI 0x02 pw_rpc** (`maestro_pw.Maestro`, ch 19/21) | per Connect: wait for `GetSoftwareInfo`, `ReadSetting 4:16`, six settings reads, `SubscribeRuntimeInfo`; writes 16/17/19/22/4/7; one re-subscription per Refresh | announcement, `RESPONSE` status OK 166 of 166 (15 announcements, 105 reads, 46 writes), stream on dock changes and with `AT+BIEV` | 15/15 announcements, 0 errors, re-subscription answered 8/8 | the Buds `DISC` it on some wear changes (5 of 14 ends: 3285, 3927, 4684, 7175, 10644 — `tshark -Y "btrfcomm.dlci==0x02 && btrfcomm.frame_type==0x43 && frame.p2p_dir==1"`), not on putting buds in the ears |
 | **DLCI 0x04 Message Stream** | 29 on-demand claims (+2 collisions with Play services at the first two Connects) | Device Info (`03 0a` nonce, `03 01 da 2d b1`, `03 02` BLE address, `03 09` "Revision 6", `03 0b` FHN), `07 34`, battery ×3, `Notify`, ACK, ring echo | every claim got its burst; ANC/Ring ACKed | Settable `00` disables ANC until the next claim even after the buds are worn again (§3) |
 | **DLCI 0x08/0x0a** (GSND) | nothing | Google app (Bisto) opens/closes them | no contention | — (the assistant path, §7) |
 | **HFP** (DLCI 0x0c when the phone set it up; DLCI 0x09 on the Buds-initiated reconnects 16:15:38 and 16:20:28 — undissected, raw `41 54 2b …`) | nothing (ADR-040) | `AT+BIEV=2,100` ×62 (44 on 0x0c, 18 on 0x09), `+CIEV` signal; **no `AT+BVRA`** anywhere | — | — |

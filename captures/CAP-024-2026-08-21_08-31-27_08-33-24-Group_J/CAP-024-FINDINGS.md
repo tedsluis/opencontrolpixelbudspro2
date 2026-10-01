@@ -1,5 +1,7 @@
 # CAP-024: In-ear Detection & Case Sounds (Group J)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): field 2 = "In-ear detection" 🟢 (ADR-019 Update 2026-09-28); field 28 "Bud return" 🟢, field 27 category 🟢 (ADR-019).
+
 Standardized, evidence-based extraction from `CAP-024-btsnoop_hci.log` + `CAP-024-recording.mp4`,
 staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `PROJECT_RULES.md` §1:
 

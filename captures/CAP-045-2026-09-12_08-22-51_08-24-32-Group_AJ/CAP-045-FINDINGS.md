@@ -1,5 +1,7 @@
 # CAP-045: `HOLD-005` Left/Right ANC-rotation-checklist split (Group AJ) — procedure not run; incidental `TOUCH-007` replication instead
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): Settable: ADR-049 (frame 612 reads `e8` with one bud docked and one loose — an open sample for its 🟡, re-check in `CAP-065`).
+
 Standardized, evidence-based extraction from `CAP-045-btsnoop_hci.log` + `CAP-045-recording.mp4`,
 staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `PROJECT_RULES.md` §1:
 
@@ -36,9 +38,9 @@ language, which this session's corrected timeline confirms against the wire (see
 ```
 $ tshark -r CAP-045-btsnoop_hci.log -Y 'btrfcomm.dlci==2 and btrfcomm.len>0 and frame.p2p_dir==0' \
     -T fields -e frame.number -e frame.time -e data.data
-(38 Sent frames total, all within two tight clusters: 08:22:58.486–08:23:01.535 and 08:23:57.681–08:24:06.478)
+(61 Sent frames total — 49 in 08:22:58.486–08:23:01.535, 12 in 08:23:57.681–08:24:06.478)
 ```
-Every one of these 38 DLCI 0x02 `Sent` frames matches the already-documented connect-time/
+Every one of these 61 DLCI 0x02 `Sent` frames matches the already-documented connect-time/
 channel-reopen settling-burst shape (`CAP-036-FINDINGS.md` §4, `CAP-041-FINDINGS.md` §8's
 byte-for-byte-diffed content) — none carries the `field5(len12){field4(len10){field12(len8){...}}}`
 rotation-checklist shape (`PROTOCOL.md` §4.5.3, `qhr` field 12/`qht`). **Zero rotation-checklist
@@ -115,6 +117,8 @@ re-run of Group AJ's own procedure is still needed.**
 - 10 wire-confirmed `TOUCH-007`-style Notify-without-Set transitions, cleanly video-correlated.
 - The Notify frame's own structure has no Left/Right field — confirmed via `PROTOCOL.md` §4.1's
   already-documented layout, not a new decode.
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1 done (Group AR ran as `CAP-056`, ADR-046); 2 done (`TOUCH-007` evidence).
 
 **Proposed (⏳ awaiting maintainer sign-off, per `AGENTS.md` §6/§15):**
 1. `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 / `TODO.md` — flag that `HOLD-005`'s Left/Right split question

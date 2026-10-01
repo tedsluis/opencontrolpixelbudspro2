@@ -1,5 +1,7 @@
 # Findings: `CAP-034` (Group W, 4th attempt — GATT `0x0c0X`/`0x0f2X` handle↔UUID mapping RESOLVED)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): this capture's GATT map was promoted to 🟢 on 2026-09-01 (`PROTOCOL.md` §6); `FE2C1238…` = Find Hub "Beacon actions" (🟢, `PROTOCOL.md` §6 2026-09-26).
+
 **✅ Maintainer sign-off obtained 2026-09-01, per `AGENTS.md` §6/§15.** All four promotions proposed
 in §9 (`PROTOCOL.md` §6/§4.3 Option D, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row,
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index + Group W section, and the cross-reference notes in
@@ -377,6 +379,7 @@ Checked exhaustively across the full session for any Read Request (`0x0a`) or Wr
 against handles `0x0c15`–`0x0c18`:
 
 ```
+$ tshark -r CAP-034-btsnoop_hci.log -Y btatt -T fields -e frame.number -e _ws.col.Info > cap034_att_full.tsv   # scratch file, not kept
 $ grep -E "0c15|0c16|0c17|0c18" cap034_att_full.tsv
 3274  Sent Read By Group Type Request, Primary Service, Handles: 0x0c15..0xffff
 3276  Rcvd Read By Group Type Response, Attribute List Length: 1, Unknown

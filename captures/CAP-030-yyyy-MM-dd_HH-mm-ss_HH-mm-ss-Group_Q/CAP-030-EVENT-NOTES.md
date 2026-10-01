@@ -37,7 +37,7 @@ start** and **observation end** boundaries, not just a single timestamp.
 | Buds MAC (partial, per `AGENTS.md` §7/§9) |            TBD             |
 
 **Preparation (required before starting):**
-- Firmware note (documentation only, not currently a blocker): `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §6
+- Firmware note (documentation only, not currently a blocker): `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §6
   states Loud Noise Protection and Adaptive Audio require firmware ≥4.467 — `PROTOCOL.md` §0.1's
   `XC-03` note leaves the numeric relationship between that scheme and this project's own confirmed
   wire-baseline `"release_5.203"` unreconciled, but also confirms this isn't currently blocking

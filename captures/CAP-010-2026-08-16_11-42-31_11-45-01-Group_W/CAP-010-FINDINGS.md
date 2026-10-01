@@ -1,5 +1,7 @@
 # Findings: `CAP-010` (Group W — GATT cache-busting attempt)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the GATT handle↔UUID map is 🟢 (`CAP-034`, `PROTOCOL.md` §6); DLCI 0x02 is pw_rpc (ADR-034).
+
 Standardized, evidence-based extraction from `CAP-010-btsnoop_hci.log` + `CAP-010-recording.mp4`,
 staged here for later promotion directly into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled on
 `captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-FINDINGS.md` and
@@ -266,26 +268,19 @@ capture as a confirming citation):**
 - DLCI 0x08's private one-time handshake content, including the `release_5.203` firmware string —
   now five confirming captures.
 
-**Not ready yet (at the time):**
-- Any UUID for handle `0x0f2a`, `0x0f28`, or the `0x0c0X`/`0x0c1X` cluster — **still unresolved,
-  now 4-for-4 negative across every capture that has attempted this.** Needs Group W's actual
-  defined method (§7 item 1), genuinely untried so far.
-- The `0x0c13`/`0x0c14` "structurally distinct from `0x0c04`/`0x0c05`" hypothesis (§3) — new this
-  session, not cross-checked against any spec.
-
-**Resolved 2026-09-01 (`CAP-034`, maintainer sign-off obtained per `AGENTS.md` §6):** the handle↔UUID
-mapping above is now known. `0x0c04` = Key-based Pairing (`FE2C1234…`), `0x0c0a` = Account Key
+**Resolved elsewhere (`CAP-034`, 🟢, maintainer sign-off 2026-09-01):**
+- The handle↔UUID mapping this capture could not obtain: `0x0c04` = Key-based Pairing (`FE2C1234…`), `0x0c0a` = Account Key
 (`FE2C1236…`), `0x0c0c` = Additional Data (`FE2C1237…`), `0x0f28` = Serial Number String, `0x0f2a` =
 Firmware Revision String (both under Device Information, `0x180A`) — confirming this section's own
-80-byte-write/Key-based-Pairing-FORM hypothesis as an exact name match, not just a shape match. The
-`0x0c13`/`0x0c14` "structurally distinct" hypothesis above is also confirmed: `0x0c13` is
-`FE2C1238…`, a genuinely separate characteristic from the Key-based-Pairing quartet — still no
-official name found for it. See `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-FINDINGS.md`
+80-byte-write/Key-based-Pairing-FORM hypothesis as an exact name match, not just a shape match.
+- The `0x0c13`/`0x0c14` "structurally distinct" hypothesis (§3): confirmed — `0x0c13` is `FE2C1238…`, the Find Hub Network "Beacon actions"
+  characteristic (`PROTOCOL.md` §6, 2026-09-26). See `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-FINDINGS.md`
 §4 for the full command+hex evidence and `PROTOCOL.md` §6 for the promoted table.
+
+**Still open:**
 - The 11:46:58–11:47:04 post-video reconnect cycle (§5) — single occurrence, no correlated
   on-screen event, cause unknown.
-- The `libmaestro`/ANC-EQ control channel identity — still completely unaddressed by any capture
-  to date, including this one (no ANC/EQ action was performed in this session).
+- *(Settled elsewhere: ANC = DLCI 0x04 Message Stream, ADR-009; EQ/settings = DLCI 0x02 pw_rpc, ADR-034. This session performed no ANC/EQ action.)*
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-FINDINGS

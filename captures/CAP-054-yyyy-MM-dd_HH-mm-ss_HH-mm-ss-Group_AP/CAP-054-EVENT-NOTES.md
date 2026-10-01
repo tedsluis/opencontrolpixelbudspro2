@@ -10,10 +10,9 @@ date/start-time/end-time, e.g. `CAP-054-2026-09-15_08-30-00_08-40-00-Group_AP`.
 `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 2):** `CAP-043` (Group Q repeat)
 established, under rigorously clean connection-free isolation, that the Buds' idle/case-closed
 `0xFE2C` BLE advertisement does not structurally match `PROTOCOL.md` §4.3 Option A's documented
-Battery Notification layout — but only tested the idle/case-closed condition. The official Fast Pair
-spec itself describes the Battery Notification extension as "**optional** when a single bud is
-inserted/removed" — a materially different trigger condition, not yet bracketed by any capture to
-date.
+Battery Notification layout — but only tested the idle/case-closed condition. A single-bud insertion/removal is a different condition, not yet bracketed
+by any capture. (The Fast Pair `batterynotification` page states **no** trigger, cadence or "optional when a single bud is inserted/removed" condition —
+re-fetched 2026-09-08 and 2026-09-24, `PROTOCOL.md` §4.3 Option A; this capture tests the condition as a guess, not as a spec statement.)
 
 ## Log Metadata
 

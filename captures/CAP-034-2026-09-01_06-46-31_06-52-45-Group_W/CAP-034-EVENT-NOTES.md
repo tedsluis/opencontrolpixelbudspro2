@@ -4,7 +4,7 @@
 This session combined (1) a confirmed-unlimited HCI snoop snaplen and (2) a genuine GATT cache-miss
 for the *entire* database (not just the GATT service), per `CAP-014-FINDINGS.md` §8's recommended
 next step, and **resolves the `0x0c0X`/`0x0f2X` handle↔UUID mapping question open since `CAP-002`**
-(PROPOSAL, pending maintainer approval — see `CAP-034-FINDINGS.md`).
+(promoted to 🟢 FACT 2026-09-01 with the maintainer's sign-off — `PROTOCOL.md` §6, `CAP-034-FINDINGS.md`).
 
 **Method for this session — a hybrid not yet tried, per the maintainer's own device availability:**
 Group W's Option (b) (a phone that has never connected to this Buds unit) was originally intended

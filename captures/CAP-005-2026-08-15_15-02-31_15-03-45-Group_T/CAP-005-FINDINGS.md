@@ -1,5 +1,7 @@
 # Findings: `CAP-005` (Group T — EQ command isolation)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the pw_hdlc split is address `00 3b`/`80 a3` (one-terminated varint) + control `03` + RpcPacket (ADR-034) — the table's `0x0000`/`0xd180` addresses and `0x3b`/`0x2a`/`0x08` "control" bytes are a wrong byte split.
+
 Standardized, evidence-based extraction from `CAP-005-btsnoop_hci.log` + `CAP-005-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Modeled on
 `captures/CAP-004-2026-08-11_06-22-36_06-25-12-Group_S/CAP-004-FINDINGS.md`. Every claim below carries a status per
@@ -117,7 +119,7 @@ becomes visible at 15:03:13 (§1), consistent with the app sending the command a
 registers, with the UI updating on the following screen redraw.
 
 **HDLC decode** (per `PROTOCOL.md` §2.2a's established method — flag `0x7E`, unescape `0x7D <X>` →
-`X^0x20`, LEB128 address, 1-byte control, trailing 4-byte CRC-32/IEEE-802.3/zlib, little-endian):
+`X^0x20`, one-terminated varint address ("LEB128" before 2026-09-30, `ai-sessions/0059`), 1-byte control, trailing 4-byte CRC-32/IEEE-802.3/zlib, little-endian):
 
 ```python
 def unescape_hdlc(data):
@@ -138,7 +140,7 @@ def unescape_hdlc(data):
 |---|---|---|---|---|
 | 1245 | `0x0000` | `0x3b` | 🟢 match (`7b1bccbe`) | `0310131dea71de7e251d9a8c9e2a1e221c8201190d0000a04015000040401d0000000025000000002d00000000` (45B) |
 | 1249 | `0xd180` | `0x2a` | 🟢 match (`4adbcc86`) | `1e221c8201190d0000a04015000040401d0000000025000000002d00000000080710131dea71de7e25f5ad2128` (45B) |
-| 1250 | `0xd180` | `0x08` | 🟢 match (`e6d97e`†) | `0110131dea71de7e251d9a8c9e` (13B) |
+| 1250 | `0xd180` | `0x08` | 🟢 match (`4c05e6d9`; the frame ends `… 9e 4c 05 e6 d9 7e`, `7e` = closing flag)† | `0110131dea71de7e251d9a8c9e` (13B) |
 
 †CRC verified programmatically against the full trailer; truncated in this table for width. All
 three CRCs verified via the same `crc32`-over-unescaped-body method as `PROTOCOL.md` §2.2a — 🟢

@@ -58,8 +58,10 @@ envelope (Group `0x03` Code `0x02`, already documented in `CAP-002-FINDINGS.md` 
 session with an on-screen cross-check — the first time this project has directly verified the
 on-wire string against the app's own displayed value rather than inferring a match across
 different capture sessions. `"Revision 6"` (DLCI 0x04's official Message Stream Device Information
-field, `CAP-002-FINDINGS.md` §3) does not appear anywhere in this screen or session — the app does
-not surface that string to the user as "the firmware version."
+field, `CAP-002-FINDINGS.md` §3) does not appear anywhere on this screen — the app does not surface that string to the user as "the firmware
+version." It **is** on the wire in this session, in the connect-time Device Information burst on DLCI 0x04: `tshark -r CAP-023-btsnoop_hci.log -Y
+'frame contains "Revision"' -T fields -e frame.number -e frame.time -e btrfcomm.dlci -e data.data` → frame 730 (08:23:45.772, DLCI 0x04)
+`030a0008… 03010003da2db1 … 0309000a5265766973696f6e2036 …` (`03 09` = firmware field, "Revision 6").
 
 **Status:** 🟢 **FACT, promoted 2026-08-23** (`DECISIONS.md` ADR-012) — same-session on-screen +
 on-wire match is direct evidence, not an inference; maintainer sign-off obtained per `AGENTS.md`

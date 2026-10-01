@@ -1,5 +1,7 @@
 # Findings: `CAP-059` (Group AU — first hardware run of the `ai-sessions/0041` build, OpenControl's own app, correlated end to end)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): Settable: ADR-049; `0e 04` precedes the post-open Case push (Option E 2026-09-24 correction); the app no longer opens DLCI 0x08 (ADR-043).
+
 Standardized, evidence-based extraction from `CAP-059-btsnoop_hci.log`, `CAP-059-recording1.mp4`/
 `CAP-059-recording2.mp4`, `CAP-059-debug-export.log`, `CAP-059-OpenControl-for-Pixel-Buds-log-
 6a07477ae6ec.txt` (app logcat), and `CAP-059-System-log-ce75839464e2.txt` (Android system log),
@@ -239,9 +241,6 @@ the maintainer's own chat approval (`AGENTS.md` §6). The action items these fin
 in `ai-sessions/0042_FEATURE_RESULT_2026_09_20.md`.
 
 **Promoted to `PROTOCOL.md`:** nothing yet from this capture specifically.
-
----
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU/CAP-059-FINDINGS.md
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU/CAP-059-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU/CAP-059-FINDINGS

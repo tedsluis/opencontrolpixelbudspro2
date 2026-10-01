@@ -158,6 +158,8 @@ same-session confirmation, no counter-example.
   entire ~9-minute session after the one deliberate reconnect.
 - The Set-vs-Get `Settable-toggles` comparison is consistent, no counter-example.
 
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–3 done (`PROTOCOL.md` §6 `CAP-039` item, `OBS-006` evidence, the combined log kept).
+
 **Proposed (⏳ awaiting maintainer sign-off, per `AGENTS.md` §6/§15):**
 1. `PROTOCOL.md` §6's open item on `CAP-039`'s cycling (added 2026-09-06) — add this capture's clean
    negative result: the cycling did not reproduce with continuous phone-screen recording, so its

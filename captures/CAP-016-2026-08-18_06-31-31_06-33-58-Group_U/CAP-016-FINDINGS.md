@@ -1,5 +1,7 @@
 # Findings: `CAP-016` (2026-08-18 re-run, Group U — case/bud-removal hardware events)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the Settable byte's current reading is ADR-049 (`0x00` ⇒ NAK; 🟡 `0x00` ⇔ no bud worn); `03 03 …` = Message Stream "Battery updated" (ADR-031).
+
 Standardized, evidence-based extraction from `CAP-016-btsnoop_hci.log` + `CAP-016-recording.mp4`
 (the `06-31-31` folder), following the same template as `CAP-001-FINDINGS.md`. Every claim below
 carries a status per `PROJECT_RULES.md` §1:
@@ -69,7 +71,8 @@ Connection"** — i.e. the *Buds* end the link, not the phone. This is the **onl
 Complete` event anywhere in the entire 785s log. It lands 0.9–1.9s after the second (last) earbud
 is placed back into the case (≈06:33:44–45 per video) — the classic link drops the instant the case
 judges "both buds docked," with no RFCOMM-level teardown or other warning frame preceding it beyond
-the routine ~6–7s periodic heartbeat (frame 3230/3231, `03 03 00 03 e4 64 ff`, 06:33:45.072).
+a Message Stream "Battery updated" frame on DLCI 0x04 (frame 3230/3231, `03 03 00 03 e4 64 ff`, 06:33:45.072 — ADR-031/033: Left `0xe4` = charging,
+100 %, Right `0x64` = 100 %, not charging).
 
 **Reproduction:**
 ```
@@ -220,7 +223,7 @@ In the ±3s window around the **first** bud being placed back into the case (≈
 shows only unrelated `LE Extended Advertising Report` frames (background BLE scan noise from other
 nearby devices, not the Buds) and one `Mode Change` baseband event at **06:33:41.680**. No RFCOMM
 data frame, no ANC re-notify, no DLCI 0x08 Code `0x12` push appears in this window. The `Mode
-Change` event's timing is suggestively close but — per `CAP-001-FINDINGS.md` §3.5's identical
+Change` event's timing is suggestively close but — per `CAP-007-FINDINGS.md` §3.5's identical
 caveat about the same event type — there is no documented mechanism connecting an HCI-level
 active/sniff-mode transition to app-visible case-docking state, so this is 🔴 **not attributable**,
 consistent with (not a new finding beyond) the prior capture's own treatment of this event type.
@@ -258,7 +261,7 @@ encodes** — still 🔴 open, per `CAP-007`(old) §6.
   currently selectable" from this capture's 8-sample pattern to `PROTOCOL.md` needs either the
   official spec text for that specific byte or a dedicated single-variable repeat (bud fully
   docked vs. fully out, nothing else changing) before it clears `PROJECT_RULES.md` §1's promotion
-  bar. Awaiting maintainer sign-off before any `PROTOCOL.md` edit.
+  bar. *(Since settled as far as the evidence allows: the spec text names the byte "Settable toggles" and `DECISIONS.md` ADR-049 records 0x00 ⇒ a `Set` is NAKed — 🟢 — with 🟡 0x00 ⇔ no bud worn.)*
 - **§1's Buds-initiated-reconnect finding and §5's case-lid-silence finding are both stable,
   cross-capture-replicated FACTs** (the latter now confirmed in two independent sessions) and are
   safe reference points for future capture design — a case-lid sensor's state, if it exists at all,

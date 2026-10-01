@@ -1,5 +1,7 @@
 # Findings: `CAP-062` (Group AX — `APP_TESTPLAN.md` run of the `ai-sessions/0046` build; the maintainer's five observations answered)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the session re-open is built (ADR-044, `ai-sessions/0048`, hardware-verified `CAP-063`); Settable: ADR-049.
+
 Standardized, evidence-based extraction from `CAP-062-btsnoop_hci.log`, `CAP-062-recording.mp4`, `CAP-062-debug-export.log`,
 `CAP-062-OpenControl-for-Pixel-Buds-log-091e23cb54d0.txt` (app logcat) and `CAP-062-System-log-8bfd96877cca.txt`, per `ai-sessions/0047`. The
 timeline these findings refer to is `CAP-062-EVENT-NOTES.md`.

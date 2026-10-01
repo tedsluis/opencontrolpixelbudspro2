@@ -1,5 +1,7 @@
 # Findings: `CAP-037` (Group AD — "Get ANC state" reconnect-reliability + dock-state transition, purpose-built repeat, `OBS-004`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the Settable byte's current reading is ADR-049 (supersedes ADR-024's "dock state" Decision).
+
 Standardized, evidence-based extraction from `CAP-037-btsnoop_hci.log` + `CAP-037-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every claim below
 carries a status per `PROJECT_RULES.md` §1:
@@ -166,6 +168,8 @@ resolve it. Recorded as 🔴 OPEN QUESTION, not force-fit into either reading. C
   pairing/SSP traffic observed on any chandle checked.
 
 ## 7. Conclusions & downstream updates — proposals only, awaiting maintainer sign-off
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–2 done as supporting evidence (ADR-022; ADR-024, whose Decision is now superseded by ADR-049); 3 **still open** — the Settable↔Current co-occurrence is not in `PROTOCOL.md` (listed in `TODO.md`); 4 done (§6 item resolved by `CAP-048`).
 
 **Recorded as this session's own factual result (no sign-off needed, purely descriptive):**
 - The session ran 34 reconnects (26 with real DLCI 0x04 payload) over ~20 minutes, not the planned

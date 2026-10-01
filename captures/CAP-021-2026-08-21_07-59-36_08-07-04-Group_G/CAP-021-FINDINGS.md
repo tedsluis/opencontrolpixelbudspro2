@@ -1,5 +1,7 @@
 # CAP-021: Press-and-Hold Configuration (Group G)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): `qhr` field 7 (press-and-hold) is 🟢 (ADR-019); field 12's bit order is 1 NC / 2 Off / 3 Transparency / 4 Adaptive, 🟢 (ADR-046) — the on-screen order NC/Off/Adaptive/Transparency below is refuted.
+
 Standardized, evidence-based extraction from `CAP-021-btsnoop_hci.log` + `CAP-021-recording.mp4`,
 staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `PROJECT_RULES.md` §1:
 
@@ -91,9 +93,9 @@ HOLD-003 (frame 4976) -> 0310131dea71de7e251d9a8c9e2a0a22083a06120422020805
 ```
 
 Decoded (offset 13 onward): `field5(len10){ field4(len8){ field7(len6){ field1|field2(len4){
-field4=varint(5|6) } } } }`.
+field4(len2){ field1=varint(5|6) } } } } }` — e.g. 1895 `3a 06 0a 04 22 02 08 06` (Left, 6) (`qju` → `qik` → `qho`, §8).
 
-| Frame | Time | Outer inner field | Value | Meaning (🟡 hypothesis) | Test-ID |
+| Frame | Time | Outer inner field | Value | Meaning (🟢, ADR-019) | Test-ID |
 |---|---|---|---|---|---|
 | 1895 | 08:01:23.784 | `field1` (Left) | `6` | Left → Digital assistant | `HOLD-002` |
 | 3619 | 08:03:16.151 | `field2` (Right) | `6` | Right → Digital assistant | `HOLD-004` |
@@ -319,10 +321,7 @@ identification above. The Left/Right selector (`qju.field1`/`field2`) and the AN
 `field1`/`field2` as §3's simplified notation suggested; it is one level deeper: `qju.field1(Left)` →
 `qik` (length-delimited) → `qik.field4` → `qho` (length-delimited) → `qho.field1` = the raw integer.
 This matches `REVERSE_ENGINEERING.md`'s own `qju`/`qik`/`qho` shape description exactly (`qik` wraps a
-`qho` value, `qho` carries the actual int) — §3's "`field4=varint(5|6)`" phrasing was a correct
-*value* but an imprecise *shape* description; corrected here rather than in §3 itself, per
-`PROJECT_RULES.md` §3's convention for `CAP-NNN-FINDINGS.md` files (rewrite findings, keep the
-history in git). The three `HOLD-005` frames sampled (5237/5247/5255) all decompose to `qhr` field
+`qho` value, `qho` carries the actual int) — §3's table gives the value; this is its exact shape. The three `HOLD-005` frames sampled (5237/5247/5255) all decompose to `qhr` field
 **12** (`qht`) with exactly 4 boolean sub-fields (tags `0x08`/`0x10`/`0x18`/`0x20`), matching `qht`'s
 already-documented 4×`BOOL` shape with no further nesting (unlike `qju`, `qht`'s fields are plain
 booleans).

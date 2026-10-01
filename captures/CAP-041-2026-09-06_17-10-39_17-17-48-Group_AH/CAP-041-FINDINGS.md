@@ -1,5 +1,7 @@
 # Findings: `CAP-041` (Group AH — DLCI 0x02 connect-time RPC burst vs. non-default settings, `OBS-007`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the "2-field sub-message" is `SubscribeRuntimeInfo` entry 6.1 = Case % (Option F, ADR-043); the connect burst is decoded (`PROTOCOL.md` §6 2026-09-24) — "no settings read-back" holds only for the burst's length/order, the official app does read every setting.
+
 Standardized, evidence-based extraction from `CAP-041-btsnoop_hci.log` + `CAP-041-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every claim below
 carries a status per `PROJECT_RULES.md` §1:
@@ -208,6 +210,8 @@ specific field would be the natural next step.
   *set* of subframe values in every session (differing only in transmission order), with exactly one
   exception — a single subframe that varies session-to-session in a way plausibly explained by a
   per-session timestamp/nonce, not a settings value. See §8 for the full evidence.
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** done — `OBS-007` closed at the content level (`PROTOCOL.md` §6 [x]); the burst is identified (§6, 2026-09-24).
 
 **Proposed, awaiting maintainer sign-off (per `AGENTS.md` §6/§15 — nothing below is committed as
 FACT and no `DECISIONS.md` ADR is drafted here):**

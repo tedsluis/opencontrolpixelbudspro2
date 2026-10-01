@@ -1,5 +1,7 @@
 # Findings: `CAP-017` (Group W retry, 18:30 — GATT discovery via nRF Connect)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): `0x0f32` = Battery Level (Battery Service `0x180F`), `0x0f2a` = Firmware Revision String — 🟢 `CAP-034` (`PROTOCOL.md` §6, §4.3 Option D).
+
 Standardized, evidence-based extraction from `CAP-017-btsnoop_hci.log` + `CAP-017-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. This is a **second,
 independent `CAP-017` capture**, distinct from
@@ -413,7 +415,7 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   own purpose remains unidentified. See `CAP-034-FINDINGS.md` §4.6.
 - 🔴 What `0x0f32` (value `0x64`) represents, and why it and its CCCD `0x0f33` appear only in this
   session, never in any capture driven by the official app. **Update 2026-08-27 (`CAP-014`,
-  PROPOSAL pending maintainer approval):** reproduces byte-for-byte (same handles, same value
+  superseded 2026-09-01 by `CAP-034`'s 🟢 mapping — marker resolved 2026-09-30, maintainer, chat, `ai-sessions/0059`):** reproduces byte-for-byte (same handles, same value
   `0x64`) in an independent nRF-Connect session 11 days later — not a one-off artifact of this
   session specifically. Still unresolved to a UUID or meaning; the "never in an official-app
   capture" half still stands, since both confirming sessions use nRF Connect. See
@@ -425,7 +427,7 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   simply wasn't triggered because no characteristic-level read happened on screen this session
   (§3's last paragraph) — the service list alone doesn't tell us whether nRF Connect read every
   characteristic's value or just enumerated the declarations. **Resolved 2026-08-27 (`CAP-014`,
-  PROPOSAL pending maintainer approval):** nRF Connect does read `0x0f2a` when given the chance —
+  superseded 2026-09-01 by `CAP-034`'s 🟢 mapping — marker resolved 2026-09-30, maintainer, chat, `ai-sessions/0059`):** nRF Connect does read `0x0f2a` when given the chance —
   `CAP-014`'s session issued a direct `Read Request` against it and got `"Revision 6"` back
   (byte-identical to `CAP-002`). This session's (`CAP-017`'s) absence was specific to this
   session's own screen activity (no characteristic-level read happened on camera), not a general

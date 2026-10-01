@@ -1,5 +1,7 @@
 # Findings: `CAP-014` (Group W repeat — GATT handle↔UUID mapping follow-up, snaplen fix)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the `0x0c0X`/`0x0f2X` handle↔UUID map was resolved by `CAP-034` (🟢, 2026-09-01): `0x0f32` = Battery Level, `0x0f2a` = Firmware Revision String — the "still 🔴 OPEN" lines below are history.
+
 Standardized, evidence-based extraction from `CAP-014-btsnoop_hci.log` + `CAP-014-recording.mp4` +
 `CAP-014-nrf-connection.log`, staged here for later promotion directly into `PROTOCOL.md` per
 `PROJECT_RULES.md` §2. Modeled on `CAP-001-FINDINGS.md` / `CAP-017-FINDINGS.md`. Every claim below
@@ -63,7 +65,7 @@ Checked directly, the same way `CAP-010-FINDINGS.md` §1 checked this for its ow
   (which starts earlier, 20:45:57) shows no `HCI Delete Stored Link Key`/bond-removal event for
   this peer before the one issued by `device.createBond()` itself at 20:55:11.353538 (frame 2364,
   see §2). **🔴 OPEN QUESTION, not glossed over:** whether the Buds were already unbonded from this
-  phone before this session began — same open-ended gap `AGENTS.md` §0.1's guardrail flagged;
+  phone before this session began — the same open-ended "did a bond exist before logging began" gap as `PROTOCOL.md` §6's `PAIR-004` item;
   unlike `CAP-013`/`CAP-031`'s equivalent question (Group A, a different test), this one is not
   resolvable after the fact because no pre-session artifact exists for `CAP-014`.
 - **The connecting app is nRF Connect (a third-party GATT client), not the official Pixel Buds
@@ -235,9 +237,9 @@ never sent.
 | `0x0f33` | Write Req (2616) | `0100` | CCCD-shaped enable (handle = `0x0f32`+1) | new this session vs. `CAP-002`/`CAP-003`/`CAP-010` |
 | `0x0f2a` | Read Resp (2973) | `5265766973696f6e2036` | ASCII `"Revision 6"` | **byte-for-byte identical to `CAP-002-FINDINGS.md` §4** (frame 1441 there) — 3rd session now confirming this exact string on this exact handle |
 | `0x0c04` | Write Req (2954) | `c916abcc85ee00fa1e6a9e5b448bc59686c8e978ff46d6a1a7616772aedf081f6effaf6d88bd9f99f90e2480f91c21941362b035170cd6804f3d7ef8377e2b44a140da5d8c447e71fa9aab6d3f5a0cae` | 80 bytes, opaque | reproduces the `0x0c04` write-then-notify shape from `CAP-002-FINDINGS.md` §4 |
-| `0x0c04` | Notify (2961) | `7dac8090ac7052714274f2ab09627cbd` | 17 bytes, opaque | — |
-| `0x0c0c` | Notify (2962) | `b76223856d8393eca0eb175f757eba157a3f9121fa0dd1684c19021d39fdcfb3e4999cbb7a11a427` | 41 bytes, opaque | reproduces `CAP-010-FINDINGS.md` §3's `0x0c0c` 40B-notify characterization (off-by-one is this frame's own byte count, not re-verified further) |
-| `0x0c0a` | Write Req (2974) | `4acd5fa227209cc4a23a717f114e5cc1` | 17 bytes, opaque | — |
+| `0x0c04` | Notify (2961) | `7dac8090ac7052714274f2ab09627cbd` | 16 bytes, opaque | — |
+| `0x0c0c` | Notify (2962) | `b76223856d8393eca0eb175f757eba157a3f9121fa0dd1684c19021d39fdcfb3e4999cbb7a11a427` | 40 bytes, opaque | reproduces `CAP-010-FINDINGS.md` §3's `0x0c0c` 40-byte notify exactly (`btatt.value` of 2962 = 40 bytes) |
+| `0x0c0a` | Write Req (2974) | `4acd5fa227209cc4a23a717f114e5cc1` | 16 bytes, opaque | — |
 | `0x0c13` | Read Resp (2979) | `016fccf028840654ca` | 9 bytes, leading `0x01` | matches `CAP-010-FINDINGS.md` §3's `0x0c13` 9-byte-Read + leading-`0x01` characterization exactly |
 | `0x0c13` | Write Req (2983) | `0108c7d7f39b2ed2689c` | 10 bytes, leading `0x01` | matches `CAP-010`'s 10-byte-Write characterization |
 | `0x0c13` | Notify (2985) | `011e341ac0d5ca1d17360158d58a1dbaa85ecbebcbccdcf99d3a65e7c71f9400` | 32 bytes, leading `0x01` | matches `CAP-010`'s 32-byte-Notify characterization |
@@ -318,7 +320,7 @@ future sessions choosing a bonding method.
   session (no characteristic-level read ever happened on screen there, per its own §4b/§4c), not a
   general property of the nRF Connect tool.
 
-## 7. Test-ID traceability (`AGENTS.md` §13 / §0.1 requirement)
+## 7. Test-ID traceability (`AGENTS.md` §13 step 7 requirement)
 
 - **`GATT-001`** (this session's primary goal, per `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`): partially
   advanced, not resolved. §0 closes the snaplen half of the previously-identified blocker; §4

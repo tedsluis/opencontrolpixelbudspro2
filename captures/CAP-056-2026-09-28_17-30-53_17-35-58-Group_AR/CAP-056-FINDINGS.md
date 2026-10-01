@@ -1,5 +1,7 @@
 # Findings: `CAP-056` (Group AR — the press-and-hold ANC-mode checklist per bud, the `qht` bit order, and in-ear detection off; `HOLD-005`, `INEAR-001`…`INEAR-004`)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): P-1 … P-7 below were applied 2026-09-28 (ADR-046/047, `PROTOCOL.md` Updates).
+
 Evidence-based extraction from `CAP-056-btsnoop_hci.log` + `CAP-056-recording.mp4` (with its audio track), staged here for promotion into
 `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every claim carries a status per `PROJECT_RULES.md` §1:
 
@@ -32,7 +34,7 @@ tshark -r CAP-056-btsnoop_hci.log -Y "btavctp or btavdtp.signal_id" -T fields -e
 
 ## 0. Capture integrity and clock (🟢 FACT)
 
-- `capinfos`: 5,376 packets, 499.628954 s, "Packet size limit: (not set)"; `cap_len ≠ len`: 0 of 5,376. SHA-256 log `cfbdc45b…647d1e`, mp4 `135bc165…31db9a`.
+- `capinfos`: 5,376 packets, 499.628954 s, "Packet size limit: (not set)"; `cap_len ≠ len`: 0 of 5,376. SHA-256 log `cfbdc45b…647d1e`, mp4 `135bc165…a123b73cfa`.
 - **Coverage:** the film covers log 17:30:53–17:35:58. The log's other 3 min (17:35:58–17:39:02) carry only the Buds' `0x73d5d805`/`0x4d93b6e2`
   stream (e.g. 4486, 5070, 5316) and phone `+CIEV: 4,3/4,4` on HFP (4925, 4946) — no setting, wear or channel event.
 - **Clock:** the overlay's seconds tick measured by a pixel-difference on the overlay digits (frame-exact decode): video t = 37.706 s → 17:31:31 and
@@ -294,6 +296,8 @@ Draft **D-B** (updates `ai-sessions/0053` §6's draft; **no number**; not regist
 ```
 
 ## 9. Proposed `PROTOCOL.md` changes (awaiting maintainer sign-off, `AGENTS.md` §6 — **not applied by this file**)
+
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** P-1 … P-7 applied 2026-09-28 (`PROTOCOL.md` §4.1/§4.5.3/§4.5.5/§6 Updates, ADR-046/047, maintainer-approved in chat, `ai-sessions/0055`).
 
 - **P-1 (§4.5.3, promotion):** "`qht` bit order 🟢 FACT: 1 = Noise cancellation, 2 = Off, 3 = Transparency, 4 = Adaptive — `CAP-056` 1815/1959
   (Adaptive → 4) and 1843/1991 (Transparency → 3) on film, matching `qht.java:31`/`hgj.java:216–331`; the on-screen-order reading is refuted. Resolves the

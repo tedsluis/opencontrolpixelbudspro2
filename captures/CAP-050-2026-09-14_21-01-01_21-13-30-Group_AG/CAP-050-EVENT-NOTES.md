@@ -125,7 +125,7 @@ is the app's own Connect/Disconnect button label, read literally from the screen
 - **Answered:** yes, the OS-toggle-triggered initial connect and the later physical dock/undock
   reconnects produce the same private-envelope (re)open signature (all 7 flagged codes fire the same
   way in both) — `CAP-050-FINDINGS.md` §3.
-- **New, carried into `PROTOCOL.md` §6 (proposed, awaiting maintainer sign-off):** `Group 0x04 Code
+- **New, carried into `PROTOCOL.md` §6 (recorded at 🟡/🔴 in `PROTOCOL.md` §6; marker resolved 2026-09-30, `ai-sessions/0059`):** `Group 0x04 Code
   0x05`/`Code 0x16` fluctuate near dock-state changes but do not reproduce consistently for the same
   physical dock configuration across different reconnects — `CAP-050-FINDINGS.md` §4/§8/§9.
 

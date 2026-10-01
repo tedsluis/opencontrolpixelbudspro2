@@ -1,5 +1,7 @@
 # Findings: `CAP-015` (Group T — EQ command isolation), 2026-08-18 capture
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the pw_hdlc reading "address 0x0000, control 0x3b / 0xd180" is a wrong byte split (ADR-034); fields 16/18 = active / last-saved EQ (ADR-034).
+
 Standardized, evidence-based extraction from `CAP-015-btsnoop_hci.log` + `CAP-015-recording.mp4`
 (the `06-11-06` folder — **not** the earlier, incomplete `2026-08-15_15-02-31` `CAP-005` folder,
 which is a separate, superseded capture and was not used as input here), staged here for later
@@ -97,7 +99,7 @@ tshark -r CAP-015-btsnoop_hci.log \
 ```
 
 **HDLC decode method** (identical to `PROTOCOL.md` §2.2a and the earlier `CAP-005`'s method — flag
-`0x7E`, unescape `0x7D <X>` → `X^0x20`, LEB128 address, 1-byte control, trailing 4-byte
+`0x7E`, unescape `0x7D <X>` → `X^0x20`, one-terminated varint address ("LEB128" before 2026-09-30, `ai-sessions/0059`), 1-byte control, trailing 4-byte
 CRC-32/IEEE-802.3/zlib, little-endian). **Every quintet-shaped `Sent`-direction DLCI 0x02 frame
 between frame 2111 (page-open) and frame 3468 (final save) — 56 frames, the full EQ interaction
 window — passes the CRC check (56/56, 100%)**, checked exhaustively, not sampled — reproduction
@@ -377,8 +379,8 @@ an explicit re-index.
 
 ## 7. Promotion readiness
 
-**Ready for `PROTOCOL.md` §4.2 (recommended next step, not applied in this pass — out of this
-session's stated scope):**
+**Promoted to `PROTOCOL.md` §4.2 on 2026-08-28 (maintainer sign-off, `DECISIONS.md` ADR-016)** — the first three items below; the fourth
+stays 🟡 (and its "slider release" reading is contradicted by the app's code, `PROTOCOL.md` §4.2):
 - The field-to-band mapping (§5) should be promoted from 🟡 HYPOTHESIS to 🟢 FACT — Low bass↔field
   1, Bass↔field 2, Mid↔field 3, Treble↔field 4, Upper treble↔field 5, wire order reversed from the
   on-screen top-to-bottom order.

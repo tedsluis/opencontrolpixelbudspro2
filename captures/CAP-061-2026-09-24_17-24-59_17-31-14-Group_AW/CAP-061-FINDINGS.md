@@ -1,5 +1,7 @@
 # Findings: `CAP-061` (Group AW — first hardware run of the `ai-sessions/0045` build; six reported symptoms root-caused)
 
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the Case comes from DLCI 0x02 `SubscribeRuntimeInfo` (ADR-043); Settable: ADR-049.
+
 Standardized, evidence-based extraction from `CAP-061-btsnoop_hci.log`, `CAP-061-recording.mp4`, `CAP-061-debug-export.log`,
 `CAP-061-OpenControl-for-Pixel-Buds-log-7a465b5a9d5e.txt` (app logcat) and `CAP-061-System-log-2c0390537392.txt`, per
 `ai-sessions/0046`. The timeline these findings refer to is `CAP-061-EVENT-NOTES.md`.
