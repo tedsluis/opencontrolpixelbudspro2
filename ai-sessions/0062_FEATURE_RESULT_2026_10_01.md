@@ -310,7 +310,13 @@ Each item is also in `TODO.md` ("Open after `ai-sessions/0062`"):
 
 ## Commits
 
-Not committed yet — awaiting the maintainer's answer to "commit and push?" (task 17).
+Committed and pushed after the maintainer's confirmation in chat (2026-10-01, "Commit and push (Recommended)"):
+
+- `ad0c4ba` — feat(app): ANC Get before every Set, cut-off answers, settings menu with dark mode and Info (code, tests, `BuildConfig`, manifest).
+- `92afb62` — docs: session 0062 (documentation, `PROTOCOL.md`/`REVERSE_ENGINEERING.md` Updates, the `CAP-066` skeleton, this RESULT), plus the follow-up
+  commit that records these hashes (`git log -1 --format=%h -- ai-sessions/0062_FEATURE_RESULT_2026_10_01.md`).
+
+Not staged: `android/.kotlin/`.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0062_FEATURE_RESULT_2026_10_01.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0062_FEATURE_RESULT_2026_10_01
