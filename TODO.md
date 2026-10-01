@@ -790,7 +790,7 @@ entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
 **Open after `ai-sessions/0061` (added 2026-10-01):**
-- **Next FEATURE session — additions from `CAP-065` (the maintainer's choice, chat 2026-10-01):** (a) a `Set`/`Get` whose Message Stream claim is closed before its
+- **Next FEATURE session — written as `ai-sessions/0062_FEATURE_PROMPT_2026_10_01.md`** (items of the 0060 block below + these; optional T-1 loss-cause log, T-2 notification flash, T-3 manifest points at its checkpoint). **Additions from `CAP-065` (the maintainer's choice, chat 2026-10-01):** (a) a `Set`/`Get` whose Message Stream claim is closed before its
   answer is reported as "answer cut off — tap Refresh" and the mode marked unconfirmed (`CAP-065-FINDINGS.md` §9 item 1; fixtures `CAP-065` 2640/2649/2651 and
   10321/10344/10356; no retry loop, no new permission); (b) a dark-mode contrast check of the Connection card's Disconnect label (Robolectric screenshot test,
   §9 item 4); (c) `StrictMode` `detectLeakedClosableObjects` in debug builds to find the unclosed resource behind the three `CloseGuard` warnings (§0, §9 item 6).
@@ -814,8 +814,8 @@ tracked task above.)_
   steps not done (K4 rotation, K1–K3, L3, K5, A5, (E), B4, Z1).
 - 🔴 **Why Android re-paged the docked Buds 3.4 ms after an ACL drop at 10:17:27 but not at 10:15:55** (`CAP-064-FINDINGS.md` §1a) — the system log has no
   Bluetooth-process lines; a bug report's `btsnoop`-side logs or `dumpsys bluetooth_manager` right after a drop would show the reason.
-- **`scripts/lint_docs.py` exits 1 on one entry** — `ai-sessions/0060_CAPTURE_PROMPT_2026_10_01.md` names the pre-rename `CAP-064` folder (a prompt is not
-  rewritten); it becomes informational once the next session pair exists. Re-checked in `0061` (see the 0061 block above).
+- ~~**`scripts/lint_docs.py` exits 1 on one entry**~~ — resolved 2026-10-01: with prompt `0062` in place the `0060`/`0061` prompts' pre-rename folder names
+  are in the "historical" bucket; `lint_docs.py` exits 0.
 - **Auto-connect on lid-open** — not possible from any event the app sees (`CAP-064-FINDINGS.md` §1); options (wording, one page on resume, CDM presence) recorded,
   the maintainer chose "Nothing now" (chat 2026-10-01).
 
