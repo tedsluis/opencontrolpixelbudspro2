@@ -789,11 +789,27 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+**Open after `ai-sessions/0063` (added 2026-10-01, `CAP-066` analysed):**
+- **Next FEATURE session (the maintainer's choice, chat 2026-10-01, "FEATURE"):** (1) **keep the tab across a configuration change** — rotation reset Sound →
+  Connection in `CAP-066` (§6 there; 🟡 cause `OpenControlNavHost.kt:243–258`, the pager synced to index 0 before the restored back stack is known; test with
+  Robolectric `StateRestorationTester`); (2) **balance precision** — steps or −/+ buttons so a small value like Right 4 (`17:7`) is reachable (32 drags never hit it,
+  `CAP-066` §5; wire unchanged, ADR-045; step size to be chosen at that session's checkpoint); (3) **name a Bluetooth-off loss** in the loss log instead of a lasting
+  "undetermined (provisional)" (T-1, `CAP-066` §7); (4) **close unbound profile proxies** in `OsConnectionObserver` (🟡 hygiene, `CAP-066` §8).
+- **Still not done on hardware** (no new skeleton was written, the maintainer's choice): BB-12 (the Left out with both worn on channel 19 — predicted Buds
+  `DISC` + 21, the open half of L-1), F-3 / BB-15 (no cut-off happened in `CAP-066`), K4d "Off" and Android's own dark switch with "System", BB-10 (balance back to
+  Right 4 — after the FEATURE fix), L3 (an export with Debug mode off), K5, A5, (E), B4, Z1 (`PAIR-001`), `ANC-002` tapped in the app.
+- 🔴 **Why `CAP-064` read Settable `e8` for 28 s** with both buds straight from the case — `CAP-065` and `CAP-066` (14 samples, 2.6–175 s) always read `00`.
+- 🔴 **Why the phone pages the Buds 0.1 s after an ACL drop at docking** (`CAP-064` 8399, `CAP-066` B2438 after the film) — no Bluetooth-process log then.
+- **`scripts/lint_docs.py` exits 1 on one entry:** `ai-sessions/0063`'s prompt names the pre-rename `CAP-066` folder; it becomes "historical" once a later
+  prompt exists (as for `0061`/`0062`).
+- 🟡 **The Buds' stray bytes after `AT+NREC=0`** on HFP (`CAP-066` §9; A6112's tail = the app's `SubscribeRuntimeInfo` request bytes) — a firmware buffer reuse;
+  out of scope, note only.
+
 **Open after `ai-sessions/0062` (added 2026-10-01):**
-- **Run `CAP-066` (Group BB) on the `ai-sessions/0062` build** — the skeleton is adapted (Info tab on film first; `08 11` before every `08 12`; BB-4t, BB-15,
+- ~~**Run `CAP-066` (Group BB) on the `ai-sessions/0062` build**~~ **Done 2026-10-01, analysed in `ai-sessions/0063`:** F-1/F-2 hardware-verified, F-3 not exercised, F-4/F-5/F-6 (On, System)/F-7 seen on film — `CAP-066-FINDINGS.md`. The original item: the skeleton is adapted (Info tab on film first; `08 11` before every `08 12`; BB-4t, BB-15,
   BB-16, K4d). Nothing of the 0062 build is hardware-verified yet: F-1 (`Get` first, the tile from the fresh `Notify`), F-2 (wording, "Not allowed now"),
   F-3 (the cut-off result and the not-confirmed mark — watch only), F-4/F-5/F-6 (menu, Info, dark mode), F-7 (the Disconnect label's contrast on the dark card).
-- **F-8 — read the StrictMode output** of the first debug run (logcat `StrictMode` lines with "A resource was acquired … but never released") and name the leaked
+- ~~**F-8 — read the StrictMode output**~~ **Done (`ai-sessions/0063`):** 5 violations, all framework objects — a `BluetoothSocket`'s `ParcelFileDescriptor` after end-of-stream and a `BluetoothLeAudio` proxy's `CloseGuard` (`CAP-066-FINDINGS.md` §8, `ARCHITECTURE.md` §12); no app leak. The original item: read the StrictMode output of the first debug run (logcat `StrictMode` lines with "A resource was acquired … but never released") and name the leaked
   object; propose a fix if it is the app's own. Release builds set no policy.
 - **T-1 — known limit:** a cause logged "(provisional)" stays the last line when no later reading of Android's link arrives (no timer re-logs it); read the last
   "Session loss cause" line as the verdict.
@@ -808,11 +824,11 @@ tracked task above.)_
   answer is reported as "answer cut off — tap Refresh" and the mode marked unconfirmed (`CAP-065-FINDINGS.md` §9 item 1; fixtures `CAP-065` 2640/2649/2651 and
   10321/10344/10356; no retry loop, no new permission); (b) a dark-mode contrast check of the Connection card's Disconnect label (Robolectric screenshot test,
   §9 item 4); (c) `StrictMode` `detectLeakedClosableObjects` in debug builds to find the unclosed resource behind the three `CloseGuard` warnings (§0, §9 item 6).
-- 🔴 **Does the announced channel switch when the hosting bud is taken out with the other worn?** (`PROTOCOL.md` §2.2a 2026-10-01 🟡) — `CAP-066` BB-12.
+- 🔴 **Does the announced channel switch when the hosting bud is taken out with the other worn?** (`PROTOCOL.md` §2.2a 2026-10-01 🟡) — `CAP-066` BB-12. **Half answered (`ai-sessions/0063`):** the Right out on 21 ⇒ `DISC` + 19, 2/2 (🟢); the Left out on 19 not tested (see the 0063 block).
 - 🔴 **Why `CAP-064` read Settable `e8` for 28 s with both buds on the table straight from the case, while `CAP-065` read `00` every time** — `CAP-066` BB-5.
 - 🔴 **What closed the app's claims at `CAP-065` 11:10:06.49 and 11:21:35.24** (no Bluetooth-process lines then; 🟡 Play services' collision as logged at
   11:27:10.450) and **why the Buds closed the session at 11:17:46 with both buds worn**.
-- 🔴 **GrapheneOS `BluetoothAutoOff … delayMillis: 0`** (`CAP-065-FINDINGS.md` §0) — film the auto-off setting at `CAP-066` K5.
+- ~~🔴 **GrapheneOS `BluetoothAutoOff … delayMillis: 0`**~~ **Answered (`ai-sessions/0063`, maintainer-approved):** the auto-off is disabled — GrapheneOS's `DelayedConditionalAction.java` schedules no alarm when the delay is 0; `CAP-066`: 0 "scheduled alarm" lines (`CAP-066-FINDINGS.md` §0).
 
 **Open after `ai-sessions/0060` (added 2026-10-01):**
 - ~~**Next FEATURE session (the maintainer's choice, chat 2026-10-01):**~~ **Done in `ai-sessions/0062`.** (1) ANC **`Get` before every `Set`** in one claim (no `Set` if that claim's `Notify` reads

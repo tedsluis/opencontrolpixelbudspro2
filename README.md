@@ -20,7 +20,7 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > Battery via HFP is not deliverable to an app (ADR-040). `CAP-064` (`ai-sessions/0060`): the app connects by itself when a bud leaves the case,
 > not when the lid is opened with both buds inside — the Buds start no connection then; tap Connect. `CAP-065` (`ai-sessions/0061`): the EQ sliders wait for the
 > Buds' EQ, every pull refreshes exactly its tab, and the Buds announce channel 19 for the Left bud and 21 for the Right.
-> `ai-sessions/0062` (not hardware-verified yet — `CAP-066`): every ANC tap asks the Buds first and changes the mode only if they allow it now (with clearer
+> `ai-sessions/0062` (hardware-tested in `CAP-066`, `ai-sessions/0063`: the ANC part works as designed; turning the phone resets the tab — to be fixed): every ANC tap asks the Buds first and changes the mode only if they allow it now (with clearer
 > wording; the tile steps from the Buds' answer), an answer cut off by another app taking the channel is said as such, and a **gear** opens **Settings** with
 > dark mode (System / On / Off), the Debug screen and an **Info** tab (the app's build, the firmware of the Case and each bud).
 
@@ -63,8 +63,8 @@ to design, implement, test, and document a native Android app.
 
 ## Current state (2026-10-01)
 
-- **Captures:** 66 registered sessions (`CAP-001`–`CAP-066`): 58 analyzed, 6 planned (among them `CAP-066`, the `CAP-064`/`CAP-065` leftovers),
-  2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-065`
+- **Captures:** 66 registered sessions (`CAP-001`–`CAP-066`): 59 analyzed, 5 planned,
+  2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-066`
   are captures of this project's own app; the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented

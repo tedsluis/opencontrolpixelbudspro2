@@ -419,6 +419,15 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
   `CAP-064`/`CAP-065` are not counted). The app's Info tab labels the entries this way (`ai-sessions/0062` F-5). Not the order of the component serials of
   `GetHardwareInfo` (`CAP-036` 1423, a different message, `qiv`).
 
+- **Update (2026-10-01, `ai-sessions/0063`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "L-1", option *"FACT for 21->19, host stays HYPOTHESIS
+  (Recommended)"*, with this text in the preview) — BB-12m tested in `CAP-066` (`CAP-066-FINDINGS.md` §4).** 🟢 **FACT (`CAP-066`, 2 of 2):** with both buds
+  worn on channel 21, taking the **Right** out made the Buds `DISC` MAESTRO with the ACL up and announce **19** (`.log.last` A2502 → A2547, A6803 → A6850; raw
+  A2547 `7e 80 a3 03 2a 64 … 10 13 1d ea 71 de 7d 5e 25 44 fa 99 71 38 ff ff ff ff 0f b5 f9 b0 f5 7e`). The Buds closed MAESTRO only on a change of the Right bud
+  (out of an ear ×3, into an ear with the Left not worn ×1: A6278 → A6441 = 21), never on the Left's 4 changes. 🟡 **HYPOTHESIS (strengthened):** the channel names
+  the bud hosting the link; the Buds move it to a worn bud. Untested: the Left out with both worn on 19 (predicted `DISC` + 21). Command: the control-frame
+  inventory (`tshark … -Y "bthci_acl.chandle==0x000b && btrfcomm.frame_type==0x43"`) and the scratch decoder of `CAP-065-FINDINGS.md`. ADR-034 item 3 is
+  unchanged.
+
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
 `[Group:1][Code:1][Length:2B-BE][Value]` envelope (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md`
@@ -713,6 +722,12 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   worn (6334) ⇒ `e8`; buds taken straight from the case to the table read `00` every time (the `CAP-064` 28-s `e8` did not recur). Status unchanged: 🟡
   "`00` ⇒ no bud worn", the converse refuted. Command: the message-level parse of `tshark -r CAP-065-btsnoop_hci.log -Y "bthci_acl.chandle==0x000b &&
   (btrfcomm.dlci==4 || btrfcomm.dlci==5)" -T fields -e frame.number -e frame.p2p_dir -e data.data`.
+  **Update (2026-10-01, `ai-sessions/0063`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-049", option *"Dated Update, no status change
+  (Recommended)"*; `DECISIONS.md` ADR-049 Update).** `CAP-066` (`CAP-066-FINDINGS.md` §3): 28 `00`, each with no bud in an ear; 48 `e8`, each with at least one in
+  an ear; buds straight from the case to the table read `00` from 2.6 s to 175 s (14 samples) — `CAP-064`'s 28-s `e8` did not recur. Status unchanged. The app's
+  `Get` before every `Set` (`ai-sessions/0062` F-1) ran 23 of 23 times; 4 `Set`s after a fresh `e8`, 4 ACKs, 0 NAK. Command: the message-level parse of
+  `tshark -r CAP-066-btsnoop_hci.log.last -Y "bthci_acl.chandle==0x000b && (btrfcomm.dlci==4 || btrfcomm.dlci==5)" -T fields -e frame.number -e frame.p2p_dir
+  -e data.data`.
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -1809,6 +1824,12 @@ The following remain 🔴 unconfirmed at the protocol level — no capture has t
 > connection (6 cases: `CAP-064` §1 B/F, `CAP-065` §1 A/E/F/G), and the ACL dropped (reason `0x13`) when the last bud was docked, also with the lid open.
 > The phone pages the Buds only when an app connects with no ACL (`CAP-064` 673, 7201) or, once, right after a drop (`CAP-064` 8399, 🔴 why). Step 1 below
 > ("Case opens … becomes discoverable") is therefore not the trigger of a reconnect to a bonded phone; a bud leaving the case is. `CAP-065-FINDINGS.md` §1.
+
+> **Note (2026-10-01, `ai-sessions/0063`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "Other notes") — a second sample of the phone re-paging after
+> a drop.** `CAP-066` (`CAP-066-FINDINGS.md` §1, after the film): ACL `Disconnection Complete` reason `0x13` (`.log` B2437, 16:35:36.945) and the phone's `Create
+> Connection` 0.1 s later (B2438, 16:35:37.044) → ACL (B2453) → `0x13` again (B2520) — as `CAP-064` 8399. 🔴 why (no Bluetooth-process log at that time). The other
+> ACLs of the run began with the Buds' Connection Request when a bud left the case or came back in range (A2804, A5530, B1445) or with the phone's page right after
+> a Bluetooth-on (A173, B173). Command: `tshark -r <log> -Y "bthci_evt.code==0x03 || bthci_evt.code==0x04 || bthci_evt.code==0x05 || bthci_cmd.opcode==0x0405"`.
 
 Full step-by-step sequence not yet captured end-to-end for the RFCOMM
 profile/Message-Stream/battery/command portions (steps 3–6 below remain ⚪
@@ -3408,6 +3429,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-01 | **`ai-sessions/0060` — `CAP-064` (Group AZ), maintainer-approved in chat 2026-10-01.** **§4.1** Settable: one worn bud ⇒ `e8` (AY-3, 2/2); in-ear detection off ⇒ `e8` with none worn; in-ear on ⇒ `e8` ≈ 28 s with both buds on the table and a `Set` ACKed — 🟡 now "`00` ⇒ no bud worn", the converse refuted (ADR-049 Update). **§4.5.3** the Buds follow OpenControl's field-12 list (six long presses, never `40`) 🟢 for `CAP-064`. **§4.5.5** OpenControl's field-2 writes behave as in `CAP-056` (SASS bit 4, no pause, `DISC` on wear changes); Settable with it off and no bud worn = `e8` (🔴 answered). |
 | 2026-10-01 | **`ai-sessions/0061` — `CAP-065` (Group BA), maintainer-approved in chat 2026-10-01.** **§2.2a** L-1: with only the Left bud out the Buds announce channel 19, with only the Right out 21 — 🟢 7/7; 🟡 the channel names the bud hosting the link (21 → 19 inside one ACL). **§4.1** Settable: 28 `00` all with no bud worn, every `e8` with one worn; one docked/one loose and both loose ⇒ `00` (ADR-049 Update, status unchanged). **§4.3** lid closed with one bud inside: that bud `ff` in `03 03`, no bud entry and no Case in the runtime-info stream (🟢 one sample). **§5** every ACL to the Buds started by the Buds when a bud left the case; none on lid-open. |
 | 2026-10-01 | **`ai-sessions/0062` — FEATURE, maintainer-approved in chat 2026-10-01.** **§2.2a** which `GetSoftwareInfo` entry is which component: 🟢 FACT (code) the official app shows entry 1 = Case, 2 = Left bud, 3 = Right bud; 🟡 that the unsolicited announcement uses the same layout; wire: 191/191 announcements with three identical entries (a checked negative). No other protocol change (the app's ANC `Get` before every `Set` uses ADR-021/022/032 item 5). | Claude (AI), maintainer-approved |
+| 2026-10-01 | **`ai-sessions/0063` — `CAP-066` (Group BB), maintainer-approved in chat 2026-10-01.** **§2.2a** L-1: with both buds worn on 21, the Right taken out ⇒ Buds `DISC` + announcement 19 — 🟢 (2 of 2); the hosting-bud reading stays 🟡 (strengthened); 19 → 21 untested. **§4.1** Settable: dated Update, status unchanged (28 `00` none worn, 48 `e8` ≥ 1 worn; straight from the case `00` 2.6–175 s). **§5** note: a second sample of the phone re-paging 0.1 s after a drop (🔴 why). | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

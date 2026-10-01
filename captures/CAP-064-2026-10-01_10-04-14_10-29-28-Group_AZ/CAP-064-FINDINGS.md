@@ -37,11 +37,13 @@ t ≈ 1485.5 s — no drift); HCI and the export are phone local time; logcat an
   covers phone time 10:04:14.6–10:29:28.6: the HCI log starts 9 s after the film's first frame and ends 1 min 53 s after its last.
 - **Build.** The film shows the `ai-sessions/0057` UI (top-bar bug icon → Debug, five tabs Connection/ANC/Sound/Controls/Find, (i) detail dialogs); the wire
   carries the `0056` reads `ReadSetting 4:12` (14 of 14 Connects, e.g. frame 1269 → answer) and writes of fields 12 and 2 (frames 9684, 9922). The system log
-  shows `installer_clear_app_data_caller … package=io.github.tedsluis.opencontrolpixelbuds` at 06:53:21.369 UTC (= 08:53:21 local, line 8044) and the
+  shows `installer_clear_app_data_caller … package=io.github.tedsluis.opencontrolpixelbuds … flags=39` at 06:53:21.369 UTC (= 08:53:21 local, line 8044) and the
   process start at 06:53:29 (line 8142) — 16 min after `b65085a` (`git log -1 --format=%ad b65085a` → 08:37:32 +0200), the last commit under `android/`
   (`git log --oneline -- android` on `d79aba4`). No log string or wire behaviour that exists only from `b65085a` on occurred in this run (no write timed out,
   no undecodable answer, no rotation), so **"the latest build" is the maintainer's statement, consistent with the evidence but not proven by it** (🟡).
-  Contrary to the skeleton's P2 ("do not clear the app's data"), the data were cleared at installation.
+  That line is **not** a data clear: `flags=39` = `FLAG_CLEAR_CODE_CACHE_ONLY | FLAG_STORAGE_EXTERNAL | FLAG_STORAGE_CE | FLAG_STORAGE_DE` (AOSP
+  `IInstalld.aidl`), called from `InstallPackageHelper.prepPerformDexoptIfNeeded` (line 8048) — the update cleared the code cache only, so the skeleton's P2 ("do
+  not clear the app's data") held (re-derived in `ai-sessions/0063`, `CAP-066-FINDINGS.md` §0).
 - **Audio.** AAC stereo, decodes (`ffmpeg -i CAP-064-recording.mp4 -vn -ac 1 -ar 16000 …`). Per-second RMS: median −69.1 dBFS, 90th percentile −60.2,
   maximum −39.8 dBFS (t ≈ 311 s); 83 seconds rise > 12 dB above the median, all short broadband transients (handling, taps). The full spectrogram shows no
   sustained harmonic speech pattern; a faint harmonic pattern at t ≈ 474–480 s (10:12:08–14 phone) is unidentified. 🟢 the maintainer's statement "I did not

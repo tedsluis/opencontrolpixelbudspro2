@@ -65,8 +65,9 @@ time; logcat and system log (UTC) = local − 2 h 00 min 00.000 s.
 - **System log.** 64,665 lines, 09-30 05:32 – 10-01 09:28:54.997 UTC. **It carries lines of the Bluetooth process** (PID 8499) — but only for its start
   (09:07) and 09:23–09:28 UTC (772 lines), so the RFCOMM collisions of 11:10:06 and 11:21:35 are not in it (§3). GrapheneOS Bluetooth auto-off played no
   part: Bluetooth went off at 09:07:27.8 UTC with `BluetoothAutoOff … alarm already scheduled: false` (31674–31705, a user action, S1); after it came back
-  `shouldScheduleAlarm: true` / `delayMillis: 0` is logged twice (31942–31943, 32020–32021) and Bluetooth never went off again. 🔴 what `delayMillis: 0`
-  means for GrapheneOS's auto-off (the setting was not filmed, P11). Each foreground-service start is again accompanied by an `am_wtf … Background started
+  `shouldScheduleAlarm: true` / `delayMillis: 0` is logged twice (31942–31943, 32020–32021) and Bluetooth never went off again. 🟢 `delayMillis: 0`
+  means the auto-off is **disabled**: GrapheneOS's `DelayedConditionalAction.java` returns before scheduling an alarm when the delay is 0 (branch `16-qpr2`;
+  `ai-sessions/0063`, `CAP-066-FINDINGS.md` §0) — no "scheduled alarm" line follows. Each foreground-service start is again accompanied by an `am_wtf … Background started
   FGS: Allowed [callingPackage: io.github.tedsluis.opencontrolpixelbuds …]` (e.g. 09:08:27.888 UTC) — as in `CAP-064` §0. **A bug report ran:** `dumpstate`
   takes the bug-report lock at 09:28:21.136 UTC (2 s before the film ends); the logcat ends at 09:28:30, before it would dump the app.
 
@@ -268,7 +269,6 @@ Command: the scratch decoder's message list filtered to `08 13`; raw example 546
 - 🔴 Whether the announced channel switches when the hosting bud is taken out with the other still worn (§4 hypothesis and its experiment).
 - 🔴 Why `CAP-064` read `e8` for 28 s with both buds on the table straight from the case, while every such case here read `00` (§3).
 - 🔴 What closed the app's claims at 11:10:06.49 and 11:21:35.24 (no Bluetooth-process lines then); 🟡 Play services' collision, as logged at 11:27:10.450.
-- 🔴 What GrapheneOS's `BluetoothAutoOff … delayMillis: 0` means (§0).
 - 🔴 Why the Buds closed the session at 11:17:46 with both buds worn and nothing touched (§4 #5, §6 #4).
 
 ---

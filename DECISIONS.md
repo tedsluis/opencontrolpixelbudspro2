@@ -2324,6 +2324,12 @@ motivated this).
   (4120, 5280, 8269, 9344, 10356). The open samples of item 3 (`CAP-045` 612 one docked/one loose, `CAP-048` 11939 both loose) were repeated with the ears in
   view and read `00`. **Item 3 is unchanged:** 🟡 HYPOTHESIS (strong) "`00` ⇒ no bud worn"; the converse stays refuted (`CAP-064`). Items 1, 2 and 4 are
   unchanged (all 7 `Set`s of `CAP-065` were sent on a non-`00` or unknown reading and ACKed).
+- **Update (2026-10-01, `ai-sessions/0063`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-049", option *"Dated Update, no status change
+  (Recommended)"*, with this text in the preview):** `CAP-066` (ears on film; `CAP-066-FINDINGS.md` §3): 28 `Notify` frames read `00`, each with no bud in an
+  ear; 48 read `e8`, each with at least one in an ear. BB-5: both buds straight from the case to the table read `00` from 2.6 s to 175 s after leaving the case
+  (14 samples, `.log.last` A3345 … A4651, e.g. A3574 `08 13 00 04 01 e8 00 20`) — `CAP-064`'s ≈ 28 s of `e8` did not recur (two runs against one; still
+  unexplained). All 4 `Set`s were sent after a fresh `e8` and ACKed. Item 3 is unchanged: 🟡 HYPOTHESIS (strong) "`00` ⇒ no bud worn"; the converse stays
+  refuted. Items 1, 2 and 4 are unchanged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

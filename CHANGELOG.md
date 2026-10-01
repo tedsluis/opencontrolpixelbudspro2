@@ -236,6 +236,15 @@ mark v1.
   lines marked; T-3: `dataExtractionRules` (exclude everything) and the manifest comment on AndroidX Core's private permission; T-2 left as is. Real-byte fixtures
   `Cap064Fixtures.kt`/`Cap065Fixtures.kt`; gate green from clean (tests `:data` 1581, `:domain` 27, `:hardware` 52, `:ui` 24; lint 0 issues; 0 compiler
   warnings); 10 mutation checks each caught. `CAP-066` (Group BB) adapted to this build. Not hardware-verified.
+- **2026-10-01 (`ai-sessions/0063`): `CAP-066` (Group BB) analysed — the first hardware run of the `0062` build.** Film (2-s sheets, scene changes, audio),
+  two HCI logs (Bluetooth off/on), two exports, logcats and system logs (before/after a force-stop). Build `043a09b` on the Info tab (app code `ad0c4ba`, not
+  "-dirty"); the install's `flags=39` clear is code-cache-only (also in `CAP-064` — its FINDINGS corrected). F-1/F-2 hardware-verified (23/23 claims `08 11`
+  first, 4 `Set`s after `e8`, 0 NAK; `ARCHITECTURE.md` §3.1 note); F-3 not exercised. Settable: 28 × `00` none worn, 48 × `e8` worn, straight from the case
+  `00` 2.6–175 s — ADR-049 Update + `PROTOCOL.md` §4.1 Update (status unchanged). L-1: the Right out with both worn on 21 ⇒ Buds `DISC` + 19, 2/2 —
+  `PROTOCOL.md` §2.2a Update (🟢 that switch, 🟡 the host). `PROTOCOL.md` §5 note (a 2nd sample of the phone re-paging after a drop). StrictMode: the
+  violations are framework objects (`ARCHITECTURE.md` §12 note). GrapheneOS auto-off `delayMillis: 0` = disabled (`CAP-065-FINDINGS.md` §0 updated). Defect: the
+  rotation resets the tab to Connection (next FEATURE, with balance precision, a named Bluetooth-off loss and proxy closing). Folder renamed to
+  `CAP-066-2026-10-01_16-12-57_16-34-50-Group_BB`. No app change, no new capture skeleton.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.
