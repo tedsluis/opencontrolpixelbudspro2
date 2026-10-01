@@ -5,7 +5,7 @@ Every tracked `.md` file (except `_sidebar.md` and `CLAUDE.md` — not content
 pages, see `lint_docs.FOOTER_EXCLUDED_FILES`) should end with:
 
     ---
-    https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/<path> - https://tedsluis.github.io/opencontrolpixelbudspro2/#/<path-without-.md>
+    https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/<path> - https://tedsluis.github.io/opencontrolpixelbudspro2/<path-without-.md>
 
 so a reader can always jump between the GitHub blob view and the Docsify site
 view of the same page. `lint_docs.py`'s footer check (wired into
