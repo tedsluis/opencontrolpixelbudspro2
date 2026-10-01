@@ -4,7 +4,6 @@
 **Category:** FEATURE
 **Date:** 2026-09-18
 **Title:** Investigate and fix a crash-on-launch found when installing `ai-sessions/0033`'s debug APK on the maintainer's own real hardware, and gitignore the maintainer's local device/app logs
-**Status:** prompt only — not yet run
 
 ---
 

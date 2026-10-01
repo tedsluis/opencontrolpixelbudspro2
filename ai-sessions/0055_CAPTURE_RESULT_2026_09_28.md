@@ -18,6 +18,7 @@
 - Phase C — done: `CAP-056-EVENT-NOTES.md` rewritten (skeleton kept as Appendix A), `CAP-056-FINDINGS.md` new.
 - Phase D — done: checkpoint answered in chat, approved documentation applied, `ensure_footers.py` and `lint_docs.py` exit 0. **Commit/push: awaiting the
   maintainer's answer to the final question.** Nothing under `android/` was modified.
+  *(Annotated 2026-09-30, `ai-sessions/0059` A58-SES-05: committed and pushed afterwards — `f798395`, `388ff10`.)*
 - Intermediate results (not committed) were in the session scratchpad: contact sheets, the pass-1 video timeline, the decoded pw_rpc table, the audio
   WAV/spectrograms, the per-frame checkbox/switch measurements.
 

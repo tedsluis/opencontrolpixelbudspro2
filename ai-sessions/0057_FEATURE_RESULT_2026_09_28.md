@@ -54,6 +54,7 @@
   `ai-sessions/INDEX.md`. `scripts/ensure_footers.py` exit 0; `scripts/lint_docs.py` exit 0 (its two new "dead reference" notes for scratchpad log names in this
   RESULT were reworded; the other 38 lines are pre-existing). `PROJECT.md` unchanged (no scope line changed).
 - **Final state:** waiting only for the maintainer's commit/push decision (prompt task 19). Nothing committed.
+  *(Annotated 2026-09-30, `ai-sessions/0059` A58-SES-05: committed and pushed afterwards — `ae259c5`, `96711e1`, `6c2d5c7`, `6c543cb`.)*
 
 ## 0. Plain-language summary (what you will see differently)
 
@@ -275,9 +276,6 @@ No new permission and no manifest change (merged debug manifest: the same 5 `use
 `com.google.android.gms`, no XML layout/drawable, no Google-owned artwork (Material Symbols are Apache-2.0 generic icons; the Case is own work). AGPL-3.0 header
 on all 6 new Kotlin files. No new timer, polling loop, service or dispatcher (the pull uses the existing application scope). No logging added. Content
 descriptions on every icon button (Debug, Back, (i), tab icons with their labels; decorative icons next to their text are `null`).
-
----
-https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0057_FEATURE_RESULT_2026_09_28.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0057_FEATURE_RESULT_2026_09_28
 
 ## 11. Open items (for the maintainer on the phone)
 

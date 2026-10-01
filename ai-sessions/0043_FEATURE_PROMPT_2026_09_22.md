@@ -4,7 +4,6 @@
 **Category:** FEATURE
 **Date:** 2026-09-22
 **Title:** Reclassify the two full `LOGS-00x` hardware-capture sets as `captures/CAP-059`/`CAP-060` (maintainer's reversed decision on where full capture sets live), fully analyse `CAP-060` (the `ai-sessions/0042` build), root-cause four specific app questions with evidence, review the app's architecture for weaknesses, and implement approved fixes/features (Case battery, dock state, tab-swipe navigation, "last known" → timestamp)
-**Status:** prompt only — not yet run
 
 ---
 

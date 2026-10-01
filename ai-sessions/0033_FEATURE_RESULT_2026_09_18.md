@@ -4,10 +4,9 @@
 **Category:** FEATURE
 **Date:** 2026-09-18
 **Title:** Refresh `ARCHITECTURE.md` against the current protocol state, then implement, wire, and UI-complete every v1 feature that is genuinely 🟢 FACT and implementation-unblocked, with GrapheneOS-appropriate hardening and (debug) logging, ending in a build the maintainer can install and test on real hardware
-**Status:** awaiting maintainer sign-off — implementation and documentation complete; one
-`PROPOSAL —` block (a consolidated DLCI 0x02 settings-write unblock ADR, Phase 0/`ARCHITECTURE.md`
-§5a) is open for maintainer review, and every feature in Phase 8's capability table is explicitly
-not yet hardware-verified (no physical Pixel Buds Pro 2 available in this environment)
+**Status:** complete — the one open `PROPOSAL —` block (a consolidated DLCI 0x02 settings-write unblock ADR) was settled field by field by the
+maintainer: `DECISIONS.md` ADR-036 (reads), ADR-045, ADR-046 and ADR-047 (writes), each "maintainer, chat"; updated 2026-09-30 by `ai-sessions/0059`
+(`AI_SESSION_LOG_PROCEDURE.md` §4a; the maintainer's OK in chat 2026-09-30, `AskUserQuestion` "Process")
 
 > **Annotated 2026-09-24** (`ai-sessions/0045`, 2026-09-24, 0044 finding S-5): still `awaiting maintainer sign-off`, because the consolidated DLCI
 > 0x02 settings-*write* unblock proposal is still open — ADR-034 and ADR-036 unblocked only reads. The features have since run on hardware

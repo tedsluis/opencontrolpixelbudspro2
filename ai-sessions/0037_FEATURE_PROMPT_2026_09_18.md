@@ -4,7 +4,6 @@
 **Category:** FEATURE
 **Date:** 2026-09-18
 **Title:** Investigate and fix "Connect" doing nothing with no status feedback, and a bottom-nav bug landing unexpectedly on Debug; extensive up-front analysis requested before any fix
-**Status:** prompt only — not yet run
 
 ---
 

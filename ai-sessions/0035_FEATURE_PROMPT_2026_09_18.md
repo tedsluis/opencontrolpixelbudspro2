@@ -4,7 +4,6 @@
 **Category:** FEATURE
 **Date:** 2026-09-18
 **Title:** Investigate and fix a crash-on-pair found after `ai-sessions/0034`'s launch-crash fix, and close the disclosed "Pair a device does nothing" gap while at it
-**Status:** prompt only — not yet run
 
 ---
 

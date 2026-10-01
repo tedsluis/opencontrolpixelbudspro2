@@ -14,6 +14,7 @@
 - Scratchpad (session-local, not in the repo): `/tmp/claude-1000/-home-tedsluis-git-opencontrolpixelbudspro2/196c928e-89c4-47c4-8656-d9716fa05122/scratchpad`
   — mutate.py, mutations.txt, final.log, baseline.log, lint_docs.txt.
 - Waiting only for the maintainer's commit/push decision (prompt task 16).
+  *(Annotated 2026-09-30, `ai-sessions/0059` A58-SES-05: committed and pushed afterwards — `5e18cad`, `a77a15a`.)*
 
 ## 1. Plain-language summary (what you will see differently)
 

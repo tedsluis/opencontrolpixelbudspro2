@@ -4,7 +4,6 @@
 **Category:** MAINTENANCE
 **Date:** 2026-09-18
 **Title:** Resume `ai-sessions/0030`'s static-analysis-tractable worklist; advance `TODO.md`'s Phase 3 (Protocol reconstruction) open items; run a full cross-check/consistency pass across every project document and bring them all up to date; systematically compile every finding still awaiting maintainer sign-off and present each one, individually summarized, for the maintainer's approval; finish with a clear, prioritized overview of everything that remains before v1 app development can begin in earnest
-**Status:** prompt only — not yet run
 
 ---
 

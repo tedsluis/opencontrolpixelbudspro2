@@ -4,7 +4,6 @@
 **Category:** FEATURE
 **Date:** 2026-09-19
 **Title:** Investigate and fix flaky Connect (flickers to Disconnected within 1-2s), an always-empty EQ tab, and inconsistent app-vs-OS Bluetooth connection state after `ai-sessions/0038`'s peer-disconnect-detection fix
-**Status:** prompt only — not yet run
 
 ---
 

@@ -4,7 +4,6 @@
 **Category:** MAINTENANCE
 **Date:** 2026-09-18
 **Title:** Survey the v1 app for parts that are unimplemented, incomplete, or too basic and fix what can be fixed without new maintainer decisions
-**Status:** prompt only — not yet run
 
 ---
 

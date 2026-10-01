@@ -4,7 +4,6 @@
 **Category:** FEATURE
 **Date:** 2026-09-19
 **Title:** Claim the shared Message Stream channel (DLCI 0x04) on the user's own ANC/Find tap, unblock the Battery Option B decoder by ADR, and research why HFP battery shows nothing and whether the EQ can be read
-**Status:** prompt only — not yet run
 
 ---
 

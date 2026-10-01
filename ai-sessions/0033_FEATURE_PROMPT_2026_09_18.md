@@ -4,7 +4,6 @@
 **Category:** FEATURE
 **Date:** 2026-09-18
 **Title:** Refresh `ARCHITECTURE.md` against the current protocol state, then implement, wire, and UI-complete every v1 feature that is genuinely 🟢 FACT and implementation-unblocked, with GrapheneOS-appropriate hardening and (debug) logging, ending in a build the maintainer can install and test on real hardware
-**Status:** prompt only — not yet run
 
 ---
 

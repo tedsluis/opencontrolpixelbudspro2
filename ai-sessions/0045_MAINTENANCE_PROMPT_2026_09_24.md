@@ -4,7 +4,6 @@
 **Category:** MAINTENANCE
 **Date:** 2026-09-24
 **Title:** Validate and process every recommendation, finding, improvement and proposal of `ai-sessions/0044_AUDIT_RESULT_2026_09_23.md` (documentation, protocol, decisions, backlog, captures, session history) and fix the Android app accordingly, asking the maintainer for approval wherever `AGENTS.md` §6 or `PROJECT_RULES.md` require it
-**Status:** prompt only — not yet run
 
 ---
 

@@ -4,7 +4,6 @@
 **Category:** FEATURE
 **Date:** 2026-09-18
 **Title:** Investigate and fix why pairing offers arbitrary devices and never completes after `ai-sessions/0035`'s crash fix, add pairing status feedback, and make the app notice a device paired outside it
-**Status:** prompt only — not yet run
 
 ---
 
