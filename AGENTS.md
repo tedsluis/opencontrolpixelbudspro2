@@ -141,8 +141,7 @@ order:
   "reference" snippets.
 - **Battery implementation:** Translate battery polling to Android-native
   mechanisms only, in the priority order given in `ARCHITECTURE.md` §4 and
-  `PROTOCOL.md` §4.3 (generic `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED`
-  broadcast as a cheap supplementary check → Fast Pair Battery Notification
+  `PROTOCOL.md` §4.3 (Fast Pair Battery Notification
   advertisement → Fast Pair Message Stream Device Information → HFP AT
   commands, via `BluetoothHeadset.ACTION_VENDOR_SPECIFIC_HEADSET_EVENT`
   parsing the standard `AT+BIEV`/`AT+CIND` HF indicators (not Apple's
@@ -173,6 +172,10 @@ order:
     message (Left/Right, ADR-031/033) and DLCI 0x02's `SubscribeRuntimeInfo` entry 6.1
     (Case, ADR-043 — maintainer-approved in chat 2026-09-25, `ai-sessions/0046`; the
     DLCI 0x08 claim of ADR-035/039 is withdrawn).
+  - **Note (2026-09-30, maintainer-approved in chat, `DECISIONS.md` ADR-029 Update,
+    `ai-sessions/0059`):** the generic `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED`
+    broadcast, which headed this list until 2026-09-30, is `@SystemApi` — not in the
+    public SDK (API 34 stub) — and is not usable by this app (§3's hidden-API rule).
 
 ## 6. libmaestro / libgfps Implementation Rules
 
@@ -272,8 +275,9 @@ order:
 - Every `BluetoothSocket`/`BluetoothGatt` call site must be wrapped in
   `try-catch`, converting exceptions into the sealed error type — no bare
   `catch (e: Exception) {}` swallow-and-ignore blocks.
-- ViewModels expose connection/command state as `StateFlow<BudsUiState>`; the
-  UI renders a distinct state for each error case (no generic "Something went
+- The UI state holder — as built, `:app`'s `MainActivity` (`DECISIONS.md`
+  ADR-048, 2026-09-30: no ViewModel) — collects the repository's `StateFlow`s into
+  `OpenControlUiState`; the UI renders a distinct state for each error case (no generic "Something went
   wrong" catch-all where a more specific message is available).
 
 ## 9. Logging & Privacy
@@ -310,7 +314,7 @@ order:
   logic must have unit tests independent of any real Bluetooth hardware (pure
   byte-array in/out).
 - The `BluetoothManager`/`BudsTransport` abstraction must be defined behind an
-  interface so it can be faked in ViewModel unit tests (no real
+  interface so it can be faked in repository and UI unit tests (no real
   `BluetoothSocket` in unit tests).
 - Any bug fix tied to a specific malformed/unexpected frame should add a
   regression test with that exact byte sequence (redact any real device
@@ -403,6 +407,12 @@ order:
    in `CAP-NNN-EVENT-NOTES.md` is a gap to flag explicitly (e.g. "expected
    but not observed" or "action attempted but not clearly isolated in the
    log"), not something to leave for a future session to notice on its own.
+8. **A negative needs a positive control** (added 2026-09-30, maintainer-approved in
+   chat, `ai-sessions/0059`). A "0 frames" / "never occurs" result is written down
+   only with the exact command, its exit status (`tshark` exits non-zero on an
+   invalid display filter — that is not an empty result), and the same filter shown
+   matching a frame known to exist in a log. (`CAP-029` used `avctp or avrcp`, which
+   errors; the valid `btavctp or btavrcp` finds 26 frames there.)
 
 ### Reverse engineering the APK
 
@@ -437,9 +447,10 @@ order:
 1. Only implement protocol behavior that is already in `PROTOCOL.md` as (at
    minimum) a HYPOTHESIS with a verification plan, preferably as a FACT (see
    `PROJECT_RULES.md` §2).
-2. Follow the architecture in `ARCHITECTURE.md` (Clean Architecture / MVVM /
-   Repository pattern). Explain any deviation and propose a `DECISIONS.md`
-   entry.
+2. Follow the architecture in `ARCHITECTURE.md` (Clean Architecture /
+   Repository pattern; no ViewModel — `DECISIONS.md` ADR-048, which superseded
+   ADR-001's MVVM clause on 2026-09-30). Explain any deviation and propose a
+   `DECISIONS.md` entry.
 3. Always add logging around Bluetooth connection state transitions (RFCOMM
    connect, and — for the secondary GATT transport — MTU negotiation,
    pairing, notify-subscriptions) — this is essential for debugging across

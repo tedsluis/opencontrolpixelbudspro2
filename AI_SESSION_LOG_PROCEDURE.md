@@ -146,5 +146,20 @@ relevant sections of `PROTOCOL.md` at the start of a session. If a prompt's auth
 the reading order, the executing session still does the reading — the absence of the reminder in a
 specific prompt file is a defect in that file, not license for the session to skip it.
 
+## 9. Prompt template (added 2026-09-30, `ai-sessions/0059`)
+
+Approved by the maintainer in chat on 2026-09-30 (`AskUserQuestion` "Process", *"Approve all (Recommended)"*), after `ai-sessions/0058`
+A58-SES-01/03/04/05. A prompt (`NNNN_CATEGORY_PROMPT_YYYY_MM_DD.md`) has these parts, in this order:
+
+1. **Header block** (§4) — with no Status line: a PROMPT carries no Status field; the RESULT does.
+2. **Reading block:** `AGENTS.md` §0.1's seven files in full (§8); then the files this task touches, section by section, each section in full
+   before it is changed. The RESULT says what was read in full and what in part.
+3. **Per-task reading list:** name the sections (e.g. `PROTOCOL.md` §4.1, `CAP-062-FINDINGS.md` §2) instead of "read <1.4 MB> in full".
+4. **Rules block:** evidence (`PROJECT_RULES.md` rule 4a; a negative needs a positive control, `AGENTS.md` §13 step 8), labels
+   (FACT/HYPOTHESIS/ASSUMPTION), the `AGENTS.md` §6 gate (no FACT promotion or ADR without the maintainer).
+5. **Resumability** (§5) and the **checkpoint**: questions in chat, one per decision.
+6. **The RESULT must end with** "Deferred documentation" (each item also added to `TODO.md`) and "Commits" (hashes, or "not committed —
+   reason").
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/AI_SESSION_LOG_PROCEDURE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/AI_SESSION_LOG_PROCEDURE

@@ -82,8 +82,11 @@ document wins, unless the project owner explicitly and knowingly deviates from i
    "supersedes" the old decision, with a stated reason.
 9a. **Scope of the non-destructive-update convention:** this "keep the old
     entry, add a dated `Update`/superseding entry" convention applies
-    **strictly to `DECISIONS.md` and `PROTOCOL.md`** — documents whose value
-    includes showing how understanding evolved over time. It does **not**
+    **strictly to `DECISIONS.md`, `PROTOCOL.md` and `REVERSE_ENGINEERING.md`** — documents
+    whose value includes showing how understanding evolved over time.
+    (`REVERSE_ENGINEERING.md` added 2026-09-30, maintainer-approved in chat,
+    `ai-sessions/0059`: its code traces were always kept with dated Updates — 64 of them —
+    while its header claimed rewrite-in-place; the header now matches the practice.) It does **not**
     apply to `CAP-NNN-FINDINGS.md` documents: those must be aggressively
     refactored and rewritten to state only the current truth. A
     `CAP-NNN-FINDINGS.md` file is a reference for "what do we currently know
