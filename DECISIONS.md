@@ -37,7 +37,7 @@ motivated this).
 ## ADR-001 — Architecture style: Clean Architecture + MVVM + Repository pattern
 
 - **Date**: _(project start)_
-- **Status**: Accepted
+- **Status**: Accepted; the clause "MVVM in the UI layer" is superseded by ADR-048 (2026-09-30) — the module split and the Repository pattern stand
 - **Context**: A clear separation is needed between (fast-evolving) protocol
   knowledge and the rest of the app, because protocol knowledge keeps changing
   throughout the project as reverse engineering progresses.
@@ -51,6 +51,8 @@ motivated this).
   types), but protocol changes stay isolated in the data/hardware layers and
   the UI/domain layers remain independently unit-testable without real
   Bluetooth hardware.
+- **Update (2026-09-30, `ai-sessions/0059`, maintainer-approved in chat 2026-09-30):** the "MVVM in the UI layer" clause was never built — the UI holds no
+  ViewModel (`ai-sessions/0033` Phase 6) — and is superseded by **ADR-048**. The five-module split and the Repository pattern are unchanged.
 
 ## ADR-002 — License: GNU AGPL-3.0
 
@@ -299,6 +301,9 @@ motivated this).
 
 - **Date**: 2026-08-15
 - **Status**: Accepted
+- **Note on process (added 2026-09-30, `ai-sessions/0059`):** this ADR names no maintainer approval, and where or when one was given is **not recorded**
+  (found by `ai-sessions/0058`, A58-GOV-04). The maintainer confirmed in chat on 2026-09-30 (`AskUserQuestion` "ADR-009", option *"Not recorded
+  (Recommended)"*) that the provenance is not recorded; the decision stands as written.
 - **Context**: `ARCHITECTURE.md` §5's implementation gate requires that a
   DLCI's framing/command identification reach 🟢 FACT in `PROTOCOL.md` **and**
   be recorded as a `DECISIONS.md` ADR before that channel's
@@ -490,6 +495,9 @@ motivated this).
   it as the authoritative firmware-version string, not merely a plausible candidate. Does not by
   itself unblock any `FrameEncoder`/`FrameDecoder` work — this is a data-field identification, not a
   command channel.
+- **Update (2026-09-30, `ai-sessions/0059`, pointer only — A58-DEC-04):** as built, the Startup Handshake (ADR-042 item 1) reads the firmware from the
+  Buds' unsolicited DLCI 0x02 `GetSoftwareInfo` announcement (the same `release_5.203` string, ADR-034), not from DLCI 0x08 — the app no longer opens
+  DLCI 0x08 (ADR-043). The FACT above is unchanged.
 
 ## ADR-013 — DLCI 0x02 general-purpose settings-write envelope shape confirmed (`field5{field4{...}}}` outer wrapper); generic write-path implementation unblocked, individual field semantics remain HYPOTHESIS
 
@@ -535,6 +543,9 @@ motivated this).
   encode/decode logic now, against fixed byte-array fixtures, ahead of any specific setting being
   wired up — but no UI control for an individual setting (Conversation Detection, Multipoint, etc.)
   should ship against this ADR alone.
+- **Update (2026-09-30, `ai-sessions/0059`, pointer only — A58-DEC-04):** the individual field semantics this ADR left gated were promoted and unblocked
+  field by field since: ADR-019 (and its Updates), ADR-020 (EQ write), ADR-034 (pw_rpc identity, `ReadSetting`), ADR-036 (reads), ADR-045/046/047 (writes of
+  17, 19, 22, 4, 7, 12, 2). The "13-byte constant prefix" is the pw_rpc `RpcPacket` header (ADR-034). This ADR's own decision is unchanged.
 
 ## ADR-014 — DLCI 0x08 `Group 0x0e Code 0x01` confirmed as a per-earbud+case battery push (index=1/2/3 → Left/Right/Case)
 
@@ -847,6 +858,14 @@ motivated this).
   hedging, when discussing which channel to target for payload-decoding work (§2.2a's paths (a)/(b)).
   Neither DLCI 0x08's still-🔴 open identity question nor the "default internal rfcomm socket"
   UUID's unexplained absence from every capture searched so far is affected by this decision.
+- **Update (2026-09-30, `ai-sessions/0059`, pointer and citation corrections — A58-PROT-02/PROT-03/DEC-04; decision unchanged):**
+  (1) `CAP-002-btsnoop_hci.log` is the un-restarted shared buffer: its first 2,663 frames **are** `CAP-001`'s (md5 of `tshark -T fields -e frame.time_epoch
+  -e frame.len` over all of `CAP-001` = md5 of `CAP-002`'s first 2,663 frames = `1c68774f38316ad9c275a975c7fcbc16`), so "`CAP-002` frame 1327 @ 42.534s" above
+  is `CAP-001`'s frame. `CAP-002`'s **own** session shows the same thing independently: SDP Service Search Attribute Response frame **49102** (17:05:35.777)
+  resolves `25e97ff7-…` to RFCOMM channel 1, and frame **49109** (17:05:35.821) is `Sent SABM` DLCI `0x02`. The three sessions stand with these frames.
+  (2) "LEB128-address" in the Context is wrong: the pw_hdlc address is a **one-terminated LSB varint** (`fut.java:178–202` shifts each 7-bit group left by one
+  and sets bit 0 of the **last** byte; ADR-034).
+  (3) The Sent-payload **content** this ADR left at 🟡 is settled by ADR-034 (every DLCI 0x02 packet is a pw_rpc `RpcPacket` for `maestro_pw.Maestro`).
 
 ## ADR-019 — `qhr`'s oneof structure confirmed inside DLCI 0x02's `field5{field4{...}}` wrapper (2 sampled fields); `qhr` fields 4 and 7 promoted to FACT; `qhr` field 12's field-number identity (not its name) promoted to FACT
 
@@ -1023,6 +1042,9 @@ motivated this).
   - **Field 2:** the switch "In-ear detection" writes field 2 in both directions on film (`CAP-056` 2173/2849/3627/4048/4344, byte-identical to `CAP-024`
     1912/1850), and the Buds' Fast Pair SASS capability bit 4 ("on-head detection is turned on") follows it 5/5 — the "In-ear detection" = "CATEGORY_OHD" label
     equivalence is 🟢 FACT (`PROTOCOL.md` §4.5.5 2026-09-28 Update).
+- **Update (2026-09-30, `ai-sessions/0059`, pointer only — A58-DEC-04):** field 22's naming gap ("Speech Detection" vs the UI's "Conversation detection",
+  left 🟡 by the 2026-09-03 Update above) was closed on 2026-09-26 by film + wire (`CAP-019` 1720/1808, `PROTOCOL.md` §4.5.1 2026-09-26 Update, maintainer-approved
+  in chat, `ai-sessions/0052`); it was recorded in ADR-045 item 3 but not here. 🟢 FACT.
 
 ## ADR-020 — EQ `FrameEncoder`/`FrameDecoder` implementation explicitly unblocked
 
@@ -1062,6 +1084,9 @@ motivated this).
   practical default described above. The field-16-vs-18 semantic question and the gain-unit question
   remain open research items (`PROTOCOL.md` §6, `TODO.md`) and should be resolved before EQ ships a
   "Save as preset"-style UI affordance that specifically depends on field 18's exact semantics.
+- **Update (2026-09-30, `ai-sessions/0059`, pointer only — A58-DEC-04):** "field 18 = `fyp.d()` … fired once per gesture" above is one reading only; the
+  trigger of field 18 has three unconfirmed candidates (Save button, navigate-away with unsaved changes, slider release — `PROTOCOL.md` §4.2, 2026-09-08 and
+  2026-09-13 traces). ADR-034 settled what 16 and 18 *hold* (active vs last-saved EQ), not what writes 18. The app writes only field 16 (unchanged).
 
 ## ADR-021 — "Get ANC state" (`0x11`) opcode identity confirmed on the wire for the first time (DLCI 0x04); trigger-reliability explicitly NOT promoted
 
@@ -1193,7 +1218,7 @@ motivated this).
 ## ADR-024 — "Notify ANC state" `Settable-toggles` byte confirmed as a dock-state indicator: `0x00` when both earbuds are seated in the case, `0xe8` otherwise
 
 - **Date**: 2026-09-05
-- **Status**: Accepted
+- **Status**: Superseded by ADR-049 (2026-09-30) for its Decision ("dock-state indicator"); the evidence and Updates below stay as history
 - **Context**: `CAP-036-FINDINGS.md` §3 flagged the "Notify ANC state" frame's `Settable-toggles`
   byte reading `0x00` as an unreconciled discrepancy against every prior sample's `0xe8`.
   `DESKRESEARCH_FINDINGS.md`'s first bonus round found `CAP-016-FINDINGS.md` §4 had already
@@ -1335,6 +1360,10 @@ motivated this).
   taken while no bud was worn, and the Buds sent no `Notify` at all on wear changes (🔴 whether the byte still drops to `00` then). The decision above is unchanged
   (`CAP-056-FINDINGS.md` §4).
 
+- **Update (2026-09-30, `ai-sessions/0059`, maintainer-approved in chat 2026-09-30, `AskUserQuestion` "ADR-049", option *"New ADR-049 (Recommended)"*):**
+  the Decision above ("`0x00` when both earbuds are seated in the case, a non-zero value otherwise") is **superseded by ADR-049** — its own Updates refute
+  the "otherwise" half (`0x00` with both buds outside the case, `CAP-062`; six earlier counter-examples). What stays FACT and what is 🟡 is stated there.
+
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 
 - **Date**: 2026-09-07
@@ -1435,6 +1464,12 @@ motivated this).
   because this project decompiles the official APK. Read it as: **"an independent implementation, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair
   specification) only — no companion-app or GMS code is used as a reference for these two channels."** The decision (GMS reverse-engineering out of scope) is unchanged; the
   title is left as written (history), and `PROJECT.md`, `ARCHITECTURE.md` §5 and `TODO.md` use the corrected wording.
+- **Update (2026-09-30, `ai-sessions/0059`, scope sentence — A58-PROT-07; decision unchanged):** the companion app **does** contain a generic
+  `[Group:1][Code:1][Length:2][Value]` codec — `gbd.java:166–178` reads an unsigned group byte, a code byte and a 2-byte length (≤ 1024) and hands the value
+  on; `fua.java:239/262` log "Send/Receive message to/from device …, group %d, type %d" — but its internal-socket subclass throws `"Unsupported legacy
+  communication style."` (`fut.java:131`) and no code binds it to DLCI 0x04 or 0x08 (whose SDP records are "GFPS RFCOMM" and "GSND CONTROL", `CAP-033`
+  frame 1279). 🟡 HYPOTHESIS: a legacy TLV style, perhaps the "default internal rfcomm socket" (`3a046f6d-…`) never seen on the wire. The Context's finding
+  — no DLCI 0x04/0x08 transport logic in the app — stands; it must not be read as "no TLV codec of that shape exists in the app".
 
 ## ADR-026 — Volume Balance (`qhr` field 17) range and Left/Right polarity confirmed: ±100, `+100`=Left, `-100`=Right
 
@@ -1563,6 +1598,12 @@ motivated this).
   every Bluetooth/battery mechanism this project relies on is available well below API 34 anyway.
   This forecloses running on older Android versions/ROMs that can't be updated past API 33, a
   deliberate trade-off given this project's GrapheneOS-first target.
+- **Update (2026-09-30, `ai-sessions/0059`, maintainer-approved in chat 2026-09-30, `AskUserQuestion` "Battery API", option *"Approve as shown
+  (Recommended)"* — A58-GOV-02/DEC-04; decision unchanged):** (1) the Context's premise "the generic battery broadcast … needs API 31+" is withdrawn: the
+  broadcast is **not public API** — `javap -constants -cp ~/Android/Sdk/platforms/android-34/android.jar android.bluetooth.BluetoothDevice | grep -i battery`
+  prints nothing (exit 1) while the same command lists `ACTION_ACL_CONNECTED`, and AOSP's `BluetoothDevice.java` declares `ACTION_BATTERY_LEVEL_CHANGED` with
+  `@SystemApi` (fetched 2026-09-30). It is not an app source (`AGENTS.md` §3/§5, `PROTOCOL.md` §4.3 Option 0). (2) `minSdk = 34` is also declared in
+  `:data` (`android/data/build.gradle.kts:24`), not only in `:app`, `:hardware`, `:ui`.
 
 ## ADR-030 — Cross-Transport Key Derivation (CTKD) confirmed as a third bonding path, gated on a pre-existing LE link
 
@@ -1597,6 +1638,9 @@ motivated this).
   first-time pairing, `AGENTS.md` §7) can now assume both bonding paths converge to the same
   encrypted classic link regardless of entry point, so reconnection logic doesn't need to
   special-case which path was used. Does not itself unblock any new command implementation.
+- **Update (2026-09-30, `ai-sessions/0059`, citation correction — A58-DEC-03; decision unchanged):** "`CAP-014`/`CAP-015` (2026-08-27 …)" in the Context
+  should read **`CAP-014` (2026-08-27)** — the second CTKD instance (`CAP-014-FINDINGS.md` §5, as `PROTOCOL.md` §5.1 cites it). `CAP-015` is the 2026-08-18
+  Group T EQ capture and carries no pairing.
 
 ## ADR-031 — Battery Option B's `Group 0x03 Code 0x03` message confirmed as the Fast Pair "Battery updated" notification (while discharging)
 
@@ -1637,6 +1681,8 @@ motivated this).
   the *Consequences* above no longer applies.
 - **Update (2026-09-24, `ai-sessions/0045`):** "Does not change the existing HFP-first priority ordering" is superseded by ADR-040:
   HFP is not an app source; Option B (Left/Right) and Option E (Case, ADR-035/039) are the implemented battery sources.
+- **Update (2026-09-30, `ai-sessions/0059`, pointer only — A58-DEC-01):** the Case part of the Update above is superseded by **ADR-043** (2026-09-24): the
+  Case comes from DLCI 0x02 `SubscribeRuntimeInfo` entry 6.1 (Option F); the app no longer opens DLCI 0x08 (Option E).
 
 ## ADR-032 — DLCI 0x04 (Message Stream) is a shared, on-demand channel: opened by the user's own ANC/Find/Connect action and released shortly after; loss of it is not a session loss
 
@@ -1802,7 +1848,17 @@ motivated this).
   requests (the app issues them one at a time), how the channel→address mapping is derived (only tabulated: 21 and 19 seen again, no new pair), and whether an EQ change is
   *audible* (a camera microphone cannot record what is in the ears — the maintainer's listening test).
 
-## ADR-035 — DLCI 0x08 is claimed on demand for the Case battery: `Group 0x0e Code 0x01`, entry index 3; receive-only
+- **Update (2026-09-30, `ai-sessions/0059`, maintainer-approved in chat 2026-09-30, `AskUserQuestion` "L-4 / L-5" and "L-1 address" — leads L-1/L-4 of
+  `ai-sessions/0058`; nothing new is unblocked):**
+  (a) **The "unnamed services" are named — 🟢 FACT (name mapping).** With the project's own `h65599` (`scripts/pwrpc_decode.py:25`): `0x73d5d805` =
+  `maestro_pw.Dosimeter`, `0x4e4abee7` = `maestro_pw.Multipoint`, `0x1c256c5d` = `maestro_pw.DynamicServerConfigService`, `0xaf3a7737` =
+  `pw.software_update.BundledUpdate`, `0x755ffe65` = `hr.core.software_update.UpdateHelperService`; the names are literals in the APK (`fux.java`,
+  `gnb.java`, `fwr.java`). Item 2's "no unnamed services" now reads "no request to any service other than `maestro_pw.Maestro`" — unchanged in effect.
+  (b) **The channel → address pairing is derivable — 🟡 HYPOTHESIS.** `fux.java:90–103` maps channels 18–22 (`MAESTRO_A`) and 23–27 (`MAESTRO_B`) to
+  CASE / LEFT_BT_CORE / LEFT_SENSOR_HUB / RIGHT_BT_CORE / RIGHT_SENSOR_HUB; `fut.java:178` builds the address `((a2 & 15) << 6) | ((a3 & 15) << 10)` as a
+  one-terminated varint; with `goq` MAESTRO_A = 10, MAESTRO_B = 13, LEFT_BT_CORE = 3, RIGHT_BT_CORE = 4 this gives `00 3b` (19), `00 4b` (21), `80 3d` (24),
+  `80 4d` (26) — the four observed request addresses, 4 of 4. Item 3's rule (send only on a tabulated channel) is **unchanged**; deriving the address in code
+  needs its own ADR after the `CAP-065` one-bud test (does the announced channel name the bud that hosts the session?). — DLCI 0x08 is claimed on demand for the Case battery: `Group 0x0e Code 0x01`, entry index 3; receive-only
 
 - **Date**: 2026-09-20
 - **Status**: Accepted (scope below); items 1–2 superseded by ADR-043 (2026-09-24)
@@ -1992,6 +2048,8 @@ motivated this).
   hidden-API route stays banned, `AGENTS.md` §3).
 - **Consequences**: `AGENTS.md` §5's battery paragraph and `ARCHITECTURE.md` §4 state HFP as "wire-confirmed, not consumable by an app; not
   implemented". No code change (already removed).
+- **Update (2026-09-30, `ai-sessions/0059`, pointer only — A58-DEC-01):** in the Decision, "DLCI 0x08 Option E (Case, ADR-035/039)" is superseded by
+  **ADR-043**: the Case comes from DLCI 0x02 `SubscribeRuntimeInfo` entry 6.1 (Option F).
 
 ## ADR-041 — The wire codec is hand-written; no protobuf runtime and no `.proto` build inputs
 
@@ -2105,6 +2163,8 @@ motivated this).
 - **Consequences**: `BudsRepositoryImpl`'s loss handling and `:app`'s visibility/`OsConnectionObserver` events gain a bounded re-open;
   `ARCHITECTURE.md` §6/§6.0b are updated when it is built. Each re-open repeats the Connect sequence (DLCI 0x02 open, `ReadSetting 4:16`,
   `SubscribeRuntimeInfo`; the DLCI 0x04 snapshot claim, ADR-032). Option (c) stays an unbuilt proposal.
+- **Update (2026-09-30, `ai-sessions/0059`, pointer only — A58-DEC-02):** "Not yet implemented" in the process note is history: built in `ai-sessions/0048`
+  (`SessionReopener`, `ARCHITECTURE.md` §6.0b) and exercised on hardware in `CAP-063` (the automatic re-opens, `CAP-063-FINDINGS.md`).
 
 ## ADR-045 — DLCI 0x02: `WriteSetting` unblocked for `qhr` fields 17, 19, 22, 4 and 7 (balance, mono, conversation detection, touch controls, press-and-hold)
 
@@ -2137,6 +2197,13 @@ motivated this).
   and conversation detection's behaviour are not established by this ADR — the Group AY re-test.
 - **Update (2026-09-28, `ai-sessions/0055`):** "Field 12 stays read- and write-gated" is superseded by **ADR-046** (field 12 read + write); field 2's write is
   added by **ADR-047**. The five fields above are unchanged.
+- **Update (2026-09-30, `ai-sessions/0059`, maintainer-approved in chat 2026-09-30, `AskUserQuestion` "App fixes", option *"Approve all (Recommended)"* —
+  A58-APP-04):** a known limit and its mitigation, added to the Consequences. A `WriteSetting` answer is matched by its method only: pw_rpc gives the Buds'
+  answers no `call_id` to match on (`scripts/pwrpc_decode.py` over every capture log: 13,582 packets with no `call_id`, the only 175 with one are the Buds'
+  unsolicited `GetSoftwareInfo`, `call_id` 4294967295). So a write answered **after** its 1.5 s wait could be taken as the answer to the next write.
+  **Mitigation (built in `ai-sessions/0059`):** after a `WriteSetting` gets no answer within 1.5 s, the next Maestro request (EQ or settings, read or write)
+  waits inside the same lock until 1.5 s after that timeout before it is sent; an answer arriving in that window belongs to no request and is dropped (logged,
+  payload-free). **Remaining limit:** an answer later than ~3 s after its request can still be misattributed (never observed; answers take ~50 ms).
 
 
 ## ADR-046 — DLCI 0x02: `ReadSetting` and `WriteSetting` unblocked for `qhr` field 12 (the press-and-hold ANC-mode list)
@@ -2179,6 +2246,59 @@ motivated this).
   "only while worn" ANC check may not apply. ADR-044's re-open is unchanged (the Buds still close DLCI 0x02 with it off). Hardware re-test: OpenControl writes
   `4:{2:0}` → OK + SASS `07 11 … b0 00`; a bud out → no `PlaybackStatusChanged`; `4:{2:1}` → OK + SASS `… b8 00`; plus a `Get` (ANC Refresh) with it off and no bud
   worn to settle the Settable byte.
+
+
+## ADR-048 — The UI layer holds no ViewModel: state is hoisted in `:app`'s `MainActivity` and application-scoped holders
+
+- **Date**: 2026-09-30
+- **Status**: Accepted (maintainer, chat 2026-09-30, `ai-sessions/0059`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0058` A58-GOV-01, extended in the chat that wrote `ai-sessions/0059`); the decision is the
+  maintainer's, given in the chat of 2026-09-30 (`AskUserQuestion` "ADR-048 UI", option *"Approve as shown (Recommended)"*, with this text in the preview),
+  per `AGENTS.md` §6. **Supersedes ADR-001's clause "MVVM in the UI layer" only** — ADR-001's five-module split and Repository pattern stand.
+- **Context**: `ai-sessions/0033` Phase 6 hoisted the UI state in `MainActivity` instead of a ViewModel, matching `ai-sessions/0013`'s pattern. The
+  repository (`BudsRepositoryImpl`) is a Hilt singleton, so its state survives a configuration change; the Quick Settings tile (`AncTileService`), the foreground
+  service and `OpenControlApplication` read it directly. `BudsUiState` (`AGENTS.md` §8, `ARCHITECTURE.md` §7) never became a type — `:ui`'s
+  `OpenControlUiState` fills that role. ADR-001, `AGENTS.md` §8/§11 and `ARCHITECTURE.md` §2/§7 still described ViewModels and use cases
+  (`grep -rn "BudsUiState\|ViewModel\|UseCase" android --include=*.kt` → only two comments saying there is none).
+- **Options considered**: (a) record the as-built design — chosen; (b) build a ViewModel to match the documents (a larger change with no defect it would fix).
+- **Decision**:
+  1. No ViewModel. `:app`'s `MainActivity` collects the `BudsRepository` flows into `OpenControlUiState` and passes it, with `OpenControlActions`, to a
+     stateless `:ui`. No use-case classes: `:app` calls `BudsRepository`'s suspend functions directly. User actions run in the application scope, not the
+     composition's (a configuration change cannot cancel them — `ai-sessions/0044` APP-4).
+  2. State that must survive a configuration change does not live in the Activity: it lives in the repository or in an application-scoped holder (as built in
+     `ai-sessions/0059`: `AppUiSession` — the pairing progress, the bonding observation and the list of unidentified frames, A58-APP-08).
+- **Consequences**: `AGENTS.md` §8 ("The UI state holder — as built, `:app`'s `MainActivity` …") and §11 ("… faked in repository and UI unit tests …") are
+  reworded; `ARCHITECTURE.md` §2 (heading, module table, UI-layer note, dependency sentence) and §7 (`OpenControlUiState` instead of `BudsUiState`) and
+  `README.md`'s approach line are aligned. UI mapping is tested as pure functions and with the Robolectric Compose tests of `:ui`.
+- **Reconsider when**: the UI mapping cannot be tested without a ViewModel, or a second screen/Activity needs the same state.
+
+## ADR-049 — "Notify ANC state" Settable toggles: what is FACT and what is not (supersedes ADR-024's Decision)
+
+- **Date**: 2026-09-30
+- **Status**: Accepted (maintainer, chat 2026-09-30, `ai-sessions/0059`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0058` A58-PROT-01); the decision is the maintainer's, given in the chat of 2026-09-30
+  (`AskUserQuestion` "ADR-049", option *"New ADR-049 (Recommended)"*, with this text in the preview), per `AGENTS.md` §6. One count differs from the preview:
+  the preview said "41/41 ACKed"; re-derived for this entry it is **40 of 40** — `CAP-002`'s four ACKed Sets are `CAP-001`'s frames (A58-PROT-02), counted once.
+- **Context**: ADR-024 (2026-09-05) promoted "`0x00` when both earbuds are seated in the case, a non-zero value otherwise" to 🟢 FACT. Its own Updates
+  refute the "otherwise" half — `0x00` with both buds outside the case (`CAP-062`, five NAKs with the buds on the table), and six earlier counter-examples
+  (`CAP-048` ×2, `CAP-047` ×3, `CAP-038`, `CAP-061` 5560) — yet each Update ended "the decision above is unchanged". The Fast Pair Hearable Controls page
+  (fetched 2026-09-30) defines byte 2 of `Notify ANC state` as *"Settable toggles: Any or all of the UI toggle bits above may also be set here, to indicate
+  which are currently enabled."*
+- **Evidence (re-derived 2026-09-30)**: a message-level parse of DLCI 0x04/0x05 in every capture log (`[Group][Code][Len][Value]` per frame, scratchpad
+  script over `tshark -Y "btrfcomm.dlci==N && btrfcomm.len>0" -e data.data`): `CAP-062` 16 `Set ANC state`, 10 NAKed `ff 02 00 03 02 08 12` (reason `0x02`,
+  e.g. frame 5998, each after a `Notify` with Settable `0x00`), 6 ACKed; every other Set in the logs ACKed — `CAP-001` 4, `CAP-006` 4, `CAP-039` 4, `CAP-051`
+  1, `CAP-059` 12, `CAP-060` 6, `CAP-063` 3 (40 ACKed with the 6 of `CAP-062`), 0 NAKed.
+- **Decision**:
+  1. 🟢 FACT: Settable `0x00` ⇒ the Buds NAK a `Set ANC state` with reason `0x02` "Not allowed due to current state" (`CAP-062`, 10 of 10); a non-zero
+     Settable (`0xe8`, the only other value ever seen) ⇒ the `Set` is ACKed (40 of 40).
+  2. 🟢 FACT (a correlation): both buds seated in the case ⇒ `0x00` (ADR-024's video-checked samples).
+  3. 🟡 HYPOTHESIS (strong): `0x00` ⇔ no bud worn. Open samples the other way — `0xe8` while the event notes say no bud was worn: `CAP-042` frame 602
+     (both buds "resting loose beside the open, empty case"), `CAP-045` frame 612 (Left in the case, Right loose), `CAP-048` frame 11939 ("both buds loose");
+     re-check on film in `CAP-065` (Group BA).
+  4. "Dock state" as the meaning of the byte is **withdrawn**; ADR-024's Decision is superseded, its evidence and Updates stay as history.
+- **Consequences**: no code change — the app already reads the byte only as "allowed / not allowed" (`AncAvailability`, `ai-sessions/0048`/`0054`).
+  `PROTOCOL.md` §4.1's bullet is retitled; code comments that still say "dock state" (`AncFrame.kt`) are corrected; capture files that call `0x00` "both
+  docked" 🟢 get a status banner (A58-CAP-04).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
