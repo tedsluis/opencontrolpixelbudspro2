@@ -5,7 +5,7 @@ based on [Keep a Changelog](https://keepachangelog.com/).
 
 Most entries below are documentation, tooling, and protocol-reconstruction process
 rather than app releases, reflecting this project's reverse-engineering-first approach — a v1
-Android app now exists (`ai-sessions/0033`, 2026-09-18), was hardware-tested in `CAP-059`–`CAP-063`, and is not yet
+Android app now exists (`ai-sessions/0033`, 2026-09-18), was hardware-tested in `CAP-059`–`CAP-066`, and is not yet
 released. See `TODO.md` for current status and `PROJECT.md` for the "definition of done" that will
 mark v1.
 
@@ -245,6 +245,15 @@ mark v1.
   violations are framework objects (`ARCHITECTURE.md` §12 note). GrapheneOS auto-off `delayMillis: 0` = disabled (`CAP-065-FINDINGS.md` §0 updated). Defect: the
   rotation resets the tab to Connection (next FEATURE, with balance precision, a named Bluetooth-off loss and proxy closing). Folder renamed to
   `CAP-066-2026-10-01_16-12-57_16-34-50-Group_BB`. No app change, no new capture skeleton.
+- **2026-10-01 (`ai-sessions/0064`): FEATURE — the maintainer's choices after `CAP-066`, plus licence and links on Info.** F-1: the tab survives a
+  configuration change (`OpenControlNavHost` skips the pager ↔ back-stack sync until the restored back stack is known; `CAP-066` K4r reset Sound → Connection;
+  `TabRestoreTest`). F-2: the balance gets `[‹]`/`[›]` steps of 1 beside the unchanged slider, one write per tap (`CAP-066`: 32 drags never reached Right 4;
+  fixtures `CAP-066` A7723/A7873, `CAP-064` 6671 = `17:7`). F-3: a session loss around an adapter TURNING_OFF/OFF reading is "Bluetooth was switched off on this
+  phone", final at once; adapter changes are logged (fixtures: `CAP-066` export E1 279–283 / E2 164–168 and the system logs' `STATE_CHANGED` lines). F-4: every
+  profile proxy obtained is closed once (`ProfileProxies`). F-6: Settings → Info shows the licence (AGPL-3.0-or-later), the bundled licence text and links to the
+  `LICENSE`, `README.md` and the issue tracker, handed to the browser on a tap — **DECISIONS.md ADR-050** (maintainer-approved in chat); no manifest change, no
+  `INTERNET`, no dependency. Gate green (`:data` 1588, `:domain` 31, `:hardware` 56, `:ui` 41; lint 0; warnings 0); 7 mutations caught. New skeleton
+  `CAP-067` (Group BC). Not hardware-verified.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

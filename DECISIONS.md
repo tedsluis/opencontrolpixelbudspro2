@@ -2331,5 +2331,25 @@ motivated this).
   unexplained). All 4 `Set`s were sent after a fresh `e8` and ACKed. Item 3 is unchanged: 🟡 HYPOTHESIS (strong) "`00` ⇒ no bud worn"; the converse stays
   refuted. Items 1, 2 and 4 are unchanged.
 
+## ADR-050 — Settings → Info may hand a project URL to another app on the user's tap; the app itself stays offline
+
+- **Date**: 2026-10-01
+- **Status**: Accepted (maintainer, chat 2026-10-01, `ai-sessions/0064`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0064`); the decision is the maintainer's, given in the chat of 2026-10-01 (`AskUserQuestion` "F-6 links",
+  option *"Links + bundled licence (Recommended)"*, and "F-6 ADR", option *"Yes, ADR-050 as drafted (Recommended)"*, with this text in the preview), per `AGENTS.md` §6.
+- **Context**: `AGENTS.md` §1 — the app must function 100% offline and never holds the `INTERNET` permission. The maintainer asked for the licence, a link to the
+  `LICENSE` and the `README.md` on GitHub, and a link to report issues on Settings → Info (chat 2026-10-01, `ai-sessions/0064` §1 item 2).
+- **Options considered**: (a) tappable links handed to another app; (b) the URLs as selectable text only; (c) (a) plus the full licence text bundled — chosen.
+- **Decision**:
+  1. Three fixed URLs — `https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/LICENSE`, `…/blob/main/README.md` and `…/issues` — constants in code
+     (`ProjectLinks`, `SettingsMenu.kt`), started only by a tap with `Intent.ACTION_VIEW`: another app (the browser) fetches the page.
+  2. The app makes no network request: no `INTERNET`, no WebView, no `<queries>` (not needed — developer.android.com, "Fulfill common use cases while having
+     limited package visibility", fetched 2026-10-01: *"Because the startActivity() method doesn't require package visibility to start another application's
+     activity, you don't need to add a <queries> element to your app's manifest"*), no new dependency, no permission.
+  3. No app to open it ⇒ `ActivityNotFoundException` is caught and a message with the URL is shown.
+  4. The full licence text is bundled (`android/ui/src/main/res/raw/license.txt`, byte-identical to `LICENSE`, checked by a unit test) and readable offline.
+- **Consequences**: `AGENTS.md` §1 is read as "the app itself makes no network request"; a tap-started hand-off to another app is not network use by this app.
+  Anything fetched in-app, or a link opened without a tap, needs a new ADR. `ARCHITECTURE.md` §1/§2.4/§9 record the links.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

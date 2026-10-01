@@ -789,19 +789,35 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+**Open after `ai-sessions/0064` (added 2026-10-01):**
+- **Run `CAP-067` (Group BC)** — skeleton `captures/CAP-067-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BC/CAP-067-EVENT-NOTES.md`: the Info tab's licence and links on film (F-6,
+  ADR-050), a rotation on every tab and on Settings → Info (F-1), the balance steps to Right 4 = `17:7` and back (F-2; the channel-19 `17:7` frame has never been
+  captured — the skeleton gives the derived bytes), a Bluetooth off/on with the export's "Bluetooth was switched off on this phone" (F-3) and StrictMode (F-4), BB-12,
+  BB-15 watch, K4d Off/System, L3, K5, then A5, (E), B4, Z1. Nothing of the `0064` build is hardware-verified.
+- 🟡 **F-4 may not silence StrictMode:** in AOSP `android16-qpr2-release` `BluetoothLeAudio.close()` never closes its `CloseGuard` (`CAP-066-FINDINGS.md` §8), so an LE
+  Audio warning can remain although the app now closes every proxy it obtained — read `CAP-067` BC-11s.
+- ⚪ **F-3 assumes** the app's own `ACTION_STATE_CHANGED` receiver gets the adapter broadcast within milliseconds of the system log's `BluetoothAutoOff` line (the
+  `CAP-066` build logged no adapter state); the `0064` build logs every change — `CAP-067` BC-10 checks it. A Bluetooth-off while the app is **not** visible is still
+  "undetermined" / decided on return (readings are visibility-bound, as the link readings).
+- **The bundled licence** (`android/ui/src/main/res/raw/license.txt`) must be updated together with `LICENSE` — `SettingsMenuTest` fails until it is (`cp LICENSE
+  android/ui/src/main/res/raw/license.txt`).
+- **Optional (the maintainer's call — project law):** a dated note in `AGENTS.md` §1 pointing to ADR-050 (the Info links hand a URL to the browser on a tap; the
+  app itself makes no network request).
+
 **Open after `ai-sessions/0063` (added 2026-10-01, `CAP-066` analysed):**
-- **Next FEATURE session (the maintainer's choice, chat 2026-10-01, "FEATURE"):** (1) **keep the tab across a configuration change** — rotation reset Sound →
+- ~~**Next FEATURE session (the maintainer's choice, chat 2026-10-01, "FEATURE"):**~~ **Done in `ai-sessions/0064`** (F-1 … F-4 built and unit-tested, plus F-6, the Info
+  links, ADR-050; not hardware-verified — `CAP-067`). (1) **keep the tab across a configuration change** — rotation reset Sound →
   Connection in `CAP-066` (§6 there; 🟡 cause `OpenControlNavHost.kt:243–258`, the pager synced to index 0 before the restored back stack is known; test with
   Robolectric `StateRestorationTester`); (2) **balance precision** — steps or −/+ buttons so a small value like Right 4 (`17:7`) is reachable (32 drags never hit it,
   `CAP-066` §5; wire unchanged, ADR-045; step size to be chosen at that session's checkpoint); (3) **name a Bluetooth-off loss** in the loss log instead of a lasting
   "undetermined (provisional)" (T-1, `CAP-066` §7); (4) **close unbound profile proxies** in `OsConnectionObserver` (🟡 hygiene, `CAP-066` §8).
-- **Still not done on hardware** (no new skeleton was written, the maintainer's choice): BB-12 (the Left out with both worn on channel 19 — predicted Buds
+- **Still not done on hardware** — now in the `CAP-067` skeleton (`ai-sessions/0064`), except `ANC-002` tapped in the app (not in the maintainer's F-5 list): BB-12 (the Left out with both worn on channel 19 — predicted Buds
   `DISC` + 21, the open half of L-1), F-3 / BB-15 (no cut-off happened in `CAP-066`), K4d "Off" and Android's own dark switch with "System", BB-10 (balance back to
   Right 4 — after the FEATURE fix), L3 (an export with Debug mode off), K5, A5, (E), B4, Z1 (`PAIR-001`), `ANC-002` tapped in the app.
 - 🔴 **Why `CAP-064` read Settable `e8` for 28 s** with both buds straight from the case — `CAP-065` and `CAP-066` (14 samples, 2.6–175 s) always read `00`.
 - 🔴 **Why the phone pages the Buds 0.1 s after an ACL drop at docking** (`CAP-064` 8399, `CAP-066` B2438 after the film) — no Bluetooth-process log then.
-- **`scripts/lint_docs.py` exits 1 on one entry:** `ai-sessions/0063`'s prompt names the pre-rename `CAP-066` folder; it becomes "historical" once a later
-  prompt exists (as for `0061`/`0062`).
+- ~~**`scripts/lint_docs.py` exits 1 on one entry:** `ai-sessions/0063`'s prompt names the pre-rename `CAP-066` folder~~ — resolved 2026-10-01: with prompt `0064` in
+  place it is in the "historical" bucket; `lint_docs.py` exits 0 (`ai-sessions/0064`).
 - 🟡 **The Buds' stray bytes after `AT+NREC=0`** on HFP (`CAP-066` §9; A6112's tail = the app's `SubscribeRuntimeInfo` request bytes) — a firmware buffer reuse;
   out of scope, note only.
 

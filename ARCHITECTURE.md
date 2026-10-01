@@ -32,6 +32,10 @@ Communication happens over up to three transports (RFCOMM is the only one the ap
   §15's question is closed on that basis (maintainer-approved 2026-09-24, `ai-sessions/0045`); tracked
   as `SPATIAL-001`.
 
+**No network from the app** (`AGENTS.md` §1): since `ai-sessions/0064` (DECISIONS.md ADR-050) Settings → Info has three project links (the licence, the README, the
+issue tracker on GitHub) that hand the URL to another app — the browser — with `Intent.ACTION_VIEW` on the user's tap; this app makes no network request, holds
+no `INTERNET` permission and needs no `<queries>`; the full licence text is bundled and readable offline.
+
 Compile/target/minimum SDK: **API 34 (Android 14)** — decided 2026-09-13, `DECISIONS.md` ADR-029;
 see §15's "already decided" list. Primary reference OS: GrapheneOS, with compatibility maintained
 for stock AOSP-based ROMs.
@@ -144,7 +148,7 @@ Connection screen (start destination)
  └─ Settings menu (since `ai-sessions/0062`; only reachable via the top app bar's gear — never shown
      in the main bottom/side navigation), with three tabs: Settings (dark mode), Debug (the
      developer-facing Debug screen, per AGENTS.md §6/§9 not part of ordinary use) and Info (the
-     app's build, the Buds' firmware)
+     app's build, the licence and the project links — `ai-sessions/0064`, ADR-050 — and the Buds' firmware)
 ```
 
 **As built since `ai-sessions/0057`** (the maintainer's decisions in chat 2026-09-29): a Material 3 top app bar titled "OpenControl" and a bottom
@@ -154,7 +158,11 @@ Debug is reached only through the top app bar's bug action, as a full-screen des
 icon and opens a full-screen **Settings** destination with three tabs — **Settings** (dark mode System / On / Off, default System, F-6), **Debug** (the Debug
 screen unchanged: Debug-mode switch, Export debug log, unidentified frames) and **Info** (the app's version, git commit and commit date from `BuildConfig`,
 computed locally at build time; the firmware of the Case / Left bud / Right bud from this connection's announcement with its receive time and the announced
-control channel, or "Not connected yet", F-5). Back returns to the tab it was opened from.
+control channel, or "Not connected yet", F-5). Back returns to the tab it was opened from. **Since `ai-sessions/0064` (F-6, ADR-050):** Info also shows the
+licence ("GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)"), **Read the licence** (the bundled `LICENSE` text, offline), and the links
+"Licence on GitHub", "README on GitHub", "Report an issue on GitHub" — each hands its fixed URL to the browser on a tap (no app to open it ⇒ a message with the
+address). **F-1:** the selected tab survives a configuration change (rotation, Android's dark switch): the pager ↔ back-stack sync is skipped until the restored
+back stack is known (`CAP-066` K4r: a rotation reset Sound → Connection; `TabRestoreTest`).
 (From `ai-sessions/0037` to `0056` Debug was a sixth bottom tab, contrary to the tree above; `0057` restored the documented design.) Every tab can be pulled
 down: while the session is `Ready` a pull runs that tab's existing refresh (Connection and Find: *Refresh battery*; ANC: Refresh; Sound: "Read EQ again" then
 the settings re-read; Controls: the settings re-read), otherwise the action of the Connection screen's own button in that state (Connect/Retry, Enable
@@ -173,7 +181,8 @@ Bluetooth, Allow, Pair) — once per pull, never automatically. The times and st
   app bar in `ai-sessions/0057`). **Since `ai-sessions/0056`**
   (the maintainer's choices in chat 2026-09-28) it also holds "Modes for press and hold (both buds)" — four boxes, shown only while a bud's press and hold is
   Noise control, the last two ticked boxes disabled with "At least two modes must stay selected." — and "In-ear detection" is a switch with a note on what "off"
-  changes; a setting not read from the Buds yet is disabled — the switches, the balance slider and (since `ai-sessions/0059`, the maintainer's
+  changes (**since `ai-sessions/0064` F-2** the balance has `[‹]`/`[›]` steps of 1 beside the slider — one write per tap, `CAP-066`: 32 drags never reached
+Right 4); a setting not read from the Buds yet is disabled — the switches, the balance slider and its steps and (since `ai-sessions/0059`, the maintainer's
   choice in chat 2026-09-30) the five EQ sliders, while the EQ presets stay usable. **Exception:** the press-and-hold action chips (`HoldRow`,
   `ControlsScreen.kt`) are enabled with the connection only; a chip tapped before the read writes that one field (`ai-sessions/0058` A58-ARCH-05).
 - **Justification for `navigation-compose`** (`AGENTS.md` §10's dependency-policy requirement): pure
@@ -543,7 +552,10 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   2026-09-24, developer.android.com "Broadcasts overview"): some system broadcasts come "from highly privileged apps, such as Bluetooth and
   telephony, that … don't run under the system's unique process ID", and a `RECEIVER_NOT_EXPORTED` receiver gets "some system broadcasts …
   but not broadcasts from the highly privileged apps". It additionally re-reads the profile proxies on caller-supplied *refresh* events
-  (resume, a change of the bonded device, a change of the app's own session) and on every proxy bind — still event-driven, no timer, still visibility-bound. An
+  (resume, a change of the bonded device, a change of the app's own session) and on every proxy bind — still event-driven, no timer, still visibility-bound.
+  **Since `ai-sessions/0064` (F-4):** every profile proxy the listener delivered is closed exactly once when the flow ends (`ProfileProxies`), also one unbound
+  earlier — a Bluetooth-off unbinds them all (`CAP-066` §8: an LE Audio proxy finalized without `close()`; 🟡 the framework's `BluetoothLeAudio` `CloseGuard` may
+  still warn). An
   **unknown** link (`AndroidLink.UNKNOWN`: no permission, no bonded address yet, no answer) has its own card line (`AndroidLine.UNKNOWN`, "Paired — Android's connection
   state isn't known (yet)") and is never rendered as "not connected". Transitions are logged once per change with their trigger; every session end is logged with its
   cause (`SessionDiagnostics`: the user's Disconnect tap, or the lost channel plus the age of the last inbound frame). The pairing bond receiver got the same flag, the bond
@@ -577,7 +589,11 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   **first reading after the loss**, however late (readings exist only while the app is on screen, so it is the one taken on return): "not connected" →
   "Android no longer showed the Buds connected when you returned to the app …", "connected" → "The app's channel was closed while the app was in the
   background; Android showed the Buds connected when you returned …" — the latter names no culprit (on return a Buds-side close and a link drop that
-  came back look the same). `CAP-063` 16:15:22: loss while hidden, first reading `NOT_CONNECTED` 3.05 s later.
+  came back look the same). `CAP-063` 16:15:22: loss while hidden, first reading `NOT_CONNECTED` 3.05 s later. **Since `ai-sessions/0064` (F-3, the
+maintainer's choice "Final at once"):** `MainActivity` also forwards every reading of Android's Bluetooth adapter (`BluetoothStateObserver`, the same visibility
+bound) to `BudsRepository.onBluetoothAdapter`; a TURNING_OFF/OFF reading from 2 s before to 1 s after the loss decides first — "Bluetooth was switched off on this
+phone", logged final (never "provisional"). `CAP-066`: both Bluetooth-offs had left a lasting "undetermined (provisional)" — the link read `UNKNOWN` — while the
+system log shows `STATE_TURNING_OFF` 0.55 s and 0.81 s before the loss. Every adapter change is logged ("Bluetooth adapter: ON -> TURNING_OFF").
 - **Deferred proposals (not decided, not implemented — need a maintainer decision and an ADR):** *automatic session connecting* would have to be either
   (a) **foreground-only** — when the app is visible and Android reports the Buds connected, open the MAESTRO session without a tap (needs a decision that a
   visible app may connect by itself, i.e. amending the "user-initiated only" rule above; no new permission or service), or (b) **background, via CDM
@@ -765,6 +781,9 @@ this sequence explicit rather than inferred from ADR-005's decision alone:
   applicable** (`AGENTS.md` §10); no EQ or battery value is persisted (the hardware is the source of truth, §3.1).
   Nothing is ever transmitted off-device (see `AGENTS.md` §1 and §9 for the enforcement rules). (Aligned 2026-09-24,
   0044 AR-3 — this bullet used to say "encrypted DataStore for custom EQ profiles and last-known battery".)
+- **Links out (`ai-sessions/0064`, DECISIONS.md ADR-050):** Settings → Info's three fixed GitHub URLs are handed to another app with `Intent.ACTION_VIEW`, only on a
+  tap; no WebView, no `INTERNET`, no `<queries>` (developer.android.com: `startActivity()` "doesn't require package visibility"); `ActivityNotFoundException` ⇒ a
+  message with the address. The licence text is bundled (`android/ui/src/main/res/raw/license.txt`, a test keeps it equal to `LICENSE`).
 - **Threat model summary:** the app assumes a privacy-conscious user on a
   hardened OS; it minimizes fingerprintable behavior (no continuous scanning
   for device *discovery*), minimizes permissions, and keeps all diagnostic
@@ -830,6 +849,8 @@ undecided (see §15's "Already decided, not open" list, updated to match).
   `ParcelFileDescriptor` of a `BluetoothSocket` whose `read()` hit end-of-stream (the module's `read()` marks the socket CLOSED without closing `mPfd`, so the
   app's later `close()` returns "Already closed") and a `BluetoothLeAudio` profile proxy (its `CloseGuard` is opened in the constructor and never closed) —
   🟡 per the AOSP Bluetooth module source `android16-qpr2-release` (`CAP-066-FINDINGS.md` §8). Expect these two in debug logcats.
+- **Bluetooth adapter changes** (`ai-sessions/0064` F-3) are logged always-on as state transitions ("Bluetooth adapter: ON -> TURNING_OFF"), and a session loss
+  around one is logged "Session loss cause: Bluetooth was switched off on this phone" (§6.0b).
 - **Gated behind an explicit, off-by-default "Debug mode" setting:** raw
   sent/received frame bytes (hex dump) — per `AGENTS.md` §9, verbose
   hex-dump logging of payloads containing device identifiers is not on by
