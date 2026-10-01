@@ -37,7 +37,8 @@ fun ancTileState(session: ConnectionState, mode: AncMode?, availability: AncAvai
     val ready = session is ConnectionState.Ready
     val subtitle = when {
         !ready -> "Open the app"
-        availability == AncAvailability.NOT_ALLOWED -> "Only while worn"
+        // `ai-sessions/0062` F-2 (the maintainer's wording, chat 2026-10-01): the byte says "not allowed now", not "not worn" (`CAP-064`: e8 with no bud worn).
+        availability == AncAvailability.NOT_ALLOWED -> "Not allowed now"
         mode == null -> "Tap to switch"
         else -> mode.toString().lowercase().replaceFirstChar { it.uppercase() }
     }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ai-sessions/0062 T-3 (the maintainer allowed this manifest change in chat 2026-10-01): nothing this app stores leaves the
+    device — no cloud backup and no device-to-device transfer (AGENTS.md §1/§9). Its only data are two local settings
+    (Debug mode, dark mode); the Buds' state is read from the Buds on every connection (ARCHITECTURE.md §3.1).
+    Android 12+ reads these rules instead of android:allowBackup for device transfers; allowBackup="false" stays for the rest.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+    </device-transfer>
+</data-extraction-rules>

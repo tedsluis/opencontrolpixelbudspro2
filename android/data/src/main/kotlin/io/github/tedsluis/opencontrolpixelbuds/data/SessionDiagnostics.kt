@@ -39,14 +39,19 @@ object SessionDiagnostics {
         return "Session lost: channel 0x%02x closed (%s); %s; not a user disconnect".format(channelId, detail ?: "no detail", last)
     }
 
-    /** What Android's link state says about the last loss (`ai-sessions/0048` I-7): the socket detail alone cannot tell (`CAP-062`, 11 of 11 identical). */
-    fun lossCauseLine(cause: SessionLossCause): String = "Session loss cause: " + when (cause) {
+    /**
+     * What Android's link state says about the last loss (`ai-sessions/0048` I-7): the socket detail alone cannot tell (`CAP-062`, 11 of 11 identical).
+     * [provisional] (`ai-sessions/0062` T-1, the maintainer's choice in chat 2026-10-01): the cause was decided before the end of the window in which a
+     * "not connected" reading still counts (loss + 1 s) — a later line may replace it (`CAP-064` §6 #1: three lines within ≈ 0.2 s); a line without the mark
+     * is final.
+     */
+    fun lossCauseLine(cause: SessionLossCause, provisional: Boolean = false): String = "Session loss cause: " + when (cause) {
         SessionLossCause.ANDROID_LINK_LOST -> "Android's link to the Buds went down around the loss"
         SessionLossCause.BUDS_CLOSED_CHANNEL -> "Android still showed the Buds connected right after the loss — the Buds closed the channel"
         SessionLossCause.ANDROID_LINK_DOWN_ON_RETURN -> "the loss happened while the app was not visible; on return Android's link was down"
         SessionLossCause.ANDROID_LINK_UP_ON_RETURN -> "the loss happened while the app was not visible; on return Android showed the Buds connected"
         SessionLossCause.UNDETERMINED -> "undetermined (no reading of Android's link close to the loss)"
-    }
+    } + if (provisional) " (provisional: a reading of Android's link within 1 s of the loss may still change it)" else ""
 
     /** A session ended because the user tapped *Disconnect* — [stateName] is the session state at that moment. */
     fun userDisconnectLine(stateName: String): String = "Session ended by the user's Disconnect tap (was $stateName)"

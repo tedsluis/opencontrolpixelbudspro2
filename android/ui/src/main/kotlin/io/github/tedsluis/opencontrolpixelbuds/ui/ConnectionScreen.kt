@@ -31,6 +31,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -44,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -202,17 +205,11 @@ private fun ConnectionStateCard(
 ) {
     // `ai-sessions/0057` (D-6/D-9): an ElevatedCard; while the app's session is open its container is the theme's `primaryContainer` **and** the session line
     // carries a check icon; a failed attempt uses `errorContainer` with its specific text — never colour alone (WCAG 1.4.1), never a generic message.
-    val colors = when (card.session) {
-        SessionLine.OPEN -> CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
-        SessionLine.FAILED -> CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        )
-        else -> CardDefaults.elevatedCardColors()
-    }
+    val pair = connectionCardColors(MaterialTheme.colorScheme, card.session)
+    val colors = pair?.let { CardDefaults.elevatedCardColors(containerColor = it.container, contentColor = it.content) } ?: CardDefaults.elevatedCardColors()
+    // `ai-sessions/0062` F-7: a TextButton's label is `primary` by default — on the coloured card it had low contrast in the dark scheme (`CAP-065` film
+    // 11:23:46–11:24:00). On a coloured card the action takes the card's own content colour (the `on…Container` role made for that container).
+    val textActionColors = pair?.let { ButtonDefaults.textButtonColors(contentColor = it.content) } ?: ButtonDefaults.textButtonColors()
     ElevatedCard(modifier = Modifier.fillMaxWidth(), colors = colors) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // Line 1 — Android's own view, the same as its Bluetooth settings.
@@ -249,11 +246,25 @@ private fun ConnectionStateCard(
             when (card.action) {
                 CardAction.CONNECT -> Button(onClick = onConnect) { Text("Connect") }
                 CardAction.RETRY -> Button(onClick = onConnect) { Text("Retry") }
-                CardAction.DISCONNECT -> TextButton(onClick = onDisconnect) { Text("Disconnect") }
+                CardAction.DISCONNECT -> TextButton(onClick = onDisconnect, colors = textActionColors) { Text("Disconnect") }
                 CardAction.NONE -> Unit
             }
         }
     }
+}
+
+/** A coloured card's container and the colour of everything on it, text actions included (`ai-sessions/0062` F-7). */
+internal data class CardColorPair(val container: Color, val content: Color)
+
+/**
+ * The Connection card's colours per session line: `primaryContainer`/`onPrimaryContainer` while the app's session is open, `errorContainer`/`onErrorContainer`
+ * after a failed attempt, `null` (the default card) otherwise. Material's tonal palettes pair each `on…Container` with its container for legible text (≥ 4.5:1,
+ * checked by `CardContrastTest` for the light and dark schemes).
+ */
+internal fun connectionCardColors(scheme: ColorScheme, session: SessionLine): CardColorPair? = when (session) {
+    SessionLine.OPEN -> CardColorPair(scheme.primaryContainer, scheme.onPrimaryContainer)
+    SessionLine.FAILED -> CardColorPair(scheme.errorContainer, scheme.onErrorContainer)
+    else -> null
 }
 
 /** The plain-language message plus, when the error carries one, the raw technical detail in a
@@ -397,6 +408,7 @@ private fun BatteryColumn(label: String, icon: ImageVector, level: BatteryLevel,
 internal fun BudsError.userMessage(lossCause: SessionLossCause? = null): String = when (this) {
     BudsError.ConnectionLost -> "Connection lost."
     BudsError.Timeout -> "The Buds didn't respond in time."
+    is BudsError.AnswerCutOff -> ANSWER_CUT_OFF_TEXT
     is BudsError.MalformedFrame -> "Received an unexpected response from the Buds."
     BudsError.UnsupportedFirmware ->
         "Safe Mode: nothing was sent — the Buds' firmware or model isn't one this app was verified against (read-only)."
@@ -449,6 +461,7 @@ internal fun channelLostMessage(channelId: Int, lossCause: SessionLossCause?): S
 internal fun BudsError.technicalDetail(): String? = when (this) {
     is BudsError.ChannelUnavailable -> detail
     is BudsError.ChannelLost -> detail
+    is BudsError.AnswerCutOff -> detail
     else -> null
 }
 
@@ -517,10 +530,19 @@ internal fun batteryText(label: String, level: BatteryLevel.Known, updatedAt: Lo
 }
 
 /**
- * I-3 (`ai-sessions/0048`): shown while the Buds' last `Notify` reports Settable `0x00`. The wording follows DECISIONS.md ADR-024's 2026-09-25
- * Update — 🟡 "not worn", never "in the case" (`CAP-062`: `0x00` also with both buds on the table).
+ * Shown while the Buds' last `Notify` reports Settable `0x00`, after a tap they refused, and as the tile's toast. **`ai-sessions/0062` F-2** (the maintainer's
+ * wording, chat 2026-10-01): the byte says the Buds don't allow a change *now* — `CAP-064` read `e8` with no bud worn (in-ear detection off, always; on,
+ * ≈ 28 s), so "only while you wear the Buds" (`ai-sessions/0048`/`0054`) was not what it means; "no bud in an ear" stays the usual reason (ADR-049 🟡).
+ * Public: `:app`'s tile toasts the same sentence.
  */
-internal const val ANC_NOT_ALLOWED_TEXT: String = "ANC can only be changed while you wear the Buds."
+const val ANC_NOT_ALLOWED_TEXT: String = "The Buds don't allow changing noise control right now (usually because no bud is in an ear)."
+
+/**
+ * `ai-sessions/0062` F-3 (the maintainer's wording, chat 2026-10-01): the claim's channel was closed after a `Set`/`Get` was written and before its answer —
+ * another client connected to the same channel (`CAP-065` 09:27:10.450 UTC system log). Never "didn't respond in time": the Buds may well have answered.
+ * Public: `:app`'s tile toasts the same sentence.
+ */
+const val ANSWER_CUT_OFF_TEXT: String = "The answer was cut off — another app took the Buds' channel. Tap Refresh to see the current mode."
 
 /** `ai-sessions/0052`: a Refresh whose claim brought no `03 03` frame — nothing new is shown. */
 internal const val NO_NEW_BATTERY_READING_TEXT: String = "No new battery reading from the Buds — try again."

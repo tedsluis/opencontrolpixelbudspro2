@@ -172,10 +172,36 @@ class CaseBatteryCodecTest {
     }
 
     @Test
-    @DisplayName("CAP-061 frame 1508 through the router: MaestroHello(21, [release_5.203])")
+    @DisplayName("CAP-061 frame 1508 through the router: MaestroHello(21, [release_5.203]) with its three entries (ai-sessions/0062 F-5)")
     fun `the router puts the real announcement's firmware on the hello`() {
         val routed = CodecRouter().feed(Dlci.MAESTRO, Cap061.announcementFrame(), timestampMillis = 0)
-        assertEquals(RoutedFrame.MaestroHello(21, listOf("release_5.203")), routed.single())
+        assertEquals(RoutedFrame.MaestroHello(21, listOf("release_5.203"), threeReleaseEntries), routed.single())
+    }
+
+    private val threeReleaseEntries = listOf(1, 2, 3).map { io.github.tedsluis.opencontrolpixelbuds.domain.FirmwareEntry(it, "release_5.203") }
+
+    @Test
+    @DisplayName("F-5: CAP-065 frame 1883 (the whole real frame, MAESTRO on DLCI 0x03, channel 19, only the Left bud out) -> entries 1, 2, 3 in order, channel 19")
+    fun `the CAP-065 announcement keeps each entry with its index`() {
+        assertEquals(threeReleaseEntries, SoftwareInfo.entries(Cap061.announcementPayload()), "CAP-061 1508: the per-entry structure is kept")
+        val routed = CodecRouter().feed(Dlci.MAESTRO, hex(Cap065.ANNOUNCEMENT_FRAME_1883), timestampMillis = 0)
+        assertEquals(RoutedFrame.MaestroHello(19, listOf("release_5.203"), threeReleaseEntries), routed.single())
+    }
+
+    @Test
+    @DisplayName("F-5, labelled supplementary structural test (hand-built, not a capture): entries that differ keep their own strings and order; Safe Mode sees the distinct list")
+    fun `differing entries keep their own strings`() {
+        val payload = lenDelimited(
+            0x22,
+            lenDelimited(0x0a, softwareInfoEntry("0000000000", "release_5.204")) +
+                lenDelimited(0x12, softwareInfoEntry("0000000000", "release_5.203")) +
+                lenDelimited(0x1a, softwareInfoEntry("0000000000", "release_5.203")),
+        )
+        assertEquals(
+            listOf(1 to "release_5.204", 2 to "release_5.203", 3 to "release_5.203"),
+            SoftwareInfo.entries(payload).map { it.index to it.firmware },
+        )
+        assertEquals(listOf("release_5.204", "release_5.203"), SoftwareInfo.firmwareStrings(payload))
     }
 
     @Test
@@ -200,6 +226,9 @@ class CaseBatteryCodecTest {
         val payload = lenDelimited(0x22, lenDelimited(0x0a, entry))
         val packet = RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_GET_SOFTWARE_INFO, payload, callId = PwRpc.CALL_ID_UNSOLICITED)
         val routed = CodecRouter().feed(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, PwRpc.encode(packet)), timestampMillis = 0)
-        assertEquals(RoutedFrame.MaestroHello(21, listOf("release_5.203")), routed.single())
+        assertEquals(
+            RoutedFrame.MaestroHello(21, listOf("release_5.203"), listOf(io.github.tedsluis.opencontrolpixelbuds.domain.FirmwareEntry(1, "release_5.203"))),
+            routed.single(),
+        )
     }
 }

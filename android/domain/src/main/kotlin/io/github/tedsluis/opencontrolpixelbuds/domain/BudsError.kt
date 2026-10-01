@@ -44,6 +44,14 @@ sealed class BudsError {
      */
     data class ChannelLost(val channelId: Int, val detail: String?) : BudsError()
 
+    /**
+     * The on-demand channel [channelId] was closed **after** a request was written on it and **before** its answer arrived (`ai-sessions/0062` F-3, the
+     * maintainer's choice in chat 2026-10-01): another client's connect to the same channel makes the stack close this app's port, and an answer the
+     * Buds send after that is lost to the app (`CAP-065` 2640 → `DISC` 2649 → ACK 2651; 10321 → 10344 → 10356). Not [Timeout] — the Buds may well have
+     * answered — and not [ChannelLost]: it is never retried (a second `Set` could repeat a change the Buds already made). [detail] as [ChannelLost]'s.
+     */
+    data class AnswerCutOff(val channelId: Int, val detail: String?) : BudsError()
+
     data object Timeout : BudsError()
     data class MalformedFrame(val raw: ByteArray) : BudsError() {
         override fun equals(other: Any?): Boolean =

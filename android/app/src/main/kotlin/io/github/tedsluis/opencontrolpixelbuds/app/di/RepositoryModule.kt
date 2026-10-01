@@ -26,6 +26,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.tedsluis.opencontrolpixelbuds.data.BudsRepositoryImpl
+import io.github.tedsluis.opencontrolpixelbuds.data.settings.DarkModeSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
@@ -59,6 +60,12 @@ object RepositoryModule {
     @Singleton
     fun provideDebugSettingsStore(@ApplicationContext context: Context): DebugSettingsStore =
         DebugSettingsStore(context)
+
+    /** The Settings tab's dark mode (`ai-sessions/0062` F-6) — the same settings file as [DebugSettingsStore]. */
+    @Provides
+    @Singleton
+    fun provideDarkModeSettingsStore(@ApplicationContext context: Context): DarkModeSettingsStore =
+        DarkModeSettingsStore(context)
 
     @Provides
     @Singleton

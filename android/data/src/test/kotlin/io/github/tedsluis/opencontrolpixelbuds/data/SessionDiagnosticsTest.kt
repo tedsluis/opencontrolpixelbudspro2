@@ -62,4 +62,15 @@ class SessionDiagnosticsTest {
         )
         for (cause in SessionLossCause.entries) assertFalse(SessionDiagnostics.lossCauseLine(cause).contains("another app"))
     }
+
+    @Test
+    @DisplayName("T-1 (ai-sessions/0062): a cause that can still change is marked provisional; a final one is not")
+    fun `provisional mark`() {
+        assertEquals(
+            "Session loss cause: Android still showed the Buds connected right after the loss — the Buds closed the channel " +
+                "(provisional: a reading of Android's link within 1 s of the loss may still change it)",
+            SessionDiagnostics.lossCauseLine(SessionLossCause.BUDS_CLOSED_CHANNEL, provisional = true),
+        )
+        assertFalse(SessionDiagnostics.lossCauseLine(SessionLossCause.ANDROID_LINK_LOST).contains("provisional"))
+    }
 }

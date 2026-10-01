@@ -32,9 +32,16 @@
         android:name="android.software.companion_device_setup"
         android:required="true" />
 
+    <!-- Not declared here, but in the merged manifest (ai-sessions/0058 A58-GOV-08; commented in ai-sessions/0062 T-3):
+         AndroidX Core adds the permission "io.github.tedsluis.opencontrolpixelbuds.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+         (protectionLevel="signature") and its uses-permission, for its own ContextCompat.registerReceiver(…,
+         RECEIVER_NOT_EXPORTED). It is private to this app — only an app signed with this app's key could hold it — and grants
+         nothing outside the app. It is not a runtime permission and asks the user for nothing. -->
+
     <application
         android:name="io.github.tedsluis.opencontrolpixelbuds.app.OpenControlApplication"
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"

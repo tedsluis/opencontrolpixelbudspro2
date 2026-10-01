@@ -6,6 +6,26 @@ plugins {
     alias(libs.plugins.hilt.android)
 }
 
+/*
+ * `ai-sessions/0062` F-5 (the maintainer's choice, chat 2026-10-01): the build identity shown on the Info tab, computed **locally** from this checkout at
+ * configuration time — never from the network. `git` is run through Gradle's `providers.exec` (configuration-cache friendly); without git, outside a
+ * repository or on any error the value is "unknown" and the build still succeeds (offline and in CI). "-dirty" = tracked files differ from the commit (untracked
+ * files, e.g. `android/.kotlin/`, do not count). The commit's own date, not a build time: two builds of one commit stay identical (reproducible).
+ */
+fun gitOutput(vararg args: String): String? = try {
+    providers.exec {
+        commandLine("git", *args)
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim().takeIf { it.isNotEmpty() }
+} catch (e: Exception) {
+    null
+}
+
+val gitCommit: String = gitOutput("rev-parse", "--short", "HEAD")?.let { hash ->
+    if (gitOutput("status", "--porcelain", "--untracked-files=no") != null) "$hash-dirty" else hash
+} ?: "unknown"
+val gitCommitDate: String = gitOutput("log", "-1", "--format=%cs") ?: "unknown"
+
 android {
     namespace = "io.github.tedsluis.opencontrolpixelbuds"
     compileSdk = 34
@@ -17,6 +37,8 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0-dev"
+        buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
+        buildConfigField("String", "GIT_COMMIT_DATE", "\"$gitCommitDate\"")
     }
 
     compileOptions {
@@ -26,6 +48,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true // F-5 (the Info tab's build identity) and F-8 (StrictMode only when BuildConfig.DEBUG)
     }
 
     // Correction (post-`ai-sessions/0033`): this block previously disabled lint's `MissingClass`

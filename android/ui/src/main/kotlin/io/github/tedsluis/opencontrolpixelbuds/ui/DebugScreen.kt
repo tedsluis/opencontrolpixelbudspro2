@@ -40,7 +40,8 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 
 /**
  * Developer-facing Debug screen (AGENTS.md §6/§9, ARCHITECTURE.md §2.4/§7) —
- * reachable only via a non-primary entry point (the top app bar's Debug action since `ai-sessions/0057`), never part of the main flow.
+ * reachable only via a non-primary entry point (the Debug tab of the settings menu behind the top app bar's gear since `ai-sessions/0062`; the bar's Debug
+ * action in `0057`–`0061`), never part of the main flow. Unchanged by `0062` (the maintainer's wording: "zoals huidige debug scherm").
  * Shows every [UnidentifiedFrame] this session has seen (structurally valid
  * but unrecognized wire data, surfaced rather than silently dropped — this
  * project's own evidence-based reverse-engineering principle) and the Debug
@@ -56,7 +57,7 @@ fun DebugScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            // `ai-sessions/0057`: reached from the top app bar's Debug action; its title ("Debug") and back arrow are in that bar.
+            // Reached from the settings menu's Debug tab (`ai-sessions/0062`); the bar shows "Settings" and the back arrow.
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Debug mode (verbose hex-dump logging)")
                 Switch(checked = debugModeEnabled, onCheckedChange = onDebugModeChanged)

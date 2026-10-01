@@ -55,9 +55,14 @@ sealed class RoutedFrame {
 
     /**
      * The Buds' unsolicited `GetSoftwareInfo` push announcing the pw_rpc channel of this connection (ADR-034); [firmware] = the
-     * distinct firmware strings it carries (`ai-sessions/0042`), empty if the payload had another shape.
+     * distinct firmware strings it carries (`ai-sessions/0042`), empty if the payload had another shape; [entries] = each entry with its field number
+     * (`ai-sessions/0062` F-5, the Info tab).
      */
-    data class MaestroHello(val channelId: Int, val firmware: List<String> = emptyList()) : RoutedFrame()
+    data class MaestroHello(
+        val channelId: Int,
+        val firmware: List<String> = emptyList(),
+        val entries: List<io.github.tedsluis.opencontrolpixelbuds.domain.FirmwareEntry> = emptyList(),
+    ) : RoutedFrame()
 
     /**
      * The Buds' answer to one of *our* Maestro requests that carries no EQ value: the empty `RESPONSE` to a
@@ -251,7 +256,8 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
     if (method == Maestro.METHOD_GET_SOFTWARE_INFO && packet.type == PwRpc.TYPE_RESPONSE &&
         packet.callId == PwRpc.CALL_ID_UNSOLICITED
     ) {
-        return RoutedFrame.MaestroHello(packet.channelId, SoftwareInfo.firmwareStrings(packet.payload))
+        val entries = SoftwareInfo.entries(packet.payload)
+        return RoutedFrame.MaestroHello(packet.channelId, entries.map { it.firmware }.distinct(), entries)
     }
     val settingsMethod = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING ||
         method == Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES

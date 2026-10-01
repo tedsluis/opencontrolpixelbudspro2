@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +52,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
@@ -67,16 +69,18 @@ private object Routes {
     const val EQ = "eq"
     const val CONTROLS = "controls"
     const val FIND_MY_BUDS = "find_my_buds"
-    const val DEBUG = "debug"
+
+    /** The settings menu (Settings / Debug / Info) — `ai-sessions/0062` F-4; it replaced the Debug destination of `ai-sessions/0057`. */
+    const val SETTINGS = "settings"
 }
 
 private data class TabDestination(val route: String, val label: String, val icon: ImageVector, val pullTab: PullTab)
 
 /**
  * The five bottom-nav tabs (ARCHITECTURE.md §2.4; `ai-sessions/0057` D-6, Android's guidance "three to five destinations of equal importance"), all with
- * the same single-top navigation (`popUpTo(start){saveState} + launchSingleTop + restoreState`, `ai-sessions/0037`). **Debug is not a tab any more** — it is
- * the top app bar's action and its own destination ([Routes.DEBUG]), as §2.4 always required ("never shown in the main bottom/side navigation"); system back
- * returns from it to the tab it was opened from (the maintainer's choice "Full screen + back", 2026-09-29).
+ * the same single-top navigation (`popUpTo(start){saveState} + launchSingleTop + restoreState`, `ai-sessions/0037`). **Debug is not a tab** — since
+ * `ai-sessions/0062` (F-4) it is the Debug tab of the settings menu behind the top app bar's gear ([Routes.SETTINGS]), never in the main bottom/side navigation
+ * (§2.4); back returns from the menu to the tab it was opened from (as Debug did since the maintainer's choice "Full screen + back", 2026-09-29).
  */
 private val TAB_DESTINATIONS = listOf(
     TabDestination(Routes.CONNECTION, "Connection", OpenControlIcons.Connection, PullTab.CONNECTION),
@@ -129,6 +133,8 @@ data class OpenControlActions(
     /** Re-reads Left/Right: a Message Stream claim (DECISIONS.md ADR-033); the Case and charging come from the runtime-info stream (ADR-043). */
     val onRefreshBattery: () -> Unit,
     val onDebugModeChanged: (Boolean) -> Unit,
+    /** The Settings tab's dark mode (`ai-sessions/0062` F-6): stored by `:app`, applied at once. */
+    val onDarkModeChanged: (DarkMode) -> Unit = {},
     /** Saves `BleLogger.exportLog()`'s current ring-buffer snapshot through the system save dialog
      * (`CreateDocument`) — local-only (AGENTS.md §9), the destination is the user's own choice, never an
      * automatic network call this app makes itself. */
@@ -171,6 +177,8 @@ data class OpenControlUiState(
         io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability.UNKNOWN,
     /** When the Buds last reported [ancAvailability] — shown as "(checked HH:MM:SS)" while it reads not allowed (`ai-sessions/0054` I-1). */
     val ancAvailabilityUpdatedAt: Long? = null,
+    /** When the last ANC change's answer was cut off — the shown mode is not confirmed until the next `Notify` (`ai-sessions/0062` F-3); `null` = confirmed. */
+    val ancModeUnconfirmedAt: Long? = null,
     /** Why the last *Refresh battery* brought no new reading (`null` = it did / none yet), `ai-sessions/0052`. */
     val batteryRefreshError: BudsError? = null,
     /** Why the Case level could not be requested this connection (`null` = requested / not yet), ADR-043. */
@@ -195,16 +203,22 @@ data class OpenControlUiState(
     val batteryStatusUpdatedAt: Long? = null,
     val unidentifiedFrames: List<UnidentifiedFrame>,
     val debugModeEnabled: Boolean,
+    /** The Settings tab's dark-mode choice (`ai-sessions/0062` F-6); `:app` applies it to the theme. */
+    val darkMode: DarkMode = DarkMode.DEFAULT,
+    /** The app's build identity for the Info tab (`ai-sessions/0062` F-5), from `BuildConfig`. */
+    val appBuild: AppBuildInfo = AppBuildInfo.UNKNOWN,
 )
 
 /**
- * Top-level navigation (ARCHITECTURE.md §2.4). A [Scaffold] with a top app bar ("OpenControl", the Debug action) and a bottom bar with the five tabs.
+ * Top-level navigation (ARCHITECTURE.md §2.4). A [Scaffold] with a top app bar ("OpenControl", the gear of the settings menu) and a bottom bar with the five
+ * tabs.
  *
  * **`ai-sessions/0043` Phase H — swipe between tabs.** A [HorizontalPager] renders the tabs; a swipe that settles on a new page calls the *same*
  * `navController.navigate(...)` a bottom-nav tap uses (`navigateToTab`), so the single-top back-stack semantics (`ai-sessions/0037`) apply identically
  * whether the tab changed by a tap or a swipe, and a tap (or a system-back navigation) scrolls the pager to match. [NavHost] itself is a zero-size, empty
- * back-stack holder — the one source of truth for "which destination", including system back. **`ai-sessions/0057`:** Debug is a destination of that same
- * graph outside the pager: while it is current the pager is replaced by [DebugScreen] and the top bar shows a back arrow; back pops it. Every tab sits in a
+ * back-stack holder — the one source of truth for "which destination", including system back. **`ai-sessions/0057`/`0062`:** the settings menu is a
+ * destination of that same graph outside the pager: while it is current the pager is replaced by [SettingsMenuScreen] and the top bar shows "Settings" and a back
+ * arrow; back pops it. Every tab sits in a
  * [PullToRefresh] whose action is [pullActionFor] (D-10). // TODO(verify): swipe, pull and back are gesture behaviour this session could not exercise on a
  * device — `APP_TESTPLAN.md` (updated for `ai-sessions/0057`).
  */
@@ -224,20 +238,20 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
-    val inDebug = currentDestination?.hierarchy?.any { it.route == Routes.DEBUG } == true
+    val inSettings = currentDestination?.hierarchy?.any { it.route == Routes.SETTINGS } == true
     val currentIndex = TAB_DESTINATIONS.indexOfFirst { d -> currentDestination?.hierarchy?.any { it.route == d.route } == true }
         .coerceAtLeast(0)
 
-    // A tap or a system-back navigation changed the current tab: keep the pager's page in sync (not while Debug is shown).
-    LaunchedEffect(currentIndex, inDebug) {
-        if (!inDebug && pagerState.currentPage != currentIndex) pagerState.scrollToPage(currentIndex)
+    // A tap or a system-back navigation changed the current tab: keep the pager's page in sync (not while the settings menu is shown).
+    LaunchedEffect(currentIndex, inSettings) {
+        if (!inSettings && pagerState.currentPage != currentIndex) pagerState.scrollToPage(currentIndex)
     }
     // A completed swipe (the pager settles on a new page): drive the exact same navigation call a bottom-nav tap uses, so back-stack semantics never
     // depend on which trigger changed the tab.
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.collect { settled ->
             val destination = navController.currentBackStackEntry?.destination
-            if (destination?.hierarchy?.any { it.route == Routes.DEBUG } == true) return@collect
+            if (destination?.hierarchy?.any { it.route == Routes.SETTINGS } == true) return@collect
             val liveIndex = TAB_DESTINATIONS.indexOfFirst { d -> destination?.hierarchy?.any { it.route == d.route } == true }
                 .coerceAtLeast(0)
             if (settled != liveIndex) navigateToTab(settled)
@@ -247,25 +261,26 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (inDebug) "Debug" else "OpenControl") },
+                title = { Text(if (inSettings) "Settings" else "OpenControl") },
                 navigationIcon = {
-                    if (inDebug) {
+                    if (inSettings) {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
                 },
                 actions = {
-                    if (!inDebug) {
-                        IconButton(onClick = { navController.navigate(Routes.DEBUG) { launchSingleTop = true } }) {
-                            Icon(OpenControlIcons.Debug, contentDescription = "Debug")
+                    if (!inSettings) {
+                        // F-4: the gear (material-icons-core's `Settings`, already a dependency) in the place of the 0057 bug icon.
+                        IconButton(onClick = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } }) {
+                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
                         }
                     }
                 },
             )
         },
         bottomBar = {
-            if (!inDebug) {
+            if (!inSettings) {
                 NavigationBar {
                     TAB_DESTINATIONS.forEachIndexed { index, destination ->
                         NavigationBarItem(
@@ -281,14 +296,18 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
     ) { padding ->
         NavHost(navController = navController, startDestination = Routes.CONNECTION, modifier = Modifier.size(0.dp)) {
             TAB_DESTINATIONS.forEach { destination -> composable(destination.route) { } }
-            composable(Routes.DEBUG) { }
+            composable(Routes.SETTINGS) { }
         }
-        if (inDebug) {
-            DebugScreen(
+        if (inSettings) {
+            SettingsMenuScreen(
+                darkMode = state.darkMode,
+                onDarkModeChanged = actions.onDarkModeChanged,
                 debugModeEnabled = state.debugModeEnabled,
                 onDebugModeChanged = actions.onDebugModeChanged,
                 unidentifiedFrames = state.unidentifiedFrames,
                 onExportLog = actions.onExportLog,
+                appBuild = state.appBuild,
+                deviceInfo = state.deviceInfo,
                 modifier = Modifier.padding(padding),
             )
         } else {
@@ -335,6 +354,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             ancModeUpdatedAt = state.ancModeUpdatedAt,
             ancAvailability = state.ancAvailability,
             ancAvailabilityUpdatedAt = state.ancAvailabilityUpdatedAt,
+            ancModeUnconfirmedAt = state.ancModeUnconfirmedAt,
             onAncModeSelected = actions.onAncModeSelected,
             onRefreshAncMode = actions.onRefreshAncMode,
             onRequestAddAncTile = actions.onRequestAddAncTile,

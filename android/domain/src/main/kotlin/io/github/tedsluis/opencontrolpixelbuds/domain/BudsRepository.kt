@@ -105,8 +105,8 @@ interface BudsRepository {
 
     /**
      * Whether the Buds currently allow an ANC `Set`, from the last `Notify ANC state`'s Settable byte ([AncAvailability], `ai-sessions/0048` I-3) —
-     * [AncAvailability.UNKNOWN] until one arrived on this connection. While [AncAvailability.NOT_ALLOWED], [setAncMode] first asks the Buds again
-     * (`ai-sessions/0054` I-1).
+     * [AncAvailability.UNKNOWN] until one arrived on this connection. Shown to the user; [setAncMode] does not rely on it — every tap asks the Buds again
+     * (`ai-sessions/0062` F-1).
      */
     val ancAvailability: Flow<AncAvailability>
 
@@ -164,12 +164,25 @@ interface BudsRepository {
     suspend fun refreshBattery(): BudsResult<Unit>
 
     /**
-     * ANC `Set` (ADR-009), on a Message Stream claim (ADR-032). While [ancAvailability] is [AncAvailability.NOT_ALLOWED] the claim first sends the
-     * `Get` (`ai-sessions/0054` I-1): the `Set` follows in the same claim only if the Buds' `Notify` now allows it; otherwise it fails with
-     * [BudsError.AncNotAllowed] and nothing more is sent.
+     * ANC `Set` (ADR-009), on a Message Stream claim (ADR-032). **Since `ai-sessions/0062` (F-1)** every claim first sends the `Get` (ADR-021/022, ADR-032
+     * item 5): the `Set` follows in the same claim only if that claim's `Notify` reads Settable non-zero; on `0x00` it fails with
+     * [BudsError.AncNotAllowed] and nothing more is sent (before, only a known "not allowed" asked first — `ai-sessions/0054` I-1). An answer cut off by
+     * the claim's close is [BudsError.AnswerCutOff] (F-3).
      */
     suspend fun setAncMode(mode: AncMode): BudsResult<Unit>
+
+    /**
+     * The Quick Settings tile's tap (`ai-sessions/0062` F-1): as [setAncMode], but the mode to set is [next] of the mode the **same claim's** `Notify`
+     * reports — not of the mode shown before the tap, which can be old (the known limit "ANC tile after re-wearing", `ai-sessions/0054`).
+     */
+    suspend fun stepAncMode(next: (current: AncMode?) -> AncMode): BudsResult<Unit>
     suspend fun refreshAncMode(): BudsResult<AncMode>
+
+    /**
+     * When the last ANC change's answer was cut off (`ai-sessions/0062` F-3) — the Buds may or may not have switched, so the shown [ancMode] is "not
+     * confirmed" until their next `Notify` (or ACK) clears this back to `null`.
+     */
+    val ancModeUnconfirmedAt: Flow<Long?>
 
     /** Reads the Buds' active EQ (`ReadSetting 4:16`, ADR-034) and updates [eqProfile]. Requires an open session. */
     suspend fun refreshEq(): BudsResult<EqBandGains>

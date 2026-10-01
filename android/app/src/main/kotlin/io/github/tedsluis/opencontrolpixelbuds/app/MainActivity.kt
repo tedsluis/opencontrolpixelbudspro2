@@ -33,6 +33,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,7 +47,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.tedsluis.opencontrolpixelbuds.BuildConfig
 import io.github.tedsluis.opencontrolpixelbuds.R
+import io.github.tedsluis.opencontrolpixelbuds.data.settings.DarkModeSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
@@ -56,6 +59,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
@@ -73,6 +77,7 @@ import io.github.tedsluis.opencontrolpixelbuds.hardware.OsConnectionObserver
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingFailure
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingState
 import io.github.tedsluis.opencontrolpixelbuds.hardware.settled
+import io.github.tedsluis.opencontrolpixelbuds.ui.AppBuildInfo
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlActions
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlNavHost
 import io.github.tedsluis.opencontrolpixelbuds.ui.OpenControlTheme
@@ -112,6 +117,10 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var debugSettingsStore: DebugSettingsStore
+
+    /** The Settings tab's dark mode (`ai-sessions/0062` F-6), applied to the theme at once. */
+    @Inject
+    lateinit var darkModeSettingsStore: DarkModeSettingsStore
 
     /**
      * The application-lifetime scope (`RepositoryModule`). Every user action runs here, not in the composition's scope: a rotation or
@@ -283,6 +292,7 @@ class MainActivity : ComponentActivity() {
             val ancModeUpdatedAt by budsRepository.ancModeUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val ancAvailability by budsRepository.ancAvailability.collectAsStateWithLifecycle(initialValue = AncAvailability.UNKNOWN)
             val ancAvailabilityUpdatedAt by budsRepository.ancAvailabilityUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
+            val ancModeUnconfirmedAt by budsRepository.ancModeUnconfirmedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val eqProfile by budsRepository.eqProfile.collectAsStateWithLifecycle(initialValue = null)
             val eqProfileUpdatedAt by budsRepository.eqProfileUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val eqError by budsRepository.eqError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
@@ -323,6 +333,7 @@ class MainActivity : ComponentActivity() {
             val bluetoothAdapterState by remember { bluetoothStateObserver.observe() }
                 .collectAsStateWithLifecycle(initialValue = remember { bluetoothStateObserver.current() })
             val debugModeEnabled by debugSettingsStore.debugModeEnabled.collectAsStateWithLifecycle(initialValue = false)
+            val darkMode by darkModeSettingsStore.darkMode.collectAsStateWithLifecycle(initialValue = DarkMode.DEFAULT)
 
             var bondedLookup by remember { mutableStateOf(companionPairing.lookupBonded()) }
             val pairingState by pairingStateFlow.collectAsStateWithLifecycle()
@@ -384,6 +395,7 @@ class MainActivity : ComponentActivity() {
                 ancModeUpdatedAt = ancModeUpdatedAt,
                 ancAvailability = ancAvailability,
                 ancAvailabilityUpdatedAt = ancAvailabilityUpdatedAt,
+                ancModeUnconfirmedAt = ancModeUnconfirmedAt,
                 caseBatteryError = caseBatteryError,
                 batteryRefreshError = batteryRefreshError,
                 safeMode = safeMode,
@@ -398,6 +410,8 @@ class MainActivity : ComponentActivity() {
                 batteryStatusUpdatedAt = batteryStatusUpdatedAt,
                 unidentifiedFrames = unidentifiedFrames,
                 debugModeEnabled = debugModeEnabled,
+                darkMode = darkMode,
+                appBuild = APP_BUILD,
             )
 
             val actions = OpenControlActions(
@@ -454,6 +468,7 @@ class MainActivity : ComponentActivity() {
                 onStopRinging = { applicationScope.launch { budsRepository.stopRinging() } },
                 onRefreshBattery = { applicationScope.launch { budsRepository.refreshBattery() } },
                 onDebugModeChanged = { enabled -> applicationScope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
+                onDarkModeChanged = { mode -> applicationScope.launch { darkModeSettingsStore.setDarkMode(mode) } },
                 onExportLog = { startLogExport() },
             )
             // `ai-sessions/0057` D-10: a pull runs the one existing action `pullActionFor` chose — the same repository call or system prompt its button makes —
@@ -479,12 +494,16 @@ class MainActivity : ComponentActivity() {
                 },
             )
 
-            OpenControlTheme {
+            // F-6: the stored choice, or Android's own setting for "System" — recomposed (not recreated) when either changes.
+            OpenControlTheme(darkTheme = darkMode.isDark(isSystemInDarkTheme())) {
                 OpenControlNavHost(state = state, actions = actionsWithPull)
             }
         }
     }
 }
+
+/** F-5: the build identity computed locally at build time (`app/build.gradle.kts`) — "unknown" parts when git was not available. */
+private val APP_BUILD = AppBuildInfo(BuildConfig.VERSION_NAME, BuildConfig.GIT_COMMIT, BuildConfig.GIT_COMMIT_DATE)
 
 /** Plain, user-facing copy per [PairingState] case — each failure has its own message and a one-line hint (AGENTS.md §8). */
 internal fun PairingState.toUserMessage(): String = when (this) {

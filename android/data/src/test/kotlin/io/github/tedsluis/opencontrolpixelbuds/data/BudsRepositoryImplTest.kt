@@ -24,6 +24,8 @@ package io.github.tedsluis.opencontrolpixelbuds.data
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap061
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap062
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap063
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap064
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap065
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
@@ -133,10 +135,14 @@ class BudsRepositoryImplTest {
         return repo to transport
     }
 
-    /** The Buds' ACK for an ANC Set (`ff 01 00 06 08 12 01 e8 e8 <mode>`, `CAP-001` frame 2041) or a Ring (`ff 01 00 03 04 01 00`). */
+    /**
+     * The Buds' ACK for an ANC Set (`ff 01 00 06 08 12 01 e8 e8 <mode>`, `CAP-001` frame 2041) or a Ring (`ff 01 00 03 04 01 00`), and — since every ANC
+     * tap sends `08 11` first (`ai-sessions/0062` F-1) — the answer to a `Get`: `CAP-065` frame 6334 (Settable `e8`, mode OFF, both buds worn).
+     */
     private suspend fun autoAck(transport: FakeBudsTransport, channel: Int, frame: ByteArray) {
         if (channel != Dlci.FAST_PAIR_MESSAGE_STREAM || frame.size < 4) return
         when (frame.toHex().take(4)) {
+            "0811" -> transport.emit(channel, hex(Cap065.NOTIFY_E8_OFF_6334))
             "0812" -> transport.emit(channel, hex("ff010006081201e8e8") + byteArrayOf(frame[7]))
             "0401" -> transport.emit(channel, hex("ff010003040100"))
         }
@@ -157,16 +163,15 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    fun `setAncMode sends the exact wire bytes and optimistically updates ancMode`() = runTest {
+    fun `setAncMode sends the Get, then the exact Set bytes, and applies the mode on the ACK`() = runTest {
         val (repo, transport) = buildRepository()
         settle()
 
         val result = repo.setAncMode(AncMode.ADAPTIVE)
         assertInstanceOf(BudsResult.Success::class.java, result)
 
-        val sent = transport.sent.single()
-        assertEquals(Dlci.FAST_PAIR_MESSAGE_STREAM, sent.first)
-        assertEquals("0812001401e8e840" + "00".repeat(16), sent.second.toHex())
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.FAST_PAIR_MESSAGE_STREAM), transport.sent.map { it.first })
+        assertEquals(listOf("08110000", "0812001401e8e840" + "00".repeat(16)), transport.sent.map { it.second.toHex() })
         assertEquals(AncMode.ADAPTIVE, repo.ancMode.first())
     }
 
@@ -190,6 +195,7 @@ class BudsRepositoryImplTest {
     fun `refreshAncMode sends Get and resolves once a fresh Notify arrives`() = runTest {
         val (repo, transport) = buildRepository()
         settle()
+        transport.onSent = null // the test answers the Get itself
 
         var result: BudsResult<AncMode>? = null
         val job = launch { result = repo.refreshAncMode() }
@@ -207,8 +213,9 @@ class BudsRepositoryImplTest {
 
     @Test
     fun `refreshAncMode times out if no Notify ever arrives`() = runTest {
-        val (repo, _) = buildRepository()
+        val (repo, transport) = buildRepository()
         settle()
+        transport.onSent = null // the Buds answer nothing — and the claim stays open (a close would be AnswerCutOff, F-3)
 
         val result = repo.refreshAncMode()
         assertInstanceOf(BudsResult.Failure::class.java, result)
@@ -970,7 +977,7 @@ class BudsRepositoryImplTest {
         assertNull(repo.ringing.first(), "a ring whose command never left the phone is not claimed")
     }
 
-    // ---- I-1 (ai-sessions/0054): a tap while the Buds last said "not allowed" re-checks with the claim's Get (reverses 0048 I-3) -------------
+    // ---- ai-sessions/0062 F-1: every ANC tap's claim sends the Get first; the Set only on a non-zero Settable (replaces 0054 I-1's "only when known 00") ----
 
     /** The Buds of `CAP-063`: the app's `Get` is answered by [getAnswer]; an ANC `Set` ADAPTIVE (4233) by its ACK (4241), ACTIVE (4497) by 4508. */
     private fun answerLikeCap063(transport: FakeBudsTransport, getAnswer: String?) {
@@ -989,16 +996,99 @@ class BudsRepositoryImplTest {
         assertEquals(AncAvailability.NOT_ALLOWED, repo.ancAvailability.first())
     }
 
+    /** The Buds of `CAP-065`: the `Get` answered by [getAnswer]; the `Set` ACTIVE (10790) by its ACK (10799) unless [setAnswer] says otherwise. */
+    private fun answerLikeCap065(
+        transport: FakeBudsTransport,
+        getAnswer: String?,
+        setAnswer: (suspend (Int) -> Unit)? = { ch -> transport.emit(ch, hex(Cap065.ACK_ACTIVE_10799)) },
+    ) {
+        transport.onSent = { ch, frame ->
+            when (frame.toHex()) {
+                Cap065.GET -> getAnswer?.let { transport.emit(ch, hex(it)) }
+                Cap065.SET_ACTIVE_10790 -> setAnswer?.invoke(ch)
+            }
+        }
+    }
+
     @Test
-    @DisplayName("I-1 (a): NOT_ALLOWED from CAP-063 4774; a tap claims once, sends Get, the Notify is 4184 (e8) -> one Set = 4233 in that claim, applied on ACK 4241")
-    fun `a disabled tap re-checks and sends the Set when the Buds now allow it`() = runTest {
+    @DisplayName("F-1 (a): ALLOWED (CAP-065 6334); a tap sends 08 11 first, the claim's Notify is 6334 (e8) -> exactly one Set = 10790, applied on ACK 10799")
+    fun `an allowed tap sends the Get first and exactly one Set`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap065.NOTIFY_E8_OFF_6334)); settle()
+        assertEquals(AncAvailability.ALLOWED, repo.ancAvailability.first())
+        answerLikeCap065(transport, getAnswer = Cap065.NOTIFY_E8_OFF_6334)
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE))
+
+        assertEquals(listOf(Cap065.GET, Cap065.SET_ACTIVE_10790), transport.sent.map { it.second.toHex() }, "Get first, then one Set, byte-identical")
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.openChannelCalls, "both in one claim")
+        assertEquals(AncMode.ACTIVE, repo.ancMode.first(), "applied on the ACK")
+        assertNull(repo.ancModeUnconfirmedAt.first())
+    }
+
+    @Test
+    @DisplayName("F-1 (b): the claim's Notify is CAP-065 5465 (00) -> no Set, AncNotAllowed (the tile's toast), not a channel error, the claim released")
+    fun `a tap whose Notify reads 00 sends no Set`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap065.NOTIFY_E8_OFF_6334)); settle() // the app last saw "allowed"
+        answerLikeCap065(transport, getAnswer = Cap065.NOTIFY_00_OFF_5465)
+        advanceTimeBy(5_000)
+
+        assertEquals(BudsError.AncNotAllowed, (repo.setAncMode(AncMode.ACTIVE) as BudsResult.Failure).error)
+        assertEquals(BudsError.AncNotAllowed, (repo.stepAncMode(AncMode::nextForTile) as BudsResult.Failure).error, "the tile's path: AncTileService toasts this")
+
+        assertEquals(listOf(Cap065.GET, Cap065.GET), transport.sent.map { it.second.toHex() }, "the Get only, each time — no 08 12")
+        assertEquals(AncAvailability.NOT_ALLOWED, repo.ancAvailability.first())
+        assertEquals(5_000L, repo.ancAvailabilityUpdatedAt.value, "the answer is stamped: the screen's \"(checked …)\" moves")
+        assertNull(repo.messageStreamError.first(), "the Buds' answer, not a channel problem")
+        advanceTimeBy(1_600); runCurrent()
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.closeChannelCalls, "the claim is released as always")
+    }
+
+    @Test
+    @DisplayName("F-1 (c): CAP-064 — the app's last Notify 3200 read e8 (18 s old); the tile's tap now sends 08 11 first, gets 3443's bytes (00) and sends no Set (no NAK 3440)")
+    fun `the CAP-064 stale e8 no longer leads to a Set`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap064.NOTIFY_E8_ADAPTIVE_3200)); settle()
+        assertEquals(AncAvailability.ALLOWED, repo.ancAvailability.first())
+        advanceTimeBy(27_000) // 10:07:47.36 -> 10:08:14.44; Play services' claim read 00 at 3299 in between — invisible to the app
+        transport.onSent = { ch, frame ->
+            when (frame.toHex()) {
+                Cap064.GET_4091 -> transport.emit(ch, hex(Cap064.NOTIFY_00_OFF_3443))
+                Cap064.SET_OFF_3433 -> transport.emit(ch, hex(Cap064.NAK_3440)) // what the Buds did to the Set without a Get
+            }
+        }
+
+        val result = repo.stepAncMode(AncMode::nextForTile)
+
+        assertEquals(BudsError.AncNotAllowed, (result as BudsResult.Failure).error)
+        assertEquals(listOf(Cap064.GET_4091), transport.sent.map { it.second.toHex() }, "08 11 only — the Set 3433 (and its NAK 3440) cannot happen")
+        assertEquals(AncMode.OFF, repo.ancMode.first(), "the claim's Notify (3443's bytes) is the Buds' mode")
+    }
+
+    @Test
+    @DisplayName("F-1 (d): availability UNKNOWN after a failed snapshot (CAP-065 F7 sent Set 10790 without a Get) -> the Get goes first too")
+    fun `an unknown availability also sends the Get first`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.onSent = null
+        assertEquals(BudsError.Timeout, (repo.refreshAncMode() as BudsResult.Failure).error) // the snapshot got no Notify
+        assertEquals(AncAvailability.UNKNOWN, repo.ancAvailability.first())
+        advanceTimeBy(5_000)
+        transport.sent.clear()
+        answerLikeCap065(transport, getAnswer = Cap065.NOTIFY_E8_OFF_6334)
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE))
+        assertEquals(listOf(Cap065.GET, Cap065.SET_ACTIVE_10790), transport.sent.map { it.second.toHex() })
+    }
+
+    @Test
+    @DisplayName("F-1 (d'): NOT_ALLOWED from CAP-063 4774, the claim's Notify is 4184 (e8) -> one Set = 4233 in that claim, applied on ACK 4241 (0054 I-1 kept)")
+    fun `a tap after a 00 re-checks and sends the Set when the Buds now allow it`() = runTest {
         val (repo, transport) = buildRepository()
         notAllowedFrom4774(transport, repo)
         answerLikeCap063(transport, getAnswer = Cap063.NOTIFY_SETTABLE_E8_4184)
 
-        val result = repo.setAncMode(AncMode.ADAPTIVE)
-
-        assertEquals(BudsResult.Success(Unit), result)
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ADAPTIVE))
         assertEquals(listOf(Cap063.GET_ANC, Cap063.SET_ADAPTIVE_4233), transport.sent.map { it.second.toHex() }, "Get, then exactly one Set")
         assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.openChannelCalls, "both in one claim")
         assertEquals(AncMode.ADAPTIVE, repo.ancMode.first(), "applied on the ACK")
@@ -1007,27 +1097,8 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("I-1 (b): the claim's Notify reads 00 again (4774) -> no Set, AncNotAllowed, still NOT_ALLOWED, not a channel error")
-    fun `a disabled tap sends no Set when the Buds still refuse`() = runTest {
-        val (repo, transport) = buildRepository()
-        notAllowedFrom4774(transport, repo)
-        answerLikeCap063(transport, getAnswer = Cap063.NOTIFY_SETTABLE_00_4774)
-        advanceTimeBy(5_000)
-
-        val result = repo.setAncMode(AncMode.ADAPTIVE)
-
-        assertEquals(BudsError.AncNotAllowed, (result as BudsResult.Failure).error)
-        assertEquals(listOf(Cap063.GET_ANC), transport.sent.map { it.second.toHex() }, "the Get only — nothing more")
-        assertEquals(AncAvailability.NOT_ALLOWED, repo.ancAvailability.first())
-        assertEquals(5_000L, repo.ancAvailabilityUpdatedAt.value, "the re-check's answer is stamped: the screen's \"(checked …)\" moves")
-        assertNull(repo.messageStreamError.first(), "the Buds' answer, not a channel problem")
-        advanceTimeBy(1_600); runCurrent()
-        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.closeChannelCalls, "the claim is released as always")
-    }
-
-    @Test
-    @DisplayName("I-1 (c): a claim that cannot open reports its error and sends nothing; a Get the Buds never answer is a Timeout without a Set")
-    fun `a failed re-check claim sends no Set`() = runTest {
+    @DisplayName("F-1: a claim that cannot open reports its error and sends nothing; a Get the Buds never answer (channel open) is a Timeout without a Set")
+    fun `a failed claim or an unanswered Get sends no Set`() = runTest {
         val (repo, transport) = buildRepository()
         notAllowedFrom4774(transport, repo)
         val busy = BudsError.ChannelUnavailable(Dlci.FAST_PAIR_MESSAGE_STREAM, "read failed, socket might closed")
@@ -1045,56 +1116,115 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("I-1 (d): the tile's tap (AncMode.nextForTile of the shown mode OFF -> ACTIVE) takes the same path: Get, Notify 4184, Set = 4497, ACK 4508")
-    fun `the tile tap re-checks the same way`() = runTest {
+    @DisplayName("F-1 (h): the tile's next mode comes from the claim's fresh Notify (6334: OFF -> ACTIVE), not from the mode shown (ADAPTIVE -> OFF)")
+    fun `the tile steps from the fresh Notify, not from the mode shown`() = runTest {
         val (repo, transport) = buildRepository()
-        notAllowedFrom4774(transport, repo)
-        answerLikeCap063(transport, getAnswer = Cap063.NOTIFY_SETTABLE_E8_4184)
-        val next = AncMode.nextForTile(repo.ancMode.first()) // AncTileService.onClick: the mode after the one shown (OFF, from 4774)
-        assertEquals(AncMode.ACTIVE, next)
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap064.NOTIFY_E8_ADAPTIVE_3200)); settle() // shown: ADAPTIVE
+        assertEquals(AncMode.OFF, AncMode.nextForTile(repo.ancMode.first()), "the shown mode would give OFF")
+        answerLikeCap065(transport, getAnswer = Cap065.NOTIFY_E8_OFF_6334) // the Buds are in OFF by now (e.g. after re-wearing)
 
-        assertEquals(BudsResult.Success(Unit), repo.setAncMode(next))
-        assertEquals(listOf(Cap063.GET_ANC, Cap063.SET_ACTIVE_4497), transport.sent.map { it.second.toHex() })
+        assertEquals(BudsResult.Success(Unit), repo.stepAncMode(AncMode::nextForTile))
+
+        assertEquals(listOf(Cap065.GET, Cap065.SET_ACTIVE_10790), transport.sent.map { it.second.toHex() }, "OFF (fresh) -> ACTIVE")
+        assertEquals(AncMode.ACTIVE, repo.ancMode.first())
+    }
+
+    // ---- ai-sessions/0062 F-3: an answer cut off by the claim's close --------------------------------------------------------------------
+
+    private val closedBySocketEof = "IOException: bt socket closed, read return: -1"
+
+    @Test
+    @DisplayName("F-3 (e): CAP-065 — Set 2640 written, the claim closed (DISC 2649), the ACK 2651 never delivered -> AnswerCutOff, mode unchanged and unconfirmed; Notify 2654 clears it")
+    fun `a Set whose answer is cut off is AnswerCutOff and leaves the mode unconfirmed`() = runTest {
+        val (repo, transport) = buildRepository()
+        answerLikeCap065(transport, getAnswer = Cap065.NOTIFY_E8_OFF_6334, setAnswer = { ch -> transport.emitChannelClosed(ch, closedBySocketEof) })
+        advanceTimeBy(3_000)
+
+        val result = repo.stepAncMode(AncMode::nextForTile)
+
+        assertEquals(BudsError.AnswerCutOff(Dlci.FAST_PAIR_MESSAGE_STREAM, closedBySocketEof), (result as BudsResult.Failure).error)
+        assertEquals(listOf(Cap065.GET, Cap065.SET_ACTIVE_2640), transport.sent.map { it.second.toHex() }, "never retried: one Set")
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.openChannelCalls, "no second claim")
+        assertEquals(AncMode.OFF, repo.ancMode.first(), "the requested mode is not applied")
+        assertEquals(3_000L, repo.ancModeUnconfirmedAt.first(), "marked not confirmed, with the time of the change")
+        assertEquals(BudsError.AnswerCutOff(Dlci.FAST_PAIR_MESSAGE_STREAM, closedBySocketEof), repo.messageStreamError.first())
+
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap065.NOTIFY_E8_ACTIVE_2654)); settle() // a later Notify (e.g. the next claim's)
+        assertEquals(AncMode.ACTIVE, repo.ancMode.first())
+        assertNull(repo.ancModeUnconfirmedAt.first(), "the Buds' own report clears the mark")
     }
 
     @Test
-    @DisplayName("I-1 (e): ALLOWED (CAP-063 4184) and UNKNOWN send the Set directly as before — no Get first (CAP-063 4233 had none either)")
-    fun `allowed and unknown taps are unchanged`() = runTest {
+    @DisplayName("F-3 (f): CAP-065 — snapshot Get 10321 written, the claim closed (DISC 10344), no Notify (10356 came after) -> AnswerCutOff, not Timeout")
+    fun `a Get whose answer is cut off is AnswerCutOff, not Timeout`() = runTest {
         val (repo, transport) = buildRepository()
-        answerLikeCap063(transport, getAnswer = null)
-        assertEquals(AncAvailability.UNKNOWN, repo.ancAvailability.first())
+        transport.onSent = { ch, frame -> if (frame.toHex() == Cap065.GET) transport.emitChannelClosed(ch, closedBySocketEof) }
+
+        val refresh = repo.refreshAncMode()
+        assertEquals(BudsError.AnswerCutOff(Dlci.FAST_PAIR_MESSAGE_STREAM, closedBySocketEof), (refresh as BudsResult.Failure).error)
+        assertEquals(listOf(Cap065.GET), transport.sent.map { it.second.toHex() }, "never retried")
+
+        transport.sent.clear()
+        val tap = repo.setAncMode(AncMode.ACTIVE)
+        assertEquals(BudsError.AnswerCutOff(Dlci.FAST_PAIR_MESSAGE_STREAM, closedBySocketEof), (tap as BudsResult.Failure).error)
+        assertEquals(listOf(Cap065.GET), transport.sent.map { it.second.toHex() }, "no Set after a cut-off Get")
+        assertNull(repo.ancModeUnconfirmedAt.first(), "a cut-off Get changed nothing the app had applied")
+    }
+
+    @Test
+    @DisplayName("F-3 (g): a Set and a Get the Buds never answer while the channel stays open are Timeout, not AnswerCutOff")
+    fun `a plain timeout with the channel open stays Timeout`() = runTest {
+        val (repo, transport) = buildRepository()
+        answerLikeCap065(transport, getAnswer = Cap065.NOTIFY_E8_OFF_6334, setAnswer = null)
+        assertEquals(BudsError.Timeout, (repo.setAncMode(AncMode.ACTIVE) as BudsResult.Failure).error)
+        assertNull(repo.ancModeUnconfirmedAt.first(), "a Timeout with the channel open marks nothing")
+        advanceTimeBy(5_000)
+        answerLikeCap065(transport, getAnswer = null)
+        assertEquals(BudsError.Timeout, (repo.refreshAncMode() as BudsResult.Failure).error)
+        assertEquals(true, transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM), "the claim was never closed under the waits")
+    }
+
+    @Test
+    @DisplayName("F-3, labelled supplementary structural test (hand-ordered, not a capture): an answer delivered right after the close is still taken")
+    fun `an answer that arrives just after the close still counts`() = runTest {
+        val (repo, transport) = buildRepository()
+        answerLikeCap065(transport, getAnswer = Cap065.NOTIFY_E8_OFF_6334, setAnswer = { ch ->
+            transport.emitChannelClosed(ch, closedBySocketEof)
+            transport.emit(ch, hex(Cap065.ACK_ACTIVE_10799)) // read before the close, still in the codec (CUT_OFF_GRACE_MS)
+        })
+
         assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE))
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap063.NOTIFY_SETTABLE_E8_4184)); settle()
-        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ADAPTIVE))
-
-        assertEquals(listOf(Cap063.SET_ACTIVE_4497, Cap063.SET_ADAPTIVE_4233), transport.sent.map { it.second.toHex() })
+        assertEquals(AncMode.ACTIVE, repo.ancMode.first())
+        assertNull(repo.ancModeUnconfirmedAt.first())
     }
 
     @Test
-    @DisplayName("I-1 with CAP-062 bytes: a NAK (5998) + Notify 00 (6000) on an unknown state; the next tap re-checks (6000 again) and sends no second Set")
-    fun `after a NAK the next tap re-checks instead of sending`() = runTest {
+    @DisplayName("F-3: Refresh battery — the burst (CAP-065 10341) came before the close (10344), the Get's Notify (10356) after it -> a new reading, no error")
+    fun `a Refresh whose Get is cut off after the burst still counts`() = runTest {
         val (repo, transport) = buildRepository()
-        transport.onSent = { ch, frame ->
-            when {
-                frame.toHex().startsWith("0812") -> {
-                    transport.emit(ch, hex("ff020003020812")) // frame 5998
-                    transport.emit(ch, hex("0813000401e80020")) // frame 6000
-                }
-                frame.toHex() == Cap063.GET_ANC -> transport.emit(ch, hex("0813000401e80020")) // 6000's bytes: still not worn
+        transport.onOpenChannel = { ch ->
+            if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM) {
+                transport.emit(ch, MODEL_ID_PRO_2)
+                transport.emit(ch, hex(Cap065.BATTERY_10341))
             }
         }
+        transport.onSent = { ch, frame -> if (frame.toHex() == Cap065.GET) transport.emitChannelClosed(ch, closedBySocketEof) }
+        advanceTimeBy(1_000)
 
-        val first = repo.setAncMode(AncMode.TRANSPARENT)
+        assertEquals(BudsResult.Success(Unit), repo.refreshBattery())
+        assertNull(repo.batteryRefreshError.first())
+        assertEquals(BatteryLevel.Known(100, true, receivedAtMillis = 1_000), repo.batteryStatus.value.right)
+        assertEquals(BudsError.AnswerCutOff(Dlci.FAST_PAIR_MESSAGE_STREAM, closedBySocketEof), repo.messageStreamError.first(), "the ANC answer was cut off")
 
-        assertEquals(BudsError.CommandRejected(0x02, "not allowed in the current state"), (first as BudsResult.Failure).error)
-        settle()
-        assertEquals(BudsError.AncNotAllowed, (repo.setAncMode(AncMode.ADAPTIVE) as BudsResult.Failure).error)
-        assertEquals(listOf("0812", "0811"), transport.sent.map { it.second.toHex().take(4) }, "one Set, then only the re-check's Get")
+        transport.onOpenChannel = { ch -> if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM) transport.emit(ch, MODEL_ID_PRO_2) } // no burst this time
+        advanceTimeBy(5_000)
+        assertEquals(BudsError.AnswerCutOff(Dlci.FAST_PAIR_MESSAGE_STREAM, closedBySocketEof), (repo.refreshBattery() as BudsResult.Failure).error)
     }
 
     @Test
     fun `a Refresh re-reads the byte and re-enables the Set (I-3)`() = runTest {
         val (repo, transport) = buildRepository()
+        transport.onSent = null // the test answers the Get itself
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e80020"))
         settle()
         val refresh = launch { repo.refreshAncMode() }
@@ -1533,6 +1663,23 @@ class BudsRepositoryImplTest {
     private val socketEof = "IOException: bt socket closed, read return: -1" // CAP-062: identical for every loss (11/11)
 
     @Test
+    @DisplayName("T-1 (ai-sessions/0062), CAP-064 §6 #1: CONNECTED 126 ms after the loss, NOT_CONNECTED 165 ms after — the first verdicts are logged as provisional, the last as final")
+    fun `the loss cause lines inside the window are marked provisional`() = runTest {
+        val (repo, transport) = buildRepository()
+        BleLogger.clear()
+        advanceTimeBy(10_000)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        advanceTimeBy(126); repo.onAndroidLink(AndroidLink.CONNECTED)
+        advanceTimeBy(39); repo.onAndroidLink(AndroidLink.NOT_CONNECTED)
+
+        val lines = BleLogger.exportLog().lines().filter { "Session loss cause" in it }
+        assertEquals(3, lines.size, lines.joinToString("\n"))
+        assert("undetermined" in lines[0] && "(provisional" in lines[0]) { lines[0] }
+        assert("the Buds closed the channel" in lines[1] && "(provisional" in lines[1]) { lines[1] }
+        assert("went down" in lines[2] && "provisional" !in lines[2]) { lines[2] }
+    }
+
+    @Test
     @DisplayName("I-7, CAP-062 06:42:35 ordering: the link was CONNECTED before the loss, NOT_CONNECTED 109 ms after it -> Android link lost")
     fun `the 06h42m35 ordering never shows the stale connected reading`() = runTest {
         val (repo, transport) = buildRepository()
@@ -1779,7 +1926,10 @@ class BudsRepositoryImplTest {
     fun `the real announcement's firmware becomes deviceInfo and unlocks writes`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
         transport.onOpenChannel = { ch -> if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM) transport.emit(ch, MODEL_ID_PRO_2) }
-        transport.onSent = { ch, frame -> if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM && frame.toHex().startsWith("0812")) transport.emit(ch, hex("ff010006081201e8e808")) }
+        transport.onSent = { ch, frame ->
+            if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM && frame.toHex() == Cap065.GET) transport.emit(ch, hex(Cap065.NOTIFY_E8_OFF_6334))
+            if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM && frame.toHex().startsWith("0812")) transport.emit(ch, hex("ff010006081201e8e808"))
+        }
         settle()
         assertNull(repo.deviceInfo.first())
 
@@ -1788,8 +1938,25 @@ class BudsRepositoryImplTest {
 
         assertEquals(listOf("release_5.203"), repo.deviceInfo.first()?.firmware)
         assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE), "the verified firmware must not be in Safe Mode")
-        assertEquals("08120014" + "01e8e808", transport.sent.single().second.toHex().take(16), "the ANC Set left the phone")
+        assertEquals(listOf(Cap065.GET, Cap065.SET_ACTIVE_10790), transport.sent.map { it.second.toHex() }, "the Get, then the ANC Set left the phone")
         assertNull(repo.safeMode.first())
+    }
+
+    @Test
+    @DisplayName("F-5: CAP-065 frame 1883 (whole real frame) -> deviceInfo with the three entries, channel 19 and its receive time — what the Info tab shows")
+    fun `the announcement's entries, channel and time reach deviceInfo`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        advanceTimeBy(4_000)
+        transport.emit(Dlci.MAESTRO, hex(Cap065.ANNOUNCEMENT_FRAME_1883))
+        settle()
+
+        val info = repo.deviceInfo.first()
+        assertEquals(listOf("release_5.203"), info?.firmware)
+        assertEquals(listOf(1, 2, 3), info?.entries?.map { it.index })
+        assertEquals(19, info?.maestroChannel)
+        assertEquals(4_000L, info?.announcedAtMillis)
+        repo.disconnect()
+        assertNull(repo.deviceInfo.first(), "after Disconnect the Info tab says not connected yet")
     }
 
     // ---- on-demand Message Stream claim (DECISIONS.md ADR-032) ------------------------------------
@@ -1803,7 +1970,7 @@ class BudsRepositoryImplTest {
         repo.setAncMode(AncMode.ADAPTIVE)
 
         assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.openChannelCalls)
-        assertEquals(Dlci.FAST_PAIR_MESSAGE_STREAM, transport.sent.single().first)
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.FAST_PAIR_MESSAGE_STREAM), transport.sent.map { it.first }, "Get and Set on the one claim")
         assertEquals(true, transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM), "still claimed during the linger")
 
         advanceTimeBy(1_600)
@@ -1881,14 +2048,17 @@ class BudsRepositoryImplTest {
     fun `the Buds' own Notify wins over the optimistic ANC update`() = runTest {
         val (repo, transport) = buildRepository()
         settle()
-        transport.onSent = null // no ACK: the Notify is the only answer
+        transport.onSent = { ch, frame ->
+            when (frame.toHex().take(4)) {
+                "0811" -> transport.emit(ch, ancNotify("e8", "40")) // the claim's Get: allowed, Adaptive
+                // No ACK: the Buds answer the Set with their real state (Off, CAP-036 frame 1182's bytes) — the Notify is the only answer.
+                "0812" -> transport.emit(ch, hex("0813000401e80020"))
+            }
+        }
 
-        val tap = launch { repo.setAncMode(AncMode.ACTIVE) }
-        runCurrent()
-        // The Buds answer with their real state (Off, CAP-036 frame 1182) — e.g. after refusing the Set.
-        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e80020"))
-        tap.join()
+        val result = repo.setAncMode(AncMode.ACTIVE)
 
+        assertEquals(BudsResult.Success(Unit), result)
         assertEquals(AncMode.OFF, repo.ancMode.first())
     }
 
@@ -1997,7 +2167,10 @@ class BudsRepositoryImplTest {
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20")) // known mode: Off
         settle()
         // NAK layout per the Fast Pair acknowledgement spec: ff 02 <len> <reason> <group> <code> — reason 0x03 = incorrect MAC.
-        transport.onSent = { ch, frame -> if (frame.toHex().startsWith("0812")) transport.emit(ch, hex("ff02000403081201")) }
+        transport.onSent = { ch, frame ->
+            if (frame.toHex() == Cap065.GET) transport.emit(ch, hex(Cap065.NOTIFY_E8_OFF_6334)) // the claim's Get: allowed (F-1)
+            if (frame.toHex().startsWith("0812")) transport.emit(ch, hex("ff02000403081201"))
+        }
 
         val result = repo.setAncMode(AncMode.ACTIVE)
 
@@ -2010,7 +2183,8 @@ class BudsRepositoryImplTest {
         val (repo, transport) = buildRepository()
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20"))
         settle()
-        transport.onSent = null
+        // The claim's Get is answered (allowed, F-1); the Set is not — and the channel stays open (a close would be AnswerCutOff, F-3).
+        transport.onSent = { ch, frame -> if (frame.toHex() == Cap065.GET) transport.emit(ch, hex(Cap065.NOTIFY_E8_OFF_6334)) }
 
         val result = repo.setAncMode(AncMode.TRANSPARENT)
 

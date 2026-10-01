@@ -49,6 +49,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.LinkReading
+import io.github.tedsluis.opencontrolpixelbuds.domain.LINK_LOST_AFTER_MS
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.classifySessionLoss
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
@@ -89,6 +90,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -265,9 +267,15 @@ class BudsRepositoryImpl(
     private val _ancAvailabilityProvisional = MutableStateFlow(false)
     override val ancAvailabilityProvisional: StateFlow<Boolean> = _ancAvailabilityProvisional
 
-    /** Every `Notify`'s availability as it arrives (replay 0) — what a re-check on a disabled tap waits for (`ai-sessions/0054` I-1); unlike
+    /** One `Notify ANC state` as it arrives: its availability and its mode (`null` = a mode byte that is not one of the four known modes). */
+    private data class AncNotify(val availability: AncAvailability, val mode: AncMode?)
+
+    /** Every `Notify` as it arrives (replay 0) — what an ANC tap's `Get` waits for before its `Set` (`ai-sessions/0062` F-1); unlike
      * [_ancModeFresh] it also fires for a `Notify` whose mode byte is not one of the four known modes. */
-    private val _ancAvailabilityFresh = MutableSharedFlow<AncAvailability>(extraBufferCapacity = 8)
+    private val _ancNotifies = MutableSharedFlow<AncNotify>(extraBufferCapacity = 8)
+
+    private val _ancModeUnconfirmedAt = MutableStateFlow<Long?>(null)
+    override val ancModeUnconfirmedAt: StateFlow<Long?> = _ancModeUnconfirmedAt
 
     /** When the current Message Stream claim opened (the ADR-024 "provisional within ~2 s" reference point). */
     @Volatile
@@ -370,13 +378,19 @@ class BudsRepositoryImpl(
         return result
     }
 
-    /** I-7: the cause of the last loss from the readings around it; logged once per change (always-on, no address, AGENTS.md §9). */
+    /**
+     * I-7: the cause of the last loss from the readings around it; logged once per change (always-on, no address, AGENTS.md §9). T-1 (`ai-sessions/0062`): a
+     * cause other than "the link went down" decided before loss + [LINK_LOST_AFTER_MS] is logged as provisional — a "not connected" reading can still come.
+     */
     private fun reclassifyLoss() {
         val lossAt = lossAtMillis
         val cause = if (lossAt == null) null else classifySessionLoss(lossAt, synchronized(linkReadings) { linkReadings.toList() }, lossWhileHidden)
         if (_lastLossCause.value != cause) {
             _lastLossCause.value = cause
-            if (cause != null) BleLogger.logConnectionEvent(SessionDiagnostics.lossCauseLine(cause))
+            if (cause != null && lossAt != null) {
+                val provisional = cause != SessionLossCause.ANDROID_LINK_LOST && clock() < lossAt + LINK_LOST_AFTER_MS
+                BleLogger.logConnectionEvent(SessionDiagnostics.lossCauseLine(cause, provisional))
+            }
         }
     }
 
@@ -488,8 +502,10 @@ class BudsRepositoryImpl(
                     // I-3 (`ai-sessions/0048`, ADR-024 Update 2026-09-25): Settable 0x00 = the Buds refuse a Set (NAK 0x02); non-zero = allowed.
                     val availability = AncAvailability.fromSettableToggles(anc.settableToggles)
                     updateAncAvailability(availability)
-                    _ancAvailabilityFresh.tryEmit(availability)
+                    _ancNotifies.tryEmit(AncNotify(availability, anc.currentMode))
                     anc.currentMode?.let {
+                        // F-3: the Buds' own report — whatever a cut-off answer would have said, this is their mode now.
+                        _ancModeUnconfirmedAt.value = null
                         emitAncMode(it)
                         _ancModeFresh.tryEmit(it)
                         _ancOutcomes.tryEmit(AncOutcome.Notified(it))
@@ -532,7 +548,7 @@ class BudsRepositoryImpl(
                 BleLogger.logConnectionEvent("Maestro channel announced by the Buds: ${frame.channelId}")
                 _maestroChannelId.value = frame.channelId
                 if (frame.firmware.isNotEmpty()) {
-                    _deviceInfo.value = DeviceInfo(frame.firmware)
+                    _deviceInfo.value = DeviceInfo(frame.firmware, frame.entries, frame.channelId, clock()) // + entries/channel/time for Info (F-5)
                     refreshObservedSafeMode()
                 }
             }
@@ -688,52 +704,74 @@ class BudsRepositoryImpl(
      * ANC `Set` (ADR-009). Counts as done only when the Buds answer (0044 APP-3; ARCHITECTURE.md §3.1 "provisional until the
      * acknowledgement confirms it"): their ACK applies the requested mode, their `Notify` has already applied the real one; a NAK is
      * [BudsError.CommandRejected] and no answer is [BudsError.Timeout] — in both cases the previous mode stays.
+     *
+     * **`ai-sessions/0062` F-1 (the maintainer's choice, chats 2026-10-01):** every tap's claim sends the `Get` first and the `Set` only if that claim's
+     * `Notify` reads Settable non-zero — the app's own last reading can be old (`CAP-064`: an 18-s-old `e8` led to `Set` 3433 → NAK 3440 → `Notify … 00`
+     * 3443; `CAP-065` F7: an unknown availability sent `Set` 10790 without a `Get`). No new message: the claim's `Get` is ADR-021/022, ADR-032 item 5.
      */
-    override suspend fun setAncMode(mode: AncMode): BudsResult<Unit> {
-        if (_ancAvailability.value != AncAvailability.NOT_ALLOWED) return withMessageStream { ancSetOnClaim(mode) }
-        // I-1 (`ai-sessions/0054`, maintainer-confirmed in chat 2026-09-28; reverses `0048` I-3's "claim nothing" for a user tap): the Buds' last
-        // Notify said no mode is switchable (Settable 0x00 — they NAK a Set then, reason 0x02, CAP-062 10/10), but that answer may be old (CAP-063:
-        // the buds were worn again 37 s after Notify 4774 and nothing re-read it for 6 min). So this tap first asks again with the ordinary claim's
-        // Get; the Set is sent in the same claim only if that Notify allows it — otherwise nothing more is sent.
-        BleLogger.logConnectionEvent("ANC tap while the Buds' last Notify allowed no change (Settable 0x00): checking again before any Set")
-        return withMessageStream {
-            val (sent, availability) = sendAncGetAndAwait(_ancAvailabilityFresh, GET_RESPONSE_TIMEOUT_MS)
-            when {
-                sent is BudsResult.Failure -> BudsResult.Failure(sent.error)
-                availability == null -> BudsResult.Failure(BudsError.Timeout)
-                availability == AncAvailability.NOT_ALLOWED -> {
-                    BleLogger.logConnectionEvent("ANC Set not sent: the Buds still report no switchable mode (Settable 0x00)")
-                    BudsResult.Failure(BudsError.AncNotAllowed)
-                }
-                else -> ancSetOnClaim(mode)
+    override suspend fun setAncMode(mode: AncMode): BudsResult<Unit> = setAncModeAfterGet { mode }
+
+    /** The tile (F-1): the mode after the one **this claim's** `Notify` reports. */
+    override suspend fun stepAncMode(next: (current: AncMode?) -> AncMode): BudsResult<Unit> = setAncModeAfterGet(next)
+
+    /**
+     * One claim: the Safe-Mode gate (a refused write sends nothing at all, not even the `Get` — ADR-042), the `Get`, then the `Set` of [choose] of the
+     * `Notify`'s mode — only if that `Notify` allows a change; on Settable `0x00` nothing more is sent ([BudsError.AncNotAllowed], `ai-sessions/0054`
+     * I-1's rule, now on every tap). A `Notify` whose mode byte is unknown passes `null` to [choose].
+     */
+    private suspend fun setAncModeAfterGet(choose: (current: AncMode?) -> AncMode): BudsResult<Unit> = withMessageStream {
+        writeGate(requireModelIdOfClaim = true)?.let { return@withMessageStream BudsResult.Failure(it) }
+        when (val got = sendAncGetAndAwait(_ancNotifies, GET_RESPONSE_TIMEOUT_MS)) {
+            is ClaimWait.SendFailed -> BudsResult.Failure(got.error)
+            is ClaimWait.TimedOut -> BudsResult.Failure(BudsError.Timeout)
+            is ClaimWait.CutOff -> BudsResult.Failure(answerCutOff("ANC Get", got.detail))
+            is ClaimWait.Answered -> if (got.value.availability == AncAvailability.NOT_ALLOWED) {
+                BleLogger.logConnectionEvent("ANC Set not sent: this claim's Notify reports no switchable mode (Settable 0x00)")
+                BudsResult.Failure(BudsError.AncNotAllowed)
+            } else {
+                ancSetOnClaim(choose(got.value.mode))
             }
         }
     }
 
     /**
      * The ANC `Set` on the already-claimed Message Stream: the Safe-Mode gate (Model ID of this claim, ADR-042), then the frame, then the Buds' answer
-     * within [ACK_WAIT_MS] — only their ACK (requested mode) or `Notify` (their own mode) counts as done.
+     * within [ACK_WAIT_MS] — only their ACK (requested mode) or `Notify` (their own mode) counts as done. A claim closed before the answer (F-3) marks the
+     * shown mode "not confirmed" ([ancModeUnconfirmedAt]) — the Buds may have switched (`CAP-065` 2640 → `DISC` 2649 → ACK 2651).
      */
     private suspend fun ancSetOnClaim(mode: AncMode): BudsResult<Unit> {
         writeGate(requireModelIdOfClaim = true)?.let { return BudsResult.Failure(it) }
-        val (result, outcome) = sendAndAwait(_ancOutcomes, ACK_WAIT_MS) {
+        val sentAt = clock() // "the change at HH:MM:SS" of the not-confirmed mark
+        val wait = sendAndAwaitOnClaim(_ancOutcomes, ACK_WAIT_MS) {
             transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, AncFrameEncoder.encode(AncFrame.Set(mode)))
         }
-        return when {
-            result is BudsResult.Failure -> result
-            outcome == null -> BudsResult.Failure(BudsError.Timeout)
-            outcome is AncOutcome.Rejected -> BudsResult.Failure(rejected(outcome.reason))
-            outcome is AncOutcome.Acked -> {
-                emitAncMode(mode)
-                BudsResult.Success(Unit)
+        return when (wait) {
+            is ClaimWait.SendFailed -> BudsResult.Failure(wait.error)
+            is ClaimWait.TimedOut -> BudsResult.Failure(BudsError.Timeout)
+            is ClaimWait.CutOff -> {
+                _ancModeUnconfirmedAt.value = sentAt
+                BudsResult.Failure(answerCutOff("ANC Set", wait.detail))
             }
-            else -> BudsResult.Success(Unit) // Notified: handleRoutedFrame already applied the Buds' own mode.
+            is ClaimWait.Answered -> when (val outcome = wait.value) {
+                is AncOutcome.Rejected -> BudsResult.Failure(rejected(outcome.reason))
+                is AncOutcome.Acked -> {
+                    emitAncMode(mode)
+                    _ancModeUnconfirmedAt.value = null
+                    BudsResult.Success(Unit)
+                }
+                is AncOutcome.Notified -> BudsResult.Success(Unit) // handleRoutedFrame already applied the Buds' own mode.
+            }
         }
     }
 
-    /** The ANC `Get` (`08 11 00 00`, ADR-021) on the claimed Message Stream, then the first matching emission of [reply] within [timeoutMs]. */
-    private suspend fun <R> sendAncGetAndAwait(reply: SharedFlow<R>, timeoutMs: Long): Pair<BudsResult<Unit>, R?> =
-        sendAndAwait(reply, timeoutMs) { transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, AncFrameEncoder.encode(AncFrame.Get)) }
+    /** The ANC `Get` (`08 11 00 00`, ADR-021) on the claimed Message Stream, then the first emission of [reply] within [timeoutMs] — or the claim's close. */
+    private suspend fun <R> sendAncGetAndAwait(reply: SharedFlow<R>, timeoutMs: Long): ClaimWait<R> =
+        sendAndAwaitOnClaim(reply, timeoutMs) { transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, AncFrameEncoder.encode(AncFrame.Get)) }
+
+    private fun answerCutOff(what: String, detail: String?): BudsError {
+        BleLogger.logConnectionEvent("$what: the Message Stream claim was closed before the Buds' answer arrived (answer cut off, not retried)")
+        return BudsError.AnswerCutOff(Dlci.FAST_PAIR_MESSAGE_STREAM, detail)
+    }
 
     private fun rejected(reason: Int): BudsError {
         val name = MessageStreamAck.reasonName(reason)
@@ -744,11 +782,12 @@ class BudsRepositoryImpl(
     override suspend fun refreshAncMode(): BudsResult<AncMode> = refreshAncMode(GET_RESPONSE_TIMEOUT_MS)
 
     private suspend fun refreshAncMode(timeoutMs: Long, freshOpen: Boolean = false): BudsResult<AncMode> = withMessageStream(freshOpen) {
-        val (sendResult, mode) = sendAncGetAndAwait(_ancModeFresh, timeoutMs)
-        when {
-            sendResult is BudsResult.Failure -> BudsResult.Failure(sendResult.error)
-            mode != null -> BudsResult.Success(mode)
-            else -> BudsResult.Failure(BudsError.Timeout)
+        when (val got = sendAncGetAndAwait(_ancModeFresh, timeoutMs)) {
+            is ClaimWait.SendFailed -> BudsResult.Failure(got.error)
+            is ClaimWait.TimedOut -> BudsResult.Failure(BudsError.Timeout)
+            // F-3: `CAP-065` 11:21:35 — the snapshot's Get (10321) was answered (10356) after the close (10344); "didn't respond in time" was wrong.
+            is ClaimWait.CutOff -> BudsResult.Failure(answerCutOff("ANC Get", got.detail))
+            is ClaimWait.Answered -> BudsResult.Success(got.value)
         }
     }
 
@@ -1065,9 +1104,12 @@ class BudsRepositoryImpl(
             val burst = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(BATTERY_BURST_WAIT_MS) { _batteryFrames.first() } }
             when (val claim = refreshAncMode(GET_RESPONSE_TIMEOUT_MS, freshOpen = true)) {
                 is BudsResult.Failure -> {
+                    // F-3 (the maintainer's choice, chat 2026-10-01): a Get whose answer was cut off still counts for the battery when the burst arrived
+                    // before the close (`CAP-065` 10341 before the DISC 10344). Otherwise a burst can still have arrived (e.g. the Notify timed out):
+                    // that is a new reading, but the claim's error is shown.
+                    val burstBeforeCutOff = claim.error is BudsError.AnswerCutOff && burst.isCompleted && burst.await() != null
                     burst.cancel()
-                    // A burst can still have arrived on the claim (e.g. the Notify timed out): that is a new reading, but the claim's error is shown.
-                    BudsResult.Failure(claim.error)
+                    if (burstBeforeCutOff) BudsResult.Success(Unit) else BudsResult.Failure(claim.error)
                 }
                 is BudsResult.Success -> if (burst.await() != null) BudsResult.Success(Unit) else BudsResult.Failure(BudsError.NoNewBatteryReading)
             }
@@ -1245,16 +1287,10 @@ class BudsRepositoryImpl(
     }
 
     /**
-     * Subscribes to [reply] **before** sending, then waits up to [timeoutMs] for one emission.
+     * Subscribes to [reply] **before** sending, then waits up to [timeoutMs] for one emission that [accept]s.
      * Subscribing first matters: the Buds answer within tens of milliseconds, and a subscription made
      * after `send()` returns can miss a fast reply. A send failure cancels the wait.
      */
-    private suspend fun <R, T> sendAndAwait(
-        reply: SharedFlow<R>,
-        timeoutMs: Long,
-        send: suspend () -> BudsResult<T>,
-    ): Pair<BudsResult<T>, R?> = sendAndAwait(reply, timeoutMs, { true }, send)
-
     private suspend fun <R, T> sendAndAwait(
         reply: SharedFlow<R>,
         timeoutMs: Long,
@@ -1271,6 +1307,47 @@ class BudsRepositoryImpl(
         }
     }
 
+    /** What a request on the claimed Message Stream got (`ai-sessions/0062` F-3): its answer, the claim's close first, nothing in time, or no send. */
+    private sealed class ClaimWait<out R> {
+        data class Answered<R>(val value: R) : ClaimWait<R>()
+        data class CutOff(val detail: String?) : ClaimWait<Nothing>()
+        data object TimedOut : ClaimWait<Nothing>()
+        data class SendFailed(val error: BudsError) : ClaimWait<Nothing>()
+    }
+
+    /**
+     * [sendAndAwait] for a request on the claimed Message Stream, which can also end by the claim's **close** (`ai-sessions/0062` F-3): the stack closes
+     * this app's port when another client connects to the same channel, and an answer sent after that never reaches the app (`CAP-065` 2649 → 2651,
+     * 10344 → 10356). Both waits are subscribed before the send. If the close comes first, the answer still wins when it turns up within
+     * [CUT_OFF_GRACE_MS] — it may have arrived just before the close and still be on its way through the codec (one bounded wait, never a loop).
+     * A timeout with the channel still open stays [ClaimWait.TimedOut].
+     */
+    private suspend fun <R> sendAndAwaitOnClaim(
+        reply: SharedFlow<R>,
+        timeoutMs: Long,
+        accept: (R) -> Boolean = { true },
+        send: suspend () -> BudsResult<Unit>,
+    ): ClaimWait<R> = coroutineScope<ClaimWait<R>> {
+        val answer = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(timeoutMs) { reply.first(accept) } }
+        val closed = async(start = CoroutineStart.UNDISPATCHED) {
+            transport.channelClosed.first { it.channelId == Dlci.FAST_PAIR_MESSAGE_STREAM }
+        }
+        try {
+            when (val sent: BudsResult<Unit> = send()) {
+                is BudsResult.Failure -> ClaimWait.SendFailed(sent.error)
+                is BudsResult.Success -> select<ClaimWait<R>> {
+                    answer.onAwait { value -> if (value != null) ClaimWait.Answered(value) else ClaimWait.TimedOut }
+                    closed.onAwait { close ->
+                        withTimeoutOrNull(CUT_OFF_GRACE_MS) { answer.await() }?.let { ClaimWait.Answered(it) } ?: ClaimWait.CutOff(close.detail)
+                    }
+                }
+            }
+        } finally {
+            answer.cancel()
+            closed.cancel()
+        }
+    }
+
     companion object {
         /** Wait for a fresh ANC Notify after a manual Refresh. Kept short: the channel is held meanwhile,
          * and Google Play services re-opens it 2.7–5.0 s after losing it (`ai-sessions/0040` §2.1). */
@@ -1278,6 +1355,9 @@ class BudsRepositoryImpl(
 
         /** Wait for the Buds' ACK/Notify after a Set or Ring before the channel may be released. */
         private const val ACK_WAIT_MS = 1_000L
+
+        /** After the claim's close, how long an answer that arrived just before it may still take through the codec (F-3) — in-process, milliseconds. */
+        private const val CUT_OFF_GRACE_MS = 100L
 
         /** How long a Refresh waits for the Buds' battery burst on its fresh claim (observed 0.3 s after the open, `CAP-062` 7088 → 7106). */
         private const val BATTERY_BURST_WAIT_MS = 2_000L

@@ -33,7 +33,7 @@ enum class AncAvailability {
     /** `Settable toggles` is non-zero (`0xe8` in every sample): a `Set` is accepted. */
     ALLOWED,
 
-    /** `Settable toggles == 0x00`: the Buds refuse a `Set` (NAK `0x02`); a tap first re-reads the byte and sends a `Set` only if it changed (`ai-sessions/0054` I-1). */
+    /** `Settable toggles == 0x00`: the Buds refuse a `Set` (NAK `0x02`); every tap re-reads the byte first and sends a `Set` only if it is non-zero (`ai-sessions/0062` F-1). */
     NOT_ALLOWED,
     ;
 
@@ -44,11 +44,25 @@ enum class AncAvailability {
 }
 
 /**
- * What the Buds announce about themselves when a session opens (their unsolicited `GetSoftwareInfo`, DECISIONS.md ADR-034):
- * the distinct firmware version strings, e.g. `release_5.203`. The entries' version numbers (`PROTOCOL.md` §2.2a, L-5) and the
- * component serials (`GetHardwareInfo`, `AGENTS.md` §9) are not carried.
+ * What the Buds announce about themselves when a session opens (their unsolicited `GetSoftwareInfo`, DECISIONS.md ADR-034): [firmware] = the distinct
+ * firmware version strings, e.g. `release_5.203` (what the Safe-Mode gate checks, ADR-042). **Since `ai-sessions/0062` (F-5):** also [entries] — each entry of
+ * the announcement's field 4 with its own index — the pw_rpc channel the Buds announced ([maestroChannel]) and when the announcement arrived
+ * ([announcedAtMillis]), for the Info tab. The entries' version numbers (`PROTOCOL.md` §2.2a, L-5) and the component serials (`GetHardwareInfo`, `AGENTS.md`
+ * §9) are not carried.
  */
-data class DeviceInfo(val firmware: List<String>)
+data class DeviceInfo(
+    val firmware: List<String>,
+    val entries: List<FirmwareEntry> = emptyList(),
+    val maestroChannel: Int? = null,
+    val announcedAtMillis: Long? = null,
+)
+
+/**
+ * One entry of the announcement's field 4: its field number [index] (1, 2 or 3 in every capture) and its firmware string (field 2). Which component an index is
+ * — 1 = Case, 2 = Left bud, 3 = Right bud — is the official app's own mapping (`PROTOCOL.md` §2.2a, 2026-10-01 `ai-sessions/0062` Update, 🟢 FACT for the
+ * app's code, 🟡 that the unsolicited announcement uses the same layout); in every capture so far the three entries are identical (191 of 191).
+ */
+data class FirmwareEntry(val index: Int, val firmware: String)
 
 /**
  * The app's read-only Safe Mode (ARCHITECTURE.md §8.1, DECISIONS.md ADR-042): active when the connected Buds' firmware is not in the

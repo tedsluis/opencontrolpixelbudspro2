@@ -36,6 +36,8 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.ancTileState
 import io.github.tedsluis.opencontrolpixelbuds.domain.ancTileStates
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
+import io.github.tedsluis.opencontrolpixelbuds.ui.ANC_NOT_ALLOWED_TEXT
+import io.github.tedsluis.opencontrolpixelbuds.ui.ANSWER_CUT_OFF_TEXT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -56,9 +58,10 @@ import javax.inject.Inject
  * The cycle is fixed and documented ([AncMode.nextInTileCycle]): Noise cancelling → Transparent → Adaptive → Off. No new permission:
  * `BIND_QUICK_SETTINGS_TILE` is required *of the caller that binds this service* (only the system), not requested by the app.
  *
- * **I-1 (`ai-sessions/0054`, replaces `0048` I-3's "tap sends nothing"):** while the Buds' last `Notify` reported Settable `0x00`
- * ([AncAvailability.NOT_ALLOWED]) the subtitle says "Only while worn"; a tap goes to [BudsRepository.setAncMode] like any other, which first asks the
- * Buds again in its claim and switches only if they now allow it — if they still refuse, a toast says so (the maintainer's choice, chat 2026-09-28).
+ * **`ai-sessions/0062` F-1/F-2/F-3 (the maintainer's choices, chat 2026-10-01; extends `0054` I-1):** a tap goes to [BudsRepository.stepAncMode]: its claim
+ * sends the `Get` first and switches to the mode after the one **that `Notify`** reports — not after the mode shown, which can be old — and only if the
+ * Buds allow a change. If they refuse, or the answer is cut off by the claim's close, a toast says so. While the Buds' last `Notify` reported Settable
+ * `0x00` ([AncAvailability.NOT_ALLOWED]) the subtitle says "Not allowed now".
  *
  * Shown, kept and tapped on GrapheneOS in `CAP-062` (R7) and `CAP-063` (J1–J4). **`ai-sessions/0059` (A58-APP-01):** the state comes from
  * [ancTileStates], which starts the ANC mode at `null` — before, `combine` waited for the first ANC report of the process and the tile could say
@@ -123,18 +126,20 @@ class AncTileService : TileService() {
             startActivityAndCollapse(open)
             return
         }
-        val next = AncMode.nextForTile(latestMode)
         BleLogger.logConnectionEvent(
-            "ANC tile tapped: ${latestMode ?: "unknown"} -> $next" +
-                if (latestAvailability == AncAvailability.NOT_ALLOWED) " (the Buds last allowed no change: the tap checks again first)" else "",
+            "ANC tile tapped (shown: ${latestMode ?: "unknown"}" +
+                (if (latestAvailability == AncAvailability.NOT_ALLOWED) ", the Buds last allowed no change" else "") +
+                "): the claim asks the Buds first and steps from their answer",
         )
         // The application scope, not this service's: the claim outlives the tile's short lifetime (the release job is the repository's).
         val appContext = applicationContext
         applicationScope.launch {
-            val result = repository.setAncMode(next)
-            if ((result as? BudsResult.Failure)?.error == BudsError.AncNotAllowed) {
-                withContext(Dispatchers.Main) { Toast.makeText(appContext, ANC_NOT_ALLOWED_TOAST, Toast.LENGTH_LONG).show() }
+            val toast = when ((repository.stepAncMode(AncMode::nextForTile) as? BudsResult.Failure)?.error) {
+                BudsError.AncNotAllowed -> ANC_NOT_ALLOWED_TEXT
+                is BudsError.AnswerCutOff -> ANSWER_CUT_OFF_TEXT
+                else -> null
             }
+            if (toast != null) withContext(Dispatchers.Main) { Toast.makeText(appContext, toast, Toast.LENGTH_LONG).show() }
         }
     }
 
@@ -148,8 +153,4 @@ class AncTileService : TileService() {
         tile.updateTile()
     }
 
-    private companion object {
-        /** The same sentence as the ANC screen's (`ANC_NOT_ALLOWED_TEXT` in `:ui`, `ai-sessions/0048`), shown when a tap's re-check is refused. */
-        const val ANC_NOT_ALLOWED_TOAST = "ANC can only be changed while you wear the Buds."
-    }
 }

@@ -1,0 +1,176 @@
+/*
+ * OpenControl for Pixel Buds Pro 2
+ * Copyright (C) 2026 Ted Sluis
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+package io.github.tedsluis.opencontrolpixelbuds.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
+import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
+import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
+
+/**
+ * The app's own build identity for the Info tab (`ai-sessions/0062` F-5): [versionName], the git [commit] it was built from (short hash, "-dirty" when tracked
+ * files differed from it, "unknown" without git) and that commit's date — computed **locally at build time** (`app/build.gradle.kts`, `BuildConfig`), never
+ * fetched. No build-time stamp (the maintainer's choice, chat 2026-10-01: reproducible builds).
+ */
+data class AppBuildInfo(val versionName: String, val commit: String, val commitDate: String) {
+    companion object {
+        val UNKNOWN = AppBuildInfo("unknown", "unknown", "unknown")
+    }
+}
+
+/** The three tabs of the settings menu, in order (the maintainer's design, chat 2026-10-01). */
+internal enum class SettingsTab(val label: String) { SETTINGS("Settings"), DEBUG("Debug"), INFO("Info") }
+
+/**
+ * The settings menu (`ai-sessions/0062` F-4, the maintainer's design in chats 2026-10-01): a full-screen destination reached from the top app bar's gear, outside
+ * the five bottom tabs (ARCHITECTURE.md §2.4), with three tabs — **Settings** (dark mode), **Debug** (today's [DebugScreen], unchanged) and **Info** (the app's
+ * build and the Buds' firmware). The selected tab survives a rotation; back (the top bar's arrow or the system's) returns to the tab the menu was opened from.
+ */
+@Composable
+fun SettingsMenuScreen(
+    darkMode: DarkMode,
+    onDarkModeChanged: (DarkMode) -> Unit,
+    debugModeEnabled: Boolean,
+    onDebugModeChanged: (Boolean) -> Unit,
+    unidentifiedFrames: List<UnidentifiedFrame>,
+    onExportLog: () -> Unit,
+    appBuild: AppBuildInfo,
+    deviceInfo: DeviceInfo?,
+    modifier: Modifier = Modifier,
+) {
+    var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
+    Column(modifier = modifier.fillMaxSize()) {
+        TabRow(selectedTabIndex = selected) { // TabRow, not PrimaryTabRow: the latter is experimental in material3 1.3.0 (no new opt-in)
+            SettingsTab.entries.forEach { tab ->
+                Tab(selected = selected == tab.ordinal, onClick = { selected = tab.ordinal }, text = { Text(tab.label) })
+            }
+        }
+        when (SettingsTab.entries[selected]) {
+            SettingsTab.SETTINGS -> DarkModeSettings(darkMode, onDarkModeChanged)
+            SettingsTab.DEBUG -> DebugScreen(
+                debugModeEnabled = debugModeEnabled,
+                onDebugModeChanged = onDebugModeChanged,
+                unidentifiedFrames = unidentifiedFrames,
+                onExportLog = onExportLog,
+            )
+            SettingsTab.INFO -> InfoTab(appBuild, deviceInfo)
+        }
+    }
+}
+
+/** The labels of the dark-mode choice, in the order shown (the maintainer's words: System, On, Off; System is the default). */
+internal fun darkModeLabel(mode: DarkMode): String = when (mode) {
+    DarkMode.SYSTEM -> "System (follows Android)"
+    DarkMode.ON -> "On"
+    DarkMode.OFF -> "Off"
+}
+
+/** F-6: one radio group; a choice is stored and applied at once (the theme follows the stored value — no restart). */
+@Composable
+private fun DarkModeSettings(darkMode: DarkMode, onDarkModeChanged: (DarkMode) -> Unit) {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Dark mode", style = MaterialTheme.typography.titleMedium)
+            Column(Modifier.selectableGroup()) {
+                DarkMode.entries.forEach { mode ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(selected = darkMode == mode, onClick = { onDarkModeChanged(mode) }, role = Role.RadioButton)
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = darkMode == mode, onClick = null) // the row is the touch target (Android's radio-group guidance)
+                        Text(darkModeLabel(mode), modifier = Modifier.padding(start = 16.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** F-5: "App: 0.1.0-dev, build d541e00 (2026-10-01)" — the build identity, never fetched. */
+internal fun appBuildLine(build: AppBuildInfo): String = "App: ${build.versionName}, build ${build.commit} (${build.commitDate})"
+
+/** The Info tab's line when the Buds have not announced anything on this connection. */
+internal const val INFO_NOT_CONNECTED: String = "Not connected yet — the Buds report their firmware when the app connects."
+
+/**
+ * Which part of the Buds an announcement entry is: the official app's own mapping (`PROTOCOL.md` §2.2a, 2026-10-01 Update — 🟢 FACT for the app's code,
+ * maintainer-approved in chat 2026-10-01, `ai-sessions/0062`): entry 1 = Case, 2 = Left bud, 3 = Right bud. Any other index is shown by its number, never
+ * guessed.
+ */
+internal fun firmwareComponentLabel(index: Int): String = when (index) {
+    1 -> "Case"
+    2 -> "Left bud"
+    3 -> "Right bud"
+    else -> "Part $index"
+}
+
+/**
+ * F-5: the Buds' part of the Info tab — the heading with the announcement's receive time, one line per entry in the announcement's order, and the announced
+ * control channel; [INFO_NOT_CONNECTED] without an announcement on this connection.
+ */
+internal fun firmwareInfoLines(deviceInfo: DeviceInfo?): List<String> {
+    if (deviceInfo == null || deviceInfo.firmware.isEmpty()) return listOf(INFO_NOT_CONNECTED)
+    val heading = "Firmware (from the Buds' announcement" + (formatUpdatedAt(deviceInfo.announcedAtMillis)?.let { ", $it" } ?: "") + "):"
+    val entries = deviceInfo.entries.sortedBy { it.index }.map { "${firmwareComponentLabel(it.index)}: ${it.firmware}" }
+        .ifEmpty { deviceInfo.firmware.map { "Firmware: $it" } }
+    return listOf(heading) + entries + listOfNotNull(deviceInfo.maestroChannel?.let { "Control channel: $it" })
+}
+
+@Composable
+private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?) {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("This app", style = MaterialTheme.typography.titleMedium)
+            Text(appBuildLine(appBuild), style = MaterialTheme.typography.bodyMedium)
+            Text("The Buds", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+            firmwareInfoLines(deviceInfo).forEach { Text(it, style = MaterialTheme.typography.bodyMedium) }
+        }
+    }
+}

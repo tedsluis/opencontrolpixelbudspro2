@@ -46,7 +46,7 @@ class AncTileTest {
     @Test
     fun `the mapping follows the session, the availability and the mode`() {
         assertEquals("Open the app", ancTileState(ConnectionState.Disconnected, AncMode.ACTIVE, AncAvailability.ALLOWED).subtitle)
-        assertEquals("Only while worn", ancTileState(ConnectionState.Ready, AncMode.ACTIVE, AncAvailability.NOT_ALLOWED).subtitle)
+        assertEquals("Not allowed now", ancTileState(ConnectionState.Ready, AncMode.ACTIVE, AncAvailability.NOT_ALLOWED).subtitle)
         val adaptive = ancTileState(ConnectionState.Ready, AncMode.ADAPTIVE, AncAvailability.ALLOWED)
         assertEquals("Adaptive", adaptive.subtitle)
         assertTrue(adaptive.active)

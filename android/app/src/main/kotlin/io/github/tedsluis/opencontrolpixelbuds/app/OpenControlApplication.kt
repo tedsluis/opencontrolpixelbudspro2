@@ -21,6 +21,8 @@ package io.github.tedsluis.opencontrolpixelbuds.app
 
 import android.app.Application
 import android.content.Intent
+import android.os.StrictMode
+import io.github.tedsluis.opencontrolpixelbuds.BuildConfig
 import dagger.hilt.android.HiltAndroidApp
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
@@ -55,6 +57,12 @@ class OpenControlApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // `ai-sessions/0062` F-8 (the maintainer's choice, chat 2026-10-01): **debug builds only** — name the object behind Android's "A resource failed to call
+        // close." (`CAP-065` logcat 09:24:04.606, 09:26:39.149, 09:27:21.562 UTC, each next to "BluetoothSocket: close() … Already closed"). penaltyLog only:
+        // a stack trace in logcat, no crash, nothing sent anywhere. Release builds never set a VM policy.
+        if (BuildConfig.DEBUG) {
+            StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder().detectLeakedClosableObjects().penaltyLog().build())
+        }
         applicationScope.launch {
             var running = false
             combine(budsRepository.connectionState, budsRepository.ancMode.onStart<io.github.tedsluis.opencontrolpixelbuds.domain.AncMode?> { emit(null) }) { state, mode ->

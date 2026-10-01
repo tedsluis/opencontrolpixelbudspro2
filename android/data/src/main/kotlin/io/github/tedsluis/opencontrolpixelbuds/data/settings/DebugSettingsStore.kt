@@ -22,11 +22,8 @@ package io.github.tedsluis.opencontrolpixelbuds.data.settings
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-
-private val Context.dataStore by preferencesDataStore(name = "opencontrol_settings")
 
 /**
  * Persists the Debug Mode toggle (ARCHITECTURE.md §7/§12, AGENTS.md §6/§9) —
@@ -37,16 +34,17 @@ private val Context.dataStore by preferencesDataStore(name = "opencontrol_settin
  * stored here (a boolean toggle) carries no device identifier or credential.
  * `ARCHITECTURE.md` §2/§9 and `AGENTS.md` §10 say "encrypted where
  * applicable" — a future session adding a genuinely sensitive value here
- * must encrypt it (wording aligned 2026-09-24, 0044 finding AR-3).
+ * must encrypt it (wording aligned 2026-09-24, 0044 finding AR-3). The file is shared with [DarkModeSettingsStore] since `ai-sessions/0062`
+ * ([openControlSettings]).
  */
 class DebugSettingsStore(private val context: Context) {
 
-    val debugModeEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val debugModeEnabled: Flow<Boolean> = context.openControlSettings.data.map { prefs ->
         prefs[DEBUG_MODE_KEY] ?: false
     }
 
     suspend fun setDebugModeEnabled(enabled: Boolean) {
-        context.dataStore.edit { prefs -> prefs[DEBUG_MODE_KEY] = enabled }
+        context.openControlSettings.edit { prefs -> prefs[DEBUG_MODE_KEY] = enabled }
     }
 
     companion object {

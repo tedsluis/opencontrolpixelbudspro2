@@ -42,6 +42,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -57,7 +58,11 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
  * [ancMode] is the Buds' own report (a `Notify`, or the ACK of a `Set`) — ARCHITECTURE.md §3.1 — and [onRefreshAncMode] re-queries it (`ai-sessions/0038`).
  *
  * **I-1 (`ai-sessions/0054`, replaces `0048` I-3's disabled buttons):** while [ancAvailability] is [AncAvailability.NOT_ALLOWED] (the Buds' last `Notify`
- * reported Settable `0x00`) the mode buttons **stay enabled** under [ancNotAllowedLine]: a tap first asks the Buds again and switches only if they now allow it.
+ * reported Settable `0x00`) the mode buttons **stay enabled** under [ancNotAllowedLine]: a tap first asks the Buds again and switches only if they now allow it
+ * (since `ai-sessions/0062` F-1 every tap asks first, whatever the last reading).
+ *
+ * **`ai-sessions/0062` F-3:** while [ancModeUnconfirmedAt] is set (the answer to a change was cut off — the Buds may have switched) the mode buttons keep the
+ * last confirmed mode, dimmed, the (i) carries the not-current dot and its first line says why, until the Buds' next `Notify` clears it.
  *
  * **`ai-sessions/0057`:** four large mode buttons (2 × 2) — the Buds' current mode is the filled one with a check mark (not colour alone), the others outlined;
  * an unknown mode fills none and says "ANC mode: unknown". The times ("updated …", "checked …"), the session line and the Message-Stream explanation are in
@@ -75,9 +80,11 @@ fun AncScreen(
     onRequestAddAncTile: () -> Unit,
     modifier: Modifier = Modifier,
     ancAvailabilityUpdatedAt: Long? = null,
+    ancModeUnconfirmedAt: Long? = null,
 ) {
     val ready = connectionState.isReady()
     val notAllowed = ready && ancAvailability == AncAvailability.NOT_ALLOWED
+    val unconfirmed = ancModeUnconfirmedAt != null
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -88,12 +95,18 @@ fun AncScreen(
             MessageStreamNotice(messageStreamError)
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    CardTitle("Noise control", ancDetailLines(connectionState, ancMode, ancModeUpdatedAt, notAllowed, ancAvailabilityUpdatedAt))
+                    CardTitle(
+                        "Noise control",
+                        ancDetailLines(connectionState, ancMode, ancModeUpdatedAt, notAllowed, ancAvailabilityUpdatedAt, ancModeUnconfirmedAt),
+                        notCurrent = unconfirmed,
+                    )
                     if (ancMode == null) Text(ancModeLine(null, null), style = MaterialTheme.typography.bodyLarge)
                     // The reason a tap may not switch stays visible; its time is in the (i).
                     if (notAllowed) Text(ancNotAllowedLine(null), style = MaterialTheme.typography.bodyMedium)
                     ANC_MODE_LIST_ORDER.chunked(2).forEach { row ->
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // F-3: a mode that is not confirmed is dimmed — always together with the (i) dot and its line, never alone (WCAG 1.4.1).
+                        val rowModifier = Modifier.fillMaxWidth().alpha(if (unconfirmed) NOT_CURRENT_ALPHA else 1f)
+                        Row(modifier = rowModifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             row.forEach { (mode, label) ->
                                 AncModeButton(label, selected = ancMode == mode, enabled = ready, modifier = Modifier.weight(1f)) { onAncModeSelected(mode) }
                             }
@@ -128,14 +141,19 @@ internal fun ancModeLine(ancMode: AncMode?, updatedAt: Long?): String = when {
     else -> "ANC mode: ${ancMode.name}" + (formatUpdatedAt(updatedAt)?.let { " (updated $it)" } ?: "")
 }
 
-/** The ANC card's (i) lines: the mode with its time, the "checked HH:MM:SS" line while not allowed, the session line, the Message-Stream explanation. */
+/**
+ * The ANC card's (i) lines: the not-confirmed line after a cut-off answer (F-3), the mode with its time, the "checked HH:MM:SS" line while not allowed, the
+ * session line, the Message-Stream explanation.
+ */
 internal fun ancDetailLines(
     connectionState: ConnectionState,
     ancMode: AncMode?,
     ancModeUpdatedAt: Long?,
     notAllowed: Boolean,
     checkedAt: Long?,
+    unconfirmedAt: Long? = null,
 ): List<String> = listOfNotNull(
+    unconfirmedAt?.let(::ancUnconfirmedLine),
     ancModeLine(ancMode, ancModeUpdatedAt),
     if (notAllowed) ancNotAllowedLine(checkedAt) else null,
     "Connection: ${connectionState::class.simpleName}",
@@ -143,11 +161,16 @@ internal fun ancDetailLines(
 )
 
 /**
- * I-1 (`ai-sessions/0054`, the maintainer's wording in chat 2026-09-28): "ANC can only be changed while you wear the Buds (checked 16:06:11). Tapping a mode
- * checks again first." — the time is when the Buds last answered; without one the parenthesis is left out.
+ * `ai-sessions/0062` F-2 (the maintainer's wording, chat 2026-10-01): "The Buds don't allow changing noise control right now (usually because no bud is in an
+ * ear; checked 10:07:54). Tapping a mode checks again first." — the time is when the Buds last answered; without one it is left out (the main surface).
  */
 internal fun ancNotAllowedLine(checkedAt: Long?): String =
-    ANC_NOT_ALLOWED_TEXT.removeSuffix(".") + (formatUpdatedAt(checkedAt)?.let { " (checked $it)" } ?: "") + ". Tapping a mode checks again first."
+    ANC_NOT_ALLOWED_TEXT.removeSuffix(").") + (formatUpdatedAt(checkedAt)?.let { "; checked $it" } ?: "") + "). Tapping a mode checks again first."
+
+/** F-3 (the maintainer's wording, chat 2026-10-01): the (i) line while the shown mode is not confirmed; [changedAt] is when the cut-off change was sent. */
+internal fun ancUnconfirmedLine(changedAt: Long): String =
+    "Not confirmed: the answer to the change" + (formatUpdatedAt(changedAt)?.let { " at $it" } ?: "") +
+        " was cut off — the Buds may have switched. Tap Refresh."
 
 @Preview(showBackground = true)
 @Composable
