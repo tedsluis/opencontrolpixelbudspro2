@@ -491,6 +491,11 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   channel, with multiple sessions described for connections to *different* devices — so all apps on the phone share one session,
   and one DLC per DLCI, towards the Buds. That the stack's failure path also closes the incumbent is Android behaviour, evidenced
   by the system log only (`ai-sessions/0039` §2.4), not by the spec.
+  *Seen again 2026-10-01 (`ai-sessions/0061`, maintainer-approved note, `CAP-065-FINDINGS.md` §3), now in the Bluetooth process's own log:* at 09:27:10.450 UTC
+  Play services' connect (`NearbyDiscovery: RfcommEventStreamMedium`, uid 10205) to the Message Stream channel hit `RFCOMM_CreateConnectionWithSecurity: already
+  at opened state` and the stack closed OpenControl's port (uid 10338) 0.1 s later. **A reply that arrives after such a close is lost to the app:** a `Set`
+  the Buds ACKed after the app's claim was closed (HCI 2640 → close 2649 → ACK 2651) left the app showing the old mode, and a `Get` answered after the close
+  (10321 → 10344 → 10356) was reported as "The Buds didn't respond in time." (proposal for the next FEATURE session: `CAP-065-FINDINGS.md` §9 item 1).
 - **A connection is one unit** — *for the session channels opened by `connect()`* (superseded for the on-demand DLCI
   0x04/0x08 channels by ADR-032, see the per-channel bullet below). Any session channel's loss (read failure, EOF, failed
   write) closes *all* of that connection's sockets before `BudsTransport.connectionLost` emits — a surviving socket stays

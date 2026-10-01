@@ -216,6 +216,14 @@ mark v1.
   with it on) — ADR-049 Update; the Buds follow OpenControl's field-12 list (ADR-046 Update); OpenControl's field-2 writes behave as the official app's (ADR-047
   Update); `PROTOCOL.md` §4.1/§4.5.3/§4.5.5 dated Updates. Folder renamed to `CAP-064-2026-10-01_10-04-14_10-29-28-Group_AZ`; `CAP-066` (Group BB) skeleton for the
   leftovers. No app change.
+- **2026-10-01 (`ai-sessions/0061`): `CAP-065` (Group BA) analysed** — film (every second at 2 s spacing plus scene changes, audio included), HCI log, debug
+  export, logcat and system log. Same installation as `CAP-064` (process continuous, no reinstall). The EQ note "…The sliders are off until it arrives…" is on
+  film between ready and the EQ read; the ANC tile is compact, so its subtitle is not on film. Settable: 28 × `00` with no bud worn, `e8` with a bud worn —
+  ADR-049 Update (status unchanged). L-1: one bud out ⇒ Left channel 19 / Right 21, 7/7 — `PROTOCOL.md` §2.2a Update (🟢 correlation, 🟡 hosting bud). Also
+  `PROTOCOL.md` §4.3 (lid closed: that bud `ff`, no Case) and §5 (every ACL started by the Buds when a bud leaves the case) Updates; `ARCHITECTURE.md` §6.0b
+  note (the collision path in the Bluetooth process's log; a reply after the close is lost). Pulls sent exactly their tab's action. Folder renamed to
+  `CAP-065-2026-10-01_11-07-30_11-28-23-Group_BA`; `CAP-066` (Group BB) extended (L-1 hosting-bud test, tile subtitle, the robustness steps not done). No
+  app change.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

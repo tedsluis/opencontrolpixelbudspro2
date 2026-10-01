@@ -18,7 +18,8 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > `ai-sessions/0057` (in use in `CAP-064`; its pull-to-refresh checks are in `CAP-065`) gives the app a Material 3 look: a top bar with the Debug action, five tabs, a
 > graphical battery (Left | Case | Right), times and details behind an (i) on each card, pull down to refresh or reconnect, dark mode and wallpaper colours.
 > Battery via HFP is not deliverable to an app (ADR-040). `CAP-064` (`ai-sessions/0060`): the app connects by itself when a bud leaves the case,
-> not when the lid is opened with both buds inside — the Buds start no connection then; tap Connect.
+> not when the lid is opened with both buds inside — the Buds start no connection then; tap Connect. `CAP-065` (`ai-sessions/0061`): the EQ sliders wait for the
+> Buds' EQ, every pull refreshes exactly its tab, and the Buds announce channel 19 for the Left bud and 21 for the Right.
 
 > ## ⚠️ Disclaimer: hardware risk
 >
@@ -59,8 +60,8 @@ to design, implement, test, and document a native Android app.
 
 ## Current state (2026-10-01)
 
-- **Captures:** 66 registered sessions (`CAP-001`–`CAP-066`): 57 analyzed, 7 planned (among them `CAP-065`, run but not yet analysed, and `CAP-066`,
-  the `CAP-064` leftovers), 2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-064`
+- **Captures:** 66 registered sessions (`CAP-001`–`CAP-066`): 58 analyzed, 6 planned (among them `CAP-066`, the `CAP-064`/`CAP-065` leftovers),
+  2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-065`
   are captures of this project's own app; the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented

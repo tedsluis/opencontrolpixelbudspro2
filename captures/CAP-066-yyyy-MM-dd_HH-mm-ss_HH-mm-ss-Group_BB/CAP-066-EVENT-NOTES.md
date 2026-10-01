@@ -12,7 +12,18 @@
   not "not worn" as such.
 - **III — the ANC modes never tapped in OpenControl** (`ANC-002` Noise cancellation, `ANC-004` Transparency) and the I-4 "last connection" words in the battery (i)
   dialog within 2 s of a Connect (`CAP-064-FINDINGS.md` §2 I-4a).
-- **IV — restore the balance** to its value before `CAP-064` (Right 4 = `17:7`; `CAP-064` ended at Centre `17:0`).
+- **IV — restore the balance** to its value before `CAP-064` (Right 4 = `17:7`; `CAP-064` ended at Centre `17:0`; `CAP-065` read `17:0` throughout).
+- **V — lead L-1, the hosting bud** (added by `ai-sessions/0061`, maintainer-approved in chat 2026-10-01, "CAP-066": *"Apply as proposed (Recommended)"*).
+  `CAP-065` (`CAP-065-FINDINGS.md` §4): one bud out ⇒ Left 19 / Right 21 (7/7, 🟢); once the channel changed 21 → 19 inside one ACL after a Buds-side `DISC`
+  with both buds worn (🟡 "the channel names the bud that hosts the link"). This section takes the hosting bud out while the other stays worn.
+- **VI — the ANC tile's subtitle (redo of `CAP-065` BA-2/BA-3).** In `CAP-065` the tile was in Android's compact form (icon only) — no subtitle on any frame —
+  and the app was swiped away, not force-stopped, so A58-APP-01 (a fresh process before the first ANC report) was not exercised.
+- **VII — the `CAP-065` robustness steps that were not done** (K4 rotation, K1/K2, K3, L3, K5, then destructive A5, (E), B4, Z1) — the maintainer's choice
+  in chat 2026-10-01 ("Leftovers": *"Append to CAP-066, destructive last (Recommended)"*).
+
+**Changed by `ai-sessions/0061` (the same chat):** BB-6 and BB-7 dropped (`CAP-065` answered both: after wearing ⇒ `00`, e.g. frames 3641/7091; one docked
+and one loose ⇒ `00`, frame 5707); BB-8 shrunk to the in-app Transparency and Off taps (Noise cancellation was tapped in the app at `CAP-065` F7, frame 10790;
+all four modes went through the tile, 2567…3045).
 
 **Facts the maintainer gave (chat 2026-10-01):** the maintainer does not speak on the films (no spoken hash or state); Play services' *Nearby devices* permission
 is **allowed** (used for casting to a Chromecast). The build is identified from the logs; if the next FEATURE session adds the app build number to an Info
@@ -61,22 +72,53 @@ DLCI numbers are session-local (MAESTRO 0x02 or 0x03, Message Stream 0x04 or 0x0
 | Step | Pre-state | Action | Expected | Expected on the wire |
 |---|---|---|---|---|
 | BB-5 | both buds in the case, lid open | Take both buds out and lay them **straight on the table** (do not wear them). Tap ANC **Refresh** at ≈ 10 s, 30 s, 60 s, 90 s, 120 s | say nothing; just tap | one `08 11` → `08 13 … <Settable> …` per Refresh — the result is the Settable value over time |
-| BB-6 | both on the table | Put both buds in the ears for 20 s, then take both out onto the table; Refresh at ≈ 10 s, 30 s, 60 s | — | as BB-5 |
-| BB-7 | both on the table | Put one bud in the case (lid open), leave the other on the table; Refresh at ≈ 10 s and 60 s | — | as BB-5 (the `CAP-064` frame 5591 situation, `00` there) |
+| ~~BB-6~~ | — | *dropped by `ai-sessions/0061`*: answered by `CAP-065` (after wearing ⇒ `00`, frames 3641, 7091, 5465) | — | — |
+| ~~BB-7~~ | — | *dropped by `ai-sessions/0061`*: answered by `CAP-065` BA-6 (one docked, one loose ⇒ `00`, frame 5707) | — | — |
 
 ### III. ANC modes and the I-4 words
 
 | Step | Pre-state | Action | Expected on screen | Expected on the wire |
 |---|---|---|---|---|
-| BB-8 | both worn, ANC tab | Tap **Noise cancellation**, wait 5 s, tap **Transparency**, wait 5 s, tap **Off** | each mode after the Buds' answer | `08 12 … 08` → ACK; `08 12 … 80` → ACK; `08 12 … 20` → ACK [`ANC-002`, `ANC-004`, `ANC-001`] |
+| BB-8 | both worn, ANC tab | Tap **Transparency** (in the app, not the tile), wait 5 s, tap **Off** | each mode after the Buds' answer | `08 12 … 80` → ACK; `08 12 … 20` → ACK [`ANC-004`, `ANC-001`] (Noise cancellation: `CAP-065` F7) |
 | BB-9 | ready, both buds in the case, lid open, Connection tab | **Disconnect**; take both buds out onto the table; **Connect**, and **immediately** tap the battery card's (i) | the (i) dialog shows the previous connection's lines marked "last connection" until the new report arrives (≈ 2 s), then "not charging (out of the case)" | app `SABM` MAESTRO; claim with `03 03 00 03 64 64 ff` |
+
+### V. Lead L-1 — the hosting bud (`PROTOCOL.md` §2.2a 2026-10-01 🟡)
+
+Read the channel from the debug export line "Maestro channel announced by the Buds: N" after each step.
+
+| Step | Pre-state | Action | Expected | Expected on the wire |
+|---|---|---|---|---|
+| BB-12 | ready, both worn; the export's last announcement is **19** | Take the **Left** bud out of the ear onto the table (on film); wait 20 s | the app re-opens by itself if the Buds close the channel | 🟡 predicts: a Buds `DISC` of MAESTRO with the ACL up, then an announcement **21** (refuted if the session stays on 19 or comes back on 19) |
+| BB-12m | ready, both worn, announcement **21** (e.g. after BB-12 and the Left back in) | Take the **Right** out onto the table; wait 20 s | as BB-12 | 🟡 predicts a Buds `DISC`, then **19** |
+
+### VI. The ANC tile's subtitle (redo of `CAP-065` BA-2/BA-3, A58-APP-01)
+
+| Step | Pre-state | Action | Expected on screen | Expected on the wire |
+|---|---|---|---|---|
+| BB-13 | before the run | Quick Settings → edit (pencil) → make the **ANC tile large** (two columns), so its subtitle shows | — | — |
+| BB-14 | ready, both worn | Settings → Apps → OpenControl → **Force stop**; reopen; as soon as "ready" shows, pull down Quick Settings (within 3 s); read the tile | a mode or "Tap to switch", **never "Open the app"** while the app shows ready | app `SABM` MAESTRO; the snapshot claim's `Notify` may come later |
 
 ### IV. Restore
 
 | Step | Action | Done |
 |---|---|---|
 | BB-10 | Sound tab: drag the balance to **Right 4** (release) | `WriteSetting 4:{17:7}` → OK ☐ |
-| BB-11 | Status bar across a minute change; stop the film | ☐ |
+| BB-11 | *(after section VII)* Status bar across a minute change; stop the film | ☐ |
+
+### VII. Robustness steps not done in `CAP-065` (from its section IV) — destructive steps last, after BB-10
+
+| Step | Pre-state | Action | Expected on screen | Expected on the wire |
+|---|---|---|---|---|
+| K4r | ready | Rotate the phone to landscape and back | nothing lost, no crash | — |
+| K1 | ready | Quick Settings: **Bluetooth off** | "Bluetooth is disabled." + Enable Bluetooth; no crash | — (the HCI log may stop) |
+| K2 | after K1 | Bluetooth on; Connect if it does not connect by itself | ready | app `SABM` MAESTRO |
+| K3 | ready, both worn | Walk out of range (another room, buds in the ears) for 30 s; come back | a clear loss text, then ready again | ACL `Disconnection Complete` reason `0x08` (timeout), not `0x13`; a re-open |
+| L3 | — | Debug → **Debug mode off** → Export debug log (a second file) | no hex lines in it | — |
+| K5 | — | *(optional)* GrapheneOS Bluetooth auto-off to the shortest; lock; wait; unlock; open the app; restore the setting | "Bluetooth is disabled." (normal), no crash | system log `BluetoothAutoOff` |
+| A5 | — | *(destructive)* Settings → Apps → OpenControl → Permissions → *Nearby devices*: **Don't allow**; open the app; allow again | "Bluetooth permission needed" / "You denied the permission." + Allow | — |
+| (E) | — | *(destructive)* Forget the Buds in Android's Bluetooth settings; open the app | "No Pixel Buds Pro 2 paired yet." + Pair a device | bond removal |
+| B4 | after (E) | Open the lid; tap **Pair a device twice quickly** | one picker, no crash | — |
+| Z1 | after B4 | Pair in the picker; Connect | ready | CDM association, bonding (SSP or CTKD, `PROTOCOL.md` §5.1) |
 
 ## A.3. After the run
 
@@ -88,11 +130,14 @@ All into this folder, then `sha256sum *`.
 - [ ] Pre-filter by the Buds' classic handle; DLCIs by content.
 - [ ] BB-1 … BB-4: each claim's `08 11`/`08 13`/`08 12` sequence against the "expected" column; **refuted if** an `08 12` is sent after a `Notify` read `00` in
       the same claim, or a disabled tap claims twice.
-- [ ] BB-5 … BB-7: a table Settable × time × physical state (film).
+- [ ] BB-5: a table Settable × time × physical state (film) — `CAP-064` read `e8` ≈ 28 s here, `CAP-065` `00` every time.
 - [ ] BB-8: three ACKs, modes `08`, `80`, `20`.
 - [ ] BB-9: the (i) dialog frames of the first 3 s against the claim/stream times.
+- [ ] BB-12/BB-12m: each announcement's channel against which bud was taken out (film) and any Buds-side `DISC` with the ACL up.
+- [ ] BB-14: the tile's subtitle frames against the export's `ConnectionState` lines.
+- [ ] VII: `APP_TESTPLAN.md` sections K, L, A, B, E; K3's ACL reason code; Z1's bonding events.
 - [ ] Registry Test-IDs: [`ANC-001`], [`ANC-002`], [`ANC-003`], [`ANC-004`], [`INEAR-002`]–[`INEAR-004`], [`CASE-004`]–[`CASE-006`], [`BATT-004`],
-      [`AUDIO-003`], [`PAIR-003`].
+      [`AUDIO-003`], [`PAIR-003`], [`PAIR-001`] (Z1).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-066-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BB/CAP-066-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-066-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BB/CAP-066-EVENT-NOTES

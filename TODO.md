@@ -789,6 +789,17 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+**Open after `ai-sessions/0061` (added 2026-10-01):**
+- **Next FEATURE session — additions from `CAP-065` (the maintainer's choice, chat 2026-10-01):** (a) a `Set`/`Get` whose Message Stream claim is closed before its
+  answer is reported as "answer cut off — tap Refresh" and the mode marked unconfirmed (`CAP-065-FINDINGS.md` §9 item 1; fixtures `CAP-065` 2640/2649/2651 and
+  10321/10344/10356; no retry loop, no new permission); (b) a dark-mode contrast check of the Connection card's Disconnect label (Robolectric screenshot test,
+  §9 item 4); (c) `StrictMode` `detectLeakedClosableObjects` in debug builds to find the unclosed resource behind the three `CloseGuard` warnings (§0, §9 item 6).
+- 🔴 **Does the announced channel switch when the hosting bud is taken out with the other worn?** (`PROTOCOL.md` §2.2a 2026-10-01 🟡) — `CAP-066` BB-12.
+- 🔴 **Why `CAP-064` read Settable `e8` for 28 s with both buds on the table straight from the case, while `CAP-065` read `00` every time** — `CAP-066` BB-5.
+- 🔴 **What closed the app's claims at `CAP-065` 11:10:06.49 and 11:21:35.24** (no Bluetooth-process lines then; 🟡 Play services' collision as logged at
+  11:27:10.450) and **why the Buds closed the session at 11:17:46 with both buds worn**.
+- 🔴 **GrapheneOS `BluetoothAutoOff … delayMillis: 0`** (`CAP-065-FINDINGS.md` §0) — film the auto-off setting at `CAP-066` K5.
+
 **Open after `ai-sessions/0060` (added 2026-10-01):**
 - **Next FEATURE session (the maintainer's choice, chat 2026-10-01):** (1) ANC **`Get` before every `Set`** in one claim (no `Set` if that claim's `Notify` reads
   `00`) and the wording "The Buds don't allow changing noise control right now (usually because no bud is in an ear). Tapping a mode checks again first." —
@@ -797,12 +808,14 @@ tracked task above.)_
   and the Case's firmware, the app's build number). Open points for that session: which entry of the `GetSoftwareInfo` announcement is the Case (`PROTOCOL.md`
   §2.2a); how the build number/commit is put into the APK without the network (a Gradle `BuildConfig` field from `git`); dark-mode persistence in the existing
   DataStore. Optional: one loss-cause log line instead of three (§9 item 5).
-- **Analyse `CAP-065`** (Group BA) — run by the maintainer before 2026-10-01 (a `zip/` folder is in its placeholder folder, untracked), not yet analysed.
-- **Run `CAP-066`** (Group BB, skeleton by `ai-sessions/0060`): the real I-1 path, Settable `00` timing, ANC-002/004 in the app, the I-4 (i) words, balance restore.
+- ~~**Analyse `CAP-065`**~~ — done in `ai-sessions/0061` (2026-10-01).
+- **Run `CAP-066`** (Group BB, skeleton by `ai-sessions/0060`, extended by `0061`): the real I-1 path, Settable `00` timing (buds straight from the case), Transparency
+  and Off in the app, the I-4 (i) words, balance restore, the L-1 hosting-bud test, the tile subtitle (enlarged tile, real force-stop), and the `CAP-065` robustness
+  steps not done (K4 rotation, K1–K3, L3, K5, A5, (E), B4, Z1).
 - 🔴 **Why Android re-paged the docked Buds 3.4 ms after an ACL drop at 10:17:27 but not at 10:15:55** (`CAP-064-FINDINGS.md` §1a) — the system log has no
   Bluetooth-process lines; a bug report's `btsnoop`-side logs or `dumpsys bluetooth_manager` right after a drop would show the reason.
 - **`scripts/lint_docs.py` exits 1 on one entry** — `ai-sessions/0060_CAPTURE_PROMPT_2026_10_01.md` names the pre-rename `CAP-064` folder (a prompt is not
-  rewritten); it becomes informational once the next session pair exists. Re-check after `0061`.
+  rewritten); it becomes informational once the next session pair exists. Re-checked in `0061` (see the 0061 block above).
 - **Auto-connect on lid-open** — not possible from any event the app sees (`CAP-064-FINDINGS.md` §1); options (wording, one page on resume, CDM presence) recorded,
   the maintainer chose "Nothing now" (chat 2026-10-01).
 
@@ -814,8 +827,7 @@ tracked task above.)_
 - **Rule-9a fold of the remaining dated addenda** in the capture FINDINGS (`ai-sessions/0058` A58-CAP-05): three were folded in 0059 (`CAP-010`,
   `CAP-015`, `CAP-021`); every FINDINGS file now opens with a "Status as of 2026-09-30" banner (`scripts/stale_capture_status.py`), so the rest are
   read under it. A full fold is a MAINTENANCE pass of its own.
-- **Run `CAP-065`** (Group BA): the 0059 app fixes on hardware, the Settable byte with the ears visible (ADR-049's 🟡), and whether the announced
-  Maestro channel names the hosting bud (`PROTOCOL.md` §2.2a L-1, 🟡/🔴).
+- ~~**Run `CAP-065`**~~ — run 2026-10-01, analysed in `ai-sessions/0061` (L-1: one bud out ⇒ Left 19 / Right 21, 🟢; the hosting bud 🟡).
 - **Needs a manifest change (none was allowed in 0059):** the `:app` lint warning `DataExtractionRules`; a justification comment for AndroidX Core's
   app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (A58-GOV-08; explained in `README.md` meanwhile).
 - **`RfcommBudsTransportTest`'s 10 s timeout** (0057, A58-APP-06) was not reproduced in 0059 (200 runs under full CPU load); the test helper now

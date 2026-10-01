@@ -2316,6 +2316,14 @@ motivated this).
   `e8` for ≈ 28 s with both buds on the table (2299, 2542, 2699, 2759) and a `Set` ACKed (2698). Every `00` of the capture came with no bud worn (incl. 5591,
   one docked/one loose). **Item 3 now reads:** 🟡 HYPOTHESIS (strong) "`00` ⇒ no bud worn"; the converse "no bud worn ⇒ `00`" is refuted (`CAP-064-FINDINGS.md`
   §3). Items 1, 2 and 4 are unchanged.
+- **Update (2026-10-01, `ai-sessions/0061`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-049", option *"Dated Update, no status change
+  (Recommended)"*, with this text in the preview):** `CAP-065` (OpenControl, ears on film; message-level parse of every claim, `CAP-065-FINDINGS.md` §3): 28
+  `Notify` frames read `00`, each with no bud in an ear; every `e8` came with at least one bud in an ear. BA-5 both buds loose on the table → `00` (5465
+  `08 13 00 04 01 e8 00 20`); BA-6 Left docked, Right loose → `00` (5707); BA-7 lid closed with the Right outside → `00` (6019); BA-8 both worn → `e8` (6334
+  `… 01 e8 e8 20`). `CAP-064`'s ≈ 28 s of `e8` with both buds on the table did not recur — every bud taken straight from the case to the table read `00`
+  (4120, 5280, 8269, 9344, 10356). The open samples of item 3 (`CAP-045` 612 one docked/one loose, `CAP-048` 11939 both loose) were repeated with the ears in
+  view and read `00`. **Item 3 is unchanged:** 🟡 HYPOTHESIS (strong) "`00` ⇒ no bud worn"; the converse stays refuted (`CAP-064`). Items 1, 2 and 4 are
+  unchanged (all 7 `Set`s of `CAP-065` were sent on a non-`00` or unknown reading and ACKed).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

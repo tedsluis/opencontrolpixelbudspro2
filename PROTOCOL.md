@@ -394,6 +394,16 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
   - **The phone's "`type 4` packets" above are `CLIENT_ERROR` — 🟢 FACT (decoder output).** pw_rpc packet type 4 = `CLIENT_ERROR`; in every capture
     log only the phone sends them (cancellations and `FAILED_PRECONDITION`s, e.g. `CAP-056` 4360 `…30012100…` = CANCELLED on `WriteSetting`), and the
     Buds never send a `SERVER_ERROR` (0 in all logs; `grep -c` over `scripts/pwrpc_decode.py` output of every `captures/*/*btsno*_hci*.log`).
+- **Update (2026-10-01, `ai-sessions/0061`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "L-1", option *"FACT for the correlation, 🟡 for
+  'host' (Recommended)"*) — lead L-1 tested in `CAP-065` (Group BA, ears and case on film; `CAP-065-FINDINGS.md` §4).** 🟢 **FACT (`CAP-065`, 7 of 7):** with
+  only the **Left** bud out of the case the Buds announce channel **19**, with only the **Right** out channel **21** — frames 884, 1883, 8190, 8509, 10123
+  (`10 13` = 19) and 4074, 9134 (`10 15` = 21), the `GetSoftwareInfo` `RESPONSE` with `call_id` 4294967295 (raw 1883 `7e 80 a3 03 2a 64 … 10 13 1d ea 71 de
+  7d 5e 25 44 fa 99 71 38 ff ff ff ff 0f …`); which bud was out is from the film (slot and head side) and the runtime-info stream's per-bud charging field
+  (Option F); these are `fux.java`'s `LEFT_BT_CORE` (19) and `RIGHT_BT_CORE` (21) on `MAESTRO_A`. 🟡 **HYPOTHESIS:** the channel names the bud that hosts the
+  phone's link, not merely the first bud out — inside one ACL, after a Buds-side `DISC` of DLCI 0x03/0x05 with both buds worn and nothing touched (6720/6721,
+  11:17:46.13), the next announcement read 19 instead of 21 (6762). Experiment: `CAP-066` (both worn on 19, take the Left out → a Buds `DISC` and 21?).
+  Command: the scratch decoder of `CAP-065-FINDINGS.md` (DLCI 2 **and** 3, per direction, CRC-32 per frame). ADR-034 item 3 (send only on a tabulated
+  channel) is unchanged.
 
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
@@ -683,6 +693,12 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   `e8` with both buds on the table (10394, 10600 `08 13 00 04 01 e8 e8 20`) — the 🔴 above is answered; in-ear detection **on** ⇒ `e8` for ≈ 28 s with both buds
   on the table (2299, 2542, 2699, 2759) and an ANC `Set` ACKed in that state (2687 → 2698). Every `00` of the capture came with no bud worn (incl. 5591, one
   docked / one loose). 🟡 HYPOTHESIS (strong): "`00` ⇒ no bud worn"; the converse "no bud worn ⇒ `00`" is **refuted** as a rule.
+  **Update (2026-10-01, `ai-sessions/0061`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "ADR-049", option *"Dated Update, no status change
+  (Recommended)"*; `DECISIONS.md` ADR-049 Update).** `CAP-065` (OpenControl, ears on film; `CAP-065-FINDINGS.md` §3): 28 `Notify` frames read `00`, each with no
+  bud in an ear, every `e8` with at least one bud in an ear; both loose (5465), one docked/one loose (5707), lid closed with one bud outside (6019) ⇒ `00`; both
+  worn (6334) ⇒ `e8`; buds taken straight from the case to the table read `00` every time (the `CAP-064` 28-s `e8` did not recur). Status unchanged: 🟡
+  "`00` ⇒ no bud worn", the converse refuted. Command: the message-level parse of `tshark -r CAP-065-btsnoop_hci.log -Y "bthci_acl.chandle==0x000b &&
+  (btrfcomm.dlci==4 || btrfcomm.dlci==5)" -T fields -e frame.number -e frame.p2p_dir -e data.data`.
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -1329,6 +1345,14 @@ event-observation coroutines.
   2–40 ms of an `AT+BIEV=2,100` (8169, 8201, 8307, 8381). `CAP-062-FINDINGS.md` §4's "nothing between changes" (06:46:57–06:48:52) holds for that
   capture only, not as a rule. `CAP-063-FINDINGS.md` §4.
 
+- **Update (2026-10-01, `ai-sessions/0061`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "Other notes", option *"§4.3 Option B/F: lid closed
+  (Recommended)"*) — the lid closed with one bud inside, 🟢 for `CAP-065`.** With the Left bud in the closed case and the Right outside (ACL up), the Buds'
+  "Battery updated" read that bud as unknown — frame 6015 `03 03 00 03 ff 64 ff` (Option B's `0x7F`/`0xff` = unknown) — and the runtime-info stream carried
+  neither that bud's entry nor the Case: 5874 `2a 10 18 00 32 06 1a 04 08 64 10 01 3a 04 08 00 18 00` = `6:{3:{1:100 2:1}} 7:{1:0 3:0}`; after the lid opened
+  the Left entry (charging) and Case 89 returned (6174, 11:16:19.2). Command: `tshark -r CAP-065-btsnoop_hci.log -Y "bthci_acl.chandle==0x000b &&
+  btrfcomm.len>0 && (frame.number==5874 || frame.number==6015)" -T fields -e frame.number -e data.data` and the MAESTRO decoder of
+  `CAP-065-FINDINGS.md`. One sample; not a rule yet.
+
 **Implementation priority (superseded 2026-09-24 — see the "Current state" note at the top of §4.3: B and E are implemented *(correction 2026-09-30:
 **B and F** are implemented; E is a FACT source the app no longer opens, ADR-043)*, A unmatched, C removed
 (ADR-040), D contested; "already-periodic HFP" below is wrong per ADR-015):** 0 (cheap to rule in/out) → A → B → C → D (see
@@ -1763,6 +1787,14 @@ The following remain 🔴 unconfirmed at the protocol level — no capture has t
 > `GetSoftwareInfo` 22–102 ms after the `UA` and a fresh client needs no opening message before `ReadSetting` (ADR-034's update, `CAP-059`); on DLCI 0x04 the
 > Buds send Device Information (session nonce `0x0A`, Model ID, …) and the battery burst right after the open (§0.1, §4.3 Option B); the official app's DLCI 0x02
 > connect burst is identified (§6). Step 3's order is §5.2 (🟡, 6 of 7).
+
+> **Update (2026-10-01, `ai-sessions/0061`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "Other notes", option *"§1/§5: ACL starts only from
+> the Buds"*) — who starts the classic link to the bonded Buds, 🟢 for `CAP-064` and `CAP-065` (OpenControl on the Pixel 9a).** In `CAP-065` all seven ACLs
+> began with the **Buds'** HCI Connection Request (frames 596, 1528, 3689, 4698, 7346, 8809, 9848), each 1–4 s after a bud left the case; the phone sent no
+> Create Connection (`-Y "bthci_cmd.opcode==0x0405"` → 0; positive control `CAP-064` 673/7201/8399). Opening the lid with both buds docked started **no**
+> connection (6 cases: `CAP-064` §1 B/F, `CAP-065` §1 A/E/F/G), and the ACL dropped (reason `0x13`) when the last bud was docked, also with the lid open.
+> The phone pages the Buds only when an app connects with no ACL (`CAP-064` 673, 7201) or, once, right after a drop (`CAP-064` 8399, 🔴 why). Step 1 below
+> ("Case opens … becomes discoverable") is therefore not the trigger of a reconnect to a bonded phone; a bud leaving the case is. `CAP-065-FINDINGS.md` §1.
 
 Full step-by-step sequence not yet captured end-to-end for the RFCOMM
 profile/Message-Stream/battery/command portions (steps 3–6 below remain ⚪
@@ -3360,6 +3392,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-28 | **`ai-sessions/0055` — `CAP-056` (Group AR), maintainer-approved in chat 2026-09-28.** **§4.5.3** `qht` bit order 1 NC / 2 Off / 3 Transparency / 4 Adaptive 🟢 (on-screen-order 🟡 refuted); checklist = "ANC gesture loop" 🟢; no Left/Right field in the write 🟢, one shared list 🟡 → ADR-046. **§4.5.5** "In-ear detection" = field 2 🟢 (film 5/5 + SASS bit 4); behaviour with it off 🟢 for `CAP-056` → ADR-047. **§4.1** Settable `00` support (stays 🟡). **§6** pause route 🟡, DLCI 0x02 `DISC` trigger 🔴, DLCI 0x08 `04 05` 🟡 / `04 16` 🔴, field-13 mirror 🟡 | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-28 |
 | 2026-09-30 | **`ai-sessions/0059` — processing the `ai-sessions/0058` audit, all status changes maintainer-approved in chat 2026-09-30.** **§4.1** Settable byte: ADR-049 supersedes ADR-024's "dock state" (🟢 `0x00` ⇒ NAK 10/10, non-zero ⇒ ACK 40/40; 🟡 `0x00` ⇔ no bud worn). **§4.3 Option 0** 🟢 not public API (`@SystemApi`). **§2.2a** "LEB128" corrected to one-terminated varint; the other pw_rpc services named (🟢); "1779298694" = `UpdateHelperService.GetRunningVersion`, not a serial (🟢); request address derivable from the channel (🟡); "type 4" = `CLIENT_ERROR`. **§6** HID = Android head-tracker sensor (🟢, `CAP-033` 1355 descriptor); CONV-002's AVRCP negative corrected (invalid filter); several answered items ticked with pointers; Group-A repeat PROPOSAL markers approved as recorded; superseded markers resolved. **§4.3 Option F** `CAP-002` 62 → 57 (own window); `CAP-043` is connection-free; implemented sources B and **F**. **§7** two rows aligned with the as-built error model | Claude (AI), maintenance task; maintainer-approved in chat 2026-09-30 |
 | 2026-10-01 | **`ai-sessions/0060` — `CAP-064` (Group AZ), maintainer-approved in chat 2026-10-01.** **§4.1** Settable: one worn bud ⇒ `e8` (AY-3, 2/2); in-ear detection off ⇒ `e8` with none worn; in-ear on ⇒ `e8` ≈ 28 s with both buds on the table and a `Set` ACKed — 🟡 now "`00` ⇒ no bud worn", the converse refuted (ADR-049 Update). **§4.5.3** the Buds follow OpenControl's field-12 list (six long presses, never `40`) 🟢 for `CAP-064`. **§4.5.5** OpenControl's field-2 writes behave as in `CAP-056` (SASS bit 4, no pause, `DISC` on wear changes); Settable with it off and no bud worn = `e8` (🔴 answered). |
+| 2026-10-01 | **`ai-sessions/0061` — `CAP-065` (Group BA), maintainer-approved in chat 2026-10-01.** **§2.2a** L-1: with only the Left bud out the Buds announce channel 19, with only the Right out 21 — 🟢 7/7; 🟡 the channel names the bud hosting the link (21 → 19 inside one ACL). **§4.1** Settable: 28 `00` all with no bud worn, every `e8` with one worn; one docked/one loose and both loose ⇒ `00` (ADR-049 Update, status unchanged). **§4.3** lid closed with one bud inside: that bud `ff` in `03 03`, no bud entry and no Case in the runtime-info stream (🟢 one sample). **§5** every ACL to the Buds started by the Buds when a bud left the case; none on lid-open. |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL
