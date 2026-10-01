@@ -20,6 +20,9 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > Battery via HFP is not deliverable to an app (ADR-040). `CAP-064` (`ai-sessions/0060`): the app connects by itself when a bud leaves the case,
 > not when the lid is opened with both buds inside — the Buds start no connection then; tap Connect. `CAP-065` (`ai-sessions/0061`): the EQ sliders wait for the
 > Buds' EQ, every pull refreshes exactly its tab, and the Buds announce channel 19 for the Left bud and 21 for the Right.
+> `ai-sessions/0062` (not hardware-verified yet — `CAP-066`): every ANC tap asks the Buds first and changes the mode only if they allow it now (with clearer
+> wording; the tile steps from the Buds' answer), an answer cut off by another app taking the channel is said as such, and a **gear** opens **Settings** with
+> dark mode (System / On / Off), the Debug screen and an **Info** tab (the app's build, the firmware of the Case and each bud).
 
 > ## ⚠️ Disclaimer: hardware risk
 >
@@ -107,7 +110,8 @@ persistent connection-status notification while connected). `BLUETOOTH_SCAN` is 
 return, flagged `neverForLocation`, only with the bounded battery-advertisement scan of ADR-006). The installed APK lists one more,
 `io.github.tedsluis.opencontrolpixelbuds.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`: AndroidX Core adds it to the merged manifest for its own
 `ContextCompat.registerReceiver(…, RECEIVER_NOT_EXPORTED)` — a signature-level permission private to this app, granting nothing outside it
-(`ai-sessions/0058` A58-GOV-08; not commented in the manifest because `ai-sessions/0059` made no manifest change). No `INTERNET` permission, ever
+(`ai-sessions/0058` A58-GOV-08; commented in the manifest since `ai-sessions/0062`, which also excludes all app data from backup and device transfer with
+`android:dataExtractionRules`). No `INTERNET` permission, ever
 (AGENTS.md §1) — verify this yourself with `aapt dump permissions android/app/build/outputs/apk/debug/app-debug.apk`
 if you want to check before installing.
 

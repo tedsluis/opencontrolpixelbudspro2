@@ -11,7 +11,11 @@ a setting not read yet is disabled: N1; a tap during a re-open: C12); **updated 
 bar with a Debug action and five tabs, the (i) details dialogs, the graphical battery, pull to refresh / reconnect, the settings re-read, the app theme —
 **section O**). **Since `0057` every time and state word the older rows expect "on screen" ("updated / read / changed HH:MM:SS", "last seen …",
 "… last connection", "Not read from the Buds yet") is in that card's (i) dialog** — tap (i) to check it; the main surface shows the value, and a dot on the (i)
-plus a dimmed value (battery) or a disabled control (settings) when it is not current. Debug (L) is opened with the bug icon in the top bar, not a tab.
+plus a dimmed value (battery) or a disabled control (settings) when it is not current. ~~Debug (L) is opened with the bug icon in the top bar, not a tab.~~
+**Updated 2026-10-01 for the `ai-sessions/0062` build:** every ANC tap — the ANC tab's and the tile's — sends `08 11` first and the `08 12` only if that claim's
+`Notify` allows it (F1–F8, G3, D2); the new not-allowed wording and the tile subtitle "Not allowed now" (F8, G3, O12); the **gear** in the top bar opens
+**Settings** with the tabs Settings (dark mode), Debug (L) and Info (L1, O1, O3, O13, P1); **section Q** (the menu, Info, dark mode, the tile from the fresh
+`Notify`, the cut-off watch, the Disconnect label's contrast).
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -25,7 +29,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 
 | # | Check | Done |
 |---|---|---|
-| P1 | Build and install the debug APK of the commit under test; write the commit hash here: `________` | ☐ |
+| P1 | Build and install the debug APK of the commit under test; **since `ai-sessions/0062`** read the build on the app's **Info** tab (gear → Info, "App: …, build <hash> (<date>)") on film — no hash to write down | ☐ |
 | P2 | Settings → System → Developer options → **Bluetooth HCI snoop log: Enabled**; then switch Bluetooth **off and on on film** (the log only starts after a toggle) | ☐ |
 | P3 | Camera films the phone screen **and** the case/buds; the phone's clock with seconds is visible (or film the status bar at a minute change at the start and the end) | ☐ |
 | P4 | Write down Play services' *Nearby devices* permission (Settings → Apps → Google Play services → Permissions): `allowed / denied` | ☐ |
@@ -77,7 +81,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
 | D1 | After C2/C4: look at the Connection tab. | "Firmware: release_5.203"; **no** Safe Mode card | the Buds' `GetSoftwareInfo` on DLCI 0x02 | | |
-| D2 | Do any write (ANC tap, F1). | It is **sent** — no "Safe Mode: nothing was sent" message | an ANC `Set` (`08 12 …`) on DLCI 0x04 | | |
+| D2 | Do any write (ANC tap, F1). | It is **sent** — no "Safe Mode: nothing was sent" message | `08 11` → `08 13 … e8 …`, then the ANC `Set` (`08 12 …`) on DLCI 0x04 | | |
 
 ## E. Battery
 
@@ -98,14 +102,14 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| F1 | Buds **in your ears**, Connected. ANC tab: tap **TRANSPARENT**. | "ANC mode: TRANSPARENT (updated …)"; you **hear** the surroundings | `08 12 … 80 …` → ACK `ff 01 …` / `08 13` | | |
+| F1 | Buds **in your ears**, Connected. ANC tab: tap **TRANSPARENT**. | "ANC mode: TRANSPARENT (updated …)"; you **hear** the surroundings | one claim: `08 11` → `08 13 … e8 …`, then `08 12 … 80 …` → ACK `ff 01 …` / `08 13` (`ai-sessions/0062` F-1: the `Get` first, every tap) | | |
 | F2 | Tap **ADAPTIVE**. | mode ADAPTIVE | `… 40 …` | | |
 | F3 | Tap **OFF**. | mode OFF; noise cancelling audibly off | `… 20 …` | | |
 | F4 | Tap **ACTIVE**. | mode ACTIVE; noise cancelling audibly on | `… 08 …` | | |
 | F5 | Change the mode with a **press-and-hold on a bud**, then tap **Refresh**. | The screen shows the bud's new mode | `08 11` → `08 13` | | |
-| F6 | Tap two modes very quickly after each other. | The last one wins, no error or hang | two `Set`s, in order | | |
+| F6 | Tap two modes very quickly after each other. | The last one wins, no error or hang | two `Get` + `Set` pairs, in order | | |
 | F7 | Tap a mode and switch to another app immediately; come back after 5 s. | The mode was still applied; no stuck "claiming" state | the channel is released (`DISC`) | | |
-| F8 | With the buds **not in your ears** (in the case, or on the table), Connected: look at the ANC tab; tap a mode; then put the buds in your ears and tap a mode again. | "ANC can only be changed while you wear the Buds (checked HH:MM:SS). Tapping a mode checks again first."; the mode buttons stay **enabled** (`ai-sessions/0054` I-1). Not worn: the tap changes nothing but the checked time; worn: the tap switches the mode | not worn: one claim, `08 11` → `08 13 … 00 …`, **no** `08 12`; worn: one claim, `08 11` → `08 13 … e8 …` → `08 12` → ACK | | |
+| F8 | With the buds **not in your ears** (in the case, or on the table), Connected: look at the ANC tab; tap a mode; then put the buds in your ears and tap a mode again. | "The Buds don't allow changing noise control right now (usually because no bud is in an ear). Tapping a mode checks again first." (the (i): "…in an ear; checked HH:MM:SS)…"); the mode buttons stay **enabled** (`ai-sessions/0054` I-1, `0062` F-2). Not worn: the tap changes nothing but the checked time, the line "The Buds don't allow changing noise control right now (usually because no bud is in an ear)."; worn: the tap switches the mode | not worn: one claim, `08 11` → `08 13 … 00 …`, **no** `08 12`; worn: one claim, `08 11` → `08 13 … e8 …` → `08 12` → ACK | | |
 
 ## G. ANC Quick Settings tile
 
@@ -113,7 +117,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 |---|---|---|---|---|---|
 | G1 | ANC tab: tap **Add ANC Quick Settings tile**. | A message: "added", "already in Quick Settings …" or "not added" | — | | |
 | G2 | Open Quick Settings fully and find the **ANC** tile (swipe through the pages, or edit). | The tile "ANC" is there; its subtitle shows the current mode when connected, "Open the app" when not | — | | |
-| G3 | Connected, Buds **worn**: tap the tile repeatedly. Then take them out and tap once more. | Worn: cycles ACTIVE → TRANSPARENT → ADAPTIVE → OFF → ACTIVE, audible; the ANC tab agrees. Not worn: subtitle "Only while worn"; a tap checks again first and shows "ANC can only be changed while you wear the Buds." if the Buds still refuse; after putting them back in, a tap switches (`ai-sessions/0054` I-1) | one `Set` per tap while worn; while not worn one claim with `08 11` → `08 13 … 00 …` and no `08 12` | | |
+| G3 | Connected, Buds **worn**: tap the tile repeatedly. Then take them out and tap once more. | Worn: cycles ACTIVE → TRANSPARENT → ADAPTIVE → OFF → ACTIVE from the mode **the Buds report in that tap's claim** (`ai-sessions/0062` F-1), audible; the ANC tab agrees. Not worn: subtitle "Not allowed now" (large tile); a tap checks first and toasts "The Buds don't allow changing noise control right now (usually because no bud is in an ear)." if they refuse; after putting them back in, a tap switches | per tap one claim: `08 11` → `08 13`, then `08 12` only if Settable ≠ `00` | | |
 | G4 | **Not** connected: tap the tile. | The tile says "Open the app"; tapping opens the app; the app then connects by itself if Android shows the Buds connected (ADR-044) — the tile itself never connects | nothing from the tile | | |
 
 ## H. Equalizer (tab "Sound" since `ai-sessions/0052`)
@@ -186,14 +190,14 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | K1 | Connected: switch **Bluetooth off** in Quick Settings. | "Bluetooth is disabled." with **Enable Bluetooth**; no crash | | | |
 | K2 | Switch Bluetooth on again, **Connect**. | ready again | | | |
 | K3 | Connected: walk out of range (another room) and back. | A clear "lost" message, then **Connect** works again | | | |
-| K4 | Rotate the phone / change to dark mode while connected. | Nothing lost; no crash | | | |
+| K4 | Rotate the phone / change to dark mode while connected (Android's switch, and the app's own Settings tab, Q2). | Nothing lost; no crash | | | |
 | K5 | Leave the phone locked for the GrapheneOS Bluetooth auto-off time, unlock, open the app. | "Bluetooth is disabled." (normal), no crash | | | |
 
-## L. Debug screen and export
+## L. Debug screen and export (the **Debug tab** of the settings menu since `ai-sessions/0062`)
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| L1 | Bug icon (top bar) → Debug: switch **Debug mode** on. *(No Debug tab since `ai-sessions/0057`, O1; corrected 2026-09-30, A58-HK-06.)* | "Unidentified frames (n)" list grows during use | — | | |
+| L1 | Gear (top bar) → **Debug** tab: switch **Debug mode** on. *(Bug icon `0057`–`0061`; the gear and the menu since `ai-sessions/0062`.)* | "Unidentified frames (n)" list grows during use | — | | |
 | L2 | Tap **Export debug log**, pick a folder and file name in Android's "save as" dialog. | "Debug log saved (N lines)."; the file holds the **whole** log (not cut at 64 KiB — `CAP-063`), connection lines with times; with Debug mode on also hex lines; **no** full Buds address | — | | |
 | L3 | Debug mode off, export again. | No hex lines | — | | |
 
@@ -201,9 +205,9 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| O1 | Start the app; look at the top and the bottom. | Top bar "OpenControl" with a bug icon on the right; bottom bar with **five** tabs Connection, ANC, Sound, Controls, Find (own icons); no Debug tab | — | | |
+| O1 | Start the app; look at the top and the bottom. | Top bar "OpenControl" with a **gear** on the right (since `ai-sessions/0062`; a bug icon before); bottom bar with **five** tabs Connection, ANC, Sound, Controls, Find (own icons); no Debug tab | — | | |
 | O2 | Swipe left through all tabs and back; tap each tab. | The selected tab follows swipe and tap | — | | |
-| O3 | Tap the bug icon; then the ← arrow; again the bug icon, then **system back**. | Debug fills the screen (title "Debug", ←, no bottom bar); ← and back return to the tab you came from | — | | |
+| O3 | Tap the gear; then the ← arrow; again the gear, then **system back**. | The settings menu fills the screen (title "Settings", ←, tabs Settings / Debug / Info, no bottom bar); ← and back return to the tab you came from | — | | |
 | O4 | Ready, both buds in the case: Connection tab. | Status card in the theme's accent colour with a check icon and "App control: ready"; Battery card with three columns Left \| Case \| Right, icon, %, a bar, a bolt on a charging bud | — | | |
 | O5 | Tap the Battery card's (i). | A dialog with the explanation, the full Left/Right/Case lines **with the same times as the debug log**, the Case note and "Firmware: …"; "Close" and back close it | — | | |
 | O6 | Take both buds out (E4's state). | Case column dimmed, a dot on the Battery (i); TalkBack (if used) reads "Battery: Details — not current"; the (i) says "last seen HH:MM:SS" | stream packet without 6.1 | | |
@@ -212,7 +216,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | O9 | **Disconnect**; pull down on any tab. Then Bluetooth off and pull; then Bluetooth on. | After Disconnect: the app connects (as the Connect button); with Bluetooth off: Android's own "enable Bluetooth" prompt — never a new dialog, never nothing | `SABM` DLCI 0x02 after the first pull | | |
 | O10 | While "App control: connecting…", pull. | The spinner ends at once; nothing else happens | nothing extra | | |
 | O11 | Sound: drag an EQ band and the balance while the write is refused (e.g. in Safe Mode, or right after a Disconnect before the tap). | While the finger is down the knob follows it; after release it returns to the Buds' value and stays there; the error line says why | no write, or a write with no OK | | |
-| O12 | ANC tab. | Four large buttons (2 × 2); the Buds' mode is the filled one with a check; with no bud worn the sentence "ANC can only be changed while you wear the Buds. Tapping a mode checks again first." (its time is in the (i)) | — | | |
+| O12 | ANC tab. | Four large buttons (2 × 2); the Buds' mode is the filled one with a check; with no bud worn the sentence "The Buds don't allow changing noise control right now (usually because no bud is in an ear). Tapping a mode checks again first." (its time is in the (i), `ai-sessions/0062`) | — | | |
 | O13 | Android Settings → Display → Dark theme on, then off; change the wallpaper colours. | The app follows dark/light and the wallpaper colours; all text readable in both | — | | |
 
 ---
@@ -227,6 +231,17 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | P4 | Only during a pairing (section B): after picking the Buds in Android's dialog, rotate the phone before "Paired" shows. | Pairing still ends with "Paired" (or its own failure text), not stuck (A58-APP-08) | `Pairing:` lines continue in the debug log | | |
 | P5 | Bluetooth on; force-stop the app and start it; watch the first second. | "Bluetooth is disabled" does **not** flash before the normal screen (A58-APP-08) | — | | Film at normal speed |
 | P6 | *(watch only)* After the run, search the debug export for "answered with a value this app cannot read" and "Late WriteSetting answer dropped". | — | If either exists: note the time; the analysis looks up the frame (A58-APP-03/04) | | |
+
+## Q. The `ai-sessions/0062` build (settings menu, Info, dark mode, ANC `Get` first, cut-off)
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| Q1 | Ready: gear → **Info**. | "App: 0.1.0-dev, build <short hash>[-dirty] (<commit date>)" (= `git log -1 --format='%h %cs'` of the build); "Firmware (from the Buds' announcement, HH:MM:SS):", "Case: release_5.203", "Left bud: release_5.203", "Right bud: release_5.203", "Control channel: 19" (or 21); after Disconnect: "Not connected yet — the Buds report their firmware when the app connects." | nothing from the app while the menu is open | | |
+| Q2 | Gear → **Settings**: Dark mode **On**, then **Off**, then **System**; with System, switch Android's own dark theme on and off. | On: dark at once; Off: light at once; System follows Android — no restart, no crash; the choice is kept after the app is closed and reopened | — | | |
+| Q3 | Q2 **On** (dark), Connection tab, session ready. | The card's **Disconnect** is as legible as the card's other text (the `CAP-065` dark frame measured ≈ 1.2:1 before the fix) | — | | |
+| Q4 | Both worn, mode Adaptive; Quick Settings → ANC tile once (large tile). | Off (the next after the Buds' **reported** mode, Adaptive) — even if the app showed another mode before | one claim: `08 11` → `08 13 … e8 40` → `08 12 … 20` → ACK | | |
+| Q5 | *(watch only)* An ANC tap or Refresh while Play services takes the channel back. | "The answer was cut off — another app took the Buds' channel. Tap Refresh to see the current mode."; after a cut-off change the mode buttons dimmed + the (i) dot ("Not confirmed: …"), cleared by the next Refresh; never "The Buds didn't respond in time." for it | the app's request, then a phone `DISC` before the Buds' answer | | |
+| Q6 | Gear → **Debug** tab. | The Debug screen as before (Debug-mode switch, Export debug log, Unidentified frames) | — | | |
 
 ## After the run (within 1 minute of the last action)
 
@@ -258,6 +273,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | N Controls | 11 | | | | |
 | O Material 3 overhaul | 13 | | | | |
 | P 0059 fixes | 6 | | | | |
+| Q 0062 build | 6 | | | | |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/APP_TESTPLAN.md - https://tedsluis.github.io/opencontrolpixelbudspro2/APP_TESTPLAN

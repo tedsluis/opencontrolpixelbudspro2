@@ -56,8 +56,8 @@ for stock AOSP-based ROMs.
 │  - CodecRouter (per-DLCI FrameEncoder/FrameDecoder:     │
 │    0x02 EQ/settings/Case, 0x04 ANC/Ring/battery/ACK)   │
 │  - SafeModeGate (§8.1, ADR-042)                         │
-│  - DataStore (Debug Mode toggle — as built; see §2's    │
-│    Data Layer note for the encryption-scope disclosure) │
+│  - DataStore (Debug Mode toggle and, since 0062, the    │
+│    dark mode — see §2's Data Layer note)                │
 └──────────────────────┬─────────────────────────────────┘
                         │ consumes BudsTransport(channelId)
 ┌──────────────────────▼─────────────────────────────────┐
@@ -114,9 +114,9 @@ enforced by the build graph, not just by convention:
   `BudsRepositoryImpl`, translating transport-level events from `:hardware`
   into domain models. Also owns local persistence — as actually built, this
   is the Debug Mode toggle via plain (not encrypted) AndroidX DataStore
-  Preferences (`DebugSettingsStore.kt`); see that file's own `// TODO(verify)`
-  for why encryption was judged unnecessary for this one non-sensitive
-  boolean, and AGENTS.md §10 for the dependency-policy reasoning. No EQ-preset
+  Preferences (`DebugSettingsStore.kt`) and — since `ai-sessions/0062` (F-6) — the dark-mode choice (`DarkModeSettingsStore.kt`, a second key in the
+  same file, `SettingsDataStore.kt`); see `DebugSettingsStore.kt`'s comment for why encryption was judged unnecessary for these non-sensitive
+  values, and AGENTS.md §10 for the dependency-policy reasoning. No EQ-preset
   or battery persistence exists yet — this project's own state-reconciliation
   design (§3.1) treats the hardware as the sole source of truth for those,
   by design, not as a gap.
@@ -141,14 +141,20 @@ Connection screen (start destination)
  │   battery is push-driven ambient state, not a user-operated control, so it doesn't need its
  │   own navigation stop; see §3.1's table)
  ├─ Find My Buds screen
- └─ Debug screen (only reachable via a clearly-labeled, non-primary entry point — e.g. a menu
-     item — never shown in the main bottom/side navigation; per AGENTS.md §6/§9 this is a
-     developer-facing surface, not part of ordinary use)
+ └─ Settings menu (since `ai-sessions/0062`; only reachable via the top app bar's gear — never shown
+     in the main bottom/side navigation), with three tabs: Settings (dark mode), Debug (the
+     developer-facing Debug screen, per AGENTS.md §6/§9 not part of ordinary use) and Info (the
+     app's build, the Buds' firmware)
 ```
 
 **As built since `ai-sessions/0057`** (the maintainer's decisions in chat 2026-09-29): a Material 3 top app bar titled "OpenControl" and a bottom
 navigation bar with exactly five tabs — **Connection, ANC, Sound, Controls, Find** (Android's guidance: "three to five destinations of equal importance").
 Debug is reached only through the top app bar's bug action, as a full-screen destination outside the five tabs; back returns to the tab it was opened from.
+**Since `ai-sessions/0062` (F-4, the maintainer's design in chat 2026-10-01):** a **gear** ("Settings", material-icons-core's `Settings` icon) replaces the bug
+icon and opens a full-screen **Settings** destination with three tabs — **Settings** (dark mode System / On / Off, default System, F-6), **Debug** (the Debug
+screen unchanged: Debug-mode switch, Export debug log, unidentified frames) and **Info** (the app's version, git commit and commit date from `BuildConfig`,
+computed locally at build time; the firmware of the Case / Left bud / Right bud from this connection's announcement with its receive time and the announced
+control channel, or "Not connected yet", F-5). Back returns to the tab it was opened from.
 (From `ai-sessions/0037` to `0056` Debug was a sixth bottom tab, contrary to the tree above; `0057` restored the documented design.) Every tab can be pulled
 down: while the session is `Ready` a pull runs that tab's existing refresh (Connection and Find: *Refresh battery*; ANC: Refresh; Sound: "Read EQ again" then
 the settings re-read; Controls: the settings re-read), otherwise the action of the Connection screen's own button in that state (Connect/Retry, Enable
@@ -269,7 +275,7 @@ should not be assumed uniform):**
 
 | Feature | Reconciliation mechanism on (re)connect | Confidence |
 |---|---|---|
-| ANC | **Corrected `ai-sessions/0040`:** the connect-time `Get`/`Notify` pair (ADR-021/ADR-022) is the *official client's* own query — a client that sends nothing gets no ANC `Notify`. This app therefore sends its own `AncFrame.Get` during each Message Stream claim (the Connect-time snapshot, ANC Refresh, and each ANC tap's reply) and treats the value as last-known between claims (ADR-032). **A `Set` is only counted once answered (2026-09-24):** ACK → requested mode, `Notify` → the Buds' mode, NAK/no answer → failure, previous mode kept. The `Notify`'s Settable byte is kept as `ancAvailability` (`ai-sessions/0048` I-3, ADR-024 Update 2026-09-25): while it reads `0x00` the Buds NAK a `Set` (reason `0x02`, `CAP-062` 10/10). **Since `ai-sessions/0054` (I-1, maintainer-confirmed in chat 2026-09-28; it reverses `0048` I-3's "claim and send nothing" for a user tap):** the ANC buttons and the tile stay tappable, with "ANC can only be changed while you wear the Buds (checked HH:MM:SS). Tapping a mode checks again first." (🟡 wording); such a tap does one ordinary claim with the `Get` and sends the `Set` **in that claim** only if the answering `Notify` reads Settable non-zero (then the usual ACK rules); if it still reads `0x00` nothing more is sent, the checked time moves and the tile shows a toast — because a `0x00` answer can be old (`CAP-063`: worn again 37 s after `Notify` 4774, disabled for 6 min). Unknown (no `Notify` yet this connection) or non-zero ⇒ the `Set` is sent directly, as before. | 🟢 FACT for the `Get`/`Notify` pair; the per-claim use is ADR-032 |
+| ANC | **Corrected `ai-sessions/0040`:** the connect-time `Get`/`Notify` pair (ADR-021/ADR-022) is the *official client's* own query — a client that sends nothing gets no ANC `Notify`. This app therefore sends its own `AncFrame.Get` during each Message Stream claim (the Connect-time snapshot, ANC Refresh, and each ANC tap's reply) and treats the value as last-known between claims (ADR-032). **A `Set` is only counted once answered (2026-09-24):** ACK → requested mode, `Notify` → the Buds' mode, NAK/no answer → failure, previous mode kept. The `Notify`'s Settable byte is kept as `ancAvailability` (`ai-sessions/0048` I-3, ADR-024 Update 2026-09-25): while it reads `0x00` the Buds NAK a `Set` (reason `0x02`, `CAP-062` 10/10). **Since `ai-sessions/0054` (I-1, maintainer-confirmed in chat 2026-09-28; it reverses `0048` I-3's "claim and send nothing" for a user tap):** the ANC buttons and the tile stay tappable, with "ANC can only be changed while you wear the Buds (checked HH:MM:SS). Tapping a mode checks again first." (🟡 wording); such a tap does one ordinary claim with the `Get` and sends the `Set` **in that claim** only if the answering `Notify` reads Settable non-zero (then the usual ACK rules); if it still reads `0x00` nothing more is sent, the checked time moves and the tile shows a toast — because a `0x00` answer can be old (`CAP-063`: worn again 37 s after `Notify` 4774, disabled for 6 min). ~~Unknown (no `Notify` yet this connection) or non-zero ⇒ the `Set` is sent directly, as before.~~ **Since `ai-sessions/0062` (F-1/F-2, maintainer-confirmed in chat 2026-10-01): every ANC tap — the screen's and the tile's — does one claim with the `Get` first and sends the `Set` in that claim only if the claim's `Notify` reads Settable non-zero; on `0x00` nothing more is sent** (`CAP-064`: an 18-s-old `e8` led to `Set` 3433 → NAK 3440; `CAP-065` F7: an unknown availability sent `Set` 10790 without a `Get`). The tile's next mode is computed from that fresh `Notify`, not from the mode shown. Wording: "The Buds don't allow changing noise control right now (usually because no bud is in an ear). Tapping a mode checks again first." (tile subtitle "Not allowed now") — the byte means "not allowed now", not "not worn" (`CAP-064`: `e8` with no bud worn). **F-3:** a claim closed after its `Set`/`Get` was written and before the answer is `BudsError.AnswerCutOff` (never retried, never "didn't respond in time"); after a cut-off `Set` the shown mode is "not confirmed" (dimmed + the (i) dot) until the Buds' next `Notify` or ACK. | 🟢 FACT for the `Get`/`Notify` pair; the per-claim use is ADR-032 |
 | EQ | No connect-time *push* exists for EQ, but the official app **reads** it — and so does this app since `ai-sessions/0041` (DECISIONS.md ADR-034, maintainer-approved 2026-09-20): the Connect sequence waits for the Buds' unsolicited `GetSoftwareInfo` announcement (which names this connection's pw_rpc channel), then sends `ReadSetting 4:16` (active EQ) on that channel and fills `eqProfile` from the answer; the EQ screen can re-read on demand. `eqProfile` is `null` only until that answer arrives or if it failed — `BudsRepository.eqError` then carries the reason (no announcement in time, a channel with no known address, an error status, a timeout). A write is only counted as done once the Buds' `RESPONSE` arrives (`status` absent/OK); anything else is surfaced, never assumed. Field 18 (last saved custom EQ) never replaces the active value. | 🟢 FACT (ADR-034: identification, `ReadSetting 4:N` semantics, three second-capture chains); 🟡 HYPOTHESIS for what a fresh client must send first and for request/response matching (handled conservatively, `// TODO(verify)`, hardware re-test) |
 | Battery (DLCI 0x04 Option B, **implemented `ai-sessions/0040`, ADR-033; charging flag `ai-sessions/0041`**) | Push-based: the Buds send three `Group 0x03 Code 0x03` frames within ~10 ms of the channel opening and again on every change — so each Message Stream claim yields a reading. Each of `b1`/`b2` is `0bSVVVVVVV`: `V` = 0–100 % and `S` = charging (maintainer-accepted 2026-09-20); `V = 0x7F`/`> 100` reads "unavailable"; `b3` (Case) is never decoded (it read `0xff` in 60/60 frames). **The Case comes from DLCI 0x02** (**ADR-043**, 2026-09-24): after the Connect-time EQ read the app sends one `SubscribeRuntimeInfo` request on the announced channel; the Buds then push `SERVER_STREAM` packets by themselves and entry 6.1 field 1 is the Case % — a packet without that entry reads "unavailable". *Refresh battery* re-reads Left/Right — **since `ai-sessions/0052`** always on a **fresh** claim (a claim still lingering is released and
 opened again, because the Buds send the `03 03` burst only on an open; no burst ⇒ "No new battery reading from the Buds — try again.", values and
@@ -495,7 +501,11 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   Play services' connect (`NearbyDiscovery: RfcommEventStreamMedium`, uid 10205) to the Message Stream channel hit `RFCOMM_CreateConnectionWithSecurity: already
   at opened state` and the stack closed OpenControl's port (uid 10338) 0.1 s later. **A reply that arrives after such a close is lost to the app:** a `Set`
   the Buds ACKed after the app's claim was closed (HCI 2640 → close 2649 → ACK 2651) left the app showing the old mode, and a `Get` answered after the close
-  (10321 → 10344 → 10356) was reported as "The Buds didn't respond in time." (proposal for the next FEATURE session: `CAP-065-FINDINGS.md` §9 item 1).
+  (10321 → 10344 → 10356) was reported as "The Buds didn't respond in time." **Built in `ai-sessions/0062` (F-3, the maintainer's choice in chat 2026-10-01):** a
+  claim's waits also watch `BudsTransport.channelClosed`; a close after the request and before its answer is `BudsError.AnswerCutOff` ("The answer was cut off —
+  another app took the Buds' channel. Tap Refresh to see the current mode.") — not retried (a `ChannelLost` would be retried once by the claim, i.e. a second
+  `Set`), not `Timeout`; an answer that turns up within 100 ms of the close still counts (it may have been read before the close). A timeout with the channel
+  open stays `Timeout`. After a cut-off `Set` the mode is marked "not confirmed" until the next `Notify`/ACK.
 - **A connection is one unit** — *for the session channels opened by `connect()`* (superseded for the on-demand DLCI
   0x04/0x08 channels by ADR-032, see the per-channel bullet below). Any session channel's loss (read failure, EOF, failed
   write) closes *all* of that connection's sockets before `BudsTransport.connectionLost` emits — a surviving socket stays
@@ -606,6 +616,7 @@ sealed class BudsError {   // as built, domain/…/BudsError.kt (updated 2026-09
     data object ConnectionLost : BudsError()
     data class ChannelUnavailable(val channelId: Int, val detail: String?) : BudsError() // socket open failed (`ai-sessions/0039`)
     data class ChannelLost(val channelId: Int, val detail: String?) : BudsError()        // open channel died (`ai-sessions/0039`)
+    data class AnswerCutOff(val channelId: Int, val detail: String?) : BudsError()       // claim closed after the request, before its answer (`ai-sessions/0062` F-3); never retried
     data object Timeout : BudsError()
     data class MalformedFrame(val raw: ByteArray) : BudsError()
     data object UnsupportedFirmware : BudsError()    // a write refused by the Safe-Mode gate (§8.1, ADR-042)
@@ -749,8 +760,8 @@ this sequence explicit rather than inferred from ADR-005's decision alone:
 7. **Reconnection** (every subsequent app launch/Bluetooth toggle) skips steps 1–4 entirely —
    `BluetoothAdapter.getBondedDevices()` already has the device, so the app goes directly to step 5's
    bonding check (normally a no-op, since the link key is already stored) and step 6.
-- **Local state persistence:** as built, only the Debug-mode switch is stored (plain AndroidX DataStore Preferences —
-  one non-sensitive boolean, §2). Future user data (e.g. custom EQ profiles) would use DataStore, **encrypted where
+- **Local state persistence:** as built, only the Debug-mode switch and — since `ai-sessions/0062` — the dark-mode choice are stored (plain AndroidX
+  DataStore Preferences, one file — non-sensitive values, §2). Future user data (e.g. custom EQ profiles) would use DataStore, **encrypted where
   applicable** (`AGENTS.md` §10); no EQ or battery value is persisted (the hardware is the source of truth, §3.1).
   Nothing is ever transmitted off-device (see `AGENTS.md` §1 and §9 for the enforcement rules). (Aligned 2026-09-24,
   0044 AR-3 — this bullet used to say "encrypted DataStore for custom EQ profiles and last-known battery".)
@@ -810,6 +821,11 @@ undecided (see §15's "Already decided, not open" list, updated to match).
   timing issues are often only reproducible with full logs.
 - **Always safe to log:** connection state transitions, MTU value, connection
   parameters.
+- **Where Debug lives:** the Debug tab of the settings menu behind the top app bar's gear (`ai-sessions/0062`, §2.4); the Debug-mode switch and "Export debug
+  log" are there, unchanged.
+- **Debug builds only (`ai-sessions/0062` F-8):** `OpenControlApplication` sets `StrictMode.VmPolicy.detectLeakedClosableObjects().penaltyLog()` when
+  `BuildConfig.DEBUG`, so a resource finalized without `close()` (`CAP-065`: three "A resource failed to call close.") is logged with its stack; release builds
+  set no policy. Local logcat only.
 - **Gated behind an explicit, off-by-default "Debug mode" setting:** raw
   sent/received frame bytes (hex dump) — per `AGENTS.md` §9, verbose
   hex-dump logging of payloads containing device identifiers is not on by

@@ -1979,6 +1979,17 @@ the first time against every one of its 20 real discriminators + default branch.
   same evidentiary tier the original 2026-09-08 finding used, now pointing the other way. Proposed
   for `PROTOCOL.md` §6 as a correction, pending review; a live correlation capture (Group AS,
   planned `CAP-057`) is the recommended way to settle RPC identity directly.
+- **Update (2026-10-01, `ai-sessions/0062`, mechanical search per ADR-017; the reading was maintainer-approved in chat as `PROTOCOL.md` §2.2a's 2026-10-01
+  Update) — what `qie`'s three entries are on the official app's firmware screen.** `qie` (field 4 of `qjb`) has fields 1/2/3 → Java `c`/`d`/`e`, each a `qid`
+  {1 → `c`, 2 → `d`, both `STRING`, `qid.java:29`}. `gaa.d(qjb)` (`gaa.java:920–1030`) maps `qie.c/d/e` → `gdm.c/d/e` through `fzv.a` = `fzr(1)`, which copies
+  `qid.c/d` → `gdd.c/d` (`fzr.java:53–76`). `OtaFragment` (`com/google/android/apps/wearables/maestro/companion/ui/settings/OtaFragment.java:88–90`) binds `e` =
+  `key_left_bud_firmware_version_pref`, `f` = `key_right_bud_firmware_version_pref`, `ah` = `key_case_firmware_version_pref` and observes `hfh.b/c/d` through
+  `hfb(11/12/13)` (`:108–110`); `hfh` builds `b = gyg(20)`, `c = hff(1)`, `d = hff(0)` (`hfh.java:37–39`). JADX failed on `hfb.d`, `hff.a` and `gyg.a`, so the
+  `apktool` smali was read: `hfb.smali` packed-switch (`:1422–1442`) index 11 → `pswitch_8` sets `OtaFragment.ah`, 12 → `pswitch_7` sets `.e`, 13 → `pswitch_6`
+  sets `.f` (`:834–908`); `gyg.smali` index 20 is outside its 20-entry table → the default code at `:47–60` reads `gdm.c` (`:1040–1060`); `hff.smali` index 1 →
+  `pswitch_12` reads `gdm.d`, index 0 → `pswitch_13` reads `gdm.e` (`:941–1192`, table `:1194–1216`); every shown string is `hfh.b(gdd)` = `gdd.d` (field 2, the
+  firmware string) or, if empty, field 1 (`hfh.java:52–60`). Chain: **entry 1 → Case, entry 2 → Left bud, entry 3 → Right bud.** Not traced: whether the
+  unsolicited announcement (`call_id 0xFFFFFFFF`) reaches `gaa.d`.
 
 
 

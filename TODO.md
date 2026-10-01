@@ -789,8 +789,22 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+**Open after `ai-sessions/0062` (added 2026-10-01):**
+- **Run `CAP-066` (Group BB) on the `ai-sessions/0062` build** — the skeleton is adapted (Info tab on film first; `08 11` before every `08 12`; BB-4t, BB-15,
+  BB-16, K4d). Nothing of the 0062 build is hardware-verified yet: F-1 (`Get` first, the tile from the fresh `Notify`), F-2 (wording, "Not allowed now"),
+  F-3 (the cut-off result and the not-confirmed mark — watch only), F-4/F-5/F-6 (menu, Info, dark mode), F-7 (the Disconnect label's contrast on the dark card).
+- **F-8 — read the StrictMode output** of the first debug run (logcat `StrictMode` lines with "A resource was acquired … but never released") and name the leaked
+  object; propose a fix if it is the app's own. Release builds set no policy.
+- **T-1 — known limit:** a cause logged "(provisional)" stays the last line when no later reading of Android's link arrives (no timer re-logs it); read the last
+  "Session loss cause" line as the verdict.
+- 🟡 **`PROTOCOL.md` §2.2a 2026-10-01 Update:** whether the unsolicited announcement reaches the official app's `gaa.d` (the Case/Left/Right mapping is 🟢 for
+  the app's screen); a capture where the three entries differ (e.g. after a firmware update of one part) would show it on the wire.
+- **`TabRow`** (the settings menu, `SettingsMenu.kt`) is used instead of the experimental `PrimaryTabRow` of material3 1.3.0 — re-check on the next BOM bump
+  (with the `TopAppBar`/`PullToRefreshBox` opt-ins below).
+
 **Open after `ai-sessions/0061` (added 2026-10-01):**
-- **Next FEATURE session — written as `ai-sessions/0062_FEATURE_PROMPT_2026_10_01.md`** (items of the 0060 block below + these; optional T-1 loss-cause log, T-2 notification flash, T-3 manifest points at its checkpoint). **Additions from `CAP-065` (the maintainer's choice, chat 2026-10-01):** (a) a `Set`/`Get` whose Message Stream claim is closed before its
+- ~~**Next FEATURE session — written as `ai-sessions/0062_FEATURE_PROMPT_2026_10_01.md`**~~ **Done 2026-10-01 (`ai-sessions/0062`):** F-1…F-8 built and
+  unit-tested, T-1 and T-3 built, T-2 left as is (the maintainer's choice); the original item: (items of the 0060 block below + these; optional T-1 loss-cause log, T-2 notification flash, T-3 manifest points at its checkpoint). **Additions from `CAP-065` (the maintainer's choice, chat 2026-10-01):** (a) a `Set`/`Get` whose Message Stream claim is closed before its
   answer is reported as "answer cut off — tap Refresh" and the mode marked unconfirmed (`CAP-065-FINDINGS.md` §9 item 1; fixtures `CAP-065` 2640/2649/2651 and
   10321/10344/10356; no retry loop, no new permission); (b) a dark-mode contrast check of the Connection card's Disconnect label (Robolectric screenshot test,
   §9 item 4); (c) `StrictMode` `detectLeakedClosableObjects` in debug builds to find the unclosed resource behind the three `CloseGuard` warnings (§0, §9 item 6).
@@ -801,7 +815,7 @@ tracked task above.)_
 - 🔴 **GrapheneOS `BluetoothAutoOff … delayMillis: 0`** (`CAP-065-FINDINGS.md` §0) — film the auto-off setting at `CAP-066` K5.
 
 **Open after `ai-sessions/0060` (added 2026-10-01):**
-- **Next FEATURE session (the maintainer's choice, chat 2026-10-01):** (1) ANC **`Get` before every `Set`** in one claim (no `Set` if that claim's `Notify` reads
+- ~~**Next FEATURE session (the maintainer's choice, chat 2026-10-01):**~~ **Done in `ai-sessions/0062`.** (1) ANC **`Get` before every `Set`** in one claim (no `Set` if that claim's `Notify` reads
   `00`) and the wording "The Buds don't allow changing noise control right now (usually because no bud is in an ear). Tapping a mode checks again first." —
   fixture `CAP-064` 3433/3440/3443 (`CAP-064-FINDINGS.md` §9 items 2–3); (2) a **settings menu behind a gear icon** in place of the top bar's bug icon, with three
   tabs: **Settings** (dark mode On / Off / System), **Debug** (today's Debug screen: Debug mode switch, Export debug log, unidentified frames), **Info** (the Buds'
@@ -828,8 +842,9 @@ tracked task above.)_
   `CAP-015`, `CAP-021`); every FINDINGS file now opens with a "Status as of 2026-09-30" banner (`scripts/stale_capture_status.py`), so the rest are
   read under it. A full fold is a MAINTENANCE pass of its own.
 - ~~**Run `CAP-065`**~~ — run 2026-10-01, analysed in `ai-sessions/0061` (L-1: one bud out ⇒ Left 19 / Right 21, 🟢; the hosting bud 🟡).
-- **Needs a manifest change (none was allowed in 0059):** the `:app` lint warning `DataExtractionRules`; a justification comment for AndroidX Core's
-  app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (A58-GOV-08; explained in `README.md` meanwhile).
+- ~~**Needs a manifest change (none was allowed in 0059):**~~ **Done in `ai-sessions/0062` (T-3, allowed in chat 2026-10-01):** `android:dataExtractionRules`
+  (`res/xml/data_extraction_rules.xml`, everything excluded — `:app` lint 0 issues) and the manifest comment on AndroidX Core's app-private
+  `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (A58-GOV-08).
 - **`RfcommBudsTransportTest`'s 10 s timeout** (0057, A58-APP-06) was not reproduced in 0059 (200 runs under full CPU load); the test helper now
   prints every thread's stack on that timeout — if it recurs, the dump names the blocked call.
 - **`maestro_pw.Dosimeter`** (`PROTOCOL.md` §2.2a, L-4): its values are known on the wire, their meaning is 🟡; a display is out of scope for now
@@ -888,8 +903,8 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
   is unticked on the left" on a Pixel 7a run if one is made (one list?).
 - 🔴 **Open from `CAP-056`:** what makes the Buds close DLCI 0x02 on a wear change; the pause route with GSND closed (Google app disabled); DLCI 0x08 `04 05`/`04 16`
   meaning; Settable with in-ear detection off and no bud worn — `PROTOCOL.md` §6.
-- **ANC tile after re-wearing (`ai-sessions/0054`, known limit):** the tile's next mode is computed from the mode shown (OFF while not worn → ACTIVE), so the
-  first tap after re-wearing may set the mode the Buds already report; harmless (the ACK applies it), not changed.
+- ~~**ANC tile after re-wearing (`ai-sessions/0054`, known limit):**~~ **Closed in `ai-sessions/0062` (F-1):** the tile's next mode is computed from the
+  `Notify` of its own claim (`BudsRepository.stepAncMode`), not from the mode shown.
 - 🔴 **Android did not re-create the ACL after an ADR-016 drop with the lid open** in `CAP-063` (unlike `CAP-062`) — `PROTOCOL.md` §6.
 - [x] **Done in `CAP-063`:** docked ring (ACKed), EQ/mono writes while docked (OK), audibility recorded as observations; the one-bud-in-an-ear test was
   **not** run (see the capture item above). **Next capture (Group AY):** I-9 Find with both buds docked (does a docked bud ring?), an EQ write while docked, the one-bud-in-an-ear test of
@@ -918,7 +933,8 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
   🔴 whether the Buds send it at all; check the next captures' DLCI 0x04 opens.
 - **Spatial audio / LE Audio visibility** (`SPATIAL-001`, `LEAUDIO-001`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §4b): 🔴 candidates, not captured.
 - **Notification flash on a failed connect:** `OpenControlApplication` starts `BudsForegroundService` at `Connecting` and stops it on
-  `Failed`, so a connect that fails fast still posts and removes the notification (`ARCHITECTURE.md` §6.0a).
+  `Failed`, so a connect that fails fast still posts and removes the notification (`ARCHITECTURE.md` §6.0a). **Left as is (the maintainer's choice, chat
+  2026-10-01, `ai-sessions/0062` T-2):** a start only at `Ready` could come after the user left the app — Android 14 refuses a background foreground-service start.
 - **ADR-044's success path is unit-tested only through `SessionReopenerTest`** (a scripted re-open): `BudsRepositoryImpl.connect()` needs a real
   `BluetoothDevice`, so the repository tests count attempts at the bonded-device lookup. The hardware step in `ai-sessions/0048` §9 closes it —
   done: the automatic re-opens were exercised in `CAP-063` (ADR-044 Update 2026-09-30).

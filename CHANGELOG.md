@@ -224,6 +224,18 @@ mark v1.
   note (the collision path in the Bluetooth process's log; a reply after the close is lost). Pulls sent exactly their tab's action. Folder renamed to
   `CAP-065-2026-10-01_11-07-30_11-28-23-Group_BA`; `CAP-066` (Group BB) extended (L-1 hosting-bud test, tile subtitle, the robustness steps not done). No
   app change.
+- **2026-10-01 (`ai-sessions/0062`): FEATURE — ANC `Get` before every `Set`, the cut-off answer, the settings menu (the maintainer's choices after `CAP-064`/
+  `CAP-065`, confirmed in chat).** F-1: every ANC tap (tab and tile) claims once, sends `08 11` and the `08 12` only if that claim's `Notify` reads Settable
+  non-zero; the tile steps from that fresh `Notify` (`BudsRepository.stepAncMode`) — no NAK on a stale "allowed" (`CAP-064` 3433 → 3440). F-2: "The Buds don't
+  allow changing noise control right now (usually because no bud is in an ear). Tapping a mode checks again first."; tile subtitle "Not allowed now". F-3: a
+  claim closed after its request and before the answer is `BudsError.AnswerCutOff` (never retried, never "didn't respond in time", `CAP-065` 2640/2649/2651,
+  10321/10344/10356), the mode then "not confirmed" until the next `Notify`. F-4/F-5/F-6: a gear opens Settings (dark mode System/On/Off in the existing
+  DataStore), Debug (unchanged) and Info (version, git commit and date via a local `BuildConfig`; firmware of Case/Left/Right with the `PROTOCOL.md` §2.2a
+  2026-10-01 Update — 🟢 the official app's mapping, maintainer-approved; the control channel). F-7: the Connection card's Disconnect in the card's own text colour
+  (the `CAP-065` dark frame measured ≈ 1.2:1) + a contrast test. F-8: StrictMode `detectLeakedClosableObjects` in debug builds. T-1: provisional loss-cause
+  lines marked; T-3: `dataExtractionRules` (exclude everything) and the manifest comment on AndroidX Core's private permission; T-2 left as is. Real-byte fixtures
+  `Cap064Fixtures.kt`/`Cap065Fixtures.kt`; gate green from clean (tests `:data` 1581, `:domain` 27, `:hardware` 52, `:ui` 24; lint 0 issues; 0 compiler
+  warnings); 10 mutation checks each caught. `CAP-066` (Group BB) adapted to this build. Not hardware-verified.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

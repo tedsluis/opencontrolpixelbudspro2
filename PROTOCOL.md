@@ -405,6 +405,20 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
   Command: the scratch decoder of `CAP-065-FINDINGS.md` (DLCI 2 **and** 3, per direction, CRC-32 per frame). ADR-034 item 3 (send only on a tabulated
   channel) is unchanged.
 
+- **Update (2026-10-01, `ai-sessions/0062`, maintainer-approved in chat 2026-10-01, `AskUserQuestion` "Info tab", option *"Promote + label (Recommended)"*, with
+  this text in the preview) — which announcement entry is which component.** 🟢 **FACT (code, the official app `v1.0.955078536-10253511`):** the
+  `GetSoftwareInfo` response type `qjb` (`fux.java:57`) carries in field 4 a `qie` whose fields 1/2/3 (Java `c`/`d`/`e`, `qie.java:29`) are each a `qid`
+  {1: version, 2: firmware string}; the app's handler `gaa.d(qjb)` (`gaa.java:920–1030`) copies them into `gdm.c/d/e` (`fzr.java:53–76`, field for field), and the
+  firmware screen `OtaFragment` (`OtaFragment.java:88–90`: `key_left_bud_firmware_version_pref`, `key_right_bud_…`, `key_case_firmware_version_pref`) shows
+  **entry 1 as the Case, entry 2 as the Left bud, entry 3 as the Right bud** — smali, JADX could not decompile these: `hfb.smali` table `:1422–1442` (index 11 →
+  `OtaFragment.ah` = Case, 12 → `.e` = Left, 13 → `.f` = Right), `gyg.smali:47–60` (default branch, `gdm.c`), `hff.smali:941–1192` (index 1 → `gdm.d`, 0 →
+  `gdm.e`). Mechanical search only (ADR-017). 🟡 **HYPOTHESIS:** the Buds' **unsolicited** announcement (`call_id 0xFFFFFFFF`) uses the same layout — it is the same
+  method's response type, but the app's routing of the unsolicited packet through `gaa.d` was not traced. **Wire (🟢, a checked negative):** `for f in
+  captures/*/*btsnoop_hci*.log; do python3 scripts/pwrpc_decode.py "$f" | grep GetSoftwareInfo; done` → 191 announcements in 57 logs, every one with entries 1, 2, 3
+  and all 573 entries `(1779298694, release_5.203)` — the wire never distinguishes them (`pwrpc_decode.py` reads DLCI 0x02 only; MAESTRO sessions on DLCI 0x03 of
+  `CAP-064`/`CAP-065` are not counted). The app's Info tab labels the entries this way (`ai-sessions/0062` F-5). Not the order of the component serials of
+  `GetHardwareInfo` (`CAP-036` 1423, a different message, `qiv`).
+
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
 `[Group:1][Code:1][Length:2B-BE][Value]` envelope (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md`
@@ -3393,6 +3407,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-30 | **`ai-sessions/0059` — processing the `ai-sessions/0058` audit, all status changes maintainer-approved in chat 2026-09-30.** **§4.1** Settable byte: ADR-049 supersedes ADR-024's "dock state" (🟢 `0x00` ⇒ NAK 10/10, non-zero ⇒ ACK 40/40; 🟡 `0x00` ⇔ no bud worn). **§4.3 Option 0** 🟢 not public API (`@SystemApi`). **§2.2a** "LEB128" corrected to one-terminated varint; the other pw_rpc services named (🟢); "1779298694" = `UpdateHelperService.GetRunningVersion`, not a serial (🟢); request address derivable from the channel (🟡); "type 4" = `CLIENT_ERROR`. **§6** HID = Android head-tracker sensor (🟢, `CAP-033` 1355 descriptor); CONV-002's AVRCP negative corrected (invalid filter); several answered items ticked with pointers; Group-A repeat PROPOSAL markers approved as recorded; superseded markers resolved. **§4.3 Option F** `CAP-002` 62 → 57 (own window); `CAP-043` is connection-free; implemented sources B and **F**. **§7** two rows aligned with the as-built error model | Claude (AI), maintenance task; maintainer-approved in chat 2026-09-30 |
 | 2026-10-01 | **`ai-sessions/0060` — `CAP-064` (Group AZ), maintainer-approved in chat 2026-10-01.** **§4.1** Settable: one worn bud ⇒ `e8` (AY-3, 2/2); in-ear detection off ⇒ `e8` with none worn; in-ear on ⇒ `e8` ≈ 28 s with both buds on the table and a `Set` ACKed — 🟡 now "`00` ⇒ no bud worn", the converse refuted (ADR-049 Update). **§4.5.3** the Buds follow OpenControl's field-12 list (six long presses, never `40`) 🟢 for `CAP-064`. **§4.5.5** OpenControl's field-2 writes behave as in `CAP-056` (SASS bit 4, no pause, `DISC` on wear changes); Settable with it off and no bud worn = `e8` (🔴 answered). |
 | 2026-10-01 | **`ai-sessions/0061` — `CAP-065` (Group BA), maintainer-approved in chat 2026-10-01.** **§2.2a** L-1: with only the Left bud out the Buds announce channel 19, with only the Right out 21 — 🟢 7/7; 🟡 the channel names the bud hosting the link (21 → 19 inside one ACL). **§4.1** Settable: 28 `00` all with no bud worn, every `e8` with one worn; one docked/one loose and both loose ⇒ `00` (ADR-049 Update, status unchanged). **§4.3** lid closed with one bud inside: that bud `ff` in `03 03`, no bud entry and no Case in the runtime-info stream (🟢 one sample). **§5** every ACL to the Buds started by the Buds when a bud left the case; none on lid-open. |
+| 2026-10-01 | **`ai-sessions/0062` — FEATURE, maintainer-approved in chat 2026-10-01.** **§2.2a** which `GetSoftwareInfo` entry is which component: 🟢 FACT (code) the official app shows entry 1 = Case, 2 = Left bud, 3 = Right bud; 🟡 that the unsolicited announcement uses the same layout; wire: 191/191 announcements with three identical entries (a checked negative). No other protocol change (the app's ANC `Get` before every `Set` uses ADR-021/022/032 item 5). | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL
