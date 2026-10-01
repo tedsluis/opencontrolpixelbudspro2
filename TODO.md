@@ -64,13 +64,15 @@ nothing here is a second copy of that detail, only a pointer plus the reasoning 
      1. `CAP-053` (Group AO) — EQ outer field 16-vs-18: isolate Save-tap / navigate-away /
         genuine slider-release from each other.
      2. `CAP-054` (Group AP) — Battery Notification, connection-free, bracketing a single-bud
-        insertion/removal (the Fast Pair spec's own "optional" trigger, untested so far).
+        insertion/removal (the Fast Pair spec's own "optional" trigger, untested so far). *(2026-09-30, `ai-sessions/0059`: the spec
+        names no such "optional" trigger — premise corrected in `CAP-054-EVENT-NOTES.md`; the capture stays planned as a plain re-test.)*
      3. `CAP-055` (Group AQ) — Nod/Shake head gestures with an actual active call/notification,
         camera also framing the gesture itself (needs a second phone to place the call).
      4. `CAP-056` (Group AR) — ANC-rotation-checklist Left/Right split, genuine re-run — **read the
-        skeleton's anti-repeat safeguard first**, `CAP-045` skipped the actual checklist screen.
+        skeleton's anti-repeat safeguard first**, `CAP-045` skipped the actual checklist screen. **Done** (`ai-sessions/0055`, analyzed: no
+        Left/Right field in the write, ADR-046).
      5. `CAP-057` (Group AS) — live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the
-        connect-time burst, using the firmware/serial-number screen.
+        connect-time burst, using the firmware/serial-number screen. **Withdrawn** (`id_registry.csv`).
      6. `CAP-058` (Group AT, added 2026-09-18, `ai-sessions/0031`) — 3rd `SDP-001`/`SDP-002` attempt,
         adding an explicit on-device process-liveness check before the "Pair" tap (see
         `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AT and `CAP-044-FINDINGS.md` §5) — maintainer approved
@@ -632,7 +634,8 @@ lower priority than finishing ANC/Battery/EQ):**
       own internal content ordering beyond channel-open timing, and user-triggered-command timing) —
       not attempted this pass.
 - [ ] **Bring the first command to full 🟢 FACT status — updated 2026-09-24:** ANC, battery Option B (ADR-031/033) and the Case message
-      (ADR-014) are FACT and implemented; Option C is FACT on the wire but not app-consumable (ADR-040). Only battery Option A remains, and
+      are FACT and implemented — the Case from DLCI 0x02 `SubscribeRuntimeInfo` (ADR-043; ADR-014's DLCI 0x08 path was withdrawn, corrected
+      2026-09-30, `ai-sessions/0059` A58-HK-03); Option C is FACT on the wire but not app-consumable (ADR-040). Only battery Option A remains, and
       that item is capture-blocked. **Original 2026-09-09 text:** ANC
       (`PROTOCOL.md` §4.1) reached full FACT status 2026-08-12 (see the checked item immediately
       below). Battery via HFP (`PROTOCOL.md` §4.3 Option C) is also already 🟢 FACT
@@ -700,7 +703,7 @@ lower priority than finishing ANC/Battery/EQ):**
       `FakeBudsTransport`.
 - [x] **First working end-to-end connection + battery status shown in the UI — UI-complete, not
       hardware-verified, 2026-09-18** (`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phases 5-6).
-      (Historical — HFP was later removed, ADR-040; battery now comes from DLCI 0x04/0x08.) HFP Option C was wired end-to-end from `HfpBatteryReader` through
+      (Historical — HFP was later removed, ADR-040; battery now comes from DLCI 0x04/0x02.) HFP Option C was wired end-to-end from `HfpBatteryReader` through
       `BudsRepositoryImpl` to `ConnectionScreen`'s battery card — but `MainActivity`'s `onConnect`/
       `onDisconnect` actions are still placeholders (no real device to connect to in this
       environment) and `HfpBatteryReader`'s actual broadcast delivery is itself unverified (see its
@@ -778,14 +781,30 @@ lower priority than finishing ANC/Battery/EQ):**
       `DECISIONS.md` ADR explicitly unblocking DLCI 0x02's generic settings-write `FrameEncoder`/
       `FrameDecoder` for the fields already at full/category-level FACT identity (touch controls,
       multipoint, volume EQ, volume balance, mono audio, in-ear detection, case sounds — fields 2,
-      4, 7, 11, 15, 17, 19, 27, 28), modeled on `ADR-020`'s own EQ precedent — awaiting maintainer
-      review, not committed.
+      4, 7, 11, 15, 17, 19, 27, 28), modeled on `ADR-020`'s own EQ precedent — decided as ADR-036 (above).
 
 ## Known technical debt
 
 _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
+
+**Open after `ai-sessions/0059` (added 2026-09-30):**
+- **Open proposals from capture FINDINGS (each needs the maintainer, `AGENTS.md` §6):** `CAP-008` §5/§4 — promote eSCO/mSBC establishment and
+  `CALL-001`'s wire/video correlation to `PROTOCOL.md`; `CAP-026` item 3 — the short/no-flag Case form (🔴, `PROTOCOL.md` §4.3 Option E);
+  `CAP-029` item 3 — `CASE-008`; `CAP-037` item 3 — record the Settable↔Current co-occurrence in `PROTOCOL.md`; `CAP-047` items 4 (a swapped-slot
+  Test-ID) and 5 (trigger candidates 1–2).
+- **Rule-9a fold of the remaining dated addenda** in the capture FINDINGS (`ai-sessions/0058` A58-CAP-05): three were folded in 0059 (`CAP-010`,
+  `CAP-015`, `CAP-021`); every FINDINGS file now opens with a "Status as of 2026-09-30" banner (`scripts/stale_capture_status.py`), so the rest are
+  read under it. A full fold is a MAINTENANCE pass of its own.
+- **Run `CAP-065`** (Group BA): the 0059 app fixes on hardware, the Settable byte with the ears visible (ADR-049's 🟡), and whether the announced
+  Maestro channel names the hosting bud (`PROTOCOL.md` §2.2a L-1, 🟡/🔴).
+- **Needs a manifest change (none was allowed in 0059):** the `:app` lint warning `DataExtractionRules`; a justification comment for AndroidX Core's
+  app-private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (A58-GOV-08; explained in `README.md` meanwhile).
+- **`RfcommBudsTransportTest`'s 10 s timeout** (0057, A58-APP-06) was not reproduced in 0059 (200 runs under full CPU load); the test helper now
+  prints every thread's stack on that timeout — if it recurs, the dump names the blocked call.
+- **`maestro_pw.Dosimeter`** (`PROTOCOL.md` §2.2a, L-4): its values are known on the wire, their meaning is 🟡; a display is out of scope for now
+  (maintainer, chat 2026-09-30, "Not now — note only").
 
 **Restructured 2026-09-24 (`ai-sessions/0045`, 0044 finding T-2):** this section now lists **open** items only. The resolved history
 that used to sit here (sessions `0037`–`0043`: back-stack fix, unreachable methods, peer-disconnect detection, connect flicker, on-demand
@@ -814,7 +833,7 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
 - [x] **Done 2026-09-28 in `CAP-056` (`ai-sessions/0055`): bit order 1 NC / 2 Off / 3 Transparency / 4 Adaptive 🟢, no side field 🟢, one list 🟡 (the
   "check Customize right" step was skipped); ADR-046 unblocks field 12.** — was: **Group AR (`CAP-056`, Pixel 7a, official app) additions from `0051` F-6:** untick only Adaptive on "Customize left", check "Customize right" on
   film, then only Transparency — settles the `qht` bit order (`PROTOCOL.md` §4.5.3 2026-09-26 Update, 🔴) and whether the list is shared; see
-  `CAP-063-EVENT-NOTES.md` §8. Only after that can field 12 get a read/write ADR.
+  `CAP-063-EVENT-NOTES.md` A.8. Only after that can field 12 get a read/write ADR.
 - [x] **Done 2026-09-28 (`ai-sessions/0054`) —** I-1 (a disabled ANC tap re-checks with the claim's `Get`, `Set` only on Settable non-zero), I-2 (a loss
   while the app was not visible is worded from the first link reading on return), I-3 (balance snaps to "Centre" within ±3), I-5 (the Digital-assistant
   note), I-4 (the previous connection's per-bud lines marked at Connect) — real `CAP-063` bytes (4774, 4184, 4233/4241, 4497/4508, 2723/2756, 3046/3059,
@@ -872,9 +891,12 @@ Message Stream, pairing/permissions, `CAP-059` fixes) lives in `CHANGELOG.md` an
 - **Notification flash on a failed connect:** `OpenControlApplication` starts `BudsForegroundService` at `Connecting` and stops it on
   `Failed`, so a connect that fails fast still posts and removes the notification (`ARCHITECTURE.md` §6.0a).
 - **ADR-044's success path is unit-tested only through `SessionReopenerTest`** (a scripted re-open): `BudsRepositoryImpl.connect()` needs a real
-  `BluetoothDevice`, so the repository tests count attempts at the bonded-device lookup. The hardware step in `ai-sessions/0048` §9 closes it.
-- **Not unit-testable with the current test setup** (no Compose / instrumented tests): the Compose wording, `OsConnectionObserver`,
-  `BudsForegroundService`/`AncTileService`, and the `BluetoothDevice`-dependent part of `BudsRepositoryImpl.connect()`.
+  `BluetoothDevice`, so the repository tests count attempts at the bonded-device lookup. The hardware step in `ai-sessions/0048` §9 closes it —
+  done: the automatic re-opens were exercised in `CAP-063` (ADR-044 Update 2026-09-30).
+- **Not unit-testable with the current test setup** (no instrumented tests): `OsConnectionObserver`, `BudsForegroundService`/`AncTileService` (the
+  tile's state mapping is tested as a pure function, `AncTileTest`, `ai-sessions/0059`), and the `BluetoothDevice`-dependent part of
+  `BudsRepositoryImpl.connect()`. Compose wording and enabled states are covered by `:ui`'s Robolectric tests since `ai-sessions/0057`
+  (`BatteryCardTest`, `PullActionTest`; `EqScreenTest` since 0059). *(corrected 2026-09-30, A58-HK-03)*
 - **Capture extraction path matters** (added 2026-08-28, verified 2026-08-30): `CAP-012`, `CAP-013`, `CAP-017`, `CAP-031` lost payload
   bytes to ACL truncation on the `btsnooz.py`-from-bugreport path (`CAP-017` via a phone-side snaplen, despite its `-btsnoop_hci.log`
   name); always prefer the raw `btsnoop_hci.log` (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 3).

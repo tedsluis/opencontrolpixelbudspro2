@@ -15,8 +15,10 @@ What the code does about it (added 2026-09-24, `ai-sessions/0045`): every decode
 `MalformedFrame`/`UnidentifiedFrame` instead of throwing; the per-channel frame splitters are reset
 whenever a channel opens, closes or is lost, and cap a single frame (1024 data bytes on the Message
 Stream channels, 4096 bytes for a pw_hdlc frame), so one corrupted length field cannot stall later
-frames; and ANC, Find My Buds and EQ writes are only sent to a device that announced the verified
-firmware and the Pixel Buds Pro 2's Fast Pair Model ID (`DECISIONS.md` ADR-042). A report that one of these can be
+frames; and every write — ANC, Find My Buds, EQ and the settings (ADR-045/046/047) — passes the Safe-Mode gate
+(`DECISIONS.md` ADR-042): all need the verified firmware; on the Message Stream (ANC, Find) the same claim must also have
+announced the Pixel Buds Pro 2's Fast Pair Model ID; on DLCI 0x02 (EQ, settings) no other Model ID may have been seen
+(`BudsRepositoryImpl.writeGate`; corrected 2026-09-30, `ai-sessions/0059` A58-HK-05). A report that one of these can be
 bypassed is in scope.
 
 Out of scope: the reverse-engineering research itself (`REVERSE_ENGINEERING.md`,

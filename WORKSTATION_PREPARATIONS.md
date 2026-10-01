@@ -319,8 +319,8 @@ write command against real hardware, not after something goes wrong.
 2. Open the case lid, and keep the case connected to power (plugged in).
 3. Press and hold the case button for **30 seconds**.
 4. This performs a **full factory reset** — confirmed via official support
-   documentation and reproduced on-the-wire in `CAP-001`/`CAP-002`
-   (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16). It also resets the Find My
+   documentation and reproduced on-the-wire in `CAP-029` (`CAP-029-FINDINGS.md` §3,
+   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16; capture corrected 2026-09-30, `ai-sessions/0059` A58-HK-01). It also resets the Find My
    Device link on the Pro 2.
 
 **What this does and doesn't recover from:**

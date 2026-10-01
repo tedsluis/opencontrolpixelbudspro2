@@ -56,25 +56,25 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-09-25)
+## Current state (2026-09-30)
 
-- **Captures:** 61 registered sessions (`CAP-001`–`CAP-061`): 53 analyzed, 7 planned, 1 withdrawn (`CAP-057`) — see
-  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-061` are captures of this project's own app; `CAP-061` found
-  why the 0045 build stayed in Safe Mode on the verified firmware (fixed in `ai-sessions/0046`, not yet re-tested on hardware).
+- **Captures:** 65 registered sessions (`CAP-001`–`CAP-065`): 56 analyzed, 7 planned (among them `CAP-064` and `CAP-065`, the hardware re-tests of
+  `ai-sessions/0057` and `0059`), 2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-063`
+  are captures of this project's own app; the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 43 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has an explicit maintainer sign-off.
+- **Decisions:** 49 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has an explicit maintainer sign-off.
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
-  firmware line, ANC Quick Settings tile, Safe Mode (ADR-042).
-- **Protocol-known but not built:** read-only display of the other settings (touch & hold, multipoint, mono audio, volume EQ, volume
-  balance, case sounds, in-ear detection — reads unblocked by ADR-036, writes gated per field); the BLE battery advertisement (never
-  matched on the wire).
-- **Still open (protocol):** head-gestures field 29, the ANC-rotation checklist's Left/Right split, EQ field 16-vs-18 save semantics,
-  DLCI 0x08's own identity, why the Buds sometimes close the RFCOMM channels — see `PROTOCOL.md` §6.
-- **App code:** [`android/`](./android) — five Gradle modules (`:app`, `:ui`, `:domain`, `:data`, `:hardware`), Hilt; every codec is
-  unit-tested against real capture bytes and fuzzed; CI builds, tests and lints every change and asserts no `INTERNET` permission
+  the settings reads (ADR-036) and writes (touch controls, press and hold, conversation detection, balance, mono, in-ear detection — ADR-045/046/047),
+  firmware line, ANC Quick Settings tile, Safe Mode (ADR-042), the session re-open while visible (ADR-044).
+- **Protocol-known but not built:** multipoint, volume EQ, case sounds (reads unblocked by ADR-036, writes gated per field); the BLE battery advertisement
+  (never matched on the wire).
+- **Still open (protocol):** head-gestures field 29, EQ field 16-vs-18 save semantics, DLCI 0x08's own identity, why the Buds sometimes close the
+  RFCOMM channels, whether the announced Maestro channel names the hosting bud — see `PROTOCOL.md` §6.
+- **App code:** [`android/`](./android) — five Gradle modules (`:app`, `:ui`, `:domain`, `:data`, `:hardware`), Hilt, no ViewModel (ADR-048); every
+  codec is unit-tested against real capture bytes and fuzzed; CI builds, tests and lints every change and asserts no `INTERNET` permission
   (`.github/workflows/android.yml`).
 
 ## Building and installing the debug APK
@@ -102,7 +102,10 @@ own justification comment in `android/app/src/main/AndroidManifest.xml` and
 `android/hardware/src/main/AndroidManifest.xml`): `BLUETOOTH_CONNECT` (RFCOMM socket I/O against the
 paired Buds), `POST_NOTIFICATIONS`/`FOREGROUND_SERVICE`/`FOREGROUND_SERVICE_CONNECTED_DEVICE` (the
 persistent connection-status notification while connected). `BLUETOOTH_SCAN` is not requested: nothing scans (it would
-return, flagged `neverForLocation`, only with the bounded battery-advertisement scan of ADR-006). No `INTERNET` permission, ever
+return, flagged `neverForLocation`, only with the bounded battery-advertisement scan of ADR-006). The installed APK lists one more,
+`io.github.tedsluis.opencontrolpixelbuds.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`: AndroidX Core adds it to the merged manifest for its own
+`ContextCompat.registerReceiver(…, RECEIVER_NOT_EXPORTED)` — a signature-level permission private to this app, granting nothing outside it
+(`ai-sessions/0058` A58-GOV-08; not commented in the manifest because `ai-sessions/0059` made no manifest change). No `INTERNET` permission, ever
 (AGENTS.md §1) — verify this yourself with `aapt dump permissions android/app/build/outputs/apk/debug/app-debug.apk`
 if you want to check before installing.
 
@@ -112,9 +115,9 @@ To also run the full test suite and static analysis (what CI runs on every chang
 ./gradlew assembleDebug testDebugUnitTest test lint
 ```
 
-**Before testing against real hardware**, read the re-test list in the latest `ai-sessions/` RESULT
-(`ai-sessions/0045_MAINTENANCE_RESULT_2026_09_24.md`) — it says, item by item, what was seen working on hardware and what is only
-unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
+**Before testing against real hardware**, read `APP_TESTPLAN.md` and the newest
+planned app capture (`CAP-065-EVENT-NOTES.md`) — they say, step by step, what is to be checked on hardware; the `CAP-062`/`CAP-063` FINDINGS say what
+was seen working there and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
 earbuds" — it means the wire bytes match known-good captures, nothing more.
 
 ## Approach
@@ -130,7 +133,7 @@ earbuds" — it means the wire bytes match known-good captures, nothing more.
    in each capture's `CAP-NNN-FINDINGS.md` and the resulting specification in
    `PROTOCOL.md`.
 4. **Design & implement** — build a native Android app (Kotlin, Jetpack Compose,
-   MVVM/Clean Architecture) around that protocol knowledge, targeting GrapheneOS
+   Clean Architecture, no ViewModel — ADR-048) around that protocol knowledge, targeting GrapheneOS
    as the primary reference OS with compatibility for stock AOSP-based ROMs. See
    [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 5. **Validate & document** — test against real hardware, document findings and

@@ -42,7 +42,7 @@ for stock AOSP-based ROMs.
 │  - Screens, Composables (state hoisted in :app's      │
 │    MainActivity — no ViewModel class, see §2)         │
 └──────────────────────┬─────────────────────────────────┘
-                        │ observes StateFlow<BudsUiState>
+                        │ OpenControlUiState + OpenControlActions
 ┌──────────────────────▼─────────────────────────────────┐
 │  :domain                                              │
 │  - Domain models (ConnectionState, AncMode, ...)      │
@@ -54,7 +54,7 @@ for stock AOSP-based ROMs.
 │  :data                                                │
 │  - BudsRepositoryImpl                                  │
 │  - CodecRouter (per-DLCI FrameEncoder/FrameDecoder:     │
-│    0x02 EQ/Case, 0x04 ANC/Ring/battery/ACK)            │
+│    0x02 EQ/settings/Case, 0x04 ANC/Ring/battery/ACK)   │
 │  - SafeModeGate (§8.1, ADR-042)                         │
 │  - DataStore (Debug Mode toggle — as built; see §2's    │
 │    Data Layer note for the encryption-scope disclosure) │
@@ -71,7 +71,7 @@ for stock AOSP-based ROMs.
 └──────────────────────────────────────────────────────┘
 ```
 
-## 2. Project Structure (MVVM & Clean Architecture)
+## 2. Project Structure (Clean Architecture; no ViewModel — `DECISIONS.md` ADR-048)
 
 `:domain` is the isolated center of the module graph, per Clean Architecture's
 dependency-inversion principle: it has no dependency on `:ui`, `:data`, or
@@ -80,9 +80,9 @@ implement or consume. Each layer is its own Gradle module so this direction is
 enforced by the build graph, not just by convention:
 
 ```
-:app            -> wires everything together, hosts MainActivity, DI graph
-:ui             -> Jetpack Compose screens, Material 3, ViewModels
-:domain         -> use cases, StateFlow-based state holders, sealed error/result types
+:app            -> wires everything together, hosts MainActivity (UI state holder, ADR-048), AppUiSession, DI graph, tile/application
+:ui             -> stateless Jetpack Compose screens, Material 3 (OpenControlUiState in, OpenControlActions out)
+:domain         -> domain models, BudsRepository interface, small pure mappings (e.g. the tile state), sealed error/result types
 :data           -> hand-written pw_rpc/Message Stream codecs (ADR-041), frame envelope (de)coder, DataStore prefs
 :hardware       -> BluetoothManager, GATT/RFCOMM sockets, ForegroundService
 ```
@@ -95,10 +95,10 @@ enforced by the build graph, not just by convention:
   the `BudsRepository` calls that back these callbacks live in `:app`'s
   `MainActivity` instead (why: `ai-sessions/0033_FEATURE_RESULT_2026_09_18.md` Phase 6 — a
   scope-bounded choice matching `ai-sessions/0013`'s `AncScreen` pattern; §2.4 describes the navigation, not this choice — pointer
-  corrected 2026-09-25, `ai-sessions/0050` F-1). The diagram above
-  still shows "ViewModels (MVVM)" as the general intended shape for this
-  layer — a future session adding a dedicated `:ui`-hosted ViewModel class
-  would be extending this pattern, not correcting a mistake in it.
+  corrected 2026-09-25, `ai-sessions/0050` F-1). **`DECISIONS.md` ADR-048** (2026-09-30, superseding ADR-001's "MVVM in the UI layer"
+  clause) records this as the design: no ViewModel; user actions run in the application scope; state that must survive a configuration
+  change lives in the repository or in an application-scoped holder — `:app`'s `AppUiSession` (pairing progress, the bonding wait, the
+  Debug list of unidentified frames; `ai-sessions/0059`).
 - **Domain Layer** (`:domain`): domain models (`ConnectionState`, `AncMode`,
   `EqBandGains`, `BatteryStatus`, `RingTarget`, the `BudsError`/`BudsResult`
   sealed hierarchy) and the `BudsRepository` interface (implemented in
@@ -167,7 +167,9 @@ Bluetooth, Allow, Pair) — once per pull, never automatically. The times and st
   app bar in `ai-sessions/0057`). **Since `ai-sessions/0056`**
   (the maintainer's choices in chat 2026-09-28) it also holds "Modes for press and hold (both buds)" — four boxes, shown only while a bud's press and hold is
   Noise control, the last two ticked boxes disabled with "At least two modes must stay selected." — and "In-ear detection" is a switch with a note on what "off"
-  changes; a setting not read from the Buds yet is disabled.
+  changes; a setting not read from the Buds yet is disabled — the switches, the balance slider and (since `ai-sessions/0059`, the maintainer's
+  choice in chat 2026-09-30) the five EQ sliders, while the EQ presets stay usable. **Exception:** the press-and-hold action chips (`HoldRow`,
+  `ControlsScreen.kt`) are enabled with the connection only; a chip tapped before the read writes that one field (`ai-sessions/0058` A58-ARCH-05).
 - **Justification for `navigation-compose`** (`AGENTS.md` §10's dependency-policy requirement): pure
   AndroidX/Compose-first library, no network/analytics/GMS dependency, the standard Compose-idiomatic
   way to implement a back-stack-aware multi-screen flow without hand-rolling one; avoids the
@@ -184,7 +186,7 @@ Bluetooth, Allow, Pair) — once per pull, never automatically. The times and st
   session could not exercise on a device or emulator.
 
 Dependency direction: `:ui → :domain ← :data → :hardware → :domain`. `:ui` depends on
-`:domain` to observe state and invoke use cases. `:data` depends on `:domain`
+`:domain` for the models and `OpenControlUiState`'s types (ADR-048: no use cases; `:app` calls `BudsRepository`). `:data` depends on `:domain`
 (to implement `BudsRepository`) and on `:hardware` (to consume `BudsTransport`
 — see §2.1). `:hardware` depends on `:domain` for the shared result/error and link types (`BudsResult`, `BudsError`,
 `AndroidLink`; `hardware/build.gradle.kts` — added to this sentence 2026-09-25, `ai-sessions/0050` F-2). `:domain` imports nothing from the other
@@ -301,7 +303,8 @@ Android has no equivalent of Linux's BlueZ/UPower/AVRCP battery reporting, so th
 - **Not an app source — HFP `AT+BIEV`/`AT+CIND`** (Option C): wire-confirmed, but no vendor-specific event reaches an app on
   Android 14+ (`CAP-059`); removed, **ADR-040**. It does **not** push periodically for the whole session (ADR-015: a settling burst,
   then irregular).
-- **Not built — generic OS broadcast** (Option 0, ⚪ untested) and **GATT Battery Service** (Option D, contested).
+- **Not an app source — generic OS broadcast** (Option 0): `ACTION_BATTERY_LEVEL_CHANGED` is `@SystemApi`, not public API (🟢, `PROTOCOL.md` §4.3
+  Option 0, 2026-09-30; `AGENTS.md` §3 bans hidden/system APIs). **Not built — GATT Battery Service** (Option D, contested).
 
 If no source reports a value, the UI shows "Battery unavailable" — the app never fabricates or carries over a percentage silently; every
 value carries the wall-clock time it was received (`"updated 14:32:07"` / `"last seen 14:32:07"`, §3.1), never a relative "N min ago"
@@ -388,20 +391,20 @@ its identification did use APK analysis — ADR-019, ADR-034 — so it is not an
 `FrameEncoder`/`FrameDecoder` work for DLCI 0x04/0x08 proceeds **independently, from capture evidence
 (and, for DLCI 0x04, the public spec) only** — the proven, already-practiced method for these channels.
 
-### 5a. Implementation-ready feature summary (refreshed `ai-sessions/0033`, 2026-09-18; re-derived through ADR-042, 2026-09-24)
+### 5a. Implementation-ready feature summary (refreshed `ai-sessions/0033`, 2026-09-18; re-derived through ADR-049, 2026-09-30)
 
 The per-channel gate above tells you whether a *channel's framing* can be coded against. It does not,
 by itself, tell you whether a *specific command* on that channel may be implemented — `AGENTS.md` §6
 requires a command's own FACT determination **and** an explicit implementation-unblock statement in a
 `DECISIONS.md` ADR, and those two things are tracked per command, not per channel. Re-derived directly
-from `PROTOCOL.md` + every `DECISIONS.md` ADR through ADR-042 (not assumed from an earlier session's
+from `PROTOCOL.md` + every `DECISIONS.md` ADR through ADR-049 (not assumed from an earlier session's
 summary), the current state is (every write below additionally passes the Safe-Mode gate, §8.1/ADR-042):
 
 | Feature | Channel | FACT status | Unblock ADR | Implementation status |
 |---|---|---|---|---|
-| ANC (Get/Set/Notify) | DLCI 0x04, Group `0x08` | 🟢 FACT | ADR-009 (explicit "block lifted"), ADR-021/ADR-022/ADR-024 | **Implemented** (`AncFrameEncoder`/`AncFrameDecoder`, `:data`) |
-| Find My Buds Left/Right | DLCI 0x04, Group `0x04` Code `0x01` | 🟢 FACT | ADR-011 (explicit "implementation is unblocked") | **Implemented** (`RingFrameEncoder`/`RingFrameDecoder`, `:data`) — structurally complete, not hardware-verified (`ai-sessions/0033`) |
-| EQ | DLCI 0x02, pw_rpc `maestro_pw.Maestro` `WriteSetting`/`ReadSetting`, payload `4:{16\|18:{5×float32}}` | 🟢 FACT (pw_rpc identification and `ReadSetting` semantics per ADR-034; envelope, field-to-band mapping, ±6.0 clamp, presets per ADR-016) | ADR-020 (write), **ADR-034** (read-only `ReadSetting` for fields 16/18, channel mirroring) | **Implemented** (`PwRpc`, `Maestro`, `EqFrameEncoder`/`EqFrameDecoder`, `BudsRepositoryImpl.readEq`/`setEqGains`, `:data`) — write ACK and read answer are surfaced; not hardware-verified (`ai-sessions/0041`) |
+| ANC (Get/Set/Notify) | DLCI 0x04, Group `0x08` | 🟢 FACT | ADR-009 (explicit "block lifted"), ADR-021/ADR-022, ADR-049 (Settable byte; supersedes ADR-024) | **Implemented** (`AncFrameEncoder`/`AncFrameDecoder`, `:data`) |
+| Find My Buds Left/Right | DLCI 0x04, Group `0x04` Code `0x01` | 🟢 FACT | ADR-011 (explicit "implementation is unblocked") | **Implemented** (`RingFrameEncoder`/`RingFrameDecoder`, `:data`) — hardware-verified: Ring Left/Right/Stop sent, ACKed, heard, stopped (`CAP-062-FINDINGS.md`) |
+| EQ | DLCI 0x02, pw_rpc `maestro_pw.Maestro` `WriteSetting`/`ReadSetting`, payload `4:{16\|18:{5×float32}}` | 🟢 FACT (pw_rpc identification and `ReadSetting` semantics per ADR-034; envelope, field-to-band mapping, ±6.0 clamp, presets per ADR-016) | ADR-020 (write), **ADR-034** (read-only `ReadSetting` for fields 16/18, channel mirroring) | **Implemented** (`PwRpc`, `Maestro`, `EqFrameEncoder`/`EqFrameDecoder`, `BudsRepositoryImpl.readEq`/`setEqGains`, `:data`) — write ACK and read answer are surfaced; hardware-verified: 5 of 5 `WriteSetting 4:{16:…}` answered OK (`CAP-063` 2374, 6009, 6017, 6026, 8633) |
 | Battery, Option C (HFP `AT+BIEV`/`AT+CIND`) — **removed `ai-sessions/0042`** (maintainer decision in chat, after the confirming run) | HFP AT-command channel | 🟢 FACT on the wire | None | **Removed** — wire-confirmed, not app-consumable (`CAP-059`: 7 × `AT+BIEV` on the wire, 0 vendor events in the app) |
 | Battery, Option B (DLCI 0x04 `Group 0x03 Code 0x03`) | DLCI 0x04 | 🟢 FACT (message *identity*; ADR-031; charging flag, ADR-033's 2026-09-20 update) | **ADR-033** (`ai-sessions/0040`, maintainer-approved; charging flag accepted 2026-09-20) | **Implemented** (`BatteryFrameDecoder`, `:data`) — `0bSVVVVVVV` per earbud; the Case (`b3`) is not decoded there. Left/Right hardware-seen in `CAP-059`–`CAP-061`. |
 | Battery, Case (Option F, DLCI 0x02 `SubscribeRuntimeInfo` entry 6.1) | DLCI 0x02 | 🟢 FACT (`PROTOCOL.md` §4.3 Option F, 2026-09-24) | **ADR-043** (one request per Connect; supersedes the DLCI 0x08 claim of ADR-035/038/039; its 2026-09-26 Update: one more per *Refresh battery*, built `ai-sessions/0052`, not hardware-verified) | **Implemented** (`Maestro.subscribeRuntimeInfoRequest`, `RuntimeInfoDecoder`, `:data`) — Case hardware-verified in `CAP-062`; per-bud charging and the last-seen Case (ADR-043 Update, `ai-sessions/0048`) not hardware-verified. |
@@ -437,8 +440,9 @@ physical link as inherently unstable:
   *visible* the session is also re-opened by itself, one attempt per event — see §6.0b; never in the background.
 - **Event-observation, not polling:** all inbound state (ANC mode, battery,
   connection status) is obtained by observing a `Flow` fed by inbound frames
-  or OS broadcasts (`ACTION_STATE_CHANGED`, the battery broadcast in §4
-  option 0, GATT notifications) — coroutines suspend until an event arrives.
+  or OS broadcasts (`ACTION_STATE_CHANGED`, `ACTION_BOND_STATE_CHANGED`, the profile
+  connection broadcasts of §6.0a) — coroutines suspend until an event arrives. (§4's
+  option 0 battery broadcast and GATT notifications are not built.)
   Nothing in this app runs a fixed-interval timer loop that re-reads state on
   a schedule; the only place anything resembling a schedule appears is the
   bounded, foreground-triggered advertisement window in §9.1, which is
@@ -569,7 +573,10 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
 
 ### 6.1 Resource Budget (Wakelocks)
 
-- The `ForegroundService` (§1) holds a wakelock only while a command is
+**As built:** no wakelock is acquired anywhere (`grep -rn "WakeLock\|PowerManager" android --include=*.kt` → none; `ai-sessions/0058`
+A58-ARCH-02). The rules below apply if one is ever added.
+
+- The `ForegroundService` (§6.0a) holds a wakelock only while a command is
   in-flight or an event-observation coroutine actively needs the CPU awake to
   process an inbound frame — never for the lifetime of the connection.
 - No wakelock is acquired merely to keep the RFCOMM socket open; the socket
@@ -590,7 +597,7 @@ A shared sealed hierarchy (`:domain`) is used across layers instead of raw
 exceptions crossing module boundaries:
 
 ```kotlin
-sealed class BudsError {   // as built, domain/…/BudsError.kt (updated 2026-09-24)
+sealed class BudsError {   // as built, domain/…/BudsError.kt (updated 2026-09-30, ai-sessions/0059)
     data object ConnectionLost : BudsError()
     data class ChannelUnavailable(val channelId: Int, val detail: String?) : BudsError() // socket open failed (`ai-sessions/0039`)
     data class ChannelLost(val channelId: Int, val detail: String?) : BudsError()        // open channel died (`ai-sessions/0039`)
@@ -602,14 +609,22 @@ sealed class BudsError {   // as built, domain/…/BudsError.kt (updated 2026-09
     data class CommandRejected(val reasonCode: Int, val detail: String) : BudsError() // a Message Stream NAK (0044 APP-3)
     data class MaestroChannelUnknown(val channelId: Int?) : BudsError() // no/unknown pw_rpc channel announced (ADR-034)
     data class MaestroRejected(val detail: String) : BudsError()        // pw_rpc error status (ADR-034)
+    data object AncNotAllowed : BudsError()          // ANC Set not sent: Settable 0x00, the Buds would NAK it (ADR-049)
+    data object NoNewBatteryReading : BudsError()    // Refresh battery got no "Battery updated" frame (`ai-sessions/0052`)
+    data object AncModeListTooShort : BudsError()    // press-and-hold list would keep < 2 modes (ADR-046); nothing sent
+    data object AncModeListNotRead : BudsError()     // press-and-hold list not read on this connection (ADR-046); nothing sent
+    data object SessionOpening : BudsError()         // a write while the session is (re)opened (`ai-sessions/0056` U-2; EQ too, 0059)
+    data object UnreadableAnswer : BudsError()       // ReadSetting answered OK with an undecodable value (`ai-sessions/0059`)
     data class Unknown(val cause: Throwable) : BudsError()
 }
 ```
 
-`:hardware` and `:data` convert all caught exceptions into this type; `:domain`
-exposes `StateFlow<BudsUiState>` where `BudsUiState` includes an optional
-`BudsError` so the Compose layer can render a specific, actionable message per
-failure mode rather than a generic error banner.
+`:hardware` and `:data` convert all caught exceptions into this type; `BudsRepository`
+exposes the errors as flows (`eqError`, `settingsError`, `batteryRefreshError`, …), and
+`:app`'s `MainActivity` (ADR-048) collects them into `:ui`'s `OpenControlUiState` — the
+role the earlier design name `BudsUiState` described (ADR-048; it never became a type) — so the
+Compose layer can render a specific, actionable message per failure mode rather than a
+generic error banner.
 
 **`UnidentifiedFrame` is deliberately not part of `BudsError`.** A frame with
 an unrecognized Group/Code (typically on DLCI 0x08, §5) parsed successfully —
@@ -639,8 +654,9 @@ evidence-based reverse-engineering principle in `AGENTS.md` §6/`PROJECT_RULES.m
 ## 8. Firmware / Protocol Compatibility
 
 Because `libmaestro`'s wire format can change across Pixel Buds firmware
-revisions, each `.proto` file and each entry in `PROTOCOL.md` carries the
-firmware/library version it was verified against. **As built (ADR-042):** `UnsupportedFirmware` (§7) is
+revisions, each entry in `PROTOCOL.md` carries the firmware/library version it was
+verified against (and each `.proto` file would, if one is ever added — none exists as a
+build input, `DECISIONS.md` ADR-041). **As built (ADR-042):** `UnsupportedFirmware` (§7) is
 returned when a *write* is refused by the Safe-Mode gate below; an inbound frame that matches no known shape is
 `MalformedFrame`/`UnidentifiedFrame`, never a best-effort parse that could misreport battery/ANC state.
 
@@ -835,7 +851,7 @@ only genuinely open *architecture* question — no new one surfaced during this 
 A related but distinct gap *was* found (the missing consolidated implementation-unblock ADR for DLCI
 0x02's individual §4.5 settings) — that is a protocol/decision-gate matter, not an architecture
 question, so it is tracked as a `PROPOSAL —` note in §5a above and in
-`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md`, not added here.
+`ai-sessions/0033_FEATURE_RESULT_2026_09_18.md`, not added here. *(Resolved since: ADR-036 reads, ADR-045/046/047 writes — §5a's settings row.)*
 
 - [x] **Closed 2026-09-24 (maintainer-approved in chat, `ai-sessions/0045`):** the HID surface is Android's standard
       head-tracker HID sensor (`#AndroidHeadTracker#`, `CAP-016-FINDINGS.md` §10; spatial audio), 🟡 HYPOTHESIS (strong) that
@@ -863,8 +879,8 @@ question, so it is tracked as a `PROPOSAL —` note in §5a above and in
 > ring is unaffected and already implemented; **minimum supported Android API level
 > — API 34 (Android 14), same as compile/target SDK** (§1, `DECISIONS.md` ADR-029,
 > decided 2026-09-13) — no lower-API compatibility path is pursued; `CompanionDeviceManager`
-> (API 26, ADR-005) and the generic battery broadcast (API 31, §4 option 0) are both
-> trivially satisfied at this floor.
+> (API 26, ADR-005) is trivially satisfied at this floor (the generic battery broadcast,
+> §4 option 0, is `@SystemApi` and not used — `PROTOCOL.md` §4.3, 2026-09-30).
 
 ## 16. Attribution
 

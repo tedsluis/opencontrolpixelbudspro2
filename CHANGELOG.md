@@ -5,7 +5,7 @@ based on [Keep a Changelog](https://keepachangelog.com/).
 
 Most entries below are documentation, tooling, and protocol-reconstruction process
 rather than app releases, reflecting this project's reverse-engineering-first approach — a v1
-Android app now exists (`ai-sessions/0033`, 2026-09-18) but is not yet hardware-verified or
+Android app now exists (`ai-sessions/0033`, 2026-09-18), was hardware-tested in `CAP-059`–`CAP-063`, and is not yet
 released. See `TODO.md` for current status and `PROJECT.md` for the "definition of done" that will
 mark v1.
 
@@ -187,6 +187,12 @@ mark v1.
   no Left/Right field in the write 🟢 (one list 🟡); "In-ear detection" = `qhr` field 2 🟢 (5 filmed taps + the Buds' SASS capability bit 4); with it off the
   phone does not pause, the Buds still close DLCI 0x02 and send no ANC `Notify` on wear changes; §6 notes (phone-side pause without AVRCP pass-through 🟡, DLCI
   0x08 `04 05` wear value 🟡, field-13 mirror 🟡). New ADR-046 (field 12 read + write) and ADR-047 (field 2 write); ADR-019/024/036/045 dated Updates. No app change.
+- **2026-09-28 (`ai-sessions/0056`): the press-and-hold ANC-mode list (field 12, ADR-046) and the "In-ear detection" switch (field 2, ADR-047) built.** Controls tab:
+  "Modes for press and hold (both buds)" — read at Connect, four boxes shown while a bud's press and hold is Noise control, one `WriteSetting` with all four
+  booleans per tap, never fewer than two ("At least two modes must stay selected."); "In-ear detection" is a switch with a note on what "off" changes. Also (the
+  maintainer's choice): a setting not read yet is disabled (U-1) and a tap during a re-open says so (U-2). Real fixtures: `CAP-056` 1529/1531, 1689…1843, 1502, 2173/4048,
+  2849/3627, and — found in this session — channel-21 field-12 frames in `CAP-041` 2176/2192/2198 and `CAP-036` 1514/1516. `:data` 1564, `:domain` 25 tests; 7
+  mutations caught. `CAP-064` skeleton section VII; `APP_TESTPLAN.md` C12, N1, N7–N11. Not hardware-verified.
 - **2026-09-29 (`ai-sessions/0057`): Material 3 UI overhaul, within the maintainer's decisions of 2026-09-29.** A top app bar "OpenControl" with a
   Debug action (Debug is no longer a bottom tab — restoring `ARCHITECTURE.md` §2.4's design), five tabs, own Kotlin icons (Material Symbols, Apache-2.0,
   plus an own Case icon), an app theme (dynamic colour, dark mode), a graphical battery (Left | Case | Right, bars, bolt; "Battery unavailable" without a
@@ -195,12 +201,15 @@ mark v1.
   `CAP-036` bytes, 3/3 mutations caught). Slider knobs no longer stay at an unacknowledged value (F-1). Field-12 list, Digital assistant, in-ear switch,
   mono/conversation detection on Sound kept as built. New test-only dependencies for `:ui` (Compose UI test + Robolectric 4.13, JUnit 4.13.2) with 9 tests.
   `APP_TESTPLAN.md` section O, `CAP-064` section VIII. Not hardware-verified. No `PROTOCOL.md`/`DECISIONS.md` change.
-- **2026-09-28 (`ai-sessions/0056`): the press-and-hold ANC-mode list (field 12, ADR-046) and the "In-ear detection" switch (field 2, ADR-047) built.** Controls tab:
-  "Modes for press and hold (both buds)" — read at Connect, four boxes shown while a bud's press and hold is Noise control, one `WriteSetting` with all four
-  booleans per tap, never fewer than two ("At least two modes must stay selected."); "In-ear detection" is a switch with a note on what "off" changes. Also (the
-  maintainer's choice): a setting not read yet is disabled (U-1) and a tap during a re-open says so (U-2). Real fixtures: `CAP-056` 1529/1531, 1689…1843, 1502, 2173/4048,
-  2849/3627, and — found in this session — channel-21 field-12 frames in `CAP-041` 2176/2192/2198 and `CAP-036` 1514/1516. `:data` 1564, `:domain` 25 tests; 7
-  mutations caught. `CAP-064` skeleton section VII; `APP_TESTPLAN.md` C12, N1, N7–N11. Not hardware-verified.
+- **2026-09-30 (`ai-sessions/0058`): an exhaustive end-to-end audit of the whole project** — 54 findings (A58-GOV/PROT/CAP/ARCH/DEC/HK/SES/APP) and
+  five undiscovered protocol leads (L-1…L-5), each with a verification command; no file other than its RESULT changed.
+- **2026-09-30 (`ai-sessions/0059`): every 0058 item processed, with the maintainer's decisions in chat.** New ADR-048 (no ViewModel; supersedes
+  ADR-001's MVVM clause) and ADR-049 (the Settable byte; supersedes ADR-024's "dock state"); `PROTOCOL.md` §2.2a/§4.1/§4.3/§6 Updates (L-2 HID
+  head tracker 🟢, L-4 service names 🟢, L-5 "serial" → version number 🟢, L-1 address derivation 🟡; battery broadcast `@SystemApi`); false
+  negatives and FACT claims in capture FINDINGS rewritten with commands and positive controls; status banners on 33 FINDINGS. App: atomic
+  connection-state transitions, the ANC tile's first value, `UnreadableAnswer` for an undecodable read, a write quarantine after a timed-out
+  `WriteSetting`, EQ sliders off until read, `SessionOpening` on the EQ tab, `AppUiSession` (pairing and Debug list survive a rotation), one clock,
+  0 Kotlin warnings — real-capture fixtures, 6/6 mutations caught. `CAP-065` (Group BA) skeleton for the hardware re-test. Not hardware-verified.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

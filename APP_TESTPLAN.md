@@ -193,7 +193,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| L1 | Debug tab: switch **Debug mode** on. | "Unidentified frames (n)" list grows during use | — | | |
+| L1 | Bug icon (top bar) → Debug: switch **Debug mode** on. *(No Debug tab since `ai-sessions/0057`, O1; corrected 2026-09-30, A58-HK-06.)* | "Unidentified frames (n)" list grows during use | — | | |
 | L2 | Tap **Export debug log**, pick a folder and file name in Android's "save as" dialog. | "Debug log saved (N lines)."; the file holds the **whole** log (not cut at 64 KiB — `CAP-063`), connection lines with times; with Debug mode on also hex lines; **no** full Buds address | — | | |
 | L3 | Debug mode off, export again. | No hex lines | — | | |
 
@@ -216,6 +216,17 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | O13 | Android Settings → Display → Dark theme on, then off; change the wallpaper colours. | The app follows dark/light and the wallpaper colours; all text readable in both | — | | |
 
 ---
+
+## P. The `ai-sessions/0059` fixes (in `CAP-065` section I as BA-1…4)
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| P1 | Buds in the case, app on the Sound tab; take them out and wear them; watch until the EQ shows "read HH:MM:SS". | Until then the five EQ sliders are **disabled** and the notice says the sliders are off until the EQ arrives; the presets can be tapped. After the read the sliders enable at the Buds' values (A58-APP-02) | `ReadSetting 4:16` answered | | |
+| P2 | Within 3 s of "App control: ready", pull down Quick Settings; read the ANC tile. | A mode or "Tap to switch" — never "Open the app" while the app says ready (A58-APP-01) | — | | |
+| P3 | Debug mode on (L1); use the app until "Unidentified frames (n)" shows n > 0; rotate the phone (auto-rotate on) or switch dark theme. | The list keeps its entries (it used to empty — A58-APP-08) | — | | If n stays 0, write "not testable" |
+| P4 | Only during a pairing (section B): after picking the Buds in Android's dialog, rotate the phone before "Paired" shows. | Pairing still ends with "Paired" (or its own failure text), not stuck (A58-APP-08) | `Pairing:` lines continue in the debug log | | |
+| P5 | Bluetooth on; force-stop the app and start it; watch the first second. | "Bluetooth is disabled" does **not** flash before the normal screen (A58-APP-08) | — | | Film at normal speed |
+| P6 | *(watch only)* After the run, search the debug export for "answered with a value this app cannot read" and "Late WriteSetting answer dropped". | — | If either exists: note the time; the analysis looks up the frame (A58-APP-03/04) | | |
 
 ## After the run (within 1 minute of the last action)
 
@@ -246,6 +257,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | M Sound settings | 6 | | | | |
 | N Controls | 11 | | | | |
 | O Material 3 overhaul | 13 | | | | |
+| P 0059 fixes | 6 | | | | |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/APP_TESTPLAN.md - https://tedsluis.github.io/opencontrolpixelbudspro2/APP_TESTPLAN
