@@ -47,7 +47,7 @@
   in place; `CAPTURE_BLUETOOTH_HCI_SNOOP.md` (Group BB run note, Capture Index row, folder name); `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (12 evidence cells + Group BB);
   `id_registry.csv` (`CAP-066` analyzed); `TODO.md`; `CHANGELOG.md`; `ai-sessions/INDEX.md`; `README.md`; `_sidebar.md`. `scripts/ensure_footers.py` → exit 0;
   `scripts/lint_docs.py` → exit 1 on one entry only (see Deferred documentation). Nothing under `android/`.
-- **All phases done.** Commit/push: only after the maintainer's confirmation (§Commits).
+- **All phases done.** Committed and pushed (§Commits).
 - **Intermediate results:** the session scratchpad (`/tmp/claude-1000/-home-tedsluis-git-opencontrolpixelbudspro2/0aae99fe-1c78-4a79-9b4d-58260aa0947e/scratchpad/`).
 
 
@@ -152,7 +152,13 @@ Each item is also in `TODO.md` ("Open after `ai-sessions/0063`"):
 
 ## Commits
 
-Not committed yet — awaiting the maintainer's confirmation of the final summary (task 19).
+Committed and pushed after the maintainer's confirmation in chat (2026-10-01, "Commit": *"Commit and push (Recommended)"*):
+
+- `c1ba952` — chore(captures): add CAP-066 (Group BB) capture files (9 files, Git LFS).
+- `ecc0176` — docs: session 0063 — CAP-066 analysed (EVENT-NOTES, FINDINGS, this RESULT, the approved Updates and notes), plus the follow-up commit that
+  records these hashes.
+
+Not staged: `android/.kotlin/`.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0063_CAPTURE_RESULT_2026_10_01.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0063_CAPTURE_RESULT_2026_10_01
