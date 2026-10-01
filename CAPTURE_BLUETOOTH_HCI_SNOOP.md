@@ -1611,6 +1611,18 @@ cut-off); Settable `00` none worn ×28, `e8` worn ×48, straight from the case `
 (2/2, 🟢, `PROTOCOL.md` §2.2a Update), host 🟡; the rotation resets the tab to Connection (a defect); StrictMode: framework objects only; GrapheneOS auto-off
 disabled (`delayMillis: 0`).
 
+#### Group BC — the first hardware run of the `ai-sessions/0064` build (planned as `CAP-067`, skeleton by `ai-sessions/0064`)
+
+Pixel 9a / GrapheneOS, OpenControl. The skeleton `captures/CAP-067-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BC/CAP-067-EVENT-NOTES.md` holds, in the order the maintainer chose
+(chat 2026-10-01, "F-5 CAP-067": *"As listed, destructive last (Recommended)"*): the Info tab filmed first — the build, the licence line, **Read the licence** (the
+bundled text) and each of the three links opened in the browser (F-6, DECISIONS.md ADR-050); a rotation on each of the five tabs and on Settings → Info (F-1:
+`CAP-066` K4r reset Sound → Connection); the balance with the new `[›]`/`[‹]` steps to **Right 4** (`17:7`) and back to Centre (F-2: `CAP-066` BB-10 never reached
+it); BB-12 — the **Left** out with both worn on channel 19 (the open half of L-1, predicted Buds `DISC` + 21); BB-15 (watch only, an answer cut off); K4d's dark
+mode **Off** and **System** with Android's own switch (also an F-1 check); L3 (an export with Debug mode off); a Bluetooth off/on with the app on screen — the
+export must say "Bluetooth was switched off on this phone" without "(provisional …)" and log the adapter changes (F-3), then StrictMode lines (F-4, the profile
+proxies); K5 (GrapheneOS auto-off short, then restored); the balance restored to Right 4; then destructive A5, (E), B4, Z1. Test-IDs: [`AUDIO-003`],
+[`INEAR-002`]–[`INEAR-004`], [`PAIR-003`], [`BATT-004`], [`PAIR-001`].
+
 ### 4.3 Hardware Actions (either phone)
 
 **Source:** `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` sections 2 (User Actions via the Case & Buds) and 4
@@ -2005,6 +2017,7 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-064` | 2026-10-01 | Pixel 9a | 17 (`CP3A.260905.009`) | `release_5.203` | OpenControl, ≥ the `ai-sessions/0057` build with the `0056` writes, installed 16 min after `b65085a` (hash not recorded) | AZ (new) | `ANC-001`, `ANC-003`, `INEAR-001`–`004`, `HOLD-001`–`005`, `CASE-004`–`006`, `BATT-004`, `AUDIO-003`, `PAIR-003` (`ANC-002`/`004` only via long presses) | Wear and settings re-test of the `0054`/`0056`/`0059` builds, ears on film: lid-open with docked buds brings no link (the auto-connect observation qualified), 4/4 LINK_BACK re-opens; AY-3 one worn ⇒ `e8`; `e8` with none worn (in-ear off; 28 s with it on); AZ-3 never `40`; I-1c tile NAK on a stale `e8`; `CAP-064-EVENT-NOTES.md`, `CAP-064-FINDINGS.md` (`ai-sessions/0060`) | `CAP-064-EVENT-NOTES.md` | `CAP-064-FINDINGS.md` | analyzed |
 | `CAP-065` | 2026-10-01 | Pixel 9a | 17 (`CP3A.260905.009`) | `release_5.203` | OpenControl, the same installation as `CAP-064` (process continuous, no reinstall; contains `b65085a`'s EQ note) | BA (new) | `ANC-001`–`004` (tile; `ANC-002` also in the app), `PAIR-003`, `CASE-004`–`006`, `BATT-004`, `EQS-001`, `AUDIO-003`, `HOLD-001`, `INEAR-001` (reads); not exercised: `PAIR-001`, `EQP-002`, `AUDIO-001` | The `0059` fixes (EQ note on film; tile subtitle not on film — compact tile), Settable with the ears on film (28 × `00` none worn, `e8` worn; ADR-049 Update), L-1 one bud out ⇒ Left 19 / Right 21 (7/7), pulls exactly per tab, a claim closed under an ACKed `Set`; robustness steps after K4 not done; `CAP-065-EVENT-NOTES.md`, `CAP-065-FINDINGS.md` (`ai-sessions/0061`) | `CAP-065-EVENT-NOTES.md` | `CAP-065-FINDINGS.md` | analyzed |
 | `CAP-066` | 2026-10-01 | Pixel 9a | 17 (`CP3A.260905.009`) | `release_5.203` | OpenControl build `043a09b` (app code `ad0c4ba`, the `ai-sessions/0062` build; Info tab on film) | BB (new) | `ANC-001`, `ANC-003`, `ANC-004`, `INEAR-002`–`004`, `CASE-004`–`006`, `BATT-004`, `AUDIO-003`, `PAIR-003`; not exercised: `ANC-002`, `PAIR-001` | First hardware run of the `0062` build: F-1/F-2 verified (23/23 `08 11` first, 4 ACKed `Set`s, 0 NAK), F-3 not exercised; Settable `00` none worn ×28 / `e8` worn ×48, straight from the case `00` 2.6–175 s; L-1 Right out on 21 ⇒ `DISC` + 19 (2/2); settings menu, Info, dark mode On/System; rotation resets the tab; K1–K3 (K3 `0x08`); BB-10, BB-12, L3, K5, A5, (E), B4, Z1 not done; `CAP-066-EVENT-NOTES.md`, `CAP-066-FINDINGS.md` (`ai-sessions/0063`) | `CAP-066-EVENT-NOTES.md` | `CAP-066-FINDINGS.md` | analyzed |
+| `CAP-067` | *planned* | Pixel 9a | 17 | `release_5.203` | OpenControl, the `ai-sessions/0064` build or later (Info tab on film) | BC (new) | `AUDIO-003`, `INEAR-002`–`004`, `PAIR-003`, `BATT-004`, `PAIR-001` | First hardware run of the `0064` build: the Info tab's licence and links (ADR-050), the tab kept on rotation (F-1), balance steps to Right 4 = `17:7` (F-2), a Bluetooth-off loss named (F-3), the profile proxies closed (F-4); BB-12 (Left out on 19), BB-15 watch, K4d Off/System, L3, K5, then A5, (E), B4, Z1; skeleton `CAP-067-EVENT-NOTES.md` (`ai-sessions/0064`) | — | — | planned |
 
 **Column notes:**
 
