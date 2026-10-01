@@ -47,6 +47,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.AdapterOffReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.LinkReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.LINK_LOST_AFTER_MS
@@ -143,6 +144,9 @@ class BudsRepositoryImpl(
 
     /** Recent readings of Android's link (I-7), newest last; guarded by itself. */
     private val linkReadings = ArrayDeque<LinkReading>()
+
+    /** When Android last reported its Bluetooth adapter turning off or off (F-3, `ai-sessions/0064`), newest last; guarded by itself. */
+    private val adapterOffReadings = ArrayDeque<AdapterOffReading>()
 
     /** When the current [lastConnectionError]'s loss happened (`null` = no loss to explain). */
     @Volatile
@@ -338,6 +342,15 @@ class BudsRepositoryImpl(
         reopener.onAndroidLink(link)
     }
 
+    override fun onBluetoothAdapter(on: Boolean) {
+        if (on) return // only an off reading can name a loss (F-3)
+        synchronized(adapterOffReadings) {
+            adapterOffReadings.addLast(AdapterOffReading(clock()))
+            while (adapterOffReadings.size > MAX_LINK_READINGS) adapterOffReadings.removeFirst()
+        }
+        reclassifyLoss()
+    }
+
     override fun onAppVisible(visible: Boolean) {
         appVisible = visible
         // I-2: leaving before any reading decided the cause (the observer stops now) — the reading taken on return will decide it.
@@ -381,14 +394,26 @@ class BudsRepositoryImpl(
     /**
      * I-7: the cause of the last loss from the readings around it; logged once per change (always-on, no address, AGENTS.md §9). T-1 (`ai-sessions/0062`): a
      * cause other than "the link went down" decided before loss + [LINK_LOST_AFTER_MS] is logged as provisional — a "not connected" reading can still come.
+     * F-3 (`ai-sessions/0064`, the maintainer's choice "Final at once"): "Bluetooth was switched off" is never provisional — the adapter reading is direct
+     * evidence, and no later link reading can arrive while Bluetooth is off (`CAP-066`: the provisional "undetermined" stayed the last line, twice).
      */
     private fun reclassifyLoss() {
         val lossAt = lossAtMillis
-        val cause = if (lossAt == null) null else classifySessionLoss(lossAt, synchronized(linkReadings) { linkReadings.toList() }, lossWhileHidden)
+        val cause = if (lossAt == null) {
+            null
+        } else {
+            classifySessionLoss(
+                lossAt,
+                synchronized(linkReadings) { linkReadings.toList() },
+                lossWhileHidden,
+                synchronized(adapterOffReadings) { adapterOffReadings.toList() },
+            )
+        }
         if (_lastLossCause.value != cause) {
             _lastLossCause.value = cause
             if (cause != null && lossAt != null) {
-                val provisional = cause != SessionLossCause.ANDROID_LINK_LOST && clock() < lossAt + LINK_LOST_AFTER_MS
+                val provisional = cause != SessionLossCause.ANDROID_LINK_LOST && cause != SessionLossCause.BLUETOOTH_OFF &&
+                    clock() < lossAt + LINK_LOST_AFTER_MS
                 BleLogger.logConnectionEvent(SessionDiagnostics.lossCauseLine(cause, provisional))
             }
         }

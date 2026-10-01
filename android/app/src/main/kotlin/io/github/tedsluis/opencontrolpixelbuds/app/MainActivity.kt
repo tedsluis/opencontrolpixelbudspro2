@@ -22,6 +22,7 @@ package io.github.tedsluis.opencontrolpixelbuds.app
 import android.Manifest
 import android.app.StatusBarManager
 import android.bluetooth.BluetoothAdapter
+import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Intent
 import android.graphics.drawable.Icon
@@ -282,6 +283,21 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    /**
+     * Settings → Info's links (`ai-sessions/0064` F-6, DECISIONS.md ADR-050): the URL is handed to another app — the browser fetches the page, this app makes no
+     * network request and needs no permission. developer.android.com (package-visibility use cases, fetched 2026-10-01): "Because the startActivity() method
+     * doesn't require package visibility to start another application's activity, you don't need to add a <queries> element" — and it recommends catching
+     * `ActivityNotFoundException`, done here with a message that shows the address.
+     */
+    private fun openUrl(url: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (e: ActivityNotFoundException) {
+            BleLogger.logConnectionEvent("Info link not opened: no app on this phone opens web links (${BleLogger.describe(e)})")
+            Toast.makeText(this, noBrowserText(url), Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         refreshPermissions("start")
@@ -330,8 +346,18 @@ class MainActivity : ComponentActivity() {
             }
             val androidLink by remember { latestLink.settled(OsConnectionObserver.NOT_CONNECTED_SETTLE_MS) }
                 .collectAsStateWithLifecycle(initialValue = AndroidLink.UNKNOWN)
-            val bluetoothAdapterState by remember { bluetoothStateObserver.observe() }
-                .collectAsStateWithLifecycle(initialValue = remember { bluetoothStateObserver.current() })
+            // `ai-sessions/0064` F-3: every adapter reading also goes to the repository (an off reading around a session loss names its cause), collected
+            // while the UI is at least STARTED — the same visibility bound as the link readings above. The screen shows the latest value.
+            val adapterStates = remember { MutableStateFlow(bluetoothStateObserver.current()) }
+            LaunchedEffect(lifecycleOwnerForLink) {
+                lifecycleOwnerForLink.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    bluetoothStateObserver.observe().collect { adapter ->
+                        adapterStates.value = adapter
+                        budsRepository.onBluetoothAdapter(BluetoothStateObserver.isOn(adapter))
+                    }
+                }
+            }
+            val bluetoothAdapterState by adapterStates.collectAsStateWithLifecycle()
             val debugModeEnabled by debugSettingsStore.debugModeEnabled.collectAsStateWithLifecycle(initialValue = false)
             val darkMode by darkModeSettingsStore.darkMode.collectAsStateWithLifecycle(initialValue = DarkMode.DEFAULT)
 
@@ -470,6 +496,7 @@ class MainActivity : ComponentActivity() {
                 onDebugModeChanged = { enabled -> applicationScope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
                 onDarkModeChanged = { mode -> applicationScope.launch { darkModeSettingsStore.setDarkMode(mode) } },
                 onExportLog = { startLogExport() },
+                onOpenUrl = { url -> openUrl(url) },
             )
             // `ai-sessions/0057` D-10: a pull runs the one existing action `pullActionFor` chose — the same repository call or system prompt its button makes —
             // once, in the application scope; the returned job lets the pull indicator end when the repository has answered. Nothing is retried or scheduled.
@@ -501,6 +528,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+/** F-6: the message when no app can open a link (the maintainer's preview, chat 2026-10-01) — the address is shown so it can be typed elsewhere. */
+internal fun noBrowserText(url: String): String = "No app on this phone can open web links. The address is $url"
 
 /** F-5: the build identity computed locally at build time (`app/build.gradle.kts`) — "unknown" parts when git was not available. */
 private val APP_BUILD = AppBuildInfo(BuildConfig.VERSION_NAME, BuildConfig.GIT_COMMIT, BuildConfig.GIT_COMMIT_DATE)

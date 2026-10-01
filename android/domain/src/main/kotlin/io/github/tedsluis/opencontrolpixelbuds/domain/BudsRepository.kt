@@ -56,6 +56,13 @@ interface BudsRepository {
     fun onAndroidLink(link: AndroidLink)
 
     /**
+     * One reading of Android's Bluetooth adapter (`BluetoothAdapter.ACTION_STATE_CHANGED`, forwarded by `:app` while the UI is visible, as [onAndroidLink]):
+     * [on] `false` for turning off / off, `true` for turning on / on. `ai-sessions/0064` F-3: an off reading around a session loss names its cause
+     * ([SessionLossCause.BLUETOOTH_OFF]). Never opens, closes or sends anything.
+     */
+    fun onBluetoothAdapter(on: Boolean)
+
+    /**
      * The app's UI became visible (`true`, on resume) or not (`false`, on stop) — DECISIONS.md ADR-044: the session is re-opened by itself only while
      * visible and Android reports the Buds connected (after a session loss, when Android's link comes back, on resume); never in the background.
      */

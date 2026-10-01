@@ -119,5 +119,19 @@ data class BudsSettings(
 
         /** The value a released balance slider writes: 0 within ±[BALANCE_CENTRE_SNAP], otherwise itself, clamped to [BALANCE_RANGE]. */
         fun snapBalance(value: Int): Int = if (kotlin.math.abs(value) <= BALANCE_CENTRE_SNAP) 0 else value.coerceIn(BALANCE_RANGE)
+
+        /**
+         * `ai-sessions/0064` F-2 (the maintainer's choice "−/+ of 1, slider kept", chat 2026-10-01): one step of the `[‹]`/`[›]` buttons beside the slider.
+         * `CAP-066` (FINDINGS §5): 32 drags never reached Right 4 (`17:7`). A step is the Buds' [current] value plus [BALANCE_STEP] toward Left (+, the wire's
+         * +100 = Left, ADR-026) or minus it toward Right — **no** centre snap (Centre → Right 1 must be possible). `null` at the end of [BALANCE_RANGE]: nothing
+         * to write.
+         */
+        fun balanceStep(current: Int, towardLeft: Boolean): Int? {
+            val next = current + if (towardLeft) BALANCE_STEP else -BALANCE_STEP
+            return next.takeIf { it in BALANCE_RANGE }
+        }
+
+        /** The `[‹]`/`[›]` step (F-2): 1, so every wire value is reachable. */
+        const val BALANCE_STEP = 1
     }
 }

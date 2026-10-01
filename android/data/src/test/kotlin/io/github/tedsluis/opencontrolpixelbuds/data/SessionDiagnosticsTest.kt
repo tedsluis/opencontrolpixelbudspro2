@@ -73,4 +73,10 @@ class SessionDiagnosticsTest {
         )
         assertFalse(SessionDiagnostics.lossCauseLine(SessionLossCause.ANDROID_LINK_LOST).contains("provisional"))
     }
+
+    @Test
+    @DisplayName("F-3 (ai-sessions/0064): the Bluetooth-off cause in the maintainer's words, final")
+    fun `bluetooth off line`() {
+        assertEquals("Session loss cause: Bluetooth was switched off on this phone", SessionDiagnostics.lossCauseLine(SessionLossCause.BLUETOOTH_OFF))
+    }
 }

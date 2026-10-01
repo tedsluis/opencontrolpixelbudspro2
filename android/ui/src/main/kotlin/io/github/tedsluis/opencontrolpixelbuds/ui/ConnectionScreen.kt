@@ -454,8 +454,12 @@ internal fun channelLostMessage(channelId: Int, lossCause: SessionLossCause?): S
     SessionLossCause.ANDROID_LINK_UP_ON_RETURN ->
         "The app's channel was closed while the app was in the background; Android showed the Buds connected when you returned. The app " +
             "reopens its channel by itself while it is on screen, or tap Connect."
+    // `ai-sessions/0064` F-3 (the maintainer's wording, chat 2026-10-01). While Bluetooth is off the screen shows "Bluetooth is disabled." instead of this card.
+    SessionLossCause.BLUETOOTH_OFF -> BLUETOOTH_OFF_LOSS_TEXT
     SessionLossCause.UNDETERMINED, null -> "The ${channelLabel(channelId)} was closed. Tap Connect to reconnect."
 }
+
+internal const val BLUETOOTH_OFF_LOSS_TEXT: String = "Bluetooth was switched off on this phone, which closed the app's channel. Tap Connect to reconnect."
 
 /** The underlying exception text for the errors that carry one — shown small, never the only message. */
 internal fun BudsError.technicalDetail(): String? = when (this) {

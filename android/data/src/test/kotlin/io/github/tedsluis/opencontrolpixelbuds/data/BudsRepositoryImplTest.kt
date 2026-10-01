@@ -26,6 +26,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap062
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap063
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap064
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap065
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap066Balance
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
@@ -1293,6 +1294,28 @@ class BudsRepositoryImplTest {
     }
 
     @Test
+    @DisplayName("ai-sessions/0064 F-2: four [›] steps from Centre on channel 21 — four writes, the fourth is CAP-064 6671 (17:7 = Right 4); ACK 6673 applies each")
+    fun `four balance steps reach Right 4 with one write each`() = runTest {
+        val (repo, transport) = buildRepository() // the CAP-061 announcement: channel 21 (CAP-064 6671 ran on 21)
+        transport.onSent = { ch, frame ->
+            val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+            if (ch == Dlci.MAESTRO && rpc.methodId == Maestro.METHOD_WRITE_SETTING) transport.emit(Dlci.MAESTRO, hex(Cap066Balance.ACK_CH21_6673))
+        }
+        advanceTimeBy(1_000)
+
+        var shown = 0 // the label: the Buds' acknowledged value
+        repeat(4) {
+            val next = BudsSettings.balanceStep(shown, towardLeft = false)!!
+            assertEquals(BudsResult.Success(Unit), repo.setVolumeBalance(next))
+            shown = repo.settings.value.volumeBalance!!.value
+        }
+
+        assertEquals(-4, shown, "Right 4")
+        assertEquals(4, transport.sent.size, "one write per step, nothing else")
+        assertEquals(Cap066Balance.RIGHT_4_CH21_6671, transport.sent.last().second.toHex(), "the fourth write is the captured 17:7, byte for byte")
+    }
+
+    @Test
     @DisplayName("ADR-045 on channel 21: conversation detection OFF = CAP-019 1720, touch controls OFF = CAP-020 1995; ACK 1731")
     fun `settings writes on channel 21 are byte-identical`() = runTest {
         val (repo, transport) = buildRepository() // the CAP-061 announcement: channel 21
@@ -1677,6 +1700,61 @@ class BudsRepositoryImplTest {
         assert("undetermined" in lines[0] && "(provisional" in lines[0]) { lines[0] }
         assert("the Buds closed the channel" in lines[1] && "(provisional" in lines[1]) { lines[1] }
         assert("went down" in lines[2] && "provisional" !in lines[2]) { lines[2] }
+    }
+
+    // ---- F-3 (ai-sessions/0064): a Bluetooth-off loss is named, and final at once ---------------------------------------------------------------
+    // CAP-066 export E1 (CAP-066-opencontrol-debug-20261001-162556.txt) lines 279-283 / E2 (…-163412.txt) lines 164-168 (local time) and the adapter states of the
+    // system logs (UTC = local − 2 h): System-log-d55db7f4e1c8 38635 14:13:00.837 (12 → 13 TURNING_OFF), 38754 14:13:01.361 (13 → 10 OFF); System-log-7f4bb1d5ea2c
+    // 42742 14:32:16.820 (12 → 13), 42895 14:32:17.651 (13 → 10).
+
+    @Test
+    @DisplayName("F-3, CAP-066 E1: TURNING_OFF 16:13:00.837, link UNKNOWN .971, OFF 01.361, loss 01.386 -> one final line 'Bluetooth was switched off on this phone'")
+    fun `the CAP-066 E1 Bluetooth-off loss is named and final`() = runTest {
+        val (repo, transport) = buildRepository()
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        advanceTimeBy(10_000)
+        BleLogger.clear()
+        repo.onBluetoothAdapter(on = false) // 16:13:00.837 TURNING_OFF
+        advanceTimeBy(134); repo.onAndroidLink(AndroidLink.UNKNOWN) // 16:13:00.971, E1 279
+        advanceTimeBy(390); repo.onBluetoothAdapter(on = false) // 16:13:01.361 OFF
+        advanceTimeBy(25); deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof)) // 16:13:01.386, E1 281
+
+        assertEquals(SessionLossCause.BLUETOOTH_OFF, repo.lastLossCause.first())
+        val lines = BleLogger.exportLog().lines().filter { "Session loss cause" in it }
+        assertEquals(1, lines.size, lines.joinToString("\n"))
+        assert(lines[0].endsWith("Session loss cause: Bluetooth was switched off on this phone")) { "final at once, no (provisional): ${lines[0]}" }
+    }
+
+    @Test
+    @DisplayName("F-3, CAP-066 E2: TURNING_OFF 16:32:16.820, link UNKNOWN 17.010, loss 17.632, OFF 17.651 -> Bluetooth was switched off; without the adapter: undetermined")
+    fun `the CAP-066 E2 Bluetooth-off loss is named, the old verdict without the adapter reading stays undetermined`() = runTest {
+        val (repo, transport) = buildRepository()
+        advanceTimeBy(10_000)
+        repo.onBluetoothAdapter(on = false) // 16:32:16.820
+        advanceTimeBy(190); repo.onAndroidLink(AndroidLink.UNKNOWN) // 16:32:17.010, E2 164
+        advanceTimeBy(622); deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof)) // 16:32:17.632, E2 166
+        assertEquals(SessionLossCause.BLUETOOTH_OFF, repo.lastLossCause.first())
+        advanceTimeBy(19); repo.onBluetoothAdapter(on = false) // 16:32:17.651
+        assertEquals(SessionLossCause.BLUETOOTH_OFF, repo.lastLossCause.first())
+
+        val (repo2, transport2) = buildRepository() // the CAP-066 build: no adapter reading reached the repository
+        advanceTimeBy(10_000)
+        repo2.onAndroidLink(AndroidLink.UNKNOWN)
+        advanceTimeBy(622); deliverLoss(transport2, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        assertEquals(SessionLossCause.UNDETERMINED, repo2.lastLossCause.first(), "E2 167")
+    }
+
+    @Test
+    fun `an adapter turning on, or an off reading long before the loss, names nothing`() = runTest {
+        val (repo, transport) = buildRepository()
+        repo.onBluetoothAdapter(on = false)
+        advanceTimeBy(60_000) // Bluetooth was off a minute ago and came back
+        repo.onBluetoothAdapter(on = true)
+        repo.onAndroidLink(AndroidLink.CONNECTED)
+        advanceTimeBy(5_000)
+        deliverLoss(transport, ConnectionLoss(Dlci.MAESTRO, socketEof))
+        advanceTimeBy(15); repo.onAndroidLink(AndroidLink.CONNECTED)
+        assertEquals(SessionLossCause.BUDS_CLOSED_CHANNEL, repo.lastLossCause.first())
     }
 
     @Test

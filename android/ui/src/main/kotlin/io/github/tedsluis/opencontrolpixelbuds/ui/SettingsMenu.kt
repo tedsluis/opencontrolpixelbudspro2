@@ -29,19 +29,24 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
@@ -77,6 +82,8 @@ fun SettingsMenuScreen(
     onExportLog: () -> Unit,
     appBuild: AppBuildInfo,
     deviceInfo: DeviceInfo?,
+    /** Hands a URL to another app (the browser) — `:app` starts `Intent.ACTION_VIEW` (`ai-sessions/0064` F-6, DECISIONS.md ADR-050); injected so `:ui` stays testable. */
+    onOpenUrl: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
@@ -94,7 +101,7 @@ fun SettingsMenuScreen(
                 unidentifiedFrames = unidentifiedFrames,
                 onExportLog = onExportLog,
             )
-            SettingsTab.INFO -> InfoTab(appBuild, deviceInfo)
+            SettingsTab.INFO -> InfoTab(appBuild, deviceInfo, onOpenUrl)
         }
     }
 }
@@ -160,8 +167,26 @@ internal fun firmwareInfoLines(deviceInfo: DeviceInfo?): List<String> {
     return listOf(heading) + entries + listOfNotNull(deviceInfo.maestroChannel?.let { "Control channel: $it" })
 }
 
+/**
+ * `ai-sessions/0064` F-6 (the maintainer's request and choice "Links + bundled licence", chat 2026-10-01; DECISIONS.md ADR-050): the project's links. Fixed
+ * constants, opened only by a tap, by another app (the browser) — this app makes no network request and has no `INTERNET` permission (AGENTS.md §1).
+ * Checked 2026-10-01 (`ai-sessions/0064` RESULT §F): `git remote get-url origin` = `git@github.com:tedsluis/opencontrolpixelbudspro2.git`; each URL answers 200.
+ */
+internal object ProjectLinks {
+    const val LICENSE_URL: String = "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/LICENSE"
+    const val README_URL: String = "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/README.md"
+    const val ISSUES_URL: String = "https://github.com/tedsluis/opencontrolpixelbudspro2/issues"
+}
+
+/** The licence line (F-6): the SPDX identifier every source file carries (`AGPL-3.0-or-later`, AGENTS.md §12, ADR-002) and the `LICENSE` file's licence. */
+internal const val LICENCE_LINE: String = "GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)"
+
+/** Under the links (F-6): where they open. */
+internal const val LINKS_NOTE: String = "Links open in your browser; this app itself has no internet access."
+
 @Composable
-private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?) {
+private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?, onOpenUrl: (String) -> Unit) {
+    var showLicence by rememberSaveable { mutableStateOf(false) }
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -169,8 +194,34 @@ private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?) {
         ) {
             Text("This app", style = MaterialTheme.typography.titleMedium)
             Text(appBuildLine(appBuild), style = MaterialTheme.typography.bodyMedium)
+            Text("Licence", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+            Text(LICENCE_LINE, style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = { showLicence = true }) { Text("Read the licence") }
+            TextButton(onClick = { onOpenUrl(ProjectLinks.LICENSE_URL) }) { Text("Licence on GitHub") }
+            Text("Project", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+            TextButton(onClick = { onOpenUrl(ProjectLinks.README_URL) }) { Text("README on GitHub") }
+            TextButton(onClick = { onOpenUrl(ProjectLinks.ISSUES_URL) }) { Text("Report an issue on GitHub") }
+            Text(LINKS_NOTE, style = MaterialTheme.typography.bodySmall)
             Text("The Buds", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             firmwareInfoLines(deviceInfo).forEach { Text(it, style = MaterialTheme.typography.bodyMedium) }
         }
     }
+    if (showLicence) LicenceDialog(onClose = { showLicence = false })
+}
+
+/** F-6: the full licence text, bundled (`res/raw/license.txt`, byte-identical to the repository's `LICENSE` — `SettingsMenuTest`), readable offline. */
+@Composable
+private fun LicenceDialog(onClose: () -> Unit) {
+    val context = LocalContext.current
+    val text = remember { context.resources.openRawResource(R.raw.license).bufferedReader().use { it.readText() } }
+    AlertDialog(
+        onDismissRequest = onClose,
+        confirmButton = { TextButton(onClick = onClose) { Text("Close") } },
+        title = { Text("Licence") },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Text(text, style = MaterialTheme.typography.bodySmall)
+            }
+        },
+    )
 }

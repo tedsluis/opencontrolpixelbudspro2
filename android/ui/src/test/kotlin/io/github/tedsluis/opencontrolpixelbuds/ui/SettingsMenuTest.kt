@@ -33,6 +33,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
@@ -185,5 +186,60 @@ class SettingsMenuTest {
         assertEquals(DarkMode.SYSTEM, DarkMode.fromStored("SEPIA"))
         assertEquals(true, DarkMode.SYSTEM.isDark(systemIsDark = true))
         assertEquals(false, DarkMode.OFF.isDark(systemIsDark = true))
+    }
+
+    // ---- ai-sessions/0064 F-6: licence, README and issues (DECISIONS.md ADR-050) -------------------------------------------------------------------
+
+    @Test
+    fun `Info shows the licence line and the three links, each tap hands exactly its URL to the opener`() {
+        val opened = mutableListOf<String>()
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, announced, onOpenUrl = { opened += it })
+            }
+        }
+        compose.onNodeWithText("Info").performClick()
+        compose.onNodeWithText("GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)").assertExists()
+        compose.onNodeWithText("Links open in your browser; this app itself has no internet access.").assertExists()
+
+        // The Robolectric screen is small (320 × 470 px): scroll each link into view before the tap.
+        compose.onNodeWithText("Licence on GitHub").performScrollTo().performClick()
+        compose.onNodeWithText("README on GitHub").performScrollTo().performClick()
+        compose.onNodeWithText("Report an issue on GitHub").performScrollTo().performClick()
+        assertEquals(
+            listOf(
+                "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/LICENSE",
+                "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/README.md",
+                "https://github.com/tedsluis/opencontrolpixelbudspro2/issues",
+            ),
+            opened,
+        )
+        compose.onNodeWithText("Case: release_5.203").assertExists() // the Buds' part stays below
+    }
+
+    @Test
+    fun `Read the licence shows the bundled text offline, nothing is opened, Close closes it`() {
+        val opened = mutableListOf<String>()
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, null, onOpenUrl = { opened += it })
+            }
+        }
+        compose.onNodeWithText("Info").performClick()
+        compose.onNodeWithText("Read the licence").performScrollTo().performClick()
+        compose.onNodeWithText("GNU AFFERO GENERAL PUBLIC LICENSE", substring = true).assertExists()
+        assertTrue("no link opened", opened.isEmpty())
+        compose.onNodeWithText("Close").performClick()
+        compose.onNodeWithText("GNU AFFERO GENERAL PUBLIC LICENSE", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the bundled licence is byte-identical to the repository's LICENSE`() {
+        // The unit tests run in the module directory (android/ui); the repository's LICENSE is two levels up. A changed LICENSE fails this until the copy is
+        // updated (cp LICENSE android/ui/src/main/res/raw/license.txt).
+        val repo = java.io.File("../../LICENSE").readBytes()
+        val bundled = java.io.File("src/main/res/raw/license.txt").readBytes()
+        assertTrue("LICENSE found (${repo.size} bytes)", repo.size > 30_000)
+        assertTrue("res/raw/license.txt == LICENSE", repo.contentEquals(bundled))
     }
 }

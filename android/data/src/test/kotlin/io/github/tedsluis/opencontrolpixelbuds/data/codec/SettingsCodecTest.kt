@@ -38,6 +38,10 @@ class SettingsCodecTest {
         return Hdlc.encode(address, PW_HDLC_CONTROL_UI, PwRpc.encode(packet)).toHex()
     }
 
+    /** The `RpcPacket` payload of a whole pw_hdlc frame (what [SettingsCodec.decode] reads). */
+    private fun rpcPayload(frameHex: String): ByteArray =
+        (PwRpc.decode((Hdlc.decode(hex(frameHex)) as BudsResult.Success).value.payload) as BudsResult.Success).value.payload
+
     /** Hdlc → pw_rpc → the router's Maestro classification, the path every inbound frame takes. */
     private fun route(frameHex: String): RoutedFrame? {
         val hdlc = (Hdlc.decode(hex(frameHex)) as BudsResult.Success).value
@@ -73,6 +77,25 @@ class SettingsCodecTest {
     fun balance() {
         for ((frame, value) in SettingsWrites.BALANCE_DRAG) assertEquals(frame, wire(SettingsCodec.balanceRequest(19, value)), "value $value")
         assertEquals(SettingsWrites.BALANCE_DRAG[0].first, wire(SettingsCodec.balanceRequest(19, -250)), "clamped to −100 (ADR-026)")
+    }
+
+    @Test
+    @DisplayName("balance, ai-sessions/0064 F-2: CAP-066 A7723 (Right 6) / A7873 (Centre) on channel 19, CAP-064 6671 (Right 4 = 17:7) on channel 21, byte for byte")
+    fun balanceStepTargets() {
+        assertEquals(Cap066Balance.RIGHT_6_A7723, wire(SettingsCodec.balanceRequest(19, -6)))
+        assertEquals(Cap066Balance.CENTRE_A7873, wire(SettingsCodec.balanceRequest(19, 0)))
+        assertEquals(Cap066Balance.RIGHT_4_CH21_6671, wire(SettingsCodec.balanceRequest(21, -4)), "the value [›] reaches in four taps from Centre")
+        assertEquals(SettingValue.Balance(-4), SettingsCodec.decode(rpcPayload(Cap066Balance.RIGHT_4_CH21_6671)))
+    }
+
+    @Test
+    @DisplayName("balance, supplementary (derived, not captured): Right 4 on channel 19 = A7723's header and field with the value 07 instead of 0b")
+    fun balanceRight4OnChannel19Derived() {
+        // No channel-19 `17:7` write exists in any capture (Cap066Balance.RIGHT_4_CH21_6671's comment); this checks the derived frame's structure only.
+        val derived = wire(SettingsCodec.balanceRequest(19, -4))
+        val header = Cap066Balance.RIGHT_6_A7723.substringBefore("88010b")
+        assertEquals(header + "880107", derived.substring(0, header.length + 6), "same pw_hdlc address, channel, service, method and field 17 tag")
+        assertEquals(SettingValue.Balance(-4), SettingsCodec.decode(rpcPayload(derived)))
     }
 
     @Test

@@ -75,7 +75,7 @@ class OsConnectionObserver(
 
     /** @param refresh events on which the state is re-read without any broadcast (resume, bond change, session change). */
     fun observe(refresh: Flow<Unit> = emptyFlow()): Flow<AndroidLink> = callbackFlow {
-        val proxies = mutableMapOf<Int, BluetoothProfile>()
+        val proxies = ProfileProxies<BluetoothProfile>() // F-4 (`ai-sessions/0064`): every proxy obtained is closed when the flow ends
         val requested = mutableSetOf<Int>()
         var lastLogged: AndroidLink? = null
 
@@ -84,7 +84,7 @@ class OsConnectionObserver(
             val connectedByProfile: Map<Int, List<String>> = if (!permissionOk) {
                 emptyMap()
             } else {
-                proxies.mapValues { (_, proxy) ->
+                proxies.bound.mapValues { (_, proxy) ->
                     try {
                         proxy.connectedDevices.map { it.address }
                     } catch (e: SecurityException) {
@@ -118,12 +118,12 @@ class OsConnectionObserver(
 
         val listener = object : BluetoothProfile.ServiceListener {
             override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
-                proxies[profile] = proxy
+                proxies.onBound(profile, proxy)
                 evaluate("profile $profile bound")
             }
 
             override fun onServiceDisconnected(profile: Int) {
-                proxies.remove(profile)
+                proxies.onUnbound(profile) // still closed in awaitClose (F-4)
                 evaluate("profile $profile unbound")
             }
         }
@@ -140,8 +140,7 @@ class OsConnectionObserver(
 
         awaitClose {
             context.unregisterReceiver(receiver)
-            proxies.forEach { (profile, proxy) -> adapter?.closeProfileProxy(profile, proxy) }
-            proxies.clear()
+            proxies.closeAll { profile, proxy -> adapter?.closeProfileProxy(profile, proxy) }
             BleLogger.logConnectionEvent("Android link observer stopped")
         }
     }

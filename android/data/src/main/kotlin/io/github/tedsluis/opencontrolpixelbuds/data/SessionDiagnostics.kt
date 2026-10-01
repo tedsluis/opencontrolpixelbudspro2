@@ -51,6 +51,7 @@ object SessionDiagnostics {
         SessionLossCause.ANDROID_LINK_DOWN_ON_RETURN -> "the loss happened while the app was not visible; on return Android's link was down"
         SessionLossCause.ANDROID_LINK_UP_ON_RETURN -> "the loss happened while the app was not visible; on return Android showed the Buds connected"
         SessionLossCause.UNDETERMINED -> "undetermined (no reading of Android's link close to the loss)"
+        SessionLossCause.BLUETOOTH_OFF -> "Bluetooth was switched off on this phone" // F-3, `ai-sessions/0064` (the maintainer's wording)
     } + if (provisional) " (provisional: a reading of Android's link within 1 s of the loss may still change it)" else ""
 
     /** A session ended because the user tapped *Disconnect* — [stateName] is the session state at that moment. */

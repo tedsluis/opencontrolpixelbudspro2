@@ -127,4 +127,51 @@ class SessionLossTest {
             classifySessionLoss(hiddenLoss, listOf(LinkReading(AndroidLink.CONNECTED, t("16:16:06.182"))), lossWhileHidden = true),
         )
     }
+
+    // ---- F-3 (ai-sessions/0064): a Bluetooth-off loss --------------------------------------------------------------------------------------------
+    // CAP-066 debug export E1 (CAP-066-opencontrol-debug-20261001-162556.txt) lines 279-283 and E2 (…-163412.txt) lines 164-168, local time; the adapter
+    // states from the system logs (UTC = local − 2 h): CAP-066-System-log-d55db7f4e1c8.txt 38635 (14:13:00.837, 12 → 13 TURNING_OFF), 38754
+    // (14:13:01.361, 13 → 10 OFF); CAP-066-System-log-7f4bb1d5ea2c.txt 42742 (14:32:16.820, 12 → 13), 42895 (14:32:17.651, 13 → 10).
+
+    @Test
+    @DisplayName("CAP-066 E1 16:13:01.386: adapter TURNING_OFF 0.55 s before the loss -> Bluetooth was switched off (was: undetermined)")
+    fun `CAP-066 E1 Bluetooth off`() {
+        val loss = t("16:13:01.386") // E1 281 "Session lost: channel 0x02 closed …"
+        val readings = listOf(LinkReading(AndroidLink.UNKNOWN, t("16:13:00.971"))) // E1 279 "Android link: CONNECTED -> UNKNOWN"
+        assertEquals(SessionLossCause.UNDETERMINED, classifySessionLoss(loss, readings), "E1 282, the CAP-066 verdict without an adapter reading")
+        val adapter = listOf(AdapterOffReading(t("16:13:00.837")), AdapterOffReading(t("16:13:01.361")))
+        assertEquals(SessionLossCause.BLUETOOTH_OFF, classifySessionLoss(loss, readings, adapterOff = adapter))
+        assertEquals(SessionLossCause.BLUETOOTH_OFF, classifySessionLoss(loss, readings, adapterOff = adapter.take(1)), "TURNING_OFF alone is enough")
+    }
+
+    @Test
+    @DisplayName("CAP-066 E2 16:32:17.632: adapter TURNING_OFF 0.81 s before, OFF 19 ms after -> Bluetooth was switched off")
+    fun `CAP-066 E2 Bluetooth off`() {
+        val loss = t("16:32:17.632") // E2 166
+        val readings = listOf(LinkReading(AndroidLink.UNKNOWN, t("16:32:17.010"))) // E2 164
+        assertEquals(SessionLossCause.UNDETERMINED, classifySessionLoss(loss, readings), "E2 167")
+        assertEquals(
+            SessionLossCause.BLUETOOTH_OFF,
+            classifySessionLoss(loss, readings, adapterOff = listOf(AdapterOffReading(t("16:32:16.820")), AdapterOffReading(t("16:32:17.651")))),
+        )
+        assertEquals(SessionLossCause.BLUETOOTH_OFF, classifySessionLoss(loss, readings, adapterOff = listOf(AdapterOffReading(t("16:32:17.651")))), "OFF after")
+    }
+
+    @Test
+    fun `an adapter-off reading outside 2 s before to 1 s after the loss claims nothing, and it wins over a lost link inside the window`() {
+        val loss = 100_000L
+        assertEquals(SessionLossCause.UNDETERMINED, classifySessionLoss(loss, emptyList(), adapterOff = listOf(AdapterOffReading(loss - 2_001))))
+        assertEquals(SessionLossCause.UNDETERMINED, classifySessionLoss(loss, emptyList(), adapterOff = listOf(AdapterOffReading(loss + 1_001))))
+        assertEquals(SessionLossCause.BLUETOOTH_OFF, classifySessionLoss(loss, emptyList(), adapterOff = listOf(AdapterOffReading(loss - 2_000))))
+        assertEquals(
+            SessionLossCause.BLUETOOTH_OFF,
+            classifySessionLoss(loss, listOf(LinkReading(AndroidLink.NOT_CONNECTED, loss + 100)), adapterOff = listOf(AdapterOffReading(loss - 500))),
+            "switching Bluetooth off also takes the link down: the adapter reading names the cause",
+        )
+        assertEquals(
+            SessionLossCause.BUDS_CLOSED_CHANNEL,
+            classifySessionLoss(loss, listOf(LinkReading(AndroidLink.CONNECTED, loss + 20)), adapterOff = listOf(AdapterOffReading(loss - 60_000))),
+            "an old Bluetooth-off (a minute earlier) changes nothing",
+        )
+    }
 }

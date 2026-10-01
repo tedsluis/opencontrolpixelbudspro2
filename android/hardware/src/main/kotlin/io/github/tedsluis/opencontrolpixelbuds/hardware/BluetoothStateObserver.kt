@@ -45,16 +45,21 @@ enum class BluetoothAdapterState { ON, OFF, TURNING_ON, TURNING_OFF }
 class BluetoothStateObserver(private val context: Context) {
 
     fun observe(): Flow<BluetoothAdapterState> = callbackFlow {
+        var last: BluetoothAdapterState? = null
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
-                val state = intent?.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
-                    ?: BluetoothAdapter.ERROR
-                trySend(mapState(state))
+                val state = mapState(intent?.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR) ?: BluetoothAdapter.ERROR)
+                // `ai-sessions/0064` F-3: always-on (a state transition, AGENTS.md §9) — `CAP-066`'s export had no trace of either Bluetooth-off.
+                adapterTransitionLine(last, state)?.let(BleLogger::logConnectionEvent)
+                last = state
+                trySend(state)
             }
         }
         context.registerReceiver(receiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
 
-        trySend(current())
+        val now = current()
+        last = now
+        trySend(now)
 
         awaitClose { context.unregisterReceiver(receiver) }
     }
@@ -66,6 +71,15 @@ class BluetoothStateObserver(private val context: Context) {
     fun current(): BluetoothAdapterState {
         val adapter = context.getSystemService<BluetoothManager>()?.adapter
         return if (adapter?.isEnabled == true) BluetoothAdapterState.ON else BluetoothAdapterState.OFF
+    }
+
+    companion object {
+        /** The always-on line for an adapter change (F-3), or `null` when nothing changed: "Bluetooth adapter: ON -> TURNING_OFF". */
+        fun adapterTransitionLine(previous: BluetoothAdapterState?, current: BluetoothAdapterState): String? =
+            if (previous == current) null else "Bluetooth adapter: ${previous?.name ?: "UNKNOWN"} -> ${current.name}"
+
+        /** What the repository is told ([io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository.onBluetoothAdapter]): only TURNING_OFF and OFF are "off". */
+        fun isOn(state: BluetoothAdapterState): Boolean = state == BluetoothAdapterState.ON || state == BluetoothAdapterState.TURNING_ON
     }
 
     private fun mapState(state: Int): BluetoothAdapterState = when (state) {

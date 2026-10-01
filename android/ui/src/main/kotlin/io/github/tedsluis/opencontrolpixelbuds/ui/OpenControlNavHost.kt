@@ -140,6 +140,11 @@ data class OpenControlActions(
      * automatic network call this app makes itself. */
     val onExportLog: () -> Unit,
     /**
+     * Settings → Info's links (`ai-sessions/0064` F-6, DECISIONS.md ADR-050): `:app` hands the URL to another app (`Intent.ACTION_VIEW`) on the user's tap — this
+     * app makes no network request itself.
+     */
+    val onOpenUrl: (String) -> Unit = {},
+    /**
      * A pull (swipe down) on a tab (`ai-sessions/0057` D-10): runs the one existing action [PullAction] names and returns the job it launched in the
      * application scope — `null` when it only opened a system prompt or did nothing — so the pull indicator lasts exactly as long as the action.
      */
@@ -239,20 +244,29 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val inSettings = currentDestination?.hierarchy?.any { it.route == Routes.SETTINGS } == true
-    val currentIndex = TAB_DESTINATIONS.indexOfFirst { d -> currentDestination?.hierarchy?.any { it.route == d.route } == true }
-        .coerceAtLeast(0)
+    // `ai-sessions/0064` F-1 (the maintainer's choice "Skip sync until known", chat 2026-10-01): `null` while the back stack is not known yet — the first
+    // composition after a configuration change, before the restored back stack is read. `CAP-066` K4r: the old fallback to 0 (Connection) scrolled the
+    // restored pager to page 0 and the settled-page collector then navigated to Connection (Sound → Connection on a rotation, 14:31:47.326 UTC).
+    val currentIndex: Int? = if (backStackEntry == null) {
+        null
+    } else {
+        TAB_DESTINATIONS.indexOfFirst { d -> currentDestination?.hierarchy?.any { it.route == d.route } == true }.coerceAtLeast(0)
+    }
 
-    // A tap or a system-back navigation changed the current tab: keep the pager's page in sync (not while the settings menu is shown).
+    // A tap or a system-back navigation changed the current tab: keep the pager's page in sync (not while the settings menu is shown, and not before the
+    // back stack is known — the pager keeps its own restored page meanwhile).
     LaunchedEffect(currentIndex, inSettings) {
-        if (!inSettings && pagerState.currentPage != currentIndex) pagerState.scrollToPage(currentIndex)
+        val index = currentIndex ?: return@LaunchedEffect
+        if (!inSettings && pagerState.currentPage != index) pagerState.scrollToPage(index)
     }
     // A completed swipe (the pager settles on a new page): drive the exact same navigation call a bottom-nav tap uses, so back-stack semantics never
-    // depend on which trigger changed the tab.
+    // depend on which trigger changed the tab. Nothing is navigated while the back stack is not known yet (F-1).
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.collect { settled ->
-            val destination = navController.currentBackStackEntry?.destination
-            if (destination?.hierarchy?.any { it.route == Routes.SETTINGS } == true) return@collect
-            val liveIndex = TAB_DESTINATIONS.indexOfFirst { d -> destination?.hierarchy?.any { it.route == d.route } == true }
+            val entry = navController.currentBackStackEntry ?: return@collect
+            val destination = entry.destination
+            if (destination.hierarchy.any { it.route == Routes.SETTINGS }) return@collect
+            val liveIndex = TAB_DESTINATIONS.indexOfFirst { d -> destination.hierarchy.any { it.route == d.route } }
                 .coerceAtLeast(0)
             if (settled != liveIndex) navigateToTab(settled)
         }
@@ -308,6 +322,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 onExportLog = actions.onExportLog,
                 appBuild = state.appBuild,
                 deviceInfo = state.deviceInfo,
+                onOpenUrl = actions.onOpenUrl,
                 modifier = Modifier.padding(padding),
             )
         } else {
