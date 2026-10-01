@@ -60,7 +60,7 @@ above it.
 
 | Firmware version | Known protocol-relevant differences | Source |
 |---|---|---|
-| `release_5.203` | `ADAPTIVE` ANC mode present; 5-band EQ; L/R/Case independent battery reporting (L/R via DLCI 0x04 Option B, Case via DLCI 0x02 Option F since ADR-043 — DLCI 0x08 Option E carries it too — §4.3; the BLE Battery Notification, Option A, has never matched; wording corrected 2026-09-24) | `[VERIFIED-LOCAL]` (Screenshot UI analysis, 2026-07-30) |
+| `release_5.203` | `ADAPTIVE` ANC mode present; 5-band EQ; L/R/Case independent battery reporting (L/R via DLCI 0x04 Option B, Case via DLCI 0x02 Option F since ADR-043 — DLCI 0x08 Option E carries it too — §4.3; the BLE Battery Notification, Option A, has never matched; wording corrected 2026-09-24) | `[VERIFIED-LOCAL]` (Screenshot UI analysis, 2026-07-30) for the UI features; the per-channel battery sources are §4.3's evidence, not the screenshot (pointer 2026-09-30) |
 
 > **Note (2026-08-14) — four different version-like strings are now documented across captures;
 > not yet reconciled into a single confirmed firmware version.** Listed here explicitly, each with
@@ -263,6 +263,10 @@ match rate is unconditional. This is a reproducible, standard-algorithm match, n
 byte pattern — per `PROJECT_RULES.md` §1's promotion rule (byte-for-byte match to a documented
 mechanism, replicated across ≥2 independent captures), **the framing mechanism itself (flag +
 escape + LEB128 address + control + CRC-32) is promoted to 🟢 FACT.**
+**Correction (2026-09-30, `ai-sessions/0059`, pointer — A58-PROT-03):** "LEB128" in this sentence and in the table row above is the wrong
+name for the address encoding: it is pw_hdlc's **one-terminated LSB varint** — each 7-bit group shifted left by one, bit 0 set only in the last
+byte (`fut.java:178–202`; `00 3b` = 3712). The 2026-09-20 Update below already uses the right name; the FACT (flag, escape, address, control
+`0x03`, CRC-32) is unchanged.
 
 **Channel ownership — promoted to 🟢 FACT (2026-08-30, maintainer sign-off, `DECISIONS.md`
 ADR-018, Option 2 — a narrow promotion, see that ADR's "What this new evidence is, precisely — and
@@ -365,6 +369,31 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
   (`python3 scripts/pwrpc_decode.py <log>` prints `… 5:raw 6:0` for each), field 5 = `34 29 3f c2 f6 cb d8 1a` (tag `0x29`, wire type 1) in
   `CAP-001`/`CAP-036`/`CAP-050`/`CAP-061`. 🔴 meaning of fields 5 and 6. A reader must skip wire type 1 — the app's reader did not, so its firmware list was
   always empty and Safe Mode (ADR-042) refused every write on the verified firmware (`CAP-061-FINDINGS.md` §1, raw bytes of frame 1508 there).
+- **Update (2026-09-30, `ai-sessions/0059`, maintainer-approved in chat 2026-09-30, `AskUserQuestion` "L-4 / L-5", "L-1 address" — leads of
+  `ai-sessions/0058`):**
+  - **The other services are named — 🟢 FACT (name mapping).** `h65599(name)` (`scripts/pwrpc_decode.py:25`) gives `0x73d5d805` =
+    `maestro_pw.Dosimeter` (methods `0x73b772ce` `FetchDailySummaries`, `0x4d93b6e2` `SubscribeToLiveDb`), `0x4e4abee7` = `maestro_pw.Multipoint`
+    (`0xd978edbe` `SubscribeToQuietModeStatus`), `0x1c256c5d` = `maestro_pw.DynamicServerConfigService`, `0xaf3a7737` =
+    `pw.software_update.BundledUpdate` (`0x87dea601` `GetStatus`), `0x755ffe65` = `hr.core.software_update.UpdateHelperService` (`0xd91a9462`
+    `GetRunningVersion`, `0x67b5452c` `GetStagedVersion`); the names are string literals in the APK (`fux.java`, `gnb.java`, `fwr.java`); wire e.g.
+    `CAP-041` frames 768/769 (requests), 782 (answers). Positive control: the same function gives `SubscribeRuntimeInfo` = `0xe61e8290` and
+    `GetHardwareInfo` = `0x28eca5e3`, the ids already decoded above. What the Dosimeter values mean stays 🟡 (they rise within a session — a cumulative
+    dose rather than a level; unit unknown); a Dosimeter display is not in scope (maintainer, chat 2026-09-30, "Not now — note only").
+  - **"1779298694" is a version number, not a serial — 🟢 FACT.** `CAP-041` frame 782 (channel 21) answers `UpdateHelperService.GetRunningVersion`
+    with `1:1779298694` (varint `86 e3 b7 d0 06`) and `GetStagedVersion` with `NOT_FOUND`; the same ten digits are field 1 of each of the three entries
+    of the unsolicited `GetSoftwareInfo` announcement (`4:{1:{1:0x31373739323938363934 2:"release_5.203"} …}`, e.g. `CAP-001` 1346, `CAP-041` 758;
+    `python3 scripts/pwrpc_decode.py <log>`). So the announcement's `<serial>` in the 2026-09-24 Update above, and "device serial" in the paragraph
+    before it, is this version number. 🟡: a build number or build time (as Unix time 2026-05-20 17:38:14 UTC). The component serials are
+    `GetHardwareInfo` field 7 (`57071WRBEC0251` …, §6).
+  - **The request address is derivable from the announced channel — 🟡 HYPOTHESIS (code + 4 of 4 wire values).** `fux.java:90–103` maps channels
+    18–22 to (`MAESTRO_A`; CASE, LEFT_BT_CORE, LEFT_SENSOR_HUB, RIGHT_BT_CORE, RIGHT_SENSOR_HUB) and 23–27 to the same on `MAESTRO_B`; `fut.java:178`
+    builds `((a2 & 15) << 6) | ((a3 & 15) << 10)` with `goq` codes MAESTRO_A 10, MAESTRO_B 13, LEFT_BT_CORE 3, RIGHT_BT_CORE 4 → `00 3b` (19),
+    `00 4b` (21), `80 3d` (24), `80 4d` (26) — every observed request address. Predicted, never seen: 18 `00 2b`, 20 `00 5b`, 22 `00 6b`, 23 `80 2d`,
+    25 `80 5d`, 27 `80 6d`. 🔴 whether the announced channel names the bud that hosts the session (19/24 Left, 21/26 Right) — test in `CAP-065`
+    (Group BA: only the Left bud out, then only the Right). The app keeps its tabulated channels (ADR-034 item 3, unchanged).
+  - **The phone's "`type 4` packets" above are `CLIENT_ERROR` — 🟢 FACT (decoder output).** pw_rpc packet type 4 = `CLIENT_ERROR`; in every capture
+    log only the phone sends them (cancellations and `FAILED_PRECONDITION`s, e.g. `CAP-056` 4360 `…30012100…` = CANCELLED on `WriteSetting`), and the
+    Buds never send a `SERVER_ERROR` (0 in all logs; `grep -c` over `scripts/pwrpc_decode.py` output of every `captures/*/*btsno*_hci*.log`).
 
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
@@ -445,7 +474,7 @@ Checked against that one confirmed signature, the two candidates diverge sharply
 | Framing mechanism vs. `pbpctrl`'s stated "HDLC U-frames" | **Match** — `0x7E`-flag-delimited, `0x7D`-escaped, exactly HDLC framing | **No match** — no `0x7E` flag bytes anywhere, no escaping; framed instead by an explicit `[Group:1][Code:1][Length:2B-BE][Value]` header, structurally the *Message Stream* shape (§2.1), not HDLC |
 | "Magic bytes" (Hypothesis B placeholder) | No fixed magic value — the HDLC flag `0x7E` itself is shared start/end framing, not a distinguishing sync byte | No magic byte either — but for a different reason: framing is length-delimited (TLV), which doesn't need one, same as the official Message Stream |
 | "Payload length" field | Not explicit — implicit via flag-delimiting (HDLC's own mechanism, matching `pbpctrl`'s description) | Explicit 2-byte big-endian length — this is *not* what `pbpctrl` describes for Maestro at all; it is exactly Message Stream §2.1's "Additional Data Length" field shape |
-| "Channel / Message ID" | HDLC Address (LEB128 varint) + Control byte — consistent with pw_rpc's own channel/service addressing scheme | Group (1B) + Code (1B) — consistent with Message Stream's Group/Code addressing, not pw_rpc's |
+| "Channel / Message ID" | HDLC Address (one-terminated varint — "LEB128" corrected 2026-09-30, §2.2a) + Control byte — consistent with pw_rpc's own channel/service addressing scheme | Group (1B) + Code (1B) — consistent with Message Stream's Group/Code addressing, not pw_rpc's |
 | Checksum | CRC-32 (IEEE 802.3/zlib), confirmed 640/640 — matches Pigweed's own documented `pw_checksum` FCS convention exactly | None found (`CAP-004-FINDINGS.md` §5a's reassembling parser closes cleanly on every session with 0 leftover bytes and no checksum-shaped trailer ever isolated) |
 
 **Conclusion, stated per `PROJECT_RULES.md` §1's promotion rules:** DLCI 0x02 is now a
@@ -462,7 +491,8 @@ ADR-018):** DLCI 0x02 as the companion app's own internal RFCOMM channel is now 
 match alone). What remains 🟡 HYPOTHESIS (strong), unchanged in strength, is narrower than the
 original "DLCI 0x02 = `libmaestro`" framing above: whether this channel's Sent-direction payload
 *content* specifically carries `libmaestro`'s settings-write commands, since no Maestro-specific
-content (an ANC/EQ method call) is decoded yet. DLCI 0x08's *identity* remains 🔴 OPEN QUESTION as before, but is now narrowed by a
+content (an ANC/EQ method call) is decoded yet *(pointer 2026-09-30, A58-PROT-05: settled — every DLCI 0x02 packet is a pw_rpc `RpcPacket` for
+`maestro_pw.Maestro`, 🟢 ADR-034)*. DLCI 0x08's *identity* remains 🔴 OPEN QUESTION as before, but is now narrowed by a
 checked negative: **not** `libmaestro` (mechanism mismatch against the one concrete signature
 `pbpctrl` publishes), leaving "a lower-level Nearby/CDM companion-device negotiation independent
 of both Fast Pair and Maestro" (`CAP-004-FINDINGS.md` §5a's existing framing) as the leading
@@ -477,7 +507,7 @@ has had anything beyond a raw DLCI number to refer to it by. This is a concrete 
 a future APK keyword pass (a `grep -ri "gsnd"` sweep of `jadx-output/` for `v1.0.955078536-10253511`
 found no match as of this update), not a resolution of the channel's identity — knowing it is *named*
 "GSND CONTROL" does not by itself reveal its Group/Code semantics or confirm/deny the Nearby/CDM
-candidate above. 🟡 HYPOTHESIS awaiting maintainer review, per `AGENTS.md` §6 — not committed as a
+candidate above. 🟡 HYPOTHESIS *(recorded at 🟡 in §6 — marker resolved 2026-09-30, maintainer, chat, `ai-sessions/0059`)*, per `AGENTS.md` §6 — not committed as a
 promotion. The same browse also named DLCI 0x0a "GSND AUDIO" (`CAP-021-FINDINGS.md` §4a's
 still-unattributed 1123-frame burst channel), DLCI 0x06 "DEBUG APP", and DLCI 0x12 "BTIS" — none
 previously documented anywhere in this project.
@@ -505,7 +535,7 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
 | `hardware_status.proto` | Battery / hardware telemetry query-response | 🟡 HYPOTHESIS — may turn out to be Fast Pair's generic Message Stream "Device Information" messages rather than a Buds-specific schema (see §4.3) |
 
 > File names above are best-guess placeholders pending real extraction — see §6
-> open questions.
+> open questions. *(2026-09-30: the four rows' 🟡 labels are history — none of these files exists, see the note below.)*
 >
 > **Superseded (2026-09-24, `ai-sessions/0045`):** extraction happened by a different route — `pbtk` cannot read this APK's codegen, the schemas
 > (`qhr`, `qjc`/`qja`, `nqx` = `pw_rpc.RpcPacket`, …) were recovered with `scripts/decode_rawmessageinfo.py` and are recorded in `REVERSE_ENGINEERING.md`
@@ -603,8 +633,12 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   opcode, `ADR-014`'s 4-independent-session Option E). **Precisely scoped claim, promoted:** "DLCI
   0x04's `Get ANC state` (`0x11`) fires whenever the channel (re)establishes and carries real
   Message Stream payload, independent of whether the underlying classic link itself reconnects."
-- **Settable-toggles byte = whether the Buds are physically docked, 🟢 FACT, promoted 2026-09-05
-  (maintainer sign-off, `DECISIONS.md` ADR-024):** of the 17 `Notify` samples referenced above, 12
+- **Settable-toggles byte — current reading, `DECISIONS.md` ADR-049 (2026-09-30, maintainer-approved in chat, `ai-sessions/0059`; supersedes
+  ADR-024's Decision):** 🟢 FACT `0x00` ⇒ a `Set` is NAKed with reason `0x02` (`CAP-062`, 10 of 10), non-zero ⇒ ACKed (40 of 40 across nine
+  captures); 🟢 FACT (correlation) both buds seated ⇒ `0x00`; 🟡 HYPOTHESIS (strong) `0x00` ⇔ no bud worn, with three open samples the other way
+  (`0xe8` while the notes say no bud was worn: `CAP-042` 602, `CAP-045` 612, `CAP-048` 11939 — re-check in `CAP-065`). "Dock state" is withdrawn.
+  The text below, from its original 2026-09-05 heading "Settable-toggles byte = whether the Buds are physically docked, 🟢 FACT, promoted
+  2026-09-05 (maintainer sign-off, `DECISIONS.md` ADR-024)", is history: of the 17 `Notify` samples referenced above, 12
   show `Settable=0xe8` and 5 show `Settable=0x00` — **not a connect-time-vs-settled split** (both
   values appear at channel-(re)open moments) but a **Buds-in-the-case-vs-not-docked** split,
   video-confirmed at 7 of 7 checked samples with zero counter-examples
@@ -664,7 +698,8 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   settings need `libmaestro`'s own channel, not a further official extension); `CAP-001` frames
   2039/2132/2159/2193 (`Set`) and 2041/2134/2162/2195
   (ACK), cross-referenced against `CAP-001-EVENT-NOTES.md`'s tap timeline.
-- **Verified with experiment**: none formally logged in a `CAP-NNN-FINDINGS.md` yet — this is a
+- **Verified with experiment** (pointer 2026-09-30, A58-PROT-05: the sentence below is history — `CAP-006` ran the isolated repeat, 4 of 4 Sets,
+  `CAP-006-FINDINGS.md` §3, ADR-009 Update): none formally logged in a `CAP-NNN-FINDINGS.md` yet — this is a
   deskresearch correlation against an existing capture, not a fresh, purpose-built experiment;
   recommended as a cheap confirmation step (repeat with isolated single taps, per
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group B) before treating the mode-index bit mapping as final for
@@ -724,7 +759,8 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   `Last saved`'s quintet is per-account/session state, not a fixed constant — the value above is
   this specific session's starting point, not a universal default.
 - **Outer field 16 vs. 18 ("preview" vs. "save") — still 🟡 HYPOTHESIS, reading revised
-  2026-08-18.** The 2026-08-15 capture guessed field 18 = an explicit `Save`-button tap, ~5s after
+  2026-08-18.** *(Pointer 2026-09-30, A58-PROT-05: what 16 and 18 **hold** is 🟢 since ADR-034 — 16 = active EQ, 18 = last-saved custom EQ, the
+  `ReadSetting` bullet below; what **triggers** a field-18 write stays 🟡.)* The 2026-08-15 capture guessed field 18 = an explicit `Save`-button tap, ~5s after
   the matching field-16 write. The 2026-08-18 capture's 15 field-18 frames each fire only
   0.05–1.9s after the preceding field-16 write, with no video-visible `Save`-button tap in between
   for any of them — **revised hypothesis: field 18 fires on slider-release (finger lift), not on a
@@ -761,7 +797,8 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
 - **Status**: 🟢 FACT for the wire envelope, the field-to-band mapping, and the ±6.0 range; 🟡
   HYPOTHESIS (strong) that DLCI 0x02 is specifically `libmaestro` (**superseded: 🟢 FACT, ADR-034**); 🟡 HYPOTHESIS for the
   preview/save field semantics; 🔴 unconfirmed for the gain units, the Control byte, and the
-  ~13-byte correlation-ID region (§6). **`FrameEncoder`/`FrameDecoder` implementation for EQ is
+  ~13-byte correlation-ID region (§6). *(Pointer 2026-09-30: the Control byte is the pw_hdlc control `0x03` and the "correlation-ID region" the
+  RpcPacket header — ADR-034; field 16/18 contents 🟢 ADR-034; still 🟡/🔴: what triggers field 18, the gain unit.)* **`FrameEncoder`/`FrameDecoder` implementation for EQ is
   explicitly unblocked, 2026-09-03 (`DECISIONS.md` ADR-020)** — the FACT-level elements above
   (envelope, field-to-band mapping, ±6.0 clamp, preset quintets) are sufficient on their own; the
   field-16-vs-18 and gain-unit open items above are unaffected and should be resolved before a
@@ -785,7 +822,8 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   accepted — 12 of 12 answered by an empty `RESPONSE` (status absent/OK; ch 21 ×5 frames 2169→2171 … 2214→2216, ch 19 ×7 frames 4924→4927 … 4996→4998), no
   `CLIENT_ERROR`/`SERVER_ERROR`/`status ≠ OK` in 36 packets — and **persisted**: the next connection's `ReadSetting` returns the last write (`[-2.00,0,2.00,3.00,5.00]`,
   frames 3202, 3558, 4855; the film's EQ screen shows the same values). Whether a change is *audible* is not established (the recording's microphone cannot hear the ears).
-- **Early EQ-write channel bug (`ai-sessions/0041`; retitled 2026-09-24 — audibility itself is unverified, not established as absent) (🟡 HYPOTHESIS, strong):** the app's write frames carried
+- **Early EQ-write channel bug (`ai-sessions/0041`; retitled 2026-09-24 — audibility itself is unverified, not established as absent) (🟡 HYPOTHESIS, strong;
+  settled — pointer 2026-09-30: after the fix the app's writes on the mirrored channel were answered OK 12 of 12, ADR-034's 2026-09-20 Update, `CAP-059`):** the app's write frames carried
   `channel_id 0` (the codec's "correlation byte" defaulted to `0x00`) and a fixed address `00 3b` (channel 19's); every capture
   uses channel 19/21/24/26 chosen per connection. Not verified on hardware; the new always-on pw_rpc status log settles it.
 - **Evidence**: `SCREENSHOTS_PIXEL_BUDS_APP.md`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1,
@@ -806,10 +844,10 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
 > 2026-09-24). **Option E** (DLCI 0x08 `0e 01`) is a FACT source but the app no longer claims DLCI 0x08: its `0e 04` request got no answer in `CAP-061`
 > (ADR-039 Update). **Option A** has never matched on the wire (`CAP-011`, `CAP-043`, `CAP-059`) and is not built. **Option C** (HFP) is
 > wire-confirmed but not consumable by an app on Android 14+ and was removed (ADR-040). **Option D** (GATT Battery Service) is contested: present in
-> `CAP-034`'s nRF-Connect discovery, absent from the phone's own LE link in `CAP-059` (see Option D's 2026-09-24 note). **Option 0** is untested.
+> `CAP-034`'s nRF-Connect discovery, absent from the phone's own LE link in `CAP-059` (see Option D's 2026-09-24 note). **Option 0** is untested *(2026-09-30, `ai-sessions/0059`: 🟢 not public API — `@SystemApi`, not an app source; Option 0's status below)*.
 > HFP does **not** push "periodically throughout the session" — `CAP-009` shows a settling burst then irregular pushes (ADR-015, §C below).
 
-Five candidate mechanisms, in priority order for implementation. **These do
+Five candidate mechanisms *(seven options are listed today — 0 and A–F; pointer 2026-09-30)*, in priority order for implementation. **These do
 not all share one update model** — Options A/B (the Fast Pair mechanisms, on
 the official Message Stream, DLCI 0x04) are event-driven (sent on connect or
 on value change, per the official spec); Option C (HFP, on a session-local RFCOMM channel —
@@ -819,7 +857,7 @@ repeating roughly every 6–7 s, but only in the ~40 s after connection setup; `
 widening to a median of ~20 s and up to ~14.6 min later in a session (Option C below; *corrected
 2026-09-24, `ai-sessions/0045`: this paragraph used to say "throughout the session"*). Option C is also
 not consumable by an app (`DECISIONS.md` ADR-040). An
-implementation that treats all four mechanisms as equally event-driven would
+implementation that treats all four mechanisms *(A–D; pointer 2026-09-30)* as equally event-driven would
 either miss HFP's periodic updates (if it only listens for state transitions)
 or busy-poll unnecessarily on the Fast Pair mechanisms (if it treats their
 event-driven pushes as periodic) — see `ARCHITECTURE.md` §6 on
@@ -827,7 +865,12 @@ event-observation coroutines.
 
 #### Option 0 — Generic OS battery broadcast (supplementary, cheapest to check)
 
-- **Status**: ⚪ ASSUMPTION — mechanism exists on Android (API 31+), not
+- **Status (2026-09-30, `ai-sessions/0059`, maintainer-approved in chat 2026-09-30, `AskUserQuestion` "Battery API"): 🟢 FACT — not public API,
+  not an app source.** `javap -constants -cp ~/Android/Sdk/platforms/android-34/android.jar android.bluetooth.BluetoothDevice | grep -i battery`
+  prints nothing (exit 1), while the same command lists `ACTION_ACL_CONNECTED`; AOSP's `BluetoothDevice.java` (fetched 2026-09-30) declares
+  `ACTION_BATTERY_LEVEL_CHANGED` with `@SystemApi`. `AGENTS.md` §3 bans hidden/system APIs, so the app cannot use it (`AGENTS.md` §5 Note 2026-09-30,
+  ADR-029 Update; first noted in `DESKRESEARCH_FINDINGS.md` 2026-09-19, Finding 3). The lines below are history.
+- **Status (until 2026-09-30)**: ⚪ ASSUMPTION — mechanism exists on Android (API 31+), not
   confirmed whether it actually fires for this device.
 - `BroadcastReceiver` on `BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED`
   (API 31+) or the legacy `android.bluetooth.device.action.BATTERY_LEVEL_CHANGED`
@@ -866,7 +909,9 @@ event-observation coroutines.
   `batterynotification` page (re-fetched 2026-09-24: no trigger, cadence or display-duration statement); it describes the Message Stream
   "Battery updated" message (Option B). The page instead says the Provider "should not include raw battery data in the advertisement all the time"
   and that battery "can be sent via Message Stream when connected" — 🟡 HYPOTHESIS that this is why all three connected captures (`CAP-011`, `CAP-043`,
-  `CAP-059`) show no battery field (test: a connection-free scan with the Buds idle in an open case and no bonded phone nearby).
+  `CAP-059`) show no battery field *(correction 2026-09-30, maintainer-approved in chat, `ai-sessions/0059`: `CAP-043` is **connection-free** —
+  `tshark -r CAP-043-btsnoop_hci.log -Y "btrfcomm or btsdp" | wc -l` → 0 of 1,572 frames — so two connected captures (`CAP-011`, `CAP-059`) and one
+  connection-free (`CAP-043`) show no battery field; the 🟡 reading is unchanged)* (test: a connection-free scan with the Buds idle in an open case and no bonded phone nearby).
 - Shown ≥8 seconds when using the "show" type; auto-hidden after 20s or via an
   explicit "hide" type frame. Optional when a single bud is inserted/removed.
   **Re-check flagged 2026-09-03**: two direct re-fetches of the official
@@ -951,7 +996,7 @@ event-observation coroutines.
   (`developers.google.com/nearby/fast-pair/specifications/extensions/deviceinformation`, fetched
   2026-08-28) documents Message Group `0x03` Code `0x03` = **"Battery updated"** — an exact match
   to the candidate below, independently derived from `CAP-009`'s own wire behavior.
-- This is presumed to be the same underlying channel as the
+- *(Pointer 2026-09-30: `hardware_status.proto` never existed — §3's 2026-09-24 note, ADR-041.)* This is presumed to be the same underlying channel as the
   `hardware_status.proto` hypothesis in §3 — i.e. likely **not** a
   Buds-specific protobuf schema at all, but generic Fast Pair Message Stream
   traffic.
@@ -1249,7 +1294,8 @@ event-observation coroutines.
   1421, 2009, 2048), payload `2:<epoch ms> 3:0 6:{1:{1:<case %> 2:…} 2:{1:<n> 2:…} 3:{1:<n> 2:…}} 7:{1:… 2:… 3:…}` — e.g. `CAP-041` frame 782
   `2a 25 10 ce 82 9b ba 87 34 18 00 32 12 0a 04 08 4f 10 01 12 04 08 64 10 02 1a 04 08 64 10 02 3a 06 08 01 10 01 18 00` = Case 79 %.
 - **Evidence**: entry 6.1 equals the DLCI 0x08 Case value (Option E, ADR-014) of the same capture in **13 of 13** captures that carry both: `CAP-001` 62,
-  `CAP-002` 62, `CAP-003` 38, `CAP-010` 42, `CAP-014` 49, `CAP-016` 100, `CAP-032` 57, `CAP-036` 100, `CAP-037` 87, `CAP-038` 85, `CAP-041` 79, `CAP-044` 84,
+  `CAP-002` 62 *(correction 2026-09-30, A58-PROT-02: `CAP-002`'s first 2,663 frames are `CAP-001`'s; in `CAP-002`'s own session the value is **57**
+  — runtime info frame 49136 `6:{1:{1:57 …}}`, DLCI 0x08 frame 49024 `… 08 39 …` = 57 — so the agreement holds with 57)*, `CAP-003` 38, `CAP-010` 42, `CAP-014` 49, `CAP-016` 100, `CAP-032` 57, `CAP-036` 100, `CAP-037` 87, `CAP-038` 85, `CAP-041` 79, `CAP-044` 84,
   `CAP-048` 95. Commands: `python3 scripts/pwrpc_decode.py <log> | grep SubscribeRuntimeInfo` against the first index-3 entry of the `0e 01` frames from
   `tshark -r <log> -Y "btrfcomm.dlci==8 && btrfcomm.len>0" -T fields -e frame.number -e data.data` (`CAP-061-FINDINGS.md` §2a).
 - 🔴 **Open** (narrowed 2026-09-25, see the per-bud bullet below): what field 3 and 7.3 mean; whether field 2 means "in the case" or "charging".
@@ -1277,7 +1323,8 @@ event-observation coroutines.
   2–40 ms of an `AT+BIEV=2,100` (8169, 8201, 8307, 8381). `CAP-062-FINDINGS.md` §4's "nothing between changes" (06:46:57–06:48:52) holds for that
   capture only, not as a rule. `CAP-063-FINDINGS.md` §4.
 
-**Implementation priority (superseded 2026-09-24 — see the "Current state" note at the top of §4.3: B and E are implemented, A unmatched, C removed
+**Implementation priority (superseded 2026-09-24 — see the "Current state" note at the top of §4.3: B and E are implemented *(correction 2026-09-30:
+**B and F** are implemented; E is a FACT source the app no longer opens, ADR-043)*, A unmatched, C removed
 (ADR-040), D contested; "already-periodic HFP" below is wrong per ADR-015):** 0 (cheap to rule in/out) → A → B → C → D (see
 `ARCHITECTURE.md` §4; A–D's order reflects official-spec confidence and
 connection-cost, not raw confidence alone since A requires no active
@@ -1427,6 +1474,9 @@ implementation gate.
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group C's own hint that Multipoint "may trigger an
   SDP/connection update, not just an RFCOMM command." This SASS correlation remains 🟡 HYPOTHESIS,
   unaffected by the field-11 promotion above.
+  **Correction (2026-09-30, `ai-sessions/0059`, A58-CAP-02):** the same `CAP-019` log shows the `0x11`/`0x40`/`0x41`/`0x42` exchange also at connect
+  (frames 785–807, 07:35:58) and at 07:39:13 (2487–2496), and Code `0x34` 15 times across the session — only `0x21` (2301) is unique to the Multipoint
+  burst (message-level parse, `CAP-019-FINDINGS.md` §4). 🟡: Multipoint triggers one more round of a recurring SASS exchange, not a Multipoint-only set.
 - **Sent to**: DLCI 0x02 (setting write) **and** DLCI 0x04 Group `0x07` (SASS negotiation).
 - **Status**: 🟢 FACT for `field 11`'s field-number identity and semantic name ("Multipoint"). 🟡
   HYPOTHESIS for the SASS correlation and for the OFF-direction wire value.
@@ -1943,7 +1993,7 @@ leaving them buried in prose elsewhere.
 
 ### Framing
 
-- [x] **Resolved 2026-09-24 (`ai-sessions/0045`, pointer):** settled per channel — ANC on DLCI 0x04 Message Stream (ADR-009), EQ/settings on DLCI 0x02 pw_rpc (ADR-020/034), Case battery on DLCI 0x08 (ADR-035); every implemented decoder has its ADR. **Narrowed 2026-08-12, not fully resolved:** is `libmaestro`'s ANC/EQ
+- [x] **Resolved 2026-09-24 (`ai-sessions/0045`, pointer):** settled per channel — ANC on DLCI 0x04 Message Stream (ADR-009), EQ/settings on DLCI 0x02 pw_rpc (ADR-020/034), Case battery on DLCI 0x08 (ADR-035) *(pointer 2026-09-30: the Case moved to DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043)*; every implemented decoder has its ADR. **Narrowed 2026-08-12, not fully resolved:** is `libmaestro`'s ANC/EQ
       control channel the same RFCOMM channel as the Fast Pair Message Stream
       (§2.1), using a custom/vendor Message Group ID — or a separate RFCOMM
       channel/PSM with its own proprietary envelope (§2.2)? Three coexisting
@@ -2056,7 +2106,7 @@ leaving them buried in prose elsewhere.
       Option E's 2026-09-24 (`0046`) update.
       **Update (2026-09-25, `ai-sessions/0047`, 🟡):** `CAP-062` — 4 of 4 `BistoRealService` stops are followed 31–298 ms later by the phone's `DISC` of
       DLCI 0x08 and 0x0a, and two service starts precede a 0x08 `SABM` (291, 689 ms) — 5 of 5 with `CAP-061` (`CAP-062-FINDINGS.md` §6).
-- [ ] Added 2026-08-14: EQ's opcode/channel is explicitly **not** assumed to sit alongside ANC's
+- [x] **Answered (pointer 2026-09-30, A58-PROT-05):** EQ is DLCI 0x02 pw_rpc `WriteSetting`/`ReadSetting` (ADR-020/034). Added 2026-08-14: EQ's opcode/channel is explicitly **not** assumed to sit alongside ANC's
       (DLCI 0x04 Group `0x08`) — that assumption held only while ANC's own channel was unresolved.
       See `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group T (new top-priority capture target) and §4.2
       above.
@@ -2088,7 +2138,7 @@ leaving them buried in prose elsewhere.
       code, or inside Google Play Services (both out of this project's scope per `DECISIONS.md`
       ADR-025), nor a differently-styled crypto call this exact grep pattern wouldn't match. Recorded as
       a genuine, narrower checked negative, not a resolution either way.
-- [ ] **Added 2026-08-15, from `CAP-005-FINDINGS.md` (Group T, EQ isolation) §6 — carried over per
+- [x] **Answered as far as the wire goes (pointer 2026-09-30):** 16 = active, 18 = last-saved custom EQ (ADR-034); what triggers an 18-write stays 🟡 (§4.2). **Added 2026-08-15, from `CAP-005-FINDINGS.md` (Group T, EQ isolation) §6 — carried over per
       this session's task instructions.** A properly isolated capture (`EQP-002` preset tap,
       `EQS-004` Bass slider drag, ≥10s gaps) found DLCI 0x02's `Sent` direction is silent all
       session except for exactly three 45-byte payloads landing precisely at the two EQ actions
@@ -2176,9 +2226,9 @@ leaving them buried in prose elsewhere.
         `0x0c0a` — possibly a structurally distinct characteristic from the Key-based-Pairing
         pair (a leading `0x01` byte precedes the payload on all three `0x0c13` values, not
         decoded further). Not independently confirmed against any spec.
-      **PROPOSAL, pending maintainer approval, added 2026-08-27 from `CAP-014-FINDINGS.md` §4c —
+      **(Superseded 2026-09-01 by `CAP-034`'s 🟢 mapping below — marker resolved 2026-09-30, maintainer, chat, `ai-sessions/0059`.) Added 2026-08-27 from `CAP-014-FINDINGS.md` §4c —
       all of the above byte-length/leading-byte characterizations reproduce exactly a 3rd/4th time**
-      (`0x0c0c` 41B notify, `0x0c13` 9B-Read/10B-Write/32B-Notify each with a leading `0x01`,
+      (`0x0c0c` 41B notify *(40 bytes — `btatt.value` of `CAP-014` 2962; corrected 2026-09-30)*, `0x0c13` 9B-Read/10B-Write/32B-Notify each with a leading `0x01`,
       `0x0c14` 2B CCCD) in an independent session 11 days later, on the same physical device —
       strengthens confidence these are stable characteristic shapes, not session artifacts, but
       did **not**, at the time, change their status: still 🟡 HYPOTHESIS, still not resolved to real
@@ -2289,7 +2339,7 @@ leaving them buried in prose elsewhere.
       envelope (§4.5's shared preamble) generalize to *every* remaining `libmaestro` setting, or
       only to the ones captured so far? Does the `field7{field1|field2{...}}` Left/Right selector
       (§4.5.3) generalize to other per-earbud settings beyond press-and-hold?
-- [ ] **Added 2026-08-21, `CAP-021-FINDINGS.md` §4:** which of `HOLD-005`'s 16 ANC-mode-rotation
+- [x] **Answered (pointer 2026-09-30):** the write carries no Left/Right field — 🟢 FACT (`CAP-056`, §4.5.3 2026-09-28 Update, ADR-046); one shared list 🟡. **Added 2026-08-21, `CAP-021-FINDINGS.md` §4:** which of `HOLD-005`'s 16 ANC-mode-rotation
       checklist frames belong to Left's list vs. Right's — the envelope carries no
       earbud-distinguishing field for this specific write, unlike `HOLD-001`–`HOLD-004`.
 - [x] **Added 2026-08-21, `CAP-022-FINDINGS.md` §5; resolved 2026-09-13, 🟢 FACT (maintainer
@@ -2332,7 +2382,7 @@ leaving them buried in prose elsewhere.
       0x00` for "Device busy") — checked against both observed variants, neither fits this shape
       either (both start with the echoed group/code, not a reason byte). Not yet checked against a
       fresh capture, per this item's own original ask.
-- [ ] **Added 2026-08-21, `CAP-022-FINDINGS.md` §8:** does Volume balance (`field 17`) actually
+- [x] **Added 2026-08-21, `CAP-022-FINDINGS.md` §8:** does Volume balance (`field 17`) actually
       persist locally on the earbuds across a disconnect/reconnect, as
       `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §1's `AUDIO-003` row claims from the app's own on-screen
       text? Not tested — `CAP-022` only captured the write itself, no reconnect cycle.
@@ -2378,14 +2428,14 @@ leaving them buried in prose elsewhere.
       Trigger candidates 1 (app backgrounded/foregrounded) and 2 (a scheduled idle sync window)
       remain untested. See `CAP-047-FINDINGS.md` §3 for the full command+hex evidence.
 - [ ] **Added 2026-08-18, `CAP-016-FINDINGS.md` §11; sharpened 2026-09-12, `CAP-018-FINDINGS.md`
-      §3–§4 (PROPOSAL, awaiting maintainer review):** a 73-frame `Handle Value Notification`
+      §3–§4 (recorded at 🟡/🔴 as written — marker resolved 2026-09-30, maintainer, chat, `ai-sessions/0059`):** a 73-frame `Handle Value Notification`
       burst on BLE ATT handle `0x0044` (connection handle `0x0002`), confined to a ~29s window
       right after the BLE link forms and before the classic link exists; 23 of the 73 contain a
       recurring `0xfea9` byte-pair marker. Not decoded — payloads don't obviously match any
       already-documented envelope shape, and the handle's own UUID was not resolved this session.
       `CAP-018` (Group Y, `GATT-002`) isolated the burst with the buds/case confirmed untouched on
       video for the session's full 152.16s duration — the burst reappears (23 frames, matching
-      `CAP-016`'s own count) — but this session's *only* LE connection (the one carrying the burst)
+      `CAP-016`'s own count *(correction 2026-09-30: `tshark -Y "btatt.opcode==0x1b && btatt.handle==0x0044"` gives 73 frames in `CAP-016`, 23 in `CAP-018` — not the same count; 23 is how many of `CAP-016`'s 73 carry the `0xfea9` marker)*) — but this session's *only* LE connection (the one carrying the burst)
       has a GATT profile (a standard Heart Rate service present, no Google Fast Pair Service, no
       `0x0c0X`/`0x0f2X` handle cluster) that this project's own evidence attributes to an unrelated
       nearby device, not the Buds; the Buds' own classic connection carries zero ATT traffic in that
@@ -2403,6 +2453,16 @@ leaving them buried in prose elsewhere.
       standard head-tracker HID sensor (`source.android.com/docs/core/interaction/sensors/head-tracker-hid-protocol`: usage page `0x20`, usage `0xE1`, used by
       spatial audio). 🟡 HYPOTHESIS (strong): the HID surface is head tracking consumed by Android itself, not a control path for this app — `ARCHITECTURE.md` §15's
       question is closed on that basis; tracked as `SPATIAL-001`.
+      **Update (2026-09-30, `ai-sessions/0059`, maintainer-approved in chat 2026-09-30, `AskUserQuestion` "L-2 HID", option *"Promote to FACT (Recommended)"*) —
+      the HID surface **is** Android's head-tracker sensor, 🟢 FACT (from bytes already on disk, lead L-2 of `ai-sessions/0058`).** The Buds' SDP HID record — its
+      service name is "Android Gamepad" (`CAP-033` frames 1274, 1355) — carries a 170-byte Report descriptor (attribute 0x0206): `05 20 09 e1 a1 01 85 02 0a 08 03 15 00
+      25 ff 75 08 95 17 b1 03 0a 02 03 … 0a 44 05 … 0a 45 05 … 0a 46 05 … c0` = Usage Page 0x20 (Sensors), Usage 0xE1 (Other: Custom), Collection (Application);
+      Report 2: Feature 0x0308 (23 bytes — the "#AndroidHeadTracker#" description of `CAP-016` §10) and 0x0302 (16 bytes); Report 1: Feature 0x0316, 0x0319, 0x030E;
+      Input 0x0544 (3 × 16 bit), 0x0545 (3 × 16 bit), 0x0546 (8 bit). Command: `tshark -r CAP-033-btsnoop_hci.log -Y "frame.number==1355" -T pdml` →
+      `btsdp.service.hid.descriptor_list.descriptor_data`, parsed item by item. source.android.com's head-tracker HID protocol (fetched 2026-09-30): *"the head tracker
+      device is an app collection with the Sensors page (0x20) and the Other: Custom usage (0xE1)"*; 0x0544 = rotation vector, 0x0545 = angular velocity, 0x0546 =
+      discontinuity count; 0x0302 = *"Persistent Unique ID … a read-only array of 16 elements, 8 bit each"*. Still 🟡: that Android itself consumes it (spatial audio).
+      Report 1's 3-byte answer (`a3 00 00`, this item's own question) is a Feature report of the reporting/power-state usages — consistent with the descriptor.
 - [ ] **Added 2026-09-04, `CAP-036-FINDINGS.md` §5:** DLCI 0x08's connect-time burst contains
       several `Sent` frames matching the identical `[Group:1][Code:1][Len(2BE)=0000]` zero-length
       shape as DLCI 0x04's confirmed "Get" pattern (§4.1): `05 0c 00 00`, `04 02 00 00`,
@@ -2424,7 +2484,7 @@ leaving them buried in prose elsewhere.
       The burst is: 1405 the unsolicited `GetSoftwareInfo` RESPONSE (`call_id 0xFFFFFFFF`, serial + `release_5.203` ×3); 1407 `SubscribeToSettingsChanges`;
       1410→1421 `SubscribeRuntimeInfo` (SERVER_STREAM, payload `6:{1:{1:100 2:1} 2:{1:100 2:2} 3:{1:100 2:2}}`); 1415→1423 **`GetHardwareInfo`** RESPONSE, field 7 =
       the three component serials `57071WRBEC0251` / `57081WRBDR2309` / `57071WRBDL3147`; 1430 `SetWallclock`; 1412…1570 a `ReadSetting` sweep of `qhr` fields
-      1–32 (e.g. 1523→1525 `4:16` = `[0.1, 0, 0.3, 0.2, 0.2]`); plus requests to unnamed services `0x73d5d805`, `0xaf3a7737`, `0x755ffe65` (answers the serial
+      1–32 (e.g. 1523→1525 `4:16` = `[0.1, 0, 0.3, 0.2, 0.2]`); plus requests to unnamed services `0x73d5d805`, `0xaf3a7737`, `0x755ffe65` (answers the serial — *pointer 2026-09-30: `UpdateHelperService.GetRunningVersion`, a version number, not a serial, §2.2a 2026-09-30 Update*
       `1779298694`) and `0x1c256c5d`. It carries a settings read-back after all — the official app's `ReadSetting` sweep (consistent with ADR-034, and with
       `OBS-007`'s content-level negative, which compared the burst *across* settings states, not whether it reads them). This unblocks nothing; `CAP-057`
       (Group AS) is withdrawn as unnecessary. Which serial belongs to which component (the `EC`/`DR`/`DL` substrings suggest Case/Right/Left) stays 🟡.
@@ -2445,11 +2505,12 @@ leaving them buried in prose elsewhere.
       sample sits in a session where the Buds are actively worn/in use throughout
       (`CAP-019`–`CAP-025`, `CAP-006`'s *first* sample). Not maintainer-reviewed for promotion —
       recorded as the current best reading, superseding the narrower "connect-time" framing this
-      item originally carried.
+      item originally carried. *(Pointer 2026-09-30: the byte's current reading is `DECISIONS.md` ADR-049 — `0x00` ⇒ Set NAKed, 🟡 `0x00` ⇔ no bud worn.)*
 - [x] **Added 2026-09-04, `CAP-036-FINDINGS.md` §12.6 (bonus battery/firmware analysis); message identified 2026-09-24 — it is the `SubscribeRuntimeInfo` server stream (see the burst item above); field meanings stay 🔴:** DLCI
       0x02's periodic push (§4.3 Option E's timing-correlation entry) decodes, HDLC-unescaped and
       CRC-32-verified, to a repeated triple pattern (`0a 04 08 64 10 01`, `12 04 08 64 10 01`,
-      `1a 04 08 64 10 02`) that resembles but does not field-for-field match Option E's confirmed
+      `1a 04 08 64 10 02`) *(bytes corrected 2026-09-30, A58-CAP-03: `CAP-036` frame 2048 carries `0a0408641001 120408641002 1a0408641002` — entries
+      6.1/6.2/6.3 = Case/Left/Right, field 2 = 2 while charging, Option F)* that resembles but does not field-for-field match Option E's confirmed
       `[value, flag, index]` battery-triple shape (only 2 fields per entry here, not 3, and the
       trailing numbers are `01, 01, 02` rather than a clean `1, 2, 3` index). Not decoded further
       per `AGENTS.md` §13.6's zero-creativity rule — genuinely open whether `libmaestro`'s own
@@ -2566,7 +2627,8 @@ leaving them buried in prose elsewhere.
       session continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS as written
       above — not promoted to FACT, since the Optional's actual state during `CAP-051`'s session
       remains unconfirmed.
-- [ ] **Added 2026-09-06, `CAP-041-FINDINGS.md` §4 (Group AH, `OBS-007`):** a recurring 2-field
+- [x] **Answered (pointer 2026-09-30):** the sub-message is `SubscribeRuntimeInfo` entry 6.1 = Case % (Option F, 🟢, ADR-043; followed live in `CAP-062`/`CAP-063`).
+      **Added 2026-09-06, `CAP-041-FINDINGS.md` §4 (Group AH, `OBS-007`):** a recurring 2-field
       sub-message inside DLCI 0x02's connect-time burst (first flagged, structurally, in
       `CAP-036-FINDINGS.md` §12.6) holds a constant value across an entire session that happens to
       match the on-screen Case battery percentage (`0x4f`=79, matching "Case: 79%" throughout).
@@ -2972,8 +3034,9 @@ leaving them buried in prose elsewhere.
       `ForegroundService` design in `ARCHITECTURE.md` §2/§6.
 - [ ] Confirmed press duration for triggering pairing mode via the case
       button, distinct from the confirmed 30-second factory-reset hold.
-- [ ] Whether captured RFCOMM payload bytes are ever link-layer encrypted in a
-      way that requires extra Wireshark configuration to decode.
+- [x] Whether captured RFCOMM payload bytes are ever link-layer encrypted in a
+      way that requires extra Wireshark configuration to decode. **Answered (pointer 2026-09-30, A58-PROT-05):** no — the HCI snoop payloads decode as plaintext
+      Message Stream TLVs and pw_rpc `RpcPacket`s in every capture (ADR-031/034).
 - [ ] **Added 2026-08-14; narrowed 2026-08-26 (`CAP-008-FINDINGS.md` §3, Group V, proposal awaiting
       sign-off):** why HFP AT-command traffic never recurs after `CAP-001`'s own handshake —
       confirmed as a genuine negative in `CAP-002` (zero `AT+` traffic anywhere else across a full
@@ -3028,7 +3091,7 @@ leaving them buried in prose elsewhere.
       Buds' own address), not yet the same address as `CAP-016`'s either, so this doesn't confirm a
       stable secondary identity, only that the pattern (an unattributed second BLE link appearing
       around connection time) recurs.
-      **Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §6), PROPOSAL — pending maintainer approval:** a third capture (`CAP-031`) checked its full log for any
+      **Tested and not reproduced, 2026-08-27 (`CAP-031-FINDINGS.md` §6) — approved by the maintainer in chat 2026-09-30 (`ai-sessions/0059`, "Approve as recorded"):** a third capture (`CAP-031`) checked its full log for any
       `LE Enhanced Connection Complete` beyond the Buds' own link — found exactly one, resolving to
       the Buds' own public address (`04:00:6e:cf:6e:07`), with zero occurrences of either
       `43:8a:82:03:4b:f2` or `4f:25:00:85:9a:b1`. This is a clean negative data point (the
@@ -3049,7 +3112,7 @@ leaving them buried in prose elsewhere.
       action used a fresh SSP handshake, not a reused key (`CAP-013-FINDINGS.md` §2/§7) — another
       instance of `PROTOCOL.md` §5.1's already-FACT "fresh pairing" path, not a new finding in
       itself.
-      **Second attempt, 2026-08-27 (`CAP-031-FINDINGS.md` §0), PROPOSAL — pending maintainer approval:** `CAP-031` retried the same repeat, this time with a genuine narrow per-device
+      **Second attempt, 2026-08-27 (`CAP-031-FINDINGS.md` §0) — approved as recorded, maintainer, chat 2026-09-30 (`ai-sessions/0059`):** `CAP-031` retried the same repeat, this time with a genuine narrow per-device
       "Forget" (screenshot-confirmed, unlike `CAP-013`'s broader reset) and a live snoop-log
       file-size-polling check during recording specifically meant to avoid `CAP-013`'s failure —
       but the log's first frame still starts 66s *after* the Forget tap, and after the
@@ -3061,7 +3124,7 @@ leaving them buried in prose elsewhere.
       own bonus findings — DLCI 0x02's ~61s-delayed open and the unattributed second BLE link both
       failed to reproduce this session (`CAP-031-FINDINGS.md` §5/§6), suggesting those were
       single-session artifacts rather than recurring behavior.
-      **Third/fourth attempt, 2026-08-27 (`CAP-032-FINDINGS.md` §0), PROPOSAL — pending maintainer approval — succeeded.** Extracted via the raw BTSnoop file path instead of the `btsnooz.py`
+      **Third/fourth attempt, 2026-08-27 (`CAP-032-FINDINGS.md` §0) — approved as recorded, maintainer, chat 2026-09-30 (`ai-sessions/0059`) — succeeded.** Extracted via the raw BTSnoop file path instead of the `btsnooz.py`
       fallback `CAP-012`/`CAP-013`/`CAP-031` all used — the resulting log is genuinely untruncated
       and its first frame (18:29:45.72) lands ~58s *before* the on-screen Forget tap (18:30:42), and
       ~30s before the video itself starts, finally covering the pre-clearing-action window. Across
@@ -3136,6 +3199,8 @@ leaving them buried in prose elsewhere.
 - [ ] **Added 2026-09-25, `CAP-062-FINDINGS.md` §3/§5:** the Buds close DLCI 0x02 (ACL up) within seconds of every wear/dock change seen (a bud out
       of the case, both into the case, out of / into the ears — 7 of 14 session ends); seating the first bud did not (2/2). 🟡 a deliberate session
       reset. 🔴 whether a bud in the case rings on `04 01` (never sent while docked). 🔴 whether the Buds accept an EQ write while docked.
+      *(Pointer 2026-09-30: both answered in `CAP-063` — a Ring Left with both buds docked was ACKed, 8518 → 8520, and heard (the maintainer's observation, §4.4
+      2026-09-28 Update); EQ writes while docked were answered OK (`CAP-063-FINDINGS.md`).)*
 - [ ] **Added 2026-09-06, `CAP-039-FINDINGS.md` §6 (Group AF, `OBS-006`):** across a single
       ~6-minute session, the classic ACL connection to the Buds disconnected and reconnected 5
       times with no clearly camera-visible trigger for most of them (4 of 5 disconnects locally
@@ -3172,7 +3237,12 @@ leaving them buried in prose elsewhere.
       `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AQ (**PROPOSAL — new capture**, planned `CAP-055`).
 - [ ] **Added 2026-09-12, `CAP-029-FINDINGS.md` §2:** Conversation Detection's on-screen media-pause
       effect (`CONV-002`) produces zero wire-visible signal — no ANC-mode Set/Notify (`08 12`/`08 13`),
-      no DLCI 0x02 settings write, no AVRCP command — anywhere in the session. Genuinely open whether
+      no DLCI 0x02 settings write, no AVRCP command — anywhere in the session.
+      **Correction (2026-09-30, `ai-sessions/0059`, A58-CAP-02) — the AVRCP part of this negative was never a result.** The filter used, `avctp or avrcp`, is
+      not a valid tshark filter (`"avctp" is not a valid protocol or protocol field`, exit status 4). With `-Y "btavctp or btavrcp"` the log has 26 frames: the
+      phone's `PlaybackStatusChanged` notifications to the Buds — Playing at 1518 (07:54:10.791) and **Paused at 1593 (07:54:17.670)**, the pause the
+      notes attribute to conversation detection — and no AV/C pass-through from the Buds (`btavrcp.opcode==0x7c` → 0 frames; the same filter matches
+      `CAP-063` 5389, a positive control). 🟡: here the phone paused without a Buds PAUSE command (compare `CAP-063`, where the Buds sent one). Genuinely open whether
       the pause is driven by a mechanism this project hasn't identified, or whether the documented
       "switches to Transparency" behavior simply didn't trigger this time (ANC was already Adaptive).
 
@@ -3224,12 +3294,12 @@ leaving them buried in prose elsewhere.
 
 | Scenario | Observed behavior | Status | Evidence |
 |---|---|---|---|
-| Malformed/unparseable frame (bad magic/length, checksum failure) | Dropped silently, surfaced internally as `BudsError.MalformedFrame`, never a crash | Design rule (not yet capture-verified) | `AGENTS.md` §6, `ARCHITECTURE.md` §5/§7 |
+| Malformed/unparseable frame (bad magic/length, checksum failure) | Logged locally (payload only in Debug mode) and dropped as `BudsError.MalformedFrame`, never a crash *(wording aligned 2026-09-30 with `AGENTS.md` §6 — "dropped silently" read as "not logged")* | Design rule (not yet capture-verified) | `AGENTS.md` §6, `ARCHITECTURE.md` §5/§7 |
 | Connection lost during write | `ConnectionState` moves to `DISCONNECTED`; in-flight event-observation coroutines cancelled ("polling" corrected 2026-09-24 — nothing polls, `ARCHITECTURE.md` §6) | Design rule (not yet capture-verified) | `ARCHITECTURE.md` §6 |
 | Buds out of range | Expected: `IOException` → `ConnectionLost`, per architecture | ⚪ ASSUMPTION | — |
 | Case closed during connection | Terminates the active Bluetooth Classic connection — capture-verified 2026-08-18: the trigger is specifically **both buds being docked** (ACL `Disconnection Complete` fires the instant the second bud is placed in the case, reason `0x13`, Buds-initiated), not the lid closing itself — closing/reopening the lid alone, with no bud docked, is wire-silent (see row below) | 🟢 FACT (maintainer sign-off 2026-08-28, `DECISIONS.md` ADR-016) | `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` §2, `CAP-016-FINDINGS.md` §1 |
 | Case lid opened/closed while both buds remain outside the case | No wire-visible signal on any RFCOMM channel (`0x02`/`0x04`/`0x08`/`0x0a`) — whatever senses the lid position, if anything, does not report it to the phone while no bud is docked | 🟢 FACT — 2 independent captures (maintainer sign-off 2026-08-28, `DECISIONS.md` ADR-016) | `CAP-007-FINDINGS.md` §3.4, `CAP-016-FINDINGS.md` §5 |
-| Inbound frame matching no known schema version | Returns `UnsupportedFirmware` rather than a best-effort parse | Design rule (not yet capture-verified) | `ARCHITECTURE.md` §8 |
+| Inbound frame matching no known schema version | *(corrected 2026-09-30, A58-PROT-06, to match the as-built design)* a frame of no known shape is `MalformedFrame` (dropped) or `UnidentifiedFrame` (shown in Debug) — never a best-effort parse; `UnsupportedFirmware` is only the Safe-Mode gate's answer to a **write** on an unverified firmware or Model ID (ADR-042). Was: "Returns `UnsupportedFirmware` rather than a best-effort parse" | Design rule (not yet capture-verified) | `ARCHITECTURE.md` §5, §7, §8 |
 
 ## 8. Changelog of this specification
 
@@ -3273,6 +3343,7 @@ leaving them buried in prose elsewhere.
 | 2026-09-26 | **`ai-sessions/0052` — status corrections D-1 of `ai-sessions/0051`, maintainer-approved in chat 2026-09-26.** **§4.5.1** OFF write `CAP-019` 1720 on film → "Conversation detection" = field 22 🟢 FACT. **§4.5.3** "Use touch controls" OFF write `CAP-020` 1995 on film, both directions 🟢; the `qht` code bit order (3 = Transparency, 4 = Adaptive) vs the 🟡 on-screen order recorded as 🔴 open. **§4.5.7/§6** balance persists across a reconnect 🟢 (three chains). **§6** `FE2C1238…` = FHN "Beacon actions" 🟢 (official page) | Claude (AI), feature task; maintainer-approved in chat 2026-09-26 |
 | 2026-09-28 | **`ai-sessions/0053` — `CAP-063`, maintainer-approved in chat 2026-09-28.** **§4.3 Option F** a second `SubscribeRuntimeInfo` on an open channel is answered (8/8) 🟢; the stream also pushes while docked and idle (with `AT+BIEV`) 🟢 for `CAP-063`. **§4.1** Settable = worn: supporting evidence, stays 🟡. **§4.2/§4.4/§4.5.5a/§4.5.7** audibility and the docked ring recorded as the maintainer's observations. **§6** conversation detection = AVRCP 🟡, Digital assistant via GSND 🟡, no ACL re-creation after an ADR-016 drop 🔴 | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-28 |
 | 2026-09-28 | **`ai-sessions/0055` — `CAP-056` (Group AR), maintainer-approved in chat 2026-09-28.** **§4.5.3** `qht` bit order 1 NC / 2 Off / 3 Transparency / 4 Adaptive 🟢 (on-screen-order 🟡 refuted); checklist = "ANC gesture loop" 🟢; no Left/Right field in the write 🟢, one shared list 🟡 → ADR-046. **§4.5.5** "In-ear detection" = field 2 🟢 (film 5/5 + SASS bit 4); behaviour with it off 🟢 for `CAP-056` → ADR-047. **§4.1** Settable `00` support (stays 🟡). **§6** pause route 🟡, DLCI 0x02 `DISC` trigger 🔴, DLCI 0x08 `04 05` 🟡 / `04 16` 🔴, field-13 mirror 🟡 | Claude (AI), capture-analysis task; maintainer-approved in chat 2026-09-28 |
+| 2026-09-30 | **`ai-sessions/0059` — processing the `ai-sessions/0058` audit, all status changes maintainer-approved in chat 2026-09-30.** **§4.1** Settable byte: ADR-049 supersedes ADR-024's "dock state" (🟢 `0x00` ⇒ NAK 10/10, non-zero ⇒ ACK 40/40; 🟡 `0x00` ⇔ no bud worn). **§4.3 Option 0** 🟢 not public API (`@SystemApi`). **§2.2a** "LEB128" corrected to one-terminated varint; the other pw_rpc services named (🟢); "1779298694" = `UpdateHelperService.GetRunningVersion`, not a serial (🟢); request address derivable from the channel (🟡); "type 4" = `CLIENT_ERROR`. **§6** HID = Android head-tracker sensor (🟢, `CAP-033` 1355 descriptor); CONV-002's AVRCP negative corrected (invalid filter); several answered items ticked with pointers; Group-A repeat PROPOSAL markers approved as recorded; superseded markers resolved. **§4.3 Option F** `CAP-002` 62 → 57 (own window); `CAP-043` is connection-free; implemented sources B and **F**. **§7** two rows aligned with the as-built error model | Claude (AI), maintenance task; maintainer-approved in chat 2026-09-30 |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

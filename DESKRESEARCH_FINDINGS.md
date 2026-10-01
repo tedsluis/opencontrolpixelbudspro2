@@ -58,7 +58,7 @@ Status legend (consistent with `PROTOCOL.md` §0):
   of all four ANC modes) already exists and satisfies exactly the "differently isolated ANC-only
   capture" the open item called for — no new capture was needed to check this.
 
-- **Method:** applied `CAP-005-FINDINGS.md` §5a's exact decode pipeline (HDLC unescape, LEB128
+- **Method:** applied `CAP-005-FINDINGS.md` §5a's exact decode pipeline (HDLC unescape, LEB128 *(the address is a one-terminated varint, not LEB128 — `PROTOCOL.md` §2.2a, 2026-09-30)*
   address/control parse, CRC-32/IEEE-802.3/zlib verify, then the three nested-length
   self-consistency assertions `payload[14]==len(payload)-15`, `payload[16]==len(payload)-17`,
   `payload[19]==len(payload)-20` that identify the EQ envelope's specific shape) against **every**
@@ -751,7 +751,7 @@ client that sends nothing still receives on channel 21.
 4. Independent confirmation on a *second* capture that `ReadSetting 4:16` equals the on-screen EQ (only `CAP-015`'s
    self-consistency was checked here, not the screen).
 
-**Proposals awaiting maintainer sign-off (`AGENTS.md` §6 — an agent proposes, never promotes).**
+**Proposals (resolved — pointer 2026-09-30, `ai-sessions/0059`: (a)–(c) were approved 2026-09-20 as `DECISIONS.md` ADR-034, (d) ran as `CAP-059`; the four "unnamed" services above are named in `PROTOCOL.md` §2.2a's 2026-09-30 Update).**
 (a) Promote to 🟢 FACT: *DLCI 0x02 carries pw_rpc packets of service `maestro_pw.Maestro`; the constant frame prefix is
 the RpcPacket header (Finding 1).* (b) Promote to 🟡→🟢 as evidence accrues: *`ReadSetting {4:N}` returns the current
 value of `qhr` field N, EQ = 16/18 (Findings 3–4).* (c) A `DECISIONS.md` ADR unblocking a **read** path on DLCI 0x02

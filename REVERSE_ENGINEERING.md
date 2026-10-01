@@ -22,15 +22,12 @@ boundary for this kind of work).
 > decision is recorded for them (`DECISIONS.md` ADR-017 §2). Read them as candidate leads until they
 > are reviewed. Entries from `ai-sessions/0024`–`0031` were signed off in `0026`/`0028`/`0029`/`0031`.
 
-**Non-destructive-update convention:** this document follows the same
-convention `CAP-NNN-FINDINGS.md` files use (`PROJECT_RULES.md` §3 rule 9a) —
-rewrite a finding in place as understanding changes; don't stack
-"Correction"/"Update" addendums under the original text. The history of *how*
-a finding changed belongs in `git log`/`git blame` and, for anything
-significant, `CHANGELOG.md` — not in this document's own prose. (This differs
-from `DECISIONS.md`/`PROTOCOL.md`'s convention, where dated `Update` notes are
-kept alongside the original text — see `PROJECT_RULES.md` §3 rule 9a for the
-scope distinction.)
+**Non-destructive-update convention (reworded 2026-09-30, maintainer-approved in chat, `ai-sessions/0059`):** this
+document keeps dated `Update` notes next to the original text, like `DECISIONS.md` and `PROTOCOL.md` — a code trace's
+history (which pass found what, which reading was corrected) is part of its evidence. `PROJECT_RULES.md` §3 rule 9a lists
+this file in that non-destructive scope. An Update states its own current conclusion, so a reader does not have to
+reconstruct it from the entries above it. (Until 2026-09-30 this paragraph claimed the rewrite-in-place convention of
+`CAP-NNN-FINDINGS.md`, while the file carried 64 dated Updates — `ai-sessions/0058` A58-GOV-06.)
 
 **Scope reminder** (see `PROJECT_RULES.md` §8, `PROJECT.md` non-goals): this
 analysis covers software the maintainer has legally installed themselves,
@@ -264,6 +261,13 @@ call per `AGENTS.md` §6/§15.
     (mirroring exactly the methodology this entry's own Hypothesis test already used to confirm the
     "pigweed" UUID → DLCI 0x02, above) — a positive match would be strong, direct wire-level
     confirmation of this pass's code-level reading.
+  - **Update (2026-09-30, `ai-sessions/0059`, A58-PROT-07) — the DLCI 0x08 part of the 🟡 HYPOTHESIS above is refuted by an SDP
+    capture that already existed.** 🟢 FACT: `CAP-033` frame 1279 (`tshark -r CAP-033-btsnoop_hci.log -Y "frame.number==1279" -V`)
+    lists the service on RFCOMM channel 4 (= DLCI 0x08) as **"GSND CONTROL", UUID `f8d1fbe4-7966-4334-8024-ff96c9330e15`** — not
+    `3a046f6d-…`; the same browse lists "GFPS RFCOMM" (`df21fe2c-…`) on channel 2 (DLCI 0x04) and "BTIS" (`e7ab2241-…`) on channel 9.
+    The "default internal rfcomm socket" is therefore **not** DLCI 0x08's owner. What stays open (🟡): the plain `gbd` TLV codec is
+    a legacy communication style — `fut.java:131`'s override throws `"Unsupported legacy communication style."` — possibly served by
+    the "default" UUID, which no capture has shown (`DECISIONS.md` ADR-025's 2026-09-30 Update).
   - **Update (2026-08-30, Tier 0 re-decode task) — a narrower, cheaper hypothesis test than the SDP-UUID
     one above run and confirmed: the `[Length:2B]` field's byte order is empirically big-endian, not
     just "consistent with `gbd`'s `DataInputStream`/`DataOutputStream` usage" as this entry stated
@@ -785,6 +789,11 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
        loop, then the `while (j3 = j >>> 7; ...) { allocate.put(...) }` encode loop with the standard
        "continuation bit on all but the last byte" pattern) — a direct implementation of §2.2a's
        already-confirmed "HDLC Address field, LEB128-varint-encoded (1–3+ bytes)".
+       **Correction (2026-09-30, `ai-sessions/0059`, A58-PROT-03):** not LEB128. The encode loop writes each 7-bit group as
+       `i3 + i3` (shifted left by one, bit 0 = 0) and ORs `1` into the **last** byte only (`fut.java:192–202`) — pw_hdlc's
+       *one-terminated* LSB varint (the byte with bit 0 set ends the address), not LEB128 (bit 7 set on every byte but the
+       last). `PROTOCOL.md` §2.2a's 2026-09-20 Update and `DECISIONS.md` ADR-034 use the correct name; e.g. `a2 = 10`
+       (`MAESTRO_A`), `a3 = 3` (`LEFT_BT_CORE`) → `j = 3712` → bytes `00 3b` (lead L-1, ADR-034's 2026-09-30 Update).
     3. Writes a single Control byte, value `3` (`0x03`) — the standard HDLC "UI" (Unnumbered
        Information) frame type, matching §2.2a's "single Control byte" and the `pbpctrl`-cited
        "wrapped in ... U-frames" description.
@@ -812,7 +821,7 @@ correlation, per `AGENTS.md` §6/§15 and `PROJECT_RULES.md` §1.
     or equivalent (builds `qjc`) → `fyv.c`/`fyv.a(qjc)` → `esk` → `nqo.e(qjc)` (`MethodClient.invoke`)
     → `npy.a(...)` (`Client`, builds & serializes the `nqx`/`RpcPacket`, `payload`=serialized `qjc`)
     → `npw.a(bytes)` (`Channel`) → `npv.a(bytes)` (one of `frg.java`'s 6 anonymous implementations) →
-    `fut.f(bytes, goq)` (HDLC-encode: flag + LEB128 address + control + payload + CRC-32 + flag, with
+    `fut.f(bytes, goq)` (HDLC-encode: flag + one-terminated varint address [was "LEB128", corrected 2026-09-30] + control + payload + CRC-32 + flag, with
     `0x7D`-escaping) → `ffd.j()` = `BluetoothSocket.getOutputStream()`.
   - **What this does NOT establish**: this is a **code-level** confirmation that the app's *encoder*
     implements the same algorithm §2.2a already confirmed from *decoding* real captured bytes — it is
@@ -4273,7 +4282,7 @@ fye.a(qhs) / fsz's WriteSetting send path  [confirmed end-to-end, see the nqx/np
   -> npy.a(...)      [pw_rpc.Client — builds/serializes the RpcPacket, payload=serialized qjc]
   -> npw.a(bytes)    [pw_rpc.Channel]
   -> npv.a(bytes)    [one of frg.java's 6 anonymous ChannelOutput implementations]
-  -> fut.f(bytes, goq)  [HDLC-encode: flag + LEB128 address + control + payload + CRC-32 + flag]
+  -> fut.f(bytes, goq)  [HDLC-encode: flag + one-terminated varint address (not LEB128, 2026-09-30) + control + payload + CRC-32 + flag]
   -> ffd.j() = BluetoothSocket.getOutputStream()
 ```
 
