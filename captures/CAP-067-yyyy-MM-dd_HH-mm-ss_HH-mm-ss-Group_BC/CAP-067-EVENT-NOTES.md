@@ -1,8 +1,12 @@
-# Event Notes: OpenControl for Pixel Buds on Pixel 9a (GrapheneOS) — Group BC, the first hardware run of the `ai-sessions/0064` build (`CAP-067`)
+# Event Notes: OpenControl for Pixel Buds Pro 2 on Pixel 9a (GrapheneOS, a profile without Google Play) — Group BC, the 1.0.0 release APK (`CAP-067`)
 
 **Status:** 🔲 **Not yet captured — skeleton only** (written by `ai-sessions/0064`, 2026-10-01; scope and order are the maintainer's choice in chat 2026-10-01,
 `AskUserQuestion` "F-5 CAP-067": *"As listed, destructive last (Recommended)"*). **Adapted 2026-10-02 (`ai-sessions/0066`, the maintainer's changes before
-the run):** the balance steps `[‹]`/`[›]` are gone (section II is the slider again) and Info has no "Licence on GitHub" link (P7: two links). After the run: rename this folder from the placeholder
+the run):** the balance steps `[‹]`/`[›]` are gone (section II is the slider again) and Info has no "Licence on GitHub" link (P7: two links). **Adapted again
+2026-10-02 (`ai-sessions/0065` follow-up, the maintainer's request in chat):** the run uses the **release-signed 1.0.0 APK** (`scripts/release.sh`, checkpoint
+answer (a)) in a **GrapheneOS secondary user without Google Play** (answer (f) — the evidence for `PROJECT.md`'s Definition of done 1–3); new P0, P1/P7/P8
+and A.0 rows, BC-7 is now a negative check, BC-11s cannot be shown on a release build, BC-12 and IX note what is per user and what is device-wide.
+After the run: rename this folder from the placeholder
 `CAP-067-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BC` to the film's first/last overlay times and analyse it as `CAP-066` was (`ai-sessions/0063`).
 
 **Purpose:**
@@ -16,17 +20,24 @@ the run):** the balance steps `[‹]`/`[›]` are gone (section II is the slider
   `CAP-066` BB-10: 32 drags, never Right 4 (`17:7`). Here: drag to Right 4 (count the drags) — the value before `CAP-064`.
 - **III — BB-12, the open half of lead L-1** (`PROTOCOL.md` §2.2a, 2026-10-01 `0063` Update 🟡): with both buds worn on channel **19**, take the **Left** out —
   predicted: a Buds `DISC` of MAESTRO with the ACL up, then announcement **21**.
-- **IV — BB-15, watch only:** an answer cut off by the claim's close (`ai-sessions/0062` F-3) — never seen on hardware yet.
+- **IV — BB-15, watch only:** an answer cut off by the claim's close (`ai-sessions/0062` F-3) — never seen on hardware yet. **Without Play services in this
+  user, no other app should claim the Message Stream at all** — so here BC-7 is mainly the negative check of the Definition of done (below).
 - **V — K4d's rest:** dark mode **Off**, and **System** with Android's own dark switch (a configuration change, so also an F-1 check).
 - **VI — L3:** an export with Debug mode **off** (no hex lines).
 - **VII — F-3 and F-4 after a Bluetooth off/on:** the export names the loss "Bluetooth was switched off on this phone" (final, no "(provisional …)") and logs
   "Bluetooth adapter: ON -> TURNING_OFF"; logcat's StrictMode lines after the off/on (F-4: the app closes every profile proxy it obtained; 🟡 the framework's
-  `BluetoothLeAudio` may still warn — `CAP-066-FINDINGS.md` §8).
+  `BluetoothLeAudio` may still warn — `CAP-066-FINDINGS.md` §8). **On the release APK StrictMode is off** (`OpenControlApplication.kt:63`, `BuildConfig.DEBUG`
+  only), so F-4 is not observable in this run — no StrictMode line is no evidence either way.
 - **VIII — K5:** GrapheneOS's Bluetooth auto-off set to a short value on film, then restored (`CAP-066`: it was disabled, `delayMillis: 0`).
 - **IX — destructive last:** A5 (*Nearby devices* denied), (E) the Buds forgotten, B4 (Pair a device twice quickly), Z1 (re-pairing, `PAIR-001`).
+- **X — the Definition of done without Google Play services** (`PROJECT.md`, `ai-sessions/0065` §A.4; the maintainer's choice (f)): connect (1), battery and ANC
+  (2), several connect/disconnect cycles (3 — BC-6/BC-10/BC-11/Z1 give them), all in a user where Google Play is not installed, with **no** Play-services claim
+  on the Message Stream in the HCI log. 🟡 HYPOTHESIS (`ai-sessions/0066` RESULT §C.1): the Owner's sandboxed Play services cannot use Bluetooth while this
+  user is in the foreground — the HCI log decides.
 
-**Facts the maintainer gave (chat 2026-10-01):** no narration on the films; Play services' *Nearby devices* permission is **allowed**; the build is read from the
-Info tab on film.
+**Facts the maintainer gave (chat 2026-10-01):** no narration on the films; Play services' *Nearby devices* permission is **allowed** (in the **Owner**; the test
+user has no Play services); the build is read from the Info tab on film. **Chat 2026-10-02:** a new build was tried in a GrapheneOS profile without Google Play
+services before the run — "it all seems to work".
 
 ---
 
@@ -34,23 +45,25 @@ Info tab on film.
 
 | Item | Value |
 |---|---|
-| Phone | **Pixel 9a, GrapheneOS** |
-| App under test | **OpenControl for Pixel Buds**, debug APK of the `ai-sessions/0064` commit or later — read from the **Info tab on film** (P7: "App: 0.1.0-dev, build <hash>[-dirty] (<commit date>)") |
+| Phone | **Pixel 9a, GrapheneOS** — the run is in a **secondary user without Google Play**; note its user id (P0) |
+| App under test | **OpenControl for Pixel Buds Pro 2 1.0.0**, the **release APK signed with the maintainer's key** from `dist/1.0.0/` (`scripts/release.sh`, `RELEASING.md` §5) — read from the **Info tab on film** (P7: "App: 1.0.0, build <hash> (<commit date>)", **no** "-dirty"); its SHA-256 and certificate SHA-256 noted from the script's output |
 | Official Pixel Buds app | **Not used.** Pixel 7a: Bluetooth off |
-| Play services *Nearby devices* | allowed |
+| Google Play in the test user | **not installed** (P0); in the Owner: sandboxed Play present, *Nearby devices* allowed (unchanged) |
 | Buds | Pixel Buds Pro 2, firmware `release_5.203` |
 
 ### A.1. Preparation
 
 | # | Check | Done |
 |---|---|---|
-| P1 | Debug APK installed **without** clearing the app's data | ☐ |
-| P2 | Bluetooth HCI snoop log on; switch Bluetooth off and on **on film** | ☐ |
+| P0 | In the test user: `adb shell am get-current-user` (the user id); `adb shell pm list packages --user <id> \| grep -i -E "gms\|vending"` — note the output **and the exit status** (1 = none); positive control: the same with `grep opencontrol` (exit 0). Save both outputs into this folder | ☐ |
+| P1 | The **release** APK installed in the test user. An app package is device-wide: if the debug build (debug key) is still installed in **any** user, the release APK is refused (different signing key) — first `adb uninstall io.github.tedsluis.opencontrolpixelbuds` (removes it from **all** users, with their app data and the app's pairing association). Then, in the test user: notifications allowed, **Pair a device** once (the companion association is per user; the Buds' bond is device-wide) | ☐ |
+| P2 | Bluetooth HCI snoop log on — a device-wide developer option, set it **in the Owner** (developer options are usually not available in a secondary user), then switch to the test user; switch Bluetooth off and on **on film** | ☐ |
 | P3 | Camera films the phone, the case and **your head** (ears visible for every wear step); head on the right of the frame = Left bud (as `CAP-064`) | ☐ |
-| P4 | Do Not Disturb on; GrapheneOS Bluetooth auto-off: note its current value (section VIII restores it) | ☐ |
+| P4 | Do Not Disturb on (in the test user); GrapheneOS Bluetooth auto-off: note its current value (section VIII restores it) — if the setting is not shown in the test user, note that and read it in the Owner | ☐ |
 | P5 | Status bar on film across a minute change at the start and at the end (the clock offset) | ☐ |
-| P6 | Quick Settings: the ANC tile large (as `CAP-066` BB-13), the Bluetooth tile reachable | ☐ |
+| P6 | Quick Settings **of the test user** (tiles are per user): the ANC tile added and large (as `CAP-066` BB-13), the Bluetooth tile reachable | ☐ |
 | P7 | After the first "ready": gear → **Info** — hold 3 s (build line, firmware lines, "Control channel: N"); then **Read the licence** — scroll once, hold 3 s, **Close**; then **README on GitHub**, **Report an issue on GitHub** — each opens the browser on film; back to the app after each | ☐ |
+| P8 | The launcher shows **"OpenControl"** under the icon; the connection notification's title reads "OpenControl for Pixel Buds Pro 2" (ADR-051) — on film once | ☐ |
 
 **Rhythm:** one action, then wait 5–10 s (longer where a step says so). Something unexpected: stop, wait 10 s, continue.
 
@@ -63,7 +76,7 @@ the Buds: N".
 
 | What | Expected on screen | Expected on the wire / in the logs | Refuted if |
 |---|---|---|---|
-| Info tab | "Licence", "GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)", "Read the licence" (no "Licence on GitHub"); "Project", "README on GitHub", "Report an issue on GitHub", "Links open in your browser; this app itself has no internet access."; then "The Buds" with the firmware lines | nothing from the app on RFCOMM while the menu is open | a link is missing or the menu sends anything |
+| Info tab | "App: 1.0.0, build <hash> (<date>)" without "-dirty"; "Works with Google Pixel Buds Pro 2. Not affiliated with or endorsed by Google. Pixel Buds is a trademark of Google LLC." (ADR-051); "Licence", "GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)", "Read the licence" (no "Licence on GitHub"); "Project", "README on GitHub", "Report an issue on GitHub", "Links open in your browser; this app itself has no internet access."; then "The Buds" with the firmware lines | nothing from the app on RFCOMM while the menu is open | a link is missing or the menu sends anything |
 | Read the licence | a dialog "Licence" with the text starting "GNU AFFERO GENERAL PUBLIC LICENSE / Version 3, 19 November 2007", scrollable; **Close** | — (bundled, offline) | the text does not show, or a browser opens |
 | Each link | the browser opens `…/blob/main/README.md`, `…/issues` (github.com/tedsluis/opencontrolpixelbudspro2) | system log: an `ACTION_VIEW` start of the browser (`START u0 {act=android.intent.action.VIEW dat=https://github.com/…}`); the app's merged manifest has no `INTERNET` | another address opens, or no app opens without the message "No app on this phone can open web links. The address is …" |
 
@@ -89,11 +102,11 @@ the Buds: N".
 | BC-6a | ready, both worn | If the export's last announcement is **21**: take the **Right** out onto the table, wait 20 s, put it back in, wait 20 s (`CAP-066`: ⇒ `DISC` + 19) | the app re-opens by itself | Buds `DISC` of MAESTRO with the ACL up, then announcement 19 | — (a precondition) |
 | BC-6 | both worn, announcement **19** | Take the **Left** bud out of the ear onto the table (on film); wait 20 s | the app re-opens by itself if the Buds close the channel | 🟡 predicts: a Buds `DISC` of MAESTRO with the ACL up, then announcement **21** [`INEAR-004`] | the session stays on 19, or comes back on 19 |
 
-#### IV. BB-15 — the cut-off watch (cannot be provoked)
+#### IV. BB-15 — the cut-off watch (cannot be provoked) — and the negative check for the Definition of done
 
 | Step | Pre-state | Action | Expected on screen | Expected on the wire |
 |---|---|---|---|---|
-| BC-7 | any ANC tap or Refresh while Play services re-opens its claim | — | "The answer was cut off — another app took the Buds' channel. Tap Refresh to see the current mode."; after a cut-off `08 12` the mode dimmed and the (i) dot; **never** "The Buds didn't respond in time." for it | the app's `08 12`/`08 11`, then a phone `DISC` on the Message Stream DLCI before the Buds' ACK/`Notify` (as `CAP-065` 2640 → 2649 → 2651) |
+| BC-7 | the whole run | — (watch only) | **expected here: never** "The answer was cut off — another app took the Buds' channel …" — no other app should claim the channel in a user without Play services. If it does show: note the time on film; it refutes "no Play services claim" for this run | **expected: no** Message Stream claim whose first phone message is `03 08 00 02 01 25` (the Play-services marker, `CAP-066-FINDINGS.md`); every claim's first message is the app's `08 11`/`08 12` (or its battery/Find sequence). A cut-off would be: the app's `08 12`/`08 11`, then a phone `DISC` before the Buds' ACK/`Notify` (as `CAP-065` 2640 → 2649 → 2651) |
 
 #### V. K4d — dark mode Off; System with Android's own switch
 
@@ -113,13 +126,13 @@ the Buds: N".
 |---|---|---|---|---|---|
 | BC-10 | ready, the app **on screen** | Quick Settings: **Bluetooth off**; wait 10 s | "Bluetooth is disabled." + Enable Bluetooth; no crash | export: "Bluetooth adapter: ON -> TURNING_OFF", "… -> OFF", "Session lost: channel 0x02 closed …", **"Session loss cause: Bluetooth was switched off on this phone"** — without "(provisional …)" — and no later "undetermined" line; system log `BluetoothAutoOff … STATE=13`, `STATE=10` | the cause is "undetermined" or provisional, or no adapter line |
 | BC-11 | after BC-10 | Bluetooth on; wait for the automatic re-open | ready | export "Bluetooth adapter: OFF -> TURNING_ON", "-> ON", "Automatic re-open of the session (ADR-044, trigger: LINK_BACK)" [`PAIR-003`] | no re-open while the app is visible and Android reports the Buds connected |
-| BC-11s | after BC-11 | Leave the app (home), wait 10 s, come back | — | logcat: "Android link observer stopped" then "… started"; `StrictMode … LeakedClosableViolation` lines: note each object and creation site — 🟡 a `BluetoothLeAudio` one may still appear (framework `CloseGuard`, `CAP-066-FINDINGS.md` §8); an app-created proxy left unclosed is not visible directly | — (information) |
+| BC-11s | after BC-11 | Leave the app (home), wait 10 s, come back | — | logcat: "Android link observer stopped" then "… started". **Release APK: no StrictMode** (debug builds only) — the `LeakedClosableViolation` check of F-4 is **not testable** in this run; record it as such, not as "no violation" | — (information) |
 
 #### VIII. K5 — GrapheneOS Bluetooth auto-off
 
 | Step | Pre-state | Action | Expected on screen | Expected in the logs |
 |---|---|---|---|---|
-| BC-12 | buds in the case, lid closed (no connection) | Settings → Security & privacy → Bluetooth auto-off: the **shortest** value (on film); lock the phone; wait past that time; unlock; open the app; then **restore** the value of P4 (on film) | "Bluetooth is disabled." (normal), no crash | system log `BluetoothAutoOff` "scheduled alarm" and the adapter `STATE=13`/`STATE=10`; the app's export (if open then) "Bluetooth adapter: … -> OFF" |
+| BC-12 | buds in the case, lid closed (no connection) | Settings → Security & privacy → Bluetooth auto-off: the **shortest** value (on film; if the setting is not available in the test user: skip BC-12 and note it — do not switch users in the middle of the run); lock the phone; wait past that time; unlock; open the app; then **restore** the value of P4 (on film) | "Bluetooth is disabled." (normal), no crash | system log `BluetoothAutoOff` "scheduled alarm" and the adapter `STATE=13`/`STATE=10`; the app's export (if open then) "Bluetooth adapter: … -> OFF" |
 
 #### Restore
 
@@ -131,31 +144,36 @@ the Buds: N".
 
 | Step | Pre-state | Action | Expected on screen | Expected on the wire |
 |---|---|---|---|---|
-| A5 | — | Settings → Apps → OpenControl → Permissions → *Nearby devices*: **Don't allow**; open the app; allow again | "Bluetooth permission needed" / "You denied the permission." + Allow | — |
-| (E) | — | Forget the Buds in Android's Bluetooth settings; open the app | "No Pixel Buds Pro 2 paired yet." + Pair a device | bond removal |
+| A5 | — | Settings → Apps → OpenControl → Permissions → *Nearby devices*: **Don't allow**; open the app; allow again (the permission is per user) | "Bluetooth permission needed" / "You denied the permission." + Allow | — |
+| (E) | — | Forget the Buds in Android's Bluetooth settings (in the test user); open the app. **Note:** the bond is device-wide — forgetting here also unpairs them for the Owner (and its Play services); Z1 pairs them again device-wide | "No Pixel Buds Pro 2 paired yet." + Pair a device | bond removal |
 | B4 | after (E) | Open the lid; tap **Pair a device twice quickly** | one picker, no crash | — |
 | Z1 | after B4 | Pair in the picker; Connect | ready | CDM association, bonding (SSP or CTKD, `PROTOCOL.md` §5.1) [`PAIR-001`] |
 | BC-end | — | Status bar across a minute change; stop the film | — | — |
 
 ### A.3. After the run
 
-Gear → **Debug** tab → **Export debug log**; `adb bugreport`; the raw `btsnoop_hci.log` (both, if Bluetooth was toggled); app logcat and system log (GrapheneOS log
-viewer); the film. All into this folder, then `sha256sum *`.
+Gear → **Debug** tab → **Export debug log** — the file lands in the **test user's** storage (e.g. `/storage/emulated/<id>/…`): `adb pull` from that path or share
+it; `adb bugreport` (covers all users); the raw `btsnoop_hci.log` (both, if Bluetooth was toggled); app logcat and system log (GrapheneOS log viewer); P0's two
+outputs; the film. All into this folder, then `sha256sum *`. Before committing: the camera films may carry a street-address overlay — check and mask.
 
 ### A.4. Analysis checklist
 
 - [ ] Pre-filter by the Buds' classic handle; DLCIs by content.
-- [ ] P7: the Info frames — build hash against `git log`; the licence line; the dialog's first line; each link's browser frame and its `ACTION_VIEW` system-log line;
+- [ ] P0/A.0: the test user's id and package list (no `com.google.android.gms`, no `com.android.vending`; exit status and positive control); the APK's SHA-256 and
+      certificate SHA-256 against `scripts/release.sh`'s output.
+- [ ] X / BC-7: every Message Stream claim and its first phone message — **zero** `03 08 00 02 01 25`; the command, its exit status and a positive control (the same
+      filter matching a Play-services claim in `CAP-066`). Only then may the Definition of done 1–3 be ticked (`PROJECT.md`, with this capture as evidence).
+- [ ] P7/P8: the Info frames — "1.0.0", build hash without "-dirty" against `git log`, the ADR-051 notice; launcher label and notification title; the licence line; the dialog's first line; each link's browser frame and its `ACTION_VIEW` system-log line;
       no app RFCOMM frame while the menu was open.
 - [ ] BC-1 … BC-3r, BC-8: per rotation / dark switch, the tab before and after (film) against the logcat `wm_on_create` times — **refuted if** any tab other than
       Connection comes back as Connection.
 - [ ] BC-3, BC-5, BC-R: every `WriteSetting 4:{17:n}` (zigzag) with its `RESPONSE`, one per release; the number of drags to reach `17:7`; the label frames after each OK; the
       channel-19 bytes of `17:7` against the derived frame above (a first capture of it).
 - [ ] BC-6: the announcement before and after against which bud was taken out (film), and any Buds-side `DISC` with the ACL up — settles BB-12 (L-1).
-- [ ] BC-7: any app claim closed between the request and the answer.
+- [ ] BC-7: any app claim closed between the request and the answer (expected: none).
 - [ ] BC-9: no hex line after the Debug-mode-off line.
 - [ ] BC-10/BC-11: the export's adapter and loss-cause lines against the system log's `STATE_CHANGED` times; "provisional" must not appear on the Bluetooth-off line.
-- [ ] BC-11s: every StrictMode violation with its object and creation site.
+- [ ] BC-11s: "not testable on the release APK" (StrictMode is debug-only) — F-4 stays open for a later debug run.
 - [ ] BC-12: the auto-off alarm lines and the app's adapter lines.
 - [ ] IX: `APP_TESTPLAN.md` sections A, B, E; Z1's bonding events.
 - [ ] Registry Test-IDs: [`AUDIO-003`] (BC-3, BC-5, BC-R), [`INEAR-002`]–[`INEAR-004`] (BC-6a/BC-6), [`PAIR-003`] (BC-11), [`BATT-004`] (every connect), [`PAIR-001`]
