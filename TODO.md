@@ -730,6 +730,8 @@ lower priority than finishing ANC/Battery/EQ):**
       nothing new was decided).
 - [ ] Prepare the first public release (tag, `CHANGELOG.md` entry, GitHub
       Release per the manual-update-distribution decision in `AGENTS.md` §1)
+      — **prepared 2026-10-02 (`ai-sessions/0065`)**: signing config, version 1.0.0, `RELEASING.md`, `scripts/release.sh`, README, `[1.0.0]` CHANGELOG
+      block. **Open:** the maintainer's own steps of `RELEASING.md` (key, `CAP-067` on the signed APK, tag, release) — see "Open after `ai-sessions/0065`".
 - [x] **Added 2026-09-18** (`ai-sessions/0033`), **done 2026-09-18** (`ai-sessions/0037`): wire
       `MainActivity`'s `onConnect`/`onDisconnect` actions to a real `RfcommBudsTransport.connect()`/
       `disconnect()` call. Required extending `BudsTransport`/`BudsRepository` (domain) with
@@ -789,13 +791,26 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+**Open after `ai-sessions/0065` (added 2026-10-02; nothing is published yet):**
+- **The maintainer's release steps** (`RELEASING.md` §1–§8): create and back up the key, set the four values in `~/.gradle/gradle.properties`, note the
+  certificate fingerprint; `scripts/release.sh 1.0.0`; run **`CAP-067` on that signed APK in a GrapheneOS secondary user without sandboxed Google Play** (it is
+  also the evidence for `PROJECT.md`'s Definition of done 1–3 — tick them only then); then tag, draft release, publish; date the `[1.0.0]` CHANGELOG block
+  and update the README's "No release has been published yet" note and Status.
+- **Repository settings** (`RELEASING.md` §9, the maintainer's commands): turn on private vulnerability reporting (off on 2026-10-02 — `SECURITY.md` and the
+  issue template's contact link rely on it); fix the topic "graphenos".
+- **Media:** the screenshot `…_212805.jpg` and the recording show the `0064` balance steps (captioned in the README). Re-take them on the release build and run
+  `scripts/readme_media.sh` again.
+- 🔴 **`gh … --attach`** (GitHub Docs) is not in the installed `gh 2.97.0`; what happens to a `user-attachments` file when its comment is deleted is not
+  documented — open, only relevant if the video is ever uploaded that way.
+- **Third-party notices in the app:** releases carry `THIRD_PARTY_NOTICES.txt`; showing it on the Info tab (bundled like `android/ui/src/main/res/raw/license.txt`) is a possible later step.
+
 **Open after `ai-sessions/0066` (added 2026-10-02):**
 - **Balance precision is open again:** the `0064` steps were removed (the maintainer's choice); `CAP-066` reached Right 4 in none of 32 drags. `CAP-067` BC-3 counts
   the drags; if it stays impractical, options are a live value label while dragging, slider `steps`, or the steps back.
 - **Definition of done "without Google Play Services":** test in a GrapheneOS secondary user without sandboxed Play (the install path and the checks are in
   `ai-sessions/0066` RESULT); the HCI log must show no Play-services claim on the Message Stream (first message `03 08 00 02 01 25`).
-- **Before the first release** (`ai-sessions/0065` prompt, not run yet; the maintainer publishes nothing yet): the app name / trademark question, R8 (not now),
-  the README video (a ≈ 0.5 MB H.264 re-encode or a GIF instead of the 15.3 MB file).
+- ~~**Before the first release**: the app name / trademark question, R8 (not now), the README video~~ — done in `ai-sessions/0065` (ADR-051; R8 not now;
+  `scripts/readme_media.sh`, 0.43 MB MP4 + GIF preview).
 
 **Open after `ai-sessions/0064` (added 2026-10-01):**
 - **Run `CAP-067` (Group BC)** — skeleton `captures/CAP-067-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BC/CAP-067-EVENT-NOTES.md`: the Info tab's licence and links on film (F-6,

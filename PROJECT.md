@@ -58,7 +58,9 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
 
 - No circumvention of DRM or copy protection.
 - No reproduction of Google's source code, assets, or trademarks (including the
-  "Pixel Buds" wordmark/logo) in the app itself.
+  "Pixel Buds" wordmark/logo) in the app itself. *Note (2026-10-02, `DECISIONS.md` ADR-051):* the product name
+  as plain text in the app's name ("OpenControl for Pixel Buds Pro 2") and the compatibility
+  line is a deliberate exception; logos, wordmark images and other assets stay excluded.
 - No support for other Pixel Buds models unless the protocol is demonstrably
   identical — this must be separately verified, never assumed.
 - No simultaneous multi-device support in v1 — the app targets exactly one
@@ -113,6 +115,18 @@ Without Google Play Services installed, the app can:
 3. Remain stable across multiple connect/disconnect cycles.
 4. Be documented and reproducible for other contributors, with every protocol
    claim traceable to a capture, a code reference, or a logged experiment.
+
+> **Evidence (2026-10-02, `ai-sessions/0065`; the maintainer's choice in chat: test in a user without Play services, tick only with that evidence):**
+>
+> | Criterion | Shown so far | Without Google Play services? |
+> |---|---|---|
+> | 1. Connect | `CAP-059` … `CAP-066` (pairing, Connect, automatic re-open) | ❌ not yet — every one of these runs had Google Play services present (each FINDINGS header) |
+> | 2. Battery and ANC | the same runs (e.g. `CAP-063`: ANC `Set` acknowledged 3/3; battery in every run) | ❌ not yet |
+> | 3. Stable over connect/disconnect cycles | `CAP-063`, `CAP-064` (several sessions, re-opens, losses explained) | ❌ not yet |
+> | 4. Documented and reproducible | `PROTOCOL.md` (every 🟢 FACT signed off), FINDINGS with frame numbers, `RELEASING.md` | ✅ |
+>
+> `CAP-035` had Google Play services *disabled*, not absent, and predates the app. Criteria 1–3 are ticked only after `CAP-067` — the 1.0.0 release APK, run
+> in a GrapheneOS secondary user without sandboxed Google Play, with no Play-services claim on the Message Stream in its HCI log.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROJECT

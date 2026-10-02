@@ -3,13 +3,36 @@
 All notable changes to this project are documented in this file. Format loosely
 based on [Keep a Changelog](https://keepachangelog.com/).
 
-Most entries below are documentation, tooling, and protocol-reconstruction process
-rather than app releases, reflecting this project's reverse-engineering-first approach — a v1
-Android app now exists (`ai-sessions/0033`, 2026-09-18), was hardware-tested in `CAP-059`–`CAP-066`, and is not yet
-released. See `TODO.md` for current status and `PROJECT.md` for the "definition of done" that will
-mark v1.
+The first release, 1.0.0, is prepared but not yet published (`ai-sessions/0065`, 2026-10-02): it is released after `CAP-067`, the hardware run of
+the signed APK. Its block below is written for users. Everything before it — documentation, tooling and the protocol reconstruction that led to the app —
+is kept unchanged under "History before 1.0.0". See `TODO.md` for current status and `RELEASING.md` for how a release is made.
 
 ## [Unreleased]
+
+## [1.0.0] - not yet released
+
+The first public release of OpenControl for Pixel Buds Pro 2 — an independent, open-source Android app for Google Pixel Buds Pro 2 that works without
+the official app and without Google Play services; no `INTERNET` permission, no location permission, no account.
+
+### Added
+
+- Noise control (Noise cancellation, Adaptive, Transparency, Off) and a Quick Settings tile.
+- Equalizer: five bands and the presets.
+- Battery: Left and Right (with "charging in the case") and the Case.
+- Find My Buds: ring the Left or Right bud.
+- Controls: touch controls on/off, press and hold per bud, and the noise-control modes press and hold cycles through.
+- Sound: balance, mono audio, conversation detection; in-ear detection on/off.
+- Settings: dark mode, a Debug screen with a debug-log export, and an Info tab (the app's build, the Buds' firmware, the licence, links to the README and
+  the issue tracker).
+- Read-only Safe Mode: no setting is changed unless the Buds announce the verified firmware (`release_5.203`).
+
+### Requirements and known limits
+
+- Android 14 (API 34) or newer. Tested on a Pixel 9a with GrapheneOS (Android 17) and Buds firmware `release_5.203` only; other firmware ⇒ Safe Mode.
+- Not included: ringing the Case or both buds, firmware updates, multipoint management, head gestures, case sounds, anything needing a Google account.
+- Updates are manual (GitHub Releases); the app never checks for them.
+
+## History before 1.0.0
 
 ### Added
 
@@ -257,6 +280,14 @@ mark v1.
 - **2026-10-02 (`ai-sessions/0066`): FEATURE — two changes before `CAP-067` (the maintainer's request).** The balance's `[‹]`/`[›]` steps of `0064` F-2 are removed
   (the slider alone again, one write per release; the real-byte tests of `17:7` stay); Settings → Info no longer links to `LICENSE` on GitHub — the licence is
   read in the app only (**DECISIONS.md ADR-050 Update**, maintainer-approved in chat). `CAP-067` skeleton, `APP_TESTPLAN.md` and `ARCHITECTURE.md` aligned.
+- **2026-10-02 (`ai-sessions/0065`): MAINTENANCE — release preparation (nothing published).** Release signing from `~/.gradle/gradle.properties` or the
+  environment, failing clearly without it (never unsigned, never the debug key); version 1.0.0 / versionCode 10000 (major × 10000 + minor × 100 + patch);
+  `.gitignore` for key files and `dist/`. App name "OpenControl for Pixel Buds Pro 2", launcher label "OpenControl", the trademark line on Info, README and
+  release notes — **DECISIONS.md ADR-051** (maintainer-approved in chat), notes in `AGENTS.md` §12 and `PROJECT.md`. New: `RELEASING.md` (runbook),
+  `scripts/release.sh` (builds in a clean worktree, verifies signature/version/no `INTERNET`, writes checksums, notices and notes, prints the publishing
+  commands), `scripts/release_notes.template`, `scripts/third_party_notices.py` + `LICENSES/Apache-2.0.txt`, `scripts/readme_media.sh`, issue templates. The
+  README rewritten for users first, with the app's screenshots and a compressed screen recording; `PROJECT.md` Definition of done: an evidence table
+  (criteria 1–3 not yet shown without Play services). Not hardware-verified.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

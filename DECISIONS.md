@@ -2355,5 +2355,25 @@ motivated this).
   `README.md` and the issues of github.com/tedsluis/opencontrolpixelbudspro2. Everything else is unchanged: started only by a tap, no network request by the
   app, no `INTERNET`, no `<queries>`, no dependency.
 
+## ADR-051 — The app's name names the Pixel Buds Pro 2 as plain text; no Google logo or other asset
+
+- **Date**: 2026-10-02
+- **Status**: Accepted (maintainer, chat 2026-10-02, `ai-sessions/0065`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0065`); the decision is the maintainer's, given in the chat of 2026-10-02 (`AskUserQuestion` "App name",
+  option *"Keep "…for Pixel Buds Pro 2" + ADR"*, and "ADR-051", option *"Yes, as shown (Recommended)"*, with this text shown in chat), per `AGENTS.md` §6.
+- **Context**: `AGENTS.md` §12 bans Google-owned assets, icons and trademarks ("Pixel Buds" wordmark/logo) in app resources. The app label has been "OpenControl
+  for Pixel Buds" since `ai-sessions/0033`. The maintainer chose to keep the product name (chat 2026-10-02, `AskUserQuestion` "App name", option *"Keep "…for
+  Pixel Buds Pro 2" + ADR"*).
+- **Options considered**: (a) a neutral "OpenControl" everywhere; (b) the descriptive name with a plain-text trademark notice — chosen; (c) a new own name.
+- **Decision**:
+  1. The app's name (`app_name`, the README title, release titles) is **"OpenControl for Pixel Buds Pro 2"**; the launcher label is **"OpenControl"**.
+  2. "Pixel Buds" appears only as plain text naming the compatible product — no Google logo, wordmark image, icon or other asset.
+  3. The README, the Info tab and the release notes carry: *"Works with Google Pixel Buds Pro 2. Not affiliated with or endorsed by Google. Pixel Buds is a
+     trademark of Google LLC."*
+  4. The `applicationId` `io.github.tedsluis.opencontrolpixelbuds` stays.
+- **Consequences**: `AGENTS.md` §12 is read as banning Google's assets and logos and any suggestion of affiliation; the plain-text compatibility name is an
+  explicit exception. This is the maintainer's judgement, not legal advice; if Google objects, rename to option (a) — the unchanged `applicationId` keeps
+  updates working.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

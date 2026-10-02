@@ -1,0 +1,6 @@
+# ai-sessions/0065 (I-9): free-form issues stay possible; security reports are pointed to the private advisory form.
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/tedsluis/opencontrolpixelbudspro2/security/advisories/new
+    about: Please do not open a public issue for a suspected vulnerability (see SECURITY.md).

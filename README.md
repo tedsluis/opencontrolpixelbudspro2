@@ -1,48 +1,94 @@
 # OpenControl for Pixel Buds Pro 2
 
-An independent, open-source Android app to fully control the **Google Pixel Buds
-Pro 2** without the official Pixel Buds app or Google Play Services.
+An independent, open-source Android app to control your **Google Pixel Buds Pro 2** without the official Pixel Buds app and without Google Play services.
+It works fully offline: no `INTERNET` permission, no location permission, no account, no analytics. Made and tested on GrapheneOS.
 
-> **Status (2026-10-01):** protocol reconstruction is mature and a v1 Android app exists end to end. ANC mode switching,
-> Find My Buds (Left/Right), the equalizer (read and write), battery (Left/Right with charging, and the Case), a Quick
-> Settings ANC tile and a read-only **Safe Mode** for unverified firmware are implemented and unit-tested. The fourth hardware
-> run (`CAP-063`, `ai-sessions/0053`) confirmed the `ai-sessions/0048` and `0052` builds on the Buds: the app re-opens its session by
-> itself while it is on screen (ADR-044), shows per bud "charging in the case" and the last Case level with its time, disables ANC while
-> the Buds are not worn, and reads and changes volume balance, mono audio, conversation detection, touch controls and the press-and-hold
-> action per bud (tabs "Sound" and "Controls", ADR-045) — every change accepted by the Buds; *Refresh battery* always gets a fresh reading.
-> `ai-sessions/0054` (hardware-run in `CAP-064`, `ai-sessions/0060`) addressed that run's findings: a tap on a disabled ANC mode now checks
-> again with the Buds, a session loss in the background is explained on return, the balance snaps to "Centre", the previous connection's
-> battery lines are marked right after Connect, and "Digital assistant" carries a note that it needs an assistant app that supports headphones.
-> `ai-sessions/0056` (hardware-verified in `CAP-064`: the Buds follow the list, the switch works) adds the press-and-hold ANC-mode list ("Modes for press and hold", ADR-046) and makes
-> "In-ear detection" a switch (ADR-047).
-> `ai-sessions/0057` (in use in `CAP-064`; its pull-to-refresh checks are in `CAP-065`) gives the app a Material 3 look: a top bar with the Debug action, five tabs, a
-> graphical battery (Left | Case | Right), times and details behind an (i) on each card, pull down to refresh or reconnect, dark mode and wallpaper colours.
-> Battery via HFP is not deliverable to an app (ADR-040). `CAP-064` (`ai-sessions/0060`): the app connects by itself when a bud leaves the case,
-> not when the lid is opened with both buds inside — the Buds start no connection then; tap Connect. `CAP-065` (`ai-sessions/0061`): the EQ sliders wait for the
-> Buds' EQ, every pull refreshes exactly its tab, and the Buds announce channel 19 for the Left bud and 21 for the Right.
-> `ai-sessions/0062` (hardware-tested in `CAP-066`, `ai-sessions/0063`: the ANC part works as designed; turning the phone reset the tab — fixed in `0064`): every ANC tap asks the Buds first and changes the mode only if they allow it now (with clearer
-> wording; the tile steps from the Buds' answer), an answer cut off by another app taking the channel is said as such, and a **gear** opens **Settings** with
-> dark mode (System / On / Off), the Debug screen and an **Info** tab (the app's build, the firmware of the Case and each bud).
-> `ai-sessions/0064`/`0066` (not hardware-tested yet; `CAP-067` is planned): the tab stays when the phone turns, a session ended by switching Bluetooth off
-> says so, and **Info** shows the licence (readable offline) with links to the README and the issue tracker on GitHub — opened in your browser on a tap; the
-> app itself still has no internet access (ADR-050).
+*Works with Google Pixel Buds Pro 2. Not affiliated with or endorsed by Google. Pixel Buds is a trademark of Google LLC.*
 
-> ## ⚠️ Disclaimer: hardware risk
->
-> This project sends undocumented, reverse-engineered commands to real Pixel Buds
-> Pro 2 hardware over an unofficial channel. **This carries a real risk of putting
-> your earbuds or case into a bad, potentially unrecoverable state** ("bricking")
-> — malformed or unexpected commands are not something Google tests against or
-> supports. Use this project's findings and any future app build **at your own
-> risk**, against hardware you're prepared to lose.
->
-> Mitigations this project takes seriously — the app's read-only Safe Mode, which refuses every write unless
-> the Buds announce a firmware version this app was verified against (`release_5.203`) and the Pixel Buds Pro 2's
-> Fast Pair Model ID (`ARCHITECTURE.md` §8.1, `DECISIONS.md` ADR-042; implemented 2026-09-24, not yet exercised on
-> hardware), and the evidence-before-implementation discipline in `AGENTS.md`/`PROJECT_RULES.md` — reduce but do
-> **not** eliminate this risk. If something does go
-> wrong, see `WORKSTATION_PREPARATIONS.md`'s Disaster Recovery section for the
-> hardware-level factory-reset procedure.
+## Download & install
+
+> **No release has been published yet.** Version 1.0.0 is being prepared; it is released after its hardware test on the signed APK (`CAP-067`). Until
+> then you can [build the app from source](#building-from-source).
+
+- Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
+- **Android 14 (API 34) or newer.**
+- Open the downloaded file; Android asks you to allow **"Install unknown apps"** for the app you opened it with (your browser or file manager) — allow it
+  for that one install if you like, and switch it off again afterwards.
+- **Check the download (optional):** every release lists the APK's SHA-256 and the SHA-256 of its signing certificate. Compare with `sha256sum <file>.apk`
+  and `apksigner verify --print-certs <file>.apk`. The certificate stays the same for every release.
+- **Updates are manual:** the app never checks for updates. Watch the repository's releases on GitHub, or let an app such as Obtainium follow the
+  Releases page for you. A newer APK installs over the old one and keeps your settings (same signing key).
+
+## What it does
+
+- **Noise control:** Noise cancellation, Adaptive, Transparency, Off — plus a Quick Settings tile.
+- **Equalizer:** five bands and the presets.
+- **Battery:** Left and Right (with "charging in the case") and the Case.
+- **Find My Buds:** ring the Left or Right bud.
+- **Controls:** touch controls on/off, press and hold per bud (noise control or digital assistant) and which noise-control modes it cycles through.
+- **Sound:** balance, mono audio, conversation detection; **in-ear detection** on/off.
+- **Settings:** dark mode (System / On / Off), a Debug screen, and an Info tab with the app's build, the Buds' firmware and the licence.
+
+## What it does not do
+
+- Ring the Case, or both buds at once (in the official app this goes through Google's Find My Device network — `DECISIONS.md` ADR-027).
+- Firmware updates.
+- Manage multipoint connections; head gestures; case sounds.
+- Anything that needs a Google account.
+- Audio itself — playback and codecs stay with Android.
+
+## Screenshots
+
+<p>
+  <img src="images/opencontrol-for-buds-IMG_20261001_212401.jpg" width="200" alt="Connection tab: connected, battery Left 100 %, Case 62 %, Right 100 %">
+  <img src="images/opencontrol-for-buds-IMG_20261001_212954.jpg" width="200" alt="ANC tab: Noise cancellation, Off, Adaptive, Transparency">
+  <img src="images/opencontrol-for-buds-IMG_20261001_212903.jpg" width="200" alt="Sound tab: equalizer with five bands and presets">
+  <img src="images/opencontrol-for-buds-IMG_20261001_212714.jpg" width="200" alt="Controls tab: touch controls and press and hold">
+</p>
+<p>
+  <img src="images/opencontrol-for-buds-IMG_20261001_212457.jpg" width="200" alt="Find tab: Ring Left, Ring Right, Stop">
+  <img src="images/opencontrol-for-buds-IMG_20261001_212622.jpg" width="200" alt="Controls tab: in-ear detection switch">
+  <img src="images/opencontrol-for-buds-IMG_20261001_212805.jpg" width="200" alt="Sound tab: balance, mono audio, conversation detection">
+  <img src="images/opencontrol-for-buds-IMG_20261001_214301.jpg" width="200" alt="Settings in dark mode: Settings, Debug and Info tabs">
+</p>
+
+**Screen recording** (60 s; the preview shows the first 12 s — click it for the full MP4):
+
+[<img src="images/opencontrol-for-buds-demo-preview.gif" width="240" alt="Screen recording preview: the Connection and ANC tabs">](images/opencontrol-for-buds-demo.mp4)
+
+*The screenshots and the recording were made on 2026-10-01 with a development build. Since then the balance slider has lost its `‹`/`›` step buttons
+(`ai-sessions/0066`); everything else looks the same.* For comparison: the official app's screens are in
+[`SCREENSHOTS_PIXEL_BUDS_APP.md`](./SCREENSHOTS_PIXEL_BUDS_APP.md).
+
+## Privacy
+
+- No `INTERNET` permission — CI checks every build for it (`.github/workflows/android.yml`). No analytics, no crash reporting, no account.
+- No location permission and no Bluetooth scanning: the app talks only to the Buds you paired, through Android's companion-device pairing.
+- Its settings stay on the phone and are excluded from backups and device transfer.
+- The two links on the Info tab (README, issues) open only when you tap them, in your browser.
+- Permissions: `BLUETOOTH_CONNECT` (talk to the Buds), `POST_NOTIFICATIONS` and the foreground-service permissions (the "connected" notification).
+
+## Safety and Safe Mode
+
+This app sends commands that were reverse-engineered, not documented by Google. That carries a real, if small, **risk of putting your earbuds or case into
+a bad state** — use it at your own risk, on hardware you are prepared to lose.
+
+The app protects you where it can: it changes settings only when the Buds announce the firmware it was verified with (`release_5.203`) and, on the Fast Pair
+channel, the Pixel Buds Pro 2's model ID. Otherwise it opens in read-only **Safe Mode** and sends no setting changes (`ARCHITECTURE.md` §8.1, `DECISIONS.md`
+ADR-042). On hardware, Safe Mode refused every write when the firmware could not be confirmed (`CAP-061`) and allowed them on the verified firmware
+(`CAP-062`, `CAP-063`); other firmware versions have not been tested. If something goes wrong, see the factory-reset procedure in
+[`WORKSTATION_PREPARATIONS.md`](./WORKSTATION_PREPARATIONS.md) (Disaster Recovery).
+
+## Status
+
+**1.0.0 is prepared, not yet released** (see above). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds firmware `release_5.203`.
+Per feature, what is hardware-verified and what is only unit-tested is in `ARCHITECTURE.md` §5a; the history of every change is in
+[`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) — a suspected
+security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
+
+---
+
+*The rest of this page is for contributors: how the protocol was reconstructed and how the app is built.*
 
 ## Why
 
@@ -64,15 +110,15 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-01)
+## Current state (2026-10-02)
 
-- **Captures:** 66 registered sessions (`CAP-001`–`CAP-066`): 59 analyzed, 5 planned,
+- **Captures:** 67 registered sessions (`CAP-001`–`CAP-067`): 59 analyzed, 6 planned (among them `CAP-067`, the hardware run of the 1.0.0 APK),
   2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-066`
   are captures of this project's own app; the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 49 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has an explicit maintainer sign-off.
+- **Decisions:** 51 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has an explicit maintainer sign-off.
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
   the settings reads (ADR-036) and writes (touch controls, press and hold, conversation detection, balance, mono, in-ear detection — ADR-045/046/047),
@@ -85,7 +131,7 @@ to design, implement, test, and document a native Android app.
   codec is unit-tested against real capture bytes and fuzzed; CI builds, tests and lints every change and asserts no `INTERNET` permission
   (`.github/workflows/android.yml`).
 
-## Building and installing the debug APK
+## Building from source
 
 Requirements: JDK 21, Android SDK with `android-34`/build-tools `34.0.0` installed (the Gradle
 wrapper handles the rest). No Android Studio installation is required — the commands below use the
@@ -124,8 +170,13 @@ To also run the full test suite and static analysis (what CI runs on every chang
 ./gradlew assembleDebug testDebugUnitTest test lint
 ```
 
+**Release build:** `./gradlew assembleRelease` builds a **signed** APK only — the four signing values come from `~/.gradle/gradle.properties` or the
+environment, and without them the build stops with a clear message (it never signs with the debug key). A release is made with `scripts/release.sh`;
+the full procedure, including creating and backing up the key, is in [`RELEASING.md`](./RELEASING.md). A debug build and a release build are signed with
+different keys, so one cannot be installed over the other: uninstall first (this deletes the app's settings).
+
 **Before testing against real hardware**, read `APP_TESTPLAN.md` and the newest
-planned app capture (`CAP-065-EVENT-NOTES.md`) — they say, step by step, what is to be checked on hardware; the `CAP-062`/`CAP-063` FINDINGS say what
+planned app capture (`CAP-067-EVENT-NOTES.md`) — they say, step by step, what is to be checked on hardware; the `CAP-062`/`CAP-063` FINDINGS say what
 was seen working there and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
 earbuds" — it means the wire bytes match known-good captures, nothing more.
 
@@ -200,6 +251,7 @@ humans and AI coding assistants working on it:
 | `WORKSTATION_PREPARATIONS.md` | Fedora development workstation setup |
 | `TODO.md` | Open tasks and current project status |
 | `CHANGELOG.md` | Changes per release |
+| `RELEASING.md` | How a release is signed, built, verified and published (GitHub Releases) |
 | `id_registry.csv` | Machine-readable registry of every `CAP-NNN`/`ADR-NNN`/Test-ID — check before assigning a new one |
 | `AI_SESSION_LOG_PROCEDURE.md` | Naming scheme, category vocabulary, and numbering discipline for logging AI-agent prompts/results into `ai-sessions/` |
 | `ai-sessions/INDEX.md` | Registry of every logged AI-agent prompt/result pair under `ai-sessions/` — check before assigning the next number |
@@ -221,8 +273,10 @@ knowledge informs this Android-native implementation.
 
 ## License
 
-GNU Affero General Public License v3.0 (AGPL-3.0) — see [`LICENSE`](./LICENSE)
-and `DECISIONS.md` ADR-002.
+GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later) — see [`LICENSE`](./LICENSE)
+and `DECISIONS.md` ADR-002. The release APK bundles open-source libraries under their own licences (Apache-2.0 —
+[`LICENSES/Apache-2.0.txt`](./LICENSES/Apache-2.0.txt)); each release carries a `THIRD_PARTY_NOTICES.txt` that lists them
+(`scripts/third_party_notices.py`).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/README.md - https://tedsluis.github.io/opencontrolpixelbudspro2/README

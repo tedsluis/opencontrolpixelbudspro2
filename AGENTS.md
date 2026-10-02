@@ -357,6 +357,12 @@ order:
   ADR-002.
 - Do not include any Google-owned assets, icons, trademarks ("Pixel Buds"
   wordmark/logo) in app resources; use generic iconography only.
+  - **Note (2026-10-02, maintainer-approved in chat, `DECISIONS.md` ADR-051):** the
+    app's name "OpenControl for Pixel Buds Pro 2" names the compatible product as plain
+    text — a deliberate exception to the line above. No Google logo, wordmark image, icon
+    or other asset is used; the README, the Info tab and the release notes say "Works
+    with Google Pixel Buds Pro 2. Not affiliated with or endorsed by Google. Pixel Buds
+    is a trademark of Google LLC."; the launcher label is "OpenControl".
 
 ## 13. Workflow by task type
 

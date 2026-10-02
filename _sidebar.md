@@ -15,6 +15,7 @@
   - [PROJECT_RULES.md](/opencontrolpixelbudspro2/PROJECT_RULES.md)
   - [TODO.md](/opencontrolpixelbudspro2/TODO.md)
   - [CHANGELOG.md](/opencontrolpixelbudspro2/CHANGELOG.md)
+  - [RELEASING.md](/opencontrolpixelbudspro2/RELEASING.md)
   - [SECURITY.md](/opencontrolpixelbudspro2/SECURITY.md)
   - [CONTRIBUTING.md](/opencontrolpixelbudspro2/CONTRIBUTING.md)
   - [MAINTAINING_DOCS_SITE.md](/opencontrolpixelbudspro2/MAINTAINING_DOCS_SITE.md)
@@ -220,5 +221,5 @@
   - **CAP-066 (Group BB)**
     - [CAP-066-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-066-2026-10-01_16-12-57_16-34-50-Group_BB/CAP-066-EVENT-NOTES.md)
     - [CAP-066-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-066-2026-10-01_16-12-57_16-34-50-Group_BB/CAP-066-FINDINGS.md)
-  - **CAP-067 (Group BC)**
+  - **CAP-067 (Group BC)** _(planned)_
     - [CAP-067-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-067-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BC/CAP-067-EVENT-NOTES.md)

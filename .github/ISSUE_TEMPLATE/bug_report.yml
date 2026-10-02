@@ -1,0 +1,68 @@
+# ai-sessions/0065 (idea I-9, approved in chat 2026-10-02): a bug report that asks for what a hardware issue needs, and nothing that identifies the user.
+name: Bug report
+description: Something in the app does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please do **not** paste your earbuds' Bluetooth address (MAC), serial numbers, account names or location.
+        A suspected security problem (e.g. a crash caused by a crafted Bluetooth frame) goes through a private security advisory instead — see SECURITY.md.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Connect …  2. Open the ANC tab …  3. Tap …"
+    validations:
+      required: true
+  - type: input
+    id: app_build
+    attributes:
+      label: App version and build
+      description: Settings (gear) → Info → "This app", e.g. "1.0.0, build abc1234 (2026-10-02)"
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Buds firmware
+      description: Settings → Info → "The Buds" (Case / Left bud / Right bud), or "not connected"
+  - type: input
+    id: phone
+    attributes:
+      label: Phone and OS
+      description: e.g. "Pixel 9a, GrapheneOS 2026100100 (Android 17)" or "Pixel 8, stock Android 15"
+    validations:
+      required: true
+  - type: dropdown
+    id: play_services
+    attributes:
+      label: Google Play services on this phone / profile
+      options:
+        - Not installed
+        - Installed (sandboxed, GrapheneOS)
+        - Installed (stock Android)
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: safe_mode
+    attributes:
+      label: Did the app show the Safe Mode notice?
+      options:
+        - "No"
+        - "Yes"
+        - Not sure
+  - type: textarea
+    id: debug_log
+    attributes:
+      label: Debug log (optional)
+      description: |
+        Settings → Debug → "Export debug log". Before attaching it, search it for your earbuds' Bluetooth address (six pairs of hex digits, e.g. AA:BB:CC:DD:EE:FF)
+        and replace each one with XX:XX:XX:XX:XX:XX.

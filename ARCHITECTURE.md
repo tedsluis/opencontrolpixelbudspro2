@@ -886,6 +886,12 @@ As built (rewritten 2026-09-24, 0044 AR-2):
   if a `.proto` build input is ever introduced — `AGENTS.md` §4.)
 - No `INTERNET` permission anywhere in any module's manifest; asserted by CI (`.github/workflows/android.yml`) on every
   change under `android/` (see `AGENTS.md` §1).
+- **Release signing and version** (`ai-sessions/0065`, 2026-10-02): `android/app/build.gradle.kts` signs the `release` build type with a `signingConfig`
+  whose four values (`OPENCONTROL_STORE_FILE`, `_KEY_ALIAS`, `_STORE_PASSWORD`, `_KEY_PASSWORD`) come from Gradle properties (`~/.gradle/gradle.properties`)
+  or the environment — never from the repository. Without them `packageRelease` fails with a clear message; no unsigned or debug-signed release APK is
+  built, and debug builds, tests and lint need no key. `versionCode` = major × 10000 + minor × 100 + patch (1.0.0 = 10000). No R8/minify (the release is the
+  code the tests and hardware runs checked). Releases are built by `scripts/release.sh` in a clean worktree (`RELEASING.md`). App name and launcher label:
+  `DECISIONS.md` ADR-051.
 
 ## 15. Open Architecture Questions
 
