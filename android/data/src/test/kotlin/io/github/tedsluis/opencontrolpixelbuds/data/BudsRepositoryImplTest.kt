@@ -1294,8 +1294,8 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("ai-sessions/0064 F-2: four [›] steps from Centre on channel 21 — four writes, the fourth is CAP-064 6671 (17:7 = Right 4); ACK 6673 applies each")
-    fun `four balance steps reach Right 4 with one write each`() = runTest {
+    @DisplayName("Right 4 on channel 21 is CAP-064 6671 (17:7) byte for byte; the empty RESPONSE 6673 applies it (the CAP-066 BB-10 target)")
+    fun `a balance of Right 4 writes the captured 17_7`() = runTest {
         val (repo, transport) = buildRepository() // the CAP-061 announcement: channel 21 (CAP-064 6671 ran on 21)
         transport.onSent = { ch, frame ->
             val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
@@ -1303,16 +1303,10 @@ class BudsRepositoryImplTest {
         }
         advanceTimeBy(1_000)
 
-        var shown = 0 // the label: the Buds' acknowledged value
-        repeat(4) {
-            val next = BudsSettings.balanceStep(shown, towardLeft = false)!!
-            assertEquals(BudsResult.Success(Unit), repo.setVolumeBalance(next))
-            shown = repo.settings.value.volumeBalance!!.value
-        }
+        assertEquals(BudsResult.Success(Unit), repo.setVolumeBalance(-4))
 
-        assertEquals(-4, shown, "Right 4")
-        assertEquals(4, transport.sent.size, "one write per step, nothing else")
-        assertEquals(Cap066Balance.RIGHT_4_CH21_6671, transport.sent.last().second.toHex(), "the fourth write is the captured 17:7, byte for byte")
+        assertEquals(listOf(Cap066Balance.RIGHT_4_CH21_6671), transport.sent.map { it.second.toHex() }, "one write, byte for byte")
+        assertEquals(SettingReading(-4, 1_000, changedByApp = true), repo.settings.value.volumeBalance)
     }
 
     @Test

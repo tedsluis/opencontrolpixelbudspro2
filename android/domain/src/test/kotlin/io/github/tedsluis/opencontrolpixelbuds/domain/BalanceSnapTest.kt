@@ -41,18 +41,4 @@ class BalanceSnapTest {
         assertEquals(100, BudsSettings.snapBalance(100))
         assertEquals(-100, BudsSettings.snapBalance(-140))
     }
-
-    @Test
-    fun `F-2 - a step of 1 toward Left or Right, no centre snap, nothing past the ends`() {
-        // ai-sessions/0064 F-2: CAP-066 (FINDINGS §5) never reached Right 4 = 17:7 by dragging; four steps toward Right from Centre do (CAP-064 6671 is that write).
-        var v = 0
-        repeat(4) { v = BudsSettings.balanceStep(v, towardLeft = false)!! }
-        assertEquals(-4, v, "Centre → Right 4 in four taps")
-        assertEquals(-1, BudsSettings.balanceStep(0, towardLeft = false), "Centre → Right 1: the ±3 snap does not apply to a step")
-        assertEquals(1, BudsSettings.balanceStep(0, towardLeft = true), "Centre → Left 1")
-        assertEquals(-5, BudsSettings.balanceStep(-6, towardLeft = true), "CAP-066 A7723 Right 6 → Right 5")
-        assertEquals(null, BudsSettings.balanceStep(100, towardLeft = true), "Left 100 is the end")
-        assertEquals(null, BudsSettings.balanceStep(-100, towardLeft = false), "Right 100 is the end")
-        assertEquals(99, BudsSettings.balanceStep(100, towardLeft = false))
-    }
 }

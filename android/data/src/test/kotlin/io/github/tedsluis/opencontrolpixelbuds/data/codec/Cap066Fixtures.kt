@@ -20,7 +20,7 @@
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
 /**
- * Real balance writes for `ai-sessions/0064` F-2 (`[‹]`/`[›]` steps of 1 beside the slider; the wire is unchanged, ADR-045). Every value is the RFCOMM payload
+ * Real balance writes (`ai-sessions/0064` F-2; the `[‹]`/`[›]` steps were removed again in `0066` — the wire is unchanged, ADR-045). Every value is the RFCOMM payload
  * of the named HCI frame, unchanged (`ai-sessions/0064` RESULT §D): `tshark -r <log> -Y "bthci_acl.chandle==0x000b && btrfcomm.len>0 && frame.number==<n>" -T
  * fields -e frame.number -e frame.time -e frame.p2p_dir -e btrfcomm.dlci -e data.data` (exit 0); decoded with `python3 scripts/pwrpc_decode.py <log>`. Nothing is
  * redacted: these frames carry only the pw_rpc header, field 17 and its value. All written by OpenControl.

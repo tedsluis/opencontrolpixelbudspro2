@@ -188,10 +188,10 @@ class SettingsMenuTest {
         assertEquals(false, DarkMode.OFF.isDark(systemIsDark = true))
     }
 
-    // ---- ai-sessions/0064 F-6: licence, README and issues (DECISIONS.md ADR-050) -------------------------------------------------------------------
+    // ---- ai-sessions/0064 F-6 / 0066: licence (in the app), README and issues (DECISIONS.md ADR-050 and its Update) -------------------------------------------------------------------
 
     @Test
-    fun `Info shows the licence line and the three links, each tap hands exactly its URL to the opener`() {
+    fun `Info shows the licence line and the two links, each tap hands exactly its URL to the opener, no LICENSE link`() {
         val opened = mutableListOf<String>()
         compose.setContent {
             OpenControlTheme(darkTheme = false) {
@@ -203,12 +203,11 @@ class SettingsMenuTest {
         compose.onNodeWithText("Links open in your browser; this app itself has no internet access.").assertExists()
 
         // The Robolectric screen is small (320 × 470 px): scroll each link into view before the tap.
-        compose.onNodeWithText("Licence on GitHub").performScrollTo().performClick()
+        compose.onNodeWithText("Licence on GitHub").assertDoesNotExist() // ai-sessions/0066: the licence is read in the app only
         compose.onNodeWithText("README on GitHub").performScrollTo().performClick()
         compose.onNodeWithText("Report an issue on GitHub").performScrollTo().performClick()
         assertEquals(
             listOf(
-                "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/LICENSE",
                 "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/README.md",
                 "https://github.com/tedsluis/opencontrolpixelbudspro2/issues",
             ),

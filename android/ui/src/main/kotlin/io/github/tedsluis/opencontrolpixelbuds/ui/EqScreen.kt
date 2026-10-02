@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -42,8 +41,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
@@ -230,24 +227,18 @@ private fun EqStatusNotice(
  * release within ±3 of the centre writes 0 ("Centre", [BudsSettings.snapBalance]). **`ai-sessions/0057` F-1:** the knob follows the finger only while it is
  * down; on release it shows the Buds' value again and moves only when they acknowledge the write — a refused or unanswered write leaves it where the Buds
  * are (it used to stay at the finger position). Not read from the Buds yet ⇒ disabled (U-1's rule; the time is in the card's (i)).
- *
- * **`ai-sessions/0064` F-2 (the maintainer's choice "−/+ of 1, slider kept", chat 2026-10-01):** `[‹]` and `[›]` beside the slider move the Buds' value one
- * step toward Left or Right ([BudsSettings.balanceStep], no centre snap) — one write per tap; the label changes only when the Buds acknowledge it. `CAP-066`
- * (FINDINGS §5): 32 drags never reached Right 4. A button is disabled at its end of the range. The slider is unchanged.
  */
 @Composable
 private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onChange: (Int) -> Unit) {
     val buds = reading?.value ?: 0
-    val usable = enabled && reading != null
     var dragPosition by remember { mutableStateOf<Float?>(null) }
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Balance")
             if (reading != null) Text(balanceText(buds), style = MaterialTheme.typography.bodySmall)
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("L")
-            BalanceStepButton("‹", BALANCE_STEP_LEFT_DESCRIPTION, BudsSettings.balanceStep(buds, towardLeft = true).takeIf { usable }, onChange)
             Slider(
                 value = dragPosition ?: -buds.toFloat(),
                 onValueChange = { dragPosition = it },
@@ -255,26 +246,14 @@ private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onCha
                     dragPosition?.let { onChange(BudsSettings.snapBalance(-it.roundToInt())) }
                     dragPosition = null
                 },
-                enabled = usable,
+                enabled = enabled && reading != null,
                 valueRange = -100f..100f,
                 modifier = Modifier.weight(1f),
             )
-            BalanceStepButton("›", BALANCE_STEP_RIGHT_DESCRIPTION, BudsSettings.balanceStep(buds, towardLeft = false).takeIf { usable }, onChange)
             Text("R")
         }
     }
 }
-
-/** One step button of the balance (F-2): writes [target] on a tap; `null` = disabled (not read, not connected, or at the end of the range). */
-@Composable
-private fun BalanceStepButton(symbol: String, description: String, target: Int?, onChange: (Int) -> Unit) {
-    IconButton(onClick = { target?.let(onChange) }, enabled = target != null, modifier = Modifier.semantics { contentDescription = description }) {
-        Text(symbol, style = MaterialTheme.typography.titleLarge)
-    }
-}
-
-internal const val BALANCE_STEP_LEFT_DESCRIPTION: String = "Balance one step to the left"
-internal const val BALANCE_STEP_RIGHT_DESCRIPTION: String = "Balance one step to the right"
 
 /**
  * [onValueChange] fires once per completed drag ([Slider]'s own `onValueChangeFinished`), not per drag-frame — each call sends a real frame over the RFCOMM

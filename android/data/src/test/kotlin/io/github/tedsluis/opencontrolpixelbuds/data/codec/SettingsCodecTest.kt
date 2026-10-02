@@ -84,7 +84,7 @@ class SettingsCodecTest {
     fun balanceStepTargets() {
         assertEquals(Cap066Balance.RIGHT_6_A7723, wire(SettingsCodec.balanceRequest(19, -6)))
         assertEquals(Cap066Balance.CENTRE_A7873, wire(SettingsCodec.balanceRequest(19, 0)))
-        assertEquals(Cap066Balance.RIGHT_4_CH21_6671, wire(SettingsCodec.balanceRequest(21, -4)), "the value [›] reaches in four taps from Centre")
+        assertEquals(Cap066Balance.RIGHT_4_CH21_6671, wire(SettingsCodec.balanceRequest(21, -4)), "Right 4, the CAP-066 BB-10 target")
         assertEquals(SettingValue.Balance(-4), SettingsCodec.decode(rpcPayload(Cap066Balance.RIGHT_4_CH21_6671)))
     }
 

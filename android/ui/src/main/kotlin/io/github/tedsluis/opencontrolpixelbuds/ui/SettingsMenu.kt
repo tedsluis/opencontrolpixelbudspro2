@@ -168,12 +168,12 @@ internal fun firmwareInfoLines(deviceInfo: DeviceInfo?): List<String> {
 }
 
 /**
- * `ai-sessions/0064` F-6 (the maintainer's request and choice "Links + bundled licence", chat 2026-10-01; DECISIONS.md ADR-050): the project's links. Fixed
+ * `ai-sessions/0064` F-6 (the maintainer's request and choice "Links + bundled licence", chat 2026-10-01; DECISIONS.md ADR-050): the project's links. **Since
+ * `ai-sessions/0066`** (the maintainer's request, chat 2026-10-02) the licence is only read in the app ("Read the licence") — no link to `LICENSE`. Fixed
  * constants, opened only by a tap, by another app (the browser) — this app makes no network request and has no `INTERNET` permission (AGENTS.md §1).
  * Checked 2026-10-01 (`ai-sessions/0064` RESULT §F): `git remote get-url origin` = `git@github.com:tedsluis/opencontrolpixelbudspro2.git`; each URL answers 200.
  */
 internal object ProjectLinks {
-    const val LICENSE_URL: String = "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/LICENSE"
     const val README_URL: String = "https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/README.md"
     const val ISSUES_URL: String = "https://github.com/tedsluis/opencontrolpixelbudspro2/issues"
 }
@@ -197,7 +197,6 @@ private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?, onOpenUrl: 
             Text("Licence", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             Text(LICENCE_LINE, style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = { showLicence = true }) { Text("Read the licence") }
-            TextButton(onClick = { onOpenUrl(ProjectLinks.LICENSE_URL) }) { Text("Licence on GitHub") }
             Text("Project", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             TextButton(onClick = { onOpenUrl(ProjectLinks.README_URL) }) { Text("README on GitHub") }
             TextButton(onClick = { onOpenUrl(ProjectLinks.ISSUES_URL) }) { Text("Report an issue on GitHub") }

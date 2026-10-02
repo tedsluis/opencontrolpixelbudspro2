@@ -26,12 +26,9 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.geometry.Offset
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
@@ -48,7 +45,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * `ai-sessions/0064` F-2: the balance's `[‹]`/`[›]` steps (tests at the end).
+ * `ai-sessions/0064`/`0066`: the balance slider writes once per completed drag (test at the end; the `0064` steps were removed again in `0066`).
  *
  * `ai-sessions/0059` (A58-APP-02, the maintainer's choice "Disable until read"): while the EQ has not been read the five band sliders are disabled — a drag
  * would write four bands the Buds never reported — and the presets (full quintets) stay usable.
@@ -96,7 +93,7 @@ class EqScreenTest {
         for (i in 0 until 5) sliders[i].assertIsEnabled()
     }
 
-    // ---- ai-sessions/0064 F-2: the balance steps --------------------------------------------------------------------------------------------------
+    // ---- the balance slider: one write per completed drag (ai-sessions/0064, kept in 0066) --------------------------------------------------------------------------------------------------
 
     /** The balance slider: the only slider with the ±100 range. */
     private val balanceSlider = SemanticsMatcher("balance slider") {
@@ -122,54 +119,8 @@ class EqScreenTest {
             }
         }
         // The balance card is the second item of the screen's LazyColumn: scroll it into composition first.
-        compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription(BALANCE_STEP_RIGHT_DESCRIPTION))
+        compose.onNode(hasScrollAction()).performScrollToNode(balanceSlider)
         return writes
-    }
-
-    @Test
-    fun `Right 4 is reachable - one tap on the right step from Right 3 writes exactly -4 (17 colon 7, CAP-064 6671)`() {
-        val writes = showBalance(-3)
-        compose.onNodeWithContentDescription(BALANCE_STEP_RIGHT_DESCRIPTION).performClick()
-        assertEquals(listOf(-4), writes)
-        compose.onNodeWithText("Right 3").assertExists() // the label is the Buds' value until they acknowledge (nothing acknowledged here)
-    }
-
-    @Test
-    fun `a step from Centre writes 1 or minus 1 - the centre snap does not apply to a step`() {
-        val writes = showBalance(0)
-        compose.onNodeWithContentDescription(BALANCE_STEP_LEFT_DESCRIPTION).performClick()
-        compose.onNodeWithContentDescription(BALANCE_STEP_RIGHT_DESCRIPTION).performClick()
-        assertEquals("each tap one write, from the Buds' value", listOf(1, -1), writes)
-    }
-
-    @Test
-    fun `the step toward an end is disabled at that end, both are disabled before the balance was read or while not connected`() {
-        showBalance(100)
-        compose.onNodeWithContentDescription(BALANCE_STEP_LEFT_DESCRIPTION).assertIsNotEnabled()
-        compose.onNodeWithContentDescription(BALANCE_STEP_RIGHT_DESCRIPTION).assertIsEnabled()
-    }
-
-    @Test
-    fun `at Right 100 only the left step is enabled`() {
-        showBalance(-100)
-        compose.onNodeWithContentDescription(BALANCE_STEP_RIGHT_DESCRIPTION).assertIsNotEnabled()
-        compose.onNodeWithContentDescription(BALANCE_STEP_LEFT_DESCRIPTION).assertIsEnabled()
-    }
-
-    @Test
-    fun `not read yet - both steps disabled`() {
-        val writes = showBalance(null)
-        compose.onNodeWithContentDescription(BALANCE_STEP_LEFT_DESCRIPTION).assertIsNotEnabled()
-        compose.onNodeWithContentDescription(BALANCE_STEP_RIGHT_DESCRIPTION).assertIsNotEnabled()
-        compose.onNodeWithContentDescription(BALANCE_STEP_RIGHT_DESCRIPTION).performClick()
-        assertTrue(writes.isEmpty())
-    }
-
-    @Test
-    fun `not connected - both steps disabled`() {
-        showBalance(0, connection = ConnectionState.Disconnected)
-        compose.onNodeWithContentDescription(BALANCE_STEP_LEFT_DESCRIPTION).assertIsNotEnabled()
-        compose.onNodeWithContentDescription(BALANCE_STEP_RIGHT_DESCRIPTION).assertIsNotEnabled()
     }
 
     @Test
