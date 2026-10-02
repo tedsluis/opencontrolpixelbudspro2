@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">OpenControl for Pixel Buds</string>
+    <!-- DECISIONS.md ADR-051 (2026-10-02): the name names the compatible product as plain text only; no Google logo or asset. -->
+    <string name="app_name">OpenControl for Pixel Buds Pro 2</string>
+    <!-- The label under the launcher icon (ADR-051). -->
+    <string name="launcher_label">OpenControl</string>
     <string name="tile_anc_label">ANC</string>
 </resources>

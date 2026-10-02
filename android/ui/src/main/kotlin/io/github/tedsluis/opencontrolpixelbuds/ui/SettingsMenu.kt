@@ -181,6 +181,13 @@ internal object ProjectLinks {
 /** The licence line (F-6): the SPDX identifier every source file carries (`AGPL-3.0-or-later`, AGENTS.md §12, ADR-002) and the `LICENSE` file's licence. */
 internal const val LICENCE_LINE: String = "GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)"
 
+/**
+ * `ai-sessions/0065`, DECISIONS.md ADR-051 (the maintainer's wording, chat 2026-10-02): the app's name names the compatible product as plain text only; this
+ * line says it is not Google's app. The same sentence is in the README and the release notes.
+ */
+internal const val TRADEMARK_NOTICE: String =
+    "Works with Google Pixel Buds Pro 2. Not affiliated with or endorsed by Google. Pixel Buds is a trademark of Google LLC."
+
 /** Under the links (F-6): where they open. */
 internal const val LINKS_NOTE: String = "Links open in your browser; this app itself has no internet access."
 
@@ -194,6 +201,7 @@ private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?, onOpenUrl: 
         ) {
             Text("This app", style = MaterialTheme.typography.titleMedium)
             Text(appBuildLine(appBuild), style = MaterialTheme.typography.bodyMedium)
+            Text(TRADEMARK_NOTICE, style = MaterialTheme.typography.bodySmall)
             Text("Licence", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             Text(LICENCE_LINE, style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = { showLicence = true }) { Text("Read the licence") }

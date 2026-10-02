@@ -58,7 +58,7 @@ class BudsForegroundService : Service() {
     private fun buildNotification(statusText: String): Notification {
         ensureChannel()
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("OpenControl for Pixel Buds")
+            .setContentTitle("OpenControl for Pixel Buds Pro 2") // the app name, DECISIONS.md ADR-051
             .setContentText(statusText)
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
             .setOngoing(true)

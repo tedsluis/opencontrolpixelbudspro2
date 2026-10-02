@@ -201,6 +201,9 @@ class SettingsMenuTest {
         compose.onNodeWithText("Info").performClick()
         compose.onNodeWithText("GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)").assertExists()
         compose.onNodeWithText("Links open in your browser; this app itself has no internet access.").assertExists()
+        compose.onNodeWithText( // ai-sessions/0065, ADR-051: the maintainer's exact wording
+            "Works with Google Pixel Buds Pro 2. Not affiliated with or endorsed by Google. Pixel Buds is a trademark of Google LLC.",
+        ).assertExists()
 
         // The Robolectric screen is small (320 × 470 px): scroll each link into view before the tap.
         compose.onNodeWithText("Licence on GitHub").assertDoesNotExist() // ai-sessions/0066: the licence is read in the app only

@@ -63,7 +63,8 @@
              comment) rather than investigated fully. -->
         <activity
             android:name="io.github.tedsluis.opencontrolpixelbuds.app.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/launcher_label">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

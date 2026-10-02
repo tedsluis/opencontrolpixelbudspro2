@@ -26,6 +26,19 @@ val gitCommit: String = gitOutput("rev-parse", "--short", "HEAD")?.let { hash ->
 } ?: "unknown"
 val gitCommitDate: String = gitOutput("log", "-1", "--format=%cs") ?: "unknown"
 
+/*
+ * `ai-sessions/0065` (the maintainer's choice, chat 2026-10-02): the release signing values come from outside the repository — Gradle properties (the
+ * maintainer's `~/.gradle/gradle.properties`, chmod 600) or, as a fallback, environment variables of the same name. The keystore file itself lives outside the
+ * repository too. Without all four values the release APK is not built at all (`packageRelease` fails with the message below): never unsigned, never signed with
+ * the debug key — a differently signed APK cannot update an installed one (developer.android.com, "Sign your app"). Debug builds, tests and lint need none
+ * of this. `RELEASING.md` has the steps.
+ */
+val releaseSigningKeys = listOf("OPENCONTROL_STORE_FILE", "OPENCONTROL_KEY_ALIAS", "OPENCONTROL_STORE_PASSWORD", "OPENCONTROL_KEY_PASSWORD")
+val releaseSigning: Map<String, String> = releaseSigningKeys.mapNotNull { key ->
+    (providers.gradleProperty(key).orNull ?: providers.environmentVariable(key).orNull)?.takeIf { it.isNotBlank() }?.let { key to it }
+}.toMap()
+val missingReleaseSigning: List<String> = releaseSigningKeys.filterNot { it in releaseSigning }
+
 android {
     namespace = "io.github.tedsluis.opencontrolpixelbuds"
     compileSdk = 34
@@ -35,10 +48,29 @@ android {
         // DECISIONS.md ADR-029: minimum supported Android API is 34, matching compile/target SDK.
         minSdk = 34
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0-dev"
+        // `ai-sessions/0065` (chat 2026-10-02): versionCode = major * 10000 + minor * 100 + patch (1.0.0 → 10000, 1.0.1 → 10001, 1.1.0 → 10100); a release
+        // candidate before 1.0.0 ("1.0.0-rc.1") takes 9901. It must grow with every release: Android refuses to install a lower one over a higher one.
+        versionCode = 10000
+        versionName = "1.0.0"
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
         buildConfigField("String", "GIT_COMMIT_DATE", "\"$gitCommitDate\"")
+    }
+
+    signingConfigs {
+        if (missingReleaseSigning.isEmpty()) {
+            create("release") {
+                storeFile = file(releaseSigning.getValue("OPENCONTROL_STORE_FILE"))
+                storePassword = releaseSigning.getValue("OPENCONTROL_STORE_PASSWORD")
+                keyAlias = releaseSigning.getValue("OPENCONTROL_KEY_ALIAS")
+                keyPassword = releaseSigning.getValue("OPENCONTROL_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (missingReleaseSigning.isEmpty()) signingConfig = signingConfigs.getByName("release")
+        }
     }
 
     compileOptions {
@@ -83,4 +115,17 @@ dependencies {
     // DECISIONS.md ADR-028: Hilt.
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+}
+
+// The clear failure of `ai-sessions/0065`: checked when the release APK is packaged, not at configuration, so debug builds, tests and lint run without keys.
+val missingSigningForTask = missingReleaseSigning
+tasks.matching { it.name == "packageRelease" }.configureEach {
+    doFirst {
+        if (missingSigningForTask.isNotEmpty()) {
+            throw GradleException(
+                "Release signing is not configured: missing ${missingSigningForTask.joinToString()}. Set them in ~/.gradle/gradle.properties " +
+                    "(or as environment variables) — see RELEASING.md. The release APK is never built unsigned or with the debug key.",
+            )
+        }
+    }
 }
