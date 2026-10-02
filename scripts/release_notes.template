@@ -1,0 +1,19 @@
+An independent, open-source Android app to control Google Pixel Buds Pro 2 — fully offline: no Google Play services needed, no `INTERNET` permission, no location permission, no account.
+
+**Features:** noise control (Noise cancellation, Adaptive, Transparency, Off) and a Quick Settings tile · equalizer with presets · battery Left/Right (with charging) and the Case · Find My Buds (ring Left / Right) · touch controls, press and hold per bud and its noise-control modes · balance, mono audio, conversation detection, in-ear detection · dark mode.
+
+**Not included:** ringing the Case or both buds, firmware updates, multipoint management, head gestures, anything that needs a Google account.
+
+**Requirements:** Android 14 (API 34) or newer. Tested on a Pixel 9a with GrapheneOS (Android 17) and Buds firmware `release_5.203` only. On any other firmware the app opens in read-only **Safe Mode** and sends no setting changes.
+
+**Install:** download `{APK}` below, allow "Install unknown apps" for your browser or file manager, and open the file. **Updates:** install a newer APK from the Releases page over the old one — it is signed with the same key, so your settings stay. The app never checks for updates itself.
+
+**Verify the download:**
+- SHA-256 of the APK: `{APK_SHA256}`
+- SHA-256 of the signing certificate: `{CERT_SHA256}` (`apksigner verify --print-certs {APK}`)
+
+**Changes:** see [CHANGELOG.md](https://github.com/tedsluis/opencontrolpixelbudspro2/blob/{TAG}/CHANGELOG.md). Third-party licences: `THIRD_PARTY_NOTICES.txt` below.
+
+**Risk:** this app sends reverse-engineered commands to your earbuds; use it at your own risk (see the README's "Safety and Safe Mode").
+
+Works with Google Pixel Buds Pro 2. Not affiliated with or endorsed by Google. Pixel Buds is a trademark of Google LLC. Licence: AGPL-3.0-or-later.
