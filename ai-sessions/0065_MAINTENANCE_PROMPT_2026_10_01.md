@@ -77,6 +77,22 @@ gives the runbook and runs none of its publishing steps. Since `ai-sessions/0066
 is the slider alone again. The maintainer's questions on video in the README, the app name and R8 were answered in chat (`ai-sessions/0066` RESULT) — use those
 answers as input and verify them.
 
+**Decided by the maintainer (chat 2026-10-02, `AskUserQuestion` "App name", option *"Keep \"…for Pixel Buds Pro 2\" + ADR"*, with this preview) — build it in
+this session, no further question on the name itself:** app name **"OpenControl for Pixel Buds Pro 2"** (written exactly so); launcher label (under the icon)
+**"OpenControl"**; in the README and on the Info tab: *"Works with Google Pixel Buds Pro 2. Not affiliated with or endorsed by Google. Pixel Buds is a trademark of
+Google LLC."*; a new ADR (the next free number in `id_registry.csv`) and a dated note in `AGENTS.md` §12 and in `PROJECT.md`'s non-goals recording this as a
+deliberate exception (the name as plain text only — no Google logo, wordmark image, icon or asset). Show the ADR text and both notes in chat and get a yes
+before writing them (`AGENTS.md` §6). The `applicationId` stays `io.github.tedsluis.opencontrolpixelbuds`.
+
+**Also asked (chat 2026-10-02): automate the README video.** Build (after the checkpoint) a local script under `scripts/` that turns a screen recording into
+GitHub-ready media with `ffmpeg` only (no new dependency): H.264 MP4 without audio, metadata stripped (`-map_metadata -1`), scaled (e.g. 1280 px high, CRF
+≈ 28, `+faststart`), checked to stay under GitHub's 10 MB video limit for attachments (`ai-sessions/0066` measured 0.55 MB for the 60 s recording), plus an
+optional short GIF or animated WebP and a poster frame (PNG). Present at the checkpoint, with pros and cons: (a) commit the small MP4/GIF/poster and link them;
+(b) upload the MP4 with `gh issue comment <n> --attach <file>` (GitHub Docs "Attaching files with GitHub CLI": `--attach` "uploads the file to GitHub and writes the
+resulting URL into the body" — available on `gh issue`/`gh pr` create/edit/comment only) to get a `user-attachments` URL that plays in the README — an
+outward-facing step (a public comment) needing the maintainer's yes each time; verify what happens to the file if that comment is deleted; (c) a GitHub Actions
+job running the same script when a recording under `images/` changes (ffmpeg on the runner; it would commit the result — weigh bot commits against a local run).
+
 ---
 
 ## 2. Facts and corrections this prompt's author found (verify each; they are starting points, not conclusions)
@@ -104,9 +120,7 @@ answers as input and verify them.
   hardware runs `CAP-059`…`CAP-066` were on a Pixel 9a **with** Google Play services present (e.g. `CAP-066-FINDINGS.md` header: "Google Play services
   present"); `CAP-035` (GMS disabled) predates the app. Build an evidence table per criterion (capture + finding, or "not shown") and do **not** tick a
   criterion without evidence; the options (a test run without Play services, or a reworded criterion through the documented rules) are a checkpoint question.
-- **Trademarks:** `AGENTS.md` §12 / `PROJECT.md` non-goals ban Google-owned assets and trademarks in the app's resources. The app label and the README use the
-  words "Pixel Buds" to name the device it works with. Check `strings.xml` and the README; present the question (keep with a "not affiliated with Google"
-  notice, or rename) at the checkpoint — do not decide it.
+- **Trademarks:** decided 2026-10-02 (§1, "Decided by the maintainer"): build it; the checkpoint only confirms the ADR and note texts.
 - **Media:** `images/` is not under Git LFS (`.gitattributes` covers `captures/**` only); the screenshots and the video are untracked so far; the video is
   15.3 MB. GitHub's README renderer does not play a repository-relative `.mp4` inline (check GitHub's docs and say what it does); options: a short GIF or a
   poster frame linking to the video, the video as a release asset, or LFS. Check every image for personal data (status bar, notifications, account names,
@@ -177,9 +191,9 @@ answers as input and verify them.
    **(a)** release readiness — `CAP-067` / the core of `APP_TESTPLAN.md` on the release-signed APK first, or a pre-release, or 1.0.0 now; **(b)** version name and
    versionCode scheme; **(c)** where the signing values live (`~/.gradle/gradle.properties`, environment variables, a gitignored `keystore.properties`) and the
    key parameters (algorithm, size, validity); **(d)** the CI option (none now / build + checksum on a tag / sign on GitHub with secrets — with an ADR draft if
-   the latter); **(e)** the README structure and texts (the mock-up) and the media (which images, how the video is shown, LFS or not); **(f)** the Definition of
+   the latter); **(e)** the README structure and texts (the mock-up) and the media (which images, how the video is shown — options (a)/(b)/(c) above, LFS or not); **(f)** the Definition of
    done (the evidence table; tick, test first, or reword); **(g)** the CHANGELOG `[1.0.0]` block (its text, and how the research history above it is kept);
-   **(h)** the app name / trademark question; **(i)** the further ideas of task 6 — a multi-select, each as its own option. Record the answers verbatim in the
+   **(h)** the ADR and the `AGENTS.md`/`PROJECT.md` note texts for the decided app name; **(i)** the further ideas of task 6 — a multi-select, each as its own option. Record the answers verbatim in the
    RESULT. Build only what is approved.
 
 ### Phase C — build what is approved (no publishing)
