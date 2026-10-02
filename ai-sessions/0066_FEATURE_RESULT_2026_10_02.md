@@ -83,7 +83,13 @@ questions (name, R8, video) for the `0065` session.
 
 ## Commits
 
-Not committed yet — awaiting the maintainer's yes.
+Committed and pushed after the maintainer's yes in chat (2026-10-02, "ja, commit en push"):
+
+- `a0a95d3` — fix(app): balance slider without steps, no LICENSE link on Info (0066).
+- `0a90d27` — docs: ADR-050 Update and the 0066 alignment (CAP-067, test plan, architecture).
+- `5ee334e` — docs: prompt 0065 (release preparation) and session 0066 files; plus the follow-up commit that records these hashes.
+
+Not staged: `android/.kotlin/`, the untracked screenshots and video in `images/` (left for the README session).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0066_FEATURE_RESULT_2026_10_02.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0066_FEATURE_RESULT_2026_10_02
