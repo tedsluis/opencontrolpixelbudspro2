@@ -254,6 +254,9 @@ mark v1.
   `LICENSE`, `README.md` and the issue tracker, handed to the browser on a tap — **DECISIONS.md ADR-050** (maintainer-approved in chat); no manifest change, no
   `INTERNET`, no dependency. Gate green (`:data` 1588, `:domain` 31, `:hardware` 56, `:ui` 41; lint 0; warnings 0); 7 mutations caught. New skeleton
   `CAP-067` (Group BC). Not hardware-verified.
+- **2026-10-02 (`ai-sessions/0066`): FEATURE — two changes before `CAP-067` (the maintainer's request).** The balance's `[‹]`/`[›]` steps of `0064` F-2 are removed
+  (the slider alone again, one write per release; the real-byte tests of `17:7` stay); Settings → Info no longer links to `LICENSE` on GitHub — the licence is
+  read in the app only (**DECISIONS.md ADR-050 Update**, maintainer-approved in chat). `CAP-067` skeleton, `APP_TESTPLAN.md` and `ARCHITECTURE.md` aligned.
 - **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
   by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
   flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.

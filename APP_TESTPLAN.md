@@ -16,8 +16,8 @@ plus a dimmed value (battery) or a disabled control (settings) when it is not cu
 `Notify` allows it (F1–F8, G3, D2); the new not-allowed wording and the tile subtitle "Not allowed now" (F8, G3, O12); the **gear** in the top bar opens
 **Settings** with the tabs Settings (dark mode), Debug (L) and Info (L1, O1, O3, O13, P1); **section Q** (the menu, Info, dark mode, the tile from the fresh
 `Notify`, the cut-off watch, the Disconnect label's contrast). **Updated 2026-10-01 for the `ai-sessions/0064` build:** the tab survives a rotation or
-Android's dark switch (K4, O13); the balance's `[‹]`/`[›]` steps (M3); a Bluetooth-off loss is named (K1); **section R** (Info's licence and links, the steps to
-Right 4, the Bluetooth-off line, the profile proxies).
+Android's dark switch (K4, O13); a Bluetooth-off loss is named (K1); **section R** (Info's licence and links, the Bluetooth-off line, the profile proxies).
+**Updated 2026-10-02 for `ai-sessions/0066`:** the balance steps are gone again (M3, R5 back to the slider) and Info has no "Licence on GitHub" link (R1, R3).
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -146,7 +146,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 |---|---|---|---|---|---|
 | M1 | Right after Connect: read Balance, Mono audio and Conversation detection. | Each shows the Buds' value with "read HH:MM:SS" (or "Not read from the Buds yet") | `ReadSetting 4:17`, `4:19`, `4:22` + answers | | |
 | M2 | Drag **Balance** fully to **L**, release. | "Left 100 · changed …"; sound in the left ear | `WriteSetting 4:{17:200}` → empty `RESPONSE` | | |
-| M3 | Balance fully to **R**; then about halfway left; then back near the centre and release. Then tap **`[›]`** four times from Centre (`ai-sessions/0064` F-2). | "Right 100", "Left NN", "Centre" — a release within ±3 of the middle snaps to "Centre" (`ai-sessions/0054` I-3); then Right 1, 2, 3, **Right 4** (a step is never snapped) | `4:{17:199}`, `4:{17:2·NN}`, `4:{17:0}`; then `4:{17:1}`, `4:{17:3}`, `4:{17:5}`, `4:{17:7}` — one write per tap | | |
+| M3 | Balance fully to **R**; then about halfway left; then back near the centre and release. | "Right 100", "Left NN", "Centre" — a release within ±3 of the middle snaps to "Centre" (`ai-sessions/0054` I-3); Left/Right 4 stays 4 | `4:{17:199}`, `4:{17:2·NN}`, `4:{17:0}` | | |
 | M4 | **Mono audio** on, then off. | switch follows after the Buds' OK; both ears play both channels while on | `4:{19:1}`, `4:{19:0}` | | |
 | M5 | **Conversation detection** off, then on; with it on, speak for 5 s (ANC on). | switch follows; say what the Buds do while you speak | `4:{22:0}`, `4:{22:1}` | | |
 | M6 | Disconnect, Connect, open Sound. | The last written values are read back ("read …") | the `ReadSetting` answers = the last writes | | |
@@ -249,11 +249,11 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| R1 | Gear → **Info**. | Under "Licence": "GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)", **Read the licence**, **Licence on GitHub**; under "Project": **README on GitHub**, **Report an issue on GitHub**, "Links open in your browser; this app itself has no internet access."; then "The Buds" | nothing from the app | | |
+| R1 | Gear → **Info**. | Under "Licence": "GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)", **Read the licence** (no "Licence on GitHub" since `ai-sessions/0066`); under "Project": **README on GitHub**, **Report an issue on GitHub**, "Links open in your browser; this app itself has no internet access."; then "The Buds" | nothing from the app | | |
 | R2 | **Read the licence**; scroll; **Close**. | A dialog "Licence" with the full text ("GNU AFFERO GENERAL PUBLIC LICENSE / Version 3, 19 November 2007 …"), also with no network; Close closes it | — | | |
-| R3 | Tap each of the three links (back to the app after each). | The browser opens `…/blob/main/LICENSE`, `…/blob/main/README.md`, `…/issues` on github.com/tedsluis/opencontrolpixelbudspro2. With no browser installed: "No app on this phone can open web links. The address is …" | the system log shows the browser's `VIEW` start; the app holds no `INTERNET` permission (A6) | | |
+| R3 | Tap each of the two links (back to the app after each). | The browser opens `…/blob/main/README.md`, `…/issues` on github.com/tedsluis/opencontrolpixelbudspro2. With no browser installed: "No app on this phone can open web links. The address is …" | the system log shows the browser's `VIEW` start; the app holds no `INTERNET` permission (A6) | | |
 | R4 | Each tab (and Settings → Info): rotate to landscape and back. | The same tab stays selected and shown each time (`CAP-066` K4r) | — | | |
-| R5 | Sound: balance at Centre; tap **`[›]`** four times, then **`[‹]`** four times. At Left 100 / Right 100 look at the button toward that end. | Right 1 … Right 4, then back to Centre — each after the Buds' OK; the button toward an end is greyed there; before the balance was read both are greyed | per tap one `WriteSetting 4:{17:n}` → OK; `17:7` = Right 4 | | |
+| R5 | Sound: drag the balance toward **R**, release; try to land on **Right 4**. *(The `0064` steps were removed in `ai-sessions/0066`.)* | the Buds' value after their OK; say how many drags Right 4 took | one `WriteSetting 4:{17:n}` per release, none during the drag; `17:7` = Right 4 | | |
 | R6 | App on screen: Bluetooth off; wait 10 s; Bluetooth on. | "Bluetooth is disabled.", then ready again by itself | export: "Bluetooth adapter: ON -> TURNING_OFF", "… -> OFF", "Session loss cause: Bluetooth was switched off on this phone" (final), later "… -> TURNING_ON", "… -> ON" and the automatic re-open | | |
 | R7 | *(debug build)* After R6, leave the app and come back; read logcat `StrictMode`. | — | note every `LeakedClosableViolation` with its object; 🟡 a `BluetoothLeAudio` one may remain (framework `CloseGuard`, `CAP-066-FINDINGS.md` §8) — the app closes every proxy it obtained (`ai-sessions/0064` F-4) | | |
 

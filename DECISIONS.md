@@ -2350,6 +2350,10 @@ motivated this).
   4. The full licence text is bundled (`android/ui/src/main/res/raw/license.txt`, byte-identical to `LICENSE`, checked by a unit test) and readable offline.
 - **Consequences**: `AGENTS.md` §1 is read as "the app itself makes no network request"; a tap-started hand-off to another app is not network use by this app.
   Anything fetched in-app, or a link opened without a tap, needs a new ADR. `ARCHITECTURE.md` §1/§2.4/§9 record the links.
+- **Update (2026-10-02, `ai-sessions/0066`, maintainer-approved in chat 2026-10-02, `AskUserQuestion` "ADR-050", option *"Update as shown (Recommended)"*):**
+  the `LICENSE` link is removed — the licence is read in the app only ("Read the licence", the bundled text, item 4). Item 1 now reads: **two** fixed URLs,
+  `README.md` and the issues of github.com/tedsluis/opencontrolpixelbudspro2. Everything else is unchanged: started only by a tap, no network request by the
+  app, no `INTERNET`, no `<queries>`, no dependency.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

@@ -1,18 +1,19 @@
 # Event Notes: OpenControl for Pixel Buds on Pixel 9a (GrapheneOS) — Group BC, the first hardware run of the `ai-sessions/0064` build (`CAP-067`)
 
 **Status:** 🔲 **Not yet captured — skeleton only** (written by `ai-sessions/0064`, 2026-10-01; scope and order are the maintainer's choice in chat 2026-10-01,
-`AskUserQuestion` "F-5 CAP-067": *"As listed, destructive last (Recommended)"*). After the run: rename this folder from the placeholder
+`AskUserQuestion` "F-5 CAP-067": *"As listed, destructive last (Recommended)"*). **Adapted 2026-10-02 (`ai-sessions/0066`, the maintainer's changes before
+the run):** the balance steps `[‹]`/`[›]` are gone (section II is the slider again) and Info has no "Licence on GitHub" link (P7: two links). After the run: rename this folder from the placeholder
 `CAP-067-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BC` to the film's first/last overlay times and analyse it as `CAP-066` was (`ai-sessions/0063`).
 
 **Purpose:**
 
-- **A.0/P7 — the Info tab of the `0064` build** (F-6, DECISIONS.md ADR-050): the build line, the licence line "GNU Affero General Public License v3.0 or later
-  (AGPL-3.0-or-later)", **Read the licence** (the bundled text, offline), and the three links — each opened once **on film** (the maintainer approved links at the
+- **A.0/P7 — the Info tab of the `0064`/`0066` build** (F-6, DECISIONS.md ADR-050 and its 2026-10-02 Update): the build line, the licence line "GNU Affero General
+  Public License v3.0 or later (AGPL-3.0-or-later)", **Read the licence** (the bundled text, offline), and the two links (README, issues) — each opened once **on film** (the maintainer approved links at the
   `0064` checkpoint, "F-6 links": *"Links + bundled licence (Recommended)"*).
 - **I — F-1, the tab across a configuration change.** `CAP-066` K4r: rotating reset **Sound → Connection** (`CAP-066-FINDINGS.md` §6). The `0064` build skips the
   pager ↔ back-stack sync until the restored back stack is known (`OpenControlNavHost.kt`, test `TabRestoreTest`).
-- **II — F-2, the balance steps** (the maintainer's choice "−/+ of 1, slider kept"): `[‹]`/`[›]` beside the slider, one write per tap. `CAP-066` BB-10: 32 drags,
-  never Right 4 (`17:7`). Here: Centre → Right 4 in four taps, back to Centre, and finally restored to Right 4 (the value before `CAP-064`).
+- **II — the balance slider (BB-10 again).** The `0064` steps were removed in `ai-sessions/0066` (the maintainer's choice); the slider writes once per release.
+  `CAP-066` BB-10: 32 drags, never Right 4 (`17:7`). Here: drag to Right 4 (count the drags) — the value before `CAP-064`.
 - **III — BB-12, the open half of lead L-1** (`PROTOCOL.md` §2.2a, 2026-10-01 `0063` Update 🟡): with both buds worn on channel **19**, take the **Left** out —
   predicted: a Buds `DISC` of MAESTRO with the ACL up, then announcement **21**.
 - **IV — BB-15, watch only:** an answer cut off by the claim's close (`ai-sessions/0062` F-3) — never seen on hardware yet.
@@ -49,7 +50,7 @@ Info tab on film.
 | P4 | Do Not Disturb on; GrapheneOS Bluetooth auto-off: note its current value (section VIII restores it) | ☐ |
 | P5 | Status bar on film across a minute change at the start and at the end (the clock offset) | ☐ |
 | P6 | Quick Settings: the ANC tile large (as `CAP-066` BB-13), the Bluetooth tile reachable | ☐ |
-| P7 | After the first "ready": gear → **Info** — hold 3 s (build line, firmware lines, "Control channel: N"); then **Read the licence** — scroll once, hold 3 s, **Close**; then **Licence on GitHub**, **README on GitHub**, **Report an issue on GitHub** — each opens the browser on film; back to the app after each | ☐ |
+| P7 | After the first "ready": gear → **Info** — hold 3 s (build line, firmware lines, "Control channel: N"); then **Read the licence** — scroll once, hold 3 s, **Close**; then **README on GitHub**, **Report an issue on GitHub** — each opens the browser on film; back to the app after each | ☐ |
 
 **Rhythm:** one action, then wait 5–10 s (longer where a step says so). Something unexpected: stop, wait 10 s, continue.
 
@@ -62,9 +63,9 @@ the Buds: N".
 
 | What | Expected on screen | Expected on the wire / in the logs | Refuted if |
 |---|---|---|---|
-| Info tab | "Licence", "GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)", "Read the licence", "Licence on GitHub"; "Project", "README on GitHub", "Report an issue on GitHub", "Links open in your browser; this app itself has no internet access."; then "The Buds" with the firmware lines | nothing from the app on RFCOMM while the menu is open | a link is missing or the menu sends anything |
+| Info tab | "Licence", "GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)", "Read the licence" (no "Licence on GitHub"); "Project", "README on GitHub", "Report an issue on GitHub", "Links open in your browser; this app itself has no internet access."; then "The Buds" with the firmware lines | nothing from the app on RFCOMM while the menu is open | a link is missing or the menu sends anything |
 | Read the licence | a dialog "Licence" with the text starting "GNU AFFERO GENERAL PUBLIC LICENSE / Version 3, 19 November 2007", scrollable; **Close** | — (bundled, offline) | the text does not show, or a browser opens |
-| Each link | the browser opens `…/blob/main/LICENSE`, `…/blob/main/README.md`, `…/issues` (github.com/tedsluis/opencontrolpixelbudspro2) | system log: an `ACTION_VIEW` start of the browser (`START u0 {act=android.intent.action.VIEW dat=https://github.com/…}`); the app's merged manifest has no `INTERNET` | another address opens, or no app opens without the message "No app on this phone can open web links. The address is …" |
+| Each link | the browser opens `…/blob/main/README.md`, `…/issues` (github.com/tedsluis/opencontrolpixelbudspro2) | system log: an `ACTION_VIEW` start of the browser (`START u0 {act=android.intent.action.VIEW dat=https://github.com/…}`); the app's merged manifest has no `INTERNET` | another address opens, or no app opens without the message "No app on this phone can open web links. The address is …" |
 
 #### I. F-1 — the tab across a configuration change
 
@@ -74,14 +75,12 @@ the Buds: N".
 | BC-2 | ready | Repeat BC-1 on **ANC**, **Sound**, **Controls**, **Find** | the same tab stays selected and shown, each time | nothing | the screen switches to Connection (the `CAP-066` K4r defect) |
 | BC-3r | ready | Gear → **Info**; rotate and back; then the top bar's back arrow | still Settings → Info after each rotation; back returns to the tab the menu was opened from | nothing | the menu closes or another tab shows |
 
-#### II. F-2 — the balance steps (`qhr` field 17, ADR-045 unchanged)
+#### II. The balance slider — BB-10 again (`qhr` field 17, ADR-045 unchanged; the `0064` steps removed in `ai-sessions/0066`)
 
 | Step | Pre-state | Action | Expected on screen | Expected on the wire | Refuted if |
 |---|---|---|---|---|---|
-| BC-3 | ready, **Sound** tab, balance read as **Centre** (`CAP-066` ended at `17:0`) | Tap **`[›]`** four times, ≈ 3 s apart | the label after each OK: Right 1, Right 2, Right 3, **Right 4** | per tap one `WriteSetting 4:{17:n}` → empty `RESPONSE` OK: `17:1`, `17:3`, `17:5`, **`17:7`**. On channel 21 the last is byte-identical to `CAP-064` 6671 `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 88 01 07 a9 7d 5e df 03 7e`; on channel 19 it is (derived, not captured) `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 88 01 07 e9 b8 6e 25 7e` | a tap sends two writes, or the label changes before the OK, or `17:7` is not reached |
-| BC-4 | Right 4 | Tap **`[‹]`** four times | Right 3, 2, 1, **Centre** | `17:5`, `17:3`, `17:1`, **`17:0`** (channel 19: = `CAP-066` A7873 `… 88 01 00 4a 2d 0a bb 7e`) → OK each | as BC-3 |
-| BC-5 | Centre | Drag the slider a little toward **R** and release | one write on release (a release within ±3 of the centre writes `17:0`) | exactly one `WriteSetting 4:{17:…}` per release, none during the drag | a write per drag frame |
-| BC-5e | *(optional)* | At Left 100 or Right 100 the button toward that end is greyed | — | no write | a write past ±100 |
+| BC-3 | ready, **Sound** tab, balance read as **Centre** (`CAP-066` ended at `17:0`) | Drag the slider toward **R** and release, aiming at **Right 4**; repeat until the label reads Right 4 (count the drags; say nothing — the film shows the label) | the label after each OK | exactly one `WriteSetting 4:{17:n}` per release (zigzag), none during a drag, each → empty `RESPONSE` OK; the target **`17:7`**: on channel 21 = `CAP-064` 6671 `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 88 01 07 a9 7d 5e df 03 7e`; on channel 19 (derived, not captured) `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 88 01 07 e9 b8 6e 25 7e` | a write per drag frame, or the label changes before the OK |
+| BC-5 | after BC-3 | Drag to near the centre and release | a release within ±3 of the centre writes `17:0` ("Centre") | one write | as BC-3 |
 
 #### III. BB-12 — lead L-1, the Left out with both worn on 19
 
@@ -126,7 +125,7 @@ the Buds: N".
 
 | Step | Action | Done |
 |---|---|---|
-| BC-R | Sound tab: **`[›]`** four times from Centre → **Right 4** (`17:7` → OK) — the balance before `CAP-064` | ☐ |
+| BC-R | Sound tab: drag to **Right 4** (`17:7` → OK) — the balance before `CAP-064` (if BC-3 ended there, nothing to do) | ☐ |
 
 #### IX. Destructive steps — last
 
@@ -150,7 +149,7 @@ viewer); the film. All into this folder, then `sha256sum *`.
       no app RFCOMM frame while the menu was open.
 - [ ] BC-1 … BC-3r, BC-8: per rotation / dark switch, the tab before and after (film) against the logcat `wm_on_create` times — **refuted if** any tab other than
       Connection comes back as Connection.
-- [ ] BC-3 … BC-5, BC-R: every `WriteSetting 4:{17:n}` (zigzag) with its `RESPONSE`, one per tap or release; the label frames after each OK; `17:7` reached; the
+- [ ] BC-3, BC-5, BC-R: every `WriteSetting 4:{17:n}` (zigzag) with its `RESPONSE`, one per release; the number of drags to reach `17:7`; the label frames after each OK; the
       channel-19 bytes of `17:7` against the derived frame above (a first capture of it).
 - [ ] BC-6: the announcement before and after against which bud was taken out (film), and any Buds-side `DISC` with the ACL up — settles BB-12 (L-1).
 - [ ] BC-7: any app claim closed between the request and the answer.
@@ -159,7 +158,7 @@ viewer); the film. All into this folder, then `sha256sum *`.
 - [ ] BC-11s: every StrictMode violation with its object and creation site.
 - [ ] BC-12: the auto-off alarm lines and the app's adapter lines.
 - [ ] IX: `APP_TESTPLAN.md` sections A, B, E; Z1's bonding events.
-- [ ] Registry Test-IDs: [`AUDIO-003`] (BC-3 … BC-5, BC-R), [`INEAR-002`]–[`INEAR-004`] (BC-6a/BC-6), [`PAIR-003`] (BC-11), [`BATT-004`] (every connect), [`PAIR-001`]
+- [ ] Registry Test-IDs: [`AUDIO-003`] (BC-3, BC-5, BC-R), [`INEAR-002`]–[`INEAR-004`] (BC-6a/BC-6), [`PAIR-003`] (BC-11), [`BATT-004`] (every connect), [`PAIR-001`]
       (Z1).
 
 ---

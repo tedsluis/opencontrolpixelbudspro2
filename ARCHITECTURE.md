@@ -32,8 +32,8 @@ Communication happens over up to three transports (RFCOMM is the only one the ap
   §15's question is closed on that basis (maintainer-approved 2026-09-24, `ai-sessions/0045`); tracked
   as `SPATIAL-001`.
 
-**No network from the app** (`AGENTS.md` §1): since `ai-sessions/0064` (DECISIONS.md ADR-050) Settings → Info has three project links (the licence, the README, the
-issue tracker on GitHub) that hand the URL to another app — the browser — with `Intent.ACTION_VIEW` on the user's tap; this app makes no network request, holds
+**No network from the app** (`AGENTS.md` §1): since `ai-sessions/0064` (DECISIONS.md ADR-050) Settings → Info has project links (since `ai-sessions/0066`: the README and the
+issue tracker on GitHub; the licence is read in the app only) that hand the URL to another app — the browser — with `Intent.ACTION_VIEW` on the user's tap; this app makes no network request, holds
 no `INTERNET` permission and needs no `<queries>`; the full licence text is bundled and readable offline.
 
 Compile/target/minimum SDK: **API 34 (Android 14)** — decided 2026-09-13, `DECISIONS.md` ADR-029;
@@ -160,7 +160,7 @@ screen unchanged: Debug-mode switch, Export debug log, unidentified frames) and 
 computed locally at build time; the firmware of the Case / Left bud / Right bud from this connection's announcement with its receive time and the announced
 control channel, or "Not connected yet", F-5). Back returns to the tab it was opened from. **Since `ai-sessions/0064` (F-6, ADR-050):** Info also shows the
 licence ("GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)"), **Read the licence** (the bundled `LICENSE` text, offline), and the links
-"Licence on GitHub", "README on GitHub", "Report an issue on GitHub" — each hands its fixed URL to the browser on a tap (no app to open it ⇒ a message with the
+"README on GitHub", "Report an issue on GitHub" (a "Licence on GitHub" link was removed in `ai-sessions/0066`, ADR-050 Update) — each hands its fixed URL to the browser on a tap (no app to open it ⇒ a message with the
 address). **F-1:** the selected tab survives a configuration change (rotation, Android's dark switch): the pager ↔ back-stack sync is skipped until the restored
 back stack is known (`CAP-066` K4r: a rotation reset Sound → Connection; `TabRestoreTest`).
 (From `ai-sessions/0037` to `0056` Debug was a sixth bottom tab, contrary to the tree above; `0057` restored the documented design.) Every tab can be pulled
@@ -181,8 +181,8 @@ Bluetooth, Allow, Pair) — once per pull, never automatically. The times and st
   app bar in `ai-sessions/0057`). **Since `ai-sessions/0056`**
   (the maintainer's choices in chat 2026-09-28) it also holds "Modes for press and hold (both buds)" — four boxes, shown only while a bud's press and hold is
   Noise control, the last two ticked boxes disabled with "At least two modes must stay selected." — and "In-ear detection" is a switch with a note on what "off"
-  changes (**since `ai-sessions/0064` F-2** the balance has `[‹]`/`[›]` steps of 1 beside the slider — one write per tap, `CAP-066`: 32 drags never reached
-Right 4); a setting not read from the Buds yet is disabled — the switches, the balance slider and its steps and (since `ai-sessions/0059`, the maintainer's
+  changes (the balance's `[‹]`/`[›]` steps of `ai-sessions/0064` F-2 were removed again in `ai-sessions/0066`, the maintainer's choice — the slider alone, one
+write per completed drag); a setting not read from the Buds yet is disabled — the switches, the balance slider and (since `ai-sessions/0059`, the maintainer's
   choice in chat 2026-09-30) the five EQ sliders, while the EQ presets stay usable. **Exception:** the press-and-hold action chips (`HoldRow`,
   `ControlsScreen.kt`) are enabled with the connection only; a chip tapped before the read writes that one field (`ai-sessions/0058` A58-ARCH-05).
 - **Justification for `navigation-compose`** (`AGENTS.md` §10's dependency-policy requirement): pure
@@ -781,7 +781,7 @@ this sequence explicit rather than inferred from ADR-005's decision alone:
   applicable** (`AGENTS.md` §10); no EQ or battery value is persisted (the hardware is the source of truth, §3.1).
   Nothing is ever transmitted off-device (see `AGENTS.md` §1 and §9 for the enforcement rules). (Aligned 2026-09-24,
   0044 AR-3 — this bullet used to say "encrypted DataStore for custom EQ profiles and last-known battery".)
-- **Links out (`ai-sessions/0064`, DECISIONS.md ADR-050):** Settings → Info's three fixed GitHub URLs are handed to another app with `Intent.ACTION_VIEW`, only on a
+- **Links out (`ai-sessions/0064`, DECISIONS.md ADR-050 and its 2026-10-02 Update):** Settings → Info's two fixed GitHub URLs (README, issues) are handed to another app with `Intent.ACTION_VIEW`, only on a
   tap; no WebView, no `INTERNET`, no `<queries>` (developer.android.com: `startActivity()` "doesn't require package visibility"); `ActivityNotFoundException` ⇒ a
   message with the address. The licence text is bundled (`android/ui/src/main/res/raw/license.txt`, a test keeps it equal to `LICENSE`).
 - **Threat model summary:** the app assumes a privacy-conscious user on a

@@ -23,9 +23,9 @@ Pro 2** without the official Pixel Buds app or Google Play Services.
 > `ai-sessions/0062` (hardware-tested in `CAP-066`, `ai-sessions/0063`: the ANC part works as designed; turning the phone reset the tab — fixed in `0064`): every ANC tap asks the Buds first and changes the mode only if they allow it now (with clearer
 > wording; the tile steps from the Buds' answer), an answer cut off by another app taking the channel is said as such, and a **gear** opens **Settings** with
 > dark mode (System / On / Off), the Debug screen and an **Info** tab (the app's build, the firmware of the Case and each bud).
-> `ai-sessions/0064` (not hardware-tested yet; `CAP-067` is planned): the tab stays when the phone turns, the balance has `‹`/`›` steps so every value (e.g.
-> Right 4) is reachable, a session ended by switching Bluetooth off says so, and **Info** shows the licence (readable offline) with links to the licence, the
-> README and the issue tracker on GitHub — opened in your browser on a tap; the app itself still has no internet access (ADR-050).
+> `ai-sessions/0064`/`0066` (not hardware-tested yet; `CAP-067` is planned): the tab stays when the phone turns, a session ended by switching Bluetooth off
+> says so, and **Info** shows the licence (readable offline) with links to the README and the issue tracker on GitHub — opened in your browser on a tap; the
+> app itself still has no internet access (ADR-050).
 
 > ## ⚠️ Disclaimer: hardware risk
 >

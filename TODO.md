@@ -789,6 +789,14 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+**Open after `ai-sessions/0066` (added 2026-10-02):**
+- **Balance precision is open again:** the `0064` steps were removed (the maintainer's choice); `CAP-066` reached Right 4 in none of 32 drags. `CAP-067` BC-3 counts
+  the drags; if it stays impractical, options are a live value label while dragging, slider `steps`, or the steps back.
+- **Definition of done "without Google Play Services":** test in a GrapheneOS secondary user without sandboxed Play (the install path and the checks are in
+  `ai-sessions/0066` RESULT); the HCI log must show no Play-services claim on the Message Stream (first message `03 08 00 02 01 25`).
+- **Before the first release** (`ai-sessions/0065` prompt, not run yet; the maintainer publishes nothing yet): the app name / trademark question, R8 (not now),
+  the README video (a ≈ 0.5 MB H.264 re-encode or a GIF instead of the 15.3 MB file).
+
 **Open after `ai-sessions/0064` (added 2026-10-01):**
 - **Run `CAP-067` (Group BC)** — skeleton `captures/CAP-067-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BC/CAP-067-EVENT-NOTES.md`: the Info tab's licence and links on film (F-6,
   ADR-050), a rotation on every tab and on Settings → Info (F-1), the balance steps to Right 4 = `17:7` and back (F-2; the channel-19 `17:7` frame has never been
