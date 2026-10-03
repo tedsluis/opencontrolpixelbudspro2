@@ -101,7 +101,9 @@ None fetched in this session; the specification points used (Fast Pair Message S
 
 ## Commits
 
-Not committed yet — waiting for the maintainer's confirmation of the final summary (prompt §4 task 20).
+- `b22e51c` chore(capture): add CAP-067 and rename its folder to the film's times (6 LFS files, 968 MB)
+- `05ee97a` docs: analyse CAP-067, tick the Definition of done, approve 1.0.0
+- a follow-up commit recording these hashes (and CI's sitemap commit in between)
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0067_CAPTURE_RESULT_2026_10_03.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0067_CAPTURE_RESULT_2026_10_03
