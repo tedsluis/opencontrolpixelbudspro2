@@ -428,6 +428,14 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
   inventory (`tshark … -Y "bthci_acl.chandle==0x000b && btrfcomm.frame_type==0x43"`) and the scratch decoder of `CAP-065-FINDINGS.md`. ADR-034 item 3 is
   unchanged.
 
+- **Update (2026-10-03, `ai-sessions/0067`, maintainer-approved in chat 2026-10-03, `AskUserQuestion` "L-1", option *"Dated Update, no status change
+  (Recommended)"*) — BC-6a / BC-6 in `CAP-067` (`CAP-067-FINDINGS.md` §4; release APK 1.0.0, a GrapheneOS user without Play services).** 🟢 With both buds worn
+  on 21, the **Right** out (head on frame-left, film 08:06:04) ⇒ Buds `DISC` of MAESTRO with the ACL up (`.log.last` A945) and announcement **19** (A982) — a
+  third sample. 🟢 With both worn on **19**, **one** bud out ⇒ `DISC` (A1085) and announcement **21** (A1123) — the first 19 → 21 on a removal, but the bud is
+  **not identifiable** on film (head out of view) or on the wire. Status unchanged: 🟡 "the channel names the hosting bud"; settling experiment: the Left out on
+  19 with the head in view. Command: the control-frame inventory and the scratch decoder of `CAP-065-FINDINGS.md` (DLCI 2 **and** 3, CRC-32 per frame).
+  ADR-034 item 3 is unchanged.
+
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
 `[Group:1][Code:1][Length:2B-BE][Value]` envelope (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md`
@@ -3430,6 +3438,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-01 | **`ai-sessions/0061` — `CAP-065` (Group BA), maintainer-approved in chat 2026-10-01.** **§2.2a** L-1: with only the Left bud out the Buds announce channel 19, with only the Right out 21 — 🟢 7/7; 🟡 the channel names the bud hosting the link (21 → 19 inside one ACL). **§4.1** Settable: 28 `00` all with no bud worn, every `e8` with one worn; one docked/one loose and both loose ⇒ `00` (ADR-049 Update, status unchanged). **§4.3** lid closed with one bud inside: that bud `ff` in `03 03`, no bud entry and no Case in the runtime-info stream (🟢 one sample). **§5** every ACL to the Buds started by the Buds when a bud left the case; none on lid-open. |
 | 2026-10-01 | **`ai-sessions/0062` — FEATURE, maintainer-approved in chat 2026-10-01.** **§2.2a** which `GetSoftwareInfo` entry is which component: 🟢 FACT (code) the official app shows entry 1 = Case, 2 = Left bud, 3 = Right bud; 🟡 that the unsolicited announcement uses the same layout; wire: 191/191 announcements with three identical entries (a checked negative). No other protocol change (the app's ANC `Get` before every `Set` uses ADR-021/022/032 item 5). | Claude (AI), maintainer-approved |
 | 2026-10-01 | **`ai-sessions/0063` — `CAP-066` (Group BB), maintainer-approved in chat 2026-10-01.** **§2.2a** L-1: with both buds worn on 21, the Right taken out ⇒ Buds `DISC` + announcement 19 — 🟢 (2 of 2); the hosting-bud reading stays 🟡 (strengthened); 19 → 21 untested. **§4.1** Settable: dated Update, status unchanged (28 `00` none worn, 48 `e8` ≥ 1 worn; straight from the case `00` 2.6–175 s). **§5** note: a second sample of the phone re-paging 0.1 s after a drop (🔴 why). | Claude (AI), maintainer-approved |
+| 2026-10-03 | **`ai-sessions/0067` — `CAP-067` (Group BC, the 1.0.0 release APK without Play services), maintainer-approved in chat 2026-10-03.** **§2.2a** L-1: Right out on 21 ⇒ `DISC` + 19 (3rd sample); one bud out on 19 ⇒ `DISC` + 21, bud not identifiable — status unchanged (🟡). | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

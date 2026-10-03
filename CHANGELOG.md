@@ -280,6 +280,13 @@ the official app and without Google Play services; no `INTERNET` permission, no 
 - **2026-10-02 (`ai-sessions/0066`): FEATURE — two changes before `CAP-067` (the maintainer's request).** The balance's `[‹]`/`[›]` steps of `0064` F-2 are removed
   (the slider alone again, one write per release; the real-byte tests of `17:7` stay); Settings → Info no longer links to `LICENSE` on GitHub — the licence is
   read in the app only (**DECISIONS.md ADR-050 Update**, maintainer-approved in chat). `CAP-067` skeleton, `APP_TESTPLAN.md` and `ARCHITECTURE.md` aligned.
+- **2026-10-03 (`ai-sessions/0067`): `CAP-067` (Group BC) analysed — the release-signed 1.0.0 APK (`8d8af4b`) in a GrapheneOS user without Google Play.**
+  Film (2-s sheets, narrowed transitions; no audio samples), two HCI logs, two exports (one with Debug mode off), one logcat, no system log. 6 Message Stream claims,
+  all the app's, 0 Play-services claims (positive control `CAP-066`); F-1 13/13 incl. the Settings menu across Android's dark switch; Info, licence, links and the
+  ADR-051 notice on film; balance Right 4 = `17:7` reached; L-1: Right out on 21 ⇒ 19 (3rd), one bud out on 19 ⇒ 21 (bud not identifiable; `PROTOCOL.md` §2.2a
+  Update); no ANC `Set` in the run, F-3 not verifiable (no export after the Bluetooth off/on). Maintainer-approved in chat: **`PROJECT.md` Definition of done 1–3
+  ticked** (the ANC change from the maintainer's own test without Play services) and **release `8d8af4b` as 1.0.0**, with one known issue (the connect-failure
+  text). Folder renamed to `captures/CAP-067-2026-10-03_07-57-35_08-18-29-Group_BC/`.
 - **2026-10-02 (`ai-sessions/0065`): MAINTENANCE — release preparation (nothing published).** Release signing from `~/.gradle/gradle.properties` or the
   environment, failing clearly without it (never unsigned, never the debug key); version 1.0.0 / versionCode 10000 (major × 10000 + minor × 100 + patch);
   `.gitignore` for key files and `dist/`. App name "OpenControl for Pixel Buds Pro 2", launcher label "OpenControl", the trademark line on Info, README and

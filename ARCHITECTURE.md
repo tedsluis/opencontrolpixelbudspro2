@@ -162,7 +162,7 @@ control channel, or "Not connected yet", F-5). Back returns to the tab it was op
 licence ("GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)"), **Read the licence** (the bundled `LICENSE` text, offline), and the links
 "README on GitHub", "Report an issue on GitHub" (a "Licence on GitHub" link was removed in `ai-sessions/0066`, ADR-050 Update) — each hands its fixed URL to the browser on a tap (no app to open it ⇒ a message with the
 address). **F-1:** the selected tab survives a configuration change (rotation, Android's dark switch): the pager ↔ back-stack sync is skipped until the restored
-back stack is known (`CAP-066` K4r: a rotation reset Sound → Connection; `TabRestoreTest`).
+back stack is known (`CAP-066` K4r: a rotation reset Sound → Connection; `TabRestoreTest`) — **hardware-verified in `CAP-067`** (`ai-sessions/0067`: 13 of 13 configuration changes kept the tab or the Settings menu, release 1.0.0).
 (From `ai-sessions/0037` to `0056` Debug was a sixth bottom tab, contrary to the tree above; `0057` restored the documented design.) Every tab can be pulled
 down: while the session is `Ready` a pull runs that tab's existing refresh (Connection and Find: *Refresh battery*; ANC: Refresh; Sound: "Read EQ again" then
 the settings re-read; Controls: the settings re-read), otherwise the action of the Connection screen's own button in that state (Connect/Retry, Enable

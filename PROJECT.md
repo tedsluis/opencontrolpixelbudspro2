@@ -110,23 +110,23 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
 
 Without Google Play Services installed, the app can:
 
-1. Connect to the Pixel Buds Pro 2 over Bluetooth (RFCOMM/BLE).
-2. At minimum, read battery status and change the ANC/Transparency mode.
-3. Remain stable across multiple connect/disconnect cycles.
-4. Be documented and reproducible for other contributors, with every protocol
+- [x] 1. Connect to the Pixel Buds Pro 2 over Bluetooth (RFCOMM/BLE).
+- [x] 2. At minimum, read battery status and change the ANC/Transparency mode.
+- [x] 3. Remain stable across multiple connect/disconnect cycles.
+- [x] 4. Be documented and reproducible for other contributors, with every protocol
    claim traceable to a capture, a code reference, or a logged experiment.
 
-> **Evidence (2026-10-02, `ai-sessions/0065`; the maintainer's choice in chat: test in a user without Play services, tick only with that evidence):**
+> **Evidence (2026-10-03, `ai-sessions/0067`; maintainer-approved in chat 2026-10-03, `AskUserQuestion` "DoD text", *"Approve as shown (Recommended)"*):**
 >
-> | Criterion | Shown so far | Without Google Play services? |
-> |---|---|---|
-> | 1. Connect | `CAP-059` … `CAP-066` (pairing, Connect, automatic re-open) | ❌ not yet — every one of these runs had Google Play services present (each FINDINGS header) |
-> | 2. Battery and ANC | the same runs (e.g. `CAP-063`: ANC `Set` acknowledged 3/3; battery in every run) | ❌ not yet |
-> | 3. Stable over connect/disconnect cycles | `CAP-063`, `CAP-064` (several sessions, re-opens, losses explained) | ❌ not yet |
-> | 4. Documented and reproducible | `PROTOCOL.md` (every 🟢 FACT signed off), FINDINGS with frame numbers, `RELEASING.md` | ✅ |
+> | Criterion | Without Google Play services |
+> |---|---|
+> | 1. Connect | ✅ `CAP-067` (1.0.0, `8d8af4b`, GrapheneOS secondary user without Play): Connect A161→A241, automatic re-opens A966, A1107, B372, B965, B1601; 0 Play-services claims (positive control `CAP-066`: 26) |
+> | 2. Battery and ANC | ✅ battery: `CAP-067` (`03 03` frames, Case via runtime info A324); ANC change: the maintainer's own test of 1.0.0 without Play services (chat 2026-10-03) — `CAP-067` itself carries no ANC `Set` (0 × `08 12`) |
+> | 3. Stable over cycles | ✅ `CAP-067`: 6 session ends (Buds `DISC` ×2, Bluetooth off/on, permission revoked, forget + re-pair), each recovered |
+> | 4. Documented | ✅ |
 >
-> `CAP-035` had Google Play services *disabled*, not absent, and predates the app. Criteria 1–3 are ticked only after `CAP-067` — the 1.0.0 release APK, run
-> in a GrapheneOS secondary user without sandboxed Google Play, with no Play-services claim on the Message Stream in its HCI log.
+> Frame numbers: "A" = `CAP-067-btsnoop_hci.log.last`, "B" = `CAP-067-btsnoop_hci.log` (`CAP-067-FINDINGS.md`). The 2026-10-02 table (every earlier run had Play
+> services present) is superseded by this one; `CAP-035` had Play services disabled, not absent.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROJECT

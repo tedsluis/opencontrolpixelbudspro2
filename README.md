@@ -81,7 +81,8 @@ ADR-042). On hardware, Safe Mode refused every write when the firmware could not
 
 ## Status
 
-**1.0.0 is prepared, not yet released** (see above). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds firmware `release_5.203`.
+**1.0.0 is tested and approved for release, not yet published** (see above): the release APK passed its hardware run `CAP-067` in a GrapheneOS user
+without Google Play services (`PROJECT.md` Definition of done ticked). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds firmware `release_5.203`.
 Per feature, what is hardware-verified and what is only unit-tested is in `ARCHITECTURE.md` §5a; the history of every change is in
 [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) — a suspected
 security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
@@ -110,11 +111,11 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-02)
+## Current state (2026-10-03)
 
-- **Captures:** 67 registered sessions (`CAP-001`–`CAP-067`): 59 analyzed, 6 planned (among them `CAP-067`, the hardware run of the 1.0.0 APK),
-  2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-066`
-  are captures of this project's own app; the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
+- **Captures:** 67 registered sessions (`CAP-001`–`CAP-067`): 60 analyzed, 5 planned,
+  2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-067`
+  are captures of this project's own app (`CAP-067`: the 1.0.0 release APK without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).

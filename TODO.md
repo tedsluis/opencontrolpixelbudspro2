@@ -791,8 +791,26 @@ _(Fill in as quick fixes are made — see `PROJECT_RULES.md` rule 15. Every
 entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
+**Open after `ai-sessions/0067` (added 2026-10-03, `CAP-067` analysed; the maintainer chose to release 1.0.0 from `8d8af4b`):**
+- **Publish 1.0.0** (`RELEASING.md` §5 copy aside, §7, §8 — the maintainer's own steps): keep `dist/1.0.0` (do not run `scripts/release.sh 1.0.0` again); tag
+  **`8d8af4b`** (`git tag -s v1.0.0 8d8af4b …`), push the tag, draft release with the three files, check, publish; afterwards date the `[1.0.0]` CHANGELOG block,
+  add an empty `[Unreleased]`, and update the README's "No release has been published yet" note. Known issue for the notes (approved in chat): the connect-failure
+  text blames another app (Play services) also when the Buds are unreachable — open the case and tap Retry.
+- **Re-test before the next release (the maintainer, chat 2026-10-03):** in the user without Play — ANC taps on the tab and the tile **on film** (`08 12` → ACK);
+  a Bluetooth off/on with the app on the Connection tab and **an export right after it** (F-3, never hardware-verified); the Left out on channel 19 with the head in
+  view (L-1); B4 double tap (`AlreadyInProgress`); the channel-19 `17:7` frame. K5/BC-12 (auto-off) only in a user where the setting exists (the Owner).
+  Export the debug log before any step that ends the process (A5, a force-stop).
+- **Connect-failure wording** (`CAP-067-FINDINGS.md` §9 item 2, §11 item 2): `ConnectionScreen.kt` `ChannelUnavailable` names "another app … Google Play services'
+  Fast Pair" also for a slow failure (page timeout, case closed) — candidate for the next FEATURE session.
+- **`APP_TESTPLAN.md` A5:** revoking *Nearby devices* in Settings ends the process; the app then shows Android's prompt at once (by design) — the "You denied the
+  permission" screen appears only after a denial in the prompt (`CAP-067` §7).
+- 🔴 Why the Buds switched ANC Transparent → Active between 08:07:34 and 08:12:44 without an app command (`CAP-067` §2).
+- **`scripts/lint_docs.py` exits 1** on `ai-sessions/0067`'s prompt naming the pre-rename `CAP-067` folder (historical once the next prompt exists) — and it
+  already exited 1 at `1752667`; re-check after the next session.
+
 **Open after `ai-sessions/0065` (added 2026-10-02; nothing is published yet):**
-- **The maintainer's release steps** (`RELEASING.md` §1–§8): create and back up the key, set the four values in `~/.gradle/gradle.properties`, note the
+- ~~**The maintainer's release steps** up to the test~~ — key, `scripts/release.sh 1.0.0` and `CAP-067` done; Definition of done ticked (`ai-sessions/0067`); publishing
+  is in "Open after `ai-sessions/0067`". History: (`RELEASING.md` §1–§8): create and back up the key, set the four values in `~/.gradle/gradle.properties`, note the
   certificate fingerprint; `scripts/release.sh 1.0.0`; run **`CAP-067` on that signed APK in a GrapheneOS secondary user without sandboxed Google Play** (it is
   also the evidence for `PROJECT.md`'s Definition of done 1–3 — tick them only then); then tag, draft release, publish; date the `[1.0.0]` CHANGELOG block
   and update the README's "No release has been published yet" note and Status.
@@ -805,15 +823,15 @@ tracked task above.)_
 - **Third-party notices in the app:** releases carry `THIRD_PARTY_NOTICES.txt`; showing it on the Info tab (bundled like `android/ui/src/main/res/raw/license.txt`) is a possible later step.
 
 **Open after `ai-sessions/0066` (added 2026-10-02):**
-- **Balance precision is open again:** the `0064` steps were removed (the maintainer's choice); `CAP-066` reached Right 4 in none of 32 drags. `CAP-067` BC-3 counts
+- **Balance precision:** `CAP-067` reached Right 4 on the 17th drag (6 of 17 snapped to Centre) — usable, still imprecise. Was: the `0064` steps were removed (the maintainer's choice); `CAP-066` reached Right 4 in none of 32 drags. `CAP-067` BC-3 counts
   the drags; if it stays impractical, options are a live value label while dragging, slider `steps`, or the steps back.
-- **Definition of done "without Google Play Services":** test in a GrapheneOS secondary user without sandboxed Play (the install path and the checks are in
+- ~~**Definition of done "without Google Play Services":**~~ — done: `CAP-067`, 0 Play-services claims; ticked in `PROJECT.md` (`ai-sessions/0067`). Was: test in a GrapheneOS secondary user without sandboxed Play (the install path and the checks are in
   `ai-sessions/0066` RESULT); the HCI log must show no Play-services claim on the Message Stream (first message `03 08 00 02 01 25`).
 - ~~**Before the first release**: the app name / trademark question, R8 (not now), the README video~~ — done in `ai-sessions/0065` (ADR-051; R8 not now;
   `scripts/readme_media.sh`, 0.43 MB MP4 + GIF preview).
 
 **Open after `ai-sessions/0064` (added 2026-10-01):**
-- **Run `CAP-067` (Group BC)** — skeleton `captures/CAP-067-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BC/CAP-067-EVENT-NOTES.md`: the Info tab's licence and links on film (F-6,
+- ~~**Run `CAP-067` (Group BC)**~~ — done 2026-10-03, analysed in `ai-sessions/0067` (F-1 13/13, F-6 on film; F-3 and F-4 not verifiable). Was: skeleton `captures/CAP-067-2026-10-03_07-57-35_08-18-29-Group_BC/CAP-067-EVENT-NOTES.md`: the Info tab's licence and links on film (F-6,
   ADR-050), a rotation on every tab and on Settings → Info (F-1), the balance steps to Right 4 = `17:7` and back (F-2; the channel-19 `17:7` frame has never been
   captured — the skeleton gives the derived bytes), a Bluetooth off/on with the export's "Bluetooth was switched off on this phone" (F-3) and StrictMode (F-4), BB-12,
   BB-15 watch, K4d Off/System, L3, K5, then A5, (E), B4, Z1. Nothing of the `0064` build is hardware-verified.
