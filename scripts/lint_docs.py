@@ -116,7 +116,9 @@ GENERIC_CAPTURE_SUFFIX_RE = re.compile(r"^-?(FINDINGS|EVENT-NOTES)\.md$|^-record
 EPHEMERAL_FRAME_RE = re.compile(r"^[A-Za-z]+[0-9]*_?[0-9]+(\.[0-9]+)?(_[0-9]+)?\.png$")
 
 # Directories that are never project documentation (tool virtualenvs, build output) — 0044 finding GOV-11.
-EXCLUDED_DIR_PARTS = {".git", ".venv", "venv", "node_modules", "build", ".gradle"}
+# "dist": scripts/release.sh's gitignored output — its release-notes.md is the GitHub release body and must never get a docs footer
+# (ensure_footers.py appended one on 2026-10-03, found and undone the same day).
+EXCLUDED_DIR_PARTS = {".git", ".venv", "venv", "node_modules", "build", ".gradle", "dist"}
 
 # Only lint cross-references to the project's own capture/doc artifacts —
 # source-code-shaped filenames (.kt, .toml, .xml, .proto, .java) describe the
