@@ -3,13 +3,13 @@
 All notable changes to this project are documented in this file. Format loosely
 based on [Keep a Changelog](https://keepachangelog.com/).
 
-The first release, 1.0.0, is prepared but not yet published (`ai-sessions/0065`, 2026-10-02): it is released after `CAP-067`, the hardware run of
-the signed APK. Its block below is written for users. Everything before it — documentation, tooling and the protocol reconstruction that led to the app —
+The first release, 1.0.0, was published on 2026-10-03 ([v1.0.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.0), build commit
+`8d8af4b`), after `CAP-067`, the hardware run of the signed APK (`ai-sessions/0067`). Its block below is written for users. Everything before it — documentation, tooling and the protocol reconstruction that led to the app —
 is kept unchanged under "History before 1.0.0". See `TODO.md` for current status and `RELEASING.md` for how a release is made.
 
 ## [Unreleased]
 
-## [1.0.0] - not yet released
+## [1.0.0] - 2026-10-03
 
 The first public release of OpenControl for Pixel Buds Pro 2 — an independent, open-source Android app for Google Pixel Buds Pro 2 that works without
 the official app and without Google Play services; no `INTERNET` permission, no location permission, no account.

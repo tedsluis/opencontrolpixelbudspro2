@@ -7,8 +7,8 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **No release has been published yet.** Version 1.0.0 is being prepared; it is released after its hardware test on the signed APK (`CAP-067`). Until
-> then you can [build the app from source](#building-from-source).
+> **Latest release: [1.0.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.0)** (2026-10-03). You can also
+> [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
 - **Android 14 (API 34) or newer.**
@@ -81,7 +81,7 @@ ADR-042). On hardware, Safe Mode refused every write when the firmware could not
 
 ## Status
 
-**1.0.0 is tested and approved for release, not yet published** (see above): the release APK passed its hardware run `CAP-067` in a GrapheneOS user
+**1.0.0 is released** (2026-10-03, see above): the release APK passed its hardware run `CAP-067` in a GrapheneOS user
 without Google Play services (`PROJECT.md` Definition of done ticked). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds firmware `release_5.203`.
 Per feature, what is hardware-verified and what is only unit-tested is in `ARCHITECTURE.md` §5a; the history of every change is in
 [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) — a suspected

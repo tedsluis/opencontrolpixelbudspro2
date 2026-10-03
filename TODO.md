@@ -792,7 +792,7 @@ entry here should be short-lived: either resolved properly or promoted to a
 tracked task above.)_
 
 **Open after `ai-sessions/0067` (added 2026-10-03, `CAP-067` analysed; the maintainer chose to release 1.0.0 from `8d8af4b`):**
-- **Publish 1.0.0** (`RELEASING.md` §5 copy aside, §7, §8 — the maintainer's own steps): keep `dist/1.0.0` (do not run `scripts/release.sh 1.0.0` again); tag
+- ~~**Publish 1.0.0**~~ — **done 2026-10-03** (v1.0.0 on tag `8d8af4b`, published 08:30:07 UTC; CHANGELOG dated, README updated). Was: (`RELEASING.md` §5 copy aside, §7, §8 — the maintainer's own steps): keep `dist/1.0.0` (do not run `scripts/release.sh 1.0.0` again); tag
   **`8d8af4b`** (`git tag -s v1.0.0 8d8af4b …`), push the tag, draft release with the three files, check, publish; afterwards date the `[1.0.0]` CHANGELOG block,
   add an empty `[Unreleased]`, and update the README's "No release has been published yet" note. Known issue for the notes (approved in chat): the connect-failure
   text blames another app (Play services) also when the Buds are unreachable — open the case and tap Retry.
