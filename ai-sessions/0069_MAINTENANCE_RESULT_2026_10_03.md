@@ -4,7 +4,7 @@
 **Category:** MAINTENANCE
 **Date:** 2026-10-03
 **Title:** Validate and process all 85 findings, the 10 protocol leads, the 18 document improvement proposals and every row of the prioritised action list of `ai-sessions/0068_AUDIT_RESULT_2026_10_03.md`, and write the `CAP-068` capture skeleton
-**Status:** awaiting maintainer sign-off — the work is done and gated; nothing is committed (the prompt asks for the maintainer's word first), 1.0.1 is not built for release, tagged or published, and `TODO.md` §1/§4 list the decisions that are the maintainer's (resumed once after a usage limit, during Phase 4)
+**Status:** complete (closed 2026-10-04 by `ai-sessions/0070`: committed by the maintainer, tested on hardware in `CAP-068`, released as 1.0.1 — build `e1fc886`, tag `v1.0.1`) — originally: awaiting maintainer sign-off — the work is done and gated; nothing is committed (the prompt asks for the maintainer's word first), 1.0.1 is not built for release, tagged or published, and `TODO.md` §1/§4 list the decisions that are the maintainer's (resumed once after a usage limit, during Phase 4)
 
 ---
 

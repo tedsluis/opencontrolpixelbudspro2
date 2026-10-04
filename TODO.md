@@ -11,12 +11,8 @@ pre-restructure file (same command). The `pbtk` root cause those pointers most o
 
 Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maintainer (a decision, a sign-off, or an action only they can do).
 
-## 1. Release 1.0.1 (hotfix — `ai-sessions/0069`)
+## 1. After release 1.0.1 (published 2026-10-04, `ai-sessions/0070`)
 
-- [ ] **M** Publish 1.0.1: built (`e1fc886`, `dist/1.0.1/`) and hardware-tested in `CAP-068`; release approved in chat 2026-10-04 (`ai-sessions/0070`).
-      Next: `RELEASING.md` D1–D3 (merge PR #1 with a merge commit, tag `e1fc886` as `v1.0.1`, upload the kept files with the known issue in the notes). E1/E2
-      were done in advance on 2026-10-04 (`ai-sessions/0070`); publishing is the maintainer's act.
-- [ ] After publishing (E4): replace the 1.0.1 summary line of `scripts/release_notes.template` for the next version (`RELEASING.md` §4 step 2).
 - [ ] **M** Decide whether two behaviours built in 1.0.1 on your chat answers get an ADR each (none was written — `AGENTS.md` §6): the device choice
       (no silent pick, "Use different Buds") and the "current value" rule (`ARCHITECTURE.md` §3.1, §9.0a item 8 describe them as built). Both seen on
       hardware in `CAP-068` (S7/S8; S1, S2, S4); the maintainer chose "Not now" again (chat 2026-10-04, `ai-sessions/0070`).
