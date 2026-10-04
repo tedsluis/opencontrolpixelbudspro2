@@ -43,7 +43,7 @@ If a setting is touched by accident, say so explicitly and treat that window as 
 |      Group(s)    | AE (`OBS-005` — realistic reconnect trigger vs. OS-toggle reconnect; incidental `PAIR-003`, `INEAR`-family) |
 |       Date       |                     2026-09-06                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` |
-|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+|   Test device    | Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`). **Official Pixel Buds Companion App, Google Play Services enabled** |
 | Video file       | `CAP-038-recording.mp4` — originally documented as 06:17s (`06:49:50`–`06:56:07`); **corrected via `ffprobe`: actual duration 247.07s (~4m07s), `06:49:50`–`~06:53:57` local time** — see Capture-integrity pre-flight and Event Timeline correction below |
 | Log file         | `CAP-038-btsnoop_hci.log` — 371.55s, 4,426 packets, 2026-09-06 06:49:58.224–06:56:09.778 local time |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
@@ -109,7 +109,7 @@ that the case lid was opened as described.**
 | `06:49:50` | Start video recording; Bluetooth quick-panel shown, Buds "Active" L:100%/C:85%/R:100% (video-confirmed, `t0.png`) | — | — | — |
 | `06:50:09`–`11` | Bluetooth toggled OFF then ON (per procedure note) | User (OS) | — | — (predates most wire activity; log itself starts `06:49:58.224`) |
 | `06:50:26.121` | **Connection Complete, chandle `0x0001`** — video-confirmed exactly (`w36.png`@06:50:26: Buds visibly out of case, quick-panel shown) — ~16s earlier than the originally-documented `06:50:42`/`06:50:27` estimates | App/OS (Auto) | `OBS-005`, `PAIR-003` | frame 841 |
-| `06:50:26.792`/`.821` | 🟢 **CORRECTED** — DLCI `0x04` does NOT carry the Fast Pair Message Stream on this specific connection; it landed on **DLCI `0x05`** instead (RFCOMM channel numbers are session-local, not fixed — `CAP-001-FINDINGS.md` §2's established finding; `libmaestro`'s own channel is correspondingly `0x03`, not `0x02`, this session). Get (`08 11 00 00`)/Notify (`08 13 00 04 01 e8 00 20`) fire normally on DLCI `0x05`: **`Settable-toggles=0x00` (DOCKED)**, Current=`0x20` (Off) — at the very first reconnect immediately after the buds were reported removed from the case, the wire reads **docked**, not undocked. Genuinely tension-worthy for `OBS-005`'s "realistic worn reconnect" framing — see `CAP-038-FINDINGS.md` §3. | App/OS (Auto) | `OBS-005` | frames 1143/1154 |
+| `06:50:26.792`/`.821` | 🟢 **CORRECTED** — DLCI `0x04` does NOT carry the Fast Pair Message Stream on this specific connection; it landed on **DLCI `0x05`** instead (the Buds opened the multiplexer on this connection, so the same server channels carry the direction bit — `CAP-038-FINDINGS.md` §3, `PROTOCOL.md` §2.3; `libmaestro`'s own channel is correspondingly `0x03`, not `0x02`, this session). Get (`08 11 00 00`)/Notify (`08 13 00 04 01 e8 00 20`) fire normally on DLCI `0x05`: **`Settable-toggles=0x00` (DOCKED)**, Current=`0x20` (Off) — at the very first reconnect immediately after the buds were reported removed from the case, the wire reads **docked**, not undocked. Genuinely tension-worthy for `OBS-005`'s "realistic worn reconnect" framing — see `CAP-038-FINDINGS.md` §3. | App/OS (Auto) | `OBS-005` | frames 1143/1154 |
 | `~06:50:34` | User taps gear icon, enters Device details (**not itself contamination** — this is normal `OBS-005` procedure navigation) | User (App) | — | (UI-only, no distinct wire signature) |
 | `~06:51:09`–`06:51:57` | User navigates Sound/EQ, In-Ear Detection, Multipoint, Touch Controls screens, toggles sliders/Multipoint (**CONTAMINATION** relative to this Group's "idle after connect" instruction) — lands as 61 non-empty `Sent` frames on chandle `0x0001`'s DLCI `0x03` (`libmaestro`-equivalent this session), not individually field-decoded this pass | User (App) | — | chandle `0x0001` DLCI `0x03`, 61 frames |
 | `06:51:57.185` | Disconnection Complete, chandle `0x0001`, reason `0x13` (Remote User Terminated, i.e. Buds-initiated) — occurs **before** the documented end of the settings-browsing window (06:52:23), meaning part of that browsing happened while already disconnected (its later portion lands on chandle `0x0004`'s DLCI `0x02` instead, see below) — plausibly the buds were placed back in the case around here (consistent with `DECISIONS.md` ADR-016 finding 5), not video-confirmed at this exact second | Buds (Auto) | — | frame 2484 |
@@ -129,7 +129,7 @@ connections — 61 `libmaestro`-write frames land on chandle `0x0001`'s DLCI `0x
 06:51:57 disconnect, and a further 63 land on chandle `0x0004`'s DLCI `0x02` from 06:52:53 onward
 — not, as an earlier pass concluded, exclusively on the second connection (that conclusion rested
 on searching only the literal DLCI number `0x02`, missing that this session's first connection
-used `0x03` for the same logical channel — RFCOMM numbering is session-local,
+used `0x03` for the same logical channel — the same server channel with the direction bit set (the Buds opened the multiplexer, FINDINGS §3),
 `CAP-001-FINDINGS.md` §2). Neither batch is individually field-decoded this pass. **Window 2 is
 not verifiably executed** — flagged as a capture gap, not a positive or negative result for the
 case-lid-trigger question. **The more significant, evidence-based correction this pass found:**
@@ -145,7 +145,7 @@ tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle>" \
 ```
 
 - [x] **Does the "Get ANC state"/"Notify ANC state" pair still fire on this realistic reconnect?**
-      **Yes, on both reconnects**, once session-local DLCI renumbering is accounted for
+      **Yes, on both reconnects**, once the direction bit of the DLCI is accounted for
       (`CAP-001-FINDINGS.md` §2): chandle `0x0001` carries it on DLCI `0x05` (frames 1143/1154),
       chandle `0x0004` on the more usual DLCI `0x04` (frames 3261/3282). No miss, consistent with
       `DECISIONS.md` ADR-022.
@@ -168,15 +168,13 @@ tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle>" \
          while handling the Buds (matches `CAP-027-FINDINGS.md` §4's established Buds-initiated
          Notify-without-Set mechanism exactly), 🟡 HYPOTHESIS, not confirmed on video (camera was on
          the phone screen, not the buds).
-      3. **No AVDTP/A2DP signaling anywhere in the log** (`tshark -Y avdtp` → 0 rows) — a clean
-         negative; despite the Buds allegedly being worn, no A2DP audio-streaming profile was
-         established this session.
+      3. **AVDTP sets up an A2DP stream on both connections** (`tshark -Y btavdtp` → 56 frames: `SetConfiguration` AAC 967/2932, `Open` 977/2943) and no media
+         follows (`bta2dp` → 0). The earlier "no AVDTP" was the invalid filter `avdtp` (exit status 4); corrected 2026-10-03.
       4. **No BLE GATT Battery-Service (`0x180F`) traffic** — the only BLE GATT activity in the log
          belongs to an unrelated device (`48:bd:eb:a0:99:c7`, confirmed via
          `bthci_evt.le_meta_subevent`), excluded per the CLI-hygiene precedent
          (`CAP-014-FINDINGS.md` §4a) — a clean negative once correctly attributed.
-      5. **DLCI `0x0b`** opens on chandle `0x0001` (6 frames) but carries no decodable content
-         checked this pass — flagged, not pursued (out of this Group's scope).
+      5. **DLCI `0x0b`** opens on chandle `0x0001` (6 frames): server channel 5 ("GSND AUDIO") with the direction bit set — control frames only.
       Result: item 1 is the session's central tension (§3); item 2 is a new HYPOTHESIS-level
       observation; items 3–4 are clean negatives (once correctly attributed away from the unrelated
       BLE device).

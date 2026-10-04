@@ -61,7 +61,7 @@ quietly keep it.
 |      Group(s)    | AC (`OBS-004` — settings-state read-back on (re)connect and on settings-screen open; incidental `PAIR-003`) |
 |       Date       |                     2026-09-04                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` (carried over from previous sessions, not explicitly checked on-screen during this capture) |
-|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** (Normal baseline) |
+|   Test device    | Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`). **Official Pixel Buds Companion App, Google Play Services enabled** (Normal baseline) |
 | Video file       | `CAP-036-recording.mp4` — 05:18s, `06:35:58`–`06:41:16` local time |
 | Log file         | `CAP-036-btsnoop_hci.log` — 454.462092s, 2,492 packets, 2026-09-04 06:35:47.353558–06:43:21.815650 local/+0200 |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
@@ -469,7 +469,7 @@ tshark -r CAP-036-btsnoop_hci.log -Y "bluetooth.addr == <buds MAC> and btrfcomm.
       documents explicitly. For anything found, say whether it matches §4.5's known
       `field5{field4{…}}` **write** envelope or is a differently-shaped frame — those are different
       findings and must not be merged. **Result: NO. Every `Sent`-direction DLCI 0x02 frame in this
-      session (34 frames) falls inside the pre-Window-1 connection-settling burst (06:36:32.57–
+      session (45 frames, 1404–1589 — `CAP-036-FINDINGS.md` §5's re-derivation; this note said 34 until 2026-10-03) falls inside the pre-Window-1 connection-settling burst (06:36:32.57–
       35.66, frames 1404–1591) — none inside Window 1/2/3/5's stated idle spans. That burst itself
       is not decoded further this session (RPC-shaped, not matching the write envelope's specific
       inner-field shape on inspection) — see `CAP-036-FINDINGS.md` §4. A separate, periodic

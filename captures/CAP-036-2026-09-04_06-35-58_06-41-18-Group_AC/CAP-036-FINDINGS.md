@@ -30,7 +30,7 @@ Standardized, evidence-based extraction from `CAP-036-btsnoop_hci.log` +
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-036` · **Date:** 2026-09-04 · **Firmware:** ⚪ ASSUMPTION `release_5.203`
-(carried over, not explicitly re-checked on-screen this session). **Phone:** Pixel 7a, Android 14,
+(carried over, not explicitly re-checked on-screen this session). **Phone:** Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`),
 official Pixel Buds Companion App (`1.0.955078535`), Google Play Services enabled (the normal
 baseline — see `CAP-036-EVENT-NOTES.md`'s preparation checklist for the `dumpsys` verification,
 carried in as-is per this session's brief). **Method:** official app only, no third-party
@@ -379,9 +379,9 @@ conclusions.
 - 🔴 This session's "Notify ANC state" frame (`08 13 00 04 01 e8 00 20`) decodes "Settable
   toggles" as `0x00`, versus `0xe8` in every previously-documented "Set ANC state" frame in the
   same byte position — not reconciled (§3).
-- 🔴 **Added in §12's bonus analysis:** DLCI 0x02's periodic push (§12.6) decodes structurally
-  (verified HDLC/CRC-32) to a repeated triple pattern resembling, but not matching field-for-field,
-  the confirmed Option E battery-triple shape — genuinely open, not claimed as battery content.
+- 🟢 DLCI 0x02's periodic push (§12.6) is the `SubscribeRuntimeInfo` stream — Case / Left / Right
+  with field 1 = % and field 2 = 2 while charging (`PROTOCOL.md` §4.3 Option F, ADR-043). Closed;
+  this item was listed as open until the rewrite of §12.6 on 2026-10-03 (`ai-sessions/0069`).
 - 🔴 **Added in §12's bonus analysis:** the BLE address `44:d6:94:50:f0:4e`, identified via DLCI
   0x04's "BLE address updated" field as (very likely) the Buds' own rotating identity this
   session, broadcasts a stable Fast Pair (`0xFE2C`)/`0x1853` advertisement 407 times — but its
@@ -531,7 +531,7 @@ connection-supervision tick) rather than four independently-timed push loops. �
 session — the *existence* of near-lockstep timing is already 🟢 FACT-adjacent per `CAP-009`, this
 session only adds DLCI 0x02 to the set of channels observed moving together.
 
-### 12.6 New: DLCI 0x02's periodic push, verified decode — structurally similar to, but not a match for, Option E's battery triple (🔴 OPEN QUESTION, not claimed)
+### 12.6 DLCI 0x02's periodic push is the `SubscribeRuntimeInfo` stream: entry 6.1 Case, 6.2 Left, 6.3 Right (🟢 FACT since `DECISIONS.md` ADR-043; `PROTOCOL.md` §4.3 Option F)
 
 ```
 $ tshark -r CAP-036-btsnoop_hci.log -Y "frame.number==2048" -T fields -e btrfcomm.dlci -e frame.p2p_dir -e data.data
@@ -547,15 +547,15 @@ sub-messages** — `0a 04 08 64 10 01`, `12 04 08 64 10 02`, `1a 04 08 64 10 02`
 entry 6.1 = Case, 6.2 = Left, 6.3 = Right, field 1 = %, field 2 = 2 while that bud charges (`PROTOCOL.md` §4.3 Option F, 🟢 ADR-043 and its
 2026-09-25 Update).
 
-**Explicitly not claimed as a match for Option E's battery-triple:** Option E's confirmed shape
-(`PROTOCOL.md` §4.3 Option E) is `[value, flag, index]` — **3** fields per entry. This structure
-has only **2** fields per entry (value + one trailing number), and that trailing number is `01,
-01, 02` rather than a clean `1, 2, 3` index sequence. The `100` value repeating three times is
-consistent with this all-100%-battery session, but with only two structurally-similar-but-different
-fields per entry and no index sequence to check against Left/Right/Case, this is **not** decoded
-as confirmed battery content — recorded as a new, distinct 🔴 open question (§11), per
-`AGENTS.md` §13.6's zero-creativity rule: the bytes don't determine a reading beyond "structurally
-similar," so no further interpretation is offered.
+**Rewritten 2026-10-03 (`ai-sessions/0069`, `A68-CAP-23`).** When this section was first written
+the structure was left as an open question because it has two fields per entry where Option E's
+triple has three, and the trailing numbers were misread as "01, 01, 02". Read from the bytes above,
+the three entries are `08 64 10 01`, `08 64 10 02`, `08 64 10 02`: field 1 = 100 in each, field 2 =
+**1, 2, 2**. With the Option F reading that is Case 100 % (field 2 = 1), Left 100 % charging and
+Right 100 % charging (field 2 = 2) — both buds were in the case when this frame was sent. The same
+frame carries entry 7 (`3a 06 08 01 10 01 18 00`) and the stream's method id. Nothing in this
+section is an open question any more; the wire evidence that settled the entry order is in
+`CAP-050`/`CAP-056` (ADR-043), not in this capture.
 
 ### 12.7 Conclusions
 
@@ -567,8 +567,8 @@ address/firmware fields (🟢 FACT since `CAP-002`, now mechanically copied into
 
 **New this session, at 🟡 HYPOTHESIS — not proposed for FACT:** the device-attribution advance for
 Option A (§12.4), the extended cross-channel timing synchronization (§12.5), and the DLCI 0x02
-periodic push's partial, non-matching structural resemblance to Option E (§12.6, left as 🔴 OPEN
-QUESTION, not a HYPOTHESIS, per its own ambiguity).
+periodic push (§12.6 — at the time an open question; identified since as the `SubscribeRuntimeInfo`
+battery stream, Option F, ADR-043).
 
 ## 13. Downstream updates from this bonus analysis
 
@@ -579,7 +579,7 @@ QUESTION, not a HYPOTHESIS, per its own ambiguity).
 - `PROTOCOL.md` §4.3 (cross-reference note) — extended the existing near-lockstep observation to
   include DLCI 0x02 (§12.5).
 - `PROTOCOL.md` §6 — 2 new 🔴 open questions added (§12.4's payload-layout non-match restated as
-  unchanged, and §12.6's DLCI 0x02 structural question).
+  unchanged, and §12.6's DLCI 0x02 structural question — the latter answered since, see §12.6).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-036-2026-09-04_06-35-58_06-41-18-Group_AC/CAP-036-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-036-2026-09-04_06-35-58_06-41-18-Group_AC/CAP-036-FINDINGS

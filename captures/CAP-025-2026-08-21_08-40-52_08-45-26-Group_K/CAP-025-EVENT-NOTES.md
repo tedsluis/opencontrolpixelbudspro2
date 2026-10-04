@@ -48,10 +48,10 @@ app splits "Find My Buds" across **two distinct screens** with two distinct mech
 |---|---|---|---|---|
 | 08:40:52 | Video start | — | — | Video first frame |
 | 08:40:5x–08:41:2x | Bluetooth reconnect; navigate Device details → Find device | User (App) | — | Connection handshake burst |
-| **08:41:30.234** (video: tap "Ring Right" at t=38s; status → "Right earbud volume increasing…", button → "Mute Right") | **Play sound on Right earbud (start)** | User (App) | `FIND-002` | Frame 2040 (+retransmit 2045); ACKs 2044, 2048 — see §Decode |
-| **08:41:41.243** (video: tap "Mute Right" ≈t=49s; status returns to "Connected") | Stop ringing Right (part of the `FIND-002` action's own lifecycle, not a separate Test-ID) | User (App) | `FIND-002` | Frame 2120 (+retransmit 2124); ACKs 2123, 2127 |
-| **08:41:46.703** (video: tap "Ring Left" at t=54s; status → "Left earbud volume increasing…", button → "Mute Left") | **Play sound on Left earbud (start)** | User (App) | `FIND-001` | Frame 2131 (+retransmit 2134); ACKs 2133, 2137 |
-| **08:41:58.882** (video: tap "Mute Left" at t=67s; status returns idle) | Stop ringing Left (part of `FIND-001`'s lifecycle) | User (App) | `FIND-001` | Frame 2180 (+retransmit 2183); ACKs 2182, 2186 |
+| **08:41:30.234** (video: tap "Ring Right" at t=38s; status → "Right earbud volume increasing…", button → "Mute Right") | **Play sound on Right earbud (start)** | User (App) | `FIND-002` | Frame 2040 (+Buds' own message 2045); Buds' ACK 2044, phone's ACK 2048 — see §Decode |
+| **08:41:41.243** (video: tap "Mute Right" ≈t=49s; status returns to "Connected") | Stop ringing Right (part of the `FIND-002` action's own lifecycle, not a separate Test-ID) | User (App) | `FIND-002` | Frame 2120 (+Buds' own message 2124); Buds' ACK 2123, phone's ACK 2127 |
+| **08:41:46.703** (video: tap "Ring Left" at t=54s; status → "Left earbud volume increasing…", button → "Mute Left") | **Play sound on Left earbud (start)** | User (App) | `FIND-001` | Frame 2131 (+Buds' own message 2134); Buds' ACK 2133, phone's ACK 2137 |
+| **08:41:58.882** (video: tap "Mute Left" at t=67s; status returns idle) | Stop ringing Left (part of `FIND-001`'s lifecycle) | User (App) | `FIND-001` | Frame 2180 (+Buds' own message 2183); Buds' ACK 2182, phone's ACK 2186 |
 | 08:42:02.900 | A 5th, asymmetric (single send + single ACK) instance of the same stop-shaped frame — see §Decode caveat | — | `FIND-001` (likely a residual retry) | Frame 2202; ACK 2204 |
 | **08:42:03–08:42:11** (video: t=71s tap "Most recent location" → t≈75s Find Hub map loads) | Navigate to Find Hub / Find My Device map view | User (App) | — | No DLCI 0x04 Group `0x04` traffic accompanies this navigation |
 | **~08:42:24–08:44:32** (video: "Connecting…"/"Stop sound" screen visible ≈t=95s/08:42:27 onward; map view with 3 per-target icons visible ≈t=150s/08:43:22 and ≈t=250s/08:45:02 — "Pixel Buds Pro 2 - Left" detail sheet with "Play sound"/"Share ownership") | **Attempted `FIND-003`(Case)/`FIND-004`(both) via Find Hub's own "Play sound" flow** | User (App) | `FIND-003`, `FIND-004` | **No `Group 0x04 Code 0x01` frame appears anywhere in this window** — instead, three full classic-RFCOMM reconnection bursts occur (08:43:42, 08:44:25, 08:45:04, ~40s apart, each matching the standard connection-open capability-handshake shape) — see §Decode |
@@ -79,16 +79,13 @@ from the spec's own worked example. **`Value` byte, now resolved with direct vid
 | `0x01` | Start ringing the **Right** earbud |
 | `0x02` | Start ringing the **Left** earbud |
 
-Every `Sent` frame is immediately retransmitted once (identical bytes), and answered by **two**
-distinct ACK shapes: `ff 01 00 02 04 01` (a byte-for-byte match to `PROTOCOL.md` §4.4's spec-quoted
-worked example) and `ff 01 00 03 04 01 00` (one extra trailing `0x00` byte, not in the spec's
-worked example — plausibly a status/result code, not confirmed further).
+Each command (phone → Buds) is answered by the Buds' ACK `ff 01 00 03 04 01 00` and then by the Buds' own `04 01 00 01 xx` message, which the phone
+acknowledges with `ff 01 00 02 04 01` — the "retransmission" and "two ACK shapes" of the earlier reading were a direction misread (`CAP-025-FINDINGS.md` §3,
+rewritten 2026-10-03).
 
 **Frame 2202 (08:42:02.900)** repeats the stop shape (`04 01 00 01 00`) once more, with only a
-single ACK (`ff 01 00 03 04 01 00`, no second ACK, no retransmission) — video shows no further tap
-in this exact window (already back on the idle "Find device" screen by t=70s), so this is most
-plausibly a residual retry/retransmission tail of the `FIND-001` stop above rather than a 6th
-distinct action — not asserted with certainty.
+single answer, the Buds' ACK (`ff 01 00 03 04 01 00`), and no status message from the Buds — video shows no further tap
+in this exact window (already back on the idle "Find device" screen by t=70s); a Stop sent while nothing was ringing.
 
 ### `FIND-003`/`FIND-004` — attempted via a different mechanism, no local Ring command observed
 
@@ -112,7 +109,7 @@ correlate with, but are not proven to be caused by, the Find Hub flow's own conn
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group K / §5)
 
 - [x] Check every frame against `PROTOCOL.md` §4.4's exact hypothesis — Group/Code confirmed
-      exactly; ACK shape mostly matches, with one extra byte in a second ACK variant.
+      exactly; the Buds' ACK carries one state byte (the spec example two); the other `ff 01` frame is the phone's ACK of the Buds' own message.
 - [x] Check whether Left/Right/Case are distinguished via a payload field — **yes for Left/Right**
       (`Value` byte, video-confirmed); **Case is not reached by this mechanism at all**.
 - [x] Cross-check structural elements against 2–3 other already-confirmed commands — see

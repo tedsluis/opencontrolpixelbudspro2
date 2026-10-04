@@ -116,6 +116,12 @@ sealed class BudsError {
     data object UnreadableAnswer : BudsError()
 
     /**
+     * The app has no read request for this setting (`ai-sessions/0069`, A68-GOV-03): reported under its own name instead of [Unknown] with an
+     * exception text. Reached only if a read is asked for a field the request builder does not know.
+     */
+    data object SettingNotReadable : BudsError()
+
+    /**
      * The Buds did not announce which pw_rpc channel this connection uses (their unsolicited `GetSoftwareInfo`
      * push, DECISIONS.md ADR-034) or announced one this app has no known HDLC address for. [channelId] is `null`
      * when nothing was announced in time. Nothing is sent — the app never guesses a channel or an address.

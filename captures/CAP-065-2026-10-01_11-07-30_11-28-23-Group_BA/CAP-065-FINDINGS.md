@@ -87,12 +87,12 @@ Whenever that link came up while the app was visible and ADR-044 was on, the app
 | F | 11:20:50.5 → 11:20:54 | Connection | yes | **lid opened**, both docked; Right out | nothing 8613 → 8809, then Connection Request 8809 (11:20:57.89) | `CONNECTED` 11:20:58.658 | 9108… (DLCI 0x02, 9134 announcement) | LINK_BACK (503) | no ✓ (BA-11) |
 | G | 11:21:28.5 → 11:21:32 | Connection | yes | **lid opened**, both docked; Left out | nothing 9683 → 9848, then Connection Request 9848 (11:21:33.91) | `CONNECTED` 11:21:34.468 | DLCI 0x03 | LINK_BACK (553) | no ✓ |
 
-Command: as in the header (HCI connection events) → exactly the seven Connection Request / Connection Complete pairs and five `0x13` / one LE `0x08`
+Command: as in the header (HCI connection events) → exactly the seven Connection Request / Connection Complete pairs and six `0x13` (1498, 3646, 4653, 7094, 8613, 9683) / one LE `0x08` (12282) — `tshark -r CAP-065-btsnoop_hci.log -Y 'bthci_evt.code==0x05' -T fields -e frame.number -e bthci_evt.reason`; "five" corrected 2026-10-03, `ai-sessions/0069`
 Disconnection Complete events; `-Y "bthci_cmd.opcode==0x0405"` → 0 frames (positive control: the same filter matches `CAP-064` frames 673, 7201 and 8399).
 
 - 🟢 Opening the lid with both buds docked produced **no HCI event** in A, E (after the lid had been closed), F and G; the link came 3.5–7 s after the lid
   opened, each time 1–4 s after a bud left its slot. In `CAP-064` the same held (B, F there). No case in this run of Android re-paging the Buds after an ACL
-  drop (all five drops were the Buds' `0x13` on docking; `CAP-064`'s 🔴 G-vs-F question gets no new sample).
+  drop (all six drops were the Buds' `0x13` on docking; `CAP-064`'s 🔴 G-vs-F question gets no new sample).
 - 🟢 The ACL drops when the **last bud is docked**, also with the lid open (11:08:53.56 lid open, 11:12:45.97 lid open, 11:14:14.83 lid open), and does **not**
   drop when the lid is closed with one bud outside (BA-7, 11:15:30–11:16:14: ACL `0x000b` stayed up). 🟢 With the lid closed and the Left bud inside, the
   Buds report the Left bud as unknown (`03 03 00 03 ff 64 ff`, 6015) and the runtime-info stream carries neither the Left entry nor the Case (5874 `…32 06 1a 04

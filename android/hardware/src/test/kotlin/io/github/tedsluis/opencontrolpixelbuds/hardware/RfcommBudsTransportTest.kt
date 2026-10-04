@@ -61,7 +61,7 @@ class RfcommBudsTransportTest {
 
     private sealed interface Event {
         class Bytes(val data: ByteArray) : Event
-        class Fail(val error: IOException) : Event
+        class Fail(val error: Exception) : Event
         data object Eof : Event
     }
 
@@ -89,7 +89,11 @@ class RfcommBudsTransportTest {
         val written = CopyOnWriteArrayList<ByteArray>()
 
         @Volatile
-        var failWrites: IOException? = null
+        var failWrites: Exception? = null
+
+        /** Thrown by `close()` when set (a stack that throws on closing a broken socket). */
+        @Volatile
+        var failClose: RuntimeException? = null
 
         @Volatile
         var closed = false
@@ -111,6 +115,7 @@ class RfcommBudsTransportTest {
             closed = true
             input.closed = true
             input.events.offer(Event.Fail(IOException("socket closed")))
+            failClose?.let { throw it }
         }
     }
 
@@ -365,6 +370,67 @@ class RfcommBudsTransportTest {
             awaitUntil("loss") { losses.items.isNotEmpty() }
             assertFalse(t.connected)
         }
+    }
+
+    // ---- `ai-sessions/0069` A68-APP-10 (AGENTS.md §8): an exception that is not an IOException around a socket call is converted, not thrown ----
+
+    @Test
+    fun `a write refused with a SecurityException is PermissionDenied, not a thrown exception`() = blocking {
+        val stack = CollidingStack()
+        val t = transport()
+        collecting(t.connectionLost) { losses ->
+            t.connectWith(channels, stack::open)
+            // What Android throws when BLUETOOTH_CONNECT was revoked while a socket is open.
+            stack.socketsFor(maestro).single().failWrites = SecurityException("Need android.permission.BLUETOOTH_CONNECT permission")
+
+            val result = t.send(maestro, byteArrayOf(0x7e, 0x7e))
+
+            assertEquals(BudsError.PermissionDenied, (result as BudsResult.Failure).error)
+            awaitUntil("loss") { losses.items.isNotEmpty() }
+            assertFalse(t.connected)
+        }
+    }
+
+    @Test
+    fun `a write failing with a runtime exception from the stack is ChannelLost with its text`() = blocking {
+        val stack = CollidingStack()
+        val t = transport()
+        collecting(t.connectionLost) { losses ->
+            t.connectWith(channels, stack::open)
+            stack.socketsFor(maestro).single().failWrites = IllegalStateException("socket not connected")
+
+            val result = t.send(maestro, byteArrayOf(0x7e, 0x7e))
+
+            assertEquals(BudsError.ChannelLost(maestro, "IllegalStateException: socket not connected"), (result as BudsResult.Failure).error)
+            awaitUntil("loss") { losses.items.isNotEmpty() }
+        }
+    }
+
+    @Test
+    fun `a reader that hits a runtime exception reports a loss instead of dying silently`() = blocking {
+        val stack = CollidingStack()
+        val t = transport()
+        collecting(t.connectionLost) { losses ->
+            t.connectWith(channels, stack::open)
+            stack.socketsFor(maestro).single().input.events.offer(Event.Fail(IllegalStateException("stream in a bad state")))
+            awaitUntil("loss") { losses.items.isNotEmpty() }
+            assertEquals(maestro, losses.items.single().channelId)
+            assertEquals("IllegalStateException: stream in a bad state", losses.items.single().detail)
+            assertFalse(t.connected)
+        }
+    }
+
+    @Test
+    fun `a socket whose close throws does not stop the others from being closed`() = blocking {
+        val stack = CollidingStack()
+        val t = transport()
+        t.connectWith(channels, stack::open)
+        stack.socketsFor(maestro).single().failClose = IllegalStateException("close on a dead socket")
+
+        t.disconnect()
+
+        assertTrue(stack.all.all { it.closed })
+        assertFalse(t.connected)
     }
 
     @Test

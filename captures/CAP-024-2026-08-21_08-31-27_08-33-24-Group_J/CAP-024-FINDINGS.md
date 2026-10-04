@@ -121,10 +121,13 @@ Both CRC-32 verified. Video: "Bud return" toggle already OFF when the Case sound
 (`DECISIONS.md` ADR-019 Update, maintainer-approved), based on this wire evidence plus,
 independently, the app's own code (write site `fyo.java:58-78`, read side logging `"received bud
 return sound setting value"`, `fxb.java` case 28 — see `REVERSE_ENGINEERING.md`'s `qhr` entry). The
-`OFF` sample (frame 1988) is not cleanly disambiguated between "a genuine tap re-affirming the
-already-off state" and "the screen syncing its display to the already-cached value on open" —
-flagged, not asserted either way; this does not affect the field-identity promotion, which rests on
-the `ON` sample plus the independent code-side confirmation.
+`OFF` sample (frame 1988) is a real 1 → 0 change (corrected 2026-10-03, `ai-sessions/0069`,
+`A68-CAP-16`): the connect-time read in this capture returns `ReadSetting` `4:{28:1}` (frame 1096),
+frame 1988 writes `4:{28:0}`, and the settings stream echoes `4:{28:0}` (1990, 1992) —
+`python3 scripts/pwrpc_decode.py CAP-024-btsnoop_hci.log`. The earlier text called it "re-affirming
+the already-off state"; the setting was on. Both directions of field 28 are therefore sampled as
+real changes (1988 off, 2023 on). What the film cannot show is whether the write at 08:32:38.084 was
+a tap that falls just before the first frame in which the screen is visible.
 
 ## 5. Analysis: `CASE-002` ("Other alerts", labeled "Other notifications")
 
@@ -195,8 +198,9 @@ inside the shared `field5{field4{...}}` wrapper — the general-purpose-envelope
 
 ## 8. Open Questions
 
-- 🔴 Whether frame 1988 (`CASE-001` OFF) reflects a genuine tap or a screen-open state sync — not
-  resolved by this capture's video resolution. → copied to `PROTOCOL.md` §6.
+- 🟢 Frame 1988 (`CASE-001` OFF) changes the value from 1 (read, frame 1096) to 0 — it is not a
+  state sync of an unchanged value (§4, corrected 2026-10-03). 🔴 Still open: the film does not show
+  the tap itself. → `PROTOCOL.md` §6 (Update of 2026-10-03).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-024-2026-08-21_08-31-27_08-33-24-Group_J/CAP-024-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-024-2026-08-21_08-31-27_08-33-24-Group_J/CAP-024-FINDINGS

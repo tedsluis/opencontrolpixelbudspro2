@@ -86,7 +86,7 @@ corrections are noted inline.
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AA)
 
-- [x] Pre-filter by address, then filter to `btsdp` per §13's CLI-hygiene rule. **Only one SDP
+- [x] Scope to the Buds' connection handle (`0x0006`; the address filter matches nothing in this log — corrected 2026-10-03), then filter to `btsdp` per `AGENTS.md` §13's CLI-hygiene rule. **Only one SDP
       transaction exists in the entire log (frames 4071–4890, 13:08:08.90–13:08:18.04)** — see
       `CAP-044-FINDINGS.md` §3.
 - [x] Does the "default internal rfcomm socket" UUID (`3a046f6d-...`, either byte order) appear in

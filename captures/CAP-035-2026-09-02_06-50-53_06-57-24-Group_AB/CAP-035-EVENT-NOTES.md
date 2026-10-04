@@ -26,7 +26,7 @@ exists.
 |       Date       |                     2026-09-02                 |
 | Firmware version |    ⚪ ASSUMPTION `release_5.203` |
 |   Test device    | Pixel 9a, GrapheneOS. **No app used — system Bluetooth settings only.** |
-| Video file       | `CAP-035-recording1.mp4` — 67.69s, 06:50:53–~06:52:01 local · `CAP-035-recording2.mp4` — 317.57s, 06:52:04–~06:57:22 local (sequential, ~7s recording-stop/restart gap — see the corrected note above the Event Timeline) |
+| Video file       | `CAP-035-recording1.mp4` — 67.69s, 06:50:53–~06:52:01 local · `CAP-035-recording2.mp4` — 317.57s, 06:52:04–~06:57:22 local (sequential, ~3 s gap — corrected 2026-10-03, was "~7s recording-stop/restart gap — see the corrected note above the Event Timeline) |
 | Log file         | `CAP-035-btsnoop_hci.log` — 488.7s, 1,945 packets, 06:50:58.76–06:59:07.47 local (`+0200`) |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
 
@@ -432,7 +432,7 @@ action/event; don't compress a burst into one row without at least noting its st
 numbers.)*
 
 **Corrected 2026-09-02, per this session's own Step-0 verification (see `CAP-035-FINDINGS.md` §1):
-video 1 and video 2 are sequential, with only a ~7s recording-stop/restart gap — NOT a ~5-minute
+video 1 and video 2 are sequential, with only a ~3 s recording-stop/restart gap (corrected 2026-10-03; was "~7s") — NOT a ~5-minute
 gap as originally guessed, and NOT a "redo" of the sequence.** Video 1 (67.69s, 06:50:53–~06:52:01)
 stopped recording while the "Koppelen met Pixel Buds Pro 2 van Ted?" dialog was already showing,
 untapped. Video 2 (317.57s, 06:52:04–~06:57:22) resumed ~3s later showing the *same*
@@ -454,7 +454,7 @@ video 1's guessed rows or video 2's own original (unverified, and as it turned o
 | ~`06:51:50`–`06:51:53` | Buds appear in scan list; tap to connect | User (OS) | `PAIR-001`, `GSND-001` | frame 552 (`LE Enhanced Connection Complete`, 06:51:53.610, handle `0x0040`) |
 | `06:52:00` | "Koppelen met Pixel Buds Pro 2 van Ted?" dialog appears on screen — **left unconfirmed**; video 1 stops recording ~1s later while it is still showing | User (OS) | `PAIR-001` | — |
 | `06:52:00.69` (approx.) | **End video 1 recording** (67.69s duration) | — | — | — |
-| — | *(~7s gap — video 1 stopped, video 2 started; dialog remains on screen, untouched, throughout)* | — | — | — |
+| — | *(~3 s gap — video 1 stopped, video 2 started; dialog remains on screen, untouched, throughout)* | — | — | — |
 | **`06:52:04`** | **Start video 2 recording.** Same still-unconfirmed pairing dialog visible (confirmed identical to video 1's last frame). | — | — | — |
 | `06:52:26.42` | Background: 2nd LE connection attempt (`0x0041`) while the dialog still sits unconfirmed; SMP pairing begins | OS (Auto) | — | frame 688 (`LE Enhanced Connection Complete`) |
 | `06:52:36.8`–`06:52:37.5` | **Real tap on "Koppelen"** (video-confirmed, `f_33s.jpg`, finger visible mid-tap at 06:52:37) → DHKey Check → classic `Create Connection` → **Connect Complete** → Link Key Request/Reply | User (OS) → OS (Auto) | `PAIR-001`, `GSND-001` | frames 739/740 (DHKey Check), 750 (Create Connection), 792 (Connect Complete, 06:52:36.814), 823/831 (Link Key Request/Reply) |
@@ -466,7 +466,7 @@ video 1's guessed rows or video 2's own original (unverified, and as it turned o
 | `06:56:00.36`–`06:56:00.75` | DLCI 0x08 **and** DLCI 0x0a both reopen; DLCI 0x08 exchanges the same handshake content again; DLCI 0x0a again carries **zero** payload | App/OS (Auto) | `GSND-001` | frames 1692–1820 |
 | `06:56:01` – `06:57:20` | **Idle observation window #2** (≈1m19s) — DLCI 0x08/0x0a close again (phone-initiated) at 06:57:20.61 | — | `GSND-001`, `BATT-003` | frames 1820–1909; DLCI close at 1909/1910 (Sent DISC)/1913/1914 (Rcvd UA) |
 | ~`06:57:21`–`06:57:24` | **End video 2 recording** (317.57s duration, video-confirmed near-identical still-connected screen at `f_313s.jpg`, 06:57:17) | — | — | — |
-| `06:57:41.83` | Final classic disconnect — last frame in the log (post-recording session teardown) | OS (Auto) | — | frame 1925 (`Disconnection Complete`) |
+| `06:57:41.83` | Final classic disconnect (post-recording session teardown). Not the last frame of the log: that is frame 1945, an LE advertising report at 06:59:07.47 (corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-23`) | OS (Auto) | — | frame 1925 (`Disconnection Complete`) |
 
 **DLCI 0x06 ("DEBUG APP") and DLCI 0x12 ("BTIS") never open at all, anywhere in this session** —
 confirmed via a full-file DLCI census (`tshark -Y btrfcomm -T fields -e btrfcomm.dlci | sort | uniq -c`
@@ -480,7 +480,7 @@ CLI-hygiene rule. Then check each of the four named channels — command + raw h
 `PROJECT_RULES.md` §1 rule 4a.)*
 
 ```
-tshark -r CAP-035-btsnoop_hci.log -Y "bluetooth.addr == 04:00:6e:cf:6e:07 and btrfcomm.dlci in {6,8,10,18}" \
+tshark -r CAP-035-btsnoop_hci.log -Y "bthci_acl.chandle==0x000b and btrfcomm.dlci in {6,8,10,18}" \     # 96 frames; handle 0x000b = the Buds (Connection Complete 792, 1455). Corrected 2026-10-03: the address filter matched nothing.
   -T fields -e frame.number -e frame.time_relative -e btrfcomm.dlci -e _ws.col.Info
 ```
 (DLCI values: 0x06=6, 0x08=8, 0x0a=10, 0x12=18 — decimal, since `tshark` field comparisons are

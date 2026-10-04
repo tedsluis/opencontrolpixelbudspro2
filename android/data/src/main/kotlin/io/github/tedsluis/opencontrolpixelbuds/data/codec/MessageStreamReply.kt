@@ -29,7 +29,8 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
  * `FF 02 <len:2> <reason> <echoed group> <echoed code> [state…]` with reasons `0x00` not supported, `0x01` device busy,
  * `0x02` not allowed in the current state, `0x03` incorrect message authentication code, `0x04` redundant device action.
  * Real ACKs: `CAP-001` frame 2041 `ff 01 00 06 08 12 01 e8 e8 40` (ANC Set), `CAP-025` frames 2044/2048 (Ring, with and without a
- * trailing state byte). No NAK has been captured yet.
+ * trailing state byte). Real NAKs (corrected `ai-sessions/0069`, A68-APP-14 — this said "No NAK has been captured yet"): `ff 02 00 03 02 08 12`,
+ * reason `0x02` for an ANC Set while the Buds allow no change — `CAP-062` (10 of them) and `CAP-064` frame 3440.
  */
 object MessageStreamAck {
     const val GROUP: Int = 0xFF

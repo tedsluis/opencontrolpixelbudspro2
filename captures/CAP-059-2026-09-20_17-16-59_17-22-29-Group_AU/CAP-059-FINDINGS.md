@@ -202,7 +202,9 @@ delay elapsed unharmed in earlier claims this same session). Play services answe
 ## 7. HFP battery: present on the wire, absent from the app (🟢 FACT)
 
 `tshark -Y bthfp` shows `AT+BIEV=2,100` sent by the Buds (frames 1216, 2624, 2631, 2685, 2694, 3077,
-3097 = 17:17:50, 17:19:05, :06, :10 ×2, :47, :50 — at the bud removals and after re-attachment); the
+3097 = 17:17:50, 17:19:05, :06, :10 ×2, :47, :50 — at the bud removals and after re-attachment), and five more after the 17:20 reconnect, when HFP ran on
+DLCI 0x09, which tshark does not dissect as `bthfp`: `-Y 'btrfcomm.len>0 && data.data contains "AT+BIEV=2,"'` → 3794 (17:20:26), 4149, 4171, 5207, 5212 —
+**12 in all** (`-Y 'frame contains "AT+BIEV=2,"' | wc -l` → 12; "seven" corrected 2026-10-03, `ai-sessions/0069`, A68-CAP-08); the
 value is the Right earbud's per `DECISIONS.md` ADR-015, never the Case. The app's debug export
 contains **only** `HFP broadcast received: CONNECTION_STATE_CHANGED` (six times) and **no**
 vendor-specific event, despite the receiver being registered from 17:17:25.364. The wire-level fact

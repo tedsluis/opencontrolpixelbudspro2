@@ -50,7 +50,11 @@ and kept correct mechanically, not by hand:
   rename since the URLs are derived from the current path each time).
 - `scripts/lint_docs.py` (wired into `.github/workflows/lint-docs.yml`, runs on every PR/push
   touching a `.md` file) fails CI if a page's footer is missing or stale — this is what keeps the
-  footer in place even if a future edit (human or AI) accidentally strips it.
+  footer in place even if a future edit (human or AI) accidentally strips it. Since 2026-10-03 (`ai-sessions/0069`) the same
+  script also fails on a registered ADR without a `## ADR-NNN` heading, on a table row whose cell count differs from its
+  header's, and on a status value outside its legend (Capture Index, `id_registry.csv`, a session RESULT's `Status` line).
+- Both scripts skip `dist/` (the gitignored output of `scripts/release.sh`): its `release-notes.md` is the body of a GitHub
+  release and must not get a docs footer (commit `9e2a475`).
 
 If you add a brand-new page, run `./scripts/ensure_footers.py` once (same as the sidebar-generation
 step above) rather than typing the footer by hand.

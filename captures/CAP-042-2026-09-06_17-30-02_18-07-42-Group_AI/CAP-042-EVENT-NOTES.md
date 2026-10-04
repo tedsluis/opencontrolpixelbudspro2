@@ -97,7 +97,7 @@ command.)*
 | 17:30:04.78 | Connection established (chandle 0x0002) | — | `OBS-002` | frame 277 |
 | 17:30:05.35–09.40 | Connect-settling burst — DLCI 0x02/0x04/0x08 full content, HFP SLC setup + 2× `AT+BIEV` | — | `OBS-002` | frames 571–969 |
 | 17:46:16.95 (t≈974.08s) | Push #1 — DLCI 0x02/0x04/0x08 fire within ~30ms of each other; **HFP silent** | ~967.5s since burst end | `OBS-002` | frames 4518–4609 |
-| 18:05:03.04 (t≈2101.04s) | Push #2 — DLCI 0x02/0x04/0x08 fire together again; **HFP silent** | 1123.7s since Push #1 | `OBS-002` | frames 7569–7671 |
+| 18:05:03.91 (t≈2101.04s; corrected 2026-10-03 — frame 7569 is at 18:05:03.907) | Push #2 — DLCI 0x02/0x04/0x08 fire together again; **HFP silent** | 1123.7s since Push #1 | `OBS-002` | frames 7569–7671 |
 | 18:07:41.75 | Log ends (last frame) | 154.6s since Push #2 | — | frame 8560 |
 
 Only 2 post-settling occurrences found in the entire ~37m39s session (see `CAP-042-FINDINGS.md` §2

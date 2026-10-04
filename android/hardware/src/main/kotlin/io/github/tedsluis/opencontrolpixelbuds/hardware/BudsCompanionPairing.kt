@@ -59,6 +59,13 @@ class BudsCompanionPairing(private val context: Context) {
     /** True from `associate()` until CDM answers (created/failed) or the picker is cancelled — a second request is refused. */
     private val associationInFlight = AtomicBoolean(false)
 
+    /**
+     * Set by [forgetAssociations] ("Use different Buds", A68-APP-05): until a new association exists, no bonded device is taken by its name — the user
+     * asked to choose. In memory only; after a process restart a single bonded "Pixel Buds" device is used again, as it always was.
+     */
+    @Volatile
+    private var chooseAgainRequested = false
+
     /** The picker was dismissed without a callback (`RESULT_CANCELED`): the next tap may start a new request. */
     fun cancelPendingAssociation() {
         if (associationInFlight.getAndSet(false)) BleLogger.logConnectionEvent("Pairing: picker dismissed — ready for a new request")
@@ -87,8 +94,33 @@ class BudsCompanionPairing(private val context: Context) {
             return BondedLookup.PermissionMissing
         }
         val associated = associations().mapNotNull { (_, view) -> view.address }.toSet()
-        val chosen = PairingLogic.chooseBonded(bonded, associated)
-        return if (chosen == null) BondedLookup.NoneBonded else BondedLookup.Found(chosen.address)
+        return when (val choice = PairingLogic.chooseBondedOrAsk(bonded, associated, nameFallback = !chooseAgainRequested)) {
+            is PairingLogic.BondedChoice.One -> BondedLookup.Found(choice.candidate.address)
+            PairingLogic.BondedChoice.None -> BondedLookup.NoneBonded
+            PairingLogic.BondedChoice.Several -> BondedLookup.SeveralCandidates
+        }
+    }
+
+    /**
+     * "Use different Buds" (`ai-sessions/0069`, A68-APP-05; the maintainer's choice in chat 2026-10-03): removes **this app's own** CompanionDeviceManager
+     * associations — nothing else: the Bluetooth pairing in Android stays, no other app's association is touched — so the next *Pair a device* opens
+     * Android's picker instead of reusing the old association. Returns how many were removed.
+     */
+    fun forgetAssociations(): Int {
+        val manager = companionDeviceManager ?: return 0
+        var removed = 0
+        associations().forEach { (info, _) ->
+            try {
+                manager.disassociate(info.id)
+                removed++
+            } catch (e: RuntimeException) {
+                BleLogger.logConnectionEvent("Pairing: could not remove an association (${BleLogger.describe(e)})")
+            }
+        }
+        chooseAgainRequested = true
+        associationInFlight.set(false)
+        BleLogger.logConnectionEvent("Pairing: use different Buds — removed $removed association(s) of this app; the next Pair a device opens the picker")
+        return removed
     }
 
     /** The bonded Buds' `BluetoothDevice`, or null (no permission and nothing bonded both read as null here — use
@@ -126,6 +158,7 @@ class BudsCompanionPairing(private val context: Context) {
         val reuse = PairingLogic.pickAssociation(existing.map { it.second })
         if (reuse != null) {
             BleLogger.logConnectionEvent("Pairing: reusing existing association (${existing.size} total) — no new picker")
+            chooseAgainRequested = false
             existing.first { it.second.id == reuse.id }.first.let(onCreated)
             return
         }
@@ -148,6 +181,7 @@ class BudsCompanionPairing(private val context: Context) {
                 override fun onAssociationPending(intentSender: IntentSender) = onPending(intentSender)
                 override fun onAssociationCreated(associationInfo: AssociationInfo) {
                     associationInFlight.set(false)
+                    chooseAgainRequested = false // the user chose: this association identifies the Buds from now on
                     BleLogger.logConnectionEvent("Pairing: association created")
                     onCreated(associationInfo)
                 }

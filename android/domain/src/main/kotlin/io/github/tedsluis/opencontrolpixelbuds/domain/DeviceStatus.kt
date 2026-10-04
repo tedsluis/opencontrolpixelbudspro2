@@ -69,6 +69,12 @@ sealed class DeviceStatus {
     data class PermissionMissing(val status: PermissionStatus) : DeviceStatus()
     data object NotPaired : DeviceStatus()
 
+    /**
+     * More than one bonded device is named "Pixel Buds" and none is this app's own association (`ai-sessions/0069`, A68-APP-04): the app does not pick
+     * one — the user chooses with *Pair a device* (Android's own picker).
+     */
+    data object SeveralBudsPaired : DeviceStatus()
+
     /** Paired; Android does not (yet) report the Buds connected to this phone (case closed, not in the ears). */
     data object PairedNotConnected : DeviceStatus()
 
@@ -94,9 +100,11 @@ fun deriveDeviceStatus(
     hasBondedDevice: Boolean,
     androidLink: AndroidLink,
     session: ConnectionState,
+    severalCandidates: Boolean = false,
 ): DeviceStatus = when {
     !bluetoothEnabled -> DeviceStatus.BluetoothOff
     !bluetoothConnect.isGranted -> DeviceStatus.PermissionMissing(bluetoothConnect)
+    !hasBondedDevice && severalCandidates -> DeviceStatus.SeveralBudsPaired
     !hasBondedDevice -> DeviceStatus.NotPaired
     session is ConnectionState.Ready -> DeviceStatus.ControlledByApp
     session is ConnectionState.Connecting || session is ConnectionState.Discovering -> DeviceStatus.Connecting
@@ -165,6 +173,6 @@ fun statusCard(status: DeviceStatus, androidLink: AndroidLink, session: Connecti
             if (failed) SessionLine.FAILED else SessionLine.NOT_OPEN,
             if (failed) CardAction.RETRY else CardAction.CONNECT,
         )
-        DeviceStatus.BluetoothOff, is DeviceStatus.PermissionMissing, DeviceStatus.NotPaired -> null
+        DeviceStatus.BluetoothOff, is DeviceStatus.PermissionMissing, DeviceStatus.NotPaired, DeviceStatus.SeveralBudsPaired -> null
     }
 }

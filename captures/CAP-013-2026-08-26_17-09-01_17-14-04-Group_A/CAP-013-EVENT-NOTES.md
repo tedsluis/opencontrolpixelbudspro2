@@ -119,5 +119,9 @@ additionally targets `PAIR-004`. All three are referenced in the timeline above.
 (Pixel Buds app onboarding permission taps) are incidentally exercised here too and referenced above,
 though they are not Group A's own assigned Test-IDs.
 
+## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
+
+- `GFPS-002` ("Save" in the Fast Pair account dialog) — **expected for a Group A repeat, not referenced**: the notes do not say whether the dialog appeared. Out of scope to investigate (ADR-008).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-013-2026-08-26_17-09-01_17-14-04-Group_A/CAP-013-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-013-2026-08-26_17-09-01_17-14-04-Group_A/CAP-013-EVENT-NOTES

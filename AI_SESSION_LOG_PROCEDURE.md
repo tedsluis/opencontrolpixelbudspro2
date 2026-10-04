@@ -108,6 +108,20 @@ records *that the update happened and why*; it does not re-narrate the earlier f
 content, matching the spirit of `PROJECT_RULES.md` rule 9a (a reference document is not an
 accumulating changelog).
 
+### 4b. Closing checklist (added 2026-10-03, `ai-sessions/0069`, from `ai-sessions/0068` `A68-SES-01`…`03`)
+
+Before a RESULT file's `Status` is set to `complete`:
+
+1. **Deferred items reach `TODO.md`.** Every item the session defers has a line in `TODO.md`; the RESULT lists them under "Deferred" with the
+   `TODO.md` wording, so the two can be compared by `grep`.
+2. **Commits are back-filled.** A RESULT is usually written before its last commit exists. Its "Commits" section names the commits made so far; the
+   **next** session's first step completes it (hash and subject of each later commit of that session). A release adds its row to `RELEASING.md`'s
+   Release log.
+3. **The `Status` value is one of the three above** — `scripts/lint_docs.py` checks the line of every RESULT file. Text after the value is free
+   (`complete (closed 2026-10-03 by …)`).
+4. **In an audit that uses sub-reviews,** each finding says whether the main session re-derived it or took it from a sub-review (the M/S marks of
+   `ai-sessions/0068`). A sub-review claim that was not re-derived is an open question with its check, not a fact.
+
 ## 5. Multi-part results
 
 A long-running or rate-limit-interrupted task does not get a new number each time it resumes.

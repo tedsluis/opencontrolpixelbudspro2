@@ -281,13 +281,35 @@ class CodecRouterTest {
     }
 
     @Test
-    @DisplayName("DLCI 0x04: ACK/NAK frames get their own routed type (CAP-001 frame 2041), and the Model ID too (CAP-059 frame 1049)")
+    @DisplayName("DLCI 0x04: ACK/NAK frames get their own routed type (CAP-001 frame 2041, CAP-064 frame 3440), and the Model ID too (CAP-059 frame 1049)")
     fun `replies and the Model ID are routed as their own types`() {
-        val routed = CodecRouter().feed(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("ff010006081201e8e840" + "ff02000403081201" + "03010003da2db1"), 0)
+        // The NAK is the real one of `CAP-064` frame 3440 (`ff 02 00 03 02 08 12`, reason 0x02) — until `ai-sessions/0069` this test used a hand-built NAK
+        // with reason 0x03 and a state byte, unlabelled (`ai-sessions/0068` A68-APP-06).
+        val routed = CodecRouter().feed(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("ff010006081201e8e840" + Cap064.NAK_3440 + "03010003da2db1"), 0)
         assertEquals(3, routed.size)
         assertEquals(MessageStreamReply.Ack(0x08, 0x12, hex("01e8e840")), (routed[0] as RoutedFrame.Reply).reply)
-        assertEquals(MessageStreamReply.Nak(0x03, 0x08, 0x12, hex("01")), (routed[1] as RoutedFrame.Reply).reply)
+        assertEquals(MessageStreamReply.Nak(0x02, 0x08, 0x12, ByteArray(0)), (routed[1] as RoutedFrame.Reply).reply)
         assertEquals("da2db1", (routed[2] as RoutedFrame.ModelId).frame.modelIdHex)
+    }
+
+    @Test
+    @DisplayName("labelled supplementary structural test (hand-built, no capture has it): a NAK with reason 0x03 and a trailing state byte")
+    fun `a NAK with another reason and a state byte decodes structurally`() {
+        val routed = CodecRouter().feed(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("ff02000403081201"), 0)
+        assertEquals(MessageStreamReply.Nak(0x03, 0x08, 0x12, hex("01")), (routed.single() as RoutedFrame.Reply).reply)
+    }
+
+    @Test
+    @DisplayName("DLCI 0x02: a real pw_hdlc frame split across two socket reads is reassembled (CAP-036 frame 1447, cut at every position)")
+    fun `an HDLC frame split across two reads decodes once`() {
+        val frame = hex(Settings036.READ_2_RESP)
+        for (cut in 1 until frame.size) {
+            val router = CodecRouter()
+            val first = router.feed(Dlci.MAESTRO, frame.copyOfRange(0, cut), 0)
+            val second = router.feed(Dlci.MAESTRO, frame.copyOfRange(cut, frame.size), 0)
+            assertTrue(first.isEmpty(), "cut at $cut: nothing before the closing flag")
+            assertInstanceOf(RoutedFrame.Setting::class.java, second.single(), "cut at $cut")
+        }
     }
 
     @ParameterizedTest

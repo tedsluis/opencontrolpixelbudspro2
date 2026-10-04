@@ -87,6 +87,9 @@ x64
 
 ## Install Java 21 OpenJDK
 
+*Note 2026-10-03 (`ai-sessions/0069`): the output below shows **Temurin** 21.0.4 — the JDK this workstation actually runs (the
+`alternatives` step selected it); the `dnf` line installs Fedora's OpenJDK 21. Either works: the build needs a JDK 21.*
+
 ```bash
 fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo dnf install -y java-21-openjdk java-21-openjdk-devel
 fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo alternatives --config java || true
@@ -149,6 +152,25 @@ fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo dnf install -y android
 
 # Android Studion
 fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ flatpak install -y flathub com.google.AndroidStudio 
+```
+
+## Android SDK platform and build tools; other tools the scripts use (added 2026-10-03, `ai-sessions/0069`)
+
+The build needs the Android SDK **platform `android-34`** and **build-tools `34.0.0`** (`README.md`, "Building from source"). Install them with
+Android Studio's SDK Manager (or `sdkmanager "platforms;android-34" "build-tools;34.0.0"`); the SDK path goes into `android/local.properties`
+(`sdk.dir=…`, gitignored). `scripts/release.sh` uses `apksigner` and `aapt2` from that build-tools folder.
+
+Check that everything the scripts and the documents use is present:
+
+```bash
+java -version                                   # 21
+ls ~/Android/Sdk/platforms ~/Android/Sdk/build-tools   # android-34, 34.0.0
+~/Android/Sdk/build-tools/34.0.0/apksigner --version
+tshark --version | head -1                      # capture analysis, scripts/pwrpc_decode.py
+ffmpeg -version | head -1                       # film stills, scripts/readme_media.sh
+git lfs version                                 # the capture logs are LFS files: run `git lfs install` once
+adb version | head -1
+python3 --version                               # the scripts use the standard library only
 ```
 
 ## Install Kotlin using SDKMAN
@@ -235,6 +257,10 @@ effect, then verify with `apktool --version` and `jadx --version`.
 
 ### pbtk (Protobuf toolkit — `.proto` schema extraction)
 
+*Status 2026-10-03: installed, **not usable on the analysed APK** (`DECISIONS.md` ADR-041) — schemas are recovered with
+`scripts/decode_rawmessageinfo.py` (`APK_REVERSE_ENGINEERING_PROCEDURE.md` §3). The description below is kept for an APK version that
+ships a native protobuf library.*
+
 Confirmed against pbtk's own README (`github.com/marin-m/pbtk`, checked 2026-08-30) rather than
 assumed. **Real scope, corrected from an earlier working assumption:** pbtk ships two separate
 extractors relevant here, not one — `pbtk-jar-extract` for Java-runtime protobuf (base/Lite/Nano/
@@ -305,6 +331,8 @@ committed to git — see `.gitignore`) rather than leaving them only in pbtk's o
 cache, so a given APK version's extraction output stays associated with that version.
 
 ## Disaster Recovery
+
+*For users of the app, the short form of this procedure is in `README.md` ("Safety and Safe Mode").*
 
 See `README.md`'s bricking disclaimer — this project sends undocumented
 commands to real hardware, and a malformed or unexpected one could leave the

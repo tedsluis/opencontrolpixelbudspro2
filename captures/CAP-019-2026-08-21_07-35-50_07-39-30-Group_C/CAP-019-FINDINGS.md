@@ -118,7 +118,7 @@ DLCI 0x02 write's echo in this project (`CAP-020-FINDINGS.md` §3/§4).
 "Conversation detection" writes `qhr` field 22 in both directions — frame 1720 `4:{22:0}` (OFF) and frame 1808 `4:{22:1}` (ON), each on film,
 each acknowledged by an empty `RESPONSE` status OK (1731, 1813).
 
-## 4. Analysis: `MULTI-001` (Multipoint OFF→ON)
+## 4. Analysis: `MULTI-001` (Multipoint OFF→ON, and ON→OFF 72 s later)
 
 Video: toggle OFF through t=128s, finger taps the toggle row starting ~t=129s, on-screen transition
 visible at t≈132s, confirmed ON (purple, checkmark) by t=133s (07:38:03).
@@ -160,9 +160,27 @@ Code `0x34` ×15 (Buds → phone; 762 at 07:35:58.541 … 2505 at 07:39:13.962, 
 three times each in a connect-time burst (785–807, 07:35:58.58–.63, incl. `07 41 00 16 69 6e 2d 75 73 65 …` "in-use"), in this Multipoint burst
 (2296–2304) and again at 07:39:13.886–.927 (2487–2496); `0x42` once more at 1879 (07:36:59.881); Code `0x21` only once, 2301, in this burst; Code
 `0x10` three times, all at connect (758/785/802). Frame 2326 (07:38:06.191) is an ANC `Notify` (`08 13 00 04 01 e8 e8 08`), not a SASS code.
-🟡 HYPOTHESIS: `0x34` is a periodic SASS message, not Multipoint-specific. The `0x11`/`0x40`/`0x41`/`0x42` exchange is **not** Multipoint-specific
-either — it also runs at connect and at 07:39:13; only `0x21` is unique to this burst. 🟡: the Multipoint toggle triggers one more round of the
-same SASS exchange (plus `0x21`), not a Multipoint-only message set.
+🟡 HYPOTHESIS: `0x34` is a periodic SASS message, not Multipoint-specific. The `0x11`/`0x40`/`0x41`/`0x42` exchange also runs at connect, so it is not a
+Multipoint-only message set; but the round at 07:39:13 is **not** an unrelated occurrence — it follows the Multipoint **OFF** write (below) by 0.1 s. So both
+Multipoint writes of this capture are each followed by a SASS round; `0x21` occurs only after the ON write.
+
+**The OFF write (🟢 FACT on the wire and on film).** Frame **2482**, 07:39:13.783, phone → Buds, DLCI 0x02:
+
+```
+raw = "7e004b0310151dea71de7d5e251d9a8c9e2a0422025800ad636bac7e"     # = WriteSetting 4:{11:0}; the ON write 2293 is the same with …58 01…
+$ python3 scripts/pwrpc_decode.py CAP-019-btsnoop_hci.log | grep "11:"
+  1032 RESPONSE ReadSetting 4:{11:0}            (the connect-time read: Multipoint was off)
+  2293 REQUEST  WriteSetting 4:{11:1}  → mirrored on SubscribeToSettingsChanges 2295, 2299
+  2482 REQUEST  WriteSetting 4:{11:0}  → mirrored 2486, 2489
+```
+
+Film (`ffmpeg -ss <t> -i CAP-019-recording.mp4 -frames:v 1`, t = 201, 203, 204, 206 s; overlay 07:39:11, :13, :14, :16; checked by eye): on "More settings" the
+"Multipoint" switch is ON at 07:39:11 and :13, a finger is on it at 07:39:14, and it reads OFF at 07:39:16.
+
+**The SASS capability flags follow the setting (🟡 HYPOTHESIS, two samples).** `07 11 00 04 01 02 <flags> 00` (Buds → phone): 2296 `… b8 00` 32 ms after the ON
+write, 2487 `… 98 00` 104 ms after the OFF write (`tshark -r CAP-019-btsnoop_hci.log -Y 'frame.number==2296||frame.number==2487' -T fields -e frame.number -e
+frame.time -e data.data`). The Fast Pair SASS page (raw text fetched 2026-10-03): *"Bit 2: multipoint current state 1, if multipoint is on 0, otherwise"*
+(MSB-first: `0x20`). (Rewritten in place 2026-10-03, `ai-sessions/0069`, A68-PROT-02 — the OFF write was missed and the 07:39:13 round was called unrelated.)
 
 **Directly confirms `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group C's own hint** ("Multipoint may trigger
 an SDP/connection update, not just an RFCOMM command") — this is the first capture to correlate
@@ -172,9 +190,8 @@ DLCI 0x04 Group `0x07` (SASS) content with a specific triggering user action.
 before the Multipoint write) is the already-documented periodic "Notify ANC state" report
 (`PROTOCOL.md` §4.1, Code `0x13`) — coincidental timing, not Multipoint-specific.
 
-**Status:** 🟡 **HYPOTHESIS** for both the DLCI 0x02 write (frame 2293) and the DLCI 0x04 Group
-`0x07` correlation (frames 2296–2319) — single capture, no official SASS extension page consulted
-this session to confirm Code semantics.
+**Status:** the DLCI 0x02 writes (2293 ON, 2482 OFF) are `qhr` field 11, whose identity is 🟢 (`PROTOCOL.md` §4.5.2); 🟡 **HYPOTHESIS** for the DLCI 0x04
+Group `0x07` correlation and the flags-bit reading (one capture, two samples).
 
 ## 5. Cross-command structural comparison
 
@@ -200,13 +217,13 @@ and touch controls (`CAP-020` frame 1995 `4:{4:0}`); not for Multipoint or head 
 
 - `CONV-001` isolates to one DLCI 0x02 write per tap (1720 OFF, 1808 ON), both on film and acknowledged — 🟢 FACT (`PROTOCOL.md` §4.5.1).
   `MULTI-001` isolates to a single write (frame 2293), verified CRC-32, within ~1s of the video-confirmed action — its field identity is 🟢
-  by ADR-019/025 (code), the OFF direction is not captured.
+  by ADR-019/025 (code); the OFF write is frame 2482, on film (§4).
 - **New, higher-confidence finding:** Multipoint's DLCI 0x02 write is immediately followed by a
   DLCI 0x04 Group `0x07` (SASS) negotiation burst containing an ASCII `"in-use"` string — the first
   content-level, action-correlated data for this previously only structurally-identified Message
   Stream group.
-- **Recommended next step:** toggling Multipoint back OFF in a future capture would confirm whether
-  the SASS burst reverses/differs, and whether DLCI 0x02's `field 11` value flips to `0`.
+- Toggling Multipoint back OFF is in this capture (frame 2482): `field 11` flips to `0` and the SASS flags byte goes `b8` → `98`. A third sample of the flags
+  byte is planned in `CAP-069`.
 
 ## 7. Open Questions
 

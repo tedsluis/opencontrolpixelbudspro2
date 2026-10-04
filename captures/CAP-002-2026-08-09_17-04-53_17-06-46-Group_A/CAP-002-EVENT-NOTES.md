@@ -86,5 +86,10 @@ log uses the same wall clock (+0200), directly comparable.
   entire app setup / CDM permission / "Device details" loading sequence (17:06:04–17:06:46) — see
   `CAP-002-FINDINGS.md` §4 for what this means and possible explanations.
 
+## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
+
+- `BATT-004` — **present on the wire, not referenced in the timeline** (see `CAP-002-FINDINGS.md`).
+- `APP-001` (one mention) and `GFPS-002` (two) are referenced; `APP-002` is not — **expected, not observed in the notes**.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES

@@ -76,7 +76,7 @@ fun pullActionFor(tab: PullTab, deviceStatus: DeviceStatus, connectionState: Con
     deviceStatus is DeviceStatus.BluetoothOff -> PullAction.ENABLE_BLUETOOTH
     deviceStatus is DeviceStatus.PermissionMissing ->
         if (deviceStatus.status == PermissionStatus.PERMANENTLY_DENIED) PullAction.OPEN_APP_SETTINGS else PullAction.REQUEST_PERMISSIONS
-    deviceStatus is DeviceStatus.NotPaired -> PullAction.PAIR
+    deviceStatus is DeviceStatus.NotPaired || deviceStatus is DeviceStatus.SeveralBudsPaired -> PullAction.PAIR
     connectionState is ConnectionState.Ready -> when (tab) {
         PullTab.CONNECTION, PullTab.FIND -> PullAction.REFRESH_BATTERY
         PullTab.ANC -> PullAction.REFRESH_ANC

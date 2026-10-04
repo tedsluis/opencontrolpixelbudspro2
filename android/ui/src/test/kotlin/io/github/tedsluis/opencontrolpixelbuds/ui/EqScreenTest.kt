@@ -29,6 +29,10 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.geometry.Offset
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
@@ -62,12 +66,12 @@ class EqScreenTest {
         it.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)?.range == EqBandGains.RANGE.start..EqBandGains.RANGE.endInclusive
     }
 
-    private fun show(gains: EqBandGains?) = compose.setContent {
+    private fun show(gains: EqBandGains?, connectionState: ConnectionState = ConnectionState.Ready, updatedAt: Long? = null) = compose.setContent {
         OpenControlTheme(darkTheme = false) {
             EqScreen(
-                connectionState = ConnectionState.Ready,
+                connectionState = connectionState,
                 gains = gains,
-                eqProfileUpdatedAt = null,
+                eqProfileUpdatedAt = updatedAt,
                 eqError = null,
                 onGainsChanged = {},
                 onPresetSelected = {},
@@ -91,6 +95,69 @@ class EqScreenTest {
         val sliders = compose.onAllNodes(eqSlider)
         sliders.assertCountEquals(5)
         for (i in 0 until 5) sliders[i].assertIsEnabled()
+    }
+
+    // ---- `ai-sessions/0069` A68-APP-08 (visible text only) and A68-APP-16 ----
+
+    @Test
+    fun `an unread EQ shows a dash for each band, never 0,0`() {
+        show(gains = null)
+        // The five bands; the balance card below (a lazy-list item of its own) adds a sixth when it is composed.
+        val dashes = compose.onAllNodesWithText("—").fetchSemanticsNodes().size
+        assertTrue("dashes shown: $dashes", dashes == 5 || dashes == 6)
+        compose.onAllNodesWithText("%.1f".format(0f)).assertCountEquals(0)
+    }
+
+    @Test
+    fun `an unread balance shows a dash, a read one its value`() {
+        showBalance(balance = null)
+        compose.onNodeWithText("—").performScrollTo().assertExists()
+        compose.onAllNodesWithText("Centre").assertCountEquals(0)
+    }
+
+    @Test
+    fun `a read EQ shows its numbers`() {
+        show(gains = EqBandGains(upperTreble = 5f, treble = 3f, mid = 2f, bass = 0f, lowBass = -2f))
+        compose.onNodeWithText("%.1f".format(5f)).assertExists()
+        compose.onNodeWithText("%.1f".format(-2f)).assertExists()
+        assertTrue(compose.onAllNodesWithText("—").fetchSemanticsNodes().size <= 1) // at most the unread balance, never a band
+    }
+
+    @Test
+    fun `the Flat preset is offered next to the five others`() {
+        val chosen = mutableListOf<EqPreset>()
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                EqScreen(ConnectionState.Ready, EqBandGains.FLAT, null, null, {}, { chosen += it }, {})
+            }
+        }
+        compose.onNodeWithText("FLAT").performScrollTo().performClick()
+        assertEquals(listOf(EqPreset.FLAT), chosen)
+    }
+
+    // ---- `ai-sessions/0069` A68-APP-02: while not connected the last connection's values stay, marked ----
+
+    @Test
+    fun `after Disconnect the EQ card marks its (i) and names the last connection`() {
+        show(gains = EqBandGains.FLAT, connectionState = ConnectionState.Disconnected, updatedAt = 1_727_600_000_000L)
+        compose.onNodeWithContentDescription("Equalizer: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
+        compose.onNodeWithText("From the last connection — the app is not connected to the Buds now.").assertExists()
+        compose.onNodeWithText("EQ updated: ${formatUpdatedAt(1_727_600_000_000L)}").assertExists()
+    }
+
+    @Test
+    fun `a read EQ on an open session has a plain (i)`() {
+        show(gains = EqBandGains.FLAT, updatedAt = 1_727_600_000_000L)
+        compose.onNodeWithContentDescription("Equalizer: $DETAILS_DESCRIPTION").assertExists()
+    }
+
+    @Test
+    fun `the settings card on Sound is marked only when it still holds values and nothing is connected`() {
+        assertEquals(true, settingsFromLastConnection(ready = false, readings = listOf(SettingReading(true, 1L), null)))
+        assertEquals("nothing was ever read: nothing to mark", false, settingsFromLastConnection(ready = false, readings = listOf(null, null)))
+        assertEquals(false, settingsFromLastConnection(ready = true, readings = listOf(SettingReading(true, 1L))))
+        assertEquals(listOf(FROM_LAST_CONNECTION_DETAIL, "x"), withLastConnectionLine(listOf("x"), true))
+        assertEquals(listOf("x"), withLastConnectionLine(listOf("x"), false))
     }
 
     // ---- the balance slider: one write per completed drag (ai-sessions/0064, kept in 0066) --------------------------------------------------------------------------------------------------

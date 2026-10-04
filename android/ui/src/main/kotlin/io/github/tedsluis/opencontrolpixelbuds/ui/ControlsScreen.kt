@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
@@ -73,16 +74,22 @@ fun ControlsScreen(
 
             // `ai-sessions/0057`: one card per group; each card's (i) has its settings' "read / changed HH:MM:SS" lines ([settingTime]) and a dot while one of
             // them is not read from the Buds yet. Functionally unchanged (D-1 … D-4).
-            SettingsCard("Touch controls", listOf("Use touch controls: ${settingTime(settings.touchControls)}"), enabled && settings.touchControls == null) {
+            SettingsCard("Touch controls", listOf("Use touch controls: ${settingTime(settings.touchControls)}"), enabled, listOf(settings.touchControls)) {
                 SettingSwitchRow("Use touch controls", null, settings.touchControls, enabled, onTouchControlsChanged)
             }
-            SettingsCard("Press and hold", pressAndHoldDetailLines(settings), enabled && pressAndHoldNotRead(settings)) {
+            SettingsCard(
+                "Press and hold",
+                pressAndHoldDetailLines(settings),
+                enabled,
+                listOfNotNull(settings.holdLeft, settings.holdRight, settings.ancModeList.takeIf { showAncModeList(settings) }),
+                notRead = pressAndHoldNotRead(settings),
+            ) {
                 Text(DIGITAL_ASSISTANT_NOTE, style = MaterialTheme.typography.bodySmall)
                 HoldRow("Left", settings.holdLeft, enabled) { onPressAndHoldChanged(Bud.LEFT, it) }
                 HoldRow("Right", settings.holdRight, enabled) { onPressAndHoldChanged(Bud.RIGHT, it) }
                 if (showAncModeList(settings)) AncModeListSection(settings.ancModeList, enabled, onAncModeSelectedChanged)
             }
-            SettingsCard("In-ear detection", listOf("In-ear detection: ${settingTime(settings.inEarDetection)}"), enabled && settings.inEarDetection == null) {
+            SettingsCard("In-ear detection", listOf("In-ear detection: ${settingTime(settings.inEarDetection)}"), enabled, listOf(settings.inEarDetection)) {
                 SettingSwitchRow("In-ear detection", IN_EAR_DETECTION_SUBTITLE, settings.inEarDetection, enabled, onInEarDetectionChanged)
                 Text(IN_EAR_DETECTION_OFF_NOTE, style = MaterialTheme.typography.bodySmall)
             }
@@ -90,12 +97,27 @@ fun ControlsScreen(
     }
 }
 
+/**
+ * One settings card. The (i) carries the dot while connected and one of [readings] is not read yet ([notRead]), or — `ai-sessions/0069` A68-APP-02 — while
+ * not connected and the card still shows the last connection's values, which are then dimmed and named as such in the first detail line.
+ */
 @Composable
-private fun SettingsCard(title: String, detailLines: List<String>, notCurrent: Boolean, content: @Composable () -> Unit) {
+private fun SettingsCard(
+    title: String,
+    detailLines: List<String>,
+    enabled: Boolean,
+    readings: List<SettingReading<*>?>,
+    notRead: Boolean = readings.any { it == null },
+    content: @Composable () -> Unit,
+) {
+    val fromLastConnection = settingsFromLastConnection(enabled, readings)
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            CardTitle(title, detailLines, notCurrent)
-            content()
+            CardTitle(title, withLastConnectionLine(detailLines, fromLastConnection), (enabled && notRead) || fromLastConnection)
+            Column(
+                modifier = Modifier.alpha(if (fromLastConnection) NOT_CURRENT_ALPHA else 1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) { content() }
         }
     }
 }

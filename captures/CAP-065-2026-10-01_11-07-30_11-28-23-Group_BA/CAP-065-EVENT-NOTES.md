@@ -197,7 +197,7 @@ app's claims start with `08 11` or `08 12` (FINDINGS §3).
 | K4 rotation | **skipped** (never rotated) | film; logcat |
 | K4 dark mode on/off | **done**: two activity recreations, no crash, all five tabs viewed in dark | logcat 09:23:45, 09:24:25 |
 | K1 / K2 Bluetooth off / on | **skipped** during the session (Bluetooth was only toggled at S1, before the app was used) | HCI; film |
-| K3 out of range | **not identifiable / not done**: no ACL loss other than the seven `0x13` drops on docking (FINDINGS §6); the film shows the phone untouched 11:24:26–11:26:26 with no Bluetooth change | HCI |
+| K3 out of range | **not identifiable / not done**: no ACL loss other than the six `0x13` drops on docking (FINDINGS §6); the film shows the phone untouched 11:24:26–11:26:26 with no Bluetooth change | HCI |
 | L2 export (Debug on) | **done after the film** (11:29:07), off film | file name |
 | L3 export with Debug off | **not done** (one export only) | — |
 | K5 auto-off | **skipped** | system log (no auto-off) |

@@ -225,11 +225,17 @@ class BudsRepositoryImpl(
     @Volatile
     private var debugModeEnabledSnapshot = false
 
-    private val _ancMode = MutableSharedFlow<AncMode>(replay = 1)
-    override val ancMode: Flow<AncMode> = _ancMode
+    // A state, not a replay-1 SharedFlow (`ai-sessions/0069`, A68-APP-03): `tryEmit` on that flow returned false — and dropped the report — whenever a
+    // collector was still busy with the previous one, while [_ancModeUpdatedAt] advanced. A StateFlow always holds the newest report.
+    private val _ancMode = MutableStateFlow<AncMode?>(null)
+    override val ancMode: StateFlow<AncMode?> = _ancMode
+
+    /** When the current connection was requested ([BudsRepository.sessionSince]); values reported before it are "from the last connection" (A68-APP-02). */
+    private val _sessionSince = MutableStateFlow<Long?>(null)
+    override val sessionSince: StateFlow<Long?> = _sessionSince
 
     /** replay=0 counterpart of [_ancMode], used only so [refreshAncMode] waits for a
-     * genuinely fresh response rather than immediately observing [_ancMode]'s replay cache. */
+     * genuinely fresh response rather than immediately observing [_ancMode]'s current value. */
     private val _ancModeFresh = MutableSharedFlow<AncMode>(extraBufferCapacity = 8)
 
     private val _ancModeUpdatedAt = MutableStateFlow<Long?>(null)
@@ -311,7 +317,7 @@ class BudsRepositoryImpl(
      * timestamp, in one place (`ai-sessions/0043` Phase H) — never a polling timer, only recorded when a
      * value is actually received. */
     private fun emitAncMode(mode: AncMode) {
-        _ancMode.tryEmit(mode)
+        _ancMode.value = mode
         _ancModeUpdatedAt.value = clock()
     }
 
@@ -433,6 +439,15 @@ class BudsRepositoryImpl(
         _ringing.update { it?.copy(fromEarlierSession = true) }
     }
 
+    /**
+     * A68-APP-02 (`ai-sessions/0069`): the session has ended (Disconnect, or a loss) — the battery values it reported are "last seen" / "last connection" from
+     * now, not only from the next Connect; until then they were shown as current while nothing was connected. The ANC mode, the EQ and the settings need no
+     * mark of their own: none of them is current while the session is not Ready ([isCurrent]).
+     */
+    private fun markValuesFromEndedSession() {
+        _batteryStatus.update { it.markedFromEarlierSession() }
+    }
+
     private val _deviceInfo = MutableStateFlow<DeviceInfo?>(null)
     override val deviceInfo: Flow<DeviceInfo?> = _deviceInfo
 
@@ -466,6 +481,8 @@ class BudsRepositoryImpl(
                     onMalformed = { BleLogger.logMalformedFrame(channelId, debugModeEnabledSnapshot) },
                     // Always-on, payload-free (AGENTS.md §9): shows whether the Buds accept or reject a request.
                     onRpcPacket = { BleLogger.logConnectionEvent(it.summary()) },
+                    // A reader threw on this frame (`ai-sessions/0069` A68-APP-01): the frame is dropped as malformed, the class is logged.
+                    onDecoderFault = { BleLogger.logConnectionEvent("Decoder fault on channel $channelId: ${BleLogger.describe(it)}") },
                 )
                 routed.forEach(::handleRoutedFrame)
             }
@@ -506,6 +523,7 @@ class BudsRepositoryImpl(
                     lossWhileHidden = !appVisible // I-2: no reading can come until the app is back on screen
                     reclassifyLoss()
                     markRingFromEarlierSession()
+                    markValuesFromEndedSession()
                     reopener.onSessionLost()
                     cancelClaimJobs()
                     codecRouter.resetAll()
@@ -592,7 +610,10 @@ class BudsRepositoryImpl(
                 _maestroReplies.tryEmit(MaestroReply.Setting(frame.value))
             }
 
-            // No persisted state (ARCHITECTURE.md §3.1's table); the Buds do not send Ring frames themselves (their ACK is a Reply).
+            // No persisted state (ARCHITECTURE.md §3.1's table). The Buds **do** send this frame themselves (corrected `ai-sessions/0069`, A68-APP-12): after the
+            // app's Ring or Stop they send their own copy `04 01 00 01 xx` — the ringing-status sync of the Fast Pair spec (`CAP-059` 2312, 2494, 2507, 2604;
+            // PROTOCOL.md §4.4) — besides their ACK (a Reply). The app reads nothing from it and sends no acknowledgement for it: an ACK would be a new send and
+            // needs its own ADR (the maintainer's choice in chat 2026-10-03, "Nothing new on the wire; test first"; `CAP-068` section VI films a stop on the bud).
             is RoutedFrame.Ring -> Unit
 
             // ADR-033. A byte the decoder does not interpret arrives as Unavailable and *replaces* any
@@ -655,6 +676,9 @@ class BudsRepositoryImpl(
         // "last seen" / "from the last connection" (with their own times) until this connection's reports replace them; kept only in memory, never
         // persisted (ARCHITECTURE.md §3.1). Before the bonded-device lookup: they are the previous connection's, whatever this attempt does.
         _batteryStatus.update { it.markedFromEarlierSession() }
+        // A68-APP-02 (`ai-sessions/0069`): from here on, whatever the Buds reported earlier is "from the last connection" — the ANC mode is kept and
+        // judged by this time ([isCurrent]); it becomes current again with this connection's first Notify or ACK.
+        _sessionSince.value = clock()
         // 0044 APP-8: no bonded device is "not paired", not a missing permission (AGENTS.md §8 — a specific message per cause).
         val device = bondedDeviceProvider()
             ?: return@withLock BudsResult.Failure(BudsError.NotPaired)
@@ -717,6 +741,7 @@ class BudsRepositoryImpl(
         _deviceInfo.value = null
         // Not the ring notice (I-6): the ring keeps sounding after Disconnect until Stop is sent (`CAP-062` frame 9772, heard until 06:53:50).
         markRingFromEarlierSession()
+        markValuesFromEndedSession()
         _safeMode.value = null
         cancelClaimJobs()
         transport.disconnect()
@@ -823,7 +848,9 @@ class BudsRepositoryImpl(
             is ConnectionState.Connecting, is ConnectionState.Discovering -> return eqFailed(BudsError.SessionOpening)
             else -> return BudsResult.Failure(BudsError.ConnectionLost)
         }
-        val clamped = gains.clamped()
+        // A68-APP-11 (`ai-sessions/0069`): a band that is not a finite number is refused here — nothing is encoded, nothing is sent.
+        val clamped = gains.clampedOrNull()
+            ?: return eqFailed(BudsError.Unknown(IllegalArgumentException("an equalizer gain is not a number")))
         return eqMutex.withLock {
             val channel = when (val c = awaitMaestroChannel()) {
                 is BudsResult.Failure -> return@withLock eqFailed(c.error)
@@ -883,7 +910,7 @@ class BudsRepositoryImpl(
             is BudsResult.Success -> c.value
         }
         val request = Maestro.readSettingRequest(channel.channelId, Maestro.FIELD_EQ_ACTIVE)
-            ?: return@withLock eqFailed(BudsError.Unknown(IllegalStateException("EQ field not readable")))
+            ?: return@withLock eqFailed(BudsError.SettingNotReadable)
         val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(request))
         // An OK answer that is not a decodable EQ value ends the wait too (A58-APP-03): reported as unreadable, not as "no answer".
         val accept: (MaestroReply) -> Boolean = {

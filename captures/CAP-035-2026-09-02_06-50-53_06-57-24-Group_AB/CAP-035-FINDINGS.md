@@ -43,7 +43,7 @@ mismatches: 0
 ```
 No snaplen limit; 0/1,945 mismatches. Not truncated.
 
-## 1. Step 0, point 1 — video relationship: sequential, ~7s gap, NOT ~5 minutes (🟢 FACT)
+## 1. Step 0, point 1 — video relationship: sequential, ~3 s gap, NOT ~5 minutes (🟢 FACT)
 
 `CAP-035-EVENT-NOTES.md`'s original header claimed "a ~5 min gap between videos," but its own event
 table anchored both video 1's "Confirm system pairing dialog" row and video 2's "Start video 2
@@ -72,7 +72,7 @@ video 1 (16 frames covering its entire 67.69s) and 10 sample points across video
 **Conclusion — interpretation, stated plainly:** this is **case (a) refined, not case (c)**: video 1
 and video 2 are two **sequential** recordings of the same real-time sequence, separated by only a
 short (~3–7s) recording-stop/restart gap — the user apparently stopped recording while the dialog
-sat open and unconfirmed, then started a second recording ~7s later from the same still-pending
+sat open and unconfirmed, then started a second recording ~3 s later (06:50:53 + 67.69 s = 06:52:00.7; video 2 starts 06:52:04 — corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-23`: this document said "~7s" here and in its §1 title) from the same still-pending
 state. It is *not* a "redo from the pairing dialog" (case (c)) in the sense of discarding and
 re-attempting the pairing flow — nothing was cancelled, re-tapped, or reset between the two videos;
 the same single pairing attempt simply continues across the recording boundary. The practical

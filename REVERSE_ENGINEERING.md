@@ -12,7 +12,7 @@ boundary for this kind of work).
 
 > **Status (updated 2026-09-24, `ai-sessions/0045`):** populated — static analysis of
 > `v1.0.955078536-10253511` since 2026-08-30, continued in logged sessions `ai-sessions/0001`–`0031`
-> (`ai-sessions/INDEX.md`). New findings are added one class/finding at a time, following
+> (`ai-sessions/INDEX.md`) *(and since: `0045`, `0055`, `0059`, `0062`, `0069` — updated 2026-10-03)*. New findings are added one class/finding at a time, following
 > `PROJECT_RULES.md` §1 (FACT / HYPOTHESIS / ASSUMPTION) and §3. *(This line used to say "no analysis
 > session has been logged yet".)*
 >
@@ -63,7 +63,7 @@ main analysis target.
 | Min/target/compile SDK | minSdk 32, targetSdk 36 (`adb shell dumpsys package`, 2026-08-30); compileSdk not separately confirmed |
 | Obfuscation present? | Yes — R8/ProGuard: almost all app-internal classes are flattened into a single `defpackage` package with short (2–4 char) obfuscated names (e.g. `fxm`, `gbm`, `fzd`, `goq`), grouped ~19 unrelated lambda bodies into shared synthetic dispatch classes (e.g. `gau`, see its entry below). A handful of third-party library classes survive unobfuscated (`dev.pigweed.pw_tokenizer.Detokenizer`, `androidx.*`) — one Kotlin function-reference metadata string also survives with its pre-obfuscation signature intact (see `fsz` entry below), which is how the `pw_hdlc`/`pw_rpc` link below was found at all. |
 | Native libraries present? | Yes, but not `libmaestro.so`/`libgfps.so` — only `lib/arm64-v8a/libandroidx.graphics.path.so` and `lib/arm64-v8a/libpw_tokenizer_jni.so`, both present only in `split_config.arm64_v8a.apk` (absent from `base.apk`). No file named `libmaestro`/`libgfps` exists anywhere across base + both splits, and no `System.loadLibrary` call in the decompiled sources names one either — see §Native libraries and the Open questions on the `fxm`/`gbm` entries below for what this means for AGENTS.md §0/§6's native-binary framing. |
-| Firmware/library versions referenced in-app | _(not yet checked this pass)_ |
+| Firmware/library versions referenced in-app | No firmware string is compiled into the app: the firmware (`release_5.203`) is read from the Buds (`GetSoftwareInfo`, `qjb`/`qie` entries below; `PROTOCOL.md` §2.2a). Tool versions (JADX, apktool) are recorded per APK in `reverse-engineering/APK_VERSIONS.md`. *(Cell filled 2026-10-03, `ai-sessions/0069`; it read "not yet checked this pass".)* |
 
 ## Method
 
@@ -96,10 +96,14 @@ out-of-scope areas). Summary:
    - `.proto`-generated classes (look for `GeneratedMessageLite`,
      `builder()`, field names matching known UI strings like `anc_mode`,
      `eq_band`)
-4. For `.proto` schema extraction specifically, use `pbtk`
-   (`AGENTS.md` §4/§6) rather than hand-reconstructing schemas from
+4. For schema extraction use `scripts/decode_rawmessageinfo.py` (or the batch tool
+   `reverse-engineering/tools/schema_batch_extractor/`) rather than hand-reconstructing schemas from
    decompiled getter/setter names alone — protobuf field numbers are not
-   always recoverable from JADX output.
+   always recoverable from JADX output. *(Changed 2026-10-03, `ai-sessions/0069`: this step named `pbtk`, which cannot
+   read this APK's codegen — the Tooling note below and `DECISIONS.md` ADR-041.)*
+4a. **"Not found in JADX" needs the smali as its positive control** (added 2026-10-03, `ai-sessions/0068` A68-RE-01): when a
+   JADX file says "Method dump skipped", grep the `apktool` smali for the field write or call before recording "not found" —
+   `qhr` field 29's write site was missed this way.
 5. Document every relevant class below, even if its name is obfuscated —
    record the obfuscated name plus a readable alias you assign for reference.
 6. Cross-check any candidate opcode, UUID, or message code against a real
@@ -122,7 +126,8 @@ the maintainer's explicit request — the FACT/HYPOTHESIS/ASSUMPTION labels belo
 does X," never for a protocol-behavior claim; every protocol-relevance reading stays 🟡/⚪ with a
 **Hypothesis test** until cross-checked against a capture. None of this has been promoted to
 `PROTOCOL.md`, and no `DECISIONS.md` ADR has been written or superseded — both remain a maintainer
-call per `AGENTS.md` §6/§15.
+call per `AGENTS.md` §6/§15. *(Stale since 2026-08-30 — pointer 2026-10-03, `ai-sessions/0069`: many of these findings have since been promoted
+with the maintainer's approval; the "Correlation status with PROTOCOL.md" table at the end lists them with their ADRs.)*
 
 ### `defpackage.fzd` — InternalRfcommUuidRegistry
 
@@ -143,7 +148,7 @@ call per `AGENTS.md` §6/§15.
 - **Hypothesis test**: not applicable to this entry alone (constants only) — see `gbm`'s entry.
 - **Open questions**: which of these two UUIDs (if either) matches the SDP record UUID actually
   observed on the wire for DLCI 0x02 (Pigweed `pw_hdlc`) vs. DLCI 0x08 (still-unidentified private
-  envelope) in `PROTOCOL.md` §2.2a/§2.3's table — not yet checked against a capture.
+  envelope) in `PROTOCOL.md` §2.2a/§2.3's table — not yet checked against a capture. *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: checked since — DLCI 0x02 is the "pigweed" socket in every capture, ADR-018; the "default" UUID was never seen)*
 
 ### `defpackage.gbm` — InternalRfcommSocketSelector
 
@@ -316,7 +321,7 @@ call per `AGENTS.md` §6/§15.
 - **Open questions**: full read/write/frame-decoding logic not traced this pass — this pass only
   located the class, not its `pw_hdlc` frame handling in detail.
 
-### `defpackage.fua` / `defpackage.gax` / `defpackage.gbo` / `defpackage.gba` / `defpackage.hjy` — Group-numbered `SparseArray` router on `gbd` (DLCI 0x02), and its per-device-variant handler registration
+### `defpackage.fua` / `defpackage.gax` / `defpackage.gbo` / `defpackage.gba` / `defpackage.hjy` — Group-numbered `SparseArray` router on `gbd` (DLCI 0x02 — *retitle note 2026-10-03, `ai-sessions/0069`, A68-RE-02: read "the legacy TLV style"; the pigweed/DLCI 0x02 socket class `fut` overrides `d()` to throw "Unsupported legacy communication style." (`fut.java:130-131`), so this router does not send on DLCI 0x02 — see the 2026-09-30 Update in the `gbm` entry*), and its per-device-variant handler registration
 
 > Added 2026-08-30, maintainer-approved write-up of a candidate cluster first surfaced during an
 > independent verification of a now-deleted, unofficial `REVIEW_REPORT.md`. That document's central
@@ -344,7 +349,7 @@ call per `AGENTS.md` §6/§15.
   inferred to need but hadn't been located until this pass.
 - **Relevant message groups/codes found**: registers whichever Group IDs its callers pass in (see
   `gax`/`gbo` below) — not itself a fixed list.
-- **Hypothesis test**: not yet run against a capture — no DLCI 0x02 payload has been decoded to the
+- **Hypothesis test**: not yet run against a capture — no DLCI 0x02 payload has been decoded to the *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: answered — every DLCI 0x02 payload decodes as a pw_rpc `RpcPacket`, ADR-034; this legacy TLV router is not what DLCI 0x02 carries)*
   point of reading its own leading Group byte against this router's registered set (§2.2a's own
   "Sent"-direction content remains opaque).
 - **Open questions**: how an inbound DLCI 0x02 payload's Group byte is actually extracted before
@@ -410,7 +415,7 @@ call per `AGENTS.md` §6/§15.
     65`) reference `"Attempt manual OTA"`, `OTA_ERROR_BATTERY_LOW`, `OTA_ERROR_NOT_DOCKED`,
     `OTA_SUCCESS` — "battery low" appears only as one *OTA precondition failure reason*, not as a
     battery-telemetry channel.
-  - **This project's own already-🟢-FACT battery-push mechanism (`PROTOCOL.md` §4.3 Option E, DLCI
+  - **This project's own already-🟢-FACT battery-push mechanism (`PROTOCOL.md` §4.3 Option E, DLCI *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: the app's Case source is DLCI 0x02 `SubscribeRuntimeInfo` since ADR-043; the DLCI 0x08 claim was withdrawn)*
     0x08's private envelope, `Group 0x0e Code 0x01`/`Group 0x04 Code 0x03`) is a different channel
     entirely from this DLCI-0x02 `fua`/`gbd` cluster** — so even where the report's high-level claim
     ("battery updates are event-driven, not app-polled") happens to be directionally consistent with
@@ -439,7 +444,7 @@ call per `AGENTS.md` §6/§15.
   fetch (triggered by this code path) precede the HID-Control/HID-Interrupt L2CAP channel setup
   already observed there?
 - **Open questions**: what `GetSoftwareInfo`'s actual pw_rpc request/response payload looks like on
-  the wire — not yet captured or decoded.
+  the wire — not yet captured or decoded. *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: captured and decoded — the unsolicited `GetSoftwareInfo` announcement, `PROTOCOL.md` §2.2a, 191 of 191)*
 
 ### `defpackage.fsz` — MaestroWriteSettingRpcClient
 
@@ -455,7 +460,7 @@ call per `AGENTS.md` §6/§15.
   pass found that the app's own vocabulary for this transport is literally Pigweed `pw_rpc` over
   `pw_hdlc`. 🟡 HYPOTHESIS: `WriteSetting` is likely the generic pw_rpc call used for settings this
   project cares about (ANC, EQ, etc.) not already covered by the Fast Pair Message Stream's Group
-  `0x08` opcode (`PROTOCOL.md` §4.1) — not yet confirmed against a capture or a decoded request
+  `0x08` opcode (`PROTOCOL.md` §4.1) — not yet confirmed against a capture or a decoded request *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: confirmed — `WriteSetting` on the wire, ADR-019/020/034/045)*
   payload.
 - **Relevant methods**:
   - the method whose reference is captured at `fsz.java:223` (`getWriteSettingMethodClient`; the call
@@ -1148,7 +1153,7 @@ the first time against every one of its 20 real discriminators + default branch.
     | 23 | MESSAGE→`qhq` (trivial marker) | not found | case 23 (`:355-357`), calls `geaVar.H(...)` | not independently named |
     | 27 | BOOL | `fyo.java:80-100` (`e`) | case 27 (`:358-361`), `"received case earcon setting value"` | **case-sound toggle (matches §4.5's "Case sound" grouping)** |
     | 28 | BOOL | `fyo.java:58-78` (`d`) | case 28 (`:362-365`), `"received bud return sound setting value"` | **"bud return" case-sound toggle (matches §4.5's other Case-sound entry)** |
-    | 29 | ENUM (`qgx.n`/similar) | not found | case 29 (`:366-373`) | not independently named |
+    | 29 | ENUM (`qgx.n`/similar) | not found *(found 2026-10-03, `ai-sessions/0069`: `cmi.smali:3499`, case 5 of `cmi.b()` — see the Update below the table)* | case 29 (`:366-373`) | not independently named *(the write path is keyed on the preference `key_head_gestures_toggle` — Update below)* |
     | 32 | BOOL | `fyo.java:257-276` (`r`) — **added 2026-09-08**, reached from `MaestroDeviceSettingsProviderService` case `2116` only (`fyc.i(new fyb(z,6))` → `fyb` case 6 → `fya.r`) | unhandled (default) | logged internal category `CATEGORY_RV_BLOCK_AUTO_TEST` (`fjm.H(24)`) — diagnostic/auto-test-sounding, not a recognizable user-facing feature |
 
     Fields left out of this table (2, 5, 11, 15, 21, 29 excepted where partially covered above) had a
@@ -1157,6 +1162,19 @@ the first time against every one of its 20 real discriminators + default branch.
     gave a nameable role. Fields 1, 6, 8, 14, 17 (write side), 20, 24, 25, 26, 30-38 were not traced to
     any call site this pass (either genuinely absent from the app's current write paths, like 6/8/9/10,
     or simply not searched for — this table is not claimed exhaustive of all 38 fields).
+    *(Correction 2026-10-03, `ai-sessions/0069`, A68-RE-04: the table above does give write sites for fields 6, 14, 17 and 32; this paragraph predates those rows. "Not traced to any
+    call site" holds for 1, 8, 9, 10, 20, 24, 25, 26, 30, 31, 33–38.)*
+
+    **Update (2026-10-03, `ai-sessions/0069`, `ai-sessions/0068` A68-RE-01 — field 29's write site, found in smali; mechanical search only, ADR-017).** 🟢 FACT (code
+    existence): `apktool-output/smali_classes2/cmi.smali:3499` is `iput v2, v1, Lqhr;->b:I` directly after `const/16 v2, 0x1d` (29), with the value
+    (`Lqhr;->c`) an `Integer` computed a few lines above from a boolean (`:3470`–`:3497`). JADX could not decompile the method (`cmi.java:134`: "Method dump
+    skipped, instructions count: 1636"), which is why the JADX-wide search for `qhr….b = 29` found nothing. The site lies in the branch `:pswitch_e` (label at
+    `cmi.smali:3102`) of `cmi.b(Object)`'s packed switch (table at `:4568`), i.e. **discriminator 5**; that branch compares its string argument with the
+    resource `0x7f140315` = `key_head_gestures_toggle` (`apktool-output/res/values/public.xml:5762`; value "head_gestures_toggle", `strings.xml:433`). The
+    only constructor call with discriminator 5 found is `hhn.java:33`, inside `hhn.a(String, Object)`, which logs "onPreferenceChange: %s, %s" (`hhn.java:32`);
+    `hhn` is the view model of `…/ui/settings/gesture/headgestures/HeadGesturesSettingFragment.java` (`:56`, `:60`). So the "Use head gestures" preference
+    writes `qhr` field 29 through `WriteSetting`. 🟡 for the protocol reading (1 = off, 2 = on) — the wire side is `CAP-020` 1935/2038 (`PROTOCOL.md` §4.5.4,
+    2026-10-03 Update); nothing is promoted here. Open: the exact boolean → enum arithmetic in the branch was not traced instruction by instruction.
 
 - **Open questions**: what fields 24/26/29's enum types actually are (validity-checker delegates to an
   unnamed obfuscated helper, unlike `qhs`); what the remaining nested `MESSAGE` fields' own semantics
@@ -2355,7 +2373,7 @@ the first time against every one of its 20 real discriminators + default branch.
 - **Open questions**: what `CASE`, `LEFT_TAHITI`/`RIGHT_TAHITI`, `LEFT_SENSOR_HUB`/`RIGHT_SENSOR_HUB`,
   and `LEFT_SPI_BRIDGE`/`RIGHT_SPI_BRIDGE` actually correspond to in hardware. ⚪ ASSUMPTION: `CASE`
   is the charging case being independently addressable over this same routing scheme, and `TAHITI`
-  reads as a chip/SoC codename — neither is capture-correlated or otherwise confirmed.
+  reads as a chip/SoC codename — neither is capture-correlated or otherwise confirmed. *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: `CASE`/`LEFT_BT_CORE`/`RIGHT_BT_CORE` are capture-correlated since `CAP-065`: channel 19 = Left, 21 = Right, `PROTOCOL.md` §2.2a)*
 
 ### Other `maestro_pw.Maestro`/`Dosimeter`/`EartipFitTest`/`HeadGesture`/`Multipoint`/`JitterBuffer` request/response types — decoded shapes register
 
@@ -2382,7 +2400,7 @@ MaestroEmptyMarker entry above).
 | `qjp` | `Multipoint.SubscribeToQuietModeStatus` response | 1 | plain `BOOL` (Java field `c`) |
 
 **Open questions**: none of the "plausibly" readings above are anything more than ⚪ ASSUMPTION from
-field count/type/RPC-name context — none is capture-correlated. Included here only to keep this
+field count/type/RPC-name context — none is capture-correlated. Included here only to keep this *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: `qiy` (`SubscribeRuntimeInfo`) and `qiv` (`GetHardwareInfo`) are capture-correlated since ADR-043 / `PROTOCOL.md` §6, 2026-09-24)*
 register complete for whoever picks up the corresponding capture-correlation work next.
 
 **Update (2026-09-13, `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 3) — `qin`'s single
@@ -3869,7 +3887,7 @@ via a capture, update its status here **and** promote it into `PROTOCOL.md`.
 
 | UUID | Found in (file:line) | Suspected function | Status |
 |---|---|---|---|
-| `3a046f6d-24d2-7655-6534-0d7ecb759709` (byte-reversed alias: `099775cb-7e0d-3465-5576-d2246d6f043a`) | `fzd.java:9`, `gbm.java:38` | App's own log label: "default internal rfcomm socket" | 🟡 HYPOTHESIS — not yet matched against a capture's SDP record |
+| `3a046f6d-24d2-7655-6534-0d7ecb759709` (byte-reversed alias: `099775cb-7e0d-3465-5576-d2246d6f043a`) | `fzd.java:9`, `gbm.java:38` | App's own log label: "default internal rfcomm socket" | 🟡 HYPOTHESIS — not yet matched against a capture's SDP record *(status 2026-10-03, A68-RE-03: never seen in any capture — exhaustive negative in the `gbm` entry; not DLCI 0x08, whose SDP record is "GSND CONTROL", `CAP-033` frame 1279)* |
 | `25e97ff7-24ce-4c4c-8951-f764a708f7b5` (byte-reversed alias: `b5f708a7-64f7-5189-4c4c-ce24f77fe925`) | `fzd.java:9`, `gbm.java:35` | App's own log label: "pigweed internal rfcomm socket" — SDP-confirmed (`CAP-001`/`CAP-002`/`CAP-032`) as RFCOMM server channel 1 = DLCI 0x02, AGENTS.md §6's Pigweed `pw_hdlc` channel | 🟢 FACT for channel ownership (confirmed by capture IDs `CAP-001`/`CAP-002`/`CAP-032`, `DECISIONS.md` ADR-018, `PROTOCOL.md` §2.2a); 🟡 HYPOTHESIS (strong) that Sent-direction payload content specifically carries `libmaestro`'s settings commands |
 | `00001124-0000-1000-8000-00805f9b34fb` | `fxm.java:12` | Bluetooth SIG-assigned HID Profile UUID (public spec, not project-specific) — app checks for it before triggering `fetchUuidsWithSdp()` | 🟢 FACT (that this official UUID is checked for); whether the Buds actually expose it is capture-dependent — cross-reference `CAP-002`/`CAP-016` |
 
@@ -3935,7 +3953,7 @@ APK, in addition to the officially documented ones.
 |---|---|---|---|---|
 | | | | | |
 
-**Empty by design, not by omission (noted 2026-09-07, `AUDIT_REPORT_2026-09-07.md` §1.0/§2.1,
+**Empty by design, not by omission (noted 2026-09-07, `AUDIT_REPORT_2026-09-07.md` §1.0/§2.1 — *that report was retired after processing, `CHANGELOG.md`; its content is carried by ADR-025*,
 `DECISIONS.md` ADR-025):** exhaustive full-tree searches found no code anywhere in this companion
 app's own decompiled source constructing or parsing a DLCI 0x04 Fast Pair Message Stream frame or
 DLCI 0x08's private envelope (no `MessageStream`/`HearableControls`/ANC-opcode literals, no
@@ -4331,6 +4349,16 @@ promoted into the protocol documentation, to avoid the same finding being
 | `qhr` field register corrections: field 6 has a real write site (`fyo.m`, caller unfound) — corrects a prior "not found" entry; field 32 (`fyo.r`) added, previously absent | (register correction, no `PROTOCOL.md` section — informational) | 2026-09-08 | `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 1 |
 | `MaestroEndpointService.onCreate()` (smali read): registered services come from a Dagger multibinding (names not recovered); `ofd`'s method is a per-call UID-based authorization check, not a service dispatcher — two policies found (`ofb` internal-UID-only, `mie` allowlisted+Google-signed). Incidental finding: an unrelated outbound gRPC client connection to `com.google.android.apps.pixel.dcservice`. **Superseded 2026-09-17 (`ai-sessions/0027`, maintainer-approved `ai-sessions/0028`) — fixed 2026-09-18, `ai-sessions/0032`, a stale-row correction, not a new finding: there is no Dagger multibinding at all — `MaestroEndpointService.b` is a hardcoded, permanently-empty Guava `ImmutableMap` (see this document's own `MaestroEndpointService` entry, 2026-09-17 update, and `PROTOCOL.md` §6's matching item).** | §6 Commands & schemas (updated) | 2026-09-08 | `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 2 |
 | `fyd.d`/`fyd.e`'s call sites traced: field 16 fires from the slider-drag/preset path (as understood); field 18 is reachable only via a dedicated, self-describing Save-button click handler — contradicts, not confirms, `CAP-015`'s own "fires on slider-release" wire-timing hypothesis | §4.2 (updated), §6 (updated) | 2026-09-08 | `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 3 item 4 |
+| *(Row corrected 2026-10-03, `ai-sessions/0069`, A68-RE-03: the row above is superseded — a second path to field 18 exists, `hod.java:36`, "Navigate away, save EQ"; `qjw` entry, 2026-09-13.)* | §4.2 | 2026-09-13 | `ai-sessions/0017` |
+| pw_rpc identity of DLCI 0x02 (`nqx` = `RpcPacket`; service/method name hashes, `fux.java`); `ReadSetting 4:N` | §2.2a, §4.2 | 2026-09-20 | 43 captures; `DECISIONS.md` ADR-034 |
+| `qhr` fields 17, 19, 22, 27, 28 (2026-09-03), 2 (2026-09-08), 11, 15 (2026-09-08) — field identities | §4.5.1, §4.5.2, §4.5.5–§4.5.8 | 2026-09-03/08 | ADR-019 Updates, ADR-025 Update |
+| Read-only `ReadSetting` for the `qhr` fields at FACT identity; writes of 17, 19, 22, 4, 7 | §4.5 | 2026-09-20 / 2026-09-26 | ADR-036, ADR-045 |
+| `qiy` — `SubscribeRuntimeInfo` stream: entry 6.1 = Case %, 6.2/6.3 per-bud charging | §4.3 Option F | 2026-09-24/25 | `CAP-061`, `CAP-062`; ADR-043 |
+| `qht` field order (1 NC, 2 Off, 3 Transparency, 4 Adaptive) and "ANC gesture loop" = the press-and-hold mode list; field 2 = "In-ear detection" | §4.5.3, §4.5.5 | 2026-09-28 | `CAP-056`; ADR-046, ADR-047 |
+| The other pw_rpc services named by their hashes (Dosimeter, Multipoint, DynamicServerConfigService, BundledUpdate, UpdateHelperService); the request address derivable from the channel (🟡) | §2.2a | 2026-09-30 | `CAP-041` 768/769/782; ADR-034 Update |
+| The "default internal rfcomm socket" is not DLCI 0x08 (refutation) | §2.3 / `gbm` entry | 2026-09-30 | `CAP-033` frame 1279 |
+| `qie` entries 1/2/3 → Case / Left / Right (the official app's firmware screen) | §2.2a | 2026-10-01 | `ai-sessions/0062`; 191 announcements |
+| `qhr` field 29 write site (`cmi`, discriminator 5, `key_head_gestures_toggle`) — recorded, **not promoted** (🟡 1 = off, 2 = on) | §4.5.4 (2026-10-03 Update) | 2026-10-03 | `CAP-020` 1183/1935/2038; `ai-sessions/0069` |
 | | | | |
 
 ## Known limitations of this analysis
@@ -4342,13 +4370,13 @@ promoted into the protocol documentation, to avoid the same finding being
   relevant capture's `CAP-NNN-FINDINGS.md` first, per `PROJECT_RULES.md` §4.
 - Protobuf field *names* recovered from JADX (via getter/setter naming) are
   not proof of the actual wire field *numbers* — field numbers, not names,
-  determine binary compatibility, and must be confirmed via `pbtk` extraction
+  determine binary compatibility, and must be confirmed via the schema decoder (`scripts/decode_rawmessageinfo.py`; not `pbtk`, ADR-041)
   or capture correlation before being treated as 🟢 FACT.
 - A class or method being present in the APK does not prove it is actually
   exercised by the specific user actions listed in
   `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` — treat static findings as 🟡 HYPOTHESIS
   until correlated with a capture showing the corresponding traffic.
-- **Low priority, noted 2026-09-07 (`EXTERNAL_REVIEW_VALIDATION_2026-09-07.md`):** file+line
+- **Low priority, noted 2026-09-07 (`EXTERNAL_REVIEW_VALIDATION_2026-09-07.md` — *retired after processing, `CHANGELOG.md`*):** file+line
   citations in this document are only reproducible against the exact decompiler version that produced
   them — `reverse-engineering/APK_VERSIONS.md`'s "Tool-version pinning" section already requires
   recording JADX/apktool/pbtk versions per analyzed APK version for this reason. A further, not-yet-

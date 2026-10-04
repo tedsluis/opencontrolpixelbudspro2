@@ -138,8 +138,12 @@ class CaseBatteryCodecTest {
     private fun softwareInfoEntry(serialLike: String, firmware: String) =
         lenDelimited(0x0a, serialLike.toByteArray()) + lenDelimited(0x12, firmware.toByteArray())
 
+    // The four tests below build their payloads by hand ([softwareInfoEntry]): **labelled supplementary structural tests** (AGENTS.md §11) — the shape is
+    // that of frame 1431, the bytes are not a capture's (labelled `ai-sessions/0069`, `ai-sessions/0068` A68-APP-06). The real announcement, with its
+    // fixed64 field 5, is `Cap061.ANNOUNCEMENT_RPC_PACKET` (frame 1508), tested in `SafeModeAndRepliesTest` and through `BudsRepositoryImplTest`.
+
     @Test
-    @DisplayName("frame 1431: the announcement carries `release_5.203` three times — shown once; field 1 (a version number, L-5) is never read")
+    @DisplayName("structural (hand-built, shape of frame 1431): `release_5.203` three times — shown once; field 1 (a version number, L-5) is never read")
     fun `firmware strings are distinct and the identifier is not read`() {
         val entry = softwareInfoEntry("0000000000", "release_5.203") // field 1 (once read as a serial; a version number, L-5) left out of the fixture
         val payload = lenDelimited(0x22, lenDelimited(0x0a, entry) + lenDelimited(0x12, entry) + lenDelimited(0x1a, entry))

@@ -56,10 +56,38 @@ object PairingLogic {
      * Which bonded device is the Buds: the one whose address matches a CDM association of this app (so a renamed device is
      * still found), and only as a fallback one whose name contains "Pixel Buds".
      */
-    fun chooseBonded(candidates: List<BondedCandidate>, associatedAddresses: Set<String>): BondedCandidate? {
+    fun chooseBonded(candidates: List<BondedCandidate>, associatedAddresses: Set<String>): BondedCandidate? =
+        (chooseBondedOrAsk(candidates, associatedAddresses) as? BondedChoice.One)?.candidate
+
+    /** What [chooseBondedOrAsk] found. */
+    sealed class BondedChoice {
+        data class One(val candidate: BondedCandidate) : BondedChoice()
+        data object None : BondedChoice()
+
+        /** More than one bonded device is named "Pixel Buds" and none is this app's association: the app does not pick one. */
+        data object Several : BondedChoice()
+    }
+
+    /**
+     * [chooseBonded] without the silent pick (`ai-sessions/0069`, A68-APP-04; the maintainer's choice in chat 2026-10-03, "No silent pick"): the device of
+     * this app's association always wins; without one, a **single** bonded device named "Pixel Buds" is used as before, but with two or more the answer is
+     * [BondedChoice.Several] — the set of bonded devices has no order, so "the first" was arbitrary and invisible. The user then taps *Pair a device* and
+     * chooses in Android's own picker. [nameFallback] = false (after "Use different Buds", A68-APP-05) skips the name fallback altogether.
+     */
+    fun chooseBondedOrAsk(
+        candidates: List<BondedCandidate>,
+        associatedAddresses: Set<String>,
+        nameFallback: Boolean = true,
+    ): BondedChoice {
         val wanted = associatedAddresses.mapNotNull { normalizeAddress(it) }.toSet()
-        return candidates.firstOrNull { normalizeAddress(it.address) in wanted }
-            ?: candidates.firstOrNull { it.name?.contains("Pixel Buds", ignoreCase = true) == true }
+        candidates.firstOrNull { normalizeAddress(it.address) in wanted }?.let { return BondedChoice.One(it) }
+        if (!nameFallback) return BondedChoice.None
+        val named = candidates.filter { it.name?.contains("Pixel Buds", ignoreCase = true) == true }
+        return when (named.size) {
+            0 -> BondedChoice.None
+            1 -> BondedChoice.One(named.single())
+            else -> BondedChoice.Several
+        }
     }
 
     enum class BondKind { NONE, BONDING, BONDED }
@@ -143,5 +171,8 @@ sealed class PairingState {
 sealed class BondedLookup {
     data class Found(val address: String) : BondedLookup()
     data object NoneBonded : BondedLookup()
+
+    /** Two or more bonded devices are named "Pixel Buds" and none is associated with this app — the user chooses with *Pair a device* (A68-APP-04). */
+    data object SeveralCandidates : BondedLookup()
     data object PermissionMissing : BondedLookup()
 }

@@ -77,14 +77,14 @@ session (same-direction offset as independently observed in `CAP-027`, this proj
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| 15:17:03 | start of the video
-| 15:17:10 | user enables bluetooth
+| 15:17:03 | start of the video | — | — | — |
+| 15:17:10 | user enables bluetooth | — | — | — |
 | 15:17:23 | "Forget" via system Bluetooth settings | User (Hardware) | `SDP-001` | Video-confirmed: "Forget device?" dialog shown 15:17:22, "Forget" tapped 15:17:24 (`CAP-033-FINDINGS.md` §1.1) — **before** Force-stop below, contrary to procedure |
 | 15:17:34 | Companion app force-stopped | User (Hardware) | `SDP-001` | Video-confirmed: Settings → Apps → Pixel Buds → App info → "Force stop" tapped 15:17:34, confirmed 15:17:36 (`CAP-033-FINDINGS.md` §1.1) |
-| 15:17:52 | user selects "pair new device"
-| 15:17:53 | user opens case
-| 15:17:55 | user presses and holds pair button on case
-| 15:18:01 | user selects pixel buds pro van Ted form Available devices.
+| 15:17:52 | user selects "pair new device" | — | — | — |
+| 15:17:53 | user opens case | — | — | — |
+| 15:17:55 | user presses and holds pair button on case | — | — | — |
+| 15:18:01 | user selects pixel buds pro van Ted form Available devices. | — | — | — |
 | 15:18:11 | User selects pair device | User (Hardware) | `SDP-001` | Bonding completes 15:18:09.16–.17 (log): `Simple Pairing Complete` frame 1241, `Link Key Notification` frame 1242, `Authentication Complete` frame 1243 (offset ~1.8–2.0s) |
 | — | (not separately timestamped in the original notes) | — | `SDP-001` | **SDP browse (the core evidence for this Test-ID), frames 1256–1873, 15:18:09.417–15:18:18.822** — see `CAP-033-FINDINGS.md` §2/§3 for the full frame-by-frame breakdown |
 | 15:18:16 | ~~user cancels pixel buds app popup~~ — **corrected**: user cancels the **system-level** Fast Pair "Save device to ted.sluis@gmail.com" dialog | User (Hardware) | `SDP-001` (isolation check) | Video-confirmed 15:18:15–15:18:17: this is Android/GMS's own account-linking prompt, not the Pixel Buds companion app opening — see `CAP-033-FINDINGS.md` §1.2. The app's own "App info" screen remains visible underneath/after, unchanged |

@@ -26,8 +26,10 @@ App **not installed**. **Log file:** `CAP-034-btsnoop_hci.log` (485.4s, 3,717 pa
 2026-09-01 06:45:35.44–06:53:40.82 local/+0200). **Video:** `CAP-034-recording.mp4` (374.5s,
 06:46:31–06:52:45 local, on-screen wall-clock overlay). **Devices:** phone (Pixel 9a), peer
 `04:00:6E:CF:6E:07` ("Pixel Buds Pro 2 van Ted") — the same physical Buds/case used throughout this
-project, and (per the folder's own preparation checklist) not previously connected to this specific
-phone.
+project, and — per the folder's own preparation checklist — a phone that **had** connected to this Buds
+unit before, with its Bluetooth cache cleared by `pm clear com.android.bluetooth` for this session
+(corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-23`: this document said "not previously connected";
+the mapping is unaffected — frame 3272 starts a full `0x0001`…`0xffff` discovery).
 
 ---
 
@@ -62,7 +64,7 @@ with a genuine cache-miss (§1, §3).
 | `CAP-010` | — | Did not actually execute Group W's own method (ran bond-removal-only on the *same*, already-used Pixel 7a); zero discovery traffic at all — Android's GATT cache (keyed to phone+peer, independent of the classic bond) served the cluster with no wire declaration (`CAP-010-FINDINGS.md` §1–§2). |
 | `CAP-017` | First-ever live discovery (fresh GATT-client-app cache miss); full 15-service UUID list recovered from video | Wire log severely ACL-truncated (~15B snaplen) — discovery *response* bytes (handle ranges, 128-bit UUIDs) never survived capture; no characteristic-level drill-down happened on screen either (`CAP-017-FINDINGS.md` §2, §4b, §4c). |
 | `CAP-014` | Snaplen fixed (confirmed 0/4,663 truncated) | Same phone + already-bonded, already-cached nRF Connect client → Android served the `0x0c0X`/`0x0f2X` cluster from its cache again; only the GATT service itself (handles `0x0001`–`0x0009`) was genuinely re-declared live (`CAP-014-FINDINGS.md` §0, §4). |
-| **`CAP-034`** | **Both at once**: unlimited snaplen (§0) **and** a genuine full-database cache miss (a phone never before connected to this Buds unit + a fresh GATT client) | — |
+| **`CAP-034`** | **Both at once**: unlimited snaplen (§0) **and** a genuine full-database cache miss (a phone whose Bluetooth cache had been cleared with `pm clear com.android.bluetooth` + a fresh GATT client — the phone had connected to this Buds unit before, `CAP-034-EVENT-NOTES.md`; corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-23`: this document said "never before connected") | — |
 
 **What made the cache miss genuine this time, checked directly (🟢 FACT):** the primary discovery
 burst (§3 below) issues a full `Read By Group Type Request, Handles: 0x0001..0xffff` (frame 3272)
@@ -125,7 +127,7 @@ never went away.
 
 **Consequence — this directly settles the guardrail question, from the log itself:**
 
-- **06:47:42.147–06:47:45.490 (before bonding, first and only genuine discovery walk) is the
+- **06:47:42.142–06:47:45.471 (before bonding, first and only genuine discovery walk) is the
   primary, and in this capture the *only*, source for the handle↔UUID mapping** — see §4.
 - **06:51:22.158 onward (the "reconnect" tap) is not a second discovery pass at all.** Its entire
   wire-level effect is a single Database Hash re-check:
@@ -158,7 +160,7 @@ never went away.
 
 ## 4. THE RESOLUTION: full 15-service handle map, from the primary discovery burst (🟢 FACT)
 
-**Method:** the entire 06:47:42.147–45.490 burst (frames 3264–3469) was extracted and every
+**Method:** the entire 06:47:42.142–45.471 burst (frames 3264–3469) was extracted and every
 `Read By Group Type`/`Read By Type`/`Find Information` response decoded byte-for-byte:
 
 ```
@@ -201,7 +203,7 @@ Continued walk (frames 3274→3276, 3277→3279, 3280→3281; each raw hex verif
 | 13 | `0x0f30` | `0x0f33` | `0x180F` | Battery Service |
 | 14 | `0x0f37` | `0x0f3e` | `109b862f-50e3-45cc-8ea1-ac62de4846d1` | "Unknown Service" (nRF's own label — no bundled name) |
 
-Handle `0x400`–`0x040f` (Audio Input Control, `0x1843`) is a **secondary** service included by
+Handle `0x0400`–`0x040f` (Audio Input Control, `0x1843`) is a **secondary** service included by
 Microphone Control (confirmed via the `Read By Type Request, Include` sub-walk, frame 3374); walk
 terminates cleanly with `Attribute Not Found, Handle: 0x0f3f` (frame 3284) — no service exists above
 `0x0f3e`. **This is the same 15-service list `CAP-017-FINDINGS.md` §3 recovered from video only** —
@@ -495,7 +497,7 @@ cross-check.
 ## 9. Conclusions & downstream updates (✅ maintainer sign-off obtained 2026-09-01, applied)
 
 **The `0x0c0X`/`0x0f2X` handle↔UUID mapping question, open since `CAP-002`, is resolved by this
-capture (🟢 FACT, §4), on the strength of the primary 06:47:42.147–45.490 discovery burst alone —
+capture (🟢 FACT, §4), on the strength of the primary 06:47:42.142–45.471 discovery burst alone —
 independently corroborated by the video's own nRF-Connect-rendered UUID names (§4.3).** Stated
 plainly, not hedged beyond what the data supports: `0x0c00`–`0x0c14` is the Google Fast Pair Service
 (`0xFE2C`) with all 5 spec-defined characteristics (Model ID, Key-based Pairing, Passkey, Account
@@ -514,7 +516,7 @@ independent video corroboration.
 2. **`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`**'s `GATT-001` row — marked resolved, citing this file in
    place of the prior "still 🔴 OPEN" `CAP-014` note.
 3. **`CAPTURE_BLUETOOTH_HCI_SNOOP.md`**'s Capture Index — a `CAP-034` row added (Group W, 4th
-   attempt, method = `pm clear com.android.bluetooth` on a phone never before connected to this
+   attempt, method = `pm clear com.android.bluetooth` on a phone that had connected before (corrected 2026-10-03) to this
    Buds unit + nRF Connect, both `GATT-001` blockers combined for the first time) and Group W's own
    section updated with a ✅ RESOLVED banner.
 4. **Closing cross-references** added to `CAP-010-FINDINGS.md` §8, `CAP-017-FINDINGS.md` §6, and

@@ -67,7 +67,20 @@ interface BudsRepository {
      * visible and Android reports the Buds connected (after a session loss, when Android's link comes back, on resume); never in the background.
      */
     fun onAppVisible(visible: Boolean)
-    val ancMode: Flow<AncMode>
+
+    /**
+     * The Buds' last reported ANC mode, `null` before any report in this app run. It is **not** cleared when a session ends: whether it is current is
+     * decided by [isCurrent] from [ancModeUpdatedAt] and [sessionSince] (`ai-sessions/0069`, A68-APP-02). A state, not an event stream: the newest report
+     * always replaces the one before it (A68-APP-03 — the replay-1 `SharedFlow` it was could drop a report while a collector was busy).
+     */
+    val ancMode: Flow<AncMode?>
+
+    /**
+     * Wall-clock time the current connection was requested (the start of the Connect, or of an automatic re-open) — `null` before the first one. A value
+     * the Buds reported before it is from an earlier connection ([isFromThisSession]). Not cleared at Disconnect; [connectionState] says whether a session
+     * is open.
+     */
+    val sessionSince: Flow<Long?>
 
     /** Wall-clock time ([System.currentTimeMillis]) the current [ancMode] value was received, or `null`
      * before any value has arrived this app run (`ai-sessions/0043` Phase H — replaces a vague "last

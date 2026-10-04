@@ -35,9 +35,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.ancTileState
 import io.github.tedsluis.opencontrolpixelbuds.domain.ancTileStates
+import io.github.tedsluis.opencontrolpixelbuds.domain.currentAncMode
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
-import io.github.tedsluis.opencontrolpixelbuds.ui.ANC_NOT_ALLOWED_TEXT
-import io.github.tedsluis.opencontrolpixelbuds.ui.ANSWER_CUT_OFF_TEXT
+import io.github.tedsluis.opencontrolpixelbuds.ui.ancTileFailureText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -92,7 +92,7 @@ class AncTileService : TileService() {
         super.onStartListening()
         listenJob?.cancel()
         listenJob = listenScope.launch {
-            ancTileStates(repository.connectionState, repository.ancMode, repository.ancAvailability).collect { state ->
+            ancTileStates(repository.connectionState, repository.currentAncMode(), repository.ancAvailability).collect { state ->
                 latestSession = if (state.ready) ConnectionState.Ready else ConnectionState.Disconnected
                 latestMode = state.mode
                 latestAvailability = state.availability
@@ -134,12 +134,10 @@ class AncTileService : TileService() {
         // The application scope, not this service's: the claim outlives the tile's short lifetime (the release job is the repository's).
         val appContext = applicationContext
         applicationScope.launch {
-            val toast = when ((repository.stepAncMode(AncMode::nextForTile) as? BudsResult.Failure)?.error) {
-                BudsError.AncNotAllowed -> ANC_NOT_ALLOWED_TEXT
-                is BudsError.AnswerCutOff -> ANSWER_CUT_OFF_TEXT
-                else -> null
-            }
-            if (toast != null) withContext(Dispatchers.Main) { Toast.makeText(appContext, toast, Toast.LENGTH_LONG).show() }
+            // `ai-sessions/0069` A68-APP-09: every failure says why — a tap that changed nothing used to be silent unless it was one of two errors
+            // (Safe Mode, a timeout, a NAK and a busy channel all showed nothing).
+            val failure = (repository.stepAncMode(AncMode::nextForTile) as? BudsResult.Failure)?.error
+            if (failure != null) withContext(Dispatchers.Main) { Toast.makeText(appContext, ancTileFailureText(failure), Toast.LENGTH_LONG).show() }
         }
     }
 

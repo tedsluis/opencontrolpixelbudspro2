@@ -36,7 +36,7 @@ in the case at any point, or the dock-state variable stops being held constant.
 |      Group(s)    | AF (`OBS-006` — Settable-toggles Set-vs-Get, fixed dock state; incidental `ANC`-family, `PAIR-003`) |
 |       Date       |                     2026-09-06                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` |
-|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+|   Test device    | Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`). **Official Pixel Buds Companion App, Google Play Services enabled** |
 | Video file       | `CAP-039-recording.mp4` — 05:03s, `07:07:17`–`07:12:20` local time |
 | Log file         | `CAP-039-btsnoop_hci.log` — 372.04s, 6,184 packets, 2026-09-06 07:07:28.040–07:13:40.082 local time |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |

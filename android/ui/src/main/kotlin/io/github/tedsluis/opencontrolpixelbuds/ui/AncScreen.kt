@@ -52,6 +52,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
 
 /**
  * Minimal, stateless ANC control screen — takes plain domain values, not a ViewModel, matching `MainActivity`'s own state-hoisting-in-the-Activity pattern.
@@ -81,10 +82,15 @@ fun AncScreen(
     modifier: Modifier = Modifier,
     ancAvailabilityUpdatedAt: Long? = null,
     ancModeUnconfirmedAt: Long? = null,
+    sessionSince: Long? = null,
 ) {
     val ready = connectionState.isReady()
     val notAllowed = ready && ancAvailability == AncAvailability.NOT_ALLOWED
     val unconfirmed = ancModeUnconfirmedAt != null
+    // `ai-sessions/0069` A68-APP-02: a mode the Buds reported on an earlier connection (or while nothing is connected now) is kept, dimmed and marked —
+    // until this connection's first Notify or ACK ([isCurrent], the one rule of every tab).
+    val fromLastConnection = ancMode != null && !isCurrent(ready, ancModeUpdatedAt, sessionSince)
+    val notCurrent = unconfirmed || fromLastConnection
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -97,15 +103,16 @@ fun AncScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     CardTitle(
                         "Noise control",
-                        ancDetailLines(connectionState, ancMode, ancModeUpdatedAt, notAllowed, ancAvailabilityUpdatedAt, ancModeUnconfirmedAt),
-                        notCurrent = unconfirmed,
+                        ancDetailLines(connectionState, ancMode, ancModeUpdatedAt, notAllowed, ancAvailabilityUpdatedAt, ancModeUnconfirmedAt, fromLastConnection),
+                        notCurrent = notCurrent,
                     )
                     if (ancMode == null) Text(ancModeLine(null, null), style = MaterialTheme.typography.bodyLarge)
                     // The reason a tap may not switch stays visible; its time is in the (i).
                     if (notAllowed) Text(ancNotAllowedLine(null), style = MaterialTheme.typography.bodyMedium)
                     ANC_MODE_LIST_ORDER.chunked(2).forEach { row ->
-                        // F-3: a mode that is not confirmed is dimmed — always together with the (i) dot and its line, never alone (WCAG 1.4.1).
-                        val rowModifier = Modifier.fillMaxWidth().alpha(if (unconfirmed) NOT_CURRENT_ALPHA else 1f)
+                        // F-3 / A68-APP-02: a mode that is not confirmed or not current is dimmed — always together with the (i) dot and its line, never alone
+                        // (WCAG 1.4.1).
+                        val rowModifier = Modifier.fillMaxWidth().alpha(if (notCurrent) NOT_CURRENT_ALPHA else 1f)
                         Row(modifier = rowModifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             row.forEach { (mode, label) ->
                                 AncModeButton(label, selected = ancMode == mode, enabled = ready, modifier = Modifier.weight(1f)) { onAncModeSelected(mode) }
@@ -136,8 +143,10 @@ private fun AncModeButton(label: String, selected: Boolean, enabled: Boolean, mo
 }
 
 /** "ANC mode: X (updated HH:MM:SS)" / "ANC mode: unknown" — the line the screen showed before `ai-sessions/0057`, now the first line of its (i). */
-internal fun ancModeLine(ancMode: AncMode?, updatedAt: Long?): String = when {
+internal fun ancModeLine(ancMode: AncMode?, updatedAt: Long?, fromLastConnection: Boolean = false): String = when {
     ancMode == null -> "ANC mode: unknown"
+    // The maintainer's wording (chat 2026-10-03): "Mode: … - from the last connection (updated 14:32:07)".
+    fromLastConnection -> "ANC mode: ${ancMode.name} — from the last connection" + (formatUpdatedAt(updatedAt)?.let { " (updated $it)" } ?: "")
     else -> "ANC mode: ${ancMode.name}" + (formatUpdatedAt(updatedAt)?.let { " (updated $it)" } ?: "")
 }
 
@@ -152,9 +161,10 @@ internal fun ancDetailLines(
     notAllowed: Boolean,
     checkedAt: Long?,
     unconfirmedAt: Long? = null,
+    fromLastConnection: Boolean = false,
 ): List<String> = listOfNotNull(
     unconfirmedAt?.let(::ancUnconfirmedLine),
-    ancModeLine(ancMode, ancModeUpdatedAt),
+    ancModeLine(ancMode, ancModeUpdatedAt, fromLastConnection),
     if (notAllowed) ancNotAllowedLine(checkedAt) else null,
     "Connection: ${connectionState::class.simpleName}",
     MESSAGE_STREAM_HINT_TEXT,

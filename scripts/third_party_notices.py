@@ -127,6 +127,17 @@ def main() -> int:
             lines.append(f"    {lic_name}" + (f" — {lic_url}" if lic_url else ""))
             if lic_name.lower() in LICENCE_FILES:
                 texts.add(LICENCE_FILES[lic_name.lower()])
+    # Icons that are not a Maven dependency (PROJECT_RULES.md rule 20 (c); added 2026-10-03, ai-sessions/0069): the app draws a few
+    # Material Symbols from their path data, copied into OpenControlIcons.kt.
+    lines += [
+        "",
+        "It also includes icon path data from:",
+        "",
+        "- Material Symbols (Outlined, weight 400) by Google — https://github.com/google/material-design-icons",
+        "    Apache License, Version 2.0 — https://www.apache.org/licenses/LICENSE-2.0",
+        "    Used as generic interface icons (ui/OpenControlIcons.kt names each one); no Google product logo or wordmark is included.",
+    ]
+    texts.add("Apache-2.0.txt")
     with zipfile.ZipFile(apk) as z:
         for entry in sorted(n for n in z.namelist() if re.search(r"(^|/)NOTICE(\.\w+)?$", n, re.I)):
             lines += ["", f"===== {entry} (from the APK) =====", "", z.read(entry).decode("utf-8", "replace").rstrip()]

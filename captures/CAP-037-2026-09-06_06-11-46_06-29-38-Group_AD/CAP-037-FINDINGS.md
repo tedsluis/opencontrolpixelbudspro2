@@ -12,7 +12,7 @@ carries a status per `PROJECT_RULES.md` §1:
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-037` · **Date:** 2026-09-06 · **Firmware:** ⚪ ASSUMPTION `release_5.203`
-(carried over, not re-checked on-screen). **Phone:** Pixel 7a, Android 14, official Pixel Buds
+(carried over, not re-checked on-screen). **Phone:** Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`), official Pixel Buds
 Companion App, Google Play Services enabled. **Log file:** `CAP-037-btsnoop_hci.log` (1212.32s,
 29,956 packets, 2026-09-06 06:11:52.979–06:32:05.299 local, 0/29,956 `cap_len`≠`len` mismatches —
 untruncated). **Video:** `CAP-037-recording.mp4` (1072.10s, 06:11:46–~06:29:38 local, wall-clock
@@ -136,28 +136,28 @@ No `Sent`-direction DLCI 0x02 traffic outside each reconnect's own brief connect
 by accident anywhere in this 20-minute session, consistent with the Contamination log's "no settings
 screens opened" note.
 
-## 5. Open question: chandle `0x0009`'s mid-connection dock-state flip (🔴 OPEN QUESTION)
+## 5. Chandle `0x0009`: an unsolicited second Notify, 3.8 s before the link drops (🟢 FACT for the frames; explained by `CAP-048` §4 as a real docking)
 
 ```
 $ tshark -r CAP-037-btsnoop_hci.log -Y "btrfcomm.dlci==4 and bthci_acl.chandle==0x0009" \
   -T fields -e frame.number -e frame.time -e frame.p2p_dir -e data.data
 11483  06:18:05.748367  Sent  08110000
-11507  06:18:06.031360  Rcvd  0813000401e8e880   <- Settable=0xe8 (undocked)
-12008  06:18:24.272960  Rcvd  0813000401e80020   <- Settable=0x00 (docked), NO preceding Get
+11507  06:18:06.031360  Rcvd  0813000401e8e880   <- Settable=0xe8
+12008  06:18:24.272960  Rcvd  0813000401e80020   <- Settable=0x00, NO preceding Get
+12065  06:18:28.089732  Rcvd  Disconnect Complete, reason 0x13
 ```
-On this one chandle, a **second** "Notify ANC state" frame arrives 18 seconds after the first,
-with **no new Get frame** in between (confirmed: no `0811` frame for this chandle between 11507 and
-12008), and its `Settable-toggles` value flips from `0xe8` to `0x00`. Two readings are consistent
-with this single data point, and this capture cannot distinguish them:
-- a real dock-state change (buds redocked) while the ACL connection remained open — which would be
-  in tension with `DECISIONS.md` ADR-016's "ACL disconnects the instant both buds are re-docked"
-  finding (from `CAP-016`, a different session/context), or
-- a spontaneous, unprompted second Notify unrelated to dock state, coincidentally matching the
-  docked-state byte value.
-No corresponding video timestamp was checked precisely for this ~18s window (out of scope for this
-pass's efficiency budget) — a future capture isolating this exact sub-second window on video would
-resolve it. Recorded as 🔴 OPEN QUESTION, not force-fit into either reading. Copy to
-`PROTOCOL.md` §6.
+Rewritten 2026-10-03 (`ai-sessions/0069`, `A68-CAP-23`). On this one handle a **second** "Notify ANC
+state" frame arrives 18.2 s after the first, with **no `Get`** in between (no `08 11` frame on this
+handle between 11507 and 12008); its Settable byte is `0x00` where the first had `0xe8`. The link
+then drops 3.8 s later (frame 12065, 06:18:28.089, `Disconnect Complete`, reason `0x13`).
+
+When this capture was analysed the frame was an open question with two candidate readings. It has
+been answered since: `CAP-048-FINDINGS.md` §4 filmed the same sequence — an unsolicited Notify with
+Settable `0x00`, followed within seconds by the Buds' disconnect — as a real docking in progress,
+consistent with `DECISIONS.md` ADR-016 (maintainer-approved 2026-09-13, `PROTOCOL.md` §8). The
+reading "Settable = dock state" used in this section's earlier text is superseded by ADR-049
+(`0x00` ⇒ a `Set` is refused; 🟡 `0x00` ⇔ no bud worn). The film of *this* capture was not
+re-viewed for the 06:18:06–06:18:28 window.
 
 ## 6. Test-ID traceability
 
@@ -192,7 +192,7 @@ promotions):**
 
 ## 8. Open questions after this session
 
-- 🔴 Chandle `0x0009`'s mid-connection `Settable-toggles` flip with no preceding Get (§5).
+- 🟢 Chandle `0x0009`'s unsolicited Notify with Settable `0x00` (§5) — answered by `CAP-048` §4 (a docking in progress; the link drops 3.8 s later). No open question remains from this session.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-037-2026-09-06_06-11-46_06-29-38-Group_AD/CAP-037-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-037-2026-09-06_06-11-46_06-29-38-Group_AD/CAP-037-FINDINGS

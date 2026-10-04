@@ -76,28 +76,28 @@ Procedure-deviation note and `CAP-014-FINDINGS.md` §4 for why.)
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| 20:53:37 | start of video CAP-014-recording.mp4.
-| 20:53:41 | user launches nrf connect app.
-| 20:54:07 | in bluetooth settings: user enables bluetooth.
-| 20:54:26 | in nrf app: user selects "scan".
-| 20:54:30 | user opens pxel buds pro 2 case.
-| 20:54:34 | user presses pair button on case. 
-| 20:54:39 | in pixel buds pro 2 pop-up: user selects close
-| 20:54:43 | in nrf app: user selects connect to Pixel buds pro 2 van Ted
-| 20:54:46 | in nrf app: client not connected
-| 20:54:48 | in nrf app: user shows log
-| 20:54:52 | in nrf app: user selects debug log
-| 20:55:09 | in nrf app: user selects bound
-| 20:55:24 | user selects pair with Pixel buds pro 2 van Ted
-| 20:55:27 | in pixel buds pro pop-up: user selects close
-| 20:55:29 | notification appears: pixel buds pro 2 left 100% Case 49% Right 100%
-| 20:55:58 - 20:57:44 | user selects client tab and shows UUIDs contents
-| 20:57:51 - 20:58:21 | user show debug logging
-| 20:58:43 | in bluetooth settings: user selects pixel buds pro 2 device details
-| 20:58:52 | user selects "nearby device permissions requiered"
-| 20:58:53 | in pixel buds app: user selects continue
-| 20:59:07 | user show firmware version
-| 20:59:17 | end of video
+| 20:53:37 | start of video CAP-014-recording.mp4. | — | — | — |
+| 20:53:41 | user launches nrf connect app. | — | — | — |
+| 20:54:07 | in bluetooth settings: user enables bluetooth. | — | — | — |
+| 20:54:26 | in nrf app: user selects "scan". | — | — | — |
+| 20:54:30 | user opens pxel buds pro 2 case. | — | — | — |
+| 20:54:34 | user presses pair button on case. | — | — | — |
+| 20:54:39 | in pixel buds pro 2 pop-up: user selects close | — | — | — |
+| 20:54:43 | in nrf app: user selects connect to Pixel buds pro 2 van Ted | — | — | — |
+| 20:54:46 | in nrf app: client not connected | — | — | — |
+| 20:54:48 | in nrf app: user shows log | — | — | — |
+| 20:54:52 | in nrf app: user selects debug log | — | — | — |
+| 20:55:09 | in nrf app: user selects bound | — | — | — |
+| 20:55:24 | user selects pair with Pixel buds pro 2 van Ted | — | — | — |
+| 20:55:27 | in pixel buds pro pop-up: user selects close | — | — | — |
+| 20:55:29 | notification appears: pixel buds pro 2 left 100% Case 49% Right 100% | — | — | — |
+| 20:55:58 - 20:57:44 | user selects client tab and shows UUIDs contents | — | — | — |
+| 20:57:51 - 20:58:21 | user show debug logging | — | — | — |
+| 20:58:43 | in bluetooth settings: user selects pixel buds pro 2 device details | — | — | — |
+| 20:58:52 | user selects "nearby device permissions requiered" | — | — | — |
+| 20:58:53 | in pixel buds app: user selects continue | — | — | — |
+| 20:59:07 | user show firmware version | — | — | — |
+| 20:59:17 | end of video | — | — | — |
 
 **Test-ID annotations (added post-analysis, `AGENTS.md` §13 traceability check):** `GATT-001`
 covers the 20:54:43–20:57:44 window (connect → service discovery/listing → CLIENT-tab scroll,

@@ -19,7 +19,6 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.domain
 
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -33,8 +32,8 @@ class AncTileTest {
 
     @Test
     fun `a Ready session with no ANC report yet says Tap to switch, not Open the app`() = runBlocking {
-        // A58-APP-01: the repository's ANC mode is a replay-1 SharedFlow with no value until the Buds report one (e.g. the Connect snapshot lost DLCI 0x04).
-        val mode = MutableSharedFlow<AncMode>(replay = 1)
+        // A58-APP-01: no mode until the Buds report one (e.g. the Connect snapshot lost DLCI 0x04) — `null` since `ai-sessions/0069` made the mode a state.
+        val mode = MutableStateFlow<AncMode?>(null)
         val state = withTimeout(1_000) {
             ancTileStates(MutableStateFlow(ConnectionState.Ready), mode, MutableStateFlow(AncAvailability.UNKNOWN)).first()
         }

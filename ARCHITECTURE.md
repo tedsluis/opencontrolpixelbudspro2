@@ -67,8 +67,8 @@ for stock AOSP-based ROMs.
 ┌──────────────────────▼─────────────────────────────────┐
 │  :hardware                                            │
 │  - BudsTransport (interface, channelId-aware)           │
-│  - RFCOMM socket manager (implemented; secondary GATT   │
-│    client not yet built — no v1 feature needs it today) │
+│  - RFCOMM socket manager (no GATT client exists)        │
+│                                                         │
 │  - ConnectionStateMachine, BleLogger                    │
 │  - ForegroundService, BudsCompanionPairing,             │
 │    BluetoothStateObserver, OsConnectionObserver          │
@@ -88,7 +88,7 @@ enforced by the build graph, not just by convention:
 :ui             -> stateless Jetpack Compose screens, Material 3 (OpenControlUiState in, OpenControlActions out)
 :domain         -> domain models, BudsRepository interface, small pure mappings (e.g. the tile state), sealed error/result types
 :data           -> hand-written pw_rpc/Message Stream codecs (ADR-041), frame envelope (de)coder, DataStore prefs
-:hardware       -> BluetoothManager, GATT/RFCOMM sockets, ForegroundService
+:hardware       -> BluetoothManager, RFCOMM sockets, ForegroundService (no GATT client exists — §13)
 ```
 
 - **UI Layer** (`:ui`, Jetpack Compose): 100% open-source Material 3
@@ -133,8 +133,9 @@ enforced by the build graph, not just by convention:
 ### 2.4 UI Navigation Structure (added `ai-sessions/0033`)
 
 `:ui` uses `androidx.navigation:navigation-compose` (pinned, justified below) for a small,
-flat destination graph — one screen per `ARCHITECTURE.md`-recognized v1 feature, plus a Debug screen
-gated behind Debug Mode (§7/§12):
+flat destination graph — one screen per `ARCHITECTURE.md`-recognized v1 feature, plus the settings menu
+(Settings / Debug / Info) behind the gear. The Debug tab is always reachable; **Debug mode** is a switch on it
+that gates only the hex lines of the log (§7/§12) — as built, (corrected 2026-10-03, `ai-sessions/0069`):
 
 ```
 Connection screen (start destination)
@@ -162,16 +163,17 @@ control channel, or "Not connected yet", F-5). Back returns to the tab it was op
 licence ("GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)"), **Read the licence** (the bundled `LICENSE` text, offline), and the links
 "README on GitHub", "Report an issue on GitHub" (a "Licence on GitHub" link was removed in `ai-sessions/0066`, ADR-050 Update) — each hands its fixed URL to the browser on a tap (no app to open it ⇒ a message with the
 address). **F-1:** the selected tab survives a configuration change (rotation, Android's dark switch): the pager ↔ back-stack sync is skipped until the restored
-back stack is known (`CAP-066` K4r: a rotation reset Sound → Connection; `TabRestoreTest`) — **hardware-verified in `CAP-067`** (`ai-sessions/0067`: 13 of 13 configuration changes kept the tab or the Settings menu, release 1.0.0).
+back stack is known (`CAP-066` K4r: a rotation reset Sound → Connection; `TabRestoreTest`) — **hardware-verified in `CAP-067`** (`ai-sessions/0067`: 14 of 14 configuration changes kept the tab or the Settings menu, release 1.0.0).
 (From `ai-sessions/0037` to `0056` Debug was a sixth bottom tab, contrary to the tree above; `0057` restored the documented design.) Every tab can be pulled
 down: while the session is `Ready` a pull runs that tab's existing refresh (Connection and Find: *Refresh battery*; ANC: Refresh; Sound: "Read EQ again" then
 the settings re-read; Controls: the settings re-read), otherwise the action of the Connection screen's own button in that state (Connect/Retry, Enable
 Bluetooth, Allow, Pair) — once per pull, never automatically. The times and state words of each card are in its (i) details dialog (§3.1).
 
 - **Connection screen** is always the start destination — every other screen assumes `ConnectionState
-  == Ready`; navigating to ANC/EQ/Find My Buds while not connected is not offered (the Connection
-  screen's own UI is what surfaces `BudsError` states and the GrapheneOS Bluetooth-disabled prompt,
-  §6.0a/§9.1).
+  == Ready` to *act*. As built, every tab can be opened at any time ((corrected 2026-10-03, `ai-sessions/0069`): the earlier text said navigating
+  while not connected "is not offered"); a tab opened without a session shows its last values marked as such, or
+  nothing, and its actions return `BudsError.ConnectionLost` (or `SessionOpening` while a connect is in flight). The Connection screen is what surfaces `BudsError`
+  states and the GrapheneOS Bluetooth-disabled prompt (§6.0a/§9.1).
 - **Why a separate screen per feature, not one dense screen**: each of ANC/EQ/Find My Buds has enough
   controls (the EQ alone is 5 sliders + 5 presets, shown in two rows of 3 + 2 — "Last saved" is not a preset in the app; corrected
   `ai-sessions/0052`, `0051` F-5) that combining them would fight the "every implemented
@@ -197,8 +199,9 @@ write per completed drag); a setting not read from the Buds yet is disabled — 
   already describes (and `ai-sessions/0037`'s fix) apply identically regardless of which trigger changed
   the tab. `NavHost` itself is kept as a zero-size, empty-composable back-stack holder — the pager owns
   what's actually rendered. `OpenControlNavHost.kt`'s own doc comment has the exact mechanism.
-  // TODO(verify): the swipe gesture and the two-way sync are Android-framework/gesture behavior this
-  session could not exercise on a device or emulator.
+  Hardware status (corrected 2026-10-03, `ai-sessions/0069`): pull-to-refresh was seen working in `CAP-065` and system back in `CAP-067`; the
+  **swipe between tabs has not been identified on film in any capture** (`CAP-062`: "swipe not distinguishable").
+  // TODO(verify): the swipe gesture — `APP_TESTPLAN.md` C10.
 
 Dependency direction: `:ui → :domain ← :data → :hardware → :domain`. `:ui` depends on
 `:domain` for the models and `OpenControlUiState`'s types (ADR-048: no use cases; `:app` calls `BudsRepository`). `:data` depends on `:domain`
@@ -258,10 +261,19 @@ change state while this app is disconnected or backgrounded.
   (ANC mode, battery, EQ) rather than assuming the
   last-known `StateFlow` value still holds. Reads run regardless of firmware; the Startup Handshake
   (§8.1, ADR-042) gates **writes** only.
+- **One rule for "current" (built `ai-sessions/0069`, 1.0.1; `ai-sessions/0068` A68-APP-02; the maintainer's choice in chat 2026-10-03, "Keep the value,
+  mark it"):** a value is current only while the session is `Ready` **and** the Buds reported it on this connection — `isCurrent(ready, valueAt,
+  sessionSince)` in `:domain` (`ValueCurrency.kt`); `BudsRepository.sessionSince` is the time the current connection was requested. A value that is not
+  current stays visible, dimmed, with the (i) dot and "from the last connection" in its details: the ANC mode (kept across sessions — a `StateFlow<AncMode?>`
+  since `0069`, A68-APP-03, so the newest report is never dropped), the EQ and the settings while nothing is connected (at a Connect they are reset to "not
+  read", as before), and the battery values, which are marked at Disconnect and at a session loss, not only at the next Connect. The Quick Settings tile and
+  the notification take the mode through the same rule (`currentAncMode`) and show none that is not current. A value that was never read shows "—", not a
+  default (the visible text only; what a screen reader says is in `TODO.md`).
 - Locally cached values are marked provisional/stale until reconciled against a fresh read. **Added
   `ai-sessions/0043`:** each cached value's own wall-clock receive time is threaded alongside it as a
   sibling `StateFlow<Long?>` (`ancModeUpdatedAt`, `eqProfileUpdatedAt`, `batteryStatusUpdatedAt`,
-  `dockStateUpdatedAt`, `BudsRepository.kt`), stamped only at the moment `BudsRepositoryImpl` actually
+  `ancAvailabilityUpdatedAt`, `BudsRepository.kt` — (corrected 2026-10-03, `ai-sessions/0069`): this list named `dockStateUpdatedAt`, a symbol that
+  no longer exists since ADR-049 replaced the dock-state reading), stamped only at the moment `BudsRepositoryImpl` actually
   receives that value — never a ticking relative counter or a polling timer (§6, "nothing in this app
   runs a fixed-interval timer loop" — a live "N seconds ago" display would need exactly that). The UI
   shows this as an absolute time string (`"updated 14:32:07"`/`"last seen 14:32:07"`), replacing the
@@ -286,13 +298,9 @@ should not be assumed uniform):**
 |---|---|---|
 | ANC | **Corrected `ai-sessions/0040`:** the connect-time `Get`/`Notify` pair (ADR-021/ADR-022) is the *official client's* own query — a client that sends nothing gets no ANC `Notify`. This app therefore sends its own `AncFrame.Get` during each Message Stream claim (the Connect-time snapshot, ANC Refresh, and each ANC tap's reply) and treats the value as last-known between claims (ADR-032). **A `Set` is only counted once answered (2026-09-24):** ACK → requested mode, `Notify` → the Buds' mode, NAK/no answer → failure, previous mode kept. The `Notify`'s Settable byte is kept as `ancAvailability` (`ai-sessions/0048` I-3, ADR-024 Update 2026-09-25): while it reads `0x00` the Buds NAK a `Set` (reason `0x02`, `CAP-062` 10/10). **Since `ai-sessions/0054` (I-1, maintainer-confirmed in chat 2026-09-28; it reverses `0048` I-3's "claim and send nothing" for a user tap):** the ANC buttons and the tile stay tappable, with "ANC can only be changed while you wear the Buds (checked HH:MM:SS). Tapping a mode checks again first." (🟡 wording); such a tap does one ordinary claim with the `Get` and sends the `Set` **in that claim** only if the answering `Notify` reads Settable non-zero (then the usual ACK rules); if it still reads `0x00` nothing more is sent, the checked time moves and the tile shows a toast — because a `0x00` answer can be old (`CAP-063`: worn again 37 s after `Notify` 4774, disabled for 6 min). ~~Unknown (no `Notify` yet this connection) or non-zero ⇒ the `Set` is sent directly, as before.~~ **Since `ai-sessions/0062` (F-1/F-2, maintainer-confirmed in chat 2026-10-01): every ANC tap — the screen's and the tile's — does one claim with the `Get` first and sends the `Set` in that claim only if the claim's `Notify` reads Settable non-zero; on `0x00` nothing more is sent** (`CAP-064`: an 18-s-old `e8` led to `Set` 3433 → NAK 3440; `CAP-065` F7: an unknown availability sent `Set` 10790 without a `Get`). The tile's next mode is computed from that fresh `Notify`, not from the mode shown. Wording: "The Buds don't allow changing noise control right now (usually because no bud is in an ear). Tapping a mode checks again first." (tile subtitle "Not allowed now") — the byte means "not allowed now", not "not worn" (`CAP-064`: `e8` with no bud worn). **F-3:** a claim closed after its `Set`/`Get` was written and before the answer is `BudsError.AnswerCutOff` (never retried, never "didn't respond in time"); after a cut-off `Set` the shown mode is "not confirmed" (dimmed + the (i) dot) until the Buds' next `Notify` or ACK. **Hardware-verified in `CAP-066` (`ai-sessions/0063`, maintainer-approved in chat 2026-10-01):** 23 of 23 app claims sent `08 11` first; 4 `Set`s, each after that claim's `Notify` read `e8`, all ACKed; 11 `00` answers sent no `Set`; the tile stepped from the fresh `Notify` (A2369 `40` → A2370 `20`). F-3 (`AnswerCutOff`) not exercised (no cut-off occurred). | 🟢 FACT for the `Get`/`Notify` pair; the per-claim use is ADR-032 |
 | EQ | No connect-time *push* exists for EQ, but the official app **reads** it — and so does this app since `ai-sessions/0041` (DECISIONS.md ADR-034, maintainer-approved 2026-09-20): the Connect sequence waits for the Buds' unsolicited `GetSoftwareInfo` announcement (which names this connection's pw_rpc channel), then sends `ReadSetting 4:16` (active EQ) on that channel and fills `eqProfile` from the answer; the EQ screen can re-read on demand. `eqProfile` is `null` only until that answer arrives or if it failed — `BudsRepository.eqError` then carries the reason (no announcement in time, a channel with no known address, an error status, a timeout). A write is only counted as done once the Buds' `RESPONSE` arrives (`status` absent/OK); anything else is surfaced, never assumed. Field 18 (last saved custom EQ) never replaces the active value. | 🟢 FACT (ADR-034: identification, `ReadSetting 4:N` semantics, three second-capture chains); 🟡 HYPOTHESIS for what a fresh client must send first and for request/response matching (handled conservatively, `// TODO(verify)`, hardware re-test) |
-| Battery (DLCI 0x04 Option B, **implemented `ai-sessions/0040`, ADR-033; charging flag `ai-sessions/0041`**) | Push-based: the Buds send three `Group 0x03 Code 0x03` frames within ~10 ms of the channel opening and again on every change — so each Message Stream claim yields a reading. Each of `b1`/`b2` is `0bSVVVVVVV`: `V` = 0–100 % and `S` = charging (maintainer-accepted 2026-09-20); `V = 0x7F`/`> 100` reads "unavailable"; `b3` (Case) is never decoded (it read `0xff` in 60/60 frames). **The Case comes from DLCI 0x02** (**ADR-043**, 2026-09-24): after the Connect-time EQ read the app sends one `SubscribeRuntimeInfo` request on the announced channel; the Buds then push `SERVER_STREAM` packets by themselves and entry 6.1 field 1 is the Case % — a packet without that entry reads "unavailable". *Refresh battery* re-reads Left/Right — **since `ai-sessions/0052`** always on a **fresh** claim (a claim still lingering is released and
-opened again, because the Buds send the `03 03` burst only on an open; no burst ⇒ "No new battery reading from the Buds — try again.", values and
-times unchanged) and it also re-sends one `SubscribeRuntimeInfo` (ADR-043 Update 2026-09-26; no wait, no retry). **Since `ai-sessions/0048` (ADR-043 Update):** the same stream's 6.2/6.3 field 2 (fallback 7.2/7.1) gives each bud's charging state, shown as "charging in the case" with its own time; the newest charging report of either source wins (I-8); a packet without 6.1 keeps the last Case value as "last seen HH:MM:SS" (I-5, in memory only, marked last seen after a reconnect). The DLCI 0x08 claim of ADR-035/038/039 is withdrawn (its `0e 04` got no answer in `CAP-061`, 8/8). | 🟢 FACT (ADR-031 identity, ADR-033 unblock + charging-flag update; `PROTOCOL.md` §4.3 Option F + ADR-043 for the Case) |
-| Battery (HFP, Option C) — **removed `ai-sessions/0042`** | Push-based on the wire (`AT+BIEV`/`AT+CIND`, ADR-015/023) but **not consumable by an app**: `CAP-059` shows `AT+BIEV=2,100` seven times on the wire and **zero** vendor-specific events in the app's receiver (and the value is one earbud's, never the Case). `HfpBatteryReader` and its wiring were removed on the maintainer's decision (chat 2026-09-20); the wire facts stay. | 🟢 FACT on the wire; 🟢 not app-consumable (`CAP-059-FINDINGS.md` §7) |
-| DLCI 0x02 settings (`ai-sessions/0052`, `0056`) | Read at Connect: after the EQ read and before `SubscribeRuntimeInfo`, one `ReadSetting 4:N` each for fields 2, 4, 7, 12, 17, 19, 22 (ADR-036, ADR-046), sequential, ≤ 2 s each, never retried; the values are reset to "not read" at every Connect and shown with "read HH:MM:SS". The same pass runs once
-more on a user pull on "Sound" or "Controls" (`refreshSettings`, `ai-sessions/0057` D-11 — same fields, order and timeout; nothing sent unless `Ready`; a field
-not answered keeps its last value and time). Writes (ADR-045: 17, 19, 22, 4, 7; ADR-046: 12; ADR-047: 2) are applied only on the Buds' empty `RESPONSE` status OK ("changed HH:MM:SS"); an error status or no answer keeps the previous value and shows the reason. **Field 12** always carries all four booleans, built from the list the Buds last reported (unread ⇒ refused), and a list with fewer than two modes is refused before anything is sent. A tap while the session is being (re)opened is refused with "The app's channel is being reopened — try again in a moment." (nothing queued). | 🟢 FACT for the field identities and the write acknowledgement (ADR-019/026/034/045/046/047, `PROTOCOL.md` §4.5 2026-09-26/28 Updates); not hardware-verified |
+| Battery (DLCI 0x04 Option B, **implemented `ai-sessions/0040`, ADR-033; charging flag `ai-sessions/0041`**) | Push-based: the Buds send three `Group 0x03 Code 0x03` frames within ~10 ms of the channel opening and again on every change — so each Message Stream claim yields a reading. Each of `b1`/`b2` is `0bSVVVVVVV`: `V` = 0–100 % and `S` = charging (maintainer-accepted 2026-09-20); `V = 0x7F`/`> 100` reads "unavailable"; `b3` (Case) is never decoded (it read `0xff` in 60/60 frames). **The Case comes from DLCI 0x02** (**ADR-043**, 2026-09-24): after the Connect-time EQ read the app sends one `SubscribeRuntimeInfo` request on the announced channel; the Buds then push `SERVER_STREAM` packets by themselves and entry 6.1 field 1 is the Case % — a packet without that entry reads "unavailable". *Refresh battery* re-reads Left/Right — **since `ai-sessions/0052`** always on a **fresh** claim (a claim still lingering is released and opened again, because the Buds send the `03 03` burst only on an open; no burst ⇒ "No new battery reading from the Buds — try again.", values and times unchanged) and it also re-sends one `SubscribeRuntimeInfo` (ADR-043 Update 2026-09-26; no wait, no retry). **Since `ai-sessions/0048` (ADR-043 Update):** the same stream's 6.2/6.3 field 2 (fallback 7.2/7.1) gives each bud's charging state, shown as "charging in the case" with its own time; the newest charging report of either source wins (I-8); a packet without 6.1 keeps the last Case value as "last seen HH:MM:SS" (I-5, in memory only, marked last seen after a reconnect). The DLCI 0x08 claim of ADR-035/038/039 is withdrawn (its `0e 04` got no answer in `CAP-061`, 8/8). | 🟢 FACT (ADR-031 identity, ADR-033 unblock + charging-flag update; `PROTOCOL.md` §4.3 Option F + ADR-043 for the Case) |
+| Battery (HFP, Option C) — **removed `ai-sessions/0042`** | Push-based on the wire (`AT+BIEV`/`AT+CIND`, ADR-015/023) but **not consumable by an app**: `CAP-059` shows `AT+BIEV=2,100` twelve times on the wire (seven dissected as HFP, five on the undissected DLCI after the reconnect — corrected 2026-10-03) and **zero** vendor-specific events in the app's receiver (and the value is one earbud's, never the Case). `HfpBatteryReader` and its wiring were removed on the maintainer's decision (chat 2026-09-20); the wire facts stay. | 🟢 FACT on the wire; 🟢 not app-consumable (`CAP-059-FINDINGS.md` §7) |
+| DLCI 0x02 settings (`ai-sessions/0052`, `0056`) | Read at Connect: after the EQ read and before `SubscribeRuntimeInfo`, one `ReadSetting 4:N` each for fields 2, 4, 7, 12, 17, 19, 22 (ADR-036, ADR-046), sequential, ≤ 2 s each, never retried; the values are reset to "not read" at every Connect and shown with "read HH:MM:SS". The same pass runs once more on a user pull on "Sound" or "Controls" (`refreshSettings`, `ai-sessions/0057` D-11 — same fields, order and timeout; nothing sent unless `Ready`; a field not answered keeps its last value and time). Writes (ADR-045: 17, 19, 22, 4, 7; ADR-046: 12; ADR-047: 2) are applied only on the Buds' empty `RESPONSE` status OK ("changed HH:MM:SS"); an error status or no answer keeps the previous value and shows the reason. **Field 12** always carries all four booleans, built from the list the Buds last reported (unread ⇒ refused), and a list with fewer than two modes is refused before anything is sent. A tap while the session is being (re)opened is refused with "The app's channel is being reopened — try again in a moment." (nothing queued). | 🟢 FACT for the field identities and the write acknowledgement (ADR-019/026/034/045/046/047, `PROTOCOL.md` §4.5 2026-09-26/28 Updates); not hardware-verified |
 | Find My Buds Left/Right | An action, not persisted state. **Since `ai-sessions/0048` (I-6):** the ring this app started is remembered in memory across Disconnect/Connect (it keeps sounding until Stop, `CAP-062`) and cleared only by an ACKed Stop or replaced by a new Ring; after a reconnect it is shown as "may still be ringing" — the app cannot know. | N/A |
 
 **Consequence for `:data`'s codec scope (updated `ai-sessions/0041`):** DLCI 0x02 is decoded as pw_hdlc → pw_rpc `RpcPacket`
@@ -301,6 +309,39 @@ not answered keeps its last value and time). Writes (ADR-045: 17, 19, 22, 4, 7; 
 17, 19, 22 (ADR-045), 12 (ADR-046, never fewer than two modes) and 2 (ADR-047) (`SettingsCodec` — nothing else can be encoded) and `SubscribeRuntimeInfo` (ADR-043)
 — updated `ai-sessions/0052`, `0056`. The earlier statement that no EQ
 read request may be built is superseded by ADR-034.
+
+### 3.2 Timing constants (as built; added 2026-10-03, `ai-sessions/0069`, `A68-ARCH-05`)
+
+One table, read from the code. Where an ADR or another section names a wait, this table is what the app does; an ADR that states a bound ("≤ 3 s")
+is met by the value here. Check with `grep -rn "const val .*_MS" android/*/src/main`.
+
+| Constant | Value | What waits for what | Where | Decision |
+|---|---|---|---|---|
+| `DEFAULT_CONNECT_ATTEMPTS` | 3 | attempts per RFCOMM channel in one connect | `RfcommBudsTransport` | §6.0b rule 4 |
+| `DEFAULT_RETRY_DELAY_MS` | 400 ms | pause between those attempts | `RfcommBudsTransport` | §6.0b |
+| `DEFAULT_FAST_FAILURE_THRESHOLD_MS` | 2 000 ms | a failed attempt slower than this is not retried | `RfcommBudsTransport` | §6.0b |
+| `MAESTRO_ANNOUNCE_WAIT_MS` | 3 000 ms | a read or write waits for the Buds' channel announcement | `BudsRepositoryImpl` | ADR-034 |
+| `EQ_READ_TIMEOUT_MS` | 2 000 ms | one EQ `ReadSetting` waits for its answer | `BudsRepositoryImpl` | ADR-034 |
+| `SETTING_READ_TIMEOUT_MS` | 2 000 ms | one settings `ReadSetting` waits for its answer; never retried | `BudsRepositoryImpl` | ADR-036 ("≤ 3 s") |
+| `EQ_WRITE_ACK_TIMEOUT_MS` | 1 500 ms | a `WriteSetting` (EQ or setting) waits for the empty `RESPONSE`; also the quarantine after an unanswered write | `BudsRepositoryImpl` | ADR-045 Update |
+| — (no constant) | no wait, no retry | the `SubscribeRuntimeInfo` request at Connect and at *Refresh battery* — the stream pushes by itself | `BudsRepositoryImpl` | ADR-043 Update of 2026-10-03 |
+| `MODEL_ID_WAIT_MS` | 1 000 ms | a Message Stream command waits for the claim's Model ID frame | `BudsRepositoryImpl` | ADR-042 |
+| `SNAPSHOT_TIMEOUT_MS` | 1 000 ms | the Connect-time ANC `Get` waits for the Notify | `BudsRepositoryImpl` | ADR-032 |
+| `GET_RESPONSE_TIMEOUT_MS` | 2 000 ms | a manual ANC Refresh waits for the Notify | `BudsRepositoryImpl` | ADR-032 |
+| `ACK_WAIT_MS` | 1 000 ms | an ANC `Set` or a Ring waits for the Buds' ACK/NAK/Notify | `BudsRepositoryImpl` | ADR-032 |
+| `CUT_OFF_GRACE_MS` | 100 ms | after a claim's close, an answer already received may still pass the codec | `BudsRepositoryImpl` | `ai-sessions/0062` F-3 |
+| `BATTERY_BURST_WAIT_MS` | 2 000 ms | *Refresh battery* waits for the `03 03` burst on its fresh claim | `BudsRepositoryImpl` | ADR-031 |
+| `MESSAGE_STREAM_LINGER_MS` | 1 500 ms | the Message Stream stays claimed after an action, then is released | `BudsRepositoryImpl` | ADR-032 |
+| `AVAILABILITY_PROVISIONAL_MS` | 2 000 ms | a Settable reading this soon after the open is provisional | `BudsRepositoryImpl` | ADR-049 |
+| `LOSS_REOPEN_DELAY_MS` | 1 500 ms | delay before the automatic re-open after a Buds-side close | `SessionReopener` | ADR-044 |
+| `CHAIN_GUARD_MS` | 10 000 ms | a loss this soon after an automatic re-open schedules no further one | `SessionReopener` | ADR-044 |
+| `NOT_CONNECTED_SETTLE_MS` | 1 500 ms | Android's "not connected" must last this long before it is reported | `OsConnectionObserver` | §6.0b |
+| `LINK_LOST_BEFORE_MS` / `LINK_LOST_AFTER_MS` | 2 000 / 1 000 ms | window around a session loss in which a link-down reading names the cause | `SessionLoss` (`:domain`) | §6.0b |
+| `ADAPTER_OFF_BEFORE_MS` / `ADAPTER_OFF_AFTER_MS` | 2 000 / 1 000 ms | the same window for a Bluetooth-off reading | `SessionLoss` | §6.0b |
+| `FRESH_READING_MS` | 2 000 ms | the first link reading after a loss counts if it is this fresh | `SessionLoss` | §6.0b |
+| `BOND_TIMEOUT_MS` | 45 000 ms | pairing waits for the bond | `BudsCompanionPairing` | §9.0a |
+
+None of these is a polling interval: each bounds one wait that a user action or a Buds event started (§6, "no fixed-interval timer loop").
 
 ## 4. Battery Status Logic (Android Fallback)
 
@@ -327,7 +368,11 @@ value carries the wall-clock time it was received (`"updated 14:32:07"` / `"last
 
 ## 5. Protocol Framing & the Three-DLCI Reality (`CodecRouter`, Data Layer Detail)
 
-Producing the protobuf byte array is only step one. Framing is no longer a
+The payload bytes are written by hand-written Kotlin codecs — there is no protobuf runtime in the app (ADR-041;
+(corrected 2026-10-03, `ai-sessions/0069`): this section opened with "Producing the protobuf byte array is only step one"). `CodecRouter` has an
+**inbound** role only: it splits and decodes what arrives per DLCI; outbound frames are built by the per-feature
+encoders (`AncFrameEncoder`, `Maestro`, `EqFrameEncoder`, `SettingsCodec`) and handed to the transport by the
+repository. Framing is no longer a
 binary either/or choice between two competing hypotheses — `PROTOCOL.md` §2.3
 establishes that **three RFCOMM DLCIs coexist**, each with its own framing,
 and `CodecRouter` dispatches to the right one by `channelId`:
@@ -419,10 +464,10 @@ summary), the current state is (every write below additionally passes the Safe-M
 |---|---|---|---|---|
 | ANC (Get/Set/Notify) | DLCI 0x04, Group `0x08` | 🟢 FACT | ADR-009 (explicit "block lifted"), ADR-021/ADR-022, ADR-049 (Settable byte; supersedes ADR-024) | **Implemented** (`AncFrameEncoder`/`AncFrameDecoder`, `:data`) |
 | Find My Buds Left/Right | DLCI 0x04, Group `0x04` Code `0x01` | 🟢 FACT | ADR-011 (explicit "implementation is unblocked") | **Implemented** (`RingFrameEncoder`/`RingFrameDecoder`, `:data`) — hardware-verified: Ring Left/Right/Stop sent, ACKed, heard, stopped (`CAP-062-FINDINGS.md`) |
-| EQ | DLCI 0x02, pw_rpc `maestro_pw.Maestro` `WriteSetting`/`ReadSetting`, payload `4:{16\|18:{5×float32}}` | 🟢 FACT (pw_rpc identification and `ReadSetting` semantics per ADR-034; envelope, field-to-band mapping, ±6.0 clamp, presets per ADR-016) | ADR-020 (write), **ADR-034** (read-only `ReadSetting` for fields 16/18, channel mirroring) | **Implemented** (`PwRpc`, `Maestro`, `EqFrameEncoder`/`EqFrameDecoder`, `BudsRepositoryImpl.readEq`/`setEqGains`, `:data`) — write ACK and read answer are surfaced; hardware-verified: 5 of 5 `WriteSetting 4:{16:…}` answered OK (`CAP-063` 2374, 6009, 6017, 6026, 8633) |
-| Battery, Option C (HFP `AT+BIEV`/`AT+CIND`) — **removed `ai-sessions/0042`** (maintainer decision in chat, after the confirming run) | HFP AT-command channel | 🟢 FACT on the wire | None | **Removed** — wire-confirmed, not app-consumable (`CAP-059`: 7 × `AT+BIEV` on the wire, 0 vendor events in the app) |
+| EQ | DLCI 0x02, pw_rpc `maestro_pw.Maestro` `WriteSetting`/`ReadSetting`, payload `4:{16\|18:{5×float32}}` | 🟢 FACT (pw_rpc identification and `ReadSetting` semantics per ADR-034; envelope, field-to-band mapping, ±6.0 clamp, presets per ADR-016) | ADR-020 (write), **ADR-034** (read-only `ReadSetting` for fields 16/18, channel mirroring) | **Implemented** (`PwRpc`, `Maestro`, `EqFrameEncoder`/`EqFrameDecoder`, `BudsRepositoryImpl.readEq`/`setEqGains`, `:data`) — write ACK and read answer are surfaced; hardware-verified: 5 of 5 `WriteSetting 4:{16:…}` answered OK (`CAP-063` 2374, 6009, 6017, 6026, 8633) **Since 1.0.1 (`ai-sessions/0069`):** a sixth preset **Flat** (0.0 × 5 — the quintet of `CAP-015` frame 2111, within ADR-020's range; named "Flat" because the official "Default" is not captured, `EQP-001`); a gain that is not a finite number is refused before anything is encoded. |
+| Battery, Option C (HFP `AT+BIEV`/`AT+CIND`) — **removed `ai-sessions/0042`** (maintainer decision in chat, after the confirming run) | HFP AT-command channel | 🟢 FACT on the wire | None | **Removed** — wire-confirmed, not app-consumable (`CAP-059`: 12 × `AT+BIEV=2,100` on the wire, 0 vendor events in the app) |
 | Battery, Option B (DLCI 0x04 `Group 0x03 Code 0x03`) | DLCI 0x04 | 🟢 FACT (message *identity*; ADR-031; charging flag, ADR-033's 2026-09-20 update) | **ADR-033** (`ai-sessions/0040`, maintainer-approved; charging flag accepted 2026-09-20) | **Implemented** (`BatteryFrameDecoder`, `:data`) — `0bSVVVVVVV` per earbud; the Case (`b3`) is not decoded there. Left/Right hardware-seen in `CAP-059`–`CAP-061`. |
-| Battery, Case (Option F, DLCI 0x02 `SubscribeRuntimeInfo` entry 6.1) | DLCI 0x02 | 🟢 FACT (`PROTOCOL.md` §4.3 Option F, 2026-09-24) | **ADR-043** (one request per Connect; supersedes the DLCI 0x08 claim of ADR-035/038/039; its 2026-09-26 Update: one more per *Refresh battery*, built `ai-sessions/0052`, not hardware-verified) | **Implemented** (`Maestro.subscribeRuntimeInfoRequest`, `RuntimeInfoDecoder`, `:data`) — Case hardware-verified in `CAP-062`; per-bud charging and the last-seen Case (ADR-043 Update, `ai-sessions/0048`) not hardware-verified. |
+| Battery, Case (Option F, DLCI 0x02 `SubscribeRuntimeInfo` entry 6.1) | DLCI 0x02 | 🟢 FACT (`PROTOCOL.md` §4.3 Option F, 2026-09-24) | **ADR-043** (one request per Connect; supersedes the DLCI 0x08 claim of ADR-035/038/039; its 2026-09-26 Update: one more per *Refresh battery*, built `ai-sessions/0052`, hardware-verified in `CAP-063` — 8 of 8 re-subscriptions answered, AY-14; (corrected 2026-10-03, `ai-sessions/0069`): this cell said "not hardware-verified") | **Implemented** (`Maestro.subscribeRuntimeInfoRequest`, `RuntimeInfoDecoder`, `:data`) — Case hardware-verified in `CAP-062`; per-bud charging and the last-seen Case (ADR-043 Update, `ai-sessions/0048`) not hardware-verified. |
 | §4.5's other DLCI 0x02 settings (Touch & Hold, Head gestures, In-ear detection, Mono audio, Volume EQ, Volume Balance, Case sounds, Multipoint, Conversation Detection) | DLCI 0x02 | 🟢 FACT for several individual fields' number/semantic identity (ADR-019 and its Updates) | **ADR-036** — read-only `ReadSetting` for fields 2, 4, 7, 11, 15, 17, 19, 22, 27, 28 (no subscription); **ADR-045** (2026-09-26) — `WriteSetting` for 17, 19, 22, 4, 7; **ADR-046** (2026-09-28) — read + write of field 12; **ADR-047** (2026-09-28) — write of field 2 (both built `ai-sessions/0056`) | **As built `ai-sessions/0052`:** reads of 2, 4, 7, 17, 19, 22 at Connect (`SettingsCodec`, fixtures `CAP-036` 1445…1540); **writes of 17, 19, 22, 4, 7 per ADR-045** (fixtures `CAP-019` 1720/1808, `CAP-020` 1741/1995, `CAP-021` 1895/3619/4315/4976, `CAP-022` 1621/1823/1922…2099, byte-identical); UI tabs Sound and Controls. **`ai-sessions/0056`:** field 12 read at Connect and written (ADR-046; fixtures `CAP-056` 1529/1531, 1689/1725/1786/1815/1843, OK 1697; channel 21 `CAP-041` 2176/2192/2198, `CAP-036` 1514/1516) and field 2 written (ADR-047; `CAP-056` 2173/4048, 2849/3627). 11, 15, 27, 28 not read (not asked for). The 0052 settings were hardware-verified in `CAP-063`; 12 and 2 are not (Group AZ, `CAP-064` section VII). |
 | Safe Mode / Startup Handshake | DLCI 0x02 announcement + DLCI 0x04 Model ID | 🟢 FACT (firmware string ADR-012/034; Model ID `PROTOCOL.md` §0.1) | **ADR-042** | **Implemented** (`SafeModeGate`, `:data`; Safe Mode card, `:ui`) |
 | Find My Buds Case / "ring both" | — | — | ADR-027 (premise narrowed 2026-09-24: spec `0x03` "ring both" untested) | **Out of scope**; sending `0x03` needs its own ADR |
@@ -440,7 +485,7 @@ GrapheneOS enforces aggressive security/battery policies, including automatic
 Bluetooth deactivation on lock or inactivity. The architecture treats the
 physical link as inherently unstable:
 
-- **Connection Lifecycle:** `BudsTransport`/`ConnectionStateMachine`
+- **Connection Lifecycle:** `BluetoothStateObserver` (`:hardware`; (corrected 2026-10-03, `ai-sessions/0069`) — not `BudsTransport`/`ConnectionStateMachine`)
   continuously observes `BluetoothAdapter.ACTION_STATE_CHANGED`; `STATE_OFF` is
   treated as a normal transition.
 - **Graceful Degradation:** an `IOException` from the socket (OS-triggered
@@ -474,8 +519,9 @@ persistent, low-priority notification. Concretely, for this app:
   foreground start) — (opening the app with a bonded device present, or an explicit reconnect tap) — not eagerly at
   app process start, and not by a background scheduler (`ARCHITECTURE.md` §6's "user-initiated
   reconnection only" rule applies here too).
-- **Notification** shows the current `ConnectionState` (`Connecting`/`Ready`/a specific `BudsError`
-  case) and, once `Ready`, a one-line summary (e.g. current ANC mode) — no raw payload content, per
+- **Notification** shows the current `ConnectionState` (`Connecting`/`Ready`) and, once `Ready`, a one-line summary
+  (the current ANC mode) — as built it never shows a `BudsError`: errors are shown in the app, and the notification
+  is removed when the session ends (`OpenControlApplication.notificationText`; (corrected 2026-10-03, `ai-sessions/0069`)) — no raw payload content, per
   §12's logging-privacy rules extended to user-visible text.
 - **Stopped** when `ConnectionStateMachine` reaches `Disconnected` and no reconnect is in flight, or
   when the user explicitly disconnects from the Connection screen. The service does not restart itself
@@ -511,8 +557,8 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   at opened state` and the stack closed OpenControl's port (uid 10338) 0.1 s later. **A reply that arrives after such a close is lost to the app:** a `Set`
   the Buds ACKed after the app's claim was closed (HCI 2640 → close 2649 → ACK 2651) left the app showing the old mode, and a `Get` answered after the close
   (10321 → 10344 → 10356) was reported as "The Buds didn't respond in time." **Built in `ai-sessions/0062` (F-3, the maintainer's choice in chat 2026-10-01):** a
-  claim's waits also watch `BudsTransport.channelClosed`; a close after the request and before its answer is `BudsError.AnswerCutOff` ("The answer was cut off —
-  another app took the Buds' channel. Tap Refresh to see the current mode.") — not retried (a `ChannelLost` would be retried once by the claim, i.e. a second
+  claim's waits also watch `BudsTransport.channelClosed`; a close after the request and before its answer is `BudsError.AnswerCutOff` (since 1.0.1: "The channel was closed
+  before the Buds' answer arrived (possibly by another app using it). Tap Refresh to see the current mode." — what was observed, the cause as a possibility) — not retried (a `ChannelLost` would be retried once by the claim, i.e. a second
   `Set`), not `Timeout`; an answer that turns up within 100 ms of the close still counts (it may have been read before the close). A timeout with the channel
   open stays `Timeout`. After a cut-off `Set` the mode is marked "not confirmed" until the next `Notify`/ACK.
 - **A connection is one unit** — *for the session channels opened by `connect()`* (superseded for the on-demand DLCI
@@ -594,7 +640,9 @@ maintainer's choice "Final at once"):** `MainActivity` also forwards every readi
 bound) to `BudsRepository.onBluetoothAdapter`; a TURNING_OFF/OFF reading from 2 s before to 1 s after the loss decides first — "Bluetooth was switched off on this
 phone", logged final (never "provisional"). `CAP-066`: both Bluetooth-offs had left a lasting "undetermined (provisional)" — the link read `UNKNOWN` — while the
 system log shows `STATE_TURNING_OFF` 0.55 s and 0.81 s before the loss. Every adapter change is logged ("Bluetooth adapter: ON -> TURNING_OFF").
-- **Deferred proposals (not decided, not implemented — need a maintainer decision and an ADR):** *automatic session connecting* would have to be either
+- **Automatic session connecting — (a) decided, (b) not decided:** (corrected 2026-10-03, `ai-sessions/0069`): (a) below is **decided and built** — `DECISIONS.md` ADR-044
+  (re-open the MAESTRO session automatically while the app is visible). (b) remains a deferred proposal that needs a maintainer decision and an ADR.
+  As first written, automatic session connecting would have to be either
   (a) **foreground-only** — when the app is visible and Android reports the Buds connected, open the MAESTRO session without a tap (needs a decision that a
   visible app may connect by itself, i.e. amending the "user-initiated only" rule above; no new permission or service), or (b) **background, via CDM
   device-presence** — the CDM device-presence-observation API on the existing association, which wakes a `CompanionDeviceService` when the Buds connect
@@ -647,6 +695,7 @@ sealed class BudsError {   // as built, domain/…/BudsError.kt (updated 2026-09
     data object AncModeListNotRead : BudsError()     // press-and-hold list not read on this connection (ADR-046); nothing sent
     data object SessionOpening : BudsError()         // a write while the session is (re)opened (`ai-sessions/0056` U-2; EQ too, 0059)
     data object UnreadableAnswer : BudsError()       // ReadSetting answered OK with an undecodable value (`ai-sessions/0059`)
+    data object SettingNotReadable : BudsError()     // no read request exists for the field (`ai-sessions/0069`; was Unknown("EQ field not readable"))
     data class Unknown(val cause: Throwable) : BudsError()
 }
 ```
@@ -657,6 +706,14 @@ exposes the errors as flows (`eqError`, `settingsError`, `batteryRefreshError`, 
 role the earlier design name `BudsUiState` described (ADR-048; it never became a type) — so the
 Compose layer can render a specific, actionable message per failure mode rather than a
 generic error banner.
+
+**Since 1.0.1 (`ai-sessions/0069`):** every error type has its own sentence, pinned as literal text in `UserMessageTest` (`Unknown` reads "Unexpected
+error: …", never "Something went wrong"); a message says what was observed and names a cause only as a possibility — another app is named only for the
+Fast Pair channel, the one channel another client is known to claim (ADR-032). **A decoder that throws** costs one frame: `CodecRouter` decodes each
+frame inside `decodeGuarded`, reports the frame as malformed and logs the exception's class ("Decoder fault on channel N: …") — the collector that feeds
+the router has no exception handler and would otherwise stop for the life of the process (A68-APP-01). **Around socket calls** `RfcommBudsTransport`
+converts a `SecurityException` into `PermissionDenied` and any other `RuntimeException` into `ChannelLost` with its text, on write, read and close
+(A68-APP-10). The UI texts are English only; they are Kotlin literals, not string resources (A68-APP-15, `TODO.md`).
 
 **`UnidentifiedFrame` is deliberately not part of `BudsError`.** A frame with
 an unrecognized Group/Code (typically on DLCI 0x08, §5) parsed successfully —
@@ -729,10 +786,20 @@ of firmware versions this app has been verified against.
 
 ## 9. Security & Permission Architecture
 
-- **Zero location tracking:** the manifest declares
-  `android:usesPermissionFlags="neverForLocation"` on `BLUETOOTH_SCAN`;
-  `BLUETOOTH_PRIVILEGED` and any `ACCESS_*_LOCATION` permission are never
-  requested.
+- **Zero location tracking:** `BLUETOOTH_SCAN` is **not declared** — nothing in the app scans. If the bounded
+  battery-advertisement scan of ADR-006 is ever built, it is declared with
+  `android:usesPermissionFlags="neverForLocation"` ((corrected 2026-10-03, `ai-sessions/0069`), `A68-ARCH-01`: this bullet said the manifest
+  declares it). `BLUETOOTH_PRIVILEGED` and any `ACCESS_*_LOCATION` permission are never requested.
+- **Permissions, as declared** (`grep -n uses-permission android/*/src/main/AndroidManifest.xml`):
+
+  | Permission | Module | Why |
+  |---|---|---|
+  | `BLUETOOTH_CONNECT` | `:hardware` | RFCOMM sockets to the paired Buds, bonded-device list, profile state |
+  | `POST_NOTIFICATIONS` | `:hardware` | the foreground-service notification |
+  | `FOREGROUND_SERVICE` | `:hardware` | the connection service |
+  | `FOREGROUND_SERVICE_CONNECTED_DEVICE` | `:hardware` | its type on API 34+ |
+
+  The merged manifest adds AndroidX Core's private `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (signature level, this app only). No `INTERNET`.
 - **Companion Device Manager (CDM):** initial pairing/discovery uses
   `CompanionDeviceManager` (API 26+) instead of custom BLE scanning — this
   delegates the scan UI to the OS and grants the app access only to the
@@ -747,8 +814,9 @@ this sequence explicit rather than inferred from ADR-005's decision alone:
    `BluetoothAdapter.getBondedDevices()` (already-paired path) yields no Buds Pro 2. Tapping it is the
    user-visible trigger CDM itself requires — never invoked automatically on app start.
 2. **`CompanionDeviceManager.associate(AssociationRequest, ...)`**, built with a
-   `BluetoothDeviceFilter` (no name/address hardcoded — the OS's own picker UI lets the user identify
-   the Buds visually, consistent with never hardcoding a MAC per `AGENTS.md` §7/§9). `singleDevice(true)`
+   `BluetoothDeviceFilter` with a **name pattern** — `(?i).*Pixel\s*Buds.*` (`BudsCompanionPairing.kt`) — and no address
+   ((corrected 2026-10-03, `ai-sessions/0069`), `A68-ARCH-02`: the text said "no name/address hardcoded"); the OS's own picker UI lets the user identify
+   the Buds, consistent with never hardcoding a MAC per `AGENTS.md` §7/§9. `singleDevice(true)`
    since this project targets exactly one paired device (`ARCHITECTURE.md` §15, `PROJECT.md`
    non-goals).
 3. **OS picker UI** renders (system-owned, not this app's own Compose UI) — the user selects the Buds
@@ -776,6 +844,14 @@ this sequence explicit rather than inferred from ADR-005's decision alone:
 7. **Reconnection** (every subsequent app launch/Bluetooth toggle) skips steps 1–4 entirely —
    `BluetoothAdapter.getBondedDevices()` already has the device, so the app goes directly to step 5's
    bonding check (normally a no-op, since the link key is already stored) and step 6.
+8. **Which bonded device (as built since 1.0.1, `ai-sessions/0069`, A68-APP-04/05; the maintainer's choice in chat 2026-10-03):** the device whose
+   address is this app's CDM association. Without an association, a **single** bonded device whose name contains "Pixel Buds" is used (as before); with
+   **two or more** the app picks none — status `SeveralBudsPaired`, "More than one Pixel Buds device is paired with this phone. Tap Pair a device to
+   choose the one to control." — and the user chooses in Android's picker (`PairingLogic.chooseBondedOrAsk`; the set of bonded devices has no order, so
+   "the first" was arbitrary). Another model picked by mistake is caught by Safe Mode's Model ID check (ADR-042).
+   **Settings → "Use different Buds"** disconnects and removes this app's own CDM associations (`BudsCompanionPairing.forgetAssociations`; the Bluetooth
+   pairing in Android stays); until a new association exists no device is taken by its name (in memory — after a process restart a single bonded
+   "Pixel Buds" device is used again). No address is stored by the app and no in-app device list exists (`AGENTS.md` §7).
 - **Local state persistence:** as built, only the Debug-mode switch and — since `ai-sessions/0062` — the dark-mode choice are stored (plain AndroidX
   DataStore Preferences, one file — non-sensitive values, §2). Future user data (e.g. custom EQ profiles) would use DataStore, **encrypted where
   applicable** (`AGENTS.md` §10); no EQ or battery value is persisted (the hardware is the source of truth, §3.1).
@@ -867,7 +943,13 @@ As built (rewritten 2026-09-24, 0044 AR-2):
   `tshark`-extracted capture bytes, fuzz/property tests (random and truncated input never throws; a valid frame decodes after a
   garbage prefix and a reset), `SafeModeGate`, and `BudsRepositoryImpl` against `FakeBudsTransport` (in `:hardware`'s **test
   fixtures**, never in the app) — pure JVM, JUnit 5 + Kotest assertions.
-- **Unit tests** (`:hardware`): `RfcommBudsTransport` with scripted sockets, `ConnectionStateMachine`, pairing/link logic.
+  Since `ai-sessions/0069`: a **structured fuzz** (`OversizedLengthTest`) mutates real captured frames *inside* their payload and re-seals them with a
+  valid CRC — random bytes almost never pass the CRC, so the readers behind it were not reached by the older fuzz tests — with a time limit, because one
+  of the defects it covers was an endless loop.
+- **Unit tests** (`:hardware`): `RfcommBudsTransport` with scripted sockets (including exceptions that are not `IOException`), `ConnectionStateMachine`,
+  pairing/link logic.
+- **Unit tests** (`:ui`, Robolectric): each tab's wording and enabled states, every error sentence as literal text. **`:app` has no tests** (the tile
+  service, the foreground service and `MainActivity` are covered only through the pure functions they call) — `TODO.md`.
 - **Unit tests** (`:domain`): pure domain logic (status derivation, tile cycle). There are no ViewModels or use cases to test.
 - **CI** (`.github/workflows/android.yml`, 2026-09-24): builds, runs all unit tests and lint, and asserts no `INTERNET` permission
   in any manifest and in the merged manifest.
@@ -922,8 +1004,8 @@ question, so it is tracked as a `PROPOSAL —` note in §5a above and in
 > (`StateFlow`/`SharedFlow` only — see §11); passive BLE scanning policy for
 > the Fast Pair Battery Notification (bounded exception — see §9.1,
 > `DECISIONS.md` ADR-006); **single-device support only for v1** — the app
-> targets exactly one paired Pixel Buds Pro 2 at a time (matches `PROJECT.md`'s
-> "Definition of done"); simultaneous multi-device support is explicitly out
+> targets exactly one paired Pixel Buds Pro 2 at a time (a **non-goal** in `PROJECT.md`, not a Definition-of-done
+> criterion — (corrected 2026-10-03, `ai-sessions/0069`)); simultaneous multi-device support is explicitly out
 > of scope until separately proposed and recorded in `DECISIONS.md`;
 > **dependency injection — Hilt** (see §10, `DECISIONS.md` ADR-028, decided
 > 2026-09-13); **Find My Buds Case/"both simultaneously" — out of scope for v1**

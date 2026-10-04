@@ -58,6 +58,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.CardAction
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.isFromThisSession
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
@@ -102,6 +103,7 @@ fun ConnectionScreen(
     modifier: Modifier = Modifier,
     safeMode: SafeModeState? = null,
     batteryRefreshError: BudsError? = null,
+    sessionSince: Long? = null,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
@@ -128,6 +130,13 @@ fun ConnectionScreen(
                     pairingStatusText?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 }
 
+                // `ai-sessions/0069` A68-APP-04 (the maintainer's wording, chat 2026-10-03): the app does not choose between several bonded Buds.
+                DeviceStatus.SeveralBudsPaired -> {
+                    Text(SEVERAL_BUDS_PAIRED_TEXT, style = MaterialTheme.typography.bodyLarge)
+                    Button(onClick = onPair) { Text("Pair a device") }
+                    pairingStatusText?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                }
+
                 else -> {
                     val card = statusCard(deviceStatus, androidLink, connectionState)
                     if (card != null) {
@@ -136,7 +145,7 @@ fun ConnectionScreen(
                     if (connectionState is ConnectionState.Ready) {
                         safeMode?.let { SafeModeCard(it) }
                         // `ai-sessions/0057`: the firmware line (formerly its own card) is in the battery card's (i) details.
-                        BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, batteryRefreshError, deviceInfo, onRefreshBattery)
+                        BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, batteryRefreshError, deviceInfo, onRefreshBattery, sessionSince)
                     }
                 }
             }
@@ -326,14 +335,28 @@ internal const val BATTERY_EXPLANATION: String =
  * The battery card's (i) lines (`ai-sessions/0057` D-7): the explanation, then **the same lines the card showed before** — [budLine] for Left and Right,
  * [caseLine] — with every time, "last seen" and "last connection", then [CASE_REFRESH_NOTE] and the firmware.
  */
-internal fun batteryDetailLines(status: BatteryStatus, batteryStatusUpdatedAt: Long?, deviceInfo: DeviceInfo?): List<String> = listOfNotNull(
+internal fun batteryDetailLines(
+    status: BatteryStatus,
+    batteryStatusUpdatedAt: Long?,
+    deviceInfo: DeviceInfo?,
+    sessionSince: Long? = null,
+): List<String> = listOfNotNull(
     BATTERY_EXPLANATION,
     budLine("Left", status.left, status.leftCharging, batteryStatusUpdatedAt),
     budLine("Right", status.right, status.rightCharging, batteryStatusUpdatedAt),
-    caseLine(status.case, batteryStatusUpdatedAt),
+    caseLine(status.case, batteryStatusUpdatedAt, caseFromLastConnection(status.case, batteryStatusUpdatedAt, sessionSince)),
     CASE_REFRESH_NOTE,
     firmwareLine(deviceInfo),
 )
+
+/**
+ * A68-APP-02 (`ai-sessions/0069`): the Case value was reported before this connection opened. `false` while [sessionSince] is unknown (nothing to compare
+ * with), so a caller that does not track sessions keeps the "no bud charging in the case" wording.
+ */
+internal fun caseFromLastConnection(level: BatteryLevel, fallbackUpdatedAt: Long?, sessionSince: Long?): Boolean {
+    val known = level as? BatteryLevel.Known ?: return false
+    return sessionSince != null && !isFromThisSession(known.receivedAtMillis ?: fallbackUpdatedAt, sessionSince)
+}
 
 /** A value on the battery card is not current: a last-seen percentage, or a charging report from the last connection (D-7's marker). */
 internal fun isNotCurrent(level: BatteryLevel, charging: ChargingReading? = null): Boolean =
@@ -354,11 +377,12 @@ private fun BatteryCard(
     batteryRefreshError: BudsError?,
     deviceInfo: DeviceInfo?,
     onRefreshBattery: () -> Unit,
+    sessionSince: Long? = null,
 ) {
     val notCurrent = isNotCurrent(status.left, status.leftCharging) || isNotCurrent(status.right, status.rightCharging) || isNotCurrent(status.case)
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            CardTitle("Battery", batteryDetailLines(status, batteryStatusUpdatedAt, deviceInfo), notCurrent)
+            CardTitle("Battery", batteryDetailLines(status, batteryStatusUpdatedAt, deviceInfo, sessionSince), notCurrent)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 BatteryColumn("Left", OpenControlIcons.Earbud, status.left, status.leftCharging, Modifier.weight(1f))
                 BatteryColumn("Case", OpenControlIcons.Case, status.case, null, Modifier.weight(1f))
@@ -421,9 +445,17 @@ internal fun BudsError.userMessage(lossCause: SessionLossCause? = null): String 
     BudsError.AncModeListNotRead -> "The list of modes has not been read from the Buds on this connection, so nothing was sent."
     BudsError.SessionOpening -> SESSION_OPENING_TEXT
     BudsError.UnreadableAnswer -> "The Buds answered with a value this app cannot read."
+    BudsError.SettingNotReadable -> "This setting cannot be read by this app."
+    // `ai-sessions/0069` A68-APP-07 (the maintainer's wording, chat 2026-10-03): what was observed, then the possible causes. Another app is named only for
+    // the Fast Pair channel — the one channel another client is known to claim (ADR-032); for every other channel that cause was never evidenced, and it was
+    // the published known issue of 1.0.0 (a closed case read as "another app").
     is BudsError.ChannelUnavailable ->
-        "Couldn't open the ${channelLabel(channelId)}. Another app on this phone — for example Google " +
-            "Play services' Fast Pair — may already be using it. Wait a few seconds, then try again."
+        if (channelId == FAST_PAIR_CHANNEL_ID) {
+            "Couldn't open the Fast Pair channel. Possible causes: the Buds are out of reach or in the closed case, or another app on this phone " +
+                "(for example Google Play services' Fast Pair) is using the channel. Try again in a few seconds."
+        } else {
+            "Couldn't open the app's channel to the Buds. Possible causes: the Buds are out of reach or in the closed case. Open the case and try again."
+        }
     is BudsError.ChannelLost -> channelLostMessage(channelId, lossCause)
     is BudsError.MaestroChannelUnknown ->
         if (channelId == null) {
@@ -432,8 +464,15 @@ internal fun BudsError.userMessage(lossCause: SessionLossCause? = null): String 
             "The Buds announced control channel $channelId, which this app has no known address for, so nothing was sent."
         }
     is BudsError.MaestroRejected -> "The Buds rejected the request ($detail)."
-    is BudsError.Unknown -> "Something went wrong: ${cause.message ?: cause::class.simpleName}"
+    // A68-GOV-03 (AGENTS.md §8): never "Something went wrong" — the exception's own text, or its class when it has none.
+    is BudsError.Unknown -> "Unexpected error: ${cause.message ?: cause::class.simpleName}"
 }
+
+/**
+ * The toast of an ANC tile tap that failed (`ai-sessions/0069`, A68-APP-09): the same sentence the app shows for that error — for **every** error, so a tap
+ * that changed nothing is never silent. Public: `:app`'s tile service shows it.
+ */
+fun ancTileFailureText(error: BudsError): String = error.userMessage()
 
 /**
  * I-7 (`ai-sessions/0048`): what the evidence says, per [SessionLossCause]. Never "likely another app" — no other app ever contended for the
@@ -441,8 +480,9 @@ internal fun BudsError.userMessage(lossCause: SessionLossCause? = null): String 
  */
 internal fun channelLostMessage(channelId: Int, lossCause: SessionLossCause?): String = when (lossCause) {
     SessionLossCause.BUDS_CLOSED_CHANNEL ->
-        "The Buds closed the app's channel (this happens when a bud goes in or out of the case or an ear). Android still shows the Buds " +
-            "connected; the app reopens its channel by itself while it is on screen, or tap Connect."
+        // A68-APP-07: the observation ("was closed while Android still shows …") first; who closed it is what the Buds are known to do, not a reading.
+        "The app's channel was closed while Android still shows the Buds connected — the Buds do this when a bud goes in or out of the case or an " +
+            "ear. The app reopens its channel by itself while it is on screen, or tap Connect."
     SessionLossCause.ANDROID_LINK_LOST ->
         "Android no longer shows the Buds connected to this phone — after a disconnect in Android's own Bluetooth settings, with both buds " +
             "in the case, or out of range. Tap Connect to reconnect."
@@ -469,6 +509,9 @@ internal fun BudsError.technicalDetail(): String? = when (this) {
     else -> null
 }
 
+/** `Dlci.FAST_PAIR_MESSAGE_STREAM` (`:ui` cannot depend on `:data`, see [channelLabel]). */
+private const val FAST_PAIR_CHANNEL_ID: Int = 0x04
+
 /**
  * Human label for an RFCOMM channel id (`:data`'s `Dlci` constants — `:ui` cannot depend on `:data`,
  * ARCHITECTURE.md §2, so the two values are mirrored here: 0x02 = `Dlci.MAESTRO`, 0x04 =
@@ -477,7 +520,6 @@ internal fun BudsError.technicalDetail(): String? = when (this) {
 internal fun channelLabel(channelId: Int): String = when (channelId) {
     0x02 -> "Maestro channel (equalizer)"
     0x04 -> "Message Stream channel (ANC, Find My Buds)"
-    0x08 -> "GSND control channel (not opened by this app, ADR-043)"
     else -> "Bluetooth channel 0x%02x".format(channelId)
 }
 
@@ -499,7 +541,8 @@ internal fun budLine(label: String, level: BatteryLevel, charging: ChargingReadi
             time != null -> " ($time)"
             else -> ""
         }
-        (if (it.charging) " — charging in the case" else " — not charging (out of the case)") + stamp
+        // A68-APP-07: "not charging" is the Buds' report; "(out of the case)" was an inference and is no longer said.
+        (if (it.charging) " — charging in the case" else " — not charging") + stamp
     } ?: ""
     return percent + chargingPart
 }
@@ -508,11 +551,14 @@ internal fun budLine(label: String, level: BatteryLevel, charging: ChargingReadi
  * The Case line (`ai-sessions/0048` I-5): the current value with its time, or the last value the Buds reported, marked "last seen" with that time —
  * they stop sending it when no bud is charging (🟢, PROTOCOL.md §4.3 Option F). Never a value without its time (AGENTS.md §5).
  */
-internal fun caseLine(level: BatteryLevel, fallbackUpdatedAt: Long? = null): String = when (level) {
+internal fun caseLine(level: BatteryLevel, fallbackUpdatedAt: Long? = null, fromLastConnection: Boolean = false): String = when (level) {
     is BatteryLevel.Known -> {
         val time = formatUpdatedAt(level.receivedAtMillis ?: fallbackUpdatedAt)
         if (level.isStale) {
-            "Case: ${level.percent}% — last seen" + (time?.let { " $it" } ?: "") + " (no bud charging in the case)"
+            // A68-APP-02 (the maintainer's wording, chat 2026-10-03): a value from an earlier connection says so — "no bud charging in the case" is a
+            // statement about now, which a value from before this connection cannot support.
+            "Case: ${level.percent}% — last seen" + (time?.let { " $it" } ?: "") +
+                (if (fromLastConnection) " (last connection)" else " (no bud charging in the case)")
         } else {
             "Case: ${level.percent}%" + (time?.let { " (updated $it)" } ?: "")
         }
@@ -544,9 +590,15 @@ const val ANC_NOT_ALLOWED_TEXT: String = "The Buds don't allow changing noise co
 /**
  * `ai-sessions/0062` F-3 (the maintainer's wording, chat 2026-10-01): the claim's channel was closed after a `Set`/`Get` was written and before its answer —
  * another client connected to the same channel (`CAP-065` 09:27:10.450 UTC system log). Never "didn't respond in time": the Buds may well have answered.
- * Public: `:app`'s tile toasts the same sentence.
+ * Public: `:app`'s tile toasts the same sentence. **`ai-sessions/0069` (A68-APP-07, the maintainer's wording of 2026-10-03):** the sentence now says what was
+ * observed — the channel was closed before the answer — and names another app as a possibility, not as the cause.
  */
-const val ANSWER_CUT_OFF_TEXT: String = "The answer was cut off — another app took the Buds' channel. Tap Refresh to see the current mode."
+const val ANSWER_CUT_OFF_TEXT: String =
+    "The channel was closed before the Buds' answer arrived (possibly by another app using it). Tap Refresh to see the current mode."
+
+/** A68-APP-04 (`ai-sessions/0069`): shown instead of a silent choice when two or more bonded devices are named "Pixel Buds" and none is associated. */
+internal const val SEVERAL_BUDS_PAIRED_TEXT: String =
+    "More than one Pixel Buds device is paired with this phone. Tap Pair a device to choose the one to control."
 
 /** `ai-sessions/0052`: a Refresh whose claim brought no `03 03` frame — nothing new is shown. */
 internal const val NO_NEW_BATTERY_READING_TEXT: String = "No new battery reading from the Buds — try again."

@@ -43,7 +43,19 @@ class DeviceStatusTest {
         bonded: Boolean = true,
         link: AndroidLink = AndroidLink.UNKNOWN,
         session: ConnectionState = ConnectionState.Disconnected,
-    ) = deriveDeviceStatus(bluetoothEnabled, permission, bonded, link, session)
+        several: Boolean = false,
+    ) = deriveDeviceStatus(bluetoothEnabled, permission, bonded, link, session, several)
+
+    @Test
+    fun `several bonded Buds without an association is its own status, below Bluetooth-off and permission`() {
+        // `ai-sessions/0069` A68-APP-04.
+        assertEquals(DeviceStatus.SeveralBudsPaired, status(bonded = false, several = true))
+        assertEquals(DeviceStatus.NotPaired, status(bonded = false, several = false))
+        assertEquals(DeviceStatus.BluetoothOff, status(bluetoothEnabled = false, bonded = false, several = true))
+        assertEquals(DeviceStatus.PermissionMissing(PermissionStatus.DENIED), status(permission = PermissionStatus.DENIED, bonded = false, several = true))
+        assertEquals(DeviceStatus.PairedNotConnected, status(bonded = true, several = true), "an identified device wins")
+        assertNull(statusCard(DeviceStatus.SeveralBudsPaired, AndroidLink.UNKNOWN, ConnectionState.Disconnected))
+    }
 
     @Test
     fun `Bluetooth off wins over everything`() {

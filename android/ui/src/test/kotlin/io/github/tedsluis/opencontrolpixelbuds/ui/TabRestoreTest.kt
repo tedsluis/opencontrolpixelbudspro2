@@ -56,8 +56,6 @@ class TabRestoreTest {
 
     private fun uiState() = OpenControlUiState(
         connectionState = ConnectionState.Ready,
-        bluetoothEnabled = true,
-        hasBondedDevice = true,
         deviceStatus = DeviceStatus.ControlledByApp,
         permissionState = PermissionState(PermissionStatus.GRANTED, PermissionStatus.GRANTED),
         pairingStatusText = null,

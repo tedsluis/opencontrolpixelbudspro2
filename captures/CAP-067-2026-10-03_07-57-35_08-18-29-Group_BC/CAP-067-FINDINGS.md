@@ -173,7 +173,7 @@ Command: the control-frame inventory (Buds-side `DISC` on 0x02/0x03: A945, A1085
   channel 21, **byte-identical to `CAP-064` frame 6671**. **BC-5:** A882 `4:{17:0}` → OK, label "Centre". **BC-R:** B834 08:15:00.639 the same bytes as A876 → OK
   B837 (514 ms) → "Right 4"; read back as 17:7 by both later sessions. 🔴 The channel-19 frame of `17:7` derived in the skeleton was **not** captured (every write
   was on channel 21).
-- 🟡 6 of 17 drags landed on "Centre" — the ±3 snap (skeleton BC-5) catches releases near the middle; the slider alone stays imprecise (`CAP-066` §5), though Right
+- 🟡 7 of 17 drags landed on "Centre" (the zeros among the 17 decoded writes above; "6" corrected 2026-10-03, `ai-sessions/0069`) — the ±3 snap (skeleton BC-5) catches releases near the middle; the slider alone stays imprecise (`CAP-066` §5), though Right
   4 was reached this time.
 - 🟢 **Runtime info:** entry 6.1 (Case) present while a bud was charging — 95 % (A324 07:58:51), 93 % (A771 08:02:02 …, B1710 08:17:04); the Right's 6.3.2 turned
   `1` at A889 08:05:12.666 and the Left's 6.2.2 at A906 08:05:32.340 (6.1 absent from then on), both `2` again at B1710 — matching the film's undock/redock order
@@ -182,7 +182,7 @@ Command: the control-frame inventory (Buds-side `DISC` on 0x02/0x03: A945, A1085
 
 ## 6. The 1.0.0 UI on hardware (F-1, F-6, ADR-050/051, K4d)
 
-- 🟢 **F-1 — the tab survives a configuration change: holds, 13 of 13.** Rotation keeps Connection (2 relaunches), ANC (2), Sound (2), Controls (2), Find (2) and the
+- 🟢 **F-1 — the tab survives a configuration change: holds, 14 of 14** (12 rotation relaunches + 2 dark-theme switches; the logcat has 12 `handleRelaunchActivity` at 06:01:11…06:03:07 UTC and `MainActivity` `wm_on_create_called` at 06:10:44 and 06:11:28 — "13 of 13" corrected 2026-10-03, `ai-sessions/0069`)**.** Rotation keeps Connection (2 relaunches), ANC (2), Sound (2), Controls (2), Find (2) and the
   Settings menu with its tab (2: Settings → Info across 08:02:59/08:03:07); Android's dark-theme switch keeps Connection (08:10:44) and the **Settings menu**
   (08:11:28.9, 4-fps narrowing). Back from the menu returned to the tab it was opened from 3 of 3 (Find 08:03:24.4, Connection 08:09:52, Connection 08:12:46).
   "Refuted if" (a tab other than Connection comes back as Connection) — **no literal hit**. Process death (A5) restored the **Sound** tab in the new process
@@ -261,7 +261,7 @@ session lost without recovery — 🟢 **no heavy app defect** in this run.
 | **HFP / AVRCP** | — | `AT+BIEV`; Paused/Stopped | — | the Buds' stray `AT+NREC` bytes |
 | **Pairing** | CDM + `createBond` | SSP Just Works, P-192 | re-pair and automatic re-open in 3 s | B4 not exercised |
 | **Android's link** | mirrors it; ADR-044 | — | re-opens after loss, permission, re-pair | F-3 lines not captured |
-| **UI** | rotation, dark mode, menu, Info, links | — | F-1 13/13, F-6, ADR-051 on film | wording of finding 2 |
+| **UI** | rotation, dark mode, menu, Info, links | — | F-1 14/14, F-6, ADR-051 on film | wording of finding 2 |
 
 ## 11. Improvements (proposals only — nothing under `android/` was changed)
 

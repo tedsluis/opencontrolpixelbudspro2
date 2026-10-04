@@ -111,8 +111,11 @@ order:
 - Use `protobuf-javalite` or the `protobuf-kotlin-lite` Gradle plugin
   exclusively. Never the full `protobuf-java` runtime.
 - `.proto` files live under `data/src/main/proto/`. The agent assumes these
-  schemas have already been extracted (e.g. via `pbtk`, or — per §0's
-  2026-08-30 correction — recovered directly from decompiled Kotlin/Java where
+  schemas have already been extracted (with a schema decoder —
+  `scripts/decode_rawmessageinfo.py`; `pbtk` cannot read this APK, `DECISIONS.md`
+  ADR-041; wording changed 2026-10-03, maintainer-approved in chat,
+  `ai-sessions/0069` — or, per §0's
+  2026-08-30 correction, recovered directly from decompiled Kotlin/Java where
   no native binary exists) from `libmaestro`/`libgfps` and are present in the
   workspace — the agent does not need to (and should not attempt to)
   reverse-engineer binaries itself; it only consumes provided `.proto`
@@ -302,11 +305,9 @@ order:
 - Preferred stack: AndroidX core/appcompat, Jetpack Compose BOM, Kotlin
   Coroutines, `protobuf-kotlin-lite`, AndroidX DataStore (Preferences,
   encrypted where applicable), AndroidX Lifecycle/ViewModel-Compose.
-- **Dependency injection is not yet decided:** Hilt/Dagger vs. a manual
-  service-locator approach is an open question (`ARCHITECTURE.md` §10, §15).
-  Neither is part of the "preferred stack" above until a `DECISIONS.md` entry
-  settles it — do not assume Hilt is pre-approved just because it doesn't
-  touch the `com.google.android.gms.*` namespace (see §1).
+- **Dependency injection: Hilt** (`DECISIONS.md` ADR-028, 2026-09-13).
+  (Replaces the "not yet decided" bullet; 2026-10-03, maintainer-approved in
+  chat, `ai-sessions/0069`.)
 
 ## 11. Testing Expectations
 
@@ -372,9 +373,13 @@ order:
    (e.g. "enabled ANC via the official app") — record this in
    `CAPTURE_BLUETOOTH_HCI_SNOOP.md`.
    - **CLI hygiene:** before any `tshark`/Wireshark filtering or scripted
-     extraction, always pre-filter the log by the Buds' address —
-     `tshark -r CAP-NNN-btsnoop_hci.log -Y "bluetooth.addr == <MAC>"` (or the
-     equivalent Wireshark display filter) — before layering on
+     extraction, scope every filter to the Buds' connection first — by address
+     where the log carries it (`tshark -r CAP-NNN-btsnoop_hci.log -Y
+     "bluetooth.addr == <MAC>"`), otherwise by connection handle
+     (`bthci_acl.chandle`, from the Connection Complete for the Buds' address);
+     `bluetooth.addr` matches nothing on several logs, so show the same filter
+     matching a known frame (changed 2026-10-03, maintainer-approved in chat,
+     `ai-sessions/0069`) — before layering on
      protocol-specific filters (`btrfcomm.dlci==...`, `btle`, etc.). A shared,
      non-restarted snoop log can contain unrelated device traffic (see e.g.
      `CAP-004`'s incidental Fitbit traffic); filtering by address first avoids
@@ -418,7 +423,11 @@ order:
    only with the exact command, its exit status (`tshark` exits non-zero on an
    invalid display filter — that is not an empty result), and the same filter shown
    matching a frame known to exist in a log. (`CAP-029` used `avctp or avrcp`, which
-   errors; the valid `btavctp or btavrcp` finds 26 frames there.)
+   errors; the valid `btavctp or btavrcp` finds 26 frames there.) A filter on
+   `data.data` does not see frames a dissector has claimed (HFP, AVDTP) — use
+   `frame contains` or the protocol's own field (added 2026-10-03,
+   maintainer-approved in chat, `ai-sessions/0069`; `CAP-002`'s "no `AT+`" was
+   such a filter artefact).
 
 ### Reverse engineering the APK
 
@@ -435,9 +444,13 @@ order:
    alias alongside it.
 4. Build a call graph incrementally; document intermediate results, even
    unfinished ones.
-5. `.proto` schemas are extracted via `pbtk`, not hand-reconstructed from
-   decompiled getter/setter names alone (§4) — field *names* recovered from
-   JADX are not proof of the actual wire field *numbers*.
+5. Schemas are recovered with a schema decoder
+   (`scripts/decode_rawmessageinfo.py`; `pbtk` cannot read this APK, ADR-041 —
+   changed 2026-10-03, maintainer-approved in chat, `ai-sessions/0069`), not
+   hand-reconstructed from decompiled getter/setter names alone (§4) — field
+   *names* recovered from JADX are not proof of the actual wire field
+   *numbers*. When JADX skips a method ("Method dump skipped"), grep the smali
+   before recording "not found" (`ai-sessions/0068` A68-RE-01).
 
 ### Writing a protocol specification entry
 

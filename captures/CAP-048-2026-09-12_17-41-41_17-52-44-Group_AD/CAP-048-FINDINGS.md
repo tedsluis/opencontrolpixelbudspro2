@@ -69,7 +69,7 @@ matching `08 11`/`08 13` Get/Notify pair — **zero misses**, a further large-sa
 
 The draft Event Timeline claimed 25 tightly-alternating (docked/undocked every ~15–20s) reconnects.
 The wire shows **13 distinct classic reconnects** (plus 2 same-chandle DLCI-0x04 reopens and one
-7-event connection-retry burst on a single chandle, §6) spread unevenly across the session — some
+burst of six page timeouts and one connection, §6) spread unevenly across the session — some
 gaps between reconnects exceed a minute (e.g. `17:44:45`→`17:45:44`, `17:45:44`→`17:46:49`). Full
 video review (dense frame extraction at every wire-derived reconnect/transition point — see
 `CAP-048-EVENT-NOTES.md`'s corrected table) confirms the buds' actual physical dock state changed
@@ -159,13 +159,17 @@ instances from the four correct ones is not established.
 ```
 $ tshark -r CAP-048-btsnoop_hci.log -Y 'bthci_acl.chandle==0x000b' -T fields -e frame.number -e frame.time -e frame.p2p_dir -e _ws.col.Info \
     | grep -E "Connect Complete|Create Connection"
-(7 "Rcvd Connect Complete" events, all chandle 0x000b, from 17:48:51.024 to 17:49:46.910, each preceded
- by its own "Sent Create Connection" — no Disconnection Complete event appears between them)
+(7 "Rcvd Connect Complete" events, from 17:48:51.024 to 17:49:46.910, each preceded by its own "Sent Create Connection")
+$ tshark -r CAP-048-btsnoop_hci.log -Y 'bthci_evt.code==0x03 && frame.number>7700 && frame.number<7790' -T fields -e frame.number -e bthci_evt.status
+7705 0x04   7712 0x04   7721 0x04   7741 0x04   7747 0x04   7753 0x04   7781 0x00
 ```
+**Six of the seven are failed pages** (status `0x04`, Page Timeout); only the seventh (7781) is a connection — which is why no Disconnection Complete lies
+between them. So this is the phone paging Buds that do not answer, six times in a row, not seven connect/complete cycles. (Rewritten in place 2026-10-03,
+`ai-sessions/0069`, A68-CAP-11.)
 Video at `t≈450` (`17:49:11`, mid-burst) shows the app UI stuck on "Connecting…", and the case
 appears closed (only the case's outer shell is visible, no loose buds in frame). 🟡 **HYPOTHESIS,
-new, not confirmed**: a closed case may impede reliable classic-link establishment, producing this
-repeated connect-retry pattern — plausible given the timing/video correlation, but not confirmed
+not confirmed**: with the case closed the Buds do not answer the phone's page, producing this
+run of page timeouts — plausible given the timing/video correlation, but not confirmed
 against any documented mechanism, and not decoded further per `AGENTS.md` §13.6.
 
 ## 7. Test-ID traceability

@@ -128,6 +128,11 @@ class CodecRouter {
      * parse structurally at all is logged by the caller via the returned
      * [BudsResult.Failure]s in [onMalformed] and dropped — never surfaced as
      * a crash (ARCHITECTURE.md §5).
+     *
+     * **A decoder that throws** (`ai-sessions/0069`, A68-APP-01): every frame is decoded inside [decodeGuarded], so an exception from a
+     * reader costs that one frame — reported through [onMalformed], with the exception itself through [onDecoderFault] — and never
+     * reaches the caller's collector, which has no handler and would stop for the life of the process. The readers are written not to
+     * throw; this is the second line of defence for a case nobody thought of.
      */
     @Synchronized
     fun feed(
@@ -137,106 +142,24 @@ class CodecRouter {
         onUnidentified: (UnidentifiedFrame) -> Unit = {},
         onMalformed: (ByteArray) -> Unit = {},
         onRpcPacket: (RpcPacket) -> Unit = {},
+        onDecoderFault: (RuntimeException) -> Unit = {},
     ): List<RoutedFrame> {
         val routed = mutableListOf<RoutedFrame>()
+        fun guarded(frame: ByteArray, decode: () -> RoutedFrame?) {
+            decodeGuarded(frame, onMalformed, onDecoderFault, decode)?.let { routed += it }
+        }
 
         when (channelId) {
             Dlci.MAESTRO -> for (frame in maestroSplitter.feed(bytes, onMalformed)) {
-                when (val decoded = Hdlc.decode(frame)) {
-                    is BudsResult.Failure -> onMalformed(frame)
-                    is BudsResult.Success -> {
-                        val payload = decoded.value.payload
-                        val unidentified = {
-                            onUnidentified(
-                                UnidentifiedFrame(
-                                    channelId = channelId,
-                                    group = null,
-                                    code = null,
-                                    raw = payload,
-                                    timestampMillis = timestampMillis,
-                                ),
-                            )
-                        }
-                        when (val rpc = PwRpc.decode(payload)) {
-                            is BudsResult.Failure -> unidentified()
-                            is BudsResult.Success -> {
-                                onRpcPacket(rpc.value)
-                                routeMaestro(rpc.value)?.let { routed += it } ?: unidentified()
-                            }
-                        }
-                    }
-                }
+                guarded(frame) { decodeMaestro(frame, channelId, timestampMillis, onUnidentified, onMalformed, onRpcPacket) }
             }
 
             Dlci.FAST_PAIR_MESSAGE_STREAM -> for (frame in messageStreamSplitter.feed(bytes, onMalformed)) {
-                val group = frame.getOrNull(0)?.toInt()?.and(0xFF)
-                val code = frame.getOrNull(1)?.toInt()?.and(0xFF)
-
-                val replyResult = MessageStreamReplyDecoder.decode(frame)
-                if (replyResult is BudsResult.Success) {
-                    routed += RoutedFrame.Reply(replyResult.value)
-                    continue
-                }
-                val modelIdResult = ModelIdFrameDecoder.decode(frame)
-                if (modelIdResult is BudsResult.Success) {
-                    routed += RoutedFrame.ModelId(modelIdResult.value)
-                    continue
-                }
-                val ancResult = AncFrameDecoder.decode(frame)
-                if (ancResult is BudsResult.Success) {
-                    routed += RoutedFrame.Anc(ancResult.value)
-                    continue
-                }
-                val ringResult = RingFrameDecoder.decode(frame)
-                if (ringResult is BudsResult.Success) {
-                    routed += RoutedFrame.Ring(ringResult.value)
-                    continue
-                }
-                val batteryResult = BatteryFrameDecoder.decode(frame)
-                if (batteryResult is BudsResult.Success) {
-                    routed += RoutedFrame.Battery(batteryResult.value)
-                    continue
-                }
-                // Structurally short/malformed frames never reach here distinctly from
-                // "recognized by neither decoder" — both decoders already validate the
-                // shared [Group][Code][Len:2BE][Data] header, so a length mismatch fails
-                // both; only a well-formed-but-unrecognized Group/Code reaches this branch
-                // for a frame with a plausible header, which is exactly UnidentifiedFrame's
-                // purpose (ARCHITECTURE.md §7). A frame too short to even have a header is
-                // reported as malformed instead.
-                if (frame.size < 4) {
-                    onMalformed(frame)
-                } else {
-                    onUnidentified(
-                        UnidentifiedFrame(
-                            channelId = channelId,
-                            group = group,
-                            code = code,
-                            raw = frame,
-                            timestampMillis = timestampMillis,
-                        ),
-                    )
-                }
+                guarded(frame) { decodeMessageStream(frame, channelId, timestampMillis, onUnidentified, onMalformed) }
             }
 
             Dlci.GSND_CONTROL -> for (frame in gsndSplitter.feed(bytes, onMalformed)) {
-                val decoded = CaseBatteryFrameDecoder.decode(frame)
-                if (decoded is BudsResult.Success) {
-                    routed += RoutedFrame.CaseBattery(decoded.value)
-                } else if (frame.size < 4) {
-                    onMalformed(frame)
-                } else {
-                    // Every other Group/Code on DLCI 0x08 stays unidentified (ADR-035: only the Case battery is understood).
-                    onUnidentified(
-                        UnidentifiedFrame(
-                            channelId = channelId,
-                            group = frame[0].toInt() and 0xFF,
-                            code = frame[1].toInt() and 0xFF,
-                            raw = frame,
-                            timestampMillis = timestampMillis,
-                        ),
-                    )
-                }
+                guarded(frame) { decodeGsnd(frame, channelId, timestampMillis, onUnidentified, onMalformed) }
             }
 
             else -> Unit // Out of this session's implementation scope (ARCHITECTURE.md §5a) — ignored.
@@ -244,7 +167,110 @@ class CodecRouter {
 
         return routed
     }
+
+    private fun decodeMaestro(
+        frame: ByteArray,
+        channelId: Int,
+        timestampMillis: Long,
+        onUnidentified: (UnidentifiedFrame) -> Unit,
+        onMalformed: (ByteArray) -> Unit,
+        onRpcPacket: (RpcPacket) -> Unit,
+    ): RoutedFrame? {
+        val decoded = Hdlc.decode(frame)
+        if (decoded !is BudsResult.Success) {
+            onMalformed(frame)
+            return null
+        }
+        val payload = decoded.value.payload
+        val unidentified = {
+            onUnidentified(UnidentifiedFrame(channelId = channelId, group = null, code = null, raw = payload, timestampMillis = timestampMillis))
+        }
+        val rpc = PwRpc.decode(payload)
+        if (rpc !is BudsResult.Success) {
+            unidentified()
+            return null
+        }
+        onRpcPacket(rpc.value)
+        return routeMaestro(rpc.value) ?: run {
+            unidentified()
+            null
+        }
+    }
+
+    private fun decodeMessageStream(
+        frame: ByteArray,
+        channelId: Int,
+        timestampMillis: Long,
+        onUnidentified: (UnidentifiedFrame) -> Unit,
+        onMalformed: (ByteArray) -> Unit,
+    ): RoutedFrame? {
+        (MessageStreamReplyDecoder.decode(frame) as? BudsResult.Success)?.let { return RoutedFrame.Reply(it.value) }
+        (ModelIdFrameDecoder.decode(frame) as? BudsResult.Success)?.let { return RoutedFrame.ModelId(it.value) }
+        (AncFrameDecoder.decode(frame) as? BudsResult.Success)?.let { return RoutedFrame.Anc(it.value) }
+        (RingFrameDecoder.decode(frame) as? BudsResult.Success)?.let { return RoutedFrame.Ring(it.value) }
+        (BatteryFrameDecoder.decode(frame) as? BudsResult.Success)?.let { return RoutedFrame.Battery(it.value) }
+        // Structurally short/malformed frames never reach here distinctly from "recognized by neither decoder" — the decoders
+        // already validate the shared [Group][Code][Len:2BE][Data] header, so a length mismatch fails them all; only a
+        // well-formed-but-unrecognized Group/Code reaches this branch for a frame with a plausible header, which is exactly
+        // UnidentifiedFrame's purpose (ARCHITECTURE.md §7). A frame too short to even have a header is reported as malformed.
+        reportUnrecognized(frame, channelId, timestampMillis, onUnidentified, onMalformed)
+        return null
+    }
+
+    private fun decodeGsnd(
+        frame: ByteArray,
+        channelId: Int,
+        timestampMillis: Long,
+        onUnidentified: (UnidentifiedFrame) -> Unit,
+        onMalformed: (ByteArray) -> Unit,
+    ): RoutedFrame? {
+        (CaseBatteryFrameDecoder.decode(frame) as? BudsResult.Success)?.let { return RoutedFrame.CaseBattery(it.value) }
+        // Every other Group/Code on DLCI 0x08 stays unidentified (ADR-035: only the Case battery is understood).
+        reportUnrecognized(frame, channelId, timestampMillis, onUnidentified, onMalformed)
+        return null
+    }
+
+    private fun reportUnrecognized(
+        frame: ByteArray,
+        channelId: Int,
+        timestampMillis: Long,
+        onUnidentified: (UnidentifiedFrame) -> Unit,
+        onMalformed: (ByteArray) -> Unit,
+    ) {
+        if (frame.size < 4) {
+            onMalformed(frame)
+        } else {
+            onUnidentified(
+                UnidentifiedFrame(
+                    channelId = channelId,
+                    group = frame[0].toInt() and 0xFF,
+                    code = frame[1].toInt() and 0xFF,
+                    raw = frame,
+                    timestampMillis = timestampMillis,
+                ),
+            )
+        }
+    }
 }
+
+/**
+ * Runs one frame's decode; a `RuntimeException` from it is reported — the frame through [onMalformed], the exception through
+ * [onDecoderFault] — and `null` is returned, so one frame is lost and the stream goes on (`ai-sessions/0069`, A68-APP-01). Not a
+ * swallow: both callbacks are the caller's log (AGENTS.md §8). `Error`s (out of memory, stack overflow) are not caught.
+ */
+internal fun <T> decodeGuarded(
+    frame: ByteArray,
+    onMalformed: (ByteArray) -> Unit,
+    onDecoderFault: (RuntimeException) -> Unit = {},
+    block: () -> T,
+): T? =
+    try {
+        block()
+    } catch (e: RuntimeException) {
+        onDecoderFault(e)
+        onMalformed(frame)
+        null
+    }
 
 /**
  * Classifies one Maestro pw_rpc packet (ADR-034), or returns null when it is not something this app understands

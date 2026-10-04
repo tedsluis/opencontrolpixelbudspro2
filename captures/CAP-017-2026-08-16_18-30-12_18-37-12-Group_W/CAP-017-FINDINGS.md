@@ -218,9 +218,11 @@ nRF Connect's client behavior, not new facts about the Buds' own GATT server lay
 
 **No application-level read/write/notify traffic on the `0x0c0X` cluster this session** — expected,
 since that activity is driven by the official Companion App's Fast Pair Key-based-Pairing flow
-(`CAP-002`/`CAP-003`/11:42-`CAP-010`), which never ran here (no DLCI 0x08 Message-Stream handshake
-either — confirmed: `tshark -r CAP-017-btsnoop_hci.log -Y 'frame contains "release_5.203"'` → 0
-matches, vs. 5 confirming sessions previously).
+(`CAP-002`/`CAP-003`/11:42-`CAP-010`), which never ran here. **DLCI 0x08 did open in this session** (rewritten 2026-10-03, `ai-sessions/0069`,
+A68-CAP-03): `tshark -r CAP-017-btsnoop_hci.log -Y 'btrfcomm.dlci==8' | wc -l` → 71 frames — `SABM` 1147 (18:32:59.669) / `UA` 1153, 58 frames with payload
+(`… && btrfcomm.len>0`), and a `DISC`/`UA` pair. Their content is not readable: this log is capped at 15 bytes per packet (`frame.cap_len` ≤ 15 for all 71), which
+is also why the earlier check `frame contains "release_5.203"` → 0 could never match — a negative without a positive control (`AGENTS.md` §13 step 8). The
+firmware string is therefore *not re-confirmed* in this session, but not because the channel stayed closed.
 
 **However, the discovery walk itself did pass directly through this cluster's handle range, and
 this is the first time any capture has independently confirmed part of its structure via real GATT

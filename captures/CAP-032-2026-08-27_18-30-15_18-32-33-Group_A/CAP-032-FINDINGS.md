@@ -9,7 +9,7 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-032` · **Date:** 2026-08-27 · **Firmware:** `release_5.203` (screen-confirmed,
-`CAP-032-recording.mp4` t=137s/18:32:15; also wire-confirmed, DLCI 0x08 `Group 0x03 Code 0x02`, §4
+`CAP-032-recording.mp4` t=120s/18:32:15 — corrected 2026-10-03: 18:30:15 + 137 s would be 18:32:32, the clock time is the one read from the screen; also wire-confirmed, DLCI 0x08 `Group 0x03 Code 0x02`, §4
 below) · **Phone:** Pixel 7a, Android 17 (⚪ assumed, build not screen-confirmed this session) ·
 **Log file:** `CAP-032-btsnoop_hci.log` (487.57s, 2,455 packets, 2026-08-27
 18:29:45.722826–18:37:53.294436 +0200, **genuine raw, untruncated BTSnoop — see §0**) · **Video:**
@@ -234,20 +234,21 @@ tag as an address field at all:
 before the Forget tap:
 `tshark -r CAP-032-btsnoop_hci.log -Y "frame.number==91" -x` →
 `01 57 fd 0a 02 00 04 07 6e cf 6e 00 04 02` — HCI command opcode `0xFD57` (a Google/vendor-specific
-opcode group, sub-command `0x0157` per its own first parameter byte), parameter payload
+opcode group: OGF `0x3f`, OCF `0x0157` — `0x0157` is part of the opcode, not a parameter byte, and the `0a` after the opcode is the HCI parameter length; corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-23`), parameter payload
 `02 00 04 07 6e cf 6e 00 04 02`, containing `07 6e cf 6e 00 04` — the Buds' `BD_ADDR`,
 little-endian-reversed, byte-for-byte identical to every other occurrence of this address in this
 project's captures.
 
 **Structural context, not asserted as confirmed protocol knowledge:** this opcode (`0xFD57`/`0x0157`)
-appears 69 times total before frame 768, in two bursts (frames 59–160, coinciding with the log's
-LE-only opening window, and frames 213–278, coinciding with the 18:30:22 classic-radio-enable burst).
+appears 69 times total before frame 768, in **four** bursts — frames 59–160 (23, the log's
+LE-only opening window), 213–278 (30, the 18:30:22 classic-radio-enable burst), 396–423 (10) and
+721–732 (6) (`tshark -r CAP-032-btsnoop_hci.log -Y "frame.number<=768 and bthci_cmd.opcode==0xfd57" -T fields -e frame.number`; corrected 2026-10-03, the text said "two bursts").
 Decoding every occurrence's raw payload shows a repeating pattern: a `02 00 NN <6-byte-addr> 02`
-entry (assigning list index `NN` to an address) is followed by a `12 01 00 NN <bytes>` entry
+entry (assigning list index `NN` to an address) is followed by a `01 00 NN <bytes>` entry with HCI parameter length `0x12` (the `12` is the length byte, not part of the entry)
 (apparently setting per-index flags/parameters), across a total of 22 distinct addresses and indices
 `0x04`–`0x1a` — matching exactly the 22 distinct `bd_addr` values independently found elsewhere in
 this log (§0.3). The Buds' address is assigned index `0x04` (frame 91) with what looks like a
-flags/parameter sub-command immediately after (frame 93: `01 00 04 01 00 11 11 01 80 01 f4 01`) that
+flags/parameter sub-command immediately after (frame 93, all 18 parameter bytes: `01 00 04 01 00 11 11 01 80 01 f4 01 01 80 10 27 02 00`) that
 structurally differs from most other indices' own follow-up (e.g. index `0x06`, frame 113:
 `01 00 06 40 00 11 11 01 80 00 00 00`) — indices `0x04`/`0x05` share one parameter pattern, `0x06`
 onward another. What this command actually configures (most plausibly a bulk push of all

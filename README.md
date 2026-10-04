@@ -7,27 +7,31 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **Latest release: [1.0.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.0)** (2026-10-03). You can also
+> **Latest release: [1.0.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.1)** (2026-10-04). You can also
 > [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
 - **Android 14 (API 34) or newer.**
 - Open the downloaded file; Android asks you to allow **"Install unknown apps"** for the app you opened it with (your browser or file manager) — allow it
   for that one install if you like, and switch it off again afterwards.
-- **Check the download (optional):** every release lists the APK's SHA-256 and the SHA-256 of its signing certificate. Compare with `sha256sum <file>.apk`
-  and `apksigner verify --print-certs <file>.apk`. The certificate stays the same for every release.
+- **Verify your download (optional):** every release lists the APK's SHA-256 — compare with `sha256sum <file>.apk`. Every release is signed with the
+  same key; `apksigner verify --print-certs <file>.apk` must show this certificate SHA-256:
+  `a7530f5ceadcdfc9cddcbb0e9889e7699961e8a4ef18898c4ec7738cc79d8dcb`
+  (the same value is in [`SECURITY.md`](./SECURITY.md) and in every release's notes). An APK with another certificate is not from this project.
 - **Updates are manual:** the app never checks for updates. Watch the repository's releases on GitHub, or let an app such as Obtainium follow the
   Releases page for you. A newer APK installs over the old one and keeps your settings (same signing key).
 
 ## What it does
 
 - **Noise control:** Noise cancellation, Adaptive, Transparency, Off — plus a Quick Settings tile.
-- **Equalizer:** five bands and the presets.
+- **Equalizer:** five bands and the presets (a "Flat" preset from 1.0.1).
 - **Battery:** Left and Right (with "charging in the case") and the Case.
 - **Find My Buds:** ring the Left or Right bud.
 - **Controls:** touch controls on/off, press and hold per bud (noise control or digital assistant) and which noise-control modes it cycles through.
 - **Sound:** balance, mono audio, conversation detection; **in-ear detection** on/off.
-- **Settings:** dark mode (System / On / Off), a Debug screen, and an Info tab with the app's build, the Buds' firmware and the licence.
+- **Settings:** dark mode (System / On / Off), "Use different Buds" (from 1.0.1), a Debug screen, and an Info tab with the app's build, the Buds'
+  firmware and the licence.
+- The app is in English only.
 
 ## What it does not do
 
@@ -40,24 +44,23 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 ## Screenshots
 
 <p>
-  <img src="images/opencontrol-for-buds-IMG_20261001_212401.jpg" width="200" alt="Connection tab: connected, battery Left 100 %, Case 62 %, Right 100 %">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212954.jpg" width="200" alt="ANC tab: Noise cancellation, Off, Adaptive, Transparency">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212903.jpg" width="200" alt="Sound tab: equalizer with five bands and presets">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212714.jpg" width="200" alt="Controls tab: touch controls and press and hold">
+  <img src="images/opencontrol-for-buds-20261004-081001.jpg" width="200" alt="Connection tab: connected, battery Left 100 %, Case 75 %, Right 100 %">
+  <img src="images/opencontrol-for-buds-20261004-081012.jpg" width="200" alt="ANC tab: Noise cancellation, Off, Adaptive, Transparency">
+  <img src="images/opencontrol-for-buds-20261004-081019.jpg" width="200" alt="Sound tab: equalizer with five bands">
+  <img src="images/opencontrol-for-buds-20261004-081050.jpg" width="200" alt="Sound tab: presets, balance, mono audio, conversation detection">
 </p>
 <p>
-  <img src="images/opencontrol-for-buds-IMG_20261001_212457.jpg" width="200" alt="Find tab: Ring Left, Ring Right, Stop">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212622.jpg" width="200" alt="Controls tab: in-ear detection switch">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212805.jpg" width="200" alt="Sound tab: balance, mono audio, conversation detection">
-  <img src="images/opencontrol-for-buds-IMG_20261001_214301.jpg" width="200" alt="Settings in dark mode: Settings, Debug and Info tabs">
+  <img src="images/opencontrol-for-buds-20261004-081113.jpg" width="200" alt="Controls tab: touch controls, press and hold, modes for press and hold">
+  <img src="images/opencontrol-for-buds-20261004-081125.jpg" width="200" alt="Controls tab: in-ear detection switch">
+  <img src="images/opencontrol-for-buds-20261004-081138.jpg" width="200" alt="Find tab: Ring Left, Ring Right, Stop">
+  <img src="images/opencontrol-for-buds-20261004-081145.jpg" width="200" alt="Settings: dark mode and Use different Buds">
 </p>
 
-**Screen recording** (60 s; the preview shows the first 12 s — click it for the full MP4):
+**Screen recording** (90 s; the preview shows the first 12 s — click it for the full MP4):
 
-[<img src="images/opencontrol-for-buds-demo-preview.gif" width="240" alt="Screen recording preview: the Connection and ANC tabs">](images/opencontrol-for-buds-demo.mp4)
+[<img src="images/opencontrol-for-buds-demo-preview.gif" width="240" alt="Screen recording preview: the Connection, ANC and Sound tabs">](images/opencontrol-for-buds-demo.mp4)
 
-*The screenshots and the recording were made on 2026-10-01 with a development build. Since then the balance slider has lost its `‹`/`›` step buttons
-(`ai-sessions/0066`); everything else looks the same.* For comparison: the official app's screens are in
+*The screenshots and the recording were made on 2026-10-04 with the 1.0.1 release build.* For comparison: the official app's screens are in
 [`SCREENSHOTS_PIXEL_BUDS_APP.md`](./SCREENSHOTS_PIXEL_BUDS_APP.md).
 
 ## Privacy
@@ -76,16 +79,31 @@ a bad state** — use it at your own risk, on hardware you are prepared to lose.
 The app protects you where it can: it changes settings only when the Buds announce the firmware it was verified with (`release_5.203`) and, on the Fast Pair
 channel, the Pixel Buds Pro 2's model ID. Otherwise it opens in read-only **Safe Mode** and sends no setting changes (`ARCHITECTURE.md` §8.1, `DECISIONS.md`
 ADR-042). On hardware, Safe Mode refused every write when the firmware could not be confirmed (`CAP-061`) and allowed them on the verified firmware
-(`CAP-062`, `CAP-063`); other firmware versions have not been tested. If something goes wrong, see the factory-reset procedure in
-[`WORKSTATION_PREPARATIONS.md`](./WORKSTATION_PREPARATIONS.md) (Disaster Recovery).
+(`CAP-062`, `CAP-063`); other firmware versions have not been tested.
+
+**After a Buds firmware update the app is read-only until a new app release** — this is deliberate, not a bug: the new firmware has to be checked
+first (`RELEASING.md`, "New Buds firmware"). There is no switch to override Safe Mode. You can still read the battery, the noise-control mode and
+the settings; to change them in the meantime, use the Buds' own touch controls.
+
+**If the Buds or the case stop responding — factory reset:** put both buds in the case, open the lid, keep the case on its charger, and hold the case
+button for **30 seconds**. This also removes the pairing; pair again afterwards. It is Google's own "start over" procedure and does not guarantee
+recovery from every failure (details: [`WORKSTATION_PREPARATIONS.md`](./WORKSTATION_PREPARATIONS.md), "Disaster Recovery").
 
 ## Status
 
-**1.0.0 is released** (2026-10-03, see above): the release APK passed its hardware run `CAP-067` in a GrapheneOS user
-without Google Play services (`PROJECT.md` Definition of done ticked). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds firmware `release_5.203`.
+**1.0.1 is released** (2026-10-04, see above): a hotfix for 1.0.0 whose release APK passed its hardware run `CAP-068` in a GrapheneOS user without Google
+Play services — noise control from the app and the Quick Settings tile, the equalizer, Bluetooth off/on, "Use different Buds" and the connect error, all on film
+and in the Bluetooth log (`PROJECT.md` Definition of done ticked). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds firmware `release_5.203`.
 Per feature, what is hardware-verified and what is only unit-tested is in `ARCHITECTURE.md` §5a; the history of every change is in
 [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) — a suspected
 security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
+
+**Known issue in 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
+
+- After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop.
+
+The three known issues of 1.0.0 (the connect error that blamed another app, values of the last connection shown as current, a silent choice between
+several paired Buds) are fixed in 1.0.1.
 
 ---
 
@@ -111,25 +129,26 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-03)
+## Current state (2026-10-04)
 
-- **Captures:** 67 registered sessions (`CAP-001`–`CAP-067`): 60 analyzed, 5 planned,
-  2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-067`
-  are captures of this project's own app (`CAP-067`: the 1.0.0 release APK without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
+- **Captures:** 69 registered sessions (`CAP-001`–`CAP-069`): 61 analyzed, 6 planned (among them `CAP-069`, the official app), 2 withdrawn (`CAP-052`,
+  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` are captures of this project's own app (`CAP-067`: the 1.0.0
+  release APK, `CAP-068`: the 1.0.1 release APK, both without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 51 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has an explicit maintainer sign-off.
+- **Decisions:** 51 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
+  approval was given but whose record is missing (the ADR says so).
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
   the settings reads (ADR-036) and writes (touch controls, press and hold, conversation detection, balance, mono, in-ear detection — ADR-045/046/047),
   firmware line, ANC Quick Settings tile, Safe Mode (ADR-042), the session re-open while visible (ADR-044).
 - **Protocol-known but not built:** multipoint, volume EQ, case sounds (reads unblocked by ADR-036, writes gated per field); the BLE battery advertisement
   (never matched on the wire).
-- **Still open (protocol):** head-gestures field 29, EQ field 16-vs-18 save semantics, DLCI 0x08's own identity, why the Buds sometimes close the
+- **Still open (protocol):** head-gestures field 29 and Multipoint field 11 (both 🟡 since 2026-10-03, to be filmed in `CAP-069`), EQ field 16-vs-18 save semantics, DLCI 0x08's own identity, why the Buds sometimes close the
   RFCOMM channels, whether the announced Maestro channel names the hosting bud — see `PROTOCOL.md` §6.
 - **App code:** [`android/`](./android) — five Gradle modules (`:app`, `:ui`, `:domain`, `:data`, `:hardware`), Hilt, no ViewModel (ADR-048); every
-  codec is unit-tested against real capture bytes and fuzzed; CI builds, tests and lints every change and asserts no `INTERNET` permission
+  codec is unit-tested against real capture bytes and fuzzed (since 1.0.1 also with mutated real frames behind a valid checksum); CI builds, tests and lints every change and asserts no `INTERNET` permission
   (`.github/workflows/android.yml`).
 
 ## Building from source
@@ -177,8 +196,8 @@ the full procedure, including creating and backing up the key, is in [`RELEASING
 different keys, so one cannot be installed over the other: uninstall first (this deletes the app's settings).
 
 **Before testing against real hardware**, read `APP_TESTPLAN.md` and the newest
-planned app capture (`CAP-067-EVENT-NOTES.md`) — they say, step by step, what is to be checked on hardware; the `CAP-062`/`CAP-063` FINDINGS say what
-was seen working there and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
+planned app capture (`CAP-068-EVENT-NOTES.md`) — they say, step by step, what is to be checked on hardware; the newest analysed run
+(`CAP-067-FINDINGS.md`, the 1.0.0 release APK) and `ARCHITECTURE.md` §5a say what was seen working and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
 earbuds" — it means the wire bytes match known-good captures, nothing more.
 
 ## Approach
@@ -242,6 +261,7 @@ humans and AI coding assistants working on it:
 | `CONTRIBUTING.md` | Guidelines for third-party contributors |
 | `CAPTURE_BLUETOOTH_HCI_SNOOP.md` | Bluetooth HCI capture procedure and log |
 | `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` | Action/behavior catalog (Test-IDs), linked to capture scenarios and protocol evidence |
+| `APP_TESTPLAN.md` | Step-by-step hardware test plan for this project's own app |
 | `captures/CAP-NNN-.../CAP-NNN-FINDINGS.md` | Per-capture findings and hypothesis tests (hypothesis → conclusion), promoted directly into `PROTOCOL.md` when confirmed |
 | `captures/CAP-NNN-.../CAP-NNN-EVENT-NOTES.md` | Per-capture event timeline (action → timestamp → wire evidence), the raw material `CAP-NNN-FINDINGS.md` is written from |
 | `captures/CAP-NNN-.../CAP-NNN-btsnoop_hci.log` | Per-capture raw Bluetooth HCI snoop log, extracted per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 |
@@ -249,14 +269,16 @@ humans and AI coding assistants working on it:
 | `captures/CAP-NNN-.../` (additional artifacts) | Some capture folders include extra supporting material beyond the four standard files above — e.g. `CAP-017-nRF.txt` (an nRF Connect export) and several PNG screenshots. Not every capture has these; check the specific folder. |
 | `SCREENSHOTS_PIXEL_BUDS_APP.md` | Reference screenshots of the official Android app |
 | `SCREENSHOTS_PIXEL_BUDS_WEB_APP.md` | Reference screenshots of the official web companion app |
-| `WORKSTATION_PREPARATIONS.md` | Fedora development workstation setup |
+| `WORKSTATION_PREPARATIONS.md` | Fedora development workstation setup; the Buds' factory-reset procedure ("Disaster Recovery") |
+| `MAINTAINING_DOCS_SITE.md` | How the documentation site (Docsify, GitHub Pages) is built and kept in sync |
 | `TODO.md` | Open tasks and current project status |
 | `CHANGELOG.md` | Changes per release |
 | `RELEASING.md` | How a release is signed, built, verified and published (GitHub Releases) |
 | `id_registry.csv` | Machine-readable registry of every `CAP-NNN`/`ADR-NNN`/Test-ID — check before assigning a new one |
 | `AI_SESSION_LOG_PROCEDURE.md` | Naming scheme, category vocabulary, and numbering discipline for logging AI-agent prompts/results into `ai-sessions/` |
 | `ai-sessions/INDEX.md` | Registry of every logged AI-agent prompt/result pair under `ai-sessions/` — check before assigning the next number |
-| `scripts/lint_docs.py` | Grep-based doc lint (dead filenames, unregistered IDs, stale project name) — run before committing a doc change |
+| `scripts/lint_docs.py` | Grep-based doc lint (dead filenames, unregistered IDs, stale project name, footers, ADR headings, table cell counts, status values) — run before committing a doc change |
+| `scripts/pwrpc_decode.py`, `scripts/message_stream_tally.py` | Decoders behind the counts in the capture findings: the MAESTRO pw_rpc conversation (DLCI 2 and 3) and the ANC `Set`/ACK/NAK tally |
 | `android/` | The Android Studio project itself (five Gradle modules: `:app`, `:ui`, `:domain`, `:data`, `:hardware`) — see the "Current state" section above for what's implemented so far |
 
 ## Target platform

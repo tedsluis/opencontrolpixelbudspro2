@@ -43,6 +43,17 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 
 internal const val SETTING_NOT_READ: String = "Not read from the Buds yet"
 
+/**
+ * `ai-sessions/0069` A68-APP-02: no session is open and at least one of a card's settings still holds a value — the last connection's. The card then keeps
+ * the values, dimmed, with the (i) dot and [FROM_LAST_CONNECTION_DETAIL] as its first detail line. (At the next Connect the values are reset to "not read"
+ * until that connection's reads answer, as before.)
+ */
+internal fun settingsFromLastConnection(ready: Boolean, readings: List<SettingReading<*>?>): Boolean = !ready && readings.any { it != null }
+
+/** [lines] with [FROM_LAST_CONNECTION_DETAIL] in front when [fromLastConnection]. */
+internal fun withLastConnectionLine(lines: List<String>, fromLastConnection: Boolean): List<String> =
+    if (fromLastConnection) listOf(FROM_LAST_CONNECTION_DETAIL) + lines else lines
+
 /** "read HH:MM:SS" for a value read from the Buds, "changed HH:MM:SS" for this app's acknowledged write. */
 internal fun settingTime(reading: SettingReading<*>?): String {
     if (reading == null) return SETTING_NOT_READ

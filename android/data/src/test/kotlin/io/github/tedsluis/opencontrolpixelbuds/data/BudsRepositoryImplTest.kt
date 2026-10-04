@@ -52,11 +52,13 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingSource
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
+import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionLoss
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
+import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
 import io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -181,15 +183,13 @@ class BudsRepositoryImplTest {
         val (repo, transport) = buildRepository()
         settle()
 
-        var mode: AncMode? = null
-        val job = launch { mode = repo.ancMode.first() }
-        runCurrent()
+        assertNull(repo.ancMode.first(), "no report yet in this app run")
 
         // CAP-036 frame 1182 (PROTOCOL.md §4.1), current state = Off.
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex("0813000401e80020"))
-        job.join()
+        settle()
 
-        assertEquals(AncMode.OFF, mode)
+        assertEquals(AncMode.OFF, repo.ancMode.first())
     }
 
     @Test
@@ -225,7 +225,12 @@ class BudsRepositoryImplTest {
 
     // ---- Maestro / EQ (DECISIONS.md ADR-034) ------------------------------------------------------
 
-    /** The Buds' unsolicited announcement of this connection's pw_rpc channel (real header, CAP-036 frame 1405 / CAP-015 frame 1879). */
+    /**
+     * The Buds' unsolicited announcement of this connection's pw_rpc channel — **a hand-built, header-only frame** (the real header of CAP-036 frame 1405 /
+     * CAP-015 frame 1879, **no payload**): a labelled supplementary fixture (AGENTS.md §11; labelled `ai-sessions/0069`, A68-APP-06) for the tests that only
+     * need "the channel is announced". It carries no firmware, so it never satisfies Safe Mode by itself — the real announcement with its payload is
+     * [Cap061.announcementFrame], which [buildRepository] emits for every verified repository.
+     */
     private fun helloFrame(channel: Int, responseAddress: Int) = Hdlc.encode(
         responseAddress,
         PW_HDLC_CONTROL_UI,
@@ -266,6 +271,39 @@ class BudsRepositoryImplTest {
         )
         assertEquals(heavyBass, repo.eqProfile.first())
         assertNull(repo.eqError.first())
+    }
+
+    @Test
+    @DisplayName("A68-APP-16: the Flat preset writes CAP-015 frame 2111 byte for byte (the official app's all-zero quintet, 06:12:13.279)")
+    fun `the Flat preset sends the captured all-zero write`() = runTest {
+        val (repo, transport) = buildRepository()
+        settle()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0))
+        transport.onSent = { _, _ -> transport.emit(Dlci.MAESTRO, hex("7e80a303080110131dea71de7d5e251d9a8c9e4c05e6d97e")) } // frame 2117, the Buds' OK
+        settle()
+
+        assertInstanceOf(BudsResult.Success::class.java, repo.applyEqPreset(EqPreset.FLAT))
+
+        assertEquals(
+            "7e003b0310131dea71de7d5e251d9a8c9e2a1e221c8201190d0000000015000000001d0000000025000000002d00000000881667fe7e",
+            transport.sent.single().second.toHex(), // CAP-015 frame 2111, whole frame incl. CRC
+        )
+        assertEquals(EqBandGains.FLAT, repo.eqProfile.first())
+    }
+
+    @Test
+    @DisplayName("A68-APP-11: a gain that is not a number is refused before anything is sent")
+    fun `setEqGains with a NaN band sends nothing`() = runTest {
+        val (repo, transport) = buildRepository()
+        settle()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0))
+        settle()
+
+        val result = repo.setEqGains(EqBandGains(Float.NaN, 0f, 0f, 0f, 0f))
+
+        assertInstanceOf(BudsResult.Failure::class.java, result)
+        assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent)
+        assertNull(repo.eqProfile.first())
     }
 
     @Test
@@ -2135,6 +2173,35 @@ class BudsRepositoryImplTest {
     }
 
     @Test
+    @DisplayName(
+        "A68-APP-13, labelled supplementary structural test (a hand-ordered sequence of real frames, not a capture): a Notify of the old mode " +
+            "followed by a NAK — the Notify is the answer, the screen keeps the Buds' own mode",
+    )
+    fun `a re-Notify of the unchanged mode before a NAK leaves the Buds' mode on screen`() = runTest {
+        val (repo, transport) = buildRepository()
+        settle()
+        transport.onSent = { ch, frame ->
+            when (frame.toHex().take(4)) {
+                "0811" -> transport.emit(ch, hex(Cap064.NOTIFY_E8_OFF_4103)) // allowed, OFF
+                "0812" -> {
+                    transport.emit(ch, hex(Cap064.NOTIFY_E8_OFF_4103)) // the Buds repeat their unchanged mode …
+                    transport.emit(ch, hex(Cap064.NAK_3440)) // … and then refuse the Set (`CAP-064` 3440's bytes)
+                }
+            }
+        }
+
+        val result = repo.setAncMode(AncMode.ADAPTIVE)
+        settle()
+
+        // What `ai-sessions/0068` flagged: the result is Success although the Set was refused. The mode shown is right — OFF, the Buds' own report, never the
+        // requested ADAPTIVE — which is the documented meaning of a Notify answer ("their Notify has already applied the real one"). No capture shows a
+        // Notify between a Set and its NAK (`CAP-062`, `CAP-064`: the NAK comes first), so the wait is left as it is; `TODO.md` carries the question.
+        assertEquals(BudsResult.Success(Unit), result)
+        assertEquals(AncMode.OFF, repo.ancMode.first())
+        assertNull(repo.ancModeUnconfirmedAt.first())
+    }
+
+    @Test
     fun `a Find My Buds tap returns as soon as the Buds ACK, not after the full wait`() = runTest {
         val (repo, transport) = buildRepository()
         settle()
@@ -2399,6 +2466,69 @@ class BudsRepositoryImplTest {
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, ancNotify("e8", "20"))
         settle()
         assertEquals(false, repo.ancAvailabilityProvisional.first())
+    }
+
+    // ---- `ai-sessions/0069`: A68-APP-03 (the newest ANC report is never dropped) and A68-APP-02 (one "current" rule; values marked at session end) ----
+
+    @Test
+    @DisplayName("A68-APP-03: three Notifies while a collector is busy — the mode is the last one (the replay-1 SharedFlow kept the first)")
+    fun `the newest ANC report is never dropped by a slow collector`() = runTest {
+        val (repo, transport) = buildRepository()
+        val seen = ArrayList<AncMode?>()
+        // A collector that is still busy with its first value while the next two arrive (a recomposition, a tile render).
+        backgroundScope.launch { repo.ancMode.collect { seen += it; kotlinx.coroutines.delay(10_000) } }
+        settle()
+        // `CAP-063` 4184 (`e8 08`, ACTIVE), `CAP-064` 3200 (`e8 40`, ADAPTIVE), `CAP-064` 4103 (`e8 20`, OFF).
+        for (frame in listOf(Cap063.NOTIFY_SETTABLE_E8_4184, Cap064.NOTIFY_E8_ADAPTIVE_3200, Cap064.NOTIFY_E8_OFF_4103)) {
+            transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(frame))
+            settle()
+        }
+        assertEquals(AncMode.OFF, repo.ancMode.first(), "the Buds' last report")
+        assertEquals(currentTime, repo.ancModeUpdatedAt.first())
+    }
+
+    @Test
+    @DisplayName("A68-APP-02: the ANC mode survives a new Connect but is not current until this connection reports one")
+    fun `a mode from the last connection is not current after a new Connect`() = runTest {
+        val (repo, transport) = buildRepository()
+        assertNull(repo.sessionSince.first(), "no Connect in this app run yet")
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap064.NOTIFY_E8_ADAPTIVE_3200))
+        settle()
+        val reportedAt = repo.ancModeUpdatedAt.first()
+
+        repo.disconnect()
+        advanceTimeBy(5_000)
+        repo.connect() // no bonded device in this test: the attempt ends NotPaired, but it is a new connection attempt all the same
+        settle()
+
+        assertEquals(currentTime, repo.sessionSince.first())
+        assertEquals(AncMode.ADAPTIVE, repo.ancMode.first(), "kept, not cleared")
+        assertEquals(false, isCurrent(ready = true, valueAtMillis = reportedAt, sessionSinceMillis = repo.sessionSince.first()))
+
+        advanceTimeBy(300)
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap064.NOTIFY_E8_OFF_4103))
+        settle()
+        assertEquals(true, isCurrent(ready = true, valueAtMillis = repo.ancModeUpdatedAt.first(), sessionSinceMillis = repo.sessionSince.first()))
+    }
+
+    @Test
+    @DisplayName("A68-APP-02: Disconnect and a lost session mark the battery values as last seen at once, not only at the next Connect")
+    fun `the battery values are marked when the session ends`() = runTest {
+        for (end in listOf("disconnect", "loss")) {
+            val (repo, transport) = buildRepository()
+            // `CAP-063` frame 2756: both buds charging, 100 %.
+            transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap063.BATTERY_BOTH_CHARGING_2756))
+            settle()
+            assertEquals(false, (repo.batteryStatus.value.left as BatteryLevel.Known).isStale, end)
+
+            if (end == "disconnect") repo.disconnect() else transport.emitConnectionLost(ConnectionLoss(channelId = 2, detail = "scripted"))
+            settle()
+
+            val status = repo.batteryStatus.value
+            assertEquals(true, (status.left as BatteryLevel.Known).isStale, end)
+            assertEquals(true, (status.right as BatteryLevel.Known).isStale, end)
+            assertEquals(true, status.leftCharging?.fromEarlierSession, end)
+        }
     }
 }
 

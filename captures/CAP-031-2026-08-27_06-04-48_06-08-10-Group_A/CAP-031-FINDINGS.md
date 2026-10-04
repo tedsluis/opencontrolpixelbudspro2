@@ -103,7 +103,7 @@ the LE discovery activity immediately preceding it):
 | 5 | `Sent Link Key Request **Negative** Reply` | 637 | 06:07:15.473817 |
 | 6 | `Rcvd IO Capability Request` → `Sent IO Capability Request Reply` | 639/640 | 06:07:15.476743/477230 |
 | 7 | `Rcvd IO Capability Response` | 648 | 06:07:15.583876 |
-| 8 | `Rcvd User Confirmation Request` → `Sent User Confirmation Request Reply` | 678/686 | 06:07:15.984302/16.170377 |
+| 8 | `Rcvd User Confirmation Request` → `Sent User Confirmation Request Reply` | 678/686 | 06:07:15.984790/16.170377 |
 | 9 | `Rcvd Simple Pairing Complete` | 688 | 06:07:16.419983 |
 | 10 | `Rcvd Link Key Notification` (new key stored) | 689 | 06:07:16.451414 |
 

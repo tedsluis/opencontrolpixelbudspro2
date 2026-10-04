@@ -4,7 +4,7 @@
 **Category:** CROSSCHECK
 **Date:** 2026-09-15
 **Title:** Deep, non-sampled cross-validation of `CAP-047` (Group AL), `CAP-050` (Group AG repeat), and `CAP-051` (Group AM) against the decompiled companion APK
-**Status:** partial — resumed
+**Status:** complete (closed 2026-10-03 by `ai-sessions/0069` — the maintainer's choice in chat, "Session log": *"Close the three + Release log in RELEASING.md (Recommended)"*: its sign-off was obtained and its leads were carried into `ai-sessions/0024` and `0025`; the angles it left unfinished are not resumed as this session)
 
 > **Annotated 2026-09-24** (`ai-sessions/0045`, 2026-09-24, 0044 finding S-4): left at `partial — resumed` on purpose. The maintainer sign-off
 > below was obtained, and the leads were carried into `ai-sessions/0024`'s open-question inventory and `0025`'s tooling, but no later

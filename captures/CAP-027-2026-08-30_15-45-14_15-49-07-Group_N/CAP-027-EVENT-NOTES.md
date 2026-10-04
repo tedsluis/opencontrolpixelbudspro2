@@ -20,7 +20,7 @@ configuration.
 |    Capture ID    |                      `CAP-027`                     |
 |      Group(s)    |                         N                          |
 |       Date       |                     2026-08-30                     |
-| Firmware version | `release_5.203` — 🟢 confirmed on-wire (DLCI 0x08 private envelope, 6 occurrences; e.g. frame 923 area) |
+| Firmware version | `release_5.203` — 🟢 confirmed on-wire (3 frames on the DLCI 0x08 private envelope — 845, 862, 875 — and the DLCI 0x02 announcement, frame 904; corrected 2026-10-03 to match `CAP-027-FINDINGS.md`) |
 |   Test device    | Pixel 7a (⚪ ASSUMPTION, same device as prior sessions — not screen-confirmed this session), official Pixel Buds Companion App (Spotify used as the music source for AVRCP correlation) |
 | Video file       |          `CAP-027-recording.mp4` — 233.77s, 15:45:14–15:49:07 local time |
 | Log file         |     `CAP-027-btsnoop_hci.log` — 15:44:22.07–15:51:47.04 (+0200), wider than the video window |
@@ -50,10 +50,10 @@ following the noted action, within the established offset), not a visual gesture
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
-| 15:45:14 | start of video
-| 15:45:18 | user enables bluetooth
-| 15:45:20 | Pixel buds pro 2 connected
-| 15:45:30 | spotify app: user selects play, music starts playing 
+| 15:45:14 | start of video | — | — | — |
+| 15:45:18 | user enables bluetooth | — | — | — |
+| 15:45:20 | Pixel buds pro 2 connected | — | — | — |
+| 15:45:30 | spotify app: user selects play, music starts playing | — | — | — |
 | 15:45:39 | Tap once on right bud | User (Hardware) | `TOUCH-002` | AVRCP frame 1580 @15:45:36.892 `Rcvd Pass Through: Control - PAUSE (Pushed)` (offset 2.11s) |
 | 15:45:48 | swipe on right bud (unintentionaly) | User (Hardware) | — | AVRCP frame 1794 @15:45:46.515 `Rcvd Pass Through: Control - PLAY (Pushed)` (offset 1.49s) — see `CAP-027-FINDINGS.md` §3.2: the "unintentional" contact still produced a Pass Through command, but a **tap-shaped** one (PLAY), not the swipe/volume shape |
 | 15:45:59 | Double-tap on right bud | User (Hardware) | `TOUCH-003` | AVRCP frame 1909 @15:45:55.855 `Rcvd Pass Through: Control - FORWARD (Pushed)` (offset 4.15s) |
@@ -73,7 +73,7 @@ following the noted action, within the established offset), not a visual gesture
 | 15:48:39 | Swipe forward on left bud (volume up) | User (Hardware) | `TOUCH-005` | AVRCP frame 2999 @15:48:36.744 `Volume: 65%` (offset 2.26s) |
 | 15:48:44 | Swipe backward on left bud (volume down) | User (Hardware) | `TOUCH-006` | AVRCP frame 3032 @15:48:42.444 `Volume: 59%` (offset 1.56s) |
 | ~15:48:48–15:48:54 (log 15:48:46.658 / 15:48:52.342) — no separate video-visible moment (screen unchanged) | Press and hold on left bud (mode: **Active noise control**, carried over from `CAP-021`) | User (Hardware) | `TOUCH-007` | DLCI 0x04 frame 3056 @15:48:46.658 `08 13 00 04 01 e8 e8 40` (`new_mode=0x40`=Adaptive) **and** frame 3091 @15:48:52.342 `08 13 00 04 01 e8 e8 80` (`new_mode=0x80`=Transparent/Aware), 5.684s apart. 🔴 **Not resolved which**: this could be one held gesture that advanced the rotation two steps, or two repeated press-and-hold actions — the procedure notes only recorded one action for this earbud, and the wire data alone cannot distinguish the two readings. See `CAP-027-FINDINGS.md` §4 |
-| 15:49:07 | end of video
+| 15:49:07 | end of video | — | — | — |
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5)
 

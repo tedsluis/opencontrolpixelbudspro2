@@ -31,6 +31,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -85,6 +86,8 @@ fun SettingsMenuScreen(
     /** Hands a URL to another app (the browser) — `:app` starts `Intent.ACTION_VIEW` (`ai-sessions/0064` F-6, DECISIONS.md ADR-050); injected so `:ui` stays testable. */
     onOpenUrl: (String) -> Unit = {},
     modifier: Modifier = Modifier,
+    /** "Use different Buds" (`ai-sessions/0069`, A68-APP-05): `:app` disconnects and removes this app's own pairing association. */
+    onUseDifferentBuds: () -> Unit = {},
 ) {
     var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
     Column(modifier = modifier.fillMaxSize()) {
@@ -94,7 +97,7 @@ fun SettingsMenuScreen(
             }
         }
         when (SettingsTab.entries[selected]) {
-            SettingsTab.SETTINGS -> DarkModeSettings(darkMode, onDarkModeChanged)
+            SettingsTab.SETTINGS -> DarkModeSettings(darkMode, onDarkModeChanged, onUseDifferentBuds)
             SettingsTab.DEBUG -> DebugScreen(
                 debugModeEnabled = debugModeEnabled,
                 onDebugModeChanged = onDebugModeChanged,
@@ -115,9 +118,13 @@ internal fun darkModeLabel(mode: DarkMode): String = when (mode) {
 
 /** F-6: one radio group; a choice is stored and applied at once (the theme follows the stored value — no restart). */
 @Composable
-private fun DarkModeSettings(darkMode: DarkMode, onDarkModeChanged: (DarkMode) -> Unit) {
+private fun DarkModeSettings(darkMode: DarkMode, onDarkModeChanged: (DarkMode) -> Unit, onUseDifferentBuds: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Scrollable since `ai-sessions/0069`: with "Use different Buds" below the radio group the tab no longer fits every screen or font size.
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             Text("Dark mode", style = MaterialTheme.typography.titleMedium)
             Column(Modifier.selectableGroup()) {
                 DarkMode.entries.forEach { mode ->
@@ -133,11 +140,20 @@ private fun DarkModeSettings(darkMode: DarkMode, onDarkModeChanged: (DarkMode) -
                     }
                 }
             }
+            // `ai-sessions/0069` A68-APP-05 (the maintainer's wording, chat 2026-10-03): the only way to control other Buds used to be clearing the app's data.
+            Text(USE_DIFFERENT_BUDS_TITLE, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
+            Text(USE_DIFFERENT_BUDS_TEXT, style = MaterialTheme.typography.bodyMedium)
+            OutlinedButton(onClick = onUseDifferentBuds) { Text(USE_DIFFERENT_BUDS_TITLE) }
         }
     }
 }
 
-/** F-5: "App: 0.1.0-dev, build d541e00 (2026-10-01)" — the build identity, never fetched. */
+internal const val USE_DIFFERENT_BUDS_TITLE: String = "Use different Buds"
+
+internal const val USE_DIFFERENT_BUDS_TEXT: String =
+    "Forgets which Buds this app controls (the Bluetooth pairing in Android stays). You then pick the Buds again with Pair a device."
+
+/** F-5: "App: 1.0.1, build <commit> (<commit date>)" — the build identity, never fetched. */
 internal fun appBuildLine(build: AppBuildInfo): String = "App: ${build.versionName}, build ${build.commit} (${build.commitDate})"
 
 /** The Info tab's line when the Buds have not announced anything on this connection. */

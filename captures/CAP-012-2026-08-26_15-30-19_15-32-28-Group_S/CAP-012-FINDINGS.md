@@ -158,11 +158,13 @@ path as `CAP-002`/`CAP-003`** (`PROTOCOL.md` §5.1's "fresh pairing" state machi
 `CAP-004`'s Cross-Transport Key Derivation path. This directly confirms the hypothesis
 `CAP-004-FINDINGS.md` §8 item 4 raised: **CTKD was an artifact of nRF Connect's early BLE
 connection specifically, not a genuine effect of GMS being disabled or the Pixel Buds app being
-absent.** Three independent sessions (`CAP-002`, `CAP-003`, `CAP-012`) now show classic SSP under
-three different conditions (official app; nRF Connect BLE tool but classic-only pairing path;
-GMS-disabled/no-app, no BLE tool at all) and exactly one session (`CAP-004`) shows CTKD, under the
-one condition that involved an early BLE connection — a clean, direct causal isolation, not merely
-a repeated negative.
+absent.** Three independent sessions (`CAP-002`, `CAP-003`, `CAP-012`) show classic SSP under
+three different conditions (official app; nRF Connect; GMS-disabled/no-app, no BLE tool at all) and `CAP-004` (and later `CAP-014`) shows CTKD. What separates
+them is **not** the mere existence of an LE link: `CAP-003` had an LE link before classic pairing (frame 1621 `LE Enhanced Connection Complete`, 1689 `Create
+Connection`, 1750 `Simple Pairing Complete`) and still used SSP. The CTKD sessions are the ones with an **SMP pairing on the LE link** (`CAP-004` frame 1856,
+`CAP-014` frame 2365 — `Pairing Request` with `Linkkey` distribution; `CAP-003`: `tshark -Y btsmp` → 0). 🟡 HYPOTHESIS: the SMP pairing gates CTKD (`DECISIONS.md`
+ADR-030 Update 2026-10-03). (Rewritten in place 2026-10-03, `ai-sessions/0069`, A68-CAP-09: this paragraph claimed "a clean, direct causal isolation" on the
+early BLE connection.)
 
 ## 3. RFCOMM channel topology this session — 🟢 FACT
 
@@ -287,14 +289,11 @@ frame in either sequence carries a real AT command payload; the individual comma
 timing of the handshake itself** — a full SLC re-establishment, not silence — is unambiguous from
 the frame-count and `4154`/`0d0a4f` pattern alone.
 
-**This narrows, but does not fully close, the open question**: a reconnect that does not power-cycle
+**The open question is closed:** a reconnect that does not power-cycle
 the radio (this session's `PAIR-003` case) *does* retrigger the handshake, same as `CAP-008`'s
-radio-power-cycle case — two independently-triggered reconnect types now both show recurrence,
-none show `CAP-002`'s original silence. `CAP-002`'s own negative result increasingly looks like it
-reflects "this session's ACL connection was simply never torn down," per `CAP-008-FINDINGS.md`
-§3's own leading explanation, rather than a property of *which* reconnect mechanism is used — but
-this is now two data points, not a definitive rule; see §9/§10 for the proposed `PROTOCOL.md`
-§6 update, which is a **proposal only**, per `AGENTS.md` §6.
+radio-power-cycle case. `CAP-002`'s "silence" never existed — it was a filter artefact
+(`CAP-002-FINDINGS.md` §5, rewritten 2026-10-03: three more handshakes in that log, one of them at
+`CAP-002`'s own fresh pairing). `PROTOCOL.md` §6's item was ticked on 2026-10-03.
 
 ## 7. Video/event-timeline validation (`CAP-012-EVENT-NOTES.md`)
 

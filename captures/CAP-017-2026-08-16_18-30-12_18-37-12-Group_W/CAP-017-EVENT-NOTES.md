@@ -16,7 +16,7 @@ standardized, evidence-graded protocol findings — this file is the *event time
 |    Capture ID    |                      `CAP-017`                     |
 |      Group(s)    | W (`GATT-001` — GATT discovery forced via a third-party client, nRF Connect — **not** either of Group W's originally-defined candidate methods (`pm clear`/Pixel 9a); see `CAP-017-FINDINGS.md` §1 for that distinction) |
 |       Date       |                     2026-08-16                     |
-| Firmware version |  `release_5.203` (not re-confirmed on-the-wire this session — no DLCI 0x08 handshake occurred, since the official Companion App's Message-Stream channel was never opened; see `CAP-017-FINDINGS.md` §4) |
+| Firmware version |  `release_5.203` (not re-confirmed on-the-wire this session — DLCI 0x08 did open (71 frames, `SABM` 1147) but the log is capped at 15 bytes per packet, so its content is unreadable; see `CAP-017-FINDINGS.md` §4) |
 |   Test device    |    Pixel 7a, Android 17 — same physical phone as `CAP-001`–`CAP-007`/the 11:42 `CAP-010`. **Client app: nRF Connect for Mobile (Nordic Semiconductor)** throughout the GATT-discovery portion; the official Pixel Buds Companion App is only visible briefly at 18:33:52–18:33:59 (its "Device details" screen, reached via the system quick-settings tile, not used to drive discovery) |
 | Video file       | `CAP-017-recording.mp4` — 419.6s, 18:30:12–18:37:12 (wall clock, +0200) |
 | Log file         | `CAP-017-btsnoop_hci.log` — 559.2s, 1,747 packets, 18:31:32.72–18:40:51.93 (wall clock, +0200) — **log starts ~80s after the video** (Bluetooth-on and nRF Connect launch predate the log's own first captured frame) **and continues ~3.7 min after the video ends** |

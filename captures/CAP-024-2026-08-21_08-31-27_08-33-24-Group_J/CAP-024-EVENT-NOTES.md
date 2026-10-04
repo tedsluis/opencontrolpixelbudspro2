@@ -102,6 +102,8 @@ CASE2  OFF/ON: field27 = 0 / 1
 **🟡 HYPOTHESIS:** `field 2` = In-ear detection, `field 28` = "Bud return" (`CASE-001`), `field 27`
 = "Other alerts" (`CASE-002`) — each with a clean ON/OFF pair.
 
+**Corrected 2026-10-03 (`ai-sessions/0069`, `A68-CAP-16`):** the value was **on** before this write — the connect-time read returns `4:{28:1}` (frame 1096) — so frame 1988 is a real 1 → 0 change, not a re-affirmed "already-OFF" value as the caveat below assumed; read "already-OFF" in it as "OFF once the screen is visible".
+
 **Caveat on `CASE1 OFF` (frame 1988, 08:32:38.084):** this write lands almost exactly when the
 "Case sounds" screen opens (video shows the screen fully loaded, toggle already OFF, at t=72s /
 08:32:39 — 1s later), rather than at a clearly video-visible tap. It is **not disambiguated from

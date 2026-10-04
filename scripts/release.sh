@@ -4,8 +4,11 @@
 #   scripts/release.sh <version> [commit]        e.g. scripts/release.sh 1.0.0      (commit defaults to HEAD)
 #
 # What it does, in order (it stops at the first failure):
-#   1. The commit's android/app/build.gradle.kts must say versionName = "<version>" and versionCode = major*10000 + minor*100 + patch (a "-rc.N" version:
-#      the code of the version before it, e.g. 1.0.0-rc.1 -> 9901). The commit must be on origin (so the tag you push points at a published commit).
+#   1. The commit's android/app/build.gradle.kts must say versionName = "<version>" and versionCode = major*10000 + minor*100 + patch, with minor and
+#      patch at most 99. A release candidate ("-rc.N", N = 1..99) is accepted only for X.0.0 and takes the code N below it (1.0.0-rc.1 -> 9901): for any
+#      other version that formula gives a code that is not above the previous release (1.0.1-rc.1 would be 9902, below 1.0.0's 10000), so the script
+#      refuses it (ai-sessions/0069, A68-HK-01; the maintainer's choice in chat 2026-10-03). The commit must be on origin (so the tag you push points
+#      at a published commit).
 #   2. A separate git worktree at that commit (always clean: the Info tab shows its hash without "-dirty"); your working copy is not touched.
 #   3. ./gradlew --offline clean assembleRelease there. The signing values come from ~/.gradle/gradle.properties or the environment (OPENCONTROL_STORE_FILE,
 #      OPENCONTROL_KEY_ALIAS, OPENCONTROL_STORE_PASSWORD, OPENCONTROL_KEY_PASSWORD); this script never reads, prints or asks for them.
@@ -27,10 +30,15 @@ dist="$repo/dist/$version"
 apk_name="opencontrol-pixelbudspro2-$version.apk"
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
-[[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-rc\.([0-9]+))?$ ]] || fail "version '$version' is not X.Y.Z or X.Y.Z-rc.N"
+[[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.([1-9][0-9]*))?$ ]] || fail "version '$version' is not X.Y.Z or X.Y.Z-rc.N (no leading zeros)"
 major="${BASH_REMATCH[1]}" minor="${BASH_REMATCH[2]}" patch="${BASH_REMATCH[3]}" rc="${BASH_REMATCH[5]:-}"
+((minor <= 99 && patch <= 99)) || fail "minor and patch must be at most 99 (the versionCode scheme has two digits for each)"
 code=$((major * 10000 + minor * 100 + patch))
-[[ -n "$rc" ]] && code=$((code - 100 + rc)) # 1.0.0-rc.1 -> 9901 (below 1.0.0's 10000)
+if [[ -n "$rc" ]]; then
+    ((minor == 0 && patch == 0)) || fail "a release candidate is only supported for X.0.0: the code of $version would not be above the previous release (RELEASING.md)"
+    ((rc >= 1 && rc <= 99)) || fail "the release candidate number must be 1..99"
+    code=$((code - 100 + rc)) # 1.0.0-rc.1 -> 9901 (below 1.0.0's 10000)
+fi
 
 # 1. The commit's version and its presence on origin.
 gradle_file="$(git show "$commit:android/app/build.gradle.kts")"
@@ -65,6 +73,7 @@ certs="$("$build_tools/apksigner" verify --verbose --print-certs "$apk")" || fai
 grep -Eq "Verified using v(2|3) scheme.*: true" <<<"$certs" || fail "no v2/v3 signature"
 [[ "$(grep -c '^Signer #[0-9]* certificate DN' <<<"$certs")" == 1 ]] || fail "expected exactly one signer"
 cert_sha256="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' <<<"$certs")"
+[[ "$cert_sha256" =~ ^[0-9a-f]{64}$ ]] || fail "could not read the signing certificate's SHA-256 from apksigner's output"
 badging="$("$build_tools/aapt2" dump badging "$apk")"
 grep -q "versionCode='$code' versionName='$version'" <<<"$badging" || fail "the APK's version is not $version ($code)"
 grep -q "uses-permission: name='android.permission.BLUETOOTH_CONNECT'" <<<"$badging" || fail "positive control failed: BLUETOOTH_CONNECT not listed"
@@ -75,7 +84,8 @@ rm -rf "$dist" && mkdir -p "$dist"
 cp "$apk" "$dist/$apk_name"
 (cd "$dist" && sha256sum "$apk_name" > "$apk_name.sha256")
 apk_sha256="$(cut -d' ' -f1 "$dist/$apk_name.sha256")"
-python3 "$repo/scripts/third_party_notices.py" --fetch "$apk" "$dist/THIRD_PARTY_NOTICES.txt"
+# The notices script of the release commit, run in the release worktree: the dependency list must be the one of the APK just built, not of the working copy.
+python3 "$work/tree/scripts/third_party_notices.py" --fetch "$apk" "$dist/THIRD_PARTY_NOTICES.txt"
 sed -e "s/{APK}/$apk_name/g" -e "s/{APK_SHA256}/$apk_sha256/g" -e "s/{CERT_SHA256}/$cert_sha256/g" -e "s/{TAG}/$tag/g" \
     "$repo/scripts/release_notes.template" > "$dist/release-notes.md"
 

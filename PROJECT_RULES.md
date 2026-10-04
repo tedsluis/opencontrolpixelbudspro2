@@ -58,6 +58,10 @@ document wins, unless the project owner explicitly and knowingly deviates from i
     hex/command inline as long as the source file it points to actually has
     them. This rule is not satisfied, in either location, by a conclusion with
     no command/hex anywhere in the chain.
+    **Added 2026-10-03 (maintainer-approved in chat, `ai-sessions/0069`):** the
+    quoted command must reproduce the quoted result on the committed log (a
+    filter that errors or cannot match is not evidence — `AGENTS.md` §13 step 8),
+    and a script behind a count is committed under `scripts/`.
 
 ## 2. Document before implementing
 
@@ -129,6 +133,14 @@ document wins, unless the project owner explicitly and knowingly deviates from i
       analysis each time), but the *conclusion* of the latest subsection is
       never something the reader must reconstruct by comparing it against an
       earlier one.
+
+    **One status banner allowed, added 2026-10-03 (maintainer-approved in chat,
+    `ai-sessions/0069`):** a `CAP-NNN-FINDINGS.md` may carry **one** dated status
+    banner at its top that names each statement of the body that a later capture
+    or ADR superseded, with the pointer. It replaces a full rewrite only for
+    findings that are not otherwise being changed; a finding that is changed is
+    rewritten in place. A second banner or a dated addendum in the body is a
+    violation.
 
 ## 4. Hypothesis tests
 
@@ -207,6 +219,19 @@ document disconnected from the capture it belongs to.
     assets, no reproduction of copyright-protected code in this project's
     codebase — only the *behavior* (the protocol) is reconstructed, never the
     implementation copied.
+    **What the rule covers, added 2026-10-03 (maintainer-approved in chat,
+    `ai-sessions/0069`):**
+    (a) *Quotations.* Research documents (`REVERSE_ENGINEERING.md`, tool SPECs)
+    may quote short excerpts of decompiled code — a few lines, with file and
+    line — where the analysis needs the exact text. Whole methods or files are
+    never committed, and nothing decompiled enters the app's source.
+    (b) *Screenshots.* Screens of the official app may be shown in the
+    documentation as evidence of its behaviour; never in the app or its store
+    assets.
+    (c) *Icons.* Generic, permissively licensed icons (e.g. Apache-2.0 Material
+    Symbols) are allowed in the app with attribution in `THIRD_PARTY_NOTICES`;
+    Google product logos and wordmarks stay banned (`AGENTS.md` §12, ADR-051).
+    This is the maintainer's judgement, not legal advice.
 21. Any request that would require a network connection, telemetry, or a
     dependency on Google Play Services is out of scope by definition (see
     `AGENTS.md` §1 and `PROJECT.md` non-goals) and must be declined or

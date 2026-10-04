@@ -41,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
@@ -71,9 +72,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
  * there was nothing to change, and the Buds never volunteer their EQ on connect
  * (the maintainer's one successful session: the MAESTRO channel was open and
  * delivered its connect-time frame, and no EQ frame ever followed). A preset is
- * a complete quintet and a slider move sends all five bands, so neither needs a
- * known starting value — the sliders simply start from flat and the screen says
- * plainly that this is *not* the Buds' current setting.
+ * a complete quintet, so it needs no known starting value. (As first built the
+ * sliders started from flat and the screen said so; since `0059` they are disabled
+ * until the EQ is read, and since `ai-sessions/0069` an unread band shows "—", no number.)
  *
  * **`ai-sessions/0059` (A58-APP-02, the maintainer's choice "Disable until read", chat 2026-09-30):** the five sliders are **disabled** until the EQ has
  * been read — one band dragged from the flat start would write the four untouched bands as 0.0, values the Buds never reported (the same rule as every
@@ -98,6 +99,8 @@ fun EqScreen(
     val enabled = connectionState.isReady()
     val slidersEnabled = enabled && gains != null // A58-APP-02: no slider write from an assumed starting quintet
     val shown = gains ?: EqBandGains.FLAT
+    // `ai-sessions/0069` A68-APP-02: while no session is open the last connection's values stay, dimmed and marked — never shown as current.
+    val eqFromLastConnection = !enabled && gains != null
     Surface(modifier = modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -108,13 +111,19 @@ fun EqScreen(
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         // `ai-sessions/0057` D-7: "EQ updated: HH:MM:SS" is in the (i); the dot marks an EQ not read from the Buds yet.
-                        CardTitle("Equalizer", eqDetailLines(eqProfileUpdatedAt), notCurrent = enabled && gains == null)
+                        CardTitle(
+                            "Equalizer",
+                            eqDetailLines(eqProfileUpdatedAt, eqFromLastConnection),
+                            notCurrent = (enabled && gains == null) || eqFromLastConnection,
+                        )
                         EqStatusNotice(connectionState, gains, eqError, onRefresh)
-                        EqBandSlider("Upper treble", shown.upperTreble, slidersEnabled) { onGainsChanged(shown.copy(upperTreble = it)) }
-                        EqBandSlider("Treble", shown.treble, slidersEnabled) { onGainsChanged(shown.copy(treble = it)) }
-                        EqBandSlider("Mid", shown.mid, slidersEnabled) { onGainsChanged(shown.copy(mid = it)) }
-                        EqBandSlider("Bass", shown.bass, slidersEnabled) { onGainsChanged(shown.copy(bass = it)) }
-                        EqBandSlider("Low bass", shown.lowBass, slidersEnabled) { onGainsChanged(shown.copy(lowBass = it)) }
+                        Column(modifier = Modifier.alpha(if (eqFromLastConnection) NOT_CURRENT_ALPHA else 1f)) {
+                            EqBandSlider("Upper treble", shown.upperTreble, slidersEnabled, known = gains != null) { onGainsChanged(shown.copy(upperTreble = it)) }
+                            EqBandSlider("Treble", shown.treble, slidersEnabled, known = gains != null) { onGainsChanged(shown.copy(treble = it)) }
+                            EqBandSlider("Mid", shown.mid, slidersEnabled, known = gains != null) { onGainsChanged(shown.copy(mid = it)) }
+                            EqBandSlider("Bass", shown.bass, slidersEnabled, known = gains != null) { onGainsChanged(shown.copy(bass = it)) }
+                            EqBandSlider("Low bass", shown.lowBass, slidersEnabled, known = gains != null) { onGainsChanged(shown.copy(lowBass = it)) }
+                        }
                         Text("Presets", style = MaterialTheme.typography.titleSmall)
                         EqPresetRows(enabled, onPresetSelected)
                     }
@@ -123,19 +132,29 @@ fun EqScreen(
             // `ai-sessions/0052` (DECISIONS.md ADR-045): below the EQ, as the prompt and the maintainer's layout choice put them.
             item {
                 val readings = listOf(settings.volumeBalance, settings.monoAudio, settings.conversationDetection)
+                val fromLastConnection = settingsFromLastConnection(enabled, readings)
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CardTitle("Balance and audio", soundSettingsDetailLines(settings), notCurrent = enabled && readings.any { it == null })
-                        if (enabled) SettingsFailureNotice(settingsError)
-                        BalanceSlider(settings.volumeBalance, enabled, onVolumeBalanceChanged)
-                        SettingSwitchRow("Mono audio", "Same sound in both ears", settings.monoAudio, enabled, onMonoAudioChanged)
-                        SettingSwitchRow(
-                            "Conversation detection",
-                            "Switch from noise cancellation to transparency when you talk",
-                            settings.conversationDetection,
-                            enabled,
-                            onConversationDetectionChanged,
+                        CardTitle(
+                            "Balance and audio",
+                            withLastConnectionLine(soundSettingsDetailLines(settings), fromLastConnection),
+                            notCurrent = (enabled && readings.any { it == null }) || fromLastConnection,
                         )
+                        if (enabled) SettingsFailureNotice(settingsError)
+                        Column(
+                            modifier = Modifier.alpha(if (fromLastConnection) NOT_CURRENT_ALPHA else 1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            BalanceSlider(settings.volumeBalance, enabled, onVolumeBalanceChanged)
+                            SettingSwitchRow("Mono audio", "Same sound in both ears", settings.monoAudio, enabled, onMonoAudioChanged)
+                            SettingSwitchRow(
+                                "Conversation detection",
+                                "Switch from noise cancellation to transparency when you talk",
+                                settings.conversationDetection,
+                                enabled,
+                                onConversationDetectionChanged,
+                            )
+                        }
                     }
                 }
             }
@@ -144,9 +163,13 @@ fun EqScreen(
 }
 
 /** The EQ card's (i): "EQ updated: HH:MM:SS" — the line the card showed before `ai-sessions/0057` — or, before any read, where the value comes from. */
-internal fun eqDetailLines(eqProfileUpdatedAt: Long?): List<String> = listOf(
-    formatUpdatedAt(eqProfileUpdatedAt)?.let { "EQ updated: $it" } ?: EQ_NOT_READ_DETAIL,
+internal fun eqDetailLines(eqProfileUpdatedAt: Long?, fromLastConnection: Boolean = false): List<String> = withLastConnectionLine(
+    listOf(formatUpdatedAt(eqProfileUpdatedAt)?.let { "EQ updated: $it" } ?: EQ_NOT_READ_DETAIL),
+    fromLastConnection,
 )
+
+/** Shown in place of a number that was not read from the Buds (A68-APP-08) — never a default drawn as a reading. */
+internal const val NOT_READ_VALUE: String = "—"
 
 internal const val EQ_NOT_READ_DETAIL: String = "The EQ is read from the Buds at Connect and with \"Read EQ again\"; it has not been read on this connection yet."
 
@@ -158,8 +181,8 @@ internal fun soundSettingsDetailLines(settings: BudsSettings): List<String> = li
 )
 
 /**
- * The presets in rows of three (`ai-sessions/0052`, the maintainer's choice "2 rijen: 3 + 2"): `[HEAVY BASS] [LIGHT BASS] [BALANCED]` /
- * `[VOCAL BOOST] [CLARITY]`. One [Row] per chunk with equal-width chips — not `FlowRow`, which is `@ExperimentalLayoutApi` in the pinned
+ * The presets in rows of three (`ai-sessions/0052`, the maintainer's choice "2 rijen: 3 + 2"; 3 + 3 since `ai-sessions/0069` added Flat):
+ * `[HEAVY BASS] [LIGHT BASS] [BALANCED]` / `[VOCAL BOOST] [CLARITY] [FLAT]`. One [Row] per chunk with equal-width chips — not `FlowRow`, which is `@ExperimentalLayoutApi` in the pinned
  * `foundation-layout` 1.7.0 (`ai-sessions/0051` §11). A smaller label style keeps "VOCAL BOOST" on one line in a third of a 360 dp screen.
  */
 @Composable
@@ -235,7 +258,7 @@ private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onCha
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Balance")
-            if (reading != null) Text(balanceText(buds), style = MaterialTheme.typography.bodySmall)
+            Text(if (reading != null) balanceText(buds) else NOT_READ_VALUE, style = MaterialTheme.typography.bodySmall)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("L")
@@ -261,13 +284,15 @@ private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onCha
  * ([dragValue]); after release they show [value] — the Buds' EQ — again, so a refused or unanswered write never leaves a gain on screen the Buds did not take.
  */
 @Composable
-private fun EqBandSlider(label: String, value: Float, enabled: Boolean, onValueChange: (Float) -> Unit) {
+private fun EqBandSlider(label: String, value: Float, enabled: Boolean, known: Boolean = true, onValueChange: (Float) -> Unit) {
     var dragValue by remember { mutableStateOf<Float?>(null) }
     val shown = dragValue ?: value
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label)
-            Text("%.1f".format(shown))
+            // A68-APP-08 (`ai-sessions/0069`, the maintainer's choice "Visual '—' only"): an EQ that was not read shows no number — "0.0" would be a value
+            // the Buds never reported. (What a screen reader says for it is a later step, `TODO.md`.)
+            Text(if (known) "%.1f".format(shown) else NOT_READ_VALUE)
         }
         Slider(
             value = shown,

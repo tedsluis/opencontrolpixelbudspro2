@@ -1,6 +1,6 @@
 # Findings: `CAP-041` (Group AH — DLCI 0x02 connect-time RPC burst vs. non-default settings, `OBS-007`)
 
-> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the "2-field sub-message" is `SubscribeRuntimeInfo` entry 6.1 = Case % (Option F, ADR-043); the connect burst is decoded (`PROTOCOL.md` §6 2026-09-24) — "no settings read-back" holds only for the burst's length/order, the official app does read every setting.
+> **Status as of 2026-10-03** (`ai-sessions/0069`; replaces the 2026-09-30 banner): §3, §6, §7 and §8 were rewritten in place — the phone's **requests** in the connect burst do not vary with the settings, but the Buds' **answers** in the same burst carry every setting (the burst is the official app's `ReadSetting` sweep, `PROTOCOL.md` §6 2026-09-24). §4's "2-field sub-message" is `SubscribeRuntimeInfo` entry 6.1 = Case % (Option F, ADR-043). §1, §2 and §5 are the analysis as written.
 
 Standardized, evidence-based extraction from `CAP-041-btsnoop_hci.log` + `CAP-041-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every claim below
@@ -12,7 +12,7 @@ carries a status per `PROJECT_RULES.md` §1:
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-041` · **Date:** 2026-09-06 · **Firmware:** 🟢 FACT `release_5.203` (confirmed
-on-screen, 17:11:32) · **Phone:** Pixel 7a, Android 14, official Pixel Buds Companion App, Google
+on-screen, 17:11:32) · **Phone:** Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`), official Pixel Buds Companion App, Google
 Play Services enabled (same baseline as `CAP-036`). **Log file:** `CAP-041-btsnoop_hci.log` (4,003
 packets, 0/4,003 `cap_len`≠`len` mismatches, 2026-09-06 17:11:56.964–17:19:38.251 local, 461.29s).
 **Video:** `CAP-041-recording.mp4` (421.23s, wall-clock overlay confirmed starting 17:10:39).
@@ -141,17 +141,25 @@ a known settings payload (see §3), to read as settings-content.
 - Window C: + both earbuds' touch customization set to Digital assistant/Adaptive, a third EQ
   config, Usage & diagnostics off.
 
-## 3. Settings-shaped candidate check (🟢 FACT, clean negative at the length level)
+## 3. Settings in the burst: none in the phone's requests, all of them in the Buds' answers (🟢 FACT)
 
-Checked every payload length in all four compared sequences (§2) against the two known
-settings-value shapes already documented in this project: a 5×`float32` EQ-band quintet
-(`PROTOCOL.md` §4.2, roughly 20–24 bytes at the relevant nesting level once the outer
-`field5{field4{...}}` wrapper and correlation-ID prefix are subtracted) and a single
-boolean/enum-shaped short frame for a toggle like touch-controls-off. **No payload length appears
-in one of the four sequences and not the others** that would be a plausible candidate for either
-shape — every length present in any one sequence also appears in at least one other, including
-`CAP-036`'s all-defaults baseline. Per `AGENTS.md` §13.6's zero-creativity rule, no settings-content
-reading is offered for any of these lengths.
+§2 compared the **phone → Buds** payload lengths only, and found them the same in every window: the requests are a fixed sweep and carry no setting value. The
+**Buds → phone** frames of the same burst are the answers, and they differ with the settings state. Decoded with `python3 scripts/pwrpc_decode.py
+CAP-041-btsnoop_hci.log` (pw_hdlc + pw_rpc, CRC-32 checked; 96 `ReadSetting` requests = 32 per window):
+
+| `ReadSetting` answer | Window A | Window B | Window C |
+|---|---|---|---|
+| field 4 (touch controls) | 799 `4:{4:0}` | 1938 `4:{4:0}` | 3211 `4:{4:0}` |
+| field 7 (press and hold) | 805 Left 5 / Right 5 | 1944 same | 3227 Left **6** / Right 5 |
+| field 15 (Volume EQ) | 868 `1` | 2007 `1` | 3239 **`0`** |
+| field 16 (active EQ) | 871 `[6.00 × 5]` | 2010 `[6.00 × 5]` | 3242 **`[-6.00 × 5]`** |
+| field 17 (balance, raw) | 874 `200` | 2013 `200` | 3245 **`199`** |
+| field 19 (mono) | 880 `1` | 2019 `1` | 3252 **`0`** |
+| field 29 | 907 `2` | 2047 `2` | 3279 **`1`** |
+
+(`CAP-036`'s all-defaults baseline: field 16 = `[0.1, 0, 0.3, 0.2, 0.2]`, frame 1525.) So the connect burst **is** a settings read-back — by the official app
+asking, not by the Buds volunteering. (Rewritten in place 2026-10-03, `ai-sessions/0069`, A68-CAP-18: this section and §8 used to conclude "no settings read-back
+of any kind" from the request side alone.)
 
 ## 4. Bonus/incidental finding: the DLCI 0x02 periodic push's constant field matches on-screen Case% (🟡 HYPOTHESIS, strengthens but does not resolve `CAP-036-FINDINGS.md` §12.6's open question)
 
@@ -193,45 +201,19 @@ specific field would be the natural next step.
 
 ## 6. Conclusions
 
-**Confirmed by this session's own evidence, at the strength the evidence supports:**
-- This session produced 3 genuine wire-confirmed reconnects (not the 4 originally claimed), each
-  with a distinct, logged settings state (§1).
-- The DLCI 0x02 connect-time burst's **length/shape signature** is essentially invariant across
-  these 3 genuinely different settings states and matches `CAP-036`'s own default-settings baseline
-  — same frame count (44–46), same dominant 26-byte-frame-run signature (§2–§3). 🟢 **FACT for this
-  session's own observation** (a raw length-sequence comparison, fully reproducible from the
-  commands above).
-- A recurring sub-message inside that burst holds a constant value (79) matching this session's
-  on-screen Case battery percentage throughout — 🟡 **HYPOTHESIS**, unconfirmed (no change occurred
-  to test it), strengthens but does not resolve `CAP-036-FINDINGS.md` §12.6's existing open item.
-- **Content-level diff completed (§8, 2026-09-08 follow-up) — the byte-for-byte comparison this
-  section originally recommended is now done.** The burst's tail run (30 of ~46 subframes) is
-  byte-for-byte identical across all 4 compared sessions; the header portion contains the exact same
-  *set* of subframe values in every session (differing only in transmission order), with exactly one
-  exception — a single subframe that varies session-to-session in a way plausibly explained by a
-  per-session timestamp/nonce, not a settings value. See §8 for the full evidence.
-
-> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** done — `OBS-007` closed at the content level (`PROTOCOL.md` §6 [x]); the burst is identified (§6, 2026-09-24).
-
-**Proposed, awaiting maintainer sign-off (per `AGENTS.md` §6/§15 — nothing below is committed as
-FACT and no `DECISIONS.md` ADR is drafted here):**
-- **Outcome classification for `OBS-007`: (b), a scoped clean negative — now closed at the content
-  level, not just the length level (§8).** DLCI 0x02's connect-time RPC burst shows no evidence of
-  restructuring, reordering its meaningful content, or varying based on EQ/touch-controls settings
-  state — the only session-to-session variation found is one subframe consistent with a
-  timestamp/correlation value, not a settings read-back.
+- 🟢 This session produced 3 wire-confirmed reconnects (not the 4 originally claimed), each with a distinct, logged settings state (§1).
+- 🟢 The phone's side of the DLCI 0x02 connect burst (44–46 frames, a run of 26-byte `ReadSetting` requests) is the same in all three windows and in `CAP-036`'s
+  baseline (§2, §8): the official app sends a fixed sweep.
+- 🟢 The Buds' side of the burst answers that sweep with the current value of every setting (§3) — `OBS-007`'s question "does the connect burst carry the settings
+  state?" is answered **yes** (in the answers), consistent with `DECISIONS.md` ADR-034/036.
+- 🟢 The one request that differs per window is `SetWallclock` carrying the phone's clock (§8).
+- 🟢 The recurring sub-message with the constant value 79 is `SubscribeRuntimeInfo` entry 6.1, the Case % (frame 782; `PROTOCOL.md` §4.3 Option F, ADR-043).
 
 ## 7. Open questions
 
-- 🔴 Which claimed BT-toggle action (of the original 4) did not produce a distinct ACL connection —
-  not resolved by the video frames pulled this pass (§1).
-- 🔴 Whether the DLCI 0x02 periodic push's 2-field sub-message (§4) actually tracks Case battery, or
-  merely coincides with it, remains open — needs a capture bracketing an actual Case% change.
-- ~~Whether the connect-time burst's payload *content* (not just length) varies with settings
-  state is untested (§6)~~ — **closed 2026-09-08, see §8**: no settings-state-dependent content
-  found; the one varying subframe is plausibly a timestamp/nonce, not decoded further.
+- 🔴 Which claimed Bluetooth-toggle action (of the original 4) did not produce a distinct ACL connection — not resolved by the video frames pulled (§1).
 
-## 8. Content-level diff of the connect-time burst across 4 sessions (added 2026-09-08, `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md` Phase 4 item 1) (🟢 FACT for the extraction/diff; 🟡 HYPOTHESIS for the one varying subframe's interpretation)
+## 8. Content-level diff of the phone's requests in the connect-time burst across 4 sessions (🟢 FACT)
 
 **Method**: for each window (this capture's A/B/C, plus `CAP-036`'s baseline), extracted every
 Sent-direction DLCI 0x02 payload in the burst window already isolated in §2, concatenated the raw
@@ -273,20 +255,13 @@ bodies:
   §4.5's shared preamble (`03 10 XX 1d ea 71 de 7e 25...`). Bytes 18–20 differ in every session
   (`a7 83 9b` / `e4 8c a0` / `84 bc a8` / `cb fe d0`); bytes 21–23 are shared by Windows A/B/C
   (`ba 87 34`) but differ for `CAP-036` (`d5 86 34`, 2 of 3 bytes different).
-- **🟡 HYPOTHESIS, unconfirmed, not decoded further (per `AGENTS.md` §13.6's zero-creativity
-  rule)**: this session-varying subframe plausibly carries a **timestamp or per-call nonce**, not a
-  settings value — `REVERSE_ENGINEERING.md`'s own `maestro_pw.Maestro` service catalog
-  (`fux.java:55-66`) already documents a real, callable `SetWallclock` method, which would
-  legitimately produce a session-specific value with no connection to settings state at all. This is
-  offered as a plausible candidate consistent with the byte pattern (varies every session, no
-  relationship found to any settings state), not asserted — the bytes were not decoded against any
-  confirmed timestamp encoding.
+- **🟢 FACT: the varying sub-frame is `maestro_pw.Maestro/SetWallclock` with the phone's wall clock in milliseconds.** Method id `4e ed 3b 67` = `0x673bed4e` =
+  `h65599("SetWallclock")`; the payload `08 a7 83 9b ba 87 34` is field 1 = varint 1788707520935 → 2026-09-06 15:12:00.935 UTC, and the frame that carries it (783)
+  was captured at 17:12:00.936 +02:00 — the same instant. Windows B and C: 1912 `1:1788707604068`, 3148 `1:1788707741188`; each answered by an empty `RESPONSE`
+  (789, 1920, 3154). (`python3 scripts/pwrpc_decode.py CAP-041-btsnoop_hci.log | grep SetWallclock`; rewritten 2026-10-03 — it was a 🟡 "timestamp or nonce".)
 
-**Conclusion**: the connect-time burst's `OBS-007` clean-negative result (§6) is now closed at the
-**content** level, not merely the length level this capture's own initial pass reached — no evidence
-across 4 genuinely different settings-state sessions that this burst carries a settings read-back of
-any kind. The one real content variation found is consistent with ordinary per-session/per-call
-metadata (a timestamp or correlation nonce), not a settings value.
+**Conclusion**: the **requests** of the connect burst are invariant apart from the wall clock; the settings are in the **answers** (§3). This section's diff is of
+the request side only and must not be read as "the burst carries no settings read-back".
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-041-2026-09-06_17-10-39_17-17-48-Group_AH/CAP-041-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-041-2026-09-06_17-10-39_17-17-48-Group_AH/CAP-041-FINDINGS

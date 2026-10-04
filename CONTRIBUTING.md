@@ -72,6 +72,21 @@ Same rules as everywhere else in this project (`PROJECT_RULES.md` §1):
   PR description; the maintainer makes the promotion/ADR decision explicitly,
   same as the restriction that applies to AI agents (`AGENTS.md` §6).
 
+## Reporting a Buds firmware the app does not know
+
+The app changes settings only on the firmware it was verified with; on any other it opens in read-only Safe Mode (`README.md`). If your Buds
+show another firmware (added 2026-10-03, `ai-sessions/0069`):
+
+- Open an issue with the **firmware string** from the Connection or Info tab and the app version. That is enough to start.
+- Helpful, if you can: the **debug-log export** (gear → Debug → Export debug log) of one connect, with Debug mode **off** — it then holds state
+  lines and no payload bytes.
+- **Do not post** an HCI snoop log, a bugreport, or an export made with Debug mode on: they contain your Buds' Bluetooth address, serial numbers
+  and account-linked keys (see "the PII exception" above for how a capture can be shared safely).
+- What happens next is the maintainer's runbook: `RELEASING.md`, "New Buds firmware".
+
+For code contributions that touch a codec: tests use **real bytes from a capture**, with the frame number and the command in a comment
+(`AGENTS.md` §11); a hand-built byte array is allowed only as a labelled, supplementary structural test.
+
 ## Reporting a security issue
 
 See `SECURITY.md` — do not open a public issue for a suspected vulnerability.
