@@ -143,7 +143,7 @@ Times are phone local time (HCI / debug export). "Claim" = the app's on-demand D
 - [x] Correlate video, HCI log, app debug export, app logcat and system log — done, `CAP-062-FINDINGS.md`.
 - [x] Every Buds packet classified (handles 0x000b/0x0042): RFCOMM 1,141 (DLCI 0x00/0x02/0x03/0x04/0x05/0x08/0x09/0x0a/0x0b/0x0c, every data frame
       decoded per DLCI: `pwrpc_decode.py` for DLCI 0x02/0x03, a per-open `[Group][Code][Len]` reassembly for 0x04/0x05/0x08/0x09), SDP 258,
-      AVDTP 222, HFP 102 (`AT+BIEV` ×14), AVRCP 42, HID 21, ATT 444 + SMP 13 on the LE handle (Fast Pair Key-based Pairing writes, ADR-008),
+      AVDTP 222, HFP 102 dissected frames (`AT+BIEV` in 65 frames: 15 dissected as `bthfp`, 50 on the undissected HFP DLCI — `frame contains "AT+BIEV"`; "×14" corrected 2026-10-03), AVRCP 42, HID 21, ATT 444 + SMP 13 on the LE handle (Fast Pair Key-based Pairing writes, ADR-008),
       L2CAP signalling. Audio profiles are classified, not decoded field by field (`PROJECT.md` non-goals).
 - [x] **Traceability (`AGENTS.md` §13.7)** — `APP_TESTPLAN.md`: A1/A2 done differently (Bluetooth switched on in Quick Settings before opening the
       app), A3 ✓, A4 ✓, **A5 not run**, **A6 not on film**; B1 ✓, B2 ✓ (first attempt with the lid closed, cancelled), B3 ✓, **B4 not run**;
@@ -160,6 +160,10 @@ Times are phone local time (HCI / debug export). "Claim" = the app's on-demand D
 
 - [x] `CAP-062-FINDINGS.md` — done.
 - [x] Folder named with the film's own start/end (`CAP-062-2026-09-25_06-38-36_06-57-10-Group_AX`), Capture Index row, Group AX, `id_registry.csv`.
+
+## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
+
+- `APP_TESTPLAN.md` steps **C1, E7 and J3** are ticked in the checklist above without a timeline row of their own. C1 and E7 are covered by neighbouring rows (the tab tour and the EQ rows); J3 rests on the system log, not on the film. Flagged as "ticked, not separately isolated".
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-062-2026-09-25_06-38-36_06-57-10-Group_AX/CAP-062-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-062-2026-09-25_06-38-36_06-57-10-Group_AX/CAP-062-EVENT-NOTES

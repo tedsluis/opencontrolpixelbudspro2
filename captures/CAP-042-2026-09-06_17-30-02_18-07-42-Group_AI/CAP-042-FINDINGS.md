@@ -1,6 +1,6 @@
 # Findings: `CAP-042` (Group AI — long pure-idle bracket for the periodic DLCI 0x02/0x04/0x08/HFP push cadence, `OBS-002`)
 
-> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): Settable: ADR-049; the DLCI 0x02 periodic push is the `SubscribeRuntimeInfo` stream (Option F).
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): Settable: ADR-049; the two idle DLCI 0x02 pushes of this log are `maestro_pw.Dosimeter/SubscribeToLiveDb` stream packets (frames 4518, 4528, 7627 … `svc=0x73d5d805 method=0x4d93b6e2 | 2:f32(0.00)`, `scripts/pwrpc_decode.py`), not the runtime-info stream — its only packet here is in the connect burst, frame 800 (banner corrected 2026-10-03, `ai-sessions/0069`, A68-CAP-20).
 
 Standardized, evidence-based extraction from `CAP-042-btsnoop_hci.log` + `CAP-042-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Status legend:
@@ -126,7 +126,7 @@ $ tshark -r CAP-042-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002 and btrfcomm.d
 
 | Cluster | Frames | Session time (`frame.time_relative`) | Content |
 |---|---|---|---|
-| Connect burst | 688–751 | 2.680–4.346s | Full connect-time content: capability blob, firmware string, Option E battery triple (`0e0100210a1f...`, frame 709, decodes `[value,flag,index]`≈Left/Right/Case all reading high, consistent with a fresh, just-connected read), Device Info Group 0x03 fields, `Group 0x04 Code 0x12` alternating-value pings (frames 721/724/729/751, values cycling per `DECISIONS.md` ADR-016 finding 7) |
+| Connect burst | 688–751 | 2.680–4.346s | Full connect-time content: capability blob, firmware string, Option E battery triple (`0e0100210a1f...`, frame 709, decodes `[value,flag,index]`≈Left/Right/Case all reading high, consistent with a fresh, just-connected read), Device Info Group 0x03 fields, `Group 0x04 Code 0x12` pings (frames 700 and 751, both `04 12 00 04 08 02 10 01` — corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-23`: frames 721/724 are `02 04 …` firmware-string messages and 729 is `02 06 00 04 08 0b 10 01`, not Code `0x12`) |
 | Push #1 | 4522, 4606 | 974.084s, 977.350s | Both `Group 0x04 Code 0x12` (`0412000408031001` / `0412000408021001` — the alternating-value ping, NOT a fresh Option E battery-triple push) |
 | Push #2 | 7569, 7671 | 2101.036s, 2104.301s | Same shape as Push #1 (`0412...0803...` / `0412...0802...`) |
 
@@ -147,10 +147,9 @@ SASS traffic), only 4 more frames occur: `Group 0x07 Code 0x34` at 974.086s/977.
 $ tshark -r CAP-042-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002 and btrfcomm.dlci==2 and btrfcomm.len>0 and frame.p2p_dir==1" \
   -T fields -e frame.number -e frame.time_relative
 ```
-52 total DLCI 0x02 Rcvd frames: the connect-settling burst (36 frames, 3.403–6.526s, matching
+52 total DLCI 0x02 Rcvd frames: the connect-settling burst (38 frames — 38 + 8 + 6 = 52; "36" corrected 2026-10-03 — 3.403–6.526s, matching
 `CAP-036-FINDINGS.md` §4's already-documented shape) plus **8 frames in Push #1** (974.056–977.146s)
-and **6 frames in Push #2** (2101.353–2103.412s) — the same connect-settling-burst-shaped content
-recurring, not a new frame type.
+and **6 frames in Push #2** (2101.353–2103.412s) — Dosimeter live-data stream packets (see the banner), not a repeat of the connect burst.
 
 ```
 $ tshark -r CAP-042-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002 and btrfcomm.dlci==12" -T fields \

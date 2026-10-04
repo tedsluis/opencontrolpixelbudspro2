@@ -45,7 +45,7 @@ explicitly in the Event Timeline and treat that window as contaminated.
 |      Group(s)    | AD (`OBS-004` — reconnect-reliability + dock-state-transition repeat; incidental `PAIR-003`) |
 |       Date       |                     2026-09-06                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` (carried over from previous verified captures) |
-|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+|   Test device    | Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`). **Official Pixel Buds Companion App, Google Play Services enabled** |
 | Video file       | `CAP-037-recording.mp4` — 1072.10s (~17m52s), `06:11:46`–`~06:29:38` local time (video runs far longer than the originally-stated "relevant action 06:11:46–06:13:48" window — see corrected Event Timeline and CAP-037-FINDINGS.md §2) |
 | Log file         | `CAP-037-btsnoop_hci.log` — 1212.32s (~20m12s), 29,956 packets, `06:11:52.979`–`06:32:05.299` local time |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
@@ -141,7 +141,7 @@ that all agree, is the authoritative record for this correction).
 | `06:14:14.04` | Reconnect 5 — Get/Notify (chandle `0x0008`) | docked (`0x00`, video-confirmed 06:14:13) — **all 5 "planned" repeats were docked, not alternating as written** | `OBS-004`, `PAIR-003` | frames 5989/6027 |
 | `~06:14:14`–`06:15:34` | Buds physically removed from case (undock event; exact moment not pinned to the second) | transition | — | — |
 | `06:15:34.39`–`06:18:05.75` | Reconnects 6–10 (chandles `0x0005`,`0x0006`,`0x0007`,`0x0008`,`0x0009`) | undocked (`0xe8`, video-confirmed 06:16:48) | `OBS-004`, `PAIR-003` | frames 8117–11507 (5 Get/Notify pairs) |
-| `06:18:06.03` | Extra Notify on chandle `0x0009` (no new Get) 18s after its own Get, value flips to `0x00` (docked) mid-connection | dock-state flip within one connection — flagged, not fully explained | 🔴 open | frame 12008 |
+| `06:18:24.27` | Extra Notify on chandle `0x0009` (no new Get) 18 s after its own Get (frame 11483, 06:18:05.75), Settable `0x00`; the link drops at 06:18:28.09 (frame 12065) | Settable flip within one connection — explained by `CAP-048` §4 as a docking in progress | 🟢 (corrected 2026-10-03: the time given here was frame 11507's) | frame 12008 |
 | `06:18:51.72`–`06:20:02.03` | Reconnects 11–13 (chandles `0x000a`,`0x000b`,`0x000c`) | docked (`0x00`) | `OBS-004`, `PAIR-003` | frames 12700–14457 |
 | `06:21:13.95`–`06:23:45.96` | Reconnects 14–18 (chandles `0x0007`,`0x0008`,`0x000a`,`0x000b`,`0x000c`) | undocked (`0xe8`, video-confirmed 06:23:42) | `OBS-004`, `PAIR-003` | frames 16300–19778 |
 | `06:24:24.86`–`06:26:08.78` | Reconnects 19–23 (chandles `0x000d`,`0x000e`,`0x000f`,`0x0010`,`0x0011`) | docked (`0x00`) | `OBS-004`, `PAIR-003` | frames 20776–24400 |
@@ -189,7 +189,7 @@ tshark -r CAP-037-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
       paired with `Current-state=0x20` (Off) in all 16 docked samples, and `Settable=0xe8` paired
       with `Current=0x80` (Transparency) in all 10 undocked samples — a clean 1:1 co-occurrence,
       plausibly because ANC simply doesn't run while docked (see CAP-037-FINDINGS.md §3).
-- [x] **Timing consistency:** Get→Notify latency across all 26 pairs ranges ~11ms–270ms (most
+- [x] **Timing consistency:** Get→Notify latency across all 26 pairs ranges 6.4 ms–283.0 ms (`CAP-037-FINDINGS.md` §3; this note said ~11ms–270ms until 2026-10-03) (most
       under 30ms), broadly consistent with `CAP-036`'s ~10.7ms single sample but with more spread —
       see CAP-037-FINDINGS.md §3 for the full per-pair timing table.
 - [x] **Three-way outcome:** **(a)** — 26/26 fire, dock state matches on every repeat. Strong
@@ -203,7 +203,7 @@ tshark -r CAP-037-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
 *(Add every new 🔴 OPEN QUESTION found here — and copy each into `PROTOCOL.md` §6's matching
 subsection per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §8's mandatory rule.)*
 
-- 🔴 Chandle `0x0009`'s second "Notify ANC state" frame (frame 12008, 06:18:06.03) fires ~18s after
+- 🔴 Chandle `0x0009`'s second "Notify ANC state" frame (frame 12008, 06:18:24.27 — corrected 2026-10-03; answered by `CAP-048` §4) fires ~18s after
   its own Get (frame 11483/11507) with no new Get in between, and its `Settable-toggles` value
   flips from `0xe8` to `0x00` — implying either a dock-state change mid-connection without a
   disconnect (in tension with `DECISIONS.md` ADR-016's "disconnect fires the instant both buds are

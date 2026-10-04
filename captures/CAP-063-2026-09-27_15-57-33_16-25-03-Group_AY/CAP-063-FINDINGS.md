@@ -113,7 +113,7 @@ Every `Set` of the app and every `Notify` of the Buds (DLCI 0x04; all on the app
   observation 9's "long press works"; F5 as written (hold, then Refresh) is **not identifiable**.
 - 🟢 FACT: every `00` reading on film had no bud worn (in the case, on the table, in the hand); every `e8` reading came with at least one bud off film.
   The film never shows the ears, so "one bud worn" is 🟡 for the one-bud rows. **ADR-024 Update's 🟡 "Settable `0x00` = no bud worn" is not
-  contradicted (0 counter-examples in 22 `Notify`s) and gains the in-the-hand case (9094), but it is not settled:** AY-3 (one bud visibly worn on
+  contradicted (0 counter-examples in 29 `Notify`s — 9 × `00`, 20 × `e8`; `tshark -r CAP-063-btsnoop_hci.log -Y 'btrfcomm.len>0 && data.data[0:4]==08:13:00:04' | wc -l`; "22" corrected 2026-10-03) and gains the in-the-hand case (9094), but it is not settled:** AY-3 (one bud visibly worn on
   film, the other visibly on the table) was skipped.
 - 🟢 FACT: while not worn the Buds report mode `20` (OFF) although the last app `Set` was ACTIVE (4497 at 16:05:27 → 4774 at 16:06:11 reads `20`, and
   5923 at 16:12:33 reads `08` again once worn). The app shows "ANC mode: OFF" then (film 16:06:12). 🟡 HYPOTHESIS: `20` is the Buds' "nothing active

@@ -171,7 +171,7 @@ ff ff 0f b5 f9 b0 f5 7e` = channel `10 13` = 19, CRC OK; A820 `7e 00 a5 03 … 1
 | 1 | A820 16:13:13.86 | **21** | new (phone page after Bluetooth-on) | both buds on the table | none charging (A940) | — (no bud out alone) |
 | 2 | A2547 16:16:52.21 | **19** | yes — Buds `DISC` 0x02 A2502 16:16:49.881 | **Right out of the ear**, Left worn, session was on **21** | none (A2615) | ✓ **21 → 19** (BB-12m) |
 | 3 | A3267 16:17:27.49 | **21** | new (Buds' ConnReq A2804) | Right-slot bud out first (16:17:24), Left 2 s later | none (A3365) | ✓ (first out) |
-| 4 | A5268 16:21:39.33 | **19** | yes — Buds `DISC` 0x03 A5223 16:21:37.023 | **Right out of the ear into the case**, Left worn, session was on **19** | Right charging (A5344) | ✓ (19 kept by the worn Left) |
+| 4 | A5268 16:21:39.33 | **19** | yes — Buds `DISC` 0x03 A5223 16:21:37.023 | **Right out of the ear into the case**, Left worn, session was on **21** (announcement #3, A3267 `7e 00 a5 03 … 10 15 …` on DLCI 0x03; all 20 payload frames A3267…A5223 carry `10 15`) | Right charging (A5344) | ✓ **21 → 19** (a third switch) |
 | 5 | A5893 16:22:22.30 | **19** | new (Buds' ConnReq A5530) | only the **Left** out (Right still docked) | Right charging (A5966) | ✓ (as `CAP-065`) |
 | 6 | A6441 16:22:56.50 | **21** | yes — Buds `DISC` 0x02 A6278 16:22:53.869 | **Right into the ear**, Left lying on the table, session was on **19** | none (A6507) | ✓ if the worn bud takes over — **19 → 21 on insertion** (new) |
 | 7 | A6850 16:24:15.26 | **19** | yes — Buds `DISC` 0x02 A6803 16:24:12.944 | **Right out of the ear**, Left worn, session was on **21** | none (A6914) | ✓ **21 → 19** (BB-12m rep.) |
@@ -183,8 +183,10 @@ ff ff 0f b5 f9 b0 f5 7e` = channel `10 13` = 19, CRC OK; A820 `7e 00 a5 03 … 1
 A6672 then nothing until A6800), Left in 16:24:00 (on 21), Right into the ear 16:24:48 (on 19). Command: the control-frame inventory (`DISC` on DLCI 0x02/0x03 by
 `p2p_dir` 1: A2502, A5223, A6278, A6803, B2422 — 5 in the run; B2422 after the film) plus the decoder's announcement list.
 
-- 🟢 FACT (this capture): **with both buds worn and the session on 21, taking the Right out made the Buds close MAESTRO and announce 19 — 2 of 2** (#2, #7), and the
-  Right going from the ear into the case did the same on 19 (#4). The `0061` prediction "21 → 19 when the Right is taken out" is **confirmed (2/2)**.
+- 🟢 FACT (this capture): **with both buds worn and the session on 21, taking the Right out made the Buds close MAESTRO and announce 19 — 3 of 3** (#2, #4, #7; #4 with the Right going
+  from the ear into the case). The `0061` prediction "21 → 19 when the Right is taken out" is **confirmed (3/3)**. (Row 4 rewritten 2026-10-03, `ai-sessions/0069`,
+  A68-CAP-02: it said the session was on 19; `tshark -r CAP-066-btsnoop_hci.log.last -Y 'frame.number==3267||frame.number==5268' -T fields -e frame.number -e
+  btrfcomm.dlci -e data.data` → 3267 `7e00a503…` (address `00 a5`, channel 21), 5268 `7e80a303…` (address `80 a3`, channel 19).)
 - 🟢 FACT: the Buds closed MAESTRO with the ACL up **only** when the Right bud's state changed (out of an ear ×3, into an ear with the Left not worn ×1) — never
   for the Left (4 changes) in this run.
 - 🟡 HYPOTHESIS (strengthened, not proven): the announced channel names the bud that hosts the phone's link; the Buds move the link to a **worn** bud when the

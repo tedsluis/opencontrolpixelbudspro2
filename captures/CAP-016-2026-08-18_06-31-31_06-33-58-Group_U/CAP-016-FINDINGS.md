@@ -80,7 +80,7 @@ tshark -r CAP-016-btsnoop_hci.log -Y "bthci_acl.chandle" -T fields -e bthci_acl.
 # → 0x0001, 0x0002 (only two connection handles in the entire log)
 ```
 
-## 2. A second, distinct BLE link appears when Bluetooth is turned on (🟡 HYPOTHESIS)
+## 2. A BLE link to another device (a heart-rate wearable) appears when Bluetooth is turned on (🟢 FACT: not the Buds)
 
 ```
 tshark -r CAP-016-btsnoop_hci.log -Y "bthci_evt.le_meta_subevent==0x0a" \
@@ -89,17 +89,27 @@ tshark -r CAP-016-btsnoop_hci.log -Y "bthci_evt.le_meta_subevent==0x0a" \
 ```
 
 This `LE Enhanced Connection Complete` (frame 691, **06:31:40.983**) lands within 1s of the video's
-own Quick-Settings/notification-shade battery display appearing ("Left 100% Case 100% Right 100%",
-≈06:31:40) — **before** the classic connection exists (that only forms at 06:32:02.749, §1). The BD_ADDR
-(`4f:25:00:85:9a:b1`) does **not** match the classic peer's BD_ADDR (`04:00:6e:cf:6e:07`) at all —
-consistent with a resolvable/random BLE address (common for Fast-Pair-capable peripherals
-advertising battery state independently of the classic bond), but this capture does **not**
-independently confirm the two addresses belong to the same physical Buds unit beyond the
-temporal coincidence. 🔴 **Not resolved this pass:** a GATT/Fast-Pair-advertisement content check
-(reading the actual battery-service payload on handle `0x0002`) would be needed to promote this
-past HYPOTHESIS.
+own Quick-Settings/notification-shade battery display appearing (≈06:31:40) — **before** the classic
+connection exists (that only forms at 06:32:02.749, §1). The peer address is a random one (address
+type `0x01`) and is not the Buds' classic address.
 
-## 3. RFCOMM channel bounce at 06:33:16 has no identified physical trigger (🔴 OPEN QUESTION, re-confirms `CAP-007`(old)'s "autonomous" finding)
+**Corrected 2026-10-03 (`ai-sessions/0069`, `A68-CAP-16`, lead L68-10): this link is not the Buds'.**
+The primary-service discovery on this handle answers with the **Heart Rate** service:
+
+```
+tshark -r CAP-016-btsnoop_hci.log -Y "btatt.uuid16==0x180d" -T fields -e frame.number -e bthci_acl.chandle
+# → 760  0x0002
+```
+
+- 🟢 FACT: the peer on connection handle `0x0002` exposes the Heart Rate service (`0x180D`, frame
+  760). The Buds' own attribute table (`CAP-034-FINDINGS.md` §4) has no Heart Rate service.
+- 🟡 HYPOTHESIS: it is the same wearable that connects in `CAP-018` (there handle `0x0004`, Heart
+  Rate service in frame 1663). Both use a random address and the two addresses differ, so the
+  captures cannot prove it is one device.
+- Consequence: the earlier reading "a second BLE link of the Buds, advertising battery state" is
+  withdrawn, and so is every attribution of this handle's traffic to the Buds (§11).
+
+## 3. RFCOMM channel bounce at 06:33:16, started by the Buds, has no identified physical trigger (🟢 FACT for who starts it, 🔴 OPEN QUESTION for why)
 
 `CAP-007`(old)'s findings (§3.3) found a full DLCI 0x02/0x04/0x08/0x0a channel teardown-and-rebuild
 coincident with a bud-removal action, and hypothesized it was *caused* by that removal (an
@@ -113,7 +123,7 @@ tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm && frame.time_relative>=596.0 && 
 ```
 
 🟢 FACT (frame numbers independently re-checked): `DISC` (`0x43`) on DLCI `0x02`/`0x04`/`0x08`/`0x0a`
-between 06:33:15.941–06:33:17.985 (frames 2770, 2773, 2784, 2785), followed by `SABM`(`0x2f`)/`UA`
+between 06:33:15.941–06:33:17.985 (frames 2770, 2772, 2784, 2785 — corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-16`: the DLCI `0x04` `DISC` is frame 2772, and the first two, on DLCI `0x02` and `0x04`, are **Received**: the Buds closed their own two channels; the phone then closed DLCI `0x08`/`0x0a`, frames 2784/2785 Sent, and re-opened all four with `SABM` 2815/2843/2904 Sent), followed by `SABM`(`0x2f`)/`UA`
 (`0x63`) reopening each in turn, complete by **06:33:19.615** (frame 2906, DLCI `0x02` last). The
 underlying ACL link (handle `0x0001`) is undisturbed throughout — no `Connect`/`Disconnect Complete`
 anywhere near this window (confirmed: the log's only such events are 06:32:02.749 and 06:33:45.152,
@@ -212,25 +222,35 @@ case lid's open/closed state is not, by itself, wire-visible on any RFCOMM chann
 whatever senses the lid position (if anything does, independent of bud presence) does not appear to
 report it to the phone over DLCI `0x02`/`0x04`/`0x08`/`0x0a` while no bud is docked.
 
-## 6. Docking a bud produces no distinct "docked" wire event either (🔴 OPEN QUESTION, new)
+## 6. Docking a bud shows on the wire as the charging bit of the Message Stream battery update (🟢 FACT for the bytes, 🟡 HYPOTHESIS for the 3–5 s film offset)
+
+Rewritten 2026-10-03 (`ai-sessions/0069`, `A68-CAP-16`). The earlier text of this section searched a
+±3 s window around the filmed docking and concluded that docking is wire-silent. The signal exists,
+a few seconds earlier than the film's overlay clock places the action:
 
 ```
-tshark -r CAP-016-btsnoop_hci.log -Y "frame.time_relative>=624.0 && frame.time_relative<=630.0" \
-  -T fields -e frame.number -e frame.time_relative -e _ws.col.Info
+tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm.dlci==4 && btrfcomm.len>0 && bthci_acl.chandle==0x0001" \
+  -T fields -e frame.number -e frame.time -e frame.p2p_dir -e data.data | awk '$4 ~ /^0303/'
 ```
 
-In the ±3s window around the **first** bud being placed back into the case (≈06:33:38–40), the log
-shows only unrelated `LE Extended Advertising Report` frames (background BLE scan noise from other
-nearby devices, not the Buds) and one `Mode Change` baseband event at **06:33:41.680**. No RFCOMM
-data frame, no ANC re-notify, no DLCI 0x08 Code `0x12` push appears in this window. The `Mode
-Change` event's timing is suggestively close but — per `CAP-007-FINDINGS.md` §3.5's identical
-caveat about the same event type — there is no documented mechanism connecting an HCI-level
-active/sniff-mode transition to app-visible case-docking state, so this is 🔴 **not attributable**,
-consistent with (not a new finding beyond) the prior capture's own treatment of this event type.
+| Frames | Time | `03 03 00 03 LL RR CC` | Reading (bit 7 = charging, ADR-031) |
+|---|---|---|---|
+| 1515 … 2306 | 06:32:03.557 – 06:32:30.418 | `64 e4 ff` | Left 100 %, Right 100 % charging (Right still in the case) |
+| 2309 … 3117 | 06:32:30.525 – 06:33:30.400 | `64 64 ff` | both out of the case |
+| 3173, 3174, 3177, 3192, 3197 | 06:33:35.057 – 06:33:35.309 | `e4 64 ff` | **Left charging** — the first bud is back in the case |
+| 3230, 3231 | 06:33:45.074 / .076 | `e4 64 ff` | unchanged, 78 ms before `Disconnection Complete` (3235, 06:33:45.152) |
 
-The **second** bud's docking (≈06:33:44–45) is likewise wire-silent except for the routine periodic
-heartbeat immediately before the disconnect (§1) — no distinct "bud N docked" signal, only the
-eventual `Disconnection Complete` once *both* are back.
+- 🟢 FACT: the first docking produces a Buds → phone battery update with the Left charging bit set at
+  **06:33:35.057** (frame 3173). The film places that docking at ≈06:33:38–40
+  (`CAP-016-EVENT-NOTES.md`), 3–5 s later. The overlay clock of the film has whole-second resolution
+  and was not measured against the phone's clock in this session, so the offset itself is 🟡.
+- 🟢 FACT: the second docking (film ≈06:33:44–45) produces no update with the Right charging bit
+  before the link drops at 06:33:45.152; the last update (3230/3231) still reads `e4 64`.
+- The `Mode Change` event at 06:33:41.680 stays unattributed, as before.
+- The same reading applies at the start of the session: `64 e4` until 06:32:30.418, `64 64` from
+  06:32:30.525 — the Right bud leaving the case, 10 s after the film's "removed at 06:32:19–20".
+  The film/wire offset is therefore not constant in this capture (🔴 OPEN: which of the two clocks,
+  or which of the two readings of the film, is off).
 
 ## 7. DLCI 0x08 Group `0x04` Code `0x12` liveness value — re-confirms `CAP-007`(old) §3.2, no new resolution (🟢 FACT for behavior, 🔴 still open for meaning)
 
@@ -345,7 +365,9 @@ short to carry any string content comparable to Report Id `0x02`'s response, and
 byte distinguishable from padding. This is reported exactly as observed (a short/near-empty
 response) — **no content is inferred or guessed for what Report Id `0x01` represents.**
 
-## 11. Handle `0x0044` notification burst containing an `0xfea9` marker (🔴 OPEN QUESTION)
+## 11. Handle `0x0044` notification burst containing an `0xfea9` marker — another device's traffic, not the Buds' (🟢 FACT for the link, 🔴 content not analysed)
+
+**Corrected 2026-10-03 (`ai-sessions/0069`, `A68-CAP-16`):** all 73 frames are on connection handle `0x0002`, the heart-rate wearable's link (§2). They say nothing about the Buds' protocol and are out of this project's scope; the description below is kept as a record of what is in the log.
 
 ```
 tshark -r CAP-016-btsnoop_hci.log -Y "btatt.handle==0x0044 and btatt.opcode==0x1b" -T fields -e frame.number -e frame.time -e bthci_acl.chandle

@@ -12,7 +12,7 @@ carries a status per `PROJECT_RULES.md` §1:
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-039` · **Date:** 2026-09-06 · **Firmware:** ⚪ ASSUMPTION `release_5.203`
-(carried over, not re-confirmed on-screen this session). **Phone:** Pixel 7a, Android 14, official
+(carried over, not re-confirmed on-screen this session). **Phone:** Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`), official
 Pixel Buds Companion App, Google Play Services enabled. **Log file:** `CAP-039-btsnoop_hci.log`
 (372.04s, 6,184 packets, 2026-09-06 07:07:28.040–07:13:40.082 local/+0200, 0/6,184
 `cap_len≠len` mismatches — untruncated, raw extraction path; first frame is a full HCI `Reset`,
@@ -48,7 +48,7 @@ confirms, matching `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3 step 3).
 ```
 $ tshark -r CAP-039-btsnoop_hci.log -Y "bthci_evt.bd_addr==04:00:6e:cf:6e:07 and bthci_evt.code==0x03" \
   -T fields -e frame.number -e frame.time -e bthci_evt.connection_handle
-653   2026-09-06T07:07:34.090967+0200  0x0002   (BLE)
+653   2026-09-06T07:07:34.090967+0200  0x0002   (status 0x04 Page Timeout, link type 0x01 ACL — a failed classic page, not a BLE connection)
 683   2026-09-06T07:07:35.110759+0200  0x0005   (classic ACL)
 1711  2026-09-06T07:08:25.794177+0200  0x0006
 2523  2026-09-06T07:09:01.366166+0200  0x0007
@@ -56,8 +56,9 @@ $ tshark -r CAP-039-btsnoop_hci.log -Y "bthci_evt.bd_addr==04:00:6e:cf:6e:07 and
 4406  2026-09-06T07:10:24.476988+0200  0x0009
 5260  2026-09-06T07:11:04.170356+0200  0x000a
 ```
-Seven Connection Complete events for the Buds' address: one initial BLE+classic pair (`0x0002`/
-`0x0005`), then **five further classic reconnects** on chandles `0x0006`–`0x000a`. Disconnection
+Seven Connection Complete events for the Buds' address: one **failed page** (frame 653 — `tshark -Y "frame.number==653" -T fields -e bthci_evt.code -e
+bthci_evt.status -e bthci_evt.link_type` → `0x03 0x04 0x01`; rewritten 2026-10-03, `ai-sessions/0069`, A68-CAP-21: it was read as a BLE link) and **six
+successful classic connections** on chandles `0x0005`–`0x000a` (the first plus five reconnects). Disconnection
 Complete events (`bthci_evt.code==0x05`) show reason `0x16` ("Terminated by Local Host") for
 `0x0005`/`0x0006`/`0x0007`/`0x0008`, and reason `0x13` ("Remote User Terminated") for `0x0009` —
 i.e. 4 of 5 disconnects were phone-initiated, consistent with repeated app/OS-level
@@ -117,8 +118,8 @@ $ tshark -r CAP-039-btsnoop_hci.log -Y "btrfcomm.dlci==4 and btrfcomm.len>0" \
 | Set 4 | 5095 | 07:10:43.913 | ANC tap (NC) | `0x0009` | `0813000401e8e808` | `0xe8` | `0x08` |
 | Get 6 | 5496 | 07:11:04.662 | reconnect #6 | `0x000a` | `0813000401e8e808` | `0xe8` | `0x08` |
 
-**Result: all 10 occurrences (4 Set-triggered + 6 Get-triggered) read `Settable-toggles = 0xe8`,
-with zero exceptions.** The Buds were undocked/worn for the entire session (never redocked,
+**Result: all 10 occurrences in the table (4 Set-triggered + 6 Get-triggered) read `Settable-toggles = 0xe8`,
+with zero exceptions.** *(Count note 2026-10-03, `ai-sessions/0069`, `A68-CAP-23`: each `Set` is followed by two Notify frames — 1416+1421, 3197+3200, 4161+4164, 5095+5096 — so the log holds 14 `08 13` frames, 7 × `…e8 08` and 7 × `…e8 40`, all `e8`; the table lists one per trigger. `tshark -r CAP-039-btsnoop_hci.log -Y "btrfcomm.dlci==4 && data.data[0:2]==08:13" -T fields -e frame.number -e data.data`.)* The Buds were undocked/worn for the entire session (never redocked,
 confirmed by procedure and by this byte never reading `0x00`).
 
 **Conclusion — directly answering OBS-006:** this is strong same-session evidence that
@@ -130,7 +131,7 @@ strengthens (does not newly promote) ADR-024, which is already 🟢 FACT.
 
 ## 4. Bonus: DLCI 0x02 burst is RPC/correlation traffic, not a confirmed settings write (🔴 open, corrects an initial hypothesis)
 
-A ~300-frame `Sent`-direction DLCI 0x02 burst occurs at `07:07:43.76`–`46.90` (frames 1203–1362,
+A 47-frame `Sent`-direction DLCI 0x02 burst (corrected 2026-10-03: `tshark -r CAP-039-btsnoop_hci.log -Y "btrfcomm.dlci==2 && btrfcomm.len>0 && frame.p2p_dir==0 && frame.number>=1203 && frame.number<=1385" | wc -l` → 47; this text said "~300-frame") occurs at `07:07:43.76`–`46.90` (frames 1203–1362,
 representative), overlapping the mid-session settings-navigation window. Decoded (HDLC-unescape +
 CRC-32/IEEE-802.3 verify, splitting each RFCOMM payload on `0x7e` first per
 `DESKRESEARCH_FINDINGS.md`'s 2026-08-17 entry):

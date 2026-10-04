@@ -1,5 +1,7 @@
 # Findings: `CAP-040` (Group AG — DLCI 0x08's unmapped Get-shaped codes vs. a known-changing value, `PRIV-001`)
 
+> **Status as of 2026-10-03** (`ai-sessions/0069`, `A68-CAP-23` — read this first; the body below is the analysis as written on 2026-09-06, with the counts and film offsets corrected in place): DLCI 0x08 is the channel the Buds' SDP record names "GSND CONTROL" (`PROTOCOL.md` §2.3). Since this capture, `0e 01` on it has been identified as the battery triple (§4.3 Option E), and the Case level the app shows comes from DLCI 0x02's runtime-info stream (ADR-043 — the DLCI 0x08 claim of ADR-035/039 is withdrawn). The statement in §3/§9 that the seven Get-shaped codes are "entirely unattributed" describes this capture's result only; the current state of each code is in `PROTOCOL.md` §6.
+
 Standardized, evidence-based extraction from `CAP-040-btsnoop_hci.log` + `CAP-040-recrding.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every claim below
 carries a status per `PROJECT_RULES.md` §1:
@@ -10,7 +12,7 @@ carries a status per `PROJECT_RULES.md` §1:
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-040` · **Date:** 2026-09-06 · **Firmware:** ⚪ ASSUMPTION `release_5.203`
-(carried over) · **Phone:** Pixel 7a, Android 14, official Pixel Buds Companion App, Google Play
+(carried over) · **Phone:** Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`), official Pixel Buds Companion App, Google Play
 Services enabled · **Log file:** `CAP-040-btsnoop_hci.log` (main log — see §0 for why this is the
 only file used) · **Video:** `CAP-040-recrding.mp4` (note: filename typo in the original recording,
 "recrding," left as-is — 1745.23s, ~07:28:00–07:57:05 local, wall-clock overlay) · **Buds MAC
@@ -146,8 +148,8 @@ analysis" rule, the tail was reviewed:
 | Video offset | Wall clock | On-screen state |
 |---|---|---|
 | 1468s | `07:52:28` | "Device details," **Disconnect** button visible (connected), Left 95% / Case 85% / Right 100%, both earbuds visibly loose beside the case (undocked) |
-| 1580s | `07:56:20` | "Device details," **Connect** button visible (disconnected), Left **100%** / Case **84%** / Right 100%, both earbuds visibly seated in the case (docked) |
-| 1712s | `07:57:00` | Same screen, still disconnected/docked, values unchanged |
+| 1700s (corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-23`: was "1580s" — with 1468 s = 07:52:28 in the row above, 1580 s is 07:54:20, when the app was still connected; 07:56:20 is 1700 s) | `07:56:20` | "Device details," **Connect** button visible (disconnected), Left **100%** / Case **84%** / Right 100%, both earbuds visibly seated in the case (docked) |
+| 1740s (corrected 2026-10-03: was "1712s") | `07:57:00` | Same screen, still disconnected/docked, values unchanged |
 
 This confirms: (1) wire and video timestamps agree closely (no drift correction needed for this
 capture, unlike `CAP-037`–`CAP-039`); (2) the session's only real disconnect (`07:55:41.465`, §1)
@@ -221,9 +223,9 @@ triple, `index=1`→Left/`2`→Right/`3`→Case) across the whole session:
 
 | Time | Frame | Left (idx=1) | Right (idx=2) | Case (idx=3) |
 |---|---|---|---|---|
-| 07:28:12.928 – 07:43:57.917 (13 occurrences) | 1029…3980 | `96`→`95` (stable at 95 from 07:28:17 on) | `100` | `85` |
+| 07:28:12.928 – 07:43:57.917 (13 occurrences), and once more at 07:53:53.247 (frame 5745, `5f` = 95) — 14 in all (corrected 2026-10-03) | 1029…3980, 5745 | `96`→`95` (stable at 95 from 07:28:17 on) | `100` | `85` |
 | **07:54:28.342** | **6243** | **`255` (`0xff`, the documented "unknown" sentinel)** | `100` | `85` |
-| 07:54:29.613 onward (8 occurrences) | 6270…7464 | `100` | `100` | `85`→`84` |
+| 07:54:29.613 onward (7 occurrences: 6270, 6287, 6319, 6400, 6427, 6811, 7464 — corrected 2026-10-03, was "8") | 6270…7464 | `100` | `100` | `85`→`84` |
 
 Raw hex for the transition frames:
 ```

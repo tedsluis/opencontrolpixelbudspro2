@@ -42,8 +42,13 @@ Base MAC filter (per `AGENTS.md` §13's CLI-hygiene rule — always filter by th
 before layering protocol filters):
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "bluetooth.addr == cf:6e:07" ...
+tshark -r CAP-007-btsnoop_hci.log -Y "bthci_acl.chandle==<the Buds' ACL handle>" ...
 ```
+
+*(Corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-16`: the filter quoted here before,
+`bluetooth.addr == cf:6e:07`, is not a valid display filter — `tshark` exits 4 with "contains too
+few bytes to be a valid Ethernet address"; a three-byte suffix cannot be compared with an address
+field. Scoping by connection handle is the working equivalent, `AGENTS.md` §13.)*
 
 In practice this capture's log contains only this one ACL link for its entire duration (a single
 `Connect Complete`, frame 313, and zero `Disconnect Complete` events anywhere in the log —
@@ -176,7 +181,13 @@ tshark -r CAP-007-btsnoop_hci.log -Y "frame.time_relative>=90.0 && frame.time_re
   window (confirmed: the log's *only* such event pair is the initial connect at 09:14:14–16) — the
   underlying ACL/baseband link is undisturbed; only the RFCOMM multiplexer's service channels
   bounce.
-- The re-opened DLCI 0x04 (Fast Pair Message Stream) immediately re-announces the **ANC state**:
+- **Order corrected 2026-10-03 (`ai-sessions/0069`, `A68-CAP-16`):** the first of the two ANC
+  Notifies below (frame 1350, 09:15:38.436) is sent on the **old** DLCI 0x04, 2 ms **before** the
+  Buds' `DISC` on DLCI 0x02 (1351) and 6 ms before their `DISC` on DLCI 0x04 (1355) — it precedes
+  the teardown, it is not a product of the re-open. The two `DISC`s on DLCI 0x02/0x04 are Received
+  (Buds-initiated); the phone then closes DLCI 0x08/0x0a (1367/1368, Sent) and re-opens all four
+  (`SABM` 1395, 1418, 1481, 1548, Sent). Only the second Notify (1572) follows the re-open.
+- DLCI 0x04 (Fast Pair Message Stream) announces the **ANC state**:
   `08 13 00 04 01 e8 e8 80` (Group `0x08` Code `0x13`, "Notify ANC state" per the official Google
   Fast Pair Hearable Controls spec, already confirmed byte-for-byte in `CAP-001-FINDINGS.md` §5) —
   at **09:15:38.436** (frame 1350) and again at **09:15:44.352** (frame 1572). Value `0x80` =
@@ -203,8 +214,15 @@ Buds' dual-radio pair — not confirmed, no direct evidence of the mechanism). W
 *produces*, however — a generic "re-announce current state on every re-opened channel" burst
 (ANC state, Group `0x04` Code `0x12`, and elsewhere a full device-info re-announcement on DLCI
 0x04, frames 1559/1560/1567) — is standard channel-(re)initialization behavior, not a dedicated
-"earbud removed" opcode. **No byte anywhere in this burst changed value as a result of the
-physical event** (§3.5 makes this the capture's central negative result).
+"earbud removed" opcode. **No byte in the ANC Notify or in Code `0x12` changed value as a result of
+the physical event** (§3.5).
+
+**One value did change (added 2026-10-03, `ai-sessions/0069`, lead L68-5; 🟢 FACT for the bytes,
+🟡 for the meaning):** DLCI 0x08 Group `0x04` Code `0x05` reads `04 05 00 02 08 06` in frame 717
+(09:14:17, both buds worn) and `04 05 00 02 08 05` in frame 1345 (8 ms before frame 1350's Notify,
+at the removal) and again in 1434 after the re-open. So the earlier statement "no byte anywhere
+changed" is withdrawn. The cross-capture tabulation of this code is in `DESKRESEARCH_FINDINGS.md`
+(entry of 2026-10-03).
 
 ### 3.4 The case-lid-close window (`OBS-003` step 2) — clean negative result
 

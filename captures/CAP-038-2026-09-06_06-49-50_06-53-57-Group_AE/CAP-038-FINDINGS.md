@@ -12,7 +12,7 @@ carries a status per `PROJECT_RULES.md` §1:
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-038` · **Date:** 2026-09-06 · **Firmware:** ⚪ ASSUMPTION `release_5.203`.
-**Phone:** Pixel 7a, Android 14, official Pixel Buds Companion App, Google Play Services enabled.
+**Phone:** Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`), official Pixel Buds Companion App, Google Play Services enabled.
 **Log file:** `CAP-038-btsnoop_hci.log` (371.55s, 4,426 packets, 2026-09-06
 06:49:58.224–06:56:09.778 local/+0200, 0/4,426 `cap_len≠len` mismatches — untruncated, raw
 extraction path). **Video:** `CAP-038-recording.mp4` (ffprobe duration 247.07s, ~06:49:50–06:53:57
@@ -102,11 +102,14 @@ $ tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==0x0001 and btrfcomm" 
 ```
 Chandle `0x0001` — the reconnect immediately following physical removal of the Buds from the case
 (the most "realistic" trigger this Group set out to test) — never opens the literal DLCI numbers
-`0x02`/`0x04`. **This is not an absence of the underlying channels** — RFCOMM server-channel
-numbers, and therefore DLCI numbers, are session-local, not fixed (`CAP-001-FINDINGS.md` §2's
-established finding, already load-bearing for `DECISIONS.md` ADR-018). On this specific connection,
-the official Fast Pair Message Stream (ANC control) landed on **DLCI `0x05`** and `libmaestro`'s
-own channel on **DLCI `0x03`** instead of the more usual `0x04`/`0x02`:
+`0x02`/`0x04`. **This is not an absence of the underlying channels, and the server channels are the usual ones** — on this connection the **Buds** opened the
+RFCOMM multiplexer (frame 1074 `Rcvd SABM Channel=0`), so the direction bit of every DLCI is 1: `tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==0x0001
+and btrfcomm" -T fields -e btrfcomm.dlci -e btrfcomm.channel -e btrfcomm.direction | sort | uniq -c` → DLCI `0x03` = channel 1 (MAESTRO), `0x05` = channel 2
+(Message Stream), `0x09` = channel 4 (GSND CONTROL), `0x0b` = channel 5 (GSND AUDIO), all direction 1; DLCI `0x08` = channel 4 direction 0 is the Buds opening the
+phone's Hands-Free AG channel (frame 1084 `Rcvd SABM Channel=4 (AG Hands-Free)`). DLCI = 2 × server channel + direction bit (`PROTOCOL.md` §2.3, 2026-10-03).
+(Rewritten in place 2026-10-03, `ai-sessions/0069`, A68-CAP-22: this paragraph used to call the channel numbers "session-local".) So the
+official Fast Pair Message Stream (ANC control) is on **DLCI `0x05`** and `libmaestro`'s
+own channel on **DLCI `0x03`** instead of `0x04`/`0x02`:
 
 ```
 $ tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==0x0001 and btrfcomm.dlci==5 and btrfcomm.len>0" \
@@ -131,8 +134,8 @@ future capture (one that holds the connection open longer before checking, or th
 video-confirms the dock sensor's own physical state at the query's exact timestamp) to resolve.
 
 `libmaestro`'s own channel (DLCI `0x03`, 155 non-empty frames total) is not decoded field-by-field
-this pass — see §7 for its role in the mid-session settings contamination. DLCI `0x0b` (6 frames,
-new to this project's documented census) is likewise not decoded — out of this capture's scope.
+this pass — see §7 for its role in the mid-session settings contamination. DLCI `0x0b` (6 frames) is server channel 5, "GSND AUDIO" — the channel this
+project otherwise sees as DLCI `0x0a`; it carries control frames only here.
 
 The session's **second** reconnect (chandle `0x0004`, 06:52:46–06:53:46) uses the more usual
 numbering — DLCI `0x04`'s Get/Notify fires at `08 11 00 00`/`08 13 00 04 01 e8 e8 80` (frames
@@ -181,16 +184,18 @@ screen throughout this session (not the buds/ears), so no video evidence exists 
 user was actively handling the Buds around this time (removed from case, inserted, navigating
 settings), making an accidental press-and-hold physically plausible. 🟡 HYPOTHESIS.
 
-## 6. No A2DP/AVDTP audio-streaming setup found (🟢 FACT, clean negative)
+## 6. An A2DP stream is configured and opened on both connections; no media is streamed (🟢 FACT)
 
 ```
-$ tshark -r CAP-038-btsnoop_hci.log -Y "avdtp" -T fields -e frame.number
-(0 rows)
+$ tshark -r CAP-038-btsnoop_hci.log -Y "avdtp"        → tshark: "avdtp" is not a valid protocol or protocol field   (exit status 4 — not an empty result)
+$ tshark -r CAP-038-btsnoop_hci.log -Y "btavdtp" | wc -l                                                            → 56  (exit 0)
+$ tshark -r CAP-038-btsnoop_hci.log -Y "btavdtp" -T fields -e frame.number -e frame.time -e bthci_acl.chandle -e _ws.col.Info
+$ tshark -r CAP-038-btsnoop_hci.log -Y "bta2dp" | wc -l                                                             → 0   (no media packets; control: btavdtp → 56)
 ```
-Despite the Buds allegedly being worn for this entire session, **no AVDTP/A2DP signaling occurs
-anywhere in the log** — no audio-streaming profile was established. This answers one part of this
-Group's own checklist directly: physical wearing alone does not trigger A2DP setup in this
-session (no audio was played).
+(Rewritten in place 2026-10-03, `ai-sessions/0069`, A68-CAP-17: this section used to report "no A2DP/AVDTP setup, clean negative" from the first command, whose
+"0 rows" was a filter error — `AGENTS.md` §13 step 8.) On each connection the Buds run AVDTP `Discover`, `SetConfiguration` and `Open`: handle `0x0001` — 945
+`Discover` (06:50:26.473), 967 `SetConfiguration … Audio MPEG-2,4 AAC` → 968 `ResponseAccept`, 977 `Open` → 978; handle `0x0004` — 2910, 2932 → 2933, 2943 → 2944
+(06:52:47.4–48.0). No `Start` follows and no A2DP media packet exists: the stream is set up at connect, and nothing was played in this session.
 
 ## 7. Bonus: DLCI 0x02 settings-write burst location corrected, not decoded field-by-field (🟡 HYPOTHESIS, scope-limited)
 
@@ -232,12 +237,12 @@ deskresearch pass could decode these frames against the known `field5{field4{...
 **Confirmed by this session's own evidence (factual record):**
 - The originally-documented Event Timeline is materially wrong about session length and Window
   2's execution — corrected in `CAP-038-EVENT-NOTES.md` with video+wire evidence (§2).
-- RFCOMM channel/DLCI numbering is session-local — this session's Fast Pair Message Stream and
+- the DLCI differs with which side opened the multiplexer (same server channels, direction bit set — §3, corrected 2026-10-03) — this session's Fast Pair Message Stream and
   `libmaestro` channels used DLCI `0x05`/`0x03` on the first connection, `0x04`/`0x02` on the
   second (§3) — reconfirms `CAP-001-FINDINGS.md` §2's existing finding, not a new one.
 - `Settable-toggles` tracks dock state correctly on the second connection, trigger-independent,
   reconfirming `DECISIONS.md` ADR-024 (§4).
-- No A2DP/AVDTP setup and no Buds-owned BLE GATT battery-service traffic this session (§1/§6).
+- An A2DP stream is configured and opened at each connect (AVDTP, §6) but never started; no Buds-owned BLE GATT battery-service traffic this session (§1).
 
 **Proposed, awaiting maintainer sign-off (not committed, per `AGENTS.md` §6/§15):**
 - Flag as a 🔴 open question for `PROTOCOL.md` §6 (not yet a HYPOTHESIS — no candidate explanation

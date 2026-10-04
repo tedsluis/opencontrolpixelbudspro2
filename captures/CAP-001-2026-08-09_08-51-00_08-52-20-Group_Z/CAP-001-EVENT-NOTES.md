@@ -74,5 +74,12 @@ comparable to log frame timestamps without offset correction.
 - The six ANC-mode taps' *exact click times* were re-verified against 1s-resolution video frames
   and match the original draft closely (all within ±1s) — those were already accurate.
 
+## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
+
+Test-IDs that belong to this capture's Groups (Z, A, B, M) or to its actions and have no row in the timeline above — flagged here as gaps, not filled in:
+
+- `BATT-004` (battery data over RFCOMM after connecting) — **present on the wire, not isolated in the timeline**; the analysis is in `CAP-001-FINDINGS.md`.
+- `APP-001`, `APP-002`, `GFPS-002` — **expected for a Group A pairing run, not referenced**: whether these taps happened in this session is not recorded in the notes (the Test-IDs were catalogued later, 2026-08-20).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-001-2026-08-09_08-51-00_08-52-20-Group_Z/CAP-001-EVENT-NOTES

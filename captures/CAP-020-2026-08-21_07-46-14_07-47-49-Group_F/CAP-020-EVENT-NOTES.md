@@ -8,7 +8,7 @@ around both actions), cross-correlated against the RFCOMM log per `CAPTURE_BLUET
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group F):** main run-through group — attributes the
 wire commands for the top-level Touch controls / Head gestures on-off toggles. **Note:** Group O
 (Head gestures physical actions, `CAP-028`) requires 'Head gestures' enabled — this session leaves
-it ON at the end, satisfying that dependency.
+it **OFF** at the end (the OFF tap at 07:47:35, frame 2038; corrected 2026-10-03); `CAP-028`'s own connect read shows it was on again by then (`29:2`).
 
 ## Log Metadata
 
@@ -44,6 +44,7 @@ again at 07:47:20 (on film, frame 1995 — re-checked `ai-sessions/0052`).
 | **07:46:44** (video t=30s, tap seen mid-transition; confirmed ON by t=32s) | **Toggle 'Use touch controls' OFF→ON** | User (App) | `TOUCH-001` | **Frame 1741** (DLCI 0x02, Sent, 07:46:44.850477) — see §Decode below. ACK/Rcvd echo: frames 1749 (07:46:45.106282), 1750/1751 (DLCI 0x08, 07:46:45.140–.142, one-time capability strings — coincidental, part of a channel-reopen burst, not touch-controls-specific), 1753 (07:46:45.142917) |
 | 07:47:00 (video t=46s tap; "Optimize head gestures" info dialog shown 07:47:01–07:47:03; final ON confirmed on-screen 07:47:04) | **Toggle 'Use head gestures' OFF→ON** | User (App) | `HEAD-001` | **Frame 1935** (DLCI 0x02, Sent, 07:47:00.005060) — see §Decode below. ACK/Rcvd echo: frames 1939 (07:47:00.441100), 1942 (07:47:00.444725). The wire write precedes the on-screen "Optimize head gestures" explainer dialog by ~1s and has no separate wire action tied to the dialog's dismissal — the dialog is client-side-only. |
 | 07:46:56–07:47:19 | Screen remains on "Controls and gestures" with both toggles ON | — | — | — |
+| **07:47:35** (film: ON at 07:47:33–34, finger 07:47:35, OFF from 07:47:36) | **Toggle 'Use head gestures' ON→OFF** (row added 2026-10-03, `ai-sessions/0069`) | User (App) | `HEAD-001` | **Frame 2038** (DLCI 0x02, phone → Buds, 07:47:35.122421) `WriteSetting 4:{29:1}`, mirrored 2044 (07:47:35.541); DLCI 0x08 `04 16 00 02 08 02` 2045 — `CAP-020-FINDINGS.md` §4 |
 | **07:47:20** (tap; ON at 07:47:17–19, OFF on-screen from 07:47:21) | **Toggle 'Use touch controls' ON→OFF** | User (App) | `TOUCH-001` | **Frame 1995** (DLCI 0x02, phone → Buds, 07:47:20.097043) `WriteSetting 4:{4:0}` → empty `RESPONSE` status OK + mirrored `4:{4:0}`, frame 2005 (07:47:20.629698) — see `CAP-020-FINDINGS.md` §3 |
 | 07:47:49 | Video end | — | — | Video last frame |
 
@@ -123,14 +124,9 @@ number/value inside it. **Not confirmed:** what `field 4`=1 vs. `field 29`=2 spe
 independent capture confirms this yet; flagged as open rather than guessed further
 (`AGENTS.md` §13's zero-creativity rule).
 
-**Checked and ruled out as event-driven for either toggle specifically:** DLCI 0x08's Group `0x04`
-Code `0x16` value (`08 01`/`08 02`, frames 922/1940/2045) also changes near the `HEAD-001` write
-(frame 1940, 07:47:00.442) — but the *same* code already appears during the initial connection
-handshake (frame 922, 07:46:20.194) and again 35s later with **no** video-visible action nearby
-(frame 2045, 07:47:35.546), alternating `0x02`→`0x01`→`0x02`. This matches the already-documented
-"irregular-interval alternator" family (`PROTOCOL.md` §6 Resolved item, Code `0x12`) rather than
-being caused by the `HEAD-001` tap — **not attributed to either Test-ID**, noted here so a future
-session doesn't re-discover this coincidence and mis-attribute it.
+**DLCI 0x08 Group `0x04` Code `0x16` follows the head-gesture setting here (🟡):** `08 02` at connect (922, field 29 = 1), `08 01` after the ON write (1940),
+`08 02` after the OFF write (2045, 07:47:35.546) — see `CAP-020-FINDINGS.md` §5 (rewritten 2026-10-03; the earlier note called 2045 "no visible action nearby",
+which was the OFF tap).
 
 DLCI 0x04 (Fast Pair Message Stream) and DLCI 0x0c carried no data-bearing traffic in either
 action's window — both toggles are confirmed **not** to ride the official Message Stream.

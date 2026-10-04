@@ -1,5 +1,7 @@
 # CAP-028: Head gestures (Group O, `HEAD-002`, `HEAD-003`)
 
+> **Status as of 2026-10-03** (`ai-sessions/0069`, `A68-CAP-16`/`-23` — read this first; the body below is the analysis as written): where this file reads the ANC Notify's Settable byte as "dock state" (`DECISIONS.md` ADR-024), the current reading is ADR-049 — `0x00` ⇒ the Buds refuse a `Set` (🟢), and 🟡 `0x00` ⇔ no bud worn.
+
 Standardized, evidence-based extraction from `CAP-028-btsnoop_hci.log` + `CAP-028-recording.mp4`,
 staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `PROJECT_RULES.md` §1:
 
@@ -24,8 +26,9 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 
 ## 2. Precondition check — Head gestures already enabled (🟢 FACT, from `CAP-020`)
 
-`CAP-020-FINDINGS.md` §4/§6 confirmed the "Use head gestures" toggle was left ON at the end of that
-session (2026-08-21), specifically as this Group's own precondition. This session does not re-toggle
+This session's own connect-time read shows the setting **on**: `python3 scripts/pwrpc_decode.py CAP-028-btsnoop_hci.log | grep "29:"` → frame 1350 `ReadSetting`
+answer `4:{29:2}` (🟡 2 = on, `PROTOCOL.md` §4.5.4), and DLCI 0x08 `04 16 00 02 08 01` at 795. (Rewritten 2026-10-03, `ai-sessions/0069`: this used to rest on
+`CAP-020` having left the toggle on — it left it off, frame 2038 there.) This session does not re-toggle
 it (no `field5{field4{field29=...}}` write appears anywhere in this log's DLCI 0x02 traffic — checked,
 see §4). The wire's own connect-time "Notify ANC state" reads `Settable-toggles=0xe8` (undocked, per
 `DECISIONS.md` ADR-024) at `07:16:21.742` (frame 765) — confirming the Buds were **not** seated in the
@@ -86,7 +89,7 @@ From the end of the connect-time settling burst (`07:16:25.49`, frame 1448) thro
 (frame 1834, the next routine periodic push — see §5), **zero** DLCI 0x02/0x04/0x08 frames appear on
 the Buds' own chandle (`0x0002`). This window fully contains the claimed head-gesture testing period
 (`07:16:29`–`07:17:15`, per the corrected Event Timeline). Also checked and ruled out: no AVRCP/AVCTP
-traffic anywhere in this window (`avctp or avrcp` filter, 0 rows) and no HCI-level SCO/eSCO connection
+traffic anywhere in this window (`btavctp or btavrcp`, restricted to 07:16:25–07:17:16: 0 rows, exit 0; the same filter over the whole log finds 6 frames, 1195–1227 at 07:16:22.95–23.00, in the connect-time burst — corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-16`: the filter quoted here before, `avctp or avrcp`, is not valid — `tshark` exits non-zero with "avctp" is not a valid protocol — so its "0 rows" was an error, not a result) and no HCI-level SCO/eSCO connection
 (call) anywhere in the entire log — consistent with there being no active call/notification context,
 which `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s own `HEAD-002`/`HEAD-003` description ties Nod/Shake's
 actual function to ("Answers a call"/"Rejects a call... or dismisses a text reply").

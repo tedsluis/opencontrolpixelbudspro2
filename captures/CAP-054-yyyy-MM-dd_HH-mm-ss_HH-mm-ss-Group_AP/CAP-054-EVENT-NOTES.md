@@ -1,4 +1,4 @@
-# Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AP (new), Battery Notification: bracket a single-bud insertion/removal, connection-free (`CAP-054`)
+# Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AP (new), Battery Notification right after the case is opened, connection-free (`CAP-054`)
 
 **Status:** 🔲 **Not yet captured — skeleton only.** Fill in every `TBD` below after recording,
 per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), and
@@ -6,13 +6,12 @@ per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), an
 the placeholder `CAP-054-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AP` to the actual session
 date/start-time/end-time, e.g. `CAP-054-2026-09-15_08-30-00_08-40-00-Group_AP`.
 
-**Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AP, added 2026-09-13,
-`ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 2):** `CAP-043` (Group Q repeat)
-established, under rigorously clean connection-free isolation, that the Buds' idle/case-closed
-`0xFE2C` BLE advertisement does not structurally match `PROTOCOL.md` §4.3 Option A's documented
-Battery Notification layout — but only tested the idle/case-closed condition. A single-bud insertion/removal is a different condition, not yet bracketed
-by any capture. (The Fast Pair `batterynotification` page states **no** trigger, cadence or "optional when a single bud is inserted/removed" condition —
-re-fetched 2026-09-08 and 2026-09-24, `PROTOCOL.md` §4.3 Option A; this capture tests the condition as a guess, not as a spec statement.)
+**Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AP; redesigned 2026-10-03, `ai-sessions/0069`, lead L68-6):** the Fast Pair
+`batterynotification` page names its own use case — show the notification "when the case has opened", hide it when the buds are removed or the
+case is closed (`PROTOCOL.md` §4.3 Option A, Correction of 2026-10-03). No capture covers "case just opened, both buds inside, phone not
+connected": `CAP-043` tested only the closed, idle case. This run opens the lid twice with the phone not connected, then brackets one bud
+out/in as the earlier design did. Until 2026-10-03 this skeleton tested a single-bud insertion/removal only, on a sentence that is not on the
+spec page (`A68-PROT-06`). Test-IDs: `BATT-007` (lid open), `BATT-002`, `BATT-003` (bud out/in).
 
 ## Log Metadata
 
@@ -29,24 +28,25 @@ re-fetched 2026-09-08 and 2026-09-24, `PROTOCOL.md` §4.3 Option A; this capture
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AP)
 
-1. Force-stop the official Pixel Buds app (as `CAP-043` did) and confirm, before starting the log,
-   that no classic RFCOMM connection to the Buds is active (system Bluetooth settings showing
-   "not connected," or the Buds already disconnected).
-2. Start HCI snoop logging and a screen/phone-camera recording of the system Bluetooth settings
-   panel (matching `CAP-043`'s own methodology).
-3. With the case closed and the phone otherwise idle, **remove exactly one earbud from the case**
-   (video-confirm the exact removal moment), then wait ≥15s without touching anything else.
-4. **Re-insert that same earbud** into the case (video-confirm), wait ≥15s again.
-5. Repeat steps 3–4 once more for the **other** earbud, as an independent second sample.
-6. Throughout, avoid opening the official app or making any classic RFCOMM connection — per
-   `AGENTS.md` §7's bounded scanning exception (filtered to the bonded device, foreground-triggered,
-   time-boxed).
+1. Phone: Bluetooth on, the Buds bonded but **not connected** — every other phone that knows the Buds has Bluetooth off; the official app
+   force-stopped (as `CAP-043`). Film the system Bluetooth panel showing the Buds as not connected.
+2. Start HCI snoop logging and the camera film (the phone's Bluetooth panel **and the case** in frame; the status bar across a minute change at
+   the start and the end).
+3. Both buds in the case, lid **closed**, ≥ 60 s (baseline).
+4. **Open the lid** on film; touch nothing for ≥ 30 s; close it; wait 30 s. Repeat once. If the phone connects by itself, note the time.
+5. Lid open: take **one** bud out on film, wait ≥ 15 s; put it back, wait ≥ 15 s.
+6. Repeat step 5 with the other bud.
+7. No app scans in this run — the log is the system's own (`AGENTS.md` §7).
 
 ## Event Timeline
 
 | Time | Action | Initiator | Test-ID | Wire evidence / Notes |
 |---|---|---|---|---|
 | TBD | Session start, app confirmed force-stopped, no active connection | User | — | Conn. state: TBD |
+| TBD | Lid closed, both buds inside, ≥ 60 s (baseline) | — | `BATT-002` | TBD |
+| TBD | Lid **opened**, video-confirmed; ≥ 30 s untouched | User (Hardware) | `BATT-007`, `CASE-003` | TBD |
+| TBD | Lid closed; 30 s | User (Hardware) | — | TBD |
+| TBD | Lid opened a second time; ≥ 30 s untouched | User (Hardware) | `BATT-007`, `CASE-003` | TBD |
 | TBD | Earbud 1 (Left/Right — specify) removed from case, video-confirmed | User (Hardware) | `CASE-004`/`CASE-005` | TBD |
 | TBD | Wait ≥15s, nothing touched | — | — | TBD |
 | TBD | Earbud 1 re-inserted into case, video-confirmed | User (Hardware) | — | TBD |
@@ -61,10 +61,12 @@ re-fetched 2026-09-08 and 2026-09-24, `PROTOCOL.md` §4.3 Option A; this capture
 
 - [ ] Isolation check (per `CAP-043`'s own method): confirm zero classic connection, zero RFCOMM,
       zero SDP to the Buds' known classic address anywhere in this log.
+- [ ] For each of the 2 lid openings (`BATT-007`): the `0xFE2C` service-data advertisements in the 30 s after the lid opens — any field
+      with type `0x3`/`0x4` and three value bytes? Command, exit status, and a positive control (the same filter on `CAP-043`).
 - [ ] For each of the 4 bracketed events (2 removals + 2 insertions), does a `0xFE2C` service-data
       advertisement carrying the documented Battery Notification layout
       (`[Flags=0x00][Account Key Data][0x33/0x34 marker][L][R][Case]`) appear within a few seconds?
-- [ ] If still a clean negative across all 4 events, record that plainly — this strengthens the case
+- [ ] If still a clean negative across the 2 lid openings and all 4 bud events, record that plainly — this strengthens the case
       for reframing `PROTOCOL.md` §4.3 Option A's status, per `CAP-043-FINDINGS.md` §7's own
       recommendation (a maintainer decision, not to be made unilaterally here).
 - [ ] If a positive match is found, decode the payload per the documented layout and cross-reference

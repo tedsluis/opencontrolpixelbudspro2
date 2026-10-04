@@ -53,16 +53,24 @@ Video: toggle screen at t=38s (08:41:30) shows a tap on "Ring Right"; status tex
 t=49s (08:41:41) returns the screen to idle.
 
 ```
-Start (frame 2040, 08:41:30.234): 04 01 00 01 01
-  retransmit (frame 2045, 08:41:30.420): 04 01 00 01 01
-  ACK (frame 2044): ff 01 00 03 04 01 00
-  ACK (frame 2048): ff 01 00 02 04 01
+$ tshark -r CAP-025-btsnoop_hci.log -Y 'btrfcomm.len>0 && btrfcomm.dlci==4 && frame.number>=2040 && frame.number<=2204 &&
+    (data.data[0:2]==04:01 || data.data[0:2]==ff:01)' -T fields -e frame.number -e frame.time -e frame.p2p_dir -e data.data      (p2p_dir 0 = phone → Buds)
 
-Stop  (frame 2120, 08:41:41.243): 04 01 00 01 00
-  retransmit (frame 2124, 08:41:41.284): 04 01 00 01 00
-  ACK (frame 2123): ff 01 00 03 04 01 00
-  ACK (frame 2127): ff 01 00 02 04 01
+2040  08:41:30.234  phone → Buds   04 01 00 01 01        Ring Right
+2044  08:41:30.380  Buds → phone   ff 01 00 03 04 01 00  the Buds' ACK (echoed group/code + one state byte)
+2045  08:41:30.420  Buds → phone   04 01 00 01 01        the Buds' own message, same format
+2048  08:41:30.427  phone → Buds   ff 01 00 02 04 01     the phone's ACK of 2045
+
+2120  08:41:41.243  phone → Buds   04 01 00 01 00        Stop
+2123  08:41:41.283  Buds → phone   ff 01 00 03 04 01 00
+2124  08:41:41.284  Buds → phone   04 01 00 01 00
+2127  08:41:41.294  phone → Buds   ff 01 00 02 04 01
 ```
+
+Each command is therefore followed by **two messages from the Buds** — their ACK and then a message of the command's own format carrying the new state — and by
+**one ACK from the phone**. 🟢 FACT for the directions; 🟡 HYPOTHESIS that the Buds' message is the specification's "Syncing ringing status back to Seekers"
+(`PROTOCOL.md` §4.4, 2026-10-03 Correction). (Rewritten in place 2026-10-03, `ai-sessions/0069`, A68-CAP-07/A68-PROT-04: this section used to read 2045/2124
+as the phone's retransmissions and both `ff 01` frames as two ACK variants from the Buds.)
 
 Decoded per `PROTOCOL.md` §2.1's Message Stream envelope (`[Group:1][Code:1][Len:2BE][Value]`):
 `Group=0x04` (Action), `Code=0x01` (Ring) — exact match to the spec-quoted worked example's
@@ -75,13 +83,21 @@ maintainer sign-off obtained per `AGENTS.md` §6.
 ## 4. Analysis: `FIND-001` (Ring Left)
 
 Video: tap "Ring Left" at t=54s (08:41:46); status → "Left earbud volume increasing…", button →
-"Mute Left". Tap "Mute Left" at t=67s (08:41:58) returns to idle. A further single stop-shaped
-frame (2202, 08:42:02.900, no retransmission, single ACK) follows 4s later with no corresponding
-video-visible tap — most plausibly a retransmission tail, not a 6th action.
+"Mute Left". Tap "Mute Left" at t=67s (08:41:58) returns to idle. A further Stop (2202,
+08:42:02.900) follows 4 s later with no corresponding video-visible tap; the Buds answer it with their ACK only (2204) — no status message, consistent with
+nothing having changed (the bud was not ringing).
 
 ```
-Start (frame 2131, 08:41:46.703): 04 01 00 01 02
-Stop  (frame 2180, 08:41:58.882): 04 01 00 01 00
+2131  08:41:46.703  phone → Buds   04 01 00 01 02        Ring Left
+2133  08:41:46.732  Buds → phone   ff 01 00 03 04 01 00
+2134  08:41:46.736  Buds → phone   04 01 00 01 02
+2137  08:41:46.743  phone → Buds   ff 01 00 02 04 01
+2180  08:41:58.882  phone → Buds   04 01 00 01 00        Stop
+2182  08:41:58.886  Buds → phone   ff 01 00 03 04 01 00
+2183  08:41:58.919  Buds → phone   04 01 00 01 00
+2186  08:41:58.932  phone → Buds   ff 01 00 02 04 01
+2202  08:42:02.900  phone → Buds   04 01 00 01 00        Stop (not ringing)
+2204  08:42:02.905  Buds → phone   ff 01 00 03 04 01 00
 ```
 
 Same envelope as `FIND-002`. `Value=0x02` = start-ring-**Left** (distinct from Right's `0x01`);
@@ -94,8 +110,8 @@ Same envelope as `FIND-002`. `Value=0x02` = start-ring-**Left** (distinct from R
 | Value | Meaning | Evidence |
 |---|---|---|
 | `0x00` | Stop / mute ringing (shared, not per-earbud) | 3 occurrences, all following a video-confirmed "Mute Left/Right" tap or immediately after |
-| `0x01` | Start ringing **Right** | 1 start (+1 retransmit), video-confirmed |
-| `0x02` | Start ringing **Left** | 1 start (+1 retransmit), video-confirmed |
+| `0x01` | Start ringing **Right** | 1 start (2040; the Buds' own message 2045 carries the same value), video-confirmed |
+| `0x02` | Start ringing **Left** | 1 start (2131; the Buds' own message 2134), video-confirmed |
 
 This resolves what would otherwise have been an open question (this batch's other captures had
 to leave several field-to-meaning mappings as unconfirmed HYPOTHESES without video — this one has
@@ -108,7 +124,7 @@ a direct, unambiguous video match for every value observed).
 | DLCI | 0x04 | 0x04 (same) |
 | Envelope | `[Group:1][Code:1][Len:2BE][Value]` | Same shape |
 | Group | `0x08` | `0x04` (different group, as the spec predicts) |
-| ACK | `0xFF 0x01 0x00 0x06 <echo>` | `0xFF 0x01 0x00 0x02 0x04 0x01` (exact spec match) + a second, longer ACK variant (§7) |
+| ACK | `0xFF 0x01 0x00 0x06 <echo>` | the Buds' ACK is `0xFF 0x01 0x00 0x03 0x04 0x01 0x00` (echo + one state byte; the spec's example carries two); `0xFF 0x01 0x00 0x02 0x04 0x01` is the **phone's** ACK of the Buds' own message (§3) |
 
 Ring's frames decode cleanly under the identical Group/Code/Length/Value rule already established
 for ANC, with 4 video-confirmed action/response pairs (2 starts, 2 stops) — satisfying, and
@@ -151,8 +167,8 @@ resolved to the same level as, `FIND-001`/`FIND-002`'s confirmed local mechanism
 
 ## 9. Open Questions
 
-- 🔴 What does the second ACK variant's extra byte (`ff 01 00 03 04 01 00`) represent? → copied to
-  `PROTOCOL.md` §6.
+- 🟡 What the Buds' ACK's state byte (`ff 01 00 03 04 01 00` — `00` in all five) and their own `04 01 00 01 xx` message mean beyond "the new ring state": a
+  Ring stopped on the bud itself is the test (`CAP-068`). The "two ACK variants" question is answered (§3; `PROTOCOL.md` §6 ticked 2026-10-03).
 - 🔴 Does `FIND-003`(Case)/`FIND-004`(both) genuinely require Find My Device Network/GMS, with no
   local-only fallback? Directly relevant to this project's Zero-GMS goal. → copied to
   `PROTOCOL.md` §6.

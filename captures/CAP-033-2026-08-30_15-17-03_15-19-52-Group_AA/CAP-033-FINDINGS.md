@@ -54,7 +54,7 @@ below) both happened entirely **after** Force-stop completed at 15:17:34 — i.e
 was anything for the app to possibly react to, it had already been stopped for ~18+ seconds. The
 10-second window during which the deviation existed (15:17:24–15:17:34, app alive but device
 already forgotten) produced no bonding or SDP activity at all in the log. This scoping does **not**
-erase the violation — it is still recorded as a deviation in §6/`SDP-001`'s status below — but it
+erase the violation — it is still recorded as a deviation in §5/`SDP-001`'s status below — but it
 means the specific evidence in §2/§3 was not collected while the app was both alive and paired.
 
 ### 1.2 The 15:18:16 popup — not a violation, but the original note was imprecise
@@ -100,11 +100,11 @@ Per this session's own instructions, if either 1.1 or 1.2 turns out to be a genu
 `SDP-001` conclusion must not be recorded as 🟢 FACT regardless of what the wire data shows. §1.1
 **is** a confirmed order violation (even though its practical blast radius on the SDP-browse window
 itself looks contained); §1.2 is not a violation. Combined with §1.3's missing comparison half,
-**`SDP-001`'s result in this capture is capped at 🟡 HYPOTHESIS** — see §6.
+**`SDP-001`'s result in this capture is capped at 🟡 HYPOTHESIS** — see §5.
 
 ## 2. The SDP browse (🟢 FACT for what was observed)
 
-`tshark -r CAP-033-btsnoop_hci.log -Y "bluetooth.addr == 04:00:6e:cf:6e:07 and btsdp" -T fields
+`tshark -r CAP-033-btsnoop_hci.log -Y "bthci_acl.chandle==0x0004 and btsdp" -T fields
 -e frame.number -e frame.time -e _ws.col.Info` — **all** `btsdp` traffic in the entire log falls in
 one tight window, **frames 1256–1873, 15:18:09.417–15:18:18.822** (9.4 seconds), immediately following
 bonding completion (`Link Key Notification`, frame 1242, 15:18:09.171):
@@ -159,9 +159,12 @@ channel:1]` protocol descriptor — across the full response:)
 **Raw-byte scan confirms the "pigweed"/"MAESTRO APP" UUID is genuinely present** (not just in the
 dissected SDP record): `python3` scan of the raw log file finds `25e97ff724ce4c4c8951f764a708f7b5`
 twice (offsets 68980, 69021 — both inside frame 1279's payload) and its byte-reversed form once
-(offset 55861, inside frame 1072, a `Rcvd Extended Inquiry Result` — almost certainly a coincidental
-16-byte match inside arbitrary EIR advertisement bytes, not a meaningful protocol occurrence, and
-not investigated further here as it is unrelated to this Group's scope). **The "default" UUID
+(offset 55861, inside frame 1072, a `Rcvd Extended Inquiry Result`). **Corrected 2026-10-03
+(`ai-sessions/0069`, `A68-CAP-23`, lead L68-10; 🟢 FACT):** this is not a coincidental match — frame
+1072 is the Buds' own Extended Inquiry Result (`tshark -r CAP-033-btsnoop_hci.log -Y
+"frame.number==1072" -V`: the Buds' address and name, and a list of five 128-bit Service Class
+UUIDs, among them this one in the little-endian byte order EIR uses). The Buds therefore announce
+their custom service UUIDs in the inquiry response, before pairing and before any SDP query. **The "default" UUID
 (`3a046f6d-24d2-7655-6534-0d7ecb759709`) and its byte-reversed form: zero occurrences**, in the raw
 byte scan across the entire log, not just the SDP-dissected frames — this session does not change
 the standing negative result already established across every other capture this project has.

@@ -10,10 +10,10 @@ Standardized, evidence-based extraction from `CAP-064-btsnoop_hci.log`, `CAP-064
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-064` · **Date:** 2026-10-01, film overlay 10:04:14–10:29:28 (phone 10:04:14.6–10:29:28.6) · **Firmware:** 🟢 `release_5.203`
-(14 of 14 DLCI 0x02 announcements, e.g. frame 1215) · **Phone:** Pixel 9a, GrapheneOS, Android 17 `CP3A.260905.009`, Google Play services and the
+(14 of 14 MAESTRO announcements — 9 on DLCI 0x02, 5 on DLCI 0x03 — e.g. frame 1215) · **Phone:** Pixel 9a, GrapheneOS, Android 17 `CP3A.260905.009`, Google Play services and the
 Google app present · **App under test:** OpenControl, ≥ the `ai-sessions/0057` build with the `0056` writes; installed 16 min after `b65085a` (§0) ·
 **HCI log:** 11,390 packets, raw, 0 `cap_len≠len` · **Buds:** `04:00:6e:cf:6e:07`, classic handle `0x000b` for every ACL of the run. LE handle `0x0041`
-(`c8:cc:a8:e7:48:93`, frame 284, 🟡 the "Charge 6" speaker) is excluded. `bluetooth.addr` is empty with this `H4 with linux header` encapsulation, so every
+(`c8:cc:a8:e7:48:93`, frame 284, the Fitbit "Charge 6", 🟢 in `CAP-065-FINDINGS.md`) is excluded. `bluetooth.addr` is empty with this `H4 with linux header` encapsulation, so every
 command pre-filters by handle.
 
 Commands used throughout (rule 4a):

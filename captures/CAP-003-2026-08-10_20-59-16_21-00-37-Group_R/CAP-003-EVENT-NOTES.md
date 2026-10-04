@@ -77,5 +77,9 @@ flow is triggered.
   timeline at all.
 - The draft's timestamps were otherwise accurate to within 1–2s of the refined values above.
 
+## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
+
+- `GATT-001` — **attempted, not achieved, and not named in the timeline**: this Group R run removed the bond, and no GATT discovery followed (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` `GATT-001`: "zero-discovery across `CAP-002`–`CAP-004`"). First achieved in `CAP-017`/`CAP-034`.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-EVENT-NOTES

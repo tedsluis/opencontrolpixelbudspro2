@@ -41,7 +41,7 @@ across multiple reconnects.
 |      Group(s)    | AG (`PRIV-001` — DLCI 0x08 unmapped Get-code correlation; incidental `PAIR-003`, `BATT`-family) |
 |       Date       |                     2026-09-06                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` |
-|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+|   Test device    | Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`). **Official Pixel Buds Companion App, Google Play Services enabled** |
 | Video file       | `CAP-040-recrding.mp4` (filename has a typo in the original recording, "recrding" not "recording" — left as-is) — actual ffprobe duration **1745.23s (~29m5s)**, `07:28:00`–`07:57:05` local time. The originally-noted "24:10s, 07:28:00–07:52:10" window covers only the documented ~15-repeat procedure; the video actually runs ~5 more minutes past that (see §Contamination log and Decode/Analysis — this tail turned out to contain the session's only *genuine* wire-level disconnect). |
 | Log file         | Two files exist for this session — see the critical `.log.last` finding below. **Authoritative source: `CAP-040-btsnoop_hci.log` (main log)** — 8,539 packets, 0/8,539 `frame.cap_len`≠`frame.len` mismatches (untruncated), 1831.99s, 2026-09-06 07:28:07.139–07:58:39.126 local. |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
@@ -246,8 +246,8 @@ tshark -r CAP-040-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
       raw hex of each. **Result: found exactly one occurrence of all 7 codes together, bundled in
       a single Sent frame (#980, 07:28:12.857, right after DLCI 0x08's one-and-only `SABM`/`UA` for
       this session at frames 958/962) — `05 0c 00 00 / 04 02 00 00 / 04 04 00 00 / 04 11 00 00 /
-      04 13 00 00 / 04 15 00 00 / 0e 04 00 00`, followed in the same frame by the already-documented
-      `Group 0x03 Code 0x02` firmware string and capability blob. This is the only time DLCI 0x08
+      04 13 00 00 / 04 15 00 00 / 0e 04 00 00`, followed in the same frame by `03 01 00 1b … "Europe/Amsterdam"` (Group `0x03` Code `0x01`, the phone's
+      time zone) and a zero-length `09 03 00 00` — no firmware string in this frame (corrected 2026-10-03 to match `CAP-040-FINDINGS.md`). This is the only time DLCI 0x08
       opens/closes in the entire 30-minute session (confirmed via `rfcomm.frametype`/`_ws.col.Info`
       filtered to `Channel=4`: one `SABM`→`UA` at session start, no `DISC` until the log ends) — see
       `CAP-040-FINDINGS.md` §1/§3 for the full command+hex.**
@@ -302,6 +302,10 @@ tshark -r CAP-040-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
 - [ ] **Do not** promote anything to 🟢 FACT or write a `DECISIONS.md` ADR without explicit
       maintainer sign-off (`AGENTS.md` §6, §15) — propose only.
 - [ ] Rename this capture's folder to the actual session date/start-time/end-time.
+
+## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
+
+- `PAIR-003` (incidental) is named in the metadata only; **no timeline row carries it**. The wire events it would attach to are the disconnect and the Buds' return to the case at 07:54:28–07:55:41, which the timeline (ending "07:52:10 End video recording") does not cover — see `CAP-040-FINDINGS.md` §4.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-040-2026-09-06_07-28-00_07-57-05-Group_AG/CAP-040-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-040-2026-09-06_07-28-00_07-57-05-Group_AG/CAP-040-EVENT-NOTES

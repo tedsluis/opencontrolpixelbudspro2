@@ -110,7 +110,7 @@ ON at 07:47:17–19, a finger taps it at 07:47:20, OFF from 07:47:21. Frame **19
 **Status:** 🟢 **FACT** — `qhr` field 4 = "Use touch controls" (ADR-019, app code + frame 1741) in **both directions**: 1741 `4:{4:1}` and 1995
 `4:{4:0}`, each on film and acknowledged (`PROTOCOL.md` §4.5.3, 2026-09-26 Update, maintainer-approved in chat, `ai-sessions/0052`).
 
-## 4. Analysis: `HEAD-001` ("Use head gestures" OFF→ON)
+## 4. Analysis: `HEAD-001` ("Use head gestures" OFF→ON, and ON→OFF 35 s later)
 
 Video shows a finger tap on the "Use head gestures" toggle at t=46s (07:47:00), an "Optimize head
 gestures" one-time explainer dialog appearing t=47–49s, and the toggle confirmed ON by t=50s
@@ -137,7 +137,25 @@ within one, which that section left open.
 ACK/Rcvd echo: frames 1939 (07:47:00.441100) and 1942 (07:47:00.444725), same shape as `TOUCH-001`'s
 echo above.
 
-**Status:** 🟡 **HYPOTHESIS**, same basis and same caveats as `TOUCH-001` above.
+**The OFF write** — frame **2038**, 07:47:35.122, phone → Buds: `WriteSetting 4:{29:1}`, mirrored on `SubscribeToSettingsChanges` in 2044 (07:47:35.541). The
+connect-time read of this session, frame 1183, answered `4:{29:1}` — the value before the ON tap:
+
+```
+$ python3 scripts/pwrpc_decode.py CAP-020-btsnoop_hci.log | grep "29:"
+  1183 RESPONSE      ReadSetting                 4:{29:1}
+  1935 REQUEST       WriteSetting                4:{29:2}     (07:47:00.005)
+  1939 SERVER_STREAM SubscribeToSettingsChanges  4:{29:2}
+  2038 REQUEST       WriteSetting                4:{29:1}     (07:47:35.122)
+  2044 SERVER_STREAM SubscribeToSettingsChanges  4:{29:1}
+```
+
+Film (`ffmpeg -ss <t> -i CAP-020-recording.mp4 -frames:v 1`, t = 79…83 s, overlay 07:47:33…37, checked by eye): "Use head gestures" is ON at 07:47:33–34, a
+finger is on the switch at 07:47:35, and it reads OFF from 07:47:36.
+
+**Status:** 🟡 **HYPOTHESIS** — `qhr` field 29: **1 = off, 2 = on** (two filmed writes and the read before them; the same reading fits the connect-time reads
+of the other captures: `29:1` in `CAP-014`…`CAP-027`, `29:2` in `CAP-028` and `CAP-029`). A write site for field 29 exists in the app's smali
+(`REVERSE_ENGINEERING.md`, `qhr` register, 2026-10-03 Update). Not promoted: `PROTOCOL.md` §4.5.4. (Rewritten in place 2026-10-03, `ai-sessions/0069`,
+A68-PROT-03: the OFF write was missed, and this file said the session left head gestures on.)
 
 ## 5. Cross-command structural comparison (both actions, this capture)
 
@@ -159,17 +177,16 @@ that exact envelope), which this capture doesn't contradict: `TOUCH-001`/`HEAD-0
 head gestures) captured on three different days — evidence the outer nesting is shared
 infrastructure, while each setting supplies its own inner field number/value. **Not confirmed:**
 what `field 4` vs. `field 29` represent (a per-setting/per-message-type ID?), or whether `1`/`2`
-are enable-flags specific to each setting or share a common enum — no second on/off cycle was
-captured for head gestures (touch controls went OFF→ON→OFF, head gestures OFF→ON only), and no official spec covers this. Flagged as
-open (§6 below), not guessed further.
+are enable-flags specific to each setting or share a common enum — both settings went OFF→ON→OFF in this capture (field 4: 1 then 0; field 29: 2 then 1,
+an enum rather than a boolean — `qhr` types it ENUM).
 
-**Checked and ruled out — DLCI 0x08 Group `0x04` Code `0x16`:** this code's value (`08 01`/`08 02`)
-changes near the `HEAD-001` frame (frame 1940, 07:47:00.442) but the same code also fires during
-the initial connection handshake (frame 922, 07:46:20.194) and again 35s after `HEAD-001` with no
-video-visible action nearby (frame 2045, 07:47:35.546), alternating `02→01→02` — matching the
-already-documented irregular-interval alternator family (`PROTOCOL.md` §6 Resolved item, Code
-`0x12`), not something caused by either toggle. Recorded so a future session doesn't mis-attribute
-this coincidence.
+**DLCI 0x08 Group `0x04` Code `0x16` follows the head-gesture setting in this capture (🟡 HYPOTHESIS, lead L68-4).** `tshark -r CAP-020-btsnoop_hci.log -Y
+'btrfcomm.len>0 && btrfcomm.dlci==8 && data.data[0:2]==04:16' -T fields -e frame.number -e frame.time -e data.data`: 922 (07:46:20.194, connect) `04 16 00 02 08
+02` while field 29 reads 1; 1940 (07:47:00.442) `… 08 01` 0.4 s after the ON write; 2045 (07:47:35.546) `… 08 02` 4 ms after the OFF write's mirror (2044). So
+`08 02` ⇔ field 29 = 1 (off) and `08 01` ⇔ field 29 = 2 (on), three of three here; `CAP-028` 795 and `CAP-029` 949 read `08 01` with `29:2`. One sample the
+other way: `CAP-029` 3757 `08 02` while field 29 still reads 2 (3998) — and `CAP-056` saw the code flip when both buds left the ears (`PROTOCOL.md` §6), so the
+code may mean "head gestures active", not the setting alone. (Rewritten 2026-10-03: this paragraph used to rule the code out as an unrelated alternator because
+it "fired again 35 s after `HEAD-001` with no visible action" — that was the OFF tap.)
 
 ## 6. Conclusions & Next Steps
 
@@ -181,12 +198,9 @@ this coincidence.
   inner content. **Promoted 2026-08-23** (`PROTOCOL.md` §4.5's shared preamble, `DECISIONS.md`
   ADR-013) to 🟢 FACT as a named, general-purpose envelope shape, after the pattern held across
   6 independent captures with no counter-example.
-- Touch controls' OFF write is in this capture (frame 1995, `4:{4:0}`). **Recommended next step:** toggle head gestures back OFF in a future
-  capture to see whether `field 29`'s value becomes `0`.
-- **State left behind:** this session leaves Head gestures enabled (ON), which is a required
-  prerequisite for the planned Group O captures (`HEAD-002`/`HEAD-003`) — already tracked in
-  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9's Capture Index row for `CAP-020`, noted here too since a
-  reader of this file alone wouldn't otherwise see it.
+- Touch controls' OFF write is in this capture (frame 1995, `4:{4:0}`). Head gestures' OFF write is in this capture too (frame 2038, `4:{29:1}`).
+- **State left behind:** this session leaves Head gestures **off** (the OFF tap at 07:47:35). The later captures read `29:2` from `CAP-028` on, so the setting
+  was switched on again before the Group O capture (`CAP-028` 1350).
 
 ## 7. Open Questions
 

@@ -27,14 +27,12 @@ non-match worth re-examining the hypothesis itself).
 |   Test device    | Pixel 7a, Android 17 (🟢 FACT, MP4 container tag); official Pixel Buds Companion App force-stopped; app version `1.0.955078536`, Google Play services active (⚪ ASSUMPTION, maintainer-supplied context) |
 | Video file       |  `CAP-043-recording.mp4` — 189.897s, 09:50:31–09:53:41 local (burned-in overlay + `ffprobe`-cross-checked) |
 | Log file         |          `CAP-043-btsnoop_hci.log` — 1,572 packets, 306.895s, 09:50:27.996–09:55:34.891 local |
-| Buds MAC (partial, per `AGENTS.md` §7/§9) | Not observed anywhere this session (see Isolation check below) |
+| Buds MAC (partial, per `AGENTS.md` §7/§9) | Once, inside a controller vendor command (frame 91); never in a connection (see Isolation check below) |
 
 **Isolation check (required — this is the whole point of the repeat) — 🟢 CONFIRMED CLEAN.**
-`tshark -r CAP-043-btsnoop_hci.log -Y "bluetooth.addr == 04:00:6e:cf:6e:07"` and
-`-Y "btrfcomm"`/`-Y "btsdp"` all return **zero** frames across the entire 306.9s log — no classic
-connection, no RFCOMM, no SDP to the Buds' known classic address at any point. A raw-byte scan for
-the address (both byte orders) confirms the same (one coincidental reversed-byte match inside an
-unrelated vendor-command parameter blob, checked and dismissed — see `CAP-043-FINDINGS.md` §2). The
+`tshark -r CAP-043-btsnoop_hci.log -Y "btrfcomm or btsdp or bthci_evt.code==0x03"` returns **zero** frames across the entire 306.9s log (the same filter
+finds 323 in `CAP-044`) — no classic connection, no RFCOMM, no SDP at any point. The Buds' address occurs once, little-endian, in the controller vendor command
+of frame 91 (`CAP-043-FINDINGS.md` §2, rewritten 2026-10-03) — not a connection. The
 specific procedure deviation `CAP-011` had (an active classic RFCOMM+GATT connection present
 throughout) does **not** reproduce here — this repeat achieves genuine isolation.
 

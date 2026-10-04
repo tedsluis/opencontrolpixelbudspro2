@@ -16,12 +16,12 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 | Purpose | Repeat of `CAP-011` (Group Q item #18) — clean, connection-free passive BLE scan for the Fast Pair Battery Notification advertisement (`PROTOCOL.md` §4.3 Option A) |
 | Date | 2026-09-13 |
 | Firmware | `release_5.203` (⚪ ASSUMPTION — maintainer-supplied session context; not independently re-derived from this capture's own wire data, since zero DLCI 0x08/classic traffic exists in this log to carry a firmware string) |
-| Test device | Pixel 7a, Android 17 (🟢 FACT — `com.android.version: 17` MP4 container tag, confirmed via `ffprobe`), official Pixel Buds Companion App force-stopped for the entire session (see §2), Google Play services active (⚪ ASSUMPTION, maintainer-supplied context) |
+| Test device | Pixel 7a, Android version ⚪ ASSUMPTION (the `com.android.version: 17` MP4 container tag is the **camera** phone's, not the test phone's — corrected 2026-10-03, `ai-sessions/0069`, A68-CAP-23; a bugreport's `ro.build.version.release` would settle it), official Pixel Buds Companion App force-stopped for the entire session (see §2), Google Play services active (⚪ ASSUMPTION, maintainer-supplied context) |
 | App version | `1.0.955078536` (⚪ ASSUMPTION, maintainer-supplied context — not wire-verifiable this session, no DLCI 0x08 traffic) |
 | Log file | [`CAP-043-btsnoop_hci.log`](./CAP-043-btsnoop_hci.log) — 1,572 packets, 306.895s, 2026-09-13 09:50:27.996–09:55:34.891 (+0200) |
 | Notes file | [`CAP-043-EVENT-NOTES.md`](./CAP-043-EVENT-NOTES.md) |
 | Video file | [`CAP-043-recording.mp4`](./CAP-043-recording.mp4) — 189.897s (30fps, 1280×720 sensor / 720×1280 displayed), 09:50:31–09:53:41 local time (`ffprobe`/burned-in overlay cross-checked, see §2) |
-| Buds MAC (classic, partial per `AGENTS.md` §7/§9) | Not observed anywhere in this session's log — see §3 (isolation confirmed both by dissector-filter and raw-byte scan) |
+| Buds MAC (classic, partial per `AGENTS.md` §7/§9) | Present once, little-endian, inside a controller vendor command at Bluetooth bring-up (frame 91) — never in a connection; see §2 |
 | `.log.last` present? | No (`ls` confirmed both at prompt-drafting time and at analysis time) — Step G of the shared methodology not applicable |
 
 ## 2. Methodology, video review, and isolation check (the entire point of this repeat)
@@ -43,31 +43,23 @@ in the video.
 
 **Isolation check (🟢 FACT, the specific procedure deviation `CAP-011` had):**
 ```
-$ tshark -r CAP-043-btsnoop_hci.log -Y "bluetooth.addr == 04:00:6e:cf:6e:07" | wc -l
-0
-$ tshark -r CAP-043-btsnoop_hci.log -Y "btrfcomm" | wc -l
-0
-$ tshark -r CAP-043-btsnoop_hci.log -Y "btsdp" | wc -l
-0
-$ python3 -c "d=open('CAP-043-btsnoop_hci.log','rb').read(); print(d.count(bytes.fromhex('04006ecf6e07')))"
-0
+$ tshark -r CAP-043-btsnoop_hci.log -Y "btrfcomm or btsdp or bthci_evt.code==0x03" | wc -l      → 0     (exit 0)
+$ tshark -r CAP-044-btsnoop_hci.log -Y "btrfcomm or btsdp or bthci_evt.code==0x03" | wc -l      → 323   (positive control: the same filter on a log with a connection)
 ```
-Zero classic-side traffic to the Buds' known classic address (`04:00:6e:cf:6e:07`, from
-`CAP-001`/`CAP-002`/`CAP-032`/`CAP-033`) anywhere in the log — no Connection Complete
-(`bthci_evt.code==0x03`, checked separately, 0 matches across the whole log), no RFCOMM, no SDP.
+No classic connection exists in the log — no Connection Complete, no RFCOMM, no SDP. (Rewritten in place 2026-10-03, `ai-sessions/0069`, A68-CAP-19: the
+check used to rest on `bluetooth.addr == <Buds address>` → 0 and a forward-byte-order scan → 0. Neither proves anything: that address filter also returns 0 on
+`CAP-031` and `CAP-044`, where the Buds are connected, and a BD_ADDR is little-endian on the wire.)
 `tshark`'s own protocol-hierarchy stats (`-z io,phs`) confirm the **entire** log's non-HCI-command/
 event content is exactly `bthci_acl → btl2cap → btatt` (BLE GATT only) — there is no `btrfcomm`
 branch in the hierarchy at all. **This is a genuinely clean, connection-free capture** — the specific
 procedure deviation that capped `CAP-011` (an active classic RFCOMM+GATT connection present
 throughout) does not reproduce here.
 
-One coincidental raw-byte match of the classic MAC's **reversed** byte order (`07 6e cf 6e 00 04`)
-was found at file offset 3902, inside a `Vendor Command 0x0157` parameter blob (`... 01 57 fd 0a 02
-00 04 07 6e cf 6e 00 04 02 00 ...`) — a controller RPA-management vendor command, not any
-BD_ADDR-carrying HCI field (`tshark`'s own dissector, which resolves BD_ADDR endianness correctly,
-found zero matches). Checked and dismissed as coincidental vendor-parameter byte overlap, following
-the same precedent `DECISIONS.md` ADR-018 already used for an analogous single reversed-byte
-coincidence in `CAP-033`.
+**The Buds' address does occur once in the log** (🟢 FACT): `tshark -r CAP-043-btsnoop_hci.log -Y 'frame contains 07:6e:cf:6e:00:04' -T fields -e
+frame.number -e frame.protocols` → `91  bluetooth:hci_h4:bthci_cmd`, raw `01 57 fd 0a 02 00 04 07 6e cf 6e 00 04 02` — HCI command opcode `0xFD57` (vendor
+specific, OCF `0x157`; `0a` is the parameter length), carrying the address in wire (little-endian) order. It is byte-identical to frame 91 of `CAP-032`, which
+`CAP-032-FINDINGS.md` §5 documents as a vendor command referencing the bonded Buds at Bluetooth bring-up. What the command does is 🔴 open (vendor semantics); it
+is a host → controller command, not traffic with the Buds, so the isolation verdict above stands.
 
 **Video/log timing note, 🔴 not fully resolved (does not affect the isolation conclusion above):**
 the log's *only* Bluetooth-adapter `Reset` command (frame 1, the standard full HCI bring-up burst
@@ -96,8 +88,8 @@ $ tshark -r CAP-043-btsnoop_hci.log -Y "bthci_evt.le_meta_subevent==0x0d and btc
 
 | Address | Frames | RSSI range | Reading |
 |---|---|---|---|
-| `52:39:01:d3:49:1e` | 60 | **-20 to -23 dBm** | 🟢 FACT — this project's own Buds/Case unit, per the same close-range-RSSI reasoning `CAP-011-FINDINGS.md` §3 used (-25 to -39 dBm there) |
-| `4d:f4:ca:40:0c:f7` | 260 | -84 to -104 dBm | 🟡 HYPOTHESIS — an unrelated, distant Fast-Pair-capable device, per `AGENTS.md` §13's own precedent for incidental co-occurring device traffic (e.g. `CAP-004`'s Fitbit). Not this project's own hardware — RSSI alone is ~60-80 dB weaker than the own-device signal and 3-orders-of-magnitude less powerful; not investigated further, out of scope. |
+| `52:39:01:d3:49:1e` | 60 | **-20 to -23 dBm** | 🟡 HYPOTHESIS (strong; an RSSI inference only — label lowered 2026-10-03, A68-CAP-23) — this project's own Buds/Case unit, per the same close-range-RSSI reasoning `CAP-011-FINDINGS.md` §3 used (-25 to -39 dBm there) |
+| `4d:f4:ca:40:0c:f7` | 260 | -84 to -104 dBm | 🟡 HYPOTHESIS — an unrelated, distant Fast-Pair-capable device, per `AGENTS.md` §13's own precedent for incidental co-occurring device traffic (e.g. `CAP-004`'s Fitbit). Not this project's own hardware — RSSI is ~60–80 dB weaker than the own-device signal (6 to 8 orders of magnitude in power); not investigated further, out of scope. |
 
 **Sampled service-data payload, own-Buds address (`52:39:01:d3:49:1e`), byte-for-byte identical across all 60 occurrences spanning the full log (frame 133, t=1.06s, through frame 1548, t=295.34s):**
 
@@ -188,9 +180,10 @@ positive to promote), and per `AGENTS.md` §6 no such promotion is asserted here
   advertisement, if not the Battery Notification extension? (`PROTOCOL.md` §6 — this capture adds a
   second confirmed non-match but does not itself identify the correct sub-type.)
 - 🔴 Does the Battery Notification extension ever fire at all for this hardware, under *any*
-  condition (e.g. a bud freshly removed/inserted, matching the spec's "optional when a single bud is
-  inserted/removed" language) — this session tested only the idle/case-closed condition, per its own
-  procedure.
+  condition — this session tested only the idle/case-closed condition, per its own procedure. The
+  condition the spec itself names is the case being **opened** (the notification is shown "when the
+  case has opened"; corrected 2026-10-03, `ai-sessions/0069`, `A68-PROT-06`: this item quoted an
+  "optional when a single bud is inserted/removed" sentence that is not on the spec page).
 - 🔴 The ~3-second video-overlay-vs-log-absolute-clock discrepancy noted in §2 — not investigated
   further, flagged for awareness only.
 - 🟡 What triggers the system Bluetooth settings panel's `L/C/R` battery display when no live
@@ -199,9 +192,9 @@ positive to promote), and per `AGENTS.md` §6 no such promotion is asserted here
 
 ## 7. Recommended next steps
 
-- A capture bracketing an actual bud insertion/removal event, still connection-free, to test the
-  spec's "optional when a single bud is inserted/removed" trigger condition for the Battery
-  Notification specifically (not attempted by this session's own case-closed-and-idle procedure).
+- A connection-free capture of the case being opened with both buds inside — the spec's own use case
+  — and then one bud taken out and put back (corrected 2026-10-03: planned as `CAP-054`, Group AP,
+  redesigned; the earlier wording here named a trigger sentence that is not on the spec page).
 - If the Battery Notification extension is never observed under any bracketed condition across
   further attempts, this is itself worth raising to the maintainer as a candidate for re-labeling
   Option A's status in `PROTOCOL.md` §4.3 from "🟡 HYPOTHESIS (confirmed as used by the Buds Pro 2

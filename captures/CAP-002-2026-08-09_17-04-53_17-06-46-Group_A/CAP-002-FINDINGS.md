@@ -71,7 +71,7 @@ session over PSM 0x0003, starting immediately after encryption completes.
 | Channel | DLCI | Opened (frame) | Content observed | Status |
 |---|---|---|---|---|
 | 0 | 0x00 | 908 | Multiplexer control (PN negotiation) | 🟢 FACT |
-| 6 | 0x0c | 930, labeled **"Hands-Free"** directly by Wireshark's SDP-driven heuristic | 937 | **No plaintext AT-command byte stream was found on this channel in this capture** — differs from `CAP-001`, where a full HFP AT handshake (`AT+BRSF`, `AT+CIND`, `AT+BIEV=2,100`, etc.) was clearly visible. See §5 open question. | 🔴 OPEN QUESTION |
+| 6 | 0x0c | 930 / 937, labeled **"Hands-Free"** directly by Wireshark's SDP-driven heuristic | The HFP Service Level Connection handshake (`AT+BRSF=921` … `AT+BIEV=2,100`), frames 48954–49079 of the shared log (17:05:34.541–.759) — see §5 (rewritten 2026-10-03: the earlier "no AT-command byte stream" was a filter artefact) | 🟢 FACT |
 | 4 | 0x08 | 933 | Short frames (4–69 bytes) in the initial 17:05:34.5–34.8 burst only; not decoded in this pass | 🔴 OPEN QUESTION |
 | 5 | 0x0a | 978 | No data-carrying frames observed | 🔴 OPEN QUESTION (same as `CAP-001`) |
 | 1 | 0x02 | 1125 | `0x7e`-delimited HDLC-style frames, same shape as `CAP-001`'s channel-1 traffic | 🟢 FACT (2026-08-12) — confirmed as Pigweed `pw_hdlc` framing (CRC-32 FCS verified 100% match, including this session's own 371 frames); see `CAP-001-FINDINGS.md` §2 "Upgrade (2026-08-12)" and `PROTOCOL.md` §2.2a for the full evidence |
@@ -466,42 +466,36 @@ Explanation #4 (CDM permission flow being a pure OS/app-framework interaction wi
 traffic) remains unconfirmed either way — none of the four ATT bursts fall inside the
 17:06:11–17:06:31 CDM-dialog window specifically.
 
-## 5. HFP channel opened but no AT-command traffic observed (🔴 OPEN QUESTION)
+## 5. HFP Service Level Connection handshake at the fresh pairing (🟢 FACT)
 
-SDP resolves and RFCOMM channel 6 is explicitly opened and labeled **"Hands-Free"** by
-Wireshark's own heuristic (frame 930/937), yet no `AT+`-prefixed ASCII bytes were found anywhere
-on any DLCI in this capture (checked via a raw hex search for the `AT` byte pattern across the
-whole sliced window — the one match was incidental, inside an unrelated channel-1 binary blob,
-not a real AT command). This directly contrasts with `CAP-001`, where a complete, unambiguous HFP
-AT handshake (`AT+BRSF`, `AT+CIND`, `AT+BIND`, `AT+BIEV=2,100`, ...) was captured on channel 4.
+The HFP AT-command handshake **does** occur in this session, on DLCI 0x0c, 0.8 s after the classic link is encrypted. (Rewritten in place 2026-10-03,
+`ai-sessions/0069`, after `ai-sessions/0068` A68-CAP-01: this section used to report "no AT-command traffic" and a "clean negative" over the whole 8-hour log. That
+negative was a filter artefact — `data.data contains "AT+"` cannot match a frame that tshark dissects as `bthfp`, because such a frame has no `data.data` field;
+`AGENTS.md` §13 step 8.)
 
-Possible explanations, not resolved here: the Service Level Connection (SLC) AT handshake may
-happen fractionally before or after this capture's slice boundaries; it may require the phone to
-actually initiate a call/audio-routing test to trigger; or first-time pairing may defer full HFP
-SLC setup until first use rather than performing it immediately (unlike `CAP-001`'s reconnect,
-where HFP was evidently already in active use). Worth checking directly with a wider time slice
-in a future pass.
+**Commands and results** (`CAP-002-btsnoop_hci.log` is the shared, un-restarted buffer; its first 2,663 frames are `CAP-001`'s):
 
-> **Update (2026-08-12) — the "wider time slice" check above is now done, and settles this
-> question with a clean negative, not a slice-boundary artifact.** This file's underlying
-> `CAP-002-btsnoop_hci.log` is not actually a pre-sliced ~150s file — it is the full, shared, non-restarted
-> ~8h20m buffer (50,468 packets, 08:50:32–17:10:58) already documented in this file's own header
-> and in `CAP-002`'s Capture Index row. Searching the **entire** file for the ASCII byte pattern
-> `AT+` (`tshark -r CAP-002-btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "AT+"'`) returns
-> exactly **23 matches, all falling within 08:51:13.958–08:51:34.860** — i.e. all 23 belong to
-> `CAP-001`'s own, already-documented HFP handshake (its `CAP-001-FINDINGS.md` §3), captured on DLCI 0x09
-> in this same shared buffer. **Zero `AT+` matches exist anywhere else in the full 8+ hour log** —
-> not during this session's own pairing/setup window (17:04–17:07), not during any of the other
-> reconnect events visible in this buffer (e.g. 11:32, 12:05 — see §2a above), and not in the ~7
-> hours of otherwise-idle time between them. This rules out the "happened just outside the slice
-> boundary" explanation directly (there was no slice — the whole day was searched) and weakens the
-> "requires a call/audio test to trigger" and "first-time-pairing defers SLC setup" explanations,
-> since neither predicts *zero* AT traffic for the rest of the day once the phone had reconnected
-> and presumably used the Buds normally afterward. Left as 🔴 OPEN QUESTION still (this capture
-> alone cannot prove HFP SLC setup never happens under any condition), but the evidence now points
-> toward "this specific phone/Buds pairing did not perform an HFP AT handshake again after
-> `CAP-001`'s reconnect, for the rest of the day this buffer covers" rather than a capture-window
-> artifact.
+```
+$ tshark -r CAP-002-btsnoop_hci.log -Y 'frame contains "AT+"' | wc -l                                   → 100   (exit 0)
+$ tshark -r CAP-002-btsnoop_hci.log -Y 'btrfcomm.len > 0 and data.data contains "AT+"' | wc -l           → 23    (the old filter: only undissected frames)
+$ tshark -r CAP-002-btsnoop_hci.log -Y 'frame contains "AT+BRSF" && frame.number>2663' \
+    -T fields -e frame.number -e frame.time -e btrfcomm.dlci
+  17391  11:31:59.342  0x08
+  18761  11:32:40.699  0x0c
+  48954  17:05:34.541  0x0c        ← this session
+$ tshark -r CAP-002-btsnoop_hci.log -Y 'bthfp && frame.number>48900' -T fields -e frame.number -e frame.time -e frame.p2p_dir -e bthfp.data
+```
+
+This session's handshake, frames 48954–49079 (17:05:34.541–.759, Buds → phone unless marked ←): `AT+BRSF=921` (← `+BRSF: 3951`), `AT+BAC=1,2,3`, `AT+CIND=?`
+(← the indicator list with `battchg (0-5)`), `AT+CIND?` (48994; ← 48996 `+CIND: 0,0,0,0,0,4,0`, i.e. `battchg` = 4), `AT+CMER=3,0,0,1`, `AT+BIND=1,2`,
+`AT+BIND=?` (← `+BIND: (1,2)`), `AT+BIND?` (← `+BIND: 1,1`, `+BIND: 2,1`), ← `+BSIR: 0`, `+BSIR: 1`, `AT+BIEV=1,1`, `AT+VGM=7`, `AT+NREC=0`, **49064
+`AT+BIEV=2,100`** (← `OK` 49065), `AT+VGS=8`, `AT+COPS=3,0`, `AT+CMEE=1`. Frame 49072 carries stray bytes after `AT+NREC=0` (as `CAP-066-FINDINGS.md` §9 describes
+for a later capture) and 49070 is the phone's `ERROR` to an empty command — not interpreted further.
+
+**Consequences.** The handshake is the same shape as `CAP-001`'s (reconnect) and occurs at this fresh pairing too; two further handshakes sit in the shared log
+between the two sessions (11:31:59 and 11:32:40). So the Service Level Connection is set up on every classic connect examined (`CAP-001`, this capture, `CAP-008`,
+`CAP-012`), and `PROTOCOL.md` §6's item "why HFP AT-command traffic never recurs after `CAP-001`'s own handshake" is answered: it does recur (ticked 2026-10-03).
+`AT+BIEV=2,100` is pushed again with each periodic push group in the log's tail (§7).
 
 ## 6. Other observations
 
@@ -535,19 +529,17 @@ of the whole 8h20m log) was checked directly, without slicing to this device.
   looked promising — it includes a **full GATT primary service discovery** (`Read By Group Type`
   requests/responses) starting 17:09:56, which is exactly the kind of traffic missing from §4's
   analysis and would have resolved the handle→UUID mapping gap.
-- **However, this traffic belongs to a different device.** The discovery response's `Source
-  Device Name` field reads **"Charge 6"** (a Fitbit Charge 6) at BD_ADDR `78:f8:1b:d6:6b:0a` —
-  confirmed by filtering the tail explicitly for the Buds' own address
-  (`04:00:6e:cf:6e:07`), which returns **zero packets** anywhere in this 17:06:46–17:10:58 window.
-  This is unrelated background Bluetooth activity from another of the maintainer's devices,
-  accumulated in the same long-running, non-restarted snoop log (see the header's scope note) —
-  it must **not** be used as Buds evidence, and is recorded here only to document that it was
-  checked and correctly excluded, not silently missed.
-- **Conclusion: no additional, usable Buds-specific traffic exists anywhere in this log past
-  17:06:46.** A new, dedicated capture — with Bluetooth restarted first, per
-  `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §2 step 5 — is genuinely necessary to get a real primary
-  service discovery against the Buds themselves and resolve the §4 handle/UUID gap, rather than
-  something recoverable from this session's existing log.
+- **The GATT discovery belongs to a different device.** The discovery response's `Source Device Name` field reads **"Charge 6"** (a Fitbit Charge 6) — unrelated
+  background Bluetooth activity from another of the maintainer's devices in the same un-restarted log; it must **not** be used as Buds evidence.
+- **The Buds are present in the tail too — 39 frames on their connection handle** (rewritten 2026-10-03, `ai-sessions/0069`, A68-CAP-16: the earlier text said
+  the address filter "returns zero packets"; `bluetooth.addr == <Buds>` matches nothing in this window although the Buds are connected, so it was a negative
+  without a positive control). `tshark -r CAP-002-btsnoop_hci.log -Y 'frame.time >= "2026-08-09 17:06:46" && bthci_acl.chandle==0x000b' | wc -l` → 39 (frames
+  49958–50012; handle `0x000b` is this session's ACL, Connection Complete frame 48642). They are three periodic push groups, at 17:08:17.5, 17:08:26.2 and
+  17:08:49.7, each: DLCI 0x08 `0e 02` (the capability string) and `0e 01` (Left 100, Right 100, Case `0x39` = 57, then `0x38` = 56 in the third), DLCI 0x04
+  `03 03 00 03 e4 e4 ff` ×3 (both buds 100 %, charging), HFP `AT+BIEV=2,100` on DLCI 0x0c, DLCI 0x08 `04 03 00 04 10 05 18 64`, and a DLCI 0x02 runtime-info
+  stream packet (entry 6.1 = `0x39`/`0x38`, the same Case value) — e.g. 49959, 49960, 49967, 49969, 49972.
+- **Conclusion: the tail holds no GATT service discovery of the Buds** — a dedicated capture was needed for the §4 handle/UUID gap (done since: `CAP-034`) — but
+  it does hold ordinary Buds traffic, which agrees with §4.3 Option B/E/F of `PROTOCOL.md` (the Case value falls 57 → 56 on both channels at once).
 
 ## 8. Recommended next steps
 
@@ -556,9 +548,9 @@ of the whole 8h20m log) was checked directly, without slicing to this device.
    the device, or by using a generic BLE scanner tool — to resolve handle `0x0f2a` and the
    `0x0c0X` handle cluster from §4 to real UUIDs. §7 confirms this cannot be recovered from
    existing logs and needs a fresh, targeted capture.
-2. A capture spanning further past the visible "Device details" screen to see whether HFP
-   AT-command SLC setup (§5) or any `libmaestro`-shaped RFCOMM traffic eventually occurs once the
-   user actually interacts with an ANC/EQ control from a fresh-paired state.
+2. ~~A capture spanning further past the visible "Device details" screen to see whether HFP
+   AT-command SLC setup (§5) or any `libmaestro`-shaped RFCOMM traffic eventually occurs~~ — the SLC setup is in this session (§5); the settings traffic was
+   captured in `CAP-005`/`CAP-015`…`CAP-024`.
 3. ~~Byte-for-byte verification of the Fast Pair Message Stream Device Information group/code
    values against the actual published spec~~ — **done, see §3** (2026-08-10).
 4. ~~Revisit `CAP-001`'s `CAP-001-FINDINGS.md` §2~~ — **done**, see `CAP-001`'s `CAP-001-FINDINGS.md`
@@ -612,11 +604,7 @@ this document already clears that bar:
   substantially strengthened 2026-08-12** — see `CAP-003` `CAP-003-FINDINGS.md` §4's own 2026-08-12
   addendum for exact byte-length validation against the official Key-based Pairing/Passkey spec
   (16-byte AES blocks, CCCD-gated flow, cross-confirmed in `CAP-002` and `CAP-003`).
-- Any HFP AT-command behavior claim specific to fresh pairing (§5) — **the "wider time slice"
-  check is now done (2026-08-12, §5 addendum): zero `AT+` traffic anywhere in the full 8h20m log
-  outside `CAP-001`'s already-documented handshake.** This is a clean negative for "AT traffic
-  recurs later," but still does not fully explain *why* — kept 🔴 pending a dedicated HFP-focused
-  capture.
+- The HFP handshake at a fresh pairing (§5) — 🟢 FACT: it occurs (frames 48954–49079); `PROTOCOL.md` §6's "never recurs" item was ticked 2026-10-03.
 - DLCI 0x08's private Group/Code/Length envelope's *purpose/identity* (§2a) — decodability is now
   a 🟢 FACT, but whether it's `libmaestro`'s own handshake or an unrelated companion-device
   negotiation remains 🔴 open.

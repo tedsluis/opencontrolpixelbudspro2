@@ -45,10 +45,10 @@ for t in 0 40 41 42 43 44 51 52 53 54 55 56 57 58 73; do
 done
 ```
 
-| Video `t` | On-screen clock | Observation |
-|---|---|---|
-| 0 | 15:02:31 | Recording start, Bluetooth-off settings sheet (matches notes) |
-| 41 | 15:03:12 | Preset picker open, finger over the list; visible options: Default, **Hea[vy bass]**, **Ligh[t bass]**, Balanced, Vocal boost, Clarity |
+| Video `t` | On-screen clock | Observation | Check against the notes |
+|---|---|---|---|
+| 0 | 15:02:31 | Recording start, Bluetooth-off settings sheet (matches notes) | — |
+| 41 | 15:03:12 | Preset picker open, finger over the list; visible options: Default, **Hea[vy bass]**, **Ligh[t bass]**, Balanced, Vocal boost, Clarity | — |
 | 42 | 15:03:13 | Preset now applied — dropdown reads **`Heavy bass`**, Bass/Low-bass sliders shifted right of center | Matches `EQP-002`'s claimed 15:03:13 exactly |
 | 51 | 15:03:22 | Finger on/near the Bass slider, handle still at its post-preset position | |
 | 52 | 15:03:23 | Bass slider handle has moved **left** (reduced) — drag already registered on-screen | |

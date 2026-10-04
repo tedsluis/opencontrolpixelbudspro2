@@ -43,7 +43,7 @@ touch nothing else. The reconnect itself is the only in-session action.
 |      Group(s)    | AH (`OBS-007` — DLCI 0x02 connect-burst content vs. non-default settings; incidental `PAIR-003`) |
 |       Date       |                     2026-09-06                      |
 | Firmware version | 🟢 **FACT** `release_5.203` (Confirmed on screen at 17:11:32) |
-|   Test device    | Pixel 7a, Android 14. **Official Pixel Buds Companion App, Google Play Services enabled** |
+|   Test device    | Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`). **Official Pixel Buds Companion App, Google Play Services enabled** |
 | Video file       | `CAP-041-recording.mp4` — `17:10:39`–`17:17:48` local time |
 | Log file         | `CAP-041-btsnoop_hci.log` |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
@@ -52,7 +52,7 @@ touch nothing else. The reconnect itself is the only in-session action.
 ```
 $ capinfos CAP-041-btsnoop_hci.log
 Number of packets:   4,003
-Earliest packet time: 2026-09-06 06:11:56.963543 (local 17:11:56.963543 +0200)
+Earliest packet time: 2026-09-06 17:11:56.963543 (+0200; corrected 2026-10-03 — the line read "06:11:56")
 Latest packet time:   2026-09-06 17:19:38.250671
 Capture duration:    461.287128 seconds
 
@@ -95,31 +95,31 @@ Untruncated, raw-path extraction. Video (`ffprobe`): 421.23s, wall-clock overlay
 
 | Time (local) | Action / Event | Initiator | Test-ID | Evidence in `CAP-041-btsnoop_hci.log` |
 |---|---|---|---|---|
-| `17:10:39` | Start video recording. Buds connected. L: 100%, Case: 79%, R: 100% | — | — |
-| `17:10:48` | Settings change: 'Use touch controls' toggled OFF | User (App) | — |
-| `17:10:59` | Settings change: Equalizer changed (Bass high, Treble low) | User (App) | — |
-| `17:11:04` | Settings change: 'Mono audio' toggled ON | User (App) | — |
-| `17:11:13` | **Window 1 start** — Bluetooth toggled OFF via Quick Settings | User (OS) | `OBS-007` |
-| `17:11:20` | Bluetooth toggled ON | User (OS) | `OBS-007` |
-| `17:11:25` | Connection established (Window 1 burst) | App/OS | `OBS-007` |
-| `17:11:32` | Firmware update screen checked (`release_5.203` confirmed) | User (App) | — |
-| `17:11:42` | Settings change: Left touch control customization -> Off | User (App) | — |
-| `17:11:48` | Settings change: Right touch control customization -> Off | User (App) | — |
-| `17:11:54` | Settings change: Equalizer changed (Treble high, Bass low) | User (App) | — |
-| `17:12:04` | **Window 2 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` |
-| `17:12:15` | Bluetooth toggled ON | User (OS) | `OBS-007` |
-| `17:12:20` | Connection established (Window 2 burst) | App/OS | `OBS-007` |
-| `17:12:43` | Settings change: Usage & diagnostics toggled OFF | User (App) | — |
-| `17:13:35` | Settings change: Left touch control -> Digital assistant | User (App) | — |
-| `17:13:52` | Settings change: Right touch control -> Adaptive | User (App) | — |
-| `17:14:15` | Settings change: Equalizer changed (Bass mid, Treble high) | User (App) | — |
-| `17:15:16` | **Window 3 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` |
-| `17:15:20` | Bluetooth toggled ON | User (OS) | `OBS-007` |
-| `17:15:25` | Connection established (Window 3 burst) | App/OS | `OBS-007` |
-| `17:16:55` | **Window 4 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` |
-| `17:17:00` | Bluetooth toggled ON | User (OS) | `OBS-007` |
-| `17:17:05` | Connection established (Window 4 burst) | App/OS | `OBS-007` |
-| `17:17:48` | End video recording | — | — |
+| `17:10:39` | Start video recording. Buds connected. L: 100%, Case: 79%, R: 100% | — | — | — |
+| `17:10:48` | Settings change: 'Use touch controls' toggled OFF | User (App) | — | — |
+| `17:10:59` | Settings change: Equalizer changed (Bass high, Treble low) | User (App) | — | — |
+| `17:11:04` | Settings change: 'Mono audio' toggled ON | User (App) | — | — |
+| `17:11:13` | **Window 1 start** — Bluetooth toggled OFF via Quick Settings | User (OS) | `OBS-007` | — |
+| `17:11:20` | Bluetooth toggled ON | User (OS) | `OBS-007` | — |
+| `17:11:25` | Connection established (Window 1 burst) | App/OS | `OBS-007` | — |
+| `17:11:32` | Firmware update screen checked (`release_5.203` confirmed) | User (App) | — | — |
+| `17:11:42` | Settings change: Left touch control customization -> Off | User (App) | — | — |
+| `17:11:48` | Settings change: Right touch control customization -> Off | User (App) | — | — |
+| `17:11:54` | Settings change: Equalizer changed (Treble high, Bass low) | User (App) | — | — |
+| `17:12:04` | **Window 2 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` | — |
+| `17:12:15` | Bluetooth toggled ON | User (OS) | `OBS-007` | — |
+| `17:12:20` | Connection established (Window 2 burst) | App/OS | `OBS-007` | — |
+| `17:12:43` | Settings change: Usage & diagnostics toggled OFF | User (App) | — | — |
+| `17:13:35` | Settings change: Left touch control -> Digital assistant | User (App) | — | — |
+| `17:13:52` | Settings change: Right touch control -> Adaptive | User (App) | — | — |
+| `17:14:15` | Settings change: Equalizer changed (Bass mid, Treble high) | User (App) | — | — |
+| `17:15:16` | **Window 3 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` | — |
+| `17:15:20` | Bluetooth toggled ON | User (OS) | `OBS-007` | — |
+| `17:15:25` | Connection established (Window 3 burst) | App/OS | `OBS-007` | — |
+| `17:16:55` | **Window 4 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` | — |
+| `17:17:00` | Bluetooth toggled ON | User (OS) | `OBS-007` | — |
+| `17:17:05` | Connection established (Window 4 burst) | App/OS | `OBS-007` | — |
+| `17:17:48` | End video recording | — | — | — |
 
 **🟢 FACT — video re-pass correction (`ffmpeg` frame extraction at t=0,46,66,72,80,95,101,163,224,277,286,300s):**
 the claimed per-window BT-toggle/connect timestamps above are placeholders and do **not** match
@@ -230,6 +230,11 @@ into one RFCOMM I-frame — `DESKRESEARCH_FINDINGS.md`'s 2026-08-28 entry, `CAP-
 - [ ] Remember to set EQ/touch-controls back to their normal values after this session, if desired
       — this is a deliberate one-off non-default state for this capture only.
 - [ ] Rename this capture's folder to the actual session date/start-time/end-time.
+
+## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
+
+- `PAIR-003` (incidental) is named in the metadata and once below the timeline; **no timeline row carries it**. The three reconnects are analysed in `CAP-041-FINDINGS.md` §3.
+- The timeline above is still the four-window placeholder this file itself declares wrong; the measured sequence is in `CAP-041-FINDINGS.md`.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-041-2026-09-06_17-10-39_17-17-48-Group_AH/CAP-041-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-041-2026-09-06_17-10-39_17-17-48-Group_AH/CAP-041-EVENT-NOTES

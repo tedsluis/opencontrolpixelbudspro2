@@ -1,5 +1,7 @@
 # CAP-049: Unexplained disconnect/reconnect cycling, repeat of `CAP-039` (Group AF, `OBS-006`)
 
+> **Status as of 2026-10-03** (`ai-sessions/0069`, `A68-CAP-16`/`-23` — read this first; the body below is the analysis as written): where this file reads the ANC Notify's Settable byte as "dock state" (`DECISIONS.md` ADR-024), the current reading is ADR-049 — `0x00` ⇒ the Buds refuse a `Set` (🟢), and 🟡 `0x00` ⇔ no bud worn.
+
 Standardized, evidence-based extraction from `CAP-049-btsnoop_hci-combined.log` (see §0) +
 `CAP-049-recording.mp4`, staged here per `PROJECT_RULES.md` §2. Every claim below carries a status
 per `PROJECT_RULES.md` §1:

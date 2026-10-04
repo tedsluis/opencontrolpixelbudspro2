@@ -76,7 +76,7 @@ frame timestamps without offset correction.
 | 06:16:45–47 | Mid → near-zero, saved | User (App) | `EQS` (Mid) | Frame 3373 (06:16:45.35): band 3 = 0.3, saved at 3382 (06:16:46.56) |
 | 06:16:56–58 | Bass → near-zero, saved | User (App) | `EQS` (Bass) | Frame 3403 (06:16:56.48): band 2 = 0.0, saved at 3428 (06:16:57.79) |
 | 06:17:07–09 | Low bass → near-zero, saved. All 5 sliders now visually centered (near-zero); `Save` button still active | User (App) | `EQS` (Low bass) | Frames 3451→3458 (06:17:07.60–07.75): band 1 steps `0.2 → 0.1`, saved at 3468 (06:17:09.03) |
-| 06:17:39 | Video ending; sliders unchanged since 06:17:09, `Save` button now greyed out again | App (Auto) | — | No further DLCI 0x02 `Sent` traffic after frame 3468 |
+| 06:17:39 | Video ending; sliders unchanged since 06:17:09, `Save` button now greyed out again | App (Auto) | — | Two more DLCI 0x02 writes follow frame 3468, neither an EQ write: `WriteSetting 4:{15:0}` at **06:17:19.705** (frame 3487) and `4:{15:1}` at **06:17:29.417** (frame 3505) — field 15 = Volume EQ (`PROTOCOL.md` §4.5.6), off then on. Corrected 2026-10-03 (`ai-sessions/0069`, `A68-CAP-16`; `python3 scripts/pwrpc_decode.py CAP-015-btsnoop_hci.log`): this cell said "No further DLCI 0x02 Sent traffic after frame 3468". The matching action is not in this timeline (🔴 the film at 06:17:19 and 06:17:29 was not re-viewed) |
 | 06:17:40 | End video recording | — | — | — |
 
 ## Notes on this session vs. the Group T test-plan minimum

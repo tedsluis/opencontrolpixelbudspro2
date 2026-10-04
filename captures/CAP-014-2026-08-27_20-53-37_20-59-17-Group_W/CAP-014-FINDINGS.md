@@ -255,18 +255,18 @@ tshark -r CAP-014-btsnoop_hci.log -Y "frame.number == <N>" \
 recur** (`0x0c05`, `0x0c0d`, both `0100` CCCD-enable writes) — same shape as `CAP-002`/`CAP-003`,
 not shown as a separate row above for brevity.
 
-**One byte-level anomaly, flagged not explained (🔴 OPEN QUESTION, zero-creativity — no
-interpretation offered):** frame 3353, a `Read Response` on handle `0x0034` (never declared via
-any discovery response on this or any other connection in this file), returns
-`656c20427564732050726f20322076616e20546564` = ASCII `"el Buds Pro 2 van Ted"` — a 21-byte
-substring of the device name `"Pixel Buds Pro 2 van Ted"` missing its first 3 characters (`"Pix"`),
-returned via a plain `Read Request` (opcode `0x0a`), not a `Read Blob Request` (which would
-normally explain an offset read). Wireshark's own dissector labels this handle's declaration
-`abbafd00…`/`abbafd01…`/`0x2803`(!) with an `[Expert Info (Warning/Protocol): Bad Data]` flag —
-this is the **same cross-connection name-cache pollution** identified in §4a (those UUIDs belong to
-the *other* device's connection, not the Buds'), so that label is disregarded per the zero-creativity
-rule. The raw bytes above are reported as-is; no theory for the missing 3 bytes or handle `0x0034`'s
-real identity is offered.
+**Frame 3353 is a complete Device Name read, not a truncated one (🟢 FACT; corrected 2026-10-03,
+`ai-sessions/0069`, `A68-CAP-16`).** `tshark -r CAP-014-btsnoop_hci.log -Y "frame.number==3353" -x`
+shows the ATT payload `0b 50 69 78 65 6c 20 42 75 64 73 20 50 72 6f 20 32 20 …` (L2CAP length
+`0x0019` = 25: opcode `0x0b` + a 24-byte value) — the full GAP Device Name, in answer to the
+`Read Request` (opcode `0x0a`) on handle `0x0034` in frame 3351. The earlier reading "missing its
+first 3 characters" came from the `-T fields -e btatt.value` output: Wireshark's dissector, carrying
+a handle→UUID mapping from the *other* connection in this file (§4a), consumed the first three value
+bytes as fields of a characteristic declaration (`btatt.handle` prints `0x0034,0x7869` — `69 78` are
+the second and third name bytes) and printed only the remaining 21. The bytes on the wire are whole;
+the same value is in the nRF Connect log of this session (`CAP-014-nrf-connection.log`, the
+`00002a00-…` read at 20:56:12.678). Handle `0x0034` = GAP Device Name on the Buds' own attribute
+table, as `CAP-034-FINDINGS.md` §4 shows for the same handle.
 
 ## 5. Classic bonding mechanism this session: Cross-Transport Key Derivation, not classic SSP (🟢 FACT — 2nd confirming instance)
 

@@ -139,17 +139,14 @@ plain text carried directly in the RFCOMM I-frame, not a proprietary binary enve
 other HFP-classified frame in this section.
 
 **This closes `PROTOCOL.md` §6's "Behavior" open item** ("why does HFP AT-command
-traffic never recur after `CAP-001`'s own handshake") **with a second, independent
-data point, not a contradiction of `CAP-002`'s negative result:** the handshake *does*
+traffic never recur after `CAP-001`'s own handshake") **:** the handshake *does*
 reoccur here, triggered by this session's own fresh classic-link connection (the
 Bluetooth radio had just been switched on, §1) — consistent with SLC setup being tied
 to (re-)establishing the RFCOMM/ACL connection itself, not to a background timer.
-`CAP-002-FINDINGS.md` §5's ~8-hour log never saw a second handshake because, on the
-evidence available, its ACL connection was never torn down and freshly re-established
-within that log's window — this capture did not test that specific boundary case
-(no deliberate reconnect-without-radio-toggle was performed), so it remains 🟡
-HYPOTHESIS, not 🟢 FACT, that *any* reconnection (not just a radio power-cycle)
-retriggers the full handshake.
+`CAP-002`'s "negative result" was a filter artefact: its log holds three further handshakes,
+including the one of its own fresh pairing (`CAP-002-FINDINGS.md` §5, rewritten 2026-10-03). The
+handshake has been seen on every classic connect examined (`CAP-001`, `CAP-002`, this capture,
+`CAP-012`'s reconnect without a radio toggle).
 
 **No second full handshake precedes call 2** (§4) — only a codec renegotiation
 (`AT+BCS`, §5) and the same RING/CIEV sequence repeat. The SLC, once established,

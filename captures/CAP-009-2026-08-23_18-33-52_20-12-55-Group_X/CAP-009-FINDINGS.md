@@ -91,12 +91,14 @@ $ tshark -r CAP-009-btsnoop_hci.log -Y "frame.number==885" -x
 obvious way.** This is consistent with `CAP-001-FINDINGS.md` §3's open question that `battchg` may
 be a stale/init-time-only value rather than a live reading — this capture adds direct evidence for
 that: it is queried once, at SLC setup, and is never refreshed again for the remaining ~86 minutes
-the HFP AT channel stays open (18:34:01–19:59:33), regardless of the ~13-percentage-point real
-change that occurs on the peer's Right earbud in that window (§3).
+the HFP AT channel stays open (18:34:01–19:59:33), regardless of the 5-percentage-point real
+change (93 → 88; corrected 2026-10-03 — "~13" was a slip) that occurs on the peer's Right earbud in that window (§3).
 
 ## 2. `AT+BIEV=2,...`: periodic but irregular, not a fixed cadence (🟢 FACT for this capture)
 
-69 `AT+BIEV=2,...` pushes occur across the session, at 5 distinct values (monotonically
+68 `AT+BIEV=2,...` pushes occur across the session (corrected 2026-10-03, `ai-sessions/0069`,
+`A68-CAP-16`: the extraction has 69 rows, one of which is `AT+BIEV=1,1` — indicator 1, not the
+battery indicator; per value: 93 ×12, 92 ×6, 90 ×5, 89 ×19, 88 ×26), at 5 distinct values (monotonically
 decreasing): `93 → 92 → 90 → 89 → 88`. Extraction:
 
 ```
@@ -202,8 +204,13 @@ reason `0x13`), then:
   end at frame 30234 / 20:15:00.73):
 
 ```
-$ tshark -r CAP-009-btsnoop_hci.log -Y 'frame.number>29074 and l2cap.psm==0x0003'
-(0 matches)
+$ tshark -r CAP-009-btsnoop_hci.log -Y 'frame.number>29074 and btl2cap.psm==0x0003' | wc -l
+0
+# Corrected 2026-10-03 (ai-sessions/0069, A68-CAP-16): the filter quoted here before, `l2cap.psm==0x0003`,
+# is not a valid field (tshark exits 4: "l2cap.psm" is not a valid protocol or protocol field) — its
+# "(0 matches)" was an error, not a result. The valid field is `btl2cap.psm`. Positive control, same log:
+# `tshark -r CAP-009-btsnoop_hci.log -Y 'btl2cap.psm==0x0003' | wc -l` is non-zero, with the first match
+# at frame 791 and the last at frame 28761 — so the conclusion (no RFCOMM after frame 29074) holds.
 $ tshark -r CAP-009-btsnoop_hci.log -Y 'frame.number>29074' -T fields -e _ws.col.Protocol | sort -u
 ATT
 AVDTP
@@ -270,7 +277,7 @@ recorded in `PROTOCOL.md` §4.3 Option A at this same HYPOTHESIS level (`AGENTS.
 
 | Question | Answer |
 | --- | --- |
-| Does `AT+CIND?`'s `battchg` track a real battery-level change over time? | 🟢 **No** — it is queried exactly once, at SLC setup, and never refreshes again, even across ~13 percentage points of real, confirmed change on the peer's Right earbud during the same HFP session. |
+| Does `AT+CIND?`'s `battchg` track a real battery-level change over time? | 🟢 **No** — it is queried exactly once, at SLC setup, and never refreshes again, even across 5 percentage points (93 → 88; corrected 2026-10-03, was "~13") of real, confirmed change on the peer's Right earbud during the same HFP session. |
 | Does `AT+BIEV=2` track a real battery-level change over time? | 🟢 **Yes, for the Right earbud specifically**, in this session — 5 distinct values over 86 minutes, each matching R's on-screen value, each landing at or before the corresponding on-screen check. |
 | Is either indicator a case- or Left-earbud-aware aggregate? | 🟢 **No** — neither indicator's value ever matches Left or Case at any point in this 101-minute session (§3). |
 | Is `AT+BIEV`'s push cadence a fixed ~6–7s regardless of value change (as `AGENTS.md` §5 currently states, based on `CAP-001`)? | 🟡 **Not over this session's idle stretches** — tight (~6–7s-class) spacing is seen right after SLC setup, consistent with `CAP-001`, but gaps widen to multiple minutes (max ≈14.6 min) later in the same session. Flagged for maintainer review, not silently corrected here (`AGENTS.md` §6). |

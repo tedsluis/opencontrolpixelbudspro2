@@ -85,7 +85,7 @@ a second, comparable SDP browse**, for a specific, wire-confirmed reason.
 ## 3. The SDP browse itself (🟢 FACT for what was observed)
 
 ```
-$ tshark -r CAP-044-btsnoop_hci.log -Y "bluetooth.addr == 04:00:6e:cf:6e:07 and btsdp" \
+$ tshark -r CAP-044-btsnoop_hci.log -Y "bthci_acl.chandle==0x0006 and btsdp" \     # 38 frames; handle 0x0006 = the Buds (Connection Complete 3982). Corrected 2026-10-03: `bluetooth.addr == <Buds>` matches nothing here.
     -T fields -e frame.number -e frame.time -e _ws.col.Info
 ```
 
@@ -173,8 +173,8 @@ $ tshark -r CAP-044-btsnoop_hci.log -Y "btrfcomm.frame_type==0x2f || btrfcomm.fr
 
 The classic ACL connection that forms at **13:08:05.64** (the one immediately preceding the
 successful bonding+SDP browse) is the **last** Connection-Complete event in the entire 850.3s log —
-there is no reconnect afterward, all the way through the log's end (13:13:18.78, 4m40s past video
-end). **Every RFCOMM channel that is open at the end of the 13:08:09–13:08:18 SDP/setup burst (DLCI
+there is no reconnect afterward, all the way through the log's end (13:13:18.78, 2m12s past video
+end — 13:11:07; corrected 2026-10-03, was "4m40s"). **Every RFCOMM channel that is open at the end of the 13:08:09–13:08:18 SDP/setup burst (DLCI
 `0x00`/`0x02`/`0x04`/`0x08`/`0x0a`/`0x0c`) stays open for the rest of the log** — the only `DISC` in the whole log is the phone's close of DLCI
 `0x04` at 13:08:12.739 (frame 4795) inside that burst, re-opened at 13:08:18.133 (4898); none after it. Force-stopping the companion app's UI process (~13:10:16–21, §1)
 does **not** tear down these RFCOMM channels or the underlying classic ACL link — consistent with
