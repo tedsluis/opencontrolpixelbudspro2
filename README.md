@@ -7,7 +7,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **Latest release: [1.0.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.0)** (2026-10-03). You can also
+> **Latest release: [1.0.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.1)** (2026-10-04). You can also
 > [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
@@ -44,24 +44,23 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 ## Screenshots
 
 <p>
-  <img src="images/opencontrol-for-buds-IMG_20261001_212401.jpg" width="200" alt="Connection tab: connected, battery Left 100 %, Case 62 %, Right 100 %">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212954.jpg" width="200" alt="ANC tab: Noise cancellation, Off, Adaptive, Transparency">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212903.jpg" width="200" alt="Sound tab: equalizer with five bands and presets">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212714.jpg" width="200" alt="Controls tab: touch controls and press and hold">
+  <img src="images/opencontrol-for-buds-20261004-081001.jpg" width="200" alt="Connection tab: connected, battery Left 100 %, Case 75 %, Right 100 %">
+  <img src="images/opencontrol-for-buds-20261004-081012.jpg" width="200" alt="ANC tab: Noise cancellation, Off, Adaptive, Transparency">
+  <img src="images/opencontrol-for-buds-20261004-081019.jpg" width="200" alt="Sound tab: equalizer with five bands">
+  <img src="images/opencontrol-for-buds-20261004-081050.jpg" width="200" alt="Sound tab: presets, balance, mono audio, conversation detection">
 </p>
 <p>
-  <img src="images/opencontrol-for-buds-IMG_20261001_212457.jpg" width="200" alt="Find tab: Ring Left, Ring Right, Stop">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212622.jpg" width="200" alt="Controls tab: in-ear detection switch">
-  <img src="images/opencontrol-for-buds-IMG_20261001_212805.jpg" width="200" alt="Sound tab: balance, mono audio, conversation detection">
-  <img src="images/opencontrol-for-buds-IMG_20261001_214301.jpg" width="200" alt="Settings in dark mode: Settings, Debug and Info tabs">
+  <img src="images/opencontrol-for-buds-20261004-081113.jpg" width="200" alt="Controls tab: touch controls, press and hold, modes for press and hold">
+  <img src="images/opencontrol-for-buds-20261004-081125.jpg" width="200" alt="Controls tab: in-ear detection switch">
+  <img src="images/opencontrol-for-buds-20261004-081138.jpg" width="200" alt="Find tab: Ring Left, Ring Right, Stop">
+  <img src="images/opencontrol-for-buds-20261004-081145.jpg" width="200" alt="Settings: dark mode and Use different Buds">
 </p>
 
-**Screen recording** (60 s; the preview shows the first 12 s — click it for the full MP4):
+**Screen recording** (90 s; the preview shows the first 12 s — click it for the full MP4):
 
-[<img src="images/opencontrol-for-buds-demo-preview.gif" width="240" alt="Screen recording preview: the Connection and ANC tabs">](images/opencontrol-for-buds-demo.mp4)
+[<img src="images/opencontrol-for-buds-demo-preview.gif" width="240" alt="Screen recording preview: the Connection, ANC and Sound tabs">](images/opencontrol-for-buds-demo.mp4)
 
-*The screenshots and the recording were made on 2026-10-01 with a development build. Since then the balance slider has lost its `‹`/`›` step buttons
-(`ai-sessions/0066`); everything else looks the same.* For comparison: the official app's screens are in
+*The screenshots and the recording were made on 2026-10-04 with the 1.0.1 release build.* For comparison: the official app's screens are in
 [`SCREENSHOTS_PIXEL_BUDS_APP.md`](./SCREENSHOTS_PIXEL_BUDS_APP.md).
 
 ## Privacy
@@ -92,20 +91,19 @@ recovery from every failure (details: [`WORKSTATION_PREPARATIONS.md`](./WORKSTAT
 
 ## Status
 
-**1.0.0 is released** (2026-10-03, see above): the release APK passed its hardware run `CAP-067` in a GrapheneOS user
-without Google Play services (`PROJECT.md` Definition of done ticked). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds firmware `release_5.203`.
+**1.0.1 is released** (2026-10-04, see above): a hotfix for 1.0.0 whose release APK passed its hardware run `CAP-068` in a GrapheneOS user without Google
+Play services — noise control from the app and the Quick Settings tile, the equalizer, Bluetooth off/on, "Use different Buds" and the connect error, all on film
+and in the Bluetooth log (`PROJECT.md` Definition of done ticked). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds firmware `release_5.203`.
 Per feature, what is hardware-verified and what is only unit-tested is in `ARCHITECTURE.md` §5a; the history of every change is in
 [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) — a suspected
 security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
 
-**Known issues in 1.0.0** (also in [`CHANGELOG.md`](./CHANGELOG.md)) — all three are fixed in **1.0.1**, which is prepared and waits for its hardware
-run (`CAP-068`) before it is published:
+**Known issue in 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
-- If the Buds cannot be reached (for example the case is closed), the connect error wrongly suggests that another app such as Google Play services is
-  using them. Open the case and tap Retry.
-- After Disconnect, or after the connection is lost, the battery values and the noise-control mode of the last connection can stay on screen as if
-  they were current.
-- With more than one pair of Pixel Buds paired to the phone, the app picks one without asking.
+- After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop.
+
+The three known issues of 1.0.0 (the connect error that blamed another app, values of the last connection shown as current, a silent choice between
+several paired Buds) are fixed in 1.0.1.
 
 ---
 
@@ -131,11 +129,11 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-03)
+## Current state (2026-10-04)
 
-- **Captures:** 69 registered sessions (`CAP-001`–`CAP-069`): 60 analyzed, 7 planned (among them `CAP-068`, the 1.0.1 release build, and
-  `CAP-069`, the official app), 2 withdrawn (`CAP-052`, `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-067`
-  are captures of this project's own app (`CAP-067`: the 1.0.0 release APK without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
+- **Captures:** 69 registered sessions (`CAP-001`–`CAP-069`): 61 analyzed, 6 planned (among them `CAP-069`, the official app), 2 withdrawn (`CAP-052`,
+  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` are captures of this project's own app (`CAP-067`: the 1.0.0
+  release APK, `CAP-068`: the 1.0.1 release APK, both without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
