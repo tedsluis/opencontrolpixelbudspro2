@@ -12,8 +12,6 @@ An independent, open-source Android app to control Google Pixel Buds Pro 2 — f
 - SHA-256 of the APK: `{APK_SHA256}`
 - SHA-256 of the signing certificate: `{CERT_SHA256}` (`apksigner verify --print-certs {APK}`)
 
-**In this release (1.0.1):** fixes for 1.0.0 — values from the last connection are no longer shown as current, a malformed frame can no longer stop the app, the connect error no longer blames another app when the Buds are out of reach, no silent choice between several paired Buds — plus "Use different Buds" and an equalizer preset "Flat".
-
 **Changes:** see [CHANGELOG.md](https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/CHANGELOG.md). Third-party licences: `THIRD_PARTY_NOTICES.txt` below.
 
 **Risk:** this app sends reverse-engineered commands to your earbuds; use it at your own risk (see the README's "Safety and Safe Mode").

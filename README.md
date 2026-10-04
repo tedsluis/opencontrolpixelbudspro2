@@ -195,9 +195,9 @@ environment, and without them the build stops with a clear message (it never sig
 the full procedure, including creating and backing up the key, is in [`RELEASING.md`](./RELEASING.md). A debug build and a release build are signed with
 different keys, so one cannot be installed over the other: uninstall first (this deletes the app's settings).
 
-**Before testing against real hardware**, read `APP_TESTPLAN.md` and the newest
-planned app capture (`CAP-068-EVENT-NOTES.md`) — they say, step by step, what is to be checked on hardware; the newest analysed run
-(`CAP-067-FINDINGS.md`, the 1.0.0 release APK) and `ARCHITECTURE.md` §5a say what was seen working and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
+**Before testing against real hardware**, read `APP_TESTPLAN.md` — it says, step by step, what is to be checked on hardware (`CAP-068-EVENT-NOTES.md`
+shows how the last run followed it); the newest analysed run
+(`CAP-068-FINDINGS.md`, the 1.0.1 release APK) and `ARCHITECTURE.md` §5a say what was seen working and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
 earbuds" — it means the wire bytes match known-good captures, nothing more.
 
 ## Approach

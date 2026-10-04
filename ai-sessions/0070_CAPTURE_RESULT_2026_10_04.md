@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-04
 **Title:** Fully analyse `CAP-068` (two films, four HCI snoop logs, five app debug exports, one app logcat, no system log), recorded with the release-signed 1.0.1 APK in a GrapheneOS secondary user without Google Play; record the real events and the findings; give the release verdict for 1.0.1 and the capture evidence for Definition-of-done criterion 2
-**Status:** complete — release of `e1fc886` as 1.0.1 approved in chat; Definition of done 2 now with frames; committed and pushed; tag and GitHub release are the maintainer's steps
+**Status:** complete — 1.0.1 (`e1fc886`) released 2026-10-04 and installed by the maintainer from the release page; Definition of done 2 with frames
 
 ---
 
@@ -116,6 +116,14 @@ untouched (`sha256sum -c` OK). Left for after publishing: `scripts/release_notes
 
 `python3 scripts/ensure_footers.py` → footers up to date. `PYTHONDONTWRITEBYTECODE=1 python3 scripts/lint_docs.py` → exit 0 after one path in this session's
 prompt was updated to the renamed folder (marked there; CI runs the same lint). The lint also found a cell-count error in the new Capture Index row, fixed.
+
+## After publishing (the maintainer's report in chat 2026-10-04)
+
+PR #1 merged with a merge commit (`4631484`); signed tag `v1.0.1` on `e1fc886` (on `origin/main`); GitHub release published 2026-10-04 13:10 UTC with the APK,
+its `.sha256` and `THIRD_PARTY_NOTICES.txt`. D4: the maintainer installed the APK from the release page with Obtainium on the Pixel 9a (GrapheneOS), the
+SHA-256 matched and the app works. E1–E4 in a pull request of their own (branch `release/1.0.1-after-publish`): `CHANGELOG.md` (link to the release),
+`README.md` (test guidance points to `CAP-068`), `RELEASING.md` §13 row (publication and D4), `scripts/release_notes.template` (the 1.0.1 summary line removed),
+`TODO.md` §1 (publication items removed), this RESULT and `ai-sessions/0069`'s Status (§4a).
 
 ## Deferred documentation
 
