@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-04
 **Title:** Fully analyse `CAP-068` (two films, four HCI snoop logs, five app debug exports, one app logcat, no system log), recorded with the release-signed 1.0.1 APK in a GrapheneOS secondary user without Google Play; record the real events and the findings; give the release verdict for 1.0.1 and the capture evidence for Definition-of-done criterion 2
-**Status:** complete — release of `e1fc886` as 1.0.1 approved in chat; Definition of done 2 now with frames; not committed yet (awaiting the maintainer's word)
+**Status:** complete — release of `e1fc886` as 1.0.1 approved in chat; Definition of done 2 now with frames; committed and pushed; tag and GitHub release are the maintainer's steps
 
 ---
 
@@ -128,7 +128,14 @@ prompt was updated to the renamed folder (marked there; CI runs the same lint). 
 
 ## Commits
 
-Not committed — the prompt asks for the maintainer's word first (task 20).
+Committed and pushed to `maintenance/0069` on the maintainer's word (chat 2026-10-04):
+
+- `badedb0` docs(captures): add CAP-068, the 1.0.1 release run, with its event notes and findings
+- `35fabd5` docs: record CAP-068 and prepare the 1.0.1 release documents
+- `8e0c0cf` docs(readme): 1.0.1 release status and new screenshots and recording
+- this commit: docs(sessions): record the 0070 commits in its RESULT
+
+`git diff e1fc886..HEAD -- android` is empty: the tested APK stays the build commit's.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0070_CAPTURE_RESULT_2026_10_04.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0070_CAPTURE_RESULT_2026_10_04
