@@ -149,7 +149,9 @@ object PwRpc {
                 }
                 2 -> {
                     val (len, next) = readVarint(bytes, i) ?: return bad()
-                    if (len < 0 || next + len > bytes.size) return bad()
+                    // Compared without adding: `next + len` overflows a Long for a declared length near Long.MAX_VALUE, passed this check and
+                    // then threw in `copyOfRange` or moved `i` backwards — an endless loop (`ai-sessions/0068` A68-APP-01).
+                    if (len < 0 || len > bytes.size - next) return bad()
                     if (field == 5) payload = bytes.copyOfRange(next, next + len.toInt())
                     i = next + len.toInt()
                 }

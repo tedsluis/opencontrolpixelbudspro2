@@ -118,7 +118,9 @@ internal object Proto {
                 }
                 2 -> {
                     val (len, next) = Varint.decode(data, i) ?: return null
-                    if (len < 0 || next + len > data.size) return null
+                    // `len > size - next`, not `next + len > size`: the sum overflows for a declared length near Int.MAX_VALUE and would
+                    // pass the check (`ai-sessions/0068` A68-APP-01). `next <= data.size` holds: the varint was read inside the array.
+                    if (len < 0 || len > data.size - next) return null
                     out += Field(number, null, data.copyOfRange(next, next + len))
                     i = next + len
                 }
