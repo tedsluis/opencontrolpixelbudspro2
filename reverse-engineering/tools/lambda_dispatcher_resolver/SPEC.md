@@ -347,7 +347,8 @@ is "a reproduction of Google's copyrighted code, banned from this project's code
 research output — this holds even though it never leaves the maintainer's own machine, since
 'codebase' here means this git history"). A committed excerpt of `aie.smali`/`ftw.java`/etc. is
 exactly what that rule bans, regardless of how small the excerpt is or that it only exists to
-support a test. **Fixed**: `tests/test_resolver.py` reads directly from the maintainer's own
+support a test *(since 2026-10-03 rule 20 (a) allows a short quoted excerpt in a research document; a decompiled file or
+method committed as a test fixture stays banned)*. **Fixed**: `tests/test_resolver.py` reads directly from the maintainer's own
 locally-decompiled `reverse-engineering/apk/v1.0.955078536-10253511/` tree (already gitignored in
 full) and the entire suite is skipped — not failed — when that tree isn't present on the machine
 running it, exactly the same pattern every other script in this project that depends on a local

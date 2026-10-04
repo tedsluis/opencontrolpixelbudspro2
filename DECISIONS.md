@@ -209,6 +209,11 @@ motivated this).
   or display-duration statement at all, and `PROTOCOL.md` §4.3 Option A already downgraded the 8 s/20 s figures to an
   unlocated 🟡 HYPOTHESIS. The ~8–20 s time-box stays as **this project's own choice** (short enough to be clearly bounded,
   long enough to catch an advertisement), not as a spec citation. `AGENTS.md` §7 is corrected the same way.
+- **Update (2026-10-03, `ai-sessions/0069`, maintainer-approved in chat 2026-10-03, `AskUserQuestion` "Other texts", option *"Approve all six (Recommended)"* — `ai-sessions/0068` A68-PROT-06; bounds unchanged):**
+  the 2026-09-24 Update's "contains no trigger, cadence or display-duration statement at all" is narrowed. The live `batterynotification` page (raw text fetched
+  2026-10-03) does name one use case: *"One common use case for this is to use 0b0011 when the case has opened and 0b0100 when buds have been removed from the case
+  or it has been closed again."* It states no cadence and no display duration; the ~8–20 s time-box stays this project's own choice. No capture has tested "case
+  just opened, both buds inside, phone not connected" (`CAP-054`, Group AP, redesigned for it).
 
 ## ADR-007 — `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Groups are capture scenarios, not tests; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the test/behavior catalog
 
@@ -453,6 +458,9 @@ motivated this).
   2026-08-23 found the previously-cited "spec worked example" for the ACK itself was miscited
   (`PROTOCOL.md` §2.1's correction); this affects the ACK-byte interpretation only, not the
   Group/Code/Value command mapping this ADR records.
+- **Update (2026-10-03, `ai-sessions/0069`, pointer — maintainer-approved in chat 2026-10-03, "Ring"):** the "second ACK variant" is not a variant: `ff 01 00 03
+  04 01 00` is the Buds' ACK and `ff 01 00 02 04 01` the phone's ACK of the Buds' own `04 01 00 01 xx` message (`PROTOCOL.md` §4.4, 2026-10-03 Correction). The
+  command mapping above is unchanged.
 - **Decision**: the Ring command's channel/opcode/value-mapping determination is accepted as 🟢
   FACT for Left/Right specifically. `FrameEncoder`/`FrameDecoder` implementation for this command
   is unblocked, per `ARCHITECTURE.md` §5's per-command implementation gate — no further capture is
@@ -1170,6 +1178,11 @@ motivated this).
   match a real, reliably-observed behavior of the official app for ANC specifically, not merely a
   single-session anecdote. A `FrameEncoder`/`FrameDecoder` implementing this specific read (if
   pursued) can rely on the trigger condition described above.
+- **Update (2026-10-03, `ai-sessions/0069`, maintainer-approved in chat 2026-10-03, `AskUserQuestion` "Counts", option *"Approve all five (Recommended)"* — `ai-sessions/0068` A68-PROT-01; decision unchanged):** the count
+  is **19 occurrences in 11 capture files**, not 17 in 10: `CAP-006` ×3 (728, 2111, 3139), `CAP-010` ×2 (2140, 2854), `CAP-016` ×2 (1511 → 1521, 2997 → 3012),
+  `CAP-019`…`CAP-024` ×1 each (759, 810, 708, 682, 746, 664), `CAP-025` ×5 (675, 1795, 3366, 4114, 4600), `CAP-036` ×1 (1169); the answering `Notify` reads Settable
+  `e8` ×14 and `00` ×5. Command: `tshark -r <log> -Y 'btrfcomm.len>0 && btrfcomm.dlci==4 && data.data==08:11:00:00' -T fields -e frame.number`. Zero misses still
+  holds. The title is left as written.
 
 ## ADR-023 — Retroactive sign-off: Option C (HFP battery) confirmed independent of GMS/app, and confirmed on GrapheneOS
 
@@ -1363,6 +1376,8 @@ motivated this).
 - **Update (2026-09-30, `ai-sessions/0059`, maintainer-approved in chat 2026-09-30, `AskUserQuestion` "ADR-049", option *"New ADR-049 (Recommended)"*):**
   the Decision above ("`0x00` when both earbuds are seated in the case, a non-zero value otherwise") is **superseded by ADR-049** — its own Updates refute
   the "otherwise" half (`0x00` with both buds outside the case, `CAP-062`; six earlier counter-examples). What stays FACT and what is 🟡 is stated there.
+- **Update (2026-10-03, `ai-sessions/0069`, maintainer-approved in chat 2026-10-03, `AskUserQuestion` "Counts", pointer — `ai-sessions/0068` A68-CAP-12):** the 2026-09-28 Update's "22 `Notify` frames" is **29** (9 × `00`,
+  20 × `e8`; `tshark -r CAP-063-btsnoop_hci.log -Y 'btrfcomm.len>0 && data.data[0:4]==08:13:00:04'`); 0 counter-examples is unchanged.
 
 ## ADR-025 — Google Play Services (GMS) reverse-engineering is out of scope; DLCI 0x04/0x08 implementation proceeds clean-room, from wire evidence only
 
@@ -1641,6 +1656,12 @@ motivated this).
 - **Update (2026-09-30, `ai-sessions/0059`, citation correction — A58-DEC-03; decision unchanged):** "`CAP-014`/`CAP-015` (2026-08-27 …)" in the Context
   should read **`CAP-014` (2026-08-27)** — the second CTKD instance (`CAP-014-FINDINGS.md` §5, as `PROTOCOL.md` §5.1 cites it). `CAP-015` is the 2026-08-18
   Group T EQ capture and carries no pairing.
+- **Update (2026-10-03, `ai-sessions/0069`, maintainer-approved in chat 2026-10-03, `AskUserQuestion` "Other texts", option *"Approve all six (Recommended)"* — `ai-sessions/0068` A68-CAP-09):** the Context's list "classic SSP
+  in every session with no pre-existing LE link (`CAP-002`/`CAP-003`)" is wrong for `CAP-003`: it had an LE link before classic pairing (frame 1621 `LE Enhanced
+  Connection Complete`, 1689 `Create Connection`, 1750 `Simple Pairing Complete`) and still used SSP — as `PROTOCOL.md` §5.1 itself says of `CAP-003`. What stays 🟢
+  FACT: CTKD occurred in the sessions with an **SMP pairing on the LE link** (`CAP-004` frame 1856, `CAP-014` frame 2365 — `Pairing Request` with `Linkkey`
+  distribution; `CAP-003` has no SMP frame, `tshark -Y btsmp` → 0). 🟡 HYPOTHESIS: the SMP pairing, not the mere existence of an LE link, gates CTKD. The
+  Consequences are unchanged.
 
 ## ADR-031 — Battery Option B's `Group 0x03 Code 0x03` message confirmed as the Fast Pair "Battery updated" notification (while discharging)
 
@@ -1742,8 +1763,8 @@ motivated this).
 ## ADR-033 — Battery Option B: `Group 0x03 Code 0x03` decoder on DLCI 0x04 unblocked for implementation (percentage regime only)
 
 - **Date**: 2026-09-19
-- **Status**: Accepted (implementation unblock, scope below); the charging-flag reading is a separate,
-  explicitly **unaccepted proposal** — see "Proposal awaiting sign-off"
+- **Status**: Accepted; the charging flag accepted 2026-09-20 (Update) *(Status line corrected 2026-10-03, maintainer-approved in chat, `ai-sessions/0069` — it
+  still called the charging-flag reading an unaccepted proposal)*
 - **Note on process**: drafted by an AI agent; the unblock is the maintainer's explicit instruction in the
   chat session of 2026-09-19 ("een ADR vrijgeven voor de batterijdecoder op 0x04"), per `AGENTS.md` §6/
   `ARCHITECTURE.md` §5a's requirement that a command's implementation-unblock be stated in an ADR.
@@ -1858,7 +1879,9 @@ motivated this).
   CASE / LEFT_BT_CORE / LEFT_SENSOR_HUB / RIGHT_BT_CORE / RIGHT_SENSOR_HUB; `fut.java:178` builds the address `((a2 & 15) << 6) | ((a3 & 15) << 10)` as a
   one-terminated varint; with `goq` MAESTRO_A = 10, MAESTRO_B = 13, LEFT_BT_CORE = 3, RIGHT_BT_CORE = 4 this gives `00 3b` (19), `00 4b` (21), `80 3d` (24),
   `80 4d` (26) — the four observed request addresses, 4 of 4. Item 3's rule (send only on a tabulated channel) is **unchanged**; deriving the address in code
-  needs its own ADR after the `CAP-065` one-bud test (does the announced channel name the bud that hosts the session?). — DLCI 0x08 is claimed on demand for the Case battery: `Group 0x0e Code 0x01`, entry index 3; receive-only
+  needs its own ADR after the `CAP-065` one-bud test (does the announced channel name the bud that hosts the session?).
+
+## ADR-035 — DLCI 0x08 is claimed on demand for the Case battery: `Group 0x0e Code 0x01`, entry index 3; receive-only
 
 - **Date**: 2026-09-20
 - **Status**: Accepted (scope below); items 1–2 superseded by ADR-043 (2026-09-24)
@@ -2139,6 +2162,9 @@ motivated this).
   (Recommended)"*, with this text in the preview):** the re-subscription of the 2026-09-26 Update is hardware-verified — `CAP-063`, 8 of 8 answered by a
   `SERVER_STREAM` within 19–355 ms (3863→3870 … 8417→8426), including both buds docked after 93 s idle. It stays; `PROTOCOL.md` §4.3 Option F records the
   FACT.
+- **Update (2026-10-03, `ai-sessions/0069`, maintainer-approved in chat 2026-10-03, `AskUserQuestion` "Other texts", pointer — `ai-sessions/0068` A68-ARCH-05):** as built, the Refresh re-subscription of the 2026-09-26 Update
+  has **no wait and no retry** (`BudsRepositoryImpl.refreshBattery`: the request is sent and an answer, if any, arrives on the stream like any other packet); "No answer
+  within 1 s" named no timer. The app's timing constants are tabulated in `ARCHITECTURE.md` §3.2.
 
 ## ADR-044 — Re-open the MAESTRO session automatically while the app is visible
 
@@ -2283,6 +2309,9 @@ motivated this).
   reworded; `ARCHITECTURE.md` §2 (heading, module table, UI-layer note, dependency sentence) and §7 (`OpenControlUiState` instead of `BudsUiState`) and
   `README.md`'s approach line are aligned. UI mapping is tested as pure functions and with the Robolectric Compose tests of `:ui`.
 - **Reconsider when**: the UI mapping cannot be tested without a ViewModel, or a second screen/Activity needs the same state.
+- **Update (2026-10-03, `ai-sessions/0069`, maintainer-approved in chat 2026-10-03, `AskUserQuestion` "AGENTS.md", option *"Four edits, no shortening (Recommended)"* — `ai-sessions/0068` A68-GOV-04):** the rewording of
+  `AGENTS.md` §13 "Implementing Android/Kotlin" step 2 ("no ViewModel — `DECISIONS.md` ADR-048 …"), made in commit `203cc43` and flagged in `ai-sessions/0059`'s RESULT
+  without a recorded answer, is approved by the maintainer.
 
 ## ADR-049 — "Notify ANC state" Settable toggles: what is FACT and what is not (supersedes ADR-024's Decision)
 

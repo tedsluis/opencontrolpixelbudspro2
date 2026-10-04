@@ -471,15 +471,15 @@ bounce mid-session, no ACL reconnect), and 17:26:55.06 (`Settable=0x00`, near th
 session, again after a DLCI-0x04-only bounce). `CAP-010` (a fresh system-Settings forget-and-repair
 repeat) adds **2 more**, both `Settable=0x00` (11:43:46.98, 11:47:04.15).
 
-**Combined tally across this document's two entries + `CAP-036-FINDINGS.md` §3: 17 occurrences
-across 10 independent capture files (`CAP-006` ×3, `CAP-010` ×2, `CAP-016` ×1 [prior entry],
+**Combined tally across this document's two entries + `CAP-036-FINDINGS.md` §3: 19 occurrences
+across 11 capture files** *(corrected 2026-10-03, `ai-sessions/0069`: this said "17 … 10"; the list names 11 files and `CAP-016` holds two pairs, 1511 → 1521 and 2997 → 3012 — `DECISIONS.md` ADR-022 Update)* **(`CAP-006` ×3, `CAP-010` ×2, `CAP-016` ×2,
 `CAP-019`–`CAP-024` ×1 each, `CAP-025` ×5, `CAP-036` ×1), zero misses against the "opens with real
 payload" criterion.** This is a materially stronger replication base than several of this
 project's own existing FACT promotions required (e.g. `ADR-009`'s ANC-Set opcode: 4 samples in one
 capture; `ADR-014`'s Option E: 4 independent sessions before FACT).
 
-**Settable-toggles byte, sharpened not contradicted:** of the 17 occurrences, **12 show
-`Settable=0xe8`** (`CAP-006`'s first, all 7 of `CAP-019`–`CAP-025`) and **5 show `Settable=0x00`**
+**Settable-toggles byte, sharpened not contradicted:** of the 19 occurrences, **14 show
+`Settable=0xe8`** (`CAP-006`'s first two, `CAP-016`'s second, the 6 of `CAP-019`–`CAP-024`, `CAP-025`'s 5 — corrected 2026-10-03 from "17 … 12") and **5 show `Settable=0x00`**
 (`CAP-016`, `CAP-036`, `CAP-006`'s last, both of `CAP-010`'s). Every `0x00` sample sits at a moment
 plausibly close to the Buds being in or near the case (`CAP-016`: "both buds still docked";
 `CAP-036`: buds sitting in the open case the whole session, never worn; `CAP-006`'s last: end of
@@ -878,6 +878,99 @@ under `captures/CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU/` (`ai-sessions/00
 2026-09-22). See that file for the full analysis (session losses, Android-state mirror gap, bond
 timeout, DLCI 0x04 claim contention, `07 34`, ANC/battery/EQ/Find, HFP, Fast Pair BLE battery
 advertisement, and the "(last known)" freshness gap).
+
+### 2026-10-03 — Three cross-capture checks from the `ai-sessions/0068` leads: DLCI 0x08 `04 03` and `04 05`, runtime-info field 2, and the `CAP-021` voice waves (`ai-sessions/0069`)
+
+No new capture; every figure below was re-derived from the logs in this repository. Nothing here is
+promoted — each result is labelled, and the proposals at the end await the maintainer.
+
+**1. DLCI 0x08 Group `0x04` Code `0x03`, field 3 = the lower of the two bud levels (lead L68-5).**
+Method: every `04 03 00 04 10 05 18 xx` message on DLCI 0x08/0x09 was paired with the next battery
+triple `0e 01` on the same channel (within 60 frames), over every `CAP-*-btsnoop_hci.log` and
+`.log.last` in the repository (one message-level parser over `btrfcomm` payloads, messages split on
+their own length field).
+
+| Relation of field 3 to the triple's Left / Right | Samples |
+|---|---|
+| Left = Right = field 3 | 355 |
+| Left ≠ Right, field 3 = the lower one, and that is Left | 63 (e.g. `CAP-008` 1097: 98 beside 98/100; `CAP-050` 1302: 37 beside 37/45) |
+| Left ≠ Right, field 3 = the lower one, and that is Right | 43 (e.g. `CAP-009` 1182: 93 beside 96/93; `CAP-011` 1140: 88 beside 93/88) |
+| Left ≠ Right, field 3 = the higher one | 0 |
+| neither | 12 (all in long sessions; e.g. `CAP-009` 5538: 93 beside 96/92 — the value of the previous triple) |
+
+- 🟢 FACT (counts): where the two levels differ, field 3 equals the lower one in 106 of 118 samples
+  and never the higher one.
+- 🟡 HYPOTHESIS: field 3 is "the lower of the two bud levels", updated slightly later than the
+  triple (the 12 "neither" samples all carry the lower value of the *previous* triple).
+- Consequence for `PROTOCOL.md` §4.3 Option E: "cross-confirms the Right value at all 4 of
+  `CAP-011`'s occurrences" is true for that capture only because Right was the lower bud there
+  (88, 88, 87, 86 beside Left 93, 92, 92, 92). A dated pointer was added there.
+- Field 2 (`05` in every sample) is unexplained.
+
+**2. DLCI 0x08 Group `0x04` Code `0x05` does not map one-to-one onto the ANC Settable byte (lead
+L68-5, second half).** Method: each `04 05 00 02 08 xx` was tabulated against the Settable byte of
+the last ANC Notify (`08 13`) seen before it on DLCI 0x04/0x05 in the same log.
+
+| `04 05` value | last Settable `00` | last Settable `e8` | no Notify yet |
+|---|---|---|---|
+| 0 | — | — | 1 (`CAP-031` 983) |
+| 1 | 6 | 18 | — |
+| 3 | 178 | 26 | 16 |
+| 4 | 14 | 33 | — |
+| 5 | 16 | 24 | — |
+| 6 | 4 | 60 | — |
+
+- 🟢 FACT (counts): value 3 goes mostly with `00` (178 of 204) and value 6 mostly with `e8` (60 of
+  64); values 1, 4 and 5 occur with both.
+- 🟡 HYPOTHESIS: Code `0x05` is a placement/wear state with at least five values, of which 3 is
+  "both in the case" and 6 "both worn". The rule the audit proposed (`03` ⇔ `00`; `04`/`05`/`06` ⇔
+  `e8`) does not hold as an equivalence in this tabulation. Part of the mismatch may be ordering
+  (the code changes before the Notify does: `CAP-007` 1345 → 1350, 8 ms); the tabulation cannot
+  separate that from a real exception.
+- 🔴 OPEN: the meaning of each value. It needs the ears and the case on film for each transition —
+  step list in the `CAP-069` skeleton (Group BE).
+
+**3. Runtime-info and software-info field 2 looks like the Buds' wall clock in milliseconds, and is
+absent when no clock was set (lead L68-8).** `python3 scripts/pwrpc_decode.py <log>`, first
+`GetSoftwareInfo` response and first `SubscribeRuntimeInfo` packet per capture, against the frame's
+own capture time (`frame.time_epoch`):
+
+| Capture | Frame | Method | Field 2 (ms) | Capture time (s) | Difference |
+|---|---|---|---|---|---|
+| `CAP-036` | 1405 | `GetSoftwareInfo` | 1788496592545 | 1788496592.597 | 52 ms |
+| `CAP-036` | 1421 | `SubscribeRuntimeInfo` | 1788496592578 | 1788496592.644 | 66 ms |
+| `CAP-036` | 2009 | `SubscribeRuntimeInfo` | 1788496790882 | 1788496791.218 | 336 ms |
+| `CAP-042` | 772 | `GetSoftwareInfo` | 1788708606198 | 1788708606.274 | 76 ms |
+| `CAP-042` | 800 | `SubscribeRuntimeInfo` | 1788708606376 | 1788708606.460 | 84 ms |
+| `CAP-050` | 1138 | `GetSoftwareInfo` | 1789412474972 | 1789412475.520 | 548 ms |
+| `CAP-050` | 1163 | `SubscribeRuntimeInfo` | 1789412475429 | 1789412475.721 | 292 ms |
+| `CAP-062` | 2768, 2782 | both | **absent** | — | — |
+| `CAP-067` | 399, 488, 596 | both | **absent** | — | — |
+
+- 🟢 FACT: in the three official-app captures sampled, field 2 is within 52–548 ms before the
+  frame's capture time; in the two OpenControl captures sampled it is absent.
+- 🟢 FACT: the official app sends `SetWallclock` in those three captures (`CAP-036` 1430, `CAP-042`
+  802, `CAP-050` 1160 and thirteen more — 14 on DLCI 2 and 3 together); the OpenControl app sends none (0 in `CAP-062` and
+  `CAP-067`, same command). In `CAP-036` the first field 2 (frame 1405) precedes that session's
+  `SetWallclock` (1430), so the clock was already set from an earlier connection.
+- 🟡 HYPOTHESIS: field 2 = the Buds' wall clock in ms since the Unix epoch, present only while the
+  Buds hold a clock value set by `SetWallclock`. Field 3 (`0` in every sample) stays open.
+- No consequence for the app: it reads fields 4 (software info) and 6/7 (runtime info) and skips
+  the others.
+
+**4. The `CAP-021` DLCI 0x0a waves (lead L68-1) — the film does not show the trigger.** The four
+waves start at 08:02:29.5, 08:02:50.1, 08:03:27.1 and 08:03:58.3 (frames as in the lead). Stills of
+`CAP-021-recording.mp4` at t = 172, 175, 193, 196, 230, 233, 261 and 264 s (overlay 08:02:28 …
+08:04:00) show the official app's "Device details" screen and, for the last wave, "Controls and
+gestures"; the case is open and empty, and the buds are out of frame for the whole stretch.
+- 🔴 OPEN: what the wearer did at those four moments is not on film (a press-and-hold on a bud is
+  the candidate; press-and-hold was set to the digital assistant during this capture). The reading
+  "Buds microphone audio to the phone for the assistant" stays 🟡. Step for it: `CAP-069` (Group BE).
+
+**Proposals awaiting the maintainer (not applied as status changes):** (a) reword §4.3 Option E's
+"cross-confirms the Right value" to "equals the lower of the two bud levels (🟡)"; (b) add Code
+`0x05` and Code `0x03` to §2.3's DLCI 0x08 table with the 🟡 readings above; (c) name field 2 of
+the two messages in `REVERSE_ENGINEERING.md` as "wall clock, ms (🟡)".
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

@@ -27,7 +27,8 @@ android/logs/
 # ("No distribution of the original Google APK or any part of it"), and PROJECT_RULES.md §8
 # rule 20 (decompiled Java/smali is a reproduction of Google's copyrighted code, banned from
 # this project's codebase even as research output — this holds even though it never leaves
-# the maintainer's own machine, since "codebase" here means this git history). Git LFS does
+# the maintainer's own machine, since "codebase" here means this git history; a short quoted
+# excerpt in a research document is allowed — rule 20 (a), 2026-10-03). Git LFS does
 # NOT exempt the APK file itself — anyone with repository access can still fetch an LFS
 # object, which is still distribution. The whole tree below (one subfolder per analyzed APK
 # version, per reverse-engineering/APK_VERSIONS.md) is ignored; only that small index file,

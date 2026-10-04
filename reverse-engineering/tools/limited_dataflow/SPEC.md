@@ -85,7 +85,7 @@ verbatim-regex discipline as `lambda_dispatcher_resolver/SPEC.md` §4's own):
 | 2 | `check-cast <reg>, L<type>;` where `<reg>` == the currently-traced register | Value/name unchanged; recorded as a "cast to `<type>`" step; continue. |
 | 3 | `invoke-<kind>[/range] {<args>}, L<cls>;-><method>(<params>)<ret>` where the traced register appears in `<args>` | Recorded as a **sink use** (`caller class/method`, `called class/method`, `invoke_kind`, `arg_position`); continue (see below — this is not a stop). |
 | 4 | A label (`:foo`), `if-*`, `goto[/16|/32]`, `packed-switch`, `sparse-switch` | Stop: `left_basic_block_scope`. |
-| — (anything else that names the traced register at all, in any operand position) | Stop: `ambiguous_redefinition` — the instruction is not one of the three alias-preserving shapes above, so per `AGENTS.md` §13.6 the tool does not guess whether it overwrites, reads-only, or is unrelated; it reports exactly which line and stops. |
+| — | (anything else that names the traced register at all, in any operand position) | Stop: `ambiguous_redefinition` — the instruction is not one of the three alias-preserving shapes above, so per `AGENTS.md` §13.6 the tool does not guess whether it overwrites, reads-only, or is unrelated; it reports exactly which line and stops. |
 
 **Why a sink use (row 3) does not end the trace:** Dalvik objects are passed to `invoke-*` by
 reference — the calling method's own register still holds the same object after the call returns
