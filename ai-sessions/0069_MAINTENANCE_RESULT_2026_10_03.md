@@ -56,7 +56,7 @@ behaviours built on chat answers get an ADR each; the three protocol proposals o
 | 6. App: `A68-APP-01`, `-02`, `-03` | done — gate green (`:data` 1596, `:hardware` 56, `:ui` 46, `:domain` 33); mutations M1–M8 each caught, sources restored |
 | 7. App: remaining items | done — gate green (`:data` 1601, `:hardware` 64, `:ui` 58, `:domain` 37); mutations M9–M16 each caught; `transport.send(` sites identical to `HEAD` (8) |
 | 8. Documents that follow the code | done — `APP_TESTPLAN.md` section S, `CAP-068` section IV with the built texts, `ARCHITECTURE.md`, `PROTOCOL.md` §4.2 pointer, `CHANGELOG.md` `[1.0.1]`, `README.md`, `SECURITY.md`, `TODO.md`, release notes template; `lint_docs.py` exit 0 |
-| 9. Finish | done except the commit: final gate after `clean` green; the maintainer is asked whether to commit and push |
+| 9. Finish | done — final gate after `clean` green; committed on branch `maintenance/0069` (2026-10-04), not pushed |
 
 ### Phase 0 — recorded facts
 
@@ -427,8 +427,21 @@ Every item is in `TODO.md` under the section named:
 
 ## Commits
 
-None. The prompt reserves the commit for the maintainer's answer: at the end of this session the working tree holds 153 modified and 12 new paths
-on top of `cd30332`, uncommitted. This section is completed by the session that commits them (`AI_SESSION_LOG_PROCEDURE.md` §4b).
+On branch `maintenance/0069` (from `cd30332`), made on 2026-10-04 after the maintainer agreed to one branch with several commits; **not pushed** by
+this session. The intermediate commits were not gated one by one — the gate ran on the complete tree, which the last app commit equals.
+
+- `8246ec8` — docs: correct the statements the 0068 audit found in the project law, protocol and decisions
+- `1ba6eec` — docs(captures): rewrite the wrong findings in place, add the CAP-068 and CAP-069 skeletons
+- `cffcd88` — chore(scripts,ci): three lint checks, DLCI 2+3 decoder, safer release script, release-variant CI
+- `dc31734` — fix(data): an oversized length field can no longer throw or loop in the readers (A68-APP-01)
+- `1a69e95` — fix(hardware): convert non-IO exceptions around socket calls into errors (A68-APP-10)
+- `88b79fe` — feat(hardware): no silent pick between several bonded Buds; forget this app's association (A68-APP-04/05)
+- `081a77c` — fix(app): 1.0.1 — values from the last connection are marked, clearer messages, Flat preset
+- `b835866` — docs: 1.0.1 changelog, release checklist and runbooks, TODO as open items only
+- `cf44734` — docs(sessions): add the 0069 maintenance prompt and result; close 0022, 0023, 0040
+- the commit that records this list (it follows the ones above)
+
+Next, by the maintainer: `RELEASING.md`, "Release checklist", from step A5 (push, pull request) on.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0069_MAINTENANCE_RESULT_2026_10_03.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0069_MAINTENANCE_RESULT_2026_10_03
