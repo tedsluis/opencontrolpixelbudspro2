@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-09-15
 **Title:** Full, non-sampled `.log`/`.log.last`/`-2.log` analysis, cross-validation, and `CAP-047-FINDINGS.md` authoring for `CAP-047` (Group AL, `CAP-021`'s DLCI 0x0a burst trigger hypothesis test, Trigger candidate 3 only) — including a targeted video re-check of a maintainer-recalled corrected docking in Recording 2
-**Status:** partial — 3 of 4 proposals now resolved as of 2026-09-18 (`CASE-009` Test-ID registered,
+**Status:** complete (closed 2026-10-03 by `ai-sessions/0069` — the maintainer's choice in chat, "Session log": *"Close the three + Release log in RELEASING.md (Recommended)"*; the one open research question named below — the swapped-dock ADR-016 disconnect inconsistency — is carried in `TODO.md`, it needs a capture, not this session). Earlier status text: 3 of 4 proposals resolved as of 2026-09-18 (`CASE-009` Test-ID registered,
 `ai-sessions/0031`; `DECISIONS.md` ADR-024 gained its formal text update recording all three of
 `CAP-047-FINDINGS.md` §5's counter-example frames, maintainer-approved in this same chat session).
 The Recording-1-vs-2 swapped-dock `DECISIONS.md` ADR-016 disconnect-inconsistency remains the one

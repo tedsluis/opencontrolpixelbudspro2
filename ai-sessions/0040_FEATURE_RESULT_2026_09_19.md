@@ -4,7 +4,7 @@
 **Category:** FEATURE
 **Date:** 2026-09-19
 **Title:** Claim the shared Message Stream channel (DLCI 0x04) on the user's own ANC/Find tap, unblock the Battery Option B decoder by ADR, and research why HFP battery shows nothing and whether the EQ can be read
-**Status:** awaiting maintainer sign-off — §10 proposals 1–4 answered by the maintainer in prompt `0041` §1 (2026-09-20, re-confirmed in chat; charging flag accepted, `pw_rpc` promotions + read-path ADR approved (ADR-034), HFP removal decided after one confirming run, the `btsnoop` capture will be supplied) and implemented/handled in `ai-sessions/0041`; proposal 5 (BLE Fast Pair battery advertisement) is still open
+**Status:** complete (closed 2026-10-03 by `ai-sessions/0069` — the maintainer's choice in chat, "Session log": *"Close the three + Release log in RELEASING.md (Recommended)"*: proposal 5, the BLE battery advertisement, is carried by the redesigned Group AP / `CAP-054` and `TODO.md`) — §10 proposals 1–4 answered by the maintainer in prompt `0041` §1 (2026-09-20, re-confirmed in chat; charging flag accepted, `pw_rpc` promotions + read-path ADR approved (ADR-034), HFP removal decided after one confirming run, the `btsnoop` capture will be supplied) and implemented/handled in `ai-sessions/0041`; proposal 5 (BLE Fast Pair battery advertisement) is still open
 
 > **Annotated 2026-09-24** (`ai-sessions/0045`, 2026-09-24, 0044 finding S-5): still open for the same reason — proposal 5 has not been decided;
 > it is listed in `TODO.md` "Known technical debt" (undecided items needing an ADR).
