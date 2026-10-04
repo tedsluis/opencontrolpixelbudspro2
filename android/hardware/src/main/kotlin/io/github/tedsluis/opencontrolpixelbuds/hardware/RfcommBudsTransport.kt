@@ -240,6 +240,12 @@ class RfcommBudsTransport(
                 // closeChannel()/teardown closing the socket under a blocked read() — an expected,
                 // silent end.
                 if (isActive) endOfChannel(connection, channelId, BleLogger.describe(e), onDemand)
+            } catch (e: CancellationException) {
+                throw e // the reader was cancelled: not a failure of the channel
+            } catch (e: RuntimeException) {
+                // `ai-sessions/0069` A68-APP-10 (AGENTS.md §8): a SecurityException after a revoked permission, or any other exception the stack throws from
+                // read(), used to end this coroutine without telling anyone — the UI stayed on Ready over a dead channel. Reported like any other end.
+                if (isActive) endOfChannel(connection, channelId, BleLogger.describe(e), onDemand)
             }
         }
 
@@ -303,6 +309,17 @@ class RfcommBudsTransport(
                 val detail = BleLogger.describe(e)
                 endOfChannel(connection, channelId, detail, onDemand)
                 BudsResult.Failure(BudsError.ChannelLost(channelId, detail))
+            } catch (e: SecurityException) {
+                // A68-APP-10: BLUETOOTH_CONNECT revoked while the socket was open — its own error, as on connect (AGENTS.md §2/§8).
+                endOfChannel(connection, channelId, BleLogger.describe(e), onDemand)
+                BudsResult.Failure(BudsError.PermissionDenied)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: RuntimeException) {
+                // A68-APP-10: anything else the stack throws from write() is a lost channel with its own text — never an exception across this boundary.
+                val detail = BleLogger.describe(e)
+                endOfChannel(connection, channelId, detail, onDemand)
+                BudsResult.Failure(BudsError.ChannelLost(channelId, detail))
             }
         }
 
@@ -352,6 +369,9 @@ class RfcommBudsTransport(
             socket.close()
         } catch (e: IOException) {
             // Closing an already-broken socket — the only thing left to do is note it.
+            BleLogger.logConnectionEvent("RFCOMM socket close: ${BleLogger.describe(e)}")
+        } catch (e: RuntimeException) {
+            // A68-APP-10: a close that throws anything else must not keep the remaining sockets of the connection open.
             BleLogger.logConnectionEvent("RFCOMM socket close: ${BleLogger.describe(e)}")
         }
     }

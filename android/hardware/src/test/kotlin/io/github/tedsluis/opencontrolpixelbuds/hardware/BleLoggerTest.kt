@@ -40,6 +40,17 @@ class BleLoggerTest {
     }
 
     @Test
+    fun `with Debug mode off no payload byte reaches the export`() {
+        // AGENTS.md §9 (`ai-sessions/0069`; the gate had no test — `ai-sessions/0068` A68-APP-06). The frame is `CAP-064` 3440, a NAK: no identifier in it.
+        BleLogger.clear()
+        val frame = byteArrayOf(0xff.toByte(), 0x02, 0x00, 0x03, 0x02, 0x08, 0x12)
+        BleLogger.logHexDump(0x04, frame, debugModeEnabled = false)
+        assertEquals("", BleLogger.exportLog())
+        BleLogger.logHexDump(0x04, frame, debugModeEnabled = true)
+        assertTrue(BleLogger.exportLog().endsWith("DLCI 0x04: ff 02 00 03 02 08 12"), BleLogger.exportLog())
+    }
+
+    @Test
     fun `a Debug-mode session far beyond 64 KiB is exported whole`() {
         BleLogger.clear()
         // A real DLCI 0x02 stream frame (CAP-062 frame 4845), as Debug mode logs it: ~150 bytes per line.
