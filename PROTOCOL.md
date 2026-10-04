@@ -559,6 +559,12 @@ promotion. The same browse also named DLCI 0x0a "GSND AUDIO" (`CAP-021-FINDINGS.
 still-unattributed 1123-frame burst channel), DLCI 0x06 "DEBUG APP", and DLCI 0x12 "BTIS" — none
 previously documented anywhere in this project.
 
+**GSND CONTROL in `CAP-069` (2026-10-04, `ai-sessions/0071`, proposal P-7 signed off in chat 2026-10-04 with all of `CAP-069-FINDINGS.md` §13; pointer, no identity change).** On server channel 4 the
+Buds report: Code `0x05` = wear state (🟡 `03` no bud worn, `04` one, `06` both; 🔴 `05`), Code `0x16` = head gestures active (🟡, `01`/`02`, §4.5.4), Code `0x14` = the
+Right bud's press-and-hold action (🟡, `03` assistant / `01` ANC, two samples), and `01 09 00 03 0a 01 03` at the start of every assistant session (🟢 for `CAP-069`,
+§6). On `CAP-069`'s third ACL the Buds opened the multiplexer and **DLCI 0x08 carried HFP** (the phone's server channel 4), GSND CONTROL DLCI 0x09 — count by server
+channel (paragraph below). The channel's protocol identity stays 🔴. `CAP-069-FINDINGS.md` §3, §8, §10.
+
 **DLCI and server channel (2026-10-03, `ai-sessions/0069`, maintainer-approved in chat 2026-10-03, `AskUserQuestion` "Other texts" — `ai-sessions/0068` A68-CAP-22).** An RFCOMM DLCI is
 2 × server channel + direction bit; the **stable identifier is the server channel**: 1 = "MAESTRO APP", 2 = "GFPS RFCOMM" (the Message Stream), 4 = "GSND CONTROL",
 5 = "GSND AUDIO" (SDP names, `CAP-033` frame 1279). With the phone as the multiplexer's initiator these are DLCI 0x02, 0x04, 0x08, 0x0a — the numbers this
@@ -767,7 +773,7 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   `08 12 00 14 01 e8 e8 20` + 16 × `00`) is ACKed `ff 01 00 06 08 12 01 e8 e8 20` (A2036) and followed by a Notify (A2037); no NAK `0x04`. 🟢 FACT for
   OpenControl's `Set` (1 sample; "A" = `CAP-068-btsnoop_hci2.log.last`, `CAP-068-FINDINGS.md` §2); what the official app sends is `CAP-069` IV. The same run:
   12 `Set`s by the release build 1.0.1 without Play services, 12 ACKed, 0 NAK, each after a non-zero Settable.
-- **Update (2026-10-04, `ai-sessions/0071`; the maintainer's `ANC-006` decision in chat 2026-10-04, `AskUserQuestion` "ANC-006", option *"Keep the Set"*):**
+- **Update (2026-10-04, `ai-sessions/0071`; the maintainer's `ANC-006` decision in chat 2026-10-04, `AskUserQuestion` "ANC-006", option *"Keep the Set"*; proposal P-3 signed off in chat 2026-10-04 with all of `CAP-069-FINDINGS.md` §13):**
   what the official app sends — `CAP-069` (1.0.990706425): three filmed taps on the already-selected mode (Adaptive 16:16:16, Transparency 16:16:42, Off 16:16:58)
   produced **no** `08 12` (0 frames in each window; positive control: the same filter returns the four real changes 5519, 5600, 5644, 5692, each ACKed). 🟢 for
   `CAP-069`. OpenControl keeps sending its `Set` for the current mode (ACKed, `CAP-068`) — the maintainer's choice. Evidence: `CAP-069-FINDINGS.md` §4.
@@ -854,7 +860,7 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   this specific session's starting point, not a universal default.
   **Update 2026-10-03 (`ai-sessions/0069`, no status change):** the OpenControl app (1.0.1) offers a preset "Flat" that writes this row's quintet — `WriteSetting 4:{16:{0.0 × 5}}`, byte for byte `CAP-015` frame 2111 (06:12:13.279) on the announced channel. It is named "Flat", not "Default": what the official app writes for its own "Default" preset is not captured (`EQP-001`, planned in `CAP-069`).
   **Update 2026-10-04 (`ai-sessions/0071`; recorded on the maintainer's answer in chat 2026-10-04, `AskUserQuestion` "EQ Default", option *"Record only, keep
-  'Flat'"*):** the official "Default" preset writes **0.0 × 5** — `CAP-069` 1990, 5803, 5965, 6066 (each OK), byte-identical in payload to OpenControl's "Flat";
+  'Flat'"*; proposal P-4 signed off in chat 2026-10-04 with all of `CAP-069-FINDINGS.md` §13):** the official "Default" preset writes **0.0 × 5** — `CAP-069` 1990, 5803, 5965, 6066 (each OK), byte-identical in payload to OpenControl's "Flat";
   OpenControl keeps the name "Flat". 🟡 one sample of a field-18 write right after the **Save** button (6050, 1 s after the filmed tap, no navigation in between) —
   for `CAP-053`. Evidence: `CAP-069-FINDINGS.md` §5.
 - **Outer field 16 vs. 18 ("preview" vs. "save") — still 🟡 HYPOTHESIS, reading revised
@@ -1486,7 +1492,7 @@ option (C), even though its per-earbud content is now FACT-confirmed.
   > (Recommended)"*):** `CAP-068` (OpenControl 1.0.1, no Play services) is no evidence for the status sync after a stop on the bud: the app released DLCI 4
   > 1.5 s after its Ring (B2721 → B2736) and no client held it when the bud was touched (film 07:51:12–14); the later Stop (B2799) got only the ACK (B2810), no
   > `04 01 00 01 00`. Status unchanged (🟡); test: `CAP-069` VII. ("B" = `CAP-068-btsnoop_hci2.log`, `CAP-068-FINDINGS.md` §6.)
-  > **Update (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Find", option *"Dated note, status 🟡 (Recommended)"*):**
+  > **Update (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Find", option *"Dated note, status 🟡 (Recommended)"*; proposal P-6 signed off in chat 2026-10-04 with all of `CAP-069-FINDINGS.md` §13):**
   > the official app **1.0.990706425 has no Find device** (`CAP-069`, every settings screen opened on film); Find Hub's *Play sound* for Left and for Right showed
   > "Can't play sound" with the Buds connected, and put **no** `04 01` on the wire (`tshark -Y "btrfcomm.len>0 && frame contains 04:01:00:01"` → 0, positive control
   > `CAP-068`). `FIND-005` cannot be tested with the official app any more; status unchanged (🟡). Test with OpenControl's own Ring while a client holds the Message
@@ -1713,9 +1719,10 @@ implementation gate.
   Noise cancellation → Off. Command: the message-level parse of `tshark -r CAP-064-btsnoop_hci.log -Y "bthci_acl.chandle==0x000b && btrfcomm.dlci==5"
   -T fields -e frame.number -e data.data` (`CAP-064-FINDINGS.md` §3). One shared list stays 🟡.
 
-- **Update (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Wear table") — supporting evidence for one shared list, no status
-  change.** `CAP-069`: ticking Off in "Customize right" wrote `4:{12:{1:1 2:1 3:1 4:1}}` (1813, OK 1816, no side field) and "Customize left" showed Off ticked 3.5 s
-  later with no write in between (film 16:06:40–44). The app shows one list; whether the Buds keep one stays 🟡. `CAP-069-FINDINGS.md` §6.
+- **Update (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Wear table"; proposal P-5 signed off in chat 2026-10-04 with all of `CAP-069-FINDINGS.md` §13) — one shared
+  list in the app.** `CAP-069`: ticking Off in "Customize right" wrote `4:{12:{1:1 2:1 3:1 4:1}}` (1813, OK 1816, no side field) and "Customize left" showed Off ticked 3.5 s
+  later with no write in between (film 16:06:40–44). 🟢 **FACT for the official app's UI** (`CAP-069`): one list for both buds. Whether the **Buds** keep one list stays 🟡 HYPOTHESIS (unchanged).
+  `CAP-069-FINDINGS.md` §6.
 
 #### 4.5.4 Head gestures
 
@@ -3481,10 +3488,10 @@ leaving them buried in prose elsewhere.
       changes with in-ear detection on — `13:4` with `0x40` (2257/2259), `13:2` with `0x08` (2322/2324), and a read of `13:0` with no bud worn (3870) — matching
       `qhs.java`'s `ANC_STATE_ADAPTIVE(4)`, `ANC_STATE_ACTIVE(2)`, `ANC_STATE_UNKNOWN(0)`.
 
-- [ ] **Added 2026-10-04, `CAP-069-FINDINGS.md` §8–§9 (maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Wear table"; all 🟡/🔴, no FACT):** 🟡 GSND
+- [ ] **Added 2026-10-04, `CAP-069-FINDINGS.md` §8–§9 (maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Wear table"; proposal P-7 signed off in chat 2026-10-04 with all of `CAP-069-FINDINGS.md` §13):** 🟡 GSND
   CONTROL Code `0x05`: `03` no bud worn (6 samples), `04` one bud worn (5), `06` both worn (2); 🔴 `05` (2351, 2255 — unfilmed insertion), value 1 never seen.
-  🟡 `01 09 00 03 0a 01 03` opens an assistant session on GSND AUDIO (🟢 3 of 3 in `CAP-069`: 3403, 4084, 4806 → first AUDIO frame 1.7–2.3 ms later; the hold itself
-  not on film). 🟡 settings-stream field 13 = ANC mode (1 Off, 2 NC, 3 Transparency, 4 Adaptive, 0 with Settable `00`; 10 of 10). 🔴 the official app 1.0.990706425
+  🟢 **FACT for `CAP-069`:** every assistant session on GSND AUDIO opens with the Buds' `01 09 00 03 0a 01 03` (3 of 3: 3403, 4084, 4806 → first AUDIO frame
+  1.7–2.3 ms later) and ends with the phone's `08 06 00 04 08 00 10 01`; 🟡 that the message reports the press-and-hold itself (the hold was not on film). 🟡 settings-stream field 13 = ANC mode (1 Off, 2 NC, 3 Transparency, 4 Adaptive, 0 with Settable `00`; 10 of 10). 🔴 the official app 1.0.990706425
   subscribes to an unnamed MAESTRO service `0xbf6c9399` (method `0x92476025`, 146 stream packets) and calls `maestro_pw.JitterBuffer` (`0x8d99df93`) — both new on
   the wire; naming needs the new APK. 🔴 Device Information `03 0b` (spec: "Current FHN ephemeral identifier") with length 25 (6853, 8241) — Find Hub Network, not
   pursued (ADR-008/027).

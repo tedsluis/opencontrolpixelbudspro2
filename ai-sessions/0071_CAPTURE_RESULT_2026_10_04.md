@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-04
 **Title:** Full analysis of CAP-069 (Group BE: the official Pixel Buds app 1.0.990706425 on the Pixel 7a — head gestures, Multipoint, assistant hold, a tap on the current ANC mode, EQ Default, wear states, Find)
-**Status:** awaiting maintainer sign-off — analysis complete, approved documentation edits applied, committed and pushed on `capture/0071-cap-069` (PR open)
+**Status:** complete (signed off by the maintainer in chat 2026-10-04: all proposals of `CAP-069-FINDINGS.md` §13) — committed and pushed on `capture/0071-cap-069`, PR #3
 
 ## Progress
 
@@ -95,6 +95,11 @@ Corrections after the questions (re-derived before writing): the "Wear table" qu
 6875, 7517, 7615, 8352) — the documents say 6 (15 samples in all). The `ANC-006` and "EQ Default" answers chose app behaviour; the corresponding `PROTOCOL.md`
 §4.1/§4.2 dated Updates record the observation (🟢 for `CAP-069`) together with that choice — no status of an existing entry was changed.
 
+**Sign-off after the session (chat 2026-10-04, verbatim):** *"Ik wil een sign-off geven op alle voorstellen in
+captures/CAP-069-2026-10-04_16-05-29_16-27-07-Group_BE/CAP-069-FINDINGS.md in paragraaf 13."* Applied: P-3/P-4/P-6 Updates cite it; P-5 now 🟢 for the official
+app's UI (the Buds side stays 🟡); P-7's §6 item states `01 09 00 03 0a 01 03` 🟢 for `CAP-069` and a new §2.3 pointer lists the GSND CONTROL codes; FINDINGS §13
+rewritten in place as applied. P-1/P-2/D-1/D-2 were already applied (ADR-052/053).
+
 ## Documents changed (only after the answers above)
 
 `captures/CAP-069-…/CAP-069-EVENT-NOTES.md` (rewritten, skeleton as Appendix A), `CAP-069-FINDINGS.md` (new); `PROTOCOL.md` (§4.1, §4.2, §4.4, §4.5.2, §4.5.3,
@@ -104,10 +109,10 @@ Corrections after the questions (re-derived before writing): the "Wear table" qu
 planned); `ai-sessions/INDEX.md`; `_sidebar.md` (folder path); `ai-sessions/0071_CAPTURE_PROMPT_2026_10_04.md` (folder path, with a note). Nothing under
 `android/`, `dist/` or `scripts/` changed (`scripts/__pycache__/lint_docs.cpython-314.pyc` unchanged — every script run with `PYTHONDONTWRITEBYTECODE=1`).
 
-**Checks:** `python3 scripts/ensure_footers.py` → "all footers already up to date". `PYTHONDONTWRITEBYTECODE=1 python3 scripts/lint_docs.py` → **exit 1** with
-63 "dead filename reference" lines, all in older `ai-sessions/` files (0010…0067; e.g. placeholder capture paths of earlier skeletons) — the same 63 lines as on the
-base tree (run with the changes stashed; that run also listed this RESULT's own line); this session's own lines (a scratch filename in this RESULT) was removed. The lint is therefore not
-clean on `origin/main` either — reported, not fixed (history files).
+**Checks:** `python3 scripts/ensure_footers.py` → "all footers already up to date". `PYTHONDONTWRITEBYTECODE=1 python3 scripts/lint_docs.py` → **exit 0**
+("lint_docs: clean"). It also prints 63 "dead filename reference" warnings, all in older `ai-sessions/` files (0010…0067, placeholder paths of earlier skeletons and
+local scratch names) — warnings, not failures. *(Corrected after the sign-off, same session: this paragraph first said the lint exits 1 because of those 63 lines;
+the exit 1 seen then came from two scratch filenames in this RESULT, removed before the documentation commit.)*
 
 ## External sources (raw text fetched 2026-10-04 with `curl`)
 
@@ -133,8 +138,6 @@ Each item is in `TODO.md` with this wording's substance:
 - Pull and decompile the official app 1.0.990706425 — name `0xbf6c9399` and `JitterBuffer` `0x8d99df93` (`TODO.md` §4).
 - `CAP-069` leftovers: the lagging charging bit, the GSND AUDIO re-open on ACL 3, `03 0b` length 25, field 18 after Save (`TODO.md` §4).
 - **M**: the Buds were left with a custom EQ and Off ticked in the press-and-hold mode list (`TODO.md` §4).
-- `lint_docs.py`'s 63 pre-existing dead references in older `ai-sessions/` files — not added to `TODO.md` (history files are left as written; the maintainer may
-  decide on a lint exception).
 
 ## Commits
 

@@ -293,7 +293,11 @@ capture (`AGENTS.md` §11).
 8. **Explain the Buds' own ANC changes.** When a `Notify` changes the mode without a user tap, OpenControl could say "changed by the Buds" in the (i) details.
    UI-only, no wire change.
 
-## 13. Proposed `PROTOCOL.md` / `DECISIONS.md` changes (awaiting maintainer sign-off, `AGENTS.md` §6 — **not applied by this file**)
+## 13. `PROTOCOL.md` / `DECISIONS.md` changes — all signed off by the maintainer (chat 2026-10-04) and applied
+
+P-1/P-2 with D-1/D-2 were approved at the checkpoint (`AskUserQuestion` "Field 29" / "Field 11") and became `PROTOCOL.md` §4.5.4/§4.5.2 Updates and ADR-052/ADR-053;
+the maintainer then signed off on every proposal of this section in chat (2026-10-04, *"Ik wil een sign-off geven op alle voorstellen … in paragraaf 13"*). P-3 → §4.1,
+P-4 → §4.2, P-5 → §4.5.3 (🟢 for the app's UI), P-6 → §4.4, P-7 → §2.3 and §6 (`01 09 00 03 0a 01 03` 🟢 for this capture; the other readings 🟡/🔴 as listed).
 
 - **P-1 (§4.5.4):** 🟡 → 🟢 FACT: "`qhr` field 29 = 'Use head gestures', 1 = off, 2 = on" — `CAP-069` 2492/2564/2737/2831/2923/3025 (each a filmed tap, OK, mirrored)
   + `CAP-020` 1935/2038 + smali `cmi` write site. GC Code `0x16` recorded as 🟡 "head gestures active (1 = active, 2 = inactive)".
