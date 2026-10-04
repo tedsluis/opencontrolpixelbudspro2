@@ -144,6 +144,8 @@ data class OpenControlActions(
      * app makes no network request itself.
      */
     val onOpenUrl: (String) -> Unit = {},
+    /** "Use different Buds" on the Settings tab (`ai-sessions/0069`, A68-APP-05). */
+    val onUseDifferentBuds: () -> Unit = {},
     /**
      * A pull (swipe down) on a tab (`ai-sessions/0057` D-10): runs the one existing action [PullAction] names and returns the job it launched in the
      * application scope — `null` when it only opened a system prompt or did nothing — so the pull indicator lasts exactly as long as the action.
@@ -153,8 +155,6 @@ data class OpenControlActions(
 
 data class OpenControlUiState(
     val connectionState: ConnectionState,
-    val bluetoothEnabled: Boolean,
-    val hasBondedDevice: Boolean,
     /** The top-level status derived from Android's Bluetooth state first, the app's own session second
      * (`ai-sessions/0041`: mirror Android's settings). */
     val deviceStatus: DeviceStatus,
@@ -174,6 +174,8 @@ data class OpenControlUiState(
     /** Why the last action needing the shared Message Stream channel could not claim it (ADR-032). */
     val messageStreamError: BudsError?,
     val ancMode: AncMode?,
+    /** When the current connection was requested (`BudsRepository.sessionSince`) — a value reported before it is "from the last connection" (A68-APP-02). */
+    val sessionSince: Long? = null,
     /** Wall-clock time (epoch millis) [ancMode] was last updated — `null` before any value arrived this
      * app run (`ai-sessions/0043` Phase H). */
     val ancModeUpdatedAt: Long? = null,
@@ -323,6 +325,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 appBuild = state.appBuild,
                 deviceInfo = state.deviceInfo,
                 onOpenUrl = actions.onOpenUrl,
+                onUseDifferentBuds = actions.onUseDifferentBuds,
                 modifier = Modifier.padding(padding),
             )
         } else {
@@ -353,6 +356,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             deviceInfo = state.deviceInfo,
             onRefreshBattery = actions.onRefreshBattery,
             lastLossCause = state.lastLossCause,
+            sessionSince = state.sessionSince,
             safeMode = state.safeMode,
             batteryRefreshError = state.batteryRefreshError,
             onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
@@ -370,6 +374,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             ancAvailability = state.ancAvailability,
             ancAvailabilityUpdatedAt = state.ancAvailabilityUpdatedAt,
             ancModeUnconfirmedAt = state.ancModeUnconfirmedAt,
+            sessionSince = state.sessionSince,
             onAncModeSelected = actions.onAncModeSelected,
             onRefreshAncMode = actions.onRefreshAncMode,
             onRequestAddAncTile = actions.onRequestAddAncTile,

@@ -21,7 +21,6 @@ package io.github.tedsluis.opencontrolpixelbuds.domain
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.onStart
 
 /** What the Quick Settings ANC tile shows (`:app`'s `AncTileService`), derived only from what the repository reports. */
 data class AncTileState(
@@ -46,12 +45,12 @@ fun ancTileState(session: ConnectionState, mode: AncMode?, availability: AncAvai
 }
 
 /**
- * The tile's state stream. `combine` emits only after **every** source has emitted once, and the repository's ANC mode has no value until the
- * Buds report one in this process — so without the leading `null` the tile would stay on "Open the app" while the session is `Ready` (A58-APP-01,
- * `ai-sessions/0059`; `OpenControlApplication` guards the same flow the same way).
+ * The tile's state stream. [ancMode] is the mode **while it is current** ([currentAncMode]) and `null` otherwise — a state that always has a value, so the
+ * tile reads "Tap to switch" (not "Open the app") while the session is `Ready` and the Buds have not reported a mode on this connection (A58-APP-01,
+ * `ai-sessions/0059`; since `ai-sessions/0069` the repository's mode is a state with `null` for "none", no leading value needs to be injected).
  */
 fun ancTileStates(
     connectionState: Flow<ConnectionState>,
-    ancMode: Flow<AncMode>,
+    ancMode: Flow<AncMode?>,
     ancAvailability: Flow<AncAvailability>,
-): Flow<AncTileState> = combine(connectionState, ancMode.onStart<AncMode?> { emit(null) }, ancAvailability, ::ancTileState)
+): Flow<AncTileState> = combine(connectionState, ancMode, ancAvailability, ::ancTileState)

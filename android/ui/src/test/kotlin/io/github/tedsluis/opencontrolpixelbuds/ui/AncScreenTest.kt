@@ -51,10 +51,12 @@ class AncScreenTest {
         availability: AncAvailability = AncAvailability.ALLOWED,
         messageStreamError: BudsError? = null,
         unconfirmedAt: Long? = null,
+        connectionState: ConnectionState = ConnectionState.Ready,
+        sessionSince: Long? = at - 1_000, // the connection opened a second before the Buds reported the mode
     ) = compose.setContent {
         OpenControlTheme(darkTheme = false) {
             AncScreen(
-                connectionState = ConnectionState.Ready,
+                connectionState = connectionState,
                 messageStreamError = messageStreamError,
                 ancMode = AncMode.OFF,
                 ancModeUpdatedAt = at,
@@ -64,6 +66,7 @@ class AncScreenTest {
                 onRequestAddAncTile = {},
                 ancAvailabilityUpdatedAt = at,
                 ancModeUnconfirmedAt = unconfirmedAt,
+                sessionSince = sessionSince,
             )
         }
     }
@@ -91,7 +94,9 @@ class AncScreenTest {
     @Test
     fun `an answer cut off is said as such, never as no response`() {
         show(messageStreamError = BudsError.AnswerCutOff(0x04, "IOException: bt socket closed, read return: -1"))
-        compose.onNodeWithText("The answer was cut off — another app took the Buds' channel. Tap Refresh to see the current mode.").assertExists()
+        compose.onNodeWithText(
+            "The channel was closed before the Buds' answer arrived (possibly by another app using it). Tap Refresh to see the current mode.",
+        ).assertExists()
         compose.onNodeWithText("The Buds didn't respond in time.").assertDoesNotExist()
     }
 
@@ -100,11 +105,37 @@ class AncScreenTest {
         show(unconfirmedAt = at)
         compose.onNodeWithContentDescription("Noise control: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
         compose.onNodeWithText(ancUnconfirmedLine(at)).assertExists()
+        // The literal sentence too (A68-APP-06: the line above compares the helper with itself).
+        compose.onNodeWithText(
+            "Not confirmed: the answer to the change at ${formatUpdatedAt(at)} was cut off — the Buds may have switched. Tap Refresh.",
+        ).assertExists()
     }
 
     @Test
     fun `a confirmed mode has a plain (i)`() {
         show()
         compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").assertExists()
+    }
+
+    // ---- `ai-sessions/0069` A68-APP-02: a mode from the last connection is kept, marked and named — never shown as the Buds' current mode ----
+
+    @Test
+    fun `a mode reported before this connection opened marks the (i) and says so`() {
+        show(sessionSince = at + 5_000) // a new Connect five seconds after the last report
+        compose.onNodeWithContentDescription("Noise control: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
+        compose.onNodeWithText("ANC mode: OFF — from the last connection (updated ${formatUpdatedAt(at)})").assertExists()
+    }
+
+    @Test
+    fun `after Disconnect the last mode stays, marked as from the last connection`() {
+        show(connectionState = ConnectionState.Disconnected)
+        compose.onNodeWithContentDescription("Noise control: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
+        compose.onNodeWithText("ANC mode: OFF — from the last connection (updated ${formatUpdatedAt(at)})").assertExists()
+    }
+
+    @Test
+    fun `the mode line of a current mode is unchanged`() {
+        assertEquals("ANC mode: OFF (updated ${formatUpdatedAt(at)})", ancModeLine(AncMode.OFF, at))
+        assertEquals("ANC mode: unknown", ancModeLine(null, null, fromLastConnection = true))
     }
 }

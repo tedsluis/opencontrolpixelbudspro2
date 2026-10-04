@@ -32,6 +32,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
@@ -75,8 +77,6 @@ class SettingsMenuTest {
 
     private fun uiState(deviceInfo: DeviceInfo? = announced, darkMode: DarkMode = DarkMode.SYSTEM) = OpenControlUiState(
         connectionState = ConnectionState.Ready,
-        bluetoothEnabled = true,
-        hasBondedDevice = true,
         deviceStatus = DeviceStatus.ControlledByApp,
         permissionState = PermissionState(PermissionStatus.GRANTED, PermissionStatus.GRANTED),
         pairingStatusText = null,
@@ -243,5 +243,22 @@ class SettingsMenuTest {
         val bundled = java.io.File("src/main/res/raw/license.txt").readBytes()
         assertTrue("LICENSE found (${repo.size} bytes)", repo.size > 30_000)
         assertTrue("res/raw/license.txt == LICENSE", repo.contentEquals(bundled))
+    }
+
+    // ---- `ai-sessions/0069` A68-APP-05: "Use different Buds" on the Settings tab ----
+
+    @Test
+    fun `the Settings tab offers Use different Buds with what it does and what it leaves alone`() {
+        var taps = 0
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, null, onUseDifferentBuds = { taps++ })
+            }
+        }
+        compose.onNodeWithText(
+            "Forgets which Buds this app controls (the Bluetooth pairing in Android stays). You then pick the Buds again with Pair a device.",
+        ).assertExists()
+        compose.onNode(hasText("Use different Buds") and hasClickAction()).performScrollTo().performClick()
+        assertEquals(1, taps)
     }
 }

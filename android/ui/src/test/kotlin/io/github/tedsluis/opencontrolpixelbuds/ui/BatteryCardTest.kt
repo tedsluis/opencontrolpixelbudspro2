@@ -37,6 +37,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -117,6 +118,17 @@ class BatteryCardTest {
     }
 
     @Test
+    fun `a Case value from before this connection says last connection, one from this connection says no bud charging`() {
+        // `ai-sessions/0069` A68-APP-02 (the maintainer's wording): literal texts, not the helper compared with itself.
+        val case = BatteryLevel.Known(84, isCharging = null, isStale = true, receivedAtMillis = at)
+        val time = formatUpdatedAt(at)
+        assertEquals("Case: 84% — last seen $time (last connection)", caseLine(case, null, caseFromLastConnection(case, null, sessionSince = at + 1)))
+        assertEquals("Case: 84% — last seen $time (no bud charging in the case)", caseLine(case, null, caseFromLastConnection(case, null, sessionSince = at)))
+        assertEquals("Case: 84% — last seen $time (no bud charging in the case)", caseLine(case, null, caseFromLastConnection(case, null, sessionSince = null)))
+        assertEquals("Case: 84% (updated $time)", caseLine(case.copy(isStale = false), null, fromLastConnection = true))
+    }
+
+    @Test
     fun `the (i) dialog shows exactly the helper lines with their times`() {
         val status = BatteryStatus(
             left = BatteryLevel.Known(97, isCharging = false, receivedAtMillis = at),
@@ -126,6 +138,11 @@ class BatteryCardTest {
         show(status)
         compose.onNodeWithContentDescription("Battery: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
         for (line in batteryDetailLines(status, at, null)) compose.onNodeWithText(line).assertExists()
+        // Literal texts as well (`ai-sessions/0069`, A68-APP-06): the three lines above and below compare a helper with itself and cannot catch a wrong wording.
+        val time = formatUpdatedAt(at)
+        compose.onNodeWithText("Left: 97% (updated $time) — not charging ($time, last connection)").assertExists()
+        compose.onNodeWithText("Case: 60% — last seen ${formatUpdatedAt(at - 60_000)} (no bud charging in the case)").assertExists()
+        compose.onNodeWithText("Right: Battery unavailable").assertExists()
         compose.onNodeWithText(budLine("Left", status.left, status.leftCharging, at)).assertExists()
         compose.onNodeWithText(caseLine(status.case, at)).assertExists()
     }

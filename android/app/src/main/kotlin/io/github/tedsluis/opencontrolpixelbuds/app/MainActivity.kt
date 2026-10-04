@@ -156,7 +156,9 @@ class MainActivity : ComponentActivity() {
     private val pairingStateFlow get() = uiSession.pairingState
 
     /** Whether a system permission prompt was already shown since this process started (see [permissionStatus]). */
-    private var permissionsRequestedThisRun = false
+    private var permissionsRequestedThisRun: Boolean
+        get() = uiSession.permissionsRequestedThisRun // survives a rotation (A68-APP-09)
+        set(value) { uiSession.permissionsRequestedThisRun = value }
     private val permissionStateFlow = MutableStateFlow(
         PermissionState(PermissionStatus.NOT_REQUESTED, PermissionStatus.NOT_REQUESTED),
     )
@@ -188,7 +190,9 @@ class MainActivity : ComponentActivity() {
      * share-sheet `EXTRA_TEXT` hand-off whose receiving app cut the text at exactly 65,536 bytes, mid-line (`CAP-063-debug-export.log`). The
      * snapshot is taken at the tap, so the file holds the log as it was when the user asked for it.
      */
-    private var pendingLogExport: String? = null
+    private var pendingLogExport: String?
+        get() = uiSession.pendingLogExport // survives a rotation while the "save as" dialog is open (A68-APP-09)
+        set(value) { uiSession.pendingLogExport = value }
 
     private val logExportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
         val text = pendingLogExport
@@ -252,6 +256,24 @@ class MainActivity : ComponentActivity() {
      * The pairing entry point behind "Pair a device". Re-entry guard (`ai-sessions/0042`): one tap started two CDM requests 82 ms
      * apart and the second one's raw error was shown while the first picker was open — nothing new starts while a pairing runs.
      */
+    /** Counts "Use different Buds" runs, so the composition re-reads the bonded lookup after each ([setContent]). */
+    private val bondedChanged = MutableStateFlow(0)
+
+    /**
+     * "Use different Buds" (`ai-sessions/0069`, A68-APP-05; the maintainer's choice in chat 2026-10-03): close the session, then remove this app's own
+     * CompanionDeviceManager associations — the Bluetooth pairing in Android stays. The Connection tab then offers *Pair a device*, which opens Android's
+     * picker. Nothing is sent to the Buds beyond the normal Disconnect.
+     */
+    private fun useDifferentBuds() {
+        applicationScope.launch {
+            budsRepository.disconnect()
+            companionPairing.forgetAssociations()
+            pairingStateFlow.value = null
+            bondedChanged.value += 1
+            linkRefresh.tryEmit(Unit)
+        }
+    }
+
     private fun startPairing() {
         val running = pairingStateFlow.value
         if (running == PairingState.Requesting || running == PairingState.Bonding) {
@@ -306,6 +328,7 @@ class MainActivity : ComponentActivity() {
                 .collectAsStateWithLifecycle(initialValue = ConnectionState.Disconnected)
             val ancMode by budsRepository.ancMode.collectAsStateWithLifecycle(initialValue = null)
             val ancModeUpdatedAt by budsRepository.ancModeUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
+            val sessionSince by budsRepository.sessionSince.collectAsStateWithLifecycle(initialValue = null as Long?)
             val ancAvailability by budsRepository.ancAvailability.collectAsStateWithLifecycle(initialValue = AncAvailability.UNKNOWN)
             val ancAvailabilityUpdatedAt by budsRepository.ancAvailabilityUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val ancModeUnconfirmedAt by budsRepository.ancModeUnconfirmedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
@@ -362,6 +385,9 @@ class MainActivity : ComponentActivity() {
             val darkMode by darkModeSettingsStore.darkMode.collectAsStateWithLifecycle(initialValue = DarkMode.DEFAULT)
 
             var bondedLookup by remember { mutableStateOf(companionPairing.lookupBonded()) }
+            // "Use different Buds" (A68-APP-05) changes which bonded device is this app's — re-read the lookup when it has run.
+            val bondedChanges by bondedChanged.collectAsStateWithLifecycle()
+            LaunchedEffect(bondedChanges) { bondedLookup = companionPairing.lookupBonded() }
             val pairingState by pairingStateFlow.collectAsStateWithLifecycle()
             LaunchedEffect(pairingState) { if (pairingState is PairingState.Bonded) bondedLookup = companionPairing.lookupBonded() }
 
@@ -402,12 +428,11 @@ class MainActivity : ComponentActivity() {
             val bluetoothEnabled = bluetoothAdapterState == BluetoothAdapterState.ON
             val state = OpenControlUiState(
                 connectionState = connectionState,
-                bluetoothEnabled = bluetoothEnabled,
-                hasBondedDevice = hasBondedDevice,
                 deviceStatus = deriveDeviceStatus(
                     bluetoothEnabled = bluetoothEnabled,
                     bluetoothConnect = permissionState.bluetoothConnect,
                     hasBondedDevice = hasBondedDevice,
+                    severalCandidates = bondedLookup is BondedLookup.SeveralCandidates,
                     androidLink = androidLink,
                     session = connectionState,
                 ),
@@ -419,6 +444,7 @@ class MainActivity : ComponentActivity() {
                 messageStreamError = messageStreamError,
                 ancMode = ancMode,
                 ancModeUpdatedAt = ancModeUpdatedAt,
+                sessionSince = sessionSince,
                 ancAvailability = ancAvailability,
                 ancAvailabilityUpdatedAt = ancAvailabilityUpdatedAt,
                 ancModeUnconfirmedAt = ancModeUnconfirmedAt,
@@ -497,6 +523,7 @@ class MainActivity : ComponentActivity() {
                 onDarkModeChanged = { mode -> applicationScope.launch { darkModeSettingsStore.setDarkMode(mode) } },
                 onExportLog = { startLogExport() },
                 onOpenUrl = { url -> openUrl(url) },
+                onUseDifferentBuds = { useDifferentBuds() },
             )
             // `ai-sessions/0057` D-10: a pull runs the one existing action `pullActionFor` chose — the same repository call or system prompt its button makes —
             // once, in the application scope; the returned job lets the pull indicator end when the repository has answered. Nothing is retried or scheduled.

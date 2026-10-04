@@ -26,12 +26,12 @@ import io.github.tedsluis.opencontrolpixelbuds.BuildConfig
 import dagger.hilt.android.HiltAndroidApp
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
+import io.github.tedsluis.opencontrolpixelbuds.domain.currentAncMode
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsForegroundService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -65,7 +65,8 @@ class OpenControlApplication : Application() {
         }
         applicationScope.launch {
             var running = false
-            combine(budsRepository.connectionState, budsRepository.ancMode.onStart<io.github.tedsluis.opencontrolpixelbuds.domain.AncMode?> { emit(null) }) { state, mode ->
+            // The mode only while it is current (`ai-sessions/0069`, A68-APP-02): a mode from the last connection is never shown as the Buds' mode.
+            combine(budsRepository.connectionState, budsRepository.currentAncMode()) { state, mode ->
                 notificationText(state, mode)
             }.distinctUntilChanged().collect { text ->
                 val intent = Intent(this@OpenControlApplication, BudsForegroundService::class.java)

@@ -42,6 +42,13 @@ data class EqBandGains(
         lowBass = lowBass.coerceIn(RANGE),
     )
 
+    /**
+     * [clamped], or `null` when a band is not a finite number (`ai-sessions/0069`, A68-APP-11): `Float.NaN.coerceIn(…)` stays NaN — every comparison with
+     * NaN is false — so [clamped] alone handed a NaN on to the encoder. No slider can produce one; a future preset import could.
+     */
+    fun clampedOrNull(): EqBandGains? =
+        if (listOf(upperTreble, treble, mid, bass, lowBass).all { it.isFinite() }) clamped() else null
+
     companion object {
         val RANGE = -6.0f..6.0f
         val FLAT = EqBandGains(0f, 0f, 0f, 0f, 0f)
@@ -61,4 +68,11 @@ enum class EqPreset(val gains: EqBandGains) {
     BALANCED(EqBandGains(upperTreble = 2.5f, treble = -1.0f, mid = 1.0f, bass = 0.5f, lowBass = -3.5f)),
     VOCAL_BOOST(EqBandGains(upperTreble = 0.0f, treble = 2.0f, mid = 4.0f, bass = 0.0f, lowBass = -1.0f)),
     CLARITY(EqBandGains(upperTreble = 5.0f, treble = 3.0f, mid = 2.0f, bass = 0.0f, lowBass = -2.0f)),
+
+    /**
+     * All bands 0.0 (`ai-sessions/0069`, A68-APP-16; the maintainer's choice in chat 2026-10-03). Named "Flat", not "Default": the official app's own
+     * "Default" preset has never been captured (`EQP-001`, planned in `CAP-069`). The quintet itself is on the wire — the official app wrote it when its
+     * Equalizer screen opened on a flat "Last saved" (`CAP-015` frame 2111) — and it is within ADR-020's ±6.0 range like every other write.
+     */
+    FLAT(EqBandGains.FLAT),
 }

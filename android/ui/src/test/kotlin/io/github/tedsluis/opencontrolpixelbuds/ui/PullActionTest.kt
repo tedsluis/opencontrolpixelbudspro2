@@ -66,6 +66,7 @@ class PullActionTest {
             assertEquals(PullAction.REQUEST_PERMISSIONS, pullActionFor(tab, DeviceStatus.PermissionMissing(PermissionStatus.DENIED), idle))
             assertEquals(PullAction.OPEN_APP_SETTINGS, pullActionFor(tab, DeviceStatus.PermissionMissing(PermissionStatus.PERMANENTLY_DENIED), idle))
             assertEquals(PullAction.PAIR, pullActionFor(tab, DeviceStatus.NotPaired, idle))
+            assertEquals(PullAction.PAIR, pullActionFor(tab, DeviceStatus.SeveralBudsPaired, idle))
         }
     }
 }

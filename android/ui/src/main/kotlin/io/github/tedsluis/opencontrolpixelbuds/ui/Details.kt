@@ -56,6 +56,12 @@ import androidx.compose.ui.unit.dp
 /** How much a value that is not current (stale, from an earlier connection) is dimmed on the main surface — always together with the (i) dot, never alone. */
 internal const val NOT_CURRENT_ALPHA: Float = 0.6f
 
+/**
+ * The first (i) line of a card whose values are not current because no session is open (`ai-sessions/0069`, A68-APP-02; the maintainer's choice in chat
+ * 2026-10-03, "Keep the value, mark it"): the values stay visible, dimmed, with the (i) dot — never shown as the Buds' current state.
+ */
+internal const val FROM_LAST_CONNECTION_DETAIL: String = "From the last connection — the app is not connected to the Buds now."
+
 internal const val DETAILS_DESCRIPTION: String = "Details"
 internal const val DETAILS_NOT_CURRENT_DESCRIPTION: String = "Details — not current"
 

@@ -24,8 +24,9 @@ package io.github.tedsluis.opencontrolpixelbuds.domain
  * null/zero placeholder — AGENTS.md §5 requires the UI to show "Battery
  * unavailable" rather than ever fabricate or carry over a stale percentage
  * silently. [isCharging] is nullable for the identical reason applied to a
- * second field: a source that carries no charging bit (the DLCI 0x08 Case push,
- * ADR-035) must report `null` ("unknown"); defaulting it to `false` would
+ * second field: a source that carries no charging bit (the Case level, read from
+ * DLCI 0x02's runtime-info stream since ADR-043 — the DLCI 0x08 push of ADR-035 is
+ * no longer opened) must report `null` ("unknown"); defaulting it to `false` would
  * silently fabricate "not charging" the same way a fabricated percentage would.
  * (The Message Stream battery message does carry one, ADR-033.)
  */

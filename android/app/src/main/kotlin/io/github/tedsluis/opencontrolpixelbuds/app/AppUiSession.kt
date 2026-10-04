@@ -48,6 +48,20 @@ class AppUiSession @Inject constructor(
     /** Pairing progress; the Activity sets `Requesting`/`Failed`/`null` from the system picker's callbacks, the bonding observation the rest. */
     val pairingState = MutableStateFlow<PairingState?>(null)
 
+    /**
+     * Whether a system permission prompt was already shown since this process started (`permissionStatus`). Here, not in the Activity
+     * (`ai-sessions/0069`, A68-APP-09): as an Activity field it was reset by a rotation, and a denied permission then read "not requested" again.
+     */
+    @Volatile
+    var permissionsRequestedThisRun: Boolean = false
+
+    /**
+     * The debug-log text waiting for the system "save as" dialog's answer. Here for the same reason: a rotation while the dialog was open recreated the
+     * Activity and the text to write was gone.
+     */
+    @Volatile
+    var pendingLogExport: String? = null
+
     @Volatile
     private var bondingJob: Job? = null
 
