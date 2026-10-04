@@ -45,6 +45,10 @@ committed). A first `§4` keyword-search pass is done — see `REVERSE_ENGINEERI
 relevant classes" section and `DECISIONS.md` ADR-018/ADR-019 for what it found. Analysis is ongoing,
 not finished — further passes remain valuable (see `TODO.md` Phase 2).
 
+**Used in a capture, not pulled (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat, `AskUserQuestion` "New APK"):** the official app
+**1.0.990706425** (Play Store "Updated on Sep 30, 2026", on film) ran `CAP-069`. It has no "Find device" screen, calls `maestro_pw.JitterBuffer` and an unnamed MAESTRO
+service `0xbf6c9399` on the wire (`CAP-069-FINDINGS.md` §9). Not pulled or decompiled; a follow-up session is planned (`TODO.md` §4).
+
 ## Why provenance matters here
 
 Recording *how* each APK was obtained strengthens the "legally obtained" basis `PROJECT_RULES.md`

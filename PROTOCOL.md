@@ -767,6 +767,10 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   `08 12 00 14 01 e8 e8 20` + 16 × `00`) is ACKed `ff 01 00 06 08 12 01 e8 e8 20` (A2036) and followed by a Notify (A2037); no NAK `0x04`. 🟢 FACT for
   OpenControl's `Set` (1 sample; "A" = `CAP-068-btsnoop_hci2.log.last`, `CAP-068-FINDINGS.md` §2); what the official app sends is `CAP-069` IV. The same run:
   12 `Set`s by the release build 1.0.1 without Play services, 12 ACKed, 0 NAK, each after a non-zero Settable.
+- **Update (2026-10-04, `ai-sessions/0071`; the maintainer's `ANC-006` decision in chat 2026-10-04, `AskUserQuestion` "ANC-006", option *"Keep the Set"*):**
+  what the official app sends — `CAP-069` (1.0.990706425): three filmed taps on the already-selected mode (Adaptive 16:16:16, Transparency 16:16:42, Off 16:16:58)
+  produced **no** `08 12` (0 frames in each window; positive control: the same filter returns the four real changes 5519, 5600, 5644, 5692, each ACKed). 🟢 for
+  `CAP-069`. OpenControl keeps sending its `Set` for the current mode (ACKed, `CAP-068`) — the maintainer's choice. Evidence: `CAP-069-FINDINGS.md` §4.
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -849,6 +853,10 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   `Last saved`'s quintet is per-account/session state, not a fixed constant — the value above is
   this specific session's starting point, not a universal default.
   **Update 2026-10-03 (`ai-sessions/0069`, no status change):** the OpenControl app (1.0.1) offers a preset "Flat" that writes this row's quintet — `WriteSetting 4:{16:{0.0 × 5}}`, byte for byte `CAP-015` frame 2111 (06:12:13.279) on the announced channel. It is named "Flat", not "Default": what the official app writes for its own "Default" preset is not captured (`EQP-001`, planned in `CAP-069`).
+  **Update 2026-10-04 (`ai-sessions/0071`; recorded on the maintainer's answer in chat 2026-10-04, `AskUserQuestion` "EQ Default", option *"Record only, keep
+  'Flat'"*):** the official "Default" preset writes **0.0 × 5** — `CAP-069` 1990, 5803, 5965, 6066 (each OK), byte-identical in payload to OpenControl's "Flat";
+  OpenControl keeps the name "Flat". 🟡 one sample of a field-18 write right after the **Save** button (6050, 1 s after the filmed tap, no navigation in between) —
+  for `CAP-053`. Evidence: `CAP-069-FINDINGS.md` §5.
 - **Outer field 16 vs. 18 ("preview" vs. "save") — still 🟡 HYPOTHESIS, reading revised
   2026-08-18.** *(Pointer 2026-09-30, A58-PROT-05: what 16 and 18 **hold** is 🟢 since ADR-034 — 16 = active EQ, 18 = last-saved custom EQ, the
   `ReadSetting` bullet below; what **triggers** a field-18 write stays 🟡.)* The 2026-08-15 capture guessed field 18 = an explicit `Save`-button tap, ~5s after
@@ -1478,6 +1486,11 @@ option (C), even though its per-earbud content is now FACT-confirmed.
   > (Recommended)"*):** `CAP-068` (OpenControl 1.0.1, no Play services) is no evidence for the status sync after a stop on the bud: the app released DLCI 4
   > 1.5 s after its Ring (B2721 → B2736) and no client held it when the bud was touched (film 07:51:12–14); the later Stop (B2799) got only the ACK (B2810), no
   > `04 01 00 01 00`. Status unchanged (🟡); test: `CAP-069` VII. ("B" = `CAP-068-btsnoop_hci2.log`, `CAP-068-FINDINGS.md` §6.)
+  > **Update (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Find", option *"Dated note, status 🟡 (Recommended)"*):**
+  > the official app **1.0.990706425 has no Find device** (`CAP-069`, every settings screen opened on film); Find Hub's *Play sound* for Left and for Right showed
+  > "Can't play sound" with the Buds connected, and put **no** `04 01` on the wire (`tshark -Y "btrfcomm.len>0 && frame contains 04:01:00:01"` → 0, positive control
+  > `CAP-068`). `FIND-005` cannot be tested with the official app any more; status unchanged (🟡). Test with OpenControl's own Ring while a client holds the Message
+  > Stream. Evidence: `CAP-069-FINDINGS.md` §7.
 - **Sent to**: RFCOMM Message Stream channel, DLCI 0x04, per §2.1.
 - **Expected response**: confirmed — see the two ACK variants above.
 - **Major structural finding — Case/"both" use a different mechanism entirely**: the official app
@@ -1608,6 +1621,11 @@ implementation gate.
   stands). 🟡 **HYPOTHESIS:** the SASS "Notify capability" flags byte carries the multipoint state — 2296 `07 11 00 04 01 02 b8 00` after ON, 2487
   `07 11 00 04 01 02 98 00` after OFF; SASS page (raw text fetched 2026-10-03): *"Bit 2: multipoint current state 1, if multipoint is on 0, otherwise"* (MSB-first,
   as bit 4 for on-head detection in §4.5.5). Two samples; a third is planned in `CAP-069`. Nothing is built by this.
+  **Update (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Field 11", option *"FACT + ADR-053 (Recommended)"*):** the
+  SASS capability flags' **bit 2 (MSB-first; `0x20`) = multipoint on** — 🟢 **FACT**. `CAP-069`: four filmed toggles, `4:{11:0}` 3161 → `07 11 00 04 01 02 98 00` 3166,
+  `4:{11:1}` 3212 → `… b8 00` 3215, `4:{11:0}` 3245 → `… 98 00` 3248, `4:{11:1}` 3275 → `… b8 00` 3278 (0.02–0.34 s), each write OK and mirrored; with `CAP-019`
+  2296/2487 six of six. SASS page (raw text fetched 2026-10-04): *"Bit 2: multipoint current state 1, if multipoint is on 0, otherwise"*. The OFF write is now on film
+  twice. Implementation: ADR-053. Evidence: `CAP-069-FINDINGS.md` §2.
 - **Sent to**: DLCI 0x02 (setting write) **and** DLCI 0x04 Group `0x07` (SASS negotiation).
 - **Status**: 🟢 FACT for `field 11`'s field-number identity and semantic name ("Multipoint"). 🟡
   HYPOTHESIS for the SASS correlation and for the OFF-direction wire value *(the OFF write is on the wire and on film since the 2026-10-03 Update; the label was
@@ -1695,6 +1713,10 @@ implementation gate.
   Noise cancellation → Off. Command: the message-level parse of `tshark -r CAP-064-btsnoop_hci.log -Y "bthci_acl.chandle==0x000b && btrfcomm.dlci==5"
   -T fields -e frame.number -e data.data` (`CAP-064-FINDINGS.md` §3). One shared list stays 🟡.
 
+- **Update (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Wear table") — supporting evidence for one shared list, no status
+  change.** `CAP-069`: ticking Off in "Customize right" wrote `4:{12:{1:1 2:1 3:1 4:1}}` (1813, OK 1816, no side field) and "Customize left" showed Off ticked 3.5 s
+  later with no write in between (film 16:06:40–44). The app shows one list; whether the Buds keep one stays 🟡. `CAP-069-FINDINGS.md` §6.
+
 #### 4.5.4 Head gestures
 
 - **Feature confirmed present**: "Use head gestures" toggle (Device details → Controls and
@@ -1716,6 +1738,13 @@ implementation gate.
   field 29: 1 = off, 2 = on — so `CAP-028`'s head-gesture test ran with the setting on. A write site exists in the APK's smali (class `cmi`, `const/16 v2, 0x1d` →
   `iput … Lqhr;->b:I`, `REVERSE_ENGINEERING.md`'s `qhr` register, 2026-10-03 Update); which UI path reaches it is not resolved. "single OFF→ON sample" above is
   history. Promotion needs one filmed OFF and ON on the current firmware (`CAP-069`) and its own ADR; nothing is built by this.
+
+- **Update (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Field 29", option *"FACT + ADR-052 (Recommended)"*):** `qhr`
+  field 29 = "Use head gestures", **1 = off, 2 = on** — 🟢 **FACT**. `CAP-069` (official app 1.0.990706425): `WriteSetting 4:{29:1}` 2492, 2737, 2923 and `4:{29:2}`
+  2564, 2831, 3025, each a filmed tap (OFF at 16:09:18, 16:10:17, 16:11:01; ON with the "Optimize head gestures" dialog at 16:09:29, 16:10:42, 16:11:18), empty
+  `RESPONSE` OK, mirrored on `SubscribeToSettingsChanges`; raw 2492 `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 e8 01 01 bc 10 6b a2 7e`;
+  `CAP-020` 1935/2038. 🟡 GSND CONTROL Code `0x16` = "head gestures active" (`08 01` active, `08 02` inactive): it follows every write inverted (6/6) and also changes
+  with wear (no bud worn → `02`). Command: `python3 scripts/pwrpc_decode.py CAP-069-btsnoop_hci.log | grep "29:"`. Implementation: ADR-052. Evidence: `CAP-069-FINDINGS.md` §1.
 
 #### 4.5.5 In-ear detection
 
@@ -3451,6 +3480,14 @@ leaving them buried in prose elsewhere.
 - [ ] **Added 2026-09-28, `CAP-056-FINDINGS.md` §4:** 🟡 `SubscribeToSettingsChanges 4:{13:n}` (field 13, `qhs` ANC state) mirrors the `Notify ANC state` mode on wear
       changes with in-ear detection on — `13:4` with `0x40` (2257/2259), `13:2` with `0x08` (2322/2324), and a read of `13:0` with no bud worn (3870) — matching
       `qhs.java`'s `ANC_STATE_ADAPTIVE(4)`, `ANC_STATE_ACTIVE(2)`, `ANC_STATE_UNKNOWN(0)`.
+
+- [ ] **Added 2026-10-04, `CAP-069-FINDINGS.md` §8–§9 (maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Wear table"; all 🟡/🔴, no FACT):** 🟡 GSND
+  CONTROL Code `0x05`: `03` no bud worn (6 samples), `04` one bud worn (5), `06` both worn (2); 🔴 `05` (2351, 2255 — unfilmed insertion), value 1 never seen.
+  🟡 `01 09 00 03 0a 01 03` opens an assistant session on GSND AUDIO (🟢 3 of 3 in `CAP-069`: 3403, 4084, 4806 → first AUDIO frame 1.7–2.3 ms later; the hold itself
+  not on film). 🟡 settings-stream field 13 = ANC mode (1 Off, 2 NC, 3 Transparency, 4 Adaptive, 0 with Settable `00`; 10 of 10). 🔴 the official app 1.0.990706425
+  subscribes to an unnamed MAESTRO service `0xbf6c9399` (method `0x92476025`, 146 stream packets) and calls `maestro_pw.JitterBuffer` (`0x8d99df93`) — both new on
+  the wire; naming needs the new APK. 🔴 Device Information `03 0b` (spec: "Current FHN ephemeral identifier") with length 25 (6853, 8241) — Find Hub Network, not
+  pursued (ADR-008/027).
 
 ### Resolved
 

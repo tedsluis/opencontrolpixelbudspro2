@@ -2359,6 +2359,9 @@ motivated this).
   (14 samples, `.log.last` A3345 … A4651, e.g. A3574 `08 13 00 04 01 e8 00 20`) — `CAP-064`'s ≈ 28 s of `e8` did not recur (two runs against one; still
   unexplained). All 4 `Set`s were sent after a fresh `e8` and ACKed. Item 3 is unchanged: 🟡 HYPOTHESIS (strong) "`00` ⇒ no bud worn"; the converse stays
   refuted. Items 1, 2 and 4 are unchanged.
+- **Update (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Wear table", option *"Desk entry + §6 🟡 (Recommended)"*):**
+  `CAP-069` (official app; ears not on film, wear inferred from the Buds' own GSND Code `0x05` and the case slots): 5 `Notify` frames read `00` (617, 6434, 6894, 7520,
+  8260), each with no bud worn; 14 read `e8`, each with at least one bud out of the case and worn per Code `0x05`. Item 3 is unchanged (🟡 "`00` ⇒ no bud worn").
 
 ## ADR-050 — Settings → Info may hand a project URL to another app on the user's tap; the app itself stays offline
 
@@ -2403,6 +2406,44 @@ motivated this).
 - **Consequences**: `AGENTS.md` §12 is read as banning Google's assets and logos and any suggestion of affiliation; the plain-text compatibility name is an
   explicit exception. This is the maintainer's judgement, not legal advice; if Google objects, rename to option (a) — the unchanged `applicationId` keeps
   updates working.
+
+## ADR-052 — DLCI 0x02: `ReadSetting` and `WriteSetting` unblocked for `qhr` field 29 (head gestures)
+
+- **Date**: 2026-10-04
+- **Status**: Accepted (maintainer, chat 2026-10-04, `ai-sessions/0071`)
+- **Note on process**: drafted by an AI agent (`CAP-069-FINDINGS.md` §13, draft D-1); the decision is the maintainer's, given in the chat of 2026-10-04
+  (`AskUserQuestion` "Field 29", option *"FACT + ADR-052 (Recommended)"*, with this text in the preview), per `AGENTS.md` §6. Depends on the `PROTOCOL.md` §4.5.4
+  2026-10-04 Update (field 29 🟢), approved in the same answer.
+- **Context**: head gestures were chosen as the next app feature "after `CAP-069`" (chat 2026-10-03, "Features"). `CAP-069` filmed six toggles of "Use head gestures"
+  in the official app 1.0.990706425: `WriteSetting 4:{29:1}` (OFF) 2492, 2737, 2923 and `4:{29:2}` (ON) 2564, 2831, 3025, each 0.4–1.1 s after its tap, answered by an
+  empty `RESPONSE` status OK and mirrored on `SubscribeToSettingsChanges`; the connect-time read is `4:{29:2}` with the switch ON on film; `CAP-020` 1935/2038 (both
+  directions, channel 21) agree.
+- **Options considered**: (a) keep gated; (b) read only; (c) read + write — chosen.
+- **Decision**: `ReadSetting 4:29` and `WriteSetting 4:{29:v}`, v ∈ {1 = off, 2 = on} (`maestro_pw.Maestro`), are unblocked. The request is byte-identical to the
+  official app's for the same value and channel (`CAP-069` 2492 `… 2a 05 22 03 e8 01 01 …` / 2564 `… e8 01 02 …` on channel 21; the channel-19 form otherwise),
+  on the announced channel with its ADR-034 address; it passes the Safe-Mode gate (ADR-042), is sent once per user tap, and counts as done only on the empty
+  `RESPONSE` status OK — otherwise the previous state stays and the reason is shown. A read value other than 1 or 2 is shown as "—". The official app's
+  "Optimize head gestures" dialog is not reproduced. Nothing is sent on GSND CONTROL (its Code `0x16` stays 🟡, not read by the app).
+- **Consequences**: the settings codec gains field 29; `Maestro.READABLE_FIELDS` gains 29 (amends ADR-036); a "Head gestures" switch on "Controls". Hardware
+  re-test: OFF → `4:{29:1}` → OK + stream `29:1`; ON → `4:{29:2}` → OK. Not built by this ADR (order: after Multipoint, the maintainer's choice, chat 2026-10-04).
+
+## ADR-053 — DLCI 0x02: `WriteSetting` unblocked for `qhr` field 11 (Multipoint)
+
+- **Date**: 2026-10-04
+- **Status**: Accepted (maintainer, chat 2026-10-04, `ai-sessions/0071`)
+- **Note on process**: drafted by an AI agent (`CAP-069-FINDINGS.md` §13, draft D-2); the decision is the maintainer's, given in the chat of 2026-10-04
+  (`AskUserQuestion` "Field 11", option *"FACT + ADR-053 (Recommended)"*, with this text in the preview), per `AGENTS.md` §6. Depends on the `PROTOCOL.md` §4.5.2
+  2026-10-04 Update (SASS bit 2 🟢), approved in the same answer.
+- **Context**: field 11 = Multipoint is 🟢 (ADR-025 Update 2026-09-08) and readable (ADR-036). `CAP-069` filmed four toggles: `WriteSetting 4:{11:0}` 3161, 3245 and
+  `4:{11:1}` 3212, 3275, each answered OK and mirrored, and the Buds' SASS capability flags `07 11 00 04 01 02 xx 00` followed within 0.35 s (`98` off, `b8` on —
+  SASS "Bit 2: multipoint current state"); `CAP-019` 2293/2482 agree.
+- **Options considered**: (a) keep read-only; (b) writable — chosen.
+- **Decision**: `WriteSetting 4:{11:v}`, v ∈ {0 = off, 1 = on}, byte-identical to `CAP-069` 3161/3212 (channel 21) or the channel-19 form for the announced channel
+  (ADR-034), through the Safe-Mode gate (ADR-042), once per tap, applied only on the empty `RESPONSE` status OK. The SASS answer goes to whichever client holds the
+  Message Stream; the app does not wait for it.
+- **Consequences**: the settings codec gains field 11 (write; the read exists per ADR-036 but is not yet built); a "Multipoint" switch. Hardware re-test: OFF →
+  `4:{11:0}` → OK (and, if the app holds the Message Stream, `07 11 … 98 00`); ON → `4:{11:1}` → OK. Built first of the two (the maintainer's order, chat
+  2026-10-04, "Order": *"Multipoint first"*).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

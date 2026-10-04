@@ -40,7 +40,6 @@ Open after `CAP-068` (`ai-sessions/0070`); each goes into the next app run with 
 
 | Capture | Group | What | Phone / app |
 |---|---|---|---|
-| `CAP-069` | BE | head gestures and Multipoint off/on on film, assistant hold, tap on the current ANC mode, EQ "Default", wear states, Ring stopped on the bud | Pixel 7a, official app |
 | `CAP-054` | AP | the `0xFE2C` advertisement right after the lid opens, connection-free (redesigned 2026-10-03, L68-6) | Pixel 7a, no app |
 | `CAP-053` | AO | EQ outer field 16 vs 18: Save tap, navigate away, slider release — each isolated | Pixel 7a, official app |
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
@@ -58,8 +57,13 @@ Open after `CAP-068` (`ai-sessions/0070`); each goes into the next app run with 
 
 Next app features, chosen by the maintainer (chat 2026-10-03, "Features": *"Yes to both, after CAP-069"*):
 
-- [ ] **Head gestures on/off** — `qhr` field 29, 🟡 1 = off / 2 = on (`PROTOCOL.md` §4.5.4). Needs `CAP-069` section I, then **M**'s promotion and an ADR.
-- [ ] **Multipoint on/off** — field 11, 🟡 (`PROTOCOL.md` §4.5.2; SASS flag bit 🟡). Needs `CAP-069` section II, then **M**'s promotion and an ADR.
+- [ ] **Multipoint switch** — field 11 write unblocked by ADR-053 (`CAP-069`, 2026-10-04); build first (**M**, chat 2026-10-04, "Order": *"Multipoint first"*), app
+      session with real-byte fixtures `CAP-069` 3161/3212 and a hardware re-test.
+- [ ] **Head gestures switch** — field 29 read + write unblocked by ADR-052 (`CAP-069`); build after Multipoint; fixtures `CAP-069` 2492/2564, reads 1226/7209.
+- [ ] `ARCHITECTURE.md` §5a and `PROJECT.md` ("Status after 1.0.x", the feature list) still describe head gestures and Multipoint as waiting for `CAP-069`;
+      update them with the app session that builds the switches (`ai-sessions/0071`, deferred).
+- [ ] Pull and decompile the official app **1.0.990706425** (ADR-017 boundary) — name the MAESTRO service `0xbf6c9399` and `JitterBuffer` method `0x8d99df93`
+      seen in `CAP-069` (`CAP-069-FINDINGS.md` §9; **M** approved the follow-up, chat 2026-10-04).
 
 Proposals awaiting the maintainer (`DESKRESEARCH_FINDINGS.md`, entry of 2026-10-03 — nothing applied as a status change):
 
@@ -72,13 +76,13 @@ Proposals awaiting the maintainer (`DESKRESEARCH_FINDINGS.md`, entry of 2026-10-
 
 Open questions (each with where it is described):
 
-- 🔴 DLCI 0x08 Code `0x05`: the meaning of values 1, 3, 4, 5, 6 (→ `CAP-069` VI); Code `0x16` follows field 29 with one counter-sample
-  (`CAP-029` 3757); field 2 of Code `0x03`.
-- 🔴 The `CAP-021` DLCI 0x0a waves: the trigger is not on film (→ `CAP-069` III). 🟡 Who owns DLCI 0x08/0x0a — the Google app's
+- 🔴 GSND CONTROL Code `0x05`: 🟡 3 = no bud worn, 4 = one, 6 = both (`CAP-069` §8); value 5 (twice, unfilmed) and 1 (never seen) open — test: one bud
+  inserted with the other in the hand, ears on film. 🟡 Code `0x16` = head gestures active (`CAP-069` §1); field 2 of Code `0x03`.
+- 🔴 The DLCI 0x0a waves are assistant sessions opened by `01 09 … 0a 01 03` (`CAP-069` §3, 3 of 3), but the hold itself has not been filmed; the hold codes
+  03/05/01/21 are 🟡. 🟡 Who owns DLCI 0x08/0x0a — the Google app's
   assistant service is the lead (`CAP-061-FINDINGS.md` §2).
-- 🔴 A tap on the current ANC mode: OpenControl sends the `Set` and the Buds ACK it (`CAP-068`, `PROTOCOL.md` §4.1 Update 2026-10-04); what the
-  official app sends is `CAP-069` IV — then **M** decides whether OpenControl should skip it (chat 2026-10-04: "Keep the Set; decide after CAP-069").
-- 🔴 Ring status: what the Buds send when the ringing is stopped on the bud (L68-2 → `CAP-069` VII; `CAP-068` could not observe it — the app's claim
+- 🔴 Ring status: what the Buds send when the ringing is stopped on the bud (L68-2; `CAP-069`: the official app has no Find device any more and Find Hub
+  rang nothing — test with OpenControl's own Ring while a client holds the Message Stream; `CAP-068` could not observe it — the app's claim
   is released 1.5 s after the Ring, `CAP-068-FINDINGS.md` §6). Known limit of 1.0.1: the "Ringing" notice stays until Stop is tapped. The app does not read the
   Buds' ring-status message; whether it should is a decision after those runs (**M**, "Nothing new on the wire; test first").
 - 🔴 The Fast Pair battery advertisement on case-open (L68-6 → `CAP-054`). The only route to a Case level without a connection (ADR-006).
@@ -99,6 +103,10 @@ Open questions (each with where it is described):
   no bud worn (`PROTOCOL.md` §6).
 - 🟡 Whether the unsolicited announcement reaches the official app's `gaa.d` (`PROTOCOL.md` §2.2a, Update of 2026-10-01).
 - 🟡 Hearable Controls MAC not enforced (`PROTOCOL.md` §4.1): a firmware that starts enforcing it would NAK with reason `0x03`.
+- 🔴 `CAP-069` leftovers: why a bud's charging bit stayed set ≈ 12 s after it left the case (7358 → 7404); why the phone re-opened GSND AUDIO on ACL 3
+  (8157 → 8271); Device Information `03 0b` (FHN EID, out of scope) with length 25; field 18 after the Save button (one sample, 6050 → `CAP-053`).
+- [ ] **M** The maintainer's Buds were left with the EQ on a custom "Last saved" curve and the press-and-hold mode list with Off ticked after `CAP-069`
+      (P7 was Balanced, Off unticked) — restore if wanted before the next run.
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
   captured — sending it needs its own ADR. Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
 - 🔴 `PROTOCOL.md` §5.2 steps 4 and 6 of the connection lifecycle (handshake content order, user-command timing); DLCI 0x08's protocol identity.
