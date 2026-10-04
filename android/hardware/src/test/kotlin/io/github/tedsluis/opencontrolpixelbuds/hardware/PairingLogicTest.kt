@@ -93,6 +93,37 @@ class PairingLogicTest {
         assertNull(PairingLogic.chooseBonded(emptyList(), setOf("04:00:6E:CF:6E:07")))
     }
 
+    // ---- `ai-sessions/0069` A68-APP-04/05: no silent pick between several bonded "Pixel Buds" devices ----
+
+    @Test
+    @DisplayName("two bonded devices named Pixel Buds and no association: the app picks none (it used to take whichever the unordered set gave first)")
+    fun `several named candidates without an association are not chosen between`() {
+        val two = listOf(BondedCandidate("AA:00:00:00:00:01", "Pixel Buds Pro 2"), BondedCandidate("AA:00:00:00:00:02", "Pixel Buds Pro"))
+        assertEquals(PairingLogic.BondedChoice.Several, PairingLogic.chooseBondedOrAsk(two, emptySet()))
+        assertEquals(PairingLogic.BondedChoice.Several, PairingLogic.chooseBondedOrAsk(two.reversed(), emptySet()), "whatever the order")
+        assertNull(PairingLogic.chooseBonded(two, emptySet()))
+    }
+
+    @Test
+    fun `this app's association decides between several candidates`() {
+        val two = listOf(BondedCandidate("AA:00:00:00:00:01", "Pixel Buds Pro 2"), BondedCandidate("AA:00:00:00:00:02", "Pixel Buds Pro"))
+        val choice = PairingLogic.chooseBondedOrAsk(two, setOf("aa:00:00:00:00:02"))
+        assertEquals(PairingLogic.BondedChoice.One(two[1]), choice)
+    }
+
+    @Test
+    fun `a single named candidate is used as before, unless the user asked to choose again`() {
+        val one = listOf(BondedCandidate("AA:00:00:00:00:09", "Car"), BondedCandidate("AA:00:00:00:00:01", "Pixel Buds Pro 2"))
+        assertEquals(PairingLogic.BondedChoice.One(one[1]), PairingLogic.chooseBondedOrAsk(one, emptySet()))
+        assertEquals(PairingLogic.BondedChoice.None, PairingLogic.chooseBondedOrAsk(one, emptySet(), nameFallback = false), "after Use different Buds")
+        assertEquals(
+            PairingLogic.BondedChoice.One(one[1]),
+            PairingLogic.chooseBondedOrAsk(one, setOf("AA:00:00:00:00:01"), nameFallback = false),
+            "an association still decides",
+        )
+        assertEquals(PairingLogic.BondedChoice.None, PairingLogic.chooseBondedOrAsk(listOf(one[0]), emptySet()))
+    }
+
     @Test
     fun `bond states map to their kind and the action`() {
         assertEquals(BondKind.NONE, PairingLogic.bondKind(10))
