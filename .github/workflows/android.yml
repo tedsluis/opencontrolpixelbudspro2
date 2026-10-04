@@ -48,6 +48,12 @@ jobs:
       - name: Build, unit tests and lint
         run: ./gradlew --no-daemon assembleDebug testDebugUnitTest test lint
 
+      # The release variant is otherwise built only on the maintainer's machine (ai-sessions/0068 A68-HK-05). CI has no signing key and the
+      # build never produces an unsigned APK (app/build.gradle.kts), so this compiles the release variant, merges its manifest and runs its lint
+      # without packaging it.
+      - name: Release variant compiles, lint (no packaging, no signing key)
+        run: ./gradlew --no-daemon :app:compileReleaseKotlin :app:processReleaseMainManifest lintRelease
+
       - name: No INTERNET permission in any merged manifest
         run: |
           # Every variant's merged manifest, not only the first one found (ai-sessions/0058 A58-GOV-09).

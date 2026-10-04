@@ -22,6 +22,15 @@ Checks:
   (d) every doc page ends with the standard cross-link footer (GitHub blob URL
       + Docsify site URL, see `expected_footer()` below) — run
       `scripts/ensure_footers.py` to add/repair it rather than hand-editing.
+  (e) every ADR registered in `id_registry.csv` has a `## ADR-NNN` heading in
+      `DECISIONS.md`, and every such heading is registered.
+  (f) every row of a Markdown table has as many cells as the table's header
+      (pipes inside code spans and escaped pipes do not count).
+  (g) status values come from their legend: the Capture Index's Status column,
+      `id_registry.csv`'s status column, and the `**Status:**` line of a
+      session log (`AI_SESSION_LOG_PROCEDURE.md`).
+  Checks (e)-(g) were added 2026-10-03 (`ai-sessions/0069`, `A68-HK-08`): each
+  is a defect class the `ai-sessions/0068` audit found by hand.
 
 Exit code is non-zero if any check fails, so this is CI/pre-commit-friendly.
 """
@@ -139,7 +148,8 @@ IMAGE_RE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)\)")
 # this list if that section's prefix table changes.
 TEST_ID_PREFIXES = (
     "PAIR|ANC|CONV|MULTI|EQP|EQS|TOUCH|HEAD|HOLD|AUDIO|FW|FWUPD|INEAR|CASE|"
-    "FIND|OBS|BATT|LOUD|ADAPT|GATT|GFPS|CALL|APP|GSND|SDP|PRIV|SPATIAL|LEAUDIO"
+    "FIND|OBS|BATT|LOUD|ADAPT|GATT|GFPS|CALL|APP|GSND|SDP|PRIV|SPATIAL|LEAUDIO|"
+    "SWITCH|WELL|FIT"
 )
 ID_RE = re.compile(
     rf"\b((?:CAP|ADR|{TEST_ID_PREFIXES})-\d{{3}})\b"
@@ -338,6 +348,106 @@ def check_footers(files: list[Path]) -> list[str]:
     return errors
 
 
+ADR_HEADING_RE = re.compile(r"^## (ADR-\d{3})\b", re.MULTILINE)
+
+
+def check_adr_headings() -> list[str]:
+    """(e) A registered ADR without a heading, or a heading without a registry row."""
+    decisions = REPO_ROOT / "DECISIONS.md"
+    if not decisions.exists():
+        return ["DECISIONS.md: not found"]
+    headings = set(ADR_HEADING_RE.findall(decisions.read_text(encoding="utf-8")))
+    with (REPO_ROOT / "id_registry.csv").open(newline="", encoding="utf-8") as f:
+        registered = {row["id"] for row in csv.DictReader(f) if row["type"] == "adr"}
+    errors = [f"DECISIONS.md: `{a}` is registered in id_registry.csv but has no `## {a}` heading"
+              for a in sorted(registered - headings)]
+    errors += [f"id_registry.csv: `{a}` has a heading in DECISIONS.md but no registry row"
+               for a in sorted(headings - registered)]
+    return errors
+
+
+CODE_SPAN_RE = re.compile(r"`[^`\n]*`")
+TABLE_SEPARATOR_RE = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$")
+
+
+def table_cells(line: str) -> int:
+    """Number of cells in a Markdown table row; pipes in code spans and escaped pipes do not count."""
+    stripped = CODE_SPAN_RE.sub("", line).replace("\\|", "").strip()
+    if stripped.startswith("|"):
+        stripped = stripped[1:]
+    if stripped.endswith("|"):
+        stripped = stripped[:-1]
+    return stripped.count("|") + 1
+
+
+def check_table_cells(files: list[Path]) -> list[str]:
+    """(f) Table rows whose cell count differs from their header's."""
+    errors = []
+    for path in files:
+        lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
+        in_fence = False
+        expected = None
+        for number, line in enumerate(lines, start=1):
+            if line.lstrip().startswith("```"):
+                in_fence = not in_fence
+                expected = None
+                continue
+            if in_fence:
+                continue
+            if expected is None:
+                if (TABLE_SEPARATOR_RE.match(line) and "|" in line and number >= 2
+                        and "|" in lines[number - 2]):
+                    expected = table_cells(lines[number - 2])
+                continue
+            if not line.strip().startswith("|"):
+                expected = None
+                continue
+            got = table_cells(line)
+            if got != expected:
+                errors.append(f"{path.relative_to(REPO_ROOT)}:{number}: table row has {got} cells, "
+                              f"its header has {expected}")
+    return errors
+
+
+CAPTURE_INDEX_STATUSES = {"planned", "captured", "analyzed", "promoted", "discarded", "withdrawn"}
+REGISTRY_STATUSES = {
+    "capture": {"planned", "captured", "analyzed", "promoted", "discarded", "withdrawn"},
+    "adr": {"accepted", "superseded", "proposed"},
+    "test": {"catalogued", "declined"},
+}
+SESSION_STATUSES = ("complete", "partial — resumed", "awaiting maintainer sign-off")
+SESSION_STATUS_RE = re.compile(r"^\*\*Status:\*\*\s*(.*)$", re.MULTILINE)
+
+
+def check_status_values() -> list[str]:
+    """(g) Status values outside their legend."""
+    errors = []
+    index = REPO_ROOT / "CAPTURE_BLUETOOTH_HCI_SNOOP.md"
+    if index.exists():
+        for number, line in enumerate(index.read_text(encoding="utf-8").split("\n"), start=1):
+            if not line.startswith("| `CAP-"):
+                continue
+            cells = CODE_SPAN_RE.sub("", line).replace("\\|", "").strip().strip("|").split("|")
+            word = re.match(r"[*\s]*([a-z]+)", cells[-1].strip())
+            if not word or word.group(1) not in CAPTURE_INDEX_STATUSES:
+                errors.append(f"{index.name}:{number}: Capture Index status "
+                              f"\"{cells[-1].strip()[:30]}\" is not in the legend")
+    with (REPO_ROOT / "id_registry.csv").open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            allowed = REGISTRY_STATUSES.get(row["type"])
+            status = row["status_or_date"]
+            if allowed is not None and status not in allowed and not re.match(r"\d{4}-\d{2}-\d{2}$", status):
+                errors.append(f"id_registry.csv: `{row['id']}` has status \"{status}\" "
+                              f"(allowed for {row['type']}: {', '.join(sorted(allowed))})")
+    # RESULT files only: a PROMPT's Status line records when it was run, not a session state.
+    for path in sorted((REPO_ROOT / "ai-sessions").glob("[0-9][0-9][0-9][0-9]_*_RESULT_*.md")):
+        match = SESSION_STATUS_RE.search(path.read_text(encoding="utf-8", errors="replace"))
+        if match and not match.group(1).startswith(SESSION_STATUSES):
+            errors.append(f"ai-sessions/{path.name}: Status \"{match.group(1)[:40]}\" is not one of: "
+                          + " | ".join(SESSION_STATUSES))
+    return errors
+
+
 def main() -> int:
     known_ids = load_registry()
     files = all_markdown_files()
@@ -355,6 +465,11 @@ def main() -> int:
     id_warnings = check_ids(files, known_ids)
     name_errors = check_old_project_name(files)
     footer_errors = check_footers(footer_files())
+    adr_errors = check_adr_headings()
+    all_table_problems = check_table_cells(files)
+    table_notes = [e for e in all_table_problems if is_history(e)]
+    table_errors = [e for e in all_table_problems if not is_history(e)]
+    status_errors = check_status_values()
 
     if filename_errors:
         print("=== Dead filename references ===")
@@ -372,10 +487,25 @@ def main() -> int:
         print("\n=== Missing/incorrect page footers ===")
         print("\n".join(sorted(footer_errors)))
 
-    total_errors = len(filename_errors) + len(name_errors) + len(footer_errors)
-    if not (filename_errors or id_warnings or name_errors or footer_errors):
+    if adr_errors:
+        print("\n=== ADR registry / heading mismatches ===")
+        print("\n".join(adr_errors))
+    if table_errors:
+        print("\n=== Table rows with a wrong cell count ===")
+        print("\n".join(table_errors))
+    if table_notes:
+        print("\n=== Table rows with a wrong cell count in historical session logs (informational) ===")
+        print("\n".join(table_notes))
+    if status_errors:
+        print("\n=== Status values outside their legend ===")
+        print("\n".join(status_errors))
+
+    total_errors = (len(filename_errors) + len(name_errors) + len(footer_errors)
+                    + len(adr_errors) + len(table_errors) + len(status_errors))
+    if not (filename_errors or id_warnings or name_errors or footer_errors
+            or adr_errors or table_errors or status_errors):
         print("lint_docs: clean — no dead filenames, no unregistered IDs, no stale project name, "
-              "no missing footers.")
+              "no missing footers, no ADR/table/status mismatches.")
 
     # ID warnings are informational (a brand-new, not-yet-registered ID is
     # normal mid-session) — only dead filenames, the project-name check, and

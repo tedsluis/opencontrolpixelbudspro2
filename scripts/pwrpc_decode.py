@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Decode the DLCI 0x02 pw_rpc conversation (Pigweed pw_hdlc + pw_rpc RpcPacket) in a btsnoop capture.
+"""Decode the MAESTRO pw_rpc conversation (Pigweed pw_hdlc + pw_rpc RpcPacket) in a btsnoop capture.
 
 Usage (needs tshark on PATH):
   scripts/pwrpc_decode.py <capture-btsnoop_hci.log>            list every pw_rpc packet with its frame number
+  scripts/pwrpc_decode.py --handle 0x000b <capture>            the same, only for one ACL connection handle
   scripts/pwrpc_decode.py --eq <capture> [<capture> ...]       EQ (qhr field 16/18) ReadSetting responses and
                                                                WriteSetting requests, in capture order
   scripts/pwrpc_decode.py --channels <capture> [<capture> ...] per capture: channel/HDLC address of the Buds' first
@@ -15,6 +16,13 @@ plain RpcPacket protobuf. Per AGENTS.md §13 the capture is pre-filtered to the 
 direction is shown as the HCI source address (which side is the phone is stated in the capture's
 own EVENT-NOTES, not guessed here). Field names of RpcPacket: 1 type, 2 channel_id, 3 service_id,
 4 method_id, 5 payload, 6 status, 7 call_id (pw_rpc packet.proto).
+
+Changed 2026-10-03 (ai-sessions/0069, A68-CAP-14 / A68-RE-06): the MAESTRO channel is RFCOMM server
+channel 1, which is DLCI 2 or DLCI 3 depending on which side opened the multiplexer (PROTOCOL.md §2.3),
+so both are read; the byte stream is reassembled per (ACL handle, DLCI, direction) instead of per HCI
+source address, which is empty on several logs and then merged both directions into one stream; the
+other services seen on the wire are named; a frame that ends in an escape byte is skipped instead of
+raising. Each line now carries `dlci=` and `dir=` (Sent = phone to Buds, Rcvd = Buds to phone).
 """
 import collections
 import struct
@@ -32,11 +40,19 @@ def h65599(name: str) -> int:
     return h
 
 
-SERVICES = {h65599("maestro_pw.Maestro"): "maestro_pw.Maestro"}
+# Service names are string literals in the APK (PROTOCOL.md §2.2a, Update of 2026-09-30); the last three have not been
+# seen on the wire in any capture.
+SERVICES = {h65599(n): n for n in (
+    "maestro_pw.Maestro", "maestro_pw.Dosimeter", "maestro_pw.Multipoint", "maestro_pw.DynamicServerConfigService",
+    "pw.software_update.BundledUpdate", "hr.core.software_update.UpdateHelperService",
+    "maestro_pw.HeadGesture", "maestro_pw.EartipFitTest", "maestro_pw.JitterBuffer")}
 # The connect-time burst names (GetHardwareInfo, SubscribeRuntimeInfo, SetWallclock) were added 2026-09-24 (ai-sessions/0045,
 # PROTOCOL.md §6): names from the APK's maestro_pw.Maestro catalog, matched to the ids on the wire in CAP-036 frames 1404-1570.
 METHODS = {h65599(n): n for n in ("WriteSetting", "ReadSetting", "SubscribeToSettingsChanges", "GetSoftwareInfo",
-                                  "GetHardwareInfo", "SubscribeRuntimeInfo", "SetWallclock")}
+                                  "GetHardwareInfo", "SubscribeRuntimeInfo", "SetWallclock",
+                                  # other services (PROTOCOL.md §2.2a):
+                                  "FetchDailySummaries", "SubscribeToLiveDb", "SubscribeToQuietModeStatus", "SetConfig",
+                                  "GetStatus", "GetRunningVersion", "GetStagedVersion")}
 # pw_rpc packet.proto PacketType. 0/1/7 are observed in the captures (REQUEST from the phone, RESPONSE and
 # SERVER_STREAM from the Buds); 2/4/5/8 are from the public proto (ai-sessions/0041 corrected an earlier table
 # that had 2/3/5 wrong).
@@ -107,28 +123,39 @@ def unescape(b):
     o, i = bytearray(), 0
     while i < len(b):
         if b[i] == 0x7D:
+            if i + 1 >= len(b):
+                return None  # an escape byte with nothing after it: not a complete frame
             o.append(b[i + 1] ^ 0x20); i += 2
         else:
             o.append(b[i]); i += 1
     return bytes(o)
 
 
-def packets(cap):
-    """Yield (frame_number, hci_source, hdlc_address_hex, hdlc_control, rpc_fields) for every pw_hdlc frame on
-    RFCOMM DLCI 2 whose payload parses as an RpcPacket. The frame number is the btsnoop frame that carried the
-    frame's closing 0x7E flag."""
+DIRECTIONS = {"0": "Sent", "1": "Rcvd"}
+
+
+def packets(cap, handle=None):
+    """Yield (frame_number, hci_source, hdlc_address_hex, hdlc_control, rpc_fields, dlci, direction) for every
+    pw_hdlc frame on RFCOMM DLCI 2 or 3 whose payload parses as an RpcPacket. The frame number is the btsnoop frame
+    that carried the frame's closing 0x7E flag. `handle` (e.g. "0x000b") restricts the read to one ACL connection."""
+    flt = "(btrfcomm.dlci==2 || btrfcomm.dlci==3) && btrfcomm.frame_type==0xef"
+    if handle:
+        flt += f" && bthci_acl.chandle=={handle}"
     rows = subprocess.run(
-        ["tshark", "-r", cap, "-Y", "btrfcomm.dlci==2 && btrfcomm.frame_type==0xef", "-T", "fields",
-         "-e", "frame.number", "-e", "bluetooth.src", "-e", "data.data"],
-        capture_output=True, text=True, check=True).stdout.strip().split("\n")
+        ["tshark", "-r", cap, "-Y", flt, "-T", "fields",
+         "-e", "frame.number", "-e", "bluetooth.src", "-e", "data.data",
+         "-e", "bthci_acl.chandle", "-e", "btrfcomm.dlci", "-e", "frame.p2p_dir"],
+        capture_output=True, text=True, check=True).stdout.rstrip("\n").split("\n")
     streams = collections.OrderedDict()
     for r in rows:
         p = r.split("\t")
-        if len(p) == 3 and p[2]:
-            buf, marks = streams.setdefault(p[1], (bytearray(), []))
+        if len(p) == 6 and p[2]:
+            key = (p[3], p[4], p[5])
+            buf, marks, _ = streams.setdefault(key, (bytearray(), [], p[1]))
             marks.append((len(buf), int(p[0])))
             buf.extend(bytes.fromhex(p[2]))
-    for src, (buf, marks) in streams.items():
+    found = []
+    for (chandle, dlci, direction), (buf, marks, src) in streams.items():
         begin = None
         for i, b in enumerate(buf):
             if b != 0x7E:
@@ -136,14 +163,17 @@ def packets(cap):
             if begin is not None and i > begin + 1:
                 u = unescape(bytes(buf[begin + 1:i]))
                 j = 0
-                while j < len(u) and not u[j] & 1:  # pw_hdlc address: one-terminated varint
+                while u is not None and j < len(u) and not u[j] & 1:  # pw_hdlc address: one-terminated varint
                     j += 1
-                if len(u) >= j + 6:
+                if u is not None and len(u) >= j + 6:
                     pk = parse(u[j + 2:-4])  # skip last address byte + control byte; drop CRC-32
                     if pk:
                         frame = max((fn for off, fn in marks if off <= i), default=None)
-                        yield frame, src, u[:j + 1].hex(), u[j + 1], {f: v for f, w, v in pk}
+                        found.append((frame, src, u[:j + 1].hex(), u[j + 1], {f: v for f, w, v in pk},
+                                      int(dlci, 16), DIRECTIONS.get(direction, "?")))
             begin = i
+    # Capture order across all streams (stable for packets that close in the same btsnoop frame).
+    yield from sorted(found, key=lambda t: t[0])
 
 
 def describe(d):
@@ -171,15 +201,15 @@ def eq_quintet(payload):
     return None
 
 
-def main_list(cap):
-    for frame, src, addr, control, d in packets(cap):
-        print(f"{frame:>6} addr={addr} ctl={control:02x} {describe(d)}")
+def main_list(cap, handle=None):
+    for frame, src, addr, control, d, dlci, direction in packets(cap, handle):
+        print(f"{frame:>6} addr={addr} ctl={control:02x} dlci={dlci} dir={direction} {describe(d)}")
 
 
 def main_eq(caps):
     for cap in caps:
         print(f"== {cap}")
-        for frame, src, addr, control, d in packets(cap):
+        for frame, src, addr, control, d, dlci, direction in packets(cap):
             met = int.from_bytes(d[4], "little") if 4 in d else None
             q = eq_quintet(d[5]) if 5 in d else None
             name = METHODS.get(met)
@@ -192,7 +222,7 @@ def main_eq(caps):
 def main_channels(caps):
     for cap in caps:
         first, req, resp = None, collections.Counter(), collections.Counter()
-        for frame, src, addr, control, d in packets(cap):
+        for frame, src, addr, control, d, dlci, direction in packets(cap):
             svc = int.from_bytes(d[3], "little") if 3 in d else None
             met = int.from_bytes(d[4], "little") if 4 in d else None
             if svc not in SERVICES:
@@ -213,5 +243,7 @@ if __name__ == "__main__":
         main_eq(sys.argv[2:])
     elif sys.argv[1] == "--channels":
         main_channels(sys.argv[2:])
+    elif sys.argv[1] == "--handle":
+        main_list(sys.argv[3], sys.argv[2])
     else:
         main_list(sys.argv[1])
