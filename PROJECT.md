@@ -121,7 +121,7 @@ Without Google Play Services installed, the app can:
 > | Criterion | Without Google Play services | Evidence type |
 > |---|---|---|
 > | 1. Connect | ✅ `CAP-067` (1.0.0, `8d8af4b`, GrapheneOS secondary user without Play): Connect A161→A241, automatic re-opens A966, A1107, B372, B965, B1601; 0 Play-services claims (positive control `CAP-066`: 26) | capture frame |
-> | 2. Battery and ANC | ✅ battery: `CAP-067` (`03 03` frames, Case via runtime info A324); ANC change: **maintainer-attested, not captured** (the maintainer's own test of 1.0.0 without Play services, chat 2026-10-03; `CAP-067` carries 0 × `08 12`) — re-test planned in `CAP-068` | battery: capture frame; ANC change: maintainer-attested |
+> | 2. Battery and ANC | ✅ battery: `CAP-067` (`03 03` frames, Case via runtime info A324) and `CAP-068`; ANC change: ✅ `CAP-068` (1.0.1, `e1fc886`, GrapheneOS secondary user without Play): 12 `Set` → 12 ACK, 0 NAK, from the tab (e.g. A1039 → A1042) and the Quick Settings tile (A1215 → A1218 …), on film; 0 Play-services claims (positive control `CAP-066`) | capture frame + film |
 > | 3. Stable over cycles | ✅ `CAP-067`: 5 session ends (Buds `DISC` ×2, Bluetooth off/on, permission revoked, forget + re-pair) and one failed first connect (page timeout, lid closed), each recovered | capture frame |
 > | 4. Documented | ✅ | repository |
 >
@@ -130,10 +130,12 @@ Without Google Play Services installed, the app can:
 > *Corrected 2026-10-03 (`ai-sessions/0069`, maintainer-approved in chat, `AskUserQuestion` "DoD ANC", option "Keep tick, reword + exception (Recommended)"):* the
 > "Evidence type" column, the wording of row 2, and row 3's count (it said "6 session ends" and named five; the sixth row of `CAP-067-FINDINGS.md` §7 is a failed
 > connect). From 1.0.1 on a criterion is ticked only with a capture frame or film (`RELEASING.md`).
+> *Row 2 updated 2026-10-04 (`ai-sessions/0070`, maintainer-approved in chat, `AskUserQuestion` "DoD text", option *"Approve as shown (Recommended)"*):* the ANC change was
+> "maintainer-attested, not captured" for 1.0.0; `CAP-068` (`CAP-068-FINDINGS.md` §2; "A" = `CAP-068-btsnoop_hci2.log.last`) replaces it with frames.
 
 ## Status after 1.0.x (added 2026-10-03, `ai-sessions/0069`)
 
-1.0.0 was published on 2026-10-03 (`RELEASING.md`, Release log); 1.0.1 is a fix release prepared in `ai-sessions/0069`. v1 contains: connection and Safe Mode,
+1.0.0 was published on 2026-10-03 (`RELEASING.md`, Release log); 1.0.1, a fix release prepared in `ai-sessions/0069`, was tested in `CAP-068` and released on 2026-10-04 (`ai-sessions/0070`). v1 contains: connection and Safe Mode,
 noise control with a Quick Settings tile, the equalizer, battery (Left / Right / Case), Find My Buds (Left / Right), touch controls, press and hold and its mode
 list, balance, mono audio, conversation detection and the in-ear detection setting. **Next features (the maintainer's choice, chat 2026-10-03, "Features"):** head
 gestures (`qhr` field 29) and Multipoint (field 11) — each only after its `PROTOCOL.md` entry is 🟢 FACT and its own `DECISIONS.md` ADR exists; the evidence run is

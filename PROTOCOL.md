@@ -762,6 +762,11 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   `062` 16, `063` 3, `064` 4, `065` 7, `066` 4), **59 ACKed, 11 NAKed with reason `0x02`** (`CAP-062` ×10, `CAP-064` 3440). Every NAK follows a `Notify` on the wire
   reading `00`; 57 ACKs follow a non-zero `Notify`, 2 follow an older `00` (`CAP-059` 2768 — last `Notify` 2104; `CAP-060` 3174 — last `Notify` 2750: no `Notify`
   was taken between the state change and the `Set`). This replaces "40 of 40 across nine captures" and "(6/6; 35/35 in …)"; ADR-049's statuses are unchanged.
+- **Update (2026-10-04, `ai-sessions/0070`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "ANC-006", option *"Keep the Set; decide after CAP-069
+  (Recommended)"*) — a `Set` for the current mode (`ANC-006`).** `CAP-068` — a `Set` for the mode the Buds already report (A2033 Notify `01 e8 e8 20` → A2034
+  `08 12 00 14 01 e8 e8 20` + 16 × `00`) is ACKed `ff 01 00 06 08 12 01 e8 e8 20` (A2036) and followed by a Notify (A2037); no NAK `0x04`. 🟢 FACT for
+  OpenControl's `Set` (1 sample; "A" = `CAP-068-btsnoop_hci2.log.last`, `CAP-068-FINDINGS.md` §2); what the official app sends is `CAP-069` IV. The same run:
+  12 `Set`s by the release build 1.0.1 without Play services, 12 ACKed, 0 NAK, each after a non-zero Settable.
 - **Sent to**: RFCOMM Fast Pair Message Stream, DLCI 0x04 (§2.1/§2.3) — **not** `libmaestro`'s
   Pigweed-HDLC channel (DLCI 0x02, §2.2a) and **not** the private DLCI-0x08 envelope; both were
   live candidates before this resolution.
@@ -1468,6 +1473,11 @@ option (C), even though its per-earbud content is now FACT-confirmed.
   > received."*). With OpenControl as the sender (`CAP-059` 2301 → 2310/2312, `CAP-062` 9541 → 9552/9553, `CAP-063` 8518 → 8520/8521) the Buds send the same two
   > messages and **no** phone-side `ff 01 00 02 04 01` follows; the app sends nothing in answer (the maintainer's choice, chat 2026-10-03, "Ring status"). Test: a
   > Ring stopped by touching the bud (`CAP-068`; predicted Buds → phone `04 01 00 01 00`).
+
+  > **Update (2026-10-04, `ai-sessions/0070`, maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Ring", option *"Dated note only, test in CAP-069
+  > (Recommended)"*):** `CAP-068` (OpenControl 1.0.1, no Play services) is no evidence for the status sync after a stop on the bud: the app released DLCI 4
+  > 1.5 s after its Ring (B2721 → B2736) and no client held it when the bud was touched (film 07:51:12–14); the later Stop (B2799) got only the ACK (B2810), no
+  > `04 01 00 01 00`. Status unchanged (🟡); test: `CAP-069` VII. ("B" = `CAP-068-btsnoop_hci2.log`, `CAP-068-FINDINGS.md` §6.)
 - **Sent to**: RFCOMM Message Stream channel, DLCI 0x04, per §2.1.
 - **Expected response**: confirmed — see the two ACK variants above.
 - **Major structural finding — Case/"both" use a different mechanism entirely**: the official app

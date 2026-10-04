@@ -123,6 +123,8 @@ flowchart TD
   `Set` (0 × `08 12`). `PROJECT.md`'s Evidence table marks that row "maintainer-attested, not captured"; `CAP-068` (the 1.0.1 release build) is planned
   to replace it with frames. **From now on** each Evidence row names its type — *capture frame*, *film*, or *maintainer-attested* — and a
   maintainer-attested row is allowed only when it is written down as such, with the capture that will replace it.
+  *Closed 2026-10-04 (`ai-sessions/0070`, maintainer-approved in chat, `AskUserQuestion` "DoD text"):* `CAP-068` holds the ANC change by the release build
+  1.0.1 with frames (`CAP-068-FINDINGS.md` §2); the exception applied to 1.0.0 only.
 - Every arrow that publishes (tag push, release create/edit/upload) is the maintainer's own act (see the top of this document).
 
 (GitHub renders the diagram; the docs site shows its source text.)
@@ -298,6 +300,7 @@ in chat 2026-10-03, `ai-sessions/0069`, "Safe Mode": *"Runbook + README, no over
 | Version | Build commit (tag) | Published | APK SHA-256 | Certificate SHA-256 | Hardware capture | Notes |
 |---|---|---|---|---|---|---|
 | 1.0.0 | `8d8af4b` (`v1.0.0`) | 2026-10-03 | `107d49b609a3509364f92e2911931e9ff51ae1dd62f96405026c27464f3467a2` | `a7530f5ceadcdfc9cddcbb0e9889e7699961e8a4ef18898c4ec7738cc79d8dcb` | `CAP-067` | Published by the maintainer. Definition of done 2 (ANC) maintainer-attested (see the rules above). Known issue in the notes: the connect-failure text. Commits around the release that no session log names: `adc8c1f` (this runbook: one PKCS12 password, the flowchart), `9e2a475` (the doc tools skip `dist/`), `d25edb8` (1.0.0 marked as released) |
+| 1.0.1 | `e1fc886` (`v1.0.1`) | 2026-10-04 | `f9dce033d3a42d93892b90ebe7b77347385c93602bdec099f59d232963b15e0f` | `a7530f5ceadcdfc9cddcbb0e9889e7699961e8a4ef18898c4ec7738cc79d8dcb` | `CAP-068` | Hotfix (`ai-sessions/0069`); release approved in chat 2026-10-04 (`ai-sessions/0070`). Definition of done 2 with frames. Known issue in the notes: the ring notice after a stop on the bud. Tag and GitHub release: the maintainer's steps D2/D3. |
 
 The certificate SHA-256 is the same for every release (§1); it is also in `README.md` and `SECURITY.md`.
 

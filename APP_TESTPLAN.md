@@ -311,5 +311,11 @@ In `CAP-068` as BD-13 … BD-19 and BD-9/BD-29.
 | R 0064 build | 7 | | | | |
 | S 1.0.1 build | 13 | | | | |
 
+**Run `CAP-068` (2026-10-04, 1.0.1 `e1fc886`, the user without Play; `ai-sessions/0070`, `CAP-068-FINDINGS.md`):** section S — ✅ S1 (partly: the tile "Open the app",
+the mode dimmed; the (i) text not opened), S2 (partly, same), S4, S5, S7, S8, S10, S11, S13; not identifiable S3, S6; not run S9 (one pair), S12 (no rotation).
+Never-run steps — ✅ C5 (one `SABM`; a second tap not identifiable on film), F5 (two Refresh taps; the press-and-hold not on film), J4 (2 min 12 s), I4 (the
+"after Disconnect" text appeared after a Buds-side loss, not after the tap), L3 (no hex line after the switch, E4), K1 (F-3: "Bluetooth was switched off on
+this phone", final); ⚠️ H5 done differently (*Read EQ again* not tapped; the value was read back at the next Connect).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/APP_TESTPLAN.md - https://tedsluis.github.io/opencontrolpixelbudspro2/APP_TESTPLAN

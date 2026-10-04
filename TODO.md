@@ -13,24 +13,22 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 ## 1. Release 1.0.1 (hotfix — `ai-sessions/0069`)
 
-- [ ] **M** Review the `ai-sessions/0069` changes and say whether to commit and push them (the session commits nothing without that answer).
-- [ ] **M** Build, test and publish 1.0.1: `RELEASING.md` §11 (hotfix path) → §4–§8. The hardware run is `CAP-068` (Group BD, skeleton in
-      `captures/`). Publishing — tag, release, upload — is the maintainer's act.
-- [ ] After `CAP-068`: replace "maintainer-attested, not captured" on Definition of done 2 (`PROJECT.md`, `RELEASING.md`) with the capture's
-      frames — **M** decides.
-- [ ] After publishing: `CHANGELOG.md` date, `README.md` "Latest release" and "Known issues", the row in `RELEASING.md` §13 (Release log).
-- [ ] `scripts/release_notes.template` carries the 1.0.1 summary line — replace it for the next version (`RELEASING.md` §4 step 2). The notes now link
-      the changelog on `main`, not at the tag (at the tag its block still reads "not yet released").
+- [ ] **M** Publish 1.0.1: built (`e1fc886`, `dist/1.0.1/`) and hardware-tested in `CAP-068`; release approved in chat 2026-10-04 (`ai-sessions/0070`).
+      Next: `RELEASING.md` D1–D3 (merge PR #1 with a merge commit, tag `e1fc886` as `v1.0.1`, upload the kept files with the known issue in the notes). E1/E2
+      were done in advance on 2026-10-04 (`ai-sessions/0070`); publishing is the maintainer's act.
+- [ ] After publishing (E4): replace the 1.0.1 summary line of `scripts/release_notes.template` for the next version (`RELEASING.md` §4 step 2).
 - [ ] **M** Decide whether two behaviours built in 1.0.1 on your chat answers get an ADR each (none was written — `AGENTS.md` §6): the device choice
-      (no silent pick, "Use different Buds") and the "current value" rule (`ARCHITECTURE.md` §3.1, §9.0a item 8 describe them as built).
+      (no silent pick, "Use different Buds") and the "current value" rule (`ARCHITECTURE.md` §3.1, §9.0a item 8 describe them as built). Both seen on
+      hardware in `CAP-068` (S7/S8; S1, S2, S4); the maintainer chose "Not now" again (chat 2026-10-04, `ai-sessions/0070`).
 
 ## 2. Hardware verification debt (the app, on film)
 
-Everything here is a step of `CAP-068` unless it says otherwise; the full list with expected bytes is in that skeleton.
+Open after `CAP-068` (`ai-sessions/0070`); each goes into the next app run with its expected bytes.
 
-- [ ] An ANC `Set` from the tab and from the Quick Settings tile by a release build (`A68-GOV-01`).
-- [ ] Bluetooth off/on with the app on the Connection tab and **an export right after it** (F-3 of `ai-sessions/0064`; never hardware-verified).
-- [ ] `APP_TESTPLAN.md` steps never run on hardware: C5, H5, F5, J4 (2 minutes), I4's words, L3 with content, the K1 screen (`A68-SES-04`).
+- [ ] `APP_TESTPLAN.md` H5 with the *Read EQ again* button (`CAP-068` read the value back only at a reconnect); S6 ("—" in the first second after
+      ready — film the phone's screen, not the camera), S12 (export across a rotation), S9 (needs two Pixel Buds paired) — not shown in `CAP-068`.
+- [ ] P1 of a release run: record `dumpsys package … | grep -E "firstInstallTime|lastUpdateTime"` in the test user — `CAP-068`'s logs suggest a fresh
+      install, not an update over 1.0.0 (`CAP-068-FINDINGS.md` §0).
 - [ ] The Left bud taken out with both worn on channel 19, head in view (lead L-1 of `ai-sessions/0061`; half answered in `CAP-066`) — 🔴. Not in
       `CAP-068`; add it to the next run with both buds worn.
 - [ ] The channel-19 balance frame `17:7`; B4 double tap (`AlreadyInProgress`) — not in `CAP-068` (B4 needs the Buds forgotten).
@@ -46,7 +44,6 @@ Everything here is a step of `CAP-068` unless it says otherwise; the full list w
 
 | Capture | Group | What | Phone / app |
 |---|---|---|---|
-| `CAP-068` | BD | the 1.0.1 release build: §2 above, the 1.0.1 changes, Ring stopped on the bud, a failed connect | Pixel 9a, OpenControl, user without Play |
 | `CAP-069` | BE | head gestures and Multipoint off/on on film, assistant hold, tap on the current ANC mode, EQ "Default", wear states, Ring stopped on the bud | Pixel 7a, official app |
 | `CAP-054` | AP | the `0xFE2C` advertisement right after the lid opens, connection-free (redesigned 2026-10-03, L68-6) | Pixel 7a, no app |
 | `CAP-053` | AO | EQ outer field 16 vs 18: Save tap, navigate away, slider release — each isolated | Pixel 7a, official app |
@@ -83,8 +80,10 @@ Open questions (each with where it is described):
   (`CAP-029` 3757); field 2 of Code `0x03`.
 - 🔴 The `CAP-021` DLCI 0x0a waves: the trigger is not on film (→ `CAP-069` III). 🟡 Who owns DLCI 0x08/0x0a — the Google app's
   assistant service is the lead (`CAP-061-FINDINGS.md` §2).
-- 🔴 A tap on the current ANC mode: does a client send a `Set`, and what do the Buds answer (L68-7 → `CAP-068` II, `CAP-069` IV).
-- 🔴 Ring status: what the Buds send when the ringing is stopped on the bud (L68-2 → `CAP-068` VI, `CAP-069` VII). The app does not read the
+- 🔴 A tap on the current ANC mode: OpenControl sends the `Set` and the Buds ACK it (`CAP-068`, `PROTOCOL.md` §4.1 Update 2026-10-04); what the
+  official app sends is `CAP-069` IV — then **M** decides whether OpenControl should skip it (chat 2026-10-04: "Keep the Set; decide after CAP-069").
+- 🔴 Ring status: what the Buds send when the ringing is stopped on the bud (L68-2 → `CAP-069` VII; `CAP-068` could not observe it — the app's claim
+  is released 1.5 s after the Ring, `CAP-068-FINDINGS.md` §6). Known limit of 1.0.1: the "Ringing" notice stays until Stop is tapped. The app does not read the
   Buds' ring-status message; whether it should is a decision after those runs (**M**, "Nothing new on the wire; test first").
 - 🔴 The Fast Pair battery advertisement on case-open (L68-6 → `CAP-054`). The only route to a Case level without a connection (ADR-006).
 - 🔴 Why the Buds close both RFCOMM channels (`CAP-059`/`CAP-060-FINDINGS.md` §1): the idle / periodic / second-host / quick re-claim
@@ -107,6 +106,7 @@ Open questions (each with where it is described):
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
   captured — sending it needs its own ADR. Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
 - 🔴 `PROTOCOL.md` §5.2 steps 4 and 6 of the connection lifecycle (handshake content order, user-command timing); DLCI 0x08's protocol identity.
+- 🔴 Why Android's CDM picker listed nothing twice and then offered the bonded Buds directly (`CAP-068-FINDINGS.md` §8).
 - 🔴 `CAP-013`'s second BLE link (not re-examined; `CAP-016`'s was a heart-rate wearable — `PROTOCOL.md` §6, Update of 2026-10-03).
 - Inventory not re-derived in `ai-sessions/0069` (L68-9, a sub-review result): which settings the official app reads at connect (fields 1–5, 7,
   11–13, 15–19, 21–32, 34–38; never 6, 8, 9, 10, 14, 20, 33), `DynamicServerConfigService/SetConfig` (not named in `PROTOCOL.md`), and the services
@@ -142,8 +142,8 @@ Open questions (each with where it is described):
       as success, so a NAK that follows is not reported (the mode shown is right; a labelled test records it; no capture shows that order). An ACK
       applies the requested mode, not the bytes the ACK echoes.
 - [ ] From `A68-APP-10`, 🟡 not tested: the on-demand channel insert in `RfcommBudsTransport.openChannel` is not atomic with `closeAll` (a socket
-      could be left open); `startForegroundService` followed at once by `stopService` on a connect that fails fast (→ `CAP-068` BD-29 watches the
-      system log); bonded-device lookups run on the main thread.
+      could be left open); `startForegroundService` followed at once by `stopService` on a connect that fails fast (`CAP-068` BD-29: no crash in
+      the app's buffers; no system log in the user without Play, so a system-side exception stays unverified); bonded-device lookups run on the main thread.
 - [ ] From `A68-APP-09`: the pull-to-refresh guard and the action buttons have no in-flight guard that survives a rotation — a second tap starts a
       second call, which the repository serialises; not shown to be a defect.
 - [ ] Tests for `:app` (the module has no test set-up): the tile service's rendering, the foreground-service start/stop, `MainActivity` as the state
@@ -192,8 +192,6 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
 - [ ] `scripts/__pycache__/lint_docs.cpython-314.pyc` is a tracked file (a compiled-Python artefact; the prompt of `ai-sessions/0069` names `__pycache__` as never to be
       staged). `.gitignore` already ignores `__pycache__/`, so it only needs untracking (`git rm --cached`) — **M**: a deletion from the repository. Until then run the scripts with
       `PYTHONDONTWRITEBYTECODE=1`, or the file shows up as modified.
-- [ ] README media: the screenshot `…_212805.jpg` and the recording still show the `0064` balance step buttons — re-take on a release build
-      (`scripts/readme_media.sh`).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/TODO.md - https://tedsluis.github.io/opencontrolpixelbudspro2/TODO

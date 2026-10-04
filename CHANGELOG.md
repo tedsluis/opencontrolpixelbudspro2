@@ -5,14 +5,15 @@ based on [Keep a Changelog](https://keepachangelog.com/).
 
 The first release, 1.0.0, was published on 2026-10-03 ([v1.0.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.0), build commit
 `8d8af4b`), after `CAP-067`, the hardware run of the signed APK (`ai-sessions/0067`). Its block below is written for users. Everything before it — documentation, tooling and the protocol reconstruction that led to the app —
-is kept unchanged under "History before 1.0.0". See `TODO.md` for current status and `RELEASING.md` for how a release is made.
+is kept unchanged under "History before 1.0.0". 1.0.1, a hotfix, followed on 2026-10-04 (build commit `e1fc886`, hardware run `CAP-068`,
+`ai-sessions/0070`). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
 
 ## [Unreleased]
 
-## [1.0.1] - not yet released
+## [1.0.1] - 2026-10-04
 
 A hotfix for 1.0.0 (`ai-sessions/0069`, from the `ai-sessions/0068` audit). Nothing new is sent to the Buds: the same commands, on the same channels.
-To be tested on hardware as `CAP-068` before it is published (`RELEASING.md` §11).
+Build commit `e1fc886`, hardware-tested as `CAP-068` (`ai-sessions/0070`) in a GrapheneOS user without Google Play services.
 
 ### Fixed
 
@@ -36,10 +37,16 @@ To be tested on hardware as `CAP-068` before it is published (`RELEASING.md` §1
 - Equalizer preset **Flat** (all bands 0.0).
 - A value that has not been read from the Buds shows "—" instead of a default ("0.0", "Centre").
 
+### Documentation
+
+- New screenshots and screen recording in the README, made with the 1.0.1 release build.
+
 ### Known limits
 
 - English only. A screen reader still announces an unread switch as "off" (the visible "—" is for sighted users only so far).
-- Not hardware-verified at the time of writing: everything above — `CAP-068` is the run for it.
+- Hardware-tested in `CAP-068` (release build `e1fc886`, no Google Play): ANC from the tab and the tile, the equalizer, Bluetooth off/on, Use different
+  Buds, the connect error. Not shown on hardware: the "—" for unread values in the first second, the export across a rotation.
+- After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop.
 
 ## [1.0.0] - 2026-10-03
 
