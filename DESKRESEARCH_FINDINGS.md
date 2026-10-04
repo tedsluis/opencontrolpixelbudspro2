@@ -972,5 +972,21 @@ gestures"; the case is open and empty, and the buds are out of frame for the who
 `0x05` and Code `0x03` to §2.3's DLCI 0x08 table with the 🟡 readings above; (c) name field 2 of
 the two messages in `REVERSE_ENGINEERING.md` as "wall clock, ms (🟡)".
 
+### 2026-10-04 — Wear and placement states against GSND CONTROL Code `0x05`, Settable and field 13 in `CAP-069` (lead L68-5, `ai-sessions/0071`)
+
+- **Trigger:** lead L68-5 (the meaning of DLCI 0x08 Code `0x05` values; the table of the 2026-10-03 entry above); `CAP-069` section VI.
+- **Method:** message-level parse of GSND CONTROL (server channel 4: DLCI 8 on ACL 1 frames < 7000 and ACL 2, DLCI 9 on ACL 3 frames > 8000 — DLCI 8 is HFP on ACL 3)
+  and of the Message Stream, `[Group][Code][Len 2 BE][Value]` per handle/DLCI/direction over `tshark -r CAP-069-btsnoop_hci.log -Y "btrfcomm.len>0 && (…)" -T fields
+  -e frame.number -e frame.time -e bthci_acl.chandle -e btrfcomm.dlci -e frame.p2p_dir -e data.data` (0 leftover bytes); `python3 scripts/pwrpc_decode.py` for the
+  runtime info and field 13. Raw examples: 694 `04 05 00 02 08 03`, 7309 `04 05 00 02 08 04`, 7415 `04 05 00 02 08 06`, 2255 `04 05 00 02 08 05`; 7520 `08 13 00 04
+  01 e8 00 20`.
+- **Captures examined:** `CAP-069` (bud identity from the case slot and the charging bits; ears not on film).
+- **Result:** (🟡 each) Code `0x05` = `03` with no bud worn (694, 6326, 6875, 7517, 7615, 8352), `04` with one bud worn (6153, 6257,
+  7309, 7385, 7453), `06` with both worn (2363, 7415); `05` at 2255 and 2351 during the unfilmed insertion of 16:08 (🔴 — the same state "one worn, the other in the
+  hand" read `04` at 7385). Settable `00` only with no bud worn (5 of 5; 14 `e8`). Field 13 = the ANC mode (1 Off, 2 NC, 3 Transparency, 4 Adaptive; 10 of 10),
+  `13:0` with Settable `00`. The charging bit of a bud lifted out of the case can stay set ≈ 12 s (Right, film 16:20:34.4 → 7404 at 16:20:46.06). Full table:
+  `CAP-069-FINDINGS.md` §8.
+- **Promoted to:** nothing promoted; `PROTOCOL.md` §6 records the 🟡/🔴 readings (2026-10-04, maintainer-approved in chat, `AskUserQuestion` "Wear table").
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS
