@@ -72,7 +72,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | C5 | Tap **Connect** twice quickly. | one session, no error | one DLCI 0x02 open | | |
 | C6 | Disconnect the Buds in **Android's** Bluetooth panel (tap the Buds' row). | "Android no longer shows the Buds connected …" with **Connect**; no crash | ACL disconnect | | |
 | C7 | Reconnect in Android's panel, then **Connect** in the app. | ready again | | | |
-| C8 | Put both buds in the case, lid open, then close the lid. | Within seconds the Buds close the session; the card names the cause: "The Buds closed the app's channel (…)" or "Android no longer shows the Buds connected …" — **never** "likely another app"; with the lid open the app may re-open by itself (a bud docked: charging in the case); after the lid is closed: "Paired — not connected to this phone"; no crash | Buds `DISC` 0x02 and/or ACL disconnect; at most one app `SABM` 0x02 per event | | |
+| C8 | Put both buds in the case, lid open, then close the lid. | Within seconds the Buds close the session; the card names the cause: "The app's channel was closed while Android still shows the Buds connected — the Buds do this when a bud goes in or out of the case or an ear. …" (wording since 1.0.1) or "Android no longer shows the Buds connected …" — **never** "likely another app"; with the lid open the app may re-open by itself (a bud docked: charging in the case); after the lid is closed: "Paired — not connected to this phone"; no crash | Buds `DISC` 0x02 and/or ACL disconnect; at most one app `SABM` 0x02 per event | | |
 | C9 | Take them out again (lid open), keep the app on screen; do **not** tap Connect. | ready again **by itself** once Android shows the Buds connected (one attempt; if it fails, a message and a Connect/Retry button) | one app `SABM` 0x02 per event (link back / Buds `DISC` + ≈ 1.5 s) | | |
 | C10 | Swipe left/right between the tabs, and use the bottom bar. | Both change the tab; Back does not jump to Debug | — | | |
 | C11 | Connected, buds out, lid open: press **Home**; put **both** buds into the case (the link drops while the app is away); wait 10 s; return to the app. | "Android no longer showed the Buds connected when you returned to the app — the connection ended while the app was in the background (…). Tap Connect to reconnect." — not the undetermined "The Maestro channel (equalizer) was closed" (`ai-sessions/0054` I-2) | ACL disconnect while the app is not visible; no app `SABM` 0x02 while away | | |
@@ -91,7 +91,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 |---|---|---|---|---|---|
 | E1 | Buds in the case, lid open, app on screen (it connects by itself; else **Connect**). | Left and Right each "NN% (updated HH:MM:SS) — charging in the case (HH:MM:SS)" | DLCI 0x04: three `03 03 …` frames; DLCI 0x02 stream with 6.2/6.3 field 2 = 2 | | |
 | E2 | Same moment: the **Case** line. | "Case: NN% (updated HH:MM:SS)" (compare with Android's Bluetooth panel / the Buds' LED) **or**, if never reported since the app started, "Not reported yet — the Buds send the Case level only while a bud is charging in the case." — never a made-up value | DLCI 0x02 `SubscribeRuntimeInfo` stream; **no app activity on DLCI 0x08** | | |
-| E3 | Take the **Right** bud out (app on screen). Do **not** tap anything, then tap **Refresh battery**. | Before the tap already: Right "— not charging (out of the case) (HH:MM:SS)", Left "— charging in the case"; the session may be closed and re-opened by itself (≈ 1.5 s); after Refresh the % times update | a stream packet with 6.3 field 2 = 1; then the DLCI 0x04 claim, battery `e4 64 ff`-style | | |
+| E3 | Take the **Right** bud out (app on screen). Do **not** tap anything, then tap **Refresh battery**. | Before the tap already: Right "— not charging (HH:MM:SS)" (1.0.1: no longer "(out of the case)"), Left "— charging in the case"; the session may be closed and re-opened by itself (≈ 1.5 s); after Refresh the % times update | a stream packet with 6.3 field 2 = 1; then the DLCI 0x04 claim, battery `e4 64 ff`-style | | |
 | E4 | Take the **Left** bud out too. | Both "not charging"; Case "NN% — last seen HH:MM:SS (no bud charging in the case)" | a stream packet without entry 6.1 | | |
 | E5 | Put both back (lid open). | Both "charging in the case", Case current again — by itself (automatic re-open if the Buds closed the session) | Buds `DISC` 0x02 → app `SABM` 0x02 ≈ 1.5 s later (unless the ACL dropped first) | | |
 | E6 | Wait a few minutes with the app open (buds in the case, lid open). | The Case line updates by itself if the Buds send a new value — the app does **not** poll | only Buds-initiated stream packets | | |
@@ -129,7 +129,7 @@ Buds **in your ears** for H2–H4, and **say aloud** what you hear at each step 
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| H0 | Look at the presets. | Two rows: `[HEAVY BASS] [LIGHT BASS] [BALANCED]` / `[VOCAL BOOST] [CLARITY]`, equal widths, no label cut off | — | | |
+| H0 | Look at the presets. | Two rows: `[HEAVY BASS] [LIGHT BASS] [BALANCED]` / `[VOCAL BOOST] [CLARITY] [FLAT]` (Flat since 1.0.1), equal widths, no label cut off | — | | |
 | H1 | Sound tab right after Connect. | The five sliders show the Buds' current EQ (compare with the official app if available); "EQ updated: HH:MM:SS" | `ReadSetting 4:16` + answer | | |
 | H2 | Tap each preset: **Heavy bass, Light bass, Balanced, Vocal boost, Clarity**. | The sliders move to the preset; audible difference | one `WriteSetting` per tap, each answered `OK` | | |
 | H3 | Drag **Upper treble** up and release. | The slider stays; audible | one `WriteSetting` (on release, not per pixel) | | |
@@ -238,11 +238,11 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| Q1 | Ready: gear → **Info**. | "App: 0.1.0-dev, build <short hash>[-dirty] (<commit date>)" (= `git log -1 --format='%h %cs'` of the build); "Firmware (from the Buds' announcement, HH:MM:SS):", "Case: release_5.203", "Left bud: release_5.203", "Right bud: release_5.203", "Control channel: 19" (or 21); after Disconnect: "Not connected yet — the Buds report their firmware when the app connects." | nothing from the app while the menu is open | | |
+| Q1 | Ready: gear → **Info**. | "App: <version>, build <short hash>[-dirty] (<commit date>)" — 1.0.1 for the hotfix build (= `git log -1 --format='%h %cs'` of the build); "Firmware (from the Buds' announcement, HH:MM:SS):", "Case: release_5.203", "Left bud: release_5.203", "Right bud: release_5.203", "Control channel: 19" (or 21); after Disconnect: "Not connected yet — the Buds report their firmware when the app connects." | nothing from the app while the menu is open | | |
 | Q2 | Gear → **Settings**: Dark mode **On**, then **Off**, then **System**; with System, switch Android's own dark theme on and off. | On: dark at once; Off: light at once; System follows Android — no restart, no crash; the choice is kept after the app is closed and reopened | — | | |
 | Q3 | Q2 **On** (dark), Connection tab, session ready. | The card's **Disconnect** is as legible as the card's other text (the `CAP-065` dark frame measured ≈ 1.2:1 before the fix) | — | | |
 | Q4 | Both worn, mode Adaptive; Quick Settings → ANC tile once (large tile). | Off (the next after the Buds' **reported** mode, Adaptive) — even if the app showed another mode before | one claim: `08 11` → `08 13 … e8 40` → `08 12 … 20` → ACK | | |
-| Q5 | *(watch only)* An ANC tap or Refresh while Play services takes the channel back. | "The answer was cut off — another app took the Buds' channel. Tap Refresh to see the current mode."; after a cut-off change the mode buttons dimmed + the (i) dot ("Not confirmed: …"), cleared by the next Refresh; never "The Buds didn't respond in time." for it | the app's request, then a phone `DISC` before the Buds' answer | | |
+| Q5 | *(watch only)* An ANC tap or Refresh while Play services takes the channel back. | "The channel was closed before the Buds' answer arrived (possibly by another app using it). Tap Refresh to see the current mode." (wording since 1.0.1); after a cut-off change the mode buttons dimmed + the (i) dot ("Not confirmed: …"), cleared by the next Refresh; never "The Buds didn't respond in time." for it | the app's request, then a phone `DISC` before the Buds' answer | | |
 | Q6 | Gear → **Debug** tab. | The Debug screen as before (Debug-mode switch, Export debug log, Unidentified frames) | — | | |
 
 ## R. The `ai-sessions/0064` build (tab on rotation, balance steps, Bluetooth-off loss, profile proxies, Info links)
@@ -256,6 +256,26 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | R5 | Sound: drag the balance toward **R**, release; try to land on **Right 4**. *(The `0064` steps were removed in `ai-sessions/0066`.)* | the Buds' value after their OK; say how many drags Right 4 took | one `WriteSetting 4:{17:n}` per release, none during the drag; `17:7` = Right 4 | | |
 | R6 | App on screen: Bluetooth off; wait 10 s; Bluetooth on. | "Bluetooth is disabled.", then ready again by itself | export: "Bluetooth adapter: ON -> TURNING_OFF", "… -> OFF", "Session loss cause: Bluetooth was switched off on this phone" (final), later "… -> TURNING_ON", "… -> ON" and the automatic re-open | | |
 | R7 | *(debug build)* After R6, leave the app and come back; read logcat `StrictMode`. | — | note every `LeakedClosableViolation` with its object; 🟡 a `BluetoothLeAudio` one may remain (framework `CloseGuard`, `CAP-066-FINDINGS.md` §8) — the app closes every proxy it obtained (`ai-sessions/0064` F-4) | | |
+
+## S. The 1.0.1 build (`ai-sessions/0069`: values from the last connection, device choice, wording, Flat, "—")
+
+In `CAP-068` as BD-13 … BD-19 and BD-9/BD-29.
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| S1 | Ready, buds worn, an ANC mode shown. Tap **Disconnect**. Open the ANC tab. | The last mode is still shown, **dimmed**, the card's (i) has the dot; in the (i): "ANC mode: <MODE> — from the last connection (updated HH:MM:SS)". The Quick Settings tile says "Open the app" | the session closes; nothing else is sent | | |
+| S2 | After S1: Sound and Controls tabs. | Sliders, switches and chips keep their last values, **dimmed** and disabled; each card's (i) has the dot and starts with "From the last connection — the app is not connected to the Buds now." | — | | |
+| S3 | **Connect**; watch the ANC tab for 3 s. | Until this connection's first answer the old mode stays dimmed with "— from the last connection"; then the mode is shown as current (no dot). Sound/Controls show "not read" until their reads answer (as before) | `08 11` → Notify; the `ReadSetting` sweep | | |
+| S4 | Both buds in the case: Disconnect, take both out, Connect; the battery card's (i) within 3 s. | "Case: NN% — last seen HH:MM:SS (last connection)" — not "(no bud charging in the case)" — until the Buds report the Case again | — | | |
+| S5 | Sound → Equalizer: tap **FLAT**. | All five sliders at 0.0 after the Buds' OK | `WriteSetting 4:{16:{0.0 × 5}}` → OK (the bytes of `CAP-015` frame 2111 on the announced channel) | | |
+| S6 | Right after a Connect, before the EQ and the balance are read (or with the reads failing). | Each EQ band shows "—" instead of a number; Balance shows "—" instead of "Centre"; sliders disabled | — | | Film the first second after "ready" |
+| S7 | Gear → **Settings**: the block "Use different Buds". Tap the button. | Text: "Forgets which Buds this app controls (the Bluetooth pairing in Android stays). You then pick the Buds again with Pair a device." After the tap: the session closes; the Connection tab shows **Pair a device** | Disconnect only; export: "Pairing: use different Buds — removed N association(s) of this app…" | | The Buds stay paired in Android's Bluetooth settings |
+| S8 | After S7: **Pair a device**; pick the Buds in Android's dialog. | Android's picker opens (no silent reuse); after the choice the app is paired with the chosen Buds | CDM association; no new bonding if already bonded | | |
+| S9 | *(only with two Pixel Buds devices paired in Android and none chosen in the app, e.g. after S7)* Open the Connection tab. | "More than one Pixel Buds device is paired with this phone. Tap Pair a device to choose the one to control." + **Pair a device** — the app connects to neither by itself | — | | "not testable" with one pair |
+| S10 | Disconnect; both buds in the **closed** case (wait until Android shows them not connected); tap **Connect**. | Within about 15 s: "Couldn't open the app's channel to the Buds. Possible causes: the Buds are out of reach or in the closed case. Open the case and try again." — **no** mention of another app or Play services | a page attempt ending in a page timeout; no RFCOMM | | The published known issue of 1.0.0 |
+| S11 | Quick Settings: tap the ANC tile while a change cannot be made (buds not worn; or Safe Mode). | A toast with the reason for **every** failure (not worn: "The Buds don't allow changing noise control right now …"; a timeout: "The Buds didn't respond in time.") | `08 11` → Notify; no `Set` when not allowed | | 1.0.0 was silent except for two errors |
+| S12 | Start an export (Debug → Export debug log) and **rotate the phone while Android's "save as" dialog is open**; then save. | "Debug log saved (N lines)." — the file has content | — | | 1.0.0 lost the text on rotation |
+| S13 | Gear → **Info**. | "App: 1.0.1, build <hash> (<date>)", no "-dirty" | — | | |
 
 ## After the run (within 1 minute of the last action)
 
@@ -289,6 +309,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | P 0059 fixes | 6 | | | | |
 | Q 0062 build | 6 | | | | |
 | R 0064 build | 7 | | | | |
+| S 1.0.1 build | 13 | | | | |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/APP_TESTPLAN.md - https://tedsluis.github.io/opencontrolpixelbudspro2/APP_TESTPLAN

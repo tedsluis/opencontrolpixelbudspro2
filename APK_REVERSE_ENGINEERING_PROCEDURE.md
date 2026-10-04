@@ -104,15 +104,23 @@ jadx -d jadx-output/ base.apk
 # Resources, manifest, smali (fallback when JADX misdecompiles something)
 apktool d base.apk -o apktool-output/
 
-# .proto schema extraction (see WORKSTATION_PREPARATIONS.md for the real, confirmed pbtk scope —
-# it is NOT limited to Java/DEX; pbtk-from-binary targets native .so files too, though whether it
-# actually succeeds against libmaestro/libgfps's specific binaries is unconfirmed until tried)
-pbtk-jar-extract base.apk pbtk-output/
-pbtk-from-binary apktool-output/lib/<abi>/libmaestro.so pbtk-output/   # once §4's native .so pass locates it
+# Schema recovery — the method that works on this APK (corrected 2026-10-03, ai-sessions/0069, A68-RE-04 / §6.15):
+# the messages are protobuf-lite classes whose layout is a "RawMessageInfo" string in the decompiled Java; this
+# script decodes that string into field numbers and types.
+python3 scripts/decode_rawmessageinfo.py <path to the decompiled class>.java
+# Batch and helper tools (each with its own SPEC.md / README.md): reverse-engineering/tools/schema_batch_extractor,
+# structural_index, lambda_dispatcher_resolver, limited_dataflow, uuid_ble_context.
 ```
 
-Record the exact **tool versions used** (`jadx --version`, `apktool --version`, pbtk's `pipx list`
-output) in `reverse-engineering/APK_VERSIONS.md`'s row for this version — decompiler output (line
+**`pbtk` does not apply to this APK** (`DECISIONS.md` ADR-041): `pbtk-jar-extract` finds no schema in it, and there is no native
+`libmaestro.so`/`libgfps.so` to run `pbtk-from-binary` on — the Maestro logic is Kotlin/Java (`AGENTS.md` §0, correction of 2026-08-30). The two
+`pbtk` commands this section used to list are kept out of the procedure; try them again only on an APK version that ships such a library.
+
+**When JADX skips a method** ("Method dump skipped", an empty body, or a `/* JADX WARN */` block), grep the smali before recording "not found":
+`grep -rn "<string or field>" apktool-output/smali*/` — the head-gestures write site was found this way after two passes had recorded it as
+missing (`REVERSE_ENGINEERING.md` row 29, `ai-sessions/0068` `A68-RE-01`).
+
+Record the exact **tool versions used** (`jadx --version`, `apktool --version`, the commit of `scripts/decode_rawmessageinfo.py`) in `reverse-engineering/APK_VERSIONS.md`'s row for this version — decompiler output (line
 numbers, class layout) can shift between versions, so a file+line citation is only reproducible if
 the decompiler version is pinned too.
 
@@ -214,7 +222,7 @@ Account-Linking/Non-Owner traffic in captures) and move on — do not follow the
 
 - **Never hand-reconstruct a `.proto` schema from getter/setter names alone** — field *names*
   recovered from JADX are not proof of the actual wire field *numbers*, which determine binary
-  compatibility. Use `pbtk`'s actual extraction output (§3), not a guessed schema.
+  compatibility. Use the schema decoder's output (§3, `scripts/decode_rawmessageinfo.py`), not a guessed schema.
 - **JADX can misdecompile obfuscated/optimized constructs** — when a decompiled method looks
   suspicious or incomplete, cross-check against the `apktool` smali output before trusting it.
 - **Reflection-based code stays invisible to static analysis** — if a call site is never found
@@ -222,9 +230,8 @@ Account-Linking/Non-Owner traffic in captures) and move on — do not follow the
   such experiment in the relevant capture's `CAP-NNN-FINDINGS.md` first, per `PROJECT_RULES.md` §4.
 - **Native `.so` disassembly is in scope for AI mechanical assistance** (`DECISIONS.md` ADR-017 §4),
   on the same terms as DEX/Java work: search, list, and explain disassembly output; never decide
-  relevance or promote a finding. Whether `pbtk-from-binary` actually succeeds against
-  `libmaestro`/`libgfps`'s specific binaries (vs. a stripped protobuf-lite descriptor pool) is
-  unconfirmed until tried — see `WORKSTATION_PREPARATIONS.md`.
+  relevance or promote a finding. This APK version has no `libmaestro`/`libgfps` native library at all (§3), so there is nothing
+  to disassemble for the Maestro logic today.
 - **If a caller/reference search comes back empty, retry with the structurally opposite search
   strategy before concluding it's a dead end** (added 2026-09-16, `ai-sessions/0023`/`ai-sessions/0024`).
   `ai-sessions/0023`'s `gjv.p()` caller trace failed twice searching for classes holding a
@@ -247,6 +254,19 @@ Account-Linking/Non-Owner traffic in captures) and move on — do not follow the
   reverse-engineering session.
 - **Never independently promote a finding to 🟢 FACT, and never commit a new/superseding
   `DECISIONS.md` ADR** — `AGENTS.md` §6/§15, unaffected by ADR-017's mechanical-assistance boundary.
+
+## 7. Checklist for a new APK version or a new Buds firmware (added 2026-10-03, `ai-sessions/0069`)
+
+1. Pull and store the APK (§2); add its row to `reverse-engineering/APK_VERSIONS.md` with the tool versions.
+2. Decompile (§3). Re-run the schema decoder on the settings message (`qhr` in `v1.0.955078536`; the class name changes with every build —
+   find it by its field count and by the string literals of its callers, `REVERSE_ENGINEERING.md`).
+3. Diff against the previous version (§2.1): the settings fields (numbers and types), the pw_rpc service and method name literals, the Fast Pair
+   model-ID handling.
+4. For every field the OpenControl app **writes** (`DECISIONS.md` ADR-045/046/047, EQ ADR-034): same number, same type, same value range? A
+   difference is a protocol change — `PROTOCOL.md` and an ADR before any code.
+5. For a new **firmware**: the wire side of this check is `RELEASING.md`, "New Buds firmware" (capture the official app's connect burst and
+   compare it with `release_5.203`).
+6. Record what was checked and what was not in `REVERSE_ENGINEERING.md`, with file and line for each claim.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/APK_REVERSE_ENGINEERING_PROCEDURE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/APK_REVERSE_ENGINEERING_PROCEDURE

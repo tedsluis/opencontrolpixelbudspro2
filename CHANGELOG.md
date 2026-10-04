@@ -9,6 +9,38 @@ is kept unchanged under "History before 1.0.0". See `TODO.md` for current status
 
 ## [Unreleased]
 
+## [1.0.1] - not yet released
+
+A hotfix for 1.0.0 (`ai-sessions/0069`, from the `ai-sessions/0068` audit). Nothing new is sent to the Buds: the same commands, on the same channels.
+To be tested on hardware as `CAP-068` before it is published (`RELEASING.md` §11).
+
+### Fixed
+
+- A frame from the Buds with an oversized length field could stop the app's reader, or loop without end. Both length checks are corrected, and a
+  reader that fails now costs only that one frame.
+- After Disconnect, or after the connection was lost, the last connection's values could stay on screen as if they were current. They now stay
+  visible but dimmed and marked "from the last connection" — the noise-control mode, the equalizer, the settings and the battery values — and the
+  Quick Settings tile and the notification no longer show a mode from the last connection.
+- A noise-control report from the Buds could be dropped when two arrived close together; the newest one is now always kept.
+- With more than one pair of Pixel Buds paired to the phone, the app picked one without asking. It now asks you to choose with *Pair a device*.
+- The connect error no longer suggests that another app is using the Buds when they are simply out of reach or in the closed case (the known
+  issue of 1.0.0). Other messages now say what was observed and name a cause only as a possibility; "Something went wrong" is gone.
+- A tap on the Quick Settings tile that could not change the mode now always says why.
+- A permission revoked while connected, or another error from Android's Bluetooth stack, no longer escapes as a crash.
+- Rotating the phone while the "save as" dialog of the debug-log export was open lost the export.
+
+### Added
+
+- **Use different Buds** (Settings): forgets which Buds the app controls, so you can pick others with *Pair a device*. The Bluetooth pairing in
+  Android stays.
+- Equalizer preset **Flat** (all bands 0.0).
+- A value that has not been read from the Buds shows "—" instead of a default ("0.0", "Centre").
+
+### Known limits
+
+- English only. A screen reader still announces an unread switch as "off" (the visible "—" is for sighted users only so far).
+- Not hardware-verified at the time of writing: everything above — `CAP-068` is the run for it.
+
 ## [1.0.0] - 2026-10-03
 
 The first public release of OpenControl for Pixel Buds Pro 2 — an independent, open-source Android app for Google Pixel Buds Pro 2 that works without
@@ -32,7 +64,20 @@ the official app and without Google Play services; no `INTERNET` permission, no 
 - Not included: ringing the Case or both buds, firmware updates, multipoint management, head gestures, case sounds, anything needing a Google account.
 - Updates are manual (GitHub Releases); the app never checks for them.
 
+### Known issues
+
+- If the Buds cannot be reached (for example the case is closed), the connect error wrongly suggests that another app such as Google Play services is
+  using them. Open the case and tap Retry. (In the release notes since publication; recorded here on 2026-10-03.)
+- After Disconnect or a lost connection, the battery values and the noise-control mode of the last connection can stay on screen as if current.
+- With more than one pair of Pixel Buds paired to the phone, the app picks one without asking.
+- A malformed frame from the Buds with an oversized length field can stop the app (found by the `ai-sessions/0068` audit; not seen on hardware).
+
+All four are fixed in 1.0.1.
+
 ## History before 1.0.0
+
+*Kept as written: one entry per work session, by kind and then by date (the three entries that were out of date order were moved into place on
+2026-10-03, `ai-sessions/0069`). It is project history, not a list of user-visible changes — those are in the release blocks above.*
 
 ### Added
 
@@ -171,6 +216,12 @@ the official app and without Google Play services; no `INTERNET` permission, no 
   `OsConnectionObserver` now emits every reading (display debounced by the screen). Tests: `:data` 1509, `:hardware` 49, `:domain` 17; five mutation
   checks caught. `CAP-062` FINDINGS §7.2 / EVENT-NOTES corrected in place (the stale text lasted ≈ 1.5 s, film t = 240.5 s, not until t = 256 s).
   `APP_TESTPLAN.md` updated (C1, C3, C8, C9, E1–E5, F8, G3, G4, I4). Not hardware-verified — Group AY plan in the RESULT.
+- **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
+  by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
+  flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.
+  Applied: an adaptive launcher icon from the project's own ANC glyph (clears lint `MissingApplicationIcon`), a binding "fixtures are real bytes"
+  rule in `AGENTS.md` §11, an EQ-audibility step for Group AY (`TODO.md`, `APP_TESTPLAN.md` §H), and two documentation defects found by the cross
+  checks (`ARCHITECTURE.md` §2: a dangling "§2.4 note" pointer, also in `MainActivity.kt`, and the missing `:hardware → :domain` dependency).
 - **2026-09-26/27 (`ai-sessions/0052`): `0051`'s approved proposals recorded, then the settings, the Refresh fix and the EQ layout built.**
   Maintainer-approved in chat 2026-09-26: `PROTOCOL.md` §4.5.1 — "Conversation detection" = `qhr` field 22 🟢 (OFF write `CAP-019` 1720 on film);
   §4.5.3 — "Use touch controls" both directions 🟢 (`CAP-020` 1995 on film) and the `qht` bit-order conflict recorded as 🔴; §4.5.7/§6 — balance
@@ -277,16 +328,6 @@ the official app and without Google Play services; no `INTERNET` permission, no 
   `LICENSE`, `README.md` and the issue tracker, handed to the browser on a tap — **DECISIONS.md ADR-050** (maintainer-approved in chat); no manifest change, no
   `INTERNET`, no dependency. Gate green (`:data` 1588, `:domain` 31, `:hardware` 56, `:ui` 41; lint 0; warnings 0); 7 mutations caught. New skeleton
   `CAP-067` (Group BC). Not hardware-verified.
-- **2026-10-02 (`ai-sessions/0066`): FEATURE — two changes before `CAP-067` (the maintainer's request).** The balance's `[‹]`/`[›]` steps of `0064` F-2 are removed
-  (the slider alone again, one write per release; the real-byte tests of `17:7` stay); Settings → Info no longer links to `LICENSE` on GitHub — the licence is
-  read in the app only (**DECISIONS.md ADR-050 Update**, maintainer-approved in chat). `CAP-067` skeleton, `APP_TESTPLAN.md` and `ARCHITECTURE.md` aligned.
-- **2026-10-03 (`ai-sessions/0067`): `CAP-067` (Group BC) analysed — the release-signed 1.0.0 APK (`8d8af4b`) in a GrapheneOS user without Google Play.**
-  Film (2-s sheets, narrowed transitions; no audio samples), two HCI logs, two exports (one with Debug mode off), one logcat, no system log. 6 Message Stream claims,
-  all the app's, 0 Play-services claims (positive control `CAP-066`); F-1 13/13 incl. the Settings menu across Android's dark switch; Info, licence, links and the
-  ADR-051 notice on film; balance Right 4 = `17:7` reached; L-1: Right out on 21 ⇒ 19 (3rd), one bud out on 19 ⇒ 21 (bud not identifiable; `PROTOCOL.md` §2.2a
-  Update); no ANC `Set` in the run, F-3 not verifiable (no export after the Bluetooth off/on). Maintainer-approved in chat: **`PROJECT.md` Definition of done 1–3
-  ticked** (the ANC change from the maintainer's own test without Play services) and **release `8d8af4b` as 1.0.0**, with one known issue (the connect-failure
-  text). Folder renamed to `captures/CAP-067-2026-10-03_07-57-35_08-18-29-Group_BC/`.
 - **2026-10-02 (`ai-sessions/0065`): MAINTENANCE — release preparation (nothing published).** Release signing from `~/.gradle/gradle.properties` or the
   environment, failing clearly without it (never unsigned, never the debug key); version 1.0.0 / versionCode 10000 (major × 10000 + minor × 100 + patch);
   `.gitignore` for key files and `dist/`. App name "OpenControl for Pixel Buds Pro 2", launcher label "OpenControl", the trademark line on Info, README and
@@ -295,12 +336,17 @@ the official app and without Google Play services; no `INTERNET` permission, no 
   commands), `scripts/release_notes.template`, `scripts/third_party_notices.py` + `LICENSES/Apache-2.0.txt`, `scripts/readme_media.sh`, issue templates. The
   README rewritten for users first, with the app's screenshots and a compressed screen recording; `PROJECT.md` Definition of done: an evidence table
   (criteria 1–3 not yet shown without Play services). Not hardware-verified.
-- **2026-09-25 (`ai-sessions/0049`, `0050`): an AI audit and its validation.** `0049` (an end-to-end audit by another session) was checked claim
-  by claim in `0050` with full enumerations and project-wide cross checks: 16 correct, 12 partly correct, 5 wrong, 1 opinion. Its S1 "security
-  flaw" (SEC-01) misread the evidence (a NAKed frame cited as ACKed; both claims are 🟡 in `PROTOCOL.md` §4.1) — no change, maintainer's choice.
-  Applied: an adaptive launcher icon from the project's own ANC glyph (clears lint `MissingApplicationIcon`), a binding "fixtures are real bytes"
-  rule in `AGENTS.md` §11, an EQ-audibility step for Group AY (`TODO.md`, `APP_TESTPLAN.md` §H), and two documentation defects found by the cross
-  checks (`ARCHITECTURE.md` §2: a dangling "§2.4 note" pointer, also in `MainActivity.kt`, and the missing `:hardware → :domain` dependency).
+- **2026-10-02 (`ai-sessions/0066`): FEATURE — two changes before `CAP-067` (the maintainer's request).** The balance's `[‹]`/`[›]` steps of `0064` F-2 are removed
+  (the slider alone again, one write per release; the real-byte tests of `17:7` stay); Settings → Info no longer links to `LICENSE` on GitHub — the licence is
+  read in the app only (**DECISIONS.md ADR-050 Update**, maintainer-approved in chat). `CAP-067` skeleton, `APP_TESTPLAN.md` and `ARCHITECTURE.md` aligned.
+- **2026-10-03 (`ai-sessions/0067`): `CAP-067` (Group BC) analysed — the release-signed 1.0.0 APK (`8d8af4b`) in a GrapheneOS user without Google Play.**
+  Film (2-s sheets, narrowed transitions; no audio samples), two HCI logs, two exports (one with Debug mode off), one logcat, no system log. 6 Message Stream claims,
+  all the app's, 0 Play-services claims (positive control `CAP-066`); F-1 14/14 (corrected 2026-10-03; was "13/13") incl. the Settings menu across Android's dark switch; Info, licence, links and the
+  ADR-051 notice on film; balance Right 4 = `17:7` reached; L-1: Right out on 21 ⇒ 19 (3rd), one bud out on 19 ⇒ 21 (bud not identifiable; `PROTOCOL.md` §2.2a
+  Update); no ANC `Set` in the run, F-3 not verifiable (no export after the Bluetooth off/on). Maintainer-approved in chat: **`PROJECT.md` Definition of done 1–3
+  ticked** (the ANC change from the maintainer's own test without Play services) and **release `8d8af4b` as 1.0.0**, with one known issue (the connect-failure
+  text). Folder renamed to `captures/CAP-067-2026-10-03_07-57-35_08-18-29-Group_BC/`.
+
 ### Fixed
 
 - **2026-09-18 (`ai-sessions/0034`): a crash-on-launch in the v1 app, found by the maintainer on
@@ -632,7 +678,7 @@ the official app and without Google Play services; no `INTERNET` permission, no 
   verification of 13 technical claims against the Bluetooth Core Spec, Google's Fast Pair spec,
   Pigweed source, and Android/AOSP docs confirmed 11 outright, clarified one
   (`BluetoothDevice.ACTION_BATTERY_LEVEL_CHANGED` is `@SystemApi`-gated, though the literal
-  broadcast string remains usable by third-party apps), and found one genuine error: `PROTOCOL.md`
+  broadcast string remains usable by third-party apps — *superseded 2026-09-30: the broadcast is not usable by this app, `AGENTS.md` §5's note of that date and ADR-029's Update*), and found one genuine error: `PROTOCOL.md`
   §2.1/§4.4's cited "spec worked ACK example" for the Ring/Find My Buds command did not match
   Google's actual specification — corrected via dated notes (neither observed `CAP-025` ACK
   variant actually matches the real spec example either; §6's open item on the extra byte was
