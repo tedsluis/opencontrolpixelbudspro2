@@ -9,7 +9,7 @@ graduated out of that file per `ai-sessions/0025`'s own authorization (see that 
 citation). Built following `../lambda_dispatcher_resolver/SPEC.md` as the template, and reusing that
 tool's own Layer 1 (`androguard_index.py`) directly, per `../BACKLOG.md`'s own sketch.
 
-**Status: implemented 2026-09-16** (`src/`, `tests/`, `README.md`), against exactly this document's
+**Status: v1 implemented 2026-09-16; v1.1 (`implements`, `field-writes`) 2026-09-17; v1.2 (`strings`, §5c) 2026-10-06, `ai-sessions/0073`.** *(Original line:)* **implemented 2026-09-16** (`src/`, `tests/`, `README.md`), against exactly this document's
 own §5/§6/§10.
 
 ---
@@ -139,7 +139,8 @@ machinery neither tool currently has.
 
 ## 5. Interface (CLI)
 
-Two commands:
+Five commands: `refs` and `unreferenced` (v1, shown here), `implements` (§5a), `field-writes` (§5b) and `strings` (§5c).
+*(Corrected 2026-10-06, `ai-sessions/0073`, `ai-sessions/0068` `A68-RE-06`: this line said "Two commands".)*
 
 ```
 structural-index refs \
@@ -203,6 +204,23 @@ field," as opposed to "who merely declares a field of this type" (§3's existing
 distinguish a field that is written from one that is only ever read, or answer "which specific field
 of a multi-field class"). Field name only, not the field's own type — the target class already fixes
 which field is meant.
+
+### 5c. `strings` — v1.2 addition, 2026-10-06 (`ai-sessions/0073`)
+
+The resource/string-table search §2.2 deferred (open question M of `ai-sessions/0024`; `REVERSE_ENGINEERING.md`'s "Resource/string-table
+sweep" was done by hand with `grep`). A different data source from the rest of the tool — `apktool-output/res/` and the text of the
+decompiled files, not DEX structure — so `resource_index.py` uses the standard library only and loads nothing through androguard.
+
+```
+structural-index strings --apk-root <apk root> [--key <regex on the name>] [--text <regex on the value>] [--no-usages]
+```
+
+For every `<string>` of `res/values/strings.xml` and every array of `res/values/arrays.xml` whose name (`--key`) and/or value (`--text`)
+matches (case-insensitive regular expressions; both given ⇒ both must match): its type, name, value (clipped at 160 characters),
+`defined_at` (`res/values/strings.xml:N`), `resource_id` and `public_at` (from `res/values/public.xml`), and three usage lists —
+`smali_uses` (a `const` of that id, `smali*/…:N`), `java_uses` (`R.<type>.<name>` in `jadx-output/sources/`, not counting the generated
+`R.java`), `xml_uses` (`@<type>/<name>` in `res/` outside `values*/`). `strings_scanned` and `files_scanned` state the size of the search,
+so a zero result is a checked negative. Translations (`values-*/`) are not searched. It lists; it does not say which use matters (§8).
 
 ## 6. Output format
 
@@ -305,6 +323,9 @@ deferred to their own follow-up passes of this same tool (or a new one), not fol
 per the same "don't bolt on a materially different capability" discipline `lambda_dispatcher_resolver`
 already models.
 
+*(Updated 2026-10-06, `ai-sessions/0073`, `A68-RE-06`: the paragraph above describes v1. The `implements`-query was built on
+2026-09-17 (§5a) and the resource/string-table search on 2026-10-06 (§5c); neither is deferred any more.)*
+
 ## 10. Test plan / acceptance criteria
 
 Per `ai-sessions/0024_AUDIT_RESULT_2026_09_16.md`'s own Phase 3.3 sketch, all three already
@@ -345,6 +366,15 @@ project's own `AGENTS.md` §13.6 discipline:
    `caller_class: defpackage.fqm`, `caller_method: o` — matching `fqm.java:2710`'s own Hilt
    member-injector body (`bluetoothPriorityReceiver.c = (fzd) this.ac.a();`), independently read and
    confirmed this same session (`ai-sessions/0027`) before being trusted as a fixture.
+
+### 10b. `strings` acceptance criteria — v1.2, 2026-10-06
+
+`tests/test_resource_index.py`: four synthetic cases on invented resource, smali and Java files under `tmp_path` (the whole chain for a key
+search, with a longer name that must not match; a case-insensitive text search that also finds an array; zero result vs. missing tree vs.
+no pattern; the CLI) and two against the local tree (skipped without it): `key_head_gestures_toggle` → `0x7f140315`,
+`strings.xml:433`, `public.xml:5762`, a `const` in `cmi.smali`, `HeadGesturesSettingFragment`, `res/xml/head_gestures_preference.xml` —
+the chain `REVERSE_ENGINEERING.md`'s `qhr` entry records (2026-10-03 Update); and "Quartz" = `title_feature_a_pref` at `strings.xml:960`
+(the resource-sweep entry). Result 2026-10-06: 23 passed in the whole suite (17 before), 0 skipped.
 
 ## 11. Directory layout and git-tracking boundary
 

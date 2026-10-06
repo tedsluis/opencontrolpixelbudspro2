@@ -50,6 +50,15 @@ uv pip install --python .venv/bin/python -e ".[dev]"
   --field c
 ```
 
+```sh
+# v1.2 (2026-10-06): string/array resources by name or value, with resource id and usages
+# (smali const, R.<type>.<name> in JADX, @<type>/<name> in res XML) — SPEC.md §5c:
+.venv/bin/python3 -m structural_index.cli strings \
+  --apk-root ../../apk/v1.0.955078536-10253511 --key '^key_head_gestures' 
+.venv/bin/python3 -m structural_index.cli strings \
+  --apk-root ../../apk/v1.0.955078536-10253511 --text 'find device' --no-usages
+```
+
 `--class` accepts the short form (`esk`), the default-package dotted form (`defpackage.esk`), or the
 raw smali descriptor (`Lesk;`) — same three-spelling convention as `lambda_dispatcher_resolver`.
 

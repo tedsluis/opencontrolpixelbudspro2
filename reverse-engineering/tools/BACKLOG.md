@@ -65,13 +65,13 @@ This ordering is a lens, not a commitment — the maintainer may pick any subset
 > independently-useful items (wire-payload-vs-schema decoder, APK version-diff, tshark/DLCI-reassignment
 > helper) unordered relative to each other, unchanged from the original text.** This ordering is now
 > adopted, not merely proposed — the structural code index (item 1) has already been built against
-> it (see that idea's own "Implemented 2026-09-16" note above); items 2-5 remain not-yet-built and
+> it (see that idea's own "Implemented 2026-09-16" note below — *"above" corrected 2026-10-06, `A68-RE-06`*); items 2-5 remain not-yet-built and
 > still follow this same order per this file's own header note that nothing here is committed to
 > being built until it graduates its own spec document.
 >
 > **Update (2026-09-16, `ai-sessions/0025` resumption):** item 2 (schema batch-extractor) and item 3
 > (UUID/BLE-context reconstruction) are now also built (see each idea's own "Implemented 2026-09-16"
-> note above). Item 4 (limited dataflow) and the three remaining unordered items remain not-yet-built
+> note below — *"above" corrected 2026-10-06*). Item 4 (limited dataflow) and the three remaining unordered items remain not-yet-built
 > and still follow this same order.
 >
 > **Update (2026-09-17, same resumption, continued after a mid-task rate-limit interruption):** item
@@ -90,9 +90,10 @@ narrowest-useful-version sketch's own single capability (construct/call/field-ty
 for one class) and passes all three of its own named acceptance criteria against the real,
 locally-decompiled APK (`esk`'s 21 construction sites; `giz.p()`'s sole `ftw.a` caller, reproducing
 `ai-sessions/0023`'s `Lgiz;->p(` smali-grep finding from a structured query; the `aie`
-non-catalogued-class zero-reference check). The `implements`-query and resource/string-table search
-named below as "explicitly deferred to a later version" remain not built — this entry stays open for
-whoever picks either of those up next, rather than being marked fully closed.
+non-catalogued-class zero-reference check). *(Corrected 2026-10-06, `ai-sessions/0073`, `ai-sessions/0068` `A68-RE-06`: this entry
+said the `implements`-query and the resource/string-table search "remain not built". The `implements`-query and a field-write search were
+built on 2026-09-17 — v1.1, `structural_index/SPEC.md` §5a/§5b; the resource/string-table search on 2026-10-06 — v1.2, `strings`, §5c.
+Nothing named in this entry is open any more.)*
 
 Generalizes `lambda_dispatcher_resolver`'s Layer 1 beyond just lambda-dispatcher detection into a
 standing query tool: "list every class implementing interface X," "find every caller of method
@@ -223,6 +224,39 @@ carries which logical channel (RFCOMM DLCI numbers are session-local, not fixed 
 reconnect). A small Python wrapper standardizing "pull every payload for the channel matching
 content signature X, across every reconnect in this log" would remove a real, recurring
 misattribution risk from that manual process.
+
+## Built in `ai-sessions/0073` (2026-10-06) — two new tools, three extensions
+
+- **[`citation_checker/`](citation_checker/SPEC.md)** (new): every `file:line` citation the documents make into the decompiled tree,
+  resolved and checked (968 on its first run; it found no missing file and no range outside a file; the reading of the 448 citations
+  without a comparable token is in that session's RESULT). Rerun it after every edit of `REVERSE_ENGINEERING.md` and on every new
+  decompile.
+- **[`pwrpc_name_table/`](pwrpc_name_table/SPEC.md)** (new): the pw_rpc ids on the wire of every capture (`census`) named from the
+  tree's string literals (`match`). First run: 8 service ids and 16 method ids, none unnamed.
+- `structural_index` v1.2 (`strings`), `schema_batch_extractor` v1.1 (`declared_type`, `refs --include-plain`), `uuid_ble_context` v1.1
+  (byte-reversed aliases, `find`) — each idea's entry above and each tool's `SPEC.md`.
+- **Not built, by decision of that session:** changes to `lambda_dispatcher_resolver` and `limited_dataflow` — no lead needed a
+  `sparse-switch` or a second discriminator; the traces that were needed were short enough to read.
+
+Still open: the wire-payload-vs-schema decoder and the tshark/DLCI-reassignment helper (above, unchanged). `scripts/pwrpc_decode.py`
+covers most of the first for DLCI 0x02.
+
+### Design notes for the APK version-diff tool (not built — no second decompiled version exists yet)
+
+For the pending pass over 1.0.990706425 (`TODO.md` §4; `APK_REVERSE_ENGINEERING_PROCEDURE.md` §2.1/§7). Obfuscated class names change
+with every build, so the diff must key on what survives R8:
+
+1. **pw_rpc catalogue**: run `pwrpc_name_table`'s literal sweep on both trees and diff the *service and method name literals* (the
+   `"pkg.Service"` / method-name pairs of the descriptor class — `fux` in 1.0.955078536), with each method's request/response schema shape.
+2. **Schemas by shape**: `schema_batch_extractor scan` on both; match classes by (field count, field numbers, types, nested shapes), not by
+   name; report shapes that appear, disappear or change — first of all the 38-field settings oneof (`qhr`) and its nested messages.
+3. **Strings and resources**: `structural_index strings` on both `strings.xml` files (keys added/removed/changed); log-string literals
+   added/removed (the literal sets themselves stay in the scratch directory — only the differences that matter are quoted).
+4. **Manifest**: components, `exported`, permissions, intent filters.
+5. **Citations**: run `citation_checker` against the new tree; every citation that no longer resolves is a class to re-locate by its
+   quoted tokens.
+
+Output: JSON per step, names and shapes only; the governance block at the top of this file applies.
 
 ---
 

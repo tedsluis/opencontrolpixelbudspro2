@@ -40,19 +40,23 @@ def h65599(name: str) -> int:
     return h
 
 
-# Service names are string literals in the APK (PROTOCOL.md §2.2a, Update of 2026-09-30); the last three have not been
-# seen on the wire in any capture.
+# Service names are string literals in the APK (PROTOCOL.md §2.2a, Update of 2026-09-30). HeadGesture and EartipFitTest have
+# not been seen on the wire in any capture; JitterBuffer and a10a20.kpi.Kpi only in CAP-069 (official app 1.0.990706425).
 SERVICES = {h65599(n): n for n in (
     "maestro_pw.Maestro", "maestro_pw.Dosimeter", "maestro_pw.Multipoint", "maestro_pw.DynamicServerConfigService",
     "pw.software_update.BundledUpdate", "hr.core.software_update.UpdateHelperService",
-    "maestro_pw.HeadGesture", "maestro_pw.EartipFitTest", "maestro_pw.JitterBuffer")}
+    "maestro_pw.HeadGesture", "maestro_pw.EartipFitTest", "maestro_pw.JitterBuffer",
+    # added 2026-10-06 (ai-sessions/0073): a literal of the APK's service catalogue; on the wire in CAP-069 (frame 1894)
+    "a10a20.kpi.Kpi")}
 # The connect-time burst names (GetHardwareInfo, SubscribeRuntimeInfo, SetWallclock) were added 2026-09-24 (ai-sessions/0045,
 # PROTOCOL.md §6): names from the APK's maestro_pw.Maestro catalog, matched to the ids on the wire in CAP-036 frames 1404-1570.
 METHODS = {h65599(n): n for n in ("WriteSetting", "ReadSetting", "SubscribeToSettingsChanges", "GetSoftwareInfo",
                                   "GetHardwareInfo", "SubscribeRuntimeInfo", "SetWallclock",
                                   # other services (PROTOCOL.md §2.2a):
                                   "FetchDailySummaries", "SubscribeToLiveDb", "SubscribeToQuietModeStatus", "SetConfig",
-                                  "GetStatus", "GetRunningVersion", "GetStagedVersion")}
+                                  "GetStatus", "GetRunningVersion", "GetStagedVersion",
+                                  # added 2026-10-06 (ai-sessions/0073): on the wire in CAP-069 (frames 1894 and 965)
+                                  "KpiStream", "SetJitterBufferSizePreference")}
 # pw_rpc packet.proto PacketType. 0/1/7 are observed in the captures (REQUEST from the phone, RESPONSE and
 # SERVER_STREAM from the Buds); 2/4/5/8 are from the public proto (ai-sessions/0041 corrected an earlier table
 # that had 2/3/5 wrong).

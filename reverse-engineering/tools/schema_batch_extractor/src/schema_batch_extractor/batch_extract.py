@@ -6,6 +6,7 @@ SPEC.md §4's own "reuse, stated precisely" note).
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -59,7 +60,30 @@ def _field_message_ref(entry: dict) -> tuple[str | None, str | None]:
     return None, None
 
 
-def _to_decoded_fields(decoded: dict) -> list[DecodedField]:
+# An instance-field declaration as JADX prints it: "    public qid c;" (SPEC.md §3a).
+_FIELD_DECL = re.compile(
+    r"^\s+(?:public|private|protected)\s+(?!static\b)(?:(?:final|volatile|transient)\s+)*([\w.$]+)\s+(\w+)\s*(?:=[^;]*)?;\s*$",
+    re.MULTILINE,
+)
+_PLAIN_MESSAGE_TYPES = ("MESSAGE", "GROUP")
+
+
+def _declared_field_types(java_text: str) -> dict[str, str]:
+    """{field name: declared type} for the instance fields of the class in `java_text`.
+    A name declared twice with different types (an inner class) is dropped, never guessed."""
+    out: dict[str, str] = {}
+    clash: set[str] = set()
+    for m in _FIELD_DECL.finditer(java_text):
+        typ, name = m.group(1), m.group(2)
+        if name in out and out[name] != typ:
+            clash.add(name)
+        out[name] = typ
+    for name in clash:
+        del out[name]
+    return out
+
+
+def _to_decoded_fields(decoded: dict, declared: dict[str, str] | None = None) -> list[DecodedField]:
     out: list[DecodedField] = []
     for entry in decoded["fields"]:
         ref, _context = _field_message_ref(entry)
@@ -73,13 +97,18 @@ def _to_decoded_fields(decoded: dict) -> list[DecodedField]:
                 message_ref=ref,
                 has_presence=entry.get("supports_presence", False),
                 hasbit=entry.get("hasbits_index"),
+                declared_type=(
+                    declared.get(entry.get("java_field") or "")
+                    if declared and ref is None and not entry.get("is_oneof") and entry["type_name"] in _PLAIN_MESSAGE_TYPES
+                    else None
+                ),
             )
         )
     return out
 
 
-def _to_schema_entry(cls_name: str, file_path: Path, decoded: dict) -> SchemaEntry:
-    fields = _to_decoded_fields(decoded)
+def _to_schema_entry(cls_name: str, file_path: Path, decoded: dict, java_text: str | None = None) -> SchemaEntry:
+    fields = _to_decoded_fields(decoded, _declared_field_types(java_text) if java_text else None)
     # message_refs: deduped, in field-number order -- every field whose own
     # RawMessageInfo entry carries a class reference (SPEC.md §3).
     seen: set[str] = set()
@@ -132,7 +161,7 @@ def scan(apk_root: Path, class_filter: list[str] | None = None, min_field_count:
                 unparsable.append(str(jf))
                 continue
             decoded = _raw.decode_info_string(c["info_string"], c["objects"])
-            all_classes.append(_to_schema_entry(cls_name, jf, decoded))
+            all_classes.append(_to_schema_entry(cls_name, jf, decoded, text if len(constructions) == 1 else None))
 
     output_classes = all_classes
     if class_filter:
@@ -167,7 +196,7 @@ def _normalize(name: str) -> str:
     return n
 
 
-def find_refs(apk_root: Path, class_name: str) -> RefsResult:
+def find_refs(apk_root: Path, class_name: str, include_plain: bool = False) -> RefsResult:
     """SPEC.md §5's `refs` command: runs a full `scan` once, then returns every
     class in the register whose own decoded schema references `class_name` via
     a oneof/list/map field (SPEC.md §3's disclosed scope). Raises KeyError if
@@ -190,6 +219,9 @@ def find_refs(apk_root: Path, class_name: str) -> RefsResult:
             if f.message_ref is not None and f.message_ref.rsplit(".", 1)[-1] == target_short:
                 context = "oneof" if f.is_oneof else ("map" if f.type_name == "MAP" else "list")
                 referenced_by.append(ReferencedBy(cls=entry.cls, field_number=f.field_number, context=context))
+            elif include_plain and f.declared_type is not None and f.declared_type.rsplit(".", 1)[-1] == target_short:
+                # v1.1 (SPEC.md §3a): a plain singular MESSAGE field whose declared Java type is the target
+                referenced_by.append(ReferencedBy(cls=entry.cls, field_number=f.field_number, context="plain"))
 
     resolved_full = next((c.cls for c in result.classes if c.cls.rsplit(".", 1)[-1] == target_short), target_short)
     return RefsResult(cls=resolved_full, referenced_by=referenced_by)

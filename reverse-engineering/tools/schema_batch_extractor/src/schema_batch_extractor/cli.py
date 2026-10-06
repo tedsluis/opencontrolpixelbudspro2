@@ -25,7 +25,7 @@ def _cmd_scan(args: argparse.Namespace) -> int:
 
 def _cmd_refs(args: argparse.Namespace) -> int:
     try:
-        result = find_refs(Path(args.apk_root), args.cls)
+        result = find_refs(Path(args.apk_root), args.cls, include_plain=args.include_plain)
     except FileNotFoundError as e:
         print(f"schema-batch-extractor: error: {e}", file=sys.stderr)
         return 1
@@ -60,6 +60,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_refs = sub.add_parser("refs", help="which classes' schemas reference this class (oneof/list/map only)")
     p_refs.add_argument("--apk-root", required=True)
     p_refs.add_argument("--class", dest="cls", required=True)
+    p_refs.add_argument("--include-plain", action="store_true",
+                        help="also list plain singular MESSAGE fields whose declared Java type is this class (v1.1)")
     p_refs.add_argument("--output-dir", default=None)
     p_refs.set_defaults(func=_cmd_refs)
 

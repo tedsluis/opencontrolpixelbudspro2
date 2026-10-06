@@ -442,6 +442,19 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
   19 with the head in view. Command: the control-frame inventory and the scratch decoder of `CAP-065-FINDINGS.md` (DLCI 2 **and** 3, CRC-32 per frame).
   ADR-034 item 3 is unchanged.
 
+- **Note (2026-10-06, `ai-sessions/0073`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "PROTOCOL", option *"All five notes (Recommended)"*; code-side findings, no status change).**
+  - **The two ids of `CAP-069` are named.** `0xbf6c9399` = `a10a20.kpi.Kpi` (method `0x92476025` = `KpiStream`) and `0x8d99df93` =
+    `maestro_pw.JitterBuffer` / `SetJitterBufferSizePreference` (service `0x7f944334`) — string literals of app **1.0.955078536** (`fux.java:52`,
+    `:50`), matched by `h65599`; on the wire only in `CAP-069` (frames 1894 `7e 00 3b 03 10 13 1d 99 93 6c bf 25 25 60 47 92 aa 8a 3b 70 7e`
+    and 965 `7e 00 4b 03 10 15 1d 34 43 94 7f 25 93 df 99 8d 2a 02 08 01 a2 69 db 54 7e`; `tshark -r CAP-069-btsnoop_hci.log -Y
+    'frame.number==965 || frame.number==1894' -T fields -e frame.number -e data.data`). Every service and method id of the 80 capture logs (8 and
+    16) is now named (`reverse-engineering/tools/pwrpc_name_table`). 🟡 what the KPI stream and the jitter-buffer preference do.
+  - **The official app does not request `GetSoftwareInfo`.** 🟢 (wire) 0 requests and 295 responses in the 80 logs; 🟢 (code) `fxm.java:53`
+    opens a pending call and sends nothing — the Buds' announcement is the answer it waits for, and the app takes that packet's target core as
+    its "primary route" unless field 6 is set (`fxk.java:30–35`, "Update primary to %d"); field 5 is the device's "random id" in the app's words
+    (`gck.java:198`). The 🔴 on fields 5 and 6 (2026-09-24 Update) and the 🟡 on the routing through `gaa.d` (2026-10-01 Update) are answered **on
+    the code side**; what the Buds mean by them stays 🟡. `REVERSE_ENGINEERING.md`, `qjb` entry.
+
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
 `[Group:1][Code:1][Length:2B-BE][Value]` envelope (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md`
@@ -948,6 +961,12 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   single Bass slider) and `CAP-015` (2026-08-18, 5 presets + all 5 sliders, 3 passes each) — see
   both FINDINGS.md files above.
 
+- **Note (2026-10-06, `ai-sessions/0073`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "PROTOCOL", option *"All five notes (Recommended)"*; no status change):** the "navigate away" path is an androidx.navigation
+  destination listener (`hod.java:32–38`, `ebg.java:93–105`): Back, the app-bar arrow and any forward navigation from the EQ screen trigger it
+  while the Save button is enabled (`hom.java:128`); Home does not change the destination. 🟡 until captured — the test is in `TODO.md` §3
+  (Group AO). The sliders are redrawn through a 10 000 ms throttle on the Buds' echo (`hom.java:68`), 🟡 the cause of `CAP-053-FINDINGS.md` §4's
+  late thumb.
+
 ### 4.3 Battery status (Left / Right / Case)
 
 > **Current state (2026-09-24, `ai-sessions/0045`) — read this first; the paragraph below is the 2026-08 framing, kept as history.** Implemented:
@@ -1453,6 +1472,12 @@ event-observation coroutines.
   btrfcomm.len>0 && (frame.number==5874 || frame.number==6015)" -T fields -e frame.number -e data.data` and the MAESTRO decoder of
   `CAP-065-FINDINGS.md`. One sample; not a rule yet.
 
+- **Note (2026-10-06, `ai-sessions/0073`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "PROTOCOL", option *"All five notes (Recommended)"*; no status change):** in the official app's schema an entry's field 2 is the enum
+  `NOT_CHARGING(1)` / `WIRED(2)` / `GENERIC_QI(3)` (`qhw.java:6–8`) — a charger type. The 🔴 "in the case or charging" reads *charging* in the
+  code (🟡 for the Buds: an empty-case test is still the capture that settles it; `3` has never been on the wire). The stream's top-level fields
+  2 and 3 are not in app 1.0.955078536's schema (`qiy` has fields 4–7 only), so the app cannot name them. The app's field 7 flags gate its
+  live-dB subscription per bud: 7.2 Left, 7.1 Right (`fsy.java:122–170`).
+
 **Implementation priority (superseded 2026-09-24 — see the "Current state" note at the top of §4.3: B and E are implemented *(correction 2026-09-30:
 **B and F** are implemented; E is a FACT source the app no longer opens, ADR-043)*, A unmatched, C removed
 (ADR-040), D contested; "already-periodic HFP" below is wrong per ADR-015):** 0 (cheap to rule in/out) → A → B → C → D (see
@@ -1956,6 +1981,12 @@ The following remain 🔴 unconfirmed at the protocol level — no capture has t
 > structure, target channel, expected response, status, evidence, verifying experiment) — this is
 > now done for every setting captured through `CAP-024`; extend §4.5.1–§4.5.8 or add a new
 > subsection as further settings are confirmed, rather than reverting to a bare bullet list.
+
+- **Note (2026-10-06, `ai-sessions/0073`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "PROTOCOL", option *"All five notes (Recommended)"*; no status change):** app 1.0.955078536 has no Loud Noise Protection or Adaptive
+  Audio control and sends nothing for them — `grep -rlEi 'loud.?noise|noise.?protect|loud.?sound|adaptive.?audio'` over the decompiled app
+  classes → 0 files (positive control `loudness.?comp` → `hlv.java`, `R.java`). "Adaptive audio" is the title of an onboarding page
+  (`strings.xml:984`); the Sound screen's "Adaptive Sound" switch calls a method that is empty for this product family (`fyo.java:415`).
+  🟡 on-device only on `release_5.203`; `CAP-030` would show whether a newer app sends anything.
 
 ## 5. Connection lifecycle
 
@@ -2866,6 +2897,9 @@ leaving them buried in prose elsewhere.
       session continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS as written
       above — not promoted to FACT, since the Optional's actual state during `CAP-051`'s session
       remains unconfirmed.
+      **Note (2026-10-06, `ai-sessions/0073`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "PROTOCOL", option *"All five notes (Recommended)"*; no status change):** the 🟡 "`ftj.p(deviceId)` reads empty" is refuted by
+      the code — the provider is `Optional.of(…)` (`fok.java:18`); the app's ANC row writes only MAESTRO setting 13 (`fye.a`), and no
+      capture shows a field-13 write at all (0 in 80 logs). 🟡 the ANC taps filmed in the official app were not on that row (`TODO.md` §4).
 - [x] **Answered (pointer 2026-09-30):** the sub-message is `SubscribeRuntimeInfo` entry 6.1 = Case % (Option F, 🟢, ADR-043; followed live in `CAP-062`/`CAP-063`).
       **Added 2026-09-06, `CAP-041-FINDINGS.md` §4 (Group AH, `OBS-007`):** a recurring 2-field
       sub-message inside DLCI 0x02's connect-time burst (first flagged, structurally, in
@@ -3618,6 +3652,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-01 | **`ai-sessions/0063` — `CAP-066` (Group BB), maintainer-approved in chat 2026-10-01.** **§2.2a** L-1: with both buds worn on 21, the Right taken out ⇒ Buds `DISC` + announcement 19 — 🟢 (2 of 2); the hosting-bud reading stays 🟡 (strengthened); 19 → 21 untested. **§4.1** Settable: dated Update, status unchanged (28 `00` none worn, 48 `e8` ≥ 1 worn; straight from the case `00` 2.6–175 s). **§5** note: a second sample of the phone re-paging 0.1 s after a drop (🔴 why). | Claude (AI), maintainer-approved |
 | 2026-10-03 | **`ai-sessions/0067` — `CAP-067` (Group BC, the 1.0.0 release APK without Play services), maintainer-approved in chat 2026-10-03.** **§2.2a** L-1: Right out on 21 ⇒ `DISC` + 19 (3rd sample); one bud out on 19 ⇒ `DISC` + 21, bud not identifiable — status unchanged (🟡). | Claude (AI), maintainer-approved |
 | 2026-10-03 | **`ai-sessions/0069` — processing the `ai-sessions/0068` audit, every text maintainer-approved in chat 2026-10-03.** **§4.1** the ADR-022 count is 19 in 11 (not 17 in 10); the Set/ACK/NAK tally restated over every log (70 Sets, 59 ACK, 11 NAK, `scripts/message_stream_tally.py`); `CAP-063` 29 `Notify`. **§2.2a** `CAP-066` 3 of 3. **§2.3** DLCI = 2 × server channel + direction bit. **§4.3** Option A: the page names the case-open use case; Option C: 12 × `AT+BIEV` in `CAP-059`. **§4.4** Ring: the directions corrected (🟢), the Buds' own message 🟡 "ringing-status sync". **§4.5.2** Multipoint OFF write `CAP-019` 2482 on film; SASS flags bit 2 🟡. **§4.5.4** head gestures: both writes in `CAP-020`, 🟡 1 = off / 2 = on (status unchanged). **§6** the HFP "never recurs" item answered (a filter artefact); stale items ticked with pointers; the second serial suffix and the sweep range corrected. **§0/§1/§2/§3** stale source and transport wording. No promotion to 🟢 beyond the Ring directions | Claude (AI), maintenance task; maintainer-approved in chat 2026-10-03 |
+| 2026-10-06 | **`ai-sessions/0073` — second APK pass (`v1.0.955078536-10253511`), every text maintainer-approved in chat 2026-10-06 (`AskUserQuestion` "PROTOCOL").** Dated notes, no status change: **§2.2a** `0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` = `JitterBuffer.SetJitterBufferSizePreference`; the official app never requests `GetSoftwareInfo` (0 of 295), fields 5 ("random id") and 6 (not-primary flag) in the app's words. **§4.2** the navigate-away path is a navigation destination listener. **§4.3 Option F** entry field 2 = charger-type enum. **§4.5.9** no Loud Noise Protection / Adaptive Audio control in this app version. **§6** the `CAP-051` Optional gate refuted. | `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

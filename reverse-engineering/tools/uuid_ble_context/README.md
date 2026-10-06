@@ -36,6 +36,14 @@ uv pip install --python .venv/bin/python -e ".[dev]"
 
 Add `--output-dir <dir>` to either command to write JSON to a file instead of stdout.
 
+```sh
+# v1.1 (2026-10-06): is a UUID from a capture anywhere in the tree — both byte orders, with and without
+# dashes, in sources, smali, res and assets (about 5 s per UUID; SPEC.md §3a):
+.venv/bin/python3 -m uuid_ble_context.cli find \
+  --apk-root ../../apk/v1.0.955078536-10253511 \
+  --uuid 25e97ff7-24ce-4c4c-8951-f764a708f7b5 --uuid f8d1fbe4-7966-4334-8024-ff96c9330e15
+```
+
 ## Tests
 
 ```sh
