@@ -547,6 +547,18 @@ with the maintainer's approval; the "Correlation status with PROTOCOL.md" table 
 - **Open questions**: whether all `maestro_pw.*` services travel over the same RFCOMM channel (the
   "pigweed" UUID from `gbm`) or are split across more than one.
 
+- **Update (2026-10-06, `ai-sessions/0073`, mechanical — `reverse-engineering/tools/pwrpc_name_table`; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*) — every pw_rpc id on
+  every wire is named from this APK version.** `census` over the 80 capture logs: 21,692 packets, 8 service ids, 16 method ids; `match` over
+  23,766 distinct string literals (38,085 Java and 37,453 smali occurrences): 0 unnamed. New against `PROTOCOL.md` §2.2a: **`0xbf6c9399` =
+  `a10a20.kpi.Kpi`, method `0x92476025` = `KpiStream`** (`fux.java:52`; stream type `qhc` {1 `ENUM`, 2 `BYTES`, 3 `FIXED32`}) and **`0x7f944334` =
+  `maestro_pw.JitterBuffer`, method `0x8d99df93` = `SetJitterBufferSizePreference`** (`fux.java:50`; request `qjs` {1 `ENUM`}) — the two ids of
+  `CAP-069` (frames 1894 and 965), called by app 1.0.990706425 only, named by literals of 1.0.955078536. The tree holds 15 service descriptors;
+  never seen on a wire: `EartipFitTest` `0xb7e3b59f`, `HeadGesture` `0xa8173748`, `Multipoint.ForceMultipointSwitch` `0x473f375f`,
+  `Maestro.SubscribeToOobeActions`, `BundledUpdate`'s `Start`/`Verify`/`Apply`/`Abort`/`Reset`/`SetTransferred`,
+  `a10a20.software_update.UpdateHelperService` `0xa83f84cc` (`fub.java:38`), `pw.rpc.EchoService`, `pw.log.Logs`, `pw.file.FileSystem`
+  (`gok.java:6`), `pw.transfer.Transfer` (`nse.java:6`). `nqs.a`/`b`/`c` = bidirectional / server-stream / unary (`nqs.java`). 🟡 what the KPI
+  stream and the jitter-buffer preference do on the Buds. The table with counts per method: `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` §4.1.
+
 ### Tooling note — `scripts/decode_rawmessageinfo.py` (protobuf-lite `RawMessageInfo` compact-schema-string decoder)
 
 This APK's protobuf-lite runtime uses `GeneratedMessageLite.newMessageInfo(default, infoString,
@@ -1421,6 +1433,28 @@ the first time against every one of its 20 real discriminators + default branch.
   part of item G; the field 6 row in this entry's own bonus register (line ~1068) should be read
   together with this update.
 
+- **Correction (2026-10-06, `ai-sessions/0073`, citation check; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Corrections", option *"Apply all eight (Recommended)"*):** in the register above, row 15's first citation
+  "`fyo.java:168-188`→`u`" is wrong — lines 168–188 are `l(boolean)` (field 2); field 15's only writer is `u(boolean)`, `fyo.java:377–396`
+  (`qhrVar.b = 15` at `:384`).
+
+- **Update (2026-10-06, `ai-sessions/0073`, mechanical; no promotion; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*) — the sweep, the write census, and names for five fields.**
+  - **The sweep.** 🟢 (code) `fyo.a()` (`fyo.java:18–58`) sends `ReadSetting` for `i = 1, 2, …` except **6, 8, 9, 10, 14, 20** (`:25`) and **33**
+    (`:26`), for as long as `pld.as(i) != 0`, through `fyv.b(qix)` (`fyv.java:51–54`); the `4:13` that precedes it on the wire is `fsy` case 12
+    (`fsy.java:204–212`). 🟢 (wire) the request order `13 1 2 3 4 5 7 11 12 13 15 16 17 18 19 21 22 23 24 25 26 27 28 29 30 31 32 34 35 36 37 38`
+    opens 36 of the capture logs. App 1.0.990706425 also asks `4:39` (`CAP-069` frames 1333, 7261, 8465 → `UNKNOWN`).
+  - **Write census.** 🟢 (code, smali-wide: every `iput … Lqhr;->b:I` with its constant, 26 sites; positive control: field 29 at
+    `cmi.smali:3499`) this version writes fields 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 27, 28, 29, 32 and no others. No
+    write site and no reader exists for 1, 8, 9, 10, 20, 24, 25, 26, 30, 31, 33–38 (the only readers of the `qhr` case are `fxb`, `fmp` — field 14 —
+    and `fyv` for outgoing writes), and no id → name table for the settings exists in the tree.
+  - **Names from the code for fields the register left open.** 🟢 (log strings) 5 → "Enabling/Disabling device(%s) diagnostics"
+    (`gck.java:582/503`; written by the OOBE `diagnosticsToggle`, `hy.java:165–169`, and Settings provider id 2113); 14 → the eartip seal test,
+    `fya.o(true/false)` from `ggi.java:171/111` ("Init OTTS test.", `hmw.java:76`); 21 → "Update device(%s) dosimeter notifications: %b"
+    (`gck.java:266`); 3 → "Set device(%s) oobe state to finished/unfinished" (`gck.java:180/186`); 6 → "Enable/Disable OOBE mode"
+    (`guy.java:25/39`). Field 29's write computes true → 2, false → 1 (`cmi.smali:3441`, `:3479`). Field 23 is stored as raw bytes and never read;
+    field 32 is written only from Settings provider id 2116 (`MaestroDeviceSettingsProviderService.java:99–106`).
+  - 🟡 for every reading of a name as a Buds behaviour. The 38-row register (type, write site, read case, wire samples of 80 logs) is
+    `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` §4.2.
+
 ### `defpackage.qjn` / `defpackage.qjt` / `defpackage.qhx` / `defpackage.qjv` — `qjc`/`qja`'s other 4 oneof-group alternatives
 
 - **Path**: `qjn.java:28` (field 2 of `qjc`/`qja`), `qjt.java:28` (field 3), `qhx.java:28` (field 1),
@@ -1643,6 +1677,13 @@ the first time against every one of its 20 real discriminators + default branch.
   marker types) is present in the schema but entirely inert in this app version — a group-level
   parallel to `qhr`'s individual fields 9/10, but total rather than partial.
 
+- **Update (2026-10-06, `ai-sessions/0073`, mechanical; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*) — the "different product" 🟡 of 2026-08-30 is confirmed on the code
+  side.** 🟢 (code) the `fya` implementation is looked up by the device type of `GetHardwareInfo` field 1 (`fzg.java:75–78`) in the map of
+  `fqg.java:389–398`: types 4, 5, 6, 9 → `fyo` (`qhr`), type 1 → `fyw` (`qjn`), type 2 → `fyx` (`qjt`). `fsf.java:9–14` names the types: 1
+  `PRESTO`, 2 `STRETTO`, 4/5 `ALLEGRO`, 6 `LARGO`, 9 `AG12AG22`. The Pixel Buds Pro 2 report type 6 (`GetHardwareInfo` `1:6`). `qjn`, `qjt` and
+  `qhx` are therefore not Pro 2 schemas; the read handler's "handleAllegroSetting" (`fxb.java:43`) names the `qhr` family. Which retail product
+  each code name is, the tree does not say. (`gax`'s "Presto" and `gbo`'s "Stretto" handler registrations are these device types 1 and 2.)
+
 ### `defpackage.qjw` — 5×`FLOAT` message, referenced twice inside `qhr` (fields 16 **and** 18)
 
 - **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/qjw.java:32`
@@ -1804,6 +1845,14 @@ the first time against every one of its 20 real discriminators + default branch.
     field-16-vs-18 semantics should be resolved before EQ ships a "Save as preset" UI affordance —
     this finding suggests that affordance's design should **not** assume field 18 fires on
     slider-release, contrary to the capture's own prior working hypothesis.
+
+- **Update (2026-10-06, `ai-sessions/0073`, mechanical; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*) — what fires `hod`, and a 10 s constant.** 🟢 (code) `hod` is an
+  androidx.navigation `OnDestinationChangedListener` (`ebg.g(ebe)`, `ebg.java:93–105`; `ebo.java:55` "android-app://androidx.navigation/";
+  registered `UserEqFragment.java:556`, removed `:566–573`); it calls `hom.k()` on any change of destination away from the EQ screen while
+  `hom.j`'s `hpp.b` — the Save button's enabled flag, `hom.java:128` — is true (`hod.java:32–38`). The five sliders are fed through
+  `hesVar.p.Q(10000L, TimeUnit.MILLISECONDS)` (`hom.java:68`), a throttle on the device-state stream. 🟡 Back, Up and forward navigation write
+  field 18 when the Save button is enabled; 🟡 the thumb redraw of `CAP-053-FINDINGS.md` §4 is that throttle delivering the Buds' echo. Test:
+  `TODO.md` §3 (Group AO).
 
 ### `defpackage.qjg` / `defpackage.qht` — 4×`BOOL` messages (press-and-hold ×4 shape candidates)
 
@@ -2021,7 +2070,15 @@ the first time against every one of its 20 real discriminators + default branch.
   firmware string) or, if empty, field 1 (`hfh.java:52–60`). Chain: **entry 1 → Case, entry 2 → Left bud, entry 3 → Right bud.** Not traced: whether the
   unsolicited announcement (`call_id 0xFFFFFFFF`) reaches `gaa.d`.
 
-
+- **Update (2026-10-06, `ai-sessions/0073`, mechanical; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*) — the announcement is the answer the app waits for; fields 5 and 6 in
+  the app's words.** 🟢 (code) the app never requests `GetSoftwareInfo`: `fxm.c` opens a pending unary call ("Start software info openUnary rpc
+  call with source:%s target:%s %s", `fxm.java:53`; `npy.b`, "Opening %s", `npy.java:82–90`) and sends nothing; the Buds' packet completes it in
+  `fxk.c` (`fxk.java:22–36`): "SoftwareInfo received from %d", the message is handed on to the firmware-info path, and — unless field 6 (`e`) is
+  true — "Update primary to %d" publishes the response's target core as the primary route. Field 5 (`d`) is the device's "random id"
+  (`gaa.java:928–930` → `gck.java:198` "Setting device(%s) random id: 0x%x"). The client matches packets on channel, service and method and
+  ignores `call_id` (`nqp.java:12–32`); a packet for a call that is not pending is answered with `FAILED_PRECONDITION` (`gon.java:248–249`,
+  "Ignoring packet for %s, which isn't pending"). 🟢 (wire) 0 `GetSoftwareInfo` requests and 295 responses in the 80 capture logs. This answers
+  the 2026-10-01 Update's "Not traced" on the code side; 🟡 what the Buds mean by "primary".
 
 ### `defpackage.ghd` / `defpackage.ghb` — MaestroDynamicServerConfigRpcClient
 
@@ -2371,6 +2428,10 @@ the first time against every one of its 20 real discriminators + default branch.
         ruled out or confirmed beyond this point. This is stated as the final open question for this
         side-thread, not chased further, per this task's own scoping.
 
+- **Correction (2026-10-06, `ai-sessions/0073`, citation check; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Corrections", option *"Apply all eight (Recommended)"*):** in step 4 of the 2026-08-30 Update above, `gcl.B()` is
+  `gcl.java:47–62`; it tests presence bit `256` and returns `a.aI(gdw.k) == 2` — not the boolean `.A`, which is `gcl.A()` (`gcl.java:31–45`,
+  presence bit `16777216`); this entry's own 2026-09-17 `gdw` note has it right. `gic.a(String)` is `gic.java:52–55` (not 47–51).
+
 ### `defpackage.goq` — MaestroRouteTarget
 
 - **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/goq.java:7`
@@ -2436,6 +2497,17 @@ triggered, camera-confirmed gesture (designed as `CAPTURE_BLUETOOTH_HCI_SNOOP.md
   channel this project would observe on the wire for a Nod/Shake action (the `StartDetection`/
   `EndDetection` unary calls and this server-stream response are all still unconfirmed against any
   capture) — this pass only sharpens the *shape* of what to look for once a capture exists.
+
+**Correction (2026-10-06, `ai-sessions/0073`, citation check; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Corrections", option *"Apply all eight (Recommended)"*):** the 0-field info string of `nia` is at `nia.java:26` (line 9,
+cited above as "`nia.java:9`-style", is the static initialiser).
+
+**Update (2026-10-06, `ai-sessions/0073`, mechanical — `schema_batch_extractor` v1.1 resolves plain `MESSAGE` fields; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*) — nested
+types and the app's names.** `qiy`: oneof 4 → `qjh` | 6 → `qhv`, each {1, 2, 3 → `qhu`}; `qhu` = {1 `UINT32`, 2 `ENUM`} whose enum is `qhw`:
+`NOT_CHARGING(1)`, `WIRED(2)`, `GENERIC_QI(3)` (`qhw.java:6–8`) — a charger type; oneof 5 → `qji` (2 × `BOOL`) | 7 → `qhy` (3 × `BOOL`;
+`fsy.java:122–170`: field 2 gates the Left bud's, field 1 the Right bud's live-dB subscription). The wire's top-level fields 2 and 3 are not in
+this schema. `qiv`: field 1 device type, 2 SKU, 5 bud hardware version, 6 charging-case hardware version (`gck.java:288` log string; enum `qil`,
+`HW_VER_PVT(7)`, `HW_VER_PRQ(9)`, `qil.java:6–17`). `qiz.c` = `Instant.now().toEpochMilli()` (`gcc.java:33–40`). `qir` field 2 is linear and
+shown as `round(10·log10(v))` dB (`hiw.java:32–37`). `qie`/`qjj` hold 3 × `qid`. 🟡 for every reading as a Buds behaviour.
 
 ### Candidate rich schemas outside this pass's traced call graph (807-class sweep, unidentified)
 
@@ -3013,6 +3085,10 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   question is not answerable from this companion app's code at all, consistent with `DECISIONS.md`
   ADR-025's existing GMS-boundary finding.
 
+- **Correction (2026-10-06, `ai-sessions/0073`, citation check; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Corrections", option *"Apply all eight (Recommended)"*):** only `hlf.java:705` builds
+  `…/links?address=<addr>&caller=maestro`; `MaestroSliceProvider.java:233` builds `…fastpair/links?address=<addr>` without `caller` and passes
+  it to `notifyChange` (it does not query it).
+
 ### `MaestroDeviceSettingsProviderService` / `defpackage.fhk` / `defpackage.ges` — AOSP Bluetooth-Device-Details settings-extension boundary
 
 *(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 3/Phase 4, maintainer-approved per prompt `0002`.)*
@@ -3139,6 +3215,23 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   itself has an early-return guard — if `deviceSettingState.b` is not an `ActionSwitchPreferenceState`,
   it logs `"Invalid preference state received"` and returns without touching any case — a
   general-purpose type guard, not specific to any one setting.
+
+- **Correction (2026-10-06, `ai-sessions/0073`, citation check; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Corrections", option *"Apply all eight (Recommended)"*):** the tree holds 30 literal `queryLocalInterface("…")`
+  descriptors plus one call with a non-literal argument (the entry says "31 unique descriptor strings").
+
+### Find device — a placeholder preference filled by Google Play services (added 2026-10-06, `ai-sessions/0073`)
+
+- **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/apktool-output/res/xml/settings_preferences.xml:7`;
+  `jadx-output/sources/defpackage/gow.java:24`
+- **Readable alias**: FindDevicePlaceholder
+- **Role**: 🟢 FACT (code existence; mechanical search per ADR-017, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*): the app's settings screen declares a preference with key
+  `find_device` (`strings.xml:422`) without a title and with `app:isPreferenceVisible="false"`. With the flag
+  `MaestroSettingProvider__allow_to_use_setting_provider` (default `true`, `nxm.java:6`) the app binds Google Play services' device-settings
+  provider (`ges.java:90`) and asks for item id 1002 (`gow.java:24`: `got.a(this.d, "find_device", 1002)`); without such an item the row stays
+  hidden (`gah.java:91`, "Unable to find %s, hide setting."). No "Find device" label, no Find-app package in `<queries>` and no ring command
+  exist in the tree.
+- **Open questions**: label, visibility and tap target come from Google Play services (out of scope, `DECISIONS.md` ADR-025); why the row was
+  shown only while the Buds were not connected (`CAP-058-FINDINGS.md` §4) cannot be answered from this or any other version of the APK.
 
 ### `defpackage.frb` / `defpackage.fuh` / `defpackage.glk` / `defpackage.gjv` — `fxm.i()`/`GetSoftwareInfo` trigger structure
 
@@ -3548,6 +3641,10 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     system app (`dcservice`) already flagged as being outside this project's own Bluetooth-protocol
     scope; no wire behavior is claimed or implied.
 
+- **Correction (2026-10-06, `ai-sessions/0073`, citation check; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Corrections", option *"Apply all eight (Recommended)"*):** in the 2026-09-18 Update, `const/4 v3, 0x3` is at
+  `ffd.smali:2362` (not 2354; the `:2432` invoke is right). The Phenotype flag behind `gno.E()` is
+  `MaestroBisto__enable_classic_priority_optimization` (`nwl.java:14`).
+
 ### `MaestroEndpointService` — exported, no-permission on-device gRPC server (open questions only)
 
 *(Added 2026-09-08, implementing `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 1/Phase 4, maintainer-approved per prompt `0002`.)*
@@ -3955,6 +4052,16 @@ reconfirmed).** 🟢 FACT (mechanical extraction, regression-tested — see
   `fxw.a`, already known from the `frb`-`gjv` entry) — no contradiction, no new lead beyond the one
   above.
 
+**Update (2026-10-06, `ai-sessions/0073`, mechanical — `uuid_ble_context` v1.1 `find`; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*) — the checked negative is now
+exhaustive for text, in both byte orders.** `find` searched 28,694 text files (sources 12,545; JADX resources and assets 1,522;
+`apktool-output` — smali, `res/`, assets — 14,623; the arm64 split 4) for four forms of each UUID (both byte orders, with and without dashes).
+Positive control: `25e97ff7-24ce-4c4c-8951-f764a708f7b5` and `3a046f6d-24d2-7655-6534-0d7ecb759709` — 14 hits each (`fzd`, `fqg`; Java and
+smali). **0 hits** for the 19 UUIDs the captures show: the Buds' SDP/EIR UUIDs `25e97ff7-24ce-4c4c-8951-f764a708f7b4` ("DEBUG APP"),
+`81c2e72a-0591-443e-a1ff-05f988593351`, `df21fe2c-2515-4fdb-8886-f12c4d67927c` ("GFPS RFCOMM"), `e7ab2241-ca64-4a69-ac02-05f5c6fe2d62`
+("BTIS"), `f8d1fbe4-7966-4334-8024-ff96c9330e15` ("GSND CONTROL") and the GATT UUIDs of `CAP-034` (`0000fe2c-…`, `fe2c1233`…`fe2c1239-8366-4814-8eb0-01de32100bea`,
+`15190001-12f4-c226-88ed-2ac5579f2a85`, `109b862f-50e3-45cc-8ea1-ac62de4846d1`, `8e0c0001-1d68-fb92-bf61-48377421680e` and three more —
+`ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` §4.10). `extract` still finds 6 literals and pairs exactly the four alias forms.
+
 ## Message Group / Code register (Fast Pair Message Stream)
 
 If the Message Stream framing hypothesis (`PROTOCOL.md` §2.1) is confirmed,
@@ -4050,6 +4157,18 @@ decision.)*
     question, which remains 🔴 open per `PROTOCOL.md` §6. **Maintainer sign-off obtained 2026-09-16**
     (chat session continuing `ai-sessions/0023`): accepted for recording at 🟡 HYPOTHESIS in
     `PROTOCOL.md` §6, per `AGENTS.md` §6/§15.
+
+- **Correction (2026-10-06, `ai-sessions/0073`, citation check; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Corrections", option *"Apply all eight (Recommended)"*):** `gsound` occurs on 43 lines of
+  `assets/1/tokenized_logs` and on 59 lines of `assets/2/crash` (239 occurrences in 102 lines) — "43 times across the two" counted the first file's
+  lines only.
+- **Update (2026-10-06, `ai-sessions/0073`, mechanical; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*) — "Bisto" is in the tree, as the Assistant set-up the app hands to the
+  Google app.** 🟢 (literals) `hdi.java:26` `ASSISTANT(R.id.oobe_bisto_fragment, …)`; `OobeActivity.java:182–196` "Run Bisto full setup deep link
+  success." / "Bisto full setup deep link is unavailable. Runs AGSA force upgrade dialog"; `nwl.java:12–14` flags
+  `MaestroBisto__agsa_minimum_version`, `…_for_expressive_theme`, `MaestroBisto__enable_classic_priority_optimization`; `nwi.java:50` log tag
+  "BistoWorker"; `strings.xml:94` `assistant_preference_key` = `key_bisto`; the manifest's `<queries>` names
+  `com.google.android.googlequicksearchbox`. `GSND`, `gsnd`, `f8d1fbe4` and `e7ab2241` stay absent from sources, smali, `res/` and assets
+  (positive control "pigweed internal rfcomm": 2 files). 🟡 this supports `CAP-061-FINDINGS.md` §2's lead that the Google app owns GSND
+  CONTROL/AUDIO; the companion app holds no code for those channels.
 
 ## Resource/string-table sweep (item M, `ai-sessions/0027`)
 
@@ -4333,6 +4452,15 @@ this section's original open item — how `fsz`'s `WriteSetting`/`fux`'s per-ser
 obtain their `MethodClient` — was resolved by a later pass the same day; see the second call-graph
 block above and the `nqx`/`npy`/`nqo`/`npw`/`nqm` entry for the full trace.)
 
+**Update (2026-10-06, `ai-sessions/0073`, mechanical; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "RE registers", option *"All four drafts (Recommended)"*):** connecting — 1000 ms before the first attempt (`fua.java:88`),
+retries with a 2ⁿ s back-off ("Fail to connect, retry in %d second.", `gbg.java:33–38`), no attempt without a connected profile or ACL
+(`gbd.java:101`), `BLUETOOTH_CONNECT` required (`MainActivity.java:468` listens for "BLUETOOTH_CONNECT_PERMISSION_REQUEST_KEY"). After the socket:
+the pending `GetSoftwareInfo` calls (`fxm.java:40` "Blocking downstream until receive primary route"), a blocking `GetHardwareInfo`
+(`ful.java:23–36`), then the settings sweep `fyo.a()`; `SetWallclock` at connect (`fst.java:58` "Set wall clock time"). Channel maps:
+`MAESTRO_A` → `fvm` (= `fux` case 13, channels 18–22), `MAESTRO_B` → `fvn` (= `fux` case 14, channels 23–27), `fqg.java:213–218`. Head tracking
+uses `android.media.Spatializer` (`gqu.java:34`, `fxx.java:16/20`), not a MAESTRO setting. The app's ANC row writes only setting 13
+(`fye.a`); its controller `Optional` is always present (`fok.java:18`).
+
 ## Correlation status with PROTOCOL.md
 
 Track which findings here have been cross-checked against a capture and
@@ -4371,6 +4499,7 @@ promoted into the protocol documentation, to avoid the same finding being
 | The "default internal rfcomm socket" is not DLCI 0x08 (refutation) | §2.3 / `gbm` entry | 2026-09-30 | `CAP-033` frame 1279 |
 | `qie` entries 1/2/3 → Case / Left / Right (the official app's firmware screen) | §2.2a | 2026-10-01 | `ai-sessions/0062`; 191 announcements |
 | `qhr` field 29 write site (`cmi`, discriminator 5, `key_head_gestures_toggle`) — recorded, **not promoted** (🟡 1 = off, 2 = on) | §4.5.4 (2026-10-03 Update) | 2026-10-03 | `CAP-020` 1183/1935/2038; `ai-sessions/0069` |
+| The pw_rpc name table (`0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` = `JitterBuffer.SetJitterBufferSizePreference`), the sweep `fyo.a()`, the write census, the device-type → schema map, the announcement path, the charger-type enum — recorded, **not promoted** | §2.2a, §4.2, §4.3 Option F, §4.5.9, §6 (dated notes) | 2026-10-06 | 80 logs; `CAP-069` 965/1894; `ai-sessions/0073` |
 | | | | |
 
 ## Known limitations of this analysis

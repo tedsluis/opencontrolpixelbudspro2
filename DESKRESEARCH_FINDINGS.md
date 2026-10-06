@@ -988,5 +988,28 @@ the two messages in `REVERSE_ENGINEERING.md` as "wall clock, ms (🟡)".
   `CAP-069-FINDINGS.md` §8.
 - **Promoted to:** nothing promoted; `PROTOCOL.md` §6 records the 🟡/🔴 readings (2026-10-04, maintainer-approved in chat, `AskUserQuestion` "Wear table").
 
+### 2026-10-06 — Cross-capture censuses behind the APK pass of `ai-sessions/0073`: pw_rpc ids, the settings sweep, per-field answers
+
+No new capture; every figure was derived from the logs in this repository (maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Desk + TODO", option *"Both (Recommended)"*). Nothing is promoted.
+
+- **Commands.** `cd reverse-engineering/tools/pwrpc_name_table && .venv/bin/python3 -m pwrpc_name_table.cli census --output /tmp/wire_ids.json`
+  (reads `captures/*/*btsno*_hci*.log*` through `scripts/pwrpc_decode.py`'s `packets()`), then `… cli match --apk-root
+  ../../apk/v1.0.955078536-10253511 --wire-ids /tmp/wire_ids.json`. Per-field samples: `ReadSetting` requests (`4:N`) paired first-in-first-out per
+  log and channel with the `ReadSetting` RESPONSEs (which carry no `call_id`), an answer without payload and with a status ≠ OK taken as the
+  answer to the oldest pending request — the session's scratch script over the same `packets()`; the raw bytes of any packet:
+  `python3 scripts/pwrpc_decode.py <log>`.
+- **1. Ids.** 🟢 80 logs, 21,692 pw_rpc packets, 8 service ids and 16 method ids, all named from literals of app 1.0.955078536 (23,766 distinct
+  literals hashed). `maestro_pw.JitterBuffer` (`0x7f944334`, method `0x8d99df93`) and `a10a20.kpi.Kpi` (`0xbf6c9399`, `0x92476025`) occur only in
+  `CAP-069` (14 and 154 packets; raw frames 965 and 1894 in `PROTOCOL.md` §2.2a). `GetSoftwareInfo`: 0 REQUESTs, 295 RESPONSEs in 68 logs.
+- **2. The sweep.** 🟢 The request order `13 1 2 3 4 5 7 11 12 13 15 16 17 18 19 21 22 23 24 25 26 27 28 29 30 31 32 34 35 36 37 38` opens 36 logs;
+  settings 6, 8, 9, 10, 14, 20, 33 are never requested (the code: `fyo.java:25–26`). Only `CAP-069` (app 1.0.990706425) requests `4:39` — frames
+  1333, 7261, 8465, each answered `UNKNOWN`.
+- **3. Answers.** 🟢 Always `UNKNOWN`: setting 1 (138 of 138 requests), 25 (137), 34 (139), 35 (139), 36 (139), 37 (138 of 139), 38 (134 of 140).
+  Constant in every log: `3:1`, `5:0`, `23:{4:{1:0}}`, `24:0`, `26:0`, `30:0`, `31:{1:0.0 2:0.0 3:5}`, `32:1`. Written by the phone in some
+  capture: 2, 4, 7, 11, 12, 15, 16, 17, 18, 19, 21, 22, 27, 28, 29; never: 3, 5, 6, 13, 14, 32.
+- **Open:** what settings 23, 24, 26, 30, 31, 32 and 39 are — not nameable from app 1.0.955078536 (`REVERSE_ENGINEERING.md`, `qhr` entry,
+  2026-10-06 Update); 🟡 the 38-row table is `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` §4.2.
+- **Promoted to:** nothing; dated notes in `PROTOCOL.md` §2.2a.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

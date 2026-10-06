@@ -267,6 +267,12 @@ Account-Linking/Non-Owner traffic in captures) and move on — do not follow the
 5. For a new **firmware**: the wire side of this check is `RELEASING.md`, "New Buds firmware" (capture the official app's connect burst and
    compare it with `release_5.203`).
 6. Record what was checked and what was not in `REVERSE_ENGINEERING.md`, with file and line for each claim.
+7. *(Added 2026-10-06, `ai-sessions/0073`, maintainer-approved in chat.)* Run `reverse-engineering/tools/citation_checker` against the new
+   tree (its README): every citation of the documents that no longer resolves, or whose quoted token has moved, is a class to re-locate by
+   that token.
+8. *(Added 2026-10-06, `ai-sessions/0073`.)* Run `reverse-engineering/tools/pwrpc_name_table` — `census` over the capture logs, then `match`
+   against the new tree: an id without a name is a service or method the new version does not hold (or a literal that changed); a name that
+   appears only in the new tree is a new service or method.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/APK_REVERSE_ENGINEERING_PROCEDURE.md - https://tedsluis.github.io/opencontrolpixelbudspro2/APK_REVERSE_ENGINEERING_PROCEDURE

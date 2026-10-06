@@ -45,10 +45,15 @@ Open after `CAP-068` (`ai-sessions/0070`); each goes into the next app run with 
 
 From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedures for a next attempt, no skeleton written:
 
-- [ ] Group AO, step 5 only: drag a slider, wait ≥ 3 s, press **Back** (once the system back gesture, once the app bar arrow), no Save — does the
-      `hod.java` "Navigate away, save EQ" path write field 18? (`CAP-053-FINDINGS.md` §3, §8.)
+- [ ] Group AO, step 5 only: drag a slider and wait until the **Save button is enabled** (the code's condition: the curve the Buds echoed equals
+      neither a preset nor the saved curve), then — one run each — the system **Back** gesture, the app-bar arrow, and opening another screen
+      from the EQ screen, no Save: the code predicts one `WriteSetting 4:{18:…}` and the "saved" toast each time; then **Home** instead (predicted:
+      no write) and Back with the Save button disabled (predicted: no write). `hod` is a navigation destination listener
+      (`ai-sessions/0073` §4.4; `CAP-053-FINDINGS.md` §3, §8).
 - [ ] Group AT, 4th attempt: disable the companion app first (`adb shell pm disable-user …maestro.companion`, reversible), keep `logcat -b events`
       running, `pidof` with its positive control, pair from Settings → Pair new device only; then re-enable and open the app (`CAP-058-FINDINGS.md` §7).
+      Positive controls and the list of the app's exported components that can start its process: `ai-sessions/0073` §4.10 (`pm list packages -d`
+      must list the package; `pidof` must stay empty after Settings → Connected devices is opened).
 - [ ] Documentation only: re-check `CAP-015`'s film at its 15 field-18 frames for a Save tap or a screen change (`CAP-053-FINDINGS.md` §7).
 
 - [ ] Optional, destructive, one-time: the factory-reset re-pair for comparison (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16) — it also resets the
@@ -67,12 +72,16 @@ Next app features, chosen by the maintainer (chat 2026-10-03, "Features": *"Yes 
 - [ ] **Head gestures switch** — field 29 read + write unblocked by ADR-052 (`CAP-069`); build after Multipoint; fixtures `CAP-069` 2492/2564, reads 1226/7209.
 - [ ] `ARCHITECTURE.md` §5a and `PROJECT.md` ("Status after 1.0.x", the feature list) still describe head gestures and Multipoint as waiting for `CAP-069`;
       update them with the app session that builds the switches (`ai-sessions/0071`, deferred).
-- [ ] Decompile the official app **1.0.990706425** (versionCode `10260911`) with JADX and apktool (ADR-017 boundary) — name the MAESTRO service
-      `0xbf6c9399` and `JitterBuffer` method `0x8d99df93` seen in `CAP-069` (`CAP-069-FINDINGS.md` §9; **M** approved the follow-up, chat 2026-10-04).
-      Pulled 2026-10-05 from the Pixel 7a (`adb pull` of base + 2 splits, same signing certificate as 1.0.955078536) into
-      `reverse-engineering/apk/v1.0.990706425-10260911/` (gitignored); not decompiled yet (**M**, chat 2026-10-05: *"Voer het nog niet uit. Dat kan
-      later."*). Also add the three files' SHA-256 to `reverse-engineering/APK_VERSIONS.md`, whose 1.0.990706425 paragraph still says "Not pulled".
-      While decompiling, check whether the Find device code is still present in both versions (see the Ring status question below).
+- [ ] Decompile the official app **1.0.990706425** (versionCode `10260911`) with JADX and apktool (ADR-017 boundary). Its first purpose is met
+      without it: the two ids of `CAP-069` are named from literals of 1.0.955078536 — `0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` =
+      `maestro_pw.JitterBuffer`/`SetJitterBufferSizePreference` (`ai-sessions/0073` §4.1, `PROTOCOL.md` §2.2a note of 2026-10-06). What the newer
+      version is still needed for: setting **39** (it requests `ReadSetting 4:39`, `CAP-069` 1333 → `UNKNOWN`), the schemas of settings 23 and 31
+      (their answers carry fields 1.0.955078536 does not know), whether the `find_device` placeholder (Play services item 1002) is still requested,
+      and why it calls the KPI stream and the jitter-buffer preference. Pulled 2026-10-05 from the Pixel 7a (`adb pull` of base + 2 splits, same
+      signing certificate as 1.0.955078536) into `reverse-engineering/apk/v1.0.990706425-10260911/` (gitignored); not decompiled yet (**M**, chat
+      2026-10-05: *"Voer het nog niet uit. Dat kan later."*). Also add the three files' SHA-256 to `reverse-engineering/APK_VERSIONS.md`, whose
+      1.0.990706425 paragraph still says "Not pulled". Start with `citation_checker` and `pwrpc_name_table` on the new tree
+      (`APK_REVERSE_ENGINEERING_PROCEDURE.md` §7 steps 7–8; design notes for the diff in `reverse-engineering/tools/BACKLOG.md`).
 
 Proposals awaiting the maintainer (`DESKRESEARCH_FINDINGS.md`, entry of 2026-10-03 — nothing applied as a status change):
 
@@ -96,6 +105,9 @@ Open questions (each with where it is described):
   bonded but not connected and not after they connected (🟡 shown only while not connected — `CAP-058-FINDINGS.md` §4) — test with OpenControl's own Ring while a client holds the Message Stream; `CAP-068` could not observe it — the app's claim
   is released 1.5 s after the Ring, `CAP-068-FINDINGS.md` §6). Known limit of 1.0.1: the "Ringing" notice stays until Stop is tapped. The app does not read the
   Buds' ring-status message; whether it should is a decision after those runs (**M**, "Nothing new on the wire; test first").
+  *(2026-10-06, `ai-sessions/0073` §4.8:* the Find device row is not built by the companion APK — its `find_device` preference is a hidden
+  placeholder that Google Play services fills (item id 1002, `gow.java:24`); label, visibility and target are Play services' — class C, no APK
+  version can explain the row's absence.)
 - 🔴 `CAP-054`: no clear Battery Notification field on case-open (`PROTOCOL.md` §4.3 Option A, Update of 2026-10-06), yet Android showed L/C/R
   without a connection — what it decoded (the closed-case advertiser's bytes after the salt, `0x2a`/`0x29` lid-state byte, or the Random Resolvable
   Data); the `0x1a` field of the bud-out advertisers (`CAP-054-FINDINGS.md` §2, §9).
@@ -114,10 +126,16 @@ Open questions (each with where it is described):
   why Android did not re-create the ACL after an ADR-016 drop with the lid open in `CAP-063`.
 - 🔴 The swapped-dock ADR-016 disconnect inconsistency between the two recordings of `CAP-047` (carried from `ai-sessions/0022`).
 - 🔴 Runtime-info stream: field 3, entry 7.3; whether field 2 of an entry means "in the case" or only "charging" (`PROTOCOL.md` §4.3 Option F).
-  🟡 top-level field 2 = wall clock (desk entry of 2026-10-03).
+  🟡 top-level field 2 = wall clock (desk entry of 2026-10-03). *(2026-10-06, `ai-sessions/0073` §4.6:* in the official app's schema an entry's
+  field 2 is the charger-type enum `NOT_CHARGING(1)`/`WIRED(2)`/`GENERIC_QI(3)`; top-level fields 2 and 3 are not in that schema; 7.2 ↔ Left,
+  7.1 ↔ Right in the code too. Still open: an empty-case test, field 3, 7.3 — per the trace "LL mode".)
 - 🔴 `CAP-056`: what makes the Buds close DLCI 0x02 on a wear change; the pause route with GSND closed; Settable with in-ear detection off and
   no bud worn (`PROTOCOL.md` §6).
-- 🟡 Whether the unsolicited announcement reaches the official app's `gaa.d` (`PROTOCOL.md` §2.2a, Update of 2026-10-01).
+- 🔴 Settings 23, 24, 26, 30, 31, 32 (answered by the Buds, no writer or reader in app 1.0.955078536) and 39 (asked by 1.0.990706425): what they
+  are (`ai-sessions/0073` §4.2; `DESKRESEARCH_FINDINGS.md` 2026-10-06). 🟡 the ANC taps filmed in the official app never produced a `WriteSetting`
+  of setting 13, although the app's own ANC row writes only that (`ai-sessions/0073` §4.9) — in the next official-app capture, film which
+  control is tapped (the app's row or the Play-services/Settings one). 🟡 what the Buds mean by the "primary" bud of the announcement (field 6;
+  the app-side routing is answered, `PROTOCOL.md` §2.2a note of 2026-10-06).
 - 🟡 Hearable Controls MAC not enforced (`PROTOCOL.md` §4.1): a firmware that starts enforcing it would NAK with reason `0x03`.
 - 🔴 `CAP-069` leftovers: why a bud's charging bit stayed set ≈ 12 s after it left the case (7358 → 7404); why the phone re-opened GSND AUDIO on ACL 3
   (8157 → 8271); Device Information `03 0b` (FHN EID, out of scope) with length 25; field 18 after the Save button (one sample, 6050 → `CAP-053`).
@@ -128,11 +146,6 @@ Open questions (each with where it is described):
 - 🔴 `PROTOCOL.md` §5.2 steps 4 and 6 of the connection lifecycle (handshake content order, user-command timing); DLCI 0x08's protocol identity.
 - 🔴 Why Android's CDM picker listed nothing twice and then offered the bonded Buds directly (`CAP-068-FINDINGS.md` §8).
 - 🔴 `CAP-013`'s second BLE link (not re-examined; `CAP-016`'s was a heart-rate wearable — `PROTOCOL.md` §6, Update of 2026-10-03).
-- Inventory not re-derived in `ai-sessions/0069` (L68-9, a sub-review result): which settings the official app reads at connect (fields 1–5, 7,
-  11–13, 15–19, 21–32, 34–38; never 6, 8, 9, 10, 14, 20, 33), `DynamicServerConfigService/SetConfig` (not named in `PROTOCOL.md`), and the services
-  never seen on the wire (`HeadGesture`, `EartipFitTest`, `JitterBuffer`). Check: `python3 scripts/pwrpc_decode.py` over `CAP-036`/`CAP-041`.
-- The UUID register (`REVERSE_ENGINEERING.md`): a checked negative for `CAP-034`'s eight GATT UUIDs; "exhaustive" is not claimed. The Buds'
-  Extended Inquiry Result lists five custom 128-bit UUIDs before pairing (`CAP-033` frame 1072) — not yet in the register.
 - Candidates without a capture scenario: Audio switch (`SWITCH-001`), Hearing wellness (`WELL-001`), eartip fit test (`FIT-001`).
   `maestro_pw.Dosimeter`: values on the wire, meaning 🟡; a display is out of scope (**M**, 2026-09-30).
 
@@ -205,8 +218,13 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
 - [ ] `ARCHITECTURE.md` §3.1: "11 `00` answers sent no `Set`" in `CAP-066` — the audit's sub-review counts 12; not re-derived (`A68-ARCH-03`).
 - [ ] `DECISIONS.md` ADR-040 Context: "`AT+BIEV=2,100` seven times" — 12 on the wire (`PROTOCOL.md` §4.3 Option C carries the correction; the
       ADR's own text needs **M**'s dated Update).
-- [ ] `scripts/decode_qhr_settings.py` is superseded by `scripts/pwrpc_decode.py` and describes the address format wrongly; four stale statements
-      in `reverse-engineering/tools/` backlog/spec files (`A68-RE-06`).
+- [ ] Reading and checks `ai-sessions/0073` owed (its "Files read" and "Deferred documentation"): `ARCHITECTURE.md`, the five older tool
+      `SPEC.md` files and the earlier APK-session RESULTs were not read in full by the main session; `PROTOCOL.md` only in the sections it
+      touched (three sub-reviews swept it); 63 of the citations its documentation edits added resolve inside their file but carry no quoted
+      token for `citation_checker` to compare; the statements marked "per the trace" in its §4 were taken from a sub-review without
+      line-by-line re-derivation; the class-A rows of its §4.11 were not worked (among them the EQ gain unit and the `"cape2_sm"`/`"500m"`
+      strings); the capture FINDINGS that raised the answered questions (`CAP-069-FINDINGS.md` §9, `CAP-053-FINDINGS.md` §8,
+      `CAP-058-FINDINGS.md` §4 and §7, `CAP-051-FINDINGS.md`) carry no pointer to its code-side answers (not among the approved drafts).
 - [ ] Deferred items of earlier sessions that never reached this file (`A68-SES-03`): `ai-sessions/0061` ("Not read in this session …"),
       `ai-sessions/0063` (one item) — read those RESULTs and carry what is still open.
 - [ ] `scripts/__pycache__/lint_docs.cpython-314.pyc` is a tracked file (a compiled-Python artefact; the prompt of `ai-sessions/0069` names `__pycache__` as never to be
