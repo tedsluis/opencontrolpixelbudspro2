@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-05
 **Title:** Full analysis of CAP-053 (Group AO: EQ field 16 vs 18), CAP-054 (Group AP: the `0xFE2C` advertisement on case-open, connection-free) and CAP-058 (Group AT: `SDP-001` 3rd attempt with a process-liveness check)
-**Status:** complete (all four checkpoint questions approved in chat 2026-10-06; not yet committed — see Commits)
+**Status:** complete (all four checkpoint questions approved in chat 2026-10-06; committed and pushed — see Commits)
 
 ## Progress
 
@@ -165,7 +165,14 @@ Each item is also in `TODO.md`:
 
 ## Commits
 
-Not committed — awaiting the maintainer's answer to the commit question (task 18).
+On branch `capture/0072-cap-053-054-058` (maintainer: *"Ja, commit, push en maak een pull request"*, chat 2026-10-06):
+
+- `756281d` docs: carry over the chat edits of 2026-10-05 (Group AT rewrite, TODO, prompt 0072)
+- `78ffe1d` chore(capture): add CAP-053 raw files (Group AO, …)
+- `1a0a7ba` chore(capture): add CAP-054 raw files (Group AP, …)
+- `0c655e8` chore(capture): add CAP-058 raw files (Group AT, …)
+- `75e5c37` docs: analyse CAP-053, CAP-054 and CAP-058 (EQ field 18, case-open advertisement, SDP-001)
+- this list's own commit (docs: record the commits of ai-sessions/0072) — its hash is back-filled by the next session (§4b item 2).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0072_CAPTURE_RESULT_2026_10_05.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0072_CAPTURE_RESULT_2026_10_05
