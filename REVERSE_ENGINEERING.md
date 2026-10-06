@@ -293,6 +293,13 @@ with the maintainer's approval; the "Correlation status with PROTOCOL.md" table 
     (added there rather than here, since that file is this project's existing authority for DLCI
     0x08's envelope decode).
 
+- **Update (2026-10-06, `ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "SDP-001", option *"Notes + 4th-attempt TODO
+  (Recommended)"*):** `SDP-001`'s 3rd attempt (`CAP-058`) — the app's process was force-stopped and running again ≈ 10 s later, before the Forget and
+  both SDP browses (`dumpsys` file; MAESTRO opened after each pairing), so the "app never running" branch was not tested. `3a046f6d-…` (the "default
+  internal rfcomm socket" UUID of `fzd.java:9`) is absent, in both byte orders, from four more full SDP browses and from every phone-side search
+  (`CAP-058` 2272/3840, `.log.last` 10479/12021); the phone's targeted searches ask only for the pigweed UUID. Status unchanged. Evidence:
+  `CAP-058-FINDINGS.md` §1–§2; a 4th attempt (app disabled) is in `TODO.md` §3.
+
 ### `defpackage.gau` (switch arm `case 3` only) — RfcommUuidNormalizer
 
 - **Path**: `reverse-engineering/apk/v1.0.955078536-10253511/jadx-output/sources/defpackage/gau.java:39`
@@ -1155,6 +1162,11 @@ the first time against every one of its 20 real discriminators + default branch.
     | 28 | BOOL | `fyo.java:58-78` (`d`) | case 28 (`:362-365`), `"received bud return sound setting value"` | **"bud return" case-sound toggle (matches §4.5's other Case-sound entry)** |
     | 29 | ENUM (`qgx.n`/similar) | not found *(found 2026-10-03, `ai-sessions/0069`: `cmi.smali:3499`, case 5 of `cmi.b()` — see the Update below the table)* | case 29 (`:366-373`) | not independently named *(the write path is keyed on the preference `key_head_gestures_toggle` — Update below)* |
     | 32 | BOOL | `fyo.java:257-276` (`r`) — **added 2026-09-08**, reached from `MaestroDeviceSettingsProviderService` case `2116` only (`fyc.i(new fyb(z,6))` → `fyb` case 6 → `fya.r`) | unhandled (default) | logged internal category `CATEGORY_RV_BLOCK_AUTO_TEST` (`fjm.H(24)`) — diagnostic/auto-test-sounding, not a recognizable user-facing feature |
+
+    **Update (2026-10-06, `ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Extras") — field 21 named on the wire:**
+    the `HearingWellnessFragment` toggle of row 21 is the switch **"Volume level notifications"** (Device details → Hearing wellness); `CAP-058` X12
+    wrote `4:{21:0}`/`4:{21:1}` four times on film (frames 5747, 5753, 5767, 5790, each OK) — `PROTOCOL.md` §4.5.8a. Row 27's label "Other alerts" is 🟢
+    since the same session (`PROTOCOL.md` §4.5.8, Update of 2026-10-06).
 
     Fields left out of this table (2, 5, 11, 15, 21, 29 excepted where partially covered above) had a
     write and/or read site but no distinguishing log message or UI-fragment context traced this pass;

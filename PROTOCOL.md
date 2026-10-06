@@ -896,6 +896,12 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   static analysis remains open; a capture isolating all three conditions from each other (no Save
   tap, no navigation away, genuine slider-release only) is designed as
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AO (**PROPOSAL — new capture**, planned `CAP-053`).
+  **Update (2026-10-06, `ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Field 18", option *"Approve as drafted
+  (Recommended)"*) — what writes field 18.** 🟢 FACT: the **Save** button writes field 18 with the screen's values (`CAP-053` 1838, 0.2–0.5 s after the
+  filmed tap; `CAP-069` 6050). 🟢 FACT: a slider release does **not** (`CAP-053`: 4 releases, 0 writes in 12.8/18.5/10.2/15.5 s). 🟢 leaving the screen
+  with Home/Recents writes nothing (`CAP-053`). 🟡 the in-app navigate-away path (`hod.java:32–39`) is untested (Back not pressed). `CAP-015` §6's
+  "release writes 18" is contradicted — 🔴 until its film is re-checked. Command: `python3 scripts/pwrpc_decode.py CAP-053-btsnoop_hci.log | grep
+  WriteSetting`. Evidence: `CAP-053-FINDINGS.md` §1, §3.
 - **Sent to / expected response**: same open questions as §4.1. **Update (2026-09-24, pointer):** settled by ADR-034 — DLCI 0x02, pw_rpc
   `maestro_pw.Maestro` `WriteSetting`/`ReadSetting` on the channel the Buds announce; a write is acknowledged by an empty `RESPONSE` (status OK), the
   "Control byte" is the pw_hdlc control `0x03` and the "~13-byte correlation-ID region" is the RpcPacket header (`channel_id`, service id, method id).
@@ -1085,6 +1091,12 @@ event-observation coroutines.
   payload's first byte is `0x10`, not the `0x00` "Flags" byte this section's table requires,
   structurally still an Account Key Filter-shaped frame, not a Battery Notification match — the
   payload-layout question above remains exactly as open as `CAP-011` left it.
+- **Update (2026-10-06, `ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Option A", option *"Approve both
+  (Recommended)"*) — the spec's own use case, tested (`CAP-054`).** 🟢 FACT (`CAP-054`, `release_5.203`): no Battery Notification field in clear in
+  610 `0xFE2C` reports — lid closed, after two lid openings, with either bud out. On lid open the Buds advertise show-UI account data + Random Resolvable
+  Data (SASS table, version `0x10`); the closed-case form carries a lid-state byte after the salt (`0x2a` closed / `0x29` open, 225/225, 🟡 meaning).
+  Android still showed L/C/R without a connection (🟡 decoded from encrypted/undocumented bytes). Command: `tshark -r CAP-054-btsnoop_hci.log -Y
+  'btcommon.eir_ad.entry.uuid_16 == 0xfe2c'` (positive control `CAP-043`). Evidence: `CAP-054-FINDINGS.md` §1–§2.
 - **Evidence**: official Fast Pair spec; `CAP-011-FINDINGS.md` (2026-08-21, inconclusive
   payload-layout result); `CAP-009-FINDINGS.md` §4 (2026-08-23, timing-only correlation);
   `CAP-036-FINDINGS.md` §12.4 (2026-09-04, device-attribution advance).
@@ -1912,9 +1924,25 @@ implementation gate.
   cleanly disambiguated between a genuine tap and a screen-open state sync — the ON sample and both
   `"Other alerts"` samples are unambiguous; this does not affect the field-identity promotions above.
   **Update 2026-10-03 (`ai-sessions/0069`, `A68-CAP-16`):** frame 1988 is a real change, not a re-affirmed value — the connect-time read in the same capture returns `ReadSetting` `4:{28:1}` (frame 1096) and frame 1988 writes `4:{28:0}`, echoed by the settings stream (1990/1992). Whether a tap or the screen caused it stays undecided from the film; "already off" is withdrawn.
+- **Update (2026-10-06, `ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Extras", option *"Other alerts = field 27
+  (label)"*) — "Other alerts" = field 27, 🟢 FACT.** `CAP-058` X9: the switch labelled "Other alerts" (More settings → Case sounds) off at 21:44:43.0
+  and on at 21:44:52.8 (film) wrote `WriteSetting 4:{27:0}` (frame 5680) and `4:{27:1}` (5697), each answered OK and mirrored; with `CAP-024`'s samples
+  the label is 🟢. "Bud return" = field 28 again (5623, 5643). Command: `python3 scripts/pwrpc_decode.py CAP-058-btsnoop_hci.log | grep WriteSetting`.
+  Evidence: `CAP-058-FINDINGS.md` §6.
 - **Evidence**: `CAP-024-FINDINGS.md` §4–§5 (`[VERIFIED-LOCAL]`, 2026-08-21, raw hex backfilled
   2026-09-03); `REVERSE_ENGINEERING.md`'s `qhr` entry; `DECISIONS.md` ADR-019.
 - **Verified with experiment**: `CAP-024` (2026-08-21), both toggles, both directions.
+
+#### 4.5.8a Volume level notifications (Hearing wellness)
+
+- **Opcode/payload — 🟢 FACT (2026-10-06, `ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Extras", option *"Field 21 =
+  Volume notif. (🟢)"*):** the switch "Volume level notifications" (Device details → Hearing wellness) writes `qhr` **field 21**, `1` = on, `0` = off:
+  `CAP-058` X12 — `WriteSetting 4:{21:0}` 5747 and `4:{21:1}` 5753 (a quick off/on, switch OFF at film 327.72 s, ON at 328.22 s), `4:{21:0}` 5767,
+  `4:{21:1}` 5790, each answered by an empty `RESPONSE` (OK) and mirrored on `SubscribeToSettingsChanges`; the connect read returns `4:{21:1}` (the
+  switch was on). Raw 5747: `tshark -r CAP-058-btsnoop_hci.log -Y "frame.number==5747" -T fields -e data.data` — payload `2a 05 22 03 a8 01 00` (field 4 →
+  field 21 = 0). A search of every capture for this write (`frame contains 1d:9a:8c:9e:2a:05:22:03:a8:01`) finds only these four frames. Code side:
+  `REVERSE_ENGINEERING.md`'s `qhr` register, field 21 (`hey.java:165–190`, `HearingWellnessFragment`). Opening the Hearing wellness page calls
+  `maestro_pw.Dosimeter.FetchDailySummaries` (5736). Nothing is built (no ADR). Evidence: `CAP-058-FINDINGS.md` §6.
 
 #### 4.5.9 Not yet mapped
 
@@ -2044,6 +2072,12 @@ earbud removal from the case (frames 1213–1217, 06:32:02.531–749). Same stor
 `CAP-001`'s path (no IO Capability/SSP exchange visible in this window). Not yet reconciled with
 *why* one session pages and the other is paged — plausibly which side (phone vs. Buds) detects
 the case-open/bud-removal event first, not yet tested directly.
+
+**Note (2026-10-06, `ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Extras", option *"Pairing IO caps + X1–X3 (🟢)"*)
+— two IO capabilities, 🟢 for `CAP-058`.** In a Fast Pair pairing (key-based pairing over LE first) the Buds answer the IO Capability exchange with
+**DisplayYesNo** and the link key is type **0x05** (authenticated P-256): `CAP-058` frames 2204/2235 and, before the film, `.log.last` 10253/10333 and
+11947/11982; in a pairing from Settings → Pair new device they answer **NoInputNoOutput** and the key is type **0x04** (unauthenticated P-256): 3789/3804,
+the confirmation reply 3801 at the filmed *Pair* tap. The fresh-pairing sequence above is unchanged. Evidence: `CAP-058-FINDINGS.md` §3.
 
 **Common tail, both paths:** `Authentication Complete` → `Set Connection
 Encryption` → `Encryption Change`, converging to the same encrypted classic
@@ -3199,6 +3233,13 @@ leaving them buried in prose elsewhere.
       residual, lower-priority open item, not blocking this resolution.
 
 ### Behavior
+
+- [ ] **Added 2026-10-06 (`ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Extras") — Android's per-device switches, 🟢 for
+      `CAP-058` (X1–X3, X5).** "Phone calls" off/on closes/reopens HFP (DLCI 0x0c `DISC` 4877, `SABM` 4971); "Media audio" off/on closes A2DP/AVRCP
+      **and the phone's GSND CONTROL and GSND AUDIO channels** (AVDTP `Close` 5091, `DISC` DLCI 0x08/0x0a 5110/5111; reopened 5155–5232); "Input device"
+      off/on closes/reopens the HID L2CAP channels (5347/5350, 5362/5373). 🟡: the phone's *Notify capability of Audio switch* (`07 11 00 14 01 01 <flags>`
+      + nonce + MAC) carries flags `80 00` with "Use audio switch" on and `00 00` with it off (5412, 5506; SASS page: a Seeker's flags "should be
+      ignored"). 🔴 why GSND follows "Media audio". Evidence: `CAP-058-FINDINGS.md` §6.
 
 - [x] **Added 2026-08-21, `CAP-025-FINDINGS.md` §7/§8 — directly relevant to this project's
       Zero-GMS goal (`AGENTS.md` §1); scope decision resolved 2026-09-13 (maintainer sign-off,

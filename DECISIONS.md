@@ -214,6 +214,10 @@ motivated this).
   2026-10-03) does name one use case: *"One common use case for this is to use 0b0011 when the case has opened and 0b0100 when buds have been removed from the case
   or it has been closed again."* It states no cadence and no display duration; the ~8–20 s time-box stays this project's own choice. No capture has tested "case
   just opened, both buds inside, phone not connected" (`CAP-054`, Group AP, redesigned for it).
+- **Update (2026-10-06, `ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Option A", option *"Approve both
+  (Recommended)"*; bounds unchanged):** `CAP-054` tested the specification's own use case (lid opened, both buds inside, phone not connected): no
+  Battery Notification field in clear in 610 `0xFE2C` reports (`PROTOCOL.md` §4.3 Option A, Update of 2026-10-06). A bounded scan would therefore find
+  no clear battery field on `release_5.203`, so nothing is built under this ADR; the app's Case level stays DLCI 0x02 (ADR-043).
 
 ## ADR-007 — `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Groups are capture scenarios, not tests; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the test/behavior catalog
 
@@ -874,6 +878,12 @@ motivated this).
   (2) "LEB128-address" in the Context is wrong: the pw_hdlc address is a **one-terminated LSB varint** (`fut.java:178–202` shifts each 7-bit group left by one
   and sets bit 0 of the **last** byte; ADR-034).
   (3) The Sent-payload **content** this ADR left at 🟡 is settled by ADR-034 (every DLCI 0x02 packet is a pw_rpc `RpcPacket` for `maestro_pw.Maestro`).
+- **Update (2026-10-06, `ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "SDP-001", option *"Notes + 4th-attempt TODO
+  (Recommended)"*; decision unchanged):** `SDP-001`'s 3rd attempt (`CAP-058`) measured the app's process: killed by the force stop, running again
+  ≈ 10 s later (new PID), before the Forget and both SDP browses — the "app never running" condition was not reached. The "default internal rfcomm
+  socket" UUID `3a046f6d-…` is absent from four more full SDP browses (`CAP-058` 2272, 3840; `.log.last` 10479, 12021) and the phone never searches
+  for it; the pigweed UUID resolves to "MAESTRO APP", RFCOMM channel 1, as before. Status unchanged (🟡); a 4th attempt with the app disabled is in
+  `TODO.md` §3. Evidence: `CAP-058-FINDINGS.md` §1–§2.
 
 ## ADR-019 — `qhr`'s oneof structure confirmed inside DLCI 0x02's `field5{field4{...}}` wrapper (2 sampled fields); `qhr` fields 4 and 7 promoted to FACT; `qhr` field 12's field-number identity (not its name) promoted to FACT
 

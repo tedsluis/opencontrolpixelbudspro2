@@ -1341,6 +1341,9 @@ This directly distinguishes the three candidate triggers `REVERSE_ENGINEERING.md
 names, closing `PROTOCOL.md` §4.2's own open item with a within-session positive/negative contrast
 instead of a single ambiguous reading.
 
+**Run (2026-10-05, `CAP-053`, `ai-sessions/0072`):** slider 4 was left with **Home** and Recents, not Back, and Mid was dragged twice. Result: Save → one
+field-18 write; releases and Home/Recents → none; Back still untested — a re-run of step 5 with Back is in `TODO.md` §3. `CAP-053-FINDINGS.md`.
+
 #### Group AP — Battery Notification right after the case is opened, connection-free (occasional, added 2026-09-13 by `ai-sessions/0017`; redesigned 2026-10-03, `ai-sessions/0069`, lead L68-6)
 
 **Purpose:** `CAP-043` (Group Q repeat) established, under clean connection-free isolation, that the
@@ -1378,6 +1381,10 @@ command, its exit status and a positive control (the same filter matching `CAP-0
 frames). A clean negative at step 4 would move Option A from "not yet observed" towards "not sent by
 this firmware" — a proposal for the maintainer, not a status change. Test-IDs: `BATT-007` (step 4),
 `BATT-002`, `BATT-003` (steps 5–6).
+
+**Run (2026-10-05, `CAP-054`, `ai-sessions/0072`):** done with one lid open/close and a second opening (the second close skipped); each bud out started
+a Buds-initiated connection. Clean negative for a clear battery field (610 reports); `PROTOCOL.md` §4.3 Option A Update of 2026-10-06.
+`CAP-054-FINDINGS.md`.
 
 #### Group AQ — Head gestures (Nod/Shake) with an active call/notification (occasional, added 2026-09-13, `ai-sessions/0017`)
 
@@ -1481,19 +1488,74 @@ activity processes | grep -i pixelbuds`, or an equivalent on-device check) immed
 "Pair" tap, rather than relying on elapsed time/step ordering alone. Maintainer approved planning a
 3rd attempt 2026-09-18 (`ai-sessions/0031`).
 
-1. **[`SDP-001`]** Force-stop the companion app (`Settings → Apps → Pixel Buds → Force stop`), then
-   Forget the device (Bluetooth settings → paired device → Forget) — in that order, unlike `CAP-033`.
-2. **Immediately before tapping "Pair"**, run the on-device process-liveness check on camera or in a
-   parallel `adb logcat`/shell capture, confirming the companion app process is absent for the entire
-   window up to and including the SDP browse that "Pair" triggers.
-3. Re-pair through Bluetooth settings only (system UI, not the companion app).
-4. **Still `SDP-001`, second half of the same session:** now open the companion app normally and
-   trigger its own `fetchUuidsWithSdp()` re-fetch, to preserve the existing app-open comparison half.
-5. **[`SDP-002`], opportunistic, only if a firmware update happens to be pending:** same as
+**Corrected 2026-10-05 (maintainer's request in chat):** the example check above, `grep -i pixelbuds`, can never match — the
+companion app's package is `com.google.android.apps.wearables.maestro.companion`, which contains neither "pixelbuds" nor "bud". An
+empty result from it says nothing (`AGENTS.md` §13 item 8). The maintainer's run of `dumpsys activity processes` on 2026-10-05
+(official app 1.0.955078536, Pixel 7a) showed the process alive (PID 22553), with `com.android.settings` bound to its
+`MaestroDeviceSettingsProviderService` and `android` (CompanionDeviceManager) bound to its `MaestroCompanionDeviceService`. Whether
+that was shortly after a force-stop was not recorded. 🟡 HYPOTHESIS: a force-stop does not keep the process dead, because the system
+Settings app and CompanionDeviceManager bind those services (an explicit bind starts a stopped app) — e.g. as soon as the Buds'
+Bluetooth page is opened. If so, `CAP-033`/`CAP-044` may never have had a dead process at the SDP browse either, and "app never
+running" may not be reachable through the Settings pairing flow at all. Supporting observation (same day): the events buffer
+showed `am_proc_start … maestro.companion, bound-service, {…companiondevice.MaestroCompanionDeviceService}` at 21:31:03 (new
+PID 5056) — the process does get started by a bind to its CompanionDeviceManager service, not only by opening the app. The procedure below measures this instead of assuming it.
+
+**Preparation (before filming starts)**
+
+- Phone: Pixel 7a, USB debugging on, connected to the laptop (`adb devices` lists it). Bluetooth HCI snoop log on; Bluetooth
+  toggled off/on once so the log starts clean. Record the official app version on film (Settings → Apps → Pixel Buds → App
+  details; 1.0.955078536 since the 2026-10-05 downgrade), the Android version and the Play services *Nearby devices* state
+  (`TODO.md` §2).
+- Set in one terminal: `P=com.google.android.apps.wearables.maestro.companion`
+- **Positive control (do not skip):** with the app running (open it once), run
+  `adb shell pidof $P; echo "exit=$?"` — it must print a PID and `exit=0`. Keep this output; it proves the check can see the
+  process. The same command printing nothing and `exit=1` later means the process is absent.
+- **Start the process event log** in a second terminal and leave it running until the end of step 6:
+  ```bash
+  adb logcat -b events -v time | grep -E --line-buffered 'am_proc_start|am_proc_died|am_kill|am_force_stop' \
+    | grep --line-buffered maestro.companion | tee CAP-058-proc-events.txt
+  ```
+  Every start of the app's process appears as an `am_proc_start` line with a timestamp and the reason (e.g. `bound-service`,
+  `content provider`, `activity`) and the component that caused it. Checked on the Pixel 7a 2026-10-05: `am_proc_start`,
+  `am_proc_died` and `am_kill` occur in the events buffer; `am_force_stop` was not in it (no force-stop had been done), so
+  that tag is unconfirmed — rely on the time noted by hand in step 1. This file — not the film — is the evidence for the process-dead window. Also run the phone's clock on film once
+  (status bar) so the film, this log and the HCI log can be lined up.
+
+**Procedure**
+
+1. **[`SDP-001`] Force-stop** the companion app: `adb shell am force-stop $P` (so the moment is in the event log as
+   `am_force_stop`), or on film via Settings → Apps → Pixel Buds → Force stop. Then run `adb shell pidof $P; echo "exit=$?"` —
+   expected: nothing, `exit=1`. Note the time.
+2. **Forget** the Buds: Settings → Connected devices → the Buds → Forget. Force-stop first, Forget second (`CAP-033` had them
+   reversed). Right after, run `adb shell pidof $P; echo "exit=$?"` again and note the time and result. If a PID appears, the
+   event log's `am_proc_start` line says what started it — write that down; do **not** force-stop again silently, the restart
+   itself is part of the result (see the 🟡 HYPOTHESIS above). Optionally force-stop once more and note that you did.
+3. **Liveness check immediately before "Pair":** put the Buds in pairing mode (case open, button on the case held), go to Settings
+   → Connected devices → Pair new device, and **just before tapping the Buds' name** run `adb shell pidof $P; echo "exit=$?"`.
+   Note the time and the result (PID or `exit=1`).
+4. **Pair** through the system Bluetooth settings only — tap the Buds' name and confirm. Do not open the companion app, the Fast
+   Pair half-sheet's "Set up" button or any Pixel Buds notification. Wait about 30 s, then run
+   `adb shell pidof $P; echo "exit=$?"` once more and note the result.
+5. **Still `SDP-001`, second half:** open the companion app normally (launcher icon) so it runs its own `fetchUuidsWithSdp()`
+   re-fetch — the app-open comparison half that `CAP-033` skipped. Note the time.
+6. Stop the event log (Ctrl+C), turn off Bluetooth (or save the HCI log), and keep CAP-058-proc-events.txt, the `pidof` outputs
+   with their times, the film and the HCI log together in the capture folder.
+7. **[`SDP-002`], opportunistic, only if a firmware update happens to be pending:** same as
    `CAP-033`/`CAP-044`'s own Group AA text — not a required part of this 3rd attempt.
 
+**Result is usable when:** the event log covers steps 1–5 without a gap, and either (a) it shows no `am_proc_start` for
+`maestro.companion` between the force-stop and the SDP browse that "Pair" triggers (clean process-dead window), or (b) it shows
+one and names its cause — then the "app never running" condition is shown unreachable through this path, which answers the
+procedure question itself (a negative result to record, not a failed capture).
+
+**Run (2026-10-05, `CAP-058`, `ai-sessions/0072`):** a mix of both texts — Settings force stop, `dumpsys … | grep <package>` ×6 (no events log, no
+`pidof`), Forget, the case button, the **Fast Pair half-sheet** (pairing 1), then Settings → Pair new device (pairing 2); the app opened through Fast
+Pair's "Set up". The process was absent at 21:40:35 and back with a new PID at 21:40:51 (laptop clock) — outcome (a) not met, (b) without a recorded
+cause. A 4th attempt with the app disabled is in `TODO.md` §3. `CAP-058-FINDINGS.md`.
+
 **Analysis:** does the "default internal rfcomm socket" UUID (`3a046f6d-...`) ever appear in the
-SDP response during the confirmed-process-dead window, contrasting with every capture to date (now
+SDP response during the confirmed-process-dead window (outcome (a) above; with outcome (b), record which UUIDs the SDP
+response held while the process was alive and what started it), contrasting with every capture to date (now
 5 consecutive negatives) showing only the "pigweed" UUID (`25e97ff7-...`)? This is the specific,
 narrower question a clean process-liveness confirmation would finally let this project answer either
 way.
@@ -2055,12 +2117,12 @@ is how the 2026-08-18 `CAP-005`/`CAP-007`/`CAP-010` ID-reuse incident (see
 | `CAP-050` | 2026-09-14 | Pixel 7a | 17 (⚪ assumed, carried over) | ⚪ assumed `release_5.203` (carried over) | 1.0.955078536 (⚪ assumed) | AG (repeat) | `PRIV-001` | Repeat of `CAP-040`'s DLCI 0x08 unmapped Get-shaped codes correlation, this time using a trigger confirmed to actually reopen DLCI 0x08 (OS Bluetooth toggle or physical dock/undock), not the app's own Connect/Disconnect buttons | `captures/CAP-050-2026-09-14_21-01-01_21-13-30-Group_AG/CAP-050-btsnoop_hci.log` | same file, raw path, 0/20,060 truncated | analyzed — see `CAP-050-FINDINGS.md`. **Session-local DLCI reassignment confirmed a second time** (one reconnect placed HFP, not the private envelope, on DLCI 0x08) — the private envelope was re-identified per reconnect by content signature, giving 15 confirmed + 1 inconclusive channel opens (not the video's own "well over 20" in-app-label estimate). All 7 `PRIV-001`-flagged codes fire on every private-envelope (re)open (14 full samples, vs. `CAP-040`'s N=1); 5 of 7 resolve to "not a match"/"no candidate found" (constant neighbors), 2 (`04 04`/`04 15`) remain inconclusive — their neighbors (`04.05`/`04.16`) fluctuate near dock-state changes but don't reproduce for the same physical configuration across reconnects. Both of `CAP-050-EVENT-NOTES.md`'s own flagged ambiguous dock-state windows resolved via wire+video correlation; one genuine `Settable-toggles` stale-reading counter-example found (consistent with `CAP-048-FINDINGS.md` §5's already-documented pattern, not a new contradiction of `DECISIONS.md` ADR-024). No clear video evidence of the maintainer-recalled mis-docking event at the review densities applied |
 | `CAP-051` | 2026-09-14 | Pixel 7a | 17 (⚪ assumed, carried over) | ⚪ assumed `release_5.203` (carried over) | 1.0.955078536 (⚪ assumed) | AM (new) | none existing — a candidate Test-ID (`ANC-005`) was proposed in `CAP-051-FINDINGS.md` §5 item 4; **declined 2026-09-18 (`ai-sessions/0031`), not registered — redundant with `TOUCH-007`'s own row, which already documents this finding**; incidental `ANC`-family, `TOUCH-007` | `qhr` field 13 ANC-parallel-path wire confirmation — isolated in-app tap and isolated physical press-and-hold gesture, checking whether either correlates with a DLCI 0x02 `field13` write alongside DLCI 0x04's confirmed path | `captures/CAP-051-2026-09-14_21-42-55_21-44-09-Group_AM/CAP-051-btsnoop_hci.log` | same file, raw path (confirmed, not just claimed), 0/2,457 truncated | analyzed — see `CAP-051-FINDINGS.md`. **All four ANC-mode actions confirmed against DLCI 0x04's already-FACT path**: the in-app tap produces a genuine `Set`(`0x12`)+ACK+`Notify` sequence; all three physical press-and-hold gestures produce only a spontaneous `Notify`(`0x13`) with no preceding `Set`/`Get` anywhere in the log — directly confirming `CAP-038-FINDINGS.md` §5's previously-unconfirmed "physical gesture" hypothesis for its own Get-less/Set-less Notify frames. **Central Group AM question: clean, confirmed negative** — no `field5{field4{field13=N}}` write (or any DLCI 0x02 `Sent`-direction payload at all) appears on DLCI 0x02 for any of the four actions, contrasting with `REVERSE_ENGINEERING.md`'s own `qhr`-entry static-analysis finding (a real, compiled write path exists for both triggers) — not contradicted, but not observed to fire in this session |
 | `CAP-052` | *withdrawn* | Pixel 7a | — | — | — | AN (new) | none existing — flagged as a `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` follow-up, not assigned here (see `CAP-052-EVENT-NOTES.md`) | `CAP-041` Case%-change bracket — ≥30-minute session with a genuine Case battery charge/discharge, to test whether DLCI 0x02's recurring 2-field sub-message actually tracks Case% or merely coincided with a constant value. **Withdrawn 2026-09-30** (maintainer, chat, `ai-sessions/0059`): answered by Option F, entry 6.1 = Case % (`PROTOCOL.md` §4.3, ADR-043) | — | — | withdrawn |
-| `CAP-053` | *planned* | Pixel 7a | TBD | TBD | TBD | AO (new) | `EQS-004`, `EQP-008` | EQ outer field 16-vs-18 — drag-and-release without ever tapping Save, isolated from the newly-found navigate-away trigger too, added `ai-sessions/0017` | — | — | planned |
-| `CAP-054` | *planned* | Pixel 7a | TBD | TBD | TBD | AP (new) | `BATT-007`, `BATT-002`, `BATT-003` | Connection-free observation of the `0xFE2C` advertisement right after the case lid is opened with both buds inside (the spec's own use case), then one bud out/in — redesigned 2026-10-03 (`ai-sessions/0069`, L68-6); was: a single-bud insertion/removal bracket only | — | — | planned |
+| `CAP-053` | 2026-10-05 | Pixel 7a | 17 (build not on this film; `CP3A.260905.009` in `CAP-054`) | `release_5.203` | official app 1.0.955078536 (after the downgrade; data wiped) | AO | `EQS-004`, `EQP-008` (also `EQS-001`–`EQS-003`, `PAIR-003`) | Field 18 is written by the **Save** tap only (1838, 0.2–0.5 s after it); 4 releases and Home/Recents wrote none; Back not tested — `CAP-053-FINDINGS.md` | — (raw logs) | `CAP-053-btsnoop_hci.log` + `.log.last` (an earlier connection, before the film) | analyzed |
+| `CAP-054` | 2026-10-05 | Pixel 7a | 17 (`CP3A.260905.009`, on film) | `release_5.203` | official app 1.0.955078536, force-stopped on film | AP | `BATT-007`, `BATT-002` (`BATT-003` not exercised; also `CASE-003`–`CASE-005`, `PAIR-003`, `BATT-001`, `BATT-004`) | No Battery Notification field in clear in 610 `0xFE2C` reports (lid closed, two lid openings, each bud out); a lid-state byte in the closed-case form; Android still showed L/C/R without a connection; each bud out started a Buds-initiated ACL — `CAP-054-FINDINGS.md` | — (raw log) | `CAP-054-btsnoop_hci.log` (a byte-prefix of `CAP-058-btsnoop_hci.log.last`) | analyzed |
 | `CAP-055` | *planned* | Pixel 7a | TBD | TBD | TBD | AQ (new) | `HEAD-002`, `HEAD-003` | Nod/Shake head gestures performed while an actual incoming call/notification is active, camera angled to also capture the gesture itself, added `ai-sessions/0017` | — | — | planned |
 | `CAP-056` | 2026-09-28 | Pixel 7a | not on film | `release_5.203` | official Pixel Buds app (version not on film) | AR (+ `0051` F-6 (A), W-12b (B)) | `HOLD-005`, `INEAR-001`, `INEAR-002`, `INEAR-003`, `INEAR-004`, `PAIR-003` | Genuine re-run of the ANC-mode checklist per bud (anti-repeat safeguard met), the `qht` bit order, and in-ear detection on/off with the ears on film | `captures/CAP-056-2026-09-28_17-30-53_17-35-58-Group_AR/CAP-056-btsnoop_hci.log` (raw path, untruncated) | same file | analyzed — see `CAP-056-FINDINGS.md`: bit order 1 NC / 2 Off / 3 Transparency / 4 Adaptive 🟢 (on-screen-order reading refuted), no Left/Right field in the write 🟢, one list 🟡 (step A2 skipped); "In-ear detection" = field 2 🟢 (5 filmed taps + the Buds' SASS bit 4); with it off: no phone pause (0/6), Buds still `DISC` DLCI 0x02, no `Notify` on wear changes; pause route = phone `PlaybackStatusChanged`, no AVRCP pass-through (🟡) — `ai-sessions/0055`, ADR-046/047 |
 | `CAP-057` | *withdrawn* | Pixel 7a | — | — | — | AS (new) | `FW-002`, `FW-003` (incidental) | Live `GetSoftwareInfo`/`GetHardwareInfo` correlation against the DLCI 0x02 connect-time burst's 3-string sub-message, following this session's structural finding that it matches `qjm`/`qjr` (`GetHardwareInfo`) better than `qie` (`GetSoftwareInfo`), added `ai-sessions/0017`. **Withdrawn 2026-09-24** (`ai-sessions/0045`): answered from `CAP-036`'s own bytes, `PROTOCOL.md` §6 | — | — | withdrawn |
-| `CAP-058` | *planned* | Pixel 7a | TBD | TBD | TBD | AT (new) | `SDP-001`, `SDP-002` (opportunistic, not attempted) | 3rd attempt at `SDP-001`'s UUID-branch isolation, adding an explicit on-device process-liveness check before the "Pair" tap per `CAP-044-FINDINGS.md` §5's own proposal; approved by the maintainer 2026-09-18, added `ai-sessions/0031` | — | — | planned |
+| `CAP-058` | 2026-10-05 | Pixel 7a | 17 | `release_5.203` | official app 1.0.955078536 | AT | `SDP-001` (process alive at the browses), `SDP-002` (not applicable), `PAIR-001`, `PAIR-004`, `CASE-008`, `CASE-001`, `CASE-002`, `SWITCH-001`, `WELL-001` | The force-stopped app ran again ≈ 10 s later (dumpsys ×6); `3a046f6d-…` absent from 4 full SDP browses; Fast Pair vs Settings pairing IO capabilities; 14 extra tests incl. `qhr` field 21 = "Volume level notifications" — `CAP-058-FINDINGS.md` | — (raw logs + `dumpsys` file) | `CAP-058-btsnoop_hci.log` + `.log.last` (18:02–21:40: `CAP-054`'s log and two pre-film pairings) | analyzed |
 | `CAP-059` | 2026-09-20 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0041` commit `9fe4b70` | AU (new) | `PAIR-001`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-006` (partial) | App-validation run of the `0041` build — pairing, ANC cycling, Find, EQ, and root-causing three session drops with three distinct causes; reclassified from `android/logs/LOGS-001` by `ai-sessions/0043` (see the intro's third-purpose note) | — (no bugreport archive kept; the log is the raw, untruncated `btsnoop_hci.log`, `CAP-059-EVENT-NOTES.md`) | `CAP-059-btsnoop_hci.log` | analyzed |
 | `CAP-060` | 2026-09-21 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0042` commit `1efa86b` | AV (new) | `PAIR-001`, `PAIR-003`, `ANC-001`–`004`, `FIND-001`/`002`, `EQP-005`/`006` (partial) | App-validation run of the `0042` build — six connection drops (three distinct mechanisms, one newly characterized), Case-battery failure (**corrected 2026-09-24**: every post-open push answers Play services' `0e 04`; the app's receive-only claims got none — `CAP-060-FINDINGS.md` §2, ADR-039), dock-state and ANC-tile root-causing; reclassified from `android/logs/LOGS-002` by `ai-sessions/0043` (see the intro's third-purpose note) | — (no bugreport archive kept; raw, untruncated `btsnoop_hci.log`, `CAP-060-EVENT-NOTES.md`) | `CAP-060-btsnoop_hci.log` | analyzed |
 | `CAP-061` | 2026-09-24 | Pixel 9a | 17 (`CP2A.260805.005`) | `release_5.203` | OpenControl, `ai-sessions/0045` code (`android/` of `5ade05e` = `964fa91`) | AW (new) | `PAIR-001`, `PAIR-003`, `CASE-003`–`CASE-006`, `BATT-004`; `ANC-001`–`004`, `FIND-001`/`002`, `EQS-001`, `EQP-*` attempted (nothing sent) | First hardware run of the `0045` build — Safe Mode on the verified firmware (the announcement's fixed64 field 5 made the firmware list empty), the DLCI 0x08 `0e 04` claim unanswered 20/20 (ADR-043 moves the Case to `SubscribeRuntimeInfo`), a premature "both in the case" (ADR-024 Update); `CAP-061-FINDINGS.md` | — (no bugreport archive; raw, untruncated `btsnoop_hci.log`, `CAP-061-EVENT-NOTES.md`) | `CAP-061-btsnoop_hci.log` | analyzed |

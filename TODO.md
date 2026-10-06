@@ -40,11 +40,16 @@ Open after `CAP-068` (`ai-sessions/0070`); each goes into the next app run with 
 
 | Capture | Group | What | Phone / app |
 |---|---|---|---|
-| `CAP-054` | AP | the `0xFE2C` advertisement right after the lid opens, connection-free (redesigned 2026-10-03, L68-6) | Pixel 7a, no app |
-| `CAP-053` | AO | EQ outer field 16 vs 18: Save tap, navigate away, slider release — each isolated | Pixel 7a, official app |
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
-| `CAP-058` | AT | `SDP-001`/`SDP-002`, third attempt, with an on-device process-liveness check | Pixel 7a |
 | `CAP-030` | Q #19–20 | Loud Noise Protection / Adaptive Audio (firmware naming never reconciled with `release_5.203`, `PROTOCOL.md` §0.1) | Pixel 7a, official app |
+
+From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedures for a next attempt, no skeleton written:
+
+- [ ] Group AO, step 5 only: drag a slider, wait ≥ 3 s, press **Back** (once the system back gesture, once the app bar arrow), no Save — does the
+      `hod.java` "Navigate away, save EQ" path write field 18? (`CAP-053-FINDINGS.md` §3, §8.)
+- [ ] Group AT, 4th attempt: disable the companion app first (`adb shell pm disable-user …maestro.companion`, reversible), keep `logcat -b events`
+      running, `pidof` with its positive control, pair from Settings → Pair new device only; then re-enable and open the app (`CAP-058-FINDINGS.md` §7).
+- [ ] Documentation only: re-check `CAP-015`'s film at its 15 field-18 frames for a Save tap or a screen change (`CAP-053-FINDINGS.md` §7).
 
 - [ ] Optional, destructive, one-time: the factory-reset re-pair for comparison (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16) — it also resets the
       Find My Device link.
@@ -62,8 +67,12 @@ Next app features, chosen by the maintainer (chat 2026-10-03, "Features": *"Yes 
 - [ ] **Head gestures switch** — field 29 read + write unblocked by ADR-052 (`CAP-069`); build after Multipoint; fixtures `CAP-069` 2492/2564, reads 1226/7209.
 - [ ] `ARCHITECTURE.md` §5a and `PROJECT.md` ("Status after 1.0.x", the feature list) still describe head gestures and Multipoint as waiting for `CAP-069`;
       update them with the app session that builds the switches (`ai-sessions/0071`, deferred).
-- [ ] Pull and decompile the official app **1.0.990706425** (ADR-017 boundary) — name the MAESTRO service `0xbf6c9399` and `JitterBuffer` method `0x8d99df93`
-      seen in `CAP-069` (`CAP-069-FINDINGS.md` §9; **M** approved the follow-up, chat 2026-10-04).
+- [ ] Decompile the official app **1.0.990706425** (versionCode `10260911`) with JADX and apktool (ADR-017 boundary) — name the MAESTRO service
+      `0xbf6c9399` and `JitterBuffer` method `0x8d99df93` seen in `CAP-069` (`CAP-069-FINDINGS.md` §9; **M** approved the follow-up, chat 2026-10-04).
+      Pulled 2026-10-05 from the Pixel 7a (`adb pull` of base + 2 splits, same signing certificate as 1.0.955078536) into
+      `reverse-engineering/apk/v1.0.990706425-10260911/` (gitignored); not decompiled yet (**M**, chat 2026-10-05: *"Voer het nog niet uit. Dat kan
+      later."*). Also add the three files' SHA-256 to `reverse-engineering/APK_VERSIONS.md`, whose 1.0.990706425 paragraph still says "Not pulled".
+      While decompiling, check whether the Find device code is still present in both versions (see the Ring status question below).
 
 Proposals awaiting the maintainer (`DESKRESEARCH_FINDINGS.md`, entry of 2026-10-03 — nothing applied as a status change):
 
@@ -82,10 +91,17 @@ Open questions (each with where it is described):
   03/05/01/21 are 🟡. 🟡 Who owns DLCI 0x08/0x0a — the Google app's
   assistant service is the lead (`CAP-061-FINDINGS.md` §2).
 - 🔴 Ring status: what the Buds send when the ringing is stopped on the bud (L68-2; `CAP-069`: the official app has no Find device any more and Find Hub
-  rang nothing — test with OpenControl's own Ring while a client holds the Message Stream; `CAP-068` could not observe it — the app's claim
+  rang nothing; 2026-10-05 the maintainer downgraded the official app to 1.0.955078536 on the Pixel 7a and it shows no Find device either — 🟡 removed
+  by something outside the APK version (server-side flag or Play services), unverified; `CAP-058` (2026-10-05, 1.0.955078536): Settings' Device details showed **Find device** while the Buds were
+  bonded but not connected and not after they connected (🟡 shown only while not connected — `CAP-058-FINDINGS.md` §4) — test with OpenControl's own Ring while a client holds the Message Stream; `CAP-068` could not observe it — the app's claim
   is released 1.5 s after the Ring, `CAP-068-FINDINGS.md` §6). Known limit of 1.0.1: the "Ringing" notice stays until Stop is tapped. The app does not read the
   Buds' ring-status message; whether it should is a decision after those runs (**M**, "Nothing new on the wire; test first").
-- 🔴 The Fast Pair battery advertisement on case-open (L68-6 → `CAP-054`). The only route to a Case level without a connection (ADR-006).
+- 🔴 `CAP-054`: no clear Battery Notification field on case-open (`PROTOCOL.md` §4.3 Option A, Update of 2026-10-06), yet Android showed L/C/R
+  without a connection — what it decoded (the closed-case advertiser's bytes after the salt, `0x2a`/`0x29` lid-state byte, or the Random Resolvable
+  Data); the `0x1a` field of the bud-out advertisers (`CAP-054-FINDINGS.md` §2, §9).
+- 🔴 `CAP-058`: what restarted the companion app ≈ 10 s after the force stop (🟡 Settings' device pages); why the official app's `ReadSetting` sweep
+  began 16 s after MAESTRO opened; why "Media audio" off also closes GSND CONTROL/AUDIO (`CAP-058-FINDINGS.md` §1, §6, §9).
+- 🔴 `CAP-053`: why the EQ screen redrew the Mid thumb 10 s after the drag (UI only; `CAP-053-FINDINGS.md` §4).
 - 🔴 Why the Buds close both RFCOMM channels (`CAP-059`/`CAP-060-FINDINGS.md` §1): the idle / periodic / second-host / quick re-claim
   experiments were never run as isolated tests. After docking, the Buds refuse about nine re-opens each until the link drops (`CAP-040`,
   L68-10) — relevant to the re-open back-off.
