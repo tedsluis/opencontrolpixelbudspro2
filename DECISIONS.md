@@ -2455,5 +2455,63 @@ motivated this).
   `4:{11:0}` → OK (and, if the app holds the Message Stream, `07 11 … 98 00`); ON → `4:{11:1}` → OK. Built first of the two (the maintainer's order, chat
   2026-10-04, "Order": *"Multipoint first"*).
 
+## ADR-054 — DLCI 0x02: `WriteSetting` unblocked for `qhr` fields 27 and 28 (Case sounds)
+
+- **Date**: 2026-10-06
+- **Status**: Accepted (maintainer, chat 2026-10-06)
+- **Note on process**: drafted by an AI agent in the chat of 2026-10-06 that continued after `ai-sessions/0073` was merged (no session file of its
+  own); the decision is the maintainer's, given in that chat (`AskUserQuestion` "ADR-054", option *"Accept ADR-054 (Recommended)"*, with this text in
+  the preview), per `AGENTS.md` §6. No `PROTOCOL.md` status changes with it: fields 27 and 28 are 🟢 in §4.5.8 (28 since 2026-09-03, the label of 27
+  since 2026-10-06).
+- **Context**: the maintainer wants the two Case sounds switches in the app's next feature session (chat 2026-10-06). ADR-036 unblocked `ReadSetting`
+  for 27 and 28 (not built) and left every write to a later ADR. The official app's writes, filmed in both captures (`CAP-024-FINDINGS.md` §4–§5;
+  `CAP-058-FINDINGS.md` §6, X8 and X9): "Earbuds replaced" — `WriteSetting 4:{28:0}` / `4:{28:1}`, `CAP-024` 1988 / 2023 (channel 19), `CAP-058`
+  5623 / 5643 (channel 21); "Other alerts" — `4:{27:0}` / `4:{27:1}`, `CAP-024` 2053 / 2084, `CAP-058` 5680 / 5697. 8 of 8 are answered by an empty
+  `RESPONSE` status OK and mirrored on `SubscribeToSettingsChanges` (e.g. 2053 → stream 2060, `RESPONSE` 2061). The connect-time reads return
+  `4:{27:1}` and `4:{28:1}` (`CAP-024` 1092 / 1096, `CAP-058` 4514 / 4517). Command: `python3 scripts/pwrpc_decode.py <log> | grep -E
+  'WriteSetting|SettingsChanges|ReadSetting'`. Not established: which sounds each switch silences (no capture listened to the case), and whether the
+  Buds accept the write with the case out of range. For `CAP-024` 1988 the film does not decide between a tap and the screen opening (`PROTOCOL.md`
+  §4.5.8, Update of 2026-10-03).
+- **Options considered**: (a) leave both unbuilt; (b) read and show only; (c) read + write — chosen.
+- **Decision**: `WriteSetting 4:{27:v}` and `4:{28:v}`, v ∈ {0 = off, 1 = on} (`maestro_pw.Maestro`), are unblocked. Each request is byte-identical
+  to the official app's for the same value and channel — channel 19: `CAP-024` 2053 / 2084 (27), 1988 / 2023 (28); channel 21: `CAP-058` 5680 / 5697
+  (27), 5623 / 5643 (28) — on the announced channel with its ADR-034 address, through the Safe-Mode gate (ADR-042), once per user tap, applied only
+  on the empty `RESPONSE` status OK; otherwise the previous state stays and the reason is shown. The current value is read at Connect (`ReadSetting
+  4:27`, `4:28`, ADR-036) and shown with its time; a value other than 0 or 1, or a setting that was not read, is shown as "—". No
+  `SubscribeToSettingsChanges`.
+- **Consequences**: the settings codec gains fields 27 and 28; `Maestro.READABLE_FIELDS` gains both (ADR-036's reads get built); two switches under a
+  "Case sounds" heading, "Earbuds replaced" (28) and "Other alerts" (27) — where they sit is the build session's proposal to the maintainer. The app
+  says what the switch sets, not which sounds stop. Hardware re-test, per switch, with the place of the Buds and the case noted: OFF → `4:{N:0}` → OK;
+  a reconnect reads `4:{N:0}`; ON → `4:{N:1}` → OK; and, as an observation, whether the case still sounds when a bud is put back with 28 off. Not
+  built by this ADR.
+
+## ADR-055 — DLCI 0x02: `WriteSetting` unblocked for `qhr` field 15 (Volume EQ)
+
+- **Date**: 2026-10-06
+- **Status**: Accepted (maintainer, chat 2026-10-06)
+- **Note on process**: drafted by an AI agent in the chat of 2026-10-06 that continued after `ai-sessions/0073` was merged (no session file of its
+  own); the decision is the maintainer's, given in that chat (`AskUserQuestion` "ADR-055", option *"Accept ADR-055 (Recommended)"*, with this text in
+  the preview), per `AGENTS.md` §6. No `PROTOCOL.md` status changes with it: field 15 = Volume EQ is 🟢 in §4.5.6 (since 2026-09-08).
+- **Context**: the maintainer wants a Volume EQ switch in the app's next feature session (chat 2026-10-06). ADR-036 unblocked `ReadSetting` for 15
+  (not built) and left every write to a later ADR. The official app's writes: `WriteSetting 4:{15:0}` / `4:{15:1}`, `CAP-022` 1871 / 1895 (channel 19,
+  both on film, `CAP-022-FINDINGS.md` §4); `CAP-015` 3487 / 3505 (channel 19, not matched to the film); `4:{15:0}`, `CAP-041` 2461 (channel 21, not
+  matched to the film). 5 of 5 are answered by an empty `RESPONSE` status OK and mirrored on `SubscribeToSettingsChanges` (e.g. 1871 → stream 1876,
+  `RESPONSE` 1877). A later read returns the written value: `CAP-041` reads `4:{15:1}` at 868 and 2007, writes 0 at 2461, and reads `4:{15:0}` at
+  3239. Command: `python3 scripts/pwrpc_decode.py <log> | grep -E 'WriteSetting|SettingsChanges|ReadSetting'`. **No `4:{15:1}` on channel 21 has been
+  captured.** (`CAP-042`'s `.log.last` holds the same frame 2461 at the same timestamp — leftover `CAP-041` content, not a sixth sample.) Not
+  established: audibility; "boosts bass and treble at lower volume" is the test plan's description (`AUDIO-002`), not a measurement.
+- **Options considered**: (a) leave it unbuilt; (b) read and show only; (c) read + write — chosen.
+- **Decision**: `WriteSetting 4:{15:v}`, v ∈ {0 = off, 1 = on} (`maestro_pw.Maestro`), is unblocked. The request is byte-identical to `CAP-022`
+  1871 / 1895 on channel 19 and to `CAP-041` 2461 for "off" on channel 21. The channel-21 "on" request is the same frame with value byte 1 and its
+  own frame check; it is built by the same codec and carries a `// TODO(verify)` until the hardware re-test has recorded it — until then its unit
+  test is a labelled structural test, not a real-byte fixture (`AGENTS.md` §11). On the announced channel with its ADR-034 address, through the
+  Safe-Mode gate (ADR-042), once per user tap, applied only on the empty `RESPONSE` status OK; otherwise the previous state stays and the reason is
+  shown. The current value is read at Connect (`ReadSetting 4:15`, ADR-036) and shown with its time; a value other than 0 or 1, or a setting that
+  was not read, is shown as "—". No `SubscribeToSettingsChanges`.
+- **Consequences**: the settings codec gains field 15; `Maestro.READABLE_FIELDS` gains 15 (ADR-036's read gets built); a "Volume EQ" switch on
+  "Sound" — its place is the build session's proposal to the maintainer. The app says what the switch sets and makes no claim about what is heard.
+  Hardware re-test: OFF → `4:{15:0}` → OK; ON → `4:{15:1}` → OK (on channel 21 this is the first capture of that frame — its bytes become the
+  fixture and the `// TODO(verify)` goes); a reconnect reads the value back; audibility as an observation. Not built by this ADR.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

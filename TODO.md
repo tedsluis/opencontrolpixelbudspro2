@@ -70,6 +70,14 @@ Next app features, chosen by the maintainer (chat 2026-10-03, "Features": *"Yes 
 - [ ] **Multipoint switch** — field 11 write unblocked by ADR-053 (`CAP-069`, 2026-10-04); build first (**M**, chat 2026-10-04, "Order": *"Multipoint first"*), app
       session with real-byte fixtures `CAP-069` 3161/3212 and a hardware re-test.
 - [ ] **Head gestures switch** — field 29 read + write unblocked by ADR-052 (`CAP-069`); build after Multipoint; fixtures `CAP-069` 2492/2564, reads 1226/7209.
+- [ ] **Case sounds switches** — fields 27 ("Other alerts") and 28 ("Earbuds replaced"), read + write unblocked by ADR-054 (chat 2026-10-06); same
+      session as the two above (**M**, chat 2026-10-06); fixtures `CAP-024` 2053/2084/1988/2023 (channel 19), `CAP-058` 5680/5697/5623/5643 (channel 21),
+      reads `CAP-024` 1092/1096, `CAP-058` 4514/4517. The hardware re-test notes where the Buds and the case are and whether the case still sounds.
+- [ ] **Volume EQ switch** — field 15, read + write unblocked by ADR-055 (chat 2026-10-06); same session; fixtures `CAP-022` 1871/1895 (channel 19),
+      `CAP-041` 2461 (channel 21, off), reads `CAP-024` 1038, `CAP-058` 2930. The channel-21 "on" frame is uncaptured: `// TODO(verify)` and a labelled
+      structural test until the hardware re-test records it.
+- [ ] In that same session (**M**, chat 2026-10-06): the screen-reader text for a setting that was not read ("—", §5 Accessibility), and the open
+      film items of §2 in its hardware run.
 - [ ] `ARCHITECTURE.md` §5a and `PROJECT.md` ("Status after 1.0.x", the feature list) still describe head gestures and Multipoint as waiting for `CAP-069`;
       update them with the app session that builds the switches (`ai-sessions/0071`, deferred).
 - [ ] Decompile the official app **1.0.990706425** (versionCode `10260911`) with JADX and apktool (ADR-017 boundary). Its first purpose is met
@@ -164,8 +172,8 @@ Open questions (each with where it is described):
 - [ ] Third-party notices on the Info tab (releases carry `THIRD_PARTY_NOTICES.txt`; bundling it like the licence text is a possible later step).
 - [ ] Auto-connect on lid-open: not possible from any event the app sees (`CAP-064-FINDINGS.md` §1); **M** chose "Nothing now" (2026-10-01).
 - [ ] Undecided, each needs its own ADR (**M**): a background session via CDM device presence (`ARCHITECTURE.md` §6.0b (b)); a per-channel
-      "degraded" state; the BLE battery advertisement scan (ADR-006's bounded exception); `SubscribeToSettingsChanges`; the settings that are
-      readable but not shown (11, 15, 27, 28).
+      "degraded" state; the BLE battery advertisement scan (ADR-006's bounded exception); `SubscribeToSettingsChanges`. (The settings that were
+      readable but not shown — 11, 15, 27, 28 — are decided: ADR-053, ADR-055, ADR-054; §4.)
 - [ ] Safe Mode: grey out Sound/Controls (offered in `ai-sessions/0057`, not chosen) — revisit only if a Safe-Mode run shows the per-tap refusal
       confuses.
 - [ ] From `ai-sessions/0068` `A68-APP-13`, not changed in 1.0.1 — each needs a test that forces the interleaving, which the present test set-up
@@ -225,6 +233,10 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
       line-by-line re-derivation; the class-A rows of its §4.11 were not worked (among them the EQ gain unit and the `"cape2_sm"`/`"500m"`
       strings); the capture FINDINGS that raised the answered questions (`CAP-069-FINDINGS.md` §9, `CAP-053-FINDINGS.md` §8,
       `CAP-058-FINDINGS.md` §4 and §7, `CAP-051-FINDINGS.md`) carry no pointer to its code-side answers (not among the approved drafts).
+- [ ] Recount the cross-capture censuses of `ai-sessions/0073` without duplicated logs: `CAP-042`'s `.log.last` is leftover `CAP-041` content, so
+      every packet and "in N logs" count of its §4.1/§4.2 and of `DESKRESEARCH_FINDINGS.md`'s entry of 2026-10-06 includes `CAP-041` twice (dated
+      correction there). First list which `.log.last` files overlap a neighbouring capture (first timestamp and one frame's bytes), then rerun
+      `pwrpc_name_table census` on the de-duplicated set and correct the figures as dated notes (**M** for the texts).
 - [ ] Deferred items of earlier sessions that never reached this file (`A68-SES-03`): `ai-sessions/0061` ("Not read in this session …"),
       `ai-sessions/0063` (one item) — read those RESULTs and carry what is still open.
 - [ ] `scripts/__pycache__/lint_docs.cpython-314.pyc` is a tracked file (a compiled-Python artefact; the prompt of `ai-sessions/0069` names `__pycache__` as never to be
