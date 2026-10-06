@@ -10,7 +10,7 @@ that file per `ai-sessions/0025`'s own resumption authorization (see that file's
 following `../structural_index/SPEC.md` as the template, the same way that tool followed
 `../lambda_dispatcher_resolver/SPEC.md`.
 
-**Status: implemented 2026-09-16** (`src/`, `tests/`, `README.md`), against exactly this document's
+**Status: v1 implemented 2026-09-16; v1.1 (`declared_type`, `refs --include-plain`, §3a) 2026-10-06, `ai-sessions/0073`.** *(Original line:)* **implemented 2026-09-16** (`src/`, `tests/`, `README.md`), against exactly this document's
 own §5/§6/§10.
 
 ---
@@ -22,7 +22,8 @@ own §5/§6/§10.
 header comment and `REVERSE_ENGINEERING.md`'s "Tooling note" section for the upstream-source
 provenance) — but its CLI takes one or more explicit file paths and decodes only the `new naa(...)`
 construction(s) it finds in each. Every class this project has recovered a real schema for so far
-(`qhr`, `qjc`/`qja`, `qjb`, `nqx`, and the rest of §4 in `REVERSE_ENGINEERING.md`) was found by first
+(`qhr`, `qjc`/`qja`, `qjb`, `nqx`, and the rest of `REVERSE_ENGINEERING.md`'s "Identified relevant classes" section — *corrected
+2026-10-06, `ai-sessions/0073`, `A68-RE-06`: this said "§4 in `REVERSE_ENGINEERING.md`", a file without numbered sections*) was found by first
 locating the class by some other means (a service-catalog string table, a call-graph trace, a
 by-hand `grep`) and *then* running the script against that one file. `REVERSE_ENGINEERING.md`'s own
 "Candidate rich schemas" section already shows the cost of *not* having a batch mode: a
@@ -113,6 +114,17 @@ that fact for a plain field; only a bytecode/field-descriptor scan (`structural_
 ndi`'s category (c), already used for exactly this in `ai-sessions/0025`'s first pass) can. §9
 explains why this tool does not also implement that separate lookup shape, and §5's own worked
 example (item H) demonstrates and records this exact gap rather than silently under-reporting.
+
+### 3a. Plain singular `MESSAGE` fields — v1.1 addition, 2026-10-06 (`ai-sessions/0073`)
+
+§3's limitation stands for the schema string: a plain singular `MESSAGE`/`GROUP` field carries no class reference there, and
+`message_ref` stays `None` for it. v1.1 closes the gap from a **second, separate data source**: the class's own JADX source declares its
+instance fields (`public qid c;`), and the schema's `java_field` names the field — so each such field gets `declared_type` (here `qid`).
+This is the cross-reference §9 proposed, taken from the decompiled declaration instead of `structural_index`'s bytecode field descriptor
+(the same fact; no androguard load, so the scan stays a few seconds). Rules: only instance fields; a field name declared twice with
+different types in one file (an inner class) is dropped, never guessed; a file holding more than one `new naa(` construction gets no
+`declared_type` at all. `refs --include-plain` adds the holders found this way with `context: "plain"`; without the flag `refs` behaves
+exactly as in v1 (the tests of the disclosed limitation still pass). On this APK: 581 plain `MESSAGE` fields, 581 resolved.
 
 ## 4. Architecture — one thin batch layer, reusing `scripts/decode_rawmessageinfo.py` directly
 
@@ -297,6 +309,13 @@ info) before this tool is trusted on anything new:
 
 No regression test may be marked passing by inspection alone — each asserts the exact expected
 result set, per this project's own `AGENTS.md` §11 fixture discipline.
+
+### 10a. v1.1 acceptance criteria, 2026-10-06
+
+Four tests added (`TestPlainMessageFields`): a synthetic class text (static field skipped, a name clash dropped — always runs with the
+module); `qie` fields 1/2/3 → `qid` (`REVERSE_ENGINEERING.md`, `qjb` entry, 2026-10-01 Update); `qju` → `qik` ×2 and `qhr`'s oneof fields
+keep `declared_type` `None`; `refs --class ndi` is empty without the flag and returns `nef` (`context: "plain"`) with it — the nesting
+`structural_index` found on 2026-09-16. Result: 16 passed (12 before), 0 skipped.
 
 ## 11. Directory layout and git-tracking boundary
 

@@ -170,3 +170,43 @@ class TestCli:
             ["scan", "--apk-root", str(APK_ROOT), "--class", "ThisClassDoesNotExistAnywhereInThisApk"]
         )
         assert exit_code == 1
+
+
+class TestPlainMessageFields:
+    """v1.1 (2026-10-06, SPEC.md §3a/§10 items 7-9): the declared Java type of a plain singular MESSAGE field."""
+
+    def test_synthetic_declarations_are_parsed_and_clashes_dropped(self):
+        text = (
+            "public final class zzz extends base {\n"
+            "    public static final zzz a;\n"
+            "    public int b;\n"
+            "    public abc c;\n"
+            "    private com.example.Def d = null;\n"
+            "    public abc e;\n"
+            "    static class Inner {\n"
+            "        public xyz e;\n"
+            "    }\n"
+            "}\n"
+        )
+        types = batch_extract._declared_field_types(text)
+        assert types == {"b": "int", "c": "abc", "d": "com.example.Def"}  # static `a` skipped, `e` clashes
+
+    def test_qie_three_plain_fields_are_qid(self, full_scan):
+        # REVERSE_ENGINEERING.md, `qjb` entry (2026-10-01 Update): qie fields 1/2/3 are each a qid
+        qie = next(c for c in full_scan.classes if c.cls == "defpackage.qie")
+        assert [(f.field_number, f.type_name, f.message_ref, f.declared_type) for f in qie.fields] == [
+            (1, "MESSAGE", None, "qid"), (2, "MESSAGE", None, "qid"), (3, "MESSAGE", None, "qid")]
+
+    def test_qju_fields_are_qik_and_oneof_fields_keep_declared_type_none(self, full_scan):
+        # REVERSE_ENGINEERING.md, `qjo`/`qju` entry: qju wraps two qik; qhr's oneof refs come from the schema string
+        qju = next(c for c in full_scan.classes if c.cls == "defpackage.qju")
+        assert [f.declared_type for f in qju.fields] == ["qik", "qik"]
+        qhr = next(c for c in full_scan.classes if c.cls == "defpackage.qhr")
+        assert all(f.declared_type is None for f in qhr.fields)
+
+    def test_refs_include_plain_finds_nef_as_holder_of_ndi(self):
+        # the v1 disclosed limitation (TestDisclosedLimitation) stays true without the flag ...
+        assert batch_extract.find_refs(APK_ROOT, "ndi").referenced_by == []
+        # ... and the flag closes it: REVERSE_ENGINEERING.md records nef ⊃ ndi (structural_index, 2026-09-16)
+        with_plain = batch_extract.find_refs(APK_ROOT, "ndi", include_plain=True).referenced_by
+        assert [(r.cls, r.context) for r in with_plain] == [("defpackage.nef", "plain")]

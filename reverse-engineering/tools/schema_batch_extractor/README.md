@@ -50,6 +50,13 @@ two tools do.
 
 Add `--output-dir <dir>` to either command to write JSON to a file instead of stdout.
 
+```sh
+# v1.1 (2026-10-06): every field of a plain singular MESSAGE type also carries `declared_type` (SPEC.md §3a);
+# holders through such a field are listed with:
+.venv/bin/python3 -m schema_batch_extractor.cli refs \
+  --apk-root ../../apk/v1.0.955078536-10253511 --class ndi --include-plain
+```
+
 ## Tests
 
 ```sh

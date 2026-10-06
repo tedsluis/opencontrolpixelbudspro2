@@ -20,9 +20,14 @@ class DecodedField:
     message_ref: str | None = None
     has_presence: bool = False
     hasbit: int | None = None
+    # v1.1 (2026-10-06, SPEC.md §3a): for a plain singular MESSAGE/GROUP field only -- the type the
+    # class's own Java source declares for `java_field` (e.g. "qid"). A second, independent data
+    # source (the JADX field declaration, not the schema string); `message_ref` stays None for these.
+    declared_type: str | None = None
 
     def to_dict(self) -> dict:
         return {
+            "declared_type": self.declared_type,
             "field_number": self.field_number,
             "type_name": self.type_name,
             "is_oneof": self.is_oneof,
@@ -84,7 +89,7 @@ class ScanResult:
 class ReferencedBy:
     cls: str
     field_number: int
-    context: str  # "oneof" | "list" | "map"
+    context: str  # "oneof" | "list" | "map" | "plain" (v1.1, only with include_plain)
 
 
 @dataclass
