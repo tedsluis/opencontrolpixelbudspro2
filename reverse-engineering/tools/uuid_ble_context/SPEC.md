@@ -9,7 +9,7 @@ extraction + BLE/GATT context reconstruction" idea, graduated out of that file p
 own resumption authorization. Built following `../schema_batch_extractor/SPEC.md`'s own template, the
 same way that tool followed `../structural_index/SPEC.md`.
 
-**Status: implemented 2026-09-16** (`src/`, `tests/`, `README.md`), against exactly this document's
+**Status: v1 implemented 2026-09-16; v1.1 (byte-reversed aliases, `find`, §3a/§5a) 2026-10-06, `ai-sessions/0073`.** *(Original line:)* **implemented 2026-09-16** (`src/`, `tests/`, `README.md`), against exactly this document's
 own §5/§6/§10.
 
 ---
@@ -101,6 +101,20 @@ This is a **plain substring check on the file's own text**, run once per file al
 extraction pass (§4) — not a second file read, not a call-graph trace. A file matching zero of these
 strings is tagged `bt_api_cooccurrence: false`, which is itself informative (§1's worked example: the
 file holding the 6th, WorkManager-internal UUID matches none of them).
+
+### 3a. Byte-reversed aliases and `find` — v1.1 addition, 2026-10-06 (`ai-sessions/0073`)
+
+§2.2 deferred byte-reversed-alias detection. `REVERSE_ENGINEERING.md`'s register pairs each of the app's two RFCOMM UUIDs with a second
+literal that is the same 16 bytes in reverse order (`fzd.java`). v1.1: every `extract` entry carries `byte_reversed` (the reversed form) and
+`byte_reversed_in_tree` (whether that form is itself a literal of the tree — then the two entries are one UUID). On this APK exactly the
+four known alias literals are paired; the HID UUID and the WorkManager sentinel are not.
+
+`find --uuid U …` (§5a) answers the opposite question — "is a UUID *from a capture* anywhere in the tree?": a case-insensitive text search
+for `U` and its byte-reversed form, each with and without dashes (four forms), over every text file of `jadx-output/sources`,
+`jadx-output/resources` (assets, manifest), `apktool-output` (smali, `res/`, assets) and `apktool-output-arm64_v8a`; images, fonts,
+native libraries and other binaries are skipped by suffix. The result lists every hit (`form`, `file`, `line`) and `files_scanned` per
+root, so zero hits is a checked negative with its denominator; a UUID known to be present (the "pigweed" one) is the positive control.
+A malformed UUID is an error (exit 1), not an empty result. GATT-semantic mapping stays out of scope (§9).
 
 ## 4. Architecture — one thin layer, reusing `structural_index` for the usage-location half
 
@@ -262,6 +276,12 @@ draws.
 
 No regression test may be marked passing by inspection alone — each asserts the exact expected
 result set, per this project's own `AGENTS.md` §11 fixture discipline.
+
+### 10a. v1.1 acceptance criteria, 2026-10-06
+
+Four tests added (`TestByteReversedAliases`): the two register pairs and the involution (plus a malformed input); `extract` marks exactly
+the four alias literals; `find` finds the pigweed UUID in `fzd.java` in both byte orders (given in upper case) and returns zero hits in
+four forms for `0000fe2c-0000-1000-8000-00805f9b34fb`; the CLI exits 1 on a malformed UUID. Result: 13 passed (9 before), 0 skipped.
 
 ## 11. Directory layout and git-tracking boundary
 

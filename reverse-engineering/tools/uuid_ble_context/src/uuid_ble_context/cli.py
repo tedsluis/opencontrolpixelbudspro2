@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from .uuid_scan import context, extract
+from .uuid_scan import context, extract, find
 
 
 def _cmd_extract(args: argparse.Namespace) -> int:
@@ -30,6 +30,18 @@ def _cmd_context(args: argparse.Namespace) -> int:
         print(f"uuid-ble-context: error: UUID {e} not found under {args.apk_root}", file=sys.stderr)
         return 1
     _emit(result.to_dict(), args.output_dir, f"{result.uuid}_context.json")
+    return 0
+
+
+def _cmd_find(args: argparse.Namespace) -> int:
+    payload = []
+    for u in args.uuid:
+        try:
+            payload.append(find(Path(args.apk_root), u).to_dict())
+        except (FileNotFoundError, ValueError) as e:
+            print(f"uuid-ble-context: error: {e}", file=sys.stderr)
+            return 1
+    _emit(payload, args.output_dir, "uuid_find.json")
     return 0
 
 
@@ -57,6 +69,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_context.add_argument("--uuid", required=True)
     p_context.add_argument("--output-dir", default=None)
     p_context.set_defaults(func=_cmd_context)
+
+    p_find = sub.add_parser("find", help="text search for given UUIDs, both byte orders, in sources, smali, res and assets")
+    p_find.add_argument("--apk-root", required=True)
+    p_find.add_argument("--uuid", action="append", required=True)
+    p_find.add_argument("--output-dir", default=None)
+    p_find.set_defaults(func=_cmd_find)
 
     return parser
 

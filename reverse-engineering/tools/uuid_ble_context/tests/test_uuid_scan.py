@@ -122,3 +122,34 @@ class TestCli:
             ["context", "--apk-root", str(APK_ROOT), "--uuid", "00000000-0000-0000-0000-000000000000"]
         )
         assert exit_code == 1
+
+
+class TestByteReversedAliases:
+    """v1.1 (2026-10-06, SPEC.md §3a/§5a/§10 items 7-10)."""
+
+    def test_byte_reversal_is_the_register_pairing_and_an_involution(self):
+        # REVERSE_ENGINEERING.md's UUID register lists these two pairs as "byte-reversed alias"
+        assert uuid_scan.byte_reversed("25e97ff7-24ce-4c4c-8951-f764a708f7b5") == "b5f708a7-64f7-5189-4c4c-ce24f77fe925"
+        assert uuid_scan.byte_reversed("3a046f6d-24d2-7655-6534-0d7ecb759709") == "099775cb-7e0d-3465-5576-d2246d6f043a"
+        assert uuid_scan.byte_reversed(uuid_scan.byte_reversed("00001124-0000-1000-8000-00805f9b34fb")) == "00001124-0000-1000-8000-00805f9b34fb"
+        with pytest.raises(ValueError):
+            uuid_scan.byte_reversed("not-a-uuid")
+
+    def test_extract_marks_exactly_the_four_alias_literals(self, extracted):
+        paired = sorted(u.uuid for u in extracted.uuids if u.byte_reversed_in_tree)
+        assert paired == ["099775cb-7e0d-3465-5576-d2246d6f043a", "25e97ff7-24ce-4c4c-8951-f764a708f7b5",
+                          "3a046f6d-24d2-7655-6534-0d7ecb759709", "b5f708a7-64f7-5189-4c4c-ce24f77fe925"]
+
+    def test_find_positive_control_and_checked_negative(self):
+        # positive control: the "pigweed" UUID is found in fzd.java in both byte orders
+        hit = uuid_scan.find(APK_ROOT, "25E97FF7-24CE-4C4C-8951-F764A708F7B5")
+        assert {h["form"] for h in hit.hits} >= {hit.uuid, hit.byte_reversed}
+        assert any(h["file"].endswith("defpackage/fzd.java") for h in hit.hits)
+        assert hit.files_scanned["jadx-output/sources"] > 12000 and hit.files_scanned["apktool-output"] > 14000
+        # checked negative: the Fast Pair GATT service's 128-bit form (CAP-034) is nowhere in the tree
+        miss = uuid_scan.find(APK_ROOT, "0000fe2c-0000-1000-8000-00805f9b34fb")
+        assert miss.hits == [] and len(miss.forms_searched) == 4
+
+    def test_cli_find_outputs_one_entry_per_uuid(self, capsys):
+        rc = cli.main(["find", "--apk-root", str(APK_ROOT), "--uuid", "25e97ff7-24ce-4c4c-8951-f764a708f7b5", "--uuid", "nonsense"])
+        assert rc == 1  # a malformed UUID is an error, not an empty result
