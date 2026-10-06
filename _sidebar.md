@@ -184,10 +184,12 @@
     - [CAP-051-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-051-2026-09-14_21-42-55_21-44-09-Group_AM/CAP-051-FINDINGS.md)
   - **CAP-052 (Group AN)** _(planned)_
     - [CAP-052-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-052-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AN/CAP-052-EVENT-NOTES.md)
-  - **CAP-053 (Group AO)** _(planned)_
+  - **CAP-053 (Group AO)**
     - [CAP-053-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-053-2026-10-05_17-46-34_17-49-39-Group_AO/CAP-053-EVENT-NOTES.md)
-  - **CAP-054 (Group AP)** _(planned)_
+    - [CAP-053-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-053-2026-10-05_17-46-34_17-49-39-Group_AO/CAP-053-FINDINGS.md)
+  - **CAP-054 (Group AP)**
     - [CAP-054-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-054-2026-10-05_18-02-33_18-08-29-Group_AP/CAP-054-EVENT-NOTES.md)
+    - [CAP-054-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-054-2026-10-05_18-02-33_18-08-29-Group_AP/CAP-054-FINDINGS.md)
   - **CAP-055 (Group AQ)** _(planned)_
     - [CAP-055-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-055-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AQ/CAP-055-EVENT-NOTES.md)
   - **CAP-056 (Group AR)**
@@ -195,8 +197,9 @@
     - [CAP-056-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-056-2026-09-28_17-30-53_17-35-58-Group_AR/CAP-056-FINDINGS.md)
   - **CAP-057 (Group AS)** _(planned)_
     - [CAP-057-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-057-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AS/CAP-057-EVENT-NOTES.md)
-  - **CAP-058 (Group AT)** _(planned)_
+  - **CAP-058 (Group AT)**
     - [CAP-058-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-058-2026-10-05_21-39-51_21-46-22-Group_AT/CAP-058-EVENT-NOTES.md)
+    - [CAP-058-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-058-2026-10-05_21-39-51_21-46-22-Group_AT/CAP-058-FINDINGS.md)
   - **CAP-059 (Group AU)**
     - [CAP-059-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU/CAP-059-EVENT-NOTES.md)
     - [CAP-059-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-059-2026-09-20_17-16-59_17-22-29-Group_AU/CAP-059-FINDINGS.md)
