@@ -1481,19 +1481,69 @@ activity processes | grep -i pixelbuds`, or an equivalent on-device check) immed
 "Pair" tap, rather than relying on elapsed time/step ordering alone. Maintainer approved planning a
 3rd attempt 2026-09-18 (`ai-sessions/0031`).
 
-1. **[`SDP-001`]** Force-stop the companion app (`Settings → Apps → Pixel Buds → Force stop`), then
-   Forget the device (Bluetooth settings → paired device → Forget) — in that order, unlike `CAP-033`.
-2. **Immediately before tapping "Pair"**, run the on-device process-liveness check on camera or in a
-   parallel `adb logcat`/shell capture, confirming the companion app process is absent for the entire
-   window up to and including the SDP browse that "Pair" triggers.
-3. Re-pair through Bluetooth settings only (system UI, not the companion app).
-4. **Still `SDP-001`, second half of the same session:** now open the companion app normally and
-   trigger its own `fetchUuidsWithSdp()` re-fetch, to preserve the existing app-open comparison half.
-5. **[`SDP-002`], opportunistic, only if a firmware update happens to be pending:** same as
+**Corrected 2026-10-05 (maintainer's request in chat):** the example check above, `grep -i pixelbuds`, can never match — the
+companion app's package is `com.google.android.apps.wearables.maestro.companion`, which contains neither "pixelbuds" nor "bud". An
+empty result from it says nothing (`AGENTS.md` §13 item 8). The maintainer's run of `dumpsys activity processes` on 2026-10-05
+(official app 1.0.955078536, Pixel 7a) showed the process alive (PID 22553), with `com.android.settings` bound to its
+`MaestroDeviceSettingsProviderService` and `android` (CompanionDeviceManager) bound to its `MaestroCompanionDeviceService`. Whether
+that was shortly after a force-stop was not recorded. 🟡 HYPOTHESIS: a force-stop does not keep the process dead, because the system
+Settings app and CompanionDeviceManager bind those services (an explicit bind starts a stopped app) — e.g. as soon as the Buds'
+Bluetooth page is opened. If so, `CAP-033`/`CAP-044` may never have had a dead process at the SDP browse either, and "app never
+running" may not be reachable through the Settings pairing flow at all. Supporting observation (same day): the events buffer
+showed `am_proc_start … maestro.companion, bound-service, {…companiondevice.MaestroCompanionDeviceService}` at 21:31:03 (new
+PID 5056) — the process does get started by a bind to its CompanionDeviceManager service, not only by opening the app. The procedure below measures this instead of assuming it.
+
+**Preparation (before filming starts)**
+
+- Phone: Pixel 7a, USB debugging on, connected to the laptop (`adb devices` lists it). Bluetooth HCI snoop log on; Bluetooth
+  toggled off/on once so the log starts clean. Record the official app version on film (Settings → Apps → Pixel Buds → App
+  details; 1.0.955078536 since the 2026-10-05 downgrade), the Android version and the Play services *Nearby devices* state
+  (`TODO.md` §2).
+- Set in one terminal: `P=com.google.android.apps.wearables.maestro.companion`
+- **Positive control (do not skip):** with the app running (open it once), run
+  `adb shell pidof $P; echo "exit=$?"` — it must print a PID and `exit=0`. Keep this output; it proves the check can see the
+  process. The same command printing nothing and `exit=1` later means the process is absent.
+- **Start the process event log** in a second terminal and leave it running until the end of step 6:
+  ```bash
+  adb logcat -b events -v time | grep -E --line-buffered 'am_proc_start|am_proc_died|am_kill|am_force_stop' \
+    | grep --line-buffered maestro.companion | tee CAP-058-proc-events.txt
+  ```
+  Every start of the app's process appears as an `am_proc_start` line with a timestamp and the reason (e.g. `bound-service`,
+  `content provider`, `activity`) and the component that caused it. Checked on the Pixel 7a 2026-10-05: `am_proc_start`,
+  `am_proc_died` and `am_kill` occur in the events buffer; `am_force_stop` was not in it (no force-stop had been done), so
+  that tag is unconfirmed — rely on the time noted by hand in step 1. This file — not the film — is the evidence for the process-dead window. Also run the phone's clock on film once
+  (status bar) so the film, this log and the HCI log can be lined up.
+
+**Procedure**
+
+1. **[`SDP-001`] Force-stop** the companion app: `adb shell am force-stop $P` (so the moment is in the event log as
+   `am_force_stop`), or on film via Settings → Apps → Pixel Buds → Force stop. Then run `adb shell pidof $P; echo "exit=$?"` —
+   expected: nothing, `exit=1`. Note the time.
+2. **Forget** the Buds: Settings → Connected devices → the Buds → Forget. Force-stop first, Forget second (`CAP-033` had them
+   reversed). Right after, run `adb shell pidof $P; echo "exit=$?"` again and note the time and result. If a PID appears, the
+   event log's `am_proc_start` line says what started it — write that down; do **not** force-stop again silently, the restart
+   itself is part of the result (see the 🟡 HYPOTHESIS above). Optionally force-stop once more and note that you did.
+3. **Liveness check immediately before "Pair":** put the Buds in pairing mode (case open, button on the case held), go to Settings
+   → Connected devices → Pair new device, and **just before tapping the Buds' name** run `adb shell pidof $P; echo "exit=$?"`.
+   Note the time and the result (PID or `exit=1`).
+4. **Pair** through the system Bluetooth settings only — tap the Buds' name and confirm. Do not open the companion app, the Fast
+   Pair half-sheet's "Set up" button or any Pixel Buds notification. Wait about 30 s, then run
+   `adb shell pidof $P; echo "exit=$?"` once more and note the result.
+5. **Still `SDP-001`, second half:** open the companion app normally (launcher icon) so it runs its own `fetchUuidsWithSdp()`
+   re-fetch — the app-open comparison half that `CAP-033` skipped. Note the time.
+6. Stop the event log (Ctrl+C), turn off Bluetooth (or save the HCI log), and keep CAP-058-proc-events.txt, the `pidof` outputs
+   with their times, the film and the HCI log together in the capture folder.
+7. **[`SDP-002`], opportunistic, only if a firmware update happens to be pending:** same as
    `CAP-033`/`CAP-044`'s own Group AA text — not a required part of this 3rd attempt.
 
+**Result is usable when:** the event log covers steps 1–5 without a gap, and either (a) it shows no `am_proc_start` for
+`maestro.companion` between the force-stop and the SDP browse that "Pair" triggers (clean process-dead window), or (b) it shows
+one and names its cause — then the "app never running" condition is shown unreachable through this path, which answers the
+procedure question itself (a negative result to record, not a failed capture).
+
 **Analysis:** does the "default internal rfcomm socket" UUID (`3a046f6d-...`) ever appear in the
-SDP response during the confirmed-process-dead window, contrasting with every capture to date (now
+SDP response during the confirmed-process-dead window (outcome (a) above; with outcome (b), record which UUIDs the SDP
+response held while the process was alive and what started it), contrasting with every capture to date (now
 5 consecutive negatives) showing only the "pigweed" UUID (`25e97ff7-...`)? This is the specific,
 narrower question a clean process-liveness confirmation would finally let this project answer either
 way.

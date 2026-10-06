@@ -62,8 +62,12 @@ Next app features, chosen by the maintainer (chat 2026-10-03, "Features": *"Yes 
 - [ ] **Head gestures switch** — field 29 read + write unblocked by ADR-052 (`CAP-069`); build after Multipoint; fixtures `CAP-069` 2492/2564, reads 1226/7209.
 - [ ] `ARCHITECTURE.md` §5a and `PROJECT.md` ("Status after 1.0.x", the feature list) still describe head gestures and Multipoint as waiting for `CAP-069`;
       update them with the app session that builds the switches (`ai-sessions/0071`, deferred).
-- [ ] Pull and decompile the official app **1.0.990706425** (ADR-017 boundary) — name the MAESTRO service `0xbf6c9399` and `JitterBuffer` method `0x8d99df93`
-      seen in `CAP-069` (`CAP-069-FINDINGS.md` §9; **M** approved the follow-up, chat 2026-10-04).
+- [ ] Decompile the official app **1.0.990706425** (versionCode `10260911`) with JADX and apktool (ADR-017 boundary) — name the MAESTRO service
+      `0xbf6c9399` and `JitterBuffer` method `0x8d99df93` seen in `CAP-069` (`CAP-069-FINDINGS.md` §9; **M** approved the follow-up, chat 2026-10-04).
+      Pulled 2026-10-05 from the Pixel 7a (`adb pull` of base + 2 splits, same signing certificate as 1.0.955078536) into
+      `reverse-engineering/apk/v1.0.990706425-10260911/` (gitignored); not decompiled yet (**M**, chat 2026-10-05: *"Voer het nog niet uit. Dat kan
+      later."*). Also add the three files' SHA-256 to `reverse-engineering/APK_VERSIONS.md`, whose 1.0.990706425 paragraph still says "Not pulled".
+      While decompiling, check whether the Find device code is still present in both versions (see the Ring status question below).
 
 Proposals awaiting the maintainer (`DESKRESEARCH_FINDINGS.md`, entry of 2026-10-03 — nothing applied as a status change):
 
@@ -82,7 +86,8 @@ Open questions (each with where it is described):
   03/05/01/21 are 🟡. 🟡 Who owns DLCI 0x08/0x0a — the Google app's
   assistant service is the lead (`CAP-061-FINDINGS.md` §2).
 - 🔴 Ring status: what the Buds send when the ringing is stopped on the bud (L68-2; `CAP-069`: the official app has no Find device any more and Find Hub
-  rang nothing — test with OpenControl's own Ring while a client holds the Message Stream; `CAP-068` could not observe it — the app's claim
+  rang nothing; 2026-10-05 the maintainer downgraded the official app to 1.0.955078536 on the Pixel 7a and it shows no Find device either — 🟡 removed
+  by something outside the APK version (server-side flag or Play services), unverified — test with OpenControl's own Ring while a client holds the Message Stream; `CAP-068` could not observe it — the app's claim
   is released 1.5 s after the Ring, `CAP-068-FINDINGS.md` §6). Known limit of 1.0.1: the "Ringing" notice stays until Stop is tapped. The app does not read the
   Buds' ring-status message; whether it should is a decision after those runs (**M**, "Nothing new on the wire; test first").
 - 🔴 The Fast Pair battery advertisement on case-open (L68-6 → `CAP-054`). The only route to a Case level without a connection (ADR-006).
