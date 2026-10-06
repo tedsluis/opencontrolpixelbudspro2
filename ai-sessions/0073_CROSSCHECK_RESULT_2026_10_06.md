@@ -1105,9 +1105,11 @@ or `reverse-engineering/apk/`, no `.venv/`, no cache directory, no JSON or CSV d
 | `1afd330` | docs(tools): update the tool backlog for ai-sessions/0073 |
 | `0a27276` | chore(scripts): name the Kpi and JitterBuffer ids in pwrpc_decode, remove decode_qhr_settings |
 | `b4405d8` | docs: apply the approved results of the second APK pass (ai-sessions/0073) |
-| (next) | docs: add ai-sessions/0073 (second reverse-engineering pass over the companion APK) — this file, its prompt and the `INDEX.md` row; its hash is recorded by the commit after it |
+| `04a4070` | docs: add ai-sessions/0073 (second reverse-engineering pass over the companion APK) — this file, its prompt and the `INDEX.md` row |
+| (this commit) | docs: record the commits of ai-sessions/0073 |
 
-The pull request and any later commit of this session: to be completed by the next session's first step (`AI_SESSION_LOG_PROCEDURE.md` §4b item 2).
+Pushed on 2026-10-06; pull request: https://github.com/tedsluis/opencontrolpixelbudspro2/pull/5 (open, not merged when this was written). The hash
+of the last commit above and the merge: to be completed by the next session's first step (`AI_SESSION_LOG_PROCEDURE.md` §4b item 2).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06
