@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -271,7 +272,11 @@ private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onCha
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Balance")
-            Text(if (reading != null) balanceText(buds) else NOT_READ_VALUE, style = MaterialTheme.typography.bodySmall)
+            if (reading != null) {
+                Text(balanceText(buds), style = MaterialTheme.typography.bodySmall)
+            } else {
+                NotReadValue(style = MaterialTheme.typography.bodySmall) // `ai-sessions/0074`: the dash with its screen-reader text
+            }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("L")
@@ -304,8 +309,8 @@ private fun EqBandSlider(label: String, value: Float, enabled: Boolean, known: B
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label)
             // A68-APP-08 (`ai-sessions/0069`, the maintainer's choice "Visual '—' only"): an EQ that was not read shows no number — "0.0" would be a value
-            // the Buds never reported. (What a screen reader says for it is a later step, `TODO.md`.)
-            Text(if (known) "%.1f".format(shown) else NOT_READ_VALUE)
+            // the Buds never reported. `ai-sessions/0074`: a screen reader says "Not read from the Buds yet" for it ([NotReadValue]).
+            if (known) Text("%.1f".format(shown)) else NotReadValue(style = LocalTextStyle.current)
         }
         Slider(
             value = shown,

@@ -30,6 +30,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
@@ -42,6 +45,21 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
  */
 
 internal const val SETTING_NOT_READ: String = "Not read from the Buds yet"
+
+/**
+ * What a screen reader says in place of [NOT_READ_VALUE] (`ai-sessions/0074`, the maintainer's choice in chat 2026-10-06: *"Not read from the Buds yet"* —
+ * the words of the (i) lines, so one term is used throughout; `TODO.md` §5 "Accessibility", the half deferred on 2026-10-03).
+ */
+internal const val NOT_READ_DESCRIPTION: String = SETTING_NOT_READ
+
+/**
+ * [NOT_READ_VALUE] ("—") for a value the Buds have not reported on this connection — an EQ band, the balance, a switch — with [NOT_READ_DESCRIPTION] as its
+ * content description, so a screen reader says what the dash means instead of reading (or skipping) the character.
+ */
+@Composable
+internal fun NotReadValue(modifier: Modifier = Modifier, style: TextStyle = MaterialTheme.typography.bodyLarge) {
+    Text(NOT_READ_VALUE, style = style, modifier = modifier.semantics { contentDescription = NOT_READ_DESCRIPTION })
+}
 
 /**
  * `ai-sessions/0069` A68-APP-02: no session is open and at least one of a card's settings still holds a value — the last connection's. The card then keeps
@@ -89,8 +107,10 @@ internal fun SettingsFailureNotice(failure: SettingsFailure?) {
 
 /**
  * One on/off setting: title and an explanatory subtitle; the switch shows the Buds' value; a tap asks for the other value and the switch moves only once the
- * Buds acknowledged it. `ai-sessions/0056` U-1: while the value is not read the switch is disabled — it would otherwise show an "off" the Buds never reported
- * and a tap would write "on" blind (AGENTS.md §5). `ai-sessions/0057` D-7: the "read / changed HH:MM:SS" line is in the card's (i) ([settingTime]).
+ * Buds acknowledged it. `ai-sessions/0056` U-1: while the value is not read no tap can write it blind (AGENTS.md §5). `ai-sessions/0057` D-7: the "read /
+ * changed HH:MM:SS" line is in the card's (i) ([settingTime]). **`ai-sessions/0074`** (the maintainer's choice in chat 2026-10-06, "— voor alle
+ * schakelaars"; ADR-052/054/055): a value not read on this connection shows [NotReadValue] ("—") **in place of** the switch — not a disabled "off" the Buds
+ * never reported; a value from the last connection stays a disabled switch (dimmed by its card).
  */
 @Composable
 internal fun SettingSwitchRow(
@@ -109,10 +129,10 @@ internal fun SettingSwitchRow(
             Text(title, style = MaterialTheme.typography.bodyLarge)
             subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         }
-        Switch(
-            checked = reading?.value ?: false,
-            onCheckedChange = { onChange(it) },
-            enabled = enabled && reading != null,
-        )
+        if (reading == null) {
+            NotReadValue()
+        } else {
+            Switch(checked = reading.value, onCheckedChange = { onChange(it) }, enabled = enabled)
+        }
     }
 }

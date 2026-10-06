@@ -116,10 +116,49 @@ class EqScreenTest {
     @Test
     fun `an unread EQ shows a dash for each band, never 0,0`() {
         show(gains = null)
-        // The five bands; the balance card below (a lazy-list item of its own) adds a sixth when it is composed.
+        // The five bands and the unread Volume EQ (`ai-sessions/0074`) in the Equalizer card; the card below (a lazy-list item of its own) adds three more —
+        // balance, mono audio, conversation detection — when it is composed.
         val dashes = compose.onAllNodesWithText("—").fetchSemanticsNodes().size
-        assertTrue("dashes shown: $dashes", dashes == 5 || dashes == 6)
+        assertTrue("dashes shown: $dashes", dashes == 6 || dashes == 9)
         compose.onAllNodesWithText("%.1f".format(0f)).assertCountEquals(0)
+    }
+
+    // ---- `ai-sessions/0074`: what a screen reader says for "—" (the maintainer's choice "Not read from the Buds yet") ----
+
+    /** A "—" that a screen reader reads as [NOT_READ_DESCRIPTION] — the semantics, not only the visible text. */
+    private val notReadDash = hasText(NOT_READ_VALUE) and
+        SemanticsMatcher.expectValue(SemanticsProperties.ContentDescription, listOf(NOT_READ_DESCRIPTION))
+
+    @Test
+    fun `each unread EQ band carries the screen-reader text, and nothing else on the card says 0,0`() {
+        show(gains = null, settings = BudsSettings(volumeEq = SettingReading(true, 1L))) // only the five bands are unread in the Equalizer card
+        val bands = compose.onAllNodes(notReadDash).fetchSemanticsNodes().size
+        assertTrue("bands read as not read: $bands", bands == 5 || bands == 8) // + balance, mono, conversation detection when composed
+        compose.onAllNodesWithText(NOT_READ_VALUE).assertCountEquals(bands) // every dash has it
+    }
+
+    @Test
+    fun `an unread balance carries the screen-reader text`() {
+        val at = 1_727_600_000_000L
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                EqScreen(
+                    connectionState = ConnectionState.Ready, gains = EqBandGains.FLAT, eqProfileUpdatedAt = at, eqError = null,
+                    onGainsChanged = {}, onPresetSelected = {}, onRefresh = {},
+                    settings = BudsSettings(monoAudio = SettingReading(false, at), conversationDetection = SettingReading(true, at), volumeEq = SettingReading(true, at)),
+                )
+            }
+        }
+        compose.onNode(hasScrollAction()).performScrollToNode(balanceSlider)
+        compose.onNode(notReadDash).assertExists() // the only unread value on the screen: the balance
+        compose.onAllNodesWithText(NOT_READ_VALUE).assertCountEquals(1)
+    }
+
+    @Test
+    fun `an unread switch on Sound shows the dash with the screen-reader text instead of a switch`() {
+        show(gains = EqBandGains.FLAT) // Volume EQ not read
+        compose.onNode(notReadDash and hasAnySibling(hasText(VOLUME_EQ_LABEL))).assertExists()
+        compose.onAllNodes(isToggleable() and hasAnySibling(hasText(VOLUME_EQ_LABEL))).assertCountEquals(0)
     }
 
     @Test
@@ -134,7 +173,8 @@ class EqScreenTest {
         show(gains = EqBandGains(upperTreble = 5f, treble = 3f, mid = 2f, bass = 0f, lowBass = -2f))
         compose.onNodeWithText("%.1f".format(5f)).assertExists()
         compose.onNodeWithText("%.1f".format(-2f)).assertExists()
-        assertTrue(compose.onAllNodesWithText("—").fetchSemanticsNodes().size <= 1) // at most the unread balance, never a band
+        // Never a band: at most the unread Volume EQ in this card and, when the second card is composed, the balance, mono and conversation detection.
+        assertTrue(compose.onAllNodesWithText("—").fetchSemanticsNodes().size in listOf(1, 4))
     }
 
     @Test

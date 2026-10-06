@@ -19,7 +19,11 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.ui
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnySibling
@@ -148,6 +152,35 @@ class ControlsScreenTest {
         compose.onNodeWithContentDescription("Touch controls: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
         compose.onNodeWithText("From the last connection — the app is not connected to the Buds now.").assertExists()
         compose.onNodeWithText("Use touch controls: read ${formatUpdatedAt(at)}").assertExists()
+    }
+
+    // ---- `ai-sessions/0074`: "—" in place of an unread switch, read by a screen reader as "Not read from the Buds yet" ----
+
+    private val notReadDash = hasText(NOT_READ_VALUE) and
+        SemanticsMatcher.expectValue(SemanticsProperties.ContentDescription, listOf(NOT_READ_DESCRIPTION))
+
+    @Test
+    fun `connected and nothing read - every switch is a dash with the screen-reader text, no switch is shown`() {
+        show(ConnectionState.Ready, BudsSettings())
+        // Use touch controls, Use head gestures, In-ear detection, Multipoint, Earbuds replaced, Other alerts.
+        compose.onAllNodes(notReadDash).assertCountEquals(6)
+        compose.onAllNodesWithText(NOT_READ_VALUE).assertCountEquals(6)
+        compose.onAllNodes(isToggleable()).assertCountEquals(0)
+    }
+
+    @Test
+    fun `one unread switch - only that one is a dash, the others are switches`() {
+        show(ConnectionState.Ready, read.copy(multipoint = null))
+        compose.onNode(notReadDash and hasAnySibling(hasText(MULTIPOINT_LABEL))).performScrollTo().assertExists()
+        compose.onAllNodes(notReadDash).assertCountEquals(1)
+        compose.onAllNodes(isToggleable() and hasAnySibling(hasText(MULTIPOINT_LABEL))).assertCountEquals(0)
+    }
+
+    @Test
+    fun `not connected with the last connection's values - switches stay switches, no dash`() {
+        show(ConnectionState.Disconnected, read)
+        compose.onAllNodes(notReadDash).assertCountEquals(0)
+        compose.onNode(isToggleable() and hasAnySibling(hasText(MULTIPOINT_LABEL))).performScrollTo().assertIsNotEnabled()
     }
 
     @Test
