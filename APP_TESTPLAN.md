@@ -18,6 +18,9 @@ plus a dimmed value (battery) or a disabled control (settings) when it is not cu
 `Notify`, the cut-off watch, the Disconnect label's contrast). **Updated 2026-10-01 for the `ai-sessions/0064` build:** the tab survives a rotation or
 Android's dark switch (K4, O13); a Bluetooth-off loss is named (K1); **section R** (Info's licence and links, the Bluetooth-off line, the profile proxies).
 **Updated 2026-10-02 for `ai-sessions/0066`:** the balance steps are gone again (M3, R5 back to the slider) and Info has no "Licence on GitHub" link (R1, R3).
+**Updated 2026-10-06 for the `ai-sessions/0074` build (1.1.0):** five new switches — Multipoint, Use head gestures, Case sounds "Earbuds replaced" and "Other
+alerts" on Controls, Volume EQ on Sound (**section T**); a switch that was not read shows "—" in place of the switch (M1, N1); twelve settings reads at Connect
+and on a pull (O8); A5 corrected (`CAP-067` §7).
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -49,7 +52,7 @@ time, what you saw). A ❌ needs the time and a screenshot or the film time — 
 | A2 | Tap **Enable Bluetooth**. | Android's own "turn on Bluetooth" prompt (not a Play-services dialog); after allowing, the app leaves the "disabled" state | — | | |
 | A3 | First start (or after clearing app data): the permission prompts. Allow *Nearby devices*. | The prompt appears; afterwards no "Bluetooth permission needed" | — | | |
 | A4 | Allow notifications when asked (or tap **Allow notifications**). | The notifications hint disappears | — | | |
-| A5 | *(optional)* Deny *Nearby devices* once, then reopen the app. | "Bluetooth permission needed" / "You denied the permission." with **Allow**; after "don't ask again": **Open app settings** | — | | |
+| A5 | *(optional)* Deny *Nearby devices* **in the app's own prompt** (A3) once, then reopen the app. *(Corrected 2026-10-06, `CAP-067` §7: revoking it later in Settings → Apps ends the app's process — Android's behaviour — so this screen follows only a denial in the prompt.)* | "Bluetooth permission needed" / "You denied the permission." with **Allow**; after "don't ask again": **Open app settings** | — | | |
 | A6 | Settings → Apps → OpenControl → Permissions. | Only *Nearby devices* and *Notifications*; no location, no network permission | — | | |
 
 ## B. Pairing (only if the Buds were forgotten, P7)
@@ -144,7 +147,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| M1 | Right after Connect: read Balance, Mono audio and Conversation detection. | Each shows the Buds' value with "read HH:MM:SS" (or "Not read from the Buds yet") | `ReadSetting 4:17`, `4:19`, `4:22` + answers | | |
+| M1 | Right after Connect: read Balance, Mono audio and Conversation detection. | Each shows the Buds' value with "read HH:MM:SS" (or "Not read from the Buds yet"); since 1.1.0 an unread switch shows "—" in place of the switch | `ReadSetting 4:17`, `4:19`, `4:22` + answers | | |
 | M2 | Drag **Balance** fully to **L**, release. | "Left 100 · changed …"; sound in the left ear | `WriteSetting 4:{17:200}` → empty `RESPONSE` | | |
 | M3 | Balance fully to **R**; then about halfway left; then back near the centre and release. | "Right 100", "Left NN", "Centre" — a release within ±3 of the middle snaps to "Centre" (`ai-sessions/0054` I-3); Left/Right 4 stays 4 | `4:{17:199}`, `4:{17:2·NN}`, `4:{17:0}` | | |
 | M4 | **Mono audio** on, then off. | switch follows after the Buds' OK; both ears play both channels while on | `4:{19:1}`, `4:{19:0}` | | |
@@ -155,7 +158,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| N1 | Right after Connect: open Controls. | "Use touch controls" with its value and time; "Press and hold" Left / Right: Noise control or Digital assistant; while a bud is on Noise control "Modes for press and hold (both buds)" with four boxes (Noise cancellation / Off / Adaptive / Transparency) and "read HH:MM:SS"; the "In-ear detection" switch with "Pauses audio when you take a bud out and resumes it when you put it back.", the note "With it off, audio does not pause …" and its time. A switch/box whose value was not read is greyed | `ReadSetting 4:4`, `4:7`, `4:12`, `4:2` + answers | | |
+| N1 | Right after Connect: open Controls. | "Use touch controls" with its value and time; "Press and hold" Left / Right: Noise control or Digital assistant; while a bud is on Noise control "Modes for press and hold (both buds)" with four boxes (Noise cancellation / Off / Adaptive / Transparency) and "read HH:MM:SS"; the "In-ear detection" switch with "Pauses audio when you take a bud out and resumes it when you put it back.", the note "With it off, audio does not pause …" and its time. A box whose value was not read is greyed; since 1.1.0 a switch that was not read shows "—" in place of the switch | `ReadSetting 4:4`, `4:7`, `4:12`, `4:2` + answers | | |
 | N2 | **Use touch controls** off; tap a bud (music playing). Then on; tap again. | Off: the tap does nothing; on: the tap pauses/plays | `4:{4:0}`, `4:{4:1}` | | |
 | N3 | **Left: Digital assistant**, press-and-hold the Left bud; then **Left: Noise control**, hold again. | the chip follows after the Buds' OK; say what the phone/Buds do; under "Press and hold" the note "Digital assistant needs an assistant app on this phone that supports headphones (…). Without one, holding the bud may only play a tone." (`ai-sessions/0054` I-5) | `4:{7:{1:{4:{1:6}}}}`, `…{1:5}` | | |
 | N4 | The same for **Right**. | as N3 | `4:{7:{2:{4:{1:6}}}}`, `…{1:5}` | | |
@@ -214,7 +217,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | O5 | Tap the Battery card's (i). | A dialog with the explanation, the full Left/Right/Case lines **with the same times as the debug log**, the Case note and "Firmware: …"; "Close" and back close it | — | | |
 | O6 | Take both buds out (E4's state). | Case column dimmed, a dot on the Battery (i); TalkBack (if used) reads "Battery: Details — not current"; the (i) says "last seen HH:MM:SS" | stream packet without 6.1 | | |
 | O7 | Make a part unavailable (e.g. right after the app starts, before any report). | "Battery unavailable" in that column and **no** bar | — | | |
-| O8 | Pull down on **Connection**, **Find**, **ANC**, **Sound**, **Controls** (Ready), one at a time, ≥ 5 s apart; write down each time. | A spinner while it runs, gone when done; Connection/Find: new battery times in the (i) or the "No new battery reading" line; ANC: the (i) time moves; Sound/Controls: the "read HH:MM:SS" times in the (i) move | Connection/Find: one DLCI 0x04 claim with `03 03` (+ one `SubscribeRuntimeInfo`); ANC: one claim `08 11` → `08 13`; Sound: `ReadSetting 4:16`, then **exactly** `4:2, 4:4, 4:7, 4:12, 4:17, 4:19, 4:22` in that order; Controls: exactly those seven reads, **nothing else** | | |
+| O8 | Pull down on **Connection**, **Find**, **ANC**, **Sound**, **Controls** (Ready), one at a time, ≥ 5 s apart; write down each time. | A spinner while it runs, gone when done; Connection/Find: new battery times in the (i) or the "No new battery reading" line; ANC: the (i) time moves; Sound/Controls: the "read HH:MM:SS" times in the (i) move | Connection/Find: one DLCI 0x04 claim with `03 03` (+ one `SubscribeRuntimeInfo`); ANC: one claim `08 11` → `08 13`; Sound: `ReadSetting 4:16`, then **exactly** `4:2, 4:4, 4:7, 4:11, 4:12, 4:15, 4:17, 4:19, 4:22, 4:27, 4:28, 4:29` in that order (twelve since 1.1.0; seven before); Controls: exactly those twelve reads, **nothing else** | | |
 | O9 | **Disconnect**; pull down on any tab. Then Bluetooth off and pull; then Bluetooth on. | After Disconnect: the app connects (as the Connect button); with Bluetooth off: Android's own "enable Bluetooth" prompt — never a new dialog, never nothing | `SABM` DLCI 0x02 after the first pull | | |
 | O10 | While "App control: connecting…", pull. | The spinner ends at once; nothing else happens | nothing extra | | |
 | O11 | Sound: drag an EQ band and the balance while the write is refused (e.g. in Safe Mode, or right after a Disconnect before the tap). | While the finger is down the knob follows it; after release it returns to the Buds' value and stays there; the error line says why | no write, or a write with no OK | | |
@@ -277,6 +280,26 @@ In `CAP-068` as BD-13 … BD-19 and BD-9/BD-29.
 | S12 | Start an export (Debug → Export debug log) and **rotate the phone while Android's "save as" dialog is open**; then save. | "Debug log saved (N lines)." — the file has content | — | | 1.0.0 lost the text on rotation |
 | S13 | Gear → **Info**. | "App: 1.0.1, build <hash> (<date>)", no "-dirty" | — | | |
 
+## T. The 1.1.0 build (`ai-sessions/0074`: five switches, "—" for an unread switch, the screen-reader text)
+
+In `CAP-070` as BF-1 … BF-25 (`captures/CAP-070-…-Group_BF/CAP-070-EVENT-NOTES.md`, which has the exact bytes per channel). Each switch changes only after the
+Buds' empty `RESPONSE` OK; a refused or unanswered write shows "The setting was not changed: <reason>" and the old value stays. No note or subtitle under the
+new switches (the maintainer's choice, "alleen labels").
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| T1 | Right after the update over 1.0.1: open the app, let it connect; open **Controls** within the first second (screen recording). | The unread switches show "—" for about a second, then the Buds' values; no crash | `ReadSetting 4:16`, then twelve `ReadSetting` (2, 4, 7, 11, 12, 15, 17, 19, 22, 27, 28, 29), each answered | | |
+| T2 | Read the Controls tab and Sound's Equalizer card. | Controls: Touch controls · Press and hold · **Head gestures** · In-ear detection · **Multipoint** · **Case sounds** (Earbuds replaced, Other alerts); Sound: **Volume EQ** below the presets; each (i) "<Label>: read HH:MM:SS" | — | | |
+| T3 | **Multipoint** off, then on. | Each after the Buds' OK, "Multipoint: changed HH:MM:SS" | `4:{11:0}`, `4:{11:1}` → empty `RESPONSE` | | Whether a second device stays connected is not claimed |
+| T4 | **Use head gestures** off, then on. | Each after the OK; no dialog | `4:{29:1}` (off), `4:{29:2}` (on) → `RESPONSE`; nothing on DLCI 0x08 | | |
+| T5 | **Earbuds replaced** off; put a bud back into the case; then on, and again. Say whether the case sounded each time. | Each after the OK | `4:{28:0}`, `4:{28:1}` | | An observation, not a claim of the app |
+| T6 | **Other alerts** off, then on. | Each after the OK | `4:{27:0}`, `4:{27:1}` | | |
+| T7 | Sound: **Volume EQ** off, then on; listen at low volume and say what you hear. | Each after the OK; Equalizer (i) "Volume EQ: changed …" | `4:{15:0}`, `4:{15:1}` | | Audibility is an observation |
+| T8 | With T3–T7 left off: Disconnect, Connect. | All five read back as off, "read HH:MM:SS" | the twelve reads; the answers equal the last writes | | |
+| T9 | Only the **Left** bud out of the case (Info: "Control channel: 19"): Multipoint and Use head gestures off, then on. | As T3/T4 | the channel-19 forms — not yet seen on the wire (`CAP-070` BF-14/15) | | |
+| T10 | Only the **Right** bud out (Info: "Control channel: 21"): Volume EQ off, then on. | As T7 | `4:{15:1}` on channel 21 — not yet seen on the wire (`CAP-070` BF-20) | | |
+| T11 | Bluetooth off; force-stop the app; open it; Controls, then Sound. Check what a screen reader gets for each "—" (`adb shell uiautomator dump`, or a screen reader if one is installed). | Controls: six "—" in place of the switches; Sound: the EQ bands, Volume EQ, balance, mono audio, conversation detection "—"; each "—" has the description **"Not read from the Buds yet"** | — | | |
+
 ## After the run (within 1 minute of the last action)
 
 | # | Collect | Done |
@@ -310,6 +333,7 @@ In `CAP-068` as BD-13 … BD-19 and BD-9/BD-29.
 | Q 0062 build | 6 | | | | |
 | R 0064 build | 7 | | | | |
 | S 1.0.1 build | 13 | | | | |
+| T 1.1.0 build | 11 | | | | |
 
 **Run `CAP-068` (2026-10-04, 1.0.1 `e1fc886`, the user without Play; `ai-sessions/0070`, `CAP-068-FINDINGS.md`):** section S — ✅ S1 (partly: the tile "Open the app",
 the mode dimmed; the (i) text not opened), S2 (partly, same), S4, S5, S7, S8, S10, S11, S13; not identifiable S3, S6; not run S9 (one pair), S12 (no rotation).
