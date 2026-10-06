@@ -375,6 +375,10 @@ class BudsRepositoryImpl(
                         SettingsCodec.FIELD_TOUCH_CONTROLS -> s.copy(touchControls = r)
                         SettingsCodec.FIELD_MONO_AUDIO -> s.copy(monoAudio = r)
                         SettingsCodec.FIELD_CONVERSATION_DETECTION -> s.copy(conversationDetection = r)
+                        SettingsCodec.FIELD_MULTIPOINT -> s.copy(multipoint = r)
+                        SettingsCodec.FIELD_CASE_SOUND_OTHER_ALERTS -> s.copy(caseSoundOtherAlerts = r)
+                        SettingsCodec.FIELD_CASE_SOUND_EARBUDS_REPLACED -> s.copy(caseSoundEarbudsReplaced = r)
+                        SettingsCodec.FIELD_VOLUME_EQ -> s.copy(volumeEq = r)
                         else -> s
                     }
                 }
@@ -384,6 +388,7 @@ class BudsRepositoryImpl(
                     holdRight = value.right?.let { SettingReading(it, atMillis, changedByApp) } ?: s.holdRight,
                 )
                 is SettingValue.AncModes -> s.copy(ancModeList = SettingReading(value.list, atMillis, changedByApp))
+                is SettingValue.HeadGestures -> s.copy(headGestures = SettingReading(value.on, atMillis, changedByApp))
             }
         }
     }
@@ -976,7 +981,7 @@ class BudsRepositoryImpl(
 
     override suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit> = setEqGains(preset.gains)
 
-    // ---- settings writes (DECISIONS.md ADR-045, ADR-046, ADR-047) --------------------------------------------------------------------------------
+    // ---- settings writes (DECISIONS.md ADR-045 … ADR-047, ADR-052 … ADR-055) ----------------------------------------------------------------------
 
     override suspend fun setVolumeBalance(value: Int): BudsResult<Unit> {
         val v = value.coerceIn(BudsSettings.BALANCE_RANGE)
@@ -994,6 +999,21 @@ class BudsRepositoryImpl(
     ) { SettingsCodec.pressAndHoldRequest(it, bud, action) }
 
     override suspend fun setInEarDetection(on: Boolean) = writeFlag(SettingsCodec.FIELD_IN_EAR_DETECTION, on)
+
+    /** ADR-053: the same write path, lock and quarantine as every other flag; the SASS answer on DLCI 0x04 is not waited for. */
+    override suspend fun setMultipoint(on: Boolean) = writeFlag(SettingsCodec.FIELD_MULTIPOINT, on)
+
+    /** ADR-054: case sounds "Other alerts" (27) and "Earbuds replaced" (28) — plain 0/1 flags on the same write path. */
+    override suspend fun setCaseSoundOtherAlerts(on: Boolean) = writeFlag(SettingsCodec.FIELD_CASE_SOUND_OTHER_ALERTS, on)
+
+    override suspend fun setCaseSoundEarbudsReplaced(on: Boolean) = writeFlag(SettingsCodec.FIELD_CASE_SOUND_EARBUDS_REPLACED, on)
+
+    /** ADR-055: "Volume EQ" (field 15), a 0/1 flag on the same write path (the channel-21 "on" frame is still to be seen on the wire — `SettingsCodec`). */
+    override suspend fun setVolumeEq(on: Boolean) = writeFlag(SettingsCodec.FIELD_VOLUME_EQ, on)
+
+    /** ADR-052: field 29 is 1/2 on the wire — its own value type and request, through the same write path, lock and quarantine as every flag. */
+    override suspend fun setHeadGestures(on: Boolean): BudsResult<Unit> =
+        writeSetting(SettingValue.HeadGestures(on)) { SettingsCodec.headGesturesRequest(it, on) }
 
     /**
      * ADR-046: the new list is built from the one the Buds last reported — inside the Maestro lock, so a second tap cannot build on a value the first tap's
@@ -1426,15 +1446,20 @@ class BudsRepositoryImpl(
         /** How long a `ReadSetting` waits for its answer. Observed answers: ~50 ms (`CAP-015`/`CAP-036`). */
         private const val EQ_READ_TIMEOUT_MS = 2_000L
 
-        /** The Connect-time settings reads (ADR-036, ADR-046), in the official app's sweep order (`CAP-036` 1445 … 1538). */
+        /** The Connect-time settings reads (ADR-036, ADR-046), in the official app's sweep order (ascending field number: `CAP-036` 1445 … 1538, `CAP-024` 837 … 1097). */
         private val SETTING_READ_ORDER = listOf(
             SettingsCodec.FIELD_IN_EAR_DETECTION,
             SettingsCodec.FIELD_TOUCH_CONTROLS,
             SettingsCodec.FIELD_PRESS_AND_HOLD,
+            SettingsCodec.FIELD_MULTIPOINT, // ADR-036/053 (`ai-sessions/0074`); between 7 and 12 as in the official sweep (`CAP-024` 973 → 1009 → 1015)
             SettingsCodec.FIELD_ANC_MODE_LIST, // ADR-046; between 7 and 17 as in the official sweep (`CAP-036` 1457 → 1514 → 1526)
+            SettingsCodec.FIELD_VOLUME_EQ, // ADR-055 (`ai-sessions/0074`); between 12 and 17 (`CAP-036` 1514 → 1520 → 1526)
             SettingsCodec.FIELD_VOLUME_BALANCE,
             SettingsCodec.FIELD_MONO_AUDIO,
             SettingsCodec.FIELD_CONVERSATION_DETECTION,
+            SettingsCodec.FIELD_CASE_SOUND_OTHER_ALERTS, // ADR-054 (`ai-sessions/0074`), `CAP-024` 1089
+            SettingsCodec.FIELD_CASE_SOUND_EARBUDS_REPLACED, // ADR-054, `CAP-024` 1093
+            SettingsCodec.FIELD_HEAD_GESTURES, // ADR-052 (`ai-sessions/0074`); the last of the official sweep's switches (`CAP-024` 1097)
         )
 
         /** How long one settings read waits for its answer (ADR-036: ≤ 3 s; observed 14–64 ms in `CAP-036` 1445→1447 … 1538→1540). */

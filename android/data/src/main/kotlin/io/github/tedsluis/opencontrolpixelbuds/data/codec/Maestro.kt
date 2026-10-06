@@ -48,16 +48,23 @@ object Maestro {
     /**
      * The only settings a read may name: EQ 16/18 (ADR-034) and — `ai-sessions/0052`, ADR-036 — 2 (in-ear detection setting), 4 (touch
      * controls), 7 (press-and-hold), 17 (balance), 19 (mono), 22 (conversation detection); since `ai-sessions/0056` 12 (the press-and-hold ANC-mode list,
-     * ADR-046 amending ADR-036; request = `CAP-056` frame 1529 on channel 19, `CAP-036` 1514 on 21). Not 11, 15, 27, 28 (allowed by ADR-036, not asked for).
+     * ADR-046 amending ADR-036; request = `CAP-056` frame 1529 on channel 19, `CAP-036` 1514 on 21); since `ai-sessions/0074` 11 (Multipoint, ADR-036/053;
+     * request = `CAP-024` frame 1009 on channel 19, `CAP-069` 1261 on 21), 15 (Volume EQ, ADR-055; `CAP-024` 1031 on 19, `CAP-036` 1520 on 21), 27 and 28 (case sounds, ADR-054; `CAP-024` 1089/1093 on 19, `CAP-036` 1553/1556 on
+     * 21) and 29 (head gestures, ADR-052; `CAP-024` 1097 on 19, `CAP-036` 1559 on 21).
      */
     val READABLE_FIELDS: Set<Int> = EQ_FIELDS + setOf(
         SettingsCodec.FIELD_IN_EAR_DETECTION,
         SettingsCodec.FIELD_TOUCH_CONTROLS,
         SettingsCodec.FIELD_PRESS_AND_HOLD,
+        SettingsCodec.FIELD_MULTIPOINT,
         SettingsCodec.FIELD_ANC_MODE_LIST,
+        SettingsCodec.FIELD_VOLUME_EQ,
         SettingsCodec.FIELD_VOLUME_BALANCE,
         SettingsCodec.FIELD_MONO_AUDIO,
         SettingsCodec.FIELD_CONVERSATION_DETECTION,
+        SettingsCodec.FIELD_CASE_SOUND_OTHER_ALERTS,
+        SettingsCodec.FIELD_CASE_SOUND_EARBUDS_REPLACED,
+        SettingsCodec.FIELD_HEAD_GESTURES,
     )
 
     /**

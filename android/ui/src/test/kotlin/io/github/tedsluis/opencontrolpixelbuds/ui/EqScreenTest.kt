@@ -22,6 +22,10 @@ package io.github.tedsluis.opencontrolpixelbuds.ui
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasAnySibling
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -66,7 +70,15 @@ class EqScreenTest {
         it.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)?.range == EqBandGains.RANGE.start..EqBandGains.RANGE.endInclusive
     }
 
-    private fun show(gains: EqBandGains?, connectionState: ConnectionState = ConnectionState.Ready, updatedAt: Long? = null) = compose.setContent {
+    /** Every Volume EQ switch tap (`ai-sessions/0074`). */
+    private val volumeEqTaps = mutableListOf<Boolean>()
+
+    private fun show(
+        gains: EqBandGains?,
+        connectionState: ConnectionState = ConnectionState.Ready,
+        updatedAt: Long? = null,
+        settings: BudsSettings = BudsSettings(),
+    ) = compose.setContent {
         OpenControlTheme(darkTheme = false) {
             EqScreen(
                 connectionState = connectionState,
@@ -76,6 +88,8 @@ class EqScreenTest {
                 onGainsChanged = {},
                 onPresetSelected = {},
                 onRefresh = {},
+                settings = settings,
+                onVolumeEqChanged = { volumeEqTaps += it },
             )
         }
     }
@@ -147,8 +161,29 @@ class EqScreenTest {
 
     @Test
     fun `a read EQ on an open session has a plain (i)`() {
-        show(gains = EqBandGains.FLAT, updatedAt = 1_727_600_000_000L)
+        // `ai-sessions/0074`: the card also holds Volume EQ — read too, so nothing on it is "not read".
+        show(gains = EqBandGains.FLAT, updatedAt = 1_727_600_000_000L, settings = BudsSettings(volumeEq = SettingReading(true, 1_727_600_000_000L)))
         compose.onNodeWithContentDescription("Equalizer: $DETAILS_DESCRIPTION").assertExists()
+    }
+
+    // ---- `ai-sessions/0074`: Volume EQ at the bottom of the Equalizer card (ADR-055) ----
+
+    @Test
+    fun `Volume EQ sits below the presets, its time in the Equalizer (i), a tap asks for the other value`() {
+        val at = 1_727_600_000_000L
+        show(gains = EqBandGains.FLAT, updatedAt = at, settings = BudsSettings(volumeEq = SettingReading(true, at, changedByApp = true)))
+        compose.onNodeWithContentDescription("Equalizer: $DETAILS_DESCRIPTION").performClick()
+        compose.onNodeWithText("Volume EQ: changed ${formatUpdatedAt(at)}").assertExists()
+        compose.onNodeWithText("Close").performClick()
+        compose.onNode(isToggleable() and hasAnySibling(hasText(VOLUME_EQ_LABEL))).performScrollTo().assertIsOn().performClick()
+        assertEquals(listOf(false), volumeEqTaps)
+    }
+
+    @Test
+    fun `an unread Volume EQ marks the Equalizer (i) even when the EQ is read`() {
+        show(gains = EqBandGains.FLAT, updatedAt = 1_727_600_000_000L)
+        compose.onNodeWithContentDescription("Equalizer: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
+        compose.onNodeWithText("Volume EQ: $SETTING_NOT_READ").assertExists()
     }
 
     @Test
@@ -180,7 +215,13 @@ class EqScreenTest {
                     onGainsChanged = {},
                     onPresetSelected = {},
                     onRefresh = {},
-                    settings = BudsSettings(volumeBalance = balance?.let { SettingReading(it, 1_727_600_000_000L) }),
+                    // `ai-sessions/0074`: the other switches read, so an unread balance is the only "—" on the screen.
+                    settings = BudsSettings(
+                        volumeBalance = balance?.let { SettingReading(it, 1_727_600_000_000L) },
+                        monoAudio = SettingReading(false, 1_727_600_000_000L),
+                        conversationDetection = SettingReading(true, 1_727_600_000_000L),
+                        volumeEq = SettingReading(true, 1_727_600_000_000L),
+                    ),
                     onVolumeBalanceChanged = { writes += it },
                 )
             }

@@ -42,6 +42,9 @@ class SettingsCodecTest {
     private fun rpcPayload(frameHex: String): ByteArray =
         (PwRpc.decode((Hdlc.decode(hex(frameHex)) as BudsResult.Success).value.payload) as BudsResult.Success).value.payload
 
+    /** The `RpcPacket` payload of an already HDLC-decoded pw_rpc packet. */
+    private fun rpcPayloadOf(rpc: ByteArray): ByteArray = (PwRpc.decode(rpc) as BudsResult.Success).value.payload
+
     /** Hdlc → pw_rpc → the router's Maestro classification, the path every inbound frame takes. */
     private fun route(frameHex: String): RoutedFrame? {
         val hdlc = (Hdlc.decode(hex(frameHex)) as BudsResult.Success).value
@@ -108,10 +111,195 @@ class SettingsCodecTest {
     }
 
     @Test
-    fun `only the ADR-045 and ADR-047 flag fields can be written as a flag - not 12, not 11`() {
-        assertEquals(setOf(2, 4, 19, 22), SettingsCodec.WRITABLE_FLAG_FIELDS)
+    fun `only the ADR-045, ADR-047 and ADR-053 flag fields can be written as a flag - not 12, not 13, not 29`() {
+        assertEquals(setOf(2, 4, 11, 15, 19, 22, 27, 28), SettingsCodec.WRITABLE_FLAG_FIELDS)
         assertNull(SettingsCodec.flagRequest(21, 12, true))
-        assertNull(SettingsCodec.flagRequest(21, 11, true))
+        assertNull(SettingsCodec.flagRequest(21, 13, true), "setting 13 is not approved for anything (ai-sessions/0074 §3)")
+        assertNull(SettingsCodec.flagRequest(21, 29, true), "head gestures are 1/2 on the wire, never a 0/1 flag (ADR-052)")
+    }
+
+    // ---- field 11, "Multipoint" (ADR-053, ai-sessions/0074) ----
+
+    @Test
+    @DisplayName("Multipoint on channel 21: CAP-069 3161 (4:{11:0}) / 3212 (4:{11:1}) and CAP-019 2482 / 2293, byte for byte incl. the CRC")
+    fun multipointWritesCh21() {
+        assertEquals(Settings074.MP_OFF_CH21_3161, wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_MULTIPOINT, false)!!))
+        assertEquals(Settings074.MP_ON_CH21_3212, wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_MULTIPOINT, true)!!))
+        assertEquals(Settings074.MP_OFF_CH21_CAP019_2482, wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_MULTIPOINT, false)!!))
+        assertEquals(Settings074.MP_ON_CH21_CAP019_2293, wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_MULTIPOINT, true)!!))
+        // The frame check of the real frames is what the decoder accepts: Hdlc.decode verifies the CRC-32.
+        for (f in listOf(Settings074.MP_OFF_CH21_3161, Settings074.MP_ON_CH21_3212)) assertEquals(true, Hdlc.decode(hex(f)) is BudsResult.Success)
+        assertEquals(SettingValue.Flag(11, false), SettingsCodec.decode(rpcPayload(Settings074.MP_OFF_CH21_3161)))
+        assertEquals(SettingValue.Flag(11, true), SettingsCodec.decode(rpcPayload(Settings074.MP_ON_CH21_3212)))
+    }
+
+    @Test
+    @DisplayName("supplementary structural (derived, not captured): Multipoint on channel 19 = the channel-19 header of CAP-022 1871 with field 11 (58 00 / 58 01)")
+    fun multipointOnChannel19Derived() {
+        // No channel-19 write of field 11 exists in any capture (ai-sessions/0074 §A.1); the hardware run records it (named step). Structure only.
+        val header = SettingsWrites.MONO_ON_1621.substringBefore("2a052203")
+        for ((on, value) in listOf(false to "5800", true to "5801")) {
+            val derived = wire(SettingsCodec.flagRequest(19, SettingsCodec.FIELD_MULTIPOINT, on)!!)
+            assertEquals(header + "2a042202" + value, derived.substring(0, header.length + 12), "channel 19, address 00 3b, WriteSetting, 4:{11:$value}")
+            assertEquals(true, Hdlc.decode(hex(derived)) is BudsResult.Success, "its own CRC-32")
+            assertEquals(SettingValue.Flag(11, on), SettingsCodec.decode(rpcPayload(derived)))
+        }
+        // The whole frame against an independent computation (python zlib.crc32 over address 00 3b … value, ai-sessions/0074 §I) — still not a capture.
+        assertEquals("7e003b0310131dea71de7d5e251d9a8c9e2a04220258009d8f9dc47e", wire(SettingsCodec.flagRequest(19, SettingsCodec.FIELD_MULTIPOINT, false)!!))
+        assertEquals("7e003b0310131dea71de7d5e251d9a8c9e2a04220258010bbf9ab37e", wire(SettingsCodec.flagRequest(19, SettingsCodec.FIELD_MULTIPOINT, true)!!))
+    }
+
+    @Test
+    @DisplayName("Multipoint reads: requests = CAP-036 1471 (ch 21) / CAP-024 1009 (ch 19); answers CAP-069 1267 (ch 21), 7272 (ch 19) = on")
+    fun multipointReads() {
+        assertEquals(Settings036.READ_11_REQ, wire(Maestro.readSettingRequest(21, SettingsCodec.FIELD_MULTIPOINT)!!))
+        assertEquals(Settings074.READ_11_REQ_CH19_1009, wire(Maestro.readSettingRequest(19, SettingsCodec.FIELD_MULTIPOINT)!!))
+        for (f in listOf(Settings074.READ_11_RESP_CH21_1267, Settings074.READ_11_RESP_CH19_7272, Settings036.READ_11_RESP)) {
+            assertEquals(RoutedFrame.Setting(SettingValue.Flag(11, true)), route(f), f)
+        }
+        assertEquals(true, (route(Settings074.ACK_CH21_3170) as RoutedFrame.RpcResult).isOk)
+    }
+
+    // ---- field 29, "Use head gestures" (ADR-052, ai-sessions/0074): 1 = off, 2 = on ----
+
+    @Test
+    @DisplayName("head gestures on channel 21: CAP-069 2492 (4:{29:1} = off) / 2564 (4:{29:2} = on), CAP-020 2038 / 1935, CAP-041 2268, byte for byte")
+    fun headGesturesWritesCh21() {
+        assertEquals(Settings074.HG_OFF_CH21_2492, wire(SettingsCodec.headGesturesRequest(21, on = false)))
+        assertEquals(Settings074.HG_ON_CH21_2564, wire(SettingsCodec.headGesturesRequest(21, on = true)))
+        assertEquals(Settings074.HG_OFF_CH21_CAP020_2038, wire(SettingsCodec.headGesturesRequest(21, on = false)))
+        assertEquals(Settings074.HG_ON_CH21_CAP020_1935, wire(SettingsCodec.headGesturesRequest(21, on = true)))
+        assertEquals(Settings074.HG_OFF_CH21_CAP041_2268, wire(SettingsCodec.headGesturesRequest(21, on = false)))
+        for (f in listOf(Settings074.HG_OFF_CH21_2492, Settings074.HG_ON_CH21_2564)) assertEquals(true, Hdlc.decode(hex(f)) is BudsResult.Success)
+    }
+
+    @Test
+    @DisplayName("head gestures: the wire value is 1 for off and 2 for on (ADR-052) — never the 0/1 of a flag; the write payloads decode back")
+    fun headGesturesWireValues() {
+        assertEquals("2203e80101", SettingsCodec.headGesturesRequest(19, on = false).payload.toHex(), "off = 1")
+        assertEquals("2203e80102", SettingsCodec.headGesturesRequest(19, on = true).payload.toHex(), "on = 2")
+        assertEquals(SettingValue.HeadGestures(false), SettingsCodec.decode(rpcPayload(Settings074.HG_OFF_CH21_2492)))
+        assertEquals(SettingValue.HeadGestures(true), SettingsCodec.decode(rpcPayload(Settings074.HG_ON_CH21_2564)))
+        assertNull(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_HEAD_GESTURES, true), "no 0/1 path to field 29")
+    }
+
+    @Test
+    @DisplayName("supplementary structural (derived, not captured): head gestures on channel 19 = the channel-19 header of CAP-022 1621 with 4:{29:1|2}")
+    fun headGesturesOnChannel19Derived() {
+        // No channel-19 write of field 29 exists in any capture (ai-sessions/0074 §A.1); the hardware run records it (named step). Structure only.
+        val header = SettingsWrites.MONO_ON_1621.substringBefore("2a052203")
+        for ((on, value) in listOf(false to "e80101", true to "e80102")) {
+            val derived = wire(SettingsCodec.headGesturesRequest(19, on))
+            assertEquals(header + "2a052203" + value, derived.substring(0, header.length + 14), "channel 19, address 00 3b, 4:{29:$value}")
+            assertEquals(true, Hdlc.decode(hex(derived)) is BudsResult.Success, "its own CRC-32")
+            assertEquals(SettingValue.HeadGestures(on), SettingsCodec.decode(rpcPayload(derived)))
+        }
+        // The whole frame against an independent computation (python zlib.crc32, ai-sessions/0074 §I) — still not a capture.
+        assertEquals("7e003b0310131dea71de7d5e251d9a8c9e2a052203e80101fcd6da847e", wire(SettingsCodec.headGesturesRequest(19, on = false)))
+        assertEquals("7e003b0310131dea71de7d5e251d9a8c9e2a052203e801024687d31d7e", wire(SettingsCodec.headGesturesRequest(19, on = true)))
+    }
+
+    @Test
+    @DisplayName("head gestures reads: requests CAP-036 1559 (ch 21) / CAP-024 1097 (ch 19); answers CAP-069 1226, 7209 = on; CAP-024 1100, CAP-020 1183 = off")
+    fun headGesturesReads() {
+        assertEquals(Settings036.READ_29_REQ, wire(Maestro.readSettingRequest(21, SettingsCodec.FIELD_HEAD_GESTURES)!!))
+        assertEquals(Settings074.READ_29_REQ_CH19_1097, wire(Maestro.readSettingRequest(19, SettingsCodec.FIELD_HEAD_GESTURES)!!))
+        for (f in listOf(Settings074.READ_29_ON_CH21_1226, Settings074.READ_29_ON_CH19_7209, Settings036.READ_29_RESP)) {
+            assertEquals(RoutedFrame.Setting(SettingValue.HeadGestures(true)), route(f), f)
+        }
+        for (f in listOf(Settings074.READ_29_OFF_CH19_CAP024_1100, Settings074.READ_29_OFF_CH21_CAP020_1183)) {
+            assertEquals(RoutedFrame.Setting(SettingValue.HeadGestures(false)), route(f), f)
+        }
+    }
+
+    @Test
+    @DisplayName("supplementary structural (hand-built, labelled): a head-gesture read of 0 or 3 is not interpreted — an OK result, never on/off")
+    fun headGesturesOtherValues() {
+        // The real CAP-069 frame 1226 (4:{29:2}) with the value byte changed and the frame re-sealed (new CRC) — no capture holds such a value.
+        val real = (Hdlc.decode(hex(Settings074.READ_29_ON_CH21_1226)) as BudsResult.Success).value
+        for (v in listOf("00", "03")) {
+            val payload = hex(real.payload.toHex().replace("2203e80102", "2203e801$v"))
+            assertNull(SettingsCodec.decode(rpcPayloadOf(payload)), "29:$v")
+            val routed = route(Hdlc.encode(real.address, real.control, payload).toHex())
+            assertEquals(true, routed is RoutedFrame.RpcResult && routed.isOk, "29:$v reaches the read as an OK answer it cannot use (UnreadableAnswer)")
+        }
+    }
+
+    // ---- fields 27 / 28, case sounds "Other alerts" / "Earbuds replaced" (ADR-054, ai-sessions/0074) ----
+
+    @Test
+    @DisplayName("case sounds: all eight official writes byte for byte — CAP-024 2053/2084 (27) and 1988/2023 (28) on ch 19, CAP-058 5680/5697 and 5623/5643 on ch 21")
+    fun caseSoundWrites() {
+        val other = SettingsCodec.FIELD_CASE_SOUND_OTHER_ALERTS
+        val replaced = SettingsCodec.FIELD_CASE_SOUND_EARBUDS_REPLACED
+        val expected = listOf(
+            Triple(19, other, false) to Settings074.CS27_OFF_CH19_2053, Triple(19, other, true) to Settings074.CS27_ON_CH19_2084,
+            Triple(21, other, false) to Settings074.CS27_OFF_CH21_5680, Triple(21, other, true) to Settings074.CS27_ON_CH21_5697,
+            Triple(19, replaced, false) to Settings074.CS28_OFF_CH19_1988, Triple(19, replaced, true) to Settings074.CS28_ON_CH19_2023,
+            Triple(21, replaced, false) to Settings074.CS28_OFF_CH21_5623, Triple(21, replaced, true) to Settings074.CS28_ON_CH21_5643,
+        )
+        for ((key, frame) in expected) {
+            val (channel, field, on) = key
+            assertEquals(frame, wire(SettingsCodec.flagRequest(channel, field, on)!!), "ch $channel 4:{$field:${if (on) 1 else 0}}")
+            assertEquals(SettingValue.Flag(field, on), SettingsCodec.decode(rpcPayload(frame)), "decodes back")
+        }
+    }
+
+    @Test
+    @DisplayName("case sounds reads: requests CAP-036 1553/1556 (ch 21), CAP-024 1089/1093 (ch 19); answers CAP-024 1092/1096, CAP-058 4514/4517 = on; ACKs 2061, 5683")
+    fun caseSoundReads() {
+        assertEquals(Settings036.READ_27_REQ, wire(Maestro.readSettingRequest(21, 27)!!))
+        assertEquals(Settings036.READ_28_REQ, wire(Maestro.readSettingRequest(21, 28)!!))
+        assertEquals(Settings074.READ_27_REQ_CH19_1089, wire(Maestro.readSettingRequest(19, 27)!!))
+        assertEquals(Settings074.READ_28_REQ_CH19_1093, wire(Maestro.readSettingRequest(19, 28)!!))
+        for (f in listOf(Settings074.READ_27_RESP_CH19_1092, Settings074.READ_27_RESP_CH21_4514, Settings036.READ_27_RESP)) {
+            assertEquals(RoutedFrame.Setting(SettingValue.Flag(27, true)), route(f), f)
+        }
+        for (f in listOf(Settings074.READ_28_RESP_CH19_1096, Settings074.READ_28_RESP_CH21_4517, Settings036.READ_28_RESP)) {
+            assertEquals(RoutedFrame.Setting(SettingValue.Flag(28, true)), route(f), f)
+        }
+        for (ack in listOf(Settings074.ACK_CH19_2061, Settings074.ACK_CH21_5683)) assertEquals(true, (route(ack) as RoutedFrame.RpcResult).isOk)
+        // The Buds' own pushes of an "off" (CAP-058 5682 / 5627): 27 and 28 are told apart on the read side too.
+        assertEquals(RoutedFrame.Setting(SettingValue.Flag(27, false)), route(Settings074.STREAM_27_OFF_CH21_5682))
+        assertEquals(RoutedFrame.Setting(SettingValue.Flag(28, false)), route(Settings074.STREAM_28_OFF_CH21_5627))
+    }
+
+    // ---- field 15, "Volume EQ" (ADR-055, ai-sessions/0074) ----
+
+    @Test
+    @DisplayName("Volume EQ: CAP-022 1871 / 1895 and CAP-015 3487 / 3505 on ch 19, CAP-041 2461 (off) on ch 21 — byte for byte incl. the CRC")
+    fun volumeEqWrites() {
+        val f = SettingsCodec.FIELD_VOLUME_EQ
+        assertEquals(Settings074.VEQ_OFF_CH19_1871, wire(SettingsCodec.flagRequest(19, f, false)!!))
+        assertEquals(Settings074.VEQ_ON_CH19_1895, wire(SettingsCodec.flagRequest(19, f, true)!!))
+        assertEquals(Settings074.VEQ_OFF_CH19_CAP015_3487, wire(SettingsCodec.flagRequest(19, f, false)!!))
+        assertEquals(Settings074.VEQ_ON_CH19_CAP015_3505, wire(SettingsCodec.flagRequest(19, f, true)!!))
+        assertEquals(Settings074.VEQ_OFF_CH21_CAP041_2461, wire(SettingsCodec.flagRequest(21, f, false)!!))
+        assertEquals(SettingValue.Flag(15, false), SettingsCodec.decode(rpcPayload(Settings074.VEQ_OFF_CH21_CAP041_2461)))
+        assertEquals(SettingValue.Flag(15, true), SettingsCodec.decode(rpcPayload(Settings074.VEQ_ON_CH19_1895)))
+    }
+
+    /** TODO(verify): ADR-055 — the channel-21 "on" frame is not captured; `CAP-070` (Group BF) records it and its real bytes replace the derived ones. */
+    @Test
+    @DisplayName("supplementary structural (derived, not captured): Volume EQ on, channel 21 = CAP-041 2461 with value 01 and its own CRC (zlib: 9977e84e)")
+    fun volumeEqOnChannel21Derived() {
+        val built = wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_VOLUME_EQ, true)!!)
+        assertEquals(Settings074.VEQ_ON_CH21_DERIVED, built, "the app's CRC-32 agrees with an independent zlib computation")
+        assertEquals(Settings074.VEQ_OFF_CH21_CAP041_2461.substringBefore("78000f47ef397e") + "7801", built.substringBefore("9977e84e7e"))
+        assertEquals(true, Hdlc.decode(hex(built)) is BudsResult.Success)
+        assertEquals(SettingValue.Flag(15, true), SettingsCodec.decode(rpcPayload(built)))
+    }
+
+    @Test
+    @DisplayName("Volume EQ reads: requests CAP-036 1520 (ch 21) / CAP-024 1031 (ch 19); answers CAP-024 1038, CAP-058 2930 = on, CAP-041 3239 = off; ACKs 1877, 2465")
+    fun volumeEqReads() {
+        assertEquals(Settings036.READ_15_REQ, wire(Maestro.readSettingRequest(21, SettingsCodec.FIELD_VOLUME_EQ)!!))
+        assertEquals(Settings074.READ_15_REQ_CH19_1031, wire(Maestro.readSettingRequest(19, SettingsCodec.FIELD_VOLUME_EQ)!!))
+        for (f in listOf(Settings074.READ_15_ON_CH19_1038, Settings074.READ_15_ON_CH21_2930, Settings036.READ_15_RESP)) {
+            assertEquals(RoutedFrame.Setting(SettingValue.Flag(15, true)), route(f), f)
+        }
+        assertEquals(RoutedFrame.Setting(SettingValue.Flag(15, false)), route(Settings074.READ_15_OFF_CH21_CAP041_3239))
+        for (ack in listOf(Settings074.ACK_CH19_1877, Settings074.ACK_CH21_2465)) assertEquals(true, (route(ack) as RoutedFrame.RpcResult).isOk)
     }
 
     // ---- field 2, the "In-ear detection" switch (ADR-047, ai-sessions/0056) ----
@@ -211,7 +399,8 @@ class SettingsCodecTest {
         // ADR-046: field 12 is readable — CAP-036 frame 1514 (channel 21) and CAP-056 frame 1529 (channel 19), byte for byte.
         assertEquals(Settings056.READ_12_REQ_CH21_1514, wire(Maestro.readSettingRequest(21, 12)!!))
         assertEquals(Settings056.READ_12_REQ_CH19, wire(Maestro.readSettingRequest(19, 12)!!))
-        assertNull(Maestro.readSettingRequest(21, 11))
+        assertNull(Maestro.readSettingRequest(21, 13), "setting 13: no read is approved (ai-sessions/0074 §3)")
+        assertNull(Maestro.readSettingRequest(21, 39))
     }
 
     @Test

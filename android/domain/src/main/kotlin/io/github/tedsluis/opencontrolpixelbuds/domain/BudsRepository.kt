@@ -209,7 +209,7 @@ interface BudsRepository {
 
     /**
      * Re-reads the DLCI 0x02 settings on the user's request — a pull on "Sound" or "Controls" (`ai-sessions/0057` D-11): the Connect-time `ReadSetting` pass
-     * once more, with the same fields in the same order (2, 4, 7, 12, 17, 19, 22), sequential, each waiting ≤ 2 s, never retried (ADR-036). Requires an open
+     * once more, with the same fields in the same order (2, 4, 7, 11, 12, 15, 17, 19, 22, 27, 28, 29), sequential, each waiting ≤ 2 s, never retried (ADR-036). Requires an open
      * session — otherwise nothing is sent and [BudsError.ConnectionLost] is returned. A field that is not answered keeps its last value with its own time; the
      * reason is in [settingsError]. Reads are not gated by Safe Mode (ADR-042).
      */
@@ -218,7 +218,7 @@ interface BudsRepository {
     suspend fun setEqGains(gains: EqBandGains): BudsResult<Unit>
     suspend fun applyEqPreset(preset: EqPreset): BudsResult<Unit>
 
-    // ---- DLCI 0x02 settings writes (DECISIONS.md ADR-045, ADR-046, ADR-047) — one `WriteSetting` per call, through the Safe-Mode gate (ADR-042); the
+    // ---- DLCI 0x02 settings writes (DECISIONS.md ADR-045 … ADR-047, ADR-052 … ADR-055) — one `WriteSetting` per call, through the Safe-Mode gate (ADR-042); the
     // value in [settings] changes only on the Buds' empty RESPONSE with status OK, otherwise the previous value stays and [settingsError] says why. A tap
     // while the session is being (re)opened fails with [BudsError.SessionOpening] — nothing is sent or queued.
 
@@ -238,6 +238,27 @@ interface BudsRepository {
 
     /** The "In-ear detection" setting (`qhr` field 2, ADR-047): `WriteSetting 4:{2:0|1}`. */
     suspend fun setInEarDetection(on: Boolean): BudsResult<Unit>
+
+    /**
+     * "Multipoint" (`qhr` field 11, ADR-053): `WriteSetting 4:{11:0|1}`. The Buds' Fast Pair SASS answer goes to whichever client holds the Message Stream;
+     * the app does not wait for it.
+     */
+    suspend fun setMultipoint(on: Boolean): BudsResult<Unit>
+
+    /**
+     * "Use head gestures" (`qhr` field 29, ADR-052): `WriteSetting 4:{29:2}` for on, `4:{29:1}` for off. The official app's "Optimize head gestures" dialog
+     * is not reproduced; nothing is sent on GSND CONTROL.
+     */
+    suspend fun setHeadGestures(on: Boolean): BudsResult<Unit>
+
+    /** Case sounds "Other alerts" (`qhr` field 27, ADR-054): `WriteSetting 4:{27:0|1}`. */
+    suspend fun setCaseSoundOtherAlerts(on: Boolean): BudsResult<Unit>
+
+    /** Case sounds "Earbuds replaced" (`qhr` field 28, ADR-054): `WriteSetting 4:{28:0|1}`. */
+    suspend fun setCaseSoundEarbudsReplaced(on: Boolean): BudsResult<Unit>
+
+    /** "Volume EQ" (`qhr` field 15, ADR-055): `WriteSetting 4:{15:0|1}`. */
+    suspend fun setVolumeEq(on: Boolean): BudsResult<Unit>
 
     suspend fun ringBud(target: RingTarget): BudsResult<Unit>
     suspend fun stopRinging(): BudsResult<Unit>

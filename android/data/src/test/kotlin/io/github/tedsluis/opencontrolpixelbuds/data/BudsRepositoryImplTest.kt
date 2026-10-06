@@ -36,6 +36,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.RpcPacket
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings036
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.SettingsWrites
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings056
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings074
 import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
@@ -423,6 +424,19 @@ class BudsRepositoryImplTest {
         (PwRpc.decode((Hdlc.decode(it.second) as BudsResult.Success).value.payload) as BudsResult.Success).value
     }
 
+    /**
+     * The Connect-time (and pull) settings reads, in order — the official app's ascending sweep (ADR-036, ADR-046; `ai-sessions/0074` adds 11, 15, 27, 28 and
+     * 29, ADR-052 … ADR-055) — each with the real request of the `CAP-036` sweep on channel 21 (frames 1445, 1451, 1457, 1471, 1514, 1520, 1526, 1532, 1538,
+     * 1553, 1556, 1559).
+     */
+    private val settingReads: List<Pair<Int, String>> = listOf(
+        2 to Settings036.READ_2_REQ, 4 to Settings036.READ_4_REQ, 7 to Settings036.READ_7_REQ, 11 to Settings036.READ_11_REQ,
+        12 to Settings056.READ_12_REQ_CH21_1514, 15 to Settings036.READ_15_REQ, 17 to Settings036.READ_17_REQ, 19 to Settings036.READ_19_REQ, 22 to Settings036.READ_22_REQ,
+        27 to Settings036.READ_27_REQ, 28 to Settings036.READ_28_REQ, 29 to Settings036.READ_29_REQ,
+    )
+    private val settingReadFields: List<Int> get() = settingReads.map { it.first }
+    private val cap036SettingReads: List<String> get() = settingReads.map { it.second }
+
     @Test
     fun `the Connect-time read (launchInitialEqRead) waits for the announcement, then reads field 16 on that channel`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
@@ -436,12 +450,12 @@ class BudsRepositoryImplTest {
 
         val requests = transport.maestroRequests()
         assertEquals("2010", requests.first().payload.toHex(), "4:16 first")
-        assertEquals(9, requests.size, "the EQ read, seven settings reads (ADR-036, ADR-046), then the runtime-info subscription (ADR-043)")
+        assertEquals(2 + settingReads.size, requests.size, "the EQ read, the settings reads (ADR-036, ADR-046, ADR-053), then the runtime-info subscription (ADR-043)")
         assertEquals(0.3f, repo.eqProfile.first()!!.mid, 1e-4f) // CAP-036 frame 1525
     }
 
     @Test
-    @DisplayName("Connect reads 2, 4, 7, 12, 17, 19, 22 byte-identical to CAP-036 1445 … 1538 and fills the settings from 1447 … 1540, with their time")
+    @DisplayName("Connect reads 2, 4, 7, 11, 12, 15, 17, 19, 22, 27, 28, 29 byte-identical to CAP-036 1445 … 1559 and fills the settings from 1447 … 1561, with their time")
     fun `the Connect-time settings reads`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
         answerReadsLikeCap036(transport)
@@ -452,13 +466,7 @@ class BudsRepositoryImplTest {
         settle()
 
         val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
-        assertEquals(
-            listOf(
-                Settings036.READ_2_REQ, Settings036.READ_4_REQ, Settings036.READ_7_REQ, Settings056.READ_12_REQ_CH21_1514,
-                Settings036.READ_17_REQ, Settings036.READ_19_REQ, Settings036.READ_22_REQ,
-            ),
-            maestro.subList(1, 8),
-        )
+        assertEquals(cap036SettingReads, maestro.subList(1, 1 + settingReads.size))
         assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().last().methodId)
         assertEquals(
             BudsSettings(
@@ -470,6 +478,11 @@ class BudsRepositoryImplTest {
                 volumeBalance = SettingReading(5, 4_000),
                 monoAudio = SettingReading(false, 4_000),
                 conversationDetection = SettingReading(true, 4_000),
+                multipoint = SettingReading(true, 4_000), // 1513
+                headGestures = SettingReading(true, 4_000), // 1561: 29:2 = on
+                caseSoundOtherAlerts = SettingReading(true, 4_000), // 1555
+                caseSoundEarbudsReplaced = SettingReading(true, 4_000), // 1558
+                volumeEq = SettingReading(true, 4_000), // 1522
             ),
             repo.settings.value,
         )
@@ -498,7 +511,7 @@ class BudsRepositoryImplTest {
         settle()
 
         val reads = transport.maestroRequests().filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }
-        assertEquals(listOf(16, 2, 4, 7, 12, 17, 19, 22), reads, "one pass, nothing retried")
+        assertEquals(listOf(16) + settingReadFields, reads, "one pass, nothing retried")
         assertNull(repo.settings.value.touchControls)
         assertNull(repo.settings.value.volumeBalance)
         assertEquals(true, repo.settings.value.conversationDetection?.value)
@@ -533,7 +546,7 @@ class BudsRepositoryImplTest {
         settle()
 
         val reads = transport.maestroRequests().filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }
-        assertEquals(listOf(16, 2, 4, 7, 12, 17, 19, 22), reads, "the pass went on without waiting")
+        assertEquals(listOf(16) + settingReadFields, reads, "the pass went on without waiting")
         assertEquals(start, currentTime, "no timeout was waited for")
         assertNull(repo.settings.value.holdLeft)
         assertNull(repo.settings.value.holdRight)
@@ -543,14 +556,8 @@ class BudsRepositoryImplTest {
 
     // ---- D-11 (ai-sessions/0057): the settings re-read on a user pull (Sound / Controls) -------------------------------------------------------------------
 
-    /** The seven `ReadSetting` requests of the official `CAP-036` sweep on channel 21 (frames 1445, 1451, 1457, 1514, 1526, 1532, 1538), in order. */
-    private val cap036SettingReads = listOf(
-        Settings036.READ_2_REQ, Settings036.READ_4_REQ, Settings036.READ_7_REQ, Settings056.READ_12_REQ_CH21_1514,
-        Settings036.READ_17_REQ, Settings036.READ_19_REQ, Settings036.READ_22_REQ,
-    )
-
     @Test
-    @DisplayName("D-11: a pull re-reads 2, 4, 7, 12, 17, 19, 22 byte-identical to CAP-036 1445 … 1538 — nothing else — and stamps the answers (1447 … 1540) with the new time")
+    @DisplayName("D-11: a pull re-reads the Connect-time fields byte-identical to CAP-036 1445 … 1538 — nothing else — and stamps the answers (1447 … 1540) with the new time")
     fun `refreshSettings re-reads the Connect-time fields once, in order, and nothing else`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
         answerReadsLikeCap036(transport)
@@ -561,7 +568,7 @@ class BudsRepositoryImplTest {
         val result = repo.refreshSettings()
 
         assertEquals(BudsResult.Success(Unit), result)
-        assertEquals(cap036SettingReads, transport.sent.map { (ch, frame) -> assertEquals(Dlci.MAESTRO, ch); frame.toHex() }, "exactly the seven reads, in order")
+        assertEquals(cap036SettingReads, transport.sent.map { (ch, frame) -> assertEquals(Dlci.MAESTRO, ch); frame.toHex() }, "exactly the Connect-time reads, in order")
         assertEquals(SettingReading(true, 5_000), repo.settings.value.inEarDetection) // 1447
         assertEquals(SettingReading(5, 5_000), repo.settings.value.volumeBalance) // 1528: zigzag 10 = +5
         assertEquals(SettingReading(true, 5_000), repo.settings.value.conversationDetection) // 1540
@@ -819,7 +826,7 @@ class BudsRepositoryImplTest {
         settle()
 
         val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
-        assertEquals(9, maestro.size, "EQ read, seven settings reads (field 12 added, ADR-046), the subscription")
+        assertEquals(2 + settingReads.size, maestro.size, "EQ read, the settings reads (field 12 added by ADR-046, 11 by ai-sessions/0074), the subscription")
         assertEquals(1, maestro.count { it == "7e004b0310151dea71de7d5e2590821ee66654bfab7e" })
         assertEquals("7e004b0310151dea71de7d5e2590821ee66654bfab7e", maestro.last())
         assertEquals(0.3f, repo.eqProfile.first()!!.mid, 1e-4f)
@@ -1592,6 +1599,254 @@ class BudsRepositoryImplTest {
         assertEquals(false, before?.value)
     }
 
+    // ---- the five switches of ai-sessions/0074 (ADR-052 … ADR-055) ----------------------------------------------------------------------------------
+
+    /** The Buds answer every WriteSetting with [ack] (a real empty `RESPONSE` of that channel) — and nothing else. */
+    private fun answerWritesWith(transport: FakeBudsTransport, ack: String) {
+        transport.onSent = { ch, frame ->
+            val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+            if (ch == Dlci.MAESTRO && rpc.methodId == Maestro.METHOD_WRITE_SETTING) transport.emit(Dlci.MAESTRO, hex(ack))
+        }
+    }
+
+    /** A hand-built `RESPONSE` with status 5 (`NOT_FOUND`) for a write — supplementary: no capture has a rejected write. */
+    private fun rejectWrites(transport: FakeBudsTransport, channel: Int, responseAddress: Int) {
+        transport.onSent = { _, _ ->
+            transport.emit(Dlci.MAESTRO, rpcFrame(responseAddress, RpcPacket(PwRpc.TYPE_RESPONSE, channel, Maestro.SERVICE_ID, Maestro.METHOD_WRITE_SETTING, status = 5)))
+        }
+    }
+
+    @Test
+    @DisplayName("MP (ADR-053), channel 21: read CAP-069 1267 = on; OFF = CAP-069 3161, ON = 3212 byte for byte, each applied on the empty RESPONSE 3170 with its time")
+    fun `the Multipoint switch on channel 21`() = runTest {
+        val (repo, transport) = buildRepository() // the CAP-061 announcement: channel 21
+        advanceTimeBy(1_000)
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_11_RESP_CH21_1267)); settle()
+        assertEquals(SettingReading(true, 1_000), repo.settings.value.multipoint)
+        answerWritesWith(transport, Settings074.ACK_CH21_3170)
+        advanceTimeBy(5_000)
+
+        assertEquals(BudsResult.Success(Unit), repo.setMultipoint(false))
+        assertEquals(SettingReading(false, 6_000, changedByApp = true), repo.settings.value.multipoint)
+        assertEquals(BudsResult.Success(Unit), repo.setMultipoint(true))
+        assertEquals(SettingReading(true, 6_000, changedByApp = true), repo.settings.value.multipoint)
+        assertEquals(listOf(Settings074.MP_OFF_CH21_3161, Settings074.MP_ON_CH21_3212), transport.sent.map { it.second.toHex() }, "one write per tap")
+        assertEquals(setOf(Dlci.MAESTRO), transport.sent.map { it.first }.toSet(), "nothing on DLCI 0x04: the SASS answer is not waited for (ADR-053)")
+        assertNull(repo.settingsError.first())
+    }
+
+    @Test
+    @DisplayName("MP, labelled supplementary structural test: on channel 19 (no capture has that write) the same codec sends the channel-19 form; the ACK CAP-022 1629 applies it")
+    fun `the Multipoint switch on channel 19`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_11_RESP_CH19_7272)); settle()
+        ackWrites(transport, 19)
+
+        assertEquals(BudsResult.Success(Unit), repo.setMultipoint(false))
+
+        val sent = transport.sent.single().second.toHex()
+        assertEquals(SettingsWrites.MONO_ON_1621.substringBefore("2a052203") + "2a0422025800", sent.substring(0, 46), "address 00 3b, channel 19, 4:{11:0}")
+        assertEquals(false, repo.settings.value.multipoint?.value)
+    }
+
+    @Test
+    fun `a Multipoint write without an answer or with an error status keeps the value read at Connect and says why`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_11_RESP)); settle()
+        val read = repo.settings.value.multipoint
+        transport.onSent = null
+
+        assertEquals(BudsError.Timeout, (repo.setMultipoint(false) as BudsResult.Failure).error)
+        assertEquals(1, transport.sent.size, "sent once, never retried")
+        assertEquals(read, repo.settings.value.multipoint, "never applied before the Buds' OK")
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure(BudsError.Timeout, write = true), repo.settingsError.first())
+
+        advanceTimeBy(2_000) // past the write quarantine (ADR-045 Update)
+        rejectWrites(transport, 21, 10496)
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), (repo.setMultipoint(false) as BudsResult.Failure).error)
+        assertEquals(read, repo.settings.value.multipoint)
+    }
+
+    @Test
+    @DisplayName("HG (ADR-052), channel 21: read CAP-069 1226 (29:2) = on; OFF = CAP-069 2492 (29:1), ON = 2564 (29:2) byte for byte, applied on the RESPONSE 2506")
+    fun `the head gestures switch on channel 21`() = runTest {
+        val (repo, transport) = buildRepository()
+        advanceTimeBy(2_000)
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_29_ON_CH21_1226)); settle()
+        assertEquals(SettingReading(true, 2_000), repo.settings.value.headGestures)
+        answerWritesWith(transport, Settings074.ACK_CH21_2506)
+        advanceTimeBy(1_000)
+
+        assertEquals(BudsResult.Success(Unit), repo.setHeadGestures(false))
+        assertEquals(SettingReading(false, 3_000, changedByApp = true), repo.settings.value.headGestures)
+        assertEquals(BudsResult.Success(Unit), repo.setHeadGestures(true))
+        assertEquals(SettingReading(true, 3_000, changedByApp = true), repo.settings.value.headGestures)
+        assertEquals(listOf(Settings074.HG_OFF_CH21_2492, Settings074.HG_ON_CH21_2564), transport.sent.map { it.second.toHex() })
+        assertEquals(setOf(Dlci.MAESTRO), transport.sent.map { it.first }.toSet(), "nothing on GSND CONTROL or any other DLCI (ADR-052)")
+    }
+
+    @Test
+    @DisplayName("HG, labelled supplementary structural test: on channel 19 (no capture has that write) the same codec sends 4:{29:2}; CAP-024 1100 read it as off")
+    fun `the head gestures switch on channel 19`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_29_OFF_CH19_CAP024_1100)); settle()
+        assertEquals(false, repo.settings.value.headGestures?.value)
+        ackWrites(transport, 19)
+
+        assertEquals(BudsResult.Success(Unit), repo.setHeadGestures(true))
+
+        assertEquals(SettingsWrites.MONO_ON_1621.substringBefore("2a052203") + "2a052203e80102", transport.sent.single().second.toHex().substring(0, 48))
+        assertEquals(true, repo.settings.value.headGestures?.value)
+    }
+
+    /**
+     * ADR-052: a read value other than 1 or 2 is not interpreted. **Supplementary, hand-built:** the real `CAP-036` frame 1561 (`4:{29:2}`) with the value
+     * changed to 3 and the frame re-sealed (new CRC) — no capture holds such a value.
+     */
+    @Test
+    fun `a head-gesture read of 3 stays not read (UnreadableAnswer), never on or off`() = runTest {
+        val real = (Hdlc.decode(hex(Settings036.READ_29_RESP)) as BudsResult.Success).value
+        val three = Hdlc.encode(real.address, real.control, hex(real.payload.toHex().replace("2203e80102", "2203e80103")))
+        val (repo, transport) = buildRepository(verified = false)
+        transport.onSent = { ch, frame ->
+            val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+            if (ch == Dlci.MAESTRO && rpc.methodId == Maestro.METHOD_READ_SETTING) {
+                when (val field = rpc.payload[1].toInt()) {
+                    29 -> transport.emit(Dlci.MAESTRO, three)
+                    else -> Settings036.ANSWERS[field]?.let { transport.emit(Dlci.MAESTRO, hex(it)) }
+                }
+            }
+        }
+        transport.emit(Dlci.MAESTRO, helloFrame(21, 10496)); settle()
+        repo.launchInitialEqRead(); settle()
+
+        assertNull(repo.settings.value.headGestures)
+        assertEquals(true, repo.settings.value.multipoint?.value, "the other fields were read")
+        assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure(BudsError.UnreadableAnswer, write = false), repo.settingsError.first())
+    }
+
+    @Test
+    fun `a head-gesture write without an answer or with an error status keeps the value read at Connect`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_29_RESP)); settle()
+        val read = repo.settings.value.headGestures
+        transport.onSent = null
+        assertEquals(BudsError.Timeout, (repo.setHeadGestures(false) as BudsResult.Failure).error)
+        assertEquals(listOf(Settings074.HG_OFF_CH21_2492), transport.sent.map { it.second.toHex() }, "sent once, never retried")
+        assertEquals(read, repo.settings.value.headGestures)
+        advanceTimeBy(2_000)
+        rejectWrites(transport, 21, 10496)
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), (repo.setHeadGestures(false) as BudsResult.Failure).error)
+        assertEquals(read, repo.settings.value.headGestures)
+    }
+
+    @Test
+    @DisplayName("CS (ADR-054), channel 21: reads CAP-058 4514/4517 = on; the push 5627 (28:0) turns only Earbuds replaced off; 5680 / 5643 byte for byte, ACK 5683")
+    fun `the case sounds switches on channel 21`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_27_RESP_CH21_4514))
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_28_RESP_CH21_4517)); settle()
+        transport.emit(Dlci.MAESTRO, hex(Settings074.STREAM_28_OFF_CH21_5627)); settle()
+        assertEquals(true, repo.settings.value.caseSoundOtherAlerts?.value, "27 untouched by a push of 28")
+        assertEquals(false, repo.settings.value.caseSoundEarbudsReplaced?.value)
+        answerWritesWith(transport, Settings074.ACK_CH21_5683)
+        advanceTimeBy(4_000)
+
+        assertEquals(BudsResult.Success(Unit), repo.setCaseSoundOtherAlerts(false))
+        assertEquals(SettingReading(false, 4_000, changedByApp = true), repo.settings.value.caseSoundOtherAlerts)
+        assertEquals(false, repo.settings.value.caseSoundEarbudsReplaced?.value, "28 untouched by a write of 27")
+        assertEquals(BudsResult.Success(Unit), repo.setCaseSoundEarbudsReplaced(true))
+        assertEquals(SettingReading(true, 4_000, changedByApp = true), repo.settings.value.caseSoundEarbudsReplaced)
+        assertEquals(false, repo.settings.value.caseSoundOtherAlerts?.value, "27 untouched by a write of 28")
+        assertEquals(listOf(Settings074.CS27_OFF_CH21_5680, Settings074.CS28_ON_CH21_5643), transport.sent.map { it.second.toHex() })
+    }
+
+    @Test
+    @DisplayName("CS on channel 19: reads CAP-024 1092/1096; 1988 (28:0), 2023 (28:1), 2053 (27:0), 2084 (27:1) byte for byte, each applied on the ACK 2061")
+    fun `the case sounds switches on channel 19`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_27_RESP_CH19_1092))
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_28_RESP_CH19_1096)); settle()
+        answerWritesWith(transport, Settings074.ACK_CH19_2061)
+
+        assertEquals(BudsResult.Success(Unit), repo.setCaseSoundEarbudsReplaced(false))
+        assertEquals(BudsResult.Success(Unit), repo.setCaseSoundEarbudsReplaced(true))
+        assertEquals(BudsResult.Success(Unit), repo.setCaseSoundOtherAlerts(false))
+        assertEquals(false, repo.settings.value.caseSoundOtherAlerts?.value)
+        assertEquals(true, repo.settings.value.caseSoundEarbudsReplaced?.value)
+        assertEquals(BudsResult.Success(Unit), repo.setCaseSoundOtherAlerts(true))
+
+        assertEquals(
+            listOf(Settings074.CS28_OFF_CH19_1988, Settings074.CS28_ON_CH19_2023, Settings074.CS27_OFF_CH19_2053, Settings074.CS27_ON_CH19_2084),
+            transport.sent.map { it.second.toHex() },
+        )
+    }
+
+    @Test
+    fun `a case-sound write without an answer or with an error status keeps the value read at Connect`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_27_RESP))
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_28_RESP)); settle()
+        val read27 = repo.settings.value.caseSoundOtherAlerts
+        val read28 = repo.settings.value.caseSoundEarbudsReplaced
+        transport.onSent = null
+        assertEquals(BudsError.Timeout, (repo.setCaseSoundOtherAlerts(false) as BudsResult.Failure).error)
+        assertEquals(read27, repo.settings.value.caseSoundOtherAlerts)
+        advanceTimeBy(2_000)
+        rejectWrites(transport, 21, 10496)
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), (repo.setCaseSoundEarbudsReplaced(false) as BudsResult.Failure).error)
+        assertEquals(read28, repo.settings.value.caseSoundEarbudsReplaced)
+        assertEquals(listOf(Settings074.CS27_OFF_CH21_5680, Settings074.CS28_OFF_CH21_5623), transport.sent.map { it.second.toHex() }, "one each, never retried")
+    }
+
+    @Test
+    @DisplayName("VEQ (ADR-055), channel 19: read CAP-024 1038 = on; OFF = CAP-022 1871, ON = 1895 byte for byte, applied on the RESPONSE 1877")
+    fun `the Volume EQ switch on channel 19`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_15_ON_CH19_1038)); settle()
+        assertEquals(true, repo.settings.value.volumeEq?.value)
+        answerWritesWith(transport, Settings074.ACK_CH19_1877)
+        advanceTimeBy(8_000)
+
+        assertEquals(BudsResult.Success(Unit), repo.setVolumeEq(false))
+        assertEquals(SettingReading(false, 8_000, changedByApp = true), repo.settings.value.volumeEq)
+        assertEquals(BudsResult.Success(Unit), repo.setVolumeEq(true))
+        assertEquals(listOf(Settings074.VEQ_OFF_CH19_1871, Settings074.VEQ_ON_CH19_1895), transport.sent.map { it.second.toHex() })
+    }
+
+    @Test
+    @DisplayName("VEQ, channel 21: OFF = CAP-041 2461 (real), ON = the derived frame (labelled supplementary, TODO(verify) ADR-055); a read of CAP-041 3239 = off")
+    fun `the Volume EQ switch on channel 21`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings074.READ_15_OFF_CH21_CAP041_3239)); settle()
+        assertEquals(false, repo.settings.value.volumeEq?.value)
+        answerWritesWith(transport, Settings074.ACK_CH21_2465)
+
+        assertEquals(BudsResult.Success(Unit), repo.setVolumeEq(true))
+        assertEquals(true, repo.settings.value.volumeEq?.value)
+        assertEquals(BudsResult.Success(Unit), repo.setVolumeEq(false))
+        assertEquals(listOf(Settings074.VEQ_ON_CH21_DERIVED, Settings074.VEQ_OFF_CH21_CAP041_2461), transport.sent.map { it.second.toHex() })
+    }
+
+    @Test
+    fun `a Volume EQ write without an answer or with an error status keeps the value read at Connect`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_15_RESP)); settle()
+        val read = repo.settings.value.volumeEq
+        transport.onSent = null
+        assertEquals(BudsError.Timeout, (repo.setVolumeEq(false) as BudsResult.Failure).error)
+        assertEquals(read, repo.settings.value.volumeEq)
+        advanceTimeBy(2_000)
+        rejectWrites(transport, 21, 10496)
+        assertEquals(BudsError.MaestroRejected("RESPONSE NOT_FOUND"), (repo.setVolumeEq(false) as BudsResult.Failure).error)
+        assertEquals(read, repo.settings.value.volumeEq)
+        assertEquals(listOf(Settings074.VEQ_OFF_CH21_CAP041_2461, Settings074.VEQ_OFF_CH21_CAP041_2461), transport.sent.map { it.second.toHex() })
+    }
+
     @Test
     fun `Safe Mode refuses the ANC-mode list and the in-ear detection writes and sends nothing (ADR-042)`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
@@ -1600,6 +1855,11 @@ class BudsRepositoryImplTest {
         settle()
         assertEquals(BudsError.UnsupportedFirmware, (repo.setAncModeSelected(AncMode.ADAPTIVE, false) as BudsResult.Failure).error)
         assertEquals(BudsError.UnsupportedFirmware, (repo.setInEarDetection(true) as BudsResult.Failure).error)
+        assertEquals(BudsError.UnsupportedFirmware, (repo.setMultipoint(true) as BudsResult.Failure).error) // ADR-053 through the same gate
+        assertEquals(BudsError.UnsupportedFirmware, (repo.setHeadGestures(false) as BudsResult.Failure).error) // ADR-052 too
+        assertEquals(BudsError.UnsupportedFirmware, (repo.setCaseSoundOtherAlerts(false) as BudsResult.Failure).error) // ADR-054
+        assertEquals(BudsError.UnsupportedFirmware, (repo.setCaseSoundEarbudsReplaced(false) as BudsResult.Failure).error)
+        assertEquals(BudsError.UnsupportedFirmware, (repo.setVolumeEq(true) as BudsResult.Failure).error) // ADR-055
         assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent)
     }
 

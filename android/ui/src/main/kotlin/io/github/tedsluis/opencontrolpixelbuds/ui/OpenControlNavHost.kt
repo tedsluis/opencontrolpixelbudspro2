@@ -130,6 +130,15 @@ data class OpenControlActions(
     val onAncModeSelectedChanged: (AncMode, Boolean) -> Unit = { _, _ -> },
     /** The "In-ear detection" switch (ADR-047, `ai-sessions/0056`). */
     val onInEarDetectionChanged: (Boolean) -> Unit = {},
+    /** The "Multipoint" switch (ADR-053, `ai-sessions/0074`). */
+    val onMultipointChanged: (Boolean) -> Unit = {},
+    /** The "Use head gestures" switch (ADR-052, `ai-sessions/0074`). */
+    val onHeadGesturesChanged: (Boolean) -> Unit = {},
+    /** The two "Case sounds" switches (ADR-054, `ai-sessions/0074`): "Earbuds replaced" (field 28) and "Other alerts" (field 27). */
+    val onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit = {},
+    val onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
+    /** The "Volume EQ" switch on Sound (ADR-055, `ai-sessions/0074`). */
+    val onVolumeEqChanged: (Boolean) -> Unit = {},
     /** Re-reads Left/Right: a Message Stream claim (DECISIONS.md ADR-033); the Case and charging come from the runtime-info stream (ADR-043). */
     val onRefreshBattery: () -> Unit,
     val onDebugModeChanged: (Boolean) -> Unit,
@@ -392,6 +401,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             onVolumeBalanceChanged = actions.onVolumeBalanceChanged,
             onMonoAudioChanged = actions.onMonoAudioChanged,
             onConversationDetectionChanged = actions.onConversationDetectionChanged,
+            onVolumeEqChanged = actions.onVolumeEqChanged,
         )
         Routes.CONTROLS -> ControlsScreen(
             connectionState = state.connectionState,
@@ -401,6 +411,10 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             onPressAndHoldChanged = actions.onPressAndHoldChanged,
             onAncModeSelectedChanged = actions.onAncModeSelectedChanged,
             onInEarDetectionChanged = actions.onInEarDetectionChanged,
+            onMultipointChanged = actions.onMultipointChanged,
+            onHeadGesturesChanged = actions.onHeadGesturesChanged,
+            onCaseSoundEarbudsReplacedChanged = actions.onCaseSoundEarbudsReplacedChanged,
+            onCaseSoundOtherAlertsChanged = actions.onCaseSoundOtherAlertsChanged,
         )
         Routes.FIND_MY_BUDS -> FindMyBudsScreen(
             connectionState = state.connectionState,

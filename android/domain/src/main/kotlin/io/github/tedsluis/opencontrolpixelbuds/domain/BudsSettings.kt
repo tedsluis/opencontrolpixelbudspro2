@@ -85,7 +85,8 @@ data class AncModeList(
 }
 
 /**
- * The DLCI 0x02 settings this app reads (DECISIONS.md ADR-036, ADR-046) and may write (ADR-045, ADR-046, ADR-047). Every field is `null` until
+ * The DLCI 0x02 settings this app reads (DECISIONS.md ADR-036, ADR-046, ADR-052) and may write (ADR-045, ADR-046, ADR-047, ADR-052 … ADR-055). Every
+ * field is `null` until
  * the Buds reported it on this connection (read at Connect, then an acknowledged write) — never a default presented as the Buds' value (AGENTS.md §5).
  */
 data class BudsSettings(
@@ -105,6 +106,16 @@ data class BudsSettings(
     val monoAudio: SettingReading<Boolean>? = null,
     /** `qhr` field 22, conversation detection (🟢 label equivalence, PROTOCOL.md §4.5.1 2026-09-26 Update). */
     val conversationDetection: SettingReading<Boolean>? = null,
+    /** `qhr` field 11, "Multipoint" (🟢, PROTOCOL.md §4.5.2); read at Connect (ADR-036), writable (ADR-053). */
+    val multipoint: SettingReading<Boolean>? = null,
+    /** `qhr` field 29, "Use head gestures" (🟢, PROTOCOL.md §4.5.4; read + write, ADR-052) — `true` = the wire's 2, `false` = its 1; any other read value stays `null`. */
+    val headGestures: SettingReading<Boolean>? = null,
+    /** `qhr` field 27, Case sounds "Other alerts" (🟢, PROTOCOL.md §4.5.8; ADR-054). What it silences is not established. */
+    val caseSoundOtherAlerts: SettingReading<Boolean>? = null,
+    /** `qhr` field 28, Case sounds "Earbuds replaced" (🟢, PROTOCOL.md §4.5.8; ADR-054). What it silences is not established. */
+    val caseSoundEarbudsReplaced: SettingReading<Boolean>? = null,
+    /** `qhr` field 15, "Volume EQ" (🟢, PROTOCOL.md §4.5.6; ADR-055). Its audible effect is not measured. */
+    val volumeEq: SettingReading<Boolean>? = null,
 ) {
     companion object {
         /** ADR-026: the wire range of the balance. */
