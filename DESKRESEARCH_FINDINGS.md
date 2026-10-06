@@ -1010,6 +1010,14 @@ No new capture; every figure was derived from the logs in this repository (maint
 - **Open:** what settings 23, 24, 26, 30, 31, 32 and 39 are — not nameable from app 1.0.955078536 (`REVERSE_ENGINEERING.md`, `qhr` entry,
   2026-10-06 Update); 🟡 the 38-row table is `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` §4.2.
 - **Promoted to:** nothing; dated notes in `PROTOCOL.md` §2.2a.
+- **Correction (2026-10-06, the chat that continued after `ai-sessions/0073`; maintainer-approved there, `AskUserQuestion` "Telfout 0073", option
+  *"Correctie + TODO (Recommended)"*) — the totals above count one capture twice.** `CAP-042`'s `.log.last` is leftover `CAP-041` content
+  (`CAP-042-EVENT-NOTES.md`, its "Log file" row): frame 2461 has the same bytes and the same timestamp (`1788707705.973342`) in both files, and both
+  start at `1788707516.963543` (4,003 frames in the `CAP-041` log, 4,829 in the `.log.last`). Command: `tshark -r <log> -Y 'frame.number==2461' -T
+  fields -e frame.time_epoch -e data.data` on both. So "80 logs" and every packet, request and "in N logs" count of items 1–3 — and the same counts in
+  `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` §4.1/§4.2 and the notes derived from them — include `CAP-041`'s packets twice (e.g. Volume EQ:
+  5 `WriteSetting`s of setting 15, not 6). Not affected: which ids and names exist, the sweep's order, which settings are always `UNKNOWN`, constant
+  or never written. Whether other `.log.last` files overlap a neighbouring capture in the same way was not checked. The recount is in `TODO.md` §6.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS
