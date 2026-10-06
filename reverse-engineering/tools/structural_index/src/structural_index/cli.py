@@ -1,4 +1,4 @@
-"""SPEC.md §5 — the `refs` and `unreferenced` commands."""
+"""SPEC.md §5/§5a/§5b/§5c — `refs`, `unreferenced`, `implements`, `field-writes`, `strings`."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from .resource_index import find_resources
 from .xref_index import (
     find_field_writes,
     find_implementers,
@@ -64,6 +65,16 @@ def _cmd_field_writes(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_strings(args: argparse.Namespace) -> int:
+    try:
+        result = find_resources(Path(args.apk_root), args.key, args.text, with_usages=not args.no_usages)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"structural-index: error: {e}", file=sys.stderr)
+        return 1
+    _emit(result.to_dict(), args.output_dir, "strings.json")
+    return 0
+
+
 def _emit(payload, output_dir: str | None, filename: str) -> None:
     text = json.dumps(payload, indent=2)
     if output_dir:
@@ -103,6 +114,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_fw.add_argument("--field", required=True)
     p_fw.add_argument("--output-dir", default=None)
     p_fw.set_defaults(func=_cmd_field_writes)
+
+    p_str = sub.add_parser("strings", help="string/array resources by name or value, with id and usages (v1.2)")
+    p_str.add_argument("--apk-root", required=True)
+    p_str.add_argument("--key", default=None, help="case-insensitive regex on the resource name")
+    p_str.add_argument("--text", default=None, help="case-insensitive regex on the resource value")
+    p_str.add_argument("--no-usages", action="store_true", help="definitions and ids only (fast)")
+    p_str.add_argument("--output-dir", default=None)
+    p_str.set_defaults(func=_cmd_strings)
 
     return parser
 
