@@ -6,11 +6,12 @@ based on [Keep a Changelog](https://keepachangelog.com/).
 The first release, 1.0.0, was published on 2026-10-03 ([v1.0.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.0), build commit
 `8d8af4b`), after `CAP-067`, the hardware run of the signed APK (`ai-sessions/0067`). Its block below is written for users. Everything before it — documentation, tooling and the protocol reconstruction that led to the app —
 is kept unchanged under "History before 1.0.0". 1.0.1, a hotfix, followed on 2026-10-04 ([v1.0.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.1), build commit
-`e1fc886`, hardware run `CAP-068`, `ai-sessions/0070`). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
+`e1fc886`, hardware run `CAP-068`, `ai-sessions/0070`); 1.1.0 on 2026-10-07 ([v1.1.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.1.0),
+build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
 
 ## [Unreleased]
 
-## [1.1.0] - not yet released
+## [1.1.0] - 2026-10-07
 
 Prepared in `ai-sessions/0074` (2026-10-06); build commit `0323849`, hardware-tested as `CAP-070` (`ai-sessions/0075`, 2026-10-07) in a GrapheneOS user without Google Play services. Five new settings, each read from the Buds
 when the app connects and changed with one request per tap — the request the official app sends for the same setting (`DECISIONS.md` ADR-052 …
@@ -30,7 +31,7 @@ ADR-055). A switch moves only when the Buds confirm the change; otherwise it sta
 
 ### Known issues
 
-- The app says what a switch sets, not what you will hear: which sounds the case-sound switches silence, what Volume EQ does to the sound, and what
+- The app says what a switch sets: which sounds the case-sound switches silence, what Volume EQ does to the sound, and what
   switching Multipoint off does to a second connected device are not established.
 - The screen-reader text for "—" is checked by the unit tests, not yet on a phone.
 - English only. After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop (from 1.0.1).
