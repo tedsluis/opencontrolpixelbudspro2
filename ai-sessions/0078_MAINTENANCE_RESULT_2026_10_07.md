@@ -408,7 +408,10 @@ to the gated state.
 | `890c6fb` | test(ui): v2 Compose test rule; pin the settings-menu tab order |
 | `6f17d1f` | ci: actions/checkout v7.0.1 in all workflows; setup-python v7.0.0; setup-gradle v6.4.0 |
 | `462b829` | docs: toolchain versions, ADR-029 Update (compileSdk 37), TODO and CHANGELOG |
-| (this commit) | docs(session): ai-sessions/0078 prompt and result, INDEX row |
+| `a4cfaf1` | docs(session): ai-sessions/0078 prompt and result, INDEX row |
+| (this commit) | docs(session): ai-sessions/0078 commits back-filled |
+
+Pull request: https://github.com/tedsluis/opencontrolpixelbudspro2/pull/11 — CI must be green before the maintainer merges.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0078_MAINTENANCE_RESULT_2026_10_07.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0078_MAINTENANCE_RESULT_2026_10_07
