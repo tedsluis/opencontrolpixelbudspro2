@@ -12,7 +12,7 @@ is kept unchanged under "History before 1.0.0". 1.0.1, a hotfix, followed on 202
 
 ## [1.1.0] - not yet released
 
-Prepared in `ai-sessions/0074` (2026-10-06); the hardware run of its release APK is `CAP-070` (planned). Five new settings, each read from the Buds
+Prepared in `ai-sessions/0074` (2026-10-06); build commit `0323849`, hardware-tested as `CAP-070` (`ai-sessions/0075`, 2026-10-07) in a GrapheneOS user without Google Play services. Five new settings, each read from the Buds
 when the app connects and changed with one request per tap — the request the official app sends for the same setting (`DECISIONS.md` ADR-052 …
 ADR-055). A switch moves only when the Buds confirm the change; otherwise it stays and the app says why.
 
@@ -30,10 +30,9 @@ ADR-055). A switch moves only when the Buds confirm the change; otherwise it sta
 
 ### Known issues
 
-- Three of the new requests have not been seen on the Bluetooth log yet: Multipoint and head gestures when the Buds use their Left control channel
-  (channel 19), and Volume EQ "on" on the Right one (channel 21). They are built the same way as the captured ones; `CAP-070` is to record them.
 - The app says what a switch sets, not what you will hear: which sounds the case-sound switches silence, what Volume EQ does to the sound, and what
   switching Multipoint off does to a second connected device are not established.
+- The screen-reader text for "—" is checked by the unit tests, not yet on a phone.
 - English only. After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop (from 1.0.1).
 
 ## [1.0.1] - 2026-10-04

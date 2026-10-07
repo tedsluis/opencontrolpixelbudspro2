@@ -19,25 +19,25 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 ## 2. Hardware verification debt (the app, on film)
 
-Open after `CAP-068` (`ai-sessions/0070`); each goes into the next app run with its expected bytes. **Taken into the 1.1.0 run `CAP-070`** (skeleton by
-`ai-sessions/0074`, `captures/CAP-070-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BF/CAP-070-EVENT-NOTES.md`) — they stay here until that run is analysed:
+Open after `CAP-070` (the 1.1.0 release run, `ai-sessions/0075`, `CAP-070-FINDINGS.md`); each goes into the next app run with its expected bytes. Done in
+`CAP-070` and removed here: the five switches on hardware (read, off, read back, on — 89 of 89 writes ACKed), the three request forms no capture held (11 and 29
+on channel 19, `15:1` on channel 21), the channel-19 balance `17:7`, the swipe between tabs (camera only), and P1 (a first install in user 10, 🟡).
 
-- [ ] **M** Run `CAP-070` (Group BF) on the 1.1.0 release APK, installed over 1.0.1 (`RELEASING.md` checklist B–C); a later CAPTURE session analyses it and
-      gives the release verdict (`ai-sessions/0074` §1 point 3).
-- [ ] The five switches of 1.1.0 on hardware — read, off, read back, on (BF-1 … BF-12), with the case-sound and Volume-EQ observations; the three request forms
-      no capture holds yet: fields 11 and 29 on channel 19 (BF-14, BF-15), `4:{15:1}` on channel 21 (BF-20) — their real bytes then replace the labelled
-      structural fixtures (`Settings074`, `SettingsCodecTest`) and the `// TODO(verify)` on `SettingsCodec.FIELD_VOLUME_EQ` (ADR-055) goes.
-- [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" (BF-24, two `uiautomator` dumps).
-- [ ] `APP_TESTPLAN.md` H5 with the *Read EQ again* button (`CAP-068` read the value back only at a reconnect) → BF-21; S6 ("—" in the first second after
-      ready — film the phone's screen, not the camera) → BF-1 on the screen recording; S12 (export across a rotation) → BF-23. S9 (needs two Pixel Buds paired)
-      — not in `CAP-070` either.
-- [ ] P1 of a release run: record `dumpsys package … | grep -E "firstInstallTime|lastUpdateTime"` in the test user — `CAP-068`'s logs suggest a fresh
-      install, not an update over 1.0.0 (`CAP-068-FINDINGS.md` §0) → `CAP-070` P1.
-- [ ] The Left bud taken out with both worn on channel 19, head in view (lead L-1 of `ai-sessions/0061`; half answered in `CAP-066`) — 🔴 → `CAP-070` BF-18
-      (`INEAR-005`).
-- [ ] The channel-19 balance frame `17:7` → `CAP-070` BF-16. B4 double tap (`AlreadyInProgress`) — not in `CAP-068`/`CAP-070` (B4 needs the Buds forgotten).
+- [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
+      Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11)
+- [ ] C12 — a tap during an automatic re-open ("The app's channel is being reopened …", no write afterwards): not done in `CAP-070` (the tap came after
+      "ready"). Needs the screen recording.
+- [ ] `APP_TESTPLAN.md` H5 with the *Read EQ again* button (`CAP-068` and `CAP-070` read the value back only at a reconnect); S6 ("—" in the first second
+      after ready) on Android's **screen recording** (seen on the camera in `CAP-070` at 06:17:43 and 06:20:24, not on the first Connect); S12 (export across a
+      rotation) — not done in `CAP-068` or `CAP-070`. S9 (needs two Pixel Buds paired).
+- [ ] The update path: install a release **over** the previous one in the test user (keep the older APK; `CAP-068` and `CAP-070` were first installs there,
+      🟡 `CAP-070-FINDINGS.md` §0) and record `adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -A12 "User 10:"`.
+- [ ] The Left bud taken out with both **worn** on channel 19, **head in view** (lead L-1; `CAP-070` BF-18 gave `DISC` + 21 with the Left identified, wear
+      not on film) — 🟡 (`INEAR-005`).
+- [ ] The case-sound and Volume-EQ observations (what is heard): the film needs an audio track (`CAP-070`'s had none), or the maintainer says it.
+- [ ] What sent the two `SIGQUIT` stack dumps of `CAP-070` (L1 508, L2 597) — keep a system log in the next run.
+- [ ] B4 double tap (`AlreadyInProgress`) — needs the Buds forgotten and re-paired.
 - [ ] K5 / BC-12 (GrapheneOS Bluetooth auto-off): only in a user where the setting exists (the Owner).
-- [ ] The swipe between tabs — not identified on film in any capture (`ARCHITECTURE.md` §2.4, `// TODO(verify)`) → `CAP-070` BF-22 (screen recording).
 - [ ] F-4 on a **debug** build: StrictMode lines after a Bluetooth off/on (🟡 the framework's `BluetoothLeAudio` may still warn —
       `CAP-066-FINDINGS.md` §8). Not observable on a release build.
 - [ ] Execute the test plans on a second device (another Android version or OEM) — never done; one phone (Pixel 9a, GrapheneOS) so far.
@@ -72,7 +72,12 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
 ## 4. Protocol: leads and open questions
 
 The five switches the maintainer chose (Multipoint, head gestures, the two case sounds, Volume EQ; ADR-052 … ADR-055) and the screen-reader text are built in
-1.1.0 (`ai-sessions/0074`); their hardware run is in §2.
+1.1.0 (`ai-sessions/0074`) and passed their hardware run `CAP-070` (`ai-sessions/0075`).
+
+- [ ] **Follow-up FEATURE session after the 1.1.0 release** (maintainer's choice, chat 2026-10-07): replace the labelled structural fixtures
+      (`SettingsFixtures.kt` `Settings074`, the labelled tests in `SettingsCodecTest.kt`) with the real `CAP-070` frames — channel-19 `4:{11:0}` A3668 /
+      `4:{11:1}` A3679, `4:{29:1}` A3614 / `4:{29:2}` A3685, `4:{17:7}` A3747, channel-21 `4:{15:1}` A4800 → A4802 (`CAP-070-FINDINGS.md` §3) — and remove the
+      `// TODO(verify)` on `SettingsCodec.FIELD_VOLUME_EQ` (ADR-055; its KDoc also names the old placeholder folder of `CAP-070`).
 
 - [ ] Decompile the official app **1.0.990706425** (versionCode `10260911`) with JADX and apktool (ADR-017 boundary). Its first purpose is met
       without it: the two ids of `CAP-069` are named from literals of 1.0.955078536 — `0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` =

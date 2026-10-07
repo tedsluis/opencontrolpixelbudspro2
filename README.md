@@ -101,10 +101,10 @@ Per feature, what is hardware-verified and what is only unit-tested is in `ARCHI
 security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
 
 **1.1.0 is prepared, not yet released** (`ai-sessions/0074`, 2026-10-06): the switches for head gestures, Multipoint, the two case sounds and Volume EQ,
-and the screen-reader text for "—". Its hardware run (`CAP-070`) is planned; until it is published, 1.0.1 above is the latest release. Known issues of 1.1.0
-so far (also in [`CHANGELOG.md`](./CHANGELOG.md)): three of the new requests have not been seen on the Bluetooth log yet — Multipoint and head gestures when
-the Buds use their Left control channel, Volume EQ "on" on the Right one — they are built like the captured ones and the run records them; and the app says
-what a switch sets, not what you will hear.
+and the screen-reader text for "—". Its hardware run (`CAP-070`, `ai-sessions/0075`, 2026-10-07) passed: every request of the five switches, on both control
+channels, byte-identical to the expected frames and confirmed by the Buds; until it is published, 1.0.1 above is the latest release. Known issues of 1.1.0
+(also in [`CHANGELOG.md`](./CHANGELOG.md)): the app says what a switch sets, not what you will hear; the screen-reader text for "—" is checked by the unit
+tests, not yet on a phone.
 
 **Known issue in 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
@@ -137,11 +137,11 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-06)
+## Current state (2026-10-07)
 
-- **Captures:** 70 registered sessions (`CAP-001`–`CAP-070`): 65 analyzed (the latest, `CAP-053`, `CAP-054` and `CAP-058` of 2026-10-05: the official app 1.0.955078536 after a downgrade — EQ field 18, the case-open advertisement, `SDP-001`), 3 planned (`CAP-070`: the 1.1.0 release run), 2 withdrawn (`CAP-052`,
-  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` are captures of this project's own app (`CAP-067`: the 1.0.0
-  release APK, `CAP-068`: the 1.0.1 release APK, both without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
+- **Captures:** 70 registered sessions (`CAP-001`–`CAP-070`): 66 analyzed (the latest, `CAP-070` of 2026-10-07: the 1.1.0 release run — every switch request on both channels confirmed, `ai-sessions/0075`), 2 planned, 2 withdrawn (`CAP-052`,
+  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` and `CAP-070` are captures of this project's own app (`CAP-067`: the 1.0.0
+  release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, all without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).

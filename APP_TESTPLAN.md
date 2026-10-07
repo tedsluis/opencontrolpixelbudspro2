@@ -288,17 +288,17 @@ new switches (the maintainer's choice, "alleen labels").
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| T1 | Right after the update over 1.0.1: open the app, let it connect; open **Controls** within the first second (screen recording). | The unread switches show "—" for about a second, then the Buds' values; no crash | `ReadSetting 4:16`, then twelve `ReadSetting` (2, 4, 7, 11, 12, 15, 17, 19, 22, 27, 28, 29), each answered | | |
-| T2 | Read the Controls tab and Sound's Equalizer card. | Controls: Touch controls · Press and hold · **Head gestures** · In-ear detection · **Multipoint** · **Case sounds** (Earbuds replaced, Other alerts); Sound: **Volume EQ** below the presets; each (i) "<Label>: read HH:MM:SS" | — | | |
-| T3 | **Multipoint** off, then on. | Each after the Buds' OK, "Multipoint: changed HH:MM:SS" | `4:{11:0}`, `4:{11:1}` → empty `RESPONSE` | | Whether a second device stays connected is not claimed |
-| T4 | **Use head gestures** off, then on. | Each after the OK; no dialog | `4:{29:1}` (off), `4:{29:2}` (on) → `RESPONSE`; nothing on DLCI 0x08 | | |
-| T5 | **Earbuds replaced** off; put a bud back into the case; then on, and again. Say whether the case sounded each time. | Each after the OK | `4:{28:0}`, `4:{28:1}` | | An observation, not a claim of the app |
-| T6 | **Other alerts** off, then on. | Each after the OK | `4:{27:0}`, `4:{27:1}` | | |
-| T7 | Sound: **Volume EQ** off, then on; listen at low volume and say what you hear. | Each after the OK; Equalizer (i) "Volume EQ: changed …" | `4:{15:0}`, `4:{15:1}` | | Audibility is an observation |
-| T8 | With T3–T7 left off: Disconnect, Connect. | All five read back as off, "read HH:MM:SS" | the twelve reads; the answers equal the last writes | | |
-| T9 | Only the **Left** bud out of the case (Info: "Control channel: 19"): Multipoint and Use head gestures off, then on. | As T3/T4 | the channel-19 forms — not yet seen on the wire (`CAP-070` BF-14/15) | | |
-| T10 | Only the **Right** bud out (Info: "Control channel: 21"): Volume EQ off, then on. | As T7 | `4:{15:1}` on channel 21 — not yet seen on the wire (`CAP-070` BF-20) | | |
-| T11 | Bluetooth off; force-stop the app; open it; Controls, then Sound. Check what a screen reader gets for each "—" (`adb shell uiautomator dump`, or a screen reader if one is installed). | Controls: six "—" in place of the switches; Sound: the EQ bands, Volume EQ, balance, mono audio, conversation detection "—"; each "—" has the description **"Not read from the Buds yet"** | — | | |
+| T1 | Right after the update over 1.0.1: open the app, let it connect; open **Controls** within the first second (screen recording). | The unread switches show "—" for about a second, then the Buds' values; no crash | `ReadSetting 4:16`, then twelve `ReadSetting` (2, 4, 7, 11, 12, 15, 17, 19, 22, 27, 28, 29), each answered | ⚠️ partly | CAP-070: twelve reads in 22/22 sessions; no crash; a first install in user 10, not an update; "—" not caught at the first Connect (camera, no screen recording) |
+| T2 | Read the Controls tab and Sound's Equalizer card. | Controls: Touch controls · Press and hold · **Head gestures** · In-ear detection · **Multipoint** · **Case sounds** (Earbuds replaced, Other alerts); Sound: **Volume EQ** below the presets; each (i) "<Label>: read HH:MM:SS" | — | ✅ | CAP-070 06:12:58–06:14:46 (order and (i) lines as specified; Equalizer (i) not opened) |
+| T3 | **Multipoint** off, then on. | Each after the Buds' OK, "Multipoint: changed HH:MM:SS" | `4:{11:0}`, `4:{11:1}` → empty `RESPONSE` | ✅ | Whether a second device stays connected is not claimed; CAP-070 A752/A1989 (ch 21 off, ch 19 on), all ACKed |
+| T4 | **Use head gestures** off, then on. | Each after the OK; no dialog | `4:{29:1}` (off), `4:{29:2}` (on) → `RESPONSE`; nothing on DLCI 0x08 | ✅ | CAP-070 A762/A1998; nothing on DLCI 0x08 |
+| T5 | **Earbuds replaced** off; put a bud back into the case; then on, and again. Say whether the case sounded each time. | Each after the OK | `4:{28:0}`, `4:{28:1}` | ⚠️ partly | An observation, not a claim of the app; writes ✅ (A770, A1992); the case-sound observation not recorded (no audio) |
+| T6 | **Other alerts** off, then on. | Each after the OK | `4:{27:0}`, `4:{27:1}` | ✅ | CAP-070 A777, A1995 |
+| T7 | Sound: **Volume EQ** off, then on; listen at low volume and say what you hear. | Each after the OK; Equalizer (i) "Volume EQ: changed …" | `4:{15:0}`, `4:{15:1}` | ⚠️ partly | Audibility is an observation; writes ✅ (A785, A1953, A3072, A3075); audibility not recorded (no audio) |
+| T8 | With T3–T7 left off: Disconnect, Connect. | All five read back as off, "read HH:MM:SS" | the twelve reads; the answers equal the last writes | ✅ | CAP-070 A824–A904: `11:0`, `15:0`, `27:0`, `28:0`, `29:1` |
+| T9 | Only the **Left** bud out of the case (Info: "Control channel: 19"): Multipoint and Use head gestures off, then on. | As T3/T4 | the channel-19 forms — first on the wire in `CAP-070` (BF-14/15) | ✅ | CAP-070 A3668/A3679, A3614/A3685 — the derived frames, ACKed |
+| T10 | Only the **Right** bud out (Info: "Control channel: 21"): Volume EQ off, then on. | As T7 | `4:{15:1}` on channel 21 — first on the wire in `CAP-070` (BF-20) | ✅ | CAP-070 A4770/A4800 — `15:1` on ch 21 = the derived frame, ACKed |
+| T11 | Bluetooth off; force-stop the app; open it; Controls, then Sound. Check what a screen reader gets for each "—" (`adb shell uiautomator dump`, or a screen reader if one is installed). | Controls: six "—" in place of the switches; Sound: the EQ bands, Volume EQ, balance, mono audio, conversation detection "—"; each "—" has the description **"Not read from the Buds yet"** | — | ⚠️ partly | "—" on film (Controls 06:38:04, Sound 06:39:04); no `uiautomator` dump — the description is not checked |
 
 ## After the run (within 1 minute of the last action)
 
@@ -333,7 +333,12 @@ new switches (the maintainer's choice, "alleen labels").
 | Q 0062 build | 6 | | | | |
 | R 0064 build | 7 | | | | |
 | S 1.0.1 build | 13 | | | | |
-| T 1.1.0 build | 11 | | | | |
+| T 1.1.0 build | 11 | 7 | 0 | 4 | 0 |
+
+**Run `CAP-070` (2026-10-07, 1.1.0 `0323849`, the user without Play; `ai-sessions/0075`, `CAP-070-FINDINGS.md`):** section T — ✅ T2, T3, T4, T6, T8, T9, T10;
+⚠️ T1 (no "—" caught at the first Connect; a first install, not an update), T5 and T7 (writes ✅, observations not recorded — no audio), T11 (no dump). Other
+steps — ✅ C10 (the swipe, camera only), O8 (twelve reads), M1/N1 ("—" on film); not run H5 (*Read EQ again* not tapped; the EQ read back after Bluetooth
+on), C12 (the tap came after "ready"), S6 on a screen recording, S12 (no rotation).
 
 **Run `CAP-068` (2026-10-04, 1.0.1 `e1fc886`, the user without Play; `ai-sessions/0070`, `CAP-068-FINDINGS.md`):** section S — ✅ S1 (partly: the tile "Open the app",
 the mode dimmed; the (i) text not opened), S2 (partly, same), S4, S5, S7, S8, S10, S11, S13; not identifiable S3, S6; not run S9 (one pair), S12 (no rotation).
