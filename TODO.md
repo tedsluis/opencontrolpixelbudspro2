@@ -148,9 +148,16 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
-- [ ] **Dependency and tool upgrade — its own session after 1.0.1** (**M**, "Own session after 1.0.1"): Gradle, AGP, Kotlin, the Compose BOM, Hilt;
-      on that bump re-check the `@ExperimentalMaterial3Api` opt-ins (`TopAppBar`, `PullToRefreshBox`) and `TabRow` vs `PrimaryTabRow`
-      (`SettingsMenu.kt`). Add `distributionSha256Sum` to the Gradle wrapper properties (`A68-HK-05`).
+- [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
+      (a) it is not hardware-tested — the next release's capture run covers it (the APK is otherwise the same app; `ai-sessions/0078` RESULT);
+      (b) **M** — raising `targetSdk` (lint `OldTargetApi` now reports 34) is its own session with a hardware run: Android 15 enforces edge-to-edge,
+      16 removes the opt-out and turns on predictive back, 17 makes an RFCOMM `read()` return −1 on close (quotes in that RESULT §A.4);
+      (c) **M** — `TabRow` is deprecated in material3 1.4.0 and kept with `@Suppress("DEPRECATION")` (`SettingsMenu.kt`); `PrimaryTabRow` narrows the
+      indicator to the label, `SecondaryTabRow` turns the selected label OnSurface — a visual choice;
+      (d) on the next BOM bump re-check the `TopAppBar` opt-in (`OpenControlNavHost.kt`): still needed because `TopAppBarScrollBehavior` is experimental;
+      (e) Gradle 9.8 / AGP 9.4 once Kotlin's "fully supported" range includes them (2.4.20: Gradle ≤ 9.7.0, AGP ≤ 9.3.1);
+      (f) one Gradle-10 deprecation remains, inside AGP (`TestFixturesUtil.kt:38`, "Using a Project object as a dependency notation") — re-check on the next
+      AGP release.
 - [ ] 🟡 **Accessibility, found while testing `ai-sessions/0074`:** a switch row's label and its `Switch` are separate accessibility nodes (siblings in the
       card), so a screen reader may announce "switch, on" without the setting's name — not tested on a phone. A merged row (`Modifier.toggleable` with
       `Role.Switch` on the row, the `Switch` without its own click) would fix it; it changes every switch's semantics (and the tests that find a switch by its

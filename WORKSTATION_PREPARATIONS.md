@@ -156,16 +156,17 @@ fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ flatpak install -y flathub 
 
 ## Android SDK platform and build tools; other tools the scripts use (added 2026-10-03, `ai-sessions/0069`)
 
-The build needs the Android SDK **platform `android-34`** and **build-tools `34.0.0`** (`README.md`, "Building from source"). Install them with
-Android Studio's SDK Manager (or `sdkmanager "platforms;android-34" "build-tools;34.0.0"`); the SDK path goes into `android/local.properties`
+The build needs the Android SDK **platform `android-37.0`** and **build-tools `36.0.0`** (`README.md`, "Building from source"; `android-34`/`34.0.0` until
+`ai-sessions/0078`, 2026-10-07 — the Android Gradle plugin 9.3 installs both itself on the first online build when the licences are accepted). Install them with
+Android Studio's SDK Manager (or `sdkmanager "platforms;android-37.0" "build-tools;36.0.0"`); the SDK path goes into `android/local.properties`
 (`sdk.dir=…`, gitignored). `scripts/release.sh` uses `apksigner` and `aapt2` from that build-tools folder.
 
 Check that everything the scripts and the documents use is present:
 
 ```bash
 java -version                                   # 21
-ls ~/Android/Sdk/platforms ~/Android/Sdk/build-tools   # android-34, 34.0.0
-~/Android/Sdk/build-tools/34.0.0/apksigner --version
+ls ~/Android/Sdk/platforms ~/Android/Sdk/build-tools   # android-37.0, 36.0.0
+~/Android/Sdk/build-tools/36.0.0/apksigner --version
 tshark --version | head -1                      # capture analysis, scripts/pwrpc_decode.py
 ffmpeg -version | head -1                       # film stills, scripts/readme_media.sh
 git lfs version                                 # the capture logs are LFS files: run `git lfs install` once
