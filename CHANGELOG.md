@@ -31,7 +31,7 @@ ADR-055). A switch moves only when the Buds confirm the change; otherwise it sta
 
 ### Known issues
 
-- The app says what a switch sets, not what you will hear: which sounds the case-sound switches silence, what Volume EQ does to the sound, and what
+- The app says what a switch sets: which sounds the case-sound switches silence, what Volume EQ does to the sound, and what
   switching Multipoint off does to a second connected device are not established.
 - The screen-reader text for "—" is checked by the unit tests, not yet on a phone.
 - English only. After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop (from 1.0.1).

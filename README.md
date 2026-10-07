@@ -103,7 +103,7 @@ security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
 **1.1.0 was released on 2026-10-07** (prepared in `ai-sessions/0074`): the switches for head gestures, Multipoint, the two case sounds and Volume EQ,
 and the screen-reader text for "—". Its hardware run (`CAP-070`, `ai-sessions/0075`) passed: every request of the five switches, on both control
 channels, byte-identical to the expected frames and confirmed by the Buds. Known issues of 1.1.0
-(also in [`CHANGELOG.md`](./CHANGELOG.md)): the app says what a switch sets, not what you will hear; the screen-reader text for "—" is checked by the unit
+(also in [`CHANGELOG.md`](./CHANGELOG.md)): the app says what a switch sets; the screen-reader text for "—" is checked by the unit
 tests, not yet on a phone.
 
 **Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
