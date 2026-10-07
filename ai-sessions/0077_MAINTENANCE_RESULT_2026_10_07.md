@@ -4,7 +4,7 @@
 **Category:** MAINTENANCE
 **Date:** 2026-10-07
 **Title:** Prepare and ask every decision that waits only for the maintainer — desk-research proposals, older capture-FINDINGS proposals, ADRs for two 1.0.1 behaviours, untracking the .pyc, restoring the Buds' state
-**Status:** awaiting maintainer sign-off — every decision answered and applied; the commit question is open
+**Status:** complete (all 13 decisions approved in chat 2026-10-07; committed and pushed to `maintenance/0077-decisions`, pull request opened — see Commits)
 
 ## Progress
 
@@ -12,7 +12,7 @@
   `HEAD..origin/main` empty; branch `maintenance/0077-decisions` from `origin/main`.
 - **Done:** Phase A (D1–D7 prepared, §A), Phase B (overview in chat; 13 questions in four `AskUserQuestion` calls, answers below), Phase C (approved edits
   applied; D6 untracked in the index, to be its own commit; footers; lint).
-- **Next:** the maintainer's answer to the commit question; the Buds restore (D7) is the maintainer's phone step.
+- **Next:** the maintainer merges the pull request; the Buds restore (D7) is the maintainer's phone step.
 - **Touched, unverified:** none.
 - **Intermediate results:** session scratchpad `f0077/`.
 
@@ -157,7 +157,17 @@ Each item is also in `TODO.md`:
 
 ## Commits
 
-Not committed yet — the commit question is open (task 10).
+On `maintenance/0077-decisions` (from `6167843`); the maintainer answered *"Commit, push en PR (Recommended)"* in chat 2026-10-07.
+
+| Hash | Subject |
+|---|---|
+| `a09a18e` | chore: untrack scripts/__pycache__/lint_docs.cpython-314.pyc |
+| `f475f51` | docs: the maintainer's pending decisions — proposals, ADR-056/057, Buds state |
+| `b3ed405` | docs(session): ai-sessions/0077 prompt and result, INDEX row |
+| (this commit) | docs(session): ai-sessions/0077 commits back-filled |
+
+A first attempt (`git commit -- <path>` for the untracked file failed, and the `.pyc` removal went into the session commit) was undone before any push
+with `git reset --soft HEAD~1` and recommitted in this order; nothing was lost.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0077_MAINTENANCE_RESULT_2026_10_07.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0077_MAINTENANCE_RESULT_2026_10_07
