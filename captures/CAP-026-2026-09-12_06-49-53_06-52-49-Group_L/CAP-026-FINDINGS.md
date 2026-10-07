@@ -138,7 +138,7 @@ then relaunch, not just navigating to a settings screen within an already-open a
   rest of the video — a further instance of the short/no-flag-form-may-be-stale pattern.
 - App force-close+reopen (connection never dropped) produces zero DLCI 0x02/0x04/0x08 traffic.
 
-> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–2 done (`BATT-001`/`OBS-001` evidence cells); 3 **still open** — the short/no-flag Case form stays 🔴 in `PROTOCOL.md` §4.3 Option E (listed in `TODO.md`).
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`; item 3 closed 2026-10-07, `ai-sessions/0077`, the maintainer's decision in chat):** 1–2 done (`BATT-001`/`OBS-001` evidence cells); 3 **closed as superseded** — the app reads the Case from DLCI 0x02 (ADR-043); the short-form question stays 🔴 in `PROTOCOL.md` §4.3 Option E.
 
 **Proposed (⏳ awaiting maintainer sign-off, per `AGENTS.md` §6/§15):**
 1. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `BATT-001` row — mark as wire-correlated, pointer to this file.

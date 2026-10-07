@@ -267,7 +267,7 @@ change state while this app is disconnected or backgrounded.
   last-known `StateFlow` value still holds. Reads run regardless of firmware; the Startup Handshake
   (§8.1, ADR-042) gates **writes** only.
 - **One rule for "current" (built `ai-sessions/0069`, 1.0.1; `ai-sessions/0068` A68-APP-02; the maintainer's choice in chat 2026-10-03, "Keep the value,
-  mark it"):** a value is current only while the session is `Ready` **and** the Buds reported it on this connection — `isCurrent(ready, valueAt,
+  mark it"; recorded as **ADR-057** on 2026-10-07):** a value is current only while the session is `Ready` **and** the Buds reported it on this connection — `isCurrent(ready, valueAt,
   sessionSince)` in `:domain` (`ValueCurrency.kt`); `BudsRepository.sessionSince` is the time the current connection was requested. A value that is not
   current stays visible, dimmed, with the (i) dot and "from the last connection" in its details: the ANC mode (kept across sessions — a `StateFlow<AncMode?>`
   since `0069`, A68-APP-03, so the newest report is never dropped), the EQ and the settings while nothing is connected (at a Connect they are reset to "not
@@ -850,7 +850,7 @@ this sequence explicit rather than inferred from ADR-005's decision alone:
 7. **Reconnection** (every subsequent app launch/Bluetooth toggle) skips steps 1–4 entirely —
    `BluetoothAdapter.getBondedDevices()` already has the device, so the app goes directly to step 5's
    bonding check (normally a no-op, since the link key is already stored) and step 6.
-8. **Which bonded device (as built since 1.0.1, `ai-sessions/0069`, A68-APP-04/05; the maintainer's choice in chat 2026-10-03):** the device whose
+8. **Which bonded device (as built since 1.0.1, `ai-sessions/0069`, A68-APP-04/05; the maintainer's choice in chat 2026-10-03; recorded as **ADR-056** on 2026-10-07):** the device whose
    address is this app's CDM association. Without an association, a **single** bonded device whose name contains "Pixel Buds" is used (as before); with
    **two or more** the app picks none — status `SeveralBudsPaired`, "More than one Pixel Buds device is paired with this phone. Tap Pair a device to
    choose the one to control." — and the user chooses in Android's picker (`PairingLogic.chooseBondedOrAsk`; the set of bonded devices has no order, so

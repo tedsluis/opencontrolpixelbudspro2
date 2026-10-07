@@ -580,6 +580,8 @@ Right bud's press-and-hold action (🟡, `03` assistant / `01` ANC, two samples)
 §6). On `CAP-069`'s third ACL the Buds opened the multiplexer and **DLCI 0x08 carried HFP** (the phone's server channel 4), GSND CONTROL DLCI 0x09 — count by server
 channel (paragraph below). The channel's protocol identity stays 🔴. `CAP-069-FINDINGS.md` §3, §8, §10.
 
+**Note (2026-10-07, `ai-sessions/0077`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "D2 Codes"; no status change).** Two additions to the GSND CONTROL codes above: Code `0x03`, field 3 = the lower of the two bud levels (🟡, 106 of 118, `DESKRESEARCH_FINDINGS.md` 2026-10-03 item 1); Code `0x05` also takes `01` (24 samples, with in-ear detection off — §6, 2026-09-28) and once `00` (`CAP-031` 983). The channel's protocol identity stays 🔴.
+
 **DLCI and server channel (2026-10-03, `ai-sessions/0069`, maintainer-approved in chat 2026-10-03, `AskUserQuestion` "Other texts" — `ai-sessions/0068` A68-CAP-22).** An RFCOMM DLCI is
 2 × server channel + direction bit; the **stable identifier is the server channel**: 1 = "MAESTRO APP", 2 = "GFPS RFCOMM" (the Message Stream), 4 = "GSND CONTROL",
 5 = "GSND AUDIO" (SDP names, `CAP-033` frame 1279). With the phone as the multiplexer's initiator these are DLCI 0x02, 0x04, 0x08, 0x0a — the numbers this
@@ -819,6 +821,8 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   recommended as a cheap confirmation step (repeat with isolated single taps, per
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group B) before treating the mode-index bit mapping as final for
   implementation.
+
+- **Note (2026-10-07, `ai-sessions/0077`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "D4d CAP-037"; no status change):** 🟡 a `Notify` with Settable `0x00` has carried Current `0x20` (Off) in every sample counted — `CAP-037` 17 of 17, `CAP-070` 19 of 19 (`tshark -r <log> -Y "btrfcomm.dlci==4 and btrfcomm.len>0" -T fields -e data.data | grep -o "0813000401e8.\{4\}" | sort | uniq -c`) — consistent with ADR-049's 🟡 "`00` ⇒ no bud worn" (no ANC without a worn bud). Proposed by `CAP-037-FINDINGS.md` §7 item 3.
 
 ### 4.2 Equalizer (EQ)
 
@@ -1360,6 +1364,7 @@ event-observation coroutines.
   100% Case 57% Right 100%". An independent, single-value message on the same DLCI (`Group 0x04
   Code 0x03`) cross-confirms the Right value at all 4 of `CAP-011`'s occurrences.
   *(Update 2026-10-03, `ai-sessions/0069`, lead L68-5 — 🟡, no status change: over all captures that message's field 3 equals the **lower** of the two bud levels wherever they differ (106 of 118 samples; never the higher one; 63 times that is Left) — it matched Right in `CAP-011` because Right was the lower bud there. Tabulation and method: `DESKRESEARCH_FINDINGS.md`, entry of 2026-10-03.)*
+- **Update (2026-10-07, `ai-sessions/0077`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "D1 Option E"):** the sentence "cross-confirms the Right value at all 4 of `CAP-011`'s occurrences" is superseded: over all captures `Group 0x04 Code 0x03`'s field 3 equals the **lower** of the two bud levels wherever they differ — 106 of 118 samples, never the higher one (63 × Left, 43 × Right; 12 carry the previous triple's lower value) — 🟡 HYPOTHESIS. In `CAP-011` Right was the lower bud. Evidence: `DESKRESEARCH_FINDINGS.md` 2026-10-03 item 1. No status change for ADR-014's index mapping.
 - **Not a new packet type — a new semantic decode of an already-known shape:** this exact
   `field1="all"` + "3 varint-triple entries" structure was already documented, structurally only,
   in `CAP-002-FINDINGS.md` §2a (2026-08-12) — that pass did not attempt to interpret the numbers.
@@ -3278,6 +3283,8 @@ leaving them buried in prose elsewhere.
 
 ### Behavior
 
+- **Note (2026-10-07, `ai-sessions/0077`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "D4a CAP-008"):** a phone call through the Buds (`CALL-001`) is wire- and film-correlated in `CAP-008-FINDINGS.md` §4 (two calls). Its eSCO/mSBC parameters (§5) are not taken further: audio codec parameters are out of scope (`PROJECT.md` Non-goals).
+
 - [ ] **Added 2026-10-06 (`ai-sessions/0072`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Extras") — Android's per-device switches, 🟢 for
       `CAP-058` (X1–X3, X5).** "Phone calls" off/on closes/reopens HFP (DLCI 0x0c `DISC` 4877, `SABM` 4971); "Media audio" off/on closes A2DP/AVRCP
       **and the phone's GSND CONTROL and GSND AUDIO channels** (AVDTP `Close` 5091, `DISC` DLCI 0x08/0x0a 5110/5111; reopened 5155–5232); "Input device"
@@ -3664,6 +3671,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-03 | **`ai-sessions/0069` — processing the `ai-sessions/0068` audit, every text maintainer-approved in chat 2026-10-03.** **§4.1** the ADR-022 count is 19 in 11 (not 17 in 10); the Set/ACK/NAK tally restated over every log (70 Sets, 59 ACK, 11 NAK, `scripts/message_stream_tally.py`); `CAP-063` 29 `Notify`. **§2.2a** `CAP-066` 3 of 3. **§2.3** DLCI = 2 × server channel + direction bit. **§4.3** Option A: the page names the case-open use case; Option C: 12 × `AT+BIEV` in `CAP-059`. **§4.4** Ring: the directions corrected (🟢), the Buds' own message 🟡 "ringing-status sync". **§4.5.2** Multipoint OFF write `CAP-019` 2482 on film; SASS flags bit 2 🟡. **§4.5.4** head gestures: both writes in `CAP-020`, 🟡 1 = off / 2 = on (status unchanged). **§6** the HFP "never recurs" item answered (a filter artefact); stale items ticked with pointers; the second serial suffix and the sweep range corrected. **§0/§1/§2/§3** stale source and transport wording. No promotion to 🟢 beyond the Ring directions | Claude (AI), maintenance task; maintainer-approved in chat 2026-10-03 |
 | 2026-10-06 | **`ai-sessions/0073` — second APK pass (`v1.0.955078536-10253511`), every text maintainer-approved in chat 2026-10-06 (`AskUserQuestion` "PROTOCOL").** Dated notes, no status change: **§2.2a** `0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` = `JitterBuffer.SetJitterBufferSizePreference`; the official app never requests `GetSoftwareInfo` (0 of 295), fields 5 ("random id") and 6 (not-primary flag) in the app's words. **§4.2** the navigate-away path is a navigation destination listener. **§4.3 Option F** entry field 2 = charger-type enum. **§4.5.9** no Loud Noise Protection / Adaptive Audio control in this app version. **§6** the `CAP-051` Optional gate refuted. | `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` |
 | 2026-10-07 | **`ai-sessions/0075` — `CAP-070` (Group BF, OpenControl 1.1.0 without Play services), maintainer-approved in chat 2026-10-07.** **§2.2a** L-1: the Left taken off on 19 with both buds out of the case ⇒ `DISC` + 21 (wear not on film); five Right changes on 19 without `DISC`; both docked ⇒ 21 or 19 — status unchanged (🟡). **§4.5.2/§4.5.4/§4.5.6/§4.5.7** dated notes: the channel-19 forms of 11 and 29, `15:1` on channel 21 and `17:7` on channel 19 are on the wire, byte-identical to the derived frames, ACKed. | Claude (AI), maintainer-approved |
+| 2026-10-07 | **`ai-sessions/0077` — the maintainer's pending decisions, approved in chat 2026-10-07.** **§4.3 Option E** dated Update: Code `0x03` field 3 = the lower bud level (🟡). **§2.3** note: Code `0x03`, Code `0x05` values `01`/`00`. **§4.1** note: Settable `00` ⇒ Current Off (🟡, 17/17 + 19/19). **§6** pointer to `CALL-001` (`CAP-008` §4; codec out of scope). No status change. | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

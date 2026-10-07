@@ -151,7 +151,7 @@ classic connection. This is normal, expected behavior, not a hidden second "forg
   patterns cleanly.
 - `CASE-008` was not attempted; the draft's claimed final "forget" did not occur.
 
-> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1 done (`PROTOCOL.md` §6 `CAP-029` item, corrected 2026-09-30 for the AVRCP filter); 2 done (`CONV-002` row); 3 **still open** (`CASE-008`).
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`; item 3 moved 2026-10-07, `ai-sessions/0077`):** 1 done (`PROTOCOL.md` §6 `CAP-029` item, corrected 2026-09-30 for the AVRCP filter); 2 done (`CONV-002` row); 3 **moved to `TODO.md` §3** as a capture idea (`CASE-008` untested).
 
 **Proposed (⏳ awaiting maintainer sign-off, per `AGENTS.md` §6/§15):**
 1. `PROTOCOL.md` §6 (Behavior) — add a new 🔴 open question: does Conversation Detection's
