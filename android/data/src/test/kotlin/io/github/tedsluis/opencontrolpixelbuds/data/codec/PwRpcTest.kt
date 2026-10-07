@@ -61,10 +61,11 @@ class PwRpcTest {
     }
 
     @Test
-    @DisplayName("only the fields ADR-034/036/046 unblock and ai-sessions/0052/0056 read can be read — no arbitrary setting read exists")
+    @DisplayName("only the fields ADR-034/036/046/052 unblock and ai-sessions/0052/0056/0074 read can be read — no arbitrary setting read exists")
     fun `refuses to build a read for any other field`() {
-        for (field in listOf(0, 1, 11, 13, 15, 27, 28, 29, 31, 200)) assertNull(Maestro.readSettingRequest(21, field), "field $field")
-        assertEquals(setOf(2, 4, 7, 12, 16, 17, 18, 19, 22), Maestro.READABLE_FIELDS)
+        // ai-sessions/0074 added 11, 15, 27, 28 (ADR-036) and 29 (ADR-052); 13 (approved for nothing), 21, 23 … 39 stay unreadable.
+        for (field in listOf(0, 1, 13, 21, 23, 30, 31, 39, 200)) assertNull(Maestro.readSettingRequest(21, field), "field $field")
+        assertEquals(setOf(2, 4, 7, 11, 12, 15, 16, 17, 18, 19, 22, 27, 28, 29), Maestro.READABLE_FIELDS)
     }
 
     @Test

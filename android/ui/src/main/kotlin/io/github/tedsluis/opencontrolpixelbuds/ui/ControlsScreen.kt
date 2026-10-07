@@ -50,7 +50,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 /**
  * The "Controls" tab (`ai-sessions/0052`, the maintainer's choice in chat 2026-09-26): "Use touch controls" (`qhr` field 4), the press-and-hold
  * action per bud (field 7) — both writable under DECISIONS.md ADR-045 — the press-and-hold ANC-mode list (field 12, ADR-046) and the "In-ear detection"
- * setting (field 2, ADR-047) — `ai-sessions/0056`, the texts and placement the maintainer chose in chat 2026-09-28.
+ * setting (field 2, ADR-047) — `ai-sessions/0056`, the texts and placement the maintainer chose in chat 2026-09-28. **`ai-sessions/0074`** (the maintainer's
+ * choices in chat 2026-10-06: "Gebaren eerst", "alleen labels"): "Head gestures" (field 29, ADR-052) below "Press and hold", "Multipoint" (field 11,
+ * ADR-053) below "In-ear detection", then "Case sounds" (fields 28 and 27, ADR-054) — labels only.
  */
 @Composable
 fun ControlsScreen(
@@ -62,6 +64,10 @@ fun ControlsScreen(
     onAncModeSelectedChanged: (AncMode, Boolean) -> Unit,
     onInEarDetectionChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onMultipointChanged: (Boolean) -> Unit = {},
+    onHeadGesturesChanged: (Boolean) -> Unit = {},
+    onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit = {},
+    onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
 ) {
     val enabled = connectionState.isReady()
     Surface(modifier = modifier.fillMaxSize()) {
@@ -89,9 +95,27 @@ fun ControlsScreen(
                 HoldRow("Right", settings.holdRight, enabled) { onPressAndHoldChanged(Bud.RIGHT, it) }
                 if (showAncModeList(settings)) AncModeListSection(settings.ancModeList, enabled, onAncModeSelectedChanged)
             }
+            SettingsCard(HEAD_GESTURES_TITLE, listOf("$HEAD_GESTURES_LABEL: ${settingTime(settings.headGestures)}"), enabled, listOf(settings.headGestures)) {
+                SettingSwitchRow(HEAD_GESTURES_LABEL, null, settings.headGestures, enabled, onHeadGesturesChanged)
+            }
             SettingsCard("In-ear detection", listOf("In-ear detection: ${settingTime(settings.inEarDetection)}"), enabled, listOf(settings.inEarDetection)) {
                 SettingSwitchRow("In-ear detection", IN_EAR_DETECTION_SUBTITLE, settings.inEarDetection, enabled, onInEarDetectionChanged)
                 Text(IN_EAR_DETECTION_OFF_NOTE, style = MaterialTheme.typography.bodySmall)
+            }
+            SettingsCard(MULTIPOINT_LABEL, listOf("$MULTIPOINT_LABEL: ${settingTime(settings.multipoint)}"), enabled, listOf(settings.multipoint)) {
+                SettingSwitchRow(MULTIPOINT_LABEL, null, settings.multipoint, enabled, onMultipointChanged)
+            }
+            SettingsCard(
+                CASE_SOUNDS_TITLE,
+                listOf(
+                    "$CASE_SOUND_EARBUDS_REPLACED_LABEL: ${settingTime(settings.caseSoundEarbudsReplaced)}",
+                    "$CASE_SOUND_OTHER_ALERTS_LABEL: ${settingTime(settings.caseSoundOtherAlerts)}",
+                ),
+                enabled,
+                listOf(settings.caseSoundEarbudsReplaced, settings.caseSoundOtherAlerts),
+            ) {
+                SettingSwitchRow(CASE_SOUND_EARBUDS_REPLACED_LABEL, null, settings.caseSoundEarbudsReplaced, enabled, onCaseSoundEarbudsReplacedChanged)
+                SettingSwitchRow(CASE_SOUND_OTHER_ALERTS_LABEL, null, settings.caseSoundOtherAlerts, enabled, onCaseSoundOtherAlertsChanged)
             }
         }
     }
@@ -179,6 +203,24 @@ internal const val ANC_MODE_LIST_TITLE: String = "Modes for press and hold (both
 
 /** Shown under the list; the two last ticked boxes are disabled ("Box disabled + line"). */
 internal const val ANC_MODE_LIST_MIN_TEXT: String = "At least two modes must stay selected."
+
+/**
+ * `ai-sessions/0074`: the label of `qhr` field 11 — the setting's name (PROTOCOL.md §4.5.2; the official screen's switch reads "Use multipoint",
+ * `CAP-069-FINDINGS.md` §2), the label the maintainer chose in chat 2026-10-06; no note ("alleen labels").
+ */
+internal const val MULTIPOINT_LABEL: String = "Multipoint"
+
+/** `ai-sessions/0074`: field 29's card and switch — "Use head gestures" is the official app's label (PROTOCOL.md §4.5.4); no note ("alleen labels"). */
+internal const val HEAD_GESTURES_TITLE: String = "Head gestures"
+internal const val HEAD_GESTURES_LABEL: String = "Use head gestures"
+
+/**
+ * `ai-sessions/0074`: the "Case sounds" card — ADR-054's labels, chosen by the maintainer in chat 2026-10-06: 28 = "Earbuds replaced" (the official settings
+ * list's wording; its switch reads "Bud return", PROTOCOL.md §4.5.8), 27 = "Other alerts"; no note.
+ */
+internal const val CASE_SOUNDS_TITLE: String = "Case sounds"
+internal const val CASE_SOUND_EARBUDS_REPLACED_LABEL: String = "Earbuds replaced"
+internal const val CASE_SOUND_OTHER_ALERTS_LABEL: String = "Other alerts"
 
 internal const val IN_EAR_DETECTION_SUBTITLE: String = "Pauses audio when you take a bud out and resumes it when you put it back."
 

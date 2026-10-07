@@ -10,6 +10,31 @@ is kept unchanged under "History before 1.0.0". 1.0.1, a hotfix, followed on 202
 
 ## [Unreleased]
 
+## [1.1.0] - not yet released
+
+Prepared in `ai-sessions/0074` (2026-10-06); build commit `0323849`, hardware-tested as `CAP-070` (`ai-sessions/0075`, 2026-10-07) in a GrapheneOS user without Google Play services. Five new settings, each read from the Buds
+when the app connects and changed with one request per tap — the request the official app sends for the same setting (`DECISIONS.md` ADR-052 …
+ADR-055). A switch moves only when the Buds confirm the change; otherwise it stays and the app says why.
+
+### Added
+
+- Controls: **Head gestures** ("Use head gestures"), **Multipoint**, and **Case sounds** — "Earbuds replaced" and "Other alerts".
+- Sound: **Volume EQ**, at the bottom of the equalizer.
+- A screen reader now says "Not read from the Buds yet" where the app shows "—" (the equalizer bands, the balance, every switch).
+
+### Changed
+
+- A switch whose setting was not read from the Buds shows "—" instead of a greyed-out "off" (the touch-controls, in-ear detection, mono audio and
+  conversation detection switches too).
+- The app reads twelve settings at connect and on a pull-to-refresh (seven before).
+
+### Known issues
+
+- The app says what a switch sets, not what you will hear: which sounds the case-sound switches silence, what Volume EQ does to the sound, and what
+  switching Multipoint off does to a second connected device are not established.
+- The screen-reader text for "—" is checked by the unit tests, not yet on a phone.
+- English only. After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop (from 1.0.1).
+
 ## [1.0.1] - 2026-10-04
 
 A hotfix for 1.0.0 (`ai-sessions/0069`, from the `ai-sessions/0068` audit). Nothing new is sent to the Buds: the same commands, on the same channels.

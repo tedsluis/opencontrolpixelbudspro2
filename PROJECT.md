@@ -36,19 +36,19 @@ To be finalized based on what is actually found in the protocol. Candidate
 features offered by the official app (it still needs to be verified which of
 these run over local BLE/RFCOMM versus over the cloud/a Google account):
 
-> **Status (2026-09-24):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
+> **Status (2026-09-24; updated 2026-10-06 for 1.1.0):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
 > says so. The authoritative per-feature state (and its unblocking ADR) is `ARCHITECTURE.md` §5a.
 
 - [x] Read battery status (left, right: DLCI 0x04, ADR-033; case and per-bud "charging in the case": DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043 and its Update)
 - [x] Switch Active Noise Cancelling / Transparency / Adaptive mode (ADR-009)
-- [x] Configure equalizer / sound profile (presets and custom bands) (ADR-020/034)
-- [~] Configure touch controls and head gestures — "Use touch controls" and press-and-hold per bud built (read + write, ADR-036/045, `ai-sessions/0052`); the press-and-hold ANC-mode list built (field 12, read + write, ADR-046, `ai-sessions/0056`); head gestures not built
+- [x] Configure equalizer / sound profile (presets and custom bands) (ADR-020/034); Volume EQ on/off (field 15, read + write, ADR-055, `ai-sessions/0074`, 1.1.0)
+- [x] Configure touch controls and head gestures — "Use touch controls" and press-and-hold per bud built (read + write, ADR-036/045, `ai-sessions/0052`); the press-and-hold ANC-mode list built (field 12, read + write, ADR-046, `ai-sessions/0056`); "Use head gestures" built (field 29, read + write, ADR-052, `ai-sessions/0074`, 1.1.0)
 - [x] Volume balance, mono audio, conversation detection (read + write, ADR-036/045, `ai-sessions/0052`)
 - [~] Read firmware version and serial numbers per component (firmware shown; serial numbers not read)
 - [x] "Find my Buds" functionality — Left/Right only (ADR-011); Case/"both" out of scope (ADR-027)
 - [ ] In-ear detection status — the in-ear detection **setting** is read and written (field 2, ADR-047, `ai-sessions/0056`); whether a bud is worn is not shown
-- [ ] Manage multipoint connections
-- [ ] Case sound settings (earbuds replaced, other notifications)
+- [~] Manage multipoint connections — the Multipoint switch is built (field 11, read + write, ADR-053, `ai-sessions/0074`, 1.1.0); choosing or listing the connected devices is not
+- [x] Case sound settings (earbuds replaced, other notifications) — fields 28 and 27, read + write, ADR-054, `ai-sessions/0074`, 1.1.0
 
 > See `PROTOCOL.md` for which of these features actually run over a local
 > BLE/RFCOMM command (in scope) versus require a Google cloud service or
@@ -133,13 +133,15 @@ Without Google Play Services installed, the app can:
 > *Row 2 updated 2026-10-04 (`ai-sessions/0070`, maintainer-approved in chat, `AskUserQuestion` "DoD text", option *"Approve as shown (Recommended)"*):* the ANC change was
 > "maintainer-attested, not captured" for 1.0.0; `CAP-068` (`CAP-068-FINDINGS.md` §2; "A" = `CAP-068-btsnoop_hci2.log.last`) replaces it with frames.
 
-## Status after 1.0.x (added 2026-10-03, `ai-sessions/0069`)
+## Status after 1.0.x (added 2026-10-03, `ai-sessions/0069`; 1.1.0 added 2026-10-06, `ai-sessions/0074`)
 
 1.0.0 was published on 2026-10-03 (`RELEASING.md`, Release log); 1.0.1, a fix release prepared in `ai-sessions/0069`, was tested in `CAP-068` and released on 2026-10-04 (`ai-sessions/0070`). v1 contains: connection and Safe Mode,
 noise control with a Quick Settings tile, the equalizer, battery (Left / Right / Case), Find My Buds (Left / Right), touch controls, press and hold and its mode
-list, balance, mono audio, conversation detection and the in-ear detection setting. **Next features (the maintainer's choice, chat 2026-10-03, "Features"):** head
-gestures (`qhr` field 29) and Multipoint (field 11) — each only after its `PROTOCOL.md` entry is 🟢 FACT and its own `DECISIONS.md` ADR exists; the evidence run is
-`CAP-069` (official app, Pixel 7a). Also open: the Battery Notification on case-open (`CAP-054`).
+list, balance, mono audio, conversation detection and the in-ear detection setting. The next features the maintainer chose (chat 2026-10-03, "Features") reached
+🟢 FACT and their ADRs in `CAP-069` (`ai-sessions/0071`): head gestures (`qhr` field 29, ADR-052) and Multipoint (field 11, ADR-053); the case sounds (27, 28,
+ADR-054) and Volume EQ (15, ADR-055) followed on 2026-10-06. **1.1.0** (prepared in `ai-sessions/0074`, not yet released) builds all five switches and the
+screen-reader text for "—"; its release run `CAP-070` (`ai-sessions/0075`, 2026-10-07) passed — every switch request on both control channels confirmed by the Buds, the three forms not seen before now on the wire; verdict: release build `0323849`. The Battery Notification on case-open was tested in `CAP-054`: no clear battery field
+(ADR-006 Update of 2026-10-06).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROJECT

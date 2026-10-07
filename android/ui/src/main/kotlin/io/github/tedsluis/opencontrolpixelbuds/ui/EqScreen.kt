@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -79,6 +80,10 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
  * **`ai-sessions/0059` (A58-APP-02, the maintainer's choice "Disable until read", chat 2026-09-30):** the five sliders are **disabled** until the EQ has
  * been read — one band dragged from the flat start would write the four untouched bands as 0.0, values the Buds never reported (the same rule as every
  * other unread setting, U-1). The presets stay enabled: a preset is a full quintet and assumes nothing.
+ *
+ * **`ai-sessions/0074` (ADR-055, the maintainer's choices in chat 2026-10-06: Volume EQ at the bottom of the Equalizer card, "alleen labels"):** the
+ * "Volume EQ" switch (`qhr` field 15) sits below the presets; its own "read / changed" line is in the Equalizer card's (i), an unread or last-connection
+ * value marks that (i) like the EQ itself.
  */
 @Composable
 fun EqScreen(
@@ -95,12 +100,15 @@ fun EqScreen(
     onVolumeBalanceChanged: (Int) -> Unit = {},
     onMonoAudioChanged: (Boolean) -> Unit = {},
     onConversationDetectionChanged: (Boolean) -> Unit = {},
+    onVolumeEqChanged: (Boolean) -> Unit = {},
 ) {
     val enabled = connectionState.isReady()
     val slidersEnabled = enabled && gains != null // A58-APP-02: no slider write from an assumed starting quintet
     val shown = gains ?: EqBandGains.FLAT
     // `ai-sessions/0069` A68-APP-02: while no session is open the last connection's values stay, dimmed and marked — never shown as current.
     val eqFromLastConnection = !enabled && gains != null
+    val volumeEqFromLastConnection = settingsFromLastConnection(enabled, listOf(settings.volumeEq))
+    val equalizerFromLastConnection = eqFromLastConnection || volumeEqFromLastConnection
     Surface(modifier = modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -113,8 +121,8 @@ fun EqScreen(
                         // `ai-sessions/0057` D-7: "EQ updated: HH:MM:SS" is in the (i); the dot marks an EQ not read from the Buds yet.
                         CardTitle(
                             "Equalizer",
-                            eqDetailLines(eqProfileUpdatedAt, eqFromLastConnection),
-                            notCurrent = (enabled && gains == null) || eqFromLastConnection,
+                            eqDetailLines(eqProfileUpdatedAt, equalizerFromLastConnection) + "$VOLUME_EQ_LABEL: ${settingTime(settings.volumeEq)}",
+                            notCurrent = (enabled && (gains == null || settings.volumeEq == null)) || equalizerFromLastConnection,
                         )
                         EqStatusNotice(connectionState, gains, eqError, onRefresh)
                         Column(modifier = Modifier.alpha(if (eqFromLastConnection) NOT_CURRENT_ALPHA else 1f)) {
@@ -126,6 +134,9 @@ fun EqScreen(
                         }
                         Text("Presets", style = MaterialTheme.typography.titleSmall)
                         EqPresetRows(enabled, onPresetSelected)
+                        Column(modifier = Modifier.alpha(if (volumeEqFromLastConnection) NOT_CURRENT_ALPHA else 1f)) {
+                            SettingSwitchRow(VOLUME_EQ_LABEL, null, settings.volumeEq, enabled, onVolumeEqChanged)
+                        }
                     }
                 }
             }
@@ -170,6 +181,9 @@ internal fun eqDetailLines(eqProfileUpdatedAt: Long?, fromLastConnection: Boolea
 
 /** Shown in place of a number that was not read from the Buds (A68-APP-08) — never a default drawn as a reading. */
 internal const val NOT_READ_VALUE: String = "—"
+
+/** `ai-sessions/0074`: the label of `qhr` field 15 (the official app's own, PROTOCOL.md §4.5.6); no note — the maintainer's choice "alleen labels". */
+internal const val VOLUME_EQ_LABEL: String = "Volume EQ"
 
 internal const val EQ_NOT_READ_DETAIL: String = "The EQ is read from the Buds at Connect and with \"Read EQ again\"; it has not been read on this connection yet."
 
@@ -258,7 +272,11 @@ private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onCha
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Balance")
-            Text(if (reading != null) balanceText(buds) else NOT_READ_VALUE, style = MaterialTheme.typography.bodySmall)
+            if (reading != null) {
+                Text(balanceText(buds), style = MaterialTheme.typography.bodySmall)
+            } else {
+                NotReadValue(style = MaterialTheme.typography.bodySmall) // `ai-sessions/0074`: the dash with its screen-reader text
+            }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("L")
@@ -291,8 +309,8 @@ private fun EqBandSlider(label: String, value: Float, enabled: Boolean, known: B
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label)
             // A68-APP-08 (`ai-sessions/0069`, the maintainer's choice "Visual '—' only"): an EQ that was not read shows no number — "0.0" would be a value
-            // the Buds never reported. (What a screen reader says for it is a later step, `TODO.md`.)
-            Text(if (known) "%.1f".format(shown) else NOT_READ_VALUE)
+            // the Buds never reported. `ai-sessions/0074`: a screen reader says "Not read from the Buds yet" for it ([NotReadValue]).
+            if (known) Text("%.1f".format(shown)) else NotReadValue(style = LocalTextStyle.current)
         }
         Slider(
             value = shown,

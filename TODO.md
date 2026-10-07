@@ -19,21 +19,27 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 ## 2. Hardware verification debt (the app, on film)
 
-Open after `CAP-068` (`ai-sessions/0070`); each goes into the next app run with its expected bytes.
+Open after `CAP-070` (the 1.1.0 release run, `ai-sessions/0075`, `CAP-070-FINDINGS.md`); each goes into the next app run with its expected bytes. Done in
+`CAP-070` and removed here: the five switches on hardware (read, off, read back, on — 89 of 89 writes ACKed), the three request forms no capture held (11 and 29
+on channel 19, `15:1` on channel 21), the channel-19 balance `17:7`, the swipe between tabs (camera only), and P1 (a first install in user 10, 🟡).
 
-- [ ] `APP_TESTPLAN.md` H5 with the *Read EQ again* button (`CAP-068` read the value back only at a reconnect); S6 ("—" in the first second after
-      ready — film the phone's screen, not the camera), S12 (export across a rotation), S9 (needs two Pixel Buds paired) — not shown in `CAP-068`.
-- [ ] P1 of a release run: record `dumpsys package … | grep -E "firstInstallTime|lastUpdateTime"` in the test user — `CAP-068`'s logs suggest a fresh
-      install, not an update over 1.0.0 (`CAP-068-FINDINGS.md` §0).
-- [ ] The Left bud taken out with both worn on channel 19, head in view (lead L-1 of `ai-sessions/0061`; half answered in `CAP-066`) — 🔴. Not in
-      `CAP-068`; add it to the next run with both buds worn.
-- [ ] The channel-19 balance frame `17:7`; B4 double tap (`AlreadyInProgress`) — not in `CAP-068` (B4 needs the Buds forgotten).
+- [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
+      Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11)
+- [ ] C12 — a tap during an automatic re-open ("The app's channel is being reopened …", no write afterwards): not done in `CAP-070` (the tap came after
+      "ready"). Needs the screen recording.
+- [ ] `APP_TESTPLAN.md` H5 with the *Read EQ again* button (`CAP-068` and `CAP-070` read the value back only at a reconnect); S6 ("—" in the first second
+      after ready) on Android's **screen recording** (seen on the camera in `CAP-070` at 06:17:43 and 06:20:24, not on the first Connect); S12 (export across a
+      rotation) — not done in `CAP-068` or `CAP-070`. S9 (needs two Pixel Buds paired).
+- [ ] The update path: install a release **over** the previous one in the test user (keep the older APK; `CAP-068` and `CAP-070` were first installs there,
+      🟡 `CAP-070-FINDINGS.md` §0) and record `adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -A12 "User 10:"`.
+- [ ] The Left bud taken out with both **worn** on channel 19, **head in view** (lead L-1; `CAP-070` BF-18 gave `DISC` + 21 with the Left identified, wear
+      not on film) — 🟡 (`INEAR-005`).
+- [ ] The case-sound and Volume-EQ observations (what is heard): the film needs an audio track (`CAP-070`'s had none), or the maintainer says it.
+- [ ] What sent the two `SIGQUIT` stack dumps of `CAP-070` (L1 508, L2 597) — keep a system log in the next run.
+- [ ] B4 double tap (`AlreadyInProgress`) — needs the Buds forgotten and re-paired.
 - [ ] K5 / BC-12 (GrapheneOS Bluetooth auto-off): only in a user where the setting exists (the Owner).
-- [ ] The swipe between tabs — not identified on film in any capture (`ARCHITECTURE.md` §2.4, `// TODO(verify)`).
 - [ ] F-4 on a **debug** build: StrictMode lines after a Bluetooth off/on (🟡 the framework's `BluetoothLeAudio` may still warn —
       `CAP-066-FINDINGS.md` §8). Not observable on a release build.
-- [ ] `APP_TESTPLAN.md` A5 wording: revoking *Nearby devices* in Settings ends the process; the "You denied the permission" screen appears only
-      after a denial in the prompt (`CAP-067` §7) — correct the test plan step when it is next run.
 - [ ] Execute the test plans on a second device (another Android version or OEM) — never done; one phone (Pixel 9a, GrapheneOS) so far.
 
 ## 3. Planned captures
@@ -65,21 +71,14 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
 
 ## 4. Protocol: leads and open questions
 
-Next app features, chosen by the maintainer (chat 2026-10-03, "Features": *"Yes to both, after CAP-069"*):
+The five switches the maintainer chose (Multipoint, head gestures, the two case sounds, Volume EQ; ADR-052 … ADR-055) and the screen-reader text are built in
+1.1.0 (`ai-sessions/0074`) and passed their hardware run `CAP-070` (`ai-sessions/0075`).
 
-- [ ] **Multipoint switch** — field 11 write unblocked by ADR-053 (`CAP-069`, 2026-10-04); build first (**M**, chat 2026-10-04, "Order": *"Multipoint first"*), app
-      session with real-byte fixtures `CAP-069` 3161/3212 and a hardware re-test.
-- [ ] **Head gestures switch** — field 29 read + write unblocked by ADR-052 (`CAP-069`); build after Multipoint; fixtures `CAP-069` 2492/2564, reads 1226/7209.
-- [ ] **Case sounds switches** — fields 27 ("Other alerts") and 28 ("Earbuds replaced"), read + write unblocked by ADR-054 (chat 2026-10-06); same
-      session as the two above (**M**, chat 2026-10-06); fixtures `CAP-024` 2053/2084/1988/2023 (channel 19), `CAP-058` 5680/5697/5623/5643 (channel 21),
-      reads `CAP-024` 1092/1096, `CAP-058` 4514/4517. The hardware re-test notes where the Buds and the case are and whether the case still sounds.
-- [ ] **Volume EQ switch** — field 15, read + write unblocked by ADR-055 (chat 2026-10-06); same session; fixtures `CAP-022` 1871/1895 (channel 19),
-      `CAP-041` 2461 (channel 21, off), reads `CAP-024` 1038, `CAP-058` 2930. The channel-21 "on" frame is uncaptured: `// TODO(verify)` and a labelled
-      structural test until the hardware re-test records it.
-- [ ] In that same session (**M**, chat 2026-10-06): the screen-reader text for a setting that was not read ("—", §5 Accessibility), and the open
-      film items of §2 in its hardware run.
-- [ ] `ARCHITECTURE.md` §5a and `PROJECT.md` ("Status after 1.0.x", the feature list) still describe head gestures and Multipoint as waiting for `CAP-069`;
-      update them with the app session that builds the switches (`ai-sessions/0071`, deferred).
+- [ ] **Follow-up FEATURE session after the 1.1.0 release** (maintainer's choice, chat 2026-10-07): replace the labelled structural fixtures
+      (`SettingsFixtures.kt` `Settings074`, the labelled tests in `SettingsCodecTest.kt`) with the real `CAP-070` frames — channel-19 `4:{11:0}` A3668 /
+      `4:{11:1}` A3679, `4:{29:1}` A3614 / `4:{29:2}` A3685, `4:{17:7}` A3747, channel-21 `4:{15:1}` A4800 → A4802 (`CAP-070-FINDINGS.md` §3) — and remove the
+      `// TODO(verify)` on `SettingsCodec.FIELD_VOLUME_EQ` (ADR-055; its KDoc also names the old placeholder folder of `CAP-070`).
+
 - [ ] Decompile the official app **1.0.990706425** (versionCode `10260911`) with JADX and apktool (ADR-017 boundary). Its first purpose is met
       without it: the two ids of `CAP-069` are named from literals of 1.0.955078536 — `0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` =
       `maestro_pw.JitterBuffer`/`SetJitterBufferSizePreference` (`ai-sessions/0073` §4.1, `PROTOCOL.md` §2.2a note of 2026-10-06). What the newer
@@ -162,8 +161,10 @@ Open questions (each with where it is described):
 - [ ] **Dependency and tool upgrade — its own session after 1.0.1** (**M**, "Own session after 1.0.1"): Gradle, AGP, Kotlin, the Compose BOM, Hilt;
       on that bump re-check the `@ExperimentalMaterial3Api` opt-ins (`TopAppBar`, `PullToRefreshBox`) and `TabRow` vs `PrimaryTabRow`
       (`SettingsMenu.kt`). Add `distributionSha256Sum` to the Gradle wrapper properties (`A68-HK-05`).
-- [ ] **Accessibility:** a setting that was not read shows "—" (the maintainer chose the visual form only, 2026-10-03); a content description
-      ("not read") for screen readers is the deferred half.
+- [ ] 🟡 **Accessibility, found while testing `ai-sessions/0074`:** a switch row's label and its `Switch` are separate accessibility nodes (siblings in the
+      card), so a screen reader may announce "switch, on" without the setting's name — not tested on a phone. A merged row (`Modifier.toggleable` with
+      `Role.Switch` on the row, the `Switch` without its own click) would fix it; it changes every switch's semantics (and the tests that find a switch by its
+      sibling label) — **M** decides whether and when.
 - [ ] **Balance precision:** `CAP-067` reached Right 4 on the 17th drag (7 of 17 snapped to Centre). Options: a live value label while dragging,
       slider `steps`, or the step buttons back.
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
@@ -173,7 +174,7 @@ Open questions (each with where it is described):
 - [ ] Auto-connect on lid-open: not possible from any event the app sees (`CAP-064-FINDINGS.md` §1); **M** chose "Nothing now" (2026-10-01).
 - [ ] Undecided, each needs its own ADR (**M**): a background session via CDM device presence (`ARCHITECTURE.md` §6.0b (b)); a per-channel
       "degraded" state; the BLE battery advertisement scan (ADR-006's bounded exception); `SubscribeToSettingsChanges`. (The settings that were
-      readable but not shown — 11, 15, 27, 28 — are decided: ADR-053, ADR-055, ADR-054; §4.)
+      readable but not shown — 11, 15, 27, 28 — are built in 1.1.0 with ADR-053, ADR-055, ADR-054, as is 29 with ADR-052.)
 - [ ] Safe Mode: grey out Sound/Controls (offered in `ai-sessions/0057`, not chosen) — revisit only if a Safe-Mode run shows the per-tap refusal
       confuses.
 - [ ] From `ai-sessions/0068` `A68-APP-13`, not changed in 1.0.1 — each needs a test that forces the interleaving, which the present test set-up

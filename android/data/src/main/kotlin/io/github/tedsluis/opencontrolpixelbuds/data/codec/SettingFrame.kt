@@ -25,13 +25,14 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
 
 /**
  * One non-EQ `qhr` setting value, as a `ReadSetting` answer carries it and as a `WriteSetting` request sends it: payload `4:{N: …}`
- * (PROTOCOL.md §4.5, ADR-013/019/034). Only the fields ADR-036/046 let the app read are modelled; [Flag] (2 — ADR-047; 4, 19, 22), [Balance] (17),
- * [PressAndHold] (7) — ADR-045 — and [AncModes] (12, ADR-046) are the only values ever written.
+ * (PROTOCOL.md §4.5, ADR-013/019/034). Only the fields ADR-036/046 let the app read are modelled; [Flag] (2 — ADR-047; 4, 19, 22 — ADR-045; 11 — ADR-053;
+ * 27, 28 — ADR-054; 15 — ADR-055),
+ * [Balance] (17), [PressAndHold] (7) — ADR-045 — [AncModes] (12, ADR-046) and [HeadGestures] (29, ADR-052) are the only values ever written.
  */
 sealed class SettingValue {
     abstract val field: Int
 
-    /** A 0/1 setting: 2 in-ear detection, 4 touch controls, 19 mono audio, 22 conversation detection. */
+    /** A 0/1 setting: 2 in-ear detection, 4 touch controls, 11 Multipoint, 15 Volume EQ, 19 mono audio, 22 conversation detection, 27 / 28 case sounds. */
     data class Flag(override val field: Int, val on: Boolean) : SettingValue()
 
     /** Field 17, `sint32` (zigzag) −100 … +100, +100 = Left (ADR-026). */
@@ -51,28 +52,62 @@ sealed class SettingValue {
     data class AncModes(val list: AncModeList) : SettingValue() {
         override val field: Int get() = SettingsCodec.FIELD_ANC_MODE_LIST
     }
+
+    /**
+     * Field 29, "Use head gestures" (🟢 PROTOCOL.md §4.5.4, ADR-052). **Not a 0/1 flag:** on the wire [SettingsCodec.HEAD_GESTURES_OFF] = 1 and
+     * [SettingsCodec.HEAD_GESTURES_ON] = 2, in both directions (`CAP-069` 2492/2564); a read of any other value is not interpreted ("—").
+     */
+    data class HeadGestures(val on: Boolean) : SettingValue() {
+        override val field: Int get() = SettingsCodec.FIELD_HEAD_GESTURES
+    }
 }
 
 /**
  * Encoder/decoder for [SettingValue] (hand-written, DECISIONS.md ADR-041). The encoder is byte-identical to the official app's writes for the same
- * channel (`SettingsCodecTest`: `CAP-019` 1720/1808, `CAP-020` 1741/1995, `CAP-021` 1895/3619/4315/4976, `CAP-022` 1621/1823/1922…2099, `CAP-056`
- * 1689/1725/1786/1815/1843/2173/4048/2849/3627, `CAP-041` 2176/2192). The
+ * channel (`SettingsCodecTest`: `CAP-019` 1720/1808/2293/2482, `CAP-020` 1741/1995, `CAP-021` 1895/3619/4315/4976, `CAP-022` 1621/1823/1922…2099,
+ * `CAP-056` 1689/1725/1786/1815/1843/2173/4048/2849/3627, `CAP-041` 2176/2192, `CAP-069` 3161/3212/2492/2564, `CAP-024` 1988/2023/2053/2084, `CAP-058`
+ * 5623/5643/5680/5697, `CAP-022` 1871/1895, `CAP-041` 2461). The
  * decoder never throws and returns `null` for anything that is not exactly one readable field of the expected shape (AGENTS.md §11).
  */
 object SettingsCodec {
     const val FIELD_IN_EAR_DETECTION = 2
     const val FIELD_TOUCH_CONTROLS = 4
     const val FIELD_PRESS_AND_HOLD = 7
+    const val FIELD_MULTIPOINT = 11
     const val FIELD_ANC_MODE_LIST = 12
+
+    /**
+     * "Volume EQ" (🟢 PROTOCOL.md §4.5.6; ADR-055). Writes are byte-identical to `CAP-022` 1871/1895 (channel 19) and `CAP-041` 2461 (channel 21, off).
+     * TODO(verify): the channel-21 `4:{15:1}` write has never been captured (ADR-055); it is built by the same codec and covered only by a labelled structural
+     * test until the hardware run records it — `captures/CAP-070-…/CAP-070-EVENT-NOTES.md` (Group BF), step "Volume EQ on, channel 21"; PROTOCOL.md §4.5.6.
+     */
+    const val FIELD_VOLUME_EQ = 15
     const val FIELD_VOLUME_BALANCE = 17
     const val FIELD_MONO_AUDIO = 19
     const val FIELD_CONVERSATION_DETECTION = 22
 
-    /** The 0/1 fields the decoder reads (ADR-036). */
-    private val FLAG_FIELDS = setOf(FIELD_IN_EAR_DETECTION, FIELD_TOUCH_CONTROLS, FIELD_MONO_AUDIO, FIELD_CONVERSATION_DETECTION)
+    /** Case sounds "Other alerts" (🟢 label, PROTOCOL.md §4.5.8 Update of 2026-10-06; ADR-054). */
+    const val FIELD_CASE_SOUND_OTHER_ALERTS = 27
 
-    /** The 0/1 fields a write may name: 4, 19, 22 (ADR-045) and 2 (ADR-047). */
-    val WRITABLE_FLAG_FIELDS: Set<Int> = setOf(FIELD_IN_EAR_DETECTION, FIELD_TOUCH_CONTROLS, FIELD_MONO_AUDIO, FIELD_CONVERSATION_DETECTION)
+    /** Case sounds "Earbuds replaced" ("Bud return", 🟢 PROTOCOL.md §4.5.8; ADR-054). */
+    const val FIELD_CASE_SOUND_EARBUDS_REPLACED = 28
+    const val FIELD_HEAD_GESTURES = 29
+
+    /** Field 29's wire values (ADR-052): 1 = off, 2 = on — `CAP-069` 2492 `e8 01 01` (OFF tap), 2564 `e8 01 02` (ON tap). */
+    const val HEAD_GESTURES_OFF = 1
+    const val HEAD_GESTURES_ON = 2
+
+    /** The 0/1 fields the decoder reads (ADR-036). */
+    private val FLAG_FIELDS = setOf(
+        FIELD_IN_EAR_DETECTION, FIELD_TOUCH_CONTROLS, FIELD_MULTIPOINT, FIELD_VOLUME_EQ, FIELD_MONO_AUDIO, FIELD_CONVERSATION_DETECTION,
+        FIELD_CASE_SOUND_OTHER_ALERTS, FIELD_CASE_SOUND_EARBUDS_REPLACED,
+    )
+
+    /** The 0/1 fields a write may name: 4, 19, 22 (ADR-045), 2 (ADR-047), 11 (ADR-053), 27 and 28 (ADR-054), 15 (ADR-055). */
+    val WRITABLE_FLAG_FIELDS: Set<Int> = setOf(
+        FIELD_IN_EAR_DETECTION, FIELD_TOUCH_CONTROLS, FIELD_MULTIPOINT, FIELD_VOLUME_EQ, FIELD_MONO_AUDIO, FIELD_CONVERSATION_DETECTION,
+        FIELD_CASE_SOUND_OTHER_ALERTS, FIELD_CASE_SOUND_EARBUDS_REPLACED,
+    )
 
     private const val FIELD4 = 4
     private const val WIRETYPE_VARINT = 0
@@ -118,11 +153,18 @@ object SettingsCodec {
         return writeRequest(channelId, tag(FIELD_ANC_MODE_LIST, WIRETYPE_LEN) + len(qht) + qht)
     }
 
-    /** `WriteSetting 4:{N:0|1}` for a field in [WRITABLE_FLAG_FIELDS] (ADR-045/047); `null` for any other field — nothing else can be written. */
+    /** `WriteSetting 4:{N:0|1}` for a field in [WRITABLE_FLAG_FIELDS] (ADR-045/047/053/054/055); `null` for any other field — nothing else can be written. */
     fun flagRequest(channelId: Int, field: Int, on: Boolean): RpcPacket? {
         if (field !in WRITABLE_FLAG_FIELDS) return null
         return writeRequest(channelId, tag(field, WIRETYPE_VARINT) + Varint.encode(if (on) 1 else 0))
     }
+
+    /**
+     * `WriteSetting 4:{29:1|2}` (ADR-052): [HEAD_GESTURES_ON] for on, [HEAD_GESTURES_OFF] for off — byte-identical to `CAP-069` 2492/2564 on channel 21. Its own
+     * function, not [flagRequest]: field 29 is never in [WRITABLE_FLAG_FIELDS], so a 0/1 value can never be written to it.
+     */
+    fun headGesturesRequest(channelId: Int, on: Boolean): RpcPacket =
+        writeRequest(channelId, tag(FIELD_HEAD_GESTURES, WIRETYPE_VARINT) + Varint.encode(if (on) HEAD_GESTURES_ON else HEAD_GESTURES_OFF))
 
     private fun writeRequest(channelId: Int, inner: ByteArray) = RpcPacket(
         type = PwRpc.TYPE_REQUEST,
@@ -156,6 +198,11 @@ object SettingsCodec {
             }
             FIELD_PRESS_AND_HOLD -> decodePressAndHold(f.bytes ?: return null)
             FIELD_ANC_MODE_LIST -> decodeAncModes(f.bytes ?: return null)
+            FIELD_HEAD_GESTURES -> when (f.varint) {
+                HEAD_GESTURES_OFF -> SettingValue.HeadGestures(false)
+                HEAD_GESTURES_ON -> SettingValue.HeadGestures(true)
+                else -> null // 0, 3, … : not interpreted (ADR-052: shown as "—")
+            }
             else -> null
         }
     }

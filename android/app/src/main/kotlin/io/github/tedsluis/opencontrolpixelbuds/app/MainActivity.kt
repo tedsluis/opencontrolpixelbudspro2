@@ -516,6 +516,12 @@ class MainActivity : ComponentActivity() {
                 // DECISIONS.md ADR-046 / ADR-047 (`ai-sessions/0056`): one write per tap, in the application scope.
                 onAncModeSelectedChanged = { mode, selected -> applicationScope.launch { budsRepository.setAncModeSelected(mode, selected) } },
                 onInEarDetectionChanged = { on -> applicationScope.launch { budsRepository.setInEarDetection(on) } },
+                // DECISIONS.md ADR-053 (`ai-sessions/0074`): one write per tap, in the application scope.
+                onMultipointChanged = { on -> applicationScope.launch { budsRepository.setMultipoint(on) } },
+                onHeadGesturesChanged = { on -> applicationScope.launch { budsRepository.setHeadGestures(on) } }, // ADR-052
+                onCaseSoundEarbudsReplacedChanged = { on -> applicationScope.launch { budsRepository.setCaseSoundEarbudsReplaced(on) } }, // ADR-054
+                onCaseSoundOtherAlertsChanged = { on -> applicationScope.launch { budsRepository.setCaseSoundOtherAlerts(on) } }, // ADR-054
+                onVolumeEqChanged = { on -> applicationScope.launch { budsRepository.setVolumeEq(on) } }, // ADR-055
                 onRing = { target -> applicationScope.launch { budsRepository.ringBud(target) } },
                 onStopRinging = { applicationScope.launch { budsRepository.stopRinging() } },
                 onRefreshBattery = { applicationScope.launch { budsRepository.refreshBattery() } },

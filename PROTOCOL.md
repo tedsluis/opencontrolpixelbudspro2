@@ -442,6 +442,8 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
   19 with the head in view. Command: the control-frame inventory and the scratch decoder of `CAP-065-FINDINGS.md` (DLCI 2 **and** 3, CRC-32 per frame).
   ADR-034 item 3 is unchanged.
 
+- **Update (2026-10-07, `ai-sessions/0075`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "L-1", option *"Dated Update, no status change (Recommended)"*) — BF-18 in `CAP-070` (OpenControl 1.1.0, a GrapheneOS user without Play; `CAP-070-FINDINGS.md` §4).** 🟢 On channel **19** with both buds out of the case, the **Left** (identified by its case slot and runtime-info 6.2) taken off ⇒ Buds `DISC` of MAESTRO with the ACL up (`CAP-070-btsnoop_hci2.log.last` A4115, 06:29:10.004) and announcement **21** (A4153 `… 10 15 1d ea 71 de 7d 5e 25 44 fa 99 71 38 ff ff ff ff 0f e8 a9 58 66 7e`) — the predicted 19 → 21, but whether both buds were **worn** is not on film (head out of view; Settable `e8` at A4208, 🟡 ADR-049). 🟢 Five changes of the Right (in/out of the case) on the same channel-19 session gave no `DISC` (A3788 … A4098). 🟢 Five more samples of the one-bud-out rule (Left only ⇒ 19: A961, A1396, A2297, A3402; Right only ⇒ 21: `CAP-070-btsnoop_hci2.log` B416). 🟢 With **both docked** the Buds announced 21 four times and 19 twice (A260, A655, A824, A4383 / A1632, A2665) — that state has no fixed channel. Status unchanged: 🟡 "the channel names the hosting bud" (strengthened); settling experiment: the same step with the head in view. Command: `tshark -r CAP-070-btsnoop_hci2.log.last -Y "bthci_acl.chandle==0x000b && btrfcomm.frame_type==0x43 && btrfcomm.dlci==2 && frame.p2p_dir==1"` (A913, A4115) and the scratch decoder of `CAP-070-FINDINGS.md` (DLCI 2 and 3, CRC-32 per frame). ADR-034 item 3 is unchanged.
+
 - **Note (2026-10-06, `ai-sessions/0073`, maintainer-approved in chat 2026-10-06, `AskUserQuestion` "PROTOCOL", option *"All five notes (Recommended)"*; code-side findings, no status change).**
   - **The two ids of `CAP-069` are named.** `0xbf6c9399` = `a10a20.kpi.Kpi` (method `0x92476025` = `KpiStream`) and `0x8d99df93` =
     `maestro_pw.JitterBuffer` / `SetJitterBufferSizePreference` (service `0x7f944334`) — string literals of app **1.0.955078536** (`fux.java:52`,
@@ -1678,6 +1680,8 @@ implementation gate.
   analysis); `ai-sessions/0001_CROSSCHECK_RESULT_2026_09_07.md` Phase 2.
 - **Verified with experiment**: `CAP-019` (2026-08-21), single OFF→ON sample.
 
+- **Note (2026-10-07, `ai-sessions/0075`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "Docs", option *"Approve both (Recommended)"*; no status change) — OpenControl 1.1.0 in `CAP-070`.** The channel-19 forms are on the wire, byte-identical to the derived frames and answered by the empty `RESPONSE`: `4:{11:0}` A3668 `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 04 22 02 58 00 9d 8f 9d c4 7e` → A3671, `4:{11:1}` A3679 `… 2a 04 22 02 58 01 0b bf 9a b3 7e` → A3681 ("A" = `CAP-070-btsnoop_hci2.log.last`); the read-back on the next connection matched every write (`CAP-070-FINDINGS.md` §2–§3). No SASS `07 11` frame followed (no Message Stream claim was open). Command: `python3 scripts/pwrpc_decode.py --handle 0x000b CAP-070-btsnoop_hci2.log.last` and the scratch pw_hdlc/CRC-32 parser of `CAP-070-FINDINGS.md`.
+
 #### 4.5.3 Touch & Hold customization
 
 - **Feature confirmed present**: "Use touch controls" top-level toggle (Device details → Controls
@@ -1790,6 +1794,8 @@ implementation gate.
   `CAP-020` 1935/2038. 🟡 GSND CONTROL Code `0x16` = "head gestures active" (`08 01` active, `08 02` inactive): it follows every write inverted (6/6) and also changes
   with wear (no bud worn → `02`). Command: `python3 scripts/pwrpc_decode.py CAP-069-btsnoop_hci.log | grep "29:"`. Implementation: ADR-052. Evidence: `CAP-069-FINDINGS.md` §1.
 
+- **Note (2026-10-07, `ai-sessions/0075`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "Docs", option *"Approve both (Recommended)"*; no status change) — OpenControl 1.1.0 in `CAP-070`.** The channel-19 forms are on the wire, byte-identical to the derived frames and ACKed: `4:{29:1}` A3614 `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 e8 01 01 fc d6 da 84 7e` → A3616, `4:{29:2}` A3685 `… 2a 05 22 03 e8 01 02 46 87 d3 1d 7e` → A3688; reads after the writes returned `29:1` / `29:2` (never 0). Nothing from the phone on DLCI 0x08. `CAP-070-FINDINGS.md` §3. Command: `python3 scripts/pwrpc_decode.py --handle 0x000b CAP-070-btsnoop_hci2.log.last` and the scratch pw_hdlc/CRC-32 parser of `CAP-070-FINDINGS.md`.
+
 #### 4.5.5 In-ear detection
 
 - **Feature confirmed present**: toggle at Device details → More settings → In-ear detection.
@@ -1873,6 +1879,8 @@ implementation gate.
 - **Verified with experiment**: `CAP-022` (2026-08-21), both directions sampled.
 - **Update 2026-10-03 (`ai-sessions/0069`, lead L68-10; wire-only, no status change):** two more Volume-EQ writes are on the wire in `CAP-015`: `WriteSetting 4:{15:0}` (frame 3487, 06:17:19.705) and `4:{15:1}` (frame 3505, 06:17:29.417) — `python3 scripts/pwrpc_decode.py CAP-015-btsnoop_hci.log`. They were not matched to the film in this pass.
 
+- **Note (2026-10-07, `ai-sessions/0075`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "Docs", option *"Approve both (Recommended)"*; no status change) — OpenControl 1.1.0 in `CAP-070`.** `4:{15:1}` on **channel 21** is on the wire: A4800 `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 04 22 02 78 01 99 77 e8 4e 7e` → A4802 empty `RESPONSE` — byte-identical to the derived frame of ADR-055. No audibility observation (the film has no audio). `CAP-070-FINDINGS.md` §3. Command: `python3 scripts/pwrpc_decode.py --handle 0x000b CAP-070-btsnoop_hci2.log.last` and the scratch pw_hdlc/CRC-32 parser of `CAP-070-FINDINGS.md`.
+
 #### 4.5.7 Volume Balance (L/R slider)
 
 - **Feature confirmed present**: "Balance" slider at Device details → Sound. `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`
@@ -1919,6 +1927,8 @@ implementation gate.
 
 - **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "Notities"):** the app's balance writes (20 of 20 OK in `CAP-063`, incl. `17:104` = Left
   52) were audible to the maintainer — an observation, not film-verified; intermediate-position scaling stays 🔴.
+
+- **Note (2026-10-07, `ai-sessions/0075`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "Docs", option *"Approve both (Recommended)"*; no status change) — OpenControl 1.1.0 in `CAP-070`.** The channel-19 `4:{17:7}` ("Right 4") is on the wire: A3747 `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 88 01 07 e9 b8 6e 25 7e` → A3750, byte-identical to the derived frame; 53 balance writes on channel 19 (values 0 … 50 zigzag), all ACKed. `CAP-070-FINDINGS.md` §3. Command: `python3 scripts/pwrpc_decode.py --handle 0x000b CAP-070-btsnoop_hci2.log.last` and the scratch pw_hdlc/CRC-32 parser of `CAP-070-FINDINGS.md`.
 
 #### 4.5.8 Case sounds
 
@@ -3653,6 +3663,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-03 | **`ai-sessions/0067` — `CAP-067` (Group BC, the 1.0.0 release APK without Play services), maintainer-approved in chat 2026-10-03.** **§2.2a** L-1: Right out on 21 ⇒ `DISC` + 19 (3rd sample); one bud out on 19 ⇒ `DISC` + 21, bud not identifiable — status unchanged (🟡). | Claude (AI), maintainer-approved |
 | 2026-10-03 | **`ai-sessions/0069` — processing the `ai-sessions/0068` audit, every text maintainer-approved in chat 2026-10-03.** **§4.1** the ADR-022 count is 19 in 11 (not 17 in 10); the Set/ACK/NAK tally restated over every log (70 Sets, 59 ACK, 11 NAK, `scripts/message_stream_tally.py`); `CAP-063` 29 `Notify`. **§2.2a** `CAP-066` 3 of 3. **§2.3** DLCI = 2 × server channel + direction bit. **§4.3** Option A: the page names the case-open use case; Option C: 12 × `AT+BIEV` in `CAP-059`. **§4.4** Ring: the directions corrected (🟢), the Buds' own message 🟡 "ringing-status sync". **§4.5.2** Multipoint OFF write `CAP-019` 2482 on film; SASS flags bit 2 🟡. **§4.5.4** head gestures: both writes in `CAP-020`, 🟡 1 = off / 2 = on (status unchanged). **§6** the HFP "never recurs" item answered (a filter artefact); stale items ticked with pointers; the second serial suffix and the sweep range corrected. **§0/§1/§2/§3** stale source and transport wording. No promotion to 🟢 beyond the Ring directions | Claude (AI), maintenance task; maintainer-approved in chat 2026-10-03 |
 | 2026-10-06 | **`ai-sessions/0073` — second APK pass (`v1.0.955078536-10253511`), every text maintainer-approved in chat 2026-10-06 (`AskUserQuestion` "PROTOCOL").** Dated notes, no status change: **§2.2a** `0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` = `JitterBuffer.SetJitterBufferSizePreference`; the official app never requests `GetSoftwareInfo` (0 of 295), fields 5 ("random id") and 6 (not-primary flag) in the app's words. **§4.2** the navigate-away path is a navigation destination listener. **§4.3 Option F** entry field 2 = charger-type enum. **§4.5.9** no Loud Noise Protection / Adaptive Audio control in this app version. **§6** the `CAP-051` Optional gate refuted. | `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` |
+| 2026-10-07 | **`ai-sessions/0075` — `CAP-070` (Group BF, OpenControl 1.1.0 without Play services), maintainer-approved in chat 2026-10-07.** **§2.2a** L-1: the Left taken off on 19 with both buds out of the case ⇒ `DISC` + 21 (wear not on film); five Right changes on 19 without `DISC`; both docked ⇒ 21 or 19 — status unchanged (🟡). **§4.5.2/§4.5.4/§4.5.6/§4.5.7** dated notes: the channel-19 forms of 11 and 29, `15:1` on channel 21 and `17:7` on channel 19 are on the wire, byte-identical to the derived frames, ACKed. | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL
