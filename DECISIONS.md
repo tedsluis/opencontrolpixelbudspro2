@@ -2512,6 +2512,11 @@ motivated this).
   "Sound" — its place is the build session's proposal to the maintainer. The app says what the switch sets and makes no claim about what is heard.
   Hardware re-test: OFF → `4:{15:0}` → OK; ON → `4:{15:1}` → OK (on channel 21 this is the first capture of that frame — its bytes become the
   fixture and the `// TODO(verify)` goes); a reconnect reads the value back; audibility as an observation. Not built by this ADR.
+- **Update (2026-10-07, `ai-sessions/0076`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "ADR-055"):** the channel-21 "on" request is
+  captured: OpenControl 1.1.0's `CAP-070` frame A4800 (`7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 04 22 02 78 01 99 77 e8 4e 7e`,
+  `CAP-070-btsnoop_hci2.log.last`, 04:30:57.072 UTC), byte-identical to the frame this ADR derived, answered by the empty `RESPONSE` A4802. Its unit
+  tests now use these bytes (`Settings070.VEQ_ON_CH21_A4800`); the `// TODO(verify)` on `SettingsCodec.FIELD_VOLUME_EQ` is removed. The decision is
+  unchanged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

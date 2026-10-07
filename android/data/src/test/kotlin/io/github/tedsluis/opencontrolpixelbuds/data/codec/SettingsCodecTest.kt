@@ -92,13 +92,14 @@ class SettingsCodecTest {
     }
 
     @Test
-    @DisplayName("balance, supplementary (derived, not captured): Right 4 on channel 19 = A7723's header and field with the value 07 instead of 0b")
-    fun balanceRight4OnChannel19Derived() {
-        // No channel-19 `17:7` write exists in any capture (Cap066Balance.RIGHT_4_CH21_6671's comment); this checks the derived frame's structure only.
-        val derived = wire(SettingsCodec.balanceRequest(19, -4))
+    @DisplayName("balance: Right 4 on channel 19 = CAP-070 A3747 (4:{17:7}, OpenControl 1.1.0), byte for byte incl. the CRC; it decodes back to −4")
+    fun balanceRight4OnChannel19() {
+        assertEquals(Settings070.BAL_R4_CH19_A3747, wire(SettingsCodec.balanceRequest(19, -4)))
+        assertEquals(true, Hdlc.decode(hex(Settings070.BAL_R4_CH19_A3747)) is BudsResult.Success, "the captured frame's own CRC-32")
+        assertEquals(SettingValue.Balance(-4), SettingsCodec.decode(rpcPayload(Settings070.BAL_R4_CH19_A3747)))
+        // Cross-check: the same header and field tag as the channel-19 Right 6 of CAP-066 A7723, the value 07 instead of 0b.
         val header = Cap066Balance.RIGHT_6_A7723.substringBefore("88010b")
-        assertEquals(header + "880107", derived.substring(0, header.length + 6), "same pw_hdlc address, channel, service, method and field 17 tag")
-        assertEquals(SettingValue.Balance(-4), SettingsCodec.decode(rpcPayload(derived)))
+        assertEquals(header + "880107", Settings070.BAL_R4_CH19_A3747.substring(0, header.length + 6))
     }
 
     @Test
@@ -134,19 +135,17 @@ class SettingsCodecTest {
     }
 
     @Test
-    @DisplayName("supplementary structural (derived, not captured): Multipoint on channel 19 = the channel-19 header of CAP-022 1871 with field 11 (58 00 / 58 01)")
-    fun multipointOnChannel19Derived() {
-        // No channel-19 write of field 11 exists in any capture (ai-sessions/0074 §A.1); the hardware run records it (named step). Structure only.
+    @DisplayName("Multipoint on channel 19: CAP-070 A3668 (4:{11:0}) / A3679 (4:{11:1}), OpenControl 1.1.0's filmed taps, byte for byte incl. the CRC")
+    fun multipointWritesCh19() {
         val header = SettingsWrites.MONO_ON_1621.substringBefore("2a052203")
-        for ((on, value) in listOf(false to "5800", true to "5801")) {
-            val derived = wire(SettingsCodec.flagRequest(19, SettingsCodec.FIELD_MULTIPOINT, on)!!)
-            assertEquals(header + "2a042202" + value, derived.substring(0, header.length + 12), "channel 19, address 00 3b, WriteSetting, 4:{11:$value}")
-            assertEquals(true, Hdlc.decode(hex(derived)) is BudsResult.Success, "its own CRC-32")
-            assertEquals(SettingValue.Flag(11, on), SettingsCodec.decode(rpcPayload(derived)))
+        for ((on, frame) in listOf(false to Settings070.MP_OFF_CH19_A3668, true to Settings070.MP_ON_CH19_A3679)) {
+            assertEquals(frame, wire(SettingsCodec.flagRequest(19, SettingsCodec.FIELD_MULTIPOINT, on)!!), "4:{11:${if (on) 1 else 0}}")
+            assertEquals(true, Hdlc.decode(hex(frame)) is BudsResult.Success, "the captured frame's own CRC-32")
+            assertEquals(SettingValue.Flag(11, on), SettingsCodec.decode(rpcPayload(frame)))
+            // Cross-check: the channel-19 header of CAP-022 1621 (address 00 3b), then WriteSetting's 4:{11:v}.
+            assertEquals(header + "2a04220258" + (if (on) "01" else "00"), frame.substring(0, header.length + 12))
         }
-        // The whole frame against an independent computation (python zlib.crc32 over address 00 3b … value, ai-sessions/0074 §I) — still not a capture.
-        assertEquals("7e003b0310131dea71de7d5e251d9a8c9e2a04220258009d8f9dc47e", wire(SettingsCodec.flagRequest(19, SettingsCodec.FIELD_MULTIPOINT, false)!!))
-        assertEquals("7e003b0310131dea71de7d5e251d9a8c9e2a04220258010bbf9ab37e", wire(SettingsCodec.flagRequest(19, SettingsCodec.FIELD_MULTIPOINT, true)!!))
+        assertEquals(true, (route(Settings070.ACK_CH19_A3671) as RoutedFrame.RpcResult).isOk, "the Buds' answer A3671")
     }
 
     @Test
@@ -184,19 +183,16 @@ class SettingsCodecTest {
     }
 
     @Test
-    @DisplayName("supplementary structural (derived, not captured): head gestures on channel 19 = the channel-19 header of CAP-022 1621 with 4:{29:1|2}")
-    fun headGesturesOnChannel19Derived() {
-        // No channel-19 write of field 29 exists in any capture (ai-sessions/0074 §A.1); the hardware run records it (named step). Structure only.
+    @DisplayName("head gestures on channel 19: CAP-070 A3614 (4:{29:1} = off) / A3685 (4:{29:2} = on), OpenControl 1.1.0's filmed taps, byte for byte")
+    fun headGesturesWritesCh19() {
         val header = SettingsWrites.MONO_ON_1621.substringBefore("2a052203")
-        for ((on, value) in listOf(false to "e80101", true to "e80102")) {
-            val derived = wire(SettingsCodec.headGesturesRequest(19, on))
-            assertEquals(header + "2a052203" + value, derived.substring(0, header.length + 14), "channel 19, address 00 3b, 4:{29:$value}")
-            assertEquals(true, Hdlc.decode(hex(derived)) is BudsResult.Success, "its own CRC-32")
-            assertEquals(SettingValue.HeadGestures(on), SettingsCodec.decode(rpcPayload(derived)))
+        for ((on, frame) in listOf(false to Settings070.HG_OFF_CH19_A3614, true to Settings070.HG_ON_CH19_A3685)) {
+            assertEquals(frame, wire(SettingsCodec.headGesturesRequest(19, on)), "4:{29:${if (on) 2 else 1}}")
+            assertEquals(true, Hdlc.decode(hex(frame)) is BudsResult.Success, "the captured frame's own CRC-32")
+            assertEquals(SettingValue.HeadGestures(on), SettingsCodec.decode(rpcPayload(frame)))
+            // Cross-check: the channel-19 header of CAP-022 1621, then 4:{29:1|2} — 1/2, never 0/1 (ADR-052).
+            assertEquals(header + "2a052203e801" + (if (on) "02" else "01"), frame.substring(0, header.length + 14))
         }
-        // The whole frame against an independent computation (python zlib.crc32, ai-sessions/0074 §I) — still not a capture.
-        assertEquals("7e003b0310131dea71de7d5e251d9a8c9e2a052203e80101fcd6da847e", wire(SettingsCodec.headGesturesRequest(19, on = false)))
-        assertEquals("7e003b0310131dea71de7d5e251d9a8c9e2a052203e801024687d31d7e", wire(SettingsCodec.headGesturesRequest(19, on = true)))
     }
 
     @Test
@@ -279,15 +275,16 @@ class SettingsCodecTest {
         assertEquals(SettingValue.Flag(15, true), SettingsCodec.decode(rpcPayload(Settings074.VEQ_ON_CH19_1895)))
     }
 
-    /** TODO(verify): ADR-055 — the channel-21 "on" frame is not captured; `CAP-070` (Group BF) records it and its real bytes replace the derived ones. */
     @Test
-    @DisplayName("supplementary structural (derived, not captured): Volume EQ on, channel 21 = CAP-041 2461 with value 01 and its own CRC (zlib: 9977e84e)")
-    fun volumeEqOnChannel21Derived() {
-        val built = wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_VOLUME_EQ, true)!!)
-        assertEquals(Settings074.VEQ_ON_CH21_DERIVED, built, "the app's CRC-32 agrees with an independent zlib computation")
-        assertEquals(Settings074.VEQ_OFF_CH21_CAP041_2461.substringBefore("78000f47ef397e") + "7801", built.substringBefore("9977e84e7e"))
-        assertEquals(true, Hdlc.decode(hex(built)) is BudsResult.Success)
-        assertEquals(SettingValue.Flag(15, true), SettingsCodec.decode(rpcPayload(built)))
+    @DisplayName("Volume EQ on, channel 21: CAP-070 A4800 (4:{15:1}, OpenControl 1.1.0's filmed tap — the frame ADR-055 left uncaptured), byte for byte")
+    fun volumeEqOnChannel21() {
+        val frame = Settings070.VEQ_ON_CH21_A4800
+        assertEquals(frame, wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_VOLUME_EQ, true)!!))
+        assertEquals(true, Hdlc.decode(hex(frame)) is BudsResult.Success, "the captured frame's own CRC-32")
+        assertEquals(SettingValue.Flag(15, true), SettingsCodec.decode(rpcPayload(frame)))
+        // Cross-check: CAP-041 2461 (off, the same channel) differs only in the value byte and the CRC.
+        assertEquals(Settings074.VEQ_OFF_CH21_CAP041_2461.substringBefore("78000f47ef397e") + "7801", frame.substringBefore("9977e84e7e"))
+        assertEquals(true, (route(Settings070.ACK_CH21_A4802) as RoutedFrame.RpcResult).isOk, "the Buds' answer A4802")
     }
 
     @Test

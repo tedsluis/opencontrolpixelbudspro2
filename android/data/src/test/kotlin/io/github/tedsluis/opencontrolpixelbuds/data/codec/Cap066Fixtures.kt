@@ -40,9 +40,9 @@ internal object Cap066Balance {
 
     /**
      * `CAP-064-btsnoop_hci.log` frame 6671 (2026-10-01 10:14:28.241526, phone → Buds, DLCI 0x02), channel 21: `WriteSetting 4:{17:7}` = zigzag −4 = **Right 4**,
-     * the value `CAP-066` could not reach. Byte-identical to `CAP-063` 5211 (2026-09-27 16:07:49.546053). No channel-19 `17:7` write exists in any capture
-     * (`pwrpc_decode.py` over every capture HCI log, `grep -E "4:\{17:[0-9]+\}"`, `ai-sessions/0064` RESULT §D → 26
-     * lines with `4:{17:7}`: 4 writes, all channel 21; positive control 6 lines with `17:11`).
+     * the value `CAP-066` could not reach. Byte-identical to `CAP-063` 5211 (2026-09-27 16:07:49.546053). Until `CAP-070` no channel-19 `17:7` write existed in
+     * any capture (`pwrpc_decode.py` over every capture HCI log, `grep -E "4:\{17:[0-9]+\}"`, `ai-sessions/0064` RESULT §D → 26 lines with `4:{17:7}`:
+     * 4 writes, all channel 21; positive control 6 lines with `17:11`); the channel-19 form is [Settings070.BAL_R4_CH19_A3747] (`ai-sessions/0076`).
      */
     const val RIGHT_4_CH21_6671 = "7e004b0310151dea71de7d5e251d9a8c9e2a052203880107a97d5edf037e"
 

@@ -304,14 +304,6 @@ internal object Settings074 {
     /** `CAP-041` frame 2461 (2026-09-06 15:15:05.973, handle 0x0004): `4:{15:0}` on channel 21; mirrored 2463, `RESPONSE` 2465. */
     const val VEQ_OFF_CH21_CAP041_2461 = "7e004b0310151dea71de7d5e251d9a8c9e2a04220278000f47ef397e"
 
-    /**
-     * **Derived, not a capture** (`ai-sessions/0074`, labelled supplementary): `4:{15:1}` on channel 21 = [VEQ_OFF_CH21_CAP041_2461] with the value byte 01 and
-     * its frame check computed independently of the app — `python3 -c "import zlib,struct; print(struct.pack('<I', zlib.crc32(bytes.fromhex(
-     * '004b0310151dea71de7e251d9a8c9e2a0422027801'))).hex())"` → `9977e84e`. No channel-21 "on" write exists in any capture (ADR-055); the hardware run
-     * `CAP-070` (Group BF) records it, and then the real frame replaces this one. TODO(verify)
-     */
-    const val VEQ_ON_CH21_DERIVED = "7e004b0310151dea71de7d5e251d9a8c9e2a04220278019977e84e7e"
-
     /** `CAP-022` frame 1877 (06:16:16.101): the empty `RESPONSE` OK to 1871 (channel 19). */
     const val ACK_CH19_1877 = "7e80a303080110131dea71de7d5e251d9a8c9e4c05e6d97e"
 
@@ -329,4 +321,39 @@ internal object Settings074 {
 
     /** `CAP-041` frame 3239 (15:15:41.784, handle 0x0005): `4:{15:0}` on channel 21 — the read after the write 2461 (ADR-055). */
     const val READ_15_OFF_CH21_CAP041_3239 = "7e00a5032a0422027800080110151dea71de7d5e2551aed0aefb252ff27e"
+}
+
+/**
+ * `ai-sessions/0076`: OpenControl **1.1.0**'s own writes on the wire in `CAP-070` (2026-10-07, the release run, `CAP-070-FINDINGS.md` §3) — the request forms
+ * that no official-app capture holds: fields 11 and 29 and the balance `17:7` on channel 19, field 15 "on" on channel 21. Each is the RFCOMM payload of
+ * the named frame of `captures/CAP-070-2026-10-07_06-10-41_06-40-59-Group_BF/CAP-070-btsnoop_hci2.log.last` (handle `0x000b`, DLCI 0x02, one RFCOMM frame each):
+ * `tshark -r CAP-070-btsnoop_hci2.log.last -Y "bthci_acl.chandle==0x000b && btrfcomm.len>0 && frame.number==<n>" -T fields -e frame.number -e frame.time_utc
+ * -e data.data`, decoded with `python3 scripts/pwrpc_decode.py --handle 0x000b CAP-070-btsnoop_hci2.log.last`; the CRC-32 of every frame checked
+ * (`zlib.crc32` over address, control and payload). Times are UTC (the film's overlay is UTC + 2 h); each write is a filmed tap (`CAP-070-EVENT-NOTES.md`).
+ * They are byte-identical to the frames `ai-sessions/0074` derived for these forms. No identifier is carried.
+ */
+internal object Settings070 {
+    /** Frame A3668 (04:21:20.250, filmed tap, BF-14): `WriteSetting 4:{11:0}` (Multipoint off) on channel 19; answered by A3671. */
+    const val MP_OFF_CH19_A3668 = "7e003b0310131dea71de7d5e251d9a8c9e2a04220258009d8f9dc47e"
+
+    /** Frame A3679 (04:21:24.246, filmed tap, BF-14): `4:{11:1}` (Multipoint on) on channel 19; answered by A3681. */
+    const val MP_ON_CH19_A3679 = "7e003b0310131dea71de7d5e251d9a8c9e2a04220258010bbf9ab37e"
+
+    /** Frame A3614 (04:20:30.497, filmed tap, BF-15): `4:{29:1}` (head gestures off — 1, ADR-052) on channel 19; answered by A3616. */
+    const val HG_OFF_CH19_A3614 = "7e003b0310131dea71de7d5e251d9a8c9e2a052203e80101fcd6da847e"
+
+    /** Frame A3685 (04:21:46.224, filmed tap, BF-15): `4:{29:2}` (head gestures on — 2) on channel 19; answered by A3688. */
+    const val HG_ON_CH19_A3685 = "7e003b0310131dea71de7d5e251d9a8c9e2a052203e801024687d31d7e"
+
+    /** Frame A3747 (04:22:58.188, a balance drag, BF-16): `4:{17:7}` = zigzag −4 = "Right 4" on channel 19; answered by A3750. */
+    const val BAL_R4_CH19_A3747 = "7e003b0310131dea71de7d5e251d9a8c9e2a052203880107e9b86e257e"
+
+    /** Frame A4800 (04:30:57.072, filmed tap, BF-20): `4:{15:1}` (Volume EQ on) on channel 21 — the frame ADR-055 left uncaptured; answered by A4802. */
+    const val VEQ_ON_CH21_A4800 = "7e004b0310151dea71de7d5e251d9a8c9e2a04220278019977e84e7e"
+
+    /** Frame A3671 (04:21:20.684): the empty `RESPONSE` status OK to A3668 (channel 19; the same bytes in A3616, A3681, A3688, A3750 and [SettingsWrites.ACK_CH19_1629]). */
+    const val ACK_CH19_A3671 = "7e80a303080110131dea71de7d5e251d9a8c9e4c05e6d97e"
+
+    /** Frame A4802 (04:30:57.160): the empty `RESPONSE` status OK to A4800 (channel 21; byte-identical to [SettingsWrites.ACK_CH21_1731]). */
+    const val ACK_CH21_A4802 = "7e00a503080110151dea71de7d5e251d9a8c9e036d4ed87e"
 }

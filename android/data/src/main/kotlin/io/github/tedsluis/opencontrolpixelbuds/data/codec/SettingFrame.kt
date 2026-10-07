@@ -77,9 +77,9 @@ object SettingsCodec {
     const val FIELD_ANC_MODE_LIST = 12
 
     /**
-     * "Volume EQ" (🟢 PROTOCOL.md §4.5.6; ADR-055). Writes are byte-identical to `CAP-022` 1871/1895 (channel 19) and `CAP-041` 2461 (channel 21, off).
-     * TODO(verify): the channel-21 `4:{15:1}` write has never been captured (ADR-055); it is built by the same codec and covered only by a labelled structural
-     * test until the hardware run records it — `captures/CAP-070-…/CAP-070-EVENT-NOTES.md` (Group BF), step "Volume EQ on, channel 21"; PROTOCOL.md §4.5.6.
+     * "Volume EQ" (🟢 PROTOCOL.md §4.5.6; ADR-055). Writes are byte-identical to `CAP-022` 1871/1895 (channel 19), `CAP-041` 2461 (channel 21, off) and — the
+     * channel-21 "on" form ADR-055 left uncaptured — OpenControl 1.1.0's own `CAP-070` frame A4800
+     * (`captures/CAP-070-2026-10-07_06-10-41_06-40-59-Group_BF/CAP-070-btsnoop_hci2.log.last`, `CAP-070-FINDINGS.md` §3), answered OK (`ai-sessions/0076`).
      */
     const val FIELD_VOLUME_EQ = 15
     const val FIELD_VOLUME_BALANCE = 17

@@ -37,6 +37,9 @@ on channel 19, `15:1` on channel 21), the channel-19 balance `17:7`, the swipe b
 - [ ] The case-sound and Volume-EQ observations (what is heard): the film needs an audio track (`CAP-070`'s had none), or the maintainer says it.
 - [ ] What sent the two `SIGQUIT` stack dumps of `CAP-070` (L1 508, L2 597) — keep a system log in the next run.
 - [ ] B4 double tap (`AlreadyInProgress`) — needs the Buds forgotten and re-paired.
+- [ ] `OpenControlNavHost.kt:238` still carries `// TODO(verify)` for swipe, pull and back; all three have been seen on film since (pull `CAP-065`,
+      back `CAP-067`, swipe `CAP-070`) — reword it with those pointers in the next session that touches `:ui` (maintainer's choice, chat 2026-10-07,
+      `ai-sessions/0076`).
 - [ ] K5 / BC-12 (GrapheneOS Bluetooth auto-off): only in a user where the setting exists (the Owner).
 - [ ] F-4 on a **debug** build: StrictMode lines after a Bluetooth off/on (🟡 the framework's `BluetoothLeAudio` may still warn —
       `CAP-066-FINDINGS.md` §8). Not observable on a release build.
@@ -72,12 +75,7 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
 ## 4. Protocol: leads and open questions
 
 The five switches the maintainer chose (Multipoint, head gestures, the two case sounds, Volume EQ; ADR-052 … ADR-055) and the screen-reader text are built in
-1.1.0 (`ai-sessions/0074`) and passed their hardware run `CAP-070` (`ai-sessions/0075`).
-
-- [ ] **Follow-up FEATURE session after the 1.1.0 release** (maintainer's choice, chat 2026-10-07): replace the labelled structural fixtures
-      (`SettingsFixtures.kt` `Settings074`, the labelled tests in `SettingsCodecTest.kt`) with the real `CAP-070` frames — channel-19 `4:{11:0}` A3668 /
-      `4:{11:1}` A3679, `4:{29:1}` A3614 / `4:{29:2}` A3685, `4:{17:7}` A3747, channel-21 `4:{15:1}` A4800 → A4802 (`CAP-070-FINDINGS.md` §3) — and remove the
-      `// TODO(verify)` on `SettingsCodec.FIELD_VOLUME_EQ` (ADR-055; its KDoc also names the old placeholder folder of `CAP-070`).
+1.1.0 (`ai-sessions/0074`) and passed their hardware run `CAP-070` (`ai-sessions/0075`); since `ai-sessions/0076` their tests use the `CAP-070` bytes.
 
 - [ ] Decompile the official app **1.0.990706425** (versionCode `10260911`) with JADX and apktool (ADR-017 boundary). Its first purpose is met
       without it: the two ids of `CAP-069` are named from literals of 1.0.955078536 — `0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` =

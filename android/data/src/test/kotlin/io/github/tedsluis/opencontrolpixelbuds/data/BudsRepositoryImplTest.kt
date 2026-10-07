@@ -36,6 +36,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.RpcPacket
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings036
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.SettingsWrites
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings056
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings070
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings074
 import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
@@ -1636,18 +1637,20 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("MP, labelled supplementary structural test: on channel 19 (no capture has that write) the same codec sends the channel-19 form; the ACK CAP-022 1629 applies it")
+    @DisplayName("MP, channel 19: read CAP-069 7272 = on; OFF = CAP-070 A3668, ON = A3679 (OpenControl 1.1.0) byte for byte, each applied on the RESPONSE A3671")
     fun `the Multipoint switch on channel 19`() = runTest {
         val (repo, transport) = buildRepository()
         transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
         transport.emit(Dlci.MAESTRO, hex(Settings074.READ_11_RESP_CH19_7272)); settle()
-        ackWrites(transport, 19)
+        assertEquals(true, repo.settings.value.multipoint?.value)
+        answerWritesWith(transport, Settings070.ACK_CH19_A3671)
 
         assertEquals(BudsResult.Success(Unit), repo.setMultipoint(false))
-
-        val sent = transport.sent.single().second.toHex()
-        assertEquals(SettingsWrites.MONO_ON_1621.substringBefore("2a052203") + "2a0422025800", sent.substring(0, 46), "address 00 3b, channel 19, 4:{11:0}")
         assertEquals(false, repo.settings.value.multipoint?.value)
+        assertEquals(BudsResult.Success(Unit), repo.setMultipoint(true))
+        assertEquals(true, repo.settings.value.multipoint?.value)
+        assertEquals(listOf(Settings070.MP_OFF_CH19_A3668, Settings070.MP_ON_CH19_A3679), transport.sent.map { it.second.toHex() }, "one write per tap")
+        assertEquals(setOf(Dlci.MAESTRO), transport.sent.map { it.first }.toSet())
     }
 
     @Test
@@ -1687,18 +1690,20 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("HG, labelled supplementary structural test: on channel 19 (no capture has that write) the same codec sends 4:{29:2}; CAP-024 1100 read it as off")
+    @DisplayName("HG, channel 19: read CAP-024 1100 (29:1) = off; ON = CAP-070 A3685 (29:2), OFF = A3614 (29:1) (OpenControl 1.1.0) byte for byte, applied on A3671")
     fun `the head gestures switch on channel 19`() = runTest {
         val (repo, transport) = buildRepository()
         transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle()
         transport.emit(Dlci.MAESTRO, hex(Settings074.READ_29_OFF_CH19_CAP024_1100)); settle()
         assertEquals(false, repo.settings.value.headGestures?.value)
-        ackWrites(transport, 19)
+        answerWritesWith(transport, Settings070.ACK_CH19_A3671)
 
         assertEquals(BudsResult.Success(Unit), repo.setHeadGestures(true))
-
-        assertEquals(SettingsWrites.MONO_ON_1621.substringBefore("2a052203") + "2a052203e80102", transport.sent.single().second.toHex().substring(0, 48))
         assertEquals(true, repo.settings.value.headGestures?.value)
+        assertEquals(BudsResult.Success(Unit), repo.setHeadGestures(false))
+        assertEquals(false, repo.settings.value.headGestures?.value)
+        assertEquals(listOf(Settings070.HG_ON_CH19_A3685, Settings070.HG_OFF_CH19_A3614), transport.sent.map { it.second.toHex() })
+        assertEquals(setOf(Dlci.MAESTRO), transport.sent.map { it.first }.toSet(), "nothing on GSND CONTROL or any other DLCI (ADR-052)")
     }
 
     /**
@@ -1819,17 +1824,18 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("VEQ, channel 21: OFF = CAP-041 2461 (real), ON = the derived frame (labelled supplementary, TODO(verify) ADR-055); a read of CAP-041 3239 = off")
+    @DisplayName("VEQ, channel 21: a read of CAP-041 3239 = off; ON = CAP-070 A4800 (OpenControl 1.1.0), applied on the RESPONSE A4802; OFF = CAP-041 2461")
     fun `the Volume EQ switch on channel 21`() = runTest {
         val (repo, transport) = buildRepository()
         transport.emit(Dlci.MAESTRO, hex(Settings074.READ_15_OFF_CH21_CAP041_3239)); settle()
         assertEquals(false, repo.settings.value.volumeEq?.value)
-        answerWritesWith(transport, Settings074.ACK_CH21_2465)
+        answerWritesWith(transport, Settings070.ACK_CH21_A4802)
 
         assertEquals(BudsResult.Success(Unit), repo.setVolumeEq(true))
         assertEquals(true, repo.settings.value.volumeEq?.value)
         assertEquals(BudsResult.Success(Unit), repo.setVolumeEq(false))
-        assertEquals(listOf(Settings074.VEQ_ON_CH21_DERIVED, Settings074.VEQ_OFF_CH21_CAP041_2461), transport.sent.map { it.second.toHex() })
+        assertEquals(false, repo.settings.value.volumeEq?.value)
+        assertEquals(listOf(Settings070.VEQ_ON_CH21_A4800, Settings074.VEQ_OFF_CH21_CAP041_2461), transport.sent.map { it.second.toHex() })
     }
 
     @Test
