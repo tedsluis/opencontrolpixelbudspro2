@@ -423,7 +423,7 @@ proposal.
 
 ## 9. Conclusions and proposed downstream updates — ⏳ awaiting maintainer sign-off for every proposed item
 
-> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–3 done (`PROTOCOL.md` §6 items, ADR-024 Update 2026-09-18); 4 **still open** (a swapped-slot Test-ID, listed in `TODO.md`); 5 **still open** (trigger candidates 1–2).
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`; items 4–5 closed 2026-10-07, `ai-sessions/0077`, the maintainer's decision in chat):** 1–3 done (`PROTOCOL.md` §6 items, ADR-024 Update 2026-09-18); 4 **done** — `CASE-009` registered 2026-09-18 (`ai-sessions/0031`); 5 **superseded** — the DLCI 0x0a waves are assistant sessions (`CAP-069-FINDINGS.md` §3).
 
 **Confirmed this session (no sign-off needed — negative results and direct observations, not FACT
 promotions of new protocol semantics):**

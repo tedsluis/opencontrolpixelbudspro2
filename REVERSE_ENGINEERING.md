@@ -2472,6 +2472,8 @@ MaestroEmptyMarker entry above).
 | `qij` | `Multipoint.ForceMultipointSwitch` request | 2 | `INT32` + `BOOL` (Java fields `c,d`) |
 | `qjp` | `Multipoint.SubscribeToQuietModeStatus` response | 1 | plain `BOOL` (Java field `c`) |
 
+- **Update (2026-10-07, `ai-sessions/0077`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "D3 Wallclock"):** the wire carries a top-level field 2 in the `qiy` (`SubscribeRuntimeInfo`) and `qjb` (`GetSoftwareInfo`) answers that this schema does not name — 🟡 HYPOTHESIS: the Buds' wall clock in ms since the Unix epoch, present only after a `SetWallclock` (52–548 ms before the capture time in `CAP-036`/`042`/`050`; absent in OpenControl's `CAP-062`, `CAP-067` and `CAP-070` — 0 of 155 — which send no `SetWallclock`). `DESKRESEARCH_FINDINGS.md` 2026-10-03 item 3. Field 3 stays open.
+
 **Open questions**: none of the "plausibly" readings above are anything more than ⚪ ASSUMPTION from
 field count/type/RPC-name context — none is capture-correlated. Included here only to keep this *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: `qiy` (`SubscribeRuntimeInfo`) and `qiv` (`GetHardwareInfo`) are capture-correlated since ADR-043 / `PROTOCOL.md` §6, 2026-09-24)*
 register complete for whoever picks up the corresponding capture-correlation work next.

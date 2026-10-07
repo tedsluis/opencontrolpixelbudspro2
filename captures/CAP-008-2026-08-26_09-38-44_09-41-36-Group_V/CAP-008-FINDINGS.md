@@ -365,10 +365,8 @@ noted for a future capture if that data point is wanted.
 
 ## 12. Recommended next steps
 
-1. Promote §5 (eSCO/mSBC establishment) and §4 (`CALL-001` wire/video correlation) to
-   `PROTOCOL.md` — these clear the FACT bar (frame numbers, byte-level command
-   parameters, cross-checked against two independent calls) — not promoted yet: a promotion needs the maintainer's sign-off
-   (`AGENTS.md` §6); listed as an open proposal in `TODO.md` (2026-09-30, `ai-sessions/0059`). `CALL-001`'s evidence points here.
+1. **Closed 2026-10-07 (`ai-sessions/0077`, the maintainer's decision in chat):** §4 (`CALL-001`) has a pointer in `PROTOCOL.md` §6; §5's eSCO/mSBC
+   parameters are not taken further — audio codec parameters are out of scope (`PROJECT.md` Non-goals).
 2. A capture with a deliberate mid-call audio-route switch (Group V's optional step 2)
    would show whether that produces any additional wire signal beyond the
    already-documented AVDTP/eSCO lifecycle.

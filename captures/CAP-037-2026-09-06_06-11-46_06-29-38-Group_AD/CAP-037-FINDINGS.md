@@ -169,7 +169,7 @@ re-viewed for the 06:18:06–06:18:28 window.
 
 ## 7. Conclusions & downstream updates — proposals only, awaiting maintainer sign-off
 
-> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** 1–2 done as supporting evidence (ADR-022; ADR-024, whose Decision is now superseded by ADR-049); 3 **still open** — the Settable↔Current co-occurrence is not in `PROTOCOL.md` (listed in `TODO.md`); 4 done (§6 item resolved by `CAP-048`).
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`; item 3 applied 2026-10-07, `ai-sessions/0077`, the maintainer's decision in chat):** 1–2 done as supporting evidence (ADR-022; ADR-024, whose Decision is now superseded by ADR-049); 3 **applied, reworded** — `PROTOCOL.md` §4.1 note of 2026-10-07 (🟡 Settable `00` ⇒ Current Off, this capture 17 of 17); 4 answered (§8).
 
 **Recorded as this session's own factual result (no sign-off needed, purely descriptive):**
 - The session ran 34 reconnects (26 with real DLCI 0x04 payload) over ~20 minutes, not the planned

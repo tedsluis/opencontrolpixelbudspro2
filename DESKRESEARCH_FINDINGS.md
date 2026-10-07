@@ -971,6 +971,7 @@ gestures"; the case is open and empty, and the buds are out of frame for the who
 "cross-confirms the Right value" to "equals the lower of the two bud levels (🟡)"; (b) add Code
 `0x05` and Code `0x03` to §2.3's DLCI 0x08 table with the 🟡 readings above; (c) name field 2 of
 the two messages in `REVERSE_ENGINEERING.md` as "wall clock, ms (🟡)".
+*(2026-10-07, `ai-sessions/0077`, maintainer's decisions in chat: (a) applied — `PROTOCOL.md` §4.3 Option E Update; (b) applied for what was still missing (Code `0x03`, Code `0x05` values `01`/`00`) — `PROTOCOL.md` §2.3 note, the rest was already there since 2026-10-04; (c) applied — `REVERSE_ENGINEERING.md` Update at the schema table.)*
 
 ### 2026-10-04 — Wear and placement states against GSND CONTROL Code `0x05`, Settable and field 13 in `CAP-069` (lead L68-5, `ai-sessions/0071`)
 

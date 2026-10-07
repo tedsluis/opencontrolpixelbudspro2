@@ -2518,5 +2518,37 @@ motivated this).
   tests now use these bytes (`Settings070.VEQ_ON_CH21_A4800`); the `// TODO(verify)` on `SettingsCodec.FIELD_VOLUME_EQ` is removed. The decision is
   unchanged.
 
+## ADR-056 — Which bonded Buds the app controls: the CDM association, never a silent pick
+
+- **Date**: 2026-10-07 (decided in chat 2026-10-03, built in 1.0.1, `ai-sessions/0069`)
+- **Status**: Accepted (maintainer, chat 2026-10-07, `AskUserQuestion` "D5 ADRs", option *"Twee ADR's nu (Recommended)"*)
+- **Note on process**: written by `ai-sessions/0077` with this text in the question's preview, per `AGENTS.md` §6; it records a decision taken and built
+  before an ADR existed (`PROJECT_RULES.md` rule 8; `TODO.md` §1 until 2026-10-07).
+- **Context**: with several bonded Pixel Buds the app took "the first" (`ai-sessions/0068` A68-APP-04/05; `getBondedDevices` has no order). The maintainer's
+  choice in chat 2026-10-03 (`ai-sessions/0069` checkpoint 14): *"No silent pick + 'Use different Buds' (Recommended)"*. Hardware: `CAP-068` S7/S8
+  (`CAP-068-FINDINGS.md` §7).
+- **Options considered**: (a) the first bonded device; (b) an in-app device list (stores addresses — `AGENTS.md` §7); (c) the CDM association, else one named
+  device, else ask — chosen.
+- **Decision**: the device is the one of this app's `CompanionDeviceManager` association; without one, a single bonded device whose name contains "Pixel
+  Buds"; with two or more, none — status `SeveralBudsPaired` and Android's picker decides. Settings → "Use different Buds" removes the app's associations
+  (the Bluetooth bond stays). No address is stored by the app.
+- **Consequences**: as built in `PairingLogic.chooseBondedOrAsk` / `BudsCompanionPairing` (`ARCHITECTURE.md` §8 item 8); another model chosen by mistake is
+  caught by Safe Mode's Model ID check (ADR-042). Untested: `APP_TESTPLAN.md` S9 (two Buds).
+
+## ADR-057 — One rule for a "current" value; never a default for an unread one
+
+- **Date**: 2026-10-07 (decided in chat 2026-10-03, built in 1.0.1; "—" for switches in 1.1.0)
+- **Status**: Accepted (maintainer, chat 2026-10-07, `AskUserQuestion` "D5 ADRs", option *"Twee ADR's nu (Recommended)"*)
+- **Note on process**: written by `ai-sessions/0077` with this text in the question's preview, per `AGENTS.md` §6; it records a decision taken and built
+  before an ADR existed (`PROJECT_RULES.md` rule 8).
+- **Context**: values from an earlier connection were shown as if current (`ai-sessions/0068` A68-APP-02/03). The maintainer's choice in chat 2026-10-03
+  (`ai-sessions/0069` checkpoint 13): *"Keep the value, mark it (Recommended)"*. Hardware: `CAP-068` S1, S2, S4 (`CAP-068-FINDINGS.md` §7); `CAP-070` "—" on
+  film (`CAP-070-FINDINGS.md` §2, §5).
+- **Options considered**: (a) clear everything on disconnect; (b) keep and mark — chosen; (c) keep unmarked.
+- **Decision**: a value is current only while the session is `Ready` and the Buds reported it on this connection (`isCurrent`, `ValueCurrency.kt`). A value
+  that is not current stays visible, dimmed, with "from the last connection" in its details; the tile and the notification show no mode that is not
+  current. A value never read shows "—" (screen reader: "Not read from the Buds yet"), never a default.
+- **Consequences**: as built (`ARCHITECTURE.md` §3.1, "One rule for 'current'"); every new setting follows it (ADR-052 … ADR-055 did).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

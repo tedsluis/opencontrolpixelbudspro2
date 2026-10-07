@@ -13,9 +13,7 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 ## 1. After release 1.0.1 (published 2026-10-04, `ai-sessions/0070`)
 
-- [ ] **M** Decide whether two behaviours built in 1.0.1 on your chat answers get an ADR each (none was written — `AGENTS.md` §6): the device choice
-      (no silent pick, "Use different Buds") and the "current value" rule (`ARCHITECTURE.md` §3.1, §9.0a item 8 describe them as built). Both seen on
-      hardware in `CAP-068` (S7/S8; S1, S2, S4); the maintainer chose "Not now" again (chat 2026-10-04, `ai-sessions/0070`).
+Nothing open (2026-10-07, `ai-sessions/0077`: the two 1.0.1 behaviours are recorded as ADR-056 and ADR-057).
 
 ## 2. Hardware verification debt (the app, on film)
 
@@ -63,6 +61,8 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
       running, `pidof` with its positive control, pair from Settings → Pair new device only; then re-enable and open the app (`CAP-058-FINDINGS.md` §7).
       Positive controls and the list of the app's exported components that can start its process: `ai-sessions/0073` §4.10 (`pm list packages -d`
       must list the package; `pidof` must stay empty after Settings → Connected devices is opened).
+- [ ] `CASE-008` (a short case-button press to force pairing mode) — never tested; a capture idea from `CAP-029-FINDINGS.md` §8 item 3 (moved here
+      2026-10-07, `ai-sessions/0077`).
 - [ ] Documentation only: re-check `CAP-015`'s film at its 15 field-18 frames for a Save tap or a screen change (`CAP-053-FINDINGS.md` §7).
 
 - [ ] Optional, destructive, one-time: the factory-reset re-pair for comparison (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16) — it also resets the
@@ -87,15 +87,6 @@ The five switches the maintainer chose (Multipoint, head gestures, the two case 
       2026-10-05: *"Voer het nog niet uit. Dat kan later."*). Also add the three files' SHA-256 to `reverse-engineering/APK_VERSIONS.md`, whose
       1.0.990706425 paragraph still says "Not pulled". Start with `citation_checker` and `pwrpc_name_table` on the new tree
       (`APK_REVERSE_ENGINEERING_PROCEDURE.md` §7 steps 7–8; design notes for the diff in `reverse-engineering/tools/BACKLOG.md`).
-
-Proposals awaiting the maintainer (`DESKRESEARCH_FINDINGS.md`, entry of 2026-10-03 — nothing applied as a status change):
-
-- [ ] **M** §4.3 Option E: "cross-confirms the Right value" → "equals the lower of the two bud levels (🟡)".
-- [ ] **M** §2.3: add DLCI 0x08 Code `0x03` and Code `0x05` with their 🟡 readings.
-- [ ] **M** `REVERSE_ENGINEERING.md`: name field 2 of the runtime-info and software-info messages "wall clock, ms (🟡)".
-- [ ] **M** Open proposals from earlier capture FINDINGS (`ai-sessions/0059`): `CAP-008` §5/§4 (eSCO/mSBC, `CALL-001`); `CAP-026` item 3 (the
-      short Case form); `CAP-029` item 3 (`CASE-008`); `CAP-037` item 3 (Settable ↔ Current co-occurrence); `CAP-047` items 4 and 5;
-      `CASE-007` 🔵 → 🟢 (`A68-SES-03`).
 
 Open questions (each with where it is described):
 
@@ -144,8 +135,9 @@ Open questions (each with where it is described):
 - 🟡 Hearable Controls MAC not enforced (`PROTOCOL.md` §4.1): a firmware that starts enforcing it would NAK with reason `0x03`.
 - 🔴 `CAP-069` leftovers: why a bud's charging bit stayed set ≈ 12 s after it left the case (7358 → 7404); why the phone re-opened GSND AUDIO on ACL 3
   (8157 → 8271); Device Information `03 0b` (FHN EID, out of scope) with length 25; field 18 after the Save button (one sample, 6050 → `CAP-053`).
-- [ ] **M** The maintainer's Buds were left with the EQ on a custom "Last saved" curve and the press-and-hold mode list with Off ticked after `CAP-069`
-      (P7 was Balanced, Off unticked) — restore if wanted before the next run.
+- [ ] **M** Restore the Buds before the next run (chat 2026-10-07, `ai-sessions/0077`): Sound → BALANCED (`4:{16:[-3.5, 0.5, 1.0, -1.0, 2.5]}`, = `CAP-015`
+      2303 / `CAP-059` 2188); Controls → Press and hold → untick Off (`4:{12:{1:1 2:0 3:1 4:0}}`, = `CAP-041` 2198 on ch 21); Disconnect + Connect, check
+      "read". Also write it as P7 of the next skeleton. (Removed when the maintainer confirms it is done.)
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
   captured — sending it needs its own ADR. Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
 - 🔴 `PROTOCOL.md` §5.2 steps 4 and 6 of the connection lifecycle (handshake content order, user-command timing); DLCI 0x08's protocol identity.
@@ -238,9 +230,6 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
       `pwrpc_name_table census` on the de-duplicated set and correct the figures as dated notes (**M** for the texts).
 - [ ] Deferred items of earlier sessions that never reached this file (`A68-SES-03`): `ai-sessions/0061` ("Not read in this session …"),
       `ai-sessions/0063` (one item) — read those RESULTs and carry what is still open.
-- [ ] `scripts/__pycache__/lint_docs.cpython-314.pyc` is a tracked file (a compiled-Python artefact; the prompt of `ai-sessions/0069` names `__pycache__` as never to be
-      staged). `.gitignore` already ignores `__pycache__/`, so it only needs untracking (`git rm --cached`) — **M**: a deletion from the repository. Until then run the scripts with
-      `PYTHONDONTWRITEBYTECODE=1`, or the file shows up as modified.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/TODO.md - https://tedsluis.github.io/opencontrolpixelbudspro2/TODO
