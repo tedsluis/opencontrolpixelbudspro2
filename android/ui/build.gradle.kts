@@ -1,15 +1,16 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "io.github.tedsluis.opencontrolpixelbuds.ui"
-    compileSdk = 34
+    // DECISIONS.md ADR-029 and its Update of 2026-10-07 (`ai-sessions/0078`): compile against API 37 — required by the AndroidX/Compose releases of
+    // the toolchain upgrade; compile-time only (minSdk and targetSdk stay 34).
+    compileSdk = 37
 
     defaultConfig {
-        // DECISIONS.md ADR-029: minimum supported Android API is 34, matching compile/target SDK.
+        // DECISIONS.md ADR-029: minimum supported Android API is 34 (compileSdk 37 since its 2026-10-07 Update).
         minSdk = 34
     }
 
