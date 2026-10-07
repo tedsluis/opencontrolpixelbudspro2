@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-07
 **Title:** Full analysis of CAP-070 (Group BF: the 1.1.0 release APK, build `0323849`, in a GrapheneOS secondary user without Google Play — the hardware test of the five switches of 0074)
-**Status:** complete (checkpoint approved in chat 2026-10-07; committed and pushed to `feature/0074-settings-switches` — see Commits)
+**Status:** complete (checkpoint approved in chat 2026-10-07; committed and pushed — see Commits; 1.1.0 released 2026-10-07)
 
 ## Progress
 
@@ -144,6 +144,18 @@ On `feature/0074-settings-switches` (pull request #7), after the build commit `0
 | (this commit) | docs(session): ai-sessions/0075 commits back-filled, status complete |
 
 The first push uploaded all LFS objects (1.4 GB) but the SSH connection closed before the refs; the second push moved the branch `0323849..714694b`.
+
+## Release (after the session's commits, the maintainer's request in chat 2026-10-07: *"Voer alle commandos uit"*)
+
+- D1: `gh pr merge 7 --merge` → merge commit `b1e4db6` (CI `build` and `lint-docs` green on `8256c74` first).
+- D2: `git tag -s v1.1.0 0323849` (SSH signature), pushed; `git branch -r --contains v1.1.0` lists `origin/main`.
+- B3 had been skipped: `~/opencontrol-1.1.0-tested` was made from `dist/1.1.0` (`cp -a`) and its `release-notes.md` updated (Known issues); the maintainer
+  edited it once more (16:58). D3: the draft created with `gh release create … --draft`; checked in a fresh `mktemp -d` directory (APK `sha256sum -c` OK,
+  notes byte-equal to the kept copy). Publishing through `gh release edit --draft=false` and `gh api -X PATCH … -F draft=false` failed with HTTP 500 four
+  times (last request id `D0BC:3AB80A:2518F24:24EC1C4:6AC660D7`; githubstatus.com "All Systems Operational"); the maintainer published it on github.com —
+  2026-10-07 15:20:14 UTC, "Latest"; the published assets re-checked (APK SHA-256 OK, notes and notices equal to the kept copy).
+- E1–E4: branch `release/1.1.0-after-publish` (CHANGELOG date and link, README latest release and status, RELEASING §13 row, template reset, these
+  Status lines). D4: the maintainer installed it from the release page, SHA-256 checked, works (chat 2026-10-07).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0075_CAPTURE_RESULT_2026_10_07.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0075_CAPTURE_RESULT_2026_10_07

@@ -6,7 +6,7 @@
 **Title:** Implement the switches Multipoint (`qhr` field 11), Head gestures (field 29), Case sounds "Other alerts" and "Earbuds replaced" (fields 27
 and 28) and Volume EQ (field 15) in the OpenControl app, the screen-reader text for a value that was not read, the documents, the hardware-run
 skeleton and the release preparation for 1.1.0
-**Status:** complete — committed on `feature/0074-settings-switches`, pull request opened (not merged); the hardware run `CAP-070` is the maintainer's next step
+**Status:** complete — released as 1.1.0 on 2026-10-07 (hardware run `CAP-070`, `ai-sessions/0075`; PR #7 merged `b1e4db6`, tag `v1.1.0` on `0323849`)
 
 ---
 

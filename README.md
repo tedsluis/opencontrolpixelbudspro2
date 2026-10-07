@@ -7,7 +7,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **Latest release: [1.0.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.1)** (2026-10-04). You can also
+> **Latest release: [1.1.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.1.0)** (2026-10-07). You can also
 > [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
@@ -100,13 +100,13 @@ Per feature, what is hardware-verified and what is only unit-tested is in `ARCHI
 [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) — a suspected
 security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
 
-**1.1.0 is prepared, not yet released** (`ai-sessions/0074`, 2026-10-06): the switches for head gestures, Multipoint, the two case sounds and Volume EQ,
-and the screen-reader text for "—". Its hardware run (`CAP-070`, `ai-sessions/0075`, 2026-10-07) passed: every request of the five switches, on both control
-channels, byte-identical to the expected frames and confirmed by the Buds; until it is published, 1.0.1 above is the latest release. Known issues of 1.1.0
+**1.1.0 was released on 2026-10-07** (prepared in `ai-sessions/0074`): the switches for head gestures, Multipoint, the two case sounds and Volume EQ,
+and the screen-reader text for "—". Its hardware run (`CAP-070`, `ai-sessions/0075`) passed: every request of the five switches, on both control
+channels, byte-identical to the expected frames and confirmed by the Buds. Known issues of 1.1.0
 (also in [`CHANGELOG.md`](./CHANGELOG.md)): the app says what a switch sets, not what you will hear; the screen-reader text for "—" is checked by the unit
 tests, not yet on a phone.
 
-**Known issue in 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
+**Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
 - After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop.
 
@@ -204,9 +204,9 @@ environment, and without them the build stops with a clear message (it never sig
 the full procedure, including creating and backing up the key, is in [`RELEASING.md`](./RELEASING.md). A debug build and a release build are signed with
 different keys, so one cannot be installed over the other: uninstall first (this deletes the app's settings).
 
-**Before testing against real hardware**, read `APP_TESTPLAN.md` — it says, step by step, what is to be checked on hardware (`CAP-068-EVENT-NOTES.md`
+**Before testing against real hardware**, read `APP_TESTPLAN.md` — it says, step by step, what is to be checked on hardware (`CAP-070-EVENT-NOTES.md`
 shows how the last run followed it); the newest analysed run
-(`CAP-068-FINDINGS.md`, the 1.0.1 release APK) and `ARCHITECTURE.md` §5a say what was seen working and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
+(`CAP-070-FINDINGS.md`, the 1.1.0 release APK) and `ARCHITECTURE.md` §5a say what was seen working and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
 earbuds" — it means the wire bytes match known-good captures, nothing more.
 
 ## Approach
