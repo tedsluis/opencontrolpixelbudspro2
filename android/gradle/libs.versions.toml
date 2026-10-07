@@ -11,6 +11,9 @@ coreKtx = "1.13.1"
 navigationCompose = "2.8.0"
 datastorePreferences = "1.1.1"
 junit5 = "5.11.0"
+# Gradle 9 no longer puts the JUnit Platform launcher on the test runtime classpath by itself (it was deprecated in 8.x); it is declared, in step with
+# junit5 (`ai-sessions/0078`).
+junitPlatform = "1.11.0"
 kotest = "5.9.1"
 javaxInject = "1"
 # `ai-sessions/0057` (the maintainer's choice at the checkpoint): `:ui` Compose UI tests on the JVM — test-only, never in the app.
@@ -40,6 +43,7 @@ hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.r
 junit5-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
 junit5-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit5" }
 junit5-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit5" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatform" }
 kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject" }
 compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
