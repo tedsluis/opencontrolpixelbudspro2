@@ -4,13 +4,13 @@
 **Category:** FEATURE
 **Date:** 2026-10-07
 **Title:** Replace the labelled, derived test fixtures of `ai-sessions/0074` with the real `CAP-070` frames and remove the `// TODO(verify)` on `SettingsCodec.FIELD_VOLUME_EQ` (ADR-055); test and comment changes only
-**Status:** awaiting maintainer sign-off — the work and the approved documentation are done; the commit question is open
+**Status:** complete (checkpoint approved in chat 2026-10-07; committed and pushed to `feature/0076-capture-fixtures`, pull request opened — see Commits)
 
 ## Progress
 
 - **Done:** Phase 0 (git state, branch `feature/0076-capture-fixtures` from `origin/main` = `bdcc583`, baseline gate), Phase A (12 of 12 frames re-derived,
   inventory), Phase B (five files), Phase C (clean gate, M1–M5, compliance), Phase D (checkpoint answered, approved edits applied, footers, lint).
-- **Next:** the maintainer's answer to the commit question.
+- **Next:** the maintainer merges the pull request.
 - **Touched, unverified:** none.
 - **Intermediate results:** session scratchpad `f0076/` (the raw-frame table, the decoder output, the mutation script and its log), the two gate logs and the count script.
 
@@ -121,7 +121,14 @@ Each item is also in `TODO.md`:
 
 ## Commits
 
-Not committed yet — the commit question is open (task 16).
+On `feature/0076-capture-fixtures` (from `bdcc583`); the maintainer answered *"Commit, push en PR (Recommended)"* in chat 2026-10-07.
+
+| Hash | Subject |
+|---|---|
+| `cfc8537` | test(data): CAP-070's real frames replace the derived 1.1.0 fixtures |
+| `ba804c5` | docs: ADR-055 Update — the channel-21 Volume EQ on frame is captured |
+| `ad4fe6b` | docs(session): ai-sessions/0076 prompt and result, INDEX row |
+| (this commit) | docs(session): ai-sessions/0076 commits back-filled |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0076_FEATURE_RESULT_2026_10_07.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0076_FEATURE_RESULT_2026_10_07
