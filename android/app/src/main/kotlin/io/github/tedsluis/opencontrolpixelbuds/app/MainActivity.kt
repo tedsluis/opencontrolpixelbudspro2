@@ -42,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -313,7 +314,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun openUrl(url: String) {
         try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) // core-ktx `toUri()` = `Uri.parse(this)` (lint UseKtx, `ai-sessions/0078`)
         } catch (e: ActivityNotFoundException) {
             BleLogger.logConnectionEvent("Info link not opened: no app on this phone opens web links (${BleLogger.describe(e)})")
             Toast.makeText(this, noBrowserText(url), Toast.LENGTH_LONG).show()

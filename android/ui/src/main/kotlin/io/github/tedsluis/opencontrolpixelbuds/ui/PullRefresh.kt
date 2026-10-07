@@ -21,7 +21,6 @@ package io.github.tedsluis.opencontrolpixelbuds.ui
 
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -90,10 +89,9 @@ fun pullActionFor(tab: PullTab, deviceStatus: DeviceStatus, connectionState: Con
 /**
  * Swipe down to refresh / reconnect (D-10). [onPull] starts the tab's action and returns the job it launched — `null` when it only opened a system prompt or
  * did nothing. The indicator shows while that job runs and ends when the repository has answered; it is never a spinner with a fixed duration.
- * `PullToRefreshBox` is `@ExperimentalMaterial3Api` in the resolved `material3` 1.3.0 — the opt-in the maintainer approved (`ai-sessions/0057`).
+ * `PullToRefreshBox` is stable in `material3` 1.4.0 (`ai-sessions/0078`); in 1.3.0 it was `@ExperimentalMaterial3Api`, opted in by `ai-sessions/0057`.
  * The content must scroll vertically for the pull to reach the box (nested scroll).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PullToRefresh(onPull: () -> Job?, modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     var running by remember { mutableStateOf<Job?>(null) }

@@ -56,6 +56,8 @@ object OpenControlIcons {
         symbol(
             "Case",
             // Outer outline (x 120…840, y −720…−240, corner radius 160).
+            // Path data needs no space between "Z" and "M": lint's TextConcatSpace (new with AGP 9) does not apply (`ai-sessions/0078`).
+            //noinspection TextConcatSpace
             "M280-240q-66 0-113-47t-47-113v-160q0-66 47-113t113-47h400q66 0 113 47t47 113v160q0 66-47 113t-113 47H280Z" +
                 // Inner cut-out (x 200…760, y −640…−320, corner radius 80) — even-odd makes it a hole.
                 "M280-320h400q33 0 56.5-23.5T760-400v-160q0-33-23.5-56.5T680-640H280q-33 0-56.5 23.5T200-560v160q0 33 23.5 56.5T280-320Z" +
