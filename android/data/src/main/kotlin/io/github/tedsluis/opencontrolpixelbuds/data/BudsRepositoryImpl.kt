@@ -1262,8 +1262,8 @@ class BudsRepositoryImpl(
                         }
                     }
                     result = action()
-                    val diedUnderUs = result is BudsResult.Failure &&
-                        (result as BudsResult.Failure).error is BudsError.ChannelLost
+                    // Kotlin 2.4 smart-casts `result` here; the explicit cast was reported as USELESS_CAST (`ai-sessions/0078`).
+                    val diedUnderUs = result is BudsResult.Failure && result.error is BudsError.ChannelLost
                     if (!diedUnderUs) break
                 }
                 // A re-check the Buds refused (I-1) is their answer, not a channel problem: the claim itself worked.

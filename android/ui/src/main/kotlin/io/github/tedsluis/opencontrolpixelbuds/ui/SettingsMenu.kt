@@ -47,7 +47,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
@@ -91,7 +91,11 @@ fun SettingsMenuScreen(
 ) {
     var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
     Column(modifier = modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = selected) { // TabRow, not PrimaryTabRow: the latter is experimental in material3 1.3.0 (no new opt-in)
+        // `TabRow` is deprecated in material3 1.4.0 ("Replaced with PrimaryTabRow and SecondaryTabRow"); kept, with its warning suppressed, so the menu
+        // looks as before — Primary label, full-width indicator (the maintainer's choice in chat 2026-10-07, `ai-sessions/0078`). PrimaryTabRow would narrow
+        // the indicator to the label; SecondaryTabRow would turn the selected label OnSurface.
+        @Suppress("DEPRECATION")
+        TabRow(selectedTabIndex = selected) {
             SettingsTab.entries.forEach { tab ->
                 Tab(selected = selected == tab.ordinal, onClick = { selected = tab.ordinal }, text = { Text(tab.label) })
             }
@@ -235,8 +239,9 @@ private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?, onOpenUrl: 
 /** F-6: the full licence text, bundled (`res/raw/license.txt`, byte-identical to the repository's `LICENSE` — `SettingsMenuTest`), readable offline. */
 @Composable
 private fun LicenceDialog(onClose: () -> Unit) {
-    val context = LocalContext.current
-    val text = remember { context.resources.openRawResource(R.raw.license).bufferedReader().use { it.readText() } }
+    // LocalResources, not LocalContext.current.resources (lint LocalContextResourcesRead, `ai-sessions/0078`): the same file and text.
+    val resources = LocalResources.current
+    val text = remember { resources.openRawResource(R.raw.license).bufferedReader().use { it.readText() } }
     AlertDialog(
         onDismissRequest = onClose,
         confirmButton = { TextButton(onClick = onClose) { Text("Close") } },

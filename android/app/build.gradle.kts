@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
@@ -41,11 +40,13 @@ val missingReleaseSigning: List<String> = releaseSigningKeys.filterNot { it in r
 
 android {
     namespace = "io.github.tedsluis.opencontrolpixelbuds"
-    compileSdk = 34
+    // DECISIONS.md ADR-029 and its Update of 2026-10-07 (`ai-sessions/0078`): compile against API 37 — required by the AndroidX/Compose releases of
+    // the toolchain upgrade; compile-time only (minSdk and targetSdk stay 34).
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "io.github.tedsluis.opencontrolpixelbuds"
-        // DECISIONS.md ADR-029: minimum supported Android API is 34, matching compile/target SDK.
+        // DECISIONS.md ADR-029: minimum supported Android API is 34, matching the target SDK (compileSdk 37 since its 2026-10-07 Update).
         minSdk = 34
         targetSdk = 34
         // `ai-sessions/0065` (chat 2026-10-02): versionCode = major * 10000 + minor * 100 + patch (1.0.0 → 10000, 1.0.1 → 10001, 1.1.0 → 10100); a release

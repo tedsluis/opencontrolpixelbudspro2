@@ -11,6 +11,15 @@ build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`). See `TODO.m
 
 ## [Unreleased]
 
+### Changed
+
+- Build (user-invisible, `ai-sessions/0078`): Gradle 8.9 → 9.7.1 (the wrapper now checks the distribution's SHA-256), Android Gradle plugin 8.6.0 →
+  9.3.3 with its built-in Kotlin, Kotlin 2.0.20 → 2.4.20, KSP → 2.3.12, Hilt 2.52 → 2.60.1, Compose BOM 2024.09.00 → 2026.09.00 (material3 1.4.0), AndroidX
+  and coroutines to their current stable releases, JUnit 5 → 6.1.3, Robolectric 4.17; Kotest removed (never used). Compiled against API 37; `minSdk` and
+  `targetSdk` stay 34 (`DECISIONS.md` ADR-029 Update). The app's permissions, components, texts and bytes on the wire are unchanged — same unit-test
+  counts (plus one new test for the settings-menu tab order), the same mutations caught; not yet hardware-tested (with the next release's run).
+- CI: `actions/checkout` v7.0.1 in all four workflows, `setup-python` v7.0.0, `setup-gradle` v6.4.0.
+
 ## [1.1.0] - 2026-10-07
 
 Prepared in `ai-sessions/0074` (2026-10-06); build commit `0323849`, hardware-tested as `CAP-070` (`ai-sessions/0075`, 2026-10-07) in a GrapheneOS user without Google Play services. Five new settings, each read from the Buds

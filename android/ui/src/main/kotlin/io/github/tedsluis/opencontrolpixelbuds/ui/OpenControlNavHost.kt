@@ -238,7 +238,9 @@ data class OpenControlUiState(
  * [PullToRefresh] whose action is [pullActionFor] (D-10). // TODO(verify): swipe, pull and back are gesture behaviour this session could not exercise on a
  * device — `APP_TESTPLAN.md` (updated for `ai-sessions/0057`).
  */
-@OptIn(ExperimentalMaterial3Api::class) // TopAppBar is experimental in the resolved material3 1.3.0 — approved at the 0057 checkpoint.
+// Approved at the 0057 checkpoint; still needed in material3 1.4.0 (`ai-sessions/0078`): TopAppBar itself carries no marker there, but its parameter type
+// TopAppBarScrollBehavior is `@ExperimentalMaterial3Api` (AppBar.kt:1401), and the compiler reports OPT_IN_USAGE_ERROR without the opt-in.
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
     val navController = rememberNavController()

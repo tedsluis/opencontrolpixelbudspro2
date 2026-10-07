@@ -1,15 +1,16 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "io.github.tedsluis.opencontrolpixelbuds.ui"
-    compileSdk = 34
+    // DECISIONS.md ADR-029 and its Update of 2026-10-07 (`ai-sessions/0078`): compile against API 37 — required by the AndroidX/Compose releases of
+    // the toolchain upgrade; compile-time only (minSdk and targetSdk stay 34).
+    compileSdk = 37
 
     defaultConfig {
-        // DECISIONS.md ADR-029: minimum supported Android API is 34, matching compile/target SDK.
+        // DECISIONS.md ADR-029: minimum supported Android API is 34 (compileSdk 37 since its 2026-10-07 Update).
         minSdk = 34
     }
 
@@ -42,7 +43,8 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.core)
     // Not referenced by this module's code, but NOT dead (0044 finding APP-12, checked 2026-09-24): navigation-compose pulls
-    // lifecycle-viewmodel-compose 2.6.2 transitively; this direct dependency aligns it with the rest of lifecycle 2.8.6.
+    // lifecycle-viewmodel-compose 2.6.2 transitively; this direct dependency aligns it with the rest of lifecycle 2.8.6. (Re-checked `ai-sessions/0078`:
+    // navigation-compose 2.10.2 requests 2.10.0, aligned to lifecycle 2.11.0.)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.navigation.compose) // ARCHITECTURE.md §2.4: navigation structure.
     debugImplementation(libs.compose.ui.tooling)

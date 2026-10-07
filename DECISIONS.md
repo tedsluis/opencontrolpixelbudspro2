@@ -1629,6 +1629,11 @@ motivated this).
   prints nothing (exit 1) while the same command lists `ACTION_ACL_CONNECTED`, and AOSP's `BluetoothDevice.java` declares `ACTION_BATTERY_LEVEL_CHANGED` with
   `@SystemApi` (fetched 2026-09-30). It is not an app source (`AGENTS.md` §3/§5, `PROTOCOL.md` §4.3 Option 0). (2) `minSdk = 34` is also declared in
   `:data` (`android/data/build.gradle.kts:24`), not only in `:app`, `:hardware`, `:ui`.
+- **Update (2026-10-07, `ai-sessions/0078`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "compileSdk", option *"37 + ADR-029 Update
+  (Recommended)"*, with this text in the preview):** `compileSdk` is raised from 34 to 37 in every module — required by the AndroidX/Compose releases of
+  the toolchain upgrade (`minCompileSdk=37` in core 1.19.1, Compose ui 1.12.1, lifecycle-runtime-compose 2.11.0, navigation-compose 2.10.2). Compile-time
+  only: `minSdk` and `targetSdk` stay 34, so the app's runtime behaviour and minimum Android version do not change. The Decision (minSdk 34) is unchanged;
+  the Context's "compile/target SDK fixed at API 34" now reads compile 37, target 34.
 
 ## ADR-030 — Cross-Transport Key Derivation (CTKD) confirmed as a third bonding path, gated on a pre-existing LE link
 

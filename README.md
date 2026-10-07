@@ -162,8 +162,9 @@ to design, implement, test, and document a native Android app.
 
 ## Building from source
 
-Requirements: JDK 21, Android SDK with `android-34`/build-tools `34.0.0` installed (the Gradle
-wrapper handles the rest). No Android Studio installation is required — the commands below use the
+Requirements: JDK 21, Android SDK with platform `android-37.0` and build-tools `36.0.0` installed (the Gradle
+wrapper handles the rest; the Android Gradle plugin installs both by itself on the first online build if the SDK licences are accepted —
+since `ai-sessions/0078`: Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20). No Android Studio installation is required — the commands below use the
 wrapper directly.
 
 ```bash
@@ -292,7 +293,7 @@ humans and AI coding assistants working on it:
 
 ## Target platform
 
-- Compile/target/minimum SDK: **API 34 (Android 14)** — `DECISIONS.md` ADR-029
+- Target/minimum SDK: **API 34 (Android 14)** — `DECISIONS.md` ADR-029; compiled against API 37 since its Update of 2026-10-07 (compile-time only)
 - Primary reference OS: GrapheneOS, with compatibility maintained for stock
   AOSP-based ROMs
 

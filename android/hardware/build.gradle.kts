@@ -1,14 +1,15 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "io.github.tedsluis.opencontrolpixelbuds.hardware"
-    compileSdk = 34
+    // DECISIONS.md ADR-029 and its Update of 2026-10-07 (`ai-sessions/0078`): compile against API 37 — required by the AndroidX/Compose releases of
+    // the toolchain upgrade; compile-time only (minSdk and targetSdk stay 34).
+    compileSdk = 37
 
     defaultConfig {
-        // Minimum supported Android API: 34 (Android 14), matching compile/target SDK
+        // Minimum supported Android API: 34 (Android 14), matching the target SDK (compileSdk 37 since the ADR-029 Update of 2026-10-07)
         // (DECISIONS.md ADR-029) — well above the 26 CompanionDeviceManager itself needs
         // (ARCHITECTURE.md §9, DECISIONS.md ADR-005).
         minSdk = 34
@@ -47,9 +48,9 @@ dependencies {
     testFixturesImplementation(project(":domain"))
     testFixturesImplementation(libs.kotlinx.coroutines.core)
 
-    testImplementation(libs.junit5.jupiter.api)
-    testRuntimeOnly(libs.junit5.jupiter.engine)
-    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher) // Gradle 9: the launcher is no longer added by itself (`ai-sessions/0078`)
     testImplementation(libs.kotlinx.coroutines.test)
 }
 

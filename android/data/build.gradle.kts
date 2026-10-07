@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
 }
 
 // Converted from a plain `kotlin.jvm` module to an Android library module this
@@ -17,10 +16,12 @@ plugins {
 // changed, not the code's own platform requirements.
 android {
     namespace = "io.github.tedsluis.opencontrolpixelbuds.data"
-    compileSdk = 34
+    // DECISIONS.md ADR-029 and its Update of 2026-10-07 (`ai-sessions/0078`): compile against API 37 — required by the AndroidX/Compose releases of
+    // the toolchain upgrade; compile-time only (minSdk and targetSdk stay 34).
+    compileSdk = 37
 
     defaultConfig {
-        // DECISIONS.md ADR-029: minimum supported Android API is 34, matching compile/target SDK.
+        // DECISIONS.md ADR-029: minimum supported Android API is 34 (compileSdk 37 since its 2026-10-07 Update).
         minSdk = 34
     }
 
@@ -48,10 +49,10 @@ dependencies {
     implementation(libs.datastore.preferences)
 
     testImplementation(testFixtures(project(":hardware"))) // FakeBudsTransport (0044 APP-10)
-    testImplementation(libs.junit5.jupiter.api)
-    testImplementation(libs.junit5.jupiter.params)
-    testRuntimeOnly(libs.junit5.jupiter.engine)
-    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit.jupiter.params)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher) // Gradle 9: the launcher is no longer added by itself (`ai-sessions/0078`)
     testImplementation(libs.kotlinx.coroutines.test)
 }
 

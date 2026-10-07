@@ -28,8 +28,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.hasClickAction
@@ -121,6 +122,23 @@ class SettingsMenuTest {
         compose.onNodeWithContentDescription("Back").performClick()
         compose.onNodeWithText("Noise control").assertExists()
         compose.onNodeWithText("Dark mode").assertDoesNotExist()
+    }
+
+    /**
+     * `ai-sessions/0078` (the maintainer's choice in chat 2026-10-07): the order of the three tabs was asserted nowhere — a mutation that swapped Settings and
+     * Debug in [SettingsTab] survived the whole `:ui` suite (M7). The tabs are found by label, so their order is checked by their position on screen.
+     */
+    @Test
+    fun `the tabs are Settings, Debug, Info from left to right, and Settings is selected when the menu opens`() {
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo("0.1.0-dev", "d541e00", "2026-10-01"), announced)
+            }
+        }
+        val lefts = listOf("Settings", "Debug", "Info").map { label -> compose.onNode(hasText(label) and hasClickAction()).getBoundsInRoot().left }
+        assertTrue("tab positions from the left: $lefts", lefts[0] < lefts[1] && lefts[1] < lefts[2])
+        compose.onNode(hasText("Settings") and hasClickAction()).assertIsSelected()
+        compose.onNodeWithText("Dark mode").assertExists()
     }
 
     @Test

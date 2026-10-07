@@ -1,21 +1,22 @@
 [versions]
-agp = "8.6.0"
-kotlin = "2.0.20"
-ksp = "2.0.20-1.0.25"
-hilt = "2.52"
-coroutines = "1.9.0"
-composeBom = "2024.09.00"
-lifecycle = "2.8.6"
-activityCompose = "1.9.2"
-coreKtx = "1.13.1"
-navigationCompose = "2.8.0"
-datastorePreferences = "1.1.1"
-junit5 = "5.11.0"
-kotest = "5.9.1"
+agp = "9.3.3"
+kotlin = "2.4.20"
+ksp = "2.3.12"
+hilt = "2.60.1"
+coroutines = "1.11.0"
+composeBom = "2026.09.00"
+lifecycle = "2.11.0"
+activityCompose = "1.13.0"
+coreKtx = "1.19.1"
+navigationCompose = "2.10.2"
+datastorePreferences = "1.2.1"
+# JUnit 6 (`ai-sessions/0078`): Jupiter and the Platform share one version number. Gradle 9 no longer puts the Platform launcher on the test runtime
+# classpath by itself (deprecated in Gradle 8.x), so it is declared next to the engine.
+junit = "6.1.3"
 javaxInject = "1"
 # `ai-sessions/0057` (the maintainer's choice at the checkpoint): `:ui` Compose UI tests on the JVM — test-only, never in the app.
 junit4 = "4.13.2"
-robolectric = "4.13"
+robolectric = "4.17"
 
 [libraries]
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -37,10 +38,10 @@ navigation-compose = { group = "androidx.navigation", name = "navigation-compose
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
-junit5-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
-junit5-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit5" }
-junit5-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit5" }
-kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
+junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+junit-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit" }
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject" }
 compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
@@ -50,7 +51,6 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

@@ -196,8 +196,8 @@ internal fun soundSettingsDetailLines(settings: BudsSettings): List<String> = li
 
 /**
  * The presets in rows of three (`ai-sessions/0052`, the maintainer's choice "2 rijen: 3 + 2"; 3 + 3 since `ai-sessions/0069` added Flat):
- * `[HEAVY BASS] [LIGHT BASS] [BALANCED]` / `[VOCAL BOOST] [CLARITY] [FLAT]`. One [Row] per chunk with equal-width chips — not `FlowRow`, which is `@ExperimentalLayoutApi` in the pinned
- * `foundation-layout` 1.7.0 (`ai-sessions/0051` §11). A smaller label style keeps "VOCAL BOOST" on one line in a third of a 360 dp screen.
+ * `[HEAVY BASS] [LIGHT BASS] [BALANCED]` / `[VOCAL BOOST] [CLARITY] [FLAT]`. One [Row] per chunk with equal-width chips — not `FlowRow`, which was `@ExperimentalLayoutApi` in
+ * `foundation-layout` 1.7.0 (`ai-sessions/0051` §11; the BOM resolves 1.12.1 since `ai-sessions/0078`, which did not re-check `FlowRow` by compiling it). A smaller label style keeps "VOCAL BOOST" on one line in a third of a 360 dp screen.
  */
 @Composable
 private fun EqPresetRows(enabled: Boolean, onPresetSelected: (EqPreset) -> Unit) {

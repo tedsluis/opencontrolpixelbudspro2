@@ -36,8 +36,8 @@ Communication happens over up to three transports (RFCOMM is the only one the ap
 issue tracker on GitHub; the licence is read in the app only) that hand the URL to another app — the browser — with `Intent.ACTION_VIEW` on the user's tap; this app makes no network request, holds
 no `INTERNET` permission and needs no `<queries>`; the full licence text is bundled and readable offline.
 
-Compile/target/minimum SDK: **API 34 (Android 14)** — decided 2026-09-13, `DECISIONS.md` ADR-029;
-see §15's "already decided" list. Primary reference OS: GrapheneOS, with compatibility maintained
+Target/minimum SDK: **API 34 (Android 14)** — decided 2026-09-13, `DECISIONS.md` ADR-029; compile SDK **37** since ADR-029's Update of 2026-10-07
+(`ai-sessions/0078`: required by the AndroidX/Compose releases of the toolchain upgrade; compile-time only); see §15's "already decided" list. Primary reference OS: GrapheneOS, with compatibility maintained
 for stock AOSP-based ROMs.
 
 ```
@@ -948,7 +948,7 @@ As built (rewritten 2026-09-24, 0044 AR-2):
 - **Unit tests** (`:data`): every codec (`CodecRouter`, ANC/Ring/Battery/Case/Model-ID/ACK-NAK/pw_rpc/HDLC/EQ) against real
   `tshark`-extracted capture bytes, fuzz/property tests (random and truncated input never throws; a valid frame decodes after a
   garbage prefix and a reset), `SafeModeGate`, and `BudsRepositoryImpl` against `FakeBudsTransport` (in `:hardware`'s **test
-  fixtures**, never in the app) — pure JVM, JUnit 5 + Kotest assertions.
+  fixtures**, never in the app) — pure JVM, JUnit Jupiter (JUnit 6 since `ai-sessions/0078`; Kotest was declared but never imported and was removed then).
   Since `ai-sessions/0069`: a **structured fuzz** (`OversizedLengthTest`) mutates real captured frames *inside* their payload and re-seals them with a
   valid CRC — random bytes almost never pass the CRC, so the readers behind it were not reached by the older fuzz tests — with a time limit, because one
   of the defects it covers was an endless loop.
@@ -969,6 +969,9 @@ As built (rewritten 2026-09-24, 0044 AR-2):
 
 - Kotlin + Jetpack Compose BOM, Gradle version catalog (`libs.versions.toml`)
   for pinned dependency versions.
+- **Toolchain (since `ai-sessions/0078`, 2026-10-07):** Gradle 9.7.1 (wrapper with `distributionSha256Sum`), AGP 9.3.3 with its built-in Kotlin (no
+  `kotlin-android` plugin), Kotlin 2.4.20, KSP 2.3.12, Hilt 2.60.1, Compose BOM 2026.09.00 (material3 1.4.0), JDK 21; the versions and their sources are
+  in that session's RESULT. `android.onlyEnableUnitTestForTheTestedBuildType=false` keeps the release variant's unit tests (AGP 9's default would drop them).
 - **No protobuf runtime, no `.proto` build inputs** (`DECISIONS.md` ADR-041, 2026-09-24): the wire codec is hand-written
   Kotlin; schemas recovered from the APK are documentation. (`protobuf-kotlin-lite` via the Gradle plugin applies only
   if a `.proto` build input is ever introduced — `AGENTS.md` §4.)
@@ -1017,7 +1020,7 @@ question, so it is tracked as a `PROPOSAL —` note in §5a above and in
 > 2026-09-13); **Find My Buds Case/"both simultaneously" — out of scope for v1**
 > (`PROJECT.md` non-goals, `DECISIONS.md` ADR-027, decided 2026-09-13) — Left/Right
 > ring is unaffected and already implemented; **minimum supported Android API level
-> — API 34 (Android 14), same as compile/target SDK** (§1, `DECISIONS.md` ADR-029,
+> — API 34 (Android 14), same as the target SDK** (compile SDK 37 since ADR-029's Update of 2026-10-07) (§1, `DECISIONS.md` ADR-029,
 > decided 2026-09-13) — no lower-API compatibility path is pursued; `CompanionDeviceManager`
 > (API 26, ADR-005) is trivially satisfied at this floor (the generic battery broadcast,
 > §4 option 0, is `@SystemApi` and not used — `PROTOCOL.md` §4.3, 2026-09-30).
