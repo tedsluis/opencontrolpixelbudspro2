@@ -452,7 +452,7 @@ On `feature/0074-settings-switches` (from `fcd863e`), one per concern:
 | `753cacf` | docs(capture): CAP-070 skeleton (Group BF) for the 1.1.0 release run, registered planned | — |
 | `771386a` | docs: ARCHITECTURE, PROJECT, TODO and APP_TESTPLAN follow the 1.1.0 switches | — |
 | `7f8750c` | chore(release): prepare 1.1.0 (versionCode 10100), not yet released | final clean gate exit 0 |
-| (this commit) | docs(session): ai-sessions/0074 prompt and result, INDEX row | `lint_docs.py` exit 0 on the final tree |
+| `0323849` | docs(session): ai-sessions/0074 prompt and result, INDEX row | `lint_docs.py` exit 0 on the final tree (back-filled by `ai-sessions/0075`) |
 
 `lint_docs.py` was **not** run on the intermediate doc commits `753cacf`/`771386a`/`7f8750c` (the attempt caused the OOM above); it is exit 0 on the
 final tree. The next session back-fills the hash of the session commit (`AI_SESSION_LOG_PROCEDURE.md` §4b).
