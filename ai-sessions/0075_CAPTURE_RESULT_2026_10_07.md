@@ -4,14 +4,14 @@
 **Category:** CAPTURE
 **Date:** 2026-10-07
 **Title:** Full analysis of CAP-070 (Group BF: the 1.1.0 release APK, build `0323849`, in a GrapheneOS secondary user without Google Play — the hardware test of the five switches of 0074)
-**Status:** awaiting maintainer sign-off — analysis and the approved documentation edits done; the commit question is open
+**Status:** complete (checkpoint approved in chat 2026-10-07; committed and pushed to `feature/0074-settings-switches` — see Commits)
 
 ## Progress
 
 - **Done:** Phase 0 (git state, file identification, privacy + migration approved and executed), Phase A (film: 101 two-second sheets, every
   transition narrowed; clock offsets; no audio), Phase B (four HCI logs, four exports, two logcats), Phase C (EVENT-NOTES, FINDINGS, verdict),
   Phase D (checkpoint answered; approved edits applied; `ensure_footers.py` and `lint_docs.py` run — see "Documentation").
-- **Next:** the maintainer's answer to the commit question; then commits on `feature/0074-settings-switches`, push, back-fill "Commits", Status → complete.
+- **Next:** nothing in this session; the maintainer's release steps below.
 - **Touched, unverified:** none — every number in the documents was re-derived in this session (no subagents used).
 - **Intermediate results:** session scratchpad (the film notes, `sheets/`, `z/` zoom strips, `dec/` decodes — `*.all.txt`, `*.ctl.txt`, `*.hdlc.txt`,
   `*.ms.txt`, `*.pw.txt`, the write table — and `bin/` scripts `inv.py`, `join.py`, `writes.py`, `reads.py`, `ph.sh`). Re-create with the commands in
@@ -133,7 +133,17 @@ Each item is also in `TODO.md`, in the same words where it is a task:
 
 ## Commits
 
-Not committed yet — the commit question is open (task 20).
+On `feature/0074-settings-switches` (pull request #7), after the build commit `0323849`; the maintainer answered *"Commit + push, 3 commits
+(Recommended)"* in chat 2026-10-07. `git diff 0323849..HEAD -- android dist scripts` is empty.
+
+| Hash | Subject |
+|---|---|
+| `4bcc409` | docs(capture): CAP-070 (Group BF) — the 1.1.0 release run, analysed |
+| `0f142e8` | docs: follow CAP-070 — known issues, L-1 update, hardware-verified switches |
+| `714694b` | docs(session): ai-sessions/0075 prompt and result, INDEX row, 0074 back-fill |
+| (this commit) | docs(session): ai-sessions/0075 commits back-filled, status complete |
+
+The first push uploaded all LFS objects (1.4 GB) but the SSH connection closed before the refs; the second push moved the branch `0323849..714694b`.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0075_CAPTURE_RESULT_2026_10_07.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0075_CAPTURE_RESULT_2026_10_07
