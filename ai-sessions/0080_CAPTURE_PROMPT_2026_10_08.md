@@ -46,7 +46,7 @@ These are the ground rules; do not audit or change anything before they are read
   - `RELEASING.md`: the **Release checklist** A–E, "Repository rules", §4–§8 and §13;
   - `APP_TESTPLAN.md` in full. Section U (U1–U14) is the 1.1.1 build; C10, C12, O2, O3, S12 and T11 are taken into this run;
   - pull request #15 (`gh pr view 15`: the checklist, B1 = `86a6fb3`), and the commits of branch `release/1.1.1` (`git log --stat origin/main..origin/release/1.1.1`).
-- **The skeleton:** `captures/CAP-071-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BG/CAP-071-EVENT-NOTES.md`.
+- **The skeleton:** `captures/CAP-071-2026-10-08_17-51-29_18-27-28-Group_BG/CAP-071-EVENT-NOTES.md` (the placeholder folder `CAP-071-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BG`, renamed in this session).
   - Read it **as committed** (`git show HEAD:<path>`): purposes, the reference-byte table, P0–P9 with the ★ items, BG-1 … BG-24 and BG-end1 in five parts, "Don'ts",
     "After the run", and the analysis checklist with its "Refuted if" column.
   - Read the **working-tree version** too. The maintainer added the P0/P1 command outputs after the run; record them as the maintainer's evidence (§2).
@@ -103,7 +103,7 @@ below (§2), is re-derived from the film, the HCI logs, the other logs, the code
    - Analyse the film `CAP-071-recording.mp4` first, and record every event and action with its time in **CAP-071-EVENT-NOTES.md**.
    - Analyse **all** `CAP-071-btsnoop_hci*` logs with `tshark`.
    - Analyse the `CAP-071-opencontrol-debug-20261008-*.txt` exports and the `CAP-071-OpenControl-for-Pixel-Buds-Pro-2-log-*.txt` logcat.
-   - Then correlate the events of `CAP-071-EVENT-NOTES.md` with the HCI logs, `CAP-071-logcat-all.txt`, the exports and the app logcat;
+   - Then correlate the events of `CAP-071-EVENT-NOTES.md` with the HCI logs, CAP-071-logcat-all.txt (kept locally since this session; committed as the extract `CAP-071-logcat-extract.txt`), the exports and the app logcat;
      `CAP-049-EVENT-NOTES.md` is the example.
    - Run an extensive analysis and record the findings in **CAP-071-FINDINGS.md**; `CAP-049-FINDINGS.md` is the example.
    - Possibly relevant: `ai-sessions/0079_MAINTENANCE_RESULT_2026_10_08.md`, `ai-sessions/INDEX.md`, `APP_TESTPLAN.md`, `CAPTURE_BLUETOOTH_HCI_SNOOP.md`,
@@ -188,7 +188,7 @@ Measured by the chat that wrote this prompt (2026-10-08). **Re-check each value:
 
 - **File modes:** six files are `-rw-r--r--`; four are `-rwxr-----` (both exports, the app logcat, the film). No capture file may have the executable bit (fix it
   in Phase 0, with approval).
-- **LFS:** `git check-attr filter` gives `lfs` for the nine data files (including `CAP-071-logcat-all.txt`) and `unspecified` for the notes (measured; re-check).
+- **LFS:** `git check-attr filter` gives `lfs` for the nine data files (including CAP-071-logcat-all.txt (kept locally since this session; committed as the extract `CAP-071-logcat-extract.txt`)) and `unspecified` for the notes (measured; re-check).
 
 **Known pitfalls (from `CAP-063` … `CAP-070` — check them, do not assume):**
 - With the `H4 with linux header` encapsulation `bluetooth.addr` is empty. Scope every filter by the Buds' connection handle(s), taken from the Connection Complete
