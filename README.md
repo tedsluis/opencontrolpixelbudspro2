@@ -106,6 +106,9 @@ channels, byte-identical to the expected frames and confirmed by the Buds. Known
 (also in [`CHANGELOG.md`](./CHANGELOG.md)): the app says what a switch sets; the screen-reader text for "—" is checked by the unit
 tests, not yet on a phone.
 
+**1.1.1 is being prepared** (`ai-sessions/0079`): the same app built with current build tools and libraries — nothing changes for you. It is published
+after its hardware run.
+
 **Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
 - After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop.
