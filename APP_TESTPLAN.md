@@ -20,7 +20,8 @@ Android's dark switch (K4, O13); a Bluetooth-off loss is named (K1); **section R
 **Updated 2026-10-02 for `ai-sessions/0066`:** the balance steps are gone again (M3, R5 back to the slider) and Info has no "Licence on GitHub" link (R1, R3).
 **Updated 2026-10-06 for the `ai-sessions/0074` build (1.1.0):** five new switches — Multipoint, Use head gestures, Case sounds "Earbuds replaced" and "Other
 alerts" on Controls, Volume EQ on Sound (**section T**); a switch that was not read shows "—" in place of the switch (M1, N1); twelve settings reads at Connect
-and on a pull (O8); A5 corrected (`CAP-067` §7).
+and on a pull (O8); A5 corrected (`CAP-067` §7). **Updated 2026-10-08 for the 1.1.1 build** (`ai-sessions/0079`: the app of 1.1.0 rebuilt with the
+toolchain of `ai-sessions/0078` — no new function; **section U**, a regression pass over what the new toolchain could change).
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -300,6 +301,29 @@ new switches (the maintainer's choice, "alleen labels").
 | T10 | Only the **Right** bud out (Info: "Control channel: 21"): Volume EQ off, then on. | As T7 | `4:{15:1}` on channel 21 — first on the wire in `CAP-070` (BF-20) | ✅ | CAP-070 A4770/A4800 — `15:1` on ch 21 = the derived frame, ACKed |
 | T11 | Bluetooth off; force-stop the app; open it; Controls, then Sound. Check what a screen reader gets for each "—" (`adb shell uiautomator dump`, or a screen reader if one is installed). | Controls: six "—" in place of the switches; Sound: the EQ bands, Volume EQ, balance, mono audio, conversation detection "—"; each "—" has the description **"Not read from the Buds yet"** | — | ⚠️ partly | "—" on film (Controls 06:38:04, Sound 06:39:04); no `uiautomator` dump — the description is not checked |
 
+## U. The 1.1.1 build (the toolchain upgrade of `ai-sessions/0078`)
+
+In `CAP-071` as BG-1 … BG-24 (`captures/CAP-071-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BG/CAP-071-EVENT-NOTES.md`, which has the reference bytes per request). Nothing
+here is new behaviour: each row checks that the rebuilt app does what 1.1.0 did. The robustness rows (C8, C9, J4, K1, K2, R6) and the open items (C12, S6, S12,
+T11, H5) are the earlier IDs, run again in `CAP-071`.
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| U1 | In 1.1.0: Settings → Dark mode **On**, Debug → Debug mode **on**; install 1.1.1 **over** it (no uninstall); open the app. | Dark at once; Debug mode still on; no crash | — | | `dumpsys`: `lastUpdateTime` later than `firstInstallTime` |
+| U2 | Gear → **Info**. | "App: 1.1.1, build <hash> (<date>)", no "-dirty" | — | | |
+| U3 | Right after the start: **Controls** within the first second (screen recording). | "—" for ≈ 1 s, then the values (S6) | the twelve reads, each = `CAP-070`'s request | | |
+| U4 | Tap each bottom tab; swipe through all and back. | The same screens as 1.1.0 (`CAP-070`'s film); the bar follows the swipe | — | | |
+| U5 | Pull down on each tab. | A spinner that ends; the (i) times move | as O8 | | |
+| U6 | Open several (i) dialogs; close with Close and with back. | They open and close | — | | |
+| U7 | Gear: the tab row; ← and system back. | Settings · Debug · Info; the selected label in the accent colour with a **full-width** underline, as 1.1.0 (`TabRow` kept with its deprecation suppressed); back returns to the tab you came from | — | | |
+| U8 | Rotate on Sound and on Info; Android's dark theme on/off with Dark mode = System. | The tab stays; the theme follows without a restart | — | | |
+| U9 | Info → **Read the licence**; both links. | The full licence; the browser opens README and issues | nothing from the app | | |
+| U10 | ANC tab: the four modes; the tile once; the notification. | Each mode after its ACK; the tile steps from the reported mode; the notification shows the mode | per tap `08 11` then the `Set` = `CAP-068`'s request | | |
+| U11 | Sound: preset **Balanced**; a band, *Read EQ again*; balance Right 4 and Centre; mono; conversation detection; Volume EQ — say what you hear. | Each after its OK | each request = its reference (`CAP-059` 2188 for Balanced on 21) | | |
+| U12 | Controls: touch controls, press and hold, the mode list without Off, in-ear detection, head gestures, Multipoint, both case sounds — say whether the case sounds with "Earbuds replaced" off. | Each after its OK | each request = its reference (`CAP-041` 2198 for the mode list on 21) | | |
+| U13 | Disconnect, Connect. | Every value of U11–U12 read back | the reads answer the last writes | | |
+| U14 | Find: Ring Left, Stop, Ring Right, Stop. | The ring follows each tap | `04 01 00 01 02` / `00` / `01` / `00` → ACK | | |
+
 ## After the run (within 1 minute of the last action)
 
 | # | Collect | Done |
@@ -334,6 +358,7 @@ new switches (the maintainer's choice, "alleen labels").
 | R 0064 build | 7 | | | | |
 | S 1.0.1 build | 13 | | | | |
 | T 1.1.0 build | 11 | 7 | 0 | 4 | 0 |
+| U 1.1.1 build | 14 | | | | |
 
 **Run `CAP-070` (2026-10-07, 1.1.0 `0323849`, the user without Play; `ai-sessions/0075`, `CAP-070-FINDINGS.md`):** section T — ✅ T2, T3, T4, T6, T8, T9, T10;
 ⚠️ T1 (no "—" caught at the first Connect; a first install, not an update), T5 and T7 (writes ✅, observations not recorded — no audio), T11 (no dump). Other

@@ -142,7 +142,7 @@ to design, implement, test, and document a native Android app.
 
 ## Current state (2026-10-07)
 
-- **Captures:** 70 registered sessions (`CAP-001`–`CAP-070`): 66 analyzed (the latest, `CAP-070` of 2026-10-07: the 1.1.0 release run — every switch request on both channels confirmed, `ai-sessions/0075`), 2 planned, 2 withdrawn (`CAP-052`,
+- **Captures:** 71 registered sessions (`CAP-001`–`CAP-071`): 66 analyzed (the latest, `CAP-070` of 2026-10-07: the 1.1.0 release run — every switch request on both channels confirmed, `ai-sessions/0075`), 3 planned (among them `CAP-071`, the 1.1.1 release run, `ai-sessions/0079`), 2 withdrawn (`CAP-052`,
   `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` and `CAP-070` are captures of this project's own app (`CAP-067`: the 1.0.0
   release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, all without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
