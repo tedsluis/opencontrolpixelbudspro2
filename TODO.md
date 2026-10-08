@@ -20,24 +20,23 @@ Nothing open (2026-10-07, `ai-sessions/0077`: the two 1.0.1 behaviours are recor
 Open after `CAP-070` (the 1.1.0 release run, `ai-sessions/0075`, `CAP-070-FINDINGS.md`); each goes into the next app run with its expected bytes. Done in
 `CAP-070` and removed here: the five switches on hardware (read, off, read back, on — 89 of 89 writes ACKed), the three request forms no capture held (11 and 29
 on channel 19, `15:1` on channel 21), the channel-19 balance `17:7`, the swipe between tabs (camera only), and P1 (a first install in user 10, 🟡).
+**Planned in `CAP-071`** (the 1.1.1 release run, skeleton by `ai-sessions/0079`): the first seven items below (BG step in brackets); the analysing session
+removes what it settles.
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
-      Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11)
+      Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — planned in `CAP-071` (BG-23).
 - [ ] C12 — a tap during an automatic re-open ("The app's channel is being reopened …", no write afterwards): not done in `CAP-070` (the tap came after
-      "ready"). Needs the screen recording.
+      "ready"). Needs the screen recording. — planned in `CAP-071` (BG-21).
 - [ ] `APP_TESTPLAN.md` H5 with the *Read EQ again* button (`CAP-068` and `CAP-070` read the value back only at a reconnect); S6 ("—" in the first second
       after ready) on Android's **screen recording** (seen on the camera in `CAP-070` at 06:17:43 and 06:20:24, not on the first Connect); S12 (export across a
-      rotation) — not done in `CAP-068` or `CAP-070`. S9 (needs two Pixel Buds paired).
+      rotation) — not done in `CAP-068` or `CAP-070`; planned in `CAP-071` (BG-13, BG-1, BG-22). S9 (needs two Pixel Buds paired) — not planned.
 - [ ] The update path: install a release **over** the previous one in the test user (keep the older APK; `CAP-068` and `CAP-070` were first installs there,
-      🟡 `CAP-070-FINDINGS.md` §0) and record `adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -A12 "User 10:"`.
+      🟡 `CAP-070-FINDINGS.md` §0) and record `adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -A12 "User 10:"`. — planned in `CAP-071` (P1: 1.1.1 over 1.1.0).
 - [ ] The Left bud taken out with both **worn** on channel 19, **head in view** (lead L-1; `CAP-070` BF-18 gave `DISC` + 21 with the Left identified, wear
-      not on film) — 🟡 (`INEAR-005`).
-- [ ] The case-sound and Volume-EQ observations (what is heard): the film needs an audio track (`CAP-070`'s had none), or the maintainer says it.
-- [ ] What sent the two `SIGQUIT` stack dumps of `CAP-070` (L1 508, L2 597) — keep a system log in the next run.
+      not on film) — 🟡 (`INEAR-005`). — planned in `CAP-071` (BG-20).
+- [ ] The case-sound and Volume-EQ observations (what is heard): the film needs an audio track (`CAP-070`'s had none), or the maintainer says it. — planned in `CAP-071` (P3, BG-13, BG-14).
+- [ ] What sent the two `SIGQUIT` stack dumps of `CAP-070` (L1 508, L2 597) — keep a system log in the next run. — planned in `CAP-071` (P6).
 - [ ] B4 double tap (`AlreadyInProgress`) — needs the Buds forgotten and re-paired.
-- [ ] `OpenControlNavHost.kt:238` still carries `// TODO(verify)` for swipe, pull and back; all three have been seen on film since (pull `CAP-065`,
-      back `CAP-067`, swipe `CAP-070`) — reword it with those pointers in the next session that touches `:ui` (maintainer's choice, chat 2026-10-07,
-      `ai-sessions/0076`).
 - [ ] K5 / BC-12 (GrapheneOS Bluetooth auto-off): only in a user where the setting exists (the Owner).
 - [ ] F-4 on a **debug** build: StrictMode lines after a Bluetooth off/on (🟡 the framework's `BluetoothLeAudio` may still warn —
       `CAP-066-FINDINGS.md` §8). Not observable on a release build.
@@ -135,7 +134,7 @@ Open questions (each with where it is described):
 - 🟡 Hearable Controls MAC not enforced (`PROTOCOL.md` §4.1): a firmware that starts enforcing it would NAK with reason `0x03`.
 - 🔴 `CAP-069` leftovers: why a bud's charging bit stayed set ≈ 12 s after it left the case (7358 → 7404); why the phone re-opened GSND AUDIO on ACL 3
   (8157 → 8271); Device Information `03 0b` (FHN EID, out of scope) with length 25; field 18 after the Save button (one sample, 6050 → `CAP-053`).
-- [ ] **M** Restore the Buds before the next run (chat 2026-10-07, `ai-sessions/0077`): Sound → BALANCED (`4:{16:[-3.5, 0.5, 1.0, -1.0, 2.5]}`, = `CAP-015`
+- [ ] **M** Restore the Buds before the next run (chat 2026-10-07, `ai-sessions/0077`) — planned as steps of `CAP-071` (BG-13 Balanced, BG-14 the mode list): Sound → BALANCED (`4:{16:[-3.5, 0.5, 1.0, -1.0, 2.5]}`, = `CAP-015`
       2303 / `CAP-059` 2188); Controls → Press and hold → untick Off (`4:{12:{1:1 2:0 3:1 4:0}}`, = `CAP-041` 2198 on ch 21); Disconnect + Connect, check
       "read". Also write it as P7 of the next skeleton. (Removed when the maintainer confirms it is done.)
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
@@ -149,7 +148,7 @@ Open questions (each with where it is described):
 ## 5. App: later work
 
 - [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
-      (a) it is not hardware-tested — the next release's capture run covers it (the APK is otherwise the same app; `ai-sessions/0078` RESULT);
+      (a) it is not hardware-tested — the 1.1.1 release run `CAP-071` covers it (skeleton by `ai-sessions/0079`; the APK is otherwise the same app);
       (b) **M** — raising `targetSdk` (lint `OldTargetApi` now reports 34) is its own session with a hardware run: Android 15 enforces edge-to-edge,
       16 removes the opt-out and turns on predictive back, 17 makes an RFCOMM `read()` return −1 on close (quotes in that RESULT §A.4);
       (c) **M** — `TabRow` is deprecated in material3 1.4.0 and kept with `@Suppress("DEPRECATION")` (`SettingsMenu.kt`); `PrimaryTabRow` narrows the
@@ -158,6 +157,10 @@ Open questions (each with where it is described):
       (e) Gradle 9.8 / AGP 9.4 once Kotlin's "fully supported" range includes them (2.4.20: Gradle ≤ 9.7.0, AGP ≤ 9.3.1);
       (f) one Gradle-10 deprecation remains, inside AGP (`TestFixturesUtil.kt:38`, "Using a Project object as a dependency notation") — re-check on the next
       AGP release.
+- [ ] **M** — repository settings (proposals from `ai-sessions/0079` §A.5, nothing changed): (a) make CI a **required status check** on `main` — first give
+      `.github/workflows/android.yml` and `.github/workflows/lint-docs.yml` a job that always reports (their path filters skip pull requests that touch neither, and a required check
+      that never runs stays "pending" for ever); (b) **allow only merge commits** (the repository also allows squash and rebase merges, while `RELEASING.md` D1
+      requires a merge commit).
 - [ ] 🟡 **Accessibility, found while testing `ai-sessions/0074`:** a switch row's label and its `Switch` are separate accessibility nodes (siblings in the
       card), so a screen reader may announce "switch, on" without the setting's name — not tested on a phone. A merged row (`Modifier.toggleable` with
       `Role.Switch` on the row, the `Switch` without its own click) would fix it; it changes every switch's semantics (and the tests that find a switch by its
