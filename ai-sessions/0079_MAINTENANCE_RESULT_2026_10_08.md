@@ -231,7 +231,10 @@ On `release/1.1.1` (from `origin/main` = `7101d9c`); the maintainer answered *"C
 | `e9740df` | docs: RELEASING.md — the repository rules of 2026-10-08 |
 | `68d214d` | docs(capture): CAP-071 skeleton (Group BG) for the 1.1.1 release run, registered planned |
 | `ab8c64b` | docs: TODO.md — items planned in CAP-071, repository proposals |
-| (this commit) | docs(session): ai-sessions/0079 result, INDEX row |
+| `22af9f1` | docs(session): ai-sessions/0079 result, INDEX row |
+| (this commit) | docs(session): ai-sessions/0079 commits back-filled |
+
+Pull request: https://github.com/tedsluis/opencontrolpixelbudspro2/pull/15 — the release checklist; A6 is the maintainer's check, D1 waits for `CAP-071`.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0079_MAINTENANCE_RESULT_2026_10_08.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0079_MAINTENANCE_RESULT_2026_10_08
