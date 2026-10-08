@@ -2,10 +2,6 @@ An independent, open-source Android app to control Google Pixel Buds Pro 2 — f
 
 **Features:** noise control (Noise cancellation, Adaptive, Transparency, Off) and a Quick Settings tile · equalizer with presets and Volume EQ · battery Left/Right (with charging) and the Case · Find My Buds (ring Left / Right) · touch controls, press and hold per bud and its noise-control modes · head gestures, Multipoint, case sounds · balance, mono audio, conversation detection, in-ear detection · dark mode.
 
-**New in 1.1.1:** nothing you will see — built with current Android build tools and libraries; your settings stay after the update.
-
-**Known issues in 1.1.1:** the app says what a switch sets, not what you will hear; the screen-reader text for "—" is checked by the unit tests, not yet on a phone.
-
 **Not included:** ringing the Case or both buds, firmware updates, choosing the devices of a multipoint connection, anything that needs a Google account.
 
 **Requirements:** Android 14 (API 34) or newer. Tested on a Pixel 9a with GrapheneOS (Android 17) and Buds firmware `release_5.203` only. On any other firmware the app opens in read-only **Safe Mode** and sends no setting changes.
