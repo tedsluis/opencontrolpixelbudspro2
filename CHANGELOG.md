@@ -11,7 +11,7 @@ build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`). See `TODO.m
 
 ## [Unreleased]
 
-## [1.1.1] - not yet released
+## [1.1.1] - 2026-10-08
 
 A maintenance release: nothing changes in what the app does or shows. It is built with current build tools and libraries (Kotlin, Jetpack Compose,
 AndroidX) so later work starts from a supported base. Prepared in `ai-sessions/0078` and `ai-sessions/0079`; tested on hardware before it is published.

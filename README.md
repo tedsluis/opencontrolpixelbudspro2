@@ -7,7 +7,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **Latest release: [1.1.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.1.0)** (2026-10-07). You can also
+> **Latest release: [1.1.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.1.1)** (2026-10-08). You can also
 > [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
@@ -106,8 +106,8 @@ channels, byte-identical to the expected frames and confirmed by the Buds. Known
 (also in [`CHANGELOG.md`](./CHANGELOG.md)): the app says what a switch sets; the screen-reader text for "—" is checked by the unit
 tests, not yet on a phone.
 
-**1.1.1 is being prepared** (`ai-sessions/0079`): the same app built with current build tools and libraries — nothing changes for you. Its hardware run
-`CAP-071` passed (`ai-sessions/0080`: the update keeps your settings, every request and answer is the same as 1.1.0's); it is published by the maintainer.
+**1.1.1** (2026-10-08, `ai-sessions/0079`): the same app built with current build tools and libraries — nothing changes for you. Its hardware run
+`CAP-071` passed (`ai-sessions/0080`: the update keeps your settings, every request and answer is the same as 1.1.0's). Known issues: as 1.1.0.
 
 **Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 

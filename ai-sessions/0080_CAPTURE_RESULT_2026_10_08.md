@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-08
 **Title:** Fully analyse `CAP-071` (one film with sound, four HCI snoop logs, two app debug exports, one app logcat, one full system log), record the real events and the findings, and give the release verdict for 1.1.1 (`RELEASING.md` C4); no app change, no new skeleton, no publishing
-**Status:** complete (every checkpoint answer given in chat 2026-10-08: release `86a6fb3` as 1.1.1; committed and pushed to `release/1.1.1` — see Commits; publishing is the maintainer's step)
+**Status:** complete (every checkpoint answer given in chat 2026-10-08: release `86a6fb3` as 1.1.1; committed and pushed — see Commits; 1.1.1 published 2026-10-08)
 
 ## Progress
 
@@ -176,7 +176,19 @@ Each is in `TODO.md` (§2, §4, §6):
 
 ## Commits
 
-Not committed yet — waiting for the maintainer's answer to the commit question (task 20).
+On `release/1.1.1` (the maintainer answered *"Commit, push, update PR (Recommended)"* in chat 2026-10-08); the first push dropped the SSH connection after the LFS
+upload, the second pushed the refs (`63a56a9..ac1d1e3`). Pull request #15's checklist B2–C4 ticked.
+
+| Hash | Subject |
+|---|---|
+| `a84be2d` | docs(capture): CAP-071 (Group BG) — the 1.1.1 release run, analysed |
+| `4611885` | docs: record CAP-071 — registry, index, test plans, TODO, two PROTOCOL notes |
+| `ac1d1e3` | docs(session): ai-sessions/0080 result, INDEX row, prompt file names |
+
+**After the session (the maintainer's release steps, chat 2026-10-08):** PR #15 merged with a merge commit `f359aa2` (the maintainer); signed tag `v1.1.1` on
+`86a6fb3` created and pushed at the maintainer's request (`git branch -r --contains v1.1.1` lists `origin/main`); release published 2026-10-08 19:41 UTC by the
+maintainer (the downloaded APK's SHA-256 = `062f35b3…f1d0`); D4: updated with Obtainium, works. E1–E4 in the pull request of branch
+`docs/1.1.1-after-publish` (CHANGELOG date, README, the Release log row, this back-fill, the template).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0080_CAPTURE_RESULT_2026_10_08.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0080_CAPTURE_RESULT_2026_10_08
