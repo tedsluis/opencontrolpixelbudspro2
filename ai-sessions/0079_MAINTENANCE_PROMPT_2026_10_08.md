@@ -58,6 +58,14 @@ licence dialog and a connect/ANC/EQ round". The same chat checked GitHub's notic
 repository uses it (`grep -rn pull_request_target .github/` → exit 1; positive control `pull_request:` found in `.github/workflows/android.yml` and `.github/workflows/lint-docs.yml`) —
 nothing to do; record it in the RESULT, no change.
 
+**Added 2026-10-08 (the maintainer's request in chat: "vul de 0079-prompt aan met die taak via een PR").** Since this prompt was written the repository
+got three rules the runbook does not describe yet: (1) **`main` accepts changes only through a pull request** — classic branch protection, admins
+included, 0 required approvals, **no required status checks**; (2) the tag ruleset **"Protect Release Tags"** (`refs/tags/v*`): deleting and moving
+(non-fast-forward) a tag is blocked, creating one is allowed, repository admins may bypass; (3) the **sitemap and sidebar workflows** no longer push to
+`main` — after a merge that changes their file they push a fixed bot branch (`bot/sitemap`, `bot/docs-sidebar`) and open or update one pull request for
+the maintainer to merge (PR #13, `30add80`; "Allow GitHub Actions to create and approve pull requests" turned on for it). Task 8a brings
+`RELEASING.md` in line; re-derive each rule from the API first (§4 task 8a), do not copy this paragraph.
+
 ---
 
 ## 2. What the release is, and what the run must prove (re-check every item in Phase A)
@@ -109,7 +117,7 @@ hold → untick Off (`4:{12:{1:1 2:0 3:1 4:0}}`), Disconnect + Connect, "read" s
 - **Registries.** The capture is registered *planned* in `id_registry.csv` with the next free numbers (check before assigning; `CAP-NNN` and Group BG are
   expected — confirm), its Group section and Capture Index row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md`, and new Test-IDs only where a step has none
   (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, registered).
-- **Scope.** §1–§2 and `RELEASING.md` A/E. Anything else is a RESULT note or a `TODO.md` line, never a silent addition.
+- **Scope.** §1–§2, `RELEASING.md` A/E and the runbook text of task 8a (documentation only — no repository setting is changed by this session). Anything else is a RESULT note or a `TODO.md` line, never a silent addition.
 - **Files.** Look before overwriting; never delete with a wildcard; no `git worktree add`.
 - **Commits.** Only after the maintainer confirms the final summary.
 
@@ -147,6 +155,8 @@ exact text or version in the preview:
 - **(e) Recording:** camera film with an audio track + Android's screen recording + a system log (Recommended) — or which of them.
 - **(f) The `// TODO(verify)` rewording** in `OpenControlNavHost.kt` now (comment only, before the build commit) or later.
 - **(g) The texts:** the `CHANGELOG.md` `[1.1.1]` block, its Known issues, and the `README.md` status line — shown in full in the preview.
+- **(h) The `RELEASING.md` changes of task 8a** — the new section and each reworded checklist/flowchart line, in full in the preview; and any direct-to-`main`
+  instruction task 8a found in another document.
 Record the answers verbatim.
 
 ### Phase C — release preparation (`RELEASING.md` A1–A5)
@@ -155,6 +165,19 @@ Record the answers verbatim.
    current build tools and libraries; what was proved: tests, mutations, APK audit — and that the hardware run follows), with **Known issues** carried from
    1.1.0 that still hold; a new empty `[Unreleased]`. `README.md`: status line and known issues (not "Latest release" — that is E1, after publishing).
    `scripts/release_notes.template`: the summary line for this version if the template carries one (`RELEASING.md` A3/E4 — check how 1.1.0 did it).
+8a. **`RELEASING.md` and the repository rules (§1, added 2026-10-08).** First re-derive the rules, each with its command and output:
+    `gh api repos/tedsluis/opencontrolpixelbudspro2/branches/main/protection` (pull request required, `enforce_admins`, `required_status_checks`),
+    `gh api repos/tedsluis/opencontrolpixelbudspro2/rulesets` and `…/rulesets/<id>` (the tag ruleset's rules and bypass), `gh api
+    repos/tedsluis/opencontrolpixelbudspro2/actions/permissions/workflow`, and the two `update-*` workflows. Then, as dated current text (no history
+    layer): a short **"Repository rules"** section near the top (what each rule allows and blocks, and what it means for a release — no direct push to
+    `main`, so the capture and its analysis go on the release branch before D1 and E is its own pull request; D2's tag can be created but never moved or
+    deleted, which enforces the existing "never move a pushed tag" rule; after D1 and after E a bot pull request for the sitemap/sidebar may appear —
+    merge it with a merge commit); in the checklist: A6 "CI green" stays a manual check because no status check is required — say so; D1/E1 mention the
+    possible bot pull request; the flowchart's "Commit capture + analysis on main" and "CHANGELOG date + README on main" reworded to the branch / pull
+    request they now go through (and the note above the diagram that says to read them that way updated or removed). Also check `AI_SESSION_LOG_PROCEDURE.md`,
+    `CONTRIBUTING.md` and `README.md` for an instruction to push or commit directly to `main` and list what you find (change only with the maintainer's
+    yes). **Not in this task:** making CI a required status check — the workflows' path filters would leave a required check pending on pull requests
+    they skip; put it in `TODO.md` §5 as a proposal (**M**) with that reason.
 9. Gate again (task 2's command, `clean`): equal counts, nothing new; the debug APK's badging shows the new `versionCode`/`versionName`;
    `PYTHONDONTWRITEBYTECODE=1 python3 scripts/lint_docs.py` and `… scripts/ensure_footers.py` exit 0.
 
@@ -180,7 +203,7 @@ Record the answers verbatim.
     `pull_request_target` check of §1, "Files read", **"Deferred documentation"** (each also in `TODO.md`) and **"Commits"**. Status per
     `AI_SESSION_LOG_PROCEDURE.md` §4/§4b.
 15. Show the maintainer a short summary and **ask whether to commit, push and open the pull request**. Only after a yes: Conventional Commits, one per
-    concern (`chore(release): 1.1.1 version` with `CHANGELOG`/`README`/template, `docs: CAP-NNN skeleton, registry, test plan`, `docs(session): …`), each
+    concern (`chore(release): 1.1.1 version` with `CHANGELOG`/`README`/template, `docs: RELEASING.md — the repository rules` for task 8a, `docs: CAP-NNN skeleton, registry, test plan`, `docs(session): …`), each
     with a *why* and the attribution line from the session's system reminder; `git fetch` and rebase before pushing, never force; nothing from `build/`,
     `dist/`, `android/.kotlin/`, `.vscode/` or `__pycache__` staged. The pull request's description is `RELEASING.md`'s checklist with A1–A6 ticked as
     done and B–E open, and a link to this RESULT. **Do not merge** — the merge (D1) comes after the run and its analysis. Then print, for the maintainer,
@@ -203,7 +226,7 @@ Record the answers verbatim.
 
 - **ai-sessions/0079_MAINTENANCE_RESULT_2026_10_08.md** — Progress block, summary, inventory, reference-byte table, checkpoint answers, gate tables,
   "Files read", "Deferred documentation", "Commits".
-- The release branch with the version change, `CHANGELOG.md`/`README.md`/template, the `CAP-NNN` skeleton and its registrations, `APP_TESTPLAN.md` U —
+- The release branch with the version change, `CHANGELOG.md`/`README.md`/template, the `RELEASING.md` update of task 8a, the `CAP-NNN` skeleton and its registrations, `APP_TESTPLAN.md` U —
   pushed, with an open pull request carrying the release checklist.
 - The maintainer's next commands, printed, not run.
 
