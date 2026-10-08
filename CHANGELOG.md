@@ -11,6 +11,11 @@ build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`). See `TODO.m
 
 ## [Unreleased]
 
+## [1.1.1] - not yet released
+
+A maintenance release: nothing changes in what the app does or shows. It is built with current build tools and libraries (Kotlin, Jetpack Compose,
+AndroidX) so later work starts from a supported base. Prepared in `ai-sessions/0078` and `ai-sessions/0079`; tested on hardware before it is published.
+
 ### Changed
 
 - Build (user-invisible, `ai-sessions/0078`): Gradle 8.9 → 9.7.1 (the wrapper now checks the distribution's SHA-256), Android Gradle plugin 8.6.0 →
@@ -19,6 +24,13 @@ build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`). See `TODO.m
   `targetSdk` stay 34 (`DECISIONS.md` ADR-029 Update). The app's permissions, components, texts and bytes on the wire are unchanged — same unit-test
   counts (plus one new test for the settings-menu tab order), the same mutations caught; not yet hardware-tested (with the next release's run).
 - CI: `actions/checkout` v7.0.1 in all four workflows, `setup-python` v7.0.0, `setup-gradle` v6.4.0.
+
+### Known issues
+
+- The app says what a switch sets: which sounds the case-sound switches silence, what Volume EQ does to the sound, and what
+  switching Multipoint off does to a second connected device are not established.
+- The screen-reader text for "—" is checked by the unit tests, not yet on a phone.
+- English only. After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop (from 1.0.1).
 
 ## [1.1.0] - 2026-10-07
 

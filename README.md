@@ -106,6 +106,9 @@ channels, byte-identical to the expected frames and confirmed by the Buds. Known
 (also in [`CHANGELOG.md`](./CHANGELOG.md)): the app says what a switch sets; the screen-reader text for "—" is checked by the unit
 tests, not yet on a phone.
 
+**1.1.1 is being prepared** (`ai-sessions/0079`): the same app built with current build tools and libraries — nothing changes for you. Its hardware run
+`CAP-071` passed (`ai-sessions/0080`: the update keeps your settings, every request and answer is the same as 1.1.0's); it is published by the maintainer.
+
 **Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
 - After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop.
@@ -139,9 +142,9 @@ to design, implement, test, and document a native Android app.
 
 ## Current state (2026-10-07)
 
-- **Captures:** 70 registered sessions (`CAP-001`–`CAP-070`): 66 analyzed (the latest, `CAP-070` of 2026-10-07: the 1.1.0 release run — every switch request on both channels confirmed, `ai-sessions/0075`), 2 planned, 2 withdrawn (`CAP-052`,
-  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` and `CAP-070` are captures of this project's own app (`CAP-067`: the 1.0.0
-  release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, all without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
+- **Captures:** 71 registered sessions (`CAP-001`–`CAP-071`): 67 analyzed (the latest, `CAP-071` of 2026-10-08: the 1.1.1 release run — the update over 1.1.0 keeps the settings and every request is byte-identical, `ai-sessions/0080`), 2 planned, 2 withdrawn (`CAP-052`,
+  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068`, `CAP-070` and `CAP-071` are captures of this project's own app (`CAP-067`: the 1.0.0
+  release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, `CAP-071`: the 1.1.1 release APK, all without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).

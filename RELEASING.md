@@ -9,6 +9,21 @@ sees the keystore or its passwords.
 certificate(s) in the new version with those in the existing version. The system allows the update if the certificates match."* and *"If you lose your
 app's signing key, you lose the ability to update your app."* So: one key for the life of the app, backed up, never in this repository.
 
+## Repository rules (re-derived 2026-10-08, `ai-sessions/0079`)
+
+Set by the maintainer on 2026-10-08; re-derived with `gh api repos/tedsluis/opencontrolpixelbudspro2/branches/main/protection`, `…/rulesets/<id>`,
+`…/actions/permissions/workflow` and the repository's merge settings (commands and outputs in `ai-sessions/0079` RESULT §A.5):
+
+- **`main`** accepts changes only through a pull request — admins included (`enforce_admins`); 0 approvals; **no required status check**, so "CI green"
+  (A6) is your own check before merging.
+- **Tags `v*`** cannot be deleted or moved once pushed (ruleset "Protect Release Tags": `deletion`, `non_fast_forward`; admins could bypass — don't).
+  Creating one is allowed: D2 as before.
+- **Merge method:** the repository also allows squash and rebase merges; always choose **"Create a merge commit"** (D1).
+- **Bot pull requests:** after a merge that changes a Markdown file, the sitemap and sidebar workflows may open a pull request from `bot/sitemap` or
+  `bot/docs-sidebar` (they no longer push to `main`). Check that it changes only `sitemap.xml` / `_sidebar.md` and merge it with a merge commit.
+
+For a release this means: the capture and its analysis go on the release branch before D1, and E is its own small pull request.
+
 ## Release checklist (copy it into the release's pull request and tick it there)
 
 Added 2026-10-04 (`ai-sessions/0069`, the maintainer's request). `X.Y.Z` is the version; every step names the section with the details. Steps marked
@@ -23,7 +38,8 @@ Added 2026-10-04 (`ai-sessions/0069`, the maintainer's request). `X.Y.Z` is the 
       `scripts/release_notes.template`: this version's summary line (§4).
 - [ ] A4. Gate, locally: `cd android && ./gradlew assembleDebug testDebugUnitTest test lint`, and `python3 scripts/lint_docs.py` (exit 0).
 - [ ] A5. Commit per concern (Conventional Commits), `git push -u origin release/X.Y.Z`, open the pull request: `gh pr create --base main --fill`.
-- [ ] A6. Both CI workflows green on the pull request (Android build and test, docs lint). **Do not merge yet.**
+- [ ] A6. Both CI workflows green on the pull request (Android build and test, docs lint) — your own check: the repository requires no status check
+      ("Repository rules"). **Do not merge yet.**
 
 **B. Build and verify — from the pushed branch tip**
 
@@ -45,7 +61,8 @@ Added 2026-10-04 (`ai-sessions/0069`, the maintainer's request). `X.Y.Z` is the 
 **D. Merge and publish — outward-facing, in this order**
 
 - [ ] D1. **you** Merge the pull request with **"Create a merge commit"** (`gh pr merge --merge`). Not squash, not rebase: both would replace the build
-      commit by a new one and the tag of D2 would point at a commit that is not on `main`.
+      commit by a new one and the tag of D2 would point at a commit that is not on `main`. The repository allows all three methods — choose the merge
+      commit yourself. Afterwards a bot pull request for the sitemap/sidebar may appear ("Repository rules"): merge it the same way.
 - [ ] D2. **you** Tag the **build commit of B1** — not the merge commit, not `HEAD`: `git tag -s vX.Y.Z <B1 hash> -m "OpenControl for Pixel Buds Pro 2 X.Y.Z"`,
       `git push origin vX.Y.Z` (§7). Check: `git branch -r --contains vX.Y.Z` lists `origin/main`.
 - [ ] D3. **you** Draft release with the three files **from the kept copy** (§7); read the draft on github.com; `gh release edit vX.Y.Z --draft=false`.
@@ -53,7 +70,8 @@ Added 2026-10-04 (`ai-sessions/0069`, the maintainer's request). `X.Y.Z` is the 
 
 **E. After publishing — a small pull request of its own**
 
-- [ ] E1. `CHANGELOG.md`: the date in the `[X.Y.Z]` block, a new empty `[Unreleased]`. `README.md`: "Latest release", Status, known issues.
+- [ ] E1. `CHANGELOG.md`: the date in the `[X.Y.Z]` block, a new empty `[Unreleased]`. `README.md`: "Latest release", Status, known issues — on a branch,
+      by pull request (`main` takes no direct push); a bot pull request may follow its merge.
 - [ ] E2. `RELEASING.md` §13: the Release log row (build commit, date, APK SHA-256, certificate SHA-256, capture).
 - [ ] E3. The session log that prepared the release: its "Commits" section and Status (`AI_SESSION_LOG_PROCEDURE.md` §4b); `TODO.md` §1 emptied.
 - [ ] E4. `scripts/release_notes.template`: remove this version's summary line, ready for the next one.
@@ -63,8 +81,8 @@ merge commit, the signed tag on the build commit, the Release log row, and the c
 
 ## Release flow — the normal path and what to do when something goes wrong
 
-*(The diagram predates the branch workflow: where it says "commit + push" read "commit and push on the release branch, pull request open", and the
-merge to `main` (D1) comes between the analysis and the tag.)*
+*(Where the diagram says "commit + push" read "commit and push on the release branch, pull request open"; the merge to `main` (D1) comes between the
+analysis and the tag. Nothing is pushed to `main` directly — "Repository rules"; reworded 2026-10-08, `ai-sessions/0079`.)*
 
 ```mermaid
 flowchart TD
@@ -95,7 +113,7 @@ flowchart TD
     REV -- "yes" --> NEXT["Next version, higher versionCode<br/>(e.g. 1.0.1) — §4"] --> P
     R -- "Play-services claim in the HCI log" --> DOD["App not at fault: DoD 1–3 not proven<br/>by this run — investigate or re-run"] --> C
     R -- "minor issues" --> KI[Known issues in release-notes.md] --> CM
-    R -- "OK" --> CM["Commit capture + analysis on main<br/>(tick DoD only with the evidence)"]
+    R -- "OK" --> CM["Commit capture + analysis on the release branch,<br/>merge the PR with a merge commit<br/>(tick DoD only with the evidence)"]
     CM --> T["§7 git tag -s v&lt;version&gt; &lt;build commit&gt;<br/>git push origin v&lt;version&gt;"]
     T --> D["gh release create --verify-tag --draft<br/>with the files from the kept copy"]
     D --> DC{Draft correct?}
@@ -104,7 +122,7 @@ flowchart TD
     DC -- yes --> PUB[gh release edit --draft=false]
     PUB --> V{"§8 phone: download,<br/>SHA-256 matches?"}
     V -- no --> STOP3[["Stop: replace the asset with the<br/>tested file, check again"]] --> V
-    V -- yes --> DONE(["Done: CHANGELOG date + README<br/>on main"])
+    V -- yes --> DONE(["Done: CHANGELOG date + README<br/>in a small pull request (E)"])
     DONE -. "problem found after publishing" .-> NEXT
 ```
 
@@ -226,8 +244,8 @@ adb uninstall io.github.tedsluis.opencontrolpixelbuds    # only if a debug build
 adb install --user <id> dist/1.0.0/opencontrol-pixelbudspro2-1.0.0.apk
 ```
 
-`INSTALL_FAILED_UPDATE_INCOMPATIBLE` means another signing key's build is still installed in some user. Commits made on `main` while you test (documentation,
-the capture and its analysis) do not touch the tested APK: the release is tied to the **build commit** (the hash on the Info tab), not to `main`.
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` means another signing key's build is still installed in some user. Pull requests merged to `main` while you test
+(documentation; the capture and its analysis go on the release branch) do not touch the tested APK: the release is tied to the **build commit** (the hash on the Info tab), not to `main`.
 
 ## 7. Each release: publish (outward-facing — no way back once public)
 
@@ -270,7 +288,7 @@ does not blur anything.
 A hotfix is a normal release with a smaller test set (added 2026-10-03, `ai-sessions/0069`; the maintainer's choice "Hotfix 1.0.1": *"1.0.1 with all of
 0069 (Recommended)"*).
 
-1. Fix on `main` in a normal session: a failing test first, the fix, the gate (`./gradlew assembleDebug testDebugUnitTest test lint`), CI green.
+1. Fix in a normal session on its own branch, merged to `main` by pull request: a failing test first, the fix, the gate (`./gradlew assembleDebug testDebugUnitTest test lint`), CI green.
 2. §4 with the next patch number (1.0.1 → versionCode 10001). No release candidate (§4).
 3. §5, then §6 with the **reduced hardware set**: connect, battery, one ANC change from the tab and one from the tile, the changed behaviour itself, a
    Bluetooth off/on, Disconnect/Connect, and an export of the debug log — in the user without Google Play, on film, as a registered capture. For 1.0.1

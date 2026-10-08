@@ -235,8 +235,8 @@ data class OpenControlUiState(
  * back-stack holder — the one source of truth for "which destination", including system back. **`ai-sessions/0057`/`0062`:** the settings menu is a
  * destination of that same graph outside the pager: while it is current the pager is replaced by [SettingsMenuScreen] and the top bar shows "Settings" and a back
  * arrow; back pops it. Every tab sits in a
- * [PullToRefresh] whose action is [pullActionFor] (D-10). // TODO(verify): swipe, pull and back are gesture behaviour this session could not exercise on a
- * device — `APP_TESTPLAN.md` (updated for `ai-sessions/0057`).
+ * [PullToRefresh] whose action is [pullActionFor] (D-10). Swipe, pull and back were seen working on hardware: pull `CAP-065`, system back `CAP-067`, the swipe
+ * between tabs `CAP-070` (camera only) — `APP_TESTPLAN.md` C10/O2/O3 (reworded in `ai-sessions/0079`; it was a `TODO(verify)` since `ai-sessions/0057`).
  */
 // Approved at the 0057 checkpoint; still needed in material3 1.4.0 (`ai-sessions/0078`): TopAppBar itself carries no marker there, but its parameter type
 // TopAppBarScrollBehavior is `@ExperimentalMaterial3Api` (AppBar.kt:1401), and the compiler reports OPT_IN_USAGE_ERROR without the opt-in.
