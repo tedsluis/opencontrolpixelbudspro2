@@ -158,7 +158,7 @@ stay reverted. 🔴 **Not explained by this capture**: no physical action, ANC t
 insertion/removal is visible in the video at 06:33:23. Video evidence (`CAP-016-EVENT-NOTES.md`)
 shows the app's ANC row itself loses its highlighted selection at ≈06:33:16, i.e. at the *start* of
 the bounce, and — per the video — never regains a highlighted selection for the remainder of the
-capture (buds are re-docked at 06:33:44–45 and the connection drops nine seconds after frame 3054),
+capture (buds are re-docked at 06:33:44–45 and the connection drops about 22 s after frame 3054 — 3235 at 06:33:45.15; corrected 2026-10-08, `ai-sessions/0081`),
 so this cannot be checked further against the UI in this capture.
 
 ## 4. Settable-toggles byte (`0x00` vs `0xe8`) tracks the app's "no mode selected" UI state, not just current ANC state (🟡 HYPOTHESIS, new — refines `CAP-001-FINDINGS.md` §5's ANC Notify field table)
@@ -314,10 +314,9 @@ classic ACL handle `0x0001`) does carry decodable content:
 ```
 tshark -r CAP-016-btsnoop_hci.log -Y "btl2cap.psm==0x0011" -T fields -e frame.number -e frame.time_relative -e frame.p2p_dir
 ```
-→ 5 frames total this session: 1943 (`Connection Request`, opens CID `0x004d`), 1980 (`Rcvd
-GET_REPORT`, Report Type Feature, Report Id `0x01`), 1983 (`Sent`, `DATA`/Feature response to
-`0x01`), 1984 (`Rcvd GET_REPORT`, Report Type Feature, Report Id `0x02`), 1991 (`Sent`, `DATA`/
-Feature response to `0x02`).
+→ 5 frames total this session (directions corrected 2026-10-08, `ai-sessions/0081`: `Sent` = phone → Buds, `frame.p2p_dir` 0): 1943
+(`Connection Request`, opens CID `0x004d`), 1980 (`Sent GET_REPORT`, Report Type Feature, Report Id `0x01`), 1983 (`Rcvd`, `DATA`/Feature
+response to `0x01`), 1984 (`Sent GET_REPORT`, Report Type Feature, Report Id `0x02`), 1991 (`Rcvd`, `DATA`/Feature response to `0x02`).
 
 **🟢 FACT — the byte-decode of frame 1991 itself** (direct, reproducible hex read, not an
 inference):

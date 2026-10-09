@@ -77,13 +77,13 @@ as this session's sole evidence below.**
 ```
 $ tshark -r CAP-049-btsnoop_hci-combined.log -Y "bthci_evt.bd_addr==04:00:6e:cf:6e:07 and bthci_evt.code==0x03" \
     -T fields -e frame.number -e frame.time -e bthci_evt.connection_handle
-691   18:14:05.361236  0x0002
+691   18:14:05.361236  0x0002   <- status 0x04 Page Timeout: no connection (annotated 2026-10-08, `ai-sessions/0081`)
 736   18:14:09.395217  0x0005
 2150  18:15:01.966566  0x0002   <- the one deliberate, draft-documented reconnect
 ```
 
 Only **one** genuine reconnect to the Buds' classic address occurs across the entire 620.53s combined
-log, beyond the initial connect settling (two chandles within the first few seconds of the session).
+log, beyond the initial connect settling (one failed page, 691, and one connection, 736, within the first few seconds of the session).
 After the `18:15:01.97` reconnect:
 
 ```

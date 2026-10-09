@@ -140,7 +140,7 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-07)
+## Current state (2026-10-08)
 
 - **Captures:** 71 registered sessions (`CAP-001`–`CAP-071`): 67 analyzed (the latest, `CAP-071` of 2026-10-08: the 1.1.1 release run — the update over 1.1.0 keeps the settings and every request is byte-identical, `ai-sessions/0080`), 2 planned, 2 withdrawn (`CAP-052`,
   `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068`, `CAP-070` and `CAP-071` are captures of this project's own app (`CAP-067`: the 1.0.0
@@ -148,7 +148,7 @@ to design, implement, test, and document a native Android app.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 55 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
+- **Decisions:** 57 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
   approval was given but whose record is missing (the ADR says so).
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),

@@ -1,5 +1,7 @@
 # Findings: `CAP-064` (Group AZ — hardware re-test of the `ai-sessions/0054`, `0056` and `0059` builds; the "no automatic connect when the case is opened" observation answered)
 
+> **Status as of 2026-10-08** (`ai-sessions/0081`; read this first — the body below is the analysis as written): §3's hypothesis (Settable `00` with in-ear detection on) was tested in `CAP-066` BB-5 — `00` straight from the case in 2.6–175 s (ADR-049 Update); §9 items 2 and 3 were built in `ai-sessions/0062` and verified in `CAP-066` (23/23 claims `08 11` first); item 4 is in ADR-049's Update; §10's 3.4 ms re-page has a second sample in `CAP-066` and a 🟡 explanation in `CAP-071-FINDINGS.md` §6 item 8; the 13 s close, the re-page and the "100 %⚡ dimmed" question are in `TODO.md` §4/§5. `CAP-064-EVENT-NOTES.md` line 20's "clearing the app's data" is corrected to the code-cache-only clear of §0.
+
 Standardized, evidence-based extraction from `CAP-064-btsnoop_hci.log`, `CAP-064-recording.mp4` (video and audio),
 `CAP-064-opencontrol-debug-20261001-103023.txt` (the app's debug export), `CAP-064-OpenControl-for-Pixel-Buds-log-49ab12ce3f7f.txt` (app logcat) and
 `CAP-064-System-log-11c30e3704a6.txt`, per `ai-sessions/0060`. The timeline these findings refer to is `CAP-064-EVENT-NOTES.md`.

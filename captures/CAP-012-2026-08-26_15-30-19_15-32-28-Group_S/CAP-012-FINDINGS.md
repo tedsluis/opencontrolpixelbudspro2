@@ -116,7 +116,7 @@ tshark -r CAP-012-btsnooz_hci.log -Y "bthci_evt.code==0x3e" -T fields -e frame.n
   sort -u -k2
 ```
 Every `LE Meta` event in this log is subevent `0x0d` (**LE Extended Advertising Report** — a
-passive scan result, 213 occurrences) or `0x02`/other advertising-report codes; **zero** occurrences
+passive scan result, 261 occurrences — the only LE Meta subevent in the log; corrected 2026-10-08, `ai-sessions/0081`); **zero** occurrences
 of subevent `0x01` (LE Connection Complete) or `0x0a` (LE Enhanced Connection Complete) appear
 anywhere in the full 542s log, not just the video window. There is simply no BLE connection to
 correlate against — the phone only ever passively hears the Buds' advertisements while performing

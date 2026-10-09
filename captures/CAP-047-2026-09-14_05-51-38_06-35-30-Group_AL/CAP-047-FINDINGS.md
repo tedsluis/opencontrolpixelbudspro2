@@ -159,7 +159,7 @@ events anywhere in the remaining 21m50s of log — the classic link stays up con
 entire recording, including the swapped-slot docking event at `06:10:21` (§4 below). DLCI roles this
 session (confirmed by content signature, per `AGENTS.md` §13's CLI-hygiene rule):
 `0x00`=mux, `0x02`=`libmaestro`, `0x04`=Fast Pair Message Stream, `0x08`=private envelope,
-`0x09`=HFP, `0x0a`=silent (`CAP-021`'s burst channel).
+`0x0c`=HFP (corrected 2026-10-08, `ai-sessions/0081`), `0x0a`=silent (`CAP-021`'s burst channel).
 
 **Recording 2 (`CAP-047-btsnoop_hci-2.log`) — three separate classic connections:**
 ```
@@ -183,8 +183,8 @@ content signature (not by raw DLCI number, per `AGENTS.md` §13):
 | Mux control | `0x00` | `0x00` |
 | `libmaestro` (HDLC-framed, `"release_5.203"` strings) | `0x02` | `0x03` |
 | Fast Pair Message Stream (`08 11`/`08 13` etc.) | `0x04` | `0x05` |
-| HFP (`AT+` commands) | `0x09` | `0x08` |
-| Private envelope (`05 0c`/`04 02`/... zero-length codes) | — (not opened, see below) | `0x09` |
+| HFP (`AT+` commands) | `0x0c` (corrected 2026-10-08, `ai-sessions/0081`) | `0x08` |
+| Private envelope (`05 0c`/`04 02`/... zero-length codes) | `0x08` (70 payload frames; cell corrected 2026-10-08, `ai-sessions/0081`) | `0x09` |
 | **Silent / `CAP-021`'s burst channel** | **`0x0a`** | **`0x0b`** |
 
 Confirmed by payload-count-per-DLCI, e.g. for Connection 2:

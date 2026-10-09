@@ -303,7 +303,7 @@ capture simply didn't reproduce the phenomenon a third time.
   available in the log for a future battery-tracking pass if needed.
 
 > **Update (2026-08-27), approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`):** the fourth attempt proposed
-> above, `CAP-032`, succeeded — extracted via the raw BTSnoop file path (§1's proposed root-cause
+> above, `CAP-032`, succeeded — extracted via the raw BTSnoop file path (§8's proposed root-cause
 > guess, "extraction path vs. session-specific," is now supported: `CAP-032`'s raw-path log is
 > genuinely untruncated). Its log's first frame lands ~58s *before* the on-screen Forget tap,
 > finally covering the pre-clearing-action window. For that session: no BLE link and no valid

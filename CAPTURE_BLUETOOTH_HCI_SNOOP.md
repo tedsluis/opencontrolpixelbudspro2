@@ -1704,7 +1704,7 @@ Debug tab with **no export afterwards** (F-3 unverified); BC-12 skipped (the aut
 revocation ended the process (no force-stop); B4 one effective tap. For a next run: export the debug log before any step that ends the process and after every
 Bluetooth off/on. `CAP-067-EVENT-NOTES.md`, `CAP-067-FINDINGS.md`.
 
-#### Group BD — the 1.0.1 release build: the `ai-sessions/0069` fixes and what 1.0.0 was never shown to do (planned as `CAP-068`, skeleton by `ai-sessions/0069`)
+#### Group BD — the 1.0.1 release build: the `ai-sessions/0069` fixes and what 1.0.0 was never shown to do (run as `CAP-068`, skeleton by `ai-sessions/0069`)
 
 Pixel 9a / GrapheneOS, the release-signed **1.0.1** APK in the secondary user without Google Play (as `CAP-067`). Scope chosen by the maintainer
 (chat 2026-10-03, "Hotfix 1.0.1": *"1.0.1 with all of 0069 (Recommended)"*; "Leads": *"CAP-068 = release build; CAP-069 = official app
@@ -1720,7 +1720,7 @@ claims; Definition of done 2's ANC change now with frames (`PROJECT.md`, maintai
 via a reconnect, not *Read EQ again*; the picker three times; S12 and S9 not run; the ears in view only twice (no wear change by head side). The Ring stopped on
 the bud (BD-27) gave no wire evidence: the app's claim was released before the stop. `CAP-068-EVENT-NOTES.md`, `CAP-068-FINDINGS.md`.
 
-#### Group BE — the official app: head gestures, Multipoint, assistant hold, EQ Default, wear states (planned as `CAP-069`, skeleton by `ai-sessions/0069`)
+#### Group BE — the official app: head gestures, Multipoint, assistant hold, EQ Default, wear states (run as `CAP-069`, skeleton by `ai-sessions/0069`)
 
 Pixel 7a, the official Pixel Buds app. The skeleton `captures/CAP-069-2026-10-04_16-05-29_16-27-07-Group_BE/CAP-069-EVENT-NOTES.md` holds: head
 gestures off/on twice (lead L68-4, `HEAD-001`); Multipoint off/on twice (L68-3, `MULTI-001`); one assistant press-and-hold with the ear on film
@@ -1753,7 +1753,7 @@ Right out); a tap during a re-open (C12); the channel-19 balance `17:7`; lead L-
 recording (P4) and the two `uiautomator` dumps; the film has no audio. An unfilmed rehearsal (05:44–05:59) is in `CAP-070-btsnoop_hci1.log.last`. Every write
 and read passed (`CAP-070-FINDINGS.md`).
 
-#### Group BG — the 1.1.1 release build: a regression run of the toolchain upgrade, plus the open film items (planned as `CAP-071`, skeleton by `ai-sessions/0079`)
+#### Group BG — the 1.1.1 release build: a regression run of the toolchain upgrade, plus the open film items (run as `CAP-071`, skeleton by `ai-sessions/0079`)
 
 Pixel 9a / GrapheneOS, the release-signed **1.1.1** APK — the app of 1.1.0 rebuilt with the toolchain of `ai-sessions/0078` (Gradle 9.7.1, AGP 9.3.3,
 Kotlin 2.4.20, Compose BOM 2026.09.00, compileSdk 37; targetSdk/minSdk 34) — in the secondary user without Google Play, installed **over 1.1.0**. Scope chosen

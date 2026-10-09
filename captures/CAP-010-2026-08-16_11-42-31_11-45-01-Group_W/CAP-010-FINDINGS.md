@@ -199,7 +199,7 @@ This is a **fourth** independent capture (`CAP-001` reconnect, `CAP-002`/`CAP-00
   for `CAP-001-FINDINGS.md` §2's "RFCOMM channel numbers are session-local, not profile-fixed"
   rule.
 - **DLCI 0x08's private one-time handshake reappears byte-for-byte** — `google-pixel-buds-pro-v1`
-  + capability blob (frame 1636), `Europe/Amsterdam` (frame 1656), and the `release_5.203`
+  + capability blob (frame 1656), `Europe/Amsterdam` (frame 1636 — the two frame numbers were swapped, corrected 2026-10-08, `ai-sessions/0081`), and the `release_5.203`
   firmware string inside the Group `0x03`/Code `0x02` protobuf blob first identified in
   `CAP-004-FINDINGS.md` §5a Task 2 (frames 1661/1688/1691) — a **fifth** independent confirmation
   of this content (`CAP-001`, `CAP-002`, `CAP-003`, `CAP-004`, now `CAP-010`), reproducible via:

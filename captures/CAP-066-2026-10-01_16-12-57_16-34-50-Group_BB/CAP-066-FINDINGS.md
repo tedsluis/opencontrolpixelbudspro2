@@ -1,5 +1,7 @@
 # Findings: `CAP-066` (Group BB — the first hardware run of the `ai-sessions/0062` build: ANC `Get` before every `Set`, cut-off handling, the settings menu; the Settable byte straight from the case; lead L-1, the hosting bud)
 
+> **Status as of 2026-10-08** (`ai-sessions/0081`; read this first — the body below is the analysis as written): §11 items 3, 4 and 6 were built in `ai-sessions/0064` and verified in `CAP-067` (K4r 14/14, the StrictMode lines, the Bluetooth-off loss text); §11 item 7 was done in `CAP-064-FINDINGS.md` §0; §12's F-3 occurred in `CAP-068`; BB-12 (the Left out on 19) was run in `CAP-067` BC-6 without an identifiable bud and is open as `INEAR-005` (`TODO.md` §2); K4d Off/System, L3, A5, (E), Z1 were run in `CAP-067`; the 28 s `e8` and the 0.1 s re-page are in `TODO.md` §4.
+
 Standardized, evidence-based extraction from `CAP-066-btsnoop_hci.log.last` and `CAP-066-btsnoop_hci.log` (before / after the Bluetooth off/on at 16:32),
 `CAP-066-recording.mp4` (video and audio), the two debug exports, the two app logcats and the two system logs (before / after the force-stop at 16:26:54), per
 `ai-sessions/0063`. The timeline these findings refer to is `CAP-066-EVENT-NOTES.md`.

@@ -178,7 +178,7 @@ $ tshark -r CAP-034-btsnoop_hci.log -Y "frame.number==3273" -x
 0030  03 07 03 4d 18 00 0b 00 0b 53 18 10 0b 12 0b 55
 0040  18 00 0c 14 0c 2c fe
 ```
-(ATT `Read By Group Type Response`, opcode `0x11`: each 4-byte group is `[start handle LE]
+(ATT `Read By Group Type Response`, opcode `0x11`: each 6-byte group (length byte `06`; corrected 2026-10-08, `ai-sessions/0081`) is `[start handle LE]
 [end handle LE] [UUID16 LE]`.) Frame 3273 (response 1 of 3, request in frame 3272) decodes to:
 
 | # | Start | End | UUID | Name |

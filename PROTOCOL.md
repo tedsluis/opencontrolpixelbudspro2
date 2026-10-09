@@ -1332,7 +1332,8 @@ event-observation coroutines.
   (the resulting fix, a retry-on-contention loop in `readCaseBattery`).
 - **Correction (2026-09-24, `ai-sessions/0045`, maintainer-approved in chat 2026-09-24):** the 2026-09-22 FACT above is narrowed. 🟢 FACT: every `0e 01`
   push within 1 s of a DLCI 0x08 open follows a phone-side `0e 04 00 00` on that open (13/13 Play-services opens, `CAP-059` ×3 + `CAP-060` ×10; first push
-  23 ms–0.38 s after the request, e.g. `CAP-060` 1979→1993, 4830→4856, 6833→6859, `CAP-059` 1176→1211); 🟢 FACT: 8/8 app claims that sent nothing received no
+  23 ms–0.56 s after the request, e.g. `CAP-060` 1979→1993, 4830→4856, 6833→6859, 2592→2628 (0.556 s, the request inside a burst), `CAP-059`
+  1176→1211; range corrected 2026-10-08, `ai-sessions/0081`); 🟢 FACT: 8/8 app claims that sent nothing received no
   push (5 held the channel 1.85–2.78 s with zero data — `CAP-060` 3770–3783, 4221–4246, 4460–4698, 5449–5749, 6419–6728; 3 closed by a Buds-side `DISC` within
   0.13 s — 1864/1870, 2520/2525, 5989/5996). Pushes without a request occur only 10 s–2 min into a long-held channel (`CAP-060` 1653, 2196, 2760, 2928, 3065,
   3099, 4938, 5080, 5196). Several frames the 2026-09-22 text listed as "unprompted" (1307, 2310, 5041, 5168, 5856) answer a request. The "contention, not a

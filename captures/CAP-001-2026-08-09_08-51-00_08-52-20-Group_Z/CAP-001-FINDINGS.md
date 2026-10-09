@@ -62,7 +62,7 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 | 0 | 0x00 | 984 (SABM) | RFCOMM multiplexer control (PN negotiation for all other channels) | 🟢 FACT |
 | 1 | 0x02 | 1334 (phone-init) | Repeating ~21–57 byte frames, each starting and ending with `0x7e` (HDLC-style flag byte), two alternating frame-header variants (`80a3`/`00a5` after the flag) | 🟡 HYPOTHESIS — structure suggests AVRCP (SDP confirms an AVRCP service exists, frames 1164–1231), but not confirmed byte-for-byte against the AVRCP spec here |
 | 2 | 0x04 | 990 (phone-init) | Short frames (6–24 bytes), several containing an `e8e8XX` byte pattern where `XX` varies between samples; also flow-control-shaped frames (`ff01...`, `08 13...`) | 🟢 FACT (2026-08-12) — this is Fast Pair's official "Hearable Controls" extension (Message Group `0x08`), Get/Set/Notify ANC state; `XX` is a one-hot ANC-mode bitmask, confirmed byte-for-byte against the spec and against this capture's own tap timeline (see §5's "Full resolution" and `PROTOCOL.md` §4.1) |
-| 4 | 0x08 (phone-init) / 0x09 (buds-init, frame 1217) | 1035 / 1217 | **Two distinct payload types multiplexed under the same channel number**: (a) on 0x08 — periodic (~6–7s) frames containing the ASCII string `google-pixel-buds-pro-v1` and a separate protobuf-shaped blob containing ASCII `all`; one early frame (1673, 08:51:32.79) contains ASCII `Europe/Amsterdam`; (b) on 0x09 — plain-ASCII HFP AT commands, see §3 | 🟢 FACT (channel exists, is dual-directional, carries this content) |
+| 4 | 0x08 (phone-init) / 0x09 (buds-init, frame 1217) | 1035 / 1217 | **Two distinct payload types multiplexed under the same channel number**: (a) on 0x08 — periodic (~6–7s) frames containing the ASCII string `google-pixel-buds-pro-v1` and a separate protobuf-shaped blob containing ASCII `all`; one early frame (1673, 08:51:22.79) contains ASCII `Europe/Amsterdam`; (b) on 0x09 — plain-ASCII HFP AT commands, see §3 | 🟢 FACT (channel exists, is dual-directional, carries this content) |
 | 5 | 0x0a | 1068 | No data-carrying frames observed in this capture, only PN/SABM/DISC control traffic | 🔴 OPEN QUESTION — channel opened and closed repeatedly but never carried a payload here |
 
 > **Addendum (2026-08-30):** DLCI 0x08's `[Group][Code][Length:2B][Value]` envelope's Length byte
@@ -204,7 +204,7 @@ AT+VGM=7 / AT+VGS=8    → OK                          (mic/speaker gain)
 AT+NREC=0              → +CME ERROR: 4 (not supported)
 AT+COPS=3,0 / AT+CMEE=1 → OK
 AT+BIEV=2,100           → OK   ← repeats at 08:51:14.106, 20.070, 20.136, 34.392, 34.860,
-                                  41.410, 52.148(x2) — roughly every 6–7s
+                                  41.410, 08:52:04.148, 08:52:04.438 — roughly every 6–7s (last two corrected 2026-10-08, `ai-sessions/0081`)
 ```
 (Full frame list: 1236–1310, 1558–1574, 1949–1969, 2027–2028, 2245–2246, 2268–2269.)
 

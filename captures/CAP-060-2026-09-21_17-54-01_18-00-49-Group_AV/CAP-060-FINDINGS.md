@@ -95,7 +95,7 @@ open (1223) precedes the app's Connect (log line 17:54:54.609), so it is Play se
 coincide with the app's failed *first* attempts (log lines 35, 61, 371): the stack's failure path closed Play services' port
 (ADR-032's mechanism), after which the app's second attempt connected and was closed by the Buds 10–130 ms later.
 
-- 🟢 FACT: **all 10 payload-carrying Play-services opens** send `0e 04 00 00` before the first `0e 01`, which follows it by 23 ms–0.38 s.
+- 🟢 FACT: **all 10 payload-carrying Play-services opens** send `0e 04 00 00` before the first `0e 01`, which follows it by 23 ms–0.56 s (the 0.556 s case is 2592 → 2628, where `0e 04 00 00` travels inside a multi-code burst; corrected 2026-10-08, `ai-sessions/0081`).
   (`CAP-059` agrees: 3/3, `CAP-059-FINDINGS.md`.)
 - 🟢 FACT: **all 8 app claims** (which send nothing) received **no** `0e 01`: 5 held the channel open 1.85–2.78 s with zero data frames,
   3 were closed by a Buds-side `DISC` within 0.13 s.

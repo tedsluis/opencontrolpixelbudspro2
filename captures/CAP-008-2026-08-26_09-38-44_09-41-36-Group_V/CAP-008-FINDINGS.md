@@ -83,7 +83,7 @@ link authenticates:
 
 **HFP's RFCOMM channel assignment is new information, not a contradiction:** this is
 the third distinct RFCOMM channel number this project has seen HFP-adjacent AT-command
-traffic land on (channel 4/DLCI 0x08 in `CAP-001`; channel 6/DLCI 0x0c here), which
+traffic land on (channel 4/DLCI 0x09 in `CAP-001` — corrected 2026-10-08, `ai-sessions/0081`; channel 6/DLCI 0x0c here), which
 reinforces — with a third independent data point — that RFCOMM server channel numbers
 are negotiated per-connection and must never be treated as a stable per-profile label
 (the point `CAP-001-FINDINGS.md` §2 already made from two sessions).
@@ -105,8 +105,8 @@ AT+VGM=7 / AT+VGS=10       → OK                              (mic/speaker gain
 AT+NREC=0 (1st)            → OK; AT+NREC=0 (2nd, duplicate) → ERROR (+CME ERROR not returned this time, plain ERROR)
 AT+COPS=3,0 / AT+CMEE=1    → OK
 ```
-(Full frame range: 776–1132, all within 09:38:50.66–.96, i.e. the entire handshake
-completes in under 300ms.)
+(Full frame range: 776–1132, all within 09:38:50.66–51.41, i.e. the entire handshake
+completes in about 750 ms; corrected 2026-10-08, `ai-sessions/0081`.)
 
 **Reproduction (added 2026-09-03, closing a hex-and-script-rule gap a documentation audit found —
 this section originally cited frame numbers and decoded AT-command text without the underlying

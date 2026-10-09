@@ -39,6 +39,7 @@ incoming call put a third party's number on `CAP-071`'s film), the screen record
 - [ ] The case-sound and Volume-EQ observations (what is heard): the film needs an audio track (`CAP-070`'s had none), or the maintainer says it. — `CAP-071` had audio but nothing was said and no case chime was
       recorded with "Earbuds replaced" off or on (the Find ring was); still open.
 - [ ] B4 double tap (`AlreadyInProgress`) — needs the Buds forgotten and re-paired.
+- [ ] `CAP-058` §9: film the CDM picker so the tapped button is identifiable (twice not identifiable in `CAP-058`).
 - [ ] K5 / BC-12 (GrapheneOS Bluetooth auto-off): only in a user where the setting exists (the Owner).
 - [ ] F-4 on a **debug** build: StrictMode lines after a Bluetooth off/on (🟡 the framework's `BluetoothLeAudio` may still warn —
       `CAP-066-FINDINGS.md` §8). Not observable on a release build.
@@ -127,7 +128,11 @@ Open questions (each with where it is described):
   field 2 is the charger-type enum `NOT_CHARGING(1)`/`WIRED(2)`/`GENERIC_QI(3)`; top-level fields 2 and 3 are not in that schema; 7.2 ↔ Left,
   7.1 ↔ Right in the code too. Still open: an empty-case test, field 3, 7.3 — per the trace "LL mode".)
 - 🔴 `CAP-056`: what makes the Buds close DLCI 0x02 on a wear change; the pause route with GSND closed; Settable with in-ear detection off and
-  no bud worn (`PROTOCOL.md` §6).
+  no bud worn (`PROTOCOL.md` §6). `CAP-064` §10: the Buds closed the session 13 s after a re-insertion with in-ear detection off, not at four other
+  wear changes.
+- 🔴 `CAP-069` §15: `01 09 00 04 0a 02 0b 06` on DLCI 0x0a at wear changes (not the assistant's `0a 01 03` of its §3); 🟡 `CAP-068` §5 losses #11/#13 =
+  a bud out of / into an ear during the ring (head not in view); 🔴 `CAP-058` §9: whether SDP UUID `3a046f6d-…` is published by any firmware or only
+  used by another product.
 - 🔴 Settings 23, 24, 26, 30, 31, 32 (answered by the Buds, no writer or reader in app 1.0.955078536) and 39 (asked by 1.0.990706425): what they
   are (`ai-sessions/0073` §4.2; `DESKRESEARCH_FINDINGS.md` 2026-10-06). 🟡 the ANC taps filmed in the official app never produced a `WriteSetting`
   of setting 13, although the app's own ANC row writes only that (`ai-sessions/0073` §4.9) — in the next official-app capture, film which
@@ -169,6 +174,8 @@ Open questions (each with where it is described):
       sibling label) — **M** decides whether and when.
 - [ ] **Balance precision:** `CAP-067` reached Right 4 on the 17th drag (7 of 17 snapped to Centre). Options: a live value label while dragging,
       slider `steps`, or the step buttons back.
+- [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
+- [ ] `CAP-069` §12 item 8: say "changed by the Buds" in the (i) details when a `Notify` changes the mode without a tap (proposal, not decided).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.
@@ -217,8 +224,10 @@ statement is lost (`ai-sessions/0068` §6 has the proposal for each):
 
 Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each with its check in that RESULT's appendix):
 
-- [ ] Arithmetic and cross-reference slips in `CAP-001`, `004`, `008`, `010`, `012`, `015` ("0.05–1.9 s" is 1.14–8.89 s), `047`, `049`, `050`,
-      `060` (`A68-CAP-16`; appendix capA/capB/capD), and the rest of `CAP-031`…`034` (`A68-CAP-23` [21]).
+- [ ] Slips still open after `ai-sessions/0081` (interpretive — with the rule-9a session): `CAP-008-FINDINGS.md:381` "eleven silent captures";
+      `CAP-033-EVENT-NOTES.md:146–147`; `CAP-047-FINDINGS.md:305–306`, `:379–380`; `CAP-050-FINDINGS.md:81–97`, `:204`, `:210` (re-open/sample
+      counts); `CAP-049` (capinfos start, the quoted tail) — `ai-sessions/0068` appendix capA/capB/capD. The 27 arithmetic slips of that list were
+      corrected in place by `ai-sessions/0081` (its ledger §B.C).
 - [ ] Folder-name end times: `CAP-036` (film ends 06:41:16), `CAP-041` (17:17:40), `CAP-042` (named after the log, not the film). A rename breaks
       every link to the folder — do it with the index restructure.
 - [ ] EVENT-NOTES left as templates: unticked "Next steps" (`CAP-037`…`042`), leftover placeholders (`CAP-035`, `CAP-036`), the placeholder timeline
@@ -226,9 +235,6 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
 - [ ] Rule 9a: FINDINGS with more than one dated layer (`CAP-036` 7+, `CAP-041` 5, `CAP-032`/`034` 4, `CAP-017` 5, and others) — fold into
       current text; FINDINGS without a status banner that still need none checked: `CAP-006`…`008`, `011`…`013`, `019`, `020`, `023`, `025`,
       `027`, `029`, `031`…`033`, `035`, `043`, `044`, `051`.
-- [ ] `ARCHITECTURE.md` §3.1: "11 `00` answers sent no `Set`" in `CAP-066` — the audit's sub-review counts 12; not re-derived (`A68-ARCH-03`).
-- [ ] `DECISIONS.md` ADR-040 Context: "`AT+BIEV=2,100` seven times" — 12 on the wire (`PROTOCOL.md` §4.3 Option C carries the correction; the
-      ADR's own text needs **M**'s dated Update).
 - [ ] Reading and checks `ai-sessions/0073` owed (its "Files read" and "Deferred documentation"): `ARCHITECTURE.md`, the five older tool
       `SPEC.md` files and the earlier APK-session RESULTs were not read in full by the main session; `PROTOCOL.md` only in the sections it
       touched (three sub-reviews swept it); 63 of the citations its documentation edits added resolve inside their file but carry no quoted
@@ -236,14 +242,15 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
       line-by-line re-derivation; the class-A rows of its §4.11 were not worked (among them the EQ gain unit and the `"cape2_sm"`/`"500m"`
       strings); the capture FINDINGS that raised the answered questions (`CAP-069-FINDINGS.md` §9, `CAP-053-FINDINGS.md` §8,
       `CAP-058-FINDINGS.md` §4 and §7, `CAP-051-FINDINGS.md`) carry no pointer to its code-side answers (not among the approved drafts).
-- [ ] `CAP-070-FINDINGS.md` §0/§12: its two `SIGQUIT`s were most likely an `adb bugreportz` (🟡; `CAP-071-FINDINGS.md` §0 shows the mechanism) — a
-      pointer for the maintainer to approve (`ai-sessions/0080`).
 - [ ] Recount the cross-capture censuses of `ai-sessions/0073` without duplicated logs: `CAP-042`'s `.log.last` is leftover `CAP-041` content, so
       every packet and "in N logs" count of its §4.1/§4.2 and of `DESKRESEARCH_FINDINGS.md`'s entry of 2026-10-06 includes `CAP-041` twice (dated
       correction there). First list which `.log.last` files overlap a neighbouring capture (first timestamp and one frame's bytes), then rerun
       `pwrpc_name_table census` on the de-duplicated set and correct the figures as dated notes (**M** for the texts).
-- [ ] Deferred items of earlier sessions that never reached this file (`A68-SES-03`): `ai-sessions/0061` ("Not read in this session …"),
-      `ai-sessions/0063` (one item) — read those RESULTs and carry what is still open.
+- [ ] Reading owed by earlier sessions (`A68-SES-03`): `ai-sessions/0061` did not read `APP_TESTPLAN.md` and several app sources with their tests in
+      full; `ai-sessions/0063` read its prompt's full-reading list only in part (its §B) — carry into the next MAINTENANCE reading pass (the rule-9a session).
+- Order decided 2026-10-09 (maintainer, chat, `ai-sessions/0081`): all of the above after the 1.2.0 work — first the `ai-sessions/0073` reading and the census
+  recount (one CROSSCHECK session), then the rule-9a folds with the slip residue (MAINTENANCE), then the EVENT-NOTES templates (MAINTENANCE), the
+  folder renames with the index restructure.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/TODO.md - https://tedsluis.github.io/opencontrolpixelbudspro2/TODO
