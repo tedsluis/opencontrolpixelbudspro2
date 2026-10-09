@@ -184,7 +184,9 @@ two; frame 2305 is a single, complete 67-byte frame. The corrected per-frame dec
 | **2305** | **`0x03`** | **`0x02`** | **63** | protobuf-shaped, contains `"release_5.203"` and `"713f855"` — see below |
 | 2310 | `0x09` | `0x02` | 2 | `08 00` |
 
-**Group `0x04` identified — 🟢 FACT.** A targeted search (not a generic query — searched directly
+**Group `0x04` — 🟡 HYPOTHESIS** (label corrected 2026-10-08, `ai-sessions/0081`: the *Device action* page defines group `0x04` for the Fast Pair
+Message Stream on DLCI 0x04 — `PROTOCOL.md` §4.4 Ring — while this table is DLCI 0x08's private `[Group][Code][Length][Value]` envelope, whose
+groups are not the Message Stream's, `PROTOCOL.md` §2.3; the identity of this envelope's group `0x04` is open). A targeted search (not a generic query — searched directly
 for "Fast Pair Message Stream Action event group 0x04") found Google's own
 [Device action](https://developers.google.com/nearby/fast-pair/specifications/extensions/deviceaction)
 spec page, which states explicitly: *"Device action event"* = `0x04`, and defines code `0x01` as
@@ -367,7 +369,7 @@ channel-4/DLCI-0x08 burst) — full decode of the DLCI 0x08 private envelope, an
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index describes Message Stream groups `0x04`, `0x05`,
 `0x09` as newly discovered *in `CAP-004`*. A full-session, reassembling decode of DLCI 0x08 in
 **all three** captures that have this channel (`CAP-001`, `CAP-002`, `CAP-004` — `CAP-003` also has
-it, 87 messages) shows this framing is **not new to `CAP-004` at all** — it is present,
+it, 67 payload frames — 27 reassembled messages per §5a; corrected 2026-10-08, `ai-sessions/0081`) shows this framing is **not new to `CAP-004` at all** — it is present,
 byte-for-byte structurally identical, from the very first capture (`CAP-001`, 2026-08-09 08:51) —
 simply never decoded before because both `CAP-001` §2 and `CAP-002` §2 explicitly deferred this
 channel as "not decoded in this pass." Corrected finding: **groups `0x01`, `0x02`, `0x03`, `0x04`,
@@ -432,8 +434,8 @@ same-numbered *group*).
 >   across all occurrences (this capture and `CAP-002`, the two sessions with enough post-setup
 >   duration to check) shows the *interval* is **not fixed** (gaps of 4–30s, no consistent period),
 >   but the *value* alternates near-perfectly between `field1=2` and `field1=3` on almost every
->   occurrence (23 consecutive toggles in this capture's own tail, one exception where two
->   consecutive `field1=3` reads land 79ms apart — frames 2766/2770). An irregular-interval,
+>   occurrence (23 reads in this capture, every consecutive pair a toggle — corrected 2026-10-08, `ai-sessions/0081`: frames 2766/2770 are
+>   `field1=2` → `field1=3` 79 ms apart, the shortest gap, not an exception). An irregular-interval,
 >   strictly-alternating pattern is a better fit for a **toggling liveness/sequence-parity bit**
 >   (marking successive keep-alive pings) than for a real physical state (which would not toggle
 >   with such regularity independent of what's actually happening physically) — 🟡 HYPOTHESIS, not

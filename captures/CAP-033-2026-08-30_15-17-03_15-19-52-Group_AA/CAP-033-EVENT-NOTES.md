@@ -132,7 +132,7 @@ session (same-direction offset as independently observed in `CAP-027`, this proj
 - [x] If positive: any promotion to 🟢 FACT in `PROTOCOL.md` or new/superseding `DECISIONS.md` ADR
       still requires explicit maintainer sign-off (`AGENTS.md` §6) — write it up as a proposal, do
       not commit it as settled. — N/A this session (`SDP-001`'s own result stays 🟡 HYPOTHESIS,
-      not promoted); the DLCI 0x08/"GSND CONTROL" SDP-identity lead in `CAP-033-FINDINGS.md` §5 is
+      not promoted); the DLCI 0x08/"GSND CONTROL" SDP-identity lead in `CAP-033-FINDINGS.md` §3 is
       written up as a 🟡 lead, recorded as such in `PROTOCOL.md` §2.3/§6 (marker resolved 2026-09-30, `ai-sessions/0059`).
 - [ ] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
       actual session date/start-time/end-time. **Not needed** — the folder name already embeds the

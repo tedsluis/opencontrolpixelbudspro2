@@ -1,5 +1,7 @@
 # Findings: `CAP-068` (Group BD — the release-signed 1.0.1 APK in a GrapheneOS secondary user without Google Play: the hardware test of the `ai-sessions/0069` hotfix)
 
+> **Status as of 2026-10-08** (`ai-sessions/0081`; read this first — the body below is the analysis as written): §0's 🟡 "installed fresh" rests on one half only — the "Permissions (start): NOT_REQUESTED -> GRANTED" line is logged at every process start (`CAP-070-FINDINGS.md` §0, code) and is no evidence; §0 and `CAP-068-EVENT-NOTES.md` P1 are corrected in place, the 0 CDM associations removed still stand; §11 item 2 (`ANC-006`) was decided "Keep the Set" (maintainer, chat 2026-10-04); §12's ring status and the CDM picker are in `TODO.md` §4, as are the two 🟡 losses during the ring (#11/#13).
+
 Standardized, evidence-based extraction from the four HCI snoop logs, the two films (`CAP-068-recording1.mp4`, `CAP-068-recording2.mp4`), the five debug
 exports and the one app logcat, per `ai-sessions/0070`. There is no system log. The timeline these findings refer to is `CAP-068-EVENT-NOTES.md`.
 
@@ -34,9 +36,10 @@ scripts/message_stream_tally.py -v` (`CAP-068-btsnoop_hci2.log.last {'get': 19, 
   e1fc886..origin/maintenance/0069 -- android` is empty — the tested build is the release candidate of `RELEASING.md` B1. `dist/1.0.1/…apk`: SHA-256
   `f9dce033…63b15e0f` (= its `.sha256`), certificate SHA-256 `a7530f5c…c79d8dcb` (`apksigner verify --print-certs`), `versionCode 10001`, its dex holds
   `e1fc886`/`2026-10-04` (`strings`). ⚪ that the installed file is that APK (no install log).
-- **Install over 1.0.0 (P1):** 🟡 HYPOTHESIS that the app was **not** updated in place but installed fresh (or its data and the association removed): the first
-  start asked for both runtime permissions (E5 7–8 `NOT_REQUESTED -> GRANTED`) and "Use different Buds" removed **0** CDM associations (E5 537), whereas
-  `CAP-067` ended with an association (its E2 08:17:01.671). Both survive an update. Settling: the maintainer's memory of the install, or
+- **Install over 1.0.0 (P1):** 🟡 HYPOTHESIS that the app was **not** updated in place but installed fresh (or its data and the association removed): "Use different Buds"
+  removed **0** CDM associations (E5 537), whereas `CAP-067` ended with an association (its E2 08:17:01.671); an association survives an update.
+  (Corrected 2026-10-08, `ai-sessions/0081`: the first start's E5 7–8 `NOT_REQUESTED -> GRANTED` was cited here too — that line is logged at every
+  process start, `CAP-070-FINDINGS.md` §0, and is no evidence.) Settling: the maintainer's memory of the install, or
   `adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -E "firstInstallTime|lastUpdateTime"` for user 10.
 - **No Google Play in the test user:** P0 (maintainer's output, exit status not recorded) lists only `app.grapheneos.gmscompat`, `…gmscompat.lib`,
   `…gmscompat.config` — packages in GrapheneOS's own `app.grapheneos` namespace that match "gms" by name. grapheneos.org/usage ("Sandboxed Google Play", fetched

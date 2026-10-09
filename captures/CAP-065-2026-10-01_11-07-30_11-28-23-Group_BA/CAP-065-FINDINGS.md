@@ -1,5 +1,7 @@
 # Findings: `CAP-065` (Group BA — robustness, UI and the `ai-sessions/0059` fixes; the Settable byte with the ears on film; lead L-1, the announced channel per bud)
 
+> **Status as of 2026-10-08** (`ai-sessions/0081`; read this first — the body below is the analysis as written): §0's three CloseGuard warnings are framework objects (`CAP-066-FINDINGS.md` §8); §4's prediction (one bud out ⇒ its channel) was confirmed 3/3 in `CAP-066`; §9 items 1, 2, 3, 4 and 6 were built in `ai-sessions/0062`…`0064` and verified in `CAP-066`/`CAP-067`; item 5 (loss-cause log) is unchanged.
+
 Standardized, evidence-based extraction from `CAP-065-btsnoop_hci.log`, `CAP-065-recording.mp4` (video and audio),
 `CAP-065-opencontrol-debug-20261001-112907.txt` (the app's debug export), `CAP-065-OpenControl-for-Pixel-Buds-log-14015f5bc461.txt` (app logcat) and
 `CAP-065-System-log-a52da8511ec6.txt`, per `ai-sessions/0061`. The timeline these findings refer to is `CAP-065-EVENT-NOTES.md`.

@@ -273,7 +273,7 @@ resolved by ordinary — not wrong-orientation — dock/undock actions).
 
 ## 7. Test-ID traceability (`AGENTS.md` §13)
 
-- **`PRIV-001`** (primary): fully exercised — 14 of the 7 target codes' full context decoded across 14
+- **`PRIV-001`** (primary): fully exercised — the 7 target codes' full context decoded across 14
   independent reconnects (vs. `CAP-040`'s N=1). Three-way outcome stated in §3: 5 of 7 codes resolve to
   "not a match" or "no candidate found"; 2 of 7 (`04 04`, `04 15`) remain inconclusive with a new,
   explicit open question (§4/§8), not silently left unmentioned.

@@ -1,5 +1,7 @@
 # Findings: `CAP-069` (Group BE — the official app 1.0.990706425 on the Pixel 7a: head gestures, Multipoint, assistant hold, a tap on the current ANC mode, EQ Default, wear states, Find; `HEAD-001`, `MULTI-001`, `HOLD-003`/`HOLD-004`, `ANC-001`…`ANC-004`, `ANC-006`, `EQP-001`, `INEAR-002`…`INEAR-004`, `CASE-004`/`CASE-005`, `FIND-001`/`FIND-005`)
 
+> **Status as of 2026-10-08** (`ai-sessions/0081`; read this first — the body below is the analysis as written): §9/§15's unnamed ids are named from the APK's literals (`ai-sessions/0073` §4): `0xbf6c9399` = `a10a20.kpi.Kpi` (`KpiStream`), `0x8d99df93` = `maestro_pw.JitterBuffer`/`SetJitterBufferSizePreference`; §12 items 1 and 2 were built in 1.1.0 (ADR-052/053, `CAP-070`); item 5 is answered by `CAP-053`; item 8 and §15's `01 09 00 04 0a 02 0b 06`, Code `0x05` value 5, the `0x0B` length and the charging bit are in `TODO.md` §4/§5.
+
 Evidence-based extraction from `CAP-069-btsnoop_hci.log` + `CAP-069-recording.mp4` (no audio samples), staged here for promotion into `PROTOCOL.md` per
 `PROJECT_RULES.md` §2. Every claim carries a status per `PROJECT_RULES.md` §1:
 

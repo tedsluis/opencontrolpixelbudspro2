@@ -177,7 +177,7 @@ respectively) and a UUID, for the first time — a concrete new lead, not a full
 a channel is *named* "GSND CONTROL" does not by itself reveal its Group/Code semantics, and
 "GSND"'s expansion is not determinable from this evidence alone. Per `AGENTS.md` §6, this is
 recorded here as a 🟡 **HYPOTHESIS** (as in `PROTOCOL.md` §2.3/§6; marker resolved 2026-09-30, maintainer, chat, `ai-sessions/0059`), not committed as a `PROTOCOL.md`
-promotion or a `DECISIONS.md` entry — see §7's recommended next step for how to close it out.
+promotion or a `DECISIONS.md` entry — see §8's recommended next step for how to close it out.
 Similarly, this SDP record independently corroborates — from wire-visible service-name strings
 rather than only APK static analysis — `DECISIONS.md` ADR-018's finding that DLCI 0x02 is the
 companion app's own "Maestro" socket; this strengthens that existing, already-FACT finding rather

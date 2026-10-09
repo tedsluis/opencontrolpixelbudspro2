@@ -1,5 +1,7 @@
 # Findings: `CAP-067` (Group BC — the release-signed 1.0.0 APK in a GrapheneOS secondary user without Google Play: the Definition-of-done run and the 1.0.0 release test)
 
+> **Status as of 2026-10-08** (`ai-sessions/0081`; read this first — the body below is the analysis as written): §9 item 1 (no ANC change in this run) has its frames in `CAP-068` — Definition of done 2 is ticked; item 2's card text was changed in 1.0.1 (`ai-sessions/0069`); item 3 (F-3) was exercised in `CAP-068`; §12's channel-19 `WriteSetting 4:{17:7}` bytes are in `CAP-070` (A3747); the Transparent → Active change, B4 and K5 are in `TODO.md` §2/§4.
+
 Standardized, evidence-based extraction from `CAP-067-btsnoop_hci.log.last` and `CAP-067-btsnoop_hci.log` (before / after the Bluetooth off/on at 08:12:23),
 `CAP-067-recording.mp4` (video only — the audio track holds no samples), the two debug exports and the one app logcat, per `ai-sessions/0067`. There is no
 system log. The timeline these findings refer to is `CAP-067-EVENT-NOTES.md`.

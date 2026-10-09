@@ -1,5 +1,7 @@
 # Findings: `CAP-070` (Group BF — the release-signed 1.1.0 APK in a GrapheneOS secondary user without Google Play: the hardware test of the five switches of `ai-sessions/0074`)
 
+> **Status as of 2026-10-08** (`ai-sessions/0081`; read this first — the body below is the analysis as written): §0/§12's two `SIGQUIT`s are the computer's `adb bugreportz` (dumpstate sends signal 3 to every Java process — `CAP-071-FINDINGS.md` §0, `CAPTURE_BLUETOOTH_HCI_SNOOP.md` "Note for every capture"), 🟡 as a mechanism shown in `CAP-071`; §11 item 1 was done in `ai-sessions/0076` (real `CAP-070` frames as fixtures); §11 item 3 was done in `CAP-068-FINDINGS.md` §0; §11 item 2 and §12's T11, C12, S12 and BF-18 are in `TODO.md` §2.
+
 Standardized, evidence-based extraction from the four HCI snoop logs, the camera film (`CAP-070-recording.mp4`), the four debug exports and the two app
 logcats, per `ai-sessions/0075`. There is no system log, no screen recording and no `uiautomator` dump. The timeline these findings refer to is
 `CAP-070-EVENT-NOTES.md` (prefixes "Z", "A", "B", E1–E4, L1–L2 as defined there).

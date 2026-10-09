@@ -84,7 +84,7 @@ alternating pattern.
 ```
 $ tshark -r CAP-048-btsnoop_hci.log -Y 'bthci_acl.chandle==0x0010 and btrfcomm.dlci==4 and btrfcomm.len>0' \
     -T fields -e frame.number -e frame.time -e frame.p2p_dir -e data.data
-11930  17:52:20.169909  0  08110000                  <- Get
+11930  17:52:20.862914  0  08110000                  <- Get
 11939  17:52:20.875464  1  0813000401e8e880          <- Notify, Settable=0xe8 (undocked), Current=0x80 (Transparency)
 12329  17:52:25.140361  1  0813000401e80020          <- Notify ONLY, no preceding Get, Settable=0x00 (docked!), Current=0x20 (Off)
 ```

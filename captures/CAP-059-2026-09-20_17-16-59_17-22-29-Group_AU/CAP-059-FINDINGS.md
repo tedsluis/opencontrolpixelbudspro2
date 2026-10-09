@@ -135,7 +135,7 @@ Phone-side `SABM` on DLCI 4 not matched by an app `connected` line belongs to Pl
 17:18:49.8 each failed once (`read ret: -1` after 192/290/280/77ms = the stack closing the incumbent's
 port — frames 1454, 2039, 2265, 2445 `Sent DISC`) and succeeded on attempt 2; Play services re-opened
 3.12s, 1.68s and 2.95s after the app's own releases (`DECISIONS.md` ADR-032 had previously seen
-2.7–5.0s), and **not at all** after the release at 17:18:53.44 for the remaining ~9 minutes of the
+2.7–5.0s), and **not at all** after the release at 17:18:53.44 for the remaining ~5¾ minutes (the log ends 17:24:37; corrected 2026-10-08, `ai-sessions/0081`) of the
 session (11 later app claims, all succeeding on attempt 1). Nothing on the films or in the logs shows a
 Play-services permission change mid-session — the *Nearby devices* permission state was not recorded
 at capture time (🔴 **capture-procedure gap**, not a wire finding). DLCI 8 and 10 were opened

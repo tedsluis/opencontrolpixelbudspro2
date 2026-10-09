@@ -144,7 +144,9 @@ only so a future reader doesn't mistake this session's unusually dense DLCI 0x02
 touch-gesture signal. **Not decoded further in this file** — doing so is out of Group N's scope
 (no Test-ID this Group covers predicts DLCI 0x02 content), and `PROTOCOL.md` §2.2a's own open
 question about this channel's Sent-direction payload semantics is unaffected either way by this
-observation.
+observation. (Decoded 2026-10-08, `ai-sessions/0081`: `scripts/pwrpc_decode.py` names the 30-byte frames `maestro_pw.Dosimeter`/`SubscribeToLiveDb`
+server-stream packets — 416, 208 per channel 19/21, of 426 stream packets — the live hearing-wellness feed, `PROTOCOL.md` §2.2a; `ai-sessions/0068`
+counted 420.)
 
 ## 4. `TOUCH-007` (press-and-hold): carried on DLCI 0x04, the *official* Fast Pair Message Stream — not `libmaestro` (🟢 FACT for the frame content; 🟡 HYPOTHESIS for the gesture attribution)
 

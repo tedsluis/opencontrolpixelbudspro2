@@ -1,6 +1,6 @@
 # Findings: `CAP-015` (Group T — EQ command isolation), 2026-08-18 capture
 
-> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the pw_hdlc reading "address 0x0000, control 0x3b / 0xd180" is a wrong byte split (ADR-034); fields 16/18 = active / last-saved EQ (ADR-034).
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): the pw_hdlc reading "address 0x0000, control 0x3b / 0xd180" is a wrong byte split (ADR-034); fields 16/18 = active / last-saved EQ (ADR-034). `CAP-053` (2026-10-05, Group AO): field 18 is written on **Save**, not on slider release — the 🔴 "Save (outer field 18) trigger mechanism" item below is answered (`CAP-053-FINDINGS.md`; `ai-sessions/0081`).
 
 Standardized, evidence-based extraction from `CAP-015-btsnoop_hci.log` + `CAP-015-recording.mp4`
 (the `06-11-06` folder — **not** the earlier, incomplete `2026-08-15_15-02-31` `CAP-005` folder,
@@ -346,7 +346,7 @@ an explicit re-index.
   possibly a preset-list or capability response, not a quintet write).
 - 🔴 **"Save" (outer field 18) trigger mechanism refined, not fully resolved.** The earlier capture
   hypothesized field 18 = an explicit tap of the on-screen `Save` button, roughly 5s after the
-  matching field-16 preview. In **this** capture, field 18 fires **0.05–1.9s** after the last
+  matching field-16 preview. In **this** capture, field 18 fires **1.1–8.9 s** (corrected 2026-10-08, `ai-sessions/0081`; "0.05–1.9s" was a slip) after the last
   field-16 preview in every one of the 15 save cycles (§4's table) — far too fast for a deliberate,
   separate tap on a UI element in a different screen region, and no video frame shows a distinct
   `Save`-button tap between drag and save for any of the 15 cycles. **Revised 🟡 HYPOTHESIS:**

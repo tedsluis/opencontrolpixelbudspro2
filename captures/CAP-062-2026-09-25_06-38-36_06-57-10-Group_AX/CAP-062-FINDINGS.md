@@ -76,8 +76,9 @@ The build is the `0046` one: "Runtime info requested (channel 19)" (export line 
   `CAP-048`/`CAP-047` (`00` with the case empty) — since those buds were out of the case but not in the ears. Not FACT: the film never shows the
   ears; "worn" is inferred from the buds leaving the table/case during the test plan's in-ear steps. **Settling experiment:** one bud in an ear,
   the other on the table, filmed; then swap; read `08 11` → `08 13` each time (no `Set` needed).
-- 🟢 FACT (all captures, same command over every `*btsnoop_hci.log`): every official-app and earlier app `Set` (35 in `CAP-001`, `-002`, `-006`,
-  `-039`, `-051`, `-059`, `-060`) was ACKed and each was answered by a `Notify` with Settable `e8`; `CAP-062` holds the only NAKs. `CAP-036` (buds in
+- 🟢 FACT (all captures, same command over every `*btsnoop_hci.log`): every official-app and earlier app `Set` (31 in `CAP-001`, `-006`, `-039`,
+  `-051`, `-059`, `-060` — `CAP-002` holds none; the full tally is 70 `Set`s in 13 captures, 59 ACKed, 11 NAKed, all NAKs in `CAP-062`: `PROTOCOL.md`
+  §4.1 Update of 2026-10-03, `scripts/message_stream_tally.py`; list corrected 2026-10-08, `ai-sessions/0081`) was ACKed and each was answered by a `Notify` with Settable `e8`; `CAP-062` holds the only NAKs. `CAP-036` (buds in
   the case for the whole session) contains **no** `Set` at all — only a `Get`/`Notify 01 e8 00 20` pair (frame 1182). 🟡 HYPOTHESIS: the official
   app does not offer ANC while the Buds report no settable mode (`CAP-001-EVENT-NOTES.md` records the ANC row "greyed out" until shortly before the
   first real `Set`).
@@ -149,7 +150,7 @@ Raw example (frame 7033, debug export line 298): `7e 00 a5 03 2a 1e 18 00 32 12 
 
 - 🟢 FACT (this capture): entry **6.2 is the Left bud and 6.3 the Right bud** (their field 1 is the percentage, 100/100 like the DLCI 0x04
   frames); their **field 2 is `2` exactly when that bud's charging bit is set**, `1` otherwise; **`7.2` = Left and `7.1` = Right** in the case/
-  charging; **entry 6.1 (Case) is present exactly when at least one bud is in the case** (lid open) — 22 of 22 stream packets agree.
+  charging; **entry 6.1 (Case) is present exactly when at least one bud is in the case** (lid open) — 43 of 43 stream packets agree (39 on DLCI 0x02, 4 on DLCI 0x03; `scripts/pwrpc_decode.py CAP-062-btsnoop_hci.log | grep SERVER_STREAM`; count corrected 2026-10-08, `ai-sessions/0081`).
 - 🟢 FACT (all captures): the same comparison over every capture that carries both messages (`xval` script in the RESULT, 45 captures, 403 stream
   packets with a battery frame within ±3 s): field 2 of 6.2/6.3 agrees with the charging bit in **401/403**; `7.x` and the presence of 6.1 in
   **397/403**. The two field-2 mismatches (`CAP-006` 2959/2968) have their battery frame 1.9 s later, across a transition; the other four (`CAP-016`
