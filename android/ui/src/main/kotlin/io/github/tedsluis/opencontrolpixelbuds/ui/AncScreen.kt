@@ -50,6 +50,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
@@ -68,6 +69,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
  * **`ai-sessions/0057`:** four large mode buttons (2 × 2) — the Buds' current mode is the filled one with a check mark (not colour alone), the others outlined;
  * an unknown mode fills none and says "ANC mode: unknown". The times ("updated …", "checked …"), the session line and the Message-Stream explanation are in
  * the card's (i) details, from the same helpers.
+ *
+ * **`ai-sessions/0082` item 1 (the maintainer's wording, chat 2026-10-09):** while [ancModeCause] is [AncModeCause.CHANGED_BY_BUDS] — a `Notify` the app did
+ * not provoke changed the mode — the (i) carries [ancChangedByBudsLine]; nothing on the main surface, no notification.
  */
 @Composable
 fun AncScreen(
@@ -83,6 +87,7 @@ fun AncScreen(
     ancAvailabilityUpdatedAt: Long? = null,
     ancModeUnconfirmedAt: Long? = null,
     sessionSince: Long? = null,
+    ancModeCause: AncModeCause? = null,
 ) {
     val ready = connectionState.isReady()
     val notAllowed = ready && ancAvailability == AncAvailability.NOT_ALLOWED
@@ -103,7 +108,7 @@ fun AncScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     CardTitle(
                         "Noise control",
-                        ancDetailLines(connectionState, ancMode, ancModeUpdatedAt, notAllowed, ancAvailabilityUpdatedAt, ancModeUnconfirmedAt, fromLastConnection),
+                        ancDetailLines(connectionState, ancMode, ancModeUpdatedAt, notAllowed, ancAvailabilityUpdatedAt, ancModeUnconfirmedAt, fromLastConnection, ancModeCause),
                         notCurrent = notCurrent,
                     )
                     if (ancMode == null) Text(ancModeLine(null, null), style = MaterialTheme.typography.bodyLarge)
@@ -151,8 +156,8 @@ internal fun ancModeLine(ancMode: AncMode?, updatedAt: Long?, fromLastConnection
 }
 
 /**
- * The ANC card's (i) lines: the not-confirmed line after a cut-off answer (F-3), the mode with its time, the "checked HH:MM:SS" line while not allowed, the
- * session line, the Message-Stream explanation.
+ * The ANC card's (i) lines: the not-confirmed line after a cut-off answer (F-3), the mode with its time, the "changed by the Buds" line when a `Notify` the app did
+ * not provoke changed the mode (`ai-sessions/0082` item 1), the "checked HH:MM:SS" line while not allowed, the session line, the Message-Stream explanation.
  */
 internal fun ancDetailLines(
     connectionState: ConnectionState,
@@ -162,9 +167,11 @@ internal fun ancDetailLines(
     checkedAt: Long?,
     unconfirmedAt: Long? = null,
     fromLastConnection: Boolean = false,
+    cause: AncModeCause? = null,
 ): List<String> = listOfNotNull(
     unconfirmedAt?.let(::ancUnconfirmedLine),
     ancModeLine(ancMode, ancModeUpdatedAt, fromLastConnection),
+    if (cause == AncModeCause.CHANGED_BY_BUDS && ancMode != null) ancChangedByBudsLine(ancModeUpdatedAt) else null,
     if (notAllowed) ancNotAllowedLine(checkedAt) else null,
     "Connection: ${connectionState::class.simpleName}",
     MESSAGE_STREAM_HINT_TEXT,
@@ -176,6 +183,14 @@ internal fun ancDetailLines(
  */
 internal fun ancNotAllowedLine(checkedAt: Long?): String =
     ANC_NOT_ALLOWED_TEXT.removeSuffix(").") + (formatUpdatedAt(checkedAt)?.let { "; checked $it" } ?: "") + "). Tapping a mode checks again first."
+
+/**
+ * `ai-sessions/0082` item 1 (the maintainer's wording, chat 2026-10-09): the (i) line while the shown mode came from a `Notify` the app did not provoke — a
+ * press-and-hold on a bud (`CAP-045` 1583/1755/1818) or the Buds' own change (`CAP-067` §2); the app cannot tell which and says so. [changedAt] is the
+ * mode's own receive time; without one the time is left out.
+ */
+internal fun ancChangedByBudsLine(changedAt: Long?): String =
+    "Changed by the Buds" + (formatUpdatedAt(changedAt)?.let { " at $it" } ?: "") + " (a press-and-hold on a bud, or the Buds' own change)."
 
 /** F-3 (the maintainer's wording, chat 2026-10-01): the (i) line while the shown mode is not confirmed; [changedAt] is when the cut-off change was sent. */
 internal fun ancUnconfirmedLine(changedAt: Long): String =

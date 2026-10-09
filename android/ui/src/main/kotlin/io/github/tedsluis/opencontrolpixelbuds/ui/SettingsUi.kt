@@ -24,12 +24,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -103,6 +105,32 @@ internal fun settingsFailureText(failure: SettingsFailure): String =
 internal fun SettingsFailureNotice(failure: SettingsFailure?) {
     failure ?: return
     Text(settingsFailureText(failure), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+}
+
+/**
+ * One settings card (Controls since `ai-sessions/0057`; gear → Settings since `ai-sessions/0082` item 5). The (i) carries the dot while connected and one of
+ * [readings] is not read yet ([notRead]), or — `ai-sessions/0069` A68-APP-02 — while not connected and the card still shows the last connection's values,
+ * which are then dimmed and named as such in the first detail line.
+ */
+@Composable
+internal fun SettingsCard(
+    title: String,
+    detailLines: List<String>,
+    enabled: Boolean,
+    readings: List<SettingReading<*>?>,
+    notRead: Boolean = readings.any { it == null },
+    content: @Composable () -> Unit,
+) {
+    val fromLastConnection = settingsFromLastConnection(enabled, readings)
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            CardTitle(title, withLastConnectionLine(detailLines, fromLastConnection), (enabled && notRead) || fromLastConnection)
+            Column(
+                modifier = Modifier.alpha(if (fromLastConnection) NOT_CURRENT_ALPHA else 1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) { content() }
+        }
+    }
 }
 
 /**

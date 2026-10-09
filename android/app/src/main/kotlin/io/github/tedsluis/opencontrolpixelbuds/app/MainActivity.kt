@@ -54,6 +54,7 @@ import io.github.tedsluis.opencontrolpixelbuds.R
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DarkModeSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
@@ -68,6 +69,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
 import io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
+import io.github.tedsluis.opencontrolpixelbuds.domain.WornReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.deriveDeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.permissionStatus
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
@@ -333,6 +335,7 @@ class MainActivity : ComponentActivity() {
             val ancAvailability by budsRepository.ancAvailability.collectAsStateWithLifecycle(initialValue = AncAvailability.UNKNOWN)
             val ancAvailabilityUpdatedAt by budsRepository.ancAvailabilityUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val ancModeUnconfirmedAt by budsRepository.ancModeUnconfirmedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
+            val ancModeCause by budsRepository.ancModeCause.collectAsStateWithLifecycle(initialValue = null as AncModeCause?)
             val eqProfile by budsRepository.eqProfile.collectAsStateWithLifecycle(initialValue = null)
             val eqProfileUpdatedAt by budsRepository.eqProfileUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val eqError by budsRepository.eqError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
@@ -346,7 +349,9 @@ class MainActivity : ComponentActivity() {
             val settingsError by budsRepository.settingsError.collectAsStateWithLifecycle(initialValue = null as SettingsFailure?)
             val batteryRefreshError by budsRepository.batteryRefreshError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val safeMode by budsRepository.safeMode.collectAsStateWithLifecycle(initialValue = null as SafeModeState?)
+            val wornReading by budsRepository.wornReading.collectAsStateWithLifecycle(initialValue = WornReading.NotRead)
             val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
+            val serialsError by budsRepository.serialsError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val ringing by budsRepository.ringing.collectAsStateWithLifecycle(initialValue = null as RingNotice?)
             val lastConnectionError by budsRepository.lastConnectionError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
@@ -449,10 +454,13 @@ class MainActivity : ComponentActivity() {
                 ancAvailability = ancAvailability,
                 ancAvailabilityUpdatedAt = ancAvailabilityUpdatedAt,
                 ancModeUnconfirmedAt = ancModeUnconfirmedAt,
+                ancModeCause = ancModeCause,
                 caseBatteryError = caseBatteryError,
                 batteryRefreshError = batteryRefreshError,
                 safeMode = safeMode,
+                wornReading = wornReading,
                 deviceInfo = deviceInfo,
+                serialsError = serialsError,
                 ringing = ringing,
                 eqProfile = eqProfile,
                 eqProfileUpdatedAt = eqProfileUpdatedAt,

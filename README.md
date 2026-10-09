@@ -109,6 +109,11 @@ tests, not yet on a phone.
 **1.1.1** (2026-10-08, `ai-sessions/0079`): the same app built with current build tools and libraries — nothing changes for you. Its hardware run
 `CAP-071` passed (`ai-sessions/0080`: the update keeps your settings, every request and answer is the same as 1.1.0's). Known issues: as 1.1.0.
 
+**1.2.0 is prepared, not yet released** (2026-10-09, `ai-sessions/0082`; its hardware run `CAP-072` decides): "Changed by the Buds" in the noise-control details,
+the serial numbers on the Info tab, a "probably worn" line on the battery card, and the Case sounds switches on gear → Settings and Conversation detection on
+Controls. Known issues of 1.2.0 (also in [`CHANGELOG.md`](./CHANGELOG.md)): the worn line is a hedged reading of a hypothesis (the Buds say "at least one bud",
+never which, and once reported it with both buds on a table); the serial labels are the official app's reading of the answer's order.
+
 **Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
 - After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop.
@@ -140,22 +145,24 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-08)
+## Current state (2026-10-09)
 
-- **Captures:** 71 registered sessions (`CAP-001`–`CAP-071`): 67 analyzed (the latest, `CAP-071` of 2026-10-08: the 1.1.1 release run — the update over 1.1.0 keeps the settings and every request is byte-identical, `ai-sessions/0080`), 2 planned, 2 withdrawn (`CAP-052`,
+- **Captures:** 72 registered sessions (`CAP-001`–`CAP-072`): 67 analyzed (the latest, `CAP-071` of 2026-10-08: the 1.1.1 release run — the update over 1.1.0 keeps the settings and every request is byte-identical, `ai-sessions/0080`), 3 planned (`CAP-072`: the 1.2.0 release run, Group BH), 2 withdrawn (`CAP-052`,
   `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068`, `CAP-070` and `CAP-071` are captures of this project's own app (`CAP-067`: the 1.0.0
   release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, `CAP-071`: the 1.1.1 release APK, all without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 57 ADRs (`DECISIONS.md`); every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
+- **Decisions:** 59 accepted ADRs and one labelled draft (ADR-060, proposed, not accepted) in `DECISIONS.md`; every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
   approval was given but whose record is missing (the ADR says so).
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
   the settings reads (ADR-036) and writes (touch controls, press and hold, conversation detection, balance, mono, in-ear detection — ADR-045/046/047;
-  from 1.1.0 head gestures, Multipoint, case sounds and Volume EQ — ADR-052…055),
+  from 1.1.0 head gestures, Multipoint, case sounds and Volume EQ — ADR-052…055), from 1.2.0 the serial numbers (one `GetHardwareInfo` per connection, ADR-058),
+  the "probably worn" line (ADR-059) and "Changed by the Buds" (`ai-sessions/0082`),
   firmware line, ANC Quick Settings tile, Safe Mode (ADR-042), the session re-open while visible (ADR-044).
-- **Protocol-known but not built:** the "Volume level notifications" switch (`qhr` field 21, 🟢 since 2026-10-06, no ADR); the BLE battery advertisement
+- **Protocol-known but not built:** the "Volume level notifications" switch (`qhr` field 21, 🟢 since 2026-10-06) and the notification behind it — studied in
+  `ai-sessions/0082` (the phone decides, from the `Dosimeter` daily doses; draft ADR-060, a 1.3.0 candidate, needs `WELL-002` first); the BLE battery advertisement
   (never matched on the wire).
 - **Still open (protocol):** EQ field 16-vs-18 save semantics, DLCI 0x08's own identity, why the Buds sometimes close the
   RFCOMM channels, whether the announced Maestro channel names the hosting bud — see `PROTOCOL.md` §6.

@@ -21,7 +21,10 @@ Android's dark switch (K4, O13); a Bluetooth-off loss is named (K1); **section R
 **Updated 2026-10-06 for the `ai-sessions/0074` build (1.1.0):** five new switches — Multipoint, Use head gestures, Case sounds "Earbuds replaced" and "Other
 alerts" on Controls, Volume EQ on Sound (**section T**); a switch that was not read shows "—" in place of the switch (M1, N1); twelve settings reads at Connect
 and on a pull (O8); A5 corrected (`CAP-067` §7). **Updated 2026-10-08 for the 1.1.1 build** (`ai-sessions/0079`: the app of 1.1.0 rebuilt with the
-toolchain of `ai-sessions/0078` — no new function; **section U**, a regression pass over what the new toolchain could change).
+toolchain of `ai-sessions/0078` — no new function; **section U**, a regression pass over what the new toolchain could change). **Updated 2026-10-09 for the
+1.2.0 build** (`ai-sessions/0082`, `DECISIONS.md` ADR-058/ADR-059): "Changed by the Buds" in the ANC (i); the serial numbers on gear → Info; the "probably worn"
+line on the battery card; the **Case sounds** switches moved from Controls to gear → **Settings** (T5, T6 note; N1); **Conversation detection** moved from Sound to
+**Controls** (M5 → N12; M1); thirteen MAESTRO requests at Connect (one `GetHardwareInfo` after the subscription; O8); **section V**.
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -148,18 +151,18 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| M1 | Right after Connect: read Balance, Mono audio and Conversation detection. | Each shows the Buds' value with "read HH:MM:SS" (or "Not read from the Buds yet"); since 1.1.0 an unread switch shows "—" in place of the switch | `ReadSetting 4:17`, `4:19`, `4:22` + answers | | |
+| M1 | Right after Connect: read Balance and Mono audio (until 1.1.1 also Conversation detection — on Controls since 1.2.0, N12). | Each shows the Buds' value with "read HH:MM:SS" (or "Not read from the Buds yet"); since 1.1.0 an unread switch shows "—" in place of the switch | `ReadSetting 4:17`, `4:19` (+ `4:22` for N12) + answers | | |
 | M2 | Drag **Balance** fully to **L**, release. | "Left 100 · changed …"; sound in the left ear | `WriteSetting 4:{17:200}` → empty `RESPONSE` | | |
 | M3 | Balance fully to **R**; then about halfway left; then back near the centre and release. | "Right 100", "Left NN", "Centre" — a release within ±3 of the middle snaps to "Centre" (`ai-sessions/0054` I-3); Left/Right 4 stays 4 | `4:{17:199}`, `4:{17:2·NN}`, `4:{17:0}` | | |
 | M4 | **Mono audio** on, then off. | switch follows after the Buds' OK; both ears play both channels while on | `4:{19:1}`, `4:{19:0}` | | |
-| M5 | **Conversation detection** off, then on; with it on, speak for 5 s (ANC on). | switch follows; say what the Buds do while you speak | `4:{22:0}`, `4:{22:1}` | | |
+| M5 | ~~**Conversation detection** off, then on~~ — **moved to Controls in 1.2.0: see N12** (the row stays for the runs before 1.2.0). | — | — | | |
 | M6 | Disconnect, Connect, open Sound. | The last written values are read back ("read …") | the `ReadSetting` answers = the last writes | | |
 
 ## N. Controls (tab "Controls" — `ai-sessions/0052`, DECISIONS.md ADR-045)
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| N1 | Right after Connect: open Controls. | "Use touch controls" with its value and time; "Press and hold" Left / Right: Noise control or Digital assistant; while a bud is on Noise control "Modes for press and hold (both buds)" with four boxes (Noise cancellation / Off / Adaptive / Transparency) and "read HH:MM:SS"; the "In-ear detection" switch with "Pauses audio when you take a bud out and resumes it when you put it back.", the note "With it off, audio does not pause …" and its time. A box whose value was not read is greyed; since 1.1.0 a switch that was not read shows "—" in place of the switch | `ReadSetting 4:4`, `4:7`, `4:12`, `4:2` + answers | | |
+| N1 | Right after Connect: open Controls. | "Use touch controls" with its value and time; "Press and hold" Left / Right: Noise control or Digital assistant; while a bud is on Noise control "Modes for press and hold (both buds)" with four boxes (Noise cancellation / Off / Adaptive / Transparency) and "read HH:MM:SS"; the "In-ear detection" switch with "Pauses audio when you take a bud out and resumes it when you put it back.", the note "With it off, audio does not pause …" and its time. A box whose value was not read is greyed; since 1.1.0 a switch that was not read shows "—" in place of the switch; **since 1.2.0** a "Conversation detection" card after In-ear detection (subtitle "Switch from noise cancellation to transparency when you talk") and **no** Case sounds card (gear → Settings, V) | `ReadSetting 4:4`, `4:7`, `4:12`, `4:2`, `4:22` + answers | | |
 | N2 | **Use touch controls** off; tap a bud (music playing). Then on; tap again. | Off: the tap does nothing; on: the tap pauses/plays | `4:{4:0}`, `4:{4:1}` | | |
 | N3 | **Left: Digital assistant**, press-and-hold the Left bud; then **Left: Noise control**, hold again. | the chip follows after the Buds' OK; say what the phone/Buds do; under "Press and hold" the note "Digital assistant needs an assistant app on this phone that supports headphones (…). Without one, holding the bud may only play a tone." (`ai-sessions/0054` I-5) | `4:{7:{1:{4:{1:6}}}}`, `…{1:5}` | | |
 | N4 | The same for **Right**. | as N3 | `4:{7:{2:{4:{1:6}}}}`, `…{1:5}` | | |
@@ -170,6 +173,7 @@ HH:MM:SS"); a refused or unanswered write shows "The setting was not changed: <r
 | N9 | Set both buds to **Digital assistant**; then one back to **Noise control**. Tick the modes back afterwards. | the mode list disappears, then reappears | only the `4:{7:…}` writes, then the `4:{12:…}` ones | | |
 | N10 | **In-ear detection** off; with music playing take a bud out and put it back. | switch off after the OK; the music does **not** pause | `WriteSetting 4:{2:0}` → OK | | |
 | N11 | **In-ear detection** on; take a bud out and put it back. | switch on after the OK; the music pauses and resumes | `4:{2:1}` → OK | | |
+| N12 | **Conversation detection** off, then on; with it on, speak for 5 s (ANC on). (On Sound as M5 until 1.1.1; on Controls since 1.2.0.) | switch follows after each OK; say what the Buds do while you speak | `4:{22:0}` = `CAP-019` 1720, `4:{22:1}` = 1808 (channel 21) | | |
 
 ## I. Find My Buds
 
@@ -293,8 +297,8 @@ new switches (the maintainer's choice, "alleen labels").
 | T2 | Read the Controls tab and Sound's Equalizer card. | Controls: Touch controls · Press and hold · **Head gestures** · In-ear detection · **Multipoint** · **Case sounds** (Earbuds replaced, Other alerts); Sound: **Volume EQ** below the presets; each (i) "<Label>: read HH:MM:SS" | — | ✅ | CAP-070 06:12:58–06:14:46 (order and (i) lines as specified; Equalizer (i) not opened) |
 | T3 | **Multipoint** off, then on. | Each after the Buds' OK, "Multipoint: changed HH:MM:SS" | `4:{11:0}`, `4:{11:1}` → empty `RESPONSE` | ✅ | Whether a second device stays connected is not claimed; CAP-070 A752/A1989 (ch 21 off, ch 19 on), all ACKed |
 | T4 | **Use head gestures** off, then on. | Each after the OK; no dialog | `4:{29:1}` (off), `4:{29:2}` (on) → `RESPONSE`; nothing on DLCI 0x08 | ✅ | CAP-070 A762/A1998; nothing on DLCI 0x08 |
-| T5 | **Earbuds replaced** off; put a bud back into the case; then on, and again. Say whether the case sounded each time. | Each after the OK | `4:{28:0}`, `4:{28:1}` | ⚠️ partly | An observation, not a claim of the app; writes ✅ (A770, A1992); the case-sound observation not recorded (no audio) |
-| T6 | **Other alerts** off, then on. | Each after the OK | `4:{27:0}`, `4:{27:1}` | ✅ | CAP-070 A777, A1995 |
+| T5 | **Earbuds replaced** off; put a bud back into the case; then on, and again. Say whether the case sounded each time. (On Controls until 1.1.1; **on gear → Settings since 1.2.0**, V13.) | Each after the OK | `4:{28:0}`, `4:{28:1}` | ⚠️ partly | An observation, not a claim of the app; writes ✅ (A770, A1992); the case-sound observation not recorded (no audio) |
+| T6 | **Other alerts** off, then on. (On gear → Settings since 1.2.0, V13.) | Each after the OK | `4:{27:0}`, `4:{27:1}` | ✅ | CAP-070 A777, A1995 |
 | T7 | Sound: **Volume EQ** off, then on; listen at low volume and say what you hear. | Each after the OK; Equalizer (i) "Volume EQ: changed …" | `4:{15:0}`, `4:{15:1}` | ⚠️ partly | Audibility is an observation; writes ✅ (A785, A1953, A3072, A3075); audibility not recorded (no audio) |
 | T8 | With T3–T7 left off: Disconnect, Connect. | All five read back as off, "read HH:MM:SS" | the twelve reads; the answers equal the last writes | ✅ | CAP-070 A824–A904: `11:0`, `15:0`, `27:0`, `28:0`, `29:1` |
 | T9 | Only the **Left** bud out of the case (Info: "Control channel: 19"): Multipoint and Use head gestures off, then on. | As T3/T4 | the channel-19 forms — first on the wire in `CAP-070` (BF-14/15) | ✅ | CAP-070 A3668/A3679, A3614/A3685 — the derived frames, ACKed |
@@ -323,6 +327,35 @@ T11, H5) are the earlier IDs, run again in `CAP-071`.
 | U12 | Controls: touch controls, press and hold, the mode list without Off, in-ear detection, head gestures, Multipoint, both case sounds — say whether the case sounds with "Earbuds replaced" off. | Each after its OK | each request = its reference (`CAP-041` 2198 for the mode list on 21) | ⚠️ | CAP-071: every request byte-identical and OK (incl. the mode list = `CAP-041` 2198); the case sound not said; no chime on the audio either way |
 | U13 | Disconnect, Connect. | Every value of U11–U12 read back | the reads answer the last writes | ✅ | CAP-071 18:18:40–43: every value read back |
 | U14 | Find: Ring Left, Stop, Ring Right, Stop. | The ring follows each tap | `04 01 00 01 02` / `00` / `01` / `00` → ACK | ✅ | CAP-071 18:19:24–18:20:13: ACKed; the ring on the audio track |
+
+## V. The 1.2.0 build (`ai-sessions/0082`: "Changed by the Buds", the serial numbers, the worn line, the two moves)
+
+In `CAP-072` as BH-1 … BH-26 (`captures/CAP-072-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BH/CAP-072-EVENT-NOTES.md`, which has the reference bytes per request and
+the wear sequence with the head in view). One new request per Connect (`GetHardwareInfo`, ADR-058); the worn line (ADR-059) and the cause line are derived
+from frames the app already received; the moved switches send the same bytes as before. The robustness rows (C8, C9, J4, K1, K2, R6) and the open items
+(C12, S6, S12, T11, H5) are the earlier IDs, run again. Serial numbers are device identifiers: **redact them** in every note (first 4 + last 2 characters).
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| V1 | In 1.1.1: Settings → Dark mode **On**, Debug → Debug mode **on**; `dumpsys package … \| grep -E "firstInstallTime\|lastUpdateTime"`; install 1.2.0 **over** it; the same `dumpsys`; open the app (lid open). | Dark at once; Debug mode on; no crash; `firstInstallTime` unchanged, `lastUpdateTime` later | the twelve reads, `SubscribeRuntimeInfo`, then **one** `GetHardwareInfo` = `CAP-036` 1415 (21) / `CAP-024` 801 (19), answered | | BH-1 |
+| V2 | Gear → **Info**: the build line, the firmware, **Serial numbers**. | "App: 1.2.0, build <hash> (<date>)"; "Serial numbers (from the Buds, HH:MM:SS):" then "Case: …", "Right bud: …", "Left bud: …" and the note "Labelled by position …" | nothing new (the answer of V1) | | BH-2; the three strings = the answer's field 7 in order |
+| V3 | Gear → **Settings**: the Case sounds card between Dark mode and Use different Buds; its (i). | Both switches with their values; the (i) "Earbuds replaced: read HH:MM:SS", "Other alerts: read …", "These settings live on the case and are read when the app connects." | — | | BH-2 |
+| V4 | Both buds in the case, lid open: the battery card's **Worn** line and its (i). | "Both buds in the case"; the (i) explanation ("Worn: from the Buds' last noise-control report. 'Probably worn' = … 'Not worn' = … With in-ear detection off the report says nothing about wearing.") | the runtime-info charging flags already received | | BH-3 |
+| V5 | Only the Left in the ear; pull on Connection. | "Probably worn (checked HH:MM:SS)" | `08 11` → `Notify` Settable `e8` | | BH-5 (`INEAR-006`) |
+| V6 | Both in; pull. Then the Left out with both worn on 19 (head in view); pull. | "Probably worn" with a later time; the session re-opens by itself | `Notify` `e8`; lead L-1: Buds `DISC` + announcement 21 | | BH-6, BH-7 (`INEAR-005`) |
+| V7 | Both buds on the table, in-ear detection on; pull; then an ANC tap. | "Not worn (checked …)"; the tap refused with the not-allowed text | `Notify` Settable `00`; no `Set` | | BH-8 |
+| V8 | In-ear detection **off**; pull. Then **on**; pull. | "Worn: unknown — in-ear detection is off"; then "Not worn (checked …)" | `4:{2:0}` → OK; `Notify` (`e8` expected, says nothing); `4:{2:1}` → OK; `Notify` `00` | | BH-9 |
+| V9 | Both in the ears; pull; the four ANC modes from the tab; the (i) after each. | "Probably worn"; each mode after its ACK; **no** "Changed by the Buds" line in the (i) | per tap `08 11` → `Notify` → `Set` → ACK | | BH-10 |
+| V10 | **Press and hold a bud** (its noise-control cycle) with the ANC tab open; the (i). Twice. | The mode changes without a tap; the (i) shows "Changed by the Buds at HH:MM:SS (a press-and-hold on a bud, or the Buds' own change)."; the time moves the second time | an unprovoked `08 13 00 04 01 e8 e8 xx` — no `08 11` before it; nothing sent by the app | | BH-11 |
+| V11 | Then a tap in the app; a pull on the ANC tab; the tile — the (i) after each. | The line is gone after each ("set …" / "read …") | each: a claim `08 11` → `Notify` (→ `Set` → ACK for the tap and the tile) | | BH-12 |
+| V12 | Both buds straight from the ears into the case and out onto the table; pull at ≈ 5, 15, 30, 45, 60 s. | "Probably worn" for at most ≈ 30 s (`CAP-064`), then "Not worn" — or "Both buds in the case" first; say what you see | `Notify` `e8` → `00`; the charging flags 2 → 0 | | BH-13; a result, not a fault, if "Probably worn" lasts longer — report it |
+| V13 | Gear → Settings → **Case sounds**: Earbuds replaced off (a bud into the case and out; say whether the case sounded), on (the same); Other alerts off, on; the (i). | Each after its OK; "changed HH:MM:SS" | `4:{28:0}`, `4:{28:1}`, `4:{27:0}`, `4:{27:1}` = `CAP-070`/`CAP-071`'s requests | | BH-14 (T5, T6) |
+| V14 | Controls → **Conversation detection** off, on; speak 5 s. | Each after its OK; the subtitle kept | `4:{22:0}` = `CAP-019` 1720, `4:{22:1}` = 1808 | | BH-15 (N12) |
+| V15 | Sound: Balanced, a slider, *Read EQ again*, Right 4, Centre, mono, Volume EQ; Controls: touch, press and hold, the mode list without Off, head gestures, Multipoint — say what you hear. | Each after its OK; no conversation-detection row on Sound | each request = its reference (`CAP-072-EVENT-NOTES.md`'s table) | | BH-16, BH-17 (H5 ★, the "Right 4" write ★) |
+| V16 | Disconnect, Connect; Sound, Controls, Settings, Info. | Every value read back; the **same three serials** with a new time; the Worn line "—" then "Probably worn" | the thirteen requests; one `GetHardwareInfo`, the same answer bytes | | BH-18 |
+| V17 | Find: Ring Left, Stop, Ring Right, Stop. | The ring follows each tap | `04 01 00 01 02` / `00` / `01` / `00` → ACK | | BH-19 |
+| V18 | The case (lid open), Home 2 min, Export + Bluetooth off/on; grep every export for a serial (first 4 + last 2) and the MAC. | The 1.0.1 cause texts; re-open by itself; "Bluetooth is disabled."; **0 hits** in the exports (positive control: the "Control channel" line) | ADR-044's `SABM` ≈ 1.5 s after the link; the thirteen requests after each re-open | | BH-20…BH-22 (C8, C9, J4, K1) |
+| V19 | Film 2: C12 (the early tap), S12 (the export across a rotation), T11 (three `uiautomator` dumps: Controls, Sound, **Settings**). | "The setting was not changed: …"; "Debug log saved (N lines)."; every "—" node's `content-desc` = `Not read from the Buds yet` (Controls seven, Sound eight, Settings two) | no `WriteSetting` after the early tap | | BH-23…BH-26 |
 
 ## After the run (within 1 minute of the last action)
 
@@ -359,6 +392,7 @@ T11, H5) are the earlier IDs, run again in `CAP-071`.
 | S 1.0.1 build | 13 | | | | |
 | T 1.1.0 build | 11 | 7 | 0 | 4 | 0 |
 | U 1.1.1 build | 14 | 11 | 0 | 3 | 0 |
+| V 1.2.0 build | 19 | | | | |
 
 **Run `CAP-070` (2026-10-07, 1.1.0 `0323849`, the user without Play; `ai-sessions/0075`, `CAP-070-FINDINGS.md`):** section T — ✅ T2, T3, T4, T6, T8, T9, T10;
 ⚠️ T1 (no "—" caught at the first Connect; a first install, not an update), T5 and T7 (writes ✅, observations not recorded — no audio), T11 (no dump). Other

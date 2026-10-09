@@ -21,6 +21,7 @@
 
 package io.github.tedsluis.opencontrolpixelbuds.data
 
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap045
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap061
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap062
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap063
@@ -28,6 +29,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap064
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap065
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap066Balance
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.HardwareInfoFixtures
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Maestro
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.PW_HDLC_CONTROL_UI
@@ -44,9 +46,11 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
+import io.github.tedsluis.opencontrolpixelbuds.domain.WornReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingReading
@@ -416,6 +420,8 @@ class BudsRepositoryImplTest {
                 if (rpc.methodId == Maestro.METHOD_READ_SETTING) {
                     Settings036.ANSWERS[rpc.payload[1].toInt()]?.let { transport.emit(Dlci.MAESTRO, hex(it)) }
                 }
+                // ADR-058: the Buds of CAP-036 answer the one GetHardwareInfo with frame 1423 (serials redacted in the fixture).
+                if (rpc.methodId == Maestro.METHOD_GET_HARDWARE_INFO) transport.emit(Dlci.MAESTRO, hex(HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED))
             }
         }
     }
@@ -451,7 +457,13 @@ class BudsRepositoryImplTest {
 
         val requests = transport.maestroRequests()
         assertEquals("2010", requests.first().payload.toHex(), "4:16 first")
-        assertEquals(2 + settingReads.size, requests.size, "the EQ read, the settings reads (ADR-036, ADR-046, ADR-053), then the runtime-info subscription (ADR-043)")
+        assertEquals(
+            3 + settingReads.size,
+            requests.size,
+            "the EQ read, the settings reads (ADR-036, ADR-046, ADR-053), the runtime-info subscription (ADR-043), then GetHardwareInfo (ADR-058)",
+        )
+        assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, requests[requests.size - 2].methodId)
+        assertEquals(Maestro.METHOD_GET_HARDWARE_INFO, requests.last().methodId, "last, after the subscription")
         assertEquals(0.3f, repo.eqProfile.first()!!.mid, 1e-4f) // CAP-036 frame 1525
     }
 
@@ -468,7 +480,8 @@ class BudsRepositoryImplTest {
 
         val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
         assertEquals(cap036SettingReads, maestro.subList(1, 1 + settingReads.size))
-        assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().last().methodId)
+        assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().let { it[it.size - 2] }.methodId)
+        assertEquals(Maestro.METHOD_GET_HARDWARE_INFO, transport.maestroRequests().last().methodId, "ADR-058: last")
         assertEquals(
             BudsSettings(
                 inEarDetection = SettingReading(true, 4_000),
@@ -517,7 +530,8 @@ class BudsRepositoryImplTest {
         assertNull(repo.settings.value.volumeBalance)
         assertEquals(true, repo.settings.value.conversationDetection?.value)
         assertEquals(io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure(BudsError.Timeout, write = false), repo.settingsError.first(), "the last reason, a read")
-        assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().last().methodId)
+        assertEquals(Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO, transport.maestroRequests().let { it[it.size - 2] }.methodId)
+        assertEquals(Maestro.METHOD_GET_HARDWARE_INFO, transport.maestroRequests().last().methodId, "ADR-058: the sequence goes on to the hardware-info read")
     }
 
     /**
@@ -827,9 +841,10 @@ class BudsRepositoryImplTest {
         settle()
 
         val maestro = transport.sent.filter { it.first == Dlci.MAESTRO }.map { it.second.toHex() }
-        assertEquals(2 + settingReads.size, maestro.size, "EQ read, the settings reads (field 12 added by ADR-046, 11 by ai-sessions/0074), the subscription")
+        assertEquals(3 + settingReads.size, maestro.size, "EQ read, the settings reads (field 12 added by ADR-046, 11 by ai-sessions/0074), the subscription, GetHardwareInfo (ADR-058)")
         assertEquals(1, maestro.count { it == "7e004b0310151dea71de7d5e2590821ee66654bfab7e" })
-        assertEquals("7e004b0310151dea71de7d5e2590821ee66654bfab7e", maestro.last())
+        assertEquals("7e004b0310151dea71de7d5e2590821ee66654bfab7e", maestro[maestro.size - 2], "the subscription right after the settings reads")
+        assertEquals(HardwareInfoFixtures.REQUEST_CH21_CAP036_1415, maestro.last(), "ADR-058: GetHardwareInfo last")
         assertEquals(0.3f, repo.eqProfile.first()!!.mid, 1e-4f)
     }
 
@@ -978,12 +993,123 @@ class BudsRepositoryImplTest {
         runCurrent()
         advanceTimeBy(3_100) // … for the settings reads …
         runCurrent()
-        advanceTimeBy(3_100) // … and for the subscription
+        advanceTimeBy(3_100) // … for the subscription …
+        runCurrent()
+        advanceTimeBy(3_100) // … and for the hardware-info read (ADR-058)
         runCurrent()
 
         assertEquals(0, transport.sent.size)
         assertEquals(BudsError.MaestroChannelUnknown(null), repo.settingsError.first()?.error)
         assertEquals(BudsError.MaestroChannelUnknown(null), repo.caseBatteryError.first())
+        assertEquals(BudsError.MaestroChannelUnknown(null), repo.serialsError.first())
+    }
+
+    // ---- ADR-058 (`ai-sessions/0082` item 2): one GetHardwareInfo per Connect, the serial numbers on the Info tab ----
+
+    /** The Buds of `CAP-036`/`CAP-024`: every ReadSetting answered, the GetHardwareInfo by [answer] (`null` = silence). */
+    private fun answerHardwareInfo(transport: FakeBudsTransport, answer: String?) {
+        transport.onSent = { ch, frame ->
+            if (ch == Dlci.MAESTRO) {
+                val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+                if (rpc.methodId == Maestro.METHOD_READ_SETTING) Settings036.ANSWERS[rpc.payload[1].toInt()]?.let { transport.emit(Dlci.MAESTRO, hex(it)) }
+                if (rpc.methodId == Maestro.METHOD_GET_HARDWARE_INFO) answer?.let { transport.emit(Dlci.MAESTRO, hex(it)) }
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("ADR-058: Connect sends exactly one GetHardwareInfo, byte-identical to CAP-036 1415 (ch 21), after the subscription; 1423's serials reach deviceInfo with their time")
+    fun `Connect reads the serial numbers once, on channel 21`() = runTest {
+        BleLogger.clear()
+        val (repo, transport) = buildRepository(verified = false)
+        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED)
+        transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_5.203"))
+        settle()
+        advanceTimeBy(4_000)
+        repo.launchInitialEqRead()
+        settle()
+
+        val hardwareRequests = transport.sent.filter { it.first == Dlci.MAESTRO && it.second.toHex() == HardwareInfoFixtures.REQUEST_CH21_CAP036_1415 }
+        assertEquals(1, hardwareRequests.size, "exactly one, byte-identical to the official app's")
+        val info = repo.deviceInfo.first()!!
+        assertEquals(HardwareInfoFixtures.SERIALS_REDACTED, info.serials.map { it.serial })
+        assertEquals(listOf(1, 2, 3), info.serials.map { it.index })
+        assertEquals(currentTime, info.serialsReadAtMillis)
+        assertEquals(listOf("release_5.203"), info.firmware, "the announcement's firmware stays")
+        assertNull(repo.serialsError.first())
+        // AGENTS.md §9 / mutation M4: no serial in any log line — the always-on log says how many, never which.
+        val log = BleLogger.exportLog()
+        for (serial in HardwareInfoFixtures.SERIALS_REDACTED) assertEquals(false, serial in log, "serial in the log")
+        assertEquals(true, "Hardware info read (channel 21): 3 serial numbers" in log)
+    }
+
+    @Test
+    @DisplayName("ADR-058: on channel 19 the request is CAP-024 801 and the answer 832 gives the same three serials in the same order")
+    fun `the serial numbers are read on channel 19 too`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH19_CAP024_832_REDACTED)
+        transport.emit(Dlci.MAESTRO, helloWithFirmware(19, 10432, "release_5.203")) // response address `80 a3` (channel 19, ADR-034)
+        settle()
+        repo.launchInitialEqRead()
+        settle()
+        assertEquals(1, transport.sent.count { it.second.toHex() == HardwareInfoFixtures.REQUEST_CH19_CAP024_801 })
+        assertEquals(HardwareInfoFixtures.SERIALS_REDACTED, repo.deviceInfo.first()!!.serials.map { it.serial })
+    }
+
+    @Test
+    @DisplayName("ADR-058: no answer within 2 s -> Timeout in serialsError, never retried, the serials stay empty; an OK answer without field 7 -> UnreadableAnswer")
+    fun `an unanswered or unreadable hardware-info read keeps the serials empty and says why`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        answerHardwareInfo(transport, null)
+        transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_5.203"))
+        settle()
+        repo.launchInitialEqRead()
+        settle()
+        advanceTimeBy(2_100)
+        runCurrent()
+        assertEquals(1, transport.sent.count { it.second.toHex() == HardwareInfoFixtures.REQUEST_CH21_CAP036_1415 }, "sent once, never retried")
+        assertEquals(BudsError.Timeout, repo.serialsError.first())
+        assertEquals(emptyList<io.github.tedsluis.opencontrolpixelbuds.domain.ComponentSerial>(), repo.deviceInfo.first()!!.serials)
+
+        // Labelled structural case (no capture holds it): the answer without field 7.
+        val (repo2, transport2) = buildRepository(verified = false)
+        val withoutSerials = RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_GET_HARDWARE_INFO, hex("0806101128093007"))
+        answerHardwareInfo(transport2, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, PwRpc.encode(withoutSerials)).toHex())
+        transport2.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_5.203"))
+        settle()
+        repo2.launchInitialEqRead()
+        settle()
+        assertEquals(BudsError.UnreadableAnswer, repo2.serialsError.first())
+        assertEquals(emptyList<io.github.tedsluis.opencontrolpixelbuds.domain.ComponentSerial>(), repo2.deviceInfo.first()!!.serials)
+    }
+
+    @Test
+    @DisplayName("ADR-058 item 2 / ADR-042 item 3: a read is not gated — the request is sent to an unverified firmware too (M10 guards the opposite)")
+    fun `the hardware-info read is sent on an unverified firmware`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED)
+        transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_9.999"))
+        settle()
+        repo.launchInitialEqRead()
+        settle()
+        assertEquals(1, transport.sent.count { it.second.toHex() == HardwareInfoFixtures.REQUEST_CH21_CAP036_1415 })
+        assertEquals(HardwareInfoFixtures.SERIALS_REDACTED, repo.deviceInfo.first()!!.serials.map { it.serial })
+        assertEquals(listOf("release_9.999"), repo.safeMode.first()?.firmware, "Safe Mode is observed (the Connection card) — it refuses writes, not this read")
+    }
+
+    @Test
+    @DisplayName("ADR-058: Disconnect clears deviceInfo (serials included) and the error; nothing is persisted")
+    fun `Disconnect drops the serials with the rest of deviceInfo`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED)
+        transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_5.203"))
+        settle()
+        repo.launchInitialEqRead()
+        settle()
+        assertEquals(3, repo.deviceInfo.first()!!.serials.size)
+        repo.disconnect()
+        assertNull(repo.deviceInfo.first())
+        assertNull(repo.serialsError.first())
     }
 
     @Test
@@ -2795,6 +2921,155 @@ class BudsRepositoryImplTest {
             assertEquals(true, (status.right as BatteryLevel.Known).isStale, end)
             assertEquals(true, status.leftCharging?.fromEarlierSession, end)
         }
+    }
+
+    // ---- ADR-059 (`ai-sessions/0082` item 3): the worn reading, derived from state the app already holds ----
+
+    @Test
+    @DisplayName("ADR-059: not read until a Notify; CAP-065 5465 (00) -> not worn; 6334 (e8) -> probably worn; CAP-062 4845 -> both in the case; field 2 = 0 -> unknown; Connect resets")
+    fun `the worn reading follows the Notify, field 2 and the charging flags`() = runTest {
+        val (repo, transport) = buildRepository()
+        settle()
+        assertEquals(WornReading.NotRead, repo.wornReading.first())
+
+        transport.emit(Dlci.MAESTRO, hex(Settings036.READ_2_RESP)) // CAP-036 1447: `4:{2:1}`, in-ear detection on
+        settle()
+        assertEquals(WornReading.NotRead, repo.wornReading.first(), "still no Notify on this connection")
+
+        advanceTimeBy(1_000)
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap065.NOTIFY_00_OFF_5465)) // both buds loose on the table
+        settle()
+        assertEquals(WornReading.NotWorn(currentTime), repo.wornReading.first())
+
+        advanceTimeBy(1_000)
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap065.NOTIFY_E8_OFF_6334)) // both worn
+        settle()
+        val checkedAt = currentTime
+        assertEquals(WornReading.ProbablyWorn(checkedAt), repo.wornReading.first())
+
+        advanceTimeBy(1_000)
+        transport.emit(Dlci.MAESTRO, hex(Cap062.STREAM_BOTH_4845)) // both buds charging
+        settle()
+        assertEquals(WornReading.BothInCase, repo.wornReading.first())
+
+        transport.emit(Dlci.MAESTRO, hex(Cap062.STREAM_NONE_2782)) // neither charging: back to the byte's reading, with the Notify's own time
+        settle()
+        assertEquals(WornReading.ProbablyWorn(checkedAt), repo.wornReading.first())
+
+        // The app's own write of field 2 = 0 (CAP-064 9922 → OK): the byte says nothing any more.
+        transport.onSent = { ch, frame -> if (ch == Dlci.MAESTRO) transport.emit(Dlci.MAESTRO, hex(SettingsWrites.ACK_CH21_1731)) }
+        assertEquals(BudsResult.Success(Unit), repo.setInEarDetection(false))
+        settle()
+        assertEquals(WornReading.InEarDetectionOff, repo.wornReading.first())
+
+        repo.disconnect()
+        repo.connect() // NotPaired in this test, but a new connection attempt: the Settable byte and field 2 are this connection's to re-read
+        settle()
+        assertEquals(WornReading.NotRead, repo.wornReading.first())
+    }
+
+    // ---- `ai-sessions/0082` item 1: why the shown ANC mode is what it is — read, set by this app, or changed by the Buds (the maintainer's rule, chat 2026-10-09) ----
+
+    @Test
+    @DisplayName("Item 1: the answer to the app's own Get is a reading (CAP-045 609 -> 612), never \"changed by the Buds\"")
+    fun `the Get's answer is a reading`() = runTest {
+        val (repo, transport) = buildRepository()
+        settle()
+        assertNull(repo.ancModeCause.first(), "nothing reported yet")
+        transport.onSent = null // the test answers the Get itself
+        val job = launch { repo.refreshAncMode() }
+        runCurrent()
+        assertEquals(Cap045.GET_609, transport.sent.single().second.toHex())
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_ADAPTIVE_612))
+        job.join()
+        assertEquals(AncMode.ADAPTIVE, repo.ancMode.first())
+        assertEquals(AncModeCause.READ, repo.ancModeCause.first())
+    }
+
+    @Test
+    @DisplayName("Item 1: a Notify the app did not provoke, with another mode, is changed by the Buds (CAP-045 1583, 1755, 1818); the same mode again changes nothing")
+    fun `an unsolicited Notify with another mode is changed by the Buds`() = runTest {
+        val (repo, transport) = buildRepository()
+        settle()
+        transport.onSent = null
+        val job = launch { repo.refreshAncMode() }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_ADAPTIVE_612)) // the Get's answer
+        job.join()
+        assertEquals(AncModeCause.READ, repo.ancModeCause.first())
+
+        advanceTimeBy(24_477) // 06:23:21.948 − 06:22:57.471
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_TRANSPARENT_1583)) // a press-and-hold on a bud
+        settle()
+        assertEquals(AncMode.TRANSPARENT, repo.ancMode.first())
+        assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first())
+        assertEquals(currentTime, repo.ancModeUpdatedAt.first(), "the line's time is the mode's receive time")
+
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_ACTIVE_1755))
+        settle()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_ADAPTIVE_1818))
+        settle()
+        assertEquals(AncMode.ADAPTIVE, repo.ancMode.first())
+        assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first())
+
+        // The Buds repeat the mode already shown (nothing pending): the cause stays, only the time moves.
+        advanceTimeBy(1_000)
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_ADAPTIVE_1818))
+        settle()
+        assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first())
+        assertEquals(currentTime, repo.ancModeUpdatedAt.first())
+    }
+
+    @Test
+    @DisplayName("Item 1: the app's own Set (Get -> Notify -> Set -> ACK), then the Buds' Notify of that mode: set by this app, never changed by the Buds")
+    fun `the app's own acknowledged Set is set by this app`() = runTest {
+        val (repo, transport) = buildRepository() // autoAck: the Get answered by CAP-065 6334 (OFF, e8), the Set ACKed
+        settle()
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ADAPTIVE))
+        assertEquals(AncMode.ADAPTIVE, repo.ancMode.first())
+        assertEquals(AncModeCause.SET_BY_APP, repo.ancModeCause.first())
+
+        // The Buds' own Notify after the ACK (as CAP-059 2779 -> 2782): the requested mode — still the app's change.
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_ADAPTIVE_612))
+        settle()
+        assertEquals(AncModeCause.SET_BY_APP, repo.ancModeCause.first())
+    }
+
+    @Test
+    @DisplayName("Item 1: the Buds answer the Set with their Notify of the requested mode before any ACK — the app's change, not theirs")
+    fun `a Notify of the requested mode while the Set waits is set by this app`() = runTest {
+        val (repo, transport) = buildRepository()
+        settle()
+        transport.onSent = { ch, frame ->
+            when (frame.toHex().take(4)) {
+                "0811" -> transport.emit(ch, hex(Cap065.NOTIFY_E8_OFF_6334))
+                "0812" -> transport.emit(ch, hex(Cap045.NOTIFY_TRANSPARENT_1583)) // the requested mode, as a Notify, no ACK
+            }
+        }
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.TRANSPARENT))
+        assertEquals(AncMode.TRANSPARENT, repo.ancMode.first())
+        assertEquals(AncModeCause.SET_BY_APP, repo.ancModeCause.first())
+    }
+
+    @Test
+    @DisplayName("Item 1: a new Connect resets the cause; the first Notify of this app run is a reading")
+    fun `Connect resets the cause and the first mode ever shown is a reading`() = runTest {
+        val (repo, transport) = buildRepository()
+        settle()
+        // No Get pending, no mode shown yet: nothing could have changed.
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_ADAPTIVE_612))
+        settle()
+        assertEquals(AncModeCause.READ, repo.ancModeCause.first())
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_TRANSPARENT_1583))
+        settle()
+        assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first())
+
+        repo.disconnect()
+        repo.connect() // no bonded device in this test: NotPaired, but a new connection attempt all the same (A68-APP-02)
+        settle()
+        assertEquals(AncMode.TRANSPARENT, repo.ancMode.first(), "the mode is kept (from the last connection)")
+        assertNull(repo.ancModeCause.first(), "its cause is this connection's to re-establish")
     }
 }
 

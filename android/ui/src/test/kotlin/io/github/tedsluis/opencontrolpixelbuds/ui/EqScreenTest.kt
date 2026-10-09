@@ -116,10 +116,10 @@ class EqScreenTest {
     @Test
     fun `an unread EQ shows a dash for each band, never 0,0`() {
         show(gains = null)
-        // The five bands and the unread Volume EQ (`ai-sessions/0074`) in the Equalizer card; the card below (a lazy-list item of its own) adds three more —
-        // balance, mono audio, conversation detection — when it is composed.
+        // The five bands and the unread Volume EQ (`ai-sessions/0074`) in the Equalizer card; the card below (a lazy-list item of its own) adds two more —
+        // balance, mono audio — when it is composed (conversation detection is on Controls since `ai-sessions/0082`).
         val dashes = compose.onAllNodesWithText("—").fetchSemanticsNodes().size
-        assertTrue("dashes shown: $dashes", dashes == 6 || dashes == 9)
+        assertTrue("dashes shown: $dashes", dashes == 6 || dashes == 8)
         compose.onAllNodesWithText("%.1f".format(0f)).assertCountEquals(0)
     }
 
@@ -133,7 +133,7 @@ class EqScreenTest {
     fun `each unread EQ band carries the screen-reader text, and nothing else on the card says 0,0`() {
         show(gains = null, settings = BudsSettings(volumeEq = SettingReading(true, 1L))) // only the five bands are unread in the Equalizer card
         val bands = compose.onAllNodes(notReadDash).fetchSemanticsNodes().size
-        assertTrue("bands read as not read: $bands", bands == 5 || bands == 8) // + balance, mono, conversation detection when composed
+        assertTrue("bands read as not read: $bands", bands == 5 || bands == 7) // + balance, mono when composed
         compose.onAllNodesWithText(NOT_READ_VALUE).assertCountEquals(bands) // every dash has it
     }
 
@@ -145,7 +145,7 @@ class EqScreenTest {
                 EqScreen(
                     connectionState = ConnectionState.Ready, gains = EqBandGains.FLAT, eqProfileUpdatedAt = at, eqError = null,
                     onGainsChanged = {}, onPresetSelected = {}, onRefresh = {},
-                    settings = BudsSettings(monoAudio = SettingReading(false, at), conversationDetection = SettingReading(true, at), volumeEq = SettingReading(true, at)),
+                    settings = BudsSettings(monoAudio = SettingReading(false, at), volumeEq = SettingReading(true, at)),
                 )
             }
         }
@@ -173,8 +173,8 @@ class EqScreenTest {
         show(gains = EqBandGains(upperTreble = 5f, treble = 3f, mid = 2f, bass = 0f, lowBass = -2f))
         compose.onNodeWithText("%.1f".format(5f)).assertExists()
         compose.onNodeWithText("%.1f".format(-2f)).assertExists()
-        // Never a band: at most the unread Volume EQ in this card and, when the second card is composed, the balance, mono and conversation detection.
-        assertTrue(compose.onAllNodesWithText("—").fetchSemanticsNodes().size in listOf(1, 4))
+        // Never a band: at most the unread Volume EQ in this card and, when the second card is composed, the balance and mono.
+        assertTrue(compose.onAllNodesWithText("—").fetchSemanticsNodes().size in listOf(1, 3))
     }
 
     @Test
@@ -227,6 +227,15 @@ class EqScreenTest {
     }
 
     @Test
+    fun `ai-sessions 0082 - the Sound tab has no Conversation detection any more, its (i) lists Balance and Mono audio only`() {
+        show(gains = EqBandGains.FLAT, settings = BudsSettings(conversationDetection = SettingReading(true, 1L)))
+        compose.onNode(hasScrollAction()).performScrollToNode(balanceSlider)
+        compose.onAllNodesWithText("Conversation detection").assertCountEquals(0)
+        compose.onAllNodesWithText("Switch from noise cancellation to transparency when you talk").assertCountEquals(0)
+        assertEquals(listOf("Balance: $SETTING_NOT_READ", "Mono audio: $SETTING_NOT_READ"), soundSettingsDetailLines(BudsSettings()))
+    }
+
+    @Test
     fun `the settings card on Sound is marked only when it still holds values and nothing is connected`() {
         assertEquals(true, settingsFromLastConnection(ready = false, readings = listOf(SettingReading(true, 1L), null)))
         assertEquals("nothing was ever read: nothing to mark", false, settingsFromLastConnection(ready = false, readings = listOf(null, null)))
@@ -259,7 +268,6 @@ class EqScreenTest {
                     settings = BudsSettings(
                         volumeBalance = balance?.let { SettingReading(it, 1_727_600_000_000L) },
                         monoAudio = SettingReading(false, 1_727_600_000_000L),
-                        conversationDetection = SettingReading(true, 1_727_600_000_000L),
                         volumeEq = SettingReading(true, 1_727_600_000_000L),
                     ),
                     onVolumeBalanceChanged = { writes += it },

@@ -3449,6 +3449,52 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     further this pass); the 7-day check that motivated the original question belongs to an unrelated
     feature entirely.
 
+### `HearingWellnessNotificationWorker` / `defpackage.fvp` / `fyh` / `fyf` / `gau` / `fsm` / `gag` (discriminator 10) / `hwy` / `his` / `hiw` — what decides a "volume level" notification (added 2026-10-09, `ai-sessions/0082` item 4; read-only, ADR-017 boundary)
+
+Question (the maintainer, chat 2026-10-09): how could OpenControl notify the user when "the recommended exposure limit is exceeded", as the official app's
+"Volume level notifications" switch (`qhr` field 21, `PROTOCOL.md` §4.5.8a) promises? Answered on the code side (JADX, `v1.0.955078536-10253511`; one smali
+read); nothing built — the design and the draft ADR are in `ai-sessions/0082` RESULT §C.4, the 🟡 list there. Every claim: `file:line`.
+
+- **The phone decides, not the Buds.** `HearingWellnessNotificationWorker` (`…/notification/hearingwellness/HearingWellnessNotificationWorker.java:27–66`) is an
+  `RxWorker`. `m(context, address)` (`:46–55`) enqueues **one-time** unique work `HEARING_WELLNESS_NOTIFICATION_WORK_<address>` with tag
+  `HEARING_WELLNESS_NOTIFICATION_WORK`, initial delay `Duration.ofMinutes(1)` (`:30`; `enh.g(Duration)` = `setInitialDelay`, `enh.java:72–78`) and policy int `2`
+  (`eng.h(String, int, …)`, `eng.java:24` — the enum name behind `2` is not recoverable, ⚪); `l(context)` (`:41–44`) cancels the tag. Not a periodic request.
+- **Scheduled from the session, gated by field 21's stored value.** `fvp.i()` (`fvp.java:58–64`, the Dosimeter connection, started with the session per
+  `fut.java:102–103`) subscribes `this.l.C(new fst(14))` → `fsy(this, 7)`: `fst` case 14 = `gcl.x()`, and `fsy` case 7 logs "HearingWellnessNotificationWorker:
+  scheduled" + `m(…)` on `true`, "… cancelled" + `l(…)` on `false`. `gcl.x()` (`gcl.java:550–563`) is the device record's flag `gdw.x` when its presence bit
+  `2097152` is set, else `true` — the stored "Volume level notifications" switch (the same preference writes field 21, `hey.java:165–190`). `fyh.a()`
+  (`fyh.java:32–36`) also schedules it right after fetching both daily summaries; `fvp.b()` (`:51–56`, session end) cancels it. 🟢 (code): **field 21 gates only
+  this phone-side worker**; no code reads a Buds-initiated message for it.
+- **What it computes** (`c()`, `:58–65`): `gck.b(address)` (the device record) → `ftq(13)` (`Optional.isPresent`) → `gau(11)` (`get`) → `gau(12)`
+  (`gau.java:104–131`): `false` when `!gcl.x()` or no summaries; else `hwy.aj(gcl.q(), gcl.r())` → `gau(13)` = `hwy.ai(…)` → `gag(lastNotified, 10)` →
+  `fsm(this, address, 5)`.
+  - `gcl.q()`/`r()` (`gcl.java:430–474`): the stored **left** (`gdf.c`) and **right** (`gdf.e`) daily summaries (`gdg`), filled by `fyf.java:49–94`, which calls
+    `maestro_pw.Dosimeter/FetchDailySummaries` per bud (`goq.LEFT_BT_CORE`/`RIGHT_BT_CORE` — channels 19 and 21, `fyh.java:28–36`, 3 retries) and copies `qhz`:
+    field 1 (`b`) → `gdg.c` = the **current day index**; field 2 (`c`, repeated `qia`) → `gdg.d`, each `qia` → `gda` {1 = day index, 6 = that day's dose, `gda.d`};
+    field 3 (`d`) → `gdg.e`; field 4 (`e`) → `gdg.f`; field 5 (`f`) → `gdg.g` = the **24-hour dose** (`his.java:28`: exposure % = `g / 4.843351E10 × 100`).
+  - `hwy.aj(gdg, gdg)` (`hwy.java`): for day index `max(left.c, right.c)` and the 7 before it, the per-day dose is `(left + right) / 2` (one present → that one).
+  - `hwy.ai(gdg)` (`hwy.java:1979–1998`): the sum of the current day and the 6 before it, `round(sum / 3.3903457E11f × 100)` — a percentage of a **7-day**
+    constant; `3.3903457E11 / 4.843351E10 = 7.0`.
+  - `gag` discriminator 10 (`apktool-output/smali_classes2/gag.smali:438–468`): `if-lt p1, 0x43` → `false` below **67 %**; else `true` when no last-notified time is
+    stored or `now − last ≥ 0x240c8400` (604 800 000 ms = **7 days**) — the throttle `ai-sessions/0025` found (the `frb`/`fuh`/`glk`/`gjv` entry above).
+  - `fsm` case 5 (`fsm.java:171–215`): on `true` — channel `"HW APPROACHING MAX NOTIFICATION"` (name `maestro_notification_title` = "Pixel Buds", importance 3),
+    title "Pixel Buds", body `hearing_wellness_approaching_max_notification_body` = "Consider lowering the volume of your earbuds to limit your audio exposure"
+    (`strings.xml:301`), tap → the hearing-wellness fragment; app event 16; `gck.P(address, gcg(now, 13))` stores the time.
+- **Constants in the code (quoted, no WHO/EU figure is named there):** 7-day limit `3.3903457E11`, 24-hour limit `4.843351E10`, notify at ≥ 67 % at most once per
+  7 days; the live level "Loud" at ≥ 85 dB (`his.java:36`), shown as `round(10·log10(v))` dB, 0 below 1 (`hiw.java:32–37`), clamped 0–120. The dose unit is not in
+  the code (the live value is linear). The switch's own summary says "exceeded" (`strings.xml:799`); the code notifies at 67 %.
+- **`qhz` on the wire** (`CAP-058` 2845, channel 21): `1:462 2:{1:228 6:…} 2:{1:456 …} … 2:{1:462 6:f32(204890640)} 5:f32(245338960)` — seven recent day entries and
+  one old; 24-h exposure 245 338 960 / 4.843351E10 = 0.5 %. 🔴 the day index's epoch.
+- **Checked negatives (wire):** no Buds-initiated Dosimeter packet in any of the 85 logs (`python3 scripts/pwrpc_decode.py "$f" | grep -c "Dosimeter.*call_id=4294967295"`
+  → 0 in every log; positive control: `call_id=4294967295` matches `GetSoftwareInfo` in `CAP-036`); in the idle logs `CAP-009` (101 min) and `CAP-042` (37 min)
+  the only unsolicited packets are `GetSoftwareInfo` (9 / 1); every `SubscribeToLiveDb` `SERVER_STREAM` follows a `REQUEST` on its channel (`CAP-009`: 1505/1506 →
+  9272/9273; `CAP-042`: 967/968). The Buds push nothing for the limit; the official app's own Hearing wellness page re-requests `FetchDailySummaries` on open
+  (`CAP-058` 5736) and at connect (2837/2838).
+- **A second finding of the same session — `GetHardwareInfo` field 7 by position (ADR-058):** `gaa.java:45–96` (`gaa.a(qiv)`) copies `qjm`/`qjr` field 1 → `gdv.c`,
+  2 → `gdv.d`, 3 → `gdv.e` by field number (`qjm.java:30`: Java `c`/`d`/`e` = proto fields 1/2/3); `fwg.java:182–215` reads `gdv.e` as left, `gdv.d` as right, `gdv.c` as
+  case — 7.1 = Case, 7.2 = Right bud, 7.3 = Left bud. This closes `ai-sessions/0073` §4.6's "🟡 that the holder keeps the wire order" on the code side (the holder
+  is filled field by field). `PROTOCOL.md` §6, Update of 2026-10-09 (🟢, maintainer-approved).
+
 ### `BluetoothPriorityReceiver` — exported broadcast receiver requesting classic-BT connection priority, holding a direct `fzd` reference (new, from a Phase 3 item L manifest re-review)
 
 *(Added 2026-09-16, `ai-sessions/0025`, implementing `ai-sessions/0024`'s Phase 3 item L — a full

@@ -26,6 +26,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
@@ -65,8 +66,7 @@ class ControlsScreenTest {
         inEarDetection = SettingReading(true, at),
         multipoint = SettingReading(true, at),
         headGestures = SettingReading(false, at),
-        caseSoundEarbudsReplaced = SettingReading(true, at),
-        caseSoundOtherAlerts = SettingReading(false, at, changedByApp = true),
+        conversationDetection = SettingReading(true, at),
     )
 
     /** The switch taps the screen reported, as "<setting>=<value>" (`ai-sessions/0074`). */
@@ -84,8 +84,7 @@ class ControlsScreenTest {
                 onInEarDetectionChanged = {},
                 onMultipointChanged = { taps += "multipoint=$it" },
                 onHeadGesturesChanged = { taps += "headGestures=$it" },
-                onCaseSoundEarbudsReplacedChanged = { taps += "earbudsReplaced=$it" },
-                onCaseSoundOtherAlertsChanged = { taps += "otherAlerts=$it" },
+                onConversationDetectionChanged = { taps += "conversationDetection=$it" },
             )
         }
     }
@@ -93,7 +92,7 @@ class ControlsScreenTest {
     @Test
     fun `connected and read - every card has a plain (i) with the read time`() {
         show(ConnectionState.Ready, read)
-        for (title in listOf("Touch controls", "Press and hold", "Head gestures", "In-ear detection", "Multipoint", "Case sounds")) {
+        for (title in listOf("Touch controls", "Press and hold", "Head gestures", "In-ear detection", "Conversation detection", "Multipoint")) {
             compose.onNodeWithContentDescription("$title: $DETAILS_DESCRIPTION").assertExists()
         }
         compose.onNodeWithContentDescription("Touch controls: $DETAILS_DESCRIPTION").performClick()
@@ -121,18 +120,23 @@ class ControlsScreenTest {
     }
 
     @Test
-    fun `ai-sessions 0074 - the Case sounds card - two switches, each its own time line and its own callback`() {
+    fun `ai-sessions 0082 - Conversation detection moved here - own card after In-ear detection, before Multipoint, subtitle kept, a tap asks for the other value`() {
         show(ConnectionState.Ready, read)
-        compose.onNodeWithContentDescription("Case sounds: $DETAILS_DESCRIPTION").performScrollTo().performClick()
-        compose.onNodeWithText("Earbuds replaced: read ${formatUpdatedAt(at)}").assertExists()
-        compose.onNodeWithText("Other alerts: changed ${formatUpdatedAt(at)}").assertExists()
+        compose.onNodeWithContentDescription("Conversation detection: $DETAILS_DESCRIPTION").performScrollTo().performClick()
+        compose.onNodeWithText("Conversation detection: read ${formatUpdatedAt(at)}").assertExists()
         compose.onNodeWithText("Close").performClick()
-        // Both switches share the card with both labels (siblings), so they are taken in layout order: Earbuds replaced first, then Other alerts.
-        val switches = compose.onAllNodes(isToggleable() and hasAnySibling(hasText(CASE_SOUND_EARBUDS_REPLACED_LABEL)) and hasAnySibling(hasText(CASE_SOUND_OTHER_ALERTS_LABEL)))
-        switches.assertCountEquals(2)
-        switches[0].performScrollTo().assertIsOn().performClick()
-        switches[1].performScrollTo().assertIsOff().performClick()
-        assertEquals(listOf("earbudsReplaced=false", "otherAlerts=true"), taps)
+        compose.onNodeWithText(CONVERSATION_DETECTION_SUBTITLE).performScrollTo().assertExists()
+        compose.onNodeWithText("Switch from noise cancellation to transparency when you talk").assertExists() // the literal `0052` wording
+        compose.onNode(isToggleable() and hasAnySibling(hasText(CONVERSATION_DETECTION_LABEL))).performScrollTo().assertIsOn().performClick()
+        assertEquals(listOf("conversationDetection=false"), taps)
+        // Order on the tab (by position): In-ear detection, then Conversation detection, then Multipoint; no Case sounds card any more.
+        val top = { title: String -> compose.onNodeWithContentDescription("$title: $DETAILS_DESCRIPTION").performScrollTo().getBoundsInRoot().top }
+        val inEar = top("In-ear detection")
+        val conversation = top("Conversation detection")
+        val multipoint = top("Multipoint")
+        assertEquals("In-ear < Conversation < Multipoint: $inEar, $conversation, $multipoint", true, inEar < conversation && conversation < multipoint)
+        compose.onNodeWithContentDescription("Case sounds: $DETAILS_DESCRIPTION").assertDoesNotExist()
+        compose.onAllNodesWithText(CASE_SOUND_EARBUDS_REPLACED_LABEL).assertCountEquals(0)
     }
 
     @Test
@@ -146,7 +150,7 @@ class ControlsScreenTest {
     @Test
     fun `not connected - the last connection's values are marked and named, and nothing can be changed`() {
         show(ConnectionState.Disconnected, read)
-        for (title in listOf("Touch controls", "Press and hold", "Head gestures", "In-ear detection", "Multipoint", "Case sounds")) {
+        for (title in listOf("Touch controls", "Press and hold", "Head gestures", "In-ear detection", "Conversation detection", "Multipoint")) {
             compose.onNodeWithContentDescription("$title: $DETAILS_NOT_CURRENT_DESCRIPTION").assertExists()
         }
         compose.onNodeWithContentDescription("Touch controls: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
@@ -162,9 +166,9 @@ class ControlsScreenTest {
     @Test
     fun `connected and nothing read - every switch is a dash with the screen-reader text, no switch is shown`() {
         show(ConnectionState.Ready, BudsSettings())
-        // Use touch controls, Use head gestures, In-ear detection, Multipoint, Earbuds replaced, Other alerts.
-        compose.onAllNodes(notReadDash).assertCountEquals(6)
-        compose.onAllNodesWithText(NOT_READ_VALUE).assertCountEquals(6)
+        // Use touch controls, Use head gestures, In-ear detection, Conversation detection, Multipoint (the case sounds are on gear → Settings since 0082).
+        compose.onAllNodes(notReadDash).assertCountEquals(5)
+        compose.onAllNodesWithText(NOT_READ_VALUE).assertCountEquals(5)
         compose.onAllNodes(isToggleable()).assertCountEquals(0)
     }
 

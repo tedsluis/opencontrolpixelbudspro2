@@ -31,9 +31,9 @@ object Maestro {
     val METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES: Int = PwRpc.nameHash("SubscribeToSettingsChanges") // 0x2821adf5
     val METHOD_GET_SOFTWARE_INFO: Int = PwRpc.nameHash("GetSoftwareInfo") // 0x7199fa44
 
-    // The official app's connect-time burst (PROTOCOL.md §6, 🟢 FACT 2026-09-24, `CAP-036` frames 1404–1570). GetHardwareInfo and
-    // SetWallclock are names only, for the debug log's method column — this app never sends them. SubscribeRuntimeInfo is sent once
-    // per Connect for the Case battery (DECISIONS.md ADR-043).
+    // The official app's connect-time burst (PROTOCOL.md §6, 🟢 FACT 2026-09-24, `CAP-036` frames 1404–1570). SetWallclock is a name only, for the
+    // debug log's method column — this app never sends it. SubscribeRuntimeInfo is sent once per Connect for the Case battery (DECISIONS.md ADR-043);
+    // GetHardwareInfo once per Connect for the serial numbers (ADR-058, `ai-sessions/0082`).
     val METHOD_GET_HARDWARE_INFO: Int = PwRpc.nameHash("GetHardwareInfo") // 0x28eca5e3
     val METHOD_SUBSCRIBE_RUNTIME_INFO: Int = PwRpc.nameHash("SubscribeRuntimeInfo") // 0xe61e8290
     val METHOD_SET_WALLCLOCK: Int = PwRpc.nameHash("SetWallclock") // 0x673bed4e
@@ -92,6 +92,18 @@ object Maestro {
         channelId = channelId,
         serviceId = SERVICE_ID,
         methodId = METHOD_SUBSCRIBE_RUNTIME_INFO,
+    )
+
+    /**
+     * `GetHardwareInfo` request (DECISIONS.md ADR-058, `ai-sessions/0082`): no payload, no call id — byte-identical to the official app's `CAP-036` frame 1415
+     * (`10 15 1d ea 71 de 7e 25 e3 a5 ec 28` on channel 21) and `CAP-024` frame 801 (`10 13 …` on channel 19). One per Connect, after the runtime-info
+     * subscription; the unary `RESPONSE` carries the three component serials in field 7 ([HardwareInfo]).
+     */
+    fun getHardwareInfoRequest(channelId: Int): RpcPacket = RpcPacket(
+        type = PwRpc.TYPE_REQUEST,
+        channelId = channelId,
+        serviceId = SERVICE_ID,
+        methodId = METHOD_GET_HARDWARE_INFO,
     )
 }
 
