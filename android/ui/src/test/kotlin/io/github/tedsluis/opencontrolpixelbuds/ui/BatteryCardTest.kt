@@ -26,6 +26,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
@@ -37,6 +38,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.WornReading
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -57,9 +59,10 @@ class BatteryCardTest {
 
     private val at = 1_727_600_000_000L
 
-    private fun show(status: BatteryStatus) = compose.setContent {
+    private fun show(status: BatteryStatus, wornReading: WornReading = WornReading.NotRead) = compose.setContent {
         OpenControlTheme(darkTheme = false) {
             ConnectionScreen(
+                wornReading = wornReading,
                 connectionState = ConnectionState.Ready,
                 deviceStatus = DeviceStatus.ControlledByApp,
                 androidLink = AndroidLink.CONNECTED,
@@ -126,6 +129,47 @@ class BatteryCardTest {
         assertEquals("Case: 84% — last seen $time (no bud charging in the case)", caseLine(case, null, caseFromLastConnection(case, null, sessionSince = at)))
         assertEquals("Case: 84% — last seen $time (no bud charging in the case)", caseLine(case, null, caseFromLastConnection(case, null, sessionSince = null)))
         assertEquals("Case: 84% (updated $time)", caseLine(case.copy(isStale = false), null, fromLastConnection = true))
+    }
+
+    // ---- ADR-059 (`ai-sessions/0082` item 3): the worn line on the battery card and its (i) explanation (the maintainer's texts, chat 2026-10-09) ----
+
+    @Test
+    fun `before a Notify the worn line is a dash with the screen-reader text`() {
+        show(BatteryStatus())
+        compose.onNodeWithText("Worn:").assertExists()
+        compose.onNode(hasText(NOT_READ_VALUE) and SemanticsMatcher.expectValue(SemanticsProperties.ContentDescription, listOf(NOT_READ_DESCRIPTION))).assertExists()
+        compose.onNodeWithContentDescription("Battery: $DETAILS_DESCRIPTION").performClick()
+        compose.onNodeWithText("Worn: —").assertExists()
+        compose.onNodeWithText(WORN_EXPLANATION).assertExists()
+    }
+
+    @Test
+    fun `probably worn and not worn carry the report's time, on the card and in the (i)`() {
+        show(BatteryStatus(), WornReading.ProbablyWorn(at))
+        compose.onNodeWithText("Probably worn (checked ${formatUpdatedAt(at)})").assertExists()
+        compose.onNodeWithContentDescription("Battery: $DETAILS_DESCRIPTION").performClick()
+        compose.onAllNodesWithText("Probably worn (checked ${formatUpdatedAt(at)})").assertCountEquals(2)
+        compose.onNodeWithText(
+            "Worn: from the Buds' last noise-control report. 'Probably worn' = the Buds allow changing noise control — on film that always meant at least one " +
+                "bud in an ear, but the Buds do not say which bud, and once (CAP-064) they reported it for about half a minute with both buds on a table. " +
+                "'Not worn' = the Buds refuse a change — in 56 filmed samples no bud was in an ear. With in-ear detection off the report says nothing about wearing.",
+        ).assertExists()
+        assertEquals("Not worn (checked ${formatUpdatedAt(at)})", wornLine(WornReading.NotWorn(at)))
+        assertEquals("Not worn", wornLine(WornReading.NotWorn(null)))
+    }
+
+    @Test
+    fun `the other readings are the literal texts`() {
+        show(BatteryStatus(), WornReading.BothInCase)
+        compose.onNodeWithText("Both buds in the case").assertExists()
+        assertEquals("Worn: unknown — in-ear detection is off", wornLine(WornReading.InEarDetectionOff))
+        assertEquals("Worn: unknown — the in-ear detection setting was not read", wornLine(WornReading.InEarDetectionNotRead))
+        assertEquals("Worn: —", wornLine(WornReading.NotRead))
+        // Never a bud named as worn: no text of the six says "Left" or "Right" worn.
+        for (reading in listOf(WornReading.NotRead, WornReading.InEarDetectionOff, WornReading.InEarDetectionNotRead, WornReading.BothInCase, WornReading.NotWorn(at), WornReading.ProbablyWorn(at))) {
+            val line = wornLine(reading)
+            assertEquals(line, false, "Left" in line || "Right" in line)
+        }
     }
 
     @Test

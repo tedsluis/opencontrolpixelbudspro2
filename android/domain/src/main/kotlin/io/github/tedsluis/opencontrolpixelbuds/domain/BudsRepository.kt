@@ -88,6 +88,13 @@ interface BudsRepository {
      * polling). */
     val ancModeUpdatedAt: Flow<Long?>
 
+    /**
+     * Why the current [ancMode] is what it is ([AncModeCause], `ai-sessions/0082` item 1): the answer to the app's own `Get`, the app's own acknowledged
+     * `Set`, or a `Notify` the app did not provoke (a press-and-hold on a bud, or the Buds' own change). `null` before the first report of this connection;
+     * reset at every Connect. Shown only in the Noise control card's details.
+     */
+    val ancModeCause: Flow<AncModeCause?>
+
     /** `null` = no value read yet this connection (ARCHITECTURE.md §3.1): the Connect sequence reads it with
      * `ReadSetting 4:16` (ADR-034), so it stays `null` only until that answer arrives or if it failed — see [eqError]. */
     val eqProfile: Flow<EqBandGains?>
@@ -143,8 +150,21 @@ interface BudsRepository {
     /** Non-null while the app is in read-only Safe Mode (ARCHITECTURE.md §8.1, DECISIONS.md ADR-042). */
     val safeMode: Flow<SafeModeState?>
 
-    /** What the Buds announced at connect (firmware), or `null` before the announcement / after a disconnect. */
+    /**
+     * The "probably worn" reading of DECISIONS.md ADR-059 (`ai-sessions/0082` item 3): [wornReading] of [ancAvailability] + [ancAvailabilityUpdatedAt], the
+     * in-ear detection setting of [settings] and the charging flags of [batteryStatus] — state the app already holds, nothing new on the wire. As old as the last
+     * `Notify` (Connect, Refresh, a noise-control tap); never a bud named as worn.
+     */
+    val wornReading: Flow<WornReading>
+
+    /** What the Buds announced at connect (firmware), or `null` before the announcement / after a disconnect; since ADR-058 also the serial numbers once read. */
     val deviceInfo: Flow<DeviceInfo?>
+
+    /**
+     * Why the one `GetHardwareInfo` per Connect (DECISIONS.md ADR-058) brought no serial numbers (`null` = it did, or none was attempted this connection):
+     * no announced channel, no answer in time, an error status, or an answer without the three strings ([BudsError.UnreadableAnswer]). Never retried.
+     */
+    val serialsError: Flow<BudsError?>
 
     /** The earbud a Find My Buds ring was last started on and not yet stopped (`null` = none) — the ring keeps sounding on the Buds after the
      * channel is released and after Disconnect (`ai-sessions/0042`, `CAP-062`), so the UI must say so. Kept across Disconnect/Connect; cleared

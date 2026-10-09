@@ -47,15 +47,26 @@ enum class AncAvailability {
  * What the Buds announce about themselves when a session opens (their unsolicited `GetSoftwareInfo`, DECISIONS.md ADR-034): [firmware] = the distinct
  * firmware version strings, e.g. `release_5.203` (what the Safe-Mode gate checks, ADR-042). **Since `ai-sessions/0062` (F-5):** also [entries] — each entry of
  * the announcement's field 4 with its own index — the pw_rpc channel the Buds announced ([maestroChannel]) and when the announcement arrived
- * ([announcedAtMillis]), for the Info tab. The entries' version numbers (`PROTOCOL.md` §2.2a, L-5) and the component serials (`GetHardwareInfo`, `AGENTS.md`
- * §9) are not carried.
+ * ([announcedAtMillis]), for the Info tab. The entries' version numbers (`PROTOCOL.md` §2.2a, L-5) are not carried. **Since `ai-sessions/0082` (ADR-058):**
+ * [serials] — the component serial numbers the Buds answer to the app's one `GetHardwareInfo` per Connect, with [serialsReadAtMillis]; empty until the
+ * answer arrived. Serials are device identifiers (`AGENTS.md` §9): shown on the Info tab, never logged.
  */
 data class DeviceInfo(
     val firmware: List<String>,
     val entries: List<FirmwareEntry> = emptyList(),
     val maestroChannel: Int? = null,
     val announcedAtMillis: Long? = null,
+    val serials: List<ComponentSerial> = emptyList(),
+    val serialsReadAtMillis: Long? = null,
 )
+
+/**
+ * One serial number of the `GetHardwareInfo` answer's field 7 (DECISIONS.md ADR-058, `ai-sessions/0082`): its field number [index] (1, 2 or 3 in every capture —
+ * 138 answers in 54 logs, always the same three strings in the same order) and the string. Which component an index is — **1 = Case, 2 = Right bud, 3 = Left
+ * bud** — is the official app's own reading of the answer by position (`gaa.java:45–96` → `fwg.java:182–215`, 🟢 for its code; the strings' EC/DR/DL marks
+ * agree; `PROTOCOL.md` §6, 2026-10-09); the labels are `:ui`'s.
+ */
+data class ComponentSerial(val index: Int, val serial: String)
 
 /**
  * One entry of the announcement's field 4: its field number [index] (1, 2 or 3 in every capture) and its firmware string (field 2). Which component an index is

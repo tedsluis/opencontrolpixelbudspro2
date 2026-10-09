@@ -57,7 +57,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 /**
  * The "Sound" tab (was "EQ"; ARCHITECTURE.md §2.4/§6): 5 band sliders within the confirmed
  * ±6.0 range (DECISIONS.md ADR-016) plus the confirmed presets, and — `ai-sessions/0052`, ADR-045 —
- * below them volume balance, mono audio and conversation detection. No "Save as
+ * below them volume balance and mono audio (conversation detection moved to Controls in `ai-sessions/0082`, item 6). No "Save as
  * preset" affordance — PROTOCOL.md §4.2's field-16-vs-18 semantics remain
  * 🟡 HYPOTHESIS (DECISIONS.md ADR-020's own scope note), so this session does
  * not ship a UI action that specifically depends on that distinction being
@@ -99,7 +99,6 @@ fun EqScreen(
     settingsError: SettingsFailure? = null,
     onVolumeBalanceChanged: (Int) -> Unit = {},
     onMonoAudioChanged: (Boolean) -> Unit = {},
-    onConversationDetectionChanged: (Boolean) -> Unit = {},
     onVolumeEqChanged: (Boolean) -> Unit = {},
 ) {
     val enabled = connectionState.isReady()
@@ -142,7 +141,7 @@ fun EqScreen(
             }
             // `ai-sessions/0052` (DECISIONS.md ADR-045): below the EQ, as the prompt and the maintainer's layout choice put them.
             item {
-                val readings = listOf(settings.volumeBalance, settings.monoAudio, settings.conversationDetection)
+                val readings = listOf(settings.volumeBalance, settings.monoAudio) // conversation detection is on Controls since `ai-sessions/0082`
                 val fromLastConnection = settingsFromLastConnection(enabled, readings)
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -158,13 +157,6 @@ fun EqScreen(
                         ) {
                             BalanceSlider(settings.volumeBalance, enabled, onVolumeBalanceChanged)
                             SettingSwitchRow("Mono audio", "Same sound in both ears", settings.monoAudio, enabled, onMonoAudioChanged)
-                            SettingSwitchRow(
-                                "Conversation detection",
-                                "Switch from noise cancellation to transparency when you talk",
-                                settings.conversationDetection,
-                                enabled,
-                                onConversationDetectionChanged,
-                            )
                         }
                     }
                 }
@@ -191,7 +183,6 @@ internal const val EQ_NOT_READ_DETAIL: String = "The EQ is read from the Buds at
 internal fun soundSettingsDetailLines(settings: BudsSettings): List<String> = listOf(
     "Balance: " + (settings.volumeBalance?.let { "${balanceText(it.value)} · ${settingTime(it)}" } ?: SETTING_NOT_READ),
     "Mono audio: ${settingTime(settings.monoAudio)}",
-    "Conversation detection: ${settingTime(settings.conversationDetection)}",
 )
 
 /**

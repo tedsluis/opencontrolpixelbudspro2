@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -36,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
@@ -52,7 +50,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
  * action per bud (field 7) — both writable under DECISIONS.md ADR-045 — the press-and-hold ANC-mode list (field 12, ADR-046) and the "In-ear detection"
  * setting (field 2, ADR-047) — `ai-sessions/0056`, the texts and placement the maintainer chose in chat 2026-09-28. **`ai-sessions/0074`** (the maintainer's
  * choices in chat 2026-10-06: "Gebaren eerst", "alleen labels"): "Head gestures" (field 29, ADR-052) below "Press and hold", "Multipoint" (field 11,
- * ADR-053) below "In-ear detection", then "Case sounds" (fields 28 and 27, ADR-054) — labels only.
+ * ADR-053) below "In-ear detection" — labels only. **`ai-sessions/0082`** (the maintainer's choices in chat 2026-10-09): the "Case sounds" card (fields 28
+ * and 27, ADR-054) moved to gear → Settings, and "Conversation detection" (field 22, ADR-045) moved here from Sound — its own card after "In-ear detection",
+ * the `0052` subtitle kept.
  */
 @Composable
 fun ControlsScreen(
@@ -66,8 +66,8 @@ fun ControlsScreen(
     modifier: Modifier = Modifier,
     onMultipointChanged: (Boolean) -> Unit = {},
     onHeadGesturesChanged: (Boolean) -> Unit = {},
-    onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit = {},
-    onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
+    /** `ai-sessions/0082` item 6: the "Conversation detection" switch (field 22, ADR-045), moved here from Sound. */
+    onConversationDetectionChanged: (Boolean) -> Unit = {},
 ) {
     val enabled = connectionState.isReady()
     Surface(modifier = modifier.fillMaxSize()) {
@@ -102,46 +102,18 @@ fun ControlsScreen(
                 SettingSwitchRow("In-ear detection", IN_EAR_DETECTION_SUBTITLE, settings.inEarDetection, enabled, onInEarDetectionChanged)
                 Text(IN_EAR_DETECTION_OFF_NOTE, style = MaterialTheme.typography.bodySmall)
             }
+            // `ai-sessions/0082` item 6 (the maintainer's choice in chat 2026-10-09): moved here from Sound, its own card, the subtitle of `0052` kept.
+            SettingsCard(
+                CONVERSATION_DETECTION_LABEL,
+                listOf("$CONVERSATION_DETECTION_LABEL: ${settingTime(settings.conversationDetection)}"),
+                enabled,
+                listOf(settings.conversationDetection),
+            ) {
+                SettingSwitchRow(CONVERSATION_DETECTION_LABEL, CONVERSATION_DETECTION_SUBTITLE, settings.conversationDetection, enabled, onConversationDetectionChanged)
+            }
             SettingsCard(MULTIPOINT_LABEL, listOf("$MULTIPOINT_LABEL: ${settingTime(settings.multipoint)}"), enabled, listOf(settings.multipoint)) {
                 SettingSwitchRow(MULTIPOINT_LABEL, null, settings.multipoint, enabled, onMultipointChanged)
             }
-            SettingsCard(
-                CASE_SOUNDS_TITLE,
-                listOf(
-                    "$CASE_SOUND_EARBUDS_REPLACED_LABEL: ${settingTime(settings.caseSoundEarbudsReplaced)}",
-                    "$CASE_SOUND_OTHER_ALERTS_LABEL: ${settingTime(settings.caseSoundOtherAlerts)}",
-                ),
-                enabled,
-                listOf(settings.caseSoundEarbudsReplaced, settings.caseSoundOtherAlerts),
-            ) {
-                SettingSwitchRow(CASE_SOUND_EARBUDS_REPLACED_LABEL, null, settings.caseSoundEarbudsReplaced, enabled, onCaseSoundEarbudsReplacedChanged)
-                SettingSwitchRow(CASE_SOUND_OTHER_ALERTS_LABEL, null, settings.caseSoundOtherAlerts, enabled, onCaseSoundOtherAlertsChanged)
-            }
-        }
-    }
-}
-
-/**
- * One settings card. The (i) carries the dot while connected and one of [readings] is not read yet ([notRead]), or — `ai-sessions/0069` A68-APP-02 — while
- * not connected and the card still shows the last connection's values, which are then dimmed and named as such in the first detail line.
- */
-@Composable
-private fun SettingsCard(
-    title: String,
-    detailLines: List<String>,
-    enabled: Boolean,
-    readings: List<SettingReading<*>?>,
-    notRead: Boolean = readings.any { it == null },
-    content: @Composable () -> Unit,
-) {
-    val fromLastConnection = settingsFromLastConnection(enabled, readings)
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            CardTitle(title, withLastConnectionLine(detailLines, fromLastConnection), (enabled && notRead) || fromLastConnection)
-            Column(
-                modifier = Modifier.alpha(if (fromLastConnection) NOT_CURRENT_ALPHA else 1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) { content() }
         }
     }
 }
@@ -214,13 +186,9 @@ internal const val MULTIPOINT_LABEL: String = "Multipoint"
 internal const val HEAD_GESTURES_TITLE: String = "Head gestures"
 internal const val HEAD_GESTURES_LABEL: String = "Use head gestures"
 
-/**
- * `ai-sessions/0074`: the "Case sounds" card — ADR-054's labels, chosen by the maintainer in chat 2026-10-06: 28 = "Earbuds replaced" (the official settings
- * list's wording; its switch reads "Bud return", PROTOCOL.md §4.5.8), 27 = "Other alerts"; no note.
- */
-internal const val CASE_SOUNDS_TITLE: String = "Case sounds"
-internal const val CASE_SOUND_EARBUDS_REPLACED_LABEL: String = "Earbuds replaced"
-internal const val CASE_SOUND_OTHER_ALERTS_LABEL: String = "Other alerts"
+/** `ai-sessions/0052`'s label and subtitle of `qhr` field 22 (ADR-045), moved from the Sound tab to this one in `ai-sessions/0082` (item 6) unchanged. */
+internal const val CONVERSATION_DETECTION_LABEL: String = "Conversation detection"
+internal const val CONVERSATION_DETECTION_SUBTITLE: String = "Switch from noise cancellation to transparency when you talk"
 
 internal const val IN_EAR_DETECTION_SUBTITLE: String = "Pauses audio when you take a bud out and resumes it when you put it back."
 

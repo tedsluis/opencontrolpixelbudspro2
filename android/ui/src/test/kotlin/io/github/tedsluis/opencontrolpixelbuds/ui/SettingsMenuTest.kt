@@ -26,8 +26,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnySibling
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -39,6 +45,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
+import io.github.tedsluis.opencontrolpixelbuds.domain.ComponentSerial
+import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
@@ -261,6 +271,119 @@ class SettingsMenuTest {
         val bundled = java.io.File("src/main/res/raw/license.txt").readBytes()
         assertTrue("LICENSE found (${repo.size} bytes)", repo.size > 30_000)
         assertTrue("res/raw/license.txt == LICENSE", repo.contentEquals(bundled))
+    }
+
+    // ---- ADR-058 (`ai-sessions/0082` item 2): the serial numbers on the Info tab, labelled by position as the official app does ----
+
+    private val withSerials = announced.copy(
+        serials = listOf(ComponentSerial(1, "5707XXXXXXXX51"), ComponentSerial(2, "5708XXXXXXXX09"), ComponentSerial(3, "5707XXXXXXXX47")),
+        serialsReadAtMillis = at + 83,
+    )
+
+    @Test
+    fun `Info shows the serial numbers under the firmware, labelled Case, Right bud, Left bud, with the note and the time`() {
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, withSerials)
+            }
+        }
+        compose.onNodeWithText("Info").performClick()
+        compose.onNodeWithText("Serial numbers (from the Buds, ${formatUpdatedAt(at + 83)}):").performScrollTo().assertExists()
+        compose.onNodeWithText("Case: 5707XXXXXXXX51").performScrollTo().assertExists()
+        compose.onNodeWithText("Right bud: 5708XXXXXXXX09").performScrollTo().assertExists()
+        compose.onNodeWithText("Left bud: 5707XXXXXXXX47").performScrollTo().assertExists()
+        compose.onNodeWithText(SERIALS_NOTE).performScrollTo().assertExists()
+        // The firmware block (its own order: Case, Left, Right) is still above it.
+        compose.onNodeWithText("Left bud: release_5.203").assertExists()
+    }
+
+    @Test
+    fun `Info says not read before the answer, the reason after a failed read, and nothing without an announcement`() {
+        assertEquals(listOf("Serial numbers: $SETTING_NOT_READ"), serialInfoLines(announced, null))
+        assertEquals(listOf("Serial numbers: not read — The Buds didn't respond in time."), serialInfoLines(announced, BudsError.Timeout))
+        assertEquals(
+            listOf("Serial numbers: not read — The Buds answered with a value this app cannot read."),
+            serialInfoLines(announced, BudsError.UnreadableAnswer),
+        )
+        assertEquals(emptyList<String>(), serialInfoLines(null, BudsError.Timeout))
+        // The labels follow the field number, in index order, never guessed for an index the Buds never used.
+        assertEquals(listOf("Case", "Right bud", "Left bud", "Part 4"), listOf(1, 2, 3, 4).map(::serialComponentLabel))
+        val lines = serialInfoLines(withSerials.copy(serials = listOf(ComponentSerial(3, "c"), ComponentSerial(1, "a"))), null)
+        assertEquals(listOf("Case: a", "Left bud: c"), lines.drop(1).dropLast(1))
+    }
+
+    @Test
+    fun `the Info tab renders the failed-read line`() {
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, announced, serialsError = BudsError.Timeout)
+            }
+        }
+        compose.onNodeWithText("Info").performClick()
+        compose.onNodeWithText("Serial numbers: not read — The Buds didn't respond in time.").performScrollTo().assertExists()
+    }
+
+    // ---- `ai-sessions/0082` item 5: the Case sounds card on the Settings tab (ADR-054), between Dark mode and Use different Buds ----
+
+    private val caseSoundsRead = BudsSettings(
+        caseSoundEarbudsReplaced = SettingReading(true, at),
+        caseSoundOtherAlerts = SettingReading(false, at, changedByApp = true),
+    )
+
+    @Test
+    fun `the Settings tab shows the Case sounds card between Dark mode and Use different Buds, with its (i) lines and the case note`() {
+        val taps = mutableListOf<String>()
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(
+                    DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, announced,
+                    connectionState = ConnectionState.Ready, settings = caseSoundsRead,
+                    onCaseSoundEarbudsReplacedChanged = { taps += "earbudsReplaced=$it" }, onCaseSoundOtherAlertsChanged = { taps += "otherAlerts=$it" },
+                )
+            }
+        }
+        val darkMode = compose.onNodeWithText("Dark mode").getBoundsInRoot().top
+        val caseSounds = compose.onNodeWithContentDescription("Case sounds: $DETAILS_DESCRIPTION").performScrollTo().getBoundsInRoot().top
+        val useDifferent = compose.onNode(hasText(USE_DIFFERENT_BUDS_TITLE) and hasClickAction()).performScrollTo().getBoundsInRoot().top
+        assertTrue("Dark mode < Case sounds < Use different Buds: $darkMode, $caseSounds, $useDifferent", darkMode < caseSounds && caseSounds < useDifferent)
+
+        compose.onNodeWithContentDescription("Case sounds: $DETAILS_DESCRIPTION").performScrollTo().performClick()
+        compose.onNodeWithText("Earbuds replaced: read ${formatUpdatedAt(at)}").assertExists()
+        compose.onNodeWithText("Other alerts: changed ${formatUpdatedAt(at)}").assertExists()
+        compose.onNodeWithText("These settings live on the case and are read when the app connects.").assertExists()
+        compose.onNodeWithText("Close").performClick()
+        // Both switches share the card with both labels (siblings): layout order, Earbuds replaced first, then Other alerts.
+        val switches = compose.onAllNodes(isToggleable() and hasAnySibling(hasText(CASE_SOUND_EARBUDS_REPLACED_LABEL)) and hasAnySibling(hasText(CASE_SOUND_OTHER_ALERTS_LABEL)))
+        switches.assertCountEquals(2)
+        switches[0].performScrollTo().assertIsOn().performClick()
+        switches[1].performScrollTo().assertIsOff().performClick()
+        assertEquals(listOf("earbudsReplaced=false", "otherAlerts=true"), taps)
+    }
+
+    @Test
+    fun `the Case sounds card not connected keeps the last values dimmed and marked, and unread values are dashes`() {
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, null, connectionState = ConnectionState.Disconnected, settings = caseSoundsRead)
+            }
+        }
+        compose.onNodeWithContentDescription("Case sounds: $DETAILS_NOT_CURRENT_DESCRIPTION").performScrollTo().performClick()
+        compose.onNodeWithText(FROM_LAST_CONNECTION_DETAIL).assertExists()
+        compose.onNodeWithText("Close").performClick()
+        compose.onAllNodes(isToggleable() and hasAnySibling(hasText(CASE_SOUND_EARBUDS_REPLACED_LABEL))).assertCountEquals(2)
+    }
+
+    @Test
+    fun `the Case sounds card connected and unread shows two dashes with the screen-reader text`() {
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, announced, connectionState = ConnectionState.Ready)
+            }
+        }
+        compose.onNodeWithContentDescription("Case sounds: $DETAILS_NOT_CURRENT_DESCRIPTION").performScrollTo().assertExists()
+        val dash = hasText(NOT_READ_VALUE) and SemanticsMatcher.expectValue(SemanticsProperties.ContentDescription, listOf(NOT_READ_DESCRIPTION))
+        compose.onAllNodes(dash).assertCountEquals(2)
+        compose.onAllNodes(isToggleable()).assertCountEquals(0)
     }
 
     // ---- `ai-sessions/0069` A68-APP-05: "Use different Buds" on the Settings tab ----

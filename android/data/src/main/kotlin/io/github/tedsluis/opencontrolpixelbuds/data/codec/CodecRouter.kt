@@ -53,6 +53,9 @@ sealed class RoutedFrame {
     /** A DLCI 0x02 `SubscribeRuntimeInfo` stream packet (DECISIONS.md ADR-043 and its 2026-09-25 Update): the Case and each bud's charging state. */
     data class RuntimeInfo(val info: io.github.tedsluis.opencontrolpixelbuds.data.codec.RuntimeInfo) : RoutedFrame()
 
+    /** The answer to the app's `GetHardwareInfo` (DECISIONS.md ADR-058): field 7's component serials, never empty here (an answer without them is an [RpcResult]). */
+    data class HardwareInfo(val serials: List<io.github.tedsluis.opencontrolpixelbuds.domain.ComponentSerial>) : RoutedFrame()
+
     /**
      * The Buds' unsolicited `GetSoftwareInfo` push announcing the pw_rpc channel of this connection (ADR-034); [firmware] = the
      * distinct firmware strings it carries (`ai-sessions/0042`), empty if the payload had another shape; [entries] = each entry with its field number
@@ -302,7 +305,12 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
     ) {
         RuntimeInfoDecoder.decode(packet.payload)?.let { return RoutedFrame.RuntimeInfo(it) }
     }
-    val answersUs = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING
+    // ADR-058 (`ai-sessions/0082`): the unary answer to the app's GetHardwareInfo — field 7's serials; an OK answer without them falls through to RpcResult.
+    if (method == Maestro.METHOD_GET_HARDWARE_INFO && packet.type == PwRpc.TYPE_RESPONSE && (packet.status == null || packet.status == 0)) {
+        val serials = HardwareInfo.serials(packet.payload)
+        if (serials.isNotEmpty()) return RoutedFrame.HardwareInfo(serials)
+    }
+    val answersUs = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING || method == Maestro.METHOD_GET_HARDWARE_INFO
     val isError = packet.type == PwRpc.TYPE_CLIENT_ERROR || packet.type == PwRpc.TYPE_SERVER_ERROR
     if (answersUs && (packet.type == PwRpc.TYPE_RESPONSE || isError)) {
         return RoutedFrame.RpcResult(packet.channelId, method, packet.type, packet.status)

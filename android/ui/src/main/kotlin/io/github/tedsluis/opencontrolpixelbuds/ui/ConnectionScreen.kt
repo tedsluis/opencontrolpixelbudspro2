@@ -67,6 +67,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLine
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.StatusCard
+import io.github.tedsluis.opencontrolpixelbuds.domain.WornReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.statusCard
 
 /**
@@ -104,6 +105,8 @@ fun ConnectionScreen(
     safeMode: SafeModeState? = null,
     batteryRefreshError: BudsError? = null,
     sessionSince: Long? = null,
+    /** DECISIONS.md ADR-059 (`ai-sessions/0082` item 3): the "probably worn" reading, a line on the battery card. */
+    wornReading: WornReading = WornReading.NotRead,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
@@ -145,7 +148,7 @@ fun ConnectionScreen(
                     if (connectionState is ConnectionState.Ready) {
                         safeMode?.let { SafeModeCard(it) }
                         // `ai-sessions/0057`: the firmware line (formerly its own card) is in the battery card's (i) details.
-                        BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, batteryRefreshError, deviceInfo, onRefreshBattery, sessionSince)
+                        BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, batteryRefreshError, deviceInfo, onRefreshBattery, sessionSince, wornReading)
                     }
                 }
             }
@@ -333,21 +336,53 @@ internal const val BATTERY_EXPLANATION: String =
 
 /**
  * The battery card's (i) lines (`ai-sessions/0057` D-7): the explanation, then **the same lines the card showed before** — [budLine] for Left and Right,
- * [caseLine] — with every time, "last seen" and "last connection", then [CASE_REFRESH_NOTE] and the firmware.
+ * [caseLine] — with every time, "last seen" and "last connection", then [CASE_REFRESH_NOTE], the worn line with its explanation (ADR-059,
+ * `ai-sessions/0082`) and the firmware.
  */
 internal fun batteryDetailLines(
     status: BatteryStatus,
     batteryStatusUpdatedAt: Long?,
     deviceInfo: DeviceInfo?,
     sessionSince: Long? = null,
+    wornReading: WornReading = WornReading.NotRead,
 ): List<String> = listOfNotNull(
     BATTERY_EXPLANATION,
     budLine("Left", status.left, status.leftCharging, batteryStatusUpdatedAt),
     budLine("Right", status.right, status.rightCharging, batteryStatusUpdatedAt),
     caseLine(status.case, batteryStatusUpdatedAt, caseFromLastConnection(status.case, batteryStatusUpdatedAt, sessionSince)),
     CASE_REFRESH_NOTE,
+    wornLine(wornReading),
+    WORN_EXPLANATION,
     firmwareLine(deviceInfo),
 )
+
+/**
+ * The worn line (DECISIONS.md ADR-059, the maintainer's texts in chat 2026-10-09): one of six readings, the time of the Buds' last report where there is one.
+ * "—" is [WornReading.NotRead]'s text on the (i); on the card it is [NotReadValue] with its screen-reader description.
+ */
+internal fun wornLine(reading: WornReading): String = when (reading) {
+    WornReading.NotRead -> "Worn: $NOT_READ_VALUE"
+    WornReading.InEarDetectionOff -> WORN_IN_EAR_OFF_TEXT
+    WornReading.InEarDetectionNotRead -> WORN_IN_EAR_NOT_READ_TEXT
+    WornReading.BothInCase -> WORN_BOTH_IN_CASE_TEXT
+    is WornReading.NotWorn -> "Not worn" + checkedSuffix(reading.checkedAtMillis)
+    is WornReading.ProbablyWorn -> "Probably worn" + checkedSuffix(reading.checkedAtMillis)
+}
+
+private fun checkedSuffix(checkedAtMillis: Long?): String = formatUpdatedAt(checkedAtMillis)?.let { " (checked $it)" } ?: ""
+
+internal const val WORN_IN_EAR_OFF_TEXT: String = "Worn: unknown — in-ear detection is off"
+internal const val WORN_IN_EAR_NOT_READ_TEXT: String = "Worn: unknown — the in-ear detection setting was not read"
+internal const val WORN_BOTH_IN_CASE_TEXT: String = "Both buds in the case"
+
+/**
+ * ADR-059's (i) explanation (the maintainer's text in chat 2026-10-09): where the reading comes from and its two known limits — the byte says "at least one
+ * bud", never which, and `CAP-064`'s ≈ 28 s; ADR-049 item 3 stays 🟡 and this text says so in plain words.
+ */
+internal const val WORN_EXPLANATION: String =
+    "Worn: from the Buds' last noise-control report. 'Probably worn' = the Buds allow changing noise control — on film that always meant at least one " +
+        "bud in an ear, but the Buds do not say which bud, and once (CAP-064) they reported it for about half a minute with both buds on a table. " +
+        "'Not worn' = the Buds refuse a change — in 56 filmed samples no bud was in an ear. With in-ear detection off the report says nothing about wearing."
 
 /**
  * A68-APP-02 (`ai-sessions/0069`): the Case value was reported before this connection opened. `false` while [sessionSince] is unknown (nothing to compare
@@ -378,11 +413,12 @@ private fun BatteryCard(
     deviceInfo: DeviceInfo?,
     onRefreshBattery: () -> Unit,
     sessionSince: Long? = null,
+    wornReading: WornReading = WornReading.NotRead,
 ) {
     val notCurrent = isNotCurrent(status.left, status.leftCharging) || isNotCurrent(status.right, status.rightCharging) || isNotCurrent(status.case)
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            CardTitle("Battery", batteryDetailLines(status, batteryStatusUpdatedAt, deviceInfo, sessionSince), notCurrent)
+            CardTitle("Battery", batteryDetailLines(status, batteryStatusUpdatedAt, deviceInfo, sessionSince, wornReading), notCurrent)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 BatteryColumn("Left", OpenControlIcons.Earbud, status.left, status.leftCharging, Modifier.weight(1f))
                 BatteryColumn("Case", OpenControlIcons.Case, status.case, null, Modifier.weight(1f))
@@ -390,6 +426,15 @@ private fun BatteryCard(
             }
             if (status.case is BatteryLevel.Unavailable) {
                 Text(caseBatteryError?.let(::caseErrorText) ?: CASE_NOT_REPORTED, style = MaterialTheme.typography.bodySmall)
+            }
+            // ADR-059 (`ai-sessions/0082` item 3): the worn line under the columns — "—" with its screen-reader text while no Notify arrived this connection.
+            if (wornReading == WornReading.NotRead) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Worn:", style = MaterialTheme.typography.bodyMedium)
+                    NotReadValue(style = MaterialTheme.typography.bodyMedium)
+                }
+            } else {
+                Text(wornLine(wornReading), style = MaterialTheme.typography.bodyMedium)
             }
             // `ai-sessions/0052`: a Refresh that brought no new reading says so — the times in the (i) are then the old ones.
             batteryRefreshError?.let {

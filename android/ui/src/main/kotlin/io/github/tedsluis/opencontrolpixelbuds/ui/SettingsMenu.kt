@@ -50,8 +50,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
+import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
+import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 
 /**
@@ -70,8 +74,9 @@ internal enum class SettingsTab(val label: String) { SETTINGS("Settings"), DEBUG
 
 /**
  * The settings menu (`ai-sessions/0062` F-4, the maintainer's design in chats 2026-10-01): a full-screen destination reached from the top app bar's gear, outside
- * the five bottom tabs (ARCHITECTURE.md §2.4), with three tabs — **Settings** (dark mode), **Debug** (today's [DebugScreen], unchanged) and **Info** (the app's
- * build and the Buds' firmware). The selected tab survives a rotation; back (the top bar's arrow or the system's) returns to the tab the menu was opened from.
+ * the five bottom tabs (ARCHITECTURE.md §2.4), with three tabs — **Settings** (dark mode; since `ai-sessions/0082` item 5 also the "Case sounds" card, moved
+ * from Controls; "Use different Buds"), **Debug** (today's [DebugScreen], unchanged) and **Info** (the app's build, the Buds' firmware and — ADR-058 — their
+ * serial numbers). The selected tab survives a rotation; back (the top bar's arrow or the system's) returns to the tab the menu was opened from.
  */
 @Composable
 fun SettingsMenuScreen(
@@ -88,6 +93,14 @@ fun SettingsMenuScreen(
     modifier: Modifier = Modifier,
     /** "Use different Buds" (`ai-sessions/0069`, A68-APP-05): `:app` disconnects and removes this app's own pairing association. */
     onUseDifferentBuds: () -> Unit = {},
+    /** Why the serial numbers were not read on this connection (DECISIONS.md ADR-058, `ai-sessions/0082`); `null` = read, or not attempted yet. */
+    serialsError: BudsError? = null,
+    /** `ai-sessions/0082` item 5: the "Case sounds" card (ADR-054) on the Settings tab — the Buds' values, the write callbacks, as on Controls before. */
+    connectionState: ConnectionState = ConnectionState.Disconnected,
+    settings: BudsSettings = BudsSettings(),
+    settingsError: SettingsFailure? = null,
+    onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit = {},
+    onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
 ) {
     var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
     Column(modifier = modifier.fillMaxSize()) {
@@ -101,14 +114,16 @@ fun SettingsMenuScreen(
             }
         }
         when (SettingsTab.entries[selected]) {
-            SettingsTab.SETTINGS -> DarkModeSettings(darkMode, onDarkModeChanged, onUseDifferentBuds)
+            SettingsTab.SETTINGS -> SettingsTabContent(
+                darkMode, onDarkModeChanged, onUseDifferentBuds, connectionState, settings, settingsError, onCaseSoundEarbudsReplacedChanged, onCaseSoundOtherAlertsChanged,
+            )
             SettingsTab.DEBUG -> DebugScreen(
                 debugModeEnabled = debugModeEnabled,
                 onDebugModeChanged = onDebugModeChanged,
                 unidentifiedFrames = unidentifiedFrames,
                 onExportLog = onExportLog,
             )
-            SettingsTab.INFO -> InfoTab(appBuild, deviceInfo, onOpenUrl)
+            SettingsTab.INFO -> InfoTab(appBuild, deviceInfo, onOpenUrl, serialsError)
         }
     }
 }
@@ -120,9 +135,23 @@ internal fun darkModeLabel(mode: DarkMode): String = when (mode) {
     DarkMode.OFF -> "Off"
 }
 
-/** F-6: one radio group; a choice is stored and applied at once (the theme follows the stored value — no restart). */
+/**
+ * The Settings tab — F-6: one radio group for dark mode; a choice is stored and applied at once (the theme follows the stored value — no restart). **Since
+ * `ai-sessions/0082` (item 5, the maintainer's order in chat 2026-10-09: Dark mode · Case sounds · Use different Buds):** the "Case sounds" card of ADR-054
+ * between them — the same [SettingsCard]/[SettingSwitchRow] as on Controls, the same (i) lines, plus the note that the setting lives on the case.
+ */
 @Composable
-private fun DarkModeSettings(darkMode: DarkMode, onDarkModeChanged: (DarkMode) -> Unit, onUseDifferentBuds: () -> Unit) {
+private fun SettingsTabContent(
+    darkMode: DarkMode,
+    onDarkModeChanged: (DarkMode) -> Unit,
+    onUseDifferentBuds: () -> Unit,
+    connectionState: ConnectionState,
+    settings: BudsSettings,
+    settingsError: SettingsFailure?,
+    onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit,
+    onCaseSoundOtherAlertsChanged: (Boolean) -> Unit,
+) {
+    val enabled = connectionState.isReady()
     Surface(modifier = Modifier.fillMaxSize()) {
         // Scrollable since `ai-sessions/0069`: with "Use different Buds" below the radio group the tab no longer fits every screen or font size.
         Column(
@@ -144,6 +173,21 @@ private fun DarkModeSettings(darkMode: DarkMode, onDarkModeChanged: (DarkMode) -
                     }
                 }
             }
+            // `ai-sessions/0082` item 5: the Case sounds card, moved from Controls (ADR-054's labels of `ai-sessions/0074`); a failed write says so here too.
+            if (enabled) SettingsFailureNotice(settingsError)
+            SettingsCard(
+                CASE_SOUNDS_TITLE,
+                listOf(
+                    "$CASE_SOUND_EARBUDS_REPLACED_LABEL: ${settingTime(settings.caseSoundEarbudsReplaced)}",
+                    "$CASE_SOUND_OTHER_ALERTS_LABEL: ${settingTime(settings.caseSoundOtherAlerts)}",
+                    CASE_SOUNDS_NOTE,
+                ),
+                enabled,
+                listOf(settings.caseSoundEarbudsReplaced, settings.caseSoundOtherAlerts),
+            ) {
+                SettingSwitchRow(CASE_SOUND_EARBUDS_REPLACED_LABEL, null, settings.caseSoundEarbudsReplaced, enabled, onCaseSoundEarbudsReplacedChanged)
+                SettingSwitchRow(CASE_SOUND_OTHER_ALERTS_LABEL, null, settings.caseSoundOtherAlerts, enabled, onCaseSoundOtherAlertsChanged)
+            }
             // `ai-sessions/0069` A68-APP-05 (the maintainer's wording, chat 2026-10-03): the only way to control other Buds used to be clearing the app's data.
             Text(USE_DIFFERENT_BUDS_TITLE, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
             Text(USE_DIFFERENT_BUDS_TEXT, style = MaterialTheme.typography.bodyMedium)
@@ -153,6 +197,16 @@ private fun DarkModeSettings(darkMode: DarkMode, onDarkModeChanged: (DarkMode) -
 }
 
 internal const val USE_DIFFERENT_BUDS_TITLE: String = "Use different Buds"
+
+/**
+ * `ai-sessions/0074`: the "Case sounds" card — ADR-054's labels, chosen by the maintainer in chat 2026-10-06: 28 = "Earbuds replaced" (the official settings
+ * list's wording; its switch reads "Bud return", PROTOCOL.md §4.5.8), 27 = "Other alerts"; no note under the switches. On gear → Settings since
+ * `ai-sessions/0082` (item 5); [CASE_SOUNDS_NOTE] is the (i)'s last line (ADR-054: the setting is read at Connect; it lives on the case).
+ */
+internal const val CASE_SOUNDS_TITLE: String = "Case sounds"
+internal const val CASE_SOUND_EARBUDS_REPLACED_LABEL: String = "Earbuds replaced"
+internal const val CASE_SOUND_OTHER_ALERTS_LABEL: String = "Other alerts"
+internal const val CASE_SOUNDS_NOTE: String = "These settings live on the case and are read when the app connects."
 
 internal const val USE_DIFFERENT_BUDS_TEXT: String =
     "Forgets which Buds this app controls (the Bluetooth pairing in Android stays). You then pick the Buds again with Pair a device."
@@ -188,6 +242,38 @@ internal fun firmwareInfoLines(deviceInfo: DeviceInfo?): List<String> {
 }
 
 /**
+ * ADR-058 (`ai-sessions/0082`): which part a `GetHardwareInfo` serial (field 7, by its field number) belongs to — the official app's own reading of the answer by
+ * position (`gaa.java:45–96` → `fwg.java:182–215`; the strings' EC/DR/DL marks agree): 1 = Case, 2 = Right bud, 3 = Left bud. Any other index is shown by its
+ * number, never guessed. Not the order of the firmware announcement ([firmwareComponentLabel]: 1 = Case, 2 = Left, 3 = Right).
+ */
+internal fun serialComponentLabel(index: Int): String = when (index) {
+    1 -> "Case"
+    2 -> "Right bud"
+    3 -> "Left bud"
+    else -> "Part $index"
+}
+
+/** Under the serial lines: where the labels come from (ADR-058 — the official app's reading, not a statement by the Buds). */
+internal const val SERIALS_NOTE: String = "Labelled by position as the official app labels them: the Buds list the Case, the Right bud, then the Left bud."
+
+/**
+ * ADR-058: the serial numbers of the Info tab — the heading with the answer's receive time and one line per string in field order; before the answer
+ * "Not read from the Buds yet"; after a failed read the reason. Nothing while nothing is announced (the firmware block already says "not connected yet").
+ */
+internal fun serialInfoLines(deviceInfo: DeviceInfo?, serialsError: BudsError?): List<String> {
+    if (deviceInfo == null) return emptyList()
+    val serials = deviceInfo.serials
+    return when {
+        serials.isNotEmpty() -> {
+            val heading = "Serial numbers (from the Buds" + (formatUpdatedAt(deviceInfo.serialsReadAtMillis)?.let { ", $it" } ?: "") + "):"
+            listOf(heading) + serials.sortedBy { it.index }.map { "${serialComponentLabel(it.index)}: ${it.serial}" } + SERIALS_NOTE
+        }
+        serialsError != null -> listOf("Serial numbers: not read — ${serialsError.userMessage()}")
+        else -> listOf("Serial numbers: $SETTING_NOT_READ")
+    }
+}
+
+/**
  * `ai-sessions/0064` F-6 (the maintainer's request and choice "Links + bundled licence", chat 2026-10-01; DECISIONS.md ADR-050): the project's links. **Since
  * `ai-sessions/0066`** (the maintainer's request, chat 2026-10-02) the licence is only read in the app ("Read the licence") — no link to `LICENSE`. Fixed
  * constants, opened only by a tap, by another app (the browser) — this app makes no network request and has no `INTERNET` permission (AGENTS.md §1).
@@ -212,7 +298,7 @@ internal const val TRADEMARK_NOTICE: String =
 internal const val LINKS_NOTE: String = "Links open in your browser; this app itself has no internet access."
 
 @Composable
-private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?, onOpenUrl: (String) -> Unit) {
+private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?, onOpenUrl: (String) -> Unit, serialsError: BudsError? = null) {
     var showLicence by rememberSaveable { mutableStateOf(false) }
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -231,6 +317,10 @@ private fun InfoTab(appBuild: AppBuildInfo, deviceInfo: DeviceInfo?, onOpenUrl: 
             Text(LINKS_NOTE, style = MaterialTheme.typography.bodySmall)
             Text("The Buds", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             firmwareInfoLines(deviceInfo).forEach { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            // ADR-058 (`ai-sessions/0082`): the serial numbers under the firmware; the note in the smaller style.
+            serialInfoLines(deviceInfo, serialsError).forEach {
+                Text(it, style = if (it == SERIALS_NOTE) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium)
+            }
         }
     }
     if (showLicence) LicenceDialog(onClose = { showLicence = false })

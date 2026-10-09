@@ -134,7 +134,7 @@ data class OpenControlActions(
     val onMultipointChanged: (Boolean) -> Unit = {},
     /** The "Use head gestures" switch (ADR-052, `ai-sessions/0074`). */
     val onHeadGesturesChanged: (Boolean) -> Unit = {},
-    /** The two "Case sounds" switches (ADR-054, `ai-sessions/0074`): "Earbuds replaced" (field 28) and "Other alerts" (field 27). */
+    /** The two "Case sounds" switches (ADR-054, `ai-sessions/0074`): "Earbuds replaced" (field 28) and "Other alerts" (field 27) — on gear → Settings since `ai-sessions/0082`. */
     val onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit = {},
     val onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
     /** The "Volume EQ" switch on Sound (ADR-055, `ai-sessions/0074`). */
@@ -195,14 +195,20 @@ data class OpenControlUiState(
     val ancAvailabilityUpdatedAt: Long? = null,
     /** When the last ANC change's answer was cut off — the shown mode is not confirmed until the next `Notify` (`ai-sessions/0062` F-3); `null` = confirmed. */
     val ancModeUnconfirmedAt: Long? = null,
+    /** Why the shown ANC mode is what it is (`ai-sessions/0082` item 1): the Noise control (i) says "changed by the Buds" for a `Notify` the app did not provoke. */
+    val ancModeCause: io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause? = null,
     /** Why the last *Refresh battery* brought no new reading (`null` = it did / none yet), `ai-sessions/0052`. */
     val batteryRefreshError: BudsError? = null,
     /** Why the Case level could not be requested this connection (`null` = requested / not yet), ADR-043. */
     val caseBatteryError: BudsError? = null,
     /** Non-null while the app is in read-only Safe Mode (ARCHITECTURE.md §8.1, ADR-042). */
     val safeMode: io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState? = null,
-    /** What the Buds announced at connect (firmware); `null` = nothing yet. */
+    /** What the Buds announced at connect (firmware); `null` = nothing yet; since ADR-058 also the serial numbers once read. */
     val deviceInfo: DeviceInfo? = null,
+    /** Why the serial numbers were not read this connection (ADR-058, `ai-sessions/0082`); `null` = read / not attempted. */
+    val serialsError: BudsError? = null,
+    /** The "probably worn" reading of the battery card (ADR-059, `ai-sessions/0082`). */
+    val wornReading: io.github.tedsluis.opencontrolpixelbuds.domain.WornReading = io.github.tedsluis.opencontrolpixelbuds.domain.WornReading.NotRead,
     /** The Find My Buds ring this app started and has not seen stopped (`null` = none) — kept across Disconnect (I-6). */
     val ringing: io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice? = null,
     val eqProfile: EqBandGains?,
@@ -337,6 +343,12 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 deviceInfo = state.deviceInfo,
                 onOpenUrl = actions.onOpenUrl,
                 onUseDifferentBuds = actions.onUseDifferentBuds,
+                serialsError = state.serialsError,
+                connectionState = state.connectionState,
+                settings = state.settings,
+                settingsError = state.settingsError,
+                onCaseSoundEarbudsReplacedChanged = actions.onCaseSoundEarbudsReplacedChanged,
+                onCaseSoundOtherAlertsChanged = actions.onCaseSoundOtherAlertsChanged,
                 modifier = Modifier.padding(padding),
             )
         } else {
@@ -370,6 +382,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             sessionSince = state.sessionSince,
             safeMode = state.safeMode,
             batteryRefreshError = state.batteryRefreshError,
+            wornReading = state.wornReading,
             onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
             onPair = actions.onPair,
             onRequestPermissions = actions.onRequestPermissions,
@@ -386,6 +399,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             ancAvailabilityUpdatedAt = state.ancAvailabilityUpdatedAt,
             ancModeUnconfirmedAt = state.ancModeUnconfirmedAt,
             sessionSince = state.sessionSince,
+            ancModeCause = state.ancModeCause,
             onAncModeSelected = actions.onAncModeSelected,
             onRefreshAncMode = actions.onRefreshAncMode,
             onRequestAddAncTile = actions.onRequestAddAncTile,
@@ -402,7 +416,6 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             settingsError = state.settingsError,
             onVolumeBalanceChanged = actions.onVolumeBalanceChanged,
             onMonoAudioChanged = actions.onMonoAudioChanged,
-            onConversationDetectionChanged = actions.onConversationDetectionChanged,
             onVolumeEqChanged = actions.onVolumeEqChanged,
         )
         Routes.CONTROLS -> ControlsScreen(
@@ -415,8 +428,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             onInEarDetectionChanged = actions.onInEarDetectionChanged,
             onMultipointChanged = actions.onMultipointChanged,
             onHeadGesturesChanged = actions.onHeadGesturesChanged,
-            onCaseSoundEarbudsReplacedChanged = actions.onCaseSoundEarbudsReplacedChanged,
-            onCaseSoundOtherAlertsChanged = actions.onCaseSoundOtherAlertsChanged,
+            onConversationDetectionChanged = actions.onConversationDetectionChanged,
         )
         Routes.FIND_MY_BUDS -> FindMyBudsScreen(
             connectionState = state.connectionState,

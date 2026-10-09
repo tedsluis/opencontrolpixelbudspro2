@@ -25,6 +25,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import org.junit.Assert.assertEquals
@@ -53,6 +54,7 @@ class AncScreenTest {
         unconfirmedAt: Long? = null,
         connectionState: ConnectionState = ConnectionState.Ready,
         sessionSince: Long? = at - 1_000, // the connection opened a second before the Buds reported the mode
+        cause: AncModeCause? = null,
     ) = compose.setContent {
         OpenControlTheme(darkTheme = false) {
             AncScreen(
@@ -67,6 +69,7 @@ class AncScreenTest {
                 ancAvailabilityUpdatedAt = at,
                 ancModeUnconfirmedAt = unconfirmedAt,
                 sessionSince = sessionSince,
+                ancModeCause = cause,
             )
         }
     }
@@ -131,6 +134,41 @@ class AncScreenTest {
         show(connectionState = ConnectionState.Disconnected)
         compose.onNodeWithContentDescription("Noise control: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
         compose.onNodeWithText("ANC mode: OFF — from the last connection (updated ${formatUpdatedAt(at)})").assertExists()
+    }
+
+    // ---- `ai-sessions/0082` item 1: "Changed by the Buds" in the (i), only for a Notify the app did not provoke ----
+
+    @Test
+    fun `a mode the Buds changed says so in the (i), with the mode's time`() {
+        show(cause = AncModeCause.CHANGED_BY_BUDS)
+        compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick() // the (i) is plain: the mode is current
+        compose.onNodeWithText("Changed by the Buds at ${formatUpdatedAt(at)} (a press-and-hold on a bud, or the Buds' own change).").assertExists()
+        compose.onNodeWithText("ANC mode: OFF (updated ${formatUpdatedAt(at)})").assertExists()
+    }
+
+    @Test
+    fun `a mode read from the Buds has no changed-by-the-Buds line`() {
+        show(cause = AncModeCause.READ)
+        compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick()
+        compose.onNodeWithText("ANC mode: OFF (updated ${formatUpdatedAt(at)})").assertExists()
+        compose.onNodeWithText("Changed by the Buds", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a mode set by this app has no changed-by-the-Buds line`() {
+        show(cause = AncModeCause.SET_BY_APP)
+        compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick()
+        compose.onNodeWithText("ANC mode: OFF (updated ${formatUpdatedAt(at)})").assertExists()
+        compose.onNodeWithText("Changed by the Buds", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the changed-by-the-Buds line leaves the time out when there is none, and needs a mode`() {
+        assertEquals("Changed by the Buds (a press-and-hold on a bud, or the Buds' own change).", ancChangedByBudsLine(null))
+        assertEquals(
+            listOf("ANC mode: unknown", "Connection: Ready", MESSAGE_STREAM_HINT_TEXT),
+            ancDetailLines(ConnectionState.Ready, null, null, notAllowed = false, checkedAt = null, cause = AncModeCause.CHANGED_BY_BUDS),
+        )
     }
 
     @Test
