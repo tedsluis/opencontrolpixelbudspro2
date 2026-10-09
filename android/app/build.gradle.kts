@@ -54,8 +54,8 @@ android {
         // Release candidates exist only for X.0.0 (`ai-sessions/0069`, `scripts/release.sh`): for any other version the candidate's code would not be
         // above the previous release. 1.0.1 = the hotfix of `ai-sessions/0069` (the maintainer's choice in chat 2026-10-03); 1.1.1 = the toolchain of `ai-sessions/0078`
         // (`ai-sessions/0079`, the maintainer's choice in chat 2026-10-08).
-        versionCode = 10101
-        versionName = "1.1.1"
+        versionCode = 10200
+        versionName = "1.2.0"
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
         buildConfigField("String", "GIT_COMMIT_DATE", "\"$gitCommitDate\"")
     }
