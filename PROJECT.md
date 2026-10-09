@@ -44,9 +44,9 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
 - [x] Configure equalizer / sound profile (presets and custom bands) (ADR-020/034); Volume EQ on/off (field 15, read + write, ADR-055, `ai-sessions/0074`, 1.1.0)
 - [x] Configure touch controls and head gestures — "Use touch controls" and press-and-hold per bud built (read + write, ADR-036/045, `ai-sessions/0052`); the press-and-hold ANC-mode list built (field 12, read + write, ADR-046, `ai-sessions/0056`); "Use head gestures" built (field 29, read + write, ADR-052, `ai-sessions/0074`, 1.1.0)
 - [x] Volume balance, mono audio, conversation detection (read + write, ADR-036/045, `ai-sessions/0052`)
-- [~] Read firmware version and serial numbers per component (firmware shown; serial numbers not read)
+- [x] Read firmware version and serial numbers per component (firmware since `ai-sessions/0062`; serial numbers since 1.2.0 — one `GetHardwareInfo` per Connect, ADR-058, `ai-sessions/0082`; labelled Case / Right bud / Left bud by position, the official app's reading)
 - [x] "Find my Buds" functionality — Left/Right only (ADR-011); Case/"both" out of scope (ADR-027)
-- [ ] In-ear detection status — the in-ear detection **setting** is read and written (field 2, ADR-047, `ai-sessions/0056`); whether a bud is worn is not shown
+- [x] In-ear detection status — the in-ear detection **setting** is read and written (field 2, ADR-047, `ai-sessions/0056`); whether a bud is worn is shown as **"probably worn"** since 1.2.0 (ADR-059, `ai-sessions/0082`: derived from the Settable byte, field 2 and the charging flags — a hypothesis, labelled as such; never per bud)
 - [~] Manage multipoint connections — the Multipoint switch is built (field 11, read + write, ADR-053, `ai-sessions/0074`, 1.1.0); choosing or listing the connected devices is not
 - [x] Case sound settings (earbuds replaced, other notifications) — fields 28 and 27, read + write, ADR-054, `ai-sessions/0074`, 1.1.0
 
@@ -145,6 +145,9 @@ screen-reader text for "—"; its release run `CAP-070` (`ai-sessions/0075`, 202
 **1.1.1** (`ai-sessions/0078`/`0079`: the same app built with the current toolchain) passed its release run `CAP-071` (`ai-sessions/0080`, 2026-10-08) in the
 user without Play: installed over 1.1.0 it kept the data and settings, and every Connect read, write, ANC `Set` and Ring was byte-identical to 1.1.0's and answered;
 verdict: release build `86a6fb3` (the maintainer, chat 2026-10-08).
+**1.2.0** (prepared in `ai-sessions/0082`, 2026-10-09; not yet released): "Changed by the Buds" in the noise-control details, the component serial numbers on the
+Info tab (ADR-058), the "probably worn" indicator on the battery card (ADR-059), the Case sounds switches moved to gear → Settings and Conversation detection
+to Controls; volume-level notifications studied, not built (a draft ADR-060, a 1.3.0 candidate). Its hardware run is `CAP-072` (Group BH, planned).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROJECT

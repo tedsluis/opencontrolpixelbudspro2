@@ -2782,6 +2782,13 @@ leaving them buried in prose elsewhere.
       `1779298694`) and `0x1c256c5d`. It carries a settings read-back after all — the official app's `ReadSetting` sweep (consistent with ADR-034, and with
       `OBS-007`'s content-level negative, which compared the burst *across* settings states, not whether it reads them). This unblocks nothing; `CAP-057`
       (Group AS) is withdrawn as unnecessary. Which serial belongs to which component (the `EC`/`DR`/`DL` substrings suggest Case/Right/Left) stays 🟡.
+      **Update (2026-10-09, `ai-sessions/0082`, maintainer-approved in chat 2026-10-09, `AskUserQuestion` "Item 2 ADR-058", with ADR-058's text in the
+      preview) — the attribution is 🟢 FACT (the official app's reading; wire-consistent):** field 7 lists **the Case (7.1), the Right bud (7.2), the Left bud
+      (7.3)** — by position. Code: `gaa.java:45–96` (`gaa.a(qiv)`) copies `qjm`/`qjr` field 1 → `gdv.c`, 2 → `gdv.d`, 3 → `gdv.e`; `fwg.java:182–215` reads
+      `gdv.e` as the left serial ("Missing left serial number"), `gdv.d` as the right, `gdv.c` as the case. Wire: 138 answers in 54 logs — channel 19: 49, 21: 88,
+      24: 1 — every one the same three strings in the same order (`for f in captures/*/*btsnoop_hci*.log*; do python3 scripts/pwrpc_decode.py "$f" | grep
+      GetHardwareInfo; done`; one request per connection on the announced channel, 138 of 138), their EC/DR/DL marks agreeing with the code's reading. The
+      app sends the request since 1.2.0 (`DECISIONS.md` ADR-058); the strings are device identifiers and are redacted everywhere outside the logs.
 - [ ] **Added 2026-09-04, `CAP-036-FINDINGS.md` §3; corrected same day by
       `DESKRESEARCH_FINDINGS.md`'s two-round cross-check across 10 capture files:** `CAP-036`'s
       "Notify ANC state" frame (`08 13 00 04 01 e8 00 20`, Settable=`0x00`) is one of **5** samples
@@ -3682,6 +3689,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-06 | **`ai-sessions/0073` — second APK pass (`v1.0.955078536-10253511`), every text maintainer-approved in chat 2026-10-06 (`AskUserQuestion` "PROTOCOL").** Dated notes, no status change: **§2.2a** `0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` = `JitterBuffer.SetJitterBufferSizePreference`; the official app never requests `GetSoftwareInfo` (0 of 295), fields 5 ("random id") and 6 (not-primary flag) in the app's words. **§4.2** the navigate-away path is a navigation destination listener. **§4.3 Option F** entry field 2 = charger-type enum. **§4.5.9** no Loud Noise Protection / Adaptive Audio control in this app version. **§6** the `CAP-051` Optional gate refuted. | `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` |
 | 2026-10-07 | **`ai-sessions/0075` — `CAP-070` (Group BF, OpenControl 1.1.0 without Play services), maintainer-approved in chat 2026-10-07.** **§2.2a** L-1: the Left taken off on 19 with both buds out of the case ⇒ `DISC` + 21 (wear not on film); five Right changes on 19 without `DISC`; both docked ⇒ 21 or 19 — status unchanged (🟡). **§4.5.2/§4.5.4/§4.5.6/§4.5.7** dated notes: the channel-19 forms of 11 and 29, `15:1` on channel 21 and `17:7` on channel 19 are on the wire, byte-identical to the derived frames, ACKed. | Claude (AI), maintainer-approved |
 | 2026-10-07 | **`ai-sessions/0077` — the maintainer's pending decisions, approved in chat 2026-10-07.** **§4.3 Option E** dated Update: Code `0x03` field 3 = the lower bud level (🟡). **§2.3** note: Code `0x03`, Code `0x05` values `01`/`00`. **§4.1** note: Settable `00` ⇒ Current Off (🟡, 17/17 + 19/19). **§6** pointer to `CALL-001` (`CAP-008` §4; codec out of scope). No status change. | Claude (AI), maintainer-approved |
+| 2026-10-09 | **`ai-sessions/0082` — 1.2.0, maintainer-approved in chat 2026-10-09.** **§6** `GetHardwareInfo` field 7: the component attribution (7.1 Case, 7.2 Right bud, 7.3 Left bud, by position — the official app's reading, wire-consistent on channels 19/21/24) 🟡 → 🟢 (ADR-058). No other status change: ADR-059 (the "probably worn" indicator) reads ADR-049 item 3 as the 🟡 it is. | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

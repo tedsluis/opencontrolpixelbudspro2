@@ -22,8 +22,9 @@ Open after `CAP-070` (the 1.1.0 release run, `ai-sessions/0075`, `CAP-070-FINDIN
 on channel 19, `15:1` on channel 21), the channel-19 balance `17:7`, the swipe between tabs (camera only), and P1 (a first install in user 10, 🟡).
 **`CAP-071`** (the 1.1.1 release run, analysed in `ai-sessions/0080`) settled the update path (1.1.1 over 1.1.0 kept data, dark mode and Debug mode) and the
 `SIGQUIT` source (the computer's `adb bugreportz`, `CAP-071-FINDINGS.md` §0) — both removed here. Its film 2 (BG-20 … BG-24) was not made and there was no screen
-recording, so the items below stay open. **Next app run:** the lid open before the app starts (P8), no app use before the film (P9), Do Not Disturb on (an
-incoming call put a third party's number on `CAP-071`'s film), the screen recording on, observations said aloud.
+recording, so the items below stay open. **Next app run — `CAP-072` (Group BH, the 1.2.0 release run, skeleton by `ai-sessions/0082`):** the lid open before the app
+starts (P8), no app use before the film (P9), Do Not Disturb on (an incoming call put a third party's number on `CAP-071`'s film), the screen recording on,
+observations said aloud. `CAP-072` takes every item below except B4, the CDM picker, K5/BC-12, F-4 and the second device (`ai-sessions/0082` RESULT §I).
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
@@ -35,7 +36,7 @@ incoming call put a third party's number on `CAP-071`'s film), the screen record
       connected and during re-opens). S9 (needs two Pixel Buds paired) — not planned.
 - [ ] The Left bud taken out with both **worn** on channel 19, **head in view** (lead L-1; `CAP-070` BF-18 gave `DISC` + 21 with the Left identified, wear
       not on film) — 🟡 (`INEAR-005`). — not run in `CAP-071` (no film 2); `CAP-071` added two "only the Left out ⇒ 19" samples and one
-      19 → 21 as the Right went back to the head (`PROTOCOL.md` §2.2a note of 2026-10-08).
+      19 → 21 as the Right went back to the head (`PROTOCOL.md` §2.2a note of 2026-10-08). In `CAP-072` the same steps read the worn indicator (`INEAR-006`, ADR-059).
 - [ ] The case-sound and Volume-EQ observations (what is heard): the film needs an audio track (`CAP-070`'s had none), or the maintainer says it. — `CAP-071` had audio but nothing was said and no case chime was
       recorded with "Earbuds replaced" off or on (the Find ring was); still open.
 - [ ] B4 double tap (`AlreadyInProgress`) — needs the Buds forgotten and re-paired.
@@ -150,7 +151,9 @@ Open questions (each with where it is described):
 - 🔴 Why Android's CDM picker listed nothing twice and then offered the bonded Buds directly (`CAP-068-FINDINGS.md` §8).
 - 🔴 `CAP-013`'s second BLE link (not re-examined; `CAP-016`'s was a heart-rate wearable — `PROTOCOL.md` §6, Update of 2026-10-03).
 - Candidates without a capture scenario: Audio switch (`SWITCH-001`), Hearing wellness (`WELL-001`), eartip fit test (`FIT-001`).
-  `maestro_pw.Dosimeter`: values on the wire, meaning 🟡; a display is out of scope (**M**, 2026-09-30).
+  `maestro_pw.Dosimeter`: values on the wire, meaning 🟡; a display is out of scope (**M**, 2026-09-30). **Volume-level notifications** studied in
+  `ai-sessions/0082` (item 4): the phone decides (the official app's worker, 67 % of a 7-day constant, once per 7 days; field 21 only gates it; the Buds push
+  nothing) — draft ADR-060 (proposed, not accepted) and the 🟡 that block it; a capture with a sound-level meter (`WELL-002`, no Group yet) comes first.
 
 ## 5. App: later work
 
@@ -175,7 +178,12 @@ Open questions (each with where it is described):
 - [ ] **Balance precision:** `CAP-067` reached Right 4 on the 17th drag (7 of 17 snapped to Centre). Options: a live value label while dragging,
       slider `steps`, or the step buttons back.
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
-- [ ] `CAP-069` §12 item 8: say "changed by the Buds" in the (i) details when a `Notify` changes the mode without a tap (proposal, not decided).
+- [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
+      RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
+      field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
+- [ ] After `CAP-072`: replace the redacted-answer fixtures of `GetHardwareInfo` (`HardwareInfoFixtures`: `CAP-036` 1423 / `CAP-024` 832 with the serials X-ed out) by
+      OpenControl's own exchange from that run (serials redacted the same way); ADR-058/ADR-059 Updates with the run's result (**M**).
+- [ ] The worn indicator's (i) text names `CAP-064` to the user (the approved wording, `ai-sessions/0082` §B); reword without the capture id if the maintainer wants (**M**).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.

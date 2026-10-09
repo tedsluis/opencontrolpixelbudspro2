@@ -2559,5 +2559,102 @@ motivated this).
   current. A value never read shows "—" (screen reader: "Not read from the Buds yet"), never a default.
 - **Consequences**: as built (`ARCHITECTURE.md` §3.1, "One rule for 'current'"); every new setting follows it (ADR-052 … ADR-055 did).
 
+## ADR-058 — DLCI 0x02: one `GetHardwareInfo` request per Connect for the component serial numbers
+
+- **Date**: 2026-10-09
+- **Status**: Accepted (maintainer, chat 2026-10-09, `ai-sessions/0082`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0082` RESULT §A.2/§B); the decision is the maintainer's, given in the chat of 2026-10-09
+  (`AskUserQuestion` "Item 2 ADR-058", option *"ADR-058, ongegate read, labels Case/Right/Left + 🟢 (Recommended)"*, with this text in the preview), per
+  `AGENTS.md` §6. The same answer promotes `PROTOCOL.md` §6's serial-attribution item (below).
+- **Context**: `GetHardwareInfo` (`maestro_pw.Maestro`, method `0x28eca5e3` = `h65599("GetHardwareInfo")`) is 🟢 since 2026-09-24 (`PROTOCOL.md` §6: `CAP-036`
+  1415 → 1423, 83 ms); the official app sends it once per connection on the announced channel — 138 requests and 138 answers in 54 logs (channel 19: 49,
+  21: 88, 24: 1; `python3 scripts/pwrpc_decode.py <log> | grep GetHardwareInfo`), every answer's field 7 the same three length-14 strings in the same order.
+  OpenControl never sent it (`Maestro.kt`: the id was a name for the debug log; 0 requests in the 14 logs of `CAP-067`/`068`/`070`/`071`), so `PROJECT.md`'s
+  scope line "serial numbers not read" stayed `[~]`. The official app reads the three strings **by position**: `gaa.java:45–96` (`gaa.a(qiv)`) copies `qjm`
+  field 1 → `gdv.c`, 2 → `gdv.d`, 3 → `gdv.e`; `fwg.java:182–215` reads `gdv.e` as the left serial, `gdv.d` as the right, `gdv.c` as the case — **7.1 = Case,
+  7.2 = Right bud, 7.3 = Left bud**. The wire agrees: 7.1 ends `…EC0251`, 7.2 `…DR3209`, 7.3 `…DL3147` (`CAP-036` 1423, `CAP-024` 832, same on every channel).
+- **Options considered**: (a) no request, serials stay unread; (b) one request per Connect, the strings shown "as reported" without labels; (c) one request
+  per Connect, gated by Safe Mode like a write; (d) one request per Connect, a read like the app's other reads, labelled by the official app's reading — chosen.
+- **Decision**:
+  1. Once per Connect, after `SubscribeRuntimeInfo`, the app sends one `GetHardwareInfo` REQUEST (empty payload, no call id) on the announced channel with its
+     ADR-034 address — byte-identical to `CAP-036` 1415 on channel 21 (`7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 e3 a5 ec 28 f9 67 61 b5 7e`) and to `CAP-024`
+     801 on channel 19 (`7e 00 3b 03 10 13 … ff 1e bb b7 7e`); no retry, ≤ 2 s wait (the existing settings-read bound), nothing queued.
+  2. A read: **not** gated by Safe Mode (ADR-042 item 3: reads continue), like `ReadSetting` and `SubscribeRuntimeInfo`.
+  3. From the `RESPONSE` only field 7's three strings are read (printable ASCII, 1–64 characters each, fields 7.1–7.3); fields 1, 2, 5, 6 and 8 are not
+     interpreted. An answer without them, an error status or no answer ⇒ "—" with the reason (`UnreadableAnswer`, `MaestroRejected`, `Timeout`).
+  4. Settings → Info, under the firmware: "Serial numbers (from the Buds, HH:MM:SS):" with one line per string, labelled **Case / Right bud / Left bud by
+     position**, and the note "Labelled by position as the official app labels them: the Buds list the Case, the Right bud, then the Left bud." —
+     `PROTOCOL.md` §6's "which serial belongs to which component … stays 🟡" becomes **🟢 FACT** (the official app's own reading; wire-consistent on 19, 21, 24).
+  5. Serials are device identifiers (`AGENTS.md` §9): never logged at `INFO` or above (the always-on log prints the pw_rpc summary and the count only; the raw
+     hex dump is Debug mode only); redacted to the first four and last two characters in fixtures, documents and this file.
+- **Consequences**: `Maestro.getHardwareInfoRequest`, a `HardwareInfo` reader (field 7 only; never throws; fuzzed), `RoutedFrame.HardwareInfo`,
+  `BudsRepositoryImpl.readHardwareInfo` (after the subscription), `DeviceInfo.serials` + `serialsReadAtMillis`, `BudsRepository.serialsError`; the Info tab
+  lines. The Connect read sequence gains one unary request (≈ 83 ms in `CAP-036`). Hardware re-test (`CAP-072`, `FW-003`): the request/answer on the announced
+  channel, the serials on film against the official app's About screen (if available) or the strings' EC/DR/DL marks. Not covered: the other fields of the
+  answer (device type, SKU, hardware versions) — a later ADR if ever wanted.
+
+## ADR-059 — A "probably worn" indicator from the Settable byte, the in-ear detection setting and the runtime-info charging flags
+
+- **Date**: 2026-10-09
+- **Status**: Accepted (maintainer, chat 2026-10-09, `ai-sessions/0082`)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0082` RESULT §A.3/§B); the decision is the maintainer's — "probably worn" as the reading was the
+  maintainer's choice before the session (chat 2026-10-09, the prompt's §1 item 3), the texts and the place in the chat of 2026-10-09 (`AskUserQuestion`
+  "Item 3 ADR-059", option *"Batterijkaart + teksten zoals voorgesteld (Recommended)"*, with this text in the preview), per `AGENTS.md` §6. **No `PROTOCOL.md`
+  status change:** ADR-049 item 3 stays 🟡, and the app's (i) says so in plain words.
+- **Context**: ADR-049 item 3: 🟡 (strong) "`00` ⇒ no bud worn" — 56 filmed samples (`CAP-065`, `CAP-066`), 0 counter-examples; the converse is **refuted**
+  (`CAP-064`: `e8` with in-ear detection off, 10394/10600; ≈ 28 s of `e8` with both buds on the table, in-ear detection on, 2299–2759). The runtime-info stream
+  gives each bud's charging state (ADR-043 Update of 2026-09-25; 🟡 charging = in the case). `PROJECT.md`'s one open `[ ]` scope line: "whether a bud is worn is
+  not shown". GSND CONTROL Code `0x05` is not a source (DLCI 0x08, not opened, ADR-043).
+- **Options considered**: (a) not shown; (b) a plain "worn / not worn" (overclaims a 🟡); (c) a hedged "probably worn" from existing state — chosen; (d) a new
+  request or channel for it — rejected (nothing on the wire carries a per-bud worn state the app may read).
+- **Decision**:
+  1. **No new wire traffic.** A pure function in `:domain` (`wornReading`) derives one reading from state the app already holds — the Settable byte of the
+     Buds' last `Notify ANC state` on this connection with its time, the in-ear detection setting (`qhr` field 2), the two charging flags of this connection — in
+     this order: no `Notify` this connection → "—" (screen reader: "Not read from the Buds yet"); field 2 = 0 → "Worn: unknown — in-ear detection is off";
+     field 2 not read → "Worn: unknown — the in-ear detection setting was not read"; both buds charging → "Both buds in the case"; Settable `00` →
+     "Not worn (checked HH:MM:SS)"; non-zero → "Probably worn (checked HH:MM:SS)".
+  2. The reading is from the last report (Connect, Refresh, a noise-control tap) — never live; its time is always shown; pull-to-refresh re-reads it through
+     the existing `Get`.
+  3. It never names a bud as worn (the byte is not per bud).
+  4. One line on the Connection screen's battery card, under the three columns; the card's (i) carries the line and the explanation with both limits: "Worn:
+     from the Buds' last noise-control report. 'Probably worn' = the Buds allow changing noise control — on film that always meant at least one bud in an ear,
+     but the Buds do not say which bud, and once (CAP-064) they reported it for about half a minute with both buds on a table. 'Not worn' = the Buds refuse a
+     change — in 56 filmed samples no bud was in an ear. With in-ear detection off the report says nothing about wearing."
+  5. ADR-049 item 3 stays 🟡; this ADR records a user-visible interpretation of it (`AGENTS.md` §13 "Implementing": a HYPOTHESIS with a verification plan),
+     not a promotion.
+- **Verification** (`CAP-072`, `INEAR-006`, ears on film): both buds out → "Not worn"; one in → "Probably worn"; both in the case → "Both buds in the case";
+  in-ear detection off → "Worn: unknown — in-ear detection is off"; buds straight from the case to the table, the indicator watched for 60 s (the ≈ 28 s case).
+- **Consequences**: `WornReading` + `wornReading()` (`:domain`), `BudsRepository.wornReading` (a `combine` of four existing flows), the battery card's line and
+  (i) lines, one test per reading with the decoded values of real frames, the repository test with the real frames. If a capture refutes "`00` ⇒ no bud worn",
+  the texts are revisited; if ADR-049 item 3 is ever promoted, the hedge may go.
+
+## ADR-060 — Volume-level notifications from `maestro_pw.Dosimeter` (DRAFT — proposed, not accepted)
+
+- **Date**: 2026-10-09 (drafted)
+- **Status**: **Proposed** — a draft awaiting maintainer sign-off; **not accepted, nothing built** (the maintainer's choice in chat 2026-10-09, `AskUserQuestion`
+  "Item 4 Dosimeter", option *"1.3.0-kandidaat, ADR-060 als concept (Recommended)"*). It stands here only because `scripts/lint_docs.py` requires a heading
+  for every registered `ADR-NNN` and the number is already cited (`ai-sessions/0082` prompt and RESULT, `TODO.md`); the agent that wrote it has no authority to
+  accept it (`AGENTS.md` §6). Accepting it is a maintainer decision in a later session, after the 🟡 below are 🟢.
+- **Context** (`ai-sessions/0082` item 4, RESULT §A.4/§C.4; `REVERSE_ENGINEERING.md` section of 2026-10-09): the official app's "Volume level notifications"
+  switch writes `qhr` field 21 (🟢, `PROTOCOL.md` §4.5.8a), but the notification itself is decided by the **phone**: `HearingWellnessNotificationWorker` runs once
+  per session (1 min after connect), sums seven daily doses from `Dosimeter.FetchDailySummaries` (left and right averaged per day) and notifies at ≥ 67 % of the
+  constant `3.3903457E11` (7 × the 24-hour constant `4.843351E10`), at most once per 7 days; field 21 only schedules or cancels that worker. The Buds never push
+  a Dosimeter value unsolicited (0 in 85 logs). OpenControl has never sent a Dosimeter request.
+- **Decision, if accepted later**:
+  1. Once per Connect, after the existing requests, one `Dosimeter.SubscribeToLiveDb` REQUEST (`CAP-027` 1107/1214's bytes, the announced channel) and one
+     `FetchDailySummaries` REQUEST (`CAP-058` 5736) — two new requests; no polling, no re-request; they end with the session. (The official app asks both buds'
+     channels; one channel would be a deviation to test.)
+  2. The phone computes the dose as the official app does: the seven day entries (`qia` field 6, linear) summed, left and right averaged, against the app's
+     constants — quoted, unit unknown, not asserted as a health figure.
+  3. A local notification channel; at most one notification per 7 days at ≥ 67 % (the official rule); the field-21 switch (read + write, a new flag write
+     byte-identical to `CAP-058` 5747/5753 on channel 21) is the user's on/off; DataStore keeps only the last-notified time.
+  4. The texts say: "the Buds' own exposure figure against the official app's limit; the unit is not verified."
+- **🟡 that must become 🟢 first**: (i) `qir` field 2 is a sound level (`WELL-002`: values against a sound-level meter on film); (ii) `qia` field 6 is a per-day dose
+  in the same unit; (iii) the day index's epoch; (iv) the Buds answer a second client's `SubscribeToLiveDb`/`FetchDailySummaries`; (v) field 21's channel-19
+  write form (uncaptured); (vi) the cost — ≈ 2 stream packets/s per channel for the whole session (`CAP-027`: 208 per channel in 4 min) — for the battery and the
+  log.
+- **Consequences, if accepted**: a Dosimeter codec, two requests in the Connect sequence, a notification channel (`POST_NOTIFICATIONS` is already held), the
+  switch on a tab, DataStore for one timestamp; its own hardware run with the meter. Until then: `TODO.md` §5 carries the candidate.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
