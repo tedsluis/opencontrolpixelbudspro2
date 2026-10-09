@@ -139,7 +139,7 @@ Without Google Play Services installed, the app can:
 noise control with a Quick Settings tile, the equalizer, battery (Left / Right / Case), Find My Buds (Left / Right), touch controls, press and hold and its mode
 list, balance, mono audio, conversation detection and the in-ear detection setting. The next features the maintainer chose (chat 2026-10-03, "Features") reached
 🟢 FACT and their ADRs in `CAP-069` (`ai-sessions/0071`): head gestures (`qhr` field 29, ADR-052) and Multipoint (field 11, ADR-053); the case sounds (27, 28,
-ADR-054) and Volume EQ (15, ADR-055) followed on 2026-10-06. **1.1.0** (prepared in `ai-sessions/0074`, not yet released) builds all five switches and the
+ADR-054) and Volume EQ (15, ADR-055) followed on 2026-10-06. **1.1.0** (prepared in `ai-sessions/0074`, released 2026-10-07; 1.1.1 followed on 2026-10-08) builds all five switches and the
 screen-reader text for "—"; its release run `CAP-070` (`ai-sessions/0075`, 2026-10-07) passed — every switch request on both control channels confirmed by the Buds, the three forms not seen before now on the wire; verdict: release build `0323849`. The Battery Notification on case-open was tested in `CAP-054`: no clear battery field
 (ADR-006 Update of 2026-10-06).
 **1.1.1** (`ai-sessions/0078`/`0079`: the same app built with the current toolchain) passed its release run `CAP-071` (`ai-sessions/0080`, 2026-10-08) in the

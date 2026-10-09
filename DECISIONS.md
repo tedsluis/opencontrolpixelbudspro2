@@ -2088,6 +2088,10 @@ motivated this).
   implemented". No code change (already removed).
 - **Update (2026-09-30, `ai-sessions/0059`, pointer only — A58-DEC-01):** in the Decision, "DLCI 0x08 Option E (Case, ADR-035/039)" is superseded by
   **ADR-043**: the Case comes from DLCI 0x02 `SubscribeRuntimeInfo` entry 6.1 (Option F).
+- **Update (2026-10-08, `ai-sessions/0081`, maintainer-approved in chat 2026-10-08):** the Context's "`AT+BIEV=2,100` seven times (frames 1216, 2624,
+  2631, 2685, 2694, 3077, 3097)" counts only the `bthfp`-dissected frames; after the 17:20 reconnect HFP ran on DLCI 0x09, undissected, with five more
+  (3794, 4149, 4171, 5207, 5212) — **12** on the wire (`tshark -r CAP-059-btsnoop_hci.log -Y 'frame contains "AT+BIEV=2,"'`; `ai-sessions/0068` CD4;
+  `PROTOCOL.md` §4.3 Option C carries the same correction). The Decision is unchanged.
 
 ## ADR-041 — The wire codec is hand-written; no protobuf runtime and no `.proto` build inputs
 
