@@ -189,9 +189,6 @@ Open questions (each with where it is described):
 - [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
-- [ ] **M** — release the rebuilt 1.2.0: B1–B3 done (build `5b4d5db`, `ai-sessions/0084`), `CAP-073` analysed (`ai-sessions/0085`), **C4 verdict OK — ready to
-      release** (the maintainer, chat 2026-10-10). Left: D1–D4 (merge PR #27 with a merge commit, the signed tag `v1.2.0` on `5b4d5db`, the release from
-      `~/opencontrol-1.2.0-tested`, the phone check) and E1–E4 (`RELEASING.md`).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.

@@ -7,7 +7,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **Latest release: [1.1.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.1.1)** (2026-10-08). You can also
+> **Latest release: [1.2.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.0)** (2026-10-10). You can also
 > [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
@@ -109,10 +109,9 @@ tests, not yet on a phone.
 **1.1.1** (2026-10-08, `ai-sessions/0079`): the same app built with current build tools and libraries — nothing changes for you. Its hardware run
 `CAP-071` passed (`ai-sessions/0080`: the update keeps your settings, every request and answer is the same as 1.1.0's). Known issues: as 1.1.0.
 
-**1.2.0 is prepared, not yet released** (2026-10-09, `ai-sessions/0082`; rebuilt 2026-10-10 in `ai-sessions/0084` after its hardware run `CAP-072`
+**1.2.0** (2026-10-10; prepared 2026-10-09 in `ai-sessions/0082`; rebuilt 2026-10-10 in `ai-sessions/0084` after its hardware run `CAP-072`
 (`ai-sessions/0083`): the app keeps its noise-control channel open while the noise-control tab is on screen, so a press-and-hold on a bud shows — ADR-061;
-re-test `CAP-073` passed, `ai-sessions/0085`: the hold works on the tab, a press-and-hold changes the mode on screen without a tap — verdict OK, ready to
-release): "Changed by the Buds" in the noise-control details, the serial numbers on the Info tab, a "probably worn" line on the battery card, a finer
+re-test `CAP-073` passed, `ai-sessions/0085`: the hold works on the tab, a press-and-hold changes the mode on screen without a tap — verdict OK): "Changed by the Buds" in the noise-control details, the serial numbers on the Info tab, a "probably worn" line on the battery card, a finer
 balance slider, and the Case sounds switches on gear → Settings and Conversation detection on Controls. Known issues of 1.2.0 (also in
 [`CHANGELOG.md`](./CHANGELOG.md)): the worn line is a hedged reading of a hypothesis (the Buds say "at least one bud", never which, and have reported it for 40
 seconds or more with both buds on a table); the serial labels are the official app's reading of the answer's order; "Changed by the Buds" shows only what the

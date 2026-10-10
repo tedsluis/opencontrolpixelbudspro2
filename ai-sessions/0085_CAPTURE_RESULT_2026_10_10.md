@@ -5,7 +5,7 @@
 **Date:** 2026-10-10
 **Title:** Fully analyse `CAP-073`: the screen recording, two HCI snoop logs, the debug export, the app logcat, the system log and the shell log; the
 release verdict for the rebuilt 1.2.0
-**Status:** awaiting maintainer sign-off (every checkpoint answered in chat 2026-10-10; the commit question is open)
+**Status:** complete (closed 2026-10-10: every checkpoint answered in chat, committed, 1.2.0 published — see Commits)
 
 
 ## Summary (plain language)
@@ -99,7 +99,24 @@ that, E1–E4 (the CHANGELOG date and README in a small pull request, the Releas
 
 ## Commits
 
-Not committed yet — the question is in the chat (`AI_SESSION_LOG_PROCEDURE.md` §4b item 2: the next session back-fills the hashes).
+The maintainer's answer (chat 2026-10-10): "ja, commit en push". On `release/1.2.0-rebuild`, after the build commit `5b4d5db` (`RELEASING.md` C3), pushed
+without force; the capture files through Git LFS (8 objects, 12 MB):
+
+- `8e8e0a7` docs(capture): CAP-073 (Group BI) — the rebuilt 1.2.0 analysed, verdict OK
+- `be8bf2a` docs: record CAP-073 — ADR-061 Update, registers, test plans and status
+- `9a53573` docs(ai-sessions): 0085 CAPTURE result, INDEX rows, 0084 back-fill
+
+## The release (the maintainer's instructions in chat 2026-10-10, each step asked for)
+
+- CI on `9a53573`: "Android build and test" and "Lint docs" passed ("check of de CI workflows groen zijn").
+- D1 ("merge de pull request"): PR #27 merged with a merge commit `4586e2b`; the bot PRs #28 (sitemap) and #29 (sidebar) merged the same way (`2739d12`,
+  `95e4e83`; "merge de bot pull requests 28 en 29").
+- D2 ("maak de tag v1.2.0 aan en push hem"): `git tag -s v1.2.0 5b4d5db -m "OpenControl for Pixel Buds Pro 2 1.2.0"` (SSH-signed), pushed; `git branch -r --contains
+  v1.2.0` lists `origin/main`.
+- D3 ("maak de draft release aan", "publiceer de release"): `gh release create v1.2.0 --verify-tag --draft …` with the three files of `~/opencontrol-1.2.0-tested`
+  (the release notes read in full first); the uploaded APK downloaded again — SHA-256 `ac04415e…a67220`; published 2026-10-10 08:19:35 UTC, "Latest".
+- D4 (the maintainer): installed with Obtainium on the Pixel 9a — "Hij werkt goed!" (chat 2026-10-10).
+- E1–E4: a separate pull request from `docs/release-1.2.0-published` (CHANGELOG date, README, PROJECT, the Release log row, this section, the template).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0085_CAPTURE_RESULT_2026_10_10.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0085_CAPTURE_RESULT_2026_10_10

@@ -11,10 +11,11 @@ build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`). See `TODO.m
 
 ## [Unreleased]
 
-## [1.2.0] - not yet released
+## [1.2.0] - 2026-10-10
 
 Prepared in `ai-sessions/0082` (2026-10-09); its hardware run `CAP-072` (Group BH, `ai-sessions/0083`) showed that a press-and-hold on a bud was never shown, so
-1.2.0 was rebuilt as the same version in `ai-sessions/0084` (2026-10-10); its re-test is `CAP-073` (Group BI). Three new things to see, two switches in new
+1.2.0 was rebuilt as the same version in `ai-sessions/0084` (2026-10-10); its re-test `CAP-073` (Group BI, `ai-sessions/0085`) passed, and it was published
+on 2026-10-10 ([v1.2.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.0), build commit `5b4d5db`). Three new things to see, two switches in new
 places, a held noise-control channel on its tab, a finer balance slider, and one study. Nothing new is written to the Buds; one new read per connection.
 
 ### Added
