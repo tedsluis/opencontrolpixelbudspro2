@@ -242,3 +242,6 @@
   - **CAP-072 (Group BH)**
     - [CAP-072-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-072-2026-10-09_17-27-26_18-23-39-Group_BH/CAP-072-EVENT-NOTES.md)
     - [CAP-072-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-072-2026-10-09_17-27-26_18-23-39-Group_BH/CAP-072-FINDINGS.md)
+  - **CAP-073 (Group BI)**
+    - [CAP-073-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-073-2026-10-10_08-23-35_08-33-24-Group_BI/CAP-073-EVENT-NOTES.md)
+    - [CAP-073-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-073-2026-10-10_08-23-35_08-33-24-Group_BI/CAP-073-FINDINGS.md)
