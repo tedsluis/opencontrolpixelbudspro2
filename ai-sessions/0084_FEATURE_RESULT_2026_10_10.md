@@ -300,6 +300,16 @@ are fixed text ("Message Stream hold started: …", "Message Stream hold ended: 
 6. **C1–C2** install over the 1.2.0 on the phone (`adb install --user <id> -r …`, no uninstall) and run `CAP-073` per its skeleton; collect the files into its folder.
 7. Then a CAPTURE session for C3/C4 (the findings, the verdict).
 
+## After the session — the build (2026-10-10, the maintainer's `scripts/release.sh 1.2.0`)
+
+The maintainer built the release APK on the branch tip and asked this session to do what is needed (chat 2026-10-10). Checked: build commit **`5b4d5db`** =
+`HEAD` = `origin/release/1.2.0-rebuild`; `sha256sum -c` → OK, APK SHA-256 `ac04415eabf4369a49e9f88230aa83fc858a7e3ea0223d725c14a43ac5a67220`; `apksigner verify
+--print-certs` → `a7530f5ceadcdfc9cddcbb0e9889e7699961e8a4ef18898c4ec7738cc79d8dcb` = `README.md:19` / `SECURITY.md:40` (B2); `aapt2 dump badging` → versionCode
+10200, versionName 1.2.0, the four permissions of `ARCHITECTURE.md` §9 plus AndroidX's private receiver permission, no `INTERNET`; `release-notes.md` has no
+unfilled `{…}` and carries the 1.2.0 lines and both checksums. B3: `~/opencontrol-1.2.0-tested` already existed (made by the maintainer) — compared, not
+overwritten: all four files identical to `dist/1.2.0` (`diff -q` empty, `cmp` on the APK). `dist/` is gitignored and not committed (`RELEASING.md` §5); the
+build's identity is recorded here, in `CAP-073-EVENT-NOTES.md` and in PR #27's checklist (B1–B3 ticked). Next: C1–C2, the `CAP-073` run.
+
 ## Commits
 
 The maintainer's answer (chat 2026-10-10, `AskUserQuestion` "Commit"): *"Commit + push (Recommended)"*. On `release/1.2.0-rebuild` (from `main` `a19e5e9`), per
@@ -311,7 +321,8 @@ concern; the two files with changes of several concerns (`BudsRepositoryImplTest
 - `7c358d6` feat: balance slider with a live value and a fine centre (±3 snap removed)
 - `921e647` docs: the rebuilt 1.2.0 — texts, worn (i), PROTOCOL serials, ADR-032/059 Updates, run tiers
 - `562a289` docs(capture): CAP-073 (Group BI) skeleton — the re-test of the rebuilt 1.2.0
-- the sixth commit (this file, `ai-sessions/INDEX.md`, the `0083` back-fill) — its hash is the branch tip after it; the next session back-fills it here.
+- `5b4d5db` docs(ai-sessions): 0084 FEATURE result, INDEX rows, 0083 back-fill — **the build commit of B1**
+- after the build: the build's identity in `CAP-073-EVENT-NOTES.md` and this file (docs only, no app file — `RELEASING.md` C3); its hash is the branch tip.
 
 Pushed without force; no pull request opened (a separate question), nothing merged, no tag, no release.
 

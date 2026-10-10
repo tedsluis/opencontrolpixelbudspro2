@@ -20,7 +20,7 @@ sequences of `CAP-072` §4 (no app change touches the worn line's logic; only it
 | Group(s) | BI (new) |
 | Date | TBD |
 | Phone | Pixel 9a, GrapheneOS (Android 17, `CP3A.261005.005` in `CAP-072`) — the secondary user without Google Play (user 10 in `CAP-072`; P0) |
-| App under test | OpenControl for Pixel Buds Pro 2 **1.2.0** rebuilt (versionCode 10200), the release APK of `scripts/release.sh` kept as `RELEASING.md` B3 says — **Info tab on film**: "App: 1.2.0, build <the B1 hash> (<date>)", no "-dirty"; APK and certificate SHA-256 from the script's output |
+| App under test | OpenControl for Pixel Buds Pro 2 **1.2.0** rebuilt (versionCode 10200), the release APK of `scripts/release.sh` (2026-10-10 08:05), **build commit `5b4d5db`** (the tip of `release/1.2.0-rebuild`), kept as `~/opencontrol-1.2.0-tested` (B3, byte-identical to `dist/1.2.0`) — **Info tab on film**: "App: 1.2.0, build 5b4d5db (<date>)", no "-dirty"; APK SHA-256 `ac04415eabf4369a49e9f88230aa83fc858a7e3ea0223d725c14a43ac5a67220`, certificate SHA-256 `a7530f5ceadcdfc9cddcbb0e9889e7699961e8a4ef18898c4ec7738cc79d8dcb` (= `README.md` / `SECURITY.md`) |
 | Previous version in this user | 1.2.0 build `ec6d163` (installed 2026-10-09 for `CAP-072`) — the update is from it (same versionCode: an equal code installs over the tested one, `RELEASING.md` rules) |
 | Official Pixel Buds app | not used (not in this user) |
 | Buds | Pixel Buds Pro 2, firmware `release_5.203` expected (any other ⇒ Safe Mode: say so, stop part III's writes) |
@@ -34,7 +34,7 @@ What `CAP-072` missed is marked ★.
 | # | Check | Done |
 |---|---|---|
 | P0 | In the test user: `adb shell am get-current-user`; `adb shell pm list packages --user <id> \| grep -i -E "gms\|vending"; echo "exit=$?"`; positive control `grep opencontrol` (exit 0) — save the outputs **with the exit statuses** | ☐ |
-| P1 | In the installed 1.2.0 (`ec6d163`): Dark mode **On**, Debug mode **on** (on film). `adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds \| grep -E "firstInstallTime\|lastUpdateTime\|versionCode"` → save. `adb install --user <id> -r dist/1.2.0/opencontrol-pixelbudspro2-1.2.0.apk` — **no uninstall**; the same `dumpsys` → save | ☐ |
+| P1 | In the installed 1.2.0 (`ec6d163`): Dark mode **On**, Debug mode **on** (on film). `adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds \| grep -E "firstInstallTime\|lastUpdateTime\|versionCode"` → save. `adb install --user <id> -r ~/opencontrol-1.2.0-tested/opencontrol-pixelbudspro2-1.2.0.apk` (SHA-256 `ac04415e…a67220`) — **no uninstall**; the same `dumpsys` → save | ☐ |
 | P2 | HCI snoop log on (set in the Owner, then switch to the test user) | ☐ |
 | P3 | The camera (with sound) is needed for **part II only**: the buds, the case and your head with both ears in view | ☐ |
 | P4 | Android's **screen recorder with sound** on for the whole run | ☐ |
