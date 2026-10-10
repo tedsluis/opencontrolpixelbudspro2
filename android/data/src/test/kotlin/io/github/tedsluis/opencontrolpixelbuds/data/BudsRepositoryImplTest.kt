@@ -28,6 +28,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap063
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap064
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap065
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap066Balance
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap072
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.HardwareInfoFixtures
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
@@ -3070,6 +3071,199 @@ class BudsRepositoryImplTest {
         settle()
         assertEquals(AncMode.TRANSPARENT, repo.ancMode.first(), "the mode is kept (from the last connection)")
         assertNull(repo.ancModeCause.first(), "its cause is this connection's to re-establish")
+    }
+
+    // ---- DECISIONS.md ADR-061 (`ai-sessions/0084`): the Message Stream claim held while the noise-control tab is on screen ----------------------------------
+
+    /** The repository with the app visible and the noise-control tab shown: the entry claim's `Get` answered by [getAnswer] (a real `Notify`). */
+    private suspend fun TestScope.holdingRepository(getAnswer: String = Cap045.NOTIFY_ADAPTIVE_612): Pair<BudsRepositoryImpl, FakeBudsTransport> {
+        val (repo, transport) = buildRepository()
+        transport.onSent = { ch, frame ->
+            when (frame.toHex().take(4)) {
+                "0811" -> transport.emit(ch, hex(getAnswer))
+                "0812" -> transport.emit(ch, hex("ff010006081201e8e8") + byteArrayOf(frame[7])) // CAP-001 2041's ACK shape
+                "0401" -> transport.emit(ch, hex("ff010003040100"))
+            }
+        }
+        repo.onAppVisible(true) // Android's link is UNKNOWN in these tests: ADR-044's re-open never fires
+        settle()
+        repo.setAncTabShown(true)
+        settle()
+        return repo to transport
+    }
+
+    @Test
+    @DisplayName("ADR-061: entering the noise-control tab claims once — one open, the Get 08 11 00 00 — and holds it: nothing released after 10 s")
+    fun `entering the noise-control tab claims once and holds the claim`() = runTest {
+        BleLogger.clear()
+        val (repo, transport) = holdingRepository()
+
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.openChannelCalls, "one claim")
+        assertEquals(listOf(Cap072.GET_A13499), transport.sent.map { it.second.toHex() }, "the existing claim's Get, nothing else")
+        assertEquals(AncMode.ADAPTIVE, repo.ancMode.first())
+        assertEquals(AncModeCause.READ, repo.ancModeCause.first(), "the Get's answer is a reading")
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls, "held, not released")
+        assertEquals(true, transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM))
+        val log = BleLogger.exportLog()
+        assertEquals(true, "Message Stream hold started: the noise-control tab is on screen (ADR-061)" in log)
+    }
+
+    @Test
+    @DisplayName("ADR-061: during the hold CAP-045 1583 (unprovoked, nothing pending) arrives and is shown as changed by the Buds")
+    fun `an unprovoked Notify during the hold is changed by the Buds`() = runTest {
+        val (repo, transport) = holdingRepository(getAnswer = Cap045.NOTIFY_ADAPTIVE_612)
+        advanceTimeBy(24_477) // CAP-045: 06:22:57.471 -> 06:23:21.948
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap045.NOTIFY_TRANSPARENT_1583))
+        settle()
+        assertEquals(AncMode.TRANSPARENT, repo.ancMode.first())
+        assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first())
+        assertEquals(currentTime, repo.ancModeUpdatedAt.first())
+        assertEquals(1, transport.sent.size, "the app sends nothing in reaction")
+        assertEquals(1, transport.openChannelCalls.size)
+    }
+
+    @Test
+    @DisplayName("ADR-061: CAP-072 A 13515 -> A 13519 and B 825 — the Buds' own changes during the hold are changed by the Buds; the Settable byte follows")
+    fun `the CAP-072 Notify frames during the hold`() = runTest {
+        val (repo, transport) = holdingRepository(getAnswer = Cap072.NOTIFY_OFF_00_A13515)
+        assertEquals(AncMode.OFF, repo.ancMode.first())
+        assertEquals(AncModeCause.READ, repo.ancModeCause.first())
+        assertEquals(AncAvailability.NOT_ALLOWED, repo.ancAvailability.first())
+
+        advanceTimeBy(63) // A 13515 -> A 13519
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap072.NOTIFY_TRANSPARENT_A13519))
+        settle()
+        assertEquals(AncMode.TRANSPARENT, repo.ancMode.first())
+        assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first())
+        assertEquals(AncAvailability.ALLOWED, repo.ancAvailability.first())
+
+        advanceTimeBy(60_000)
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap072.NOTIFY_ACTIVE_B825))
+        settle()
+        assertEquals(AncMode.ACTIVE, repo.ancMode.first())
+        assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first())
+        assertEquals(1, transport.openChannelCalls.size)
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls)
+    }
+
+    @Test
+    @DisplayName("ADR-061: a tap during the hold reuses the open channel (no second claim), sends its Get first, is set by this app, and the claim stays held")
+    fun `a tap during the hold reuses the channel`() = runTest {
+        val (repo, transport) = holdingRepository(getAnswer = Cap072.NOTIFY_TRANSPARENT_A11938)
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE))
+        assertEquals(1, transport.openChannelCalls.size, "no second SABM")
+        assertEquals(
+            listOf(Cap072.GET_A13499, Cap072.GET_A13499, Cap065.SET_ACTIVE_10790),
+            transport.sent.map { it.second.toHex() },
+            "the entry's Get, the tap's Get, then its Set (CAP-065 10790 = CAP-072 A 11939's bytes)",
+        )
+        assertEquals(AncModeCause.SET_BY_APP, repo.ancModeCause.first())
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls, "still held after the tap")
+    }
+
+    @Test
+    @DisplayName("ADR-061: the tile during the hold (stepAncMode) is no second claim and does not end the hold")
+    fun `the tile during the hold keeps it`() = runTest {
+        val (repo, transport) = holdingRepository(getAnswer = Cap072.NOTIFY_TRANSPARENT_A11938)
+        assertEquals(BudsResult.Success(Unit), repo.stepAncMode(AncMode::nextForTile))
+        assertEquals(1, transport.openChannelCalls.size)
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls)
+    }
+
+    @Test
+    @DisplayName("ADR-061: leaving the tab releases the claim after MESSAGE_STREAM_LINGER_MS (1.5 s), not before; the log names the reason")
+    fun `leaving the tab releases after the linger`() = runTest {
+        BleLogger.clear()
+        val (repo, transport) = holdingRepository()
+        advanceTimeBy(5_000); runCurrent()
+        repo.setAncTabShown(false)
+        runCurrent()
+        advanceTimeBy(1_400); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls, "not before 1.5 s")
+        advanceTimeBy(200); runCurrent()
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.closeChannelCalls)
+        assertEquals(true, "Message Stream hold ended: the noise-control tab was left" in BleLogger.exportLog())
+    }
+
+    @Test
+    @DisplayName("ADR-061: leaving the app (onAppVisible false) releases after 1.5 s, not before")
+    fun `leaving the app releases after the linger`() = runTest {
+        BleLogger.clear()
+        val (repo, transport) = holdingRepository()
+        repo.onAppVisible(false)
+        runCurrent()
+        advanceTimeBy(1_400); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls)
+        advanceTimeBy(200); runCurrent()
+        assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM), transport.closeChannelCalls)
+        assertEquals(true, "Message Stream hold ended: the app is not visible" in BleLogger.exportLog())
+    }
+
+    @Test
+    @DisplayName("ADR-061: re-entering the tab after the release claims once more; a quick return within the linger keeps the claim instead")
+    fun `re-entering the tab claims again, a quick return keeps the claim`() = runTest {
+        val (repo, transport) = holdingRepository()
+        repo.setAncTabShown(false); runCurrent()
+        advanceTimeBy(700); runCurrent()
+        repo.setAncTabShown(true); settle() // back within the linger: the pending release is cancelled, no new claim
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(1, transport.openChannelCalls.size)
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls)
+
+        repo.setAncTabShown(false); runCurrent()
+        advanceTimeBy(1_600); runCurrent()
+        assertEquals(1, transport.closeChannelCalls.size)
+        repo.setAncTabShown(true); settle()
+        assertEquals(2, transport.openChannelCalls.size, "one new claim with its Get")
+        assertEquals(listOf(Cap072.GET_A13499, Cap072.GET_A13499), transport.sent.map { it.second.toHex() })
+    }
+
+    @Test
+    @DisplayName("ADR-061: the Buds (or another client) close DLCI 0x04 under the hold — no re-claim by itself; the next tap claims again and holds")
+    fun `a channel closed under the hold is not re-claimed by itself`() = runTest {
+        BleLogger.clear()
+        val (repo, transport) = holdingRepository(getAnswer = Cap072.NOTIFY_TRANSPARENT_A11938)
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, "stream closed (EOF)")
+        settle()
+        advanceTimeBy(30_000); runCurrent()
+        assertEquals(1, transport.openChannelCalls.size, "no re-claim by itself")
+        assertEquals(true, "Message Stream hold ended: the channel was closed, not by this app" in BleLogger.exportLog())
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE))
+        assertEquals(2, transport.openChannelCalls.size, "the tap claims again")
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls, "and the claim is held again (the tab is still shown)")
+    }
+
+    @Test
+    @DisplayName("ADR-061: a session loss ends the hold; nothing claims by itself afterwards (the next claim — a pull here — is held again)")
+    fun `a session loss under the hold claims nothing by itself`() = runTest {
+        BleLogger.clear()
+        val machine = buildConnectionStateMachine()
+        val (repo, transport) = buildRepository(connectionStateMachine = machine)
+        transport.onSent = { ch, frame -> if (frame.toHex().take(4) == "0811") transport.emit(ch, hex(Cap045.NOTIFY_ADAPTIVE_612)) }
+        repo.onAppVisible(true); repo.setAncTabShown(true); settle()
+        assertEquals(1, transport.openChannelCalls.size)
+
+        transport.emitConnectionLost(ConnectionLoss(channelId = Dlci.MAESTRO, detail = "bt socket closed, read return: -1"))
+        transport.openChannels.clear() // the real transport has closed every socket of the connection before it reports the loss (BudsTransport.connectionLost)
+        settle()
+        assertEquals(ConnectionState.Disconnected, repo.connectionState.first())
+        assertEquals(true, "Message Stream hold ended: the session was lost" in BleLogger.exportLog())
+        advanceTimeBy(30_000); runCurrent()
+        assertEquals(1, transport.openChannelCalls.size, "no claim by itself after the loss")
+
+        // A new session (here driven directly — connect() needs a BluetoothDevice): its first claim is kept as the hold, the tab still shown.
+        transport.connected = true
+        machine.onConnectRequested(); machine.onLinkEstablished(); machine.onReady()
+        assertEquals(BudsResult.Success(AncMode.ADAPTIVE), repo.refreshAncMode())
+        assertEquals(2, transport.openChannelCalls.size)
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls, "held again: the noise-control tab is still shown")
     }
 }
 

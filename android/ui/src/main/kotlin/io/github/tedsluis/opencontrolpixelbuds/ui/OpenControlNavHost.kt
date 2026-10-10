@@ -160,6 +160,11 @@ data class OpenControlActions(
      * application scope — `null` when it only opened a system prompt or did nothing — so the pull indicator lasts exactly as long as the action.
      */
     val onPull: (PullAction) -> Job? = { null },
+    /**
+     * DECISIONS.md ADR-061 (`ai-sessions/0084`): `true` while the noise-control tab is the selected tab and the settings menu is closed, `false` otherwise —
+     * `:app` forwards it to `BudsRepository.setAncTabShown`, which holds the Message Stream claim while it is `true` and the app is visible.
+     */
+    val onAncTabShown: (Boolean) -> Unit = {},
 )
 
 data class OpenControlUiState(
@@ -277,6 +282,12 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
     LaunchedEffect(currentIndex, inSettings) {
         val index = currentIndex ?: return@LaunchedEffect
         if (!inSettings && pagerState.currentPage != index) pagerState.scrollToPage(index)
+    }
+    // ADR-061: report whether the noise-control tab is the one shown — not before the back stack is known (F-1), and not while the settings menu covers it.
+    // An (i) dialog on the tab keeps it shown (the maintainer's choice in chat 2026-10-10, "Tab selected + app visible").
+    LaunchedEffect(currentIndex, inSettings) {
+        val index = currentIndex ?: return@LaunchedEffect
+        actions.onAncTabShown(!inSettings && TAB_DESTINATIONS[index].route == Routes.ANC)
     }
     // A completed swipe (the pager settles on a new page): drive the exact same navigation call a bottom-nav tap uses, so back-stack semantics never
     // depend on which trigger changed the tab. Nothing is navigated while the back stack is not known yet (F-1).

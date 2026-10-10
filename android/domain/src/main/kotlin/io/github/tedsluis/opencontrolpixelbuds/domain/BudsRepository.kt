@@ -69,6 +69,15 @@ interface BudsRepository {
     fun onAppVisible(visible: Boolean)
 
     /**
+     * The noise-control tab became the shown tab (`true`) or not (`false`) — `:ui`'s selected tab with the settings menu closed, forwarded by `:app`. DECISIONS.md
+     * ADR-061: while it is shown **and** the app is visible ([onAppVisible]) the Message Stream claim (DLCI 0x04, ADR-032) is held instead of released, so the
+     * Buds' `Notify` of a change made on a bud reaches the app ([ancModeCause] `CHANGED_BY_BUDS`). Entering the tab with the session `Ready` claims once (the
+     * existing claim with its `Get`) unless a claim is open; leaving the tab or the app releases it the usual 1.5 s later (ADR-032's linger). Never
+     * opens anything in the background and never re-claims by itself after the channel was closed by the Buds or another client.
+     */
+    fun setAncTabShown(shown: Boolean)
+
+    /**
      * The Buds' last reported ANC mode, `null` before any report in this app run. It is **not** cleared when a session ends: whether it is current is
      * decided by [isCurrent] from [ancModeUpdatedAt] and [sessionSince] (`ai-sessions/0069`, A68-APP-02). A state, not an event stream: the newest report
      * always replaces the one before it (A68-APP-03 — the replay-1 `SharedFlow` it was could drop a report while a collector was busy).
