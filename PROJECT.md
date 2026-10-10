@@ -147,7 +147,7 @@ user without Play: installed over 1.1.0 it kept the data and settings, and every
 verdict: release build `86a6fb3` (the maintainer, chat 2026-10-08).
 **1.2.0** (prepared in `ai-sessions/0082`, 2026-10-09; not yet released): "Changed by the Buds" in the noise-control details, the component serial numbers on the
 Info tab (ADR-058), the "probably worn" indicator on the battery card (ADR-059), the Case sounds switches moved to gear → Settings and Conversation detection
-to Controls; volume-level notifications studied, not built (a draft ADR-060, a 1.3.0 candidate). Its hardware run is `CAP-072` (Group BH, planned).
+to Controls; volume-level notifications studied, not built (a draft ADR-060, a 1.3.0 candidate). Its hardware run `CAP-072` (`ai-sessions/0083`, 2026-10-09) found no heavy defect — every request answered and byte-identical, the serials and the worn line as specified — but showed that a press-and-hold is never shown (no claim open between actions, ADR-032); verdict **fix first** (the maintainer, chat 2026-10-10): ADR-061 holds the noise-control channel while that tab is on screen, then a short re-test.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROJECT

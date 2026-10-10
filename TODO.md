@@ -25,20 +25,22 @@ on channel 19, `15:1` on channel 21), the channel-19 balance `17:7`, the swipe b
 recording, so the items below stay open. **Next app run — `CAP-072` (Group BH, the 1.2.0 release run, skeleton by `ai-sessions/0082`):** the lid open before the app
 starts (P8), no app use before the film (P9), Do Not Disturb on (an incoming call put a third party's number on `CAP-071`'s film), the screen recording on,
 observations said aloud. `CAP-072` takes every item below except B4, the CDM picker, K5/BC-12, F-4 and the second device (`ai-sessions/0082` RESULT §I).
+**`CAP-072`** (the 1.2.0 release run, analysed in `ai-sessions/0083`) settled lead L-1 (🟢, `PROTOCOL.md` §2.2a Update of 2026-10-10) and S6 (seen on the screen
+recording) — both removed here; its film 2 was not made: the maintainer moved C12, S12 and T11 to the run of the **rebuilt 1.2.0** (verdict "fix first",
+ADR-061, chat 2026-10-10). **Next app run:** the rebuilt 1.2.0 — the ADR-061 hold test plus the items below; the shorter-run tiers of §6 apply.
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
 - [ ] C12 — a tap during an automatic re-open ("The app's channel is being reopened …", no write afterwards): not done in `CAP-070` (the tap came after
       "ready"). Needs the screen recording. — not done in `CAP-071` (no film 2).
-- [ ] `APP_TESTPLAN.md` H5 with the *Read EQ again* button (`CAP-068` and `CAP-070` read the value back only at a reconnect); S6 ("—" in the first second
-      after ready) on Android's **screen recording** (seen on the camera in `CAP-070` at 06:17:43 and 06:20:24, not on the first Connect); S12 (export across a
-      rotation) — not done in `CAP-068`, `CAP-070` or `CAP-071` (no H5 tap, no screen recording, no film 2; `CAP-071` showed "—" while not
-      connected and during re-opens). S9 (needs two Pixel Buds paired) — not planned.
-- [ ] The Left bud taken out with both **worn** on channel 19, **head in view** (lead L-1; `CAP-070` BF-18 gave `DISC` + 21 with the Left identified, wear
-      not on film) — 🟡 (`INEAR-005`). — not run in `CAP-071` (no film 2); `CAP-071` added two "only the Left out ⇒ 19" samples and one
-      19 → 21 as the Right went back to the head (`PROTOCOL.md` §2.2a note of 2026-10-08). In `CAP-072` the same steps read the worn indicator (`INEAR-006`, ADR-059).
-- [ ] The case-sound and Volume-EQ observations (what is heard): the film needs an audio track (`CAP-070`'s had none), or the maintainer says it. — `CAP-071` had audio but nothing was said and no case chime was
-      recorded with "Earbuds replaced" off or on (the Find ring was); still open.
+- [ ] `APP_TESTPLAN.md` H5 with the *Read EQ again* button (`CAP-068` and `CAP-070` read the value back only at a reconnect); S12 (export across a
+      rotation) — not done in `CAP-068`, `CAP-070`, `CAP-071` or `CAP-072` (no H5 tap; in `CAP-072` the phone was rotated before the save dialog, not during
+      it). S9 (needs two Pixel Buds paired) — not planned.
+- [ ] The case sound (`CAP-072-FINDINGS.md` §6, the maintainer's choice 2026-10-10): every write and read correct; a faint chime at Right-bud entries with
+      "Earbuds replaced" on, none at Left-bud entries. **Proposed experiment** (no skeleton yet): the official app vs OpenControl, Earbuds replaced on/off, each bud
+      separately and both, from the ear and from the hand, lid open, 30 s apart, music off, a microphone **at the case**, three repetitions per state.
+- [ ] Volume EQ (what is heard) and its writes — not done in `CAP-072` (no `4:{15:…}` write).
+- [ ] The worn line with in-ear detection **off** ("Worn: unknown — in-ear detection is off", `INEAR-006`) — not read in `CAP-072` (BH-9 done without a pull).
 - [ ] B4 double tap (`AlreadyInProgress`) — needs the Buds forgotten and re-paired.
 - [ ] `CAP-058` §9: film the CDM picker so the tapped button is identifiable (twice not identifiable in `CAP-058`).
 - [ ] K5 / BC-12 (GrapheneOS Bluetooth auto-off): only in a user where the setting exists (the Owner).
@@ -142,9 +144,10 @@ Open questions (each with where it is described):
 - 🟡 Hearable Controls MAC not enforced (`PROTOCOL.md` §4.1): a firmware that starts enforcing it would NAK with reason `0x03`.
 - 🔴 `CAP-069` leftovers: why a bud's charging bit stayed set ≈ 12 s after it left the case (7358 → 7404); why the phone re-opened GSND AUDIO on ACL 3
   (8157 → 8271); Device Information `03 0b` (FHN EID, out of scope) with length 25; field 18 after the Save button (one sample, 6050 → `CAP-053`).
-- [ ] **M** Restore the Buds (chat 2026-10-07, `ai-sessions/0077`) — done in `CAP-071` except one band: the mode list without Off (A3060, read back
-      `12:{1:1 2:0 3:1 4:0}`) and BALANCED (A3000) were written, but the Upper treble was then moved to +6.0 (A3009), so the active EQ reads
-      `[-3.5, 0.5, 1.0, -1.0, 6.0]` (`CAP-071` B492). One tap on Sound → BALANCED finishes it. (Removed when the maintainer confirms it is done.)
+- [ ] **M** Restore the Buds (chat 2026-10-07, `ai-sessions/0077`) — after `CAP-072` the Buds read EQ `[-3.5, 0.5, 1.0, -1.0, 6.0]` (Balanced with the Upper treble
+      at +6.0) and the mode list **with Adaptive** `12:{1:1 2:0 3:1 4:1}` (the reads of 18:20:05 in `CAP-072-btsnoop_hci2.log`). One tap on Sound → BALANCED and unticking
+      Adaptive on Controls finish it. (Removed when the maintainer confirms it is done.)
+- 🔴 `CAP-072` §4: why the Buds kept Settable `e8` ≥ 42 s with both buds on a table (17:51:19 → 17:52:00.9) while `CAP-065`/`CAP-066` read `00` within 2.6 s.
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
   captured — sending it needs its own ADR. Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
 - 🔴 `PROTOCOL.md` §5.2 steps 4 and 6 of the connection lifecycle (handshake content order, user-command timing); DLCI 0x08's protocol identity.
@@ -181,8 +184,16 @@ Open questions (each with where it is described):
 - [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
-- [ ] After `CAP-072`: replace the redacted-answer fixtures of `GetHardwareInfo` (`HardwareInfoFixtures`: `CAP-036` 1423 / `CAP-024` 832 with the serials X-ed out) by
-      OpenControl's own exchange from that run (serials redacted the same way); ADR-058/ADR-059 Updates with the run's result (**M**).
+- [ ] **1.2.0 rebuild (before release; verdict "fix first", the maintainer 2026-10-10):** build `DECISIONS.md` ADR-061 — hold the Message Stream claim while the
+      noise-control tab is on screen (`BudsRepositoryImpl.withMessageStream`/`scheduleRelease`, the tab's visibility from `:ui`/`:app`), unit tests with the
+      `CAP-045` 1583 unprovoked `Notify` during a hold and a release after leaving the tab; update `CHANGELOG.md` `[1.2.0]` and the release notes; then a
+      targeted hardware run (the hold with the tab open → the (i) line; leaving the tab → the phone's `DISC` ≤ 1.5 s; plus T11, the force-stop, C12, S12, H5,
+      Volume EQ from §2) (`CAP-072-FINDINGS.md` §5, §12).
+- [ ] Replace the redacted-answer fixtures of `GetHardwareInfo` (`HardwareInfoFixtures`: `CAP-036` 1423 / `CAP-024` 832 with the serials X-ed out) by
+      OpenControl's own exchange from `CAP-072`: request A 7593 → answer A 7596 (channel 21) and A 8616 → A 8620 (channel 19) of `CAP-072-btsnoop_hci2.log.last`,
+      serials redacted the same way (a FEATURE session; the ADR-058/ADR-059 Updates are done, 2026-10-10).
+- [ ] Balance slider: ≈ 30 writes and labels up to "Right 53" were needed to land near "Right 4" in `CAP-072` (18:07:49–18:08:57) — a finer step or tap targets
+      around the centre (a FEATURE question, **M**).
 - [ ] The worn indicator's (i) text names `CAP-064` to the user (the approved wording, `ai-sessions/0082` §B); reword without the capture id if the maintainer wants (**M**).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
@@ -229,6 +240,13 @@ statement is lost (`ai-sessions/0068` §6 has the proposal for each):
       2026-09-25, the announcement census, the call-id census) get entries with their commands, or a pointer line at the top (§6.2).
 - [ ] `AGENTS.md` §5 and §6 — shorten each to the rule plus one pointer (**M**: project law; "Four edits, no shortening" for now).
 - [ ] Optional (**M**, project law): a dated note in `AGENTS.md` §1 pointing to ADR-050 (the Info links hand a URL to the browser).
+- [ ] **Shorter hardware runs** (`ai-sessions/0083` RESULT "Testing burden", the maintainer's choice 2026-10-10: *"Both tiers + helper + card"*): write the
+      **minimal release run** (≤ 15 min: the update over the last release, Info (build, firmware, serials), one Connect, one ANC tap, each new or changed write
+      once, Bluetooth off/on, one export; screen recording only) and the **extended run** (camera and head, only when the wire or wear behaviour changes) into
+      `APP_TESTPLAN.md`/`RELEASING.md` as a proposal for **M**; a one-page run card; a `scripts/` helper that pulls the HCI log and the exports (bugreport),
+      names the files, decodes the session and compares each request with its fixture (its own session).
+- [ ] `PROTOCOL.md` §2.2a (2026-09-24 note, line ≈ 388) and §6 (≈ 2791, ≈ 3053) write the three component serials in full; ADR-058 item 5 asks for the first 4 +
+      last 2 characters in documents — redact them (a text change for **M**, found by `ai-sessions/0083`).
 
 Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each with its check in that RESULT's appendix):
 

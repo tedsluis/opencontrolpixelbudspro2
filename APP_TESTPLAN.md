@@ -330,7 +330,7 @@ T11, H5) are the earlier IDs, run again in `CAP-071`.
 
 ## V. The 1.2.0 build (`ai-sessions/0082`: "Changed by the Buds", the serial numbers, the worn line, the two moves)
 
-In `CAP-072` as BH-1 … BH-26 (`captures/CAP-072-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BH/CAP-072-EVENT-NOTES.md`, which has the reference bytes per request and
+In `CAP-072` as BH-1 … BH-26 (`captures/CAP-072-2026-10-09_17-27-26_18-23-39-Group_BH/CAP-072-EVENT-NOTES.md`, which has the reference bytes per request and
 the wear sequence with the head in view). One new request per Connect (`GetHardwareInfo`, ADR-058); the worn line (ADR-059) and the cause line are derived
 from frames the app already received; the moved switches send the same bytes as before. The robustness rows (C8, C9, J4, K1, K2, R6) and the open items
 (C12, S6, S12, T11, H5) are the earlier IDs, run again. Serial numbers are device identifiers: **redact them** in every note (first 4 + last 2 characters).
@@ -392,7 +392,14 @@ from frames the app already received; the moved switches send the same bytes as 
 | S 1.0.1 build | 13 | | | | |
 | T 1.1.0 build | 11 | 7 | 0 | 4 | 0 |
 | U 1.1.1 build | 14 | 11 | 0 | 3 | 0 |
-| V 1.2.0 build | 19 | | | | |
+| V 1.2.0 build | 19 | 13 | 1 | 4 | 1 |
+
+**Run `CAP-072` (2026-10-09, 1.2.0 `ec6d163`, the user without Play; `ai-sessions/0083`, `CAP-072-FINDINGS.md`):** section V — ✅ V1–V7, V11, V13, V14, V16,
+V17, V18; ❌ **V10** — the press-and-hold change is never shown: the app holds no Message Stream claim between actions (ADR-032), so the step **cannot pass as
+written**; verdict "fix first", ADR-061 (hold the claim while the noise-control tab is on screen); ⚠️ V8 (in-ear off/on written, the Worn line not read), V9 (two
+taps, not the four modes), V12 ("Probably worn" at 42 s on the table — the documented limit), V15 (Volume EQ, *Read EQ again* and "Right 4" not done); not run
+V19 (film 2 moved to the rebuild's run; S12 done differently: the rotation before the save dialog). Other steps — ✅ S6 on the screen recording (17:31:28), U1–U3
+(the update kept Dark mode and Debug mode), C8/C9 (×4), K1/K2, J4.
 
 **Run `CAP-070` (2026-10-07, 1.1.0 `0323849`, the user without Play; `ai-sessions/0075`, `CAP-070-FINDINGS.md`):** section T — ✅ T2, T3, T4, T6, T8, T9, T10;
 ⚠️ T1 (no "—" caught at the first Connect; a first install, not an update), T5 and T7 (writes ✅, observations not recorded — no audio), T11 (no dump). Other

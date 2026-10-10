@@ -2593,6 +2593,12 @@ motivated this).
   channel, the serials on film against the official app's About screen (if available) or the strings' EC/DR/DL marks. Not covered: the other fields of the
   answer (device type, SKU, hardware versions) — a later ADR if ever wanted.
 
+- **Update (2026-10-10, `ai-sessions/0083`, maintainer-approved in chat 2026-10-10, `AskUserQuestion` "ADR Updates", option *"Add both Updates
+  (Recommended)"*, with this text in the preview):** hardware-verified in `CAP-072` (1.2.0, build `ec6d163`) — 30 requests byte-identical to `CAP-036` 1415 (channel
+  21) / `CAP-024` 801 (channel 19), one per session, last; 29 answered in 35–173 ms, one cut by the Buds' `DISC` (A 21175 → 21179) and not retried; the three
+  strings identical in every answer; the Info tab shows Case / Right bud / Left bud (`CAP-072-FINDINGS.md` §2). The answer appears in the exports only inside the
+  Debug-mode hex dump, as item 5 allows (the maintainer, same chat, "Hex serials"). The decision is unchanged.
+
 ## ADR-059 — A "probably worn" indicator from the Settable byte, the in-ear detection setting and the runtime-info charging flags
 
 - **Date**: 2026-10-09
@@ -2628,6 +2634,11 @@ motivated this).
   (i) lines, one test per reading with the decoded values of real frames, the repository test with the real frames. If a capture refutes "`00` ⇒ no bud worn",
   the texts are revisited; if ADR-049 item 3 is ever promoted, the hedge may go.
 
+- **Update (2026-10-10, `ai-sessions/0083`, maintainer-approved in chat 2026-10-10, `AskUserQuestion` "ADR Updates", option *"Add both Updates
+  (Recommended)"*, with this text in the preview):** `CAP-072`: every reading followed the rule; 18 claims read `00`, each with no bud worn; with in-ear detection on
+  and both buds straight from the case to a table the Buds reported `e8` at 23 s and 42 s (A 13749, 13853) → "Probably worn" (the documented limit, now ≥ 42 s);
+  the "in-ear detection is off" reading was not seen (`CAP-072-FINDINGS.md` §4). ADR-049 item 3 is unchanged (🟡 "`00` ⇒ no bud worn"). The decision is unchanged.
+
 ## ADR-060 — Volume-level notifications from `maestro_pw.Dosimeter` (DRAFT — proposed, not accepted)
 
 - **Date**: 2026-10-09 (drafted)
@@ -2655,6 +2666,25 @@ motivated this).
   log.
 - **Consequences, if accepted**: a Dosimeter codec, two requests in the Connect sequence, a notification channel (`POST_NOTIFICATIONS` is already held), the
   switch on a tab, DataStore for one timestamp; its own hardware run with the meter. Until then: `TODO.md` §5 carries the candidate.
+
+## ADR-061 — Hold the Message Stream claim while the noise-control tab is on screen
+
+- **Date**: 2026-10-10
+- **Status**: Accepted (maintainer, chat 2026-10-10, `ai-sessions/0083`) — not yet built
+- **Note on process**: drafted by an AI agent (`ai-sessions/0083`); the decision is the maintainer's, given in the chat of 2026-10-10 (`AskUserQuestion` "Hold
+  result", option *"Fix first: hold 0x04 on ANC tab"*, and "Hold ADR", option *"Accept as ADR-061 now (Recommended)"*, with this text in the preview), per
+  `AGENTS.md` §6.
+- **Context**: `CAP-072` §5 — the maintainer's press-and-holds changed the mode audibly but never reached the app: ADR-032 claims DLCI 0x04 only for an action and
+  releases it 1.5 s later (items 3 and 5), and in the user without Play services nobody else holds the channel, so the Buds' `Notify` has no recipient (no claim
+  from A 11947 17:44:34 to A 12490 17:48:46). 1.2.0's "Changed by the Buds" (`AncModeCause`) worked inside a claim (A 13519, 17:51:10).
+- **Options considered**: (a) keep ADR-032 and reword the feature as a limit; (b) hold the claim while the noise-control tab is visible — chosen; (c) a Refresh hint
+  only; (d) a background claim — rejected (ADR-032's "no background claim").
+- **Decision**: while the noise-control tab is visible the app keeps its DLCI 0x04 claim open (opened on entering the tab, by the existing claim code); it is
+  released 1.5 s after leaving the tab or the app, or on a session loss. No background or periodic claim; ADR-032's other items are unchanged. An unprovoked
+  `Notify` during the hold is classed `AncModeCause.CHANGED_BY_BUDS` as today.
+- **Consequences**: on a phone with Play services, Play's Fast Pair is locked out of DLCI 0x04 while the tab is open (claim contention, ADR-032 (i)). 1.2.0 is
+  rebuilt with this change before release (nothing is published yet). Re-test: tab open, hold a bud → `Notify` → the (i) line without a tap; leave the tab → the
+  phone's `DISC` within 1.5 s; the film-2 items of `CAP-072` (T11, the force-stop) in the same run.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
