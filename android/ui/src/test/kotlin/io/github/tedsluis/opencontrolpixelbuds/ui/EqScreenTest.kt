@@ -38,6 +38,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.geometry.Offset
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingReading
@@ -290,5 +292,55 @@ class EqScreenTest {
         compose.waitForIdle()
         assertEquals("one write per completed gesture, not per drag frame", 1, writes.size)
         assertTrue("dragged toward R = a Right value", writes.single() < 0)
+    }
+
+    // ---- ai-sessions/0084 item 3 (the maintainer's choice in chat 2026-10-10, "Live value + fine centre"; CAP-072 18:07:49–18:08:57: 30 writes for "Right 4") ----
+
+    @Test
+    fun `the mapping - the middle third holds -10 to +10 in steps of 1, the ends are 100, every value has its own position`() {
+        assertEquals(0, balanceFromPosition(0f))
+        assertEquals("a third of the travel to the right = Right 10", -BALANCE_FINE_LIMIT, balanceFromPosition(100f / 3f))
+        assertEquals("a third to the left = Left 10", BALANCE_FINE_LIMIT, balanceFromPosition(-100f / 3f))
+        assertEquals(-100, balanceFromPosition(100f))
+        assertEquals(100, balanceFromPosition(-100f))
+        assertEquals("beyond the travel is clamped", -100, balanceFromPosition(140f))
+        assertEquals("one step in the fine third is 1/30 of the travel", 10f / 3f, positionForBalance(-1), 1e-4f)
+        assertEquals("Right 4 sits at 4/30 of the travel", 40f / 3f, positionForBalance(-4), 1e-4f)
+        for (value in -100..100) assertEquals("round trip $value", value, balanceFromPosition(positionForBalance(value)))
+        assertTrue("positions grow with Right", (-100..99).all { positionForBalance(it) > positionForBalance(it + 1) })
+    }
+
+    @Test
+    fun `the label shows the Buds' value, and the finger's value with release to set while the finger is down`() {
+        assertEquals("Right 4", balanceSliderLabel(-4, null))
+        assertEquals("Centre", balanceSliderLabel(0, null))
+        assertEquals("Right 4 — release to set", balanceSliderLabel(0, positionForBalance(-4)))
+        assertEquals("Left 10 — release to set", balanceSliderLabel(-4, positionForBalance(10)))
+    }
+
+    @Test
+    fun `setting the slider to Right 4's position writes -4 once, the 17_7 of CAP-070 A3747 and CAP-064 6671`() {
+        // -4 is zigzag 7 on the wire: SettingsCodecTest pins balanceRequest(19, -4) = CAP-070 A3747 and (21, -4) = CAP-064 6671 byte for byte.
+        val writes = showBalance(0)
+        compose.onNode(balanceSlider).performSemanticsAction(SemanticsActions.SetProgress) { it(positionForBalance(-4)) }
+        compose.waitForIdle()
+        assertEquals(listOf(-4), writes)
+    }
+
+    @Test
+    fun `while dragging the label shows the finger's value, after release the Buds' value again`() {
+        val writes = showBalance(0)
+        compose.onNode(balanceSlider).performTouchInput {
+            down(center)
+            repeat(3) { moveBy(Offset(width / 40f, 0f)) } // past the touch slop, into the fine third, toward R
+        }
+        compose.waitForIdle()
+        compose.onNode(hasText("release to set", substring = true)).assertExists()
+        compose.onNode(balanceSlider).performTouchInput { up() }
+        compose.waitForIdle()
+        assertEquals("one write, on release", 1, writes.size)
+        assertTrue("a small move near the centre is a small Right value: ${writes.single()}", writes.single() in -10..-1)
+        compose.onNode(hasText("release to set", substring = true)).assertDoesNotExist()
+        compose.onNodeWithText("Centre").assertExists() // the Buds' value until they acknowledge the write
     }
 }

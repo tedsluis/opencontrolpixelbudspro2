@@ -186,7 +186,7 @@ Bluetooth, Allow, Pair) — once per pull, never automatically. The times and st
   (the maintainer's choices in chat 2026-09-28) it also holds "Modes for press and hold (both buds)" — four boxes, shown only while a bud's press and hold is
   Noise control, the last two ticked boxes disabled with "At least two modes must stay selected." — and "In-ear detection" is a switch with a note on what "off"
   changes (the balance's `[‹]`/`[›]` steps of `ai-sessions/0064` F-2 were removed again in `ai-sessions/0066`, the maintainer's choice — the slider alone, one
-write per completed drag); a setting not read from the Buds yet cannot be written — the balance slider and (since `ai-sessions/0059`, the maintainer's
+write per completed drag; since the 1.2.0 rebuild, `ai-sessions/0084`, the maintainer's choice "Live value + fine centre": the label shows the finger's value while dragging and the middle third of the slider holds −10 … +10 in steps of 1 — the ±3 snap to Centre of `ai-sessions/0054` I-3 is gone); a setting not read from the Buds yet cannot be written — the balance slider and (since `ai-sessions/0059`, the maintainer's
   choice in chat 2026-09-30) the five EQ sliders are disabled, while the EQ presets stay usable; **since 1.1.0** (`ai-sessions/0074`, the maintainer's choice
   in chat 2026-10-06, "— voor alle schakelaars") a switch that was not read shows "—" in place of the switch, and every "—" carries the content description
   "Not read from the Buds yet" for screen readers (`NotReadValue`, `SettingsUi.kt`). **Since 1.1.0** "Controls" also holds the cards "Head gestures" ("Use head

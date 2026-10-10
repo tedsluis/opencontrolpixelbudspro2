@@ -1454,14 +1454,14 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("I-3: a centred balance (BudsSettings.snapBalance of a release at Left 2) is CAP-046 frame 1873 byte for byte; ACK 1878 shows 'Centre'")
-    fun `a snapped balance writes 17_0 like the official app`() = runTest {
+    @DisplayName("A centred balance (0, the slider's middle since ai-sessions/0084 — the I-3 snap is gone) is CAP-046 frame 1873 byte for byte; ACK 1878 shows 'Centre'")
+    fun `a centred balance writes 17_0 like the official app`() = runTest {
         val (repo, transport) = buildRepository()
         transport.emit(Dlci.MAESTRO, helloFrame(19, 0x28c0)); settle() // CAP-046 ran on channel 19
         ackWrites(transport, 19) // 1878 = the channel's empty RESPONSE (identical to CAP-022 1629)
         advanceTimeBy(3_000)
 
-        assertEquals(BudsResult.Success(Unit), repo.setVolumeBalance(BudsSettings.snapBalance(2)))
+        assertEquals(BudsResult.Success(Unit), repo.setVolumeBalance(0))
 
         assertEquals(listOf(SettingsWrites.BALANCE_CENTRE_1873), transport.sent.map { it.second.toHex() })
         assertEquals(SettingReading(0, 3_000, changedByApp = true), repo.settings.value.volumeBalance)
