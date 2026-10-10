@@ -366,24 +366,24 @@ from frames the app already received; the moved switches send the same bytes as 
 
 ## W. The rebuilt 1.2.0 (`ai-sessions/0084`: the Message Stream held on the noise-control tab — ADR-061 — and the finer balance slider)
 
-In `CAP-073` as BI-1 … BI-20 (`captures/CAP-073-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BI/CAP-073-EVENT-NOTES.md`, which has the reference bytes per request). Nothing
+In `CAP-073` as BI-1 … BI-20 (`captures/CAP-073-2026-10-10_08-23-35_08-33-24-Group_BI/CAP-073-EVENT-NOTES.md`, which has the reference bytes per request). Nothing
 new on the wire: ADR-061 changes only **when** the existing claim (`SABM` DLCI 0x04, `08 11`, the phone's `DISC`) ends. The open items of `CAP-072` (T11, C12,
 S12, H5, T7, V8) are the earlier IDs, run again.
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| W1 | Update over the `ec6d163` 1.2.0 (Dark mode and Debug mode set); open the app; Info. | Dark at once; Debug mode on; "App: 1.2.0, build <B1 hash>", no "-dirty"; firmware ×3; the serials | the thirteen requests, one `GetHardwareInfo` = `CAP-072` A 7593 (21) / A 8616 (19) | | BI-1, BI-2 |
-| W2 | Disconnect, Connect; Bluetooth off/on; Export. | ready; "Bluetooth is disabled.", then ready by itself; "Debug log saved (N lines)." | the thirteen requests after each open | | BI-3 … BI-5 |
-| W3 | (the fixture-independent check) The requests of W1/W2 against `CAP-072`'s frames. | — | byte-identical to `CAP-072` (the unit tests' fixtures since `ai-sessions/0084` are `CAP-072`'s own frames) | | analysis |
-| W4 | Both buds worn: open the **ANC** tab, wait 30 s. | the mode; the (i) ends "While this tab is open the app keeps the Buds' noise-control channel open, …" | one `SABM` DLCI 0x04 + `08 11`; **no `DISC`** for 30 s | | BI-6 (ADR-061) |
-| W5 | **Press and hold** the Left bud, then the Right bud; the (i) after each. | the mode changes without a tap; "Changed by the Buds at HH:MM:SS (a press-and-hold on a bud, or the Buds' own change)."; the time moves | an unprovoked `08 13 00 04 01 e8 e8 xx` per hold, nothing from the app | | BI-7, BI-8 (`TOUCH-007`) |
-| W6 | On the ANC tab: a mode tap; then the tile from Quick Settings. | each mode after its ACK; no "Changed by the Buds" line | `08 11` → `Notify` → `Set` → ACK on the held channel — **no second `SABM`**, no `DISC` | | BI-9, BI-10 |
-| W7 | Leave the ANC tab (Controls); back; Home; return. | — | the phone's `DISC` ≈ 1.5 s after leaving the tab and after Home; a new `SABM` + `08 11` on entering and on return | | BI-11, BI-12 |
-| W8 | With the ANC tab shown: both buds into the case, then out into the ears. | the session ends with its cause, then ready by itself | ADR-044's re-open and its snapshot claim **kept** (no `DISC` while the tab is shown) | | BI-13 |
-| W9 | T11: Bluetooth off, `am force-stop`, three `uiautomator` dumps (Controls, Sound, gear → Settings). | every "—" has `content-desc` "Not read from the Buds yet" (Controls 7, Sound 8, Settings 2) | — | | BI-14 |
-| W10 | C12: a Multipoint tap during the re-open after the Right bud went into the case; S12: Export with a rotation during the save dialog; H5: *Read EQ again*. | "The app's channel is being reopened …", nothing written; "Debug log saved (N lines)."; the EQ time moves | no `4:{11:…}`; one `ReadSetting 4:16` | | BI-15 … BI-17 |
-| W11 | Volume EQ off/on (say what you hear); in-ear detection off → pull → on → pull. | each after its OK; "Worn: unknown — in-ear detection is off", then "Probably worn (checked …)"; the battery (i) says "… 40 seconds or more …", no capture id | `4:{15:0}`/`{15:1}`; `4:{2:0}`/`{2:1}` = the references | | BI-18, BI-19 |
-| W12 | Balance: drag slowly to **"Right 4 — release to set"**, release; then to "Centre". | the label follows the finger with "— release to set"; after release the Buds' value; one write per release | `4:{17:7}` (`CAP-070` 3747 on 19, `CAP-064` 6671 on 21), then `4:{17:0}`; nothing during a drag | | BI-20 (`AUDIO-003`) |
+| W1 | Update over the `ec6d163` 1.2.0 (Dark mode and Debug mode set); open the app; Info. | Dark at once; Debug mode on; "App: 1.2.0, build <B1 hash>", no "-dirty"; firmware ×3; the serials | the thirteen requests, one `GetHardwareInfo` = `CAP-072` A 7593 (21) / A 8616 (19) | ✅ | BI-1, BI-2 |
+| W2 | Disconnect, Connect; Bluetooth off/on; Export. | ready; "Bluetooth is disabled.", then ready by itself; "Debug log saved (N lines)." | the thirteen requests after each open | ⚠️ Bluetooth off/on not run | BI-3 … BI-5 |
+| W3 | (the fixture-independent check) The requests of W1/W2 against `CAP-072`'s frames. | — | byte-identical to `CAP-072` (the unit tests' fixtures since `ai-sessions/0084` are `CAP-072`'s own frames) | ✅ | analysis |
+| W4 | Both buds worn: open the **ANC** tab, wait 30 s. | the mode; the (i) ends "While this tab is open the app keeps the Buds' noise-control channel open, …" | one `SABM` DLCI 0x04 + `08 11`; **no `DISC`** for 30 s | ⚠️ (i) not opened | BI-6 (ADR-061) |
+| W5 | **Press and hold** the Left bud, then the Right bud; the (i) after each. | the mode changes without a tap; "Changed by the Buds at HH:MM:SS (a press-and-hold on a bud, or the Buds' own change)."; the time moves | an unprovoked `08 13 00 04 01 e8 e8 xx` per hold, nothing from the app | ⚠️ (i) line not checked | BI-7, BI-8 (`TOUCH-007`) |
+| W6 | On the ANC tab: a mode tap; then the tile from Quick Settings. | each mode after its ACK; no "Changed by the Buds" line | `08 11` → `Notify` → `Set` → ACK on the held channel — **no second `SABM`**, no `DISC` | ⚠️ tile not run | BI-9, BI-10 |
+| W7 | Leave the ANC tab (Controls); back; Home; return. | — | the phone's `DISC` ≈ 1.5 s after leaving the tab and after Home; a new `SABM` + `08 11` on entering and on return | ⚠️ Home/return not run | BI-11, BI-12 |
+| W8 | With the ANC tab shown: both buds into the case, then out into the ears. | the session ends with its cause, then ready by itself | ADR-044's re-open and its snapshot claim **kept** (no `DISC` while the tab is shown) | not run | BI-13 |
+| W9 | T11: Bluetooth off, `am force-stop`, three `uiautomator` dumps (Controls, Sound, gear → Settings). | every "—" has `content-desc` "Not read from the Buds yet" (Controls 7, Sound 8, Settings 2) | — | not run | BI-14 |
+| W10 | C12: a Multipoint tap during the re-open after the Right bud went into the case; S12: Export with a rotation during the save dialog; H5: *Read EQ again*. | "The app's channel is being reopened …", nothing written; "Debug log saved (N lines)."; the EQ time moves | no `4:{11:…}`; one `ReadSetting 4:16` | not run | BI-15 … BI-17 |
+| W11 | Volume EQ off/on (say what you hear); in-ear detection off → pull → on → pull. | each after its OK; "Worn: unknown — in-ear detection is off", then "Probably worn (checked …)"; the battery (i) says "… 40 seconds or more …", no capture id | `4:{15:0}`/`{15:1}`; `4:{2:0}`/`{2:1}` = the references | ⚠️ (i) text ✅; Volume EQ, in-ear not run | BI-18, BI-19 |
+| W12 | Balance: drag slowly to **"Right 4 — release to set"**, release; then to "Centre". | the label follows the finger with "— release to set"; after release the Buds' value; one write per release | `4:{17:7}` (`CAP-070` 3747 on 19, `CAP-064` 6671 on 21), then `4:{17:0}`; nothing during a drag | ✅ | BI-20 (`AUDIO-003`) |
 
 ## After the run (within 1 minute of the last action)
 
@@ -421,7 +421,12 @@ S12, H5, T7, V8) are the earlier IDs, run again.
 | T 1.1.0 build | 11 | 7 | 0 | 4 | 0 |
 | U 1.1.1 build | 14 | 11 | 0 | 3 | 0 |
 | V 1.2.0 build | 19 | 13 | 1 | 4 | 1 |
-| W 1.2.0 rebuilt | 12 | | | | |
+| W 1.2.0 rebuilt | 12 | 3 | 0 | 6 | 3 |
+
+**Run `CAP-073` (2026-10-10, 1.2.0 rebuilt `5b4d5db`, the user without Play; `ai-sessions/0085`, `CAP-073-FINDINGS.md`):** section W — ✅ W1, W3, W12;
+⚠️ W2 (Disconnect/Connect and the export ✅; Bluetooth off/on not run), W4/W5 (the hold and four press-and-holds shown without a tap ✅; the noise-control (i) not
+opened), W6 (four taps on the held channel ✅; the tile not run), W7 (the `DISC` 1.509 s after leaving the tab ✅; Home/return not run), W11 (the battery (i)
+text ✅; Volume EQ and in-ear detection not run); not run W8, W9, W10 (the maintainer tested only the changed functionality). Verdict: OK — ready to release.
 
 **Run `CAP-072` (2026-10-09, 1.2.0 `ec6d163`, the user without Play; `ai-sessions/0083`, `CAP-072-FINDINGS.md`):** section V — ✅ V1–V7, V11, V13, V14, V16,
 V17, V18; ❌ **V10** — the press-and-hold change is never shown: the app holds no Message Stream claim between actions (ADR-032), so the step **cannot pass as

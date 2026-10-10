@@ -29,6 +29,12 @@ observations said aloud. `CAP-072` takes every item below except B4, the CDM pic
 recording) — both removed here; its film 2 was not made: the maintainer moved C12, S12 and T11 to the run of the **rebuilt 1.2.0** (verdict "fix first",
 ADR-061, chat 2026-10-10). **Next app run:** `CAP-073` (Group BI, the rebuilt 1.2.0, skeleton by `ai-sessions/0084`, ≤ 20 min) — the ADR-061 hold test plus
 T11, C12, S12, H5, Volume EQ, the worn line with in-ear detection off and balance "Right 4" (BI-14 … BI-20); the tiers of `RELEASING.md` §11a apply.
+**`CAP-073`** (the rebuilt 1.2.0, analysed in `ai-sessions/0085`, verdict OK — ready to release) settled the ADR-061 hold's main path and balance "Right 4"
+(both removed here); the maintainer tested only the changed functionality, so T11, C12, S12, H5, Volume EQ and the worn line with in-ear detection off stay open,
+with the hold's untested branches below.
+- [ ] The ADR-061 hold's other branches on hardware (`CAP-073-FINDINGS.md` §4): the tile with the noise-control tab shown (no second `SABM`, no `DISC`); Home and
+      return (the `DISC` ≈ 1.5 s after Home, a new claim on return); a session loss and the ADR-044 re-open while the tab is shown (the snapshot kept); and the
+      noise-control (i) after a press-and-hold ("Changed by the Buds at HH:MM:SS …" and the ADR-061 sentence) — not run in `CAP-073`.
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
@@ -145,9 +151,9 @@ Open questions (each with where it is described):
 - 🟡 Hearable Controls MAC not enforced (`PROTOCOL.md` §4.1): a firmware that starts enforcing it would NAK with reason `0x03`.
 - 🔴 `CAP-069` leftovers: why a bud's charging bit stayed set ≈ 12 s after it left the case (7358 → 7404); why the phone re-opened GSND AUDIO on ACL 3
   (8157 → 8271); Device Information `03 0b` (FHN EID, out of scope) with length 25; field 18 after the Save button (one sample, 6050 → `CAP-053`).
-- [ ] **M** Restore the Buds (chat 2026-10-07, `ai-sessions/0077`) — after `CAP-072` the Buds read EQ `[-3.5, 0.5, 1.0, -1.0, 6.0]` (Balanced with the Upper treble
-      at +6.0) and the mode list **with Adaptive** `12:{1:1 2:0 3:1 4:1}` (the reads of 18:20:05 in `CAP-072-btsnoop_hci2.log`). One tap on Sound → BALANCED and unticking
-      Adaptive on Controls finish it. (Removed when the maintainer confirms it is done.)
+- [ ] **M** Restore the Buds (chat 2026-10-07, `ai-sessions/0077`) — after `CAP-073` (session 11, 08:32:17) the Buds read EQ `[-2.0, 0.0, 2.0, 3.0, 5.0]` (the Owner
+      user's write of 07:08:44, `CAP-073-btsnoop_hci.log.last` A 22180), the mode list **with Adaptive** `12:{1:1 2:0 3:1 4:1}` and **balance Left 4** (`17:8`,
+      `CAP-073-FINDINGS.md` §3). Sound → BALANCED, the balance back to Centre and unticking Adaptive on Controls finish it. (Removed when the maintainer confirms it is done.)
 - 🔴 `CAP-072` §4: why the Buds kept Settable `e8` ≥ 42 s with both buds on a table (17:51:19 → 17:52:00.9) while `CAP-065`/`CAP-066` read `00` within 2.6 s.
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
   captured — sending it needs its own ADR. Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
@@ -183,8 +189,9 @@ Open questions (each with where it is described):
 - [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
-- [ ] **M** — the rebuilt 1.2.0 (`ai-sessions/0084`: ADR-061 built, the `CAP-072` fixtures, the finer balance slider, the texts): `scripts/release.sh 1.2.0` on the
-      branch tip (B1–B3), the run `CAP-073` (Group BI), then a CAPTURE session for the verdict (C3/C4) (`RELEASING.md`; the steps in `ai-sessions/0084` RESULT).
+- [ ] **M** — release the rebuilt 1.2.0: B1–B3 done (build `5b4d5db`, `ai-sessions/0084`), `CAP-073` analysed (`ai-sessions/0085`), **C4 verdict OK — ready to
+      release** (the maintainer, chat 2026-10-10). Left: D1–D4 (merge PR #27 with a merge commit, the signed tag `v1.2.0` on `5b4d5db`, the release from
+      `~/opencontrol-1.2.0-tested`, the phone check) and E1–E4 (`RELEASING.md`).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.

@@ -2691,6 +2691,11 @@ motivated this).
 - **Consequences**: on a phone with Play services, Play's Fast Pair is locked out of DLCI 0x04 while the tab is open (claim contention, ADR-032 (i)). 1.2.0 is
   rebuilt with this change before release (nothing is published yet). Re-test: tab open, hold a bud → `Notify` → the (i) line without a tap; leave the tab → the
   phone's `DISC` within 1.5 s; the film-2 items of `CAP-072` (T11, the force-stop) in the same run.
+- **Update (2026-10-10, `ai-sessions/0085`, maintainer-approved in chat 2026-10-10, `AskUserQuestion` "ADR-061", option *"Add the Update (Recommended)"*):**
+  built in the 1.2.0 rebuild (`ai-sessions/0084`, build `5b4d5db`) and hardware-verified for its main path in `CAP-073`: entering the noise-control tab claimed
+  DLCI 0x04 once (B 3484) and kept it 31 s; four unprovoked `Notify` (B 3531, 3543, 3546, 3547) changed the mode on screen without a tap; four taps used the held
+  channel (no `SABM`); leaving the tab released it 1.509 s later (B 3654) (`CAP-073-FINDINGS.md` §4). Not hardware-tested: the tile, Home, a loss or re-open while
+  the tab is shown, the (i) line. The decision is unchanged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

@@ -111,7 +111,8 @@ tests, not yet on a phone.
 
 **1.2.0 is prepared, not yet released** (2026-10-09, `ai-sessions/0082`; rebuilt 2026-10-10 in `ai-sessions/0084` after its hardware run `CAP-072`
 (`ai-sessions/0083`): the app keeps its noise-control channel open while the noise-control tab is on screen, so a press-and-hold on a bud shows — ADR-061;
-re-test `CAP-073`): "Changed by the Buds" in the noise-control details, the serial numbers on the Info tab, a "probably worn" line on the battery card, a finer
+re-test `CAP-073` passed, `ai-sessions/0085`: the hold works on the tab, a press-and-hold changes the mode on screen without a tap — verdict OK, ready to
+release): "Changed by the Buds" in the noise-control details, the serial numbers on the Info tab, a "probably worn" line on the battery card, a finer
 balance slider, and the Case sounds switches on gear → Settings and Conversation detection on Controls. Known issues of 1.2.0 (also in
 [`CHANGELOG.md`](./CHANGELOG.md)): the worn line is a hedged reading of a hypothesis (the Buds say "at least one bud", never which, and have reported it for 40
 seconds or more with both buds on a table); the serial labels are the official app's reading of the answer's order; "Changed by the Buds" shows only what the
@@ -150,13 +151,13 @@ to design, implement, test, and document a native Android app.
 
 ## Current state (2026-10-10)
 
-- **Captures:** 73 registered sessions (`CAP-001`–`CAP-073`): 68 analyzed (the latest, `CAP-072` of 2026-10-09: the 1.2.0 release run — every request answered and byte-identical, the serials and the worn line as specified, the press-and-hold not shown by design → fix first, `ai-sessions/0083`), 3 planned (among them `CAP-073`, the re-test of the rebuilt 1.2.0, `ai-sessions/0084`), 2 withdrawn (`CAP-052`,
-  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068`, `CAP-070`, `CAP-071` and `CAP-072` are captures of this project's own app (`CAP-067`: the 1.0.0
-  release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, `CAP-071`: the 1.1.1 release APK, `CAP-072`: the 1.2.0 release APK, all without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
+- **Captures:** 73 registered sessions (`CAP-001`–`CAP-073`): 69 analyzed (the latest, `CAP-073` of 2026-10-10: the rebuilt 1.2.0 — the noise-control channel held on its tab, four press-and-holds shown without a tap, every request byte-identical to `CAP-072` → OK, ready to release, `ai-sessions/0085`), 2 planned, 2 withdrawn (`CAP-052`,
+  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` and `CAP-070`–`CAP-073` are captures of this project's own app (`CAP-067`: the 1.0.0
+  release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, `CAP-071`: the 1.1.1 release APK, `CAP-072`: the 1.2.0 release APK, `CAP-073`: the rebuilt 1.2.0 release APK, all without Google Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 60 accepted ADRs (ADR-061, 2026-10-10, built in the 1.2.0 rebuild, `ai-sessions/0084`, not yet hardware-verified) and one labelled draft (ADR-060, proposed, not accepted) in `DECISIONS.md`; every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
+- **Decisions:** 60 accepted ADRs (ADR-061, 2026-10-10, built in the 1.2.0 rebuild, `ai-sessions/0084`, its main path hardware-verified in `CAP-073`) and one labelled draft (ADR-060, proposed, not accepted) in `DECISIONS.md`; every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
   approval was given but whose record is missing (the ADR says so).
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
