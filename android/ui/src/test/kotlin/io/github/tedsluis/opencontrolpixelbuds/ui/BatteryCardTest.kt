@@ -151,7 +151,7 @@ class BatteryCardTest {
         compose.onAllNodesWithText("Probably worn (checked ${formatUpdatedAt(at)})").assertCountEquals(2)
         compose.onNodeWithText(
             "Worn: from the Buds' last noise-control report. 'Probably worn' = the Buds allow changing noise control — on film that always meant at least one " +
-                "bud in an ear, but the Buds do not say which bud, and once (CAP-064) they reported it for about half a minute with both buds on a table. " +
+                "bud in an ear, but the Buds do not say which bud, and they have reported it for 40 seconds or more with both buds on a table. " +
                 "'Not worn' = the Buds refuse a change — in 56 filmed samples no bud was in an ear. With in-ear detection off the report says nothing about wearing.",
         ).assertExists()
         assertEquals("Not worn (checked ${formatUpdatedAt(at)})", wornLine(WornReading.NotWorn(at)))

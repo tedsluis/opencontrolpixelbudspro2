@@ -539,6 +539,8 @@ class MainActivity : ComponentActivity() {
                 onExportLog = { startLogExport() },
                 onOpenUrl = { url -> openUrl(url) },
                 onUseDifferentBuds = { useDifferentBuds() },
+                // DECISIONS.md ADR-061 (`ai-sessions/0084`): the repository holds the Message Stream claim while this is true and the app is visible.
+                onAncTabShown = { shown -> budsRepository.setAncTabShown(shown) },
             )
             // `ai-sessions/0057` D-10: a pull runs the one existing action `pullActionFor` chose — the same repository call or system prompt its button makes —
             // once, in the application scope; the returned job lets the pull indicator end when the repository has answered. Nothing is retried or scheduled.

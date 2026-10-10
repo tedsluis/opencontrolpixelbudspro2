@@ -166,9 +166,24 @@ class AncScreenTest {
     fun `the changed-by-the-Buds line leaves the time out when there is none, and needs a mode`() {
         assertEquals("Changed by the Buds (a press-and-hold on a bud, or the Buds' own change).", ancChangedByBudsLine(null))
         assertEquals(
-            listOf("ANC mode: unknown", "Connection: Ready", MESSAGE_STREAM_HINT_TEXT),
+            listOf("ANC mode: unknown", "Connection: Ready", ANC_HOLD_HINT_TEXT),
             ancDetailLines(ConnectionState.Ready, null, null, notAllowed = false, checkedAt = null, cause = AncModeCause.CHANGED_BY_BUDS),
         )
+    }
+
+    @Test
+    fun `ADR-061 - the (i) ends with the hold sentence, the maintainer's text, and Find keeps the brief-claim hint`() {
+        assertEquals(
+            "While this tab is open the app keeps the Buds' noise-control channel open, so a change made on a bud (a press-and-hold) shows here. Another " +
+                "app that uses the channel (for example Google Play services' Fast Pair) cannot use it meanwhile; it is released 1.5 seconds after you leave " +
+                "the tab.",
+            ANC_HOLD_HINT_TEXT,
+        )
+        assertEquals(ANC_HOLD_HINT_TEXT, ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null).last())
+        assertEquals(false, ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null).contains(MESSAGE_STREAM_HINT_TEXT))
+        show(cause = AncModeCause.READ)
+        compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick()
+        compose.onNodeWithText(ANC_HOLD_HINT_TEXT).assertExists()
     }
 
     @Test

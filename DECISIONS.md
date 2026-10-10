@@ -1774,6 +1774,9 @@ motivated this).
   is audible; (iii) Find My Buds works and the sound **keeps repeating until Stop is pressed** — this answers the
   open question in *What this does NOT settle* (ii): ringing **does** continue after the Message Stream socket is
   released, so the 1.5 s linger is sufficient for Find. Still unverified: limit (iii) (occasional short windows).
+- **Update (2026-10-10, `ai-sessions/0084`, pointer only — maintainer-approved in chat 2026-10-10, `AskUserQuestion` "ADR-032", option *"Pointer Update on
+  ADR-032 (Recommended)"*):** item 3 ("released after a short linger") has one exception since 1.2.0: while the noise-control tab is on screen the claim is held
+  (**ADR-061**); it is released 1.5 s after leaving the tab or the app. The other items are unchanged.
 
 ## ADR-033 — Battery Option B: `Group 0x03 Code 0x03` decoder on DLCI 0x04 unblocked for implementation (percentage regime only)
 
@@ -2638,6 +2641,9 @@ motivated this).
   (Recommended)"*, with this text in the preview):** `CAP-072`: every reading followed the rule; 18 claims read `00`, each with no bud worn; with in-ear detection on
   and both buds straight from the case to a table the Buds reported `e8` at 23 s and 42 s (A 13749, 13853) → "Probably worn" (the documented limit, now ≥ 42 s);
   the "in-ear detection is off" reading was not seen (`CAP-072-FINDINGS.md` §4). ADR-049 item 3 is unchanged (🟡 "`00` ⇒ no bud worn"). The decision is unchanged.
+- **Update (2026-10-10, `ai-sessions/0084`, maintainer-approved in chat 2026-10-10, `AskUserQuestion` "Worn (i)", option *"Reword, no capture id
+  (Recommended)"*):** item 4's (i) text now reads "… but the Buds do not say which bud, and they have reported it for 40 seconds or more with both buds on a
+  table. …" (`CAP-072` §4: `e8` at 42 s) — no capture id shown to the user. The decision is unchanged.
 
 ## ADR-060 — Volume-level notifications from `maestro_pw.Dosimeter` (DRAFT — proposed, not accepted)
 
@@ -2685,6 +2691,11 @@ motivated this).
 - **Consequences**: on a phone with Play services, Play's Fast Pair is locked out of DLCI 0x04 while the tab is open (claim contention, ADR-032 (i)). 1.2.0 is
   rebuilt with this change before release (nothing is published yet). Re-test: tab open, hold a bud → `Notify` → the (i) line without a tap; leave the tab → the
   phone's `DISC` within 1.5 s; the film-2 items of `CAP-072` (T11, the force-stop) in the same run.
+- **Update (2026-10-10, `ai-sessions/0085`, maintainer-approved in chat 2026-10-10, `AskUserQuestion` "ADR-061", option *"Add the Update (Recommended)"*):**
+  built in the 1.2.0 rebuild (`ai-sessions/0084`, build `5b4d5db`) and hardware-verified for its main path in `CAP-073`: entering the noise-control tab claimed
+  DLCI 0x04 once (B 3484) and kept it 31 s; four unprovoked `Notify` (B 3531, 3543, 3546, 3547) changed the mode on screen without a tap; four taps used the held
+  channel (no `SABM`); leaving the tab released it 1.509 s later (B 3654) (`CAP-073-FINDINGS.md` §4). Not hardware-tested: the tile, Home, a loss or re-open while
+  the tab is shown, the (i) line. The decision is unchanged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

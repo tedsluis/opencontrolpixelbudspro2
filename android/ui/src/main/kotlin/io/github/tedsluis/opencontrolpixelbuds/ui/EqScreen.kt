@@ -43,6 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
@@ -251,20 +253,26 @@ private fun EqStatusNotice(
 
 /**
  * Volume balance (`qhr` field 17, ADR-026/045). The wire's +100 is **Left**, so the slider runs from Left (its left end) to Right: slider position =
- * −value. One write per completed drag, as the EQ sliders; the text is the Buds' value ("Left 40"), not the finger position. **`ai-sessions/0054` I-3:** a
- * release within ±3 of the centre writes 0 ("Centre", [BudsSettings.snapBalance]). **`ai-sessions/0057` F-1:** the knob follows the finger only while it is
- * down; on release it shows the Buds' value again and moves only when they acknowledge the write — a refused or unanswered write leaves it where the Buds
- * are (it used to stay at the finger position). Not read from the Buds yet ⇒ disabled (U-1's rule; the time is in the card's (i)).
+ * −value. One write per completed drag, as the EQ sliders. **`ai-sessions/0057` F-1:** the knob follows the finger only while it is down; on release it shows
+ * the Buds' value again and moves only when they acknowledge the write — a refused or unanswered write leaves it where the Buds are. Not read from the Buds yet ⇒
+ * disabled (U-1's rule; the time is in the card's (i)).
+ *
+ * **`ai-sessions/0084` item 3 (the maintainer's choice in chat 2026-10-10, "Live value + fine centre"; `CAP-072` 18:07:49–18:08:57: 30 writes to aim at
+ * "Right 4", the label showing only the Buds' value after each release):** while the finger is down the label shows **its** value with "— release to set", and
+ * the travel is non-linear — the middle third holds −10 … +10 in steps of 1, the outer thirds the rest ([balanceFromPosition]). The `ai-sessions/0054` I-3 snap
+ * to Centre within ±3 is gone: each value near the centre can be reached. The official app has a plain ±100 slider showing its value
+ * (`sound_preferences.xml:15`, `CenteredSliderPreference`, `ai-sessions/0084` RESULT §A.4).
  */
 @Composable
 private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onChange: (Int) -> Unit) {
     val buds = reading?.value ?: 0
     var dragPosition by remember { mutableStateOf<Float?>(null) }
+    val label = balanceSliderLabel(buds, dragPosition)
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Balance")
             if (reading != null) {
-                Text(balanceText(buds), style = MaterialTheme.typography.bodySmall)
+                Text(label, style = MaterialTheme.typography.bodySmall)
             } else {
                 NotReadValue(style = MaterialTheme.typography.bodySmall) // `ai-sessions/0074`: the dash with its screen-reader text
             }
@@ -272,20 +280,62 @@ private fun BalanceSlider(reading: SettingReading<Int>?, enabled: Boolean, onCha
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("L")
             Slider(
-                value = dragPosition ?: -buds.toFloat(),
+                value = dragPosition ?: positionForBalance(buds),
                 onValueChange = { dragPosition = it },
                 onValueChangeFinished = {
-                    dragPosition?.let { onChange(BudsSettings.snapBalance(-it.roundToInt())) }
+                    dragPosition?.let { onChange(balanceFromPosition(it)) }
                     dragPosition = null
                 },
                 enabled = enabled && reading != null,
-                valueRange = -100f..100f,
-                modifier = Modifier.weight(1f),
+                valueRange = -BALANCE_TRAVEL..BALANCE_TRAVEL,
+                // A screen reader says the balance ("Right 4"), not the knob's percentage of a non-linear travel.
+                modifier = Modifier.weight(1f).semantics { if (reading != null) stateDescription = label },
             )
             Text("R")
         }
     }
 }
+
+/** The slider's travel, in its own units (position = −value at the ends): `ai-sessions/0084` item 3. */
+private const val BALANCE_TRAVEL = 100f
+
+/** `ai-sessions/0084` item 3: the balance values of the fine middle third of the travel (−10 … +10, steps of 1). */
+internal const val BALANCE_FINE_LIMIT = 10
+
+/** The share of the travel on each side of the centre that holds the fine values: one sixth each side, the middle third in all. */
+private const val BALANCE_FINE_TRAVEL = BALANCE_TRAVEL / 3f
+
+/**
+ * The balance a slider position stands for (`ai-sessions/0084` item 3): position = −value (Left at the left end); |position| up to a third of the travel
+ * maps linearly to 0 … [BALANCE_FINE_LIMIT], the rest of the travel to [BALANCE_FINE_LIMIT] … 100 — rounded to the wire's integer, clamped to ±100 (ADR-026).
+ */
+internal fun balanceFromPosition(position: Float): Int {
+    val p = position.coerceIn(-BALANCE_TRAVEL, BALANCE_TRAVEL)
+    val distance = kotlin.math.abs(p)
+    val magnitude = if (distance <= BALANCE_FINE_TRAVEL) {
+        distance * BALANCE_FINE_LIMIT / BALANCE_FINE_TRAVEL
+    } else {
+        BALANCE_FINE_LIMIT + (distance - BALANCE_FINE_TRAVEL) * (BudsSettings.BALANCE_RANGE.last - BALANCE_FINE_LIMIT) / (BALANCE_TRAVEL - BALANCE_FINE_TRAVEL)
+    }
+    val value = magnitude.roundToInt().coerceAtMost(BudsSettings.BALANCE_RANGE.last)
+    return if (p > 0) -value else value // the right half of the slider is Right = negative on the wire
+}
+
+/** The slider position that shows [value] — the inverse of [balanceFromPosition] for every value in ±100. */
+internal fun positionForBalance(value: Int): Float {
+    val v = value.coerceIn(BudsSettings.BALANCE_RANGE)
+    val magnitude = kotlin.math.abs(v)
+    val distance = if (magnitude <= BALANCE_FINE_LIMIT) {
+        magnitude * BALANCE_FINE_TRAVEL / BALANCE_FINE_LIMIT
+    } else {
+        BALANCE_FINE_TRAVEL + (magnitude - BALANCE_FINE_LIMIT) * (BALANCE_TRAVEL - BALANCE_FINE_TRAVEL) / (BudsSettings.BALANCE_RANGE.last - BALANCE_FINE_LIMIT)
+    }
+    return if (v > 0) -distance else distance
+}
+
+/** The balance row's label: the Buds' value, or — while the finger is down — the finger's value with "— release to set" (`ai-sessions/0084` item 3). */
+internal fun balanceSliderLabel(budsValue: Int, dragPosition: Float?): String =
+    if (dragPosition == null) balanceText(budsValue) else "${balanceText(balanceFromPosition(dragPosition))} — release to set"
 
 /**
  * [onValueChange] fires once per completed drag ([Slider]'s own `onValueChangeFinished`), not per drag-frame — each call sends a real frame over the RFCOMM

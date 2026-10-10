@@ -72,6 +72,9 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
  *
  * **`ai-sessions/0082` item 1 (the maintainer's wording, chat 2026-10-09):** while [ancModeCause] is [AncModeCause.CHANGED_BY_BUDS] — a `Notify` the app did
  * not provoke changed the mode — the (i) carries [ancChangedByBudsLine]; nothing on the main surface, no notification.
+ *
+ * **DECISIONS.md ADR-061 (`ai-sessions/0084`):** while this tab is shown the repository holds the Message Stream claim (reported by [OpenControlNavHost]), so
+ * such a `Notify` reaches the app; the (i) ends with [ANC_HOLD_HINT_TEXT].
  */
 @Composable
 fun AncScreen(
@@ -157,7 +160,7 @@ internal fun ancModeLine(ancMode: AncMode?, updatedAt: Long?, fromLastConnection
 
 /**
  * The ANC card's (i) lines: the not-confirmed line after a cut-off answer (F-3), the mode with its time, the "changed by the Buds" line when a `Notify` the app did
- * not provoke changed the mode (`ai-sessions/0082` item 1), the "checked HH:MM:SS" line while not allowed, the session line, the Message-Stream explanation.
+ * not provoke changed the mode (`ai-sessions/0082` item 1), the "checked HH:MM:SS" line while not allowed, the session line, the hold explanation (ADR-061).
  */
 internal fun ancDetailLines(
     connectionState: ConnectionState,
@@ -174,8 +177,16 @@ internal fun ancDetailLines(
     if (cause == AncModeCause.CHANGED_BY_BUDS && ancMode != null) ancChangedByBudsLine(ancModeUpdatedAt) else null,
     if (notAllowed) ancNotAllowedLine(checkedAt) else null,
     "Connection: ${connectionState::class.simpleName}",
-    MESSAGE_STREAM_HINT_TEXT,
+    ANC_HOLD_HINT_TEXT,
 )
+
+/**
+ * DECISIONS.md ADR-061 (the maintainer's text in chat 2026-10-10, `ai-sessions/0084`): the noise-control card's (i) says that the channel is held while this tab
+ * is open — Find keeps [MESSAGE_STREAM_HINT_TEXT], since its taps still claim briefly.
+ */
+internal const val ANC_HOLD_HINT_TEXT: String = "While this tab is open the app keeps the Buds' noise-control channel open, so a change made on a bud " +
+    "(a press-and-hold) shows here. Another app that uses the channel (for example Google Play services' Fast Pair) cannot use it meanwhile; it is " +
+    "released 1.5 seconds after you leave the tab."
 
 /**
  * `ai-sessions/0062` F-2 (the maintainer's wording, chat 2026-10-01): "The Buds don't allow changing noise control right now (usually because no bud is in an

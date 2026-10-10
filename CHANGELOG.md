@@ -13,24 +13,31 @@ build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`). See `TODO.m
 
 ## [1.2.0] - not yet released
 
-Prepared in `ai-sessions/0082` (2026-10-09); its hardware run is `CAP-072` (Group BH), after which it is released — or rebuilt as the same version. Three new
-things to see, two switches in new places, and one study. Nothing new is written to the Buds; one new read per connection.
+Prepared in `ai-sessions/0082` (2026-10-09); its hardware run `CAP-072` (Group BH, `ai-sessions/0083`) showed that a press-and-hold on a bud was never shown, so
+1.2.0 was rebuilt as the same version in `ai-sessions/0084` (2026-10-10); its re-test is `CAP-073` (Group BI). Three new things to see, two switches in new
+places, a held noise-control channel on its tab, a finer balance slider, and one study. Nothing new is written to the Buds; one new read per connection.
 
 ### Added
 
 - **"Changed by the Buds"** in the noise-control card's (i) details: when the Buds report a mode the app did not ask for — a press-and-hold on a bud, or the
-  Buds' own change — the (i) says "Changed by the Buds at HH:MM:SS (a press-and-hold on a bud, or the Buds' own change)." A mode the app set, or read when it
-  connected or refreshed, has no such line. Nothing on the main surface, no notification. (`CAP-069` §12 item 8; fixtures `CAP-045`.)
+  Buds' own change — while the noise-control tab is open (or within about 1.5 s of another action of the app), the (i) says "Changed by the Buds at HH:MM:SS
+  (a press-and-hold on a bud, or the Buds' own change)." A mode the app set, or read when it connected or refreshed, has no such line. Nothing on the main
+  surface, no notification. (`CAP-069` §12 item 8; fixtures `CAP-045`, `CAP-072`.)
 - **Serial numbers** on gear → Info, under the firmware (`DECISIONS.md` ADR-058): one `GetHardwareInfo` request per connection — the official app's own, sent
   after the battery subscription, never retried — and the three strings of its answer, labelled Case / Right bud / Left bud by position, as the official app
   labels them (the Buds list them in that order). "Not read" with the reason if the Buds do not answer. Serial numbers are never written to the app's log.
 - **"Probably worn"** on the Connection screen's battery card (`DECISIONS.md` ADR-059): from the Buds' last noise-control report (at Connect, Refresh and every
   noise-control tap), the in-ear detection setting and whether the buds are charging: "Probably worn (checked HH:MM:SS)", "Not worn (checked HH:MM:SS)", "Both buds
-  in the case", or "Worn: unknown — in-ear detection is off". The (i) explains the two limits: the Buds say "at least one bud", never which; and once (`CAP-064`)
-  they reported "worn" for about half a minute with both buds on a table. Nothing new is sent for it.
+  in the case", or "Worn: unknown — in-ear detection is off". The (i) explains the two limits: the Buds say "at least one bud", never which; and they have
+  reported it for 40 seconds or more with both buds on a table. Nothing new is sent for it.
 
 ### Changed
 
+- **The noise-control channel stays open while the noise-control tab is on screen** (`DECISIONS.md` ADR-061): the Buds' report of a change made on a bud
+  reaches the app; released 1.5 s after you leave the tab or the app, never held in the background. On a phone with Google Play services, Play's Fast Pair
+  cannot use that channel while the tab is open. The (i) says so.
+- **The balance slider** shows the value under your finger while you drag ("Right 4 — release to set") and is finer near the centre: steps of 1 within ±10
+  take the middle third of the slider. Still one write, on release. The snap to Centre within ±3 is gone.
 - The two **Case sounds** switches ("Earbuds replaced", "Other alerts") moved from Controls to gear → **Settings** (Dark mode · Case sounds · Use different Buds);
   their (i) adds "These settings live on the case and are read when the app connects." The requests are unchanged.
 - **Conversation detection** moved from Sound to **Controls** (its own card after In-ear detection, the same subtitle). Sound keeps Balance, Mono audio and Volume
@@ -47,12 +54,15 @@ things to see, two switches in new places, and one study. Nothing new is written
 ### Known issues
 
 - The worn indicator is a hedged reading of a hypothesis (`DECISIONS.md` ADR-049 item 3): "Probably worn" means the Buds allow a noise-control change, which on
-  film always meant at least one bud in an ear — the app cannot say which bud, and once the Buds reported it with both buds on a table for about half a minute.
+  film always meant at least one bud in an ear — the app cannot say which bud, and the Buds have reported it for 40 seconds or more with both buds on a table
+  (`CAP-072`).
 - The serial-number labels (Case / Right bud / Left bud) are the official app's reading of the answer's order, consistent with the strings' own marks; the Buds
   do not name the parts.
-- The three items above are not hardware-verified before `CAP-072`; the 1.1.1 known issues stay: the app says what a switch sets; the screen-reader text for "—"
-  is checked by the unit tests, not yet on a phone; English only; after you stop a ring by touching the bud, the app keeps saying it is ringing until you tap
-  Stop.
+- "Changed by the Buds" appears only for a change the Buds report while the noise-control tab is open or within about 1.5 s of another action of the app; a
+  change made while another tab is shown or the app is in the background appears as the new mode at the next read, without the line.
+- The five 1.2.0 items were checked in `CAP-072`; the hold is checked in `CAP-073`. The 1.1.1 known issues stay: the app says what a switch sets; the
+  screen-reader text for "—" is checked by the unit tests, not yet on a phone; English only; after you stop a ring by touching the bud, the app keeps saying it
+  is ringing until you tap Stop.
 
 ## [1.1.1] - 2026-10-08
 

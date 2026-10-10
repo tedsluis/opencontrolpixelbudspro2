@@ -36,6 +36,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -140,5 +141,29 @@ class TabRestoreTest {
         compose.waitForIdle()
         compose.onNodeWithText("Equalizer").assertExists() // back returns to Sound, as before the relaunch
         bottomItem("Sound").assertIsSelected()
+    }
+
+    /**
+     * DECISIONS.md ADR-061 (`ai-sessions/0084`, the maintainer's choice "Tab selected + app visible"): the nav host reports `true` while the noise-control tab is
+     * the selected tab and the settings menu is closed, `false` on any other tab or with the menu open — the repository holds the Message Stream claim only then.
+     */
+    @Test
+    fun `ADR-061 - the noise-control tab is reported shown only while it is selected and the settings menu is closed`() {
+        val reports = mutableListOf<Boolean>()
+        compose.setContent { OpenControlTheme(darkTheme = false) { OpenControlNavHost(uiState(), noActions.copy(onAncTabShown = { reports += it })) } }
+        compose.waitForIdle()
+        assertEquals("the start tab is Connection", false, reports.last())
+
+        bottomItem("ANC").performClick(); compose.waitForIdle()
+        assertEquals(true, reports.last())
+
+        compose.onNodeWithContentDescription("Settings").performClick(); compose.waitForIdle()
+        assertEquals("the settings menu covers the tab", false, reports.last())
+
+        compose.onNodeWithContentDescription("Back").performClick(); compose.waitForIdle()
+        assertEquals("back on the noise-control tab", true, reports.last())
+
+        bottomItem("Sound").performClick(); compose.waitForIdle()
+        assertEquals(false, reports.last())
     }
 }

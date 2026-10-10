@@ -27,7 +27,14 @@ starts (P8), no app use before the film (P9), Do Not Disturb on (an incoming cal
 observations said aloud. `CAP-072` takes every item below except B4, the CDM picker, K5/BC-12, F-4 and the second device (`ai-sessions/0082` RESULT §I).
 **`CAP-072`** (the 1.2.0 release run, analysed in `ai-sessions/0083`) settled lead L-1 (🟢, `PROTOCOL.md` §2.2a Update of 2026-10-10) and S6 (seen on the screen
 recording) — both removed here; its film 2 was not made: the maintainer moved C12, S12 and T11 to the run of the **rebuilt 1.2.0** (verdict "fix first",
-ADR-061, chat 2026-10-10). **Next app run:** the rebuilt 1.2.0 — the ADR-061 hold test plus the items below; the shorter-run tiers of §6 apply.
+ADR-061, chat 2026-10-10). **Next app run:** `CAP-073` (Group BI, the rebuilt 1.2.0, skeleton by `ai-sessions/0084`, ≤ 20 min) — the ADR-061 hold test plus
+T11, C12, S12, H5, Volume EQ, the worn line with in-ear detection off and balance "Right 4" (BI-14 … BI-20); the tiers of `RELEASING.md` §11a apply.
+**`CAP-073`** (the rebuilt 1.2.0, analysed in `ai-sessions/0085`, verdict OK — ready to release) settled the ADR-061 hold's main path and balance "Right 4"
+(both removed here); the maintainer tested only the changed functionality, so T11, C12, S12, H5, Volume EQ and the worn line with in-ear detection off stay open,
+with the hold's untested branches below.
+- [ ] The ADR-061 hold's other branches on hardware (`CAP-073-FINDINGS.md` §4): the tile with the noise-control tab shown (no second `SABM`, no `DISC`); Home and
+      return (the `DISC` ≈ 1.5 s after Home, a new claim on return); a session loss and the ADR-044 re-open while the tab is shown (the snapshot kept); and the
+      noise-control (i) after a press-and-hold ("Changed by the Buds at HH:MM:SS …" and the ADR-061 sentence) — not run in `CAP-073`.
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
@@ -144,9 +151,9 @@ Open questions (each with where it is described):
 - 🟡 Hearable Controls MAC not enforced (`PROTOCOL.md` §4.1): a firmware that starts enforcing it would NAK with reason `0x03`.
 - 🔴 `CAP-069` leftovers: why a bud's charging bit stayed set ≈ 12 s after it left the case (7358 → 7404); why the phone re-opened GSND AUDIO on ACL 3
   (8157 → 8271); Device Information `03 0b` (FHN EID, out of scope) with length 25; field 18 after the Save button (one sample, 6050 → `CAP-053`).
-- [ ] **M** Restore the Buds (chat 2026-10-07, `ai-sessions/0077`) — after `CAP-072` the Buds read EQ `[-3.5, 0.5, 1.0, -1.0, 6.0]` (Balanced with the Upper treble
-      at +6.0) and the mode list **with Adaptive** `12:{1:1 2:0 3:1 4:1}` (the reads of 18:20:05 in `CAP-072-btsnoop_hci2.log`). One tap on Sound → BALANCED and unticking
-      Adaptive on Controls finish it. (Removed when the maintainer confirms it is done.)
+- [ ] **M** Restore the Buds (chat 2026-10-07, `ai-sessions/0077`) — after `CAP-073` (session 11, 08:32:17) the Buds read EQ `[-2.0, 0.0, 2.0, 3.0, 5.0]` (the Owner
+      user's write of 07:08:44, `CAP-073-btsnoop_hci.log.last` A 22180), the mode list **with Adaptive** `12:{1:1 2:0 3:1 4:1}` and **balance Left 4** (`17:8`,
+      `CAP-073-FINDINGS.md` §3). Sound → BALANCED, the balance back to Centre and unticking Adaptive on Controls finish it. (Removed when the maintainer confirms it is done.)
 - 🔴 `CAP-072` §4: why the Buds kept Settable `e8` ≥ 42 s with both buds on a table (17:51:19 → 17:52:00.9) while `CAP-065`/`CAP-066` read `00` within 2.6 s.
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
   captured — sending it needs its own ADR. Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
@@ -178,23 +185,13 @@ Open questions (each with where it is described):
       card), so a screen reader may announce "switch, on" without the setting's name — not tested on a phone. A merged row (`Modifier.toggleable` with
       `Role.Switch` on the row, the `Switch` without its own click) would fix it; it changes every switch's semantics (and the tests that find a switch by its
       sibling label) — **M** decides whether and when.
-- [ ] **Balance precision:** `CAP-067` reached Right 4 on the 17th drag (7 of 17 snapped to Centre). Options: a live value label while dragging,
-      slider `steps`, or the step buttons back.
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
 - [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
-- [ ] **1.2.0 rebuild (before release; verdict "fix first", the maintainer 2026-10-10):** build `DECISIONS.md` ADR-061 — hold the Message Stream claim while the
-      noise-control tab is on screen (`BudsRepositoryImpl.withMessageStream`/`scheduleRelease`, the tab's visibility from `:ui`/`:app`), unit tests with the
-      `CAP-045` 1583 unprovoked `Notify` during a hold and a release after leaving the tab; update `CHANGELOG.md` `[1.2.0]` and the release notes; then a
-      targeted hardware run (the hold with the tab open → the (i) line; leaving the tab → the phone's `DISC` ≤ 1.5 s; plus T11, the force-stop, C12, S12, H5,
-      Volume EQ from §2) (`CAP-072-FINDINGS.md` §5, §12).
-- [ ] Replace the redacted-answer fixtures of `GetHardwareInfo` (`HardwareInfoFixtures`: `CAP-036` 1423 / `CAP-024` 832 with the serials X-ed out) by
-      OpenControl's own exchange from `CAP-072`: request A 7593 → answer A 7596 (channel 21) and A 8616 → A 8620 (channel 19) of `CAP-072-btsnoop_hci2.log.last`,
-      serials redacted the same way (a FEATURE session; the ADR-058/ADR-059 Updates are done, 2026-10-10).
-- [ ] Balance slider: ≈ 30 writes and labels up to "Right 53" were needed to land near "Right 4" in `CAP-072` (18:07:49–18:08:57) — a finer step or tap targets
-      around the centre (a FEATURE question, **M**).
-- [ ] The worn indicator's (i) text names `CAP-064` to the user (the approved wording, `ai-sessions/0082` §B); reword without the capture id if the maintainer wants (**M**).
+- [ ] **M** — release the rebuilt 1.2.0: B1–B3 done (build `5b4d5db`, `ai-sessions/0084`), `CAP-073` analysed (`ai-sessions/0085`), **C4 verdict OK — ready to
+      release** (the maintainer, chat 2026-10-10). Left: D1–D4 (merge PR #27 with a merge commit, the signed tag `v1.2.0` on `5b4d5db`, the release from
+      `~/opencontrol-1.2.0-tested`, the phone check) and E1–E4 (`RELEASING.md`).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.
@@ -240,13 +237,14 @@ statement is lost (`ai-sessions/0068` §6 has the proposal for each):
       2026-09-25, the announcement census, the call-id census) get entries with their commands, or a pointer line at the top (§6.2).
 - [ ] `AGENTS.md` §5 and §6 — shorten each to the rule plus one pointer (**M**: project law; "Four edits, no shortening" for now).
 - [ ] Optional (**M**, project law): a dated note in `AGENTS.md` §1 pointing to ADR-050 (the Info links hand a URL to the browser).
-- [ ] **Shorter hardware runs** (`ai-sessions/0083` RESULT "Testing burden", the maintainer's choice 2026-10-10: *"Both tiers + helper + card"*): write the
-      **minimal release run** (≤ 15 min: the update over the last release, Info (build, firmware, serials), one Connect, one ANC tap, each new or changed write
-      once, Bluetooth off/on, one export; screen recording only) and the **extended run** (camera and head, only when the wire or wear behaviour changes) into
-      `APP_TESTPLAN.md`/`RELEASING.md` as a proposal for **M**; a one-page run card; a `scripts/` helper that pulls the HCI log and the exports (bugreport),
-      names the files, decodes the session and compares each request with its fixture (its own session).
-- [ ] `PROTOCOL.md` §2.2a (2026-09-24 note, line ≈ 388) and §6 (≈ 2791, ≈ 3053) write the three component serials in full; ADR-058 item 5 asks for the first 4 +
-      last 2 characters in documents — redact them (a text change for **M**, found by `ai-sessions/0083`).
+- [ ] **Shorter hardware runs** (`ai-sessions/0083` RESULT "Testing burden", the maintainer's choice 2026-10-10: *"Both tiers + helper + card"*): the two tiers are
+      in `RELEASING.md` §11a and `APP_TESTPLAN.md` since `ai-sessions/0084`; still to do (its own session): a one-page run card (the maintainer chose to write it
+      with the helper, chat 2026-10-10) and a `scripts/` helper that pulls the HCI log and the exports (bugreport), names the files, decodes the session and
+      compares each request with its fixture.
+- [ ] Serials still written beyond the first 4 + last 2 characters (ADR-058 item 5; `PROTOCOL.md` done in `ai-sessions/0084`, the maintainer chose "PROTOCOL.md
+      only"): in full in `REVERSE_ENGINEERING.md` and seven `ai-sessions` files (0003 RESULT, 0017 PROMPT and RESULT, 0045, 0058, 0068 RESULTs, 0082 PROMPT); the
+      last six characters in `DECISIONS.md` ADR-058's Context and in several `ai-sessions` files (`grep -rlI` for the strings' tails) — **M** decides whether the
+      historical session logs are edited.
 
 Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each with its check in that RESULT's appendix):
 

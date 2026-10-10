@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-09
 **Title:** Fully analyse `CAP-072` (one camera film without sound, one screen recording with sound, four HCI snoop logs, four app debug exports, one app logcat, one full system log, the P0/P1 shell log), record the real events and the findings, investigate the case-sound and press-and-hold observations, give the release verdict for 1.2.0 (`RELEASING.md` C4) and propose shorter hardware runs; no app change, no new skeleton, no publishing
-**Status:** awaiting maintainer sign-off (every checkpoint answered in chat 2026-10-10; the commit question is open)
+**Status:** complete (closed 2026-10-10 by `ai-sessions/0084`: every checkpoint was answered in chat 2026-10-10; committed and merged — "Commits" below)
 
 ## Summary (plain language)
 
@@ -140,7 +140,11 @@ pattern (wear + audio). What only re-confirmed bytes the unit tests already pin:
 
 ## Commits
 
-Not committed yet — awaiting the maintainer's answer to the commit question (task 20).
+Back-filled 2026-10-10 by `ai-sessions/0084` (`AI_SESSION_LOG_PROCEDURE.md` §4b item 2), on `release/1.2.0`, merged into `main` by PR #24 (merge commit `0c61b90`):
+
+- `bc24c56` docs(capture): CAP-072 — the 1.2.0 release run (Group BH), analysed
+- `51e490f` docs: CAP-072 results — ADR-061, ADR-058/059 Updates, L-1 promoted, plans
+- `2d5255a` docs(ai-sessions): 0083 CAPTURE prompt, result and INDEX row
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0083_CAPTURE_RESULT_2026_10_09.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0083_CAPTURE_RESULT_2026_10_09

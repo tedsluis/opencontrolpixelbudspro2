@@ -118,6 +118,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  *   DLCI 0x08 is no longer opened). HFP `AT+BIEV` is not consumed (ADR-040).
  * - **Safe Mode** (ARCHITECTURE.md §8.1, ADR-042): every write/control command passes [SafeModeGate] first.
  * - **Find My Buds**: no persisted state to reconcile.
+ * - **The Message Stream claim** (ADR-032) is held while the noise-control tab is on screen (ADR-061, [setAncTabShown]), so a `Notify` the app did not provoke
+ *   (a press-and-hold on a bud) reaches it.
  *
  * This class stays unit-testable against a [io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport]
  * and scripted flows, per AGENTS.md §11. [connectionStateMachine] is the real, already
@@ -402,6 +404,93 @@ class BudsRepositoryImpl(
         // I-2: leaving before any reading decided the cause (the observer stops now) — the reading taken on return will decide it.
         if (!visible && lossAtMillis != null && _lastLossCause.value == SessionLossCause.UNDETERMINED) lossWhileHidden = true
         reopener.onVisible(visible)
+        reconcileHold(if (visible) null else HoldEnd.APP_HIDDEN)
+    }
+
+    override fun setAncTabShown(shown: Boolean) {
+        ancTabShown = shown
+        reconcileHold(if (shown) null else HoldEnd.TAB_LEFT)
+    }
+
+    // ---- ADR-061: the Message Stream claim held while the noise-control tab is on screen (`ai-sessions/0084`) --------------------------------------------
+
+    /** Whether `:ui` shows the noise-control tab ([setAncTabShown]); with [appVisible] it decides whether the claim is held ([holdWanted]). */
+    @Volatile
+    private var ancTabShown = false
+
+    /** ADR-061 (the maintainer's choice in chat 2026-10-10, "Tab selected + app visible"): the tab is shown and the app is visible (resume … stop). */
+    private val holdWanted: Boolean get() = ancTabShown && appVisible
+
+    /** Whether an open claim is being held now (logged when it starts and ends). Changed only with [claimMutex] held, or when the session ends. */
+    @Volatile
+    private var holdOpen = false
+
+    /** Why the hold ends when it is next found unwanted ([releaseOrHold]) — the last reason given by [setAncTabShown] / [onAppVisible]. */
+    @Volatile
+    private var holdEndReason = HoldEnd.TAB_LEFT
+
+    @Volatile
+    private var holdJob: Job? = null
+
+    /** Why a hold ended — the always-on log line's words (AGENTS.md §9: no payload, no address). */
+    private enum class HoldEnd(val text: String) {
+        TAB_LEFT("the noise-control tab was left"),
+        APP_HIDDEN("the app is not visible"),
+        SESSION_LOST("the session was lost"),
+        DISCONNECT("Disconnect"),
+        CHANNEL_CLOSED("the channel was closed, not by this app"),
+    }
+
+    /**
+     * Entering ([holdWanted] true): an open claim (one lingering after an action) is kept — its pending release is cancelled; with the channel closed and the
+     * session `Ready` one claim is made with the existing claim code and its `Get` ([refreshAncMode], `08 11 00 00`), which [releaseOrHold] then keeps.
+     * Leaving: an open hold ends and the ordinary release ([MESSAGE_STREAM_LINGER_MS]) is scheduled. Runs in [scope], serialised by [claimMutex].
+     */
+    private fun reconcileHold(endReason: HoldEnd?) {
+        if (endReason != null) holdEndReason = endReason
+        holdJob = scope.launch {
+            val claimNow = claimMutex.withLock {
+                when {
+                    !holdWanted -> {
+                        if (holdOpen) releaseOrHold()
+                        false
+                    }
+                    transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM) -> {
+                        releaseJob?.cancel()
+                        releaseJob = null
+                        releaseOrHold()
+                        false
+                    }
+                    else -> connectionStateMachine.state.value is ConnectionState.Ready
+                }
+            }
+            // The claim's own `finally` ([releaseOrHold]) keeps it while the tab is still shown.
+            if (claimNow) refreshAncMode(GET_RESPONSE_TIMEOUT_MS)
+        }
+    }
+
+    /**
+     * The end of every claim (`withMessageStream`'s `finally`) and of every hold change, with [claimMutex] held: while [holdWanted] and the channel is open
+     * the claim is kept (ADR-061) — nothing is scheduled; otherwise a running hold ends (logged with [holdEndReason]) and the release is scheduled as ADR-032
+     * item 3 always did.
+     */
+    private fun releaseOrHold() {
+        if (holdWanted && transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM)) {
+            if (!holdOpen) {
+                holdOpen = true
+                BleLogger.logConnectionEvent("Message Stream hold started: the noise-control tab is on screen (ADR-061)")
+            }
+            return
+        }
+        endHold(holdEndReason)
+        scheduleRelease()
+    }
+
+    /** The hold ends without a release of its own: the session ended (the transport closed every socket) or the channel was closed by someone else. */
+    private fun endHold(reason: HoldEnd) {
+        if (!holdOpen) return
+        holdOpen = false
+        BleLogger.logConnectionEvent("Message Stream hold ended: ${reason.text}")
     }
 
     /** Stores one reported setting value with its time; a press-and-hold packet only touches the bud(s) it names. */
@@ -548,7 +637,12 @@ class BudsRepositoryImpl(
             // so the next claim cannot start misaligned (0044 finding APP-2).
             transport.channelClosed.collect { closed ->
                 codecRouter.reset(closed.channelId)
-                if (closed.channelId == Dlci.FAST_PAIR_MESSAGE_STREAM) _modelIdThisClaim.value = null
+                if (closed.channelId == Dlci.FAST_PAIR_MESSAGE_STREAM) {
+                    _modelIdThisClaim.value = null
+                    // ADR-061 (the maintainer's choice in chat 2026-10-10, "Keep it as the hold"): no re-claim by itself — the next tap, pull or a re-entry
+                    // of the noise-control tab claims again.
+                    endHold(HoldEnd.CHANNEL_CLOSED)
+                }
             }
         }
         scope.launch {
@@ -581,6 +675,7 @@ class BudsRepositoryImpl(
                     markRingFromEarlierSession()
                     markValuesFromEndedSession()
                     reopener.onSessionLost()
+                    endHold(HoldEnd.SESSION_LOST) // the transport has closed every socket; ADR-044's re-open may hold its own snapshot claim again (ADR-061)
                     cancelClaimJobs()
                     codecRouter.resetAll()
                     connectionStateMachine.onDisconnected()
@@ -815,6 +910,7 @@ class BudsRepositoryImpl(
         markRingFromEarlierSession()
         markValuesFromEndedSession()
         _safeMode.value = null
+        endHold(HoldEnd.DISCONNECT)
         cancelClaimJobs()
         transport.disconnect()
         codecRouter.resetAll()
@@ -1305,7 +1401,8 @@ class BudsRepositoryImpl(
     /**
      * Claims the Message Stream channel (DLCI 0x04) for one user action, runs [action], and schedules
      * its release [MESSAGE_STREAM_LINGER_MS] later so Google Play services can take the channel back
-     * and hold it stably. Serialised by [claimMutex]. Requires an open session (the MAESTRO channel);
+     * and hold it stably — **unless the noise-control tab is on screen**: then the claim is held until the tab or the app is left (DECISIONS.md ADR-061,
+     * [releaseOrHold]); an action during the hold reuses the open channel. Serialised by [claimMutex]. Requires an open session (the MAESTRO channel);
      * a channel that is busy is retried inside `transport.openChannel` and, if still busy, reported
      * through [messageStreamError] and the returned failure — never silently dropped.
      *
@@ -1349,8 +1446,8 @@ class BudsRepositoryImpl(
                 _messageStreamError.value = (result as? BudsResult.Failure)?.error?.takeIf { it != BudsError.AncNotAllowed }
             } finally {
                 // Always released — a tap cancelled mid-action must not leave DLCI 0x04 claimed and Play services locked out
-                // (0044 APP-4).
-                scheduleRelease()
+                // (0044 APP-4) — except while the noise-control tab is on screen, when the claim is held (ADR-061).
+                releaseOrHold()
             }
             result
         }
@@ -1473,6 +1570,8 @@ class BudsRepositoryImpl(
         snapshotJob = null
         resubscribeJob?.cancel()
         resubscribeJob = null
+        holdJob?.cancel()
+        holdJob = null
     }
 
     /**
@@ -1554,7 +1653,7 @@ class BudsRepositoryImpl(
         /** Wait for the ANC state during the Connect-time snapshot. */
         private const val SNAPSHOT_TIMEOUT_MS = 1_000L
 
-        /** How long the channel stays claimed after an action so replies land, then it is released. */
+        /** How long the channel stays claimed after an action so replies land, then it is released — also after the noise-control tab or the app is left (ADR-061). */
         private const val MESSAGE_STREAM_LINGER_MS = 1_500L
 
         /** How long a read/write waits for the Buds' channel announcement (their first Maestro packet). */

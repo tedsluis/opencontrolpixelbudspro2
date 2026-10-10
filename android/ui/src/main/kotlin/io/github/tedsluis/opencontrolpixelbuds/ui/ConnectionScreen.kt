@@ -377,11 +377,12 @@ internal const val WORN_BOTH_IN_CASE_TEXT: String = "Both buds in the case"
 
 /**
  * ADR-059's (i) explanation (the maintainer's text in chat 2026-10-09): where the reading comes from and its two known limits — the byte says "at least one
- * bud", never which, and `CAP-064`'s ≈ 28 s; ADR-049 item 3 stays 🟡 and this text says so in plain words.
+ * bud", never which, and the Buds' "allowed" with both buds on a table (`CAP-064` ≈ 28 s, `CAP-072` 42 s); ADR-049 item 3 stays 🟡 and this text says so in plain
+ * words. **`ai-sessions/0084` (the maintainer's choice in chat 2026-10-10, "Reword, no capture id"; ADR-059 Update):** no capture id, the longer duration.
  */
 internal const val WORN_EXPLANATION: String =
     "Worn: from the Buds' last noise-control report. 'Probably worn' = the Buds allow changing noise control — on film that always meant at least one " +
-        "bud in an ear, but the Buds do not say which bud, and once (CAP-064) they reported it for about half a minute with both buds on a table. " +
+        "bud in an ear, but the Buds do not say which bud, and they have reported it for 40 seconds or more with both buds on a table. " +
         "'Not worn' = the Buds refuse a change — in 56 filmed samples no bud was in an ear. With in-ear detection off the report says nothing about wearing."
 
 /**
