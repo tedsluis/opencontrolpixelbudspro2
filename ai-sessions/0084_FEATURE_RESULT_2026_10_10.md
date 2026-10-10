@@ -5,7 +5,7 @@
 **Date:** 2026-10-10
 **Title:** Rebuild OpenControl 1.2.0 (versionCode 10200) with ADR-061, the `HardwareInfoFixtures` swap, the balance-slider choice, the `CAP-072` documentation
 fixes, the `CAP-073` (Group BI) re-test skeleton and the release preparation (no tag, no publication)
-**Status:** awaiting maintainer sign-off (every checkpoint answered in chat 2026-10-10; the commit question is open)
+**Status:** complete (closed 2026-10-10 by `ai-sessions/0085`: committed and pushed as listed under Commits; the build `5b4d5db` hardware-tested in `CAP-073`, verdict OK — the maintainer in chat 2026-10-10)
 
 ## Summary (plain language)
 
@@ -322,9 +322,11 @@ concern; the two files with changes of several concerns (`BudsRepositoryImplTest
 - `921e647` docs: the rebuilt 1.2.0 — texts, worn (i), PROTOCOL serials, ADR-032/059 Updates, run tiers
 - `562a289` docs(capture): CAP-073 (Group BI) skeleton — the re-test of the rebuilt 1.2.0
 - `5b4d5db` docs(ai-sessions): 0084 FEATURE result, INDEX rows, 0083 back-fill — **the build commit of B1**
-- after the build: the build's identity in `CAP-073-EVENT-NOTES.md` and this file (docs only, no app file — `RELEASING.md` C3); its hash is the branch tip.
+- `34dbd7a` docs: record the rebuilt 1.2.0 build (5b4d5db) for CAP-073 (the build's identity in the skeleton and this file; docs only — `RELEASING.md` C3)
+- `f46404a` docs(ai-sessions): 0085 prompt — full analysis of CAP-073 (Group BI)
 
-Pushed without force; no pull request opened (a separate question), nothing merged, no tag, no release.
+Pushed without force; pull request #27 opened afterwards (the maintainer, "open de pull request"), nothing merged, no tag, no release. *(Back-filled
+2026-10-10 by `ai-sessions/0085`, `AI_SESSION_LOG_PROCEDURE.md` §4b item 2.)*
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0084_FEATURE_RESULT_2026_10_10.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0084_FEATURE_RESULT_2026_10_10

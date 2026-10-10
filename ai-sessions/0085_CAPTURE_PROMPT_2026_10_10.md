@@ -46,7 +46,7 @@ These are the ground rules; do not audit or change anything before they are read
   - `RELEASING.md`: the Release checklist A–E, "Repository rules", §4–§8, **§11a** (the two tiers) and §13;
   - `APP_TESTPLAN.md`: section **W** (W1–W12), V, M3 and the Summary;
   - pull request #27 (`gh pr view 27 --json state,headRefOid,body`) and `git log --oneline a19e5e9..origin/release/1.2.0-rebuild`.
-- **The skeleton:** `captures/CAP-073-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BI/CAP-073-EVENT-NOTES.md`, read **as committed** (`git show HEAD:<path>`): purposes I–III,
+- **The skeleton:** captures/CAP-073-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BI/CAP-073-EVENT-NOTES.md (the placeholder folder, renamed by this session), read **as committed** (`git show HEAD:<path>`): purposes I–III,
   the reference-frame table, P0–P9, BI-1 … BI-20 with "Refuted if", Don'ts, the analysis checklist. Check with `git status` that the working-tree copy is unchanged.
 - **The previous run and the layout to follow — read in full:** `captures/CAP-072-2026-10-09_17-27-26_18-23-39-Group_BH/CAP-072-EVENT-NOTES.md` and
   `…/CAP-072-FINDINGS.md` (the "before": the press-and-hold gap of §5, the claim inventory of §1, the session ends of §7, the privacy method of §0); and the
