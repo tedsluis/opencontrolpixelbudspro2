@@ -27,7 +27,8 @@ starts (P8), no app use before the film (P9), Do Not Disturb on (an incoming cal
 observations said aloud. `CAP-072` takes every item below except B4, the CDM picker, K5/BC-12, F-4 and the second device (`ai-sessions/0082` RESULT §I).
 **`CAP-072`** (the 1.2.0 release run, analysed in `ai-sessions/0083`) settled lead L-1 (🟢, `PROTOCOL.md` §2.2a Update of 2026-10-10) and S6 (seen on the screen
 recording) — both removed here; its film 2 was not made: the maintainer moved C12, S12 and T11 to the run of the **rebuilt 1.2.0** (verdict "fix first",
-ADR-061, chat 2026-10-10). **Next app run:** the rebuilt 1.2.0 — the ADR-061 hold test plus the items below; the shorter-run tiers of §6 apply.
+ADR-061, chat 2026-10-10). **Next app run:** `CAP-073` (Group BI, the rebuilt 1.2.0, skeleton by `ai-sessions/0084`, ≤ 20 min) — the ADR-061 hold test plus
+T11, C12, S12, H5, Volume EQ, the worn line with in-ear detection off and balance "Right 4" (BI-14 … BI-20); the tiers of `RELEASING.md` §11a apply.
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
@@ -178,23 +179,12 @@ Open questions (each with where it is described):
       card), so a screen reader may announce "switch, on" without the setting's name — not tested on a phone. A merged row (`Modifier.toggleable` with
       `Role.Switch` on the row, the `Switch` without its own click) would fix it; it changes every switch's semantics (and the tests that find a switch by its
       sibling label) — **M** decides whether and when.
-- [ ] **Balance precision:** `CAP-067` reached Right 4 on the 17th drag (7 of 17 snapped to Centre). Options: a live value label while dragging,
-      slider `steps`, or the step buttons back.
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
 - [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
-- [ ] **1.2.0 rebuild (before release; verdict "fix first", the maintainer 2026-10-10):** build `DECISIONS.md` ADR-061 — hold the Message Stream claim while the
-      noise-control tab is on screen (`BudsRepositoryImpl.withMessageStream`/`scheduleRelease`, the tab's visibility from `:ui`/`:app`), unit tests with the
-      `CAP-045` 1583 unprovoked `Notify` during a hold and a release after leaving the tab; update `CHANGELOG.md` `[1.2.0]` and the release notes; then a
-      targeted hardware run (the hold with the tab open → the (i) line; leaving the tab → the phone's `DISC` ≤ 1.5 s; plus T11, the force-stop, C12, S12, H5,
-      Volume EQ from §2) (`CAP-072-FINDINGS.md` §5, §12).
-- [ ] Replace the redacted-answer fixtures of `GetHardwareInfo` (`HardwareInfoFixtures`: `CAP-036` 1423 / `CAP-024` 832 with the serials X-ed out) by
-      OpenControl's own exchange from `CAP-072`: request A 7593 → answer A 7596 (channel 21) and A 8616 → A 8620 (channel 19) of `CAP-072-btsnoop_hci2.log.last`,
-      serials redacted the same way (a FEATURE session; the ADR-058/ADR-059 Updates are done, 2026-10-10).
-- [ ] Balance slider: ≈ 30 writes and labels up to "Right 53" were needed to land near "Right 4" in `CAP-072` (18:07:49–18:08:57) — a finer step or tap targets
-      around the centre (a FEATURE question, **M**).
-- [ ] The worn indicator's (i) text names `CAP-064` to the user (the approved wording, `ai-sessions/0082` §B); reword without the capture id if the maintainer wants (**M**).
+- [ ] **M** — the rebuilt 1.2.0 (`ai-sessions/0084`: ADR-061 built, the `CAP-072` fixtures, the finer balance slider, the texts): `scripts/release.sh 1.2.0` on the
+      branch tip (B1–B3), the run `CAP-073` (Group BI), then a CAPTURE session for the verdict (C3/C4) (`RELEASING.md`; the steps in `ai-sessions/0084` RESULT).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.
@@ -240,13 +230,14 @@ statement is lost (`ai-sessions/0068` §6 has the proposal for each):
       2026-09-25, the announcement census, the call-id census) get entries with their commands, or a pointer line at the top (§6.2).
 - [ ] `AGENTS.md` §5 and §6 — shorten each to the rule plus one pointer (**M**: project law; "Four edits, no shortening" for now).
 - [ ] Optional (**M**, project law): a dated note in `AGENTS.md` §1 pointing to ADR-050 (the Info links hand a URL to the browser).
-- [ ] **Shorter hardware runs** (`ai-sessions/0083` RESULT "Testing burden", the maintainer's choice 2026-10-10: *"Both tiers + helper + card"*): write the
-      **minimal release run** (≤ 15 min: the update over the last release, Info (build, firmware, serials), one Connect, one ANC tap, each new or changed write
-      once, Bluetooth off/on, one export; screen recording only) and the **extended run** (camera and head, only when the wire or wear behaviour changes) into
-      `APP_TESTPLAN.md`/`RELEASING.md` as a proposal for **M**; a one-page run card; a `scripts/` helper that pulls the HCI log and the exports (bugreport),
-      names the files, decodes the session and compares each request with its fixture (its own session).
-- [ ] `PROTOCOL.md` §2.2a (2026-09-24 note, line ≈ 388) and §6 (≈ 2791, ≈ 3053) write the three component serials in full; ADR-058 item 5 asks for the first 4 +
-      last 2 characters in documents — redact them (a text change for **M**, found by `ai-sessions/0083`).
+- [ ] **Shorter hardware runs** (`ai-sessions/0083` RESULT "Testing burden", the maintainer's choice 2026-10-10: *"Both tiers + helper + card"*): the two tiers are
+      in `RELEASING.md` §11a and `APP_TESTPLAN.md` since `ai-sessions/0084`; still to do (its own session): a one-page run card (the maintainer chose to write it
+      with the helper, chat 2026-10-10) and a `scripts/` helper that pulls the HCI log and the exports (bugreport), names the files, decodes the session and
+      compares each request with its fixture.
+- [ ] Serials still written beyond the first 4 + last 2 characters (ADR-058 item 5; `PROTOCOL.md` done in `ai-sessions/0084`, the maintainer chose "PROTOCOL.md
+      only"): in full in `REVERSE_ENGINEERING.md` and seven `ai-sessions` files (0003 RESULT, 0017 PROMPT and RESULT, 0045, 0058, 0068 RESULTs, 0082 PROMPT); the
+      last six characters in `DECISIONS.md` ADR-058's Context and in several `ai-sessions` files (`grep -rlI` for the strings' tails) — **M** decides whether the
+      historical session logs are edited.
 
 Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each with its check in that RESULT's appendix):
 

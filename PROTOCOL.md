@@ -385,7 +385,8 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
     of the unsolicited `GetSoftwareInfo` announcement (`4:{1:{1:0x31373739323938363934 2:"release_5.203"} …}`, e.g. `CAP-001` 1346, `CAP-041` 758;
     `python3 scripts/pwrpc_decode.py <log>`). So the announcement's `<serial>` in the 2026-09-24 Update above, and "device serial" in the paragraph
     before it, is this version number. 🟡: a build number or build time (as Unix time 2026-05-20 17:38:14 UTC). The component serials are
-    `GetHardwareInfo` field 7 (`57071WRBEC0251` …, §6).
+    `GetHardwareInfo` field 7 (`5707…51` …, §6). *(Serials shortened to the first 4 and last 2 characters 2026-10-10, ADR-058 item 5; maintainer-approved in
+    chat, `ai-sessions/0084`.)*
   - **The request address is derivable from the announced channel — 🟡 HYPOTHESIS (code + 4 of 4 wire values).** `fux.java:90–103` maps channels
     18–22 to (`MAESTRO_A`; CASE, LEFT_BT_CORE, LEFT_SENSOR_HUB, RIGHT_BT_CORE, RIGHT_SENSOR_HUB) and 23–27 to the same on `MAESTRO_B`; `fut.java:178`
     builds `((a2 & 15) << 6) | ((a3 & 15) << 10)` with `goq` codes MAESTRO_A 10, MAESTRO_B 13, LEFT_BT_CORE 3, RIGHT_BT_CORE 4 → `00 3b` (19),
@@ -2788,7 +2789,7 @@ leaving them buried in prose elsewhere.
       `GetSoftwareInfo = 0x7199fa44`, `ReadSetting = 0xaed0ae51`, `SubscribeToSettingsChanges = 0x2821adf5`) — two independent paths (wire bytes, app code).
       The burst is: 1405 the unsolicited `GetSoftwareInfo` RESPONSE (`call_id 0xFFFFFFFF`, serial + `release_5.203` ×3); 1407 `SubscribeToSettingsChanges`;
       1410→1421 `SubscribeRuntimeInfo` (SERVER_STREAM, payload `6:{1:{1:100 2:1} 2:{1:100 2:2} 3:{1:100 2:2}}`); 1415→1423 **`GetHardwareInfo`** RESPONSE, field 7 =
-      the three component serials `57071WRBEC0251` / `57081WRBDR2309` / `57071WRBDL3147` *(correction 2026-10-03, maintainer-approved in chat, `ai-sessions/0069`, "Counts": the second ends "…DR3209" on the wire — `CAP-036` frame 1423 `… 44 52 33 32 30 39`)*; 1430 `SetWallclock`; 1412…1570 a `ReadSetting` sweep of `qhr` fields
+      the three component serials `5707…51` / `5708…09` / `5707…47` *(correction 2026-10-03 …: the second string was copied wrongly here; the wire value is `CAP-036` frame 1423)* *(serials shortened 2026-10-10, ADR-058 item 5, `ai-sessions/0084`)*; 1430 `SetWallclock`; 1412…1570 a `ReadSetting` sweep of `qhr` fields
       1–32 *(same correction: fields 1–38 without 6, 8, 9, 10, 14, 20, 33; requests 1412…1585, last answer 1587)* (e.g. 1523→1525 `4:16` = `[0.1, 0, 0.3, 0.2, 0.2]`); plus requests to unnamed services `0x73d5d805`, `0xaf3a7737`, `0x755ffe65` (answers the serial — *pointer 2026-09-30: `UpdateHelperService.GetRunningVersion`, a version number, not a serial, §2.2a 2026-09-30 Update*
       `1779298694`) and `0x1c256c5d`. It carries a settings read-back after all — the official app's `ReadSetting` sweep (consistent with ADR-034, and with
       `OBS-007`'s content-level negative, which compared the burst *across* settings states, not whether it reads them). This unblocks nothing; `CAP-057`
@@ -3050,7 +3051,8 @@ leaving them buried in prose elsewhere.
       *already-captured* connect-time burst frame is structurally consistent with `qjb`'s decoded
       shape instead. Within `CAP-036`'s own connect-time burst (frame 1423, `bthci_acl.chandle==0x0005`,
       DLCI 0x02, Rcvd), a sub-message decodes to three length-14 strings inside a nested field —
-      `"57071WRBEC0251"`, `"57081WRBDR2309"` *(wire: "…DR3209", corrected 2026-10-03)*, `"57071WRBDL3147"` — structurally matching `qie`'s
+      `"5707…51"`, `"5708…09"` *(the wire's second string differs from the one first copied here — corrected 2026-10-03)*, `"5707…47"` *(serials shortened
+      2026-10-10, ADR-058 item 5, `ai-sessions/0084`)* — structurally matching `qie`'s
       documented shape (three optional sub-fields, `REVERSE_ENGINEERING.md`'s `qjb`/`gaa` entries:
       `qie.c`/`.d`/`.e`, one of `qjb`'s two oneof alternatives) far more closely than a coincidence
       would predict (three strings, same length, each resembling a component serial number —
@@ -3702,6 +3704,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-07 | **`ai-sessions/0077` — the maintainer's pending decisions, approved in chat 2026-10-07.** **§4.3 Option E** dated Update: Code `0x03` field 3 = the lower bud level (🟡). **§2.3** note: Code `0x03`, Code `0x05` values `01`/`00`. **§4.1** note: Settable `00` ⇒ Current Off (🟡, 17/17 + 19/19). **§6** pointer to `CALL-001` (`CAP-008` §4; codec out of scope). No status change. | Claude (AI), maintainer-approved |
 | 2026-10-09 | **`ai-sessions/0082` — 1.2.0, maintainer-approved in chat 2026-10-09.** **§6** `GetHardwareInfo` field 7: the component attribution (7.1 Case, 7.2 Right bud, 7.3 Left bud, by position — the official app's reading, wire-consistent on channels 19/21/24) 🟡 → 🟢 (ADR-058). No other status change: ADR-059 (the "probably worn" indicator) reads ADR-049 item 3 as the 🟡 it is. | Claude (AI), maintainer-approved |
 | 2026-10-10 | **`ai-sessions/0083` — `CAP-072` (Group BH, OpenControl 1.2.0 without Play services), maintainer-approved in chat 2026-10-10.** **§2.2a** L-1: with both buds worn on 19, the Left out of the ear ⇒ Buds `DISC` + 21 — 🟡 → 🟢 (4 of 4); six more samples of "only the Right out ⇒ 21"; the hosting-bud reading stays 🟡. | Claude (AI), maintainer-approved |
+| 2026-10-10 | **`ai-sessions/0084` — the 1.2.0 rebuild, maintainer-approved in chat 2026-10-10 (`AskUserQuestion` "Serials").** §2.2a and §6 (two places): the three component serials shortened to the first 4 and last 2 characters (ADR-058 item 5). No status change. | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

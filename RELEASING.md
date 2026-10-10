@@ -296,6 +296,14 @@ A hotfix is a normal release with a smaller test set (added 2026-10-03, `ai-sess
 4. A hotfix that changes a **write** to the Buds (new bytes on the wire) is not a hotfix: it needs its `PROTOCOL.md` entry, its ADR and a full capture.
 5. §7 and §8 as usual. The published 1.0.0 stays available; the release notes of the hotfix say what it fixes.
 
+## 11a. The hardware run: two tiers (added 2026-10-10, `ai-sessions/0084`; the maintainer's choice in `ai-sessions/0083`, "Both tiers + helper + card")
+
+- **Minimal release run** (every release, ≤ 20 min, the screen recording only): the update over the last release (Dark mode and Debug mode kept), Info (build
+  without "-dirty", firmware, serials), one Connect, one noise-control tap, each new or changed request once, Bluetooth off/on, one export.
+- **Extended run** (added only when the wire or wear behaviour changes): the camera on the buds and the head, the wear sequences, sounds said aloud — only the
+  steps the skeleton names.
+- Until the helper script exists (`TODO.md` §6) the pass/fail list comes from the capture analysis.
+
 ## 12. New Buds firmware
 
 The app changes settings only on the firmware it was verified with (`release_5.203`, a constant — `DECISIONS.md` ADR-042 item 4). When Google updates the
