@@ -421,8 +421,8 @@ class BudsRepositoryImplTest {
                 if (rpc.methodId == Maestro.METHOD_READ_SETTING) {
                     Settings036.ANSWERS[rpc.payload[1].toInt()]?.let { transport.emit(Dlci.MAESTRO, hex(it)) }
                 }
-                // ADR-058: the Buds of CAP-036 answer the one GetHardwareInfo with frame 1423 (serials redacted in the fixture).
-                if (rpc.methodId == Maestro.METHOD_GET_HARDWARE_INFO) transport.emit(Dlci.MAESTRO, hex(HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED))
+                // ADR-058: the Buds answer the one GetHardwareInfo as in CAP-072 A 7596 (= CAP-036 1423's bytes; serials redacted in the fixture).
+                if (rpc.methodId == Maestro.METHOD_GET_HARDWARE_INFO) transport.emit(Dlci.MAESTRO, hex(HardwareInfoFixtures.RESPONSE_CH21_CAP072_A7596_REDACTED))
             }
         }
     }
@@ -845,7 +845,7 @@ class BudsRepositoryImplTest {
         assertEquals(3 + settingReads.size, maestro.size, "EQ read, the settings reads (field 12 added by ADR-046, 11 by ai-sessions/0074), the subscription, GetHardwareInfo (ADR-058)")
         assertEquals(1, maestro.count { it == "7e004b0310151dea71de7d5e2590821ee66654bfab7e" })
         assertEquals("7e004b0310151dea71de7d5e2590821ee66654bfab7e", maestro[maestro.size - 2], "the subscription right after the settings reads")
-        assertEquals(HardwareInfoFixtures.REQUEST_CH21_CAP036_1415, maestro.last(), "ADR-058: GetHardwareInfo last")
+        assertEquals(HardwareInfoFixtures.REQUEST_CH21_CAP072_A7593, maestro.last(), "ADR-058: GetHardwareInfo last")
         assertEquals(0.3f, repo.eqProfile.first()!!.mid, 1e-4f)
     }
 
@@ -1019,18 +1019,19 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("ADR-058: Connect sends exactly one GetHardwareInfo, byte-identical to CAP-036 1415 (ch 21), after the subscription; 1423's serials reach deviceInfo with their time")
+    @DisplayName("ADR-058: Connect sends exactly one GetHardwareInfo, byte-identical to CAP-072 A 7593 (ch 21, = CAP-036 1415), after the subscription; A 7596's serials reach deviceInfo with their time")
     fun `Connect reads the serial numbers once, on channel 21`() = runTest {
         BleLogger.clear()
         val (repo, transport) = buildRepository(verified = false)
-        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED)
+        // The whole RFCOMM read of A 7596: a runtime-info packet, then the answer — as OpenControl received it in CAP-072.
+        answerHardwareInfo(transport, HardwareInfoFixtures.RFCOMM_CH21_CAP072_A7596_REDACTED)
         transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_5.203"))
         settle()
         advanceTimeBy(4_000)
         repo.launchInitialEqRead()
         settle()
 
-        val hardwareRequests = transport.sent.filter { it.first == Dlci.MAESTRO && it.second.toHex() == HardwareInfoFixtures.REQUEST_CH21_CAP036_1415 }
+        val hardwareRequests = transport.sent.filter { it.first == Dlci.MAESTRO && it.second.toHex() == HardwareInfoFixtures.REQUEST_CH21_CAP072_A7593 }
         assertEquals(1, hardwareRequests.size, "exactly one, byte-identical to the official app's")
         val info = repo.deviceInfo.first()!!
         assertEquals(HardwareInfoFixtures.SERIALS_REDACTED, info.serials.map { it.serial })
@@ -1045,15 +1046,15 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("ADR-058: on channel 19 the request is CAP-024 801 and the answer 832 gives the same three serials in the same order")
+    @DisplayName("ADR-058: on channel 19 the request is CAP-072 A 8616 (= CAP-024 801) and the answer A 8620 gives the same three serials in the same order")
     fun `the serial numbers are read on channel 19 too`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
-        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH19_CAP024_832_REDACTED)
+        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH19_CAP072_A8620_REDACTED)
         transport.emit(Dlci.MAESTRO, helloWithFirmware(19, 10432, "release_5.203")) // response address `80 a3` (channel 19, ADR-034)
         settle()
         repo.launchInitialEqRead()
         settle()
-        assertEquals(1, transport.sent.count { it.second.toHex() == HardwareInfoFixtures.REQUEST_CH19_CAP024_801 })
+        assertEquals(1, transport.sent.count { it.second.toHex() == HardwareInfoFixtures.REQUEST_CH19_CAP072_A8616 })
         assertEquals(HardwareInfoFixtures.SERIALS_REDACTED, repo.deviceInfo.first()!!.serials.map { it.serial })
     }
 
@@ -1068,7 +1069,7 @@ class BudsRepositoryImplTest {
         settle()
         advanceTimeBy(2_100)
         runCurrent()
-        assertEquals(1, transport.sent.count { it.second.toHex() == HardwareInfoFixtures.REQUEST_CH21_CAP036_1415 }, "sent once, never retried")
+        assertEquals(1, transport.sent.count { it.second.toHex() == HardwareInfoFixtures.REQUEST_CH21_CAP072_A7593 }, "sent once, never retried")
         assertEquals(BudsError.Timeout, repo.serialsError.first())
         assertEquals(emptyList<io.github.tedsluis.opencontrolpixelbuds.domain.ComponentSerial>(), repo.deviceInfo.first()!!.serials)
 
@@ -1088,12 +1089,12 @@ class BudsRepositoryImplTest {
     @DisplayName("ADR-058 item 2 / ADR-042 item 3: a read is not gated — the request is sent to an unverified firmware too (M10 guards the opposite)")
     fun `the hardware-info read is sent on an unverified firmware`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
-        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED)
+        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH21_CAP072_A7596_REDACTED)
         transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_9.999"))
         settle()
         repo.launchInitialEqRead()
         settle()
-        assertEquals(1, transport.sent.count { it.second.toHex() == HardwareInfoFixtures.REQUEST_CH21_CAP036_1415 })
+        assertEquals(1, transport.sent.count { it.second.toHex() == HardwareInfoFixtures.REQUEST_CH21_CAP072_A7593 })
         assertEquals(HardwareInfoFixtures.SERIALS_REDACTED, repo.deviceInfo.first()!!.serials.map { it.serial })
         assertEquals(listOf("release_9.999"), repo.safeMode.first()?.firmware, "Safe Mode is observed (the Connection card) — it refuses writes, not this read")
     }
@@ -1102,7 +1103,7 @@ class BudsRepositoryImplTest {
     @DisplayName("ADR-058: Disconnect clears deviceInfo (serials included) and the error; nothing is persisted")
     fun `Disconnect drops the serials with the rest of deviceInfo`() = runTest {
         val (repo, transport) = buildRepository(verified = false)
-        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED)
+        answerHardwareInfo(transport, HardwareInfoFixtures.RESPONSE_CH21_CAP072_A7596_REDACTED)
         transport.emit(Dlci.MAESTRO, helloWithFirmware(21, 10496, "release_5.203"))
         settle()
         repo.launchInitialEqRead()

@@ -30,7 +30,8 @@ import kotlin.random.Random
 /**
  * `GetHardwareInfo` (DECISIONS.md ADR-058, `ai-sessions/0082` item 2): the request on both channels is byte-identical to the official app's, the answer's
  * field 7 decodes to the three component serials by position, an answer without them is an OK result (never a guessed serial), and the reader never throws.
- * Fixtures: [HardwareInfoFixtures] (the answers with the serials redacted — device identifiers, `AGENTS.md` §9).
+ * Fixtures: [HardwareInfoFixtures] — OpenControl 1.2.0's own exchange of `CAP-072` (`ai-sessions/0084` item 2), the answers with the serials redacted
+ * (device identifiers, `AGENTS.md` §9).
  */
 class HardwareInfoCodecTest {
 
@@ -40,10 +41,10 @@ class HardwareInfoCodecTest {
         (PwRpc.decode((Hdlc.decode(hex(frameHex)) as BudsResult.Success).value.payload) as BudsResult.Success).value.payload
 
     @Test
-    @DisplayName("the request is byte-identical to CAP-036 frame 1415 (channel 21) and CAP-024 frame 801 (channel 19); empty payload, no call id")
+    @DisplayName("the request is byte-identical to OpenControl 1.2.0's own CAP-072 A 7593 (channel 21) and A 8616 (channel 19) — the official app's CAP-036 1415 / CAP-024 801 bytes; empty payload, no call id")
     fun `request matches the official app's on both channels`() {
-        assertEquals(HardwareInfoFixtures.REQUEST_CH21_CAP036_1415, wire(4736, Maestro.getHardwareInfoRequest(21)))
-        assertEquals(HardwareInfoFixtures.REQUEST_CH19_CAP024_801, wire(3712, Maestro.getHardwareInfoRequest(19)))
+        assertEquals(HardwareInfoFixtures.REQUEST_CH21_CAP072_A7593, wire(4736, Maestro.getHardwareInfoRequest(21)))
+        assertEquals(HardwareInfoFixtures.REQUEST_CH19_CAP072_A8616, wire(3712, Maestro.getHardwareInfoRequest(19)))
         val packet = Maestro.getHardwareInfoRequest(21)
         assertEquals(0, packet.payload.size)
         assertEquals(null, packet.callId)
@@ -51,16 +52,16 @@ class HardwareInfoCodecTest {
     }
 
     @Test
-    @DisplayName("CAP-036 1423: field 7 -> three serials in field order 1, 2, 3; fields 1, 2, 5, 6, 8 are not read")
+    @DisplayName("CAP-072 A 7596: field 7 -> three serials in field order 1, 2, 3; fields 1, 2, 5, 6, 8 are not read")
     fun `the answer's field 7 decodes to the three serials by position`() {
-        val serials = HardwareInfo.serials(payloadOf(HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED))
+        val serials = HardwareInfo.serials(payloadOf(HardwareInfoFixtures.RESPONSE_CH21_CAP072_A7596_REDACTED))
         assertEquals(HardwareInfoFixtures.SERIALS_REDACTED.mapIndexed { i, s -> ComponentSerial(i + 1, s) }, serials)
     }
 
     @Test
-    @DisplayName("CAP-024 832 (channel 19): the same three strings in the same order — the answer does not depend on the hosting bud")
+    @DisplayName("CAP-072 A 8620 (channel 19): the same three strings in the same order — the answer does not depend on the hosting bud")
     fun `the channel-19 answer carries the same serials in the same order`() {
-        val serials = HardwareInfo.serials(payloadOf(HardwareInfoFixtures.RESPONSE_CH19_CAP024_832_REDACTED))
+        val serials = HardwareInfo.serials(payloadOf(HardwareInfoFixtures.RESPONSE_CH19_CAP072_A8620_REDACTED))
         assertEquals(HardwareInfoFixtures.SERIALS_REDACTED, serials.map { it.serial })
         assertEquals(listOf(1, 2, 3), serials.map { it.index })
     }
@@ -68,7 +69,7 @@ class HardwareInfoCodecTest {
     @Test
     @DisplayName("the router: the whole real frame routes to RoutedFrame.HardwareInfo; an OK answer without field 7 is an RpcResult (UnreadableAnswer upstream)")
     fun `the router routes the answer, and an answer without serials as a plain result`() {
-        val routed = CodecRouter().feed(Dlci.MAESTRO, hex(HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED), timestampMillis = 0)
+        val routed = CodecRouter().feed(Dlci.MAESTRO, hex(HardwareInfoFixtures.RESPONSE_CH21_CAP072_A7596_REDACTED), timestampMillis = 0)
         assertEquals(RoutedFrame.HardwareInfo(HardwareInfoFixtures.SERIALS_REDACTED.mapIndexed { i, s -> ComponentSerial(i + 1, s) }), routed.single())
 
         // A labelled supplementary structural case (no capture holds it): the same answer with field 7 absent — fields 1, 2, 5, 6 only.
@@ -81,6 +82,15 @@ class HardwareInfoCodecTest {
         val rejected = RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_GET_HARDWARE_INFO, status = 5)
         val error = CodecRouter().feed(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, PwRpc.encode(rejected)), timestampMillis = 0)
         assertEquals(RoutedFrame.RpcResult(21, Maestro.METHOD_GET_HARDWARE_INFO, PwRpc.TYPE_RESPONSE, 5), error.single())
+    }
+
+    @Test
+    @DisplayName("CAP-072 A 7596 whole: one RFCOMM read holds a runtime-info packet and then the answer — both routed, the serials from the second frame")
+    fun `an answer that follows a runtime-info packet in the same read is routed`() {
+        val routed = CodecRouter().feed(Dlci.MAESTRO, hex(HardwareInfoFixtures.RFCOMM_CH21_CAP072_A7596_REDACTED), timestampMillis = 0)
+        assertEquals(2, routed.size, "two pw_hdlc frames, two routed frames")
+        assertTrue(routed[0] is RoutedFrame.RuntimeInfo, "the runtime-info packet first: ${routed[0]}")
+        assertEquals(RoutedFrame.HardwareInfo(HardwareInfoFixtures.SERIALS_REDACTED.mapIndexed { i, s -> ComponentSerial(i + 1, s) }), routed[1])
     }
 
     @Test
@@ -105,7 +115,7 @@ class HardwareInfoCodecTest {
         repeat(3_000) {
             HardwareInfo.serials(ByteArray(random.nextInt(0, 96)) { random.nextInt(256).toByte() })
         }
-        val real = payloadOf(HardwareInfoFixtures.RESPONSE_CH21_CAP036_1423_REDACTED)
+        val real = payloadOf(HardwareInfoFixtures.RESPONSE_CH21_CAP072_A7596_REDACTED)
         repeat(3_000) {
             val mutated = real.copyOf()
             repeat(random.nextInt(1, 4)) { mutated[random.nextInt(mutated.size)] = random.nextInt(256).toByte() }
