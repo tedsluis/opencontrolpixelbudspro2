@@ -7,7 +7,9 @@ The first release, 1.0.0, was published on 2026-10-03 ([v1.0.0](https://github.c
 `8d8af4b`), after `CAP-067`, the hardware run of the signed APK (`ai-sessions/0067`). Its block below is written for users. Everything before it — documentation, tooling and the protocol reconstruction that led to the app —
 is kept unchanged under "History before 1.0.0". 1.0.1, a hotfix, followed on 2026-10-04 ([v1.0.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.0.1), build commit
 `e1fc886`, hardware run `CAP-068`, `ai-sessions/0070`); 1.1.0 on 2026-10-07 ([v1.1.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.1.0),
-build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
+build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`); 1.1.1 on 2026-10-08 ([v1.1.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.1.1),
+build commit `86a6fb3`, hardware run `CAP-071`, `ai-sessions/0080`); 1.2.0 on 2026-10-10 ([v1.2.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.0),
+build commit `5b4d5db`, hardware runs `CAP-072` and `CAP-073`, `ai-sessions/0083`, `0085`). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
 
 ## [Unreleased]
 
