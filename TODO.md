@@ -11,9 +11,10 @@ pre-restructure file (same command). The `pbtk` root cause those pointers most o
 
 Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maintainer (a decision, a sign-off, or an action only they can do).
 
-## 1. After release 1.0.1 (published 2026-10-04, `ai-sessions/0070`)
+## 1. After release 1.2.0 (published 2026-10-10, `ai-sessions/0085`)
 
-Nothing open (2026-10-07, `ai-sessions/0077`: the two 1.0.1 behaviours are recorded as ADR-056 and ADR-057).
+Nothing open (2026-10-11): E1–E4 are done (PR #30), the README shows the 1.2.0 build (PR #32). The Buds' restore is in §4, the hold's untested branches
+in §2.
 
 ## 2. Hardware verification debt (the app, on film)
 
@@ -27,11 +28,10 @@ starts (P8), no app use before the film (P9), Do Not Disturb on (an incoming cal
 observations said aloud. `CAP-072` takes every item below except B4, the CDM picker, K5/BC-12, F-4 and the second device (`ai-sessions/0082` RESULT §I).
 **`CAP-072`** (the 1.2.0 release run, analysed in `ai-sessions/0083`) settled lead L-1 (🟢, `PROTOCOL.md` §2.2a Update of 2026-10-10) and S6 (seen on the screen
 recording) — both removed here; its film 2 was not made: the maintainer moved C12, S12 and T11 to the run of the **rebuilt 1.2.0** (verdict "fix first",
-ADR-061, chat 2026-10-10). **Next app run:** `CAP-073` (Group BI, the rebuilt 1.2.0, skeleton by `ai-sessions/0084`, ≤ 20 min) — the ADR-061 hold test plus
-T11, C12, S12, H5, Volume EQ, the worn line with in-ear detection off and balance "Right 4" (BI-14 … BI-20); the tiers of `RELEASING.md` §11a apply.
+ADR-061, chat 2026-10-10).
 **`CAP-073`** (the rebuilt 1.2.0, analysed in `ai-sessions/0085`, verdict OK — ready to release) settled the ADR-061 hold's main path and balance "Right 4"
 (both removed here); the maintainer tested only the changed functionality, so T11, C12, S12, H5, Volume EQ and the worn line with in-ear detection off stay open,
-with the hold's untested branches below.
+with the hold's untested branches below. **Next app run:** none planned — these items go into the hardware run of the next release (`RELEASING.md` §11a).
 - [ ] The ADR-061 hold's other branches on hardware (`CAP-073-FINDINGS.md` §4): the tile with the noise-control tab shown (no second `SABM`, no `DISC`); Home and
       return (the `DISC` ≈ 1.5 s after Home, a new claim on return); a session loss and the ADR-044 re-open while the tab is shown (the snapshot kept); and the
       noise-control (i) after a press-and-hold ("Changed by the Buds at HH:MM:SS …" and the ADR-061 sentence) — not run in `CAP-073`.
