@@ -46,23 +46,23 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 ## Screenshots
 
 <p>
-  <img src="images/opencontrol-for-buds-20261004-081001.jpg" width="200" alt="Connection tab: connected, battery Left 100 %, Case 75 %, Right 100 %">
-  <img src="images/opencontrol-for-buds-20261004-081012.jpg" width="200" alt="ANC tab: Noise cancellation, Off, Adaptive, Transparency">
-  <img src="images/opencontrol-for-buds-20261004-081019.jpg" width="200" alt="Sound tab: equalizer with five bands">
-  <img src="images/opencontrol-for-buds-20261004-081050.jpg" width="200" alt="Sound tab: presets, balance, mono audio, conversation detection">
+  <img src="images/opencontrol-for-buds-20261011-080443.jpg" width="200" alt="Connection tab: connected, battery Left 100 %, Case 100 %, Right 100 %, both buds in the case">
+  <img src="images/opencontrol-for-buds-20261011-080505.jpg" width="200" alt="ANC tab: Noise cancellation, Off, Adaptive (selected), Transparency">
+  <img src="images/opencontrol-for-buds-20261011-080512.jpg" width="200" alt="Sound tab: equalizer with five bands and the presets">
+  <img src="images/opencontrol-for-buds-20261011-080519.jpg" width="200" alt="Sound tab: presets, Volume EQ, balance and mono audio">
 </p>
 <p>
-  <img src="images/opencontrol-for-buds-20261004-081113.jpg" width="200" alt="Controls tab: touch controls, press and hold, modes for press and hold">
-  <img src="images/opencontrol-for-buds-20261004-081125.jpg" width="200" alt="Controls tab: in-ear detection switch">
-  <img src="images/opencontrol-for-buds-20261004-081138.jpg" width="200" alt="Find tab: Ring Left, Ring Right, Stop">
-  <img src="images/opencontrol-for-buds-20261004-081145.jpg" width="200" alt="Settings: dark mode and Use different Buds">
+  <img src="images/opencontrol-for-buds-20261011-080532.jpg" width="200" alt="Controls tab: touch controls, press and hold per bud, modes for press and hold">
+  <img src="images/opencontrol-for-buds-20261011-080549.jpg" width="200" alt="Controls tab: head gestures, in-ear detection, conversation detection, Multipoint">
+  <img src="images/opencontrol-for-buds-20261011-080554.jpg" width="200" alt="Find tab: Ring Left, Ring Right, Stop">
+  <img src="images/opencontrol-for-buds-20261011-080609.jpg" width="200" alt="Settings: dark mode, case sounds and Use different Buds">
 </p>
 
-**Screen recording** (90 s; the preview shows the first 12 s — click it for the full MP4):
+**Screen recording** (40 s; the preview shows the first 20 s — click it for the full MP4):
 
 [<img src="images/opencontrol-for-buds-demo-preview.gif" width="240" alt="Screen recording preview: the Connection, ANC and Sound tabs">](images/opencontrol-for-buds-demo.mp4)
 
-*The screenshots and the recording were made on 2026-10-04 with the 1.0.1 release build.* For comparison: the official app's screens are in
+*The screenshots and the recording were made on 2026-10-11 with the 1.2.0 release build.* For comparison: the official app's screens are in
 [`SCREENSHOTS_PIXEL_BUDS_APP.md`](./SCREENSHOTS_PIXEL_BUDS_APP.md).
 
 ## Privacy
