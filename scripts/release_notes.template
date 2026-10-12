@@ -2,6 +2,10 @@ An independent, open-source Android app to control Google Pixel Buds Pro 2 — f
 
 **Features:** noise control (Noise cancellation, Adaptive, Transparency, Off) and a Quick Settings tile — with "Changed by the Buds" in its details when a bud's press-and-hold or the Buds themselves changed the mode while the noise-control tab is open · equalizer with presets and Volume EQ · battery Left/Right (with charging), the Case and a "probably worn" line · Find My Buds (ring Left / Right) · touch controls, press and hold per bud and its noise-control modes · head gestures, Multipoint, conversation detection, in-ear detection · balance (finer near the centre), mono audio · case sounds and dark mode on gear → Settings · firmware and serial numbers on gear → Info.
 
+**New in 1.2.1:** a **Noise-control channel** setting on gear → Settings for phones with Google Play services, where Play's Fast Pair takes the channel back about 5 seconds after this app opened it on the noise-control tab — "Show a hint, do not take it back" (the default: the noise-control card says when it was taken) or "Take it back while the noise-control tab is open" (3, 6 and 12 seconds later, three times per visit of the tab, then the hint); without Play services nothing changes.
+
+**Known issues in 1.2.1:** in a user with Google Play services, with "Show a hint" every press-and-hold after the first (about 5 seconds after a connect or a tap) reaches Play services instead of this app until you tap, refresh or pull down; with "Take it back" roughly 4 of 10 holds fall in the other app's windows and Android's own Buds settings may be stale while the tab is open — the timings are one Play version's. The 1.2.0 known issues stay.
+
 **Not included:** ringing the Case or both buds, firmware updates, choosing the devices of a multipoint connection, anything that needs a Google account.
 
 **Requirements:** Android 14 (API 34) or newer. Tested on a Pixel 9a with GrapheneOS (Android 17) and Buds firmware `release_5.203` only. On any other firmware the app opens in read-only **Safe Mode** and sends no setting changes.

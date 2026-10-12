@@ -53,9 +53,9 @@ android {
         // candidate before 1.0.0 ("1.0.0-rc.1") takes 9901; 1.1.1 → 10101. It must grow with every release: Android refuses to install a lower one over a higher one.
         // Release candidates exist only for X.0.0 (`ai-sessions/0069`, `scripts/release.sh`): for any other version the candidate's code would not be
         // above the previous release. 1.0.1 = the hotfix of `ai-sessions/0069` (the maintainer's choice in chat 2026-10-03); 1.1.1 = the toolchain of `ai-sessions/0078`
-        // (`ai-sessions/0079`, the maintainer's choice in chat 2026-10-08).
-        versionCode = 10200
-        versionName = "1.2.0"
+        // (`ai-sessions/0079`, the maintainer's choice in chat 2026-10-08); 1.2.1 = the Noise-control channel switch of `ai-sessions/0087` (chat 2026-10-12).
+        versionCode = 10201
+        versionName = "1.2.1"
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
         buildConfigField("String", "GIT_COMMIT_DATE", "\"$gitCommitDate\"")
     }

@@ -2707,6 +2707,52 @@ motivated this).
   press-and-hold after a Connect was shown; 35 later holds reached Play services (its `HearableControlManager` logs one). The Consequences' "Play's Fast Pair is locked
   out while the tab is open" holds for about 5 s only. The decision is unchanged; the fix options are `CAP-074-FINDINGS.md` §9 — the maintainer's choice in the same
   chat: a Settings switch between "hint only, no re-claim" and "re-claim after a foreign close with a back-off", a FEATURE prompt of its own (`TODO.md` §5).
+- **Update (2026-10-12, `ai-sessions/0087`, maintainer-approved in chat 2026-10-12, `AskUserQuestion` "ADR-061 Update", with this text in the preview):** the
+  Decision's "the Buds (or another client) closing DLCI 0x04 ends it without a re-claim" holds for the Settings tab's default mode "Show a hint, do not take it
+  back"; in the mode "Take it back while the noise-control tab is open" **ADR-062** re-claims after a foreign close 3, 6 and 12 s later (three times per visit of
+  the tab), then stops. The hold itself, its start and its other end reasons are unchanged.
+
+## ADR-062 — A user-selectable re-claim of the noise-control channel after a foreign close, with a back-off
+
+- **Date**: 2026-10-12
+- **Status**: Accepted (maintainer, chat 2026-10-12, `ai-sessions/0087`) — supersedes ADR-061's clause "the Buds (or another client) closing DLCI 0x04 ends it
+  without a re-claim" for the switch's mode "take it back" only; ADR-061's hold and ADR-032's claim model stand. Built in 1.2.1 (`ai-sessions/0087`); **not yet
+  hardware-verified** — the run `CAP-075` (Group BK).
+- **Note on process**: drafted by an AI agent (`ai-sessions/0087`); the switch with its two modes is the maintainer's choice in chat 2026-10-12 (`ai-sessions/0086`
+  Checkpoint D, verbatim there); the delay/back-off/cap, the default, the texts and this text approved in the chat of 2026-10-12 (`AskUserQuestion` "Re-claim
+  delay" → *"3 s, 6 s, 12 s, then stop (Recommended)"*, "Default mode" → *"Hint only (Recommended)"*, "Switch card", "Hint texts", "ADR-062" → *"Accept ADR-062 as
+  drafted (Recommended)"*), per `AGENTS.md` §6.
+- **Context**: `CAP-074` (`ai-sessions/0086`): in the GrapheneOS user with Google Play services every ADR-061 hold was cut 4.7–5.1 s after the app's `SABM`
+  (12 of 12) — Play's Fast Pair re-connects 5.2–5.7 s after losing DLCI 0x04 to the app's connect (20 of 20), the stack refuses the second connection and removes
+  the app's port; Play retries 2.2–2.6 s after a collided recovery. With ADR-061's "no re-claim" only the first (sometimes the second) press-and-hold after a
+  Connect was shown; 35 holds reached Play. In the user without Play nothing contends (`CAP-073`: the hold lived 31 s, every hold shown). The ANC (i) claimed a
+  lockout that lasts ≈ 5 s only. The numbers were re-derived from `CAP-074-btsnoop_hci.log` by `ai-sessions/0087` (RESULT §A.1: Play's loss → the cut 5.22 … 5.71 s,
+  eleven values; Play's retry 2.24 … 2.55 s, ten values; once 4.44 s after a retry that collided).
+- **Options considered**: the six of `CAP-074-FINDINGS.md` §9 — (A) re-claim after a foreign close with a back-off, (B) a hint and no re-claim, (C) document the
+  limit, (D) a one-shot re-claim, (E) claim-per-action in the Play user, (F) a fixed 2.6-s re-claim — and a switch between B+C and A, so the user chooses (the
+  maintainer). Delay candidates (`ai-sessions/0087` RESULT §A.3): 0.5/1/2/4 s (rests on Play's retry back-off, one sample; 2-s windows), 3 s × 10 (ten kills of
+  Play's socket), 3/6/12 s then stop — chosen.
+- **Decision**:
+  1. A setting "Noise-control channel" on gear → Settings, stored locally (DataStore key `hold_reclaim_mode`; `HoldReclaimMode`): `HINT_ONLY` (the default) or
+     `RECLAIM`. The app itself stays offline.
+  2. In both modes, when a held claim is closed by someone else while the noise-control tab is shown (`channelClosed` with the hold open), the hold ends as ADR-061
+     says and the noise-control card shows the hint with the close's time ("The noise-control channel was taken by another app at HH:MM:SS (for example Google
+     Play services' Fast Pair)[; the app took it back N times and stopped]. A change made on a bud is not shown until you tap a mode, Refresh, or pull down.") —
+     mode `HINT_ONLY` at once; mode `RECLAIM` after the cap — cleared when the app holds the channel again, at Connect, Disconnect and a session loss.
+  3. Mode `RECLAIM`: 3.0 s after the foreign close — 6 s after the next, 12 s after the third — the app claims again with the existing claim code (`refreshAncMode`:
+     `SABM`, `08 11 00 00`, the usual release when the tab is left), only if the tab is still shown, the app visible, the session `Ready` and the channel closed; at
+     most three re-claims per visit of the tab (the counter resets on a re-entry of the tab, the app's return, a tap, Refresh, a pull, a Connect); never in the
+     background; a session loss, a Disconnect, leaving the tab or the app, or switching to `HINT_ONLY` cancels a pending re-claim. One always-on, payload-free log
+     line per re-claim and one when it stops.
+  4. The ANC (i) says another app may take the channel back about 5 s later and points to the setting; the setting's (i) says the numbers are one Play version's,
+     measured 2026-10-12 (🟡 for others).
+  5. Nothing new on the wire; ADR-032's items 1, 2, 4, 5 and ADR-061's hold are unchanged.
+- **What this does NOT settle**: Play's timers on other versions (`ai-sessions/0040` 2.7–5.0 s, `CAP-059` 1.7–3.1 s); why Play stopped re-claiming in
+  `CAP-059`/`061`/`062` and not in `CAP-074` (🔴 `TODO.md` §4); the stack path of each cut in `CAP-074` (🟡, its §8).
+- **Consequences**: in mode `RECLAIM` a tug of war with Play's Fast Pair while the tab is open (the app holds ≈ 5 of every 8.5 s, three kills of Play's socket per
+  visit, then the hint; Android's own Buds view may be stale meanwhile); `HoldReclaimMode` and `ChannelTaken` (`:domain`), `HoldReclaimSettingsStore`
+  (`:data/settings`), `BudsRepository.ancChannelTaken`, the Settings card, the hint line, the corrected ANC (i); tests with `FakeBudsTransport` and real `CAP-074`
+  bytes (`Cap074Fixtures`); the hardware run `CAP-075` (Group BK) in both users; version 1.2.1 (the maintainer's choice, chat 2026-10-12, "Version").
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
