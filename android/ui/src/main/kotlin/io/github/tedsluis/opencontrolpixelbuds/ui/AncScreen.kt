@@ -52,6 +52,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
+import io.github.tedsluis.opencontrolpixelbuds.domain.ChannelTaken
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
 
@@ -75,6 +76,10 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
  *
  * **DECISIONS.md ADR-061 (`ai-sessions/0084`):** while this tab is shown the repository holds the Message Stream claim (reported by [OpenControlNavHost]), so
  * such a `Notify` reaches the app; the (i) ends with [ANC_HOLD_HINT_TEXT].
+ *
+ * **DECISIONS.md ADR-062 (`ai-sessions/0087`, the maintainer's texts in chat 2026-10-12):** while [channelTaken] is set — the held channel was closed by another
+ * app (Google Play services' Fast Pair, `CAP-074`) and, in the "take it back" mode, the re-claims are exhausted — [ancChannelTakenLine] is shown below the mode
+ * buttons and in the (i); it clears when the app holds the channel again.
  */
 @Composable
 fun AncScreen(
@@ -91,6 +96,7 @@ fun AncScreen(
     ancModeUnconfirmedAt: Long? = null,
     sessionSince: Long? = null,
     ancModeCause: AncModeCause? = null,
+    channelTaken: ChannelTaken? = null,
 ) {
     val ready = connectionState.isReady()
     val notAllowed = ready && ancAvailability == AncAvailability.NOT_ALLOWED
@@ -111,12 +117,17 @@ fun AncScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     CardTitle(
                         "Noise control",
-                        ancDetailLines(connectionState, ancMode, ancModeUpdatedAt, notAllowed, ancAvailabilityUpdatedAt, ancModeUnconfirmedAt, fromLastConnection, ancModeCause),
+                        ancDetailLines(
+                            connectionState, ancMode, ancModeUpdatedAt, notAllowed, ancAvailabilityUpdatedAt, ancModeUnconfirmedAt, fromLastConnection, ancModeCause,
+                            channelTaken,
+                        ),
                         notCurrent = notCurrent,
                     )
                     if (ancMode == null) Text(ancModeLine(null, null), style = MaterialTheme.typography.bodyLarge)
                     // The reason a tap may not switch stays visible; its time is in the (i).
                     if (notAllowed) Text(ancNotAllowedLine(null), style = MaterialTheme.typography.bodyMedium)
+                    // ADR-062: the channel was taken by another app — on the main surface too (the maintainer's choice in chat 2026-10-12, "Hint texts"), with its time.
+                    if (channelTaken != null) Text(ancChannelTakenLine(channelTaken), style = MaterialTheme.typography.bodyMedium)
                     ANC_MODE_LIST_ORDER.chunked(2).forEach { row ->
                         // F-3 / A68-APP-02: a mode that is not confirmed or not current is dimmed — always together with the (i) dot and its line, never alone
                         // (WCAG 1.4.1).
@@ -160,7 +171,8 @@ internal fun ancModeLine(ancMode: AncMode?, updatedAt: Long?, fromLastConnection
 
 /**
  * The ANC card's (i) lines: the not-confirmed line after a cut-off answer (F-3), the mode with its time, the "changed by the Buds" line when a `Notify` the app did
- * not provoke changed the mode (`ai-sessions/0082` item 1), the "checked HH:MM:SS" line while not allowed, the session line, the hold explanation (ADR-061).
+ * not provoke changed the mode (`ai-sessions/0082` item 1), the "checked HH:MM:SS" line while not allowed, the channel-taken line (ADR-062), the session line, the
+ * hold explanation (ADR-061).
  */
 internal fun ancDetailLines(
     connectionState: ConnectionState,
@@ -171,22 +183,43 @@ internal fun ancDetailLines(
     unconfirmedAt: Long? = null,
     fromLastConnection: Boolean = false,
     cause: AncModeCause? = null,
+    channelTaken: ChannelTaken? = null,
 ): List<String> = listOfNotNull(
     unconfirmedAt?.let(::ancUnconfirmedLine),
     ancModeLine(ancMode, ancModeUpdatedAt, fromLastConnection),
     if (cause == AncModeCause.CHANGED_BY_BUDS && ancMode != null) ancChangedByBudsLine(ancModeUpdatedAt) else null,
     if (notAllowed) ancNotAllowedLine(checkedAt) else null,
+    channelTaken?.let(::ancChannelTakenLine),
     "Connection: ${connectionState::class.simpleName}",
     ANC_HOLD_HINT_TEXT,
 )
 
 /**
  * DECISIONS.md ADR-061 (the maintainer's text in chat 2026-10-10, `ai-sessions/0084`): the noise-control card's (i) says that the channel is held while this tab
- * is open — Find keeps [MESSAGE_STREAM_HINT_TEXT], since its taps still claim briefly.
+ * is open — Find keeps [MESSAGE_STREAM_HINT_TEXT], since its taps still claim briefly. **Corrected by ADR-062 (`ai-sessions/0087`, the maintainer's text in chat
+ * 2026-10-12):** the earlier "cannot use it meanwhile" claimed a lockout that `CAP-074` shows lasts ≈ 5 s — Play's Fast Pair takes the channel back; what the
+ * app does then is the Settings tab's choice.
  */
 internal const val ANC_HOLD_HINT_TEXT: String = "While this tab is open the app keeps the Buds' noise-control channel open, so a change made on a bud " +
-    "(a press-and-hold) shows here. Another app that uses the channel (for example Google Play services' Fast Pair) cannot use it meanwhile; it is " +
-    "released 1.5 seconds after you leave the tab."
+    "(a press-and-hold) shows here; it is released 1.5 seconds after you leave the tab. Another app that uses the channel (for example Google Play " +
+    "services' Fast Pair) loses it to this app and may take it back about 5 seconds later; what the app does then is set on the Settings tab under " +
+    "Noise-control channel."
+
+/**
+ * DECISIONS.md ADR-062 (the maintainer's texts in chat 2026-10-12, "Hint texts"): the line while [ChannelTaken] is set — with the close's time, and in the "take
+ * it back" mode with the re-claims made before the app stopped. The other app is named as an example only (`CAP-074`: Play services' Fast Pair; the app cannot
+ * see who took the channel — the stack closed its socket).
+ */
+internal fun ancChannelTakenLine(taken: ChannelTaken): String {
+    val time = formatUpdatedAt(taken.atMillis)?.let { " at $it" } ?: ""
+    val reclaimed = when (taken.reclaimAttempts) {
+        0 -> ""
+        1 -> "; the app took it back once and stopped"
+        else -> "; the app took it back ${taken.reclaimAttempts} times and stopped"
+    }
+    return "The noise-control channel was taken by another app$time (for example Google Play services' Fast Pair)$reclaimed. A change made on a bud is not " +
+        "shown until you tap a mode, Refresh, or pull down."
+}
 
 /**
  * `ai-sessions/0062` F-2 (the maintainer's wording, chat 2026-10-01): "The Buds don't allow changing noise control right now (usually because no bud is in an

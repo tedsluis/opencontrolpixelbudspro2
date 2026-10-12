@@ -30,6 +30,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TabRow
@@ -55,6 +56,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
+import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 
@@ -74,9 +76,10 @@ internal enum class SettingsTab(val label: String) { SETTINGS("Settings"), DEBUG
 
 /**
  * The settings menu (`ai-sessions/0062` F-4, the maintainer's design in chats 2026-10-01): a full-screen destination reached from the top app bar's gear, outside
- * the five bottom tabs (ARCHITECTURE.md §2.4), with three tabs — **Settings** (dark mode; since `ai-sessions/0082` item 5 also the "Case sounds" card, moved
- * from Controls; "Use different Buds"), **Debug** (today's [DebugScreen], unchanged) and **Info** (the app's build, the Buds' firmware and — ADR-058 — their
- * serial numbers). The selected tab survives a rotation; back (the top bar's arrow or the system's) returns to the tab the menu was opened from.
+ * the five bottom tabs (ARCHITECTURE.md §2.4), with three tabs — **Settings** (dark mode; since `ai-sessions/0087` the "Noise-control channel" card, ADR-062;
+ * since `ai-sessions/0082` item 5 also the "Case sounds" card, moved from Controls; "Use different Buds"), **Debug** (today's [DebugScreen], unchanged) and
+ * **Info** (the app's build, the Buds' firmware and — ADR-058 — their serial numbers). The selected tab survives a rotation; back (the top bar's arrow or the
+ * system's) returns to the tab the menu was opened from.
  */
 @Composable
 fun SettingsMenuScreen(
@@ -101,6 +104,9 @@ fun SettingsMenuScreen(
     settingsError: SettingsFailure? = null,
     onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit = {},
     onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
+    /** DECISIONS.md ADR-062 (`ai-sessions/0087`): the "Noise-control channel" choice — stored by `:app`, applied by the repository at once. */
+    holdReclaimMode: HoldReclaimMode = HoldReclaimMode.DEFAULT,
+    onHoldReclaimModeChanged: (HoldReclaimMode) -> Unit = {},
 ) {
     var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
     Column(modifier = modifier.fillMaxSize()) {
@@ -116,6 +122,7 @@ fun SettingsMenuScreen(
         when (SettingsTab.entries[selected]) {
             SettingsTab.SETTINGS -> SettingsTabContent(
                 darkMode, onDarkModeChanged, onUseDifferentBuds, connectionState, settings, settingsError, onCaseSoundEarbudsReplacedChanged, onCaseSoundOtherAlertsChanged,
+                holdReclaimMode, onHoldReclaimModeChanged,
             )
             SettingsTab.DEBUG -> DebugScreen(
                 debugModeEnabled = debugModeEnabled,
@@ -138,7 +145,9 @@ internal fun darkModeLabel(mode: DarkMode): String = when (mode) {
 /**
  * The Settings tab — F-6: one radio group for dark mode; a choice is stored and applied at once (the theme follows the stored value — no restart). **Since
  * `ai-sessions/0082` (item 5, the maintainer's order in chat 2026-10-09: Dark mode · Case sounds · Use different Buds):** the "Case sounds" card of ADR-054
- * between them — the same [SettingsCard]/[SettingSwitchRow] as on Controls, the same (i) lines, plus the note that the setting lives on the case.
+ * between them — the same [SettingsCard]/[SettingSwitchRow] as on Controls, the same (i) lines, plus the note that the setting lives on the case. **Since
+ * `ai-sessions/0087` (ADR-062, the maintainer's order in chat 2026-10-12: Dark mode · Noise-control channel · Case sounds · Use different Buds):** the
+ * [HoldReclaimCard] after Dark mode — the app's own settings together, then the Buds', then the pairing action.
  */
 @Composable
 private fun SettingsTabContent(
@@ -150,6 +159,8 @@ private fun SettingsTabContent(
     settingsError: SettingsFailure?,
     onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit,
     onCaseSoundOtherAlertsChanged: (Boolean) -> Unit,
+    holdReclaimMode: HoldReclaimMode,
+    onHoldReclaimModeChanged: (HoldReclaimMode) -> Unit,
 ) {
     val enabled = connectionState.isReady()
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -173,6 +184,8 @@ private fun SettingsTabContent(
                     }
                 }
             }
+            // ADR-062 (`ai-sessions/0087`): what the app does when another app takes the held noise-control channel.
+            HoldReclaimCard(holdReclaimMode, onHoldReclaimModeChanged)
             // `ai-sessions/0082` item 5: the Case sounds card, moved from Controls (ADR-054's labels of `ai-sessions/0074`); a failed write says so here too.
             if (enabled) SettingsFailureNotice(settingsError)
             SettingsCard(
@@ -197,6 +210,53 @@ private fun SettingsTabContent(
 }
 
 internal const val USE_DIFFERENT_BUDS_TITLE: String = "Use different Buds"
+
+/**
+ * DECISIONS.md ADR-062 (`ai-sessions/0087`; the maintainer's texts in chat 2026-10-12, "Switch card"): the "Noise-control channel" card — a title with an (i), the
+ * intro line and a two-way radio group as Dark mode's. The numbers in the (i) are `CAP-074`'s (one Play services version, measured 2026-10-12 — said there).
+ */
+internal const val HOLD_RECLAIM_TITLE: String = "Noise-control channel"
+internal const val HOLD_RECLAIM_INTRO: String = "When another app takes the channel:"
+
+internal fun holdReclaimLabel(mode: HoldReclaimMode): String = when (mode) {
+    HoldReclaimMode.HINT_ONLY -> "Show a hint, do not take it back"
+    HoldReclaimMode.RECLAIM -> "Take it back while the noise-control tab is open (may fight that app)"
+}
+
+internal val HOLD_RECLAIM_DETAIL_LINES: List<String> = listOf(
+    "While the noise-control tab is open the app keeps the Buds' noise-control channel, so a change made on a bud shows. On a phone with Google Play " +
+        "services, Play's Fast Pair takes the channel back about 5 seconds after it lost it to this app (measured on 2026-10-12 with one version of Play " +
+        "services; another version may differ).",
+    "Show a hint: the noise-control card says the channel was taken and when; a change made on a bud is shown at your next tap, Refresh or pull-down.",
+    "Take it back: 3 seconds after the channel is taken the app claims it again (then after 6 and 12 seconds, three times per visit of the tab), so a " +
+        "change made on a bud shows about 5 seconds of every 9. Each claim takes the channel from the other app, which takes it back again — a tug of war " +
+        "while the tab is open; the other app's own view of the Buds may be stale meanwhile.",
+    "Without Google Play services nothing else uses the channel and both choices behave the same.",
+)
+
+@Composable
+private fun HoldReclaimCard(mode: HoldReclaimMode, onChange: (HoldReclaimMode) -> Unit) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            CardTitle(HOLD_RECLAIM_TITLE, HOLD_RECLAIM_DETAIL_LINES)
+            Text(HOLD_RECLAIM_INTRO, style = MaterialTheme.typography.bodyMedium)
+            Column(Modifier.selectableGroup()) {
+                HoldReclaimMode.entries.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(selected = mode == option, onClick = { onChange(option) }, role = Role.RadioButton)
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = mode == option, onClick = null) // the row is the touch target (as Dark mode)
+                        Text(holdReclaimLabel(option), modifier = Modifier.padding(start = 16.dp))
+                    }
+                }
+            }
+        }
+    }
+}
 
 /**
  * `ai-sessions/0074`: the "Case sounds" card — ADR-054's labels, chosen by the maintainer in chat 2026-10-06: 28 = "Earbuds replaced" (the official settings

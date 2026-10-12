@@ -51,12 +51,14 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
+import io.github.tedsluis.opencontrolpixelbuds.domain.ChannelTaken
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
+import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
@@ -165,6 +167,8 @@ data class OpenControlActions(
      * `:app` forwards it to `BudsRepository.setAncTabShown`, which holds the Message Stream claim while it is `true` and the app is visible.
      */
     val onAncTabShown: (Boolean) -> Unit = {},
+    /** The Settings tab's "Noise-control channel" choice (DECISIONS.md ADR-062, `ai-sessions/0087`): stored by `:app`, followed by the repository at once. */
+    val onHoldReclaimModeChanged: (HoldReclaimMode) -> Unit = {},
 )
 
 data class OpenControlUiState(
@@ -202,6 +206,10 @@ data class OpenControlUiState(
     val ancModeUnconfirmedAt: Long? = null,
     /** Why the shown ANC mode is what it is (`ai-sessions/0082` item 1): the Noise control (i) says "changed by the Buds" for a `Notify` the app did not provoke. */
     val ancModeCause: io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause? = null,
+    /** DECISIONS.md ADR-062: the held noise-control channel was taken by another app (`BudsRepository.ancChannelTaken`); `null` = no hint. */
+    val ancChannelTaken: ChannelTaken? = null,
+    /** The Settings tab's "Noise-control channel" choice (ADR-062). */
+    val holdReclaimMode: HoldReclaimMode = HoldReclaimMode.DEFAULT,
     /** Why the last *Refresh battery* brought no new reading (`null` = it did / none yet), `ai-sessions/0052`. */
     val batteryRefreshError: BudsError? = null,
     /** Why the Case level could not be requested this connection (`null` = requested / not yet), ADR-043. */
@@ -360,6 +368,8 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 settingsError = state.settingsError,
                 onCaseSoundEarbudsReplacedChanged = actions.onCaseSoundEarbudsReplacedChanged,
                 onCaseSoundOtherAlertsChanged = actions.onCaseSoundOtherAlertsChanged,
+                holdReclaimMode = state.holdReclaimMode,
+                onHoldReclaimModeChanged = actions.onHoldReclaimModeChanged,
                 modifier = Modifier.padding(padding),
             )
         } else {
@@ -411,6 +421,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             ancModeUnconfirmedAt = state.ancModeUnconfirmedAt,
             sessionSince = state.sessionSince,
             ancModeCause = state.ancModeCause,
+            channelTaken = state.ancChannelTaken,
             onAncModeSelected = actions.onAncModeSelected,
             onRefreshAncMode = actions.onRefreshAncMode,
             onRequestAddAncTile = actions.onRequestAddAncTile,
