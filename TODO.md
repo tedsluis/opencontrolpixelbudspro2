@@ -13,8 +13,8 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 ## 1. After release 1.2.0 (published 2026-10-10, `ai-sessions/0085`)
 
-Nothing open (2026-10-11): E1–E4 are done (PR #30), the README shows the 1.2.0 build (PR #32). The Buds' restore is in §4, the hold's untested branches
-in §2.
+Nothing open (2026-10-12): E1–E4 are done (PR #30), the README shows the 1.2.0 build (PR #32), and the Buds are restored to the state of 2026-10-07
+(Balanced, balance Centre, press and hold Noise cancellation + Transparency — the maintainer, chat 2026-10-12). The hold's untested branches are in §2.
 
 ## 2. Hardware verification debt (the app, on film)
 
@@ -151,9 +151,6 @@ Open questions (each with where it is described):
 - 🟡 Hearable Controls MAC not enforced (`PROTOCOL.md` §4.1): a firmware that starts enforcing it would NAK with reason `0x03`.
 - 🔴 `CAP-069` leftovers: why a bud's charging bit stayed set ≈ 12 s after it left the case (7358 → 7404); why the phone re-opened GSND AUDIO on ACL 3
   (8157 → 8271); Device Information `03 0b` (FHN EID, out of scope) with length 25; field 18 after the Save button (one sample, 6050 → `CAP-053`).
-- [ ] **M** Restore the Buds (chat 2026-10-07, `ai-sessions/0077`) — after `CAP-073` (session 11, 08:32:17) the Buds read EQ `[-2.0, 0.0, 2.0, 3.0, 5.0]` (the Owner
-      user's write of 07:08:44, `CAP-073-btsnoop_hci.log.last` A 22180), the mode list **with Adaptive** `12:{1:1 2:0 3:1 4:1}` and **balance Left 4** (`17:8`,
-      `CAP-073-FINDINGS.md` §3). Sound → BALANCED, the balance back to Centre and unticking Adaptive on Controls finish it. (Removed when the maintainer confirms it is done.)
 - 🔴 `CAP-072` §4: why the Buds kept Settable `e8` ≥ 42 s with both buds on a table (17:51:19 → 17:52:00.9) while `CAP-065`/`CAP-066` read `00` within 2.6 s.
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
   captured — sending it needs its own ADR. Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
