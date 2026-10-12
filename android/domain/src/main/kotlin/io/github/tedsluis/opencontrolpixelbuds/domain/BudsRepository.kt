@@ -73,9 +73,19 @@ interface BudsRepository {
      * ADR-061: while it is shown **and** the app is visible ([onAppVisible]) the Message Stream claim (DLCI 0x04, ADR-032) is held instead of released, so the
      * Buds' `Notify` of a change made on a bud reaches the app ([ancModeCause] `CHANGED_BY_BUDS`). Entering the tab with the session `Ready` claims once (the
      * existing claim with its `Get`) unless a claim is open; leaving the tab or the app releases it the usual 1.5 s later (ADR-032's linger). Never
-     * opens anything in the background and never re-claims by itself after the channel was closed by the Buds or another client.
+     * opens anything in the background. After the channel was closed by the Buds or another client it re-claims by itself only in the mode
+     * [HoldReclaimMode.RECLAIM] of the Settings tab (DECISIONS.md ADR-062: 3, 6 and 12 s after the first, second and third foreign close of one visit of the
+     * tab, then it stops); in the default mode [HoldReclaimMode.HINT_ONLY] it never does — [ancChannelTaken] says so.
      */
     fun setAncTabShown(shown: Boolean)
+
+    /**
+     * DECISIONS.md ADR-062 (`ai-sessions/0087`): the Message Stream claim the app held on the noise-control tab was closed by someone else — Google Play services'
+     * Fast Pair recovering the channel ≈ 5 s after it lost it to this app (`CAP-074`). Set at the first such close in mode [HoldReclaimMode.HINT_ONLY], and once
+     * the re-claims of mode [HoldReclaimMode.RECLAIM] are exhausted; `null` otherwise. Cleared when the app holds the channel again (a tap, Refresh, a pull, a
+     * re-entry of the tab, a re-claim), at Connect, at Disconnect and at a session loss. Shown on the noise-control card only.
+     */
+    val ancChannelTaken: Flow<ChannelTaken?>
 
     /**
      * The Buds' last reported ANC mode, `null` before any report in this app run. It is **not** cleared when a session ends: whether it is current is

@@ -29,6 +29,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap064
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap065
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap066Balance
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap072
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap074
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.HardwareInfoFixtures
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
@@ -54,8 +55,10 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.WornReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
+import io.github.tedsluis.opencontrolpixelbuds.domain.ChannelTaken
 import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingSource
+import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
@@ -116,6 +119,8 @@ class BudsRepositoryImplTest {
         verified: Boolean = true,
         /** Called on every connect attempt that reaches the bonded-device lookup (a re-open attempt, ADR-044, counts here). */
         onConnectAttempt: () -> Unit = {},
+        /** The Settings tab's "Noise-control channel" choice (ADR-062); the default — hint only — is the behaviour of every test written before `ai-sessions/0087`. */
+        holdReclaimMode: MutableStateFlow<HoldReclaimMode> = MutableStateFlow(HoldReclaimMode.DEFAULT),
     ): Pair<BudsRepositoryImpl, FakeBudsTransport> {
         val transport = FakeBudsTransport()
         // backgroundScope, not `scope` itself: BudsRepositoryImpl's init block launches
@@ -130,6 +135,7 @@ class BudsRepositoryImplTest {
             // a bonded device (see the dedicated connect()-failure test instead).
             bondedDeviceProvider = { onConnectAttempt(); null },
             debugModeEnabled = MutableStateFlow(false),
+            holdReclaimMode = holdReclaimMode,
             scope = scope.backgroundScope,
             clock = { scope.testScheduler.currentTime },
         )
@@ -3077,8 +3083,11 @@ class BudsRepositoryImplTest {
     // ---- DECISIONS.md ADR-061 (`ai-sessions/0084`): the Message Stream claim held while the noise-control tab is on screen ----------------------------------
 
     /** The repository with the app visible and the noise-control tab shown: the entry claim's `Get` answered by [getAnswer] (a real `Notify`). */
-    private suspend fun TestScope.holdingRepository(getAnswer: String = Cap045.NOTIFY_ADAPTIVE_612): Pair<BudsRepositoryImpl, FakeBudsTransport> {
-        val (repo, transport) = buildRepository()
+    private suspend fun TestScope.holdingRepository(
+        getAnswer: String = Cap045.NOTIFY_ADAPTIVE_612,
+        holdReclaimMode: MutableStateFlow<HoldReclaimMode> = MutableStateFlow(HoldReclaimMode.DEFAULT),
+    ): Pair<BudsRepositoryImpl, FakeBudsTransport> {
+        val (repo, transport) = buildRepository(holdReclaimMode = holdReclaimMode)
         transport.onSent = { ch, frame ->
             when (frame.toHex().take(4)) {
                 "0811" -> transport.emit(ch, hex(getAnswer))
@@ -3265,6 +3274,216 @@ class BudsRepositoryImplTest {
         assertEquals(2, transport.openChannelCalls.size)
         advanceTimeBy(10_000); runCurrent()
         assertEquals(emptyList<Int>(), transport.closeChannelCalls, "held again: the noise-control tab is still shown")
+    }
+
+    // ---- DECISIONS.md ADR-062 (`ai-sessions/0087`): a held claim closed by someone else — the Settings tab's choice (CAP-074's bytes and timings) -------------
+
+    /**
+     * `CAP-074` 06:42:30–06:42:36 (`CAP-074-FINDINGS.md` §4, `ai-sessions/0087` §A.1): the Connect's snapshot claim answered by B 15853 (ADAPTIVE) becomes the hold
+     * on entering the tab; the unprovoked B 15860 (TRANSPARENT, 2.336 s later) is shown; then the stack closes the app's port (the `DISC` B 15909, 5.133 s after the
+     * `SABM`) — `channelClosed` with the export's `read return: -1` text.
+     */
+    private suspend fun TestScope.cutAfterTheShownHold(repo: BudsRepositoryImpl, transport: FakeBudsTransport) {
+        advanceTimeBy(2_336) // B 15853 06:42:30.868 -> B 15860 06:42:33.204
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap074.NOTIFY_TRANSPARENT_B15860))
+        settle()
+        assertEquals(AncMode.TRANSPARENT, repo.ancMode.first())
+        assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first(), "the one hold shown after that Connect")
+        advanceTimeBy(Cap074.CUT_AFTER_SABM_MS - 2_336 - 159) // the SABM B 15822 was 159 ms before its answer B 15853; the DISC B 15909 5.133 s after the SABM
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL)
+        settle()
+    }
+
+    /** The ADR-062 re-claim lines of the log (not the hint-only line, which says "no re-claim"). */
+    private fun reclaimLines(log: String): List<String> = log.lines().filter { "Message Stream re-claim" in it }
+
+    @Test
+    @DisplayName("ADR-062 hint only (the default): the cut ends the hold, nothing re-claims for 60 s, the hint carries the close's time; a tap claims again and clears it")
+    fun `hint only - no re-claim after the cut, the hint with the close's time, a tap clears it`() = runTest {
+        BleLogger.clear()
+        val (repo, transport) = holdingRepository(getAnswer = Cap074.NOTIFY_ADAPTIVE_B15853)
+        assertNull(repo.ancChannelTaken.first(), "no hint while the hold is open")
+
+        cutAfterTheShownHold(repo, transport)
+        val cutAt = currentTime
+        assertEquals(true, "Message Stream hold ended: the channel was closed, not by this app" in BleLogger.exportLog())
+        assertEquals(ChannelTaken(cutAt, reclaimAttempts = 0), repo.ancChannelTaken.first(), "the hint, with the close's time")
+        assertEquals(AncMode.TRANSPARENT, repo.ancMode.first(), "the shown mode stays")
+
+        advanceTimeBy(60_000); runCurrent()
+        assertEquals(1, transport.openChannelCalls.size, "no re-claim by itself within 60 s")
+        assertEquals(listOf(Cap072.GET_A13499), transport.sent.map { it.second.toHex() }, "nothing sent since the entry's Get")
+        assertEquals(emptyList<String>(), reclaimLines(BleLogger.exportLog()))
+        assertEquals(ChannelTaken(cutAt, 0), repo.ancChannelTaken.first(), "the hint stays until a claim")
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE)) // the user's tap: the existing claim with its Get
+        assertEquals(2, transport.openChannelCalls.size, "one claim")
+        assertNull(repo.ancChannelTaken.first(), "the hint is cleared: the app holds the channel again")
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls, "and the claim is held (the tab is still shown)")
+    }
+
+    @Test
+    @DisplayName("ADR-062 hint only: a close of a claim that was not held (the Connection tab shown) sets no hint")
+    fun `hint only - a close of a claim that was not held is not a taken channel`() = runTest {
+        val (repo, transport) = buildRepository()
+        repo.onAppVisible(true); settle() // the noise-control tab is not shown: the snapshot-like claim lingers, no hold
+        assertEquals(BudsResult.Success(AncMode.OFF), repo.refreshAncMode())
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL)
+        settle()
+        assertNull(repo.ancChannelTaken.first())
+    }
+
+    @Test
+    @DisplayName("ADR-062 take it back: openChannel exactly 3 s after the cut (not before), the Get sent, the hold started again; the next cuts 6 s and 12 s; after the third re-claim the hint and no further claim")
+    fun `take it back - re-claims 3, 6 and 12 s after the cuts, then stops with the hint`() = runTest {
+        BleLogger.clear()
+        val mode = MutableStateFlow(HoldReclaimMode.RECLAIM)
+        val (repo, transport) = holdingRepository(getAnswer = Cap074.NOTIFY_ADAPTIVE_B15853, holdReclaimMode = mode)
+        cutAfterTheShownHold(repo, transport)
+        assertNull(repo.ancChannelTaken.first(), "no hint while re-claims are left")
+
+        // 1st re-claim: 3.0 s after the cut — after Play's retry (2.2–2.6 s in CAP-074) has taken the channel, so the claim's attempt 1 meets Play there.
+        advanceTimeBy(2_999); runCurrent()
+        assertEquals(1, transport.openChannelCalls.size, "not before 3 s")
+        advanceTimeBy(1); settle()
+        assertEquals(2, transport.openChannelCalls.size, "the re-claim at 3.0 s")
+        assertEquals(listOf(Cap072.GET_A13499, Cap072.GET_A13499), transport.sent.map { it.second.toHex() }, "the existing claim's Get, nothing else")
+        assertEquals(true, transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM))
+        var log = BleLogger.exportLog()
+        assertEquals(listOf("Message Stream re-claim 1/3 after a foreign close, 3000 ms later (ADR-062)"), reclaimLines(log).map { it.substringAfter(' ') })
+        assertEquals(2, log.lines().count { "Message Stream hold started" in it }, "the hold started again")
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls, "held, not released")
+
+        // 2nd cut (CAP-074: Play recovers 5.2–5.7 s after losing its socket) → the 2nd re-claim 6.0 s later.
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL); settle()
+        advanceTimeBy(5_999); runCurrent()
+        assertEquals(2, transport.openChannelCalls.size, "not before 6 s")
+        advanceTimeBy(1); settle()
+        assertEquals(3, transport.openChannelCalls.size, "the re-claim at 6.0 s")
+
+        // 3rd cut → the 3rd re-claim 12.0 s later.
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL); settle()
+        advanceTimeBy(11_999); runCurrent()
+        assertEquals(3, transport.openChannelCalls.size, "not before 12 s")
+        advanceTimeBy(1); settle()
+        assertEquals(4, transport.openChannelCalls.size, "the re-claim at 12.0 s")
+        assertNull(repo.ancChannelTaken.first(), "still no hint: the third re-claim holds")
+
+        // 4th cut → the cap: no further claim, the hint with the re-claims made.
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL); settle()
+        val stoppedAt = currentTime
+        assertEquals(ChannelTaken(stoppedAt, reclaimAttempts = 3), repo.ancChannelTaken.first())
+        advanceTimeBy(60_000); runCurrent()
+        assertEquals(4, transport.openChannelCalls.size, "no claim after the cap")
+        log = BleLogger.exportLog()
+        assertEquals(
+            listOf(
+                "Message Stream re-claim 1/3 after a foreign close, 3000 ms later (ADR-062)",
+                "Message Stream re-claim 2/3 after a foreign close, 6000 ms later (ADR-062)",
+                "Message Stream re-claim 3/3 after a foreign close, 12000 ms later (ADR-062)",
+                "Message Stream re-claim stopped after 3 re-claims — a tap, a pull or re-entering the noise-control tab claims again (ADR-062)",
+            ),
+            reclaimLines(log).map { it.substringAfter(' ') },
+        )
+
+        // A tap starts a new chain: the hint clears, the claim is held, and the next cut is re-claimed 3 s later again.
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE))
+        assertEquals(5, transport.openChannelCalls.size)
+        assertNull(repo.ancChannelTaken.first())
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL); settle()
+        advanceTimeBy(3_000); settle()
+        assertEquals(6, transport.openChannelCalls.size, "the chain restarted at 3 s")
+    }
+
+    @Test
+    @DisplayName("ADR-062 take it back: the tab left, or the app hidden, during the delay → no claim (the re-claim is cancelled)")
+    fun `take it back - leaving the tab or the app during the delay claims nothing`() = runTest {
+        for (leave in listOf<(BudsRepositoryImpl) -> Unit>({ it.setAncTabShown(false) }, { it.onAppVisible(false) })) {
+            BleLogger.clear()
+            val (repo, transport) = holdingRepository(getAnswer = Cap074.NOTIFY_ADAPTIVE_B15853, holdReclaimMode = MutableStateFlow(HoldReclaimMode.RECLAIM))
+            cutAfterTheShownHold(repo, transport)
+            advanceTimeBy(1_000); runCurrent()
+            leave(repo); settle()
+            advanceTimeBy(60_000); runCurrent()
+            assertEquals(1, transport.openChannelCalls.size, "no claim after leaving")
+            assertEquals(true, "Message Stream re-claim cancelled (ADR-062)" in BleLogger.exportLog())
+            assertNull(repo.ancChannelTaken.first(), "no hint either: the tab is not shown")
+        }
+    }
+
+    @Test
+    @DisplayName("ADR-062 take it back: a session loss during the delay → no claim; the ADR-044 re-open's snapshot is kept as the hold, as today")
+    fun `take it back - a session loss during the delay claims nothing, the re-open's snapshot is the hold again`() = runTest {
+        BleLogger.clear()
+        val machine = buildConnectionStateMachine()
+        val mode = MutableStateFlow(HoldReclaimMode.RECLAIM)
+        val (repo, transport) = buildRepository(connectionStateMachine = machine, holdReclaimMode = mode)
+        transport.onSent = { ch, frame -> if (frame.toHex().take(4) == "0811") transport.emit(ch, hex(Cap074.NOTIFY_ADAPTIVE_B15853)) }
+        repo.onAppVisible(true); repo.setAncTabShown(true); settle()
+        assertEquals(1, transport.openChannelCalls.size)
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL); settle()
+        advanceTimeBy(1_000); runCurrent()
+
+        transport.emitConnectionLost(ConnectionLoss(channelId = Dlci.MAESTRO, detail = "bt socket closed, read return: -1"))
+        transport.openChannels.clear()
+        settle()
+        assertEquals(ConnectionState.Disconnected, repo.connectionState.first())
+        advanceTimeBy(60_000); runCurrent()
+        assertEquals(1, transport.openChannelCalls.size, "no claim by itself after the loss")
+        assertNull(repo.ancChannelTaken.first())
+
+        // The new session (driven directly — connect() needs a BluetoothDevice): its first claim is kept as the hold, and a cut of it starts a fresh chain.
+        transport.connected = true
+        machine.onConnectRequested(); machine.onLinkEstablished(); machine.onReady()
+        assertEquals(BudsResult.Success(AncMode.ADAPTIVE), repo.refreshAncMode())
+        assertEquals(2, transport.openChannelCalls.size)
+        advanceTimeBy(10_000); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls, "held again")
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL); settle()
+        advanceTimeBy(3_000); settle()
+        assertEquals(3, transport.openChannelCalls.size, "the first step of a new chain, 3 s")
+    }
+
+    @Test
+    @DisplayName("ADR-062 take it back: a Disconnect during the delay → no claim, no hint")
+    fun `take it back - a Disconnect during the delay claims nothing`() = runTest {
+        val (repo, transport) = holdingRepository(getAnswer = Cap074.NOTIFY_ADAPTIVE_B15853, holdReclaimMode = MutableStateFlow(HoldReclaimMode.RECLAIM))
+        cutAfterTheShownHold(repo, transport)
+        advanceTimeBy(1_000); runCurrent()
+        repo.disconnect(); settle()
+        advanceTimeBy(60_000); runCurrent()
+        assertEquals(1, transport.openChannelCalls.size)
+        assertNull(repo.ancChannelTaken.first())
+    }
+
+    @Test
+    @DisplayName("ADR-062 the switch: the repository follows a change at once — to hint only, a pending re-claim is cancelled and the hint is not back-filled; to take it back, the next cut re-claims")
+    fun `the switch - a change of the setting is followed at once`() = runTest {
+        BleLogger.clear()
+        val mode = MutableStateFlow(HoldReclaimMode.RECLAIM)
+        val (repo, transport) = holdingRepository(getAnswer = Cap074.NOTIFY_ADAPTIVE_B15853, holdReclaimMode = mode)
+        cutAfterTheShownHold(repo, transport)
+        advanceTimeBy(1_000); runCurrent()
+        mode.value = HoldReclaimMode.HINT_ONLY; settle()
+        advanceTimeBy(60_000); runCurrent()
+        assertEquals(1, transport.openChannelCalls.size, "the pending re-claim was cancelled")
+        assertEquals(true, "Message Stream re-claim cancelled (ADR-062)" in BleLogger.exportLog())
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE)) // the user's tap holds again
+        assertEquals(2, transport.openChannelCalls.size)
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL); settle()
+        assertEquals(ChannelTaken(currentTime, 0), repo.ancChannelTaken.first(), "hint only now")
+        advanceTimeBy(60_000); runCurrent()
+        assertEquals(2, transport.openChannelCalls.size, "no re-claim in hint only")
+
+        mode.value = HoldReclaimMode.RECLAIM; settle()
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.OFF))
+        assertEquals(3, transport.openChannelCalls.size)
+        transport.emitChannelClosed(Dlci.FAST_PAIR_MESSAGE_STREAM, Cap074.CUT_DETAIL); settle()
+        advanceTimeBy(3_000); settle()
+        assertEquals(4, transport.openChannelCalls.size, "take it back again: the re-claim 3 s after the cut")
     }
 }
 

@@ -35,6 +35,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -54,6 +55,8 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.FirmwareEntry
+import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
+import androidx.compose.ui.test.assertIsNotSelected
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
 import org.junit.Assert.assertEquals
@@ -342,9 +345,11 @@ class SettingsMenuTest {
                 )
             }
         }
-        val darkMode = compose.onNodeWithText("Dark mode").getBoundsInRoot().top
-        val caseSounds = compose.onNodeWithContentDescription("Case sounds: $DETAILS_DESCRIPTION").performScrollTo().getBoundsInRoot().top
-        val useDifferent = compose.onNode(hasText(USE_DIFFERENT_BUDS_TITLE) and hasClickAction()).performScrollTo().getBoundsInRoot().top
+        // Measured in one scroll state, unclipped (a performScrollTo between the readings would move every node, and a node outside the small Robolectric
+        // viewport has clipped bounds of 0 — `ai-sessions/0087` added a card above).
+        val darkMode = compose.onNodeWithText("Dark mode").getUnclippedBoundsInRoot().top
+        val caseSounds = compose.onNodeWithContentDescription("Case sounds: $DETAILS_DESCRIPTION").getUnclippedBoundsInRoot().top
+        val useDifferent = compose.onNode(hasText(USE_DIFFERENT_BUDS_TITLE) and hasClickAction()).getUnclippedBoundsInRoot().top
         assertTrue("Dark mode < Case sounds < Use different Buds: $darkMode, $caseSounds, $useDifferent", darkMode < caseSounds && caseSounds < useDifferent)
 
         compose.onNodeWithContentDescription("Case sounds: $DETAILS_DESCRIPTION").performScrollTo().performClick()
@@ -384,6 +389,71 @@ class SettingsMenuTest {
         val dash = hasText(NOT_READ_VALUE) and SemanticsMatcher.expectValue(SemanticsProperties.ContentDescription, listOf(NOT_READ_DESCRIPTION))
         compose.onAllNodes(dash).assertCountEquals(2)
         compose.onAllNodes(isToggleable()).assertCountEquals(0)
+    }
+
+    // ---- DECISIONS.md ADR-062 (`ai-sessions/0087`, the maintainer's choices in chat 2026-10-12): the "Noise-control channel" card ----
+
+    @Test
+    fun `ADR-062 - the Noise-control channel card sits between Dark mode and Case sounds, shows the stored choice, and a tap hands the other one over`() {
+        val chosen = mutableListOf<HoldReclaimMode>()
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(
+                    DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, announced,
+                    connectionState = ConnectionState.Ready, settings = caseSoundsRead,
+                    holdReclaimMode = HoldReclaimMode.HINT_ONLY, onHoldReclaimModeChanged = { chosen += it },
+                )
+            }
+        }
+        // One scroll state for the three readings, unclipped (a performScrollTo between them would move every node; off-screen nodes clip to 0).
+        val darkMode = compose.onNodeWithText("Dark mode").getUnclippedBoundsInRoot().top
+        val card = compose.onNodeWithContentDescription("Noise-control channel: $DETAILS_DESCRIPTION").getUnclippedBoundsInRoot().top
+        val caseSounds = compose.onNodeWithContentDescription("Case sounds: $DETAILS_DESCRIPTION").getUnclippedBoundsInRoot().top
+        assertTrue("Dark mode < Noise-control channel < Case sounds: $darkMode, $card, $caseSounds", darkMode < card && card < caseSounds)
+
+        compose.onNodeWithText("When another app takes the channel:").performScrollTo().assertExists()
+        compose.onNodeWithText("Show a hint, do not take it back").performScrollTo().assertIsSelected()
+        compose.onNodeWithText("Take it back while the noise-control tab is open (may fight that app)").performScrollTo().assertIsNotSelected().performClick()
+        assertEquals(listOf(HoldReclaimMode.RECLAIM), chosen)
+
+        compose.onNodeWithContentDescription("Noise-control channel: $DETAILS_DESCRIPTION").performScrollTo().performClick()
+        HOLD_RECLAIM_DETAIL_LINES.forEach { compose.onNodeWithText(it).assertExists() }
+        compose.onNodeWithText("Close").performClick()
+    }
+
+    @Test
+    fun `ADR-062 - the card's texts are the maintainer's, and the stored choice reads back`() {
+        assertEquals("Noise-control channel", HOLD_RECLAIM_TITLE)
+        assertEquals("When another app takes the channel:", HOLD_RECLAIM_INTRO)
+        assertEquals("Show a hint, do not take it back", holdReclaimLabel(HoldReclaimMode.HINT_ONLY))
+        assertEquals("Take it back while the noise-control tab is open (may fight that app)", holdReclaimLabel(HoldReclaimMode.RECLAIM))
+        assertEquals(
+            listOf(
+                "While the noise-control tab is open the app keeps the Buds' noise-control channel, so a change made on a bud shows. On a phone with Google Play " +
+                    "services, Play's Fast Pair takes the channel back about 5 seconds after it lost it to this app (measured on 2026-10-12 with one version of " +
+                    "Play services; another version may differ).",
+                "Show a hint: the noise-control card says the channel was taken and when; a change made on a bud is shown at your next tap, Refresh or pull-down.",
+                "Take it back: 3 seconds after the channel is taken the app claims it again (then after 6 and 12 seconds, three times per visit of the tab), so a " +
+                    "change made on a bud shows about 5 seconds of every 9. Each claim takes the channel from the other app, which takes it back again — a tug of " +
+                    "war while the tab is open; the other app's own view of the Buds may be stale meanwhile.",
+                "Without Google Play services nothing else uses the channel and both choices behave the same.",
+            ),
+            HOLD_RECLAIM_DETAIL_LINES,
+        )
+        assertEquals(HoldReclaimMode.RECLAIM, HoldReclaimMode.fromStored("RECLAIM"))
+        assertEquals(HoldReclaimMode.HINT_ONLY, HoldReclaimMode.fromStored(null))
+        assertEquals(HoldReclaimMode.HINT_ONLY, HoldReclaimMode.fromStored("FIGHT"))
+    }
+
+    @Test
+    fun `ADR-062 - with take it back stored, that row is the selected one`() {
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, null, holdReclaimMode = HoldReclaimMode.RECLAIM)
+            }
+        }
+        compose.onNodeWithText("Take it back while the noise-control tab is open (may fight that app)").performScrollTo().assertIsSelected()
+        compose.onNodeWithText("Show a hint, do not take it back").performScrollTo().assertIsNotSelected()
     }
 
     // ---- `ai-sessions/0069` A68-APP-05: "Use different Buds" on the Settings tab ----

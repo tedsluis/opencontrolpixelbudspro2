@@ -13,6 +13,33 @@ build commit `5b4d5db`, hardware runs `CAP-072` and `CAP-073`, `ai-sessions/0083
 
 ## [Unreleased]
 
+## [1.2.1] - not yet released
+
+Prepared in `ai-sessions/0087` (2026-10-12) after `CAP-074` (`ai-sessions/0086`): in a user with Google Play services, Play's Fast Pair takes the noise-control
+channel back about 5 seconds after this app opened it on its tab, so only the first press-and-hold after a connect was shown. One new setting; nothing new on
+the wire.
+
+### Added
+
+- **Noise-control channel** on gear → Settings (`DECISIONS.md` ADR-062): what the app does when another app takes the channel while the noise-control tab is
+  open. **Show a hint, do not take it back** (the default): the noise-control card says the channel was taken and when, and that a tap, Refresh or pull-down
+  shows a change made on a bud. **Take it back while the noise-control tab is open**: 3, 6 and 12 seconds after the channel is taken the app claims it again —
+  three times per visit of the tab — so a press-and-hold shows about 5 seconds of every 9 while the two apps take the channel from each other; then the hint.
+  Measured with one version of Play services on 2026-10-12 (`CAP-074`); without Play services nothing contends and both choices behave the same.
+
+### Changed
+
+- The noise-control (i) no longer says another app "cannot use" the channel while the tab is open: it loses it to this app and may take it back about
+  5 seconds later; the new setting decides what happens then.
+
+### Known issues
+
+- In a user with Google Play services: with "Show a hint", every press-and-hold after the first (about 5 seconds after a connect or a tap) reaches Play services
+  instead of this app until you tap, refresh or pull down; with "Take it back", roughly 4 of 10 holds fall in the other app's windows, three re-claims per visit of
+  the tab, and Android's own Buds settings may be stale while the tab is open. The timings are one Play version's (`CAP-074`). Not yet checked on a phone — the
+  hardware run is `CAP-075`.
+- The 1.2.0 known issues stay (the hedged worn line, the serial labels, "Changed by the Buds" only on the tab; the 1.1.1 ones).
+
 ## [1.2.0] - 2026-10-10
 
 Prepared in `ai-sessions/0082` (2026-10-09); its hardware run `CAP-072` (Group BH, `ai-sessions/0083`) showed that a press-and-hold on a bud was never shown, so
