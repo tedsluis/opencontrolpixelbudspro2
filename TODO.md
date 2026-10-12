@@ -15,6 +15,8 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 Nothing open (2026-10-12): E1–E4 are done (PR #30), the README shows the 1.2.0 build (PR #32), and the Buds are restored to the state of 2026-10-07
 (Balanced, balance Centre, press and hold Noise cancellation + Transparency — the maintainer, chat 2026-10-12). The hold's untested branches are in §2.
+**`CAP-074` (2026-10-12, `ai-sessions/0086`) changed that state again:** the Buds now hold a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]` (the 06:38:27 write) and **all four** press-and-hold
+modes (the 06:38:41 write), balance Centre (`CAP-074-FINDINGS.md` §0) — restore if wanted (**M**).
 
 ## 2. Hardware verification debt (the app, on film)
 
@@ -34,7 +36,10 @@ ADR-061, chat 2026-10-10).
 with the hold's untested branches below. **Next app run:** none planned — these items go into the hardware run of the next release (`RELEASING.md` §11a).
 - [ ] The ADR-061 hold's other branches on hardware (`CAP-073-FINDINGS.md` §4): the tile with the noise-control tab shown (no second `SABM`, no `DISC`); Home and
       return (the `DISC` ≈ 1.5 s after Home, a new claim on return); a session loss and the ADR-044 re-open while the tab is shown (the snapshot kept); and the
-      noise-control (i) after a press-and-hold ("Changed by the Buds at HH:MM:SS …" and the ADR-061 sentence) — not run in `CAP-073`.
+      noise-control (i) after a press-and-hold ("Changed by the Buds at HH:MM:SS …" and the ADR-061 sentence) — not run in `CAP-073`. **`CAP-074` (the Owner user with
+      Play services, `ai-sessions/0086`) ran the "another client closes DLCI 0x04 while the tab is shown" branch twelve times:** the hold ended "the channel was closed,
+      not by this app" and nothing re-claimed — as designed; the branch works, and it is the cause of the first-hold-only symptom (`CAP-074-FINDINGS.md` §4, §8). Still
+      not run: the tile, Home, a session loss / ADR-044 re-open with the tab shown, the (i) line.
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
@@ -125,7 +130,9 @@ Open questions (each with where it is described):
 - 🔴 Why the Buds close both RFCOMM channels (`CAP-059`/`CAP-060-FINDINGS.md` §1): the idle / periodic / second-host / quick re-claim
   experiments were never run as isolated tests. After docking, the Buds refuse about nine re-opens each until the link drops (`CAP-040`,
   L68-10) — relevant to the re-open back-off.
-- 🔴 Why Play services stops re-claiming DLCI 0x04 (`CAP-059`, `CAP-061`); what closed the app's claims at `CAP-065` 11:10:06.49 and
+- 🔴 Why Play services stops re-claiming DLCI 0x04 (`CAP-059`, `CAP-061`) — it did **not** stop in `CAP-074` (2026-10-12, Owner user): 20 of 20 recoveries 5.2–5.7 s
+  after losing the channel, a retry 2.2–2.6 s after a collided recovery (`CAP-074-FINDINGS.md` §4 items 3 and 5; `ai-sessions/0040` saw 2.7–5.0 s, `CAP-059` 1.7–3.1 s —
+  the Play version and the Nearby-devices permission state were never recorded); what closed the app's claims at `CAP-065` 11:10:06.49 and
   11:21:35.24, and why the Buds closed the session at 11:17:46 with both buds worn.
 - 🔴 Why `CAP-064` read Settable `e8` for 28 s with both buds straight from the case (`CAP-065`/`CAP-066`: always `00`); four `e8` Notifies
   with no bud worn in `CAP-047` (1048, 2673, 3996, 4339) are not among ADR-049's samples (L68-10).
@@ -183,6 +190,13 @@ Open questions (each with where it is described):
       `Role.Switch` on the row, the `Switch` without its own click) would fix it; it changes every switch's semantics (and the tests that find a switch by its
       sibling label) — **M** decides whether and when.
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
+- [ ] **M — the Play-user hold fix (`CAP-074`, `ai-sessions/0086`; the maintainer's choice in chat 2026-10-12):** a switch on the Settings tab that lets the user choose
+      between (1) "hint only, no re-claim" — the ANC card says the channel was taken by another app (Google Play services' Fast Pair) and that a tap on Refresh re-reads
+      the mode; the (i) text's "cannot use it meanwhile" corrected (Play takes the channel back ≈ 5 s later) — and (2) "re-claim after a foreign close while the tab is
+      shown, with a back-off" (`CAP-074-FINDINGS.md` §9 options B + C and A; the numbers to design around: Play re-connects 5.2–5.7 s after losing the channel, retries
+      2.2–2.6 s after a collision). Its own FEATURE prompt (`ai-sessions/0087`): the ADR-061 supersession for (2), the switch's default, the tests with `FakeBudsTransport`,
+      a hardware run in the Play user. Until then 1.2.0's limit in the Play user is documented in `CAP-074-FINDINGS.md` §8 and ADR-061's Update only (no Known-issues
+      line — the maintainer's choice).
 - [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
