@@ -1777,6 +1777,10 @@ motivated this).
 - **Update (2026-10-10, `ai-sessions/0084`, pointer only — maintainer-approved in chat 2026-10-10, `AskUserQuestion` "ADR-032", option *"Pointer Update on
   ADR-032 (Recommended)"*):** item 3 ("released after a short linger") has one exception since 1.2.0: while the noise-control tab is on screen the claim is held
   (**ADR-061**); it is released 1.5 s after leaving the tab or the app. The other items are unchanged.
+- **Update (2026-10-12, `ai-sessions/0086`, maintainer-approved in chat 2026-10-12, `AskUserQuestion` "ADR Updates", option *"Add both Updates (Recommended)"*, with
+  this text in the preview):** (i)'s "Play services' recovery of its own socket took 2.7–5.0 s" reads **5.2–5.7 s in `CAP-074`** (20 of 20 recoveries, the Owner user
+  with Google Play services), with a retry 2.2–2.6 s after a recovery that collided; with the ADR-061 hold the recovery cuts the app's claim
+  (`CAP-074-FINDINGS.md` §4 items 3–5). The decision is unchanged.
 
 ## ADR-033 — Battery Option B: `Group 0x03 Code 0x03` decoder on DLCI 0x04 unblocked for implementation (percentage regime only)
 
@@ -2696,6 +2700,13 @@ motivated this).
   DLCI 0x04 once (B 3484) and kept it 31 s; four unprovoked `Notify` (B 3531, 3543, 3546, 3547) changed the mode on screen without a tap; four taps used the held
   channel (no `SABM`); leaving the tab released it 1.509 s later (B 3654) (`CAP-073-FINDINGS.md` §4). Not hardware-tested: the tile, Home, a loss or re-open while
   the tab is shown, the (i) line. The decision is unchanged.
+- **Update (2026-10-12, `ai-sessions/0086`, maintainer-approved in chat 2026-10-12, `AskUserQuestion` "ADR Updates", option *"Add both Updates (Recommended)"*, with
+  this text in the preview):** `CAP-074` (the released `5b4d5db` in the GrapheneOS Owner user **with** Google Play services): in 12 of 12 entries of the noise-control
+  tab the hold ended by a close the app did not make, 4.7–5.1 s after its `SABM` — Play services' Fast Pair re-connects 5.2–5.7 s after losing the channel to the app's
+  connect and the stack closes the app's port (`CAP-074-FINDINGS.md` §4, §8). The app does not re-claim (this ADR's choice), so only the first (sometimes the second)
+  press-and-hold after a Connect was shown; 35 later holds reached Play services (its `HearableControlManager` logs one). The Consequences' "Play's Fast Pair is locked
+  out while the tab is open" holds for about 5 s only. The decision is unchanged; the fix options are `CAP-074-FINDINGS.md` §9 — the maintainer's choice in the same
+  chat: a Settings switch between "hint only, no re-claim" and "re-claim after a foreign close with a back-off", a FEATURE prompt of its own (`TODO.md` §5).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
