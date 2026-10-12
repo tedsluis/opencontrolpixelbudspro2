@@ -278,6 +278,18 @@ cancelled (ADR-062)" — no payload, no address, no serial. No new wire request:
    collect the files into its folder.
 7. Then a CAPTURE session for C3/C4 (the findings, the verdict, an ADR-062 Update with that run's numbers).
 
+## After the session — the merge and the build (2026-10-12, the maintainer)
+
+The maintainer merged PR #39 with a merge commit (`31ee183`, on their instruction in chat) and the bot PR #38 (`_sidebar.md` only, `935a37a`); bot PR #40
+(`sitemap.xml`) was open afterwards. Then **B1**: `scripts/release.sh 1.2.1` (2026-10-12 17:17) — built and verified by the script, **build commit `31ee183`**
+(the merge commit; the Info tab will show "build 31ee183", the tag of D2 goes there). Checked by this session: `sha256sum -c` → OK, APK SHA-256
+`a60a3cc9b2a80e9dc5fecb8810c9cb8e7cbb20fa9eb7a2a0ce663b89e964963e`; `apksigner verify --print-certs` → `a7530f5ceadcdfc9cddcbb0e9889e7699961e8a4ef18898c4ec7738cc79d8dcb`
+= `README.md` / `SECURITY.md` (**B2**); `aapt2 dump badging` → versionCode 10201, versionName 1.2.1, the four permissions of `ARCHITECTURE.md` §9 plus AndroidX's
+private receiver permission, no `INTERNET`; `release-notes.md` has no unfilled `{…}` and carries the 1.2.1 lines and both checksums; `THIRD_PARTY_NOTICES.txt`
+136 libraries. **B3** (`cp -a dist/1.2.1 ~/opencontrol-1.2.1-tested`) is the maintainer's own act — not yet made when this was written. `dist/` is gitignored and
+not committed (`RELEASING.md` §5); the build's identity is recorded here and in the `CAP-075` skeleton. Because the pull request was merged before the hardware
+run, the capture and its analysis go on their own branch and pull request (C3). Next: B3, C1–C2 (`CAP-075`).
+
 ## Files read
 
 - **In full:** `AGENTS.md` (system context), `PROJECT_RULES.md`, `PROJECT.md`, `ARCHITECTURE.md`, `DECISIONS.md` (ADR-001 … ADR-061 with every Update, the draft
