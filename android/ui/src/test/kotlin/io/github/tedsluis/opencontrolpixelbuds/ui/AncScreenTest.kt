@@ -19,7 +19,9 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.ui
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -27,6 +29,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
+import io.github.tedsluis.opencontrolpixelbuds.domain.ChannelTaken
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -55,6 +58,7 @@ class AncScreenTest {
         connectionState: ConnectionState = ConnectionState.Ready,
         sessionSince: Long? = at - 1_000, // the connection opened a second before the Buds reported the mode
         cause: AncModeCause? = null,
+        channelTaken: ChannelTaken? = null,
     ) = compose.setContent {
         OpenControlTheme(darkTheme = false) {
             AncScreen(
@@ -70,6 +74,7 @@ class AncScreenTest {
                 ancModeUnconfirmedAt = unconfirmedAt,
                 sessionSince = sessionSince,
                 ancModeCause = cause,
+                channelTaken = channelTaken,
             )
         }
     }
@@ -172,13 +177,15 @@ class AncScreenTest {
     }
 
     @Test
-    fun `ADR-061 - the (i) ends with the hold sentence, the maintainer's text, and Find keeps the brief-claim hint`() {
+    fun `ADR-061 - the (i) ends with the hold sentence, the maintainer's text (corrected by ADR-062), and Find keeps the brief-claim hint`() {
         assertEquals(
-            "While this tab is open the app keeps the Buds' noise-control channel open, so a change made on a bud (a press-and-hold) shows here. Another " +
-                "app that uses the channel (for example Google Play services' Fast Pair) cannot use it meanwhile; it is released 1.5 seconds after you leave " +
-                "the tab.",
+            // ADR-062 (the maintainer's text in chat 2026-10-12): no longer "cannot use it meanwhile" — CAP-074 showed Play takes the channel back ≈ 5 s later.
+            "While this tab is open the app keeps the Buds' noise-control channel open, so a change made on a bud (a press-and-hold) shows here; it is " +
+                "released 1.5 seconds after you leave the tab. Another app that uses the channel (for example Google Play services' Fast Pair) loses it to " +
+                "this app and may take it back about 5 seconds later; what the app does then is set on the Settings tab under Noise-control channel.",
             ANC_HOLD_HINT_TEXT,
         )
+        assertEquals(false, ANC_HOLD_HINT_TEXT.contains("cannot use it meanwhile"))
         assertEquals(ANC_HOLD_HINT_TEXT, ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null).last())
         assertEquals(false, ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null).contains(MESSAGE_STREAM_HINT_TEXT))
         show(cause = AncModeCause.READ)
@@ -190,5 +197,39 @@ class AncScreenTest {
     fun `the mode line of a current mode is unchanged`() {
         assertEquals("ANC mode: OFF (updated ${formatUpdatedAt(at)})", ancModeLine(AncMode.OFF, at))
         assertEquals("ANC mode: unknown", ancModeLine(null, null, fromLastConnection = true))
+    }
+
+    // ---- DECISIONS.md ADR-062 (`ai-sessions/0087`, the maintainer's texts in chat 2026-10-12): the channel-taken hint ----
+
+    @Test
+    fun `ADR-062 - the hint-only line is the maintainer's text with the close's time, on the main surface and in the (i), before the Connection line`() {
+        val taken = ChannelTaken(at + 5_133, reclaimAttempts = 0) // CAP-074: the cut 5.133 s after the SABM
+        val time = formatUpdatedAt(at + 5_133)
+        val expected = "The noise-control channel was taken by another app at $time (for example Google Play services' Fast Pair). A change made on a bud is " +
+            "not shown until you tap a mode, Refresh, or pull down."
+        assertEquals(expected, ancChannelTakenLine(taken))
+        show(channelTaken = taken)
+        compose.onNodeWithText(expected).assertExists() // the main surface
+        compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick()
+        compose.onAllNodesWithText(expected).assertCountEquals(2) // and the (i)
+        val lines = ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null, channelTaken = taken)
+        assertEquals(listOf(expected, "Connection: Ready", ANC_HOLD_HINT_TEXT), lines.takeLast(3))
+    }
+
+    @Test
+    fun `ADR-062 - after the cap the line says how often the app took the channel back, and no hint means no line`() {
+        val time = formatUpdatedAt(at)
+        assertEquals(
+            "The noise-control channel was taken by another app at $time (for example Google Play services' Fast Pair); the app took it back 3 times and " +
+                "stopped. A change made on a bud is not shown until you tap a mode, Refresh, or pull down.",
+            ancChannelTakenLine(ChannelTaken(at, reclaimAttempts = 3)),
+        )
+        assertEquals(
+            "The noise-control channel was taken by another app at $time (for example Google Play services' Fast Pair); the app took it back once and " +
+                "stopped. A change made on a bud is not shown until you tap a mode, Refresh, or pull down.",
+            ancChannelTakenLine(ChannelTaken(at, reclaimAttempts = 1)),
+        )
+        show()
+        compose.onNodeWithText("The noise-control channel was taken", substring = true).assertDoesNotExist()
     }
 }
