@@ -319,10 +319,9 @@ per concern, each with its *why* and the attribution line:
 2. `cdf3a78` test: CAP-074 fixtures, the hold-reclaim tests with FakeBudsTransport, the settings-store round trip, the UI texts.
 3. `5cd5664` docs: ADR-062 and the ADR-061 Update, 1.2.1 (10201) — CHANGELOG, README, release notes, PROJECT, TODO, id_registry (both new registry rows).
 4. `3f373c2` docs(capture): CAP-075 (Group BK) skeleton — the 1.2.1 run in both GrapheneOS users; APP_TESTPLAN §X.
-5. this file and the `ai-sessions/INDEX.md` row — docs(ai-sessions): 0087 FEATURE result, INDEX row *(its hash is completed by the next session,
-   `AI_SESSION_LOG_PROCEDURE.md` §4b item 2)*.
+5. `4778d32` docs(ai-sessions): 0087 FEATURE result, INDEX row; then the back-fill of these hashes and the pull-request number (`AI_SESSION_LOG_PROCEDURE.md` §4b item 2).
 
-`git fetch` and a rebase on `origin/main` if it moved; pushed without force; no pull request opened by this session (a separate question), no tag, no release.
+`git fetch` (`origin/main` had not moved, no rebase needed); pushed without force; **pull request #39** opened on the maintainer's answer ("Open the pull request", chat 2026-10-12: https://github.com/tedsluis/opencontrolpixelbudspro2/pull/39) with the summary and the Release checklist — not merged by this session; no tag, no release. *(The hash of the back-fill commit of this paragraph is completed by the next session.)*
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0087_FEATURE_RESULT_2026_10_12.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0087_FEATURE_RESULT_2026_10_12
