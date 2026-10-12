@@ -27,7 +27,9 @@ line on the battery card; the **Case sounds** switches moved from Controls to ge
 **Controls** (M5 → N12; M1); thirteen MAESTRO requests at Connect (one `GetHardwareInfo` after the subscription; O8); **section V**. **Updated 2026-10-10 for
 the rebuilt 1.2.0** (`ai-sessions/0084`, `DECISIONS.md` ADR-061): the Message Stream claim is held while the noise-control tab is on screen (F-rows: a tap there
 reuses the held channel; V10 can pass); the balance slider shows the finger's value while dragging and is finer near the centre — the ±3 snap of M3 is gone;
-**section W**.
+**section W**. **Updated 2026-10-12 for 1.2.1** (`ai-sessions/0087`, `DECISIONS.md` ADR-062): the Settings tab's "Noise-control channel" choice — in a user with
+Google Play services Play's Fast Pair takes the held channel back ≈ 5 s later (`CAP-074`); "Show a hint" (the default) puts a hint line on the noise-control card,
+"Take it back" re-claims 3, 6 and 12 s after the cuts, then stops; **section X** (both users). The "After the run" rows are AR1 … AR5 since then (they were X1 … X5).
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -385,15 +387,37 @@ S12, H5, T7, V8) are the earlier IDs, run again.
 | W11 | Volume EQ off/on (say what you hear); in-ear detection off → pull → on → pull. | each after its OK; "Worn: unknown — in-ear detection is off", then "Probably worn (checked …)"; the battery (i) says "… 40 seconds or more …", no capture id | `4:{15:0}`/`{15:1}`; `4:{2:0}`/`{2:1}` = the references | ⚠️ (i) text ✅; Volume EQ, in-ear not run | BI-18, BI-19 |
 | W12 | Balance: drag slowly to **"Right 4 — release to set"**, release; then to "Centre". | the label follows the finger with "— release to set"; after release the Buds' value; one write per release | `4:{17:7}` (`CAP-070` 3747 on 19, `CAP-064` 6671 on 21), then `4:{17:0}`; nothing during a drag | ✅ | BI-20 (`AUDIO-003`) |
 
+## X. 1.2.1 (`ai-sessions/0087`: the "Noise-control channel" switch — ADR-062 — in the user with Google Play services and the user without)
+
+In `CAP-075` as BK-1 … BK-21 (captures/CAP-075-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BK/CAP-075-EVENT-NOTES.md, which has the reference frames per request from
+`CAP-074` and `CAP-073`). Nothing new on the wire: the re-claim of "Take it back" is the existing claim (`SABM` DLCI 0x04, `08 11 00 00`, the phone's `DISC`);
+the switch changes only **when** a claim is made after another client closed the held one. The timings expected below are `CAP-074`'s Play services (one version,
+measured 2026-10-12): recovery 5.2–5.7 s after it lost the channel, retry 2.2–2.6 s after a collided recovery — write down this run's own numbers.
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| X1 | **User 0 (Play).** Update over 1.2.0 (Debug mode on); open the app; Info; gear → Settings: the "Noise-control channel" card and its (i). | "App: 1.2.1, build <B1 hash>", no "-dirty"; the card between Dark mode and Case sounds, "Show a hint, do not take it back" selected; the (i)'s four lines | the thirteen requests + `GetHardwareInfo`; the snapshot claim's attempt 1 fails (Play), attempt 2 connects | | BK-1, BK-2 |
+| X2 | Disconnect, Connect; the ANC tab at once. | ready; the mode; the hold | the thirteen requests; the snapshot claim kept as the hold | | BK-3, BK-4 |
+| X3 | **Hint only:** press and hold a bud every ≈ 5 s for 30 s; touch nothing; pull the system log within a minute of the first cut. | the first hold shown; then the hint line "The noise-control channel was taken by another app at HH:MM:SS (for example Google Play services' Fast Pair). A change made on a bud is not shown until you tap a mode, Refresh, or pull down."; the later holds not shown | the cut ≈ 4.7–5.1 s after the `SABM` (the phone's `DISC`, "closed … read return: -1", "hold ended: the channel was closed, not by this app", "the hint is shown, no re-claim"); **no app `SABM` afterwards**; Play's `SABM` 2.2–2.6 s after the cut; the holds' `Notify` on Play's claim | | BK-5 (`TOUCH-007`) |
+| X4 | Open the ANC (i); tap a mode; later pull down. | the (i) has the hint line and the corrected last sentence ("… may take it back about 5 seconds later; what the app does then is set on the Settings tab under Noise-control channel."); the tap and the pull clear the hint; ≈ 5 s later it is back | the tap's claim (attempt 1 fails, attempt 2 connects), `08 11` → `Notify` → `Set` → ACK; the cut; the pull's claim; the cut | | BK-6, BK-7 (`ANC-001`…`004`) |
+| X5 | gear → Settings → **"Take it back while the noise-control tab is open (may fight that app)"**; back to ANC. | the row selected; a new claim on return | the `DISC` ≈ 1.5 s after the gear; a new `SABM` + `08 11` on return | | BK-8 |
+| X6 | **Take it back:** press and hold a bud every ≈ 4 s for 60 s; touch nothing; count the holds shown. | the holds inside the app's windows shown (≈ 6 of 10); after the third re-claim's cut the hint "…; the app took it back 3 times and stopped. …"; nothing more on screen | the cut ≈ 5 s after the `SABM`; the re-claim `SABM` + `08 11` **3.0 s** after the cut (attempt 1 fails, attempt 2 ≈ 0.4 s later); the cut; the re-claim **6.0 s** after; the cut; **12.0 s**; the cut; **no fourth**; export "re-claim 1/3 … 3000 ms", "2/3 … 6000 ms", "3/3 … 12000 ms", "stopped after 3 re-claims" | | BK-9 (`TOUCH-007`) |
+| X7 | Tap a mode; two holds; wait. | the hint gone; the chain restarted | the tap's claim; the cut; the re-claim 3 s after it | | BK-10 |
+| X8 | Within 2 s of a cut: the Sound tab (then back); Home (then return); the switch to "Show a hint" (then back). | no re-claim in any of the three; a new claim on each return | "Message Stream re-claim cancelled (ADR-062)" ×3; no `SABM` 3 s after those cuts; the returns' claims | | BK-11 … BK-13 |
+| X9 | Hint only: Disconnect, Connect on the ANC tab; Export. | the hint gone at Connect, back ≈ 5 s later; "Debug log saved (N lines)." | the thirteen requests; the snapshot claim held; the cut | | BK-14, BK-end1 (`PAIR-003`) |
+| X10 | **User 10 (no Play).** Open the app; Info; Settings: the card (hint only). | the build; the card | the Connect sequence; the snapshot claim released ≈ 1.5 s after its answer | | BK-15 |
+| X11 | Hint only: the ANC tab; holds every ≈ 5 s for 30 s. Then "Take it back"; back to ANC; holds every ≈ 5 s for 30 s. | every hold shown in both positions; no hint | one `SABM` + `08 11` per tab entry; **no `DISC` while the tab is shown**; no re-claim line; 0 Play-services claims | | BK-16, BK-17 (`TOUCH-007`) |
+| X12 | Leave the tab (Controls); optional: the tile on the tab, Home/return, both buds into the case and out with the tab shown; back to "Show a hint"; Export. | Controls; (optional branches as in W6–W8) | the `DISC` ≈ 1.5 s after leaving; (optional: no second `SABM` for the tile; the `DISC` after Home; the re-open's snapshot kept) | | BK-18 … BK-21, BK-end2 |
+
 ## After the run (within 1 minute of the last action)
 
 | # | Collect | Done |
 |---|---|---|
-| X1 | Export the debug log (L2) | ☐ |
-| X2 | Pull the HCI snoop log (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3) | ☐ |
-| X3 | App logcat and the system log (GrapheneOS log viewer) | ☐ |
-| X4 | Stop the film; note its first and last clock time | ☐ |
-| X5 | Put everything, with this filled-in plan and the events file, in one folder for analysis (it becomes the next `CAP-NNN`) | ☐ |
+| AR1 | Export the debug log (L2) | ☐ |
+| AR2 | Pull the HCI snoop log (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` §3) | ☐ |
+| AR3 | App logcat and the system log (GrapheneOS log viewer) | ☐ |
+| AR4 | Stop the film; note its first and last clock time | ☐ |
+| AR5 | Put everything, with this filled-in plan and the events file, in one folder for analysis (it becomes the next `CAP-NNN`) | ☐ |
 
 ## Summary
 
@@ -422,6 +446,7 @@ S12, H5, T7, V8) are the earlier IDs, run again.
 | U 1.1.1 build | 14 | 11 | 0 | 3 | 0 |
 | V 1.2.0 build | 19 | 13 | 1 | 4 | 1 |
 | W 1.2.0 rebuilt | 12 | 3 | 0 | 6 | 3 |
+| X 1.2.1 | 12 | | | | |
 
 **Run `CAP-073` (2026-10-10, 1.2.0 rebuilt `5b4d5db`, the user without Play; `ai-sessions/0085`, `CAP-073-FINDINGS.md`):** section W — ✅ W1, W3, W12;
 ⚠️ W2 (Disconnect/Connect and the export ✅; Bluetooth off/on not run), W4/W5 (the hold and four press-and-holds shown without a tap ✅; the noise-control (i) not
