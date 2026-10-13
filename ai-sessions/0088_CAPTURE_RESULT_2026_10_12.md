@@ -139,7 +139,7 @@ RFCOMM specification HTML on bluetooth.com (404).
 - `be89684` docs(capture): CAP-075 (Group BK) — the folder (the two documents, the four HCI logs, two exports, two app logcats, the extract, the two recordings, the checksum file; Git LFS for the logs, texts and films).
 - `23f5bc0` docs: the registers, the ADR-062 Update, the PROTOCOL §4.1 note + §8 row, CHANGELOG, TODO, ARCHITECTURE, the sidebar.
 - the third commit (this RESULT, `ai-sessions/INDEX.md` row 0088, the mechanical path/name fixes in the 0088 PROMPT).
-Branch `capture/cap-075` on `main` `9c52a4e` (`git fetch`: nothing behind at commit time); not pushed — the maintainer is asked.
+Branch `capture/cap-075` on `main` `9c52a4e` (`git fetch`: nothing behind at commit time); pushed 2026-10-13 after the maintainer's "Push and open the PR" (chat); pull request #44 opened against `main` (not merged).
 
 ## Progress (updated after every phase and every substantial step)
 
