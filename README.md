@@ -7,7 +7,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **Latest release: [1.2.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.0)** (2026-10-10). You can also
+> **Latest release: [1.2.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.1)** (2026-10-13). You can also
 > [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
@@ -117,11 +117,14 @@ balance slider, and the Case sounds switches on gear → Settings and Conversati
 seconds or more with both buds on a table); the serial labels are the official app's reading of the answer's order; "Changed by the Buds" shows only what the
 Buds report while the noise-control tab is open.
 
-**1.2.1** (not yet released; prepared 2026-10-12 in `ai-sessions/0087` after `CAP-074`, `ai-sessions/0086`): a **Noise-control channel** setting on gear →
-Settings for phones with Google Play services, where Play's Fast Pair takes the channel back about 5 seconds after this app opened it on the noise-control tab —
-"Show a hint" (the default: the card says when it was taken) or "Take it back" (3, 6, 12 seconds later, three times per visit, a tug of war with Play meanwhile).
-Its hardware run is `CAP-075` (Group BK), in the users with and without Play services. Known issues of 1.2.1: as in [`CHANGELOG.md`](./CHANGELOG.md) (the
-holds that fall in Play's windows; the timings are one Play version's).
+**1.2.1** (2026-10-13; prepared 2026-10-12 in `ai-sessions/0087` after `CAP-074`, `ai-sessions/0086`; build `31ee183`): a **Noise-control channel** setting on
+gear → Settings for phones with Google Play services, where Play's Fast Pair takes the channel back about 5 seconds after this app opened it on the noise-control
+tab — "Show a hint" (the default: the card says when it was taken) or "Take it back" (3, 6, 12 seconds later, three times per visit, a tug of war with Play
+meanwhile). Its hardware run `CAP-075` (Group BK, `ai-sessions/0088`, both users) passed — without Play services both choices are identical and every
+press-and-hold on the tab is shown (41 of 41); verdict: release build `31ee183`. Known issues of 1.2.1 (also in [`CHANGELOG.md`](./CHANGELOG.md)): in a user
+with Google Play services "Show a hint" shows a press-and-hold only while this app's claim lives (until Play's next connect, 5.3–5.8 s after Play lost the
+channel), then the hint; "Take it back" holds the channel about 43 % of a 44-second chain (three re-claims per visit of the tab), then nothing until a tap —
+the timings are one Play version's.
 
 **Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
@@ -154,15 +157,15 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-12)
+## Current state (2026-10-13)
 
-- **Captures:** 75 registered sessions (`CAP-001`–`CAP-075`): 70 analyzed (the latest, `CAP-074` of 2026-10-12: the released 1.2.0 in the user **with** Google Play services — every hold cut ≈ 5 s later by Play's Fast Pair, only the first press-and-hold shown, `ai-sessions/0086`), 3 planned (`CAP-075`: the 1.2.1 run), 2 withdrawn (`CAP-052`,
-  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` and `CAP-070`–`CAP-074` are captures of this project's own app (`CAP-067`: the 1.0.0
-  release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, `CAP-071`: the 1.1.1 release APK, `CAP-072`: the 1.2.0 release APK, `CAP-073`: the rebuilt 1.2.0 release APK, all without Google Play services; `CAP-074`: the released 1.2.0 in the Owner user with Play services); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
+- **Captures:** 75 registered sessions (`CAP-001`–`CAP-075`): 71 analyzed (the latest, `CAP-075` of 2026-10-12/13: the 1.2.1 release build in both GrapheneOS users — without Google Play services every press-and-hold on the tab shown, with Play services the hint and the re-claims measured against Play's timers, `ai-sessions/0088`), 2 planned, 2 withdrawn (`CAP-052`,
+  `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` and `CAP-070`–`CAP-075` are captures of this project's own app (`CAP-067`: the 1.0.0
+  release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, `CAP-071`: the 1.1.1 release APK, `CAP-072`: the 1.2.0 release APK, `CAP-073`: the rebuilt 1.2.0 release APK, all without Google Play services; `CAP-074`: the released 1.2.0 in the Owner user with Play services; `CAP-075`: the 1.2.1 release APK in both users); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 61 accepted ADRs (ADR-062, 2026-10-12, the Noise-control channel switch of 1.2.1, `ai-sessions/0087`, not yet hardware-verified; ADR-061, 2026-10-10, built in the 1.2.0 rebuild, `ai-sessions/0084`, its main path hardware-verified in `CAP-073`) and one labelled draft (ADR-060, proposed, not accepted) in `DECISIONS.md`; every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
+- **Decisions:** 61 accepted ADRs (ADR-062, 2026-10-12, the Noise-control channel switch of 1.2.1, `ai-sessions/0087`, hardware-verified in `CAP-075` — its Update of 2026-10-13, `ai-sessions/0088`; ADR-061, 2026-10-10, built in the 1.2.0 rebuild, `ai-sessions/0084`, its main path hardware-verified in `CAP-073`) and one labelled draft (ADR-060, proposed, not accepted) in `DECISIONS.md`; every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
   approval was given but whose record is missing (the ADR says so).
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),

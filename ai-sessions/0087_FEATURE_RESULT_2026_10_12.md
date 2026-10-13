@@ -6,7 +6,7 @@
 **Title:** Build the maintainer's chosen fix for `CAP-074` (`ai-sessions/0086`): a switch on the Settings tab between (1) "hint only, no re-claim" and (2) "re-claim
 after a foreign close while the noise-control tab is shown, with a back-off"; the hint, the corrected ANC (i), ADR-062, tests with `FakeBudsTransport`, mutation
 checks, the `CAP-075` (Group BK) skeleton, the documents, the release preparation (no tag, no publication)
-**Status:** complete (built, gate green, mutations killed, documented; committed and pushed on `feature/hold-reclaim-switch` — see Commits; the pull request, the build and the `CAP-075` run are the maintainer's next steps)
+**Status:** complete — and released: PR #39 merged 2026-10-12 (its merge commit `31ee183` is the build commit of `scripts/release.sh 1.2.1`), `CAP-075` run by the maintainer and analysed by `ai-sessions/0088` (verdict "no heavy issue"), tag `v1.2.1` on `31ee183` and the release published 2026-10-13 (see Commits)
 
 ## Summary (plain language)
 
@@ -334,6 +334,8 @@ per concern, each with its *why* and the attribution line:
 5. `4778d32` docs(ai-sessions): 0087 FEATURE result, INDEX row; then the back-fill of these hashes and the pull-request number (`AI_SESSION_LOG_PROCEDURE.md` §4b item 2).
 
 `git fetch` (`origin/main` had not moved, no rebase needed); pushed without force; **pull request #39** opened on the maintainer's answer ("Open the pull request", chat 2026-10-12: https://github.com/tedsluis/opencontrolpixelbudspro2/pull/39) with the summary and the Release checklist — not merged by this session; no tag, no release. *(The hash of the back-fill commit of this paragraph is completed by the next session.)*
+
+**Release (E3, added 2026-10-13):** PR #39 merged with a merge commit on 2026-10-12 → `31ee183`, built by the maintainer (`scripts/release.sh 1.2.1`, 2026-10-12 17:17, kept as ~/opencontrol-1.2.1-tested; APK SHA-256 `a60a3cc9b2a80e9dc5fecb8810c9cb8e7cbb20fa9eb7a2a0ce663b89e964963e`, certificate `a7530f5ceadcdfc9cddcbb0e9889e7699961e8a4ef18898c4ec7738cc79d8dcb`); the hardware run `CAP-075` (both users) analysed in `ai-sessions/0088` (PR #44, merged 2026-10-13) with the verdict "no heavy issue — release as built"; tag `v1.2.1` on `31ee183`, the release published 2026-10-13 (`RELEASING.md` §13).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0087_FEATURE_RESULT_2026_10_12.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0087_FEATURE_RESULT_2026_10_12
