@@ -39,7 +39,7 @@ with the hold's untested branches below. **Next app run:** none planned — thes
       noise-control (i) after a press-and-hold ("Changed by the Buds at HH:MM:SS …" and the ADR-061 sentence) — not run in `CAP-073`. **`CAP-074` (the Owner user with
       Play services, `ai-sessions/0086`) ran the "another client closes DLCI 0x04 while the tab is shown" branch twelve times:** the hold ended "the channel was closed,
       not by this app" and nothing re-claimed — as designed; the branch works, and it is the cause of the first-hold-only symptom (`CAP-074-FINDINGS.md` §4, §8). Still
-      not run: the tile, Home, a session loss / ADR-044 re-open with the tab shown, the (i) line. **`CAP-075` (Group BK, planned by `ai-sessions/0087`) takes the Play-user branch in both switch positions (BK-5 … BK-14) and, optionally, the tile, Home and the loss with the tab shown (BK-19 … BK-21).**
+      not run: the tile, Home, a session loss / ADR-044 re-open with the tab shown, the (i) line. **`CAP-075` (Group BK, planned by `ai-sessions/0087`) takes the Play-user branch in both switch positions (BK-5 … BK-14) and, optionally, the tile, Home and the loss with the tab shown (BK-19 … BK-21).** **Run (`ai-sessions/0088`, `CAP-075-FINDINGS.md` §4): the Play-user branch in both positions done — hint only 2 cuts, take it back three chains of three re-claims; still not run: the tile, Home/return, a loss with the tab shown (BK-19 … BK-21), and BK-11 … BK-13 (a tab change, Home or the switch within 2 s of a cut — the cancel path ran once, pre-film).**
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
@@ -85,11 +85,18 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
 - [ ] Optional, destructive, one-time: the factory-reset re-pair for comparison (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16) — it also resets the
       Find My Device link.
 - [ ] Record Play services' *Nearby devices* permission state and the phone's Android version (Settings → About, on film) in every capture
-      (`A68-CAP-23`: the Pixel 7a's version is unreconciled in `CAP-036`…`041`). `CAP-075`'s P0 asks for it on film (the first time), with Play services' version.
+      (`A68-CAP-23`: the Pixel 7a's version is unreconciled in `CAP-036`…`041`). `CAP-075`'s P0 asks for it on film (the first time), with Play services' version. **Not done in `CAP-075`** (the P0 film was not made; the user and Play's presence come from the logs, `CAP-075-FINDINGS.md` §0) — still open.
 - Standing practice (kept open on purpose): every capture session gets its Capture Index row with firmware, Android and app version
   (`PROJECT_RULES.md` rules 11 and 14); every hypothesis test is logged in the capture's FINDINGS before a promotion (rule 4).
 
 ## 4. Protocol: leads and open questions
+
+- [ ] `CAP-075-FINDINGS.md` §12 (`ai-sessions/0088`): (1) what triggers the Buds' own closes of DLCI 0x02 (17:28:47) and 0x02 + 0x04 (06:28:49) with the app
+      in the background, after an `AT+BIEV` — the buds into/out of the case off screen? a run with the case moves on camera (`CASE-004`/`005`); (2) what Play's
+      `RfcommEventStreamMedium` does when "Retry times remaining" reaches 0 (seen 5 → 4 once, back at 5 next time); (3) the Google app's (uid 10302)
+      DLCI 0x08/0x0a traffic on the Buds' ACL in the Owner user (63 frames, the firmware string in its answers) — what it reads; (4) whether a `ReadSetting` id
+      outside the thirteen, or a runtime-info field, exposes the current noise-control mode on DLCI 0x02 (nothing on 0x02 moved at any of 31 holds) — the
+      reverse-engineering lead behind `CAP-075-FINDINGS.md` §9 P5.
 
 The five switches the maintainer chose (Multipoint, head gestures, the two case sounds, Volume EQ; ADR-052 … ADR-055) and the screen-reader text are built in
 1.1.0 (`ai-sessions/0074`) and passed their hardware run `CAP-070` (`ai-sessions/0075`); since `ai-sessions/0076` their tests use the `CAP-070` bytes.
@@ -171,6 +178,11 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
+- [ ] **Next FEATURE prompt (0089, the maintainer's choice in chat 2026-10-13, `ai-sessions/0088`, "FEATURE" → "P1 + P2 + P4"):** the noise-control channel in the
+      Play user after `CAP-075` (`CAP-075-FINDINGS.md` §9) — P1 a constant 3-s re-claim step with a longer chain (capped by count or time; ADR-062 Update 2),
+      P2 a "Take it back again" action on the hint card, P4 a cause label for a mode learned by a re-claim's own read. Later: P3 a shorter attempt-2 latency
+      for the on-demand channel; P5 the mode on the app's own channel (§4's lead). Rejected on evidence: a re-claim before Play's retry (§9 P6).
+
 - [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
       (a) hardware-tested in `CAP-071` (`ai-sessions/0080`): no behaviour change found — the same reads, request bytes, answers, re-opens and screens as 1.1.0;
       (b) **M** — raising `targetSdk` (lint `OldTargetApi` now reports 34) is its own session with a hardware run: Android 15 enforces edge-to-edge,
@@ -191,10 +203,10 @@ Open questions (each with where it is described):
       sibling label) — **M** decides whether and when.
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
 - [ ] **M — the 1.2.1 release steps (`ai-sessions/0087`, built 2026-10-12: the "Noise-control channel" switch, ADR-062):** merge the pull request when CI is green;
-      `scripts/release.sh 1.2.1` on the branch tip (B1–B3); the run `CAP-075` (Group BK, both users — the skeleton under `captures/`), then a CAPTURE session for the
-      verdict (C3/C4) and an ADR-062 Update with that run's numbers; then D1–D4 and E1–E4 (`RELEASING.md`). Open after the build: whether Play's timers hold on
-      that day (the re-claim at 3 s meets Play's retry at 2.2–2.6 s — if Play's retry is slower the app's attempt 1 connects into a free channel and is cut within
-      2 s, as `CAP-074` 14845/14890: a finding for the run, not a defect).
+      `scripts/release.sh 1.2.1` on the branch tip (B1–B3); the run `CAP-075` (Group BK, both users) **done**, the CAPTURE session `ai-sessions/0088` **done** (C3: `CAP-075-FINDINGS.md`,
+      the registers; the ADR-062 Update of 2026-10-13; C4: the maintainer's verdict in chat 2026-10-13 — no heavy issue, **1.2.1 released as built**); **remaining:
+      D1–D4 and E1–E4** (`RELEASING.md`). The question after the build is answered: Play's timers held (retry 2.1–2.8 s, recovery 5.3–5.8 s), so every re-claim
+      met Play on the channel (attempt 1 refused, attempt 2 connected ≈ 0.9 s later) — `CAP-075-FINDINGS.md` §1, §4.
 - [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.

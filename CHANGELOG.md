@@ -34,10 +34,12 @@ the wire.
 
 ### Known issues
 
-- In a user with Google Play services: with "Show a hint", every press-and-hold after the first (about 5 seconds after a connect or a tap) reaches Play services
-  instead of this app until you tap, refresh or pull down; with "Take it back", roughly 4 of 10 holds fall in the other app's windows, three re-claims per visit of
-  the tab, and Android's own Buds settings may be stale while the tab is open. The timings are one Play version's (`CAP-074`). Not yet checked on a phone — the
-  hardware run is `CAP-075`.
+- In a user with Google Play services (measured in `CAP-075`, 2026-10-13, one Play version): with "Show a hint", a press-and-hold is shown only while this app's
+  claim lives — until Play services' next connect, 5.3–5.8 s after Play lost the channel (0.4–4.7 s after a tap or a connect) — then the hint; none of 9 holds was
+  shown as it happened. With "Take it back", three re-claims per visit of the tab (3, 6 and 12 s after each cut), each holding about 4.7 s of a 9-, 12- and 18-s
+  cycle: the app holds the channel about 43 % of a 44-s chain, then nothing until a tap, Refresh or pull-down; 8 of 19 holds were shown within a second, 6 never;
+  Android's own Buds settings are stale while this app holds the channel. Without Play services nothing contends and both choices are identical (41 of 41 holds
+  shown).
 - The 1.2.0 known issues stay (the hedged worn line, the serial labels, "Changed by the Buds" only on the tab; the 1.1.1 ones).
 
 ## [1.2.0] - 2026-10-10

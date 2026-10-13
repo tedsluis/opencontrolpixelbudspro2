@@ -2754,5 +2754,21 @@ motivated this).
   (`:data/settings`), `BudsRepository.ancChannelTaken`, the Settings card, the hint line, the corrected ANC (i); tests with `FakeBudsTransport` and real `CAP-074`
   bytes (`Cap074Fixtures`); the hardware run `CAP-075` (Group BK) in both users; version 1.2.1 (the maintainer's choice, chat 2026-10-12, "Version").
 
+- **Update 2026-10-13 (`ai-sessions/0088`, `CAP-075`, maintainer-approved in chat 2026-10-13, `AskUserQuestion` "ADR-062 Upd"): hardware-verified.** Without
+  Play (the secondary user) both modes are identical and regression-free against `CAP-073` (41 of 41 press-and-holds shown within a second; no foreign close in
+  six holds of 14–36 s; no hint, no re-claim). With Play (the Owner user, one Play version, 2026-10-13): mode 1 showed the hint with the cut's time and never
+  re-claimed (2 of 2); mode 2 ran three chains of exactly three re-claims scheduled 3 000 / 6 000 / 12 000 ms after the cut (the export's lines 3 009–3 011 /
+  6 003–6 006 / 12 003–12 006 ms after the "closed" line), each reaching the wire 4.0–4.8 s after the cut because attempt 1 is refused by the stack ("already at
+  opened state": Play's retry, 2.1–2.8 s after the cut, is on the channel) and attempt 2 connects 0.9–1.5 s later by killing Play's socket; each re-claimed hold is
+  cut 5.3–5.8 s after Play's loss (4.55–4.92 s after its `SABM`). Coverage ≈ 43 % of a 44-s chain, then 0 % until a tap, Refresh or re-entry; 8 of 31 holds shown
+  within a second (5 unprovoked `Notify` frames on the app's claim, 3 read by a re-claim's own `Get`), 16 never. The "about 5 seconds of every 9" estimate holds
+  for the first cycle only (9.2–9.5 s); the second and third cycles are 12.0–12.4 and 17.7–18.2 s — Play's timers did not change over 15 cycles, so the back-off
+  buys nothing (`CAP-075-FINDINGS.md` §4, §9). The cancel path ran once (pre-film, 06:19:04); a tab change, Home or the switch within 2 s of a cut (BK-11 … BK-13)
+  are untested. The stack path of each cut (`CAP-074-FINDINGS.md` §8 (a), 🟡 there) is observed 15 of 15 in the system log (`CAP-075-FINDINGS.md` §5). Play's
+  timers equal `CAP-074`'s (recovery 5.33–5.82 s ×18, retry 2.06–2.82 s ×15, 4.56 s once after "Retry times remaining 4"). Follow-up (the maintainer's choice,
+  chat 2026-10-13, "FEATURE" → "P1 + P2 + P4"): a constant 3-s step with a longer chain, a "Take it back again" action on the hint, a cause label for a mode
+  learned by a re-claim's read — the next FEATURE prompt, with an ADR-062 Update 2 for the constant step. The release verdict of `CAP-075` ("Verdict C4"): no heavy
+  issue, 1.2.1 released as built.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

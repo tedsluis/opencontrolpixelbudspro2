@@ -125,7 +125,7 @@ in §2 and §3 is re-derived from the recordings, the HCI logs, the other logs, 
 
 ## 2. The evidence (measured 2026-10-12/13 by the session that wrote this prompt — re-derive every number)
 
-The folder `captures/CAP-075-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BK/` (the skeleton's placeholder name; the skeleton file is committed, the **thirteen** other
+The folder `captures/CAP-075-2026-10-12_17-22-31_2026-10-13_06-34-32-Group_BK/` (the skeleton's placeholder name; the skeleton file is committed, the **thirteen** other
 files are **untracked**) holds, per `sha256sum` and `ls -la` of 2026-10-13 06:42:
 
 **Set 1 — the user without Google Play (2026-10-12; the first run of this prompt analysed these):**
@@ -133,7 +133,7 @@ files are **untracked**) holds, per `sha256sum` and `ls -la` of 2026-10-13 06:42
 | File | Measured | Notes |
 |---|---|---|
 | CAP-075-EVENT-NOTES.md | the committed skeleton (27,190 B, SHA-256 `7f42e6c5…acbde`) | **exists**: add the timeline to it, keep the planned procedure as the appendix |
-| CAP-075-screen-20261012-172842-1791818551858.mp4 | 76.5 MB, 370.8 s, H.264 1080 × 2424 at 60 fps nominal (4,203 video frames); **an AAC audio track**; `creation_time` 2026-10-12T15:28:54Z; mode 750; SHA-256 `d351739d…42b1b3` | the status bar reads **17:22** at the first frame and flips to **17:23** between film seconds 28 and 29, **17:28** at the last frame ⇒ the name stamp 17:28:42 is the **end**; the film covers ≈ 17:22:31 – 17:28:42 (measure the offset to ± 0.1 s at 10 fps) |
+| CAP-075-recording1.mp4 | 76.5 MB, 370.8 s, H.264 1080 × 2424 at 60 fps nominal (4,203 video frames); **an AAC audio track**; `creation_time` 2026-10-12T15:28:54Z; mode 750; SHA-256 `d351739d…42b1b3` | the status bar reads **17:22** at the first frame and flips to **17:23** between film seconds 28 and 29, **17:28** at the last frame ⇒ the name stamp 17:28:42 is the **end**; the film covers ≈ 17:22:31 – 17:28:42 (measure the offset to ± 0.1 s at 10 fps) |
 | CAP-075-btsnoop_hci1.log | 81,868 B; 1,832 packets, 2026-10-12 17:23:08.048 – 17:30:33.747; SHA-256 `96e70475…6411` | renamed by the maintainer from the earlier name CAP-075-btsnoop_hci.log; one Buds ACL: page frame 145, Connection Complete 151 (17:23:09.631, handle `0x000b`, `04:00:6e:…:07`) → Disconnection Complete 1814 (17:28:47.531, reason `0x13`); the 18 packets after it are vendor/LE housekeeping, no Buds frame |
 | CAP-075-btsnoop_hci1.log.last | 55,100 B; 1,110 packets, 17:21:54.524 – 17:23:04.307; SHA-256 `493357a2…7c550` | not a prefix of hci1.log; a Buds ACL from frame 501 (17:22:45.301) to 1097 (17:23:04.162, reason **`0x16`**, together with an LE handle `0x0040` at 1096 — a Bluetooth **off** at 17:23:04; the current log starts 17:23:08 with Bluetooth **on**) |
 | CAP-075-opencontrol-debug-20261012-173158.txt | 228 lines, 17:25:20.122 – 17:31:53.825 (local time); mode 750; SHA-256 `c66a4ced…369b92` | one export, one process (PID 14361); starts with "Permissions (start)" and a LINK_BACK re-open at 17:25:20 |
@@ -143,7 +143,7 @@ files are **untracked**) holds, per `sha256sum` and `ls -la` of 2026-10-13 06:42
 
 | File | Measured | Notes |
 |---|---|---|
-| CAP-075-screen-20261013-063431-1791865743758.mp4 | 65.4 MB, 327.9 s, 1080 × 2424, an audio track; `creation_time` 2026-10-13T04:34:36Z; mode 750; SHA-256 `39e3433c…e21ea6` | if the name stamp is the end (as set 1): ≈ 06:29:03 – 06:34:31 — **derive it from the status bar**; the export's last hold is 06:35:30 and the export was saved 06:35:33 (the logcat's "Debug log exported (513 lines)" 04:35:38 UTC), so the film cannot start at 06:34:31 |
+| CAP-075-recording2.mp4 | 65.4 MB, 327.9 s, 1080 × 2424, an audio track; `creation_time` 2026-10-13T04:34:36Z; mode 750; SHA-256 `39e3433c…e21ea6` | if the name stamp is the end (as set 1): ≈ 06:29:03 – 06:34:31 — **derive it from the status bar**; the export's last hold is 06:35:30 and the export was saved 06:35:33 (the logcat's "Debug log exported (513 lines)" 04:35:38 UTC), so the film cannot start at 06:34:31 |
 | CAP-075-btsnoop_hci2.log | 476,769 B; 7,291 packets, 2026-10-13 06:29:18.537 – 06:36:53.161; SHA-256 `6b55526f…1250f1` | one Buds ACL (page 163, Connection Complete 469 at 06:29:21.136, `0x000b`), open at the log's end; DLCIs on `0x000b`: 0x00, 0x02, 0x04 (945 frames), **0x08 (59)**, 0x09, 0x0a, 0x0c |
 | CAP-075-btsnoop_hci2.log.last | 1,395,929 B; 21,824 packets, **2026-10-12 18:13:13.002 – 2026-10-13 06:29:14.324** (one rotation spanning the night); SHA-256 `e9241db8…9b3c` | Buds ACLs: 18:13:17 → 18:14:11 (`0x13`), 18:14:11 → 18:14:12 (`0x13`), and **06:19:00.784 → 06:29:13.490 (`0x16`, with LE handle `0x0041` — a Bluetooth off at 06:29:13**; hci2.log starts 06:29:18 with Bluetooth on); 905 Buds frames on 10-12 18:xx (before the run — another app session? the Owner's 1.2.1 install test?) and 592 on 10-13 06:xx |
 | CAP-075-opencontrol-debug-20261013-063533.txt | 512 lines, 06:18:58.764 – 06:35:31.729 (local); mode 750; SHA-256 `23ea855b…6f990` | one process (PID 17838, started 06:18:58 — `am_proc_start: [User=0,PID=17838,UID=10354,…,next-top-activity]` in the system log); **16 holds, 15 ended "the channel was closed, not by this app"**, 1 "the tab was left"; 17 "connect failed after N ms (attempt 1/3)"; 16 "on-demand channel 0x04 closed … session channels untouched"; **three complete re-claim chains 1/3 → 2/3 → 3/3 → "stopped after 3 re-claims"** (06:30:22–06:30:58, 06:32:48–06:33:25, 06:33:46–06:34:22) and one "re-claim cancelled" (06:19:04); **two "taken by another client: the hint is shown, no re-claim (hint only)"** (06:31:33, 06:32:02); 3 "Session ended by the user's Disconnect tap"; 5 Connect sequences (channel 21 once at 06:19, channel **19** four times); a session loss at 06:28:49 (Bluetooth off) and the LINK_BACK re-open at 06:29:27 |
@@ -178,7 +178,7 @@ APK pull and its `sha256sum`), a camera film, a `sha256sum` file. Record each as
 - **The switch position in force per period** (set 2): the export's lines name it — re-claim chains at 06:30:22–06:30:58, 06:32:48–06:33:25, 06:33:46–06:34:22 =
   RECLAIM; "hint is shown, no re-claim" at 06:31:33 and 06:32:02 = HINT_ONLY; "re-claim cancelled" at 06:19:04 (HINT_ONLY or the tab left? — the code decides);
   the three Disconnect taps (06:31:26, 06:31:51, 06:32:35) separate the conditions. Confirm each switch on film (the Settings card's selected row).
-- **`CAP-075-logcat-all.txt` contains no `am_switch_user`**, one `am_proc_start` for the app (user 0, 06:18:58.248), no `installation completed`; the System-log
+- **CAP-075-logcat-all.txt contains no `am_switch_user`**, one `am_proc_start` for the app (user 0, 06:18:58.248), no `installation completed`; the System-log
   file has the same `am_proc_start` with `User=0`. **Set 2 is the Owner user** by the system log — verify and say it with the line numbers.
 
 State of the repository at the time of writing: `main` at `0409a55` (PRs #39–#42 merged: the feature, the bot PRs, the build identity, this prompt's first
