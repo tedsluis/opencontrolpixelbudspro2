@@ -13,8 +13,8 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 ## 1. After release 1.2.1 (published 2026-10-13, `ai-sessions/0088` and its continuation in chat)
 
-- [ ] **D4 (the maintainer):** on the phone, download the APK from the release page, compare its SHA-256 with the notes (`a60a3cc9…`), install it over
-      the tested one in both users — the tested build and the published one are the same file (re-checked with `gh release download` after publishing).
+- [x] **D4 (the maintainer):** done 2026-10-13 — the published 1.2.1 installed on the phone with Obtainium (the maintainer, chat 2026-10-13: "De installatie
+      van 1.2.1 op mijn telefoon met Obtainium is gelukt"); the tested build and the published one are the same file (re-checked with `gh release download`).
 - E1–E4 done by the pull request of `release/1.2.1-after` (CHANGELOG date, README, the Release log row, the session logs, the notes template).
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
   unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). The Owner user's stored "Noise-control channel" choice is "Take it back" and the secondary
@@ -205,7 +205,7 @@ Open questions (each with where it is described):
       sibling label) — **M** decides whether and when.
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
 - [x] **M — the 1.2.1 release steps:** done — PR #39 merged (the build commit `31ee183`), `CAP-075` run and analysed (`ai-sessions/0088`, PR #44), verdict
-      "no heavy issue", tag `v1.2.1` and the release published 2026-10-13 (approved in chat); E1–E4 by the pull request of `release/1.2.1-after`; D4 in §1.
+      "no heavy issue", tag `v1.2.1` and the release published 2026-10-13 (approved in chat); E1–E4 by the pull request of `release/1.2.1-after` (#45); D4 done 2026-10-13 (Obtainium, §1).
 - [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
