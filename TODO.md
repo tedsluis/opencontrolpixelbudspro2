@@ -180,7 +180,7 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
-- [ ] **Next FEATURE prompt (0089, the maintainer's choice in chat 2026-10-13, `ai-sessions/0088`, "FEATURE" → "P1 + P2 + P4"):** the noise-control channel in the
+- [ ] **Next FEATURE prompt — written: `ai-sessions/0089_FEATURE_PROMPT_2026_10_13.md` (the maintainer's choice in chat 2026-10-13, `ai-sessions/0088`, "FEATURE" → "P1 + P2 + P4"; plus the switch renamed, e.g. "Channel control", with options that say whether the phone has Google Play services, chat 2026-10-13):** the noise-control channel in the
       Play user after `CAP-075` (`CAP-075-FINDINGS.md` §9) — P1 a constant 3-s re-claim step with a longer chain (capped by count or time; ADR-062 Update 2),
       P2 a "Take it back again" action on the hint card, P4 a cause label for a mode learned by a re-claim's own read. Later: P3 a shorter attempt-2 latency
       for the on-demand channel; P5 the mode on the app's own channel (§4's lead). Rejected on evidence: a re-claim before Play's retry (§9 P6).
