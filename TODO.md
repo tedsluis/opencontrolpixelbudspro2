@@ -11,12 +11,14 @@ pre-restructure file (same command). The `pbtk` root cause those pointers most o
 
 Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maintainer (a decision, a sign-off, or an action only they can do).
 
-## 1. After release 1.2.0 (published 2026-10-10, `ai-sessions/0085`)
+## 1. After release 1.2.1 (published 2026-10-13, `ai-sessions/0088` and its continuation in chat)
 
-Nothing open (2026-10-12): E1–E4 are done (PR #30), the README shows the 1.2.0 build (PR #32), and the Buds are restored to the state of 2026-10-07
-(Balanced, balance Centre, press and hold Noise cancellation + Transparency — the maintainer, chat 2026-10-12). The hold's untested branches are in §2.
-**`CAP-074` (2026-10-12, `ai-sessions/0086`) changed that state again:** the Buds now hold a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]` (the 06:38:27 write) and **all four** press-and-hold
-modes (the 06:38:41 write), balance Centre (`CAP-074-FINDINGS.md` §0) — restore if wanted (**M**).
+- [ ] **D4 (the maintainer):** on the phone, download the APK from the release page, compare its SHA-256 with the notes (`a60a3cc9…`), install it over
+      the tested one in both users — the tested build and the published one are the same file (re-checked with `gh release download` after publishing).
+- E1–E4 done by the pull request of `release/1.2.1-after` (CHANGELOG date, README, the Release log row, the session logs, the notes template).
+- The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
+  unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). The Owner user's stored "Noise-control channel" choice is "Take it back" and the secondary
+  user's too (`CAP-075-FINDINGS.md` §4) — the default "Show a hint" is not restored.
 
 ## 2. Hardware verification debt (the app, on film)
 
@@ -202,11 +204,8 @@ Open questions (each with where it is described):
       `Role.Switch` on the row, the `Switch` without its own click) would fix it; it changes every switch's semantics (and the tests that find a switch by its
       sibling label) — **M** decides whether and when.
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
-- [ ] **M — the 1.2.1 release steps (`ai-sessions/0087`, built 2026-10-12: the "Noise-control channel" switch, ADR-062):** merge the pull request when CI is green;
-      `scripts/release.sh 1.2.1` on the branch tip (B1–B3); the run `CAP-075` (Group BK, both users) **done**, the CAPTURE session `ai-sessions/0088` **done** (C3: `CAP-075-FINDINGS.md`,
-      the registers; the ADR-062 Update of 2026-10-13; C4: the maintainer's verdict in chat 2026-10-13 — no heavy issue, **1.2.1 released as built**); **remaining:
-      D1–D4 and E1–E4** (`RELEASING.md`). The question after the build is answered: Play's timers held (retry 2.1–2.8 s, recovery 5.3–5.8 s), so every re-claim
-      met Play on the channel (attempt 1 refused, attempt 2 connected ≈ 0.9 s later) — `CAP-075-FINDINGS.md` §1, §4.
+- [x] **M — the 1.2.1 release steps:** done — PR #39 merged (the build commit `31ee183`), `CAP-075` run and analysed (`ai-sessions/0088`, PR #44), verdict
+      "no heavy issue", tag `v1.2.1` and the release published 2026-10-13 (approved in chat); E1–E4 by the pull request of `release/1.2.1-after`; D4 in §1.
 - [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
