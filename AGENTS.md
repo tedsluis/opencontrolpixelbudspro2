@@ -66,6 +66,10 @@ order:
   network access (e.g. Dagger/Hilt, AndroidX). See §10 — inclusion still
   requires justification, this rule only clarifies that "made by Google" is
   not itself disqualifying; "requires GMS or the network" is.
+- **Note (2026-10-13, maintainer-approved in chat, `DECISIONS.md` ADR-063):**
+  asking Android's `PackageManager` whether the package
+  `com.google.android.gms` is installed (no import, no binding, nothing read
+  from it) is not GMS use; the Settings card's information line relies on it.
 
 ## 2. GrapheneOS Compatibility & Permissions
 
