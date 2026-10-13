@@ -20,6 +20,8 @@
 package io.github.tedsluis.opencontrolpixelbuds.ui
 
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -59,6 +61,7 @@ class AncScreenTest {
         sessionSince: Long? = at - 1_000, // the connection opened a second before the Buds reported the mode
         cause: AncModeCause? = null,
         channelTaken: ChannelTaken? = null,
+        onReclaim: () -> Unit = {},
     ) = compose.setContent {
         OpenControlTheme(darkTheme = false) {
             AncScreen(
@@ -75,6 +78,7 @@ class AncScreenTest {
                 sessionSince = sessionSince,
                 ancModeCause = cause,
                 channelTaken = channelTaken,
+                onReclaimAncChannel = onReclaim,
             )
         }
     }
@@ -177,12 +181,12 @@ class AncScreenTest {
     }
 
     @Test
-    fun `ADR-061 - the (i) ends with the hold sentence, the maintainer's text (corrected by ADR-062), and Find keeps the brief-claim hint`() {
+    fun `ADR-061 - the (i) ends with the hold sentence, the maintainer's text (ADR-062 Update 2), and Find keeps the brief-claim hint`() {
         assertEquals(
-            // ADR-062 (the maintainer's text in chat 2026-10-12): no longer "cannot use it meanwhile" — CAP-074 showed Play takes the channel back ≈ 5 s later.
-            "While this tab is open the app keeps the Buds' noise-control channel open, so a change made on a bud (a press-and-hold) shows here; it is " +
-                "released 1.5 seconds after you leave the tab. Another app that uses the channel (for example Google Play services' Fast Pair) loses it to " +
-                "this app and may take it back about 5 seconds later; what the app does then is set on the Settings tab under Noise-control channel.",
+            // ADR-062 Update 2 (the maintainer's text in chat 2026-10-13, "ANC (i)"): the card's new name; no "cannot use it meanwhile" (CAP-074).
+            "While this tab is open the app keeps the Buds' noise-control channel, so a press-and-hold on a bud shows here; it is released 1.5 seconds " +
+                "after you leave the tab. On a phone with Google Play services, Play's Fast Pair takes the channel back about 5 seconds later; what this app " +
+                "does then is set on the Settings tab under Noise control with Google Play services.",
             ANC_HOLD_HINT_TEXT,
         )
         assertEquals(false, ANC_HOLD_HINT_TEXT.contains("cannot use it meanwhile"))
@@ -199,14 +203,14 @@ class AncScreenTest {
         assertEquals("ANC mode: unknown", ancModeLine(null, null, fromLastConnection = true))
     }
 
-    // ---- DECISIONS.md ADR-062 (`ai-sessions/0087`, the maintainer's texts in chat 2026-10-12): the channel-taken hint ----
+    // ---- DECISIONS.md ADR-062 Update 2 (`ai-sessions/0089`, the maintainer's texts in chat 2026-10-13): the channel-taken hint and its action ----
 
     @Test
     fun `ADR-062 - the hint-only line is the maintainer's text with the close's time, on the main surface and in the (i), before the Connection line`() {
         val taken = ChannelTaken(at + 5_133, reclaimAttempts = 0) // CAP-074: the cut 5.133 s after the SABM
         val time = formatUpdatedAt(at + 5_133)
-        val expected = "The noise-control channel was taken by another app at $time (for example Google Play services' Fast Pair). A change made on a bud is " +
-            "not shown until you tap a mode, Refresh, or pull down."
+        val expected = "Another app took the noise-control channel at $time — usually Google Play services' Fast Pair. A press-and-hold on a bud is not " +
+            "shown until this app has the channel again: tap Take it back again, a mode, Refresh, or pull down."
         assertEquals(expected, ancChannelTakenLine(taken))
         show(channelTaken = taken)
         compose.onNodeWithText(expected).assertExists() // the main surface
@@ -220,16 +224,65 @@ class AncScreenTest {
     fun `ADR-062 - after the cap the line says how often the app took the channel back, and no hint means no line`() {
         val time = formatUpdatedAt(at)
         assertEquals(
-            "The noise-control channel was taken by another app at $time (for example Google Play services' Fast Pair); the app took it back 3 times and " +
-                "stopped. A change made on a bud is not shown until you tap a mode, Refresh, or pull down.",
-            ancChannelTakenLine(ChannelTaken(at, reclaimAttempts = 3)),
+            "Another app took the noise-control channel at $time — usually Google Play services' Fast Pair; this app took it back 20 times and stopped. " +
+                "A press-and-hold on a bud is not shown until this app has the channel again: tap Take it back again, a mode, Refresh, or pull down.",
+            ancChannelTakenLine(ChannelTaken(at, reclaimAttempts = 20)),
         )
         assertEquals(
-            "The noise-control channel was taken by another app at $time (for example Google Play services' Fast Pair); the app took it back once and " +
-                "stopped. A change made on a bud is not shown until you tap a mode, Refresh, or pull down.",
+            "Another app took the noise-control channel at $time — usually Google Play services' Fast Pair; this app took it back once and stopped. " +
+                "A press-and-hold on a bud is not shown until this app has the channel again: tap Take it back again, a mode, Refresh, or pull down.",
             ancChannelTakenLine(ChannelTaken(at, reclaimAttempts = 1)),
         )
         show()
-        compose.onNodeWithText("The noise-control channel was taken", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Another app took the noise-control channel", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `ADR-062 Update 2 - Take it back again is shown only with the hint, and a tap hands it over`() {
+        assertEquals("Take it back again", TAKE_IT_BACK_AGAIN_LABEL)
+        var taps = 0
+        show(channelTaken = ChannelTaken(at, reclaimAttempts = 20), onReclaim = { taps++ })
+        compose.onNodeWithText("Take it back again").assertIsEnabled().performClick()
+        assertEquals(1, taps)
+    }
+
+    @Test
+    fun `ADR-062 Update 2 - no hint, no Take it back again`() {
+        show()
+        compose.onNodeWithText("Take it back again").assertDoesNotExist()
+    }
+
+    @Test
+    fun `ADR-062 Update 2 - Take it back again is disabled while the session is not ready`() {
+        show(connectionState = ConnectionState.Disconnected, channelTaken = ChannelTaken(at, reclaimAttempts = 0))
+        compose.onNodeWithText("Take it back again").assertIsNotEnabled()
+    }
+
+    @Test
+    fun `ADR-062 Update 2 - a mode the app's own Get found changed carries the changed-since-last-read line (CAP-075 2980)`() {
+        val time = formatUpdatedAt(at)
+        val expected = "Changed since the app last saw it (read at $time): a press-and-hold on a bud or the Buds' own change, made while this app did not " +
+            "have the channel."
+        assertEquals(expected, ancChangedSinceLastReadLine(at))
+        assertEquals(
+            "Changed since the app last saw it: a press-and-hold on a bud or the Buds' own change, made while this app did not have the channel.",
+            ancChangedSinceLastReadLine(null),
+        )
+        show(cause = AncModeCause.CHANGED_SINCE_LAST_READ)
+        compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick()
+        compose.onNodeWithText(expected).assertExists()
+        compose.onNodeWithText("Changed by the Buds", substring = true).assertDoesNotExist()
+        assertEquals(
+            listOf("ANC mode: OFF (updated $time)", expected, "Connection: Ready", ANC_HOLD_HINT_TEXT),
+            ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null, cause = AncModeCause.CHANGED_SINCE_LAST_READ),
+        )
+    }
+
+    @Test
+    fun `ADR-062 Update 2 - a reading, the app's own Set and the Buds' change carry no changed-since-last-read line`() {
+        for (cause in listOf(AncModeCause.READ, AncModeCause.SET_BY_APP, AncModeCause.CHANGED_BY_BUDS, null)) {
+            val lines = ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null, cause = cause)
+            assertEquals("$cause", false, lines.any { it.startsWith("Changed since the app last saw it") })
+        }
     }
 }

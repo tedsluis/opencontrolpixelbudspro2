@@ -20,6 +20,8 @@
 package io.github.tedsluis.opencontrolpixelbuds.data.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +35,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
 /**
- * DECISIONS.md ADR-062 (`ai-sessions/0087`): the "Noise-control channel" choice round-trips through the preferences file — on the JVM, against a temporary
+ * DECISIONS.md ADR-062 (`ai-sessions/0087`): the "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") round-trips through the preferences file — on the JVM, against a temporary
  * file (`PreferenceDataStoreFactory`, no Android context), and read back by a **second** instance over the same file, so a value kept in memory only would
  * fail. Nothing stored, or an unknown name, reads as the default (hint only).
  */
@@ -65,5 +67,23 @@ class HoldReclaimSettingsStoreTest {
         assertEquals(HoldReclaimMode.HINT_ONLY, HoldReclaimMode.fromStored(null))
         assertEquals(HoldReclaimMode.HINT_ONLY, HoldReclaimMode.fromStored("SOMETHING_ELSE"))
         assertEquals(HoldReclaimMode.RECLAIM, HoldReclaimMode.fromStored("RECLAIM"))
+        assertEquals(HoldReclaimMode.HINT_ONLY, HoldReclaimMode.fromStored("HINT_ONLY"))
+    }
+
+    /**
+     * ADR-062 Update 2 (`ai-sessions/0089`): the card was renamed and its options reworded, but a choice stored by 1.2.1 keeps its meaning — the same key
+     * (`hold_reclaim_mode`) and the same names. The file is written here as 1.2.1 wrote it (the raw key and string), then read by this build's store.
+     */
+    @Test
+    fun `a choice stored by 1_2_1 keeps its meaning after the update`() = runBlocking {
+        for ((stored, expected) in listOf("RECLAIM" to HoldReclaimMode.RECLAIM, "HINT_ONLY" to HoldReclaimMode.HINT_ONLY)) {
+            val file = File(dir, "v121_$stored.preferences_pb")
+            val writer = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            PreferenceDataStoreFactory.create(scope = writer) { file }.edit { it[stringPreferencesKey("hold_reclaim_mode")] = stored }
+            writer.cancel()
+            val reader = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            assertEquals(expected, storeOver(file, reader).mode.first(), "1.2.1's \"$stored\"")
+            reader.cancel()
+        }
     }
 }
