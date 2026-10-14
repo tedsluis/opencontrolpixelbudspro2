@@ -124,15 +124,16 @@ acknowledgement, not a data-carrying UIH frame:
 1797  21:44:03.090  Sent  len=0
 1811  21:44:06.076  Sent  len=0
 ```
-**The only non-empty traffic in this entire window is `Rcvd`-direction** (Buds→phone) — the
-already-documented periodic push (`PROTOCOL.md` §4.3 Option B's cross-channel-sync entry,
-`CAP-036-FINDINGS.md` §12.5), e.g. frame 1565 (`21:43:33.092`):
-```
-7e00a5032a1f10e2f3c88b8a341800320c1204086410011a04086410013a06080010001800080710151dea71de7d5e2590821ee64863cfb07e
-```
-— recurring every ~10s (`1517`/`1565`/`1711`/`1796` at `21:43:23`/`33`/`43`/`44:03`), not correlated
-with any of the four actions' own timing, consistent with `CAP-036-FINDINGS.md` §12.5's existing
-"periodic, not event-triggered" characterization.
+**The only non-empty traffic in this window is `Rcvd`-direction** (Buds→phone), and it is of two kinds (`python3 scripts/pwrpc_decode.py
+CAP-051-btsnoop_hci.log`, frames 1520–1811):
+- the runtime-info stream (`SubscribeRuntimeInfo`, every ~10 s: 1517/1565/1711/1796 at `21:43:23`/`33`/`43`/`44:03`, not tied to the actions), e.g. 1565
+  `7e00a5032a1f10e2f3c88b8a341800320c1204086410011a04086410013a06080010001800080710151dea71de7d5e2590821ee64863cfb07e`;
+- the **settings stream** (`SubscribeToSettingsChanges`, subscribed at 1177): one `SERVER_STREAM` `4:{13:n}` right after each of the four Notifies — 1534
+  `13:3` (the tap, 0.001 s after Notify 1533), **1717 `13:2`** (gesture #1, +0.144 s after 1707), **1755 `13:4`** (gesture #2, +0.002 s after 1754), **1802
+  `13:3`** (gesture #3, +0.048 s after 1801); raw 1755 `7e 00 a5 03 2a 04 22 02 68 04 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 39 67 a2 f7 7e` (`2a 04 22 02
+  68 04` = `4:{13:4}`, `08 07` = `SERVER_STREAM`, `10 15` = channel 21). 🟢 FACT (this capture): each hold is reported twice — on the Message Stream and on
+  MAESTRO setting 13 (`PROTOCOL.md` §4.1, Update of 2026-10-14; `DESKRESEARCH_FINDINGS.md` 2026-10-14). The Notify at 1993 (21:45:45.603) has no stream
+  packet: the Buds closed DLCI 0x02 5 ms later (1996); the re-open's `ReadSetting 4:13` (2247) reads `13:0`.
 
 **No `field5{field4{field13=N}}` write, or any other `Sent`-direction payload of any kind, appears on
 DLCI 0x02 at or near any of the four actions.** This holds for:
@@ -158,7 +159,7 @@ per `AGENTS.md` §13.6's zero-creativity rule (no forced resolution offered):
   dead code in this build, or reachable from a different UI element than the one exercised here;
 - the physical press-and-hold gesture, as directly confirmed by `CAP-027-FINDINGS.md` §4 and this
   session's own §2, drives the mode change through firmware/on-device logic that reports out via DLCI
-  0x04's Notify alone — with no accompanying phone-side DLCI 0x02 write in either direction, contrary
+  0x04's Notify and DLCI 0x02's settings stream (setting 13, above) — with no phone-side DLCI 0x02 write, contrary
   to the `gvi`/`gvj` static-analysis path's own premise that this specific app-side callback fires on
   a `HOLD` gesture event.
 

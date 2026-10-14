@@ -140,6 +140,11 @@ above it.
 > this is a latent documentation gap, flagged so a future firmware-compatibility check
 > (`ARCHITECTURE.md` §8) doesn't silently assume a relationship that was never verified.
 
+> **Note (2026-10-14, `ai-sessions/0090`, maintainer-approved in chat 2026-10-14, `AskUserQuestion` "PROTOCOL", E-20) — Class of Device, 🟢 for these
+> captures.** The Buds' Connection Request carries Class of Device **`0x244404`** (Audio/Video: Wearable Headset Device; service class Rendering Audio):
+> `tshark -r CAP-016-btsnoop_hci.log -Y 'frame.number==1213' -V | grep 'Class of Device'` → `0x244404`; the same in `CAP-064` 903. pbpctrl (`cli/src/bt.rs:12`,
+> commit ba253a7) and MagicPodsCore (`PixelBudsHelper.h:33–34`) use the same value for the Pro 2 and `0x240404` for the gen-1 Pro (external only).
+
 ## 1. Transports overview
 
 | Transport | Used for | Status |
@@ -206,6 +211,12 @@ message group(s)" rather than a fully separate protocol.
 A point against this hypothesis: the officially documented Message Stream
 format (§2.1) has **no** checksum field at all, which is inconsistent with this
 hypothesis if the two channels turn out to be the same one.
+
+> **Correction (2026-10-14, `ai-sessions/0090`, maintainer-approved in chat 2026-10-14, `AskUserQuestion` "PROTOCOL", E-06) — the attribution, not a FACT.**
+> "pbpctrl-derived" is wrong: `qzed/pbpctrl` (pinned `2620367`) has used Pigweed `pw_hdlc` with CRC-32 since its first Maestro commits (`git log --reverse
+> -- libmaestro/src/hdlc` → 6be65c1 and b2c3dbf, 2022-12-17; `libmaestro/src/hdlc/decoder.rs:147` `crc::crc32(…)`); it has no magic byte, no length field
+> and no CRC-16 (`0x5a` occurs only inside its CRC-32 table, `crc.rs:95`). The table above was never pbpctrl's format. A third-party summary that says
+> "HDLC … CRC-16" (KashaMalaga/PixelBudsMacOS `Reference/README.md:21`, read 2026-10-14) is wrong too — §2.2a's 640/640 check is CRC-32.
 
 ### 2.2a Hypothesis B, resolved for one specific channel — DLCI 0x02 is Pigweed `pw_hdlc` framing
 
@@ -839,6 +850,21 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
 - **Note (2026-10-07, `ai-sessions/0077`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "D4d CAP-037"; no status change):** 🟡 a `Notify` with Settable `0x00` has carried Current `0x20` (Off) in every sample counted — `CAP-037` 17 of 17, `CAP-070` 19 of 19 (`tshark -r <log> -Y "btrfcomm.dlci==4 and btrfcomm.len>0" -T fields -e data.data | grep -o "0813000401e8.\{4\}" | sort | uniq -c`) — consistent with ADR-049's 🟡 "`00` ⇒ no bud worn" (no ANC without a worn bud). Proposed by `CAP-037-FINDINGS.md` §7 item 3.
 - **Note (2026-10-12, `ai-sessions/0086`, maintainer-approved in chat 2026-10-12, `AskUserQuestion` "Docs"; no status change):** `Notify ANC state` goes to **the client that holds DLCI 0x04** — on Android one RFCOMM connection per (device, channel) across all apps (`ARCHITECTURE.md` §6.0b), so one Seeker at a time. `CAP-074` (the Owner user with Google Play services): of 82 `Notify` frames in the run, 34 arrived on OpenControl's claims and 48 on Play services' — the Buds' own mode changes (press-and-holds, `TOUCH-007`) 9 to the app and 35 to Play, none to both (`CAP-074-FINDINGS.md` §1, §4; Play's `HearableControlManager: onReceiveEventStreamResponse` logs one at 04:45:26.639 UTC). The Hearable Controls page (fetched 2026-10-12): *"If the user changes the setting via headset gesture or companion application, the Provider should also send notification to all connected Seekers."* — "connected" = on the Message Stream.
 - **Note (2026-10-13, `ai-sessions/0088`, maintainer-approved in chat 2026-10-13, `AskUserQuestion` "PROTOCOL"; no status change for the opcode):** **contention with Google Play services' Fast Pair client (the Owner user) — 🟢 FACT, one Play version, 2026-10-12/13.** Play's client uses DLCI 0x04 (server channel 2) in all 24 of its claims (`CAP-075`; never 0x05); its first message is `03 08 00 02 01 25` (Platform type), then its own `08 11 00 00`. It re-opens the Message Stream **5.3–5.8 s** after it lost the channel (18 values, `CAP-075-FINDINGS.md` §1; `CAP-074`: 5.2–5.7 s) and retries **2.1–2.8 s** after a connect of its own collided with an open claim (15 values; 4.6 s once after two losses within 2.5 s — its `RfcommEventStreamMedium` "Retry times remaining" counter went 5 → 4). On Android 17 / GrapheneOS a second `connect()` to an open server channel is refused by the stack with `RFCOMM_CreateConnectionWithSecurity: already at opened state` and the stack closes **both** sockets (`cleanup_rfc_slot` for both uids; the open one's blocking read returns −1) — 15 of 15 cuts in `CAP-075`'s system-log extract (`CAP-075-FINDINGS.md` §5; `CAP-074-FINDINGS.md` §8 (a), where it was 🟡). A claim made while Play's recovery timer runs is cut at its expiry (0.4–1.6 s lives seen); a claim that killed Play's socket lives 4.55–4.92 s. Consequence for the app: `ARCHITECTURE.md` §6.0b, `DECISIONS.md` ADR-062 and its Update of 2026-10-13.
+- **Update (2026-10-14, `ai-sessions/0090`, maintainer-approved in chat 2026-10-14, `AskUserQuestion` "FACT §4.1", option *"Promote as shown (Recommended)"*) — the mode on the app's
+  own channel, 🟢 FACT.** Maestro setting 13 (`qhr` field 13, enum `qhs`) is the noise-control mode on DLCI 0x02: 1 Off = `0x20`, 2 NC = `0x08`, 3 Transparency =
+  `0x80`, 4 Adaptive = `0x40`, 0 = Settable `00`.
+  - A client that sent `SubscribeToSettingsChanges` receives a `SERVER_STREAM` `4:{13:n}` for every mode change the Buds report on the Message Stream: 73 of 73
+    Buds-side changes and 39 of 39 Set-driven changes within 1–150 ms (46 official-app captures, each event once; `python3 scripts/anc_setting13_crosscheck.py
+    --census <logs>`); filmed holds `CAP-051` 1707/1717, 1754/1755, 1801/1802; `TOUCH-007` `CAP-027` 2930/2932, 3056/3057, 3091/3093 (raw `CAP-051` 1755
+    `7e 00 a5 03 2a 04 22 02 68 04 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 39 67 a2 f7 7e` = `4:{13:4}`, ch 21).
+  - The stream reports a change while no client holds the Message Stream: `CAP-038` 2170 `13:3`, 2205 `13:2` (DLCI 0x05 closed by the phone at 1756).
+  - Not pushed: a change the Buds make together with their `DISC` of MAESTRO (12 of 77, e.g. `CAP-051` 1993 → `DISC` 1996, 5 ms later); the next
+    `ReadSetting 4:13` shows it.
+  - `ReadSetting 4:13` = the latest reported mode in 359 of 382 answers (the 17 others follow a stretch with no report reachable).
+  - Not on any wire: `WriteSetting 4:{13:n}` (0 in 96 logs).
+  Supersedes the 🟡 items of 2026-09-28 (`CAP-056`) and 2026-10-04 (`CAP-069`, 10 of 10) in §6. Tables and commands: `DESKRESEARCH_FINDINGS.md` 2026-10-14;
+  code side: the companion app's ANC state is fed only from setting 13 (`REVERSE_ENGINEERING.md`, `qhr` register, Update of 2026-10-14). Used by
+  `DECISIONS.md` ADR-064.
 
 ### 4.2 Equalizer (EQ)
 
@@ -1951,6 +1977,12 @@ implementation gate.
   52) were audible to the maintainer — an observation, not film-verified; intermediate-position scaling stays 🔴.
 
 - **Note (2026-10-07, `ai-sessions/0075`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "Docs", option *"Approve both (Recommended)"*; no status change) — OpenControl 1.1.0 in `CAP-070`.** The channel-19 `4:{17:7}` ("Right 4") is on the wire: A3747 `7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 88 01 07 e9 b8 6e 25 7e` → A3750, byte-identical to the derived frame; 53 balance writes on channel 19 (values 0 … 50 zigzag), all ACKed. `CAP-070-FINDINGS.md` §3. Command: `python3 scripts/pwrpc_decode.py --handle 0x000b CAP-070-btsnoop_hci2.log.last` and the scratch pw_hdlc/CRC-32 parser of `CAP-070-FINDINGS.md`.
+
+- **Note (2026-10-14, `ai-sessions/0090`, maintainer-approved in chat 2026-10-14, `AskUserQuestion` "PROTOCOL", E-07; no status change).** pbpctrl's
+  `VolumeAsymmetry::from_raw` (`libmaestro/src/service/settings.rs:478–489`, pin `2620367`) equals −zigzag for all 201 raw values 0…200 (`python3 -I -c` over
+  both functions; 199 → +100, 200 → −100): its −100 "(left)" (`cli/src/cli.rs:243`) is this project's +100 = Left (ADR-026) — the same physical mapping, the
+  opposite sign convention. Its display (`settings.rs:510–515`) attenuates the other side linearly (`left = min(100, 100 − v)`, `right = min(100, 100 + v)`) —
+  🟡 external, for the open intermediate scaling.
 
 #### 4.5.8 Case sounds
 
@@ -3611,14 +3643,29 @@ leaving them buried in prose elsewhere.
 - [ ] **Added 2026-09-28, `CAP-056-FINDINGS.md` §4:** 🟡 `SubscribeToSettingsChanges 4:{13:n}` (field 13, `qhs` ANC state) mirrors the `Notify ANC state` mode on wear
       changes with in-ear detection on — `13:4` with `0x40` (2257/2259), `13:2` with `0x08` (2322/2324), and a read of `13:0` with no bud worn (3870) — matching
       `qhs.java`'s `ANC_STATE_ADAPTIVE(4)`, `ANC_STATE_ACTIVE(2)`, `ANC_STATE_UNKNOWN(0)`.
+      *(Pointer 2026-10-14, `ai-sessions/0090`, maintainer-approved in chat: 🟢 FACT now — §4.1, Update of 2026-10-14.)*
 
 - [ ] **Added 2026-10-04, `CAP-069-FINDINGS.md` §8–§9 (maintainer-approved in chat 2026-10-04, `AskUserQuestion` "Wear table"; proposal P-7 signed off in chat 2026-10-04 with all of `CAP-069-FINDINGS.md` §13):** 🟡 GSND
   CONTROL Code `0x05`: `03` no bud worn (6 samples), `04` one bud worn (5), `06` both worn (2); 🔴 `05` (2351, 2255 — unfilmed insertion), value 1 never seen.
   🟢 **FACT for `CAP-069`:** every assistant session on GSND AUDIO opens with the Buds' `01 09 00 03 0a 01 03` (3 of 3: 3403, 4084, 4806 → first AUDIO frame
-  1.7–2.3 ms later) and ends with the phone's `08 06 00 04 08 00 10 01`; 🟡 that the message reports the press-and-hold itself (the hold was not on film). 🟡 settings-stream field 13 = ANC mode (1 Off, 2 NC, 3 Transparency, 4 Adaptive, 0 with Settable `00`; 10 of 10). 🔴 the official app 1.0.990706425
+  1.7–2.3 ms later) and ends with the phone's `08 06 00 04 08 00 10 01`; 🟡 that the message reports the press-and-hold itself (the hold was not on film). 🟡 settings-stream field 13 = ANC mode (1 Off, 2 NC, 3 Transparency, 4 Adaptive, 0 with Settable `00`; 10 of 10) *(🟢 since 2026-10-14 — §4.1, `ai-sessions/0090`)*. 🔴 the official app 1.0.990706425
   subscribes to an unnamed MAESTRO service `0xbf6c9399` (method `0x92476025`, 146 stream packets) and calls `maestro_pw.JitterBuffer` (`0x8d99df93`) — both new on
   the wire; naming needs the new APK. 🔴 Device Information `03 0b` (spec: "Current FHN ephemeral identifier") with length 25 (6853, 8241) — Find Hub Network, not
   pursued (ADR-008/027).
+- [ ] **Added 2026-10-14, `ai-sessions/0090` (maintainer-approved in chat 2026-10-14, `AskUserQuestion` "PROTOCOL") — 🟡 HYPOTHESIS: a one-bud and a two-bud noise-control
+  mode.** The Buds switch the mode on a wear change without any command: one bud worn → `40` (`CAP-056` 2257, 2458, 3983; `CAP-064`/`CAP-065` §3) or `80`
+  (`CAP-066` §3; `CAP-067` A1027, A1178), both worn → `08` (`CAP-056` 2322, 2764, 4001; `CAP-067` B474, B1025), each mirrored on setting 13 (§4.1, 2026-10-14).
+  The one-bud value differs between sessions, so it is stored. pbpctrl names settings 9 and 10 `ALLEGRO_ANCR_STATE_ONE_BUD` / `ALLEGRO_ANCR_STATE_TWO_BUDS`
+  (its `maestro_pw.proto:92–93`; "reading … returns non-zero status (code: 2)" on the gen 1) — a name most likely taken from Google's app, not evidence; the APK
+  types 9/10 as `qhs` and never reads or writes them. Test: `ReadSetting 4:8`, `4:9`, `4:10` once (read-only), then one bud out and in with the settings
+  stream on. Explains, if true, `TODO.md` §4 "Transparent → Active between 08:07:34 and 08:12:44" (`CAP-067` §2).
+  **Update (2026-10-14, `ai-sessions/0090` continuation, maintainer-approved in chat 2026-10-14, `AskUserQuestion` "E-03 docs") — 🟡 HYPOTHESIS (strong):**
+  the Buds keep a stored noise-control mode per wear state (one bud / both) and restore it on a wear change; a hold or an app Set changes the stored mode of
+  the current state. Test over the 46 official-app captures (wear = the Buds' GSND CONTROL `04 05 00 02 08 XX`, 🟡 `CAP-069` §8): on entering one/two the
+  mode equals the last mode seen in that state earlier in the capture in **28 of 28** (27 distinct), 0 counter-examples — e.g. `CAP-069` both → 1 at 7416 after
+  the app set Off while both were worn (5524 … 5698); `CAP-045` one-bud holds 4 → 3 → 2 → 4 (1583, 1755, 1818), the next one-bud entry (2122) → 4. Command:
+  `python3 scripts/wear_mode_crosscheck.py --restore <logs>` (`DESKRESEARCH_FINDINGS.md` 2026-10-14 §9). Not shown: that settings 9/10 hold these stores
+  (never read or streamed on any wire: 0 in 96 logs, positive control fields 7/11/12 → 2327).
 
 ### Resolved
 
@@ -3709,6 +3756,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-10 | **`ai-sessions/0084` — the 1.2.0 rebuild, maintainer-approved in chat 2026-10-10 (`AskUserQuestion` "Serials").** §2.2a and §6 (two places): the three component serials shortened to the first 4 and last 2 characters (ADR-058 item 5). No status change. | Claude (AI), maintainer-approved |
 | 2026-10-12 | **`ai-sessions/0086` — `CAP-074` (Group BJ, OpenControl 1.2.0 in the Owner user with Google Play services), maintainer-approved in chat 2026-10-12.** §4.1: a note that `Notify ANC state` reaches the one client holding DLCI 0x04 (35 press-and-hold `Notify` frames to Play services, 9 to the app). No status change. | Claude (AI), maintainer-approved |
 | 2026-10-13 | **`ai-sessions/0088` — `CAP-075` (Group BK, OpenControl 1.2.1 in both GrapheneOS users), maintainer-approved in chat 2026-10-13.** §4.1: a 🟢 FACT note on Google Play services' Fast Pair client — DLCI 0x04 in all its claims, recovery 5.3–5.8 s after a loss, retry 2.1–2.8 s after a collision, the stack's `already at opened state` refusal closing both sockets (15 of 15 cuts in the system log). No status change for the opcode. | Claude (AI), maintainer-approved |
+| 2026-10-14 | **`ai-sessions/0090` — the pbpctrl cross-check (E-01 … E-23), maintainer-approved in chat 2026-10-14.** **§4.1** 🟢 FACT: setting 13 = the noise-control mode on DLCI 0x02, pushed on the settings stream to a subscribed client for every reported change (73/73 Buds-side, 39/39 Set-driven), incl. while no client holds the Message Stream; `ReadSetting 4:13` = the latest mode (359/382) — used by ADR-064; §6's two 🟡 items on field 13 point there. **§6** 🟡 one-bud / two-bud mode (pbpctrl names 9/10). **§2.2** correction: the format was never pbpctrl's. **§4.5.7** note: pbpctrl's balance = −zigzag (same mapping). **§0.1** note: Class of Device `0x244404`. | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

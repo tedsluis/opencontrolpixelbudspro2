@@ -510,6 +510,11 @@ summary), the current state is (every write below additionally passes the Safe-M
 | Safe Mode / Startup Handshake | DLCI 0x02 announcement + DLCI 0x04 Model ID | 🟢 FACT (firmware string ADR-012/034; Model ID `PROTOCOL.md` §0.1) | **ADR-042** | **Implemented** (`SafeModeGate`, `:data`; Safe Mode card, `:ui`) |
 | Find My Buds Case / "ring both" | — | — | ADR-027 (premise narrowed 2026-09-24: spec `0x03` "ring both" untested) | **Out of scope**; sending `0x03` needs its own ADR |
 
+> **Rule (2026-10-14, maintainer-approved in chat, `ai-sessions/0090`, `AskUserQuestion` "Law/drafts"): the app never writes `qhr` settings 3 and 6.**
+> Setting 3 is the "OOBE finished" flag and setting 6 "OOBE mode" (the APK: "Set device(%s) oobe state to finished/unfinished", "Enable/Disable OOBE mode";
+> pbpctrl's help: 6 "is used to intercept and block touch gestures during the setup wizard", 3 "You normally do not want to change this flag"). No ADR may
+> unblock a write of either without first superseding this rule.
+
 This table is this project's authoritative implementation-readiness list until superseded by a new ADR
 — a future session should re-derive it from `DECISIONS.md` directly rather than copying it forward
 uncritically, the same discipline this refresh itself applied.
