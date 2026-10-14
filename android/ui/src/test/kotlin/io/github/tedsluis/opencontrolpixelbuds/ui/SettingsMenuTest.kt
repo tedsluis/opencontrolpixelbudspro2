@@ -55,8 +55,6 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.FirmwareEntry
-import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
-import io.github.tedsluis.opencontrolpixelbuds.domain.PlayServicesPresence
 import androidx.compose.ui.test.assertIsNotSelected
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
@@ -392,132 +390,24 @@ class SettingsMenuTest {
         compose.onAllNodes(isToggleable()).assertCountEquals(0)
     }
 
-    // ---- DECISIONS.md ADR-062 (`ai-sessions/0087`) and its Update 2 (`ai-sessions/0089`, the maintainer's choices in chat 2026-10-13): the card ----
-
-    private val noPlay = "This phone has no Google Play services"
-    private val withPlay = "This phone has Google Play services"
+    // ---- DECISIONS.md ADR-065 (`ai-sessions/0091`): the "Noise control with Google Play services" card and the Play-services line are gone ----
 
     @Test
-    fun `ADR-062 Update 2 - the card sits between Dark mode and Case sounds, shows the stored choice, and a tap hands the other one over`() {
-        val chosen = mutableListOf<HoldReclaimMode>()
+    fun `ADR-065 - the Settings tab has no Noise control with Google Play services card and no Google Play services line, Case sounds follows Dark mode`() {
         compose.setContent {
             OpenControlTheme(darkTheme = false) {
                 SettingsMenuScreen(
                     DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, announced,
                     connectionState = ConnectionState.Ready, settings = caseSoundsRead,
-                    holdReclaimMode = HoldReclaimMode.HINT_ONLY, onHoldReclaimModeChanged = { chosen += it },
                 )
             }
         }
-        // One scroll state for the three readings, unclipped (a performScrollTo between them would move every node; off-screen nodes clip to 0).
+        compose.onNodeWithText("Noise control with Google Play services", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("This phone has", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Google Play services", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Take it back", substring = true).assertDoesNotExist()
         val darkMode = compose.onNodeWithText("Dark mode").getUnclippedBoundsInRoot().top
-        val card = compose.onNodeWithContentDescription("Noise control with Google Play services: $DETAILS_DESCRIPTION").getUnclippedBoundsInRoot().top
         val caseSounds = compose.onNodeWithContentDescription("Case sounds: $DETAILS_DESCRIPTION").getUnclippedBoundsInRoot().top
-        assertTrue("Dark mode < the card < Case sounds: $darkMode, $card, $caseSounds", darkMode < card && card < caseSounds)
-
-        compose.onNodeWithText(HOLD_RECLAIM_INTRO).performScrollTo().assertExists()
-        compose.onNodeWithText(noPlay).performScrollTo().assertIsSelected()
-        compose.onNodeWithText(holdReclaimSupportingText(HoldReclaimMode.HINT_ONLY)).performScrollTo().assertExists()
-        compose.onNodeWithText(withPlay).performScrollTo().assertIsNotSelected().performClick()
-        assertEquals(listOf(HoldReclaimMode.RECLAIM), chosen)
-        compose.onNodeWithText("Google Play services:", substring = true).assertDoesNotExist() // no presence known: no line (ADR-063 item 4)
-
-        compose.onNodeWithContentDescription("Noise control with Google Play services: $DETAILS_DESCRIPTION").performScrollTo().performClick()
-        HOLD_RECLAIM_DETAIL_LINES.forEach { compose.onNodeWithText(it).assertExists() }
-        compose.onNodeWithText("Close").performClick()
-    }
-
-    @Test
-    fun `ADR-062 Update 2 - the card's texts are the maintainer's, and the stored names keep their meaning`() {
-        assertEquals("Noise control with Google Play services", HOLD_RECLAIM_TITLE)
-        assertEquals("The Buds report a press-and-hold on a bud to one app at a time. Choose what fits this phone:", HOLD_RECLAIM_INTRO)
-        assertEquals(noPlay, holdReclaimLabel(HoldReclaimMode.HINT_ONLY))
-        assertEquals(withPlay, holdReclaimLabel(HoldReclaimMode.RECLAIM))
-        assertEquals(
-            "Nothing else uses the noise-control channel. If another app takes it anyway, the noise-control tab says so.",
-            holdReclaimSupportingText(HoldReclaimMode.HINT_ONLY),
-        )
-        assertEquals(
-            "While the noise-control tab is open, take the channel back from Play services' Fast Pair 3 seconds after each time it takes it, so a " +
-                "press-and-hold shows about half of the time.",
-            holdReclaimSupportingText(HoldReclaimMode.RECLAIM),
-        )
-        assertEquals(
-            listOf(
-                "The Buds send a press-and-hold's noise-control change to one app at a time: the app that has their noise-control channel open. While the " +
-                    "noise-control tab is open this app keeps that channel.",
-                "On a phone with Google Play services, Play's Fast Pair takes the channel back 5 to 6 seconds after it lost it to this app, every time " +
-                    "(measured in October 2026 with one version of Play services; another version may differ).",
-                "No Google Play services: the noise-control tab shows every press-and-hold. If another app takes the channel anyway, the tab says so and " +
-                    "when; Take it back again, a tap, Refresh or a pull-down takes it back.",
-                "Google Play services: 3 seconds after each time Play takes the channel this app takes it back, up to 20 times (about 3 minutes) per " +
-                    "visit of the tab, so a press-and-hold shows about half of the time. It is a tug of war with Play: Android's own view of the Buds may " +
-                    "lag meanwhile. After the 20th time the tab says so; Take it back again starts over.",
-                "Without Google Play services both choices behave the same.",
-            ),
-            HOLD_RECLAIM_DETAIL_LINES,
-        )
-        // The stored names are 1.2.1's (a stored choice keeps its meaning after the rename — HoldReclaimSettingsStoreTest reads a 1.2.1 file).
-        assertEquals(listOf("HINT_ONLY", "RECLAIM"), HoldReclaimMode.entries.map { it.name })
-        assertEquals(HoldReclaimMode.RECLAIM, HoldReclaimMode.fromStored("RECLAIM"))
-        assertEquals(HoldReclaimMode.HINT_ONLY, HoldReclaimMode.fromStored("HINT_ONLY"))
-        assertEquals(HoldReclaimMode.HINT_ONLY, HoldReclaimMode.fromStored(null))
-        assertEquals(HoldReclaimMode.HINT_ONLY, HoldReclaimMode.fromStored("FIGHT"))
-    }
-
-    @Test
-    fun `ADR-062 - with the Google Play services option stored, that row is the selected one`() {
-        compose.setContent {
-            OpenControlTheme(darkTheme = false) {
-                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, null, holdReclaimMode = HoldReclaimMode.RECLAIM)
-            }
-        }
-        compose.onNodeWithText(withPlay).performScrollTo().assertIsSelected()
-        compose.onNodeWithText(noPlay).performScrollTo().assertIsNotSelected()
-    }
-
-    // ---- DECISIONS.md ADR-063 (`ai-sessions/0089`): whether Android finds Google Play services on this phone — information only ----
-
-    @Test
-    fun `ADR-063 - the presence line per answer, none without one`() {
-        assertEquals("Google Play services: found on this phone", playServicesPresenceLine(PlayServicesPresence.FOUND))
-        assertEquals("Google Play services: found but disabled on this phone", playServicesPresenceLine(PlayServicesPresence.FOUND_DISABLED))
-        assertEquals("Google Play services: not found on this phone", playServicesPresenceLine(PlayServicesPresence.NOT_FOUND))
-        assertEquals(null, playServicesPresenceLine(null))
-    }
-
-    @Test
-    fun `ADR-063 - the card shows the presence line and the stored choice is left as it is`() {
-        val chosen = mutableListOf<HoldReclaimMode>()
-        compose.setContent {
-            OpenControlTheme(darkTheme = false) {
-                SettingsMenuScreen(
-                    DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, null,
-                    holdReclaimMode = HoldReclaimMode.HINT_ONLY, onHoldReclaimModeChanged = { chosen += it },
-                    playServicesPresence = PlayServicesPresence.FOUND,
-                )
-            }
-        }
-        compose.onNodeWithText("Google Play services: found on this phone").performScrollTo().assertExists()
-        compose.onNodeWithText(noPlay).performScrollTo().assertIsSelected() // information only: nothing switches by itself
-        compose.waitForIdle()
-        assertEquals(emptyList<HoldReclaimMode>(), chosen)
-    }
-
-    // ---- `ai-sessions/0069` A68-APP-05: "Use different Buds" on the Settings tab ----
-
-    @Test
-    fun `the Settings tab offers Use different Buds with what it does and what it leaves alone`() {
-        var taps = 0
-        compose.setContent {
-            OpenControlTheme(darkTheme = false) {
-                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, null, onUseDifferentBuds = { taps++ })
-            }
-        }
-        compose.onNodeWithText(
-            "Forgets which Buds this app controls (the Bluetooth pairing in Android stays). You then pick the Buds again with Pair a device.",
-        ).assertExists()
-        compose.onNode(hasText("Use different Buds") and hasClickAction()).performScrollTo().performClick()
-        assertEquals(1, taps)
+        assertTrue("Dark mode < Case sounds: $darkMode, $caseSounds", darkMode < caseSounds)
     }
 }
