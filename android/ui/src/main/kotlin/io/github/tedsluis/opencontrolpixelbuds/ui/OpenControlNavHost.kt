@@ -51,15 +51,12 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
-import io.github.tedsluis.opencontrolpixelbuds.domain.ChannelTaken
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
-import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
-import io.github.tedsluis.opencontrolpixelbuds.domain.PlayServicesPresence
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
@@ -113,8 +110,6 @@ data class OpenControlActions(
     val onDisconnect: () -> Unit,
     val onAncModeSelected: (AncMode) -> Unit,
     val onRefreshAncMode: () -> Unit,
-    /** The noise-control hint's "Take it back again" (DECISIONS.md ADR-062 Update 2, `ai-sessions/0089`): `BudsRepository.reclaimAncChannel`. */
-    val onReclaimAncChannel: () -> Unit = {},
     /** Asks Android directly to add the ANC Quick Settings tile (`StatusBarManager.requestAddTileService`,
      * API 33+) instead of requiring the user to find it themselves via Quick Settings' edit screen
      * (`ai-sessions/0043`, `CAP-060-FINDINGS.md` §4 — the tile's code was correct but never discovered). */
@@ -165,13 +160,6 @@ data class OpenControlActions(
      * application scope — `null` when it only opened a system prompt or did nothing — so the pull indicator lasts exactly as long as the action.
      */
     val onPull: (PullAction) -> Job? = { null },
-    /**
-     * DECISIONS.md ADR-061 (`ai-sessions/0084`): `true` while the noise-control tab is the selected tab and the settings menu is closed, `false` otherwise —
-     * `:app` forwards it to `BudsRepository.setAncTabShown`, which holds the Message Stream claim while it is `true` and the app is visible.
-     */
-    val onAncTabShown: (Boolean) -> Unit = {},
-    /** The Settings tab's "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") (DECISIONS.md ADR-062, `ai-sessions/0087`): stored by `:app`, followed by the repository at once. */
-    val onHoldReclaimModeChanged: (HoldReclaimMode) -> Unit = {},
 )
 
 data class OpenControlUiState(
@@ -209,12 +197,6 @@ data class OpenControlUiState(
     val ancModeUnconfirmedAt: Long? = null,
     /** Why the shown ANC mode is what it is (`ai-sessions/0082` item 1): the Noise control (i) says "changed by the Buds" for a `Notify` the app did not provoke. */
     val ancModeCause: io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause? = null,
-    /** DECISIONS.md ADR-062: the held noise-control channel was taken by another app (`BudsRepository.ancChannelTaken`); `null` = no hint. */
-    val ancChannelTaken: ChannelTaken? = null,
-    /** The Settings tab's "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") (ADR-062). */
-    val holdReclaimMode: HoldReclaimMode = HoldReclaimMode.DEFAULT,
-    /** DECISIONS.md ADR-063 (`ai-sessions/0089`): whether Android finds Google Play services on this phone — the Settings card's information line; `null` = none. */
-    val playServicesPresence: PlayServicesPresence? = null,
     /** Why the last *Refresh battery* brought no new reading (`null` = it did / none yet), `ai-sessions/0052`. */
     val batteryRefreshError: BudsError? = null,
     /** Why the Case level could not be requested this connection (`null` = requested / not yet), ADR-043. */
@@ -296,12 +278,6 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
         val index = currentIndex ?: return@LaunchedEffect
         if (!inSettings && pagerState.currentPage != index) pagerState.scrollToPage(index)
     }
-    // ADR-061: report whether the noise-control tab is the one shown — not before the back stack is known (F-1), and not while the settings menu covers it.
-    // An (i) dialog on the tab keeps it shown (the maintainer's choice in chat 2026-10-10, "Tab selected + app visible").
-    LaunchedEffect(currentIndex, inSettings) {
-        val index = currentIndex ?: return@LaunchedEffect
-        actions.onAncTabShown(!inSettings && TAB_DESTINATIONS[index].route == Routes.ANC)
-    }
     // A completed swipe (the pager settles on a new page): drive the exact same navigation call a bottom-nav tap uses, so back-stack semantics never
     // depend on which trigger changed the tab. Nothing is navigated while the back stack is not known yet (F-1).
     LaunchedEffect(pagerState) {
@@ -373,9 +349,6 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 settingsError = state.settingsError,
                 onCaseSoundEarbudsReplacedChanged = actions.onCaseSoundEarbudsReplacedChanged,
                 onCaseSoundOtherAlertsChanged = actions.onCaseSoundOtherAlertsChanged,
-                holdReclaimMode = state.holdReclaimMode,
-                onHoldReclaimModeChanged = actions.onHoldReclaimModeChanged,
-                playServicesPresence = state.playServicesPresence,
                 modifier = Modifier.padding(padding),
             )
         } else {
@@ -427,11 +400,9 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             ancModeUnconfirmedAt = state.ancModeUnconfirmedAt,
             sessionSince = state.sessionSince,
             ancModeCause = state.ancModeCause,
-            channelTaken = state.ancChannelTaken,
             onAncModeSelected = actions.onAncModeSelected,
             onRefreshAncMode = actions.onRefreshAncMode,
             onRequestAddAncTile = actions.onRequestAddAncTile,
-            onReclaimAncChannel = actions.onReclaimAncChannel,
         )
         Routes.EQ -> EqScreen(
             connectionState = state.connectionState,

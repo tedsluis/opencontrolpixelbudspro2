@@ -53,7 +53,6 @@ import io.github.tedsluis.opencontrolpixelbuds.BuildConfig
 import io.github.tedsluis.opencontrolpixelbuds.R
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DarkModeSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
-import io.github.tedsluis.opencontrolpixelbuds.data.settings.HoldReclaimSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
@@ -61,15 +60,12 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
-import io.github.tedsluis.opencontrolpixelbuds.domain.ChannelTaken
-import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
-import io.github.tedsluis.opencontrolpixelbuds.domain.PlayServicesPresence
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
 import io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
@@ -129,10 +125,6 @@ class MainActivity : ComponentActivity() {
     /** The Settings tab's dark mode (`ai-sessions/0062` F-6), applied to the theme at once. */
     @Inject
     lateinit var darkModeSettingsStore: DarkModeSettingsStore
-
-    /** The Settings tab's "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") (DECISIONS.md ADR-062, `ai-sessions/0087`); the repository follows the same store. */
-    @Inject
-    lateinit var holdReclaimSettingsStore: HoldReclaimSettingsStore
 
     /**
      * The application-lifetime scope (`RepositoryModule`). Every user action runs here, not in the composition's scope: a rotation or
@@ -344,7 +336,6 @@ class MainActivity : ComponentActivity() {
             val ancAvailabilityUpdatedAt by budsRepository.ancAvailabilityUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val ancModeUnconfirmedAt by budsRepository.ancModeUnconfirmedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val ancModeCause by budsRepository.ancModeCause.collectAsStateWithLifecycle(initialValue = null as AncModeCause?)
-            val ancChannelTaken by budsRepository.ancChannelTaken.collectAsStateWithLifecycle(initialValue = null as ChannelTaken?)
             val eqProfile by budsRepository.eqProfile.collectAsStateWithLifecycle(initialValue = null)
             val eqProfileUpdatedAt by budsRepository.eqProfileUpdatedAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val eqError by budsRepository.eqError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
@@ -398,9 +389,6 @@ class MainActivity : ComponentActivity() {
             val bluetoothAdapterState by adapterStates.collectAsStateWithLifecycle()
             val debugModeEnabled by debugSettingsStore.debugModeEnabled.collectAsStateWithLifecycle(initialValue = false)
             val darkMode by darkModeSettingsStore.darkMode.collectAsStateWithLifecycle(initialValue = DarkMode.DEFAULT)
-            val holdReclaimMode by holdReclaimSettingsStore.mode.collectAsStateWithLifecycle(initialValue = HoldReclaimMode.DEFAULT)
-            // DECISIONS.md ADR-063 (`ai-sessions/0089`): re-asked on every resume — Play services can be installed, removed or disabled while the app is away.
-            var playServicesPresence by remember { mutableStateOf<PlayServicesPresence?>(null) }
 
             var bondedLookup by remember { mutableStateOf(companionPairing.lookupBonded()) }
             // "Use different Buds" (A68-APP-05) changes which bonded device is this app's — re-read the lookup when it has run.
@@ -419,9 +407,6 @@ class MainActivity : ComponentActivity() {
                         refreshPermissions("resume")
                         if (permissionStateFlow.value.bluetoothConnect == PermissionStatus.NOT_REQUESTED) requestPermissions()
                         bondedLookup = companionPairing.lookupBonded()
-                        val presence = PlayServicesProbe.presence(packageManager)
-                        if (presence != playServicesPresence) BleLogger.logConnectionEvent(PlayServicesProbe.logLine(presence))
-                        playServicesPresence = presence
                         linkRefresh.tryEmit(Unit)
                         // ADR-044 (c): visible again — the session may be re-opened once Android reports the Buds connected.
                         budsRepository.onAppVisible(true)
@@ -470,9 +455,6 @@ class MainActivity : ComponentActivity() {
                 ancAvailabilityUpdatedAt = ancAvailabilityUpdatedAt,
                 ancModeUnconfirmedAt = ancModeUnconfirmedAt,
                 ancModeCause = ancModeCause,
-                ancChannelTaken = ancChannelTaken,
-                holdReclaimMode = holdReclaimMode,
-                playServicesPresence = playServicesPresence,
                 caseBatteryError = caseBatteryError,
                 batteryRefreshError = batteryRefreshError,
                 safeMode = safeMode,
@@ -515,8 +497,6 @@ class MainActivity : ComponentActivity() {
                 onDisconnect = { applicationScope.launch { budsRepository.disconnect() } },
                 onAncModeSelected = { mode -> applicationScope.launch { budsRepository.setAncMode(mode) } },
                 onRefreshAncMode = { applicationScope.launch { budsRepository.refreshAncMode() } },
-                // DECISIONS.md ADR-062 Update 2 (`ai-sessions/0089`): the hint's "Take it back again" — a claim with its Get, no Set.
-                onReclaimAncChannel = { applicationScope.launch { budsRepository.reclaimAncChannel() } },
                 onRequestAddAncTile = {
                     // Asks Android directly to add the tile (API 33+, this app's minSdk) instead of
                     // requiring the user to find it themselves via Quick Settings' own edit screen
@@ -559,10 +539,6 @@ class MainActivity : ComponentActivity() {
                 onExportLog = { startLogExport() },
                 onOpenUrl = { url -> openUrl(url) },
                 onUseDifferentBuds = { useDifferentBuds() },
-                // DECISIONS.md ADR-061 (`ai-sessions/0084`): the repository holds the Message Stream claim while this is true and the app is visible.
-                onAncTabShown = { shown -> budsRepository.setAncTabShown(shown) },
-                // DECISIONS.md ADR-062 (`ai-sessions/0087`): stored like dark mode; the repository follows the store's flow at once.
-                onHoldReclaimModeChanged = { mode -> applicationScope.launch { holdReclaimSettingsStore.setMode(mode) } },
             )
             // `ai-sessions/0057` D-10: a pull runs the one existing action `pullActionFor` chose — the same repository call or system prompt its button makes —
             // once, in the application scope; the returned job lets the pull indicator end when the repository has answered. Nothing is retried or scheduled.

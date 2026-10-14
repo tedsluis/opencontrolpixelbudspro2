@@ -38,17 +38,6 @@
          RECEIVER_NOT_EXPORTED). It is private to this app — only an app signed with this app's key could hold it — and grants
          nothing outside the app. It is not a runtime permission and asks the user for nothing. -->
 
-    <!-- DECISIONS.md ADR-063 (ai-sessions/0089, maintainer-approved in chat 2026-10-13): package visibility
-         for exactly one package, so PlayServicesProbe can ask PackageManager whether Google Play services is
-         installed and enabled for this user — the Settings card "Noise control with Google Play services"
-         shows it as information only. Not a permission; nothing of that package is imported, bound, started
-         or read, and no network is used (AGENTS.md §1 and its dated note of 2026-10-13). Without this entry
-         Android 11+ hides the package and every answer would be "not found". ADR-050's links still need no
-         <queries> (startActivity does not require package visibility). -->
-    <queries>
-        <package android:name="com.google.android.gms" />
-    </queries>
-
     <application
         android:name="io.github.tedsluis.opencontrolpixelbuds.app.OpenControlApplication"
         android:allowBackup="false"
