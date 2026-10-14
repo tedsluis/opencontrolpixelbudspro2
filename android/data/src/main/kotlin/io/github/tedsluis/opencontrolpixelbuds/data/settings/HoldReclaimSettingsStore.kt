@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Persists the Settings tab's "Noise-control channel" choice (DECISIONS.md ADR-062, `ai-sessions/0087`) in the app's existing settings file
+ * Persists the Settings tab's "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") (DECISIONS.md ADR-062, `ai-sessions/0087`) in the app's existing settings file
  * ([openControlSettings] — a third key, no new dependency, as [DarkModeSettingsStore]). Stored as the [HoldReclaimMode] name; an unknown or missing value reads
  * as [HoldReclaimMode.DEFAULT]. Non-sensitive (a two-way choice), so not encrypted (`ARCHITECTURE.md` §2/§9, `AGENTS.md` §10).
  *

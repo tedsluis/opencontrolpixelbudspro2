@@ -2770,5 +2770,49 @@ motivated this).
   learned by a re-claim's read — the next FEATURE prompt, with an ADR-062 Update 2 for the constant step. The release verdict of `CAP-075` ("Verdict C4"): no heavy
   issue, 1.2.1 released as built.
 
+- **Update 2 (2026-10-13, `ai-sessions/0089`, maintainer-approved in chat 2026-10-13, `AskUserQuestion` "ADR form" → *"ADR-062 Update 2 (Recommended)"*, with this
+  text in the preview): the constant step and the longer chain, after `CAP-075`.** Supersedes item 3's delays and cap and the texts of items 1, 2 and 4:
+  (1) mode `RECLAIM` re-claims **3.0 s after every foreign close** of the held claim (measured from the close, as before), at most **20** re-claims per chain
+  (≈ 3 min of 9.3-s cycles), then the hint with the count; the log line "Message Stream re-claim N/20 …" (`HOLD_RECLAIM_STEP_MS`, `HOLD_RECLAIM_CAP`);
+  (2) the hint gets **"Take it back again"**: the existing claim with its `Get`, no `Set`, no battery read; it starts a new chain (in `HINT_ONLY` one claim, held
+  until the next cut) — `BudsRepository.reclaimAncChannel`, one always-on line "Message Stream claim by the hint card's action (ADR-062 Update 2)";
+  (3) the card is **"Noise control with Google Play services"**; its options say whether the phone has Google Play services (`HINT_ONLY` = "This phone has no
+  Google Play services", `RECLAIM` = "This phone has Google Play services"), each with a supporting line; the stored names and the DataStore key are unchanged
+  (a 1.2.1 choice keeps its meaning — tested on a file written as 1.2.1 wrote it);
+  (4) a `Get` answer that differs from the mode last seen on this connection is `AncModeCause.CHANGED_SINCE_LAST_READ`, shown in the ANC (i) as "Changed since
+  the app last saw it (read at HH:MM:SS): a press-and-hold on a bud or the Buds' own change, made while this app did not have the channel." (the first report of a
+  connection stays `READ`; `CAP-075` H2 2980, 5102, 5361).
+  Why: Play's timers did not change over 15 cycles (`CAP-075-FINDINGS.md` §1, §4); the 6/12-s back-off only lengthened the dead time (51 / 39 / 26 % per cycle,
+  43 % of a 44-s chain); a constant step keeps ≈ 50 % (4.55–4.92 s of ≈ 9.3 s) for the whole chain. Everything else of ADR-062, ADR-061 and ADR-032 stands
+  (never in the background, never after a session loss; cancelled by leaving the tab or the app, a loss, a Disconnect or the setting; nothing new on the wire).
+  The card's information line on Play services' presence is **ADR-063**. Not hardware-verified: `CAP-076` (Group BL). Built in 1.2.2 (10202).
+
+## ADR-063 — The Settings card may say whether Google Play services is installed on this phone (information only)
+
+- **Date**: 2026-10-13
+- **Status**: Accepted (maintainer, chat 2026-10-13, `ai-sessions/0089`) — built in 1.2.2; not hardware-verified (`CAP-076`, Group BL)
+- **Note on process**: drafted by an AI agent (`ai-sessions/0089`); the information line is the maintainer's choice in chat 2026-10-13 (`AskUserQuestion` "Play
+  check" → *"Ja, als informatieregel"*, against the agent's recommendation "no"), this text approved in the same chat (`AskUserQuestion` "ADR-063" → *"ADR-063
+  zoals getoond (Recommended)"*, with this text in the preview), and the dated note in `AGENTS.md` §1 likewise ("AGENTS.md" → *"Ja, gedateerde notitie in §1"*),
+  per `AGENTS.md` §6.
+- **Context**: the card of ADR-062 Update 2 asks the user whether the phone has Google Play services; a user may not know. On GrapheneOS sandboxed Google Play is
+  an ordinary app installed per user (`com.google.android.gms`, uid 10205 in the Owner user in `CAP-074`/`CAP-075`; absent in the secondary user, `CAP-073`/
+  `CAP-075` set 1). `AGENTS.md` §1 bans the GMS libraries, telemetry and the network, not asking Android whether a package exists. Since Android 11 another
+  package is visible to an app only through a `<queries>` element (package visibility); ADR-050 needed none (its links use `startActivity`).
+- **Options considered**: (a) no line — the options say it themselves (the agent's recommendation); (b) an information line from `PackageManager` — chosen; (c) a
+  line that also pre-selects the option — rejected (the choice stays the user's).
+- **Decision**:
+  1. `:app` asks Android's `PackageManager`, on every resume, whether the package `com.google.android.gms` is installed for this user and enabled
+     (`getApplicationInfo`; one constant, one call — `PlayServicesProbe`). Nothing is read from Play, nothing is bound, started or sent; no import of
+     `com.google.android.gms.*`, no permission, no network.
+  2. The manifest gets `<queries><package android:name="com.google.android.gms"/></queries>` — required for that query on Android 11+ (package visibility);
+     justified in a manifest comment and the pull request. ADR-050's "no `<queries>`" (the links) is unchanged.
+  3. The card "Noise control with Google Play services" shows one line: "Google Play services: found on this phone" / "found but disabled on this phone" / "not
+     found on this phone". Information only: the stored choice and the default (`HINT_ONLY`) do not change by themselves; no prompt, no automatic switch.
+  4. A failure of the query shows no line (never a guess); the change of the answer is logged always-on and payload-free ("Google Play services on this phone:
+     found (ADR-063, information only)").
+- **Consequences**: `PlayServicesPresence` (`:domain`), the line and its `:ui` tests, the manifest entry, a dated note in `AGENTS.md` §1; `CAP-076` checks the line
+  in both users (Owner: found; the secondary user: not found).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

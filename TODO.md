@@ -16,6 +16,9 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 - [x] **D4 (the maintainer):** done 2026-10-13 — the published 1.2.1 installed on the phone with Obtainium (the maintainer, chat 2026-10-13: "De installatie
       van 1.2.1 op mijn telefoon met Obtainium is gelukt"); the tested build and the published one are the same file (re-checked with `gh release download`).
 - E1–E4 done by the pull request of `release/1.2.1-after` (CHANGELOG date, README, the Release log row, the session logs, the notes template).
+- [ ] **M — the 1.2.2 release steps** (prepared in `ai-sessions/0089`, branch `feature/channel-control`): the pull request and both CI workflows; B1
+      `scripts/release.sh 1.2.2` on the merged tip; B2; B3 `cp -a dist/1.2.2 ~/opencontrol-1.2.2-tested`; C1–C2 the `CAP-076` run (Group BL, both users); a CAPTURE
+      session for C3/C4 (the verdict); then D1–D4 / E1–E4 (`RELEASING.md`).
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
   unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). The Owner user's stored "Noise-control channel" choice is "Take it back" and the secondary
   user's too (`CAP-075-FINDINGS.md` §4) — the default "Show a hint" is not restored.
@@ -41,7 +44,7 @@ with the hold's untested branches below. **Next app run:** none planned — thes
       noise-control (i) after a press-and-hold ("Changed by the Buds at HH:MM:SS …" and the ADR-061 sentence) — not run in `CAP-073`. **`CAP-074` (the Owner user with
       Play services, `ai-sessions/0086`) ran the "another client closes DLCI 0x04 while the tab is shown" branch twelve times:** the hold ended "the channel was closed,
       not by this app" and nothing re-claimed — as designed; the branch works, and it is the cause of the first-hold-only symptom (`CAP-074-FINDINGS.md` §4, §8). Still
-      not run: the tile, Home, a session loss / ADR-044 re-open with the tab shown, the (i) line. **`CAP-075` (Group BK, planned by `ai-sessions/0087`) takes the Play-user branch in both switch positions (BK-5 … BK-14) and, optionally, the tile, Home and the loss with the tab shown (BK-19 … BK-21).** **Run (`ai-sessions/0088`, `CAP-075-FINDINGS.md` §4): the Play-user branch in both positions done — hint only 2 cuts, take it back three chains of three re-claims; still not run: the tile, Home/return, a loss with the tab shown (BK-19 … BK-21), and BK-11 … BK-13 (a tab change, Home or the switch within 2 s of a cut — the cancel path ran once, pre-film).**
+      not run: the tile, Home, a session loss / ADR-044 re-open with the tab shown, the (i) line. **`CAP-075` (Group BK, planned by `ai-sessions/0087`) takes the Play-user branch in both switch positions (BK-5 … BK-14) and, optionally, the tile, Home and the loss with the tab shown (BK-19 … BK-21).** **Run (`ai-sessions/0088`, `CAP-075-FINDINGS.md` §4): the Play-user branch in both positions done — hint only 2 cuts, take it back three chains of three re-claims; still not run: the tile, Home/return, a loss with the tab shown (BK-19 … BK-21), and BK-11 … BK-13 (a tab change, Home or the switch within 2 s of a cut — the cancel path ran once, pre-film).** **`CAP-076` (Group BL, skeleton by `ai-sessions/0089`) takes BK-11 … BK-13 again as BL-9 … BL-11 and the optional branches as BL-22 … BL-24.**
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
@@ -68,6 +71,7 @@ with the hold's untested branches below. **Next app run:** none planned — thes
 |---|---|---|---|
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
 | `CAP-030` | Q #19–20 | Loud Noise Protection / Adaptive Audio (firmware naming never reconciled with `release_5.203`, `PROTOCOL.md` §0.1) | Pixel 7a, official app |
+| `CAP-076` | BL | The 1.2.2 run (`ai-sessions/0089`, ADR-062 Update 2, ADR-063): the re-claim 3 s after every cut up to 20, Take it back again, the cause line, the renamed card — both users | Pixel 9a, OpenControl 1.2.2 |
 
 From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedures for a next attempt, no skeleton written:
 
@@ -87,7 +91,7 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
 - [ ] Optional, destructive, one-time: the factory-reset re-pair for comparison (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16) — it also resets the
       Find My Device link.
 - [ ] Record Play services' *Nearby devices* permission state and the phone's Android version (Settings → About, on film) in every capture
-      (`A68-CAP-23`: the Pixel 7a's version is unreconciled in `CAP-036`…`041`). `CAP-075`'s P0 asks for it on film (the first time), with Play services' version. **Not done in `CAP-075`** (the P0 film was not made; the user and Play's presence come from the logs, `CAP-075-FINDINGS.md` §0) — still open.
+      (`A68-CAP-23`: the Pixel 7a's version is unreconciled in `CAP-036`…`041`). `CAP-075`'s P0 asks for it on film (the first time), with Play services' version. **Not done in `CAP-075`** (the P0 film was not made; the user and Play's presence come from the logs, `CAP-075-FINDINGS.md` §0) — still open; `CAP-076`'s P0 asks again.
 - Standing practice (kept open on purpose): every capture session gets its Capture Index row with firmware, Android and app version
   (`PROJECT_RULES.md` rules 11 and 14); every hypothesis test is logged in the capture's FINDINGS before a promotion (rule 4).
 
@@ -180,10 +184,10 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
-- [ ] **Next FEATURE prompt — written: `ai-sessions/0089_FEATURE_PROMPT_2026_10_13.md` (the maintainer's choice in chat 2026-10-13, `ai-sessions/0088`, "FEATURE" → "P1 + P2 + P4"; plus the switch renamed, e.g. "Channel control", with options that say whether the phone has Google Play services, chat 2026-10-13):** the noise-control channel in the
-      Play user after `CAP-075` (`CAP-075-FINDINGS.md` §9) — P1 a constant 3-s re-claim step with a longer chain (capped by count or time; ADR-062 Update 2),
-      P2 a "Take it back again" action on the hint card, P4 a cause label for a mode learned by a re-claim's own read. Later: P3 a shorter attempt-2 latency
-      for the on-demand channel; P5 the mode on the app's own channel (§4's lead). Rejected on evidence: a re-claim before Play's retry (§9 P6).
+- [ ] **The noise-control channel in the Play user — after `ai-sessions/0089` (1.2.2: P1 + P2 + P4 built, ADR-062 Update 2):** still later — P3 a shorter
+      attempt-2 latency for the on-demand channel (`CAP-075-FINDINGS.md` §9: the re-claim's `SABM` 0.7–1.0 s after attempt 1's refusal); P5 the mode on the app's
+      own channel (§4's lead). Rejected on evidence: a re-claim before Play's retry (§9 P6). Whether 20 re-claims in a row drive Play's "Retry times remaining" to 0
+      and what Play does then is ❓ (§4; `CAP-076` P6 watches it).
 
 - [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
       (a) hardware-tested in `CAP-071` (`ai-sessions/0080`): no behaviour change found — the same reads, request bytes, answers, re-opens and screens as 1.1.0;
@@ -253,7 +257,8 @@ statement is lost (`ai-sessions/0068` §6 has the proposal for each):
 - [ ] `DESKRESEARCH_FINDINGS.md` — the cross-capture analyses that live only in session RESULTs or ADR text (runtime-info comparison of
       2026-09-25, the announcement census, the call-id census) get entries with their commands, or a pointer line at the top (§6.2).
 - [ ] `AGENTS.md` §5 and §6 — shorten each to the rule plus one pointer (**M**: project law; "Four edits, no shortening" for now).
-- [ ] Optional (**M**, project law): a dated note in `AGENTS.md` §1 pointing to ADR-050 (the Info links hand a URL to the browser).
+- [ ] Optional (**M**, project law): a dated note in `AGENTS.md` §1 pointing to ADR-050 (the Info links hand a URL to the browser). (ADR-063's note was added
+      to §1 on 2026-10-13, `ai-sessions/0089`, the maintainer's choice in chat.)
 - [ ] **Shorter hardware runs** (`ai-sessions/0083` RESULT "Testing burden", the maintainer's choice 2026-10-10: *"Both tiers + helper + card"*): the two tiers are
       in `RELEASING.md` §11a and `APP_TESTPLAN.md` since `ai-sessions/0084`; still to do (its own session): a one-page run card (the maintainer chose to write it
       with the helper, chat 2026-10-10) and a `scripts/` helper that pulls the HCI log and the exports (bugreport), names the files, decodes the session and
@@ -289,6 +294,9 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
       `pwrpc_name_table census` on the de-duplicated set and correct the figures as dated notes (**M** for the texts).
 - [ ] Reading owed by earlier sessions (`A68-SES-03`): `ai-sessions/0061` did not read `APP_TESTPLAN.md` and several app sources with their tests in
       full; `ai-sessions/0063` read its prompt's full-reading list only in part (its §B) — carry into the next MAINTENANCE reading pass (the rule-9a session).
+- [ ] Reading owed by `ai-sessions/0089` (its RESULT "Files read"): `RELEASING.md`, the `ai-sessions/0087`/`0088` PROMPT and RESULT files, `CAP-074-FINDINGS.md`
+      §4/§8/§9, `CAP-073-FINDINGS.md` §4 and `PROTOCOL.md` §2.3/§8 were not read in full (none of them was changed; the facts used were re-derived from `CAP-075`)
+      — carry into the next reading pass.
 - Order decided 2026-10-09 (maintainer, chat, `ai-sessions/0081`): all of the above after the 1.2.0 work — first the `ai-sessions/0073` reading and the census
   recount (one CROSSCHECK session), then the rule-9a folds with the slip residue (MAINTENANCE), then the EVENT-NOTES templates (MAINTENANCE), the
   folder renames with the index restructure.

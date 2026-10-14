@@ -14,6 +14,37 @@ build commit `31ee183`, hardware run `CAP-075`, `ai-sessions/0088`). See `TODO.m
 
 ## [Unreleased]
 
+## [1.2.2]
+
+Prepared in `ai-sessions/0089` (2026-10-13) after `CAP-075` (`ai-sessions/0088`): with Google Play services, Play's Fast Pair takes the noise-control channel
+back every 5–6 seconds, the same every time — 1.2.1's 6- and 12-second pauses only made the app wait longer. Nothing new on the wire.
+
+### Changed
+
+- **The setting is now called "Noise control with Google Play services"** (gear → Settings) and its options say which phone they are for: **"This phone has no
+  Google Play services"** (the default) and **"This phone has Google Play services"**. A choice made in 1.2.1 is kept ("Show a hint" = no Google Play services,
+  "Take it back" = Google Play services). The card says whether Android finds Google Play services on the phone — information only; the choice stays yours
+  (`DECISIONS.md` ADR-063: the app asks Android's package manager whether the package exists — no Google library, nothing read from it, no network).
+- **With Google Play services the app now takes the channel back 3 seconds after every time Play takes it, up to 20 times (about 3 minutes) per visit of the
+  noise-control tab** — instead of three times at 3, 6 and 12 seconds (`DECISIONS.md` ADR-062 Update 2). A press-and-hold on a bud is shown about half of the
+  time for the whole 3 minutes (1.2.1: about 43 % of 44 seconds).
+- Plainer texts on the card, its (i), the noise-control hint and the noise-control (i).
+
+### Added
+
+- **"Take it back again"** under the noise-control hint: takes the channel back without changing the mode (no mode is written, no battery is read). With Google
+  Play services it starts a new round of up to 20.
+- The noise-control (i) says when a mode the app read had changed since it last saw it: "Changed since the app last saw it (read at HH:MM:SS): a press-and-hold
+  on a bud or the Buds' own change, made while this app did not have the channel." (1.2.1 showed such a mode without a cause.)
+
+### Known issues
+
+- Expected from `CAP-075`'s measurements (one Play version, 2026-10-13), **not yet measured with 1.2.2** (`CAP-076`): with Google Play services the app holds the
+  channel about 4.6–4.9 s of every ≈ 9.3 s for about 3 minutes, so about half of the press-and-holds are shown; then the hint until "Take it back again", a tap,
+  Refresh or pull-down. It is a tug of war with Play: Android's own Buds settings may be stale meanwhile. What Play does after many collisions in a row is
+  unknown. Without Google Play services nothing contends and both choices behave the same.
+- The 1.2.1 and 1.2.0 known issues not changed above stay (the hedged worn line, the serial labels, "Changed by the Buds" only on the tab).
+
 ## [1.2.1] - 2026-10-13
 
 Prepared in `ai-sessions/0087` (2026-10-12) after `CAP-074` (`ai-sessions/0086`): in a user with Google Play services, Play's Fast Pair takes the noise-control

@@ -57,6 +57,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.PlayServicesPresence
 import io.github.tedsluis.opencontrolpixelbuds.domain.SettingsFailure
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 
@@ -76,7 +77,8 @@ internal enum class SettingsTab(val label: String) { SETTINGS("Settings"), DEBUG
 
 /**
  * The settings menu (`ai-sessions/0062` F-4, the maintainer's design in chats 2026-10-01): a full-screen destination reached from the top app bar's gear, outside
- * the five bottom tabs (ARCHITECTURE.md §2.4), with three tabs — **Settings** (dark mode; since `ai-sessions/0087` the "Noise-control channel" card, ADR-062;
+ * the five bottom tabs (ARCHITECTURE.md §2.4), with three tabs — **Settings** (dark mode; since `ai-sessions/0087` the "Noise-control channel" card, ADR-062 — renamed
+ * "Noise control with Google Play services" by ADR-062 Update 2, `ai-sessions/0089`;
  * since `ai-sessions/0082` item 5 also the "Case sounds" card, moved from Controls; "Use different Buds"), **Debug** (today's [DebugScreen], unchanged) and
  * **Info** (the app's build, the Buds' firmware and — ADR-058 — their serial numbers). The selected tab survives a rotation; back (the top bar's arrow or the
  * system's) returns to the tab the menu was opened from.
@@ -104,9 +106,11 @@ fun SettingsMenuScreen(
     settingsError: SettingsFailure? = null,
     onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit = {},
     onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
-    /** DECISIONS.md ADR-062 (`ai-sessions/0087`): the "Noise-control channel" choice — stored by `:app`, applied by the repository at once. */
+    /** DECISIONS.md ADR-062 (`ai-sessions/0087`): the "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") — stored by `:app`, applied by the repository at once. */
     holdReclaimMode: HoldReclaimMode = HoldReclaimMode.DEFAULT,
     onHoldReclaimModeChanged: (HoldReclaimMode) -> Unit = {},
+    /** DECISIONS.md ADR-063 (`ai-sessions/0089`): whether Android finds Google Play services on this phone — information only; `null` = no line. */
+    playServicesPresence: PlayServicesPresence? = null,
 ) {
     var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
     Column(modifier = modifier.fillMaxSize()) {
@@ -122,7 +126,7 @@ fun SettingsMenuScreen(
         when (SettingsTab.entries[selected]) {
             SettingsTab.SETTINGS -> SettingsTabContent(
                 darkMode, onDarkModeChanged, onUseDifferentBuds, connectionState, settings, settingsError, onCaseSoundEarbudsReplacedChanged, onCaseSoundOtherAlertsChanged,
-                holdReclaimMode, onHoldReclaimModeChanged,
+                holdReclaimMode, onHoldReclaimModeChanged, playServicesPresence,
             )
             SettingsTab.DEBUG -> DebugScreen(
                 debugModeEnabled = debugModeEnabled,
@@ -147,7 +151,9 @@ internal fun darkModeLabel(mode: DarkMode): String = when (mode) {
  * `ai-sessions/0082` (item 5, the maintainer's order in chat 2026-10-09: Dark mode · Case sounds · Use different Buds):** the "Case sounds" card of ADR-054
  * between them — the same [SettingsCard]/[SettingSwitchRow] as on Controls, the same (i) lines, plus the note that the setting lives on the case. **Since
  * `ai-sessions/0087` (ADR-062, the maintainer's order in chat 2026-10-12: Dark mode · Noise-control channel · Case sounds · Use different Buds):** the
- * [HoldReclaimCard] after Dark mode — the app's own settings together, then the Buds', then the pairing action.
+ * [HoldReclaimCard] after Dark mode — the app's own settings together, then the Buds', then the pairing action. **Since `ai-sessions/0089`** (ADR-062 Update 2,
+ * ADR-063) that card is "Noise control with Google Play services", its options say whether the phone has Google Play services, and it shows whether Android
+ * finds Play services on this phone ([playServicesPresenceLine]).
  */
 @Composable
 private fun SettingsTabContent(
@@ -161,6 +167,7 @@ private fun SettingsTabContent(
     onCaseSoundOtherAlertsChanged: (Boolean) -> Unit,
     holdReclaimMode: HoldReclaimMode,
     onHoldReclaimModeChanged: (HoldReclaimMode) -> Unit,
+    playServicesPresence: PlayServicesPresence?,
 ) {
     val enabled = connectionState.isReady()
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -185,7 +192,7 @@ private fun SettingsTabContent(
                 }
             }
             // ADR-062 (`ai-sessions/0087`): what the app does when another app takes the held noise-control channel.
-            HoldReclaimCard(holdReclaimMode, onHoldReclaimModeChanged)
+            HoldReclaimCard(holdReclaimMode, onHoldReclaimModeChanged, playServicesPresence)
             // `ai-sessions/0082` item 5: the Case sounds card, moved from Controls (ADR-054's labels of `ai-sessions/0074`); a failed write says so here too.
             if (enabled) SettingsFailureNotice(settingsError)
             SettingsCard(
@@ -212,34 +219,59 @@ private fun SettingsTabContent(
 internal const val USE_DIFFERENT_BUDS_TITLE: String = "Use different Buds"
 
 /**
- * DECISIONS.md ADR-062 (`ai-sessions/0087`; the maintainer's texts in chat 2026-10-12, "Switch card"): the "Noise-control channel" card — a title with an (i), the
- * intro line and a two-way radio group as Dark mode's. The numbers in the (i) are `CAP-074`'s (one Play services version, measured 2026-10-12 — said there).
+ * DECISIONS.md ADR-062 (`ai-sessions/0087`; the maintainer's texts in chat 2026-10-12, "Switch card") — renamed and reworded by ADR-062 Update 2
+ * (`ai-sessions/0089`; the maintainer's texts in chat 2026-10-13, "Card name", "Options", "Card (i)"): the "Noise control with Google Play services" card — a
+ * title with an (i), the intro line, ADR-063's line on whether Android finds Play services on this phone, and a two-way radio group whose rows say whether the
+ * phone has Google Play services, each with a supporting line. The stored names (`HINT_ONLY`, `RECLAIM`) are 1.2.1's; only the texts changed. The numbers in
+ * the (i) are `CAP-074`/`CAP-075`'s (one Play services version, measured in October 2026 — said there).
  */
-internal const val HOLD_RECLAIM_TITLE: String = "Noise-control channel"
-internal const val HOLD_RECLAIM_INTRO: String = "When another app takes the channel:"
+internal const val HOLD_RECLAIM_TITLE: String = "Noise control with Google Play services"
+internal const val HOLD_RECLAIM_INTRO: String = "The Buds report a press-and-hold on a bud to one app at a time. Choose what fits this phone:"
 
 internal fun holdReclaimLabel(mode: HoldReclaimMode): String = when (mode) {
-    HoldReclaimMode.HINT_ONLY -> "Show a hint, do not take it back"
-    HoldReclaimMode.RECLAIM -> "Take it back while the noise-control tab is open (may fight that app)"
+    HoldReclaimMode.HINT_ONLY -> "This phone has no Google Play services"
+    HoldReclaimMode.RECLAIM -> "This phone has Google Play services"
+}
+
+internal fun holdReclaimSupportingText(mode: HoldReclaimMode): String = when (mode) {
+    HoldReclaimMode.HINT_ONLY ->
+        "Nothing else uses the noise-control channel. If another app takes it anyway, the noise-control tab says so."
+    HoldReclaimMode.RECLAIM ->
+        "While the noise-control tab is open, take the channel back from Play services' Fast Pair 3 seconds after each time it takes it, so a " +
+            "press-and-hold shows about half of the time."
 }
 
 internal val HOLD_RECLAIM_DETAIL_LINES: List<String> = listOf(
-    "While the noise-control tab is open the app keeps the Buds' noise-control channel, so a change made on a bud shows. On a phone with Google Play " +
-        "services, Play's Fast Pair takes the channel back about 5 seconds after it lost it to this app (measured on 2026-10-12 with one version of Play " +
-        "services; another version may differ).",
-    "Show a hint: the noise-control card says the channel was taken and when; a change made on a bud is shown at your next tap, Refresh or pull-down.",
-    "Take it back: 3 seconds after the channel is taken the app claims it again (then after 6 and 12 seconds, three times per visit of the tab), so a " +
-        "change made on a bud shows about 5 seconds of every 9. Each claim takes the channel from the other app, which takes it back again — a tug of war " +
-        "while the tab is open; the other app's own view of the Buds may be stale meanwhile.",
-    "Without Google Play services nothing else uses the channel and both choices behave the same.",
+    "The Buds send a press-and-hold's noise-control change to one app at a time: the app that has their noise-control channel open. While the " +
+        "noise-control tab is open this app keeps that channel.",
+    "On a phone with Google Play services, Play's Fast Pair takes the channel back 5 to 6 seconds after it lost it to this app, every time (measured in " +
+        "October 2026 with one version of Play services; another version may differ).",
+    "No Google Play services: the noise-control tab shows every press-and-hold. If another app takes the channel anyway, the tab says so and when; Take " +
+        "it back again, a tap, Refresh or a pull-down takes it back.",
+    "Google Play services: 3 seconds after each time Play takes the channel this app takes it back, up to 20 times (about 3 minutes) per visit of the " +
+        "tab, so a press-and-hold shows about half of the time. It is a tug of war with Play: Android's own view of the Buds may lag meanwhile. After the " +
+        "20th time the tab says so; Take it back again starts over.",
+    "Without Google Play services both choices behave the same.",
 )
 
+/**
+ * DECISIONS.md ADR-063 (`ai-sessions/0089`; the maintainer's choice in chat 2026-10-13): the card's information line — what Android's package manager says about
+ * Google Play services for this user. Information only: the stored choice never changes by itself. `null` (the query failed or did not run) ⇒ no line.
+ */
+internal fun playServicesPresenceLine(presence: PlayServicesPresence?): String? = when (presence) {
+    PlayServicesPresence.FOUND -> "Google Play services: found on this phone"
+    PlayServicesPresence.FOUND_DISABLED -> "Google Play services: found but disabled on this phone"
+    PlayServicesPresence.NOT_FOUND -> "Google Play services: not found on this phone"
+    null -> null
+}
+
 @Composable
-private fun HoldReclaimCard(mode: HoldReclaimMode, onChange: (HoldReclaimMode) -> Unit) {
+private fun HoldReclaimCard(mode: HoldReclaimMode, onChange: (HoldReclaimMode) -> Unit, playServicesPresence: PlayServicesPresence?) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             CardTitle(HOLD_RECLAIM_TITLE, HOLD_RECLAIM_DETAIL_LINES)
             Text(HOLD_RECLAIM_INTRO, style = MaterialTheme.typography.bodyMedium)
+            playServicesPresenceLine(playServicesPresence)?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             Column(Modifier.selectableGroup()) {
                 HoldReclaimMode.entries.forEach { option ->
                     Row(
@@ -250,7 +282,14 @@ private fun HoldReclaimCard(mode: HoldReclaimMode, onChange: (HoldReclaimMode) -
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(selected = mode == option, onClick = null) // the row is the touch target (as Dark mode)
-                        Text(holdReclaimLabel(option), modifier = Modifier.padding(start = 16.dp))
+                        Column(modifier = Modifier.padding(start = 16.dp)) {
+                            Text(holdReclaimLabel(option), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                holdReclaimSupportingText(option),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }

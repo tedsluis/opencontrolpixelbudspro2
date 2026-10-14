@@ -30,6 +30,10 @@ reuses the held channel; V10 can pass); the balance slider shows the finger's va
 **section W**. **Updated 2026-10-12 for 1.2.1** (`ai-sessions/0087`, `DECISIONS.md` ADR-062): the Settings tab's "Noise-control channel" choice — in a user with
 Google Play services Play's Fast Pair takes the held channel back ≈ 5 s later (`CAP-074`); "Show a hint" (the default) puts a hint line on the noise-control card,
 "Take it back" re-claims 3, 6 and 12 s after the cuts, then stops; **section X** (both users). The "After the run" rows are AR1 … AR5 since then (they were X1 … X5).
+**Updated 2026-10-13 for 1.2.2** (`ai-sessions/0089`, `DECISIONS.md` ADR-062 Update 2 and ADR-063): the card is "Noise control with Google Play services" with
+options that say whether the phone has Google Play services and a line whether Android finds Play services; in the Play option the re-claim comes 3 s after every
+cut, up to 20 times, then the hint with "Take it back again"; a mode the app's own `Get` finds changed gets "Changed since the app last saw it" in the (i);
+**section Y** (both users).
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -409,6 +413,30 @@ measured 2026-10-12): recovery 5.2–5.7 s after it lost the channel, retry 2.2�
 | X11 | Hint only: the ANC tab; holds every ≈ 5 s for 30 s. Then "Take it back"; back to ANC; holds every ≈ 5 s for 30 s. | every hold shown in both positions; no hint | one `SABM` + `08 11` per tab entry; **no `DISC` while the tab is shown**; no re-claim line; 0 Play-services claims | ✅ | BK-16, BK-17 (`TOUCH-007`) — H2/H3/H5 (hint only) and H4/H6 (take it back): 41 of 41 shown, no `DISC` while the tab was shown, 0 re-claim lines, 0 Play claims |
 | X12 | Leave the tab (Controls); optional: the tile on the tab, Home/return, both buds into the case and out with the tab shown; back to "Show a hint"; Export. | Controls; (optional branches as in W6–W8) | the `DISC` ≈ 1.5 s after leaving; (optional: no second `SABM` for the tile; the `DISC` after Home; the re-open's snapshot kept) | ⚠️ | BK-18 … BK-21, BK-end2 — the `DISC` 1.50–1.51 s after leaving the tab ×6 ✓; the optional branches not run; the switch **not** set back (set 1 ends on "Take it back"); Export ✓ (228 lines) |
 
+## Y. 1.2.2 (`ai-sessions/0089`: the constant re-claim step, "Take it back again", the cause line, the renamed card — ADR-062 Update 2, ADR-063 — in both users)
+
+In `CAP-076` as BL-1 … BL-24 (captures/CAP-076-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BL/CAP-076-EVENT-NOTES.md, which has the reference frames per request from
+`CAP-075`). Nothing new on the wire: the re-claim and "Take it back again" are the existing claim (`SABM` DLCI 0x04, `08 11 00 00`, the phone's `DISC`). The
+timings expected below are `CAP-075`'s Play services (one version, measured 2026-10-13): Play's retry 2.1–2.8 s after a cut, its recovery 5.3–5.8 s after it lost
+the channel — a cycle of ≈ 9.2–9.5 s with ≈ 4.6–4.9 s held; write down this run's own numbers.
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| Y1 | **User 0 (Play).** Update over 1.2.1 (Debug mode on); open the app; Info; gear → Settings: the card and its (i). | "App: 1.2.2, build <B1 hash>", no "-dirty"; the card "Noise control with Google Play services" between Dark mode and Case sounds; "Google Play services: found on this phone"; **"This phone has Google Play services" selected** (1.2.1's "Take it back" kept); each option with its second line; the (i)'s five lines | the thirteen requests + `GetHardwareInfo`; the snapshot claim | | BL-1, BL-2 (`PAIR-003`, `BATT-004`, `FW-003`) |
+| Y2 | Disconnect, Connect; the ANC tab. | ready; the mode; the hold | the thirteen requests; the hold | | BL-3, BL-4 |
+| Y3 | **Google Play services option:** press and hold a bud every ≈ 4 s for 3½ minutes; touch nothing; count the holds shown; the system log at once after. | about half of the holds shown during ≈ 3 minutes; no hint meanwhile; after the 20th re-claim's cut the hint "Another app took the noise-control channel at HH:MM:SS — usually Google Play services' Fast Pair; this app took it back 20 times and stopped. …" with **Take it back again** | per cycle the cut, Play's retry, the export's "re-claim N/20 … 3000 ms later" **3.0 s** after each "closed" line (every step 3000 ms), attempt 1 refused, the app's `SABM` + `08 11`; after the 20th: "re-claim stopped after 20 re-claims — …"; no 21st | | BL-5, BL-6 (`TOUCH-007`) |
+| Y4 | Open the ANC (i) after a re-claim that found another mode. | "Changed since the app last saw it (read at HH:MM:SS): a press-and-hold on a bud or the Buds' own change, made while this app did not have the channel."; the last sentence names "Noise control with Google Play services" | the re-claim's `08 11` answered with another mode than the app's last report | | BL-7 (`TOUCH-007`) |
+| Y5 | Tap **Take it back again**; two holds; wait 15 s. | the hint and the button gone; the holds in the window shown; a re-claim 3 s after the next cut | one claim: `08 11 00 00` only — **no `08 12`**, no DLCI 0x02 request; "Message Stream claim by the hint card's action (ADR-062 Update 2)"; after its cut "re-claim 1/20" | | BL-8 (`ANC-001`…`004`, `TOUCH-007`) |
+| Y6 | Within 2 s of a cut: the Sound tab (then back); Home (then return). | no re-claim; a new claim on each return | "Message Stream re-claim cancelled (ADR-062)" ×2; no `SABM` 3 s after those cuts | | BL-9, BL-10 |
+| Y7 | gear → Settings → **"This phone has no Google Play services"**; back to ANC; holds for 20 s. | the first hold in the claim shown, then the hint without "took it back" and with the button; no re-claim | "the hint is shown, no re-claim (ADR-062, hint only)"; no app `SABM` after the cut | | BL-11 (`TOUCH-007`) |
+| Y8 | Tap **Take it back again** (no-Play option); wait 10 s. | the hint gone, back ≈ 5 s later; no re-claim | one claim with `08 11` only; its cut; no re-claim | | BL-12 (`ANC-001`…`004`) |
+| Y9 | Back to **"This phone has Google Play services"**; ANC. | the row selected; a new claim | after its cut "re-claim 1/20" | | BL-13 |
+| Y10 | Disconnect, Connect on the ANC tab; Export. | the hint gone at Connect; "Debug log saved (N lines)." | the thirteen requests; the chain from 1/20 | | BL-14, BL-end1 (`PAIR-003`) |
+| Y11 | **User 10 (no Play).** Open the app; Info; Settings: the card. | the build; "Google Play services: not found on this phone"; "This phone has Google Play services" selected (1.2.1's stored choice; nothing switches by itself) | the Connect sequence; the snapshot claim released ≈ 1.5 s after its answer | | BL-15 (`PAIR-003`, `FW-003`, `BATT-004`) |
+| Y12 | The ANC tab; holds every ≈ 5 s for 30 s. Then "This phone has no Google Play services"; back to ANC; holds every ≈ 5 s for 30 s. | every hold shown in both options; no hint, no button | one `SABM` + `08 11` per tab entry; **no `DISC` while the tab is shown**; no re-claim line; 0 Play-services claims | | BL-16, BL-17 (`TOUCH-007`) |
+| Y13 | The ANC (i) after a hold; then the Connection tab, a hold there, back to ANC, the (i). | first "Changed by the Buds at …" (no changed-since line); after the hold away from the tab "Changed since the app last saw it (read at …)" | the return's `08 11` answered with another mode | | BL-18, BL-19 (`TOUCH-007`) |
+| Y14 | Leave the tab (Controls); optional: the tile on the tab, Home/return, both buds into the case and out with the tab shown; Export. | Controls; (optional branches as in W6–W8) | the `DISC` ≈ 1.5 s after leaving; (optional: as X12) | | BL-20 … BL-24, BL-end2 |
+
 ## After the run (within 1 minute of the last action)
 
 | # | Collect | Done |
@@ -447,6 +475,7 @@ measured 2026-10-12): recovery 5.2–5.7 s after it lost the channel, retry 2.2�
 | V 1.2.0 build | 19 | 13 | 1 | 4 | 1 |
 | W 1.2.0 rebuilt | 12 | 3 | 0 | 6 | 3 |
 | X 1.2.1 | 12 | 6 | 0 | 5 | 1 |
+| Y 1.2.2 | 14 | | | | |
 
 **Run `CAP-075` (2026-10-12 set 1, the user without Play; 2026-10-13 set 2, the Owner with Play; 1.2.1 `31ee183`; `ai-sessions/0088`, `CAP-075-FINDINGS.md`):** section X — ✅ X2, X5, X6, X7, X10, X11; ⚠️ X1 (set 2's card pre-set to "Take it back"), X3 (the hint ✓, no re-claim ✓, 0 of 9 holds shown — the claims lived 0.42 / 1.2 s), X4 (the (i) ✓; no mode tap), X9 (on the Connection tab), X12 (the switch not set back; the optional branches not run); not run X8. The X6 expectation "≈ 6 of 10" was 8 of 19 within a second (the 6/12-s steps lengthen the cycles). Verdict (the maintainer, chat 2026-10-13): no heavy issue — 1.2.1 released as built.
 

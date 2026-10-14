@@ -59,6 +59,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceStatus
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqBandGains
 import io.github.tedsluis.opencontrolpixelbuds.domain.EqPreset
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldReclaimMode
+import io.github.tedsluis.opencontrolpixelbuds.domain.PlayServicesPresence
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
@@ -112,6 +113,8 @@ data class OpenControlActions(
     val onDisconnect: () -> Unit,
     val onAncModeSelected: (AncMode) -> Unit,
     val onRefreshAncMode: () -> Unit,
+    /** The noise-control hint's "Take it back again" (DECISIONS.md ADR-062 Update 2, `ai-sessions/0089`): `BudsRepository.reclaimAncChannel`. */
+    val onReclaimAncChannel: () -> Unit = {},
     /** Asks Android directly to add the ANC Quick Settings tile (`StatusBarManager.requestAddTileService`,
      * API 33+) instead of requiring the user to find it themselves via Quick Settings' edit screen
      * (`ai-sessions/0043`, `CAP-060-FINDINGS.md` §4 — the tile's code was correct but never discovered). */
@@ -167,7 +170,7 @@ data class OpenControlActions(
      * `:app` forwards it to `BudsRepository.setAncTabShown`, which holds the Message Stream claim while it is `true` and the app is visible.
      */
     val onAncTabShown: (Boolean) -> Unit = {},
-    /** The Settings tab's "Noise-control channel" choice (DECISIONS.md ADR-062, `ai-sessions/0087`): stored by `:app`, followed by the repository at once. */
+    /** The Settings tab's "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") (DECISIONS.md ADR-062, `ai-sessions/0087`): stored by `:app`, followed by the repository at once. */
     val onHoldReclaimModeChanged: (HoldReclaimMode) -> Unit = {},
 )
 
@@ -208,8 +211,10 @@ data class OpenControlUiState(
     val ancModeCause: io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause? = null,
     /** DECISIONS.md ADR-062: the held noise-control channel was taken by another app (`BudsRepository.ancChannelTaken`); `null` = no hint. */
     val ancChannelTaken: ChannelTaken? = null,
-    /** The Settings tab's "Noise-control channel" choice (ADR-062). */
+    /** The Settings tab's "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") (ADR-062). */
     val holdReclaimMode: HoldReclaimMode = HoldReclaimMode.DEFAULT,
+    /** DECISIONS.md ADR-063 (`ai-sessions/0089`): whether Android finds Google Play services on this phone — the Settings card's information line; `null` = none. */
+    val playServicesPresence: PlayServicesPresence? = null,
     /** Why the last *Refresh battery* brought no new reading (`null` = it did / none yet), `ai-sessions/0052`. */
     val batteryRefreshError: BudsError? = null,
     /** Why the Case level could not be requested this connection (`null` = requested / not yet), ADR-043. */
@@ -370,6 +375,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 onCaseSoundOtherAlertsChanged = actions.onCaseSoundOtherAlertsChanged,
                 holdReclaimMode = state.holdReclaimMode,
                 onHoldReclaimModeChanged = actions.onHoldReclaimModeChanged,
+                playServicesPresence = state.playServicesPresence,
                 modifier = Modifier.padding(padding),
             )
         } else {
@@ -425,6 +431,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             onAncModeSelected = actions.onAncModeSelected,
             onRefreshAncMode = actions.onRefreshAncMode,
             onRequestAddAncTile = actions.onRequestAddAncTile,
+            onReclaimAncChannel = actions.onReclaimAncChannel,
         )
         Routes.EQ -> EqScreen(
             connectionState = state.connectionState,

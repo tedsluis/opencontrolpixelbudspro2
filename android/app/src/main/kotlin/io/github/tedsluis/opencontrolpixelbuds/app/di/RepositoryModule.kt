@@ -68,7 +68,7 @@ object RepositoryModule {
     fun provideDarkModeSettingsStore(@ApplicationContext context: Context): DarkModeSettingsStore =
         DarkModeSettingsStore(context)
 
-    /** The Settings tab's "Noise-control channel" choice (DECISIONS.md ADR-062, `ai-sessions/0087`) — the same settings file as [DebugSettingsStore]. */
+    /** The Settings tab's "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") (DECISIONS.md ADR-062, `ai-sessions/0087`) — the same settings file as [DebugSettingsStore]. */
     @Provides
     @Singleton
     fun provideHoldReclaimSettingsStore(@ApplicationContext context: Context): HoldReclaimSettingsStore =

@@ -29,7 +29,10 @@ package io.github.tedsluis.opencontrolpixelbuds.domain
  * - [SET_BY_APP] — the Buds' ACK of the app's `Set`, or their `Notify` of the requested mode while that `Set` was still waiting for its answer.
  * - [CHANGED_BY_BUDS] — any other `Notify` whose mode differs from the shown one: a press-and-hold on a bud, or the Buds' own change — the app cannot
  *   tell which, and says so.
+ * - [CHANGED_SINCE_LAST_READ] (DECISIONS.md ADR-062 Update 2, `ai-sessions/0089`; the maintainer's wording in chat 2026-10-13) — the answer to the app's own
+ *   `Get` carries a mode other than the one the app last saw on this connection: the change happened while this app did not have the channel (in `CAP-075`
+ *   on Google Play services' claim or between claims — `CAP-075-btsnoop_hci2.log` 2980, 5102, 5361). The first report of a connection stays [READ].
  *
  * A `Notify` with the mode already shown, while nothing is waiting, leaves the cause as it is (only the mode's time moves). Reset at every Connect.
  */
-enum class AncModeCause { READ, SET_BY_APP, CHANGED_BY_BUDS }
+enum class AncModeCause { READ, SET_BY_APP, CHANGED_BY_BUDS, CHANGED_SINCE_LAST_READ }

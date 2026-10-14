@@ -20,16 +20,18 @@
 package io.github.tedsluis.opencontrolpixelbuds.domain
 
 /**
- * The Settings tab's "Noise-control channel" choice (DECISIONS.md ADR-062, `ai-sessions/0087`; the maintainer's choice in chat 2026-10-12): what the app does
- * when another client — Google Play services' Fast Pair on a phone that has it (`CAP-074`: ≈ 5 s after it lost the channel to this app) — closes the Message
- * Stream claim the app holds while the noise-control tab is on screen (ADR-061).
+ * The Settings tab's "Noise control with Google Play services" choice (DECISIONS.md ADR-062, `ai-sessions/0087`; renamed and explained by ADR-062 Update 2,
+ * `ai-sessions/0089` — the maintainer's choices in chat 2026-10-12 and 2026-10-13): what the app does when another client — Google Play services' Fast Pair on a
+ * phone that has it (`CAP-074`/`CAP-075`: 5.3–5.8 s after it lost the channel to this app) — closes the Message Stream claim the app holds while the
+ * noise-control tab is on screen (ADR-061).
  *
- * - [HINT_ONLY] (the default): the hold ends and nothing re-claims (ADR-061 as written); the noise-control card says the channel was taken and when; the next tap,
- *   Refresh, pull or re-entry of the tab claims again.
- * - [RECLAIM]: the app claims again 3, 6 and 12 s after the first, second and third foreign close of one visit of the tab — the existing claim with its `Get`
- *   (nothing new on the wire) — then stops and shows the hint; never in the background, never after a session loss, never when the tab or the app was left.
+ * - [HINT_ONLY] (the default; shown as "This phone has no Google Play services"): the hold ends and nothing re-claims (ADR-061 as written); the noise-control card
+ *   says the channel was taken and when; "Take it back again", the next tap, Refresh, pull or re-entry of the tab claims again.
+ * - [RECLAIM] (shown as "This phone has Google Play services"): the app claims again 3 s after every foreign close — the existing claim with its `Get` (nothing
+ *   new on the wire) — at most 20 times per chain, then stops and shows the hint; never in the background, never after a session loss, never when the tab or the
+ *   app was left.
  *
- * Stored locally (AndroidX DataStore, `:data/settings`), never sent anywhere.
+ * Stored locally (AndroidX DataStore, `:data/settings`), never sent anywhere. The stored names are 1.2.1's and keep their meaning ([fromStored]).
  */
 enum class HoldReclaimMode {
     HINT_ONLY,
@@ -51,3 +53,10 @@ enum class HoldReclaimMode {
  * ([reclaimAttempts] = the re-claims made, 0 in the hint-only mode). Cleared when the app holds the channel again, at Connect, Disconnect and a session loss.
  */
 data class ChannelTaken(val atMillis: Long, val reclaimAttempts: Int)
+
+/**
+ * DECISIONS.md ADR-063 (`ai-sessions/0089`; the maintainer's choice in chat 2026-10-13): whether Google Play services is installed for this user, as Android's
+ * package manager answers `:app` — information for the Settings card only; it never changes the stored [HoldReclaimMode]. `null` where it is used = the query
+ * failed or has not run: no line is shown (never a guess).
+ */
+enum class PlayServicesPresence { FOUND, FOUND_DISABLED, NOT_FOUND }

@@ -122,7 +122,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  * - **Find My Buds**: no persisted state to reconcile.
  * - **The Message Stream claim** (ADR-032) is held while the noise-control tab is on screen (ADR-061, [setAncTabShown]), so a `Notify` the app did not provoke
  *   (a press-and-hold on a bud) reaches it. When another client closes that held claim (Google Play services' Fast Pair, ≈ 5 s after it lost the channel —
- *   `CAP-074`), the Settings tab's [holdReclaimMode] decides (ADR-062): a hint and no re-claim, or a re-claim 3, 6 and 12 s later, then the hint.
+ *   `CAP-074`), the Settings tab's [holdReclaimMode] decides (ADR-062): a hint and no re-claim, or — ADR-062 Update 2 — a re-claim 3 s after every such close,
+ *   at most 20 times per chain, then the hint; the hint's "Take it back again" ([reclaimAncChannel]) starts a new chain.
  *
  * This class stays unit-testable against a [io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport]
  * and scripted flows, per AGENTS.md §11. [connectionStateMachine] is the real, already
@@ -137,7 +138,7 @@ class BudsRepositoryImpl(
     private val connectionStateMachine: ConnectionStateMachine,
     private val bondedDeviceProvider: () -> BluetoothDevice?,
     debugModeEnabled: Flow<Boolean>,
-    /** The Settings tab's "Noise-control channel" choice (DECISIONS.md ADR-062), persisted by `HoldReclaimSettingsStore`; followed at once. */
+    /** The Settings tab's "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") (DECISIONS.md ADR-062), persisted by `HoldReclaimSettingsStore`; followed at once. */
     holdReclaimMode: Flow<HoldReclaimMode>,
     private val scope: CoroutineScope,
     /** Wall clock for the provisional Settable rule (ADR-049, which superseded ADR-024's dock-state reading), the loss cause (I-7) and the re-open rules (ADR-044); a test passes its virtual clock. */
@@ -356,11 +357,14 @@ class BudsRepositoryImpl(
     }
 
     /**
-     * The cause a `Notify` gives the mode it carries (`ai-sessions/0082` item 1, the maintainer's rule): the answer to the app's `Get` is a reading; the requested
-     * mode while the app's `Set` waits is the app's own change; a mode other than the shown one, with nothing waiting, is the Buds' — a press-and-hold on a bud or
-     * their own change; the first mode ever shown this run is a reading too (nothing was shown that could have changed); the same mode again changes nothing (`null`).
+     * The cause a `Notify` gives the mode it carries (`ai-sessions/0082` item 1, the maintainer's rule): the answer to the app's `Get` is a reading — unless
+     * (ADR-062 Update 2, `ai-sessions/0089`) this connection already reported a mode ([_ancModeCause] is reset at every Connect) and the answer differs from it:
+     * then the mode changed while this app did not have the channel (`CAP-075` 2980, 5102, 5361); the requested mode while the app's `Set` waits is the app's own
+     * change; a mode other than the shown one, with nothing waiting, is the Buds' — a press-and-hold on a bud or their own change; the first mode ever shown this
+     * run is a reading too (nothing was shown that could have changed); the same mode again changes nothing (`null`).
      */
     private fun causeOfNotify(mode: AncMode, answersGet: Boolean): AncModeCause? = when {
+        answersGet && _ancModeCause.value != null && _ancMode.value != null && mode != _ancMode.value -> AncModeCause.CHANGED_SINCE_LAST_READ
         answersGet -> AncModeCause.READ
         setPendingMode == mode -> AncModeCause.SET_BY_APP
         _ancMode.value == null -> AncModeCause.READ
@@ -517,18 +521,17 @@ class BudsRepositoryImpl(
     @Volatile
     private var reclaimJob: Job? = null
 
-    /** Re-claims made in this chain — since the tab was entered, the app returned, the user's last claim or the Connect (ADR-062 item 3). */
+    /** Re-claims made in this chain — since the tab was entered, the app returned, the user's last claim, "Take it back again" or the Connect (ADR-062 item 3). */
     @Volatile
     private var reclaimAttempts = 0
 
     /**
-     * A held claim was closed by someone else — in `CAP-074` Google Play services' Fast Pair recovering the channel 5.2–5.7 s after it lost it to this app, the
-     * stack closing this app's port on that collision (`CAP-074-FINDINGS.md` §4, §8). Mode HINT_ONLY: the hint with the close's time, nothing re-claims (ADR-061 as
-     * written). Mode RECLAIM: one bounded delay ([HOLD_RECLAIM_DELAYS_MS] — 3 s after the first close of the chain, 6 s after the second, 12 s after the third;
-     * each after Play's own retry of 2.2–2.6 s has succeeded, so the app's connect finds Play on the channel and the bounded retry of `openChannel` takes it),
-     * then the existing claim with its `Get` ([refreshAncMode]) — provided the tab is still shown, the app visible, the session `Ready` and the channel still
-     * closed; after the third re-claim the hint. Nothing new on the wire; never a loop: the chain has its cap and ends with the tab, the app's visibility, the
-     * session or the setting.
+     * A held claim was closed by someone else — in `CAP-074`/`CAP-075` Google Play services' Fast Pair recovering the channel 5.3–5.8 s after it lost it to this
+     * app, the stack closing this app's port on that collision (`CAP-075-FINDINGS.md` §5). Mode HINT_ONLY: the hint with the close's time, nothing re-claims
+     * (ADR-061 as written). Mode RECLAIM (ADR-062 Update 2): one bounded delay of [HOLD_RECLAIM_STEP_MS] after **every** close — after Play's own retry (2.1–2.8 s
+     * after the cut) has taken the channel, so the app's attempt 1 is refused, kills Play's socket, and attempt 2 connects — then the existing claim with its `Get`
+     * ([refreshAncMode]), provided the tab is still shown, the app visible, the session `Ready` and the channel still closed; after [HOLD_RECLAIM_CAP] re-claims
+     * the hint. Nothing new on the wire; never a loop: the chain has its cap and ends with the tab, the app's visibility, the session or the setting.
      */
     private fun onHeldClaimTaken() {
         val takenAt = clock()
@@ -539,14 +542,15 @@ class BudsRepositoryImpl(
             }
             HoldReclaimMode.RECLAIM -> {
                 val attempt = reclaimAttempts
-                if (attempt >= HOLD_RECLAIM_DELAYS_MS.size) {
+                if (attempt >= HOLD_RECLAIM_CAP) {
                     _ancChannelTaken.value = ChannelTaken(takenAt, reclaimAttempts = attempt)
                     BleLogger.logConnectionEvent(
-                        "Message Stream re-claim stopped after $attempt re-claims — a tap, a pull or re-entering the noise-control tab claims again (ADR-062)",
+                        "Message Stream re-claim stopped after $attempt re-claims — Take it back again, a tap, a pull or re-entering the noise-control tab " +
+                            "claims again (ADR-062)",
                     )
                     return
                 }
-                val delayMs = HOLD_RECLAIM_DELAYS_MS[attempt]
+                val delayMs = HOLD_RECLAIM_STEP_MS
                 reclaimAttempts = attempt + 1
                 reclaimJob?.cancel()
                 reclaimJob = scope.launch {
@@ -558,7 +562,7 @@ class BudsRepositoryImpl(
                     }
                     if (!claimNow) return@launch
                     BleLogger.logConnectionEvent(
-                        "Message Stream re-claim ${attempt + 1}/${HOLD_RECLAIM_DELAYS_MS.size} after a foreign close, $delayMs ms later (ADR-062)",
+                        "Message Stream re-claim ${attempt + 1}/$HOLD_RECLAIM_CAP after a foreign close, $delayMs ms later (ADR-062)",
                     )
                     refreshAncMode(GET_RESPONSE_TIMEOUT_MS) // the claim's own `finally` keeps it as the hold while the tab is shown (ADR-061)
                 }
@@ -1116,6 +1120,16 @@ class BudsRepositoryImpl(
 
     override suspend fun refreshAncMode(): BudsResult<AncMode> {
         startReclaimChain() // ADR-062 item 3: Refresh or a pull is the user's own claim — a new chain
+        return refreshAncMode(GET_RESPONSE_TIMEOUT_MS)
+    }
+
+    /**
+     * The hint card's "Take it back again" (ADR-062 Update 2, `ai-sessions/0089`; the maintainer's choice in chat 2026-10-13, "one button, both modes"): a new
+     * chain, then the existing claim with its `Get` — the same path as Refresh's ANC claim, without a `Set` and without the battery claim of *Refresh battery*.
+     */
+    override suspend fun reclaimAncChannel(): BudsResult<AncMode> {
+        BleLogger.logConnectionEvent("Message Stream claim by the hint card's action (ADR-062 Update 2)")
+        startReclaimChain()
         return refreshAncMode(GET_RESPONSE_TIMEOUT_MS)
     }
 
@@ -1767,13 +1781,16 @@ class BudsRepositoryImpl(
         private const val MESSAGE_STREAM_LINGER_MS = 1_500L
 
         /**
-         * ADR-062 (the maintainer's choice in chat 2026-10-12, "3 s, 6 s, 12 s, then stop"): the delay before the re-claim after the first, second and third foreign
-         * close of one chain; its size is the cap. Designed around `CAP-074`'s Play services: it recovers the channel 5.2–5.7 s after losing it (20 of 20) and retries
-         * 2.2–2.6 s after a collided recovery (10 of 10) — 3 s lets that retry succeed first, so the app's connect finds Play on the channel (attempt 1 kills its
-         * socket, attempt 2 connects 0.4 s later) instead of racing the retry into a free channel. Those are one Play version's timers (🟡 for others:
-         * `ai-sessions/0040` 2.7–5.0 s, `CAP-059` 1.7–3.1 s). Not a polling interval: each delay follows one foreign close, and the chain is capped.
+         * ADR-062 Update 2 (`ai-sessions/0089`; the maintainer's choice in chat 2026-10-13, "P1"): the delay before the re-claim after **every** foreign close of
+         * the held claim, measured from the close (1.2.1's first step, kept). `CAP-075` (one Play version): Play retries 2.1–2.8 s after the cut, so at 3 s the
+         * app's attempt 1 meets Play on the channel, is refused and kills Play's socket, attempt 2 connects 0.7–1.0 s later; Play recovers 5.3–5.8 s after its loss
+         * and cuts the app again — a held 4.55–4.92 s of every ≈ 9.3 s (`CAP-075-FINDINGS.md` §1, §4). 1.2.1's 6- and 12-s steps only lengthened the dead time
+         * (Play's timers did not change over 15 cycles). Not a polling interval: each delay follows one foreign close, and the chain is capped.
          */
-        internal val HOLD_RECLAIM_DELAYS_MS: List<Long> = listOf(3_000L, 6_000L, 12_000L)
+        internal const val HOLD_RECLAIM_STEP_MS: Long = 3_000L
+
+        /** ADR-062 Update 2 (the maintainer's choice in chat 2026-10-13, "20 re-claims"): the re-claims per chain, ≈ 20 × 9.3 s ≈ 3 minutes; then the hint. */
+        internal const val HOLD_RECLAIM_CAP: Int = 20
 
         /** How long a read/write waits for the Buds' channel announcement (their first Maestro packet). */
         private const val MAESTRO_ANNOUNCE_WAIT_MS = 3_000L

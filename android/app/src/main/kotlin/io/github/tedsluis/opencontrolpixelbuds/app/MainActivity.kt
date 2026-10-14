@@ -69,6 +69,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.PermissionStatus
+import io.github.tedsluis.opencontrolpixelbuds.domain.PlayServicesPresence
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
 import io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState
 import io.github.tedsluis.opencontrolpixelbuds.domain.SessionLossCause
@@ -129,7 +130,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var darkModeSettingsStore: DarkModeSettingsStore
 
-    /** The Settings tab's "Noise-control channel" choice (DECISIONS.md ADR-062, `ai-sessions/0087`); the repository follows the same store. */
+    /** The Settings tab's "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") (DECISIONS.md ADR-062, `ai-sessions/0087`); the repository follows the same store. */
     @Inject
     lateinit var holdReclaimSettingsStore: HoldReclaimSettingsStore
 
@@ -398,6 +399,8 @@ class MainActivity : ComponentActivity() {
             val debugModeEnabled by debugSettingsStore.debugModeEnabled.collectAsStateWithLifecycle(initialValue = false)
             val darkMode by darkModeSettingsStore.darkMode.collectAsStateWithLifecycle(initialValue = DarkMode.DEFAULT)
             val holdReclaimMode by holdReclaimSettingsStore.mode.collectAsStateWithLifecycle(initialValue = HoldReclaimMode.DEFAULT)
+            // DECISIONS.md ADR-063 (`ai-sessions/0089`): re-asked on every resume — Play services can be installed, removed or disabled while the app is away.
+            var playServicesPresence by remember { mutableStateOf<PlayServicesPresence?>(null) }
 
             var bondedLookup by remember { mutableStateOf(companionPairing.lookupBonded()) }
             // "Use different Buds" (A68-APP-05) changes which bonded device is this app's — re-read the lookup when it has run.
@@ -416,6 +419,9 @@ class MainActivity : ComponentActivity() {
                         refreshPermissions("resume")
                         if (permissionStateFlow.value.bluetoothConnect == PermissionStatus.NOT_REQUESTED) requestPermissions()
                         bondedLookup = companionPairing.lookupBonded()
+                        val presence = PlayServicesProbe.presence(packageManager)
+                        if (presence != playServicesPresence) BleLogger.logConnectionEvent(PlayServicesProbe.logLine(presence))
+                        playServicesPresence = presence
                         linkRefresh.tryEmit(Unit)
                         // ADR-044 (c): visible again — the session may be re-opened once Android reports the Buds connected.
                         budsRepository.onAppVisible(true)
@@ -466,6 +472,7 @@ class MainActivity : ComponentActivity() {
                 ancModeCause = ancModeCause,
                 ancChannelTaken = ancChannelTaken,
                 holdReclaimMode = holdReclaimMode,
+                playServicesPresence = playServicesPresence,
                 caseBatteryError = caseBatteryError,
                 batteryRefreshError = batteryRefreshError,
                 safeMode = safeMode,
@@ -508,6 +515,8 @@ class MainActivity : ComponentActivity() {
                 onDisconnect = { applicationScope.launch { budsRepository.disconnect() } },
                 onAncModeSelected = { mode -> applicationScope.launch { budsRepository.setAncMode(mode) } },
                 onRefreshAncMode = { applicationScope.launch { budsRepository.refreshAncMode() } },
+                // DECISIONS.md ADR-062 Update 2 (`ai-sessions/0089`): the hint's "Take it back again" — a claim with its Get, no Set.
+                onReclaimAncChannel = { applicationScope.launch { budsRepository.reclaimAncChannel() } },
                 onRequestAddAncTile = {
                     // Asks Android directly to add the tile (API 33+, this app's minSdk) instead of
                     // requiring the user to find it themselves via Quick Settings' own edit screen
