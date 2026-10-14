@@ -955,6 +955,9 @@ own capture time (`frame.time_epoch`):
   `SetWallclock` (1430), so the clock was already set from an earlier connection.
 - 🟡 HYPOTHESIS: field 2 = the Buds' wall clock in ms since the Unix epoch, present only while the
   Buds hold a clock value set by `SetWallclock`. Field 3 (`0` in every sample) stays open.
+- *Note (2026-10-14, `ai-sessions/0090`, maintainer-approved in chat 2026-10-14, E-10):* `qzed/pbpctrl` never sends `SetWallclock`
+  (`libmaestro/src/service/impls/maestro.rs:115–116`, `// TODO: - SetWallClock`) and reports field 2 as "maybe unix time in ms (consistent ~60s difference to
+  actual time)" (`maestro_pw.proto:44`). That fits this 🟡 — a clock set earlier by the official app and left to drift — without proving it.
 - No consequence for the app: it reads fields 4 (software info) and 6/7 (runtime info) and skips
   the others.
 
@@ -1019,6 +1022,76 @@ No new capture; every figure was derived from the logs in this repository (maint
   `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` §4.1/§4.2 and the notes derived from them — include `CAP-041`'s packets twice (e.g. Volume EQ:
   5 `WriteSetting`s of setting 15, not 6). Not affected: which ids and names exist, the sweep's order, which settings are always `UNKNOWN`, constant
   or never written. Whether other `.log.last` files overlap a neighbouring capture in the same way was not checked. The recount is in `TODO.md` §6.
+
+### 2026-10-14 — The noise-control mode on DLCI 0x02 (setting 13), and the pbpctrl cross-check (`ai-sessions/0090`)
+
+Desk research over the 96 `btsnoop` logs under `captures/` (the `btsnooz` logs of `CAP-012`/`013`/`031` not included) and three external projects at pinned
+commits (`qzed/pbpctrl` `2620367`, MagicPodsCore `pbp2` `e0288c3`, omarchy-pixelbuds `2614ac1`), read in a scratch directory and never built or run.
+Maintainer-approved in chat 2026-10-14 (`AskUserQuestion` "APPLY", option *"Desk entry + script (Recommended)"*). Every DLCI 2/3/4/5 payload used here sits on
+the handle(s) whose Connection Complete names the Buds (`tshark -r <log> -Y 'bthci_evt.code==0x03 && bthci_evt.status==0' -T fields -e frame.number -e
+bthci_evt.connection_handle -e bthci_evt.bd_addr`, e.g. `CAP-051` 786 → `0x0002`; `CAP-056` 835 → `0x0005`).
+
+**Tool.** `scripts/anc_setting13_crosscheck.py` (new): per log every Buds `Notify ANC state` (`08 13`) classed `set` (an `08 12` ≤ 3 s before), `get` (an `08 11
+00 00` ≤ 1 s before) or `unprovoked`; every `SubscribeToSettingsChanges` REQUEST, `SERVER_STREAM` `4:{13:n}`, `ReadSetting` `4:{13:n}` answer and `WriteSetting`
+`4:{13:n}`; `--summary` one line per log; `--census` each event once across logs (by capture time to the ms) with RFCOMM `UA`/`DISC` tracking. It reuses
+`scripts/pwrpc_decode.py` and `scripts/message_stream_tally.py`'s reassembly.
+
+**1. Who subscribes.** `--summary <every log>`: `SubscribeToSettingsChanges` REQUESTs only in official-app captures, once per MAESTRO (re-)open — e.g.
+`CAP-051` 1177 `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 01 97 54 b0 7e` (REQUEST, ch 21, method `0x2821adf5`, empty payload). 🟢 0 in the 33
+OpenControl logs (`CAP-059`…`068`, `070`…`075`: `subscribe=0 stream13=0 read13=0 write13=0`); positive controls: the same command finds `subscribe=4 … read13=13`
+in `CAP-069`, `subscribe=6 … read13=7` in `CAP-056`, and the decoder reads OpenControl's own requests in its logs (`python3 scripts/pwrpc_decode.py <log> |
+grep -c 'dir=Sent REQUEST.*method=ReadSetting'` → 117 in `CAP-073` `.log.last`, 26 in `CAP-075` `hci2.log.last`, 112 in `CAP-064`; never `4:13`).
+
+**2. Every reported mode change against the stream** (`--census` over the 46 official-app captures that subscribe: `CAP-001`, `002`, `003`, `005`–`011`,
+`014`–`016`, `018`–`029`, `032`, `036`–`042`, `044`–`051`, `053`, `054`, `056`, `058`, `069`; `CAP-049`'s combined log left out):
+
+| Class (each event once) | Count | Examples |
+|---|---|---|
+| Buds-side Notify, a `4:{13:n}` within 1 s, `n` as predicted (1 `0x20`, 2 `0x08`, 3 `0x80`, 4 `0x40`, 0 Settable `00`) | 73 | `CAP-051` 1707/1717, 1754/1755, 1801/1802 (filmed holds); `CAP-027` 2930/2932, 3056/3057, 3091/3093 (`TOUCH-007`); `CAP-021` 13 of 13 |
+| the same, two Notifies 6–168 ms apart, matched in order | 2 | `CAP-056` 3983/4001 ↔ 4025/4028; `CAP-040` `.log.last` 10841/10851 ↔ 10842/10858 |
+| no stream packet — the Buds `DISC` MAESTRO and the Message Stream 2–30 ms after the Notify | 12 | `CAP-006` 2875, `007` 1350, `016` 2768, `037` 7165, `038` 3847, `040` 6386, `045` 1849, `050` 5972, `051` 1993 (→ `DISC` 1996, 1998), `056` 2458, 3670, `069` 6156 |
+| no stream packet — MAESTRO being re-opened | 1 | `CAP-047` `-2.log` 3996; the re-open's read 4066 = `13:3` |
+| no stream packet — a Notify at a fresh Message Stream open, no change | 1 | `CAP-005` 2348 |
+| Notify after the phone's `08 12` Set, stream with the same value | 39 | `CAP-051` 1530/1533 → 1534 `13:3`; `CAP-069` 5524…5698 |
+| stream packet with a Notify within 1 s | 100 | |
+| stream packet with no Notify and **no Message Stream open on any handle** | 3 | `CAP-038` 2170 `13:3`, 2205 `13:2`, 2479 `13:0` (DLCI 0x05 closed by the phone at 1756, 06:50:37.225; ACL down 2484) |
+
+🟢 FACT (promoted in `PROTOCOL.md` §4.1, Update of 2026-10-14): setting 13 is the mode, and a subscribed client gets it for every reported change, also when
+nobody holds the Message Stream; a change made together with the Buds' `DISC` of MAESTRO is not pushed. Byte check, `CAP-051` 1755 `7e 00 a5 03 2a 04 22 02 68
+04 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 39 67 a2 f7 7e`: payload `2a 04 22 02 68 04` = `4:{13:4}`, `08 07` = `SERVER_STREAM`, `10 15` = ch 21.
+
+**3. `ReadSetting 4:13`.** `--census`: 382 answers (each once) — 359 equal the latest reported mode, 6 have no earlier report in their log, 17 differ, each after
+a stretch with no reachable report (a MAESTRO re-open after a `DISC`, or minutes of silence: `CAP-047` `-2.log` 2537 `13:3` 65.6 s after a Settable-`00`
+Notify; `CAP-051` 2247 `13:0` 4.7 s after the re-homing `DISC`); `CAP-042` `.log.last` 4096 `13:2` answered 0.4 s before the Notify/stream of the same change
+(4099/4100). `WriteSetting 4:{13:n}`: 0 in all 96 logs.
+
+**4. Ring status (E-04).** `tshark -r <log> -Y 'btrfcomm.len>0 && (btrfcomm.dlci==4||btrfcomm.dlci==5) && (frame contains 04:01:00:01 || frame contains
+ff:01:00:02:04:01)' -T fields -e frame.time_epoch -e frame.p2p_dir -e data.data`, each Buds `04 01 00 01 xx` compared with the phone's last `04 01 00 01 yy`: 44
+messages in 10 logs (40 distinct), every one < 1 s after the phone's own Ring/Stop with the same value, 0 unprompted; the official app ACKs each (`ff 01 00 02
+04 01`, 4 of 4 in `CAP-025`, e.g. 2045 → 2048), OpenControl never. pbpctrl `libgfps/examples/ring.rs:135–160` expects further updates "once the user has touched
+the buds"; the Device Action page (fetched 2026-10-14): "Seeker's will listen for this message and provide an acknowledgement". Not observed here: no capture
+stopped a ring on a bud while a client held the channel.
+
+**5. Settings 1 and 5 (E-13).** `python3 scripts/pwrpc_decode.py` over the 96 logs, each `ReadSetting` RESPONSE paired with the request before it: setting 1
+136 of 136 `UNKNOWN`, setting 5 136 of 136 `4:{5:0}`; without `CAP-042`'s `.log.last` 133 / 133. `ai-sessions/0073`'s "138" used another log set; the duplicate
+changes neither conclusion.
+
+**6. Announcements (E-15, E-17).** `pwrpc_decode.py`, `GetSoftwareInfo` with `call_id 4294967295`: 459 in 87 logs (duplicates included) on channels 19 (218), 21
+(238), 24 (1), 26 (2) — never 18 or 23; 0 `GetSoftwareInfo` REQUESTs. Of 523 MAESTRO opens 459 carried an announcement within 5 s; 63 of the 64 others lived
+≤ 1.0 s (refused re-opens around docking, `CAP-025`, `CAP-040`, `CAP-011`); one stayed open without one: `CAP-050` 17702 (handle `0x000c`), where the official
+app's Dosimeter requests (17712) were not answered either.
+
+**7. Dosimeter (E-11).** `CAP-027` `SubscribeToLiveDb` streams, 197 values per channel; `10·log10(x)`: ch 19 min −12.2 / median 69.9 / max 83.2, ch 21 −20.0 /
+69.9 / 83.1 — a plausible range for dB (🟡; pbpctrl `maestro_pw.proto:295` "convert to dB via log10(x) * 10"). For `WELL-002`; it does not replace the meter.
+
+**8. Provenance of pbpctrl's knowledge (E-22; the maintainer's choice of place, `AskUserQuestion` "Provenance").** pbpctrl does not say how it got the
+protocol. Its history shows public sources (`docs/Notes.md`: the Fast Pair spec, AOSP; Pigweed's `pw.rpc.packet.proto`), listening and probing from Linux
+(`libmaestro/src/pwrpc/utils.rs:11–14` `EncodedMessage` "for reverse-engineering … `protoscope`"; "returns non-zero status" comments) and — most likely — names
+from Google's app: pw_rpc ids are 65599 hashes, so the method names need a string source; the 13 peers of `goq` (incl. `DEBUG_APP`), the 17 gesture types of
+`qhp`, `qhs`'s `ANC_STATE_*` and "Allegro" (`fxb.java:43`, `fsf.java`) reappear letter for letter, while its battery enum (UNKNOWN / NOT_CHARGING / CHARGING)
+differs from the APK's `qhw` (`NOT_CHARGING(1) WIRED(2) GENERIC_QI(3)`) — its own guess there. **pbpctrl's names therefore weigh as "APK name", not as
+independent evidence** next to this project's own APK reading. MagicPodsCore's Pixel Buds support says it reimplemented pbpctrl's framing, address tables
+and id hash (commit 97e36ab); omarchy-pixelbuds names pbpctrl as the source of what it ported (`bridge/maestro.py:6–12`).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

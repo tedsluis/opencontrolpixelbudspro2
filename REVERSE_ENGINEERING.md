@@ -1454,6 +1454,35 @@ the first time against every one of its 20 real discriminators + default branch.
     field 32 is written only from Settings provider id 2116 (`MaestroDeviceSettingsProviderService.java:99–106`).
   - 🟡 for every reading of a name as a Buds behaviour. The 38-row register (type, write site, read case, wire samples of 80 logs) is
     `ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md` §4.2.
+- **Update (2026-10-14, `ai-sessions/0090`, mechanical, ADR-017; maintainer-approved in chat 2026-10-14, `AskUserQuestion` "APK check", option *"RE Update +
+  ADR-025 pointer (Recommended)"*, and "APPLY", option *"RE register names"*) — field 13 is the app's only ANC-state source; names from pbpctrl.**
+  - 🟢 (code) **The companion app's ANC state has one writer:** `gea.I(device, qhs)` ("Update device(%s) Anc state: %s", `gck.java:208–211`), called only from
+    `fxb.smali:1237` (`fxb` case 13) — smali-wide `grep -rn 'Lgea;->I(Ljava/lang/String;Lgcq;)V\|Lgck;->I(Ljava/lang/String;Lgcq;)V'` → 1 site; positive control
+    `gea.J` (attention alert) → `gaa.smali`. `fxb` is fed by (a) `ReadSetting` answers and (b) the settings stream: `fxg.i()` → `esa` case 19 ("Start stream
+    setting value with Route %d", `esa.java:150–155`) → `fvo` case 2 (smali `:pswitch_b`, `fvo.smali:1495ff.`; JADX skipped `fvo.call()`): "Invoke stream
+    SubscribeToSettingsChanges rpc", `npy.f(channel, "maestro_pw.Maestro", "SubscribeToSettingsChanges")`; every `qja` → each `fxb.a(qja)` (`fxx.smali`
+    `:pswitch_12`). `ReadSetting 4:13` is sent by `fwx` (`fsy` case 12, `fsy.java:204–212`) on every value of `fwx.c`, which `fwt` case 2 (`fwt.java:115–119`)
+    fills from each `SubscribeRuntimeInfo` packet's field 7 (`qhy`: 3 × `BOOL`, `python3 scripts/decode_rawmessageinfo.py qhy.java`) — on the wire 6 of 27
+    `4:13` requests in `CAP-045`/`051`/`056`/`069` follow such a packet (🟡 trigger detail; the rest are the connect sweep). Wire side: `PROTOCOL.md` §4.1,
+    Update of 2026-10-14. (So `DECISIONS.md` ADR-025's "downstream sink" `gck` is fed by Maestro, not Play services — its pointer Update of 2026-10-14.)
+  - **pbpctrl's names** (`qzed/pbpctrl` pin `2620367`, `libmaestro/proto/maestro_pw.proto:82–101` `AllegroSettingType`) — **pbpctrl naming, most likely taken from
+    Google's app, not evidence** (`DESKRESEARCH_FINDINGS.md` 2026-10-14, provenance): 1 `ALLEGRO_AUTO_OTA_ENABLE` (pbpctrl help: automatic updates "when the
+    device is not in use"; the Pro 2 answers `UNKNOWN`, 136 of 136), 2 `OHD_ENABLE`, 3 `OOBE_IS_FINISHED`, 4 `GESTURE_ENABLE`, 5 `DIAGNOSTICS_ENABLE` (help: makes
+    the app send diagnostics to Google; reads `5:0` 136 of 136), 6 `OOBE_MODE` (help: blocks touch gestures during the setup wizard), 7 `GESTURE_CONTROL`, 8
+    `ANC_ACCESSIBILITY_MODE`, 9 `ANCR_STATE_ONE_BUD`, 10 `ANCR_STATE_TWO_BUDS` (8/9/10: "reading … returns non-zero status (code: 2)" on the gen 1), 11
+    `MULTIPOINT_ENABLE`, 12 `ANCR_GESTURE_LOOP`, 13 `CURRENT_ANCR_STATE`, 14 `OTTS_MODE`, 15 `VOLUME_EQ_ENABLE`, 16 `CURRENT_USER_EQ`, 17 `VOLUME_ASYMMETRY`,
+    18 `LAST_SAVED_USER_EQ`. The types agree with this register (8 `BOOL`, 9/10/13 `ENUM qhs`). None of these literals is in the APK (`grep -rl` over
+    `jadx-output/sources` and the smali: `ANCR_STATE_ONE_BUD`, `ANCR_STATE_TWO_BUDS`, `ANC_ACCESSIBILITY`, `ANCR_STATE`, `CURRENT_ANCR` → 0/0; positive control
+    `ANC_STATE_ADAPTIVE` 3/2); "Allegro" is in it (`fxb.java:43` "handleAllegroSetting for %s"; `fsf.java` device types 4/5 `ALLEGRO`).
+  - **Hold actions** (field 7's value, pbpctrl `RegularActionTarget`, `proto:158–166`): 1 `CHECK_NOTIFICATIONS`, 2 `PREVIOUS_TRACK_REPEAT`, 3 `NEXT_TRACK`, 4
+    `PLAY_PAUSE_TRACK`, 5 `ANC_CONTROL`, 6 `ASSISTANT_QUERY` — 🟡 names; the wire has carried only 5 and 6 (ADR-045). The app-side enum `fph` (`fph.java:6–14`)
+    shares 1–3 but has 4 `TRANSLATE` … 8 `ANC` — not the wire's enum. Never written by this project.
+  - **`SubscribeToOobeActions` (`qje`)**: field 1 validates against `qhp` (`qgx.java:52–53`, `qgx.h` = `qgx(7)`); `qhp`'s 17 constants (`qhp.java:8–24`,
+    `ACTION_TYPE_UNKNOWN(0)` … `LEFT_ON_HEAD(10)`, `LEFT_OFF_HEAD(11)`, `RIGHT_ON_HEAD(12)`, `RIGHT_OFF_HEAD(13)` … `HOLD_CANCEL(16)`) equal pbpctrl's `OobeAction`
+    (`proto:196–213`) name for name. Never on any wire.
+  - **Peers**: `goq` (`HOST(1)` … `DEBUG_APP(9)`, `MAESTRO_A(10)`, `LEFT_TAHITI(11)`, `RIGHT_TAHITI(12)`, `MAESTRO_B(13)`) equals pbpctrl's `Peer`
+    (`libmaestro/src/protocol/addr.rs:8–20`) constant for constant; channels 18–27 (`addr.rs:87–96`) = `fux.java:90–103`. `DEBUG_APP` ↔ the SDP service "DEBUG
+    APP" is a speculative note only.
 
 ### `defpackage.qjn` / `defpackage.qjt` / `defpackage.qhx` / `defpackage.qjv` — `qjc`/`qja`'s other 4 oneof-group alternatives
 
