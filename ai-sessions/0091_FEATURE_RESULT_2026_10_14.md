@@ -267,9 +267,11 @@ fixture names, `Varint.kt`, `CaseBatteryFrame.kt` (`Proto.fields`).
 **Deferred documentation:** none beyond `TODO.md`'s open items (the maintainer's next steps below; `CAP-076`'s analysis will add an ADR-065 Update with the
 numbers and may settle `PROTOCOL.md` §6's wear-change item). The capture logs' `tshark` positive control for "0 `SABM` from the app" belongs to that analysis.
 
-**Commits:** none yet — the maintainer's yes is asked first (Phase G). Proposed, per concern: `feat`: the subscription, the read of 13 and the stream in the
-codec and the repository; `refactor`: the hold/re-claim/Play removal (code, manifest, UI); `test`: the fixtures and tests; `docs`: ADR-065 and the documents,
-`CAP-076`, 1.3.0.
+**Commits** (the maintainer's yes in chat 2026-10-14, `AskUserQuestion` "Commit+push" → *"Ja, commit en push"*), on `feature/settings-stream`, pushed
+2026-10-14 after `git fetch` (origin/main unchanged, no rebase needed), no force: `bb7a843` feat(data): the subscription, the read of 13 and the stream in the
+codec and the repository; `7756e55` refactor: the hold/re-claim/Play removal (code, manifest, UI); `152c5b3` test: the fixtures and tests; `8a72572` docs:
+ADR-065 and the documents, `CAP-076`, 1.3.0. The split is by file and concern — the gate was run on the final tree, not on each intermediate commit
+(`BudsRepositoryImpl.kt` carries both the feature and the removal in the first commit). A fifth docs commit records this paragraph.
 
 **The maintainer's next steps (not executed by this session):** push `feature/settings-stream` and open the PR with the Release checklist; CI green; B1
 `scripts/release.sh 1.3.0`, B2, B3; C1–C2 the `CAP-076` run in both users (the skeleton); a CAPTURE session for C3/C4 and the verdict; only then the
