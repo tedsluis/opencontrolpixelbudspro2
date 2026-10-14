@@ -50,7 +50,8 @@ object Maestro {
      * controls), 7 (press-and-hold), 17 (balance), 19 (mono), 22 (conversation detection); since `ai-sessions/0056` 12 (the press-and-hold ANC-mode list,
      * ADR-046 amending ADR-036; request = `CAP-056` frame 1529 on channel 19, `CAP-036` 1514 on 21); since `ai-sessions/0074` 11 (Multipoint, ADR-036/053;
      * request = `CAP-024` frame 1009 on channel 19, `CAP-069` 1261 on 21), 15 (Volume EQ, ADR-055; `CAP-024` 1031 on 19, `CAP-036` 1520 on 21), 27 and 28 (case sounds, ADR-054; `CAP-024` 1089/1093 on 19, `CAP-036` 1553/1556 on
-     * 21) and 29 (head gestures, ADR-052; `CAP-024` 1097 on 19, `CAP-036` 1559 on 21).
+     * 21) and 29 (head gestures, ADR-052; `CAP-024` 1097 on 19, `CAP-036` 1559 on 21); since `ai-sessions/0091` 13 (the noise-control mode, ADR-064/065;
+     * request = `CAP-051` 1178 on channel 21, `CAP-056` 1450 on 19).
      */
     val READABLE_FIELDS: Set<Int> = EQ_FIELDS + setOf(
         SettingsCodec.FIELD_IN_EAR_DETECTION,
@@ -58,6 +59,7 @@ object Maestro {
         SettingsCodec.FIELD_PRESS_AND_HOLD,
         SettingsCodec.FIELD_MULTIPOINT,
         SettingsCodec.FIELD_ANC_MODE_LIST,
+        SettingsCodec.FIELD_ANC_STATE,
         SettingsCodec.FIELD_VOLUME_EQ,
         SettingsCodec.FIELD_VOLUME_BALANCE,
         SettingsCodec.FIELD_MONO_AUDIO,
@@ -92,6 +94,19 @@ object Maestro {
         channelId = channelId,
         serviceId = SERVICE_ID,
         methodId = METHOD_SUBSCRIBE_RUNTIME_INFO,
+    )
+
+    /**
+     * `SubscribeToSettingsChanges` (DECISIONS.md ADR-064 item 1, ADR-065 item 1; `ai-sessions/0091`): the one server-stream subscription per MAESTRO session
+     * after which the Buds push every setting change as `4:{N: …}` (PROTOCOL.md §4.1 Update of 2026-10-14). An empty payload, like
+     * [subscribeRuntimeInfoRequest]; sealed with the announced channel's address it is byte-identical to the official app's `CAP-051` 1177 (channel 21,
+     * `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 01 97 54 b0 7e`) and `CAP-056` 1451 (channel 19).
+     */
+    fun subscribeToSettingsChangesRequest(channelId: Int): RpcPacket = RpcPacket(
+        type = PwRpc.TYPE_REQUEST,
+        channelId = channelId,
+        serviceId = SERVICE_ID,
+        methodId = METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES,
     )
 
     /**

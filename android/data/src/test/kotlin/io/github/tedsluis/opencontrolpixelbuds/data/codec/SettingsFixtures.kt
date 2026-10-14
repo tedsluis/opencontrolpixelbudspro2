@@ -95,6 +95,12 @@ internal object Settings036 {
     /** Frame 1561 (04:36:34.034): `4:{29:2}` — head gestures **on** (2 = on, ADR-052); byte-identical to `CAP-069` 1226 and `CAP-058` 4520. */
     const val READ_29_RESP = "7e00a5032a052203e80102080110151dea71de7d5e2551aed0ae898482177e"
 
+    /** Frame 1517 (06:36:33.200): `ReadSetting 4:13` — the noise-control mode (ADR-064/065, `ai-sessions/0091`; = `CAP-051` 1178). */
+    const val READ_13_REQ = "7e004b0310151dea71de7d5e2551aed0ae2a02200d9e82abac7e"
+
+    /** Frame 1519 (06:36:33.249): `4:{13:0}` — no mode settable (the Buds in the case; = `CAP-045` 2033). */
+    const val READ_13_RESP = "7e00a5032a0422026800080110151dea71de7d5e2551aed0ae651b08147e"
+
     /** Frame 1525: `4:{16:[0.1, 0.0, 0.3, 0.2, 0.2]}` — the EQ read answer of the same sweep. */
     const val READ_16_RESP =
         "7e00a5032a1e221c8201190dc0cccc3d15000000001da099993e25c0cc4c3e2dc0cc4c3e080110151dea71de7d5e2551aed0ae85b618ed7e"
@@ -107,6 +113,7 @@ internal object Settings036 {
         2 to READ_2_RESP, 4 to READ_4_RESP, 7 to READ_7_RESP, 16 to READ_16_RESP, 17 to READ_17_RESP, 19 to READ_19_RESP, 22 to READ_22_RESP,
         12 to Settings056.READ_12_RESP_OFF_UNTICKED_1516, // the same sweep's field-12 answer (frame 1516, request 1514) — ai-sessions/0056
         11 to READ_11_RESP, 15 to READ_15_RESP, 27 to READ_27_RESP, 28 to READ_28_RESP, 29 to READ_29_RESP, // ai-sessions/0074
+        13 to READ_13_RESP, // ai-sessions/0091 (ADR-064/065): the same sweep's field-13 answer (frame 1519, request 1517)
     )
 }
 

@@ -256,8 +256,8 @@ class SettingsCodecTest {
         }
         for (ack in listOf(Settings074.ACK_CH19_2061, Settings074.ACK_CH21_5683)) assertEquals(true, (route(ack) as RoutedFrame.RpcResult).isOk)
         // The Buds' own pushes of an "off" (CAP-058 5682 / 5627): 27 and 28 are told apart on the read side too.
-        assertEquals(RoutedFrame.Setting(SettingValue.Flag(27, false)), route(Settings074.STREAM_27_OFF_CH21_5682))
-        assertEquals(RoutedFrame.Setting(SettingValue.Flag(28, false)), route(Settings074.STREAM_28_OFF_CH21_5627))
+        assertEquals(RoutedFrame.Setting(SettingValue.Flag(27, false), stream = true), route(Settings074.STREAM_27_OFF_CH21_5682))
+        assertEquals(RoutedFrame.Setting(SettingValue.Flag(28, false), stream = true), route(Settings074.STREAM_28_OFF_CH21_5627))
     }
 
     // ---- field 15, "Volume EQ" (ADR-055, ai-sessions/0074) ----
@@ -367,7 +367,7 @@ class SettingsCodecTest {
     fun ancModeListDecodes() {
         assertEquals(RoutedFrame.Setting(SettingValue.AncModes(all)), route(Settings056.READ_12_RESP_ALL_1531))
         assertEquals(RoutedFrame.Setting(SettingValue.AncModes(all.with(AncMode.OFF, false))), route(Settings056.READ_12_RESP_OFF_UNTICKED_1516))
-        assertEquals(RoutedFrame.Setting(SettingValue.AncModes(all.with(AncMode.ACTIVE, false))), route(Settings056.PUSH_NC_OFF_1696))
+        assertEquals(RoutedFrame.Setting(SettingValue.AncModes(all.with(AncMode.ACTIVE, false)), stream = true), route(Settings056.PUSH_NC_OFF_1696))
         fun payload(frame: String) = (PwRpc.decode((Hdlc.decode(hex(frame)) as BudsResult.Success).value.payload) as BudsResult.Success).value.payload
         assertEquals(SettingValue.AncModes(all.with(AncMode.ADAPTIVE, false)), SettingsCodec.decode(payload(Settings056.WRITE_ADAPTIVE_OFF_1815)))
         assertEquals(SettingValue.AncModes(all.with(AncMode.TRANSPARENT, false)), SettingsCodec.decode(payload(Settings056.WRITE_TRANSPARENCY_OFF_1843)))
@@ -396,7 +396,9 @@ class SettingsCodecTest {
         // ADR-046: field 12 is readable — CAP-036 frame 1514 (channel 21) and CAP-056 frame 1529 (channel 19), byte for byte.
         assertEquals(Settings056.READ_12_REQ_CH21_1514, wire(Maestro.readSettingRequest(21, 12)!!))
         assertEquals(Settings056.READ_12_REQ_CH19, wire(Maestro.readSettingRequest(19, 12)!!))
-        assertNull(Maestro.readSettingRequest(21, 13), "setting 13: no read is approved (ai-sessions/0074 §3)")
+        // ADR-064/065 (`ai-sessions/0091`): field 13 is readable — CAP-051 1178 (channel 21) and CAP-056 1450 (channel 19), byte for byte.
+        assertEquals(SettingsStream.READ_13_REQ_CH21_CAP051_1178, wire(Maestro.readSettingRequest(21, 13)!!))
+        assertEquals(SettingsStream.READ_13_REQ_CH19_CAP056_1450, wire(Maestro.readSettingRequest(19, 13)!!))
         assertNull(Maestro.readSettingRequest(21, 39))
     }
 

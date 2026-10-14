@@ -19,6 +19,7 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.data.codec
 
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
 import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
@@ -60,6 +61,16 @@ sealed class SettingValue {
     data class HeadGestures(val on: Boolean) : SettingValue() {
         override val field: Int get() = SettingsCodec.FIELD_HEAD_GESTURES
     }
+
+    /**
+     * Field 13, the noise-control mode as a setting (🟢 PROTOCOL.md §4.1 Update of 2026-10-14; DECISIONS.md ADR-064, ADR-065; `ai-sessions/0091`):
+     * 1 = Off, 2 = Noise cancellation, 3 = Transparency, 4 = Adaptive — `CAP-051` 1225 (`13:4`), 1717 (`13:2`), 1802 (`13:3`), `CAP-021` 1089 (`13:1`);
+     * 0 = no mode settable ([mode] `null` — ADR-049's Settable `00`: `CAP-045` 2033/2277, `CAP-051` 2247 after the Buds' own `DISC`), never shown as a mode.
+     * Any other value is not interpreted (the decoder returns `null`). **Read only** — never encoded (ADR-064 item 4: `WriteSetting 4:{13:n}` stays gated).
+     */
+    data class AncState(val mode: AncMode?) : SettingValue() {
+        override val field: Int get() = SettingsCodec.FIELD_ANC_STATE
+    }
 }
 
 /**
@@ -75,6 +86,9 @@ object SettingsCodec {
     const val FIELD_PRESS_AND_HOLD = 7
     const val FIELD_MULTIPOINT = 11
     const val FIELD_ANC_MODE_LIST = 12
+
+    /** The noise-control mode as a setting (ADR-064/065, `ai-sessions/0091`) — see [SettingValue.AncState]; read only. */
+    const val FIELD_ANC_STATE = 13
 
     /**
      * "Volume EQ" (🟢 PROTOCOL.md §4.5.6; ADR-055). Writes are byte-identical to `CAP-022` 1871/1895 (channel 19), `CAP-041` 2461 (channel 21, off) and — the
@@ -108,6 +122,13 @@ object SettingsCodec {
         FIELD_IN_EAR_DETECTION, FIELD_TOUCH_CONTROLS, FIELD_MULTIPOINT, FIELD_VOLUME_EQ, FIELD_MONO_AUDIO, FIELD_CONVERSATION_DETECTION,
         FIELD_CASE_SOUND_OTHER_ALERTS, FIELD_CASE_SOUND_EARBUDS_REPLACED,
     )
+
+    /** Field 13's wire values (PROTOCOL.md §4.1 Update of 2026-10-14): 0 = none settable, 1 = Off, 2 = Noise cancellation, 3 = Transparency, 4 = Adaptive. */
+    private const val ANC_STATE_NONE = 0
+    private const val ANC_STATE_OFF = 1
+    private const val ANC_STATE_ACTIVE = 2
+    private const val ANC_STATE_TRANSPARENT = 3
+    private const val ANC_STATE_ADAPTIVE = 4
 
     private const val FIELD4 = 4
     private const val WIRETYPE_VARINT = 0
@@ -203,8 +224,27 @@ object SettingsCodec {
                 HEAD_GESTURES_ON -> SettingValue.HeadGestures(true)
                 else -> null // 0, 3, … : not interpreted (ADR-052: shown as "—")
             }
+            FIELD_ANC_STATE -> when (f.varint) {
+                ANC_STATE_NONE -> SettingValue.AncState(null)
+                ANC_STATE_OFF -> SettingValue.AncState(AncMode.OFF)
+                ANC_STATE_ACTIVE -> SettingValue.AncState(AncMode.ACTIVE)
+                ANC_STATE_TRANSPARENT -> SettingValue.AncState(AncMode.TRANSPARENT)
+                ANC_STATE_ADAPTIVE -> SettingValue.AncState(AncMode.ADAPTIVE)
+                else -> null // 5, … : not interpreted
+            }
             else -> null
         }
+    }
+
+    /**
+     * The one field number of a `4:{N: …}` payload, whatever N — for the router's "a stream packet for a field this app does not read" line (ADR-065 item 2:
+     * logged payload-free, not interpreted, not an [UnidentifiedFrame]). `null` for any other shape. Never throws.
+     */
+    fun fieldOf(payload: ByteArray): Int? {
+        val top = Proto.fields(payload) ?: return null
+        if (top.size != 1 || top[0].number != FIELD4) return null
+        val inner = Proto.fields(top[0].bytes ?: return null) ?: return null
+        return inner.singleOrNull()?.number
     }
 
     /**

@@ -42,8 +42,17 @@ sealed class RoutedFrame {
     data class ModelId(val frame: ModelIdFrame) : RoutedFrame()
     data class Eq(val frame: EqFrame) : RoutedFrame()
 
-    /** A non-EQ setting value (`4:{N: …}`, ADR-036/045) from a `ReadSetting` answer or the settings-change stream (`ai-sessions/0052`). */
-    data class Setting(val value: SettingValue) : RoutedFrame()
+    /**
+     * A non-EQ setting value (`4:{N: …}`, ADR-036/045) from a `ReadSetting` answer ([stream] false, a `RESPONSE`) or the settings-change stream the app
+     * subscribes to ([stream] true, a `SERVER_STREAM` packet — DECISIONS.md ADR-064/065, `ai-sessions/0091`; `CAP-056` 1696/2175, `CAP-069` 2502).
+     */
+    data class Setting(val value: SettingValue, val stream: Boolean = false) : RoutedFrame()
+
+    /**
+     * A settings-stream packet `4:{N: …}` for a field this app does not read (N outside `Maestro.READABLE_FIELDS`) — DECISIONS.md ADR-065 item 2: logged
+     * payload-free and not interpreted; not an [UnidentifiedFrame], since its meaning is known (a setting changed) even though its value is not shown.
+     */
+    data class UnreadSetting(val field: Int) : RoutedFrame()
     data class Ring(val frame: RingFrame) : RoutedFrame()
     data class Battery(val frame: BatteryFrame) : RoutedFrame()
 
@@ -296,7 +305,12 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
     ) {
         val eq = EqFrameDecoder.decode(packet)
         if (eq is BudsResult.Success) return RoutedFrame.Eq(eq.value)
-        SettingsCodec.decode(packet.payload)?.let { return RoutedFrame.Setting(it) }
+        val stream = packet.type == PwRpc.TYPE_SERVER_STREAM
+        SettingsCodec.decode(packet.payload)?.let { return RoutedFrame.Setting(it, stream) }
+        // ADR-065 item 2 (`ai-sessions/0091`): a pushed change of a field this app does not read is said, not shown — and not an UnidentifiedFrame.
+        if (stream && method == Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES) {
+            SettingsCodec.fieldOf(packet.payload)?.takeIf { it !in Maestro.READABLE_FIELDS }?.let { return RoutedFrame.UnreadSetting(it) }
+        }
     }
     // ADR-043 (+ its 2026-09-25 Update): the runtime-info stream the app subscribes to once per Connect; the Case and each bud's charging state.
     if (method == Maestro.METHOD_SUBSCRIBE_RUNTIME_INFO &&
