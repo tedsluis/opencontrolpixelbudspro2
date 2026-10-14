@@ -16,9 +16,11 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 - [x] **D4 (the maintainer):** done 2026-10-13 — the published 1.2.1 installed on the phone with Obtainium (the maintainer, chat 2026-10-13: "De installatie
       van 1.2.1 op mijn telefoon met Obtainium is gelukt"); the tested build and the published one are the same file (re-checked with `gh release download`).
 - E1–E4 done by the pull request of `release/1.2.1-after` (CHANGELOG date, README, the Release log row, the session logs, the notes template).
-- [ ] **M — the 1.2.2 release steps** (prepared in `ai-sessions/0089`, branch `feature/channel-control`): the pull request and both CI workflows; B1
-      `scripts/release.sh 1.2.2` on the merged tip; B2; B3 `cp -a dist/1.2.2 ~/opencontrol-1.2.2-tested`; C1–C2 the `CAP-076` run (Group BL, both users); a CAPTURE
-      session for C3/C4 (the verdict); then D1–D4 / E1–E4 (`RELEASING.md`).
+- [x] **1.2.2 published 2026-10-14** (tag `v1.2.2` on build commit `bfd7891`, PR #49 merged with `5b204ea`; E1–E4 by the pull request of `release/1.2.2-after`).
+      **No hardware capture:** the maintainer tested 1.2.2 on the phone and released it without `CAP-076` (chat 2026-10-14). D4 (install the published APK with
+      Obtainium) is the maintainer's (**M**).
+- [ ] `CAP-076` (Group BL, skeleton by `ai-sessions/0089`) stays planned but is **not** required for 1.2.2; whether it is still run depends on `ai-sessions/0090`
+      (the DLCI 0x02 setting-13 route) — **M**.
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
   unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). The Owner user's stored "Noise-control channel" choice is "Take it back" and the secondary
   user's too (`CAP-075-FINDINGS.md` §4) — the default "Show a hint" is not restored.
@@ -71,7 +73,7 @@ with the hold's untested branches below. **Next app run:** none planned — thes
 |---|---|---|---|
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
 | `CAP-030` | Q #19–20 | Loud Noise Protection / Adaptive Audio (firmware naming never reconciled with `release_5.203`, `PROTOCOL.md` §0.1) | Pixel 7a, official app |
-| `CAP-076` | BL | The 1.2.2 run (`ai-sessions/0089`, ADR-062 Update 2, ADR-063): the re-claim 3 s after every cut up to 20, Take it back again, the cause line, the renamed card — both users | Pixel 9a, OpenControl 1.2.2 |
+| `CAP-076` | BL | (not required for 1.2.2, released 2026-10-14 without it — see §1) The 1.2.2 run (`ai-sessions/0089`, ADR-062 Update 2, ADR-063): the re-claim 3 s after every cut up to 20, Take it back again, the cause line, the renamed card — both users | Pixel 9a, OpenControl 1.2.2 |
 
 From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedures for a next attempt, no skeleton written:
 
@@ -184,6 +186,9 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
+- [ ] **Next: `ai-sessions/0090_CROSSCHECK_PROMPT_2026_10_14.md`** (written 2026-10-14): the pbpctrl-derived list E-01 … E-23, led by the question whether the
+      app can learn a press-and-hold's mode on DLCI 0x02 (Maestro setting 13, `SubscribeToSettingsChanges`) instead of the contested Message Stream — desk
+      research only.
 - [ ] **The noise-control channel in the Play user — after `ai-sessions/0089` (1.2.2: P1 + P2 + P4 built, ADR-062 Update 2):** still later — P3 a shorter
       attempt-2 latency for the on-demand channel (`CAP-075-FINDINGS.md` §9: the re-claim's `SABM` 0.7–1.0 s after attempt 1's refusal); P5 the mode on the app's
       own channel (§4's lead). Rejected on evidence: a re-claim before Play's retry (§9 P6). Whether 20 re-claims in a row drive Play's "Retry times remaining" to 0

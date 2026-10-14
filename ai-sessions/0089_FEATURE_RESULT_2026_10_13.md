@@ -6,7 +6,7 @@
 **Title:** Build the follow-up of `CAP-075` (`ai-sessions/0088`, "P1 + P2 + P4"): the constant 3-s re-claim step with a longer, capped chain, a "Take it back
 again" action on the hint card, a cause line for a mode learned by a re-claim's own read, and the switch renamed and explained (options that say whether the
 phone has Google Play services)
-**Status:** awaiting maintainer sign-off (built, tested, documented and committed on `feature/channel-control`; the pull request, the release and `CAP-076` are the maintainer's)
+**Status:** complete (closed 2026-10-14 in the chat continuation: PR #49 merged, 1.2.2 published with tag `v1.2.2` on `bfd7891` — the maintainer released it after his own test on the phone, without `CAP-076`; see Commits)
 
 ## Summary (plain language)
 
@@ -256,7 +256,11 @@ The maintainer's answer in chat 2026-10-13 (`AskUserQuestion` "Commit" → *"Ja:
 - `4d33759` docs(capture): CAP-076 (Group BL) skeleton — the 1.2.2 run in both GrapheneOS users; APP_TESTPLAN §Y
 - this file and the `ai-sessions/INDEX.md` row: the commit after these (its hash is the next session's to back-fill, `AI_SESSION_LOG_PROCEDURE.md` §4b).
 
-Pushed without force after `git fetch` and a rebase check; the pull request is a separate question (not opened by this session unless the maintainer says so).
+Pushed without force after `git fetch` and a rebase check. **Continuation in chat 2026-10-13/14:** the session-log commit is `bfd7891` (docs(ai-sessions): 0089
+RESULT and INDEX row) — also the build commit of `scripts/release.sh 1.2.2` (B1); PR #49 opened (the maintainer's yes), CI green, B1–B3 by the maintainer;
+merged with merge commit `5b204ea` (`gh pr merge --merge`); tag `v1.2.2` (SSH-signed) on `bfd7891`; the release published 2026-10-14 from
+`~/opencontrol-1.2.2-tested` with "New in 1.2.2" and "Known issues" paragraphs added to the notes; `CAP-076` not run — the maintainer's choice in chat
+2026-10-14 ("Ik heb versie 1.2.2 getest zonder CAP-076 uit te voeren en het werkt"). E1–E4: the pull request of `release/1.2.2-after`.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0089_FEATURE_RESULT_2026_10_13.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0089_FEATURE_RESULT_2026_10_13

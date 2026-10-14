@@ -7,7 +7,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **Latest release: [1.2.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.1)** (2026-10-13). You can also
+> **Latest release: [1.2.2](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.2)** (2026-10-14). You can also
 > [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
@@ -126,13 +126,14 @@ with Google Play services "Show a hint" shows a press-and-hold only while this a
 channel), then the hint; "Take it back" holds the channel about 43 % of a 44-second chain (three re-claims per visit of the tab), then nothing until a tap —
 the timings are one Play version's.
 
-**1.2.2** (prepared 2026-10-13 in `ai-sessions/0089` after `CAP-075`; not released yet — its hardware run is `CAP-076`, Group BL): the setting is now called
+**1.2.2** (2026-10-14; prepared 2026-10-13 in `ai-sessions/0089` after `CAP-075`; build `bfd7891`; tested by the maintainer on the phone without a recorded
+capture — `CAP-076`, Group BL, was not run): the setting is now called
 **Noise control with Google Play services**, and its options say which phone they are for — "This phone has no Google Play services" (the default) or "This
 phone has Google Play services"; a choice made in 1.2.1 is kept. The card says whether Android finds Google Play services on the phone (information only,
 ADR-063). With Google Play services the app takes the channel back **3 seconds after every time Play takes it, up to 20 times** (about 3 minutes) per visit of the
 noise-control tab, so a press-and-hold is shown about half of the time for the whole 3 minutes (ADR-062 Update 2); the hint has a **Take it back again** button
 (no mode written); and the noise-control (i) says when a mode the app read had changed while it did not have the channel. Expected numbers are `CAP-075`'s (one
-Play version), not yet measured with 1.2.2.
+Play version), not measured with 1.2.2.
 
 **Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
@@ -179,7 +180,7 @@ to design, implement, test, and document a native Android app.
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
   the settings reads (ADR-036) and writes (touch controls, press and hold, conversation detection, balance, mono, in-ear detection — ADR-045/046/047;
   from 1.1.0 head gestures, Multipoint, case sounds and Volume EQ — ADR-052…055), from 1.2.0 the serial numbers (one `GetHardwareInfo` per connection, ADR-058),
-  the "probably worn" line (ADR-059) and "Changed by the Buds" (`ai-sessions/0082`) with the noise-control channel held on its tab (ADR-061, `ai-sessions/0084`), from 1.2.1 the Noise-control channel setting (hint or re-claim after another app takes the channel — ADR-062, `ai-sessions/0087`; in 1.2.2, not released yet, renamed "Noise control with Google Play services", the re-claim 3 s after every cut up to 20 times, "Take it back again" — ADR-062 Update 2, ADR-063, `ai-sessions/0089`),
+  the "probably worn" line (ADR-059) and "Changed by the Buds" (`ai-sessions/0082`) with the noise-control channel held on its tab (ADR-061, `ai-sessions/0084`), from 1.2.1 the Noise-control channel setting (hint or re-claim after another app takes the channel — ADR-062, `ai-sessions/0087`; in 1.2.2 (2026-10-14) renamed "Noise control with Google Play services", the re-claim 3 s after every cut up to 20 times, "Take it back again" — ADR-062 Update 2, ADR-063, `ai-sessions/0089`),
   firmware line, ANC Quick Settings tile, Safe Mode (ADR-042), the session re-open while visible (ADR-044).
 - **Protocol-known but not built:** the "Volume level notifications" switch (`qhr` field 21, 🟢 since 2026-10-06) and the notification behind it — studied in
   `ai-sessions/0082` (the phone decides, from the `Dosimeter` daily doses; draft ADR-060, a 1.3.0 candidate, needs `WELL-002` first); the BLE battery advertisement
