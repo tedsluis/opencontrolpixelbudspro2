@@ -1093,5 +1093,32 @@ differs from the APK's `qhw` (`NOT_CHARGING(1) WIRED(2) GENERIC_QI(3)`) — its 
 independent evidence** next to this project's own APK reading. MagicPodsCore's Pixel Buds support says it reimplemented pbpctrl's framing, address tables
 and id hash (commit 97e36ab); omarchy-pixelbuds names pbpctrl as the source of what it ported (`bridge/maestro.py:6–12`).
 
+*§9–§11 added the same day (`ai-sessions/0090` continuation in chat, maintainer-approved 2026-10-14, `AskUserQuestion` "E-03 docs").*
+
+**9. A stored mode per wear state (E-03).** `scripts/wear_mode_crosscheck.py` (new): wear = the Buds' GSND CONTROL `04 05 00 02 08 XX` (DLCI 0x08/0x09; 03 none,
+04/05 one bud, 06 both — 🟡 `CAP-069` §8); mode = every Notify (Settable `00` → 0) and setting-13 value; 0 is not a stored mode. `--restore`: on entering
+one/two, is the mode the last mode seen in that same state earlier in the log (holds and app Sets made in that state update it; reports up to 2.5 s after the
+wear change and before the next one)?
+
+| Log set | Entries with an earlier visit | Match | Differ | First visit | No report in 2.5 s |
+|---|---|---|---|---|---|
+| 46 official-app captures (the list of §2) | 28 (27 distinct — `CAP-002` 2219 = `CAP-001` 2219) | **28** | **0** | 48 | 8 |
+| 33 OpenControl logs (`CAP-059`…`068`, `070`…`075`) | 12 | 8 | 4 | 13 | 18 |
+
+Examples: `CAP-056` one bud → 4 (2257, 2458, 3983), both → 2 (2322, 2764, 4001); `CAP-069` one bud → 3 four times (2256, 6156, 7317, 7458), both → 4 (2366),
+the app's Sets while both were worn (5524 … 5698, ending Off), both → 1 (7416); `CAP-045` one-bud holds 4 → 3 → 2 → 4 (1583, 1755, 1818), next one-bud entry
+(2122) → 4; `CAP-002` one → 3, two → 1, one → 3, two → 1 (18384 … 19800). The 4 OpenControl differences fall where the wear signal — held there by another
+client — misses a step (`CAP-065`: no wear message between 2342 `06` and 4018 `03`, while the Buds reported `40`, that capture's one-bud mode, at 3596 just
+before Settable `00` at 3641); not counted either way. Without `--restore` over all 96 logs: `mode changes by class: {'wear': 83, 'app': 62, 'no-wear': 218}`
+(the no-wear changes are holds, e.g. `CAP-021`, `CAP-074`, `CAP-075`). 🟡 (strong), `PROTOCOL.md` §6 item of 2026-10-14.
+
+**10. Settings 8/9/10 and `SubscribeToOobeActions` — checked negatives.** `python3 scripts/pwrpc_decode.py` over all 96 logs, `grep -E '\| 4:(8|9|10)$|\|
+4:\{(8|9|10):'` → 0 (positive control, the same pattern for 7/11/12 → 2327); `SubscribeToOobeActions` (`h65599` = `0x57f3becb`) → 0, and every method id in the
+96 logs is a named one. Neither is testable from existing captures.
+
+**11. Runtime-info field 7 (pbpctrl: 7.1 right bud in the case, 7.2 left).** Over every `SubscribeRuntimeInfo` packet with fields 6 and 7 in the 96 decoded logs
+(duplicated logs included): 1783 of 1840 (96.9 %) have 7.2 = "6.2 charging" and 7.1 = "6.3 charging" (field 2 = 2); the 57 others differ in one bud only. Consistent
+with `PROTOCOL.md` §4.3 Option F (6.2 Left, 6.3 Right) and the code trace (7.2 Left, 7.1 Right); 🟡 that 7.x means "in the case" rather than "charging".
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DESKRESEARCH_FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DESKRESEARCH_FINDINGS

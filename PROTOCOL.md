@@ -3659,6 +3659,13 @@ leaving them buried in prose elsewhere.
   (its `maestro_pw.proto:92–93`; "reading … returns non-zero status (code: 2)" on the gen 1) — a name most likely taken from Google's app, not evidence; the APK
   types 9/10 as `qhs` and never reads or writes them. Test: `ReadSetting 4:8`, `4:9`, `4:10` once (read-only), then one bud out and in with the settings
   stream on. Explains, if true, `TODO.md` §4 "Transparent → Active between 08:07:34 and 08:12:44" (`CAP-067` §2).
+  **Update (2026-10-14, `ai-sessions/0090` continuation, maintainer-approved in chat 2026-10-14, `AskUserQuestion` "E-03 docs") — 🟡 HYPOTHESIS (strong):**
+  the Buds keep a stored noise-control mode per wear state (one bud / both) and restore it on a wear change; a hold or an app Set changes the stored mode of
+  the current state. Test over the 46 official-app captures (wear = the Buds' GSND CONTROL `04 05 00 02 08 XX`, 🟡 `CAP-069` §8): on entering one/two the
+  mode equals the last mode seen in that state earlier in the capture in **28 of 28** (27 distinct), 0 counter-examples — e.g. `CAP-069` both → 1 at 7416 after
+  the app set Off while both were worn (5524 … 5698); `CAP-045` one-bud holds 4 → 3 → 2 → 4 (1583, 1755, 1818), the next one-bud entry (2122) → 4. Command:
+  `python3 scripts/wear_mode_crosscheck.py --restore <logs>` (`DESKRESEARCH_FINDINGS.md` 2026-10-14 §9). Not shown: that settings 9/10 hold these stores
+  (never read or streamed on any wire: 0 in 96 logs, positive control fields 7/11/12 → 2327).
 
 ### Resolved
 
