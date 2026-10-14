@@ -5,7 +5,7 @@
 **Date:** 2026-10-14
 **Title:** Point-by-point check of the pbpctrl-derived findings list (E-01 … E-23) against the external sources at pinned commits and this repository's own
 captures, APK notes and documents
-**Status:** awaiting maintainer sign-off — every proposal answered in chat 2026-10-14 and applied; not committed (the commit question is open)
+**Status:** awaiting maintainer sign-off — every proposal answered in chat 2026-10-14 and applied and pushed (branch `research/pbpctrl-crosscheck`); the build of ADR-064 is the next session
 
 ## Summary
 
@@ -382,7 +382,12 @@ lacked its third cell). Nothing under `android/` changed; nothing from the exter
 
 ## Commits
 
-Not committed — the maintainer has not yet been asked (Phase E: "ask whether to commit and push").
+Approved in chat 2026-10-14 ("Commit" → *"Commit per concern + push (Recommended)"*); branch `research/pbpctrl-crosscheck`, pushed; no pull request yet.
+- `7bfb078` re: setting 13 is the noise-control mode on DLCI 0x02, pushed on the settings stream
+- `55cbdb1` docs: ADR-064 — subscribe to settings changes and read setting 13 (read only)
+- `cd9428c` docs: pbpctrl battery wording, never write settings 3/6, TODO after ai-sessions/0090
+- `0b1681a` docs: ai-sessions/0090 RESULT and INDEX row
+- (this list: the follow-up commit that back-fills it)
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0090_CROSSCHECK_RESULT_2026_10_14.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0090_CROSSCHECK_RESULT_2026_10_14
