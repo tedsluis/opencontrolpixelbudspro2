@@ -390,5 +390,49 @@ Approved in chat 2026-10-14 ("Commit" → *"Commit per concern + push (Recommend
 - `ba2bfa8` docs: ai-sessions/0090 commit list back-filled
 - (the PR number: the follow-up commit that records it)
 
+## Continuation in chat (2026-10-14): evidence in the existing captures for the new findings
+
+The maintainer, after PR #55: *"Ga na of er in de bestaande captures al bewijs voor de nieuwe bevindingen zit."* Desk work only; the analysis is
+`scripts/wear_mode_crosscheck.py` (committed after the maintainer's answer below; first run as a scratch script, the figures here are the committed script's).
+
+**1. Settings 8/9/10 and `SubscribeToOobeActions` on the wire — 🟢 checked negatives.** `python3 scripts/pwrpc_decode.py` over all 96 logs, then
+`grep -E '\| 4:(8|9|10)$|\| 4:\{(8|9|10):'` → **0**; positive control, the same pattern for 7/11/12 → 2327. `SubscribeToOobeActions` (`h65599` =
+`0x57f3becb`) → **0**; every method id in the 96 logs is named by the decoder (no unnamed id printed), so an OOBE call would have shown. Neither can be tested
+from existing captures; both stay experiments.
+
+**2. The one-bud / two-bud mode (E-03) — strong support in the official app's captures.** Wear signal: the Buds' GSND CONTROL message `04 05 00 02 08 XX`
+(DLCI 0x08/0x09, from the Buds; `XX` 03 none, 04/05 one bud, 06 both — 🟡 `CAP-069` §8); mode: every Notify (Settable `00` → 0) and stream/read value of
+setting 13. Test of the prediction "on entering a wear state the mode equals the last mode seen in that same state earlier in the capture" (holds and app Sets
+made in that state update it; value 0 = no mode settable, not stored; the report window ends at the next wear change):
+
+| Capture set | Entries into one/two with an earlier visit | Match | Differ | First visit | No report in 2.5 s |
+|---|---|---|---|---|---|
+| 46 official-app captures | 28 (27 distinct — `CAP-002` 2219 is `CAP-001`'s frame) | **28** | **0** | 48 | 8 |
+| 33 OpenControl logs (wear signal from another client, where present) | 12 | 8 | 4 | 13 | 18 |
+
+Examples (official app): `CAP-056` one bud → 4 (2257, 2458, 3983), both → 2 (2322, 2764, 4001); `CAP-069` one bud → 3 four times (2256, 6156, 7317, 7458),
+both → 4 at 2366, then the app's Sets while both were worn (5524 … 5698, ending Off) and both → **1** at 7416 — the two-bud mode the app had set; `CAP-045`
+holds while one bud was worn moved the mode 4 → 3 → 2 → 4 (1583, 1755, 1818), and the next one-bud entry (2122) restored **4**; `CAP-002` one → 3, two → 1,
+one → 3, two → 1 (18384 … 19800). The four OpenControl differences fall where the other client's wear signal misses a step — e.g. `CAP-065`: no wear
+message between 2342 (`06`) and 4018 (`03`), yet the Buds reported `40` at 3596 (that capture's one-bud mode) just before Settable `00` at 3641; they are not
+counted either way. Classed over all logs, mode changes split into 83 at a wear change, 62 by the app and 218 without a wear change (holds — e.g. `CAP-021`, `CAP-074`,
+`CAP-075` cycles with the wear state unchanged). 🟡 → **strong**: the Buds keep a stored mode per wear state and restore it on a wear change; a hold or an app
+Set changes the stored mode of the current state. Still not shown: that settings 9/10 are those stores (never read on any wire, item 1).
+
+**3. pbpctrl's runtime-info layout (7.1 right in the case, 7.2 left).** Over every `SubscribeRuntimeInfo` packet carrying both field 6 and field 7 in the
+96 decoded logs (duplicated logs included): 1783 of 1840 (96.9 %) have 7.2 = (6.2 charging) **and** 7.1 = (6.3 charging); the 57 others differ in one bud only
+(e.g. 7.x = 1 with the bud not charging — full, or a charging bit that lags, `TODO.md` §4 `CAP-069` 7358 → 7404). Consistent with this project's 6.2 Left /
+6.3 Right and the code trace's 7.2 Left / 7.1 Right; 🟡 that 7.x means "in the case" (pbpctrl's name), not just "charging".
+
+Command: `python3 scripts/wear_mode_crosscheck.py --restore <the 46 official-app logs>` → `{'first visit': 48, 'match': 28, 'no report within 2.5 s': 8}`;
+the same on the 33 OpenControl logs → `{'no report within 2.5 s': 18, 'first visit': 13, 'match': 8, 'differ': 4}`; without `--restore` on all 96 logs →
+`mode changes by class: {'wear': 83, 'app': 62, 'no-wear': 218}`.
+
+**4. Already settled in the main session, no new capture evidence possible:** `WriteSetting 4:{13:n}` (0 in 96 logs), an unprompted ring-status message
+(0 of 40), Ring "both" (never sent).
+
+**Maintainer's answer (chat 2026-10-14, `AskUserQuestion` "E-03 docs"):** *"🟡 strong + desk + script (Recommended)"* — applied: `PROTOCOL.md` §6 item of
+2026-10-14 updated, `DESKRESEARCH_FINDINGS.md` 2026-10-14 §9–§11, `scripts/wear_mode_crosscheck.py`; committed on `research/pbpctrl-crosscheck` (PR #55).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0090_CROSSCHECK_RESULT_2026_10_14.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0090_CROSSCHECK_RESULT_2026_10_14
