@@ -382,12 +382,13 @@ lacked its third cell). Nothing under `android/` changed; nothing from the exter
 
 ## Commits
 
-Approved in chat 2026-10-14 ("Commit" → *"Commit per concern + push (Recommended)"*); branch `research/pbpctrl-crosscheck`, pushed; no pull request yet.
+Approved in chat 2026-10-14 ("Commit" → *"Commit per concern + push (Recommended)"*); branch `research/pbpctrl-crosscheck`, pushed; pull request **#55** opened 2026-10-14 at the maintainer's request in chat ("maak een pull request aan"); merging is the maintainer's.
 - `7bfb078` re: setting 13 is the noise-control mode on DLCI 0x02, pushed on the settings stream
 - `55cbdb1` docs: ADR-064 — subscribe to settings changes and read setting 13 (read only)
 - `cd9428c` docs: pbpctrl battery wording, never write settings 3/6, TODO after ai-sessions/0090
 - `0b1681a` docs: ai-sessions/0090 RESULT and INDEX row
-- (this list: the follow-up commit that back-fills it)
+- `ba2bfa8` docs: ai-sessions/0090 commit list back-filled
+- (the PR number: the follow-up commit that records it)
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0090_CROSSCHECK_RESULT_2026_10_14.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0090_CROSSCHECK_RESULT_2026_10_14
