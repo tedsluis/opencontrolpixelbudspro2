@@ -251,3 +251,5 @@
   - **CAP-075 (Group BK)**
     - [CAP-075-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-075-2026-10-12_17-22-31_2026-10-13_06-34-32-Group_BK/CAP-075-EVENT-NOTES.md)
     - [CAP-075-FINDINGS.md](/opencontrolpixelbudspro2/captures/CAP-075-2026-10-12_17-22-31_2026-10-13_06-34-32-Group_BK/CAP-075-FINDINGS.md)
+  - **CAP-076 (Group BL)** _(planned)_
+    - [CAP-076-EVENT-NOTES.md](/opencontrolpixelbudspro2/captures/CAP-076-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BL/CAP-076-EVENT-NOTES.md)
