@@ -18,8 +18,9 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
       installed on the Pixel 9a with Obtainium (the maintainer, chat 2026-10-14: "Ik heb opencontrol for buds middels obtainium geupdate naar 1.2.2 op mijn pixel
       9a telefoon"); the published APK's SHA-256 = the tested build's (`d750551a…8a6b`, re-checked with `gh release download`). E1–E4: PR #52.
       (1.2.1: D4 done 2026-10-13 with Obtainium; E1–E4 by PR #45.)
-- [ ] `CAP-076` (Group BL, skeleton by `ai-sessions/0089`) stays planned but is **not** required for 1.2.2; whether it is still run depends on `ai-sessions/0090`
-      (the DLCI 0x02 setting-13 route) — **M**.
+- [ ] `CAP-076` (Group BL, skeleton by `ai-sessions/0089`) stays planned but is **not** required for 1.2.2. `ai-sessions/0090` answered the setting-13 route
+      (🟢 `PROTOCOL.md` §4.1 Update of 2026-10-14; ADR-064 accepted): the next hardware run is ADR-064's, with its build (§5) — whether `CAP-076` is still run
+      is **M**.
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
   unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). The Owner user's stored "Noise-control channel" choice is "Take it back" and the secondary
   user's too (`CAP-075-FINDINGS.md` §4) — the default "Show a hint" is not restored.
@@ -101,9 +102,9 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
 - [ ] `CAP-075-FINDINGS.md` §12 (`ai-sessions/0088`): (1) what triggers the Buds' own closes of DLCI 0x02 (17:28:47) and 0x02 + 0x04 (06:28:49) with the app
       in the background, after an `AT+BIEV` — the buds into/out of the case off screen? a run with the case moves on camera (`CASE-004`/`005`); (2) what Play's
       `RfcommEventStreamMedium` does when "Retry times remaining" reaches 0 (seen 5 → 4 once, back at 5 next time); (3) the Google app's (uid 10302)
-      DLCI 0x08/0x0a traffic on the Buds' ACL in the Owner user (63 frames, the firmware string in its answers) — what it reads; (4) whether a `ReadSetting` id
-      outside the thirteen, or a runtime-info field, exposes the current noise-control mode on DLCI 0x02 (nothing on 0x02 moved at any of 31 holds) — the
-      reverse-engineering lead behind `CAP-075-FINDINGS.md` §9 P5.
+      DLCI 0x08/0x0a traffic on the Buds' ACL in the Owner user (63 frames, the firmware string in its answers) — what it reads; (4) answered by `ai-sessions/0090`: setting 13
+      (`ReadSetting 4:13`, and `SubscribeToSettingsChanges` for every change) — nothing moved at the 31 holds because OpenControl never subscribed; built next
+      under ADR-064 (§5).
 
 The five switches the maintainer chose (Multipoint, head gestures, the two case sounds, Volume EQ; ADR-052 … ADR-055) and the screen-reader text are built in
 1.1.0 (`ai-sessions/0074`) and passed their hardware run `CAP-070` (`ai-sessions/0075`); since `ai-sessions/0076` their tests use the `CAP-070` bytes.
@@ -132,6 +133,9 @@ Open questions (each with where it is described):
   bonded but not connected and not after they connected (🟡 shown only while not connected — `CAP-058-FINDINGS.md` §4) — test with OpenControl's own Ring while a client holds the Message Stream; `CAP-068` could not observe it — the app's claim
   is released 1.5 s after the Ring, `CAP-068-FINDINGS.md` §6). Known limit of 1.0.1: the "Ringing" notice stays until Stop is tapped. The app does not read the
   Buds' ring-status message; whether it should is a decision after those runs (**M**, "Nothing new on the wire; test first").
+  *(`ai-sessions/0090` E-04:* every Buds `04 01 00 01 xx` in the captures is an echo < 1 s after the phone's own Ring/Stop (40 of 40, 0 unprompted); the
+  official app ACKs each with `ff 01 00 02 04 01`, OpenControl never. **Proposal (a new send → its own ADR, M):** hold the claim while ringing, ACK the Buds'
+  status message, clear "Ringing" when the mask reads 0; **experiment step:** a Ring stopped by touching the bud, with the claim held, filmed.)
   *(2026-10-06, `ai-sessions/0073` §4.8:* the Find device row is not built by the companion APK — its `find_device` preference is a hidden
   placeholder that Google Play services fills (item id 1002, `gow.java:24`); label, visibility and target are Play services' — class C, no APK
   version can explain the row's absence.)
@@ -150,7 +154,9 @@ Open questions (each with where it is described):
   11:21:35.24, and why the Buds closed the session at 11:17:46 with both buds worn.
 - 🔴 Why `CAP-064` read Settable `e8` for 28 s with both buds straight from the case (`CAP-065`/`CAP-066`: always `00`); four `e8` Notifies
   with no bud worn in `CAP-047` (1048, 2673, 3996, 4339) are not among ADR-049's samples (L68-10).
-- 🔴 Why the Buds switched ANC Transparent → Active between 08:07:34 and 08:12:44 without an app command (`CAP-067` §2).
+- 🔴 Why the Buds switched ANC Transparent → Active between 08:07:34 and 08:12:44 without an app command (`CAP-067` §2). 🟡 a one-bud and a two-bud mode
+  (`PROTOCOL.md` §6, item of 2026-10-14, `ai-sessions/0090` E-03): Transparent at both one-worn samples, Active at both two-worn samples. **Experiment (read
+  only, `ai-sessions/0090` E-03):** `ReadSetting 4:8`, `4:9`, `4:10` once, then one bud out and in with the settings stream on (pbpctrl: status 2 on the gen 1).
 - 🔴 Why Android pages the Buds 0.1 s (or 3.4 ms) after an ACL drop at docking in some cases and not in others (`CAP-064` §1a, `CAP-066`);
   why Android did not re-create the ACL after an ADR-016 drop with the lid open in `CAP-063`.
 - 🔴 The swapped-dock ADR-016 disconnect inconsistency between the two recordings of `CAP-047` (carried from `ai-sessions/0022`).
@@ -169,12 +175,20 @@ Open questions (each with where it is described):
   of setting 13, although the app's own ANC row writes only that (`ai-sessions/0073` §4.9) — in the next official-app capture, film which
   control is tapped (the app's row or the Play-services/Settings one). 🟡 what the Buds mean by the "primary" bud of the announcement (field 6;
   the app-side routing is answered, `PROTOCOL.md` §2.2a note of 2026-10-06).
+- [ ] **Experiment (`ai-sessions/0090` E-01, needs its own approval — a new write):** `WriteSetting 4:{13:n}` from a debug build — n = 1…4 with the
+  `RESPONSE` status, the `08 13` Notify on DLCI 0x04 (to whom, if Play holds it), the audible change; variants with one bud worn and with Settable `00`. A
+  positive result needs a `PROTOCOL.md` entry first and its own ADR (like ADR-045). Not on any wire yet (0 in 96 logs).
+- [ ] **Experiment (`ai-sessions/0090` E-12):** a read-only `SubscribeToOobeActions` **without** OOBE mode (setting 6 is never written, `ARCHITECTURE.md` §5a
+  rule) — do per-bud `LEFT_ON_HEAD` … `RIGHT_OFF_HEAD` events (`qhp` 10–13) arrive? Would refine ADR-059's "probably worn" (never per bud).
+- Idea, low priority (`ai-sessions/0090` E-17): an explicit `GetSoftwareInfo` as a fallback after `MAESTRO_ANNOUNCE_WAIT_MS` — one MAESTRO open in 523 stayed
+  open without an announcement (`CAP-050` 17702, where nothing was answered either), so it would rarely help.
 - 🟡 Hearable Controls MAC not enforced (`PROTOCOL.md` §4.1): a firmware that starts enforcing it would NAK with reason `0x03`.
 - 🔴 `CAP-069` leftovers: why a bud's charging bit stayed set ≈ 12 s after it left the case (7358 → 7404); why the phone re-opened GSND AUDIO on ACL 3
   (8157 → 8271); Device Information `03 0b` (FHN EID, out of scope) with length 25; field 18 after the Save button (one sample, 6050 → `CAP-053`).
 - 🔴 `CAP-072` §4: why the Buds kept Settable `e8` ≥ 42 s with both buds on a table (17:51:19 → 17:52:00.9) while `CAP-065`/`CAP-066` read `00` within 2.6 s.
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
-  captured — sending it needs its own ADR. Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
+  captured — sending it needs its own ADR. (The Device Action page, re-fetched 2026-10-14 by `ai-sessions/0090`, still defines `0x03` "Ring both left and
+  right"; one ACK per command; a filmed test with the buds out of the ears; the Case has no receiver of its own — pbpctrl `README.md:52`.) Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
 - 🔴 `PROTOCOL.md` §5.2 steps 4 and 6 of the connection lifecycle (handshake content order, user-command timing); DLCI 0x08's protocol identity.
 - 🔴 Why Android's CDM picker listed nothing twice and then offered the bonded Buds directly (`CAP-068-FINDINGS.md` §8).
 - 🔴 `CAP-013`'s second BLE link (not re-examined; `CAP-016`'s was a heart-rate wearable — `PROTOCOL.md` §6, Update of 2026-10-03).
@@ -185,12 +199,14 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
-- [ ] **Next: `ai-sessions/0090_CROSSCHECK_PROMPT_2026_10_14.md`** (written 2026-10-14): the pbpctrl-derived list E-01 … E-23, led by the question whether the
-      app can learn a press-and-hold's mode on DLCI 0x02 (Maestro setting 13, `SubscribeToSettingsChanges`) instead of the contested Message Stream — desk
-      research only.
+- [ ] **Next: a FEATURE session that builds ADR-064** (accepted 2026-10-14, `ai-sessions/0090`): one `SubscribeToSettingsChanges` and one `ReadSetting 4:13`
+      per MAESTRO session, field 13 only, the mode shown with "Changed by the Buds" without a Message Stream claim; fixtures from `CAP-051` 1177/1755 and `CAP-056`
+      1451; then its hardware run (skeleton written by that session — the maintainer's choice, chat 2026-10-14): both users, holds with the noise-control tab
+      closed, a wear-change re-home and the re-open's read; optionally the read-only `ReadSetting 4:8/9/10` (§4). If holds show without DLCI 0x04, a later ADR may
+      retire ADR-061/062's hold and re-claim (**M**).
 - [ ] **The noise-control channel in the Play user — after `ai-sessions/0089` (1.2.2: P1 + P2 + P4 built, ADR-062 Update 2):** still later — P3 a shorter
       attempt-2 latency for the on-demand channel (`CAP-075-FINDINGS.md` §9: the re-claim's `SABM` 0.7–1.0 s after attempt 1's refusal); P5 the mode on the app's
-      own channel (§4's lead). Rejected on evidence: a re-claim before Play's retry (§9 P6). Whether 20 re-claims in a row drive Play's "Retry times remaining" to 0
+      own channel — now ADR-064 (above). Rejected on evidence: a re-claim before Play's retry (§9 P6). Whether 20 re-claims in a row drive Play's "Retry times remaining" to 0
       and what Play does then is ❓ (§4; `CAP-076` P6 watches it).
 
 - [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
@@ -223,7 +239,7 @@ Open questions (each with where it is described):
 - [ ] Third-party notices on the Info tab (releases carry `THIRD_PARTY_NOTICES.txt`; bundling it like the licence text is a possible later step).
 - [ ] Auto-connect on lid-open: not possible from any event the app sees (`CAP-064-FINDINGS.md` §1); **M** chose "Nothing now" (2026-10-01).
 - [ ] Undecided, each needs its own ADR (**M**): a background session via CDM device presence (`ARCHITECTURE.md` §6.0b (b)); a per-channel
-      "degraded" state; the BLE battery advertisement scan (ADR-006's bounded exception); `SubscribeToSettingsChanges`. (The settings that were
+      "degraded" state; the BLE battery advertisement scan (ADR-006's bounded exception). (`SubscribeToSettingsChanges` is decided by ADR-064, 2026-10-14.) (The settings that were
       readable but not shown — 11, 15, 27, 28 — are built in 1.1.0 with ADR-053, ADR-055, ADR-054, as is 29 with ADR-052.)
 - [ ] Safe Mode: grey out Sound/Controls (offered in `ai-sessions/0057`, not chosen) — revisit only if a Safe-Mode run shows the per-tap refusal
       confuses.
@@ -300,6 +316,9 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
       full; `ai-sessions/0063` read its prompt's full-reading list only in part (its §B) — carry into the next MAINTENANCE reading pass (the rule-9a session).
 - [ ] Reading owed by `ai-sessions/0089` (its RESULT "Files read"): `RELEASING.md`, the `ai-sessions/0087`/`0088` PROMPT and RESULT files, `CAP-074-FINDINGS.md`
       §4/§8/§9, `CAP-073-FINDINGS.md` §4 and `PROTOCOL.md` §2.3/§8 were not read in full (none of them was changed; the facts used were re-derived from `CAP-075`)
+      — carry into the next reading pass.
+- [ ] Reading owed by `ai-sessions/0090` (its RESULT "Files read"): `PROTOCOL.md`, `ARCHITECTURE.md` and `REVERSE_ENGINEERING.md` were read only in the sections
+      named by its prompt (and the sections it changed), not in full; the FINDINGS of `CAP-038`, `CAP-045`, `CAP-064`, `CAP-069`, `CAP-075` only at the cited frames
       — carry into the next reading pass.
 - Order decided 2026-10-09 (maintainer, chat, `ai-sessions/0081`): all of the above after the 1.2.0 work — first the `ai-sessions/0073` reading and the census
   recount (one CROSSCHECK session), then the rule-9a folds with the slip residue (MAINTENANCE), then the EVENT-NOTES templates (MAINTENANCE), the

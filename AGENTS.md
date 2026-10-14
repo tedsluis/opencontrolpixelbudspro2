@@ -142,6 +142,11 @@ order:
 - The reference project `pbpctrl` targets Linux and depends on BlueZ, D-Bus,
   AVRCP, and UPower for battery state. Android uses the Fluoride/Babel
   Bluetooth stack — these are **not** interchangeable.
+  - **Note (2026-10-14, maintainer-approved in chat, `ai-sessions/0090`):** more
+    precisely, pbpctrl uses UPower only for BlueZ's experimental AVRCP battery (one
+    combined meter for both buds) and reads its detailed battery (per bud and the
+    case) over Maestro and Fast Pair (its `README.md`, lines 39–52, at commit
+    `2620367`). The ban below is unchanged.
 - **ABSOLUTE BAN:** Do not generate D-Bus, UPower, or BlueZ configuration code
   (e.g. editing `/etc/bluetooth/main.conf`). This code has no meaning on
   Android and must never appear in this repository, including in comments or
