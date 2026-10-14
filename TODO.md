@@ -18,9 +18,10 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
       installed on the Pixel 9a with Obtainium (the maintainer, chat 2026-10-14: "Ik heb opencontrol for buds middels obtainium geupdate naar 1.2.2 op mijn pixel
       9a telefoon"); the published APK's SHA-256 = the tested build's (`d750551a…8a6b`, re-checked with `gh release download`). E1–E4: PR #52.
       (1.2.1: D4 done 2026-10-13 with Obtainium; E1–E4 by PR #45.)
-- [ ] `CAP-076` (Group BL, skeleton by `ai-sessions/0089`) stays planned but is **not** required for 1.2.2. `ai-sessions/0090` answered the setting-13 route
-      (🟢 `PROTOCOL.md` §4.1 Update of 2026-10-14; ADR-064 accepted): the next hardware run is ADR-064's, with its build (§5) — whether `CAP-076` is still run
-      is **M**.
+- [ ] `CAP-076` (Group BL) is **the 1.3.0 run** since `ai-sessions/0091` (2026-10-14): the skeleton of `ai-sessions/0089` (the 1.2.2 run, never made) is rewritten
+      for ADR-064/065 — both users, holds with the noise-control tab closed and open, the own tap, the wear-change re-home, Bluetooth off/on, taps while Play
+      holds the channel, optionally the EQ/a switch from the official app on a second phone; the counts for the verdict in its analysis checklist. Runs after
+      `RELEASING.md` B1–B3 for 1.3.0 (a CAPTURE session analyses it, C3/C4).
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
   unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). The Owner user's stored "Noise-control channel" choice is "Take it back" and the secondary
   user's too (`CAP-075-FINDINGS.md` §4) — the default "Show a hint" is not restored.
@@ -41,7 +42,8 @@ ADR-061, chat 2026-10-10).
 **`CAP-073`** (the rebuilt 1.2.0, analysed in `ai-sessions/0085`, verdict OK — ready to release) settled the ADR-061 hold's main path and balance "Right 4"
 (both removed here); the maintainer tested only the changed functionality, so T11, C12, S12, H5, Volume EQ and the worn line with in-ear detection off stay open,
 with the hold's untested branches below. **Next app run:** none planned — these items go into the hardware run of the next release (`RELEASING.md` §11a).
-- [ ] The ADR-061 hold's other branches on hardware (`CAP-073-FINDINGS.md` §4): the tile with the noise-control tab shown (no second `SABM`, no `DISC`); Home and
+- [x] ~~The ADR-061 hold's other branches on hardware~~ — **moot since 1.3.0** (`ai-sessions/0091`, ADR-065: the hold and the re-claim are removed; the tile, Home,
+      a loss and the re-open with the tab shown are in `CAP-076` as BL-8/BL-9/BL-10/BL-24 for the stream instead). History: (`CAP-073-FINDINGS.md` §4): the tile with the noise-control tab shown (no second `SABM`, no `DISC`); Home and
       return (the `DISC` ≈ 1.5 s after Home, a new claim on return); a session loss and the ADR-044 re-open while the tab is shown (the snapshot kept); and the
       noise-control (i) after a press-and-hold ("Changed by the Buds at HH:MM:SS …" and the ADR-061 sentence) — not run in `CAP-073`. **`CAP-074` (the Owner user with
       Play services, `ai-sessions/0086`) ran the "another client closes DLCI 0x04 while the tab is shown" branch twelve times:** the hold ended "the channel was closed,
@@ -73,7 +75,7 @@ with the hold's untested branches below. **Next app run:** none planned — thes
 |---|---|---|---|
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
 | `CAP-030` | Q #19–20 | Loud Noise Protection / Adaptive Audio (firmware naming never reconciled with `release_5.203`, `PROTOCOL.md` §0.1) | Pixel 7a, official app |
-| `CAP-076` | BL | (not required for 1.2.2, released 2026-10-14 without it — see §1) The 1.2.2 run (`ai-sessions/0089`, ADR-062 Update 2, ADR-063): the re-claim 3 s after every cut up to 20, Take it back again, the cause line, the renamed card — both users | Pixel 9a, OpenControl 1.2.2 |
+| `CAP-076` | BL | The 1.3.0 run (`ai-sessions/0091`, ADR-064/ADR-065; the 1.2.2 skeleton of `ai-sessions/0089` replaced): the two new requests once per session, holds shown on any tab through the settings stream, the own tap, the wear-change re-home, Bluetooth off/on, taps while Play holds the channel — both users | Pixel 9a, OpenControl 1.3.0 |
 
 From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedures for a next attempt, no skeleton written:
 
@@ -103,8 +105,8 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
       in the background, after an `AT+BIEV` — the buds into/out of the case off screen? a run with the case moves on camera (`CASE-004`/`005`); (2) what Play's
       `RfcommEventStreamMedium` does when "Retry times remaining" reaches 0 (seen 5 → 4 once, back at 5 next time); (3) the Google app's (uid 10302)
       DLCI 0x08/0x0a traffic on the Buds' ACL in the Owner user (63 frames, the firmware string in its answers) — what it reads; (4) answered by `ai-sessions/0090`: setting 13
-      (`ReadSetting 4:13`, and `SubscribeToSettingsChanges` for every change) — nothing moved at the 31 holds because OpenControl never subscribed; built next
-      under ADR-064 (§5).
+      (`ReadSetting 4:13`, and `SubscribeToSettingsChanges` for every change) — nothing moved at the 31 holds because OpenControl never subscribed; **built in
+      1.3.0** (`ai-sessions/0091`, ADR-064/065), its hardware run `CAP-076`.
 
 The five switches the maintainer chose (Multipoint, head gestures, the two case sounds, Volume EQ; ADR-052 … ADR-055) and the screen-reader text are built in
 1.1.0 (`ai-sessions/0074`) and passed their hardware run `CAP-070` (`ai-sessions/0075`); since `ai-sessions/0076` their tests use the `CAP-070` bytes.
@@ -199,15 +201,18 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
-- [ ] **Next: `ai-sessions/0091_FEATURE_PROMPT_2026_10_14.md`** (written 2026-10-14 from the maintainer's feedback on 0090) — build ADR-064 as **1.3.0**, the stream feeding every read setting, ADR-061/062/063 replaced by one new ADR (the hold, the re-claim, the card and the Play line removed), the cause line rewritten, `CAP-076` rewritten for 1.3.0. The earlier outline (accepted 2026-10-14, `ai-sessions/0090`): one `SubscribeToSettingsChanges` and one `ReadSetting 4:13`
+- [x] **Done 2026-10-14 (`ai-sessions/0091`, branch `feature/settings-stream`): ADR-064 built as 1.3.0** — the stream feeding every read setting, ADR-061/062/063
+      superseded by ADR-065 (the hold, the re-claim, the card and the Play line removed), the cause line rewritten, `CAP-076` rewritten for 1.3.0; mutation
+      checks M1–M5 caught. **Next:** the maintainer's push, PR and CI; then `RELEASING.md` B1–B3 for 1.3.0 and `CAP-076` (C1–C2), analysed by a CAPTURE
+      session (C3/C4). Deferred documentation of 0091: none beyond the items in this file. The prompt's earlier outline (accepted 2026-10-14, `ai-sessions/0090`): one `SubscribeToSettingsChanges` and one `ReadSetting 4:13`
       per MAESTRO session, field 13 only, the mode shown with "Changed by the Buds" without a Message Stream claim; fixtures from `CAP-051` 1177/1755 and `CAP-056`
       1451; then its hardware run (skeleton written by that session — the maintainer's choice, chat 2026-10-14): both users, holds with the noise-control tab
-      closed, a wear-change re-home and the re-open's read; optionally the read-only `ReadSetting 4:8/9/10` (§4). If holds show without DLCI 0x04, a later ADR may
-      retire ADR-061/062's hold and re-claim (**M**).
-- [ ] **The noise-control channel in the Play user — after `ai-sessions/0089` (1.2.2: P1 + P2 + P4 built, ADR-062 Update 2):** still later — P3 a shorter
-      attempt-2 latency for the on-demand channel (`CAP-075-FINDINGS.md` §9: the re-claim's `SABM` 0.7–1.0 s after attempt 1's refusal); P5 the mode on the app's
-      own channel — now ADR-064 (above). Rejected on evidence: a re-claim before Play's retry (§9 P6). Whether 20 re-claims in a row drive Play's "Retry times remaining" to 0
-      and what Play does then is ❓ (§4; `CAP-076` P6 watches it).
+      closed, a wear-change re-home and the re-open's read; optionally the read-only `ReadSetting 4:8/9/10` (§4 — **not** in the 1.3.0 run, the maintainer's
+      choice in chat 2026-10-14; a later session may add it). The retirement of ADR-061/062's hold and re-claim is ADR-065 (done).
+- [ ] **The noise-control channel in the Play user — after 1.3.0 (ADR-065: the re-claim is gone, the holds no longer depend on the channel):** what remains is
+      the per-tap collision with Play's claim (`CAP-075-FINDINGS.md` §5; 1.3.0's known issue) — P3 a shorter attempt-2 latency for the on-demand channel (§9:
+      attempt 2 0.7–1.0 s after attempt 1's refusal) is still open (**M**). Whether repeated collisions drive Play's "Retry times remaining" to 0 and what Play
+      does then stays ❓ (§4; `CAP-076` BL-11 counts the collided taps).
 
 - [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
       (a) hardware-tested in `CAP-071` (`ai-sessions/0080`): no behaviour change found — the same reads, request bytes, answers, re-opens and screens as 1.1.0;

@@ -33,7 +33,10 @@ Google Play services Play's Fast Pair takes the held channel back ≈ 5 s later 
 **Updated 2026-10-13 for 1.2.2** (`ai-sessions/0089`, `DECISIONS.md` ADR-062 Update 2 and ADR-063): the card is "Noise control with Google Play services" with
 options that say whether the phone has Google Play services and a line whether Android finds Play services; in the Play option the re-claim comes 3 s after every
 cut, up to 20 times, then the hint with "Take it back again"; a mode the app's own `Get` finds changed gets "Changed since the app last saw it" in the (i);
-**section Y** (both users).
+**section Y** (both users). **Updated 2026-10-14 for 1.3.0** (`ai-sessions/0091`, `DECISIONS.md` ADR-064 and ADR-065): the app subscribes to the Buds' settings
+stream and reads the noise-control mode on its own channel at every Connect and re-open (fifteen MAESTRO requests: O8), so a press-and-hold shows on any tab
+without a claim of the shared channel; the hold, the re-claim, the "Noise control with Google Play services" card and the Play line are gone (the F-rows no
+longer hold the channel; the X/Y rows of 1.2.1/1.2.2 are history); the (i) texts of the noise-control card; **section Y rewritten** for the 1.3.0 run (both users).
 This is a *user-level*
 functional test of this project's own app; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the separate catalogue of Buds/official-app behaviours, and the
 "Expected on the wire" column below only names what to look for in the HCI log afterwards (`ai-sessions/0046` RESULT §9 has the exact frames).
@@ -413,29 +416,39 @@ measured 2026-10-12): recovery 5.2–5.7 s after it lost the channel, retry 2.2�
 | X11 | Hint only: the ANC tab; holds every ≈ 5 s for 30 s. Then "Take it back"; back to ANC; holds every ≈ 5 s for 30 s. | every hold shown in both positions; no hint | one `SABM` + `08 11` per tab entry; **no `DISC` while the tab is shown**; no re-claim line; 0 Play-services claims | ✅ | BK-16, BK-17 (`TOUCH-007`) — H2/H3/H5 (hint only) and H4/H6 (take it back): 41 of 41 shown, no `DISC` while the tab was shown, 0 re-claim lines, 0 Play claims |
 | X12 | Leave the tab (Controls); optional: the tile on the tab, Home/return, both buds into the case and out with the tab shown; back to "Show a hint"; Export. | Controls; (optional branches as in W6–W8) | the `DISC` ≈ 1.5 s after leaving; (optional: no second `SABM` for the tile; the `DISC` after Home; the re-open's snapshot kept) | ⚠️ | BK-18 … BK-21, BK-end2 — the `DISC` 1.50–1.51 s after leaving the tab ×6 ✓; the optional branches not run; the switch **not** set back (set 1 ends on "Take it back"); Export ✓ (228 lines) |
 
-## Y. 1.2.2 (`ai-sessions/0089`: the constant re-claim step, "Take it back again", the cause line, the renamed card — ADR-062 Update 2, ADR-063 — in both users)
+## Y. 1.3.0 (`ai-sessions/0091`: the settings stream on the app's own channel — ADR-064, ADR-065 — in both users)
 
-In `CAP-076` as BL-1 … BL-24 (captures/CAP-076-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BL/CAP-076-EVENT-NOTES.md, which has the reference frames per request from
-`CAP-075`). Nothing new on the wire: the re-claim and "Take it back again" are the existing claim (`SABM` DLCI 0x04, `08 11 00 00`, the phone's `DISC`). The
-timings expected below are `CAP-075`'s Play services (one version, measured 2026-10-13): Play's retry 2.1–2.8 s after a cut, its recovery 5.3–5.8 s after it lost
-the channel — a cycle of ≈ 9.2–9.5 s with ≈ 4.6–4.9 s held; write down this run's own numbers.
+In `CAP-076` as BL-1 … BL-25 (captures/CAP-076-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BL/CAP-076-EVENT-NOTES.md, which has the reference frames per request). Two
+new requests on the wire at every Connect and re-open — `SubscribeToSettingsChanges` and `ReadSetting 4:13`, the official app's bytes (`CAP-051` 1177/1178,
+`CAP-056` 1451/1450); the Buds then push every change of the mode (and of every other setting the app reads) as a stream packet on the app's own channel, on any
+tab, with or without Google Play services. The hold (W), the "Noise-control channel" / "Noise control with Google Play services" setting (X, the 1.2.2 Y) are
+gone: a stored choice is ignored. Expected: every hold shown within a second; no `SABM` on DLCI 0x04 from the app except for a tap, the tile, Refresh, a pull
+or a Connect's snapshot; the own tap's stream packet ≈ 0.3 s after the `Set`.
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| Y1 | **User 0 (Play).** Update over 1.2.1 (Debug mode on); open the app; Info; gear → Settings: the card and its (i). | "App: 1.2.2, build <B1 hash>", no "-dirty"; the card "Noise control with Google Play services" between Dark mode and Case sounds; "Google Play services: found on this phone"; **"This phone has Google Play services" selected** (1.2.1's "Take it back" kept); each option with its second line; the (i)'s five lines | the thirteen requests + `GetHardwareInfo`; the snapshot claim | | BL-1, BL-2 (`PAIR-003`, `BATT-004`, `FW-003`) |
-| Y2 | Disconnect, Connect; the ANC tab. | ready; the mode; the hold | the thirteen requests; the hold | | BL-3, BL-4 |
-| Y3 | **Google Play services option:** press and hold a bud every ≈ 4 s for 3½ minutes; touch nothing; count the holds shown; the system log at once after. | about half of the holds shown during ≈ 3 minutes; no hint meanwhile; after the 20th re-claim's cut the hint "Another app took the noise-control channel at HH:MM:SS — usually Google Play services' Fast Pair; this app took it back 20 times and stopped. …" with **Take it back again** | per cycle the cut, Play's retry, the export's "re-claim N/20 … 3000 ms later" **3.0 s** after each "closed" line (every step 3000 ms), attempt 1 refused, the app's `SABM` + `08 11`; after the 20th: "re-claim stopped after 20 re-claims — …"; no 21st | | BL-5, BL-6 (`TOUCH-007`) |
-| Y4 | Open the ANC (i) after a re-claim that found another mode. | "Changed since the app last saw it (read at HH:MM:SS): a press-and-hold on a bud or the Buds' own change, made while this app did not have the channel."; the last sentence names "Noise control with Google Play services" | the re-claim's `08 11` answered with another mode than the app's last report | | BL-7 (`TOUCH-007`) |
-| Y5 | Tap **Take it back again**; two holds; wait 15 s. | the hint and the button gone; the holds in the window shown; a re-claim 3 s after the next cut | one claim: `08 11 00 00` only — **no `08 12`**, no DLCI 0x02 request; "Message Stream claim by the hint card's action (ADR-062 Update 2)"; after its cut "re-claim 1/20" | | BL-8 (`ANC-001`…`004`, `TOUCH-007`) |
-| Y6 | Within 2 s of a cut: the Sound tab (then back); Home (then return). | no re-claim; a new claim on each return | "Message Stream re-claim cancelled (ADR-062)" ×2; no `SABM` 3 s after those cuts | | BL-9, BL-10 |
-| Y7 | gear → Settings → **"This phone has no Google Play services"**; back to ANC; holds for 20 s. | the first hold in the claim shown, then the hint without "took it back" and with the button; no re-claim | "the hint is shown, no re-claim (ADR-062, hint only)"; no app `SABM` after the cut | | BL-11 (`TOUCH-007`) |
-| Y8 | Tap **Take it back again** (no-Play option); wait 10 s. | the hint gone, back ≈ 5 s later; no re-claim | one claim with `08 11` only; its cut; no re-claim | | BL-12 (`ANC-001`…`004`) |
-| Y9 | Back to **"This phone has Google Play services"**; ANC. | the row selected; a new claim | after its cut "re-claim 1/20" | | BL-13 |
-| Y10 | Disconnect, Connect on the ANC tab; Export. | the hint gone at Connect; "Debug log saved (N lines)." | the thirteen requests; the chain from 1/20 | | BL-14, BL-end1 (`PAIR-003`) |
-| Y11 | **User 10 (no Play).** Open the app; Info; Settings: the card. | the build; "Google Play services: not found on this phone"; "This phone has Google Play services" selected (1.2.1's stored choice; nothing switches by itself) | the Connect sequence; the snapshot claim released ≈ 1.5 s after its answer | | BL-15 (`PAIR-003`, `FW-003`, `BATT-004`) |
-| Y12 | The ANC tab; holds every ≈ 5 s for 30 s. Then "This phone has no Google Play services"; back to ANC; holds every ≈ 5 s for 30 s. | every hold shown in both options; no hint, no button | one `SABM` + `08 11` per tab entry; **no `DISC` while the tab is shown**; no re-claim line; 0 Play-services claims | | BL-16, BL-17 (`TOUCH-007`) |
-| Y13 | The ANC (i) after a hold; then the Connection tab, a hold there, back to ANC, the (i). | first "Changed by the Buds at …" (no changed-since line); after the hold away from the tab "Changed since the app last saw it (read at …)" | the return's `08 11` answered with another mode | | BL-18, BL-19 (`TOUCH-007`) |
-| Y14 | Leave the tab (Controls); optional: the tile on the tab, Home/return, both buds into the case and out with the tab shown; Export. | Controls; (optional branches as in W6–W8) | the `DISC` ≈ 1.5 s after leaving; (optional: as X12) | | BL-20 … BL-24, BL-end2 |
+| Y1 | **User 0 (Play).** Update over 1.2.2 (Debug mode on; the 1.2.2 card's choice on film first); open the app; Info; gear → Settings. | "App: 1.3.0, build <B1 hash>", no "-dirty"; Settings = Dark mode, Case sounds, Use different Buds — **no "Noise control with Google Play services" card, no "Google Play services: …" line** | the **fifteen** requests: `4:16`, the twelve settings, `SubscribeRuntimeInfo`, **`SubscribeToSettingsChanges`, `ReadSetting 4:13`**, `GetHardwareInfo`; the snapshot claim | | BL-1, BL-2 (`PAIR-003`, `BATT-004`, `FW-003`) |
+| Y2 | Disconnect, Connect. | ready | the fifteen requests again — the subscription and the read once per session | | BL-3 (`PAIR-003`) |
+| Y3 | **Connection tab**, both worn: 10 press-and-holds ≈ 6 s apart; touch nothing; then open ANC. | the mode follows every hold (the notification's line; ANC shows the last) | one `4:{13:n}` stream packet per hold on DLCI 0x02; **no app `SABM` on DLCI 0x04** | | BL-4 (`TOUCH-007`, `ANC-001`…`004`) |
+| Y4 | **ANC tab**: 10 press-and-holds ≈ 6 s apart; the (i) after one. | **10 of 10** shown within a second; the (i) "Changed by the Buds at HH:MM:SS: the Buds reported a new mode — a press-and-hold on a bud, or a change they made themselves."; the last sentence "The Buds report every change of the mode on the app's own channel. … that part is a hypothesis." | one stream packet per hold; no app `SABM`; no hint, no "Take it back again" | | BL-5, BL-6 (`TOUCH-007`, `ANC-001`…`004`) |
+| Y5 | Tap a mode; the (i). The ANC tile once. | the mode at once; no "Changed by the Buds" line for the own tap; the tile steps one mode and the app follows | one claim per tap/tile (`08 11`, `08 12`, ACK), the Buds' `Notify`, **the stream packet of the tapped mode ≈ 0.3 s after the `Set`**, the `DISC` ≈ 1.5 s after the ACK | | BL-7, BL-8 (`ANC-001`…`004`) |
+| Y6 | One bud out (both worn), 10 s, back in, 10 s; read the mode after each. | either the loss and the re-open by itself with the mode read ("Changed since the app last saw it (read at …)" if it differs), or the Buds' own switch as "Changed by the Buds" (🟡) | the Buds' `DISC` → the re-open's fifteen requests (the subscription and the read again), or a stream packet without a `DISC` — say which | | BL-9 (`PAIR-003`, `TOUCH-007`) |
+| Y7 | Bluetooth off, 5 s, on; wait. | "Bluetooth was switched off"; ready again by itself | the re-open's fifteen requests — the subscription again | | BL-10 (`PAIR-003`) |
+| Y8 | Taps while Play holds the channel; tap again after a failed one. | the mode after at most two taps; **no hint, no re-claim, no "Take it back again"** | a refused attempt 1 with Play's `DISC` (the `CAP-075` §5 collision — the known issue); the app never re-claims by itself | | BL-11 (`ANC-001`…`004`) |
+| Y9 | 5 more holds on the ANC tab. | 5 of 5 shown | 5 stream packets; no app `SABM` | | BL-12 (`TOUCH-007`) |
+| Y10 | (optional) The official app on a second phone: an EQ slider; In-ear detection off/on. | the equalizer and the switch follow in OpenControl ("read HH:MM:SS", not "changed by this app") | the stream packets for field 16 and field 2 on OpenControl's channel | | BL-13 |
+| Y11 | Export; the system log; switch to user 10. | "Debug log saved (N lines)." | — | | BL-end1 |
+| Y12 | **User 10 (no Play).** Open the app; Info; Settings. | the build; no card, no Play line | the fifteen requests; the snapshot claim released ≈ 1.5 s after its answer | | BL-14 (`PAIR-003`, `FW-003`, `BATT-004`) |
+| Y13 | Connection tab: 10 holds; then ANC: 10 holds; the (i). | every hold followed / shown; "Changed by the Buds at …" | 20 stream packets; no app `SABM`; 0 Play claims (positive control: part 1's count); **no `DISC` of DLCI 0x04 while the tab is shown — there is no claim** | | BL-15, BL-16 (`TOUCH-007`, `ANC-001`…`004`) |
+| Y14 | A tap; the tile. | the mode; the app follows the tile; no "Changed by the Buds" for the own change | one claim each; the stream packet ≈ 0.3 s after the `Set`; the `DISC` ≈ 1.5 s after the ACK | | BL-17, BL-18 (`ANC-001`…`004`) |
+| Y15 | One bud out / in (as Y6). | as Y6 | as Y6 | | BL-19 (`PAIR-003`, `TOUCH-007`) |
+| Y16 | Bluetooth off / on. | ready again by itself | the re-open's requests — the subscription again | | BL-20 (`PAIR-003`) |
+| Y17 | Controls tab: 5 holds; then ANC. | the last mode; "Changed by the Buds" | 5 packets; no app `SABM` | | BL-21 (`TOUCH-007`) |
+| Y18 | Disconnect; two holds while disconnected; Connect; the ANC (i). | after the Connect the mode read; **"Changed since the app last saw it (read at HH:MM:SS): a press-and-hold on a bud or the Buds' own change, made while this app was not connected."** | nothing while disconnected; the Connect's fifteen requests; the read's answer | | BL-22 (`PAIR-003`, `TOUCH-007`) |
+| Y19 | Both buds into the case, 15 s, out, 15 s. | the session ends and re-opens by itself, or "The Buds don't allow changing noise control right now …" with the mode kept; the mode read once worn; **a value 0 never shown as a mode** | the loss and the re-open's requests, or a stream packet `4:{13:0}`; the read's answer 0 in the case, 1–4 worn | | BL-23 (`PAIR-003`) |
+| Y20 | (optional) Home; two holds while hidden; return. | the holds' result on return | 2 packets while hidden; no `SABM` | | BL-24 (`TOUCH-007`) |
+| Y21 | (optional) The official app on a second phone: an EQ slider; a switch. | OpenControl follows | the stream packets | | BL-25 |
+| Y22 | Export; the system log; the APK pull. | "Debug log saved (N lines)." | — | | BL-end2 |
 
 ## After the run (within 1 minute of the last action)
 
@@ -475,7 +488,7 @@ the channel — a cycle of ≈ 9.2–9.5 s with ≈ 4.6–4.9 s held; write down
 | V 1.2.0 build | 19 | 13 | 1 | 4 | 1 |
 | W 1.2.0 rebuilt | 12 | 3 | 0 | 6 | 3 |
 | X 1.2.1 | 12 | 6 | 0 | 5 | 1 |
-| Y 1.2.2 | 14 | | | | |
+| Y 1.3.0 | 22 | | | | |
 
 **Run `CAP-075` (2026-10-12 set 1, the user without Play; 2026-10-13 set 2, the Owner with Play; 1.2.1 `31ee183`; `ai-sessions/0088`, `CAP-075-FINDINGS.md`):** section X — ✅ X2, X5, X6, X7, X10, X11; ⚠️ X1 (set 2's card pre-set to "Take it back"), X3 (the hint ✓, no re-claim ✓, 0 of 9 holds shown — the claims lived 0.42 / 1.2 s), X4 (the (i) ✓; no mode tap), X9 (on the Connection tab), X12 (the switch not set back; the optional branches not run); not run X8. The X6 expectation "≈ 6 of 10" was 8 of 19 within a second (the 6/12-s steps lengthen the cycles). Verdict (the maintainer, chat 2026-10-13): no heavy issue — 1.2.1 released as built.
 
