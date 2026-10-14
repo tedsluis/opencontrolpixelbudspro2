@@ -11,14 +11,13 @@ pre-restructure file (same command). The `pbtk` root cause those pointers most o
 
 Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maintainer (a decision, a sign-off, or an action only they can do).
 
-## 1. After release 1.2.1 (published 2026-10-13, `ai-sessions/0088` and its continuation in chat)
+## 1. After release 1.2.2 (published 2026-10-14, `ai-sessions/0089` and its continuation in chat)
 
-- [x] **D4 (the maintainer):** done 2026-10-13 — the published 1.2.1 installed on the phone with Obtainium (the maintainer, chat 2026-10-13: "De installatie
-      van 1.2.1 op mijn telefoon met Obtainium is gelukt"); the tested build and the published one are the same file (re-checked with `gh release download`).
-- E1–E4 done by the pull request of `release/1.2.1-after` (CHANGELOG date, README, the Release log row, the session logs, the notes template).
 - [x] **1.2.2 published 2026-10-14** (tag `v1.2.2` on build commit `bfd7891`, PR #49 merged with `5b204ea`; E1–E4 by the pull request of `release/1.2.2-after`).
-      **No hardware capture:** the maintainer tested 1.2.2 on the phone and released it without `CAP-076` (chat 2026-10-14). D4 (install the published APK with
-      Obtainium) is the maintainer's (**M**).
+      **No hardware capture:** the maintainer tested 1.2.2 on the phone and released it without `CAP-076` (chat 2026-10-14). **D4 done 2026-10-14:** the published APK
+      installed on the Pixel 9a with Obtainium (the maintainer, chat 2026-10-14: "Ik heb opencontrol for buds middels obtainium geupdate naar 1.2.2 op mijn pixel
+      9a telefoon"); the published APK's SHA-256 = the tested build's (`d750551a…8a6b`, re-checked with `gh release download`). E1–E4: PR #52.
+      (1.2.1: D4 done 2026-10-13 with Obtainium; E1–E4 by PR #45.)
 - [ ] `CAP-076` (Group BL, skeleton by `ai-sessions/0089`) stays planned but is **not** required for 1.2.2; whether it is still run depends on `ai-sessions/0090`
       (the DLCI 0x02 setting-13 route) — **M**.
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;

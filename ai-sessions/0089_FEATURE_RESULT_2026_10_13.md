@@ -260,7 +260,8 @@ Pushed without force after `git fetch` and a rebase check. **Continuation in cha
 RESULT and INDEX row) — also the build commit of `scripts/release.sh 1.2.2` (B1); PR #49 opened (the maintainer's yes), CI green, B1–B3 by the maintainer;
 merged with merge commit `5b204ea` (`gh pr merge --merge`); tag `v1.2.2` (SSH-signed) on `bfd7891`; the release published 2026-10-14 from
 `~/opencontrol-1.2.2-tested` with "New in 1.2.2" and "Known issues" paragraphs added to the notes; `CAP-076` not run — the maintainer's choice in chat
-2026-10-14 ("Ik heb versie 1.2.2 getest zonder CAP-076 uit te voeren en het werkt"). E1–E4: the pull request of `release/1.2.2-after`.
+2026-10-14 ("Ik heb versie 1.2.2 getest zonder CAP-076 uit te voeren en het werkt"). E1–E4: PR #52 (`release/1.2.2-after`). D4 done 2026-10-14: the published
+1.2.2 installed with Obtainium on the Pixel 9a (the maintainer, chat).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0089_FEATURE_RESULT_2026_10_13.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0089_FEATURE_RESULT_2026_10_13
