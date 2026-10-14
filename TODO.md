@@ -199,7 +199,7 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
-- [ ] **Next: a FEATURE session that builds ADR-064** (accepted 2026-10-14, `ai-sessions/0090`): one `SubscribeToSettingsChanges` and one `ReadSetting 4:13`
+- [ ] **Next: `ai-sessions/0091_FEATURE_PROMPT_2026_10_14.md`** (written 2026-10-14 from the maintainer's feedback on 0090) — build ADR-064 as **1.3.0**, the stream feeding every read setting, ADR-061/062/063 replaced by one new ADR (the hold, the re-claim, the card and the Play line removed), the cause line rewritten, `CAP-076` rewritten for 1.3.0. The earlier outline (accepted 2026-10-14, `ai-sessions/0090`): one `SubscribeToSettingsChanges` and one `ReadSetting 4:13`
       per MAESTRO session, field 13 only, the mode shown with "Changed by the Buds" without a Message Stream claim; fixtures from `CAP-051` 1177/1755 and `CAP-056`
       1451; then its hardware run (skeleton written by that session — the maintainer's choice, chat 2026-10-14): both users, holds with the noise-control tab
       closed, a wear-change re-home and the re-open's read; optionally the read-only `ReadSetting 4:8/9/10` (§4). If holds show without DLCI 0x04, a later ADR may

@@ -5,7 +5,7 @@
 **Date:** 2026-10-14
 **Title:** Point-by-point check of the pbpctrl-derived findings list (E-01 … E-23) against the external sources at pinned commits and this repository's own
 captures, APK notes and documents
-**Status:** awaiting maintainer sign-off — every proposal answered in chat 2026-10-14 and applied and pushed (branch `research/pbpctrl-crosscheck`); the build of ADR-064 is the next session
+**Status:** complete — every proposal answered in chat 2026-10-14 and applied (branch `research/pbpctrl-crosscheck`, PR #55; the merge is the maintainer's act); the build of ADR-064 is `ai-sessions/0091` (corrected from "awaiting maintainer sign-off" on the maintainer's feedback, `AI_SESSION_LOG_PROCEDURE.md` §4a)
 
 ## Summary
 
