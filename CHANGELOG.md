@@ -10,11 +10,12 @@ is kept unchanged under "History before 1.0.0". 1.0.1, a hotfix, followed on 202
 build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`); 1.1.1 on 2026-10-08 ([v1.1.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.1.1),
 build commit `86a6fb3`, hardware run `CAP-071`, `ai-sessions/0080`); 1.2.0 on 2026-10-10 ([v1.2.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.0),
 build commit `5b4d5db`, hardware runs `CAP-072` and `CAP-073`, `ai-sessions/0083`, `0085`); 1.2.1 on 2026-10-13 ([v1.2.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.1),
-build commit `31ee183`, hardware run `CAP-075`, `ai-sessions/0088`). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
+build commit `31ee183`, hardware run `CAP-075`, `ai-sessions/0088`); 1.2.2 on 2026-10-14 ([v1.2.2](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.2),
+build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phone without a recorded capture — `CAP-076` was not run). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
 
 ## [Unreleased]
 
-## [1.2.2]
+## [1.2.2] - 2026-10-14
 
 Prepared in `ai-sessions/0089` (2026-10-13) after `CAP-075` (`ai-sessions/0088`): with Google Play services, Play's Fast Pair takes the noise-control channel
 back every 5–6 seconds, the same every time — 1.2.1's 6- and 12-second pauses only made the app wait longer. Nothing new on the wire.
@@ -39,7 +40,8 @@ back every 5–6 seconds, the same every time — 1.2.1's 6- and 12-second pause
 
 ### Known issues
 
-- Expected from `CAP-075`'s measurements (one Play version, 2026-10-13), **not yet measured with 1.2.2** (`CAP-076`): with Google Play services the app holds the
+- Released after the maintainer's own test on the phone, **without a recorded hardware capture** (`CAP-076` was not run — the maintainer's choice in chat
+  2026-10-14). Expected from `CAP-075`'s measurements (one Play version, 2026-10-13), not measured with 1.2.2: with Google Play services the app holds the
   channel about 4.6–4.9 s of every ≈ 9.3 s for about 3 minutes, so about half of the press-and-holds are shown; then the hint until "Take it back again", a tap,
   Refresh or pull-down. It is a tug of war with Play: Android's own Buds settings may be stale meanwhile. What Play does after many collisions in a row is
   unknown. Without Google Play services nothing contends and both choices behave the same.
