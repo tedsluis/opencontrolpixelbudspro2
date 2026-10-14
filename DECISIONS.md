@@ -1495,6 +1495,12 @@ motivated this).
   communication style."` (`fut.java:131`) and no code binds it to DLCI 0x04 or 0x08 (whose SDP records are "GFPS RFCOMM" and "GSND CONTROL", `CAP-033`
   frame 1279). 🟡 HYPOTHESIS: a legacy TLV style, perhaps the "default internal rfcomm socket" (`3a046f6d-…`) never seen on the wire. The Context's finding
   — no DLCI 0x04/0x08 transport logic in the app — stands; it must not be read as "no TLV codec of that shape exists in the app".
+- **Update (2026-10-14, `ai-sessions/0090`, pointer — maintainer-approved in chat 2026-10-14, `AskUserQuestion` "APK check", option *"RE Update + ADR-025
+  pointer (Recommended)"*; decision unchanged):** the Context's "downstream domain-model sink (`gck.java`/`gcl.java`/`eht.java`) that receives an
+  already-decoded value from elsewhere" receives the ANC state from **Maestro setting 13** on DLCI 0x02, not from Play services: its one writer
+  `gea.I(device, qhs)` ("Update device(%s) Anc state: %s", `gck.java:208–211`) is called only from `fxb.smali:1237` (`fxb` case 13), fed by `ReadSetting`
+  answers and the app's own `SubscribeToSettingsChanges` stream (`REVERSE_ENGINEERING.md`, `qhr` register, Update of 2026-10-14). The Message Stream
+  transport is still not in the APK; GMS stays out of scope.
 
 ## ADR-026 — Volume Balance (`qhr` field 17) range and Left/Right polarity confirmed: ±100, `+100`=Left, `-100`=Right
 
@@ -1902,6 +1908,8 @@ motivated this).
   one-terminated varint; with `goq` MAESTRO_A = 10, MAESTRO_B = 13, LEFT_BT_CORE = 3, RIGHT_BT_CORE = 4 this gives `00 3b` (19), `00 4b` (21), `80 3d` (24),
   `80 4d` (26) — the four observed request addresses, 4 of 4. Item 3's rule (send only on a tabulated channel) is **unchanged**; deriving the address in code
   needs its own ADR after the `CAP-065` one-bud test (does the announced channel name the bud that hosts the session?).
+- **Update (2026-10-14, `ai-sessions/0090`, pointer — maintainer-approved in chat 2026-10-14 with ADR-064):** item 2's "no `SubscribeToSettingsChanges`" is
+  amended by **ADR-064** for one subscription per MAESTRO session, of which only field 13 is decoded.
 
 ## ADR-035 — DLCI 0x08 is claimed on demand for the Case battery: `Group 0x0e Code 0x01`, entry index 3; receive-only
 
@@ -1957,6 +1965,9 @@ motivated this).
   bytes as fixtures). **Every write is a later, separate ADR.** No behaviour changes today.
 - **Update (2026-09-28, `ai-sessions/0055`):** field 12 is added to the readable fields by ADR-046 (its semantics reached 🟢 FACT in `PROTOCOL.md` §4.5.3's
   2026-09-28 Update).
+- **Update (2026-10-14, `ai-sessions/0090`, pointer — maintainer-approved in chat 2026-10-14 with ADR-064):** "no `SubscribeToSettingsChanges`" is amended by
+  **ADR-064** (one subscription per MAESTRO session, field 13 only), and field 13 is added to the readable fields (`ReadSetting 4:13`, `PROTOCOL.md` §4.1
+  Update of 2026-10-14).
 
 ## ADR-037 — `android/logs/LOGS-0xx`'s "always gitignored" rule retired for full capture sessions specifically; ad hoc pulls unaffected
 
@@ -2673,7 +2684,9 @@ motivated this).
 - **🟡 that must become 🟢 first**: (i) `qir` field 2 is a sound level (`WELL-002`: values against a sound-level meter on film); (ii) `qia` field 6 is a per-day dose
   in the same unit; (iii) the day index's epoch; (iv) the Buds answer a second client's `SubscribeToLiveDb`/`FetchDailySummaries`; (v) field 21's channel-19
   write form (uncaptured); (vi) the cost — ≈ 2 stream packets/s per channel for the whole session (`CAP-027`: 208 per channel in 4 min) — for the battery and the
-  log.
+  log; *(added 2026-10-14, `ai-sessions/0090`, maintainer-approved in chat 2026-10-14, `AskUserQuestion` "Law/drafts")* (vii) the Buds' clock must be set
+  first (`SetWallclock`), and an unset clock drifts (pbpctrl, which never sends `SetWallclock`, notes a "consistent ~60s difference to actual time",
+  `maestro_pw.proto:44`) — the day index of (iii) may depend on it. The draft stays Proposed.
 - **Consequences, if accepted**: a Dosimeter codec, two requests in the Connect sequence, a notification channel (`POST_NOTIFICATIONS` is already held), the
   switch on a tab, DataStore for one timestamp; its own hardware run with the meter. Until then: `TODO.md` §5 carries the candidate.
 
@@ -2813,6 +2826,38 @@ motivated this).
      found (ADR-063, information only)").
 - **Consequences**: `PlayServicesPresence` (`:domain`), the line and its `:ui` tests, the manifest entry, a dated note in `AGENTS.md` §1; `CAP-076` checks the line
   in both users (Owner: found; the secondary user: not found).
+
+## ADR-064 — DLCI 0x02: `SubscribeToSettingsChanges` and `ReadSetting 4:13` — the noise-control mode on the app's own channel (read only)
+
+- **Date**: 2026-10-14
+- **Status**: Accepted (maintainer, chat 2026-10-14, `ai-sessions/0090`) — not yet built; its hardware run comes with the build
+- **Note on process**: drafted by an AI agent (`ai-sessions/0090`); the decision is the maintainer's, given in the chat of 2026-10-14 (`AskUserQuestion`
+  "ADR-064", option *"Accept now, build next (Recommended)"*, with this text in the preview), per `AGENTS.md` §6. It rests on the `PROTOCOL.md` §4.1 Update of
+  2026-10-14 (setting 13 = the mode, 🟢), approved in the same chat.
+- **Context**: a press-and-hold changes the mode on the Buds; the Message Stream's `Notify ANC state` reaches only the one client that holds DLCI 0x04, and in
+  the user with Google Play services Play's Fast Pair takes that channel back about 5 s after every claim (ADR-061, ADR-062 and its Updates; `CAP-074`,
+  `CAP-075`; 1.2.2 shows about half of the holds at best). The official app learns the mode from Maestro setting 13 instead: it subscribes to
+  `SubscribeToSettingsChanges` on every MAESTRO session and reads `4:13` (`REVERSE_ENGINEERING.md`, `qhr` register, Update of 2026-10-14). In its captures the
+  stream carries `4:{13:n}` for 73 of 73 Buds-side and 39 of 39 Set-driven changes, also while no client holds the Message Stream (`CAP-038` 2170, 2205);
+  OpenControl never subscribed (0 of 33 logs), which is why nothing moved on DLCI 0x02 at any of `CAP-075`'s 31 holds (`DESKRESEARCH_FINDINGS.md` 2026-10-14).
+  DLCI 0x02 is the app's own session channel, never contended by another client; the Buds close it themselves on some wear changes (L-1, ADR-044).
+- **Options considered**: (a) keep the Message Stream as the only source (ADR-061/062); (b) this decision, read only; (c) (b) plus switching ANC with
+  `WriteSetting 4:{13:n}` — not now: no capture holds such a write (0 in 96 logs).
+- **Decision**:
+  1. Once per MAESTRO session (Connect and every ADR-044 re-open), after `SubscribeRuntimeInfo`: one `SubscribeToSettingsChanges` REQUEST (empty payload,
+     byte-identical to `CAP-051` 1177 on channel 21 — `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 01 97 54 b0 7e` — or `CAP-056` 1451 on channel 19)
+     and one `ReadSetting 4:13`, on the announced channel with its ADR-034 address. No retry, no polling.
+  2. Only field 13 is decoded (1–4 = the mode, 0 = no mode settable); other stream fields are logged payload-free and not interpreted.
+  3. A stream value that changes the mode without a tap is shown with the cause "Changed by the Buds" — no Message Stream claim is needed for it.
+  4. Nothing is written; `WriteSetting 4:{13:n}` stays gated (its own ADR after an experiment).
+  5. Amends ADR-036 and ADR-034 item 2 ("no subscription") for this subscription only.
+  6. ADR-061/062/063 are unchanged until the hardware run; if holds are shown with the noise-control tab closed and DLCI 0x04 untouched, a later ADR may retire
+     the hold and the re-claim.
+- **Verification**: both GrapheneOS users; holds with the noise-control tab closed (one stream packet per hold, the mode on screen, no `SABM` on DLCI 0x04); a
+  wear-change re-home (the Buds' `DISC`) and the re-open's `ReadSetting 4:13`; the tile and the notification follow.
+- **Consequences**: the codec gains the subscription request and a field-13 decoder (real `CAP-051`/`CAP-056` bytes as fixtures, fuzzed);
+  `BudsRepositoryImpl`'s Connect sequence gains two requests; `PROTOCOL.md` §4.1 Update of 2026-10-14 is its evidence. A FEATURE session builds it with its
+  hardware run (`TODO.md` §5).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
