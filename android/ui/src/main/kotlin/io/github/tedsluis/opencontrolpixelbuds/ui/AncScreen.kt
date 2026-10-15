@@ -159,8 +159,8 @@ private fun AncModeButton(label: String, selected: Boolean, enabled: Boolean, mo
 internal fun ancModeLine(ancMode: AncMode?, updatedAt: Long?, fromLastConnection: Boolean = false): String = when {
     ancMode == null -> "ANC mode: unknown"
     // The maintainer's wording (chat 2026-10-03): "Mode: … - from the last connection (updated 14:32:07)".
-    fromLastConnection -> "ANC mode: ${ancMode.name} — from the last connection" + (formatUpdatedAt(updatedAt)?.let { " (updated $it)" } ?: "")
-    else -> "ANC mode: ${ancMode.name}" + (formatUpdatedAt(updatedAt)?.let { " (updated $it)" } ?: "")
+    fromLastConnection -> "ANC mode: ${ancMode.label} — from the last connection" + (formatUpdatedAt(updatedAt)?.let { " (updated $it)" } ?: "")
+    else -> "ANC mode: ${ancMode.label}" + (formatUpdatedAt(updatedAt)?.let { " (updated $it)" } ?: "")
 }
 
 /**
@@ -183,7 +183,7 @@ internal fun ancDetailLines(
     if (cause == AncModeCause.CHANGED_BY_BUDS && ancMode != null) ancChangedByBudsLine(ancModeUpdatedAt) else null,
     if (cause == AncModeCause.CHANGED_SINCE_LAST_READ && ancMode != null) ancChangedSinceLastReadLine(ancModeUpdatedAt) else null,
     if (notAllowed) ancNotAllowedLine(checkedAt) else null,
-    "Connection: ${connectionState::class.simpleName}",
+    "Connection: ${connectionStateText(connectionState)}",
     ANC_STREAM_HINT_TEXT,
 )
 

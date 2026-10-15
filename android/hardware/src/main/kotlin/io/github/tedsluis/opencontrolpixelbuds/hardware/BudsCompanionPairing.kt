@@ -48,23 +48,20 @@ import java.util.regex.Pattern
  * outcome means) lives in [PairingLogic] and is unit-tested; this class is the thin Android glue around it, and logs every
  * step (always-on, no address — AGENTS.md §9/§13).
  *
- * // TODO(verify): the CDM `associate()` callback and picker are not exercised against a real device in this environment
- * // — the maintainer re-test (b) in `ai-sessions/0041` confirms/refutes the fixes for the "could not resolve the selected
- * // device" failure.
+ * The CDM `associate()` callback and picker were confirmed on the maintainer's device (`ai-sessions/0041` re-test (b), `ai-sessions/0043`).
+ *
+ * [choiceMemory] is shared by every instance (`ai-sessions/0094`, A93-APP-01): the Activity's instance runs "Use different Buds", the repository's
+ * singleton connects — both must see the same choice.
  */
-class BudsCompanionPairing(private val context: Context) {
+class BudsCompanionPairing(private val context: Context, private val choiceMemory: PairingChoiceMemory) {
 
     private val companionDeviceManager: CompanionDeviceManager? = context.getSystemService()
 
     /** True from `associate()` until CDM answers (created/failed) or the picker is cancelled — a second request is refused. */
     private val associationInFlight = AtomicBoolean(false)
 
-    /**
-     * Set by [forgetAssociations] ("Use different Buds", A68-APP-05): until a new association exists, no bonded device is taken by its name — the user
-     * asked to choose. In memory only; after a process restart a single bonded "Pixel Buds" device is used again, as it always was.
-     */
-    @Volatile
-    private var chooseAgainRequested = false
+    /** False after "Use different Buds" until a new association exists ([PairingChoiceMemory]). */
+    internal fun nameFallbackAllowed(): Boolean = !choiceMemory.chooseAgainRequested
 
     /** The picker was dismissed without a callback (`RESULT_CANCELED`): the next tap may start a new request. */
     fun cancelPendingAssociation() {
@@ -94,7 +91,7 @@ class BudsCompanionPairing(private val context: Context) {
             return BondedLookup.PermissionMissing
         }
         val associated = associations().mapNotNull { (_, view) -> view.address }.toSet()
-        return when (val choice = PairingLogic.chooseBondedOrAsk(bonded, associated, nameFallback = !chooseAgainRequested)) {
+        return when (val choice = PairingLogic.chooseBondedOrAsk(bonded, associated, nameFallback = nameFallbackAllowed())) {
             is PairingLogic.BondedChoice.One -> BondedLookup.Found(choice.candidate.address)
             PairingLogic.BondedChoice.None -> BondedLookup.NoneBonded
             PairingLogic.BondedChoice.Several -> BondedLookup.SeveralCandidates
@@ -107,6 +104,8 @@ class BudsCompanionPairing(private val context: Context) {
      * Android's picker instead of reusing the old association. Returns how many were removed.
      */
     fun forgetAssociations(): Int {
+        choiceMemory.chooseAgainRequested = true
+        associationInFlight.set(false)
         val manager = companionDeviceManager ?: return 0
         var removed = 0
         associations().forEach { (info, _) ->
@@ -117,8 +116,6 @@ class BudsCompanionPairing(private val context: Context) {
                 BleLogger.logConnectionEvent("Pairing: could not remove an association (${BleLogger.describe(e)})")
             }
         }
-        chooseAgainRequested = true
-        associationInFlight.set(false)
         BleLogger.logConnectionEvent("Pairing: use different Buds — removed $removed association(s) of this app; the next Pair a device opens the picker")
         return removed
     }
@@ -141,8 +138,8 @@ class BudsCompanionPairing(private val context: Context) {
      * `IntentSender` [onPending] receives must be launched via an `ActivityResultLauncher` by the caller (`:app`, which
      * owns the `ComponentActivity`).
      *
-     * // TODO(verify): [NAME_PATTERN] filters CDM's own device picker to names containing "Pixel Buds" (case-insensitive) —
-     * // confirmed against the maintainer's real device (`ai-sessions/0036`).
+     * [NAME_PATTERN] filters CDM's own device picker to names containing "Pixel Buds" (case-insensitive) — confirmed on the maintainer's device
+     * (`ai-sessions/0036`).
      */
     fun requestAssociation(
         onPending: (IntentSender) -> Unit,
@@ -158,7 +155,7 @@ class BudsCompanionPairing(private val context: Context) {
         val reuse = PairingLogic.pickAssociation(existing.map { it.second })
         if (reuse != null) {
             BleLogger.logConnectionEvent("Pairing: reusing existing association (${existing.size} total) — no new picker")
-            chooseAgainRequested = false
+            choiceMemory.chooseAgainRequested = false
             existing.first { it.second.id == reuse.id }.first.let(onCreated)
             return
         }
@@ -174,6 +171,23 @@ class BudsCompanionPairing(private val context: Context) {
             .setSingleDevice(true) // ARCHITECTURE.md §15: single-device support only for v1.
             .build()
         BleLogger.logConnectionEvent("Pairing: association requested (CDM picker)")
+        // A93-APP-05 (`ai-sessions/0094`): a throwing associate() must not leave the request "in flight" — every later tap would read "already in progress".
+        try {
+            associate(manager, request, onPending, onCreated, onFailure)
+        } catch (e: RuntimeException) {
+            associationInFlight.set(false)
+            BleLogger.logConnectionEvent("Pairing: association request refused by the system (${BleLogger.describe(e)})")
+            onFailure(PairingFailure.AssociationFailed(e.javaClass.simpleName))
+        }
+    }
+
+    private fun associate(
+        manager: CompanionDeviceManager,
+        request: AssociationRequest,
+        onPending: (IntentSender) -> Unit,
+        onCreated: (AssociationInfo) -> Unit,
+        onFailure: (PairingFailure) -> Unit,
+    ) {
         manager.associate(
             request,
             ContextCompat.getMainExecutor(context),
@@ -181,7 +195,7 @@ class BudsCompanionPairing(private val context: Context) {
                 override fun onAssociationPending(intentSender: IntentSender) = onPending(intentSender)
                 override fun onAssociationCreated(associationInfo: AssociationInfo) {
                     associationInFlight.set(false)
-                    chooseAgainRequested = false // the user chose: this association identifies the Buds from now on
+                    choiceMemory.chooseAgainRequested = false // the user chose: this association identifies the Buds from now on
                     BleLogger.logConnectionEvent("Pairing: association created")
                     onCreated(associationInfo)
                 }
@@ -366,4 +380,14 @@ class BudsCompanionPairing(private val context: Context) {
         /** Upper bound for the classic bond to complete once started. */
         const val BOND_TIMEOUT_MS = 45_000L
     }
+}
+
+/**
+ * "Use different Buds" (A68-APP-05), remembered once per process (`ai-sessions/0094`, A93-APP-01): until a new association exists, no bonded device is
+ * taken by its name — the user asked to choose. One instance is shared by every [BudsCompanionPairing] (the DI singleton in `:app`); a rotation keeps
+ * it. In memory only: after a process restart a single bonded "Pixel Buds" device is used again, as it always was.
+ */
+class PairingChoiceMemory {
+    @Volatile
+    var chooseAgainRequested: Boolean = false
 }

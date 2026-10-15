@@ -319,7 +319,8 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                         NavigationBarItem(
                             selected = currentIndex == index,
                             onClick = { navigateToTab(index) },
-                            icon = { Icon(destination.icon, contentDescription = destination.label) },
+                            // A93-APP-07 (`ai-sessions/0094`): the label below already names the tab — the icon says nothing more.
+                            icon = { Icon(destination.icon, contentDescription = null) },
                             label = { Text(destination.label) },
                         )
                     }

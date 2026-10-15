@@ -63,13 +63,9 @@ class BudsForegroundService : Service() {
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW) // AGENTS.md §2: persistent, low-priority.
+            // A93-APP-08 (`ai-sessions/0094`): `getLaunchIntentForPackage` may return null — then the notification opens nothing instead of failing.
             .setContentIntent(
-                PendingIntent.getActivity(
-                    this,
-                    0,
-                    packageManager.getLaunchIntentForPackage(packageName),
-                    PendingIntent.FLAG_IMMUTABLE,
-                ),
+                packageManager.getLaunchIntentForPackage(packageName)?.let { PendingIntent.getActivity(this, 0, it, PendingIntent.FLAG_IMMUTABLE) },
             )
             .build()
     }

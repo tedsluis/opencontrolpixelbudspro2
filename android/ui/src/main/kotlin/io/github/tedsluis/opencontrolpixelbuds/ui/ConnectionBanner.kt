@@ -26,6 +26,14 @@ import androidx.compose.ui.Modifier
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 
+/** Human words for the connection state in an (i) line (`ai-sessions/0094`, A93-APP-08: the class name was shown — "Discovering", "Failed"). */
+internal fun connectionStateText(state: ConnectionState): String = when (state) {
+    ConnectionState.Disconnected -> "not connected"
+    ConnectionState.Connecting, ConnectionState.Discovering -> "connecting"
+    ConnectionState.Ready -> "connected"
+    is ConnectionState.Failed -> "not connected (${state.error.userMessage()})"
+}
+
 /** True only when the app's own control channels are open — every command screen gates on this. */
 internal fun ConnectionState.isReady(): Boolean = this is ConnectionState.Ready
 

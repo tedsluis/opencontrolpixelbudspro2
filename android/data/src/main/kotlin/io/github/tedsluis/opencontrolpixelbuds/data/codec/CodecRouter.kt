@@ -40,7 +40,8 @@ sealed class RoutedFrame {
 
     /** The Model ID the Buds send on every Message Stream open (Safe-Mode gate, DECISIONS.md ADR-042). */
     data class ModelId(val frame: ModelIdFrame) : RoutedFrame()
-    data class Eq(val frame: EqFrame) : RoutedFrame()
+    /** An EQ value (field 16/18) — a `ReadSetting`/`WriteSetting` answer ([stream] false) or a settings-stream push ([stream] true, `ai-sessions/0094` A93-APP-04). */
+    data class Eq(val frame: EqFrame, val stream: Boolean = false) : RoutedFrame()
 
     /**
      * A non-EQ setting value (`4:{N: …}`, ADR-036/045) from a `ReadSetting` answer ([stream] false, a `RESPONSE`) or the settings-change stream the app
@@ -303,9 +304,9 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
     if (settingsMethod && carriesValue && packet.payload.isNotEmpty() &&
         (packet.status == null || packet.status == 0)
     ) {
-        val eq = EqFrameDecoder.decode(packet)
-        if (eq is BudsResult.Success) return RoutedFrame.Eq(eq.value)
         val stream = packet.type == PwRpc.TYPE_SERVER_STREAM
+        val eq = EqFrameDecoder.decode(packet)
+        if (eq is BudsResult.Success) return RoutedFrame.Eq(eq.value, stream)
         SettingsCodec.decode(packet.payload)?.let { return RoutedFrame.Setting(it, stream) }
         // ADR-065 item 2 (`ai-sessions/0091`): a pushed change of a field this app does not read is said, not shown — and not an UnidentifiedFrame.
         if (stream && method == Maestro.METHOD_SUBSCRIBE_TO_SETTINGS_CHANGES) {

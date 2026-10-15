@@ -60,10 +60,13 @@ class OversizedLengthTest {
     private class Seen {
         val malformed = ArrayList<ByteArray>()
         var unidentified = 0
+
+        /** A decoder that threw (caught by `decodeGuarded`, `ai-sessions/0094` A93-APP-06): a fuzz run must see none. */
+        var faults = 0
     }
 
     private fun CodecRouter.feedCounting(channel: Int, bytes: ByteArray, seen: Seen): List<RoutedFrame> =
-        feed(channel, bytes, 0L, onUnidentified = { seen.unidentified++ }, onMalformed = { seen.malformed += it })
+        feed(channel, bytes, 0L, onUnidentified = { seen.unidentified++ }, onMalformed = { seen.malformed += it }, onDecoderFault = { seen.faults++ })
 
     @Test
     @DisplayName("synthetic: Proto.fields refuses a length that overflows the offset (was: IllegalArgumentException from copyOfRange)")
@@ -182,5 +185,6 @@ class OversizedLengthTest {
         // Nothing was poisoned: a real frame still decodes on each channel afterwards.
         assertInstanceOf(RoutedFrame.Setting::class.java, router.feedCounting(Dlci.MAESTRO, hex(Settings036.READ_2_RESP), seen).single())
         assertTrue(seen.unidentified + seen.malformed.size > 0)
+        assertEquals(0, seen.faults, "no decoder threw (a throw would be turned into a malformed frame and hidden)")
     }
 }

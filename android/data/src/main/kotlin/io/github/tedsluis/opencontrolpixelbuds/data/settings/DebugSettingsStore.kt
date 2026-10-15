@@ -20,6 +20,8 @@
 package io.github.tedsluis.opencontrolpixelbuds.data.settings
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.Flow
@@ -37,14 +39,17 @@ import kotlinx.coroutines.flow.map
  * must encrypt it (wording aligned 2026-09-24, 0044 finding AR-3). The file is shared with [DarkModeSettingsStore] since `ai-sessions/0062`
  * ([openControlSettings]).
  */
-class DebugSettingsStore(private val context: Context) {
+class DebugSettingsStore internal constructor(private val dataStore: DataStore<Preferences>) {
 
-    val debugModeEnabled: Flow<Boolean> = context.openControlSettings.data.map { prefs ->
+    constructor(context: Context) : this(context.openControlSettings)
+
+    /** A file that cannot be read (corrupt, I/O error) reads as off ([readableData], A93-APP-05). */
+    val debugModeEnabled: Flow<Boolean> = dataStore.readableData().map { prefs ->
         prefs[DEBUG_MODE_KEY] ?: false
     }
 
     suspend fun setDebugModeEnabled(enabled: Boolean) {
-        context.openControlSettings.edit { prefs -> prefs[DEBUG_MODE_KEY] = enabled }
+        dataStore.edit { prefs -> prefs[DEBUG_MODE_KEY] = enabled }
     }
 
     companion object {

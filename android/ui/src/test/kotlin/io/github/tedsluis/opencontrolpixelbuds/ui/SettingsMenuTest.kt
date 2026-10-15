@@ -356,12 +356,32 @@ class SettingsMenuTest {
         compose.onNodeWithText("Other alerts: changed ${formatUpdatedAt(at)}").assertExists()
         compose.onNodeWithText("These settings live on the case and are read when the app connects.").assertExists()
         compose.onNodeWithText("Close").performClick()
-        // Both switches share the card with both labels (siblings): layout order, Earbuds replaced first, then Other alerts.
-        val switches = compose.onAllNodes(isToggleable() and hasAnySibling(hasText(CASE_SOUND_EARBUDS_REPLACED_LABEL)) and hasAnySibling(hasText(CASE_SOUND_OTHER_ALERTS_LABEL)))
+        // Each row is its switch, with its label (A93-APP-07, `ai-sessions/0094`): layout order, Earbuds replaced first, then Other alerts.
+        val switches = compose.onAllNodes(isToggleable() and (hasText(CASE_SOUND_EARBUDS_REPLACED_LABEL) or hasText(CASE_SOUND_OTHER_ALERTS_LABEL)))
         switches.assertCountEquals(2)
         switches[0].performScrollTo().assertIsOn().performClick()
         switches[1].performScrollTo().assertIsOff().performClick()
         assertEquals(listOf("earbudsReplaced=false", "otherAlerts=true"), taps)
+    }
+
+    @Test
+    fun `A93-APP-08 - Use different Buds asks first - Cancel forgets nothing, the confirm button forgets`() {
+        var forgotten = 0
+        compose.setContent {
+            OpenControlTheme(darkTheme = false) {
+                SettingsMenuScreen(DarkMode.SYSTEM, {}, false, {}, emptyList(), {}, AppBuildInfo.UNKNOWN, null, onUseDifferentBuds = { forgotten++ })
+            }
+        }
+        val button = hasText(USE_DIFFERENT_BUDS_TITLE) and hasClickAction()
+        compose.onNode(button).performScrollTo().performClick()
+        compose.onNodeWithText(USE_DIFFERENT_BUDS_CONFIRM).assertExists()
+        compose.onNodeWithText("Cancel").performClick()
+        assertEquals(0, forgotten)
+        compose.onNodeWithText(USE_DIFFERENT_BUDS_CONFIRM).assertDoesNotExist()
+
+        compose.onNode(button).performScrollTo().performClick()
+        compose.onNodeWithText(USE_DIFFERENT_BUDS_CONFIRM).performClick()
+        assertEquals(1, forgotten)
     }
 
     @Test
@@ -374,7 +394,7 @@ class SettingsMenuTest {
         compose.onNodeWithContentDescription("Case sounds: $DETAILS_NOT_CURRENT_DESCRIPTION").performScrollTo().performClick()
         compose.onNodeWithText(FROM_LAST_CONNECTION_DETAIL).assertExists()
         compose.onNodeWithText("Close").performClick()
-        compose.onAllNodes(isToggleable() and hasAnySibling(hasText(CASE_SOUND_EARBUDS_REPLACED_LABEL))).assertCountEquals(2)
+        compose.onAllNodes(isToggleable() and (hasText(CASE_SOUND_EARBUDS_REPLACED_LABEL) or hasText(CASE_SOUND_OTHER_ALERTS_LABEL))).assertCountEquals(2)
     }
 
     @Test

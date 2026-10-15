@@ -38,7 +38,8 @@ class DarkModeSettingsStore internal constructor(private val dataStore: DataStor
 
     constructor(context: Context) : this(context.openControlSettings)
 
-    val darkMode: Flow<DarkMode> = dataStore.data.map { prefs -> DarkMode.fromStored(prefs[DARK_MODE_KEY]) }
+    /** A file that cannot be read (corrupt, I/O error) reads as the default ([readableData], A93-APP-05). */
+    val darkMode: Flow<DarkMode> = dataStore.readableData().map { prefs -> DarkMode.fromStored(prefs[DARK_MODE_KEY]) }
 
     suspend fun setDarkMode(mode: DarkMode) {
         dataStore.edit { prefs -> prefs[DARK_MODE_KEY] = mode.name }

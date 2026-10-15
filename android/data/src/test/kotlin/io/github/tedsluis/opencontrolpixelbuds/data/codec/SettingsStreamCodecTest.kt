@@ -164,10 +164,13 @@ class SettingsStreamCodecTest {
     private class Seen {
         var unidentified = 0
         var malformed = 0
+
+        /** A decoder that threw (caught by `decodeGuarded`, `ai-sessions/0094` A93-APP-06): a fuzz run must see none. */
+        var faults = 0
     }
 
     private fun CodecRouter.feedCounting(bytes: ByteArray, seen: Seen): List<RoutedFrame> =
-        feed(Dlci.MAESTRO, bytes, 0L, onUnidentified = { seen.unidentified++ }, onMalformed = { seen.malformed++ })
+        feed(Dlci.MAESTRO, bytes, 0L, onUnidentified = { seen.unidentified++ }, onMalformed = { seen.malformed++ }, onDecoderFault = { seen.faults++ })
 
     @Test
     @DisplayName("synthetic: field 13 with every value 0–255 — 0 is none, 1–4 the modes, 5–255 not interpreted (an UnidentifiedFrame, never a mode, never a throw)")
@@ -271,6 +274,7 @@ class SettingsStreamCodecTest {
             }
         }
         assertTrue(seen.unidentified + seen.malformed > 0)
+        assertEquals(0, seen.faults, "no decoder threw (a throw would be turned into a malformed frame and hidden)")
         assertEquals(
             listOf<RoutedFrame>(RoutedFrame.Setting(SettingValue.AncState(AncMode.ACTIVE), stream = true)),
             router.feedCounting(hex(SettingsStream.STREAM_13_ACTIVE_CH21_CAP051_1717), seen),

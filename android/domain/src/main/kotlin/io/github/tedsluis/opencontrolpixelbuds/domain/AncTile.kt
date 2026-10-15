@@ -39,7 +39,7 @@ fun ancTileState(session: ConnectionState, mode: AncMode?, availability: AncAvai
         // `ai-sessions/0062` F-2 (the maintainer's wording, chat 2026-10-01): the byte says "not allowed now", not "not worn" (`CAP-064`: e8 with no bud worn).
         availability == AncAvailability.NOT_ALLOWED -> "Not allowed now"
         mode == null -> "Tap to switch"
-        else -> mode.toString().lowercase().replaceFirstChar { it.uppercase() }
+        else -> mode.label
     }
     return AncTileState(ready, mode, availability, subtitle, active = ready && mode != null && mode != AncMode.OFF)
 }

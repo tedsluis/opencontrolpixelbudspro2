@@ -55,8 +55,8 @@ android {
         // above the previous release. 1.0.1 = the hotfix of `ai-sessions/0069` (the maintainer's choice in chat 2026-10-03); 1.1.1 = the toolchain of `ai-sessions/0078`
         // (`ai-sessions/0079`, the maintainer's choice in chat 2026-10-08); 1.2.1 = the Noise-control channel switch of `ai-sessions/0087` (chat 2026-10-12).
         // 1.2.2 = the constant re-claim step, "Take it back again" and the renamed card of `ai-sessions/0089` (chat 2026-10-13, "Version").
-        versionCode = 10300
-        versionName = "1.3.0"
+        versionCode = 10301
+        versionName = "1.3.1"
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
         buildConfigField("String", "GIT_COMMIT_DATE", "\"$gitCommitDate\"")
     }
