@@ -11,11 +11,12 @@ build commit `0323849`, hardware run `CAP-070`, `ai-sessions/0075`); 1.1.1 on 20
 build commit `86a6fb3`, hardware run `CAP-071`, `ai-sessions/0080`); 1.2.0 on 2026-10-10 ([v1.2.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.0),
 build commit `5b4d5db`, hardware runs `CAP-072` and `CAP-073`, `ai-sessions/0083`, `0085`); 1.2.1 on 2026-10-13 ([v1.2.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.1),
 build commit `31ee183`, hardware run `CAP-075`, `ai-sessions/0088`); 1.2.2 on 2026-10-14 ([v1.2.2](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.2),
-build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phone without a recorded capture — `CAP-076` was not run). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
+build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phone without a recorded capture — `CAP-076` was not run); 1.3.0 on 2026-10-15
+([v1.3.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.3.0), build commit `ff27ee1`, hardware run `CAP-076`, `ai-sessions/0092`). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
 
 ## [Unreleased]
 
-## [1.3.0]
+## [1.3.0] - 2026-10-15
 
 Prepared in `ai-sessions/0091` (2026-10-14) after `ai-sessions/0090`'s cross-check of the official app (`DECISIONS.md` ADR-064, ADR-065): the Buds report every
 change of the noise-control mode — and of every other setting — on the app's own channel, once the app asks for it. Two new requests on the wire at every
