@@ -2919,6 +2919,16 @@ motivated this).
   store, the probe and the `<queries>` entry; `ARCHITECTURE.md` §2.4, §3.1, §3.2, §5a, §6.0b updated; version 1.3.0 (`CHANGELOG.md`).
 - **Note (as built, `ai-sessions/0091`)**: item 1's "a send failure ends the sequence" is implemented as every other step of the Connect sequence — each request
   fails on its own and is never retried; a lost session fails them all (the test "a lost session during the subscription is not retried").
+- **Update (2026-10-15, `ai-sessions/0092`, `CAP-076`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "ADR-065 Upd", option *"Write it as drafted
+  (Recommended)"*): hardware-verified in both GrapheneOS users (1.3.0 `ff27ee1`).** One `SubscribeToSettingsChanges` and one `ReadSetting 4:13` per MAESTRO
+  session, byte-identical to `CAP-051` 1177/1178 (channel 21) and `CAP-056` 1451/1450 (channel 19), after `SubscribeRuntimeInfo` and before `GetHardwareInfo` —
+  12 of 12 full sessions (Connects, LINK_BACK and AFTER_LOSS re-opens, the re-open after Bluetooth off); press-and-holds on the noise-control tab shown within
+  0.1 s, **29 of 29 with Google Play services holding the Message Stream and 12 of 12 without**; 33 app claims of DLCI 0x04, all user actions or the Connect's
+  snapshot (none held, none re-claimed); 15 own `Set`s ACKed and classed as the app's (the stream 55–246 ms after the `Set`); value 0 never shown as a mode.
+  Found: with both buds out of the case every change is pushed twice (channels 21 and 19, 🟡 one per bud core); item 4's "changed since the app last saw it" is
+  overwritten by the equal `ReadSetting 4:13` answer that follows the snapshot's `Get` (12 of 12 sessions in that order — `CAP-076-FINDINGS.md` §6.2); a tile
+  tap cut right after the `Get`'s answer sends nothing and says nothing (§5.3). Not verified: holds on other tabs on screen, Home, another phone's changes. The
+  decision is unchanged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

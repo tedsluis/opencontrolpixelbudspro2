@@ -40,9 +40,11 @@ Connect, both byte-identical to the official app's.
 ### Known issues
 
 - A tap on a noise-control mode claims the shared channel for about 1.5 seconds; on a phone with Google Play services, Play's Fast Pair may be on it at that
-  moment (about 5 seconds after a claim) — the tap then fails with a message; tap again.
+  moment (about 5 seconds after a claim) — the tap then usually fails with a message (in `CAP-076` once without one, from the tile: nothing changed); tap again.
 - When the Buds close the session themselves (one bud out while both are worn — 12 of 77 such changes in the captures), the app re-opens it and reads the mode
   again; in between, the mode shown can be a few seconds old.
+- After a reconnect (or when the Buds re-open the session themselves), a mode that changed while the app was not connected shows as read: the (i) line
+  "Changed since the app last saw it" does not appear (`CAP-076`). A fix follows.
 
 ## [1.2.2] - 2026-10-14
 

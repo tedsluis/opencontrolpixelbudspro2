@@ -865,6 +865,14 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   Supersedes the 🟡 items of 2026-09-28 (`CAP-056`) and 2026-10-04 (`CAP-069`, 10 of 10) in §6. Tables and commands: `DESKRESEARCH_FINDINGS.md` 2026-10-14;
   code side: the companion app's ANC state is fed only from setting 13 (`REVERSE_ENGINEERING.md`, `qhr` register, Update of 2026-10-14). Used by
   `DECISIONS.md` ADR-064.
+- **Note (2026-10-15, `ai-sessions/0092`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "PROTOCOL", option *"Add the §4.1 note + §8 row
+  (Recommended)"*; no status change) — the stream in OpenControl's own logs (`CAP-076`).** OpenControl 1.3.0 subscribes once per MAESTRO session (12 of 12
+  sessions, byte-identical to `CAP-051` 1177/1178 and `CAP-056` 1451/1450); the Buds pushed every reported change of setting 13 to it, also while Google Play
+  services held the Message Stream and received the `Notify` (41 of 41 holds shown, `CAP-076-FINDINGS.md` §4). With both buds out of the case each change came
+  twice, with channel 21 and 19 (68 of 68; e.g. `CAP-076-btsnoop_hci1.log` 6108 `7e00a5032a0422026801080710151dea71de7d5e25f5ad2128b2d925c47e` and 6117
+  `7e80a3032a0422026801080710131dea71de7d5e25f5ad2128117bf5557e`), with one bud in the case once, on that bud's channel — 🟡 one packet per bud core (19 =
+  LEFT_BT_CORE, 21 = RIGHT_BT_CORE, §2.2a); the official app's captures show one packet per change (❓, `CAP-076-FINDINGS.md` §4.3). The §6 item "a stored
+  mode per wear state" is **not** settled by this run (three wear-driven switches within 2–7 ms of the Buds' AVRCP PAUSE/PLAY, no ears on film).
 
 ### 4.2 Equalizer (EQ)
 
@@ -3757,6 +3765,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-12 | **`ai-sessions/0086` — `CAP-074` (Group BJ, OpenControl 1.2.0 in the Owner user with Google Play services), maintainer-approved in chat 2026-10-12.** §4.1: a note that `Notify ANC state` reaches the one client holding DLCI 0x04 (35 press-and-hold `Notify` frames to Play services, 9 to the app). No status change. | Claude (AI), maintainer-approved |
 | 2026-10-13 | **`ai-sessions/0088` — `CAP-075` (Group BK, OpenControl 1.2.1 in both GrapheneOS users), maintainer-approved in chat 2026-10-13.** §4.1: a 🟢 FACT note on Google Play services' Fast Pair client — DLCI 0x04 in all its claims, recovery 5.3–5.8 s after a loss, retry 2.1–2.8 s after a collision, the stack's `already at opened state` refusal closing both sockets (15 of 15 cuts in the system log). No status change for the opcode. | Claude (AI), maintainer-approved |
 | 2026-10-14 | **`ai-sessions/0090` — the pbpctrl cross-check (E-01 … E-23), maintainer-approved in chat 2026-10-14.** **§4.1** 🟢 FACT: setting 13 = the noise-control mode on DLCI 0x02, pushed on the settings stream to a subscribed client for every reported change (73/73 Buds-side, 39/39 Set-driven), incl. while no client holds the Message Stream; `ReadSetting 4:13` = the latest mode (359/382) — used by ADR-064; §6's two 🟡 items on field 13 point there. **§6** 🟡 one-bud / two-bud mode (pbpctrl names 9/10). **§2.2** correction: the format was never pbpctrl's. **§4.5.7** note: pbpctrl's balance = −zigzag (same mapping). **§0.1** note: Class of Device `0x244404`. | Claude (AI), maintainer-approved |
+| 2026-10-15 | **`ai-sessions/0092` — `CAP-076` (Group BL, OpenControl 1.3.0 in both GrapheneOS users), maintainer-approved in chat 2026-10-15.** §4.1: a note — the settings stream in OpenControl's own logs (12 of 12 sessions subscribed, 41 of 41 holds pushed while Play held the Message Stream), every change pushed twice with both buds out of the case (🟡 one per bud core). No status change; §6's wear item unchanged. | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

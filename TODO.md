@@ -18,10 +18,12 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
       installed on the Pixel 9a with Obtainium (the maintainer, chat 2026-10-14: "Ik heb opencontrol for buds middels obtainium geupdate naar 1.2.2 op mijn pixel
       9a telefoon"); the published APK's SHA-256 = the tested build's (`d750551a…8a6b`, re-checked with `gh release download`). E1–E4: PR #52.
       (1.2.1: D4 done 2026-10-13 with Obtainium; E1–E4 by PR #45.)
-- [ ] `CAP-076` (Group BL) is **the 1.3.0 run** since `ai-sessions/0091` (2026-10-14): the skeleton of `ai-sessions/0089` (the 1.2.2 run, never made) is rewritten
-      for ADR-064/065 — both users, holds with the noise-control tab closed and open, the own tap, the wear-change re-home, Bluetooth off/on, taps while Play
-      holds the channel, optionally the EQ/a switch from the official app on a second phone; the counts for the verdict in its analysis checklist. Runs after
-      `RELEASING.md` B1–B3 for 1.3.0 (a CAPTURE session analyses it, C3/C4).
+- [x] `CAP-076` (Group BL), **the 1.3.0 run**, captured 2026-10-15 in both users and analysed by `ai-sessions/0092` (`CAP-076-FINDINGS.md`): the two requests
+      once per session (12 of 12), every hold on the noise-control tab shown (29 of 29 with Play, 12 of 12 without), three minor defects (§5 below); **verdict
+      "release as built + Known issues"** (the maintainer, chat 2026-10-15) — next: `RELEASING.md` D1–D4 (the maintainer's), then E1–E4. Not run (the maintainer
+      tested only the changed functionality): BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25.
+- **The Buds' state after `CAP-076` (2026-10-15):** EQ `[−1, 0, 4, 2, 1.69]`, **in-ear detection off** (written 07:06:56, not switched on again), all four
+  press-and-hold modes, balance Centre — restore in-ear detection if wanted (**M**).
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
   unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). The Owner user's stored "Noise-control channel" choice is "Take it back" and the secondary
   user's too (`CAP-075-FINDINGS.md` §4) — the default "Show a hint" is not restored.
@@ -75,7 +77,6 @@ with the hold's untested branches below. **Next app run:** none planned — thes
 |---|---|---|---|
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
 | `CAP-030` | Q #19–20 | Loud Noise Protection / Adaptive Audio (firmware naming never reconciled with `release_5.203`, `PROTOCOL.md` §0.1) | Pixel 7a, official app |
-| `CAP-076` | BL | The 1.3.0 run (`ai-sessions/0091`, ADR-064/ADR-065; the 1.2.2 skeleton of `ai-sessions/0089` replaced): the two new requests once per session, holds shown on any tab through the settings stream, the own tap, the wear-change re-home, Bluetooth off/on, taps while Play holds the channel — both users | Pixel 9a, OpenControl 1.3.0 |
 
 From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedures for a next attempt, no skeleton written:
 
@@ -95,7 +96,7 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
 - [ ] Optional, destructive, one-time: the factory-reset re-pair for comparison (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group P #16) — it also resets the
       Find My Device link.
 - [ ] Record Play services' *Nearby devices* permission state and the phone's Android version (Settings → About, on film) in every capture
-      (`A68-CAP-23`: the Pixel 7a's version is unreconciled in `CAP-036`…`041`). `CAP-075`'s P0 asks for it on film (the first time), with Play services' version. **Not done in `CAP-075`** (the P0 film was not made; the user and Play's presence come from the logs, `CAP-075-FINDINGS.md` §0) — still open; `CAP-076`'s P0 asks again.
+      (`A68-CAP-23`: the Pixel 7a's version is unreconciled in `CAP-036`…`041`). `CAP-075`'s P0 asks for it on film (the first time), with Play services' version. **Not done in `CAP-075`** (the P0 film was not made; the user and Play's presence come from the logs, `CAP-075-FINDINGS.md` §0) — still open; `CAP-076`'s P0 asks again. **`CAP-076`: not on film either; read by `adb` at 07:53 instead (`ai-sessions/0092`, CAP-076-adb-checks-0092.log): Play 26.32.34, the *Nearby devices* group granted in user 0, not installed in user 10** — on film still open.
 - Standing practice (kept open on purpose): every capture session gets its Capture Index row with firmware, Android and app version
   (`PROJECT_RULES.md` rules 11 and 14); every hypothesis test is logged in the capture's FINDINGS before a promotion (rule 4).
 
@@ -212,8 +213,14 @@ Open questions (each with where it is described):
 - [ ] **The noise-control channel in the Play user — after 1.3.0 (ADR-065: the re-claim is gone, the holds no longer depend on the channel):** what remains is
       the per-tap collision with Play's claim (`CAP-075-FINDINGS.md` §5; 1.3.0's known issue) — P3 a shorter attempt-2 latency for the on-demand channel (§9:
       attempt 2 0.7–1.0 s after attempt 1's refusal) is still open (**M**). Whether repeated collisions drive Play's "Retry times remaining" to 0 and what Play
-      does then stays ❓ (§4; `CAP-076` BL-11 counts the collided taps).
-
+      does then stays ❓ (§4). **`CAP-076` (§5.2 of its findings):** 13 taps with Play present in 12 claims — 8 refused at attempt 1 and done at attempt 2 (0.87–1.11 s later), 2 cut in their linger, 1 cut before the `Get`'s answer (a toast), 1 after it (silent, P2 below); Play's counter went 5 → 4 once (06:46:28) and back.
+- [ ] **After `CAP-076` (`ai-sessions/0092`, `CAP-076-FINDINGS.md` §13; the maintainer's choice in chat 2026-10-15: no FEATURE prompt now, recorded here):**
+      P1 keep "Changed since the app last saw it" across the reconnect's second, equal read (`causeOfReadAnswer` returns `null` for an equal answer; the
+      snapshot's `Notify` came first in 12 of 12 sessions — §6.2) (**S**); P2 a tile tap whose claim closes after the `Get`'s answer and before its `Set`
+      reports a failure (§5.3; a `Set` wait that ignores a `Notify` received before the `Set` was written; a test with the delay) (**S–M**); P3 log a same-mode
+      push as "unchanged" (§4.4) (**XS**); P4 the two packets per change with both buds out — one Connect on a fresh ACL, then the official app on the same
+      ACL (§4.3, a capture); P5 the shorter attempt-2 latency (above); P6 a mode line on the Connection tab (§4.2) (**S**). The seven CloseGuard lines of
+      `CAP-076` A1 (06:47:10/44, §0) — which sockets (❓).
 - [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
       (a) hardware-tested in `CAP-071` (`ai-sessions/0080`): no behaviour change found — the same reads, request bytes, answers, re-opens and screens as 1.1.0;
       (b) **M** — raising `targetSdk` (lint `OldTargetApi` now reports 34) is its own session with a hardware run: Android 15 enforces edge-to-edge,
