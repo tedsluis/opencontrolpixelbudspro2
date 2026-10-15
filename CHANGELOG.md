@@ -15,6 +15,37 @@ build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phon
 
 ## [Unreleased]
 
+## [1.3.0]
+
+Prepared in `ai-sessions/0091` (2026-10-14) after `ai-sessions/0090`'s cross-check of the official app (`DECISIONS.md` ADR-064, ADR-065): the Buds report every
+change of the noise-control mode — and of every other setting — on the app's own channel, once the app asks for it. Two new requests on the wire at every
+Connect, both byte-identical to the official app's.
+
+### Changed
+
+- **A press-and-hold on a bud now shows in the app whatever tab is open, with or without Google Play services on the phone.** The Buds push the new mode on the
+  app's own channel; the noise-control (i) says "Changed by the Buds at HH:MM:SS". The channel shared with Google Play services is claimed only for a tap, as in
+  1.1.x.
+- **Every setting the app shows follows a change made elsewhere** (the official app on another phone, the Buds themselves): the equalizer, the switches, the
+  balance, the press-and-hold actions and modes — each with the time it came in.
+- The noise-control mode is read at every Connect and re-open: a change made while the app was not connected shows at once ("Changed since the app last saw
+  it").
+
+### Removed
+
+- The setting "Noise control with Google Play services", its card, the "Google Play services: found / not found" line, the hold of the channel while the
+  noise-control tab is open, the re-claims and "Take it back again" (`DECISIONS.md` ADR-061, ADR-062, ADR-063 — superseded by ADR-065). A choice stored by 1.2.1
+  or 1.2.2 is ignored. The app no longer asks Android whether Google Play services is installed (the manifest's `<queries>` entry is gone).
+
+### Known issues
+
+- A tap on a noise-control mode claims the shared channel for about 1.5 seconds; on a phone with Google Play services, Play's Fast Pair may be on it at that
+  moment (about 5 seconds after a claim) — the tap then usually fails with a message (in `CAP-076` once without one, from the tile: nothing changed); tap again.
+- When the Buds close the session themselves (one bud out while both are worn — 12 of 77 such changes in the captures), the app re-opens it and reads the mode
+  again; in between, the mode shown can be a few seconds old.
+- After a reconnect (or when the Buds re-open the session themselves), a mode that changed while the app was not connected shows as read: the (i) line
+  "Changed since the app last saw it" does not appear (`CAP-076`). A fix follows.
+
 ## [1.2.2] - 2026-10-14
 
 Prepared in `ai-sessions/0089` (2026-10-13) after `CAP-075` (`ai-sessions/0088`): with Google Play services, Play's Fast Pair takes the noise-control channel

@@ -20,6 +20,8 @@
 package io.github.tedsluis.opencontrolpixelbuds.data.settings
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
@@ -28,14 +30,18 @@ import kotlinx.coroutines.flow.map
 
 /**
  * Persists the dark-mode choice of the Settings tab (`ai-sessions/0062` F-6, the maintainer's choice in chat 2026-10-01: System / On / Off, default System) in
- * the app's existing settings file ([openControlSettings]). Stored as the [DarkMode] name; an unknown or missing value reads as [DarkMode.DEFAULT].
+ * the app's existing settings file ([openControlSettings]). Stored as the [DarkMode] name; an unknown or missing value reads as [DarkMode.DEFAULT]. Reads and
+ * writes its own key only: the key `hold_reclaim_mode` that 1.2.1/1.2.2 stored in the same file (ADR-062) is ignored since `ai-sessions/0091` (DECISIONS.md
+ * ADR-065 item 5) — never read, never migrated, never removed. The [DataStore] constructor is for the JVM test over a temporary file.
  */
-class DarkModeSettingsStore(private val context: Context) {
+class DarkModeSettingsStore internal constructor(private val dataStore: DataStore<Preferences>) {
 
-    val darkMode: Flow<DarkMode> = context.openControlSettings.data.map { prefs -> DarkMode.fromStored(prefs[DARK_MODE_KEY]) }
+    constructor(context: Context) : this(context.openControlSettings)
+
+    val darkMode: Flow<DarkMode> = dataStore.data.map { prefs -> DarkMode.fromStored(prefs[DARK_MODE_KEY]) }
 
     suspend fun setDarkMode(mode: DarkMode) {
-        context.openControlSettings.edit { prefs -> prefs[DARK_MODE_KEY] = mode.name }
+        dataStore.edit { prefs -> prefs[DARK_MODE_KEY] = mode.name }
     }
 
     companion object {

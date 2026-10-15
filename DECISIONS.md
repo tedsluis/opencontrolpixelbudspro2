@@ -1787,6 +1787,10 @@ motivated this).
   this text in the preview):** (i)'s "Play services' recovery of its own socket took 2.7–5.0 s" reads **5.2–5.7 s in `CAP-074`** (20 of 20 recoveries, the Owner user
   with Google Play services), with a retry 2.2–2.6 s after a recovery that collided; with the ADR-061 hold the recovery cuts the app's claim
   (`CAP-074-FINDINGS.md` §4 items 3–5). The decision is unchanged.
+- **Update (2026-10-14, `ai-sessions/0091`, pointer only — maintainer-approved in chat 2026-10-14, `AskUserQuestion` "ADR-065", option *"Accept as drafted
+  (Recommended)"*):** the hold exception of the 2026-10-10 Update is gone — **ADR-065** removes ADR-061's hold and ADR-062's re-claim; item 3's "released after
+  a short linger" holds again for every claim, and the claim per tap (with the Connect's snapshot claim) is again the only Message Stream behaviour. The mode
+  reaches the app without a claim, on DLCI 0x02 (ADR-064/065). The other items are unchanged.
 
 ## ADR-033 — Battery Option B: `Group 0x03 Code 0x03` decoder on DLCI 0x04 unblocked for implementation (percentage regime only)
 
@@ -2693,7 +2697,8 @@ motivated this).
 ## ADR-061 — Hold the Message Stream claim while the noise-control tab is on screen
 
 - **Date**: 2026-10-10
-- **Status**: Accepted (maintainer, chat 2026-10-10, `ai-sessions/0083`) — not yet built
+- **Status**: Accepted (maintainer, chat 2026-10-10, `ai-sessions/0083`) — built in the 1.2.0 rebuild (`ai-sessions/0084`). **Superseded by ADR-065 (2026-10-14,
+  `ai-sessions/0091`): the hold is removed in 1.3.0 — the mode comes from the Buds' settings stream on the app's own channel.** The text below is kept as written.
 - **Note on process**: drafted by an AI agent (`ai-sessions/0083`); the decision is the maintainer's, given in the chat of 2026-10-10 (`AskUserQuestion` "Hold
   result", option *"Fix first: hold 0x04 on ANC tab"*, and "Hold ADR", option *"Accept as ADR-061 now (Recommended)"*, with this text in the preview), per
   `AGENTS.md` §6.
@@ -2729,8 +2734,9 @@ motivated this).
 
 - **Date**: 2026-10-12
 - **Status**: Accepted (maintainer, chat 2026-10-12, `ai-sessions/0087`) — supersedes ADR-061's clause "the Buds (or another client) closing DLCI 0x04 ends it
-  without a re-claim" for the switch's mode "take it back" only; ADR-061's hold and ADR-032's claim model stand. Built in 1.2.1 (`ai-sessions/0087`); **not yet
-  hardware-verified** — the run `CAP-075` (Group BK).
+  without a re-claim" for the switch's mode "take it back" only; ADR-061's hold and ADR-032's claim model stand. Built in 1.2.1 (`ai-sessions/0087`);
+  hardware-verified by `CAP-075` (its Update of 2026-10-13). **Superseded by ADR-065 (2026-10-14, `ai-sessions/0091`), with its Updates: the re-claim, the
+  setting, its card and "Take it back again" are removed in 1.3.0; a stored `hold_reclaim_mode` is ignored.** The text below is kept as written.
 - **Note on process**: drafted by an AI agent (`ai-sessions/0087`); the switch with its two modes is the maintainer's choice in chat 2026-10-12 (`ai-sessions/0086`
   Checkpoint D, verbatim there); the delay/back-off/cap, the default, the texts and this text approved in the chat of 2026-10-12 (`AskUserQuestion` "Re-claim
   delay" → *"3 s, 6 s, 12 s, then stop (Recommended)"*, "Default mode" → *"Hint only (Recommended)"*, "Switch card", "Hint texts", "ADR-062" → *"Accept ADR-062 as
@@ -2803,7 +2809,9 @@ motivated this).
 ## ADR-063 — The Settings card may say whether Google Play services is installed on this phone (information only)
 
 - **Date**: 2026-10-13
-- **Status**: Accepted (maintainer, chat 2026-10-13, `ai-sessions/0089`) — built in 1.2.2; not hardware-verified (`CAP-076`, Group BL)
+- **Status**: Accepted (maintainer, chat 2026-10-13, `ai-sessions/0089`) — built in 1.2.2; never hardware-verified (1.2.2 was released without `CAP-076`).
+  **Superseded by ADR-065 (2026-10-14, `ai-sessions/0091`): the Play-services line, `PlayServicesProbe` and the `<queries>` entry are removed in 1.3.0.** The
+  text below is kept as written.
 - **Note on process**: drafted by an AI agent (`ai-sessions/0089`); the information line is the maintainer's choice in chat 2026-10-13 (`AskUserQuestion` "Play
   check" → *"Ja, als informatieregel"*, against the agent's recommendation "no"), this text approved in the same chat (`AskUserQuestion` "ADR-063" → *"ADR-063
   zoals getoond (Recommended)"*, with this text in the preview), and the dated note in `AGENTS.md` §1 likewise ("AGENTS.md" → *"Ja, gedateerde notitie in §1"*),
@@ -2858,6 +2866,69 @@ motivated this).
 - **Consequences**: the codec gains the subscription request and a field-13 decoder (real `CAP-051`/`CAP-056` bytes as fixtures, fuzzed);
   `BudsRepositoryImpl`'s Connect sequence gains two requests; `PROTOCOL.md` §4.1 Update of 2026-10-14 is its evidence. A FEATURE session builds it with its
   hardware run (`TODO.md` §5).
+- **Update (2026-10-14, `ai-sessions/0091`, pointer only — maintainer-approved in chat 2026-10-14, `AskUserQuestion` "ADR-065", option *"Accept as drafted
+  (Recommended)"*):** built in 1.3.0. **ADR-065** amends item 2 (every field the app reads is decoded from the stream, not only 13) and item 6 (ADR-061/062/063
+  are retired now, not after the hardware run); items 1, 3, 4 and 5 are unchanged. The hardware run is `CAP-076` (Group BL, rewritten for 1.3.0).
+
+## ADR-065 — The settings stream (DLCI 0x02) replaces the hold and the re-claim of the Message Stream: every setting the app reads follows the Buds' push; the Play-services setting, card and package query are removed
+
+- **Date**: 2026-10-14
+- **Status**: Accepted (maintainer, chat 2026-10-14, `ai-sessions/0091`) — built in 1.3.0; hardware run `CAP-076` (Group BL)
+- **Supersedes**: ADR-061 (the hold), ADR-062 and its Updates of 2026-10-13 (the re-claim, the setting, "Take it back again", the card), ADR-063 (the
+  Play-services line and the `<queries>` entry). **Amends** ADR-064 item 2 (every read field is decoded from the stream, not only 13) and item 6 (the retirement
+  happens now, not after the hardware run). ADR-032's claim per tap, with its linger and release, is again the only Message Stream behaviour; the Connect-time
+  snapshot claim stays.
+- **Note on process**: drafted by an AI agent (`ai-sessions/0091`); the decision is the maintainer's, given in the chat of 2026-10-14 (`AskUserQuestion`
+  "ADR-065", option *"Accept as drafted (Recommended)"*, with this text in the preview), per `AGENTS.md` §6. It rests on ADR-064 and the `PROTOCOL.md` §4.1
+  Update of 2026-10-14 (🟢 setting 13 = the mode). The same chat settled, each with its own question: the (i) text and the two cause lines (Q3, Q10), one
+  rule for every read answer also across a Connect (Q4), the availability fed by setting 13 (Q5), the order of the requests (Q6), the snapshot claim kept
+  (Q7), the files deleted (Q8), `ReadSetting 4:8/9/10` not in this run (Q9), the release texts (Q11) — verbatim in `ai-sessions/0091`'s RESULT §B.
+- **Context**: ADR-064 decided the subscription and the read of setting 13 and left ADR-061/062/063 in place until the hardware run. The maintainer's feedback
+  on `ai-sessions/0090` (the FEATURE prompt of 0091, §3): the hold and the re-claim exist only to catch a press-and-hold on the shared channel; with the stream
+  the Buds report it on the app's own channel (`CAP-051` 1717/1755/1802, `CAP-038` 2170/2205 with no Message Stream open), so the three ADRs, the setting and the
+  package query lose their reason and go now. The stream also carries every other setting the app shows (`CAP-056` 1696 field 12, 2175 field 2; `CAP-069` 2502
+  field 29; `CAP-015` 2116 field 16).
+- **Options considered**: (a) ADR-064 item 6 as written — keep the hold and the re-claim until `CAP-076`; (b) this decision; (c) keep the setting as a fallback —
+  rejected: two mechanisms for one value, and the Play-user branch stays the hardest to test.
+- **Decision**:
+  1. The wire as ADR-064 item 1: once per MAESTRO session (Connect and every ADR-044 re-open), after `SubscribeRuntimeInfo`, one `SubscribeToSettingsChanges`
+     REQUEST and one `ReadSetting 4:13`, byte-identical to `CAP-051` 1177/1178 (channel 21) and `CAP-056` 1451/1450 (channel 19), on the announced channel with
+     its ADR-034 address; no retry, no polling; a send failure ends the sequence (the re-open subscribes again).
+  2. (amends ADR-064 item 2) Every field the app reads — 2, 4, 7, 11, 12, 13, 15, 16, 17, 19, 22, 27, 28, 29 — is decoded from a `SERVER_STREAM` packet
+     through the same decoders as a `ReadSetting` answer and applied with its receive time (field 18 is read but not shown, as today). A stream packet for any
+     other field is logged payload-free ("Settings stream: field N not shown") and not interpreted — not an `UnidentifiedFrame`. Nothing is written in reaction
+     to a stream packet.
+  3. Setting 13: 1 = Off, 2 = Noise cancellation, 3 = Transparency, 4 = Adaptive; 0 = no mode settable (ADR-049's Settable `00`) — never shown as a mode. The
+     last value received wins, whatever its channel.
+  4. The cause: a stream value equal to the mode of the app's own last `Set` within `ANC_SET_WINDOW_MS` (2 s; `CAP-051` 1527 → 1534 = 269 ms, `CAP-056` 4001 →
+     4028 = 55 ms) is the app's own change; a stream value that differs from the shown mode with no such `Set` is "Changed by the Buds (HH:MM:SS)" — the push
+     is the cause, whatever triggered it (a press-and-hold is one trigger; the Buds' own switch on a wear change is 🟡, `PROTOCOL.md` §6 item of 2026-10-14);
+     a read answer (`Notify` to the app's `Get`, or the RESPONSE to `ReadSetting 4:13`) that differs from the last shown mode is "Changed since the app last saw
+     it (read at HH:MM:SS)".
+  5. Removed from the app: the hold of the claim while the noise-control tab is shown (ADR-061); the re-claim chain, the setting "Noise control with Google Play
+     services", its card and "Take it back again" (ADR-062); the "Google Play services: found / not found" line, `PlayServicesProbe` and the manifest's
+     `<queries>` entry (ADR-063). The stored key `hold_reclaim_mode` is no longer read: a stored value is ignored, never migrated. `AGENTS.md` §1's ADR-063 note
+     gets a dated pointer.
+  6. `WriteSetting 4:{13:n}` stays gated (ADR-064 item 4; `TODO.md` §4's experiment E-01).
+- **Verification**: `CAP-076` (Group BL, rewritten for 1.3.0): both GrapheneOS users; press-and-holds with the noise-control tab closed and open (≥ 10 each per
+  user, ears on film) — every hold shown, one stream packet per hold, no `SABM` on DLCI 0x04 from OpenControl after the Connect's snapshot; a wear-change
+  re-home (the Buds' `DISC` → re-open → subscribe + read); Bluetooth off/on; a tap on the tab and on the tile with Play present (one claim each, released within
+  the linger); the EQ and a switch changed in the official app on another phone if available.
+- **Consequences**: `SettingsCodec` gains field 13 and the stream-vs-answer flag; `CodecRouter` the `UnreadSetting` frame; `BudsRepositoryImpl` loses the
+  hold/re-claim code and gains the two requests and the cause rules; `:domain` loses `HoldReclaimMode`, `ChannelTaken`, `PlayServicesPresence`; `:app` loses the
+  store, the probe and the `<queries>` entry; `ARCHITECTURE.md` §2.4, §3.1, §3.2, §5a, §6.0b updated; version 1.3.0 (`CHANGELOG.md`).
+- **Note (as built, `ai-sessions/0091`)**: item 1's "a send failure ends the sequence" is implemented as every other step of the Connect sequence — each request
+  fails on its own and is never retried; a lost session fails them all (the test "a lost session during the subscription is not retried").
+- **Update (2026-10-15, `ai-sessions/0092`, `CAP-076`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "ADR-065 Upd", option *"Write it as drafted
+  (Recommended)"*): hardware-verified in both GrapheneOS users (1.3.0 `ff27ee1`).** One `SubscribeToSettingsChanges` and one `ReadSetting 4:13` per MAESTRO
+  session, byte-identical to `CAP-051` 1177/1178 (channel 21) and `CAP-056` 1451/1450 (channel 19), after `SubscribeRuntimeInfo` and before `GetHardwareInfo` —
+  12 of 12 full sessions (Connects, LINK_BACK and AFTER_LOSS re-opens, the re-open after Bluetooth off); press-and-holds on the noise-control tab shown within
+  0.1 s, **29 of 29 with Google Play services holding the Message Stream and 12 of 12 without**; 33 app claims of DLCI 0x04, all user actions or the Connect's
+  snapshot (none held, none re-claimed); 15 own `Set`s ACKed and classed as the app's (the stream 55–246 ms after the `Set`); value 0 never shown as a mode.
+  Found: with both buds out of the case every change is pushed twice (channels 21 and 19, 🟡 one per bud core); item 4's "changed since the app last saw it" is
+  overwritten by the equal `ReadSetting 4:13` answer that follows the snapshot's `Get` (12 of 12 sessions in that order — `CAP-076-FINDINGS.md` §6.2); a tile
+  tap cut right after the `Get`'s answer sends nothing and says nothing (§5.3). Not verified: holds on other tabs on screen, Home, another phone's changes. The
+  decision is unchanged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

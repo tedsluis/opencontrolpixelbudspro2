@@ -69,32 +69,6 @@ interface BudsRepository {
     fun onAppVisible(visible: Boolean)
 
     /**
-     * The noise-control tab became the shown tab (`true`) or not (`false`) — `:ui`'s selected tab with the settings menu closed, forwarded by `:app`. DECISIONS.md
-     * ADR-061: while it is shown **and** the app is visible ([onAppVisible]) the Message Stream claim (DLCI 0x04, ADR-032) is held instead of released, so the
-     * Buds' `Notify` of a change made on a bud reaches the app ([ancModeCause] `CHANGED_BY_BUDS`). Entering the tab with the session `Ready` claims once (the
-     * existing claim with its `Get`) unless a claim is open; leaving the tab or the app releases it the usual 1.5 s later (ADR-032's linger). Never
-     * opens anything in the background. After the channel was closed by the Buds or another client it re-claims by itself only in the mode
-     * [HoldReclaimMode.RECLAIM] of the Settings tab (DECISIONS.md ADR-062 Update 2: 3 s after every foreign close, at most 20 times per chain, then it stops);
-     * in the default mode [HoldReclaimMode.HINT_ONLY] it never does — [ancChannelTaken] says so.
-     */
-    fun setAncTabShown(shown: Boolean)
-
-    /**
-     * The hint card's "Take it back again" (DECISIONS.md ADR-062 Update 2, `ai-sessions/0089`): starts a new re-claim chain and makes the existing claim with its
-     * `Get` (`08 11 00 00`) — no `Set`, no battery read, no `SubscribeRuntimeInfo`. While the noise-control tab is shown the claim is held (ADR-061); in mode
-     * [HoldReclaimMode.HINT_ONLY] until the next foreign close, in mode [HoldReclaimMode.RECLAIM] with up to 20 re-claims after it. Requires an open session.
-     */
-    suspend fun reclaimAncChannel(): BudsResult<AncMode>
-
-    /**
-     * DECISIONS.md ADR-062 (`ai-sessions/0087`): the Message Stream claim the app held on the noise-control tab was closed by someone else — Google Play services'
-     * Fast Pair recovering the channel ≈ 5 s after it lost it to this app (`CAP-074`). Set at the first such close in mode [HoldReclaimMode.HINT_ONLY], and once
-     * the re-claims of mode [HoldReclaimMode.RECLAIM] are exhausted; `null` otherwise. Cleared when the app holds the channel again (a tap, Refresh, a pull, a
-     * re-entry of the tab, a re-claim, [reclaimAncChannel]), at Connect, at Disconnect and at a session loss. Shown on the noise-control card only.
-     */
-    val ancChannelTaken: Flow<ChannelTaken?>
-
-    /**
      * The Buds' last reported ANC mode, `null` before any report in this app run. It is **not** cleared when a session ends: whether it is current is
      * decided by [isCurrent] from [ancModeUpdatedAt] and [sessionSince] (`ai-sessions/0069`, A68-APP-02). A state, not an event stream: the newest report
      * always replaces the one before it (A68-APP-03 — the replay-1 `SharedFlow` it was could drop a report while a collector was busy).

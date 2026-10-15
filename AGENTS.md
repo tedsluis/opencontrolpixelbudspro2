@@ -70,6 +70,7 @@ order:
   asking Android's `PackageManager` whether the package
   `com.google.android.gms` is installed (no import, no binding, nothing read
   from it) is not GMS use; the Settings card's information line relies on it.
+- **Pointer (2026-10-14, maintainer-approved in chat, `DECISIONS.md` ADR-065, `ai-sessions/0091`):** superseded — the package query is gone; since 1.3.0 the app no longer asks Android whether `com.google.android.gms` is installed (no `<queries>` entry in the manifest).
 
 ## 2. GrapheneOS Compatibility & Permissions
 
