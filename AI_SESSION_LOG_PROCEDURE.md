@@ -121,6 +121,12 @@ Before a RESULT file's `Status` is set to `complete`:
    (`complete (closed 2026-10-03 by …)`).
 4. **In an audit that uses sub-reviews,** each finding says whether the main session re-derived it or took it from a sub-review (the M/S marks of
    `ai-sessions/0068`). A sub-review claim that was not re-derived is an open question with its check, not a fact.
+5. **The INDEX row agrees with the RESULT** (added 2026-10-15, `ai-sessions/0094` — `ai-sessions/0093` A93-HK-05/A93-SES-07): its status cell starts with
+   the same value as the RESULT's `Status`, and the next session that touches the record also updates the cell — `scripts/lint_docs.py` checks both, and an
+   unfilled `| (this commit) |` row in any record older than the newest session.
+6. **Records are checked, not written from memory.** A compliance line quotes the command and its output (e.g. the merged manifest's permissions); a
+   count names the command that produced it; every document the prompt names as changed is re-read after the change. Stale "Next:" and "pull request
+   opened" lines in Summary and Progress are closed when the work they announce is done.
 
 ## 5. Multi-part results
 

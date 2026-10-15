@@ -4,7 +4,7 @@
 **Category:** MAINTENANCE
 **Date:** 2026-10-07
 **Title:** Prepare and ask every decision that waits only for the maintainer — desk-research proposals, older capture-FINDINGS proposals, ADRs for two 1.0.1 behaviours, untracking the .pyc, restoring the Buds' state
-**Status:** complete (all 13 decisions approved in chat 2026-10-07; committed and pushed to `maintenance/0077-decisions`, pull request opened — see Commits)
+**Status:** complete (all 13 decisions approved in chat 2026-10-07; committed and pushed to `maintenance/0077-decisions`, pull request opened — see Commits) *(Status update 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-06/07: PR #10 merged 2026-10-07 as `42660fd`.)*
 
 ## Progress
 
@@ -164,7 +164,7 @@ On `maintenance/0077-decisions` (from `6167843`); the maintainer answered *"Comm
 | `a09a18e` | chore: untrack scripts/__pycache__/lint_docs.cpython-314.pyc |
 | `f475f51` | docs: the maintainer's pending decisions — proposals, ADR-056/057, Buds state |
 | `b3ed405` | docs(session): ai-sessions/0077 prompt and result, INDEX row |
-| (this commit) | docs(session): ai-sessions/0077 commits back-filled |
+| `5f75dda` *(back-filled 2026-10-15, `ai-sessions/0094`)* | docs(session): ai-sessions/0077 commits back-filled |
 
 A first attempt (`git commit -- <path>` for the untracked file failed, and the `.pyc` removal went into the session commit) was undone before any push
 with `git reset --soft HEAD~1` and recommitted in this order; nothing was lost.

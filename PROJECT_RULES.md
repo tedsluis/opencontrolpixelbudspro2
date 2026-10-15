@@ -161,9 +161,11 @@ document disconnected from the capture it belongs to.
 ## 5. AI behavior within this project
 
 13. An AI model working on this project:
-    - reads `AGENTS.md`, `PROJECT_RULES.md`, `ARCHITECTURE.md`, and the relevant
-      sections of `PROTOCOL.md` at the start of a session (or whenever context
-      has been reset).
+    - reads, at the start of a session (or whenever context has been reset), the
+      documents `AGENTS.md` §0.1 lists, in that order (changed 2026-10-15,
+      maintainer-approved in chat, `ai-sessions/0094` — `ai-sessions/0093`
+      A93-GOV-04: the shorter list here omitted `PROJECT.md`, `DECISIONS.md` and
+      `TODO.md`).
     - explicitly distinguishes FACT / HYPOTHESIS / ASSUMPTION in every answer
       that concerns the protocol or the reverse-engineered code.
     - proposes a verifying experiment when in doubt, rather than guessing.

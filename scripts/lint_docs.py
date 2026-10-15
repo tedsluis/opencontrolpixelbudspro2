@@ -409,7 +409,7 @@ def check_table_cells(files: list[Path]) -> list[str]:
     return errors
 
 
-CAPTURE_INDEX_STATUSES = {"planned", "captured", "analyzed", "promoted", "discarded", "withdrawn"}
+CAPTURE_INDEX_STATUSES = {"planned", "captured", "analyzed", "discarded", "withdrawn"}  # "promoted" retired 2026-10-15 (ai-sessions/0094)
 REGISTRY_STATUSES = {
     "capture": {"planned", "captured", "analyzed", "promoted", "discarded", "withdrawn"},
     "adr": {"accepted", "superseded", "proposed"},
@@ -448,6 +448,61 @@ def check_status_values() -> list[str]:
     return errors
 
 
+ADR_STATUS_LINE_RE = re.compile(r"^## (ADR-\d{3})\b.*?^- \*\*Status\*\*:?\s*\**([A-Za-z]+)", re.MULTILINE | re.DOTALL)
+INDEX_ROW_RE = re.compile(r"^\| (\d{4}) \| [A-Z]+ \|.*\| ([^|]*?) \|\s*$", re.MULTILINE)
+INDEX_STATUSES = SESSION_STATUSES + ("planned",)
+
+
+def check_governance() -> list[str]:
+    """(h)–(l), added 2026-10-15 (ai-sessions/0094, maintainer-approved in chat; ai-sessions/0093 A93-HK-01/05, A93-GOV-07,
+    A93-DEC-03, A93-SES-07): the INDEX status cells, finished items left in TODO.md, the README's ADR counts, the first word of
+    every ADR Status line, and an unfilled "(this commit)" row in a session record older than the newest session."""
+    errors = []
+    with (REPO_ROOT / "id_registry.csv").open(newline="", encoding="utf-8") as f:
+        adr_status = {row["id"]: row["status_or_date"] for row in csv.DictReader(f) if row["type"] == "adr"}
+    sessions = sorted(p.name for p in (REPO_ROOT / "ai-sessions").glob("[0-9][0-9][0-9][0-9]_*.md"))
+    newest = sessions[-1][:4] if sessions else None
+    # (h) INDEX: the status cell starts with a legend value; a session with a RESULT agrees with the RESULT's first value.
+    index = REPO_ROOT / "ai-sessions" / "INDEX.md"
+    for m in INDEX_ROW_RE.finditer(index.read_text(encoding="utf-8")):
+        num, cell = m.group(1), m.group(2).strip()
+        if not cell.startswith(INDEX_STATUSES):
+            errors.append(f"ai-sessions/INDEX.md: {num}: status \"{cell[:40]}\" is not one of: " + " | ".join(INDEX_STATUSES))
+            continue
+        results = list((REPO_ROOT / "ai-sessions").glob(f"{num}_*_RESULT_*.md"))
+        if results and num != newest:
+            rm = SESSION_STATUS_RE.search(results[0].read_text(encoding="utf-8", errors="replace"))
+            if rm:
+                first = next((v for v in SESSION_STATUSES if rm.group(1).startswith(v)), None)
+                if first and not cell.startswith(first):
+                    errors.append(f"ai-sessions/INDEX.md: {num}: status cell does not start with its RESULT's \"{first}\"")
+    # (i) TODO.md holds open items only.
+    for n, line in enumerate((REPO_ROOT / "TODO.md").read_text(encoding="utf-8").splitlines(), 1):
+        if re.match(r"\s*- \[x\]", line):
+            errors.append(f"TODO.md:{n}: a finished item ([x]) — delete it; the work is recorded where it was done")
+    # (j) README's ADR counts against the registry.
+    rm = re.search(r"(\d+) accepted, (\d+) superseded", (REPO_ROOT / "README.md").read_text(encoding="utf-8"))
+    if rm:
+        acc = sum(1 for v in adr_status.values() if v == "accepted")
+        sup = sum(1 for v in adr_status.values() if v == "superseded")
+        if (int(rm.group(1)), int(rm.group(2))) != (acc, sup):
+            errors.append(f"README.md: \"{rm.group(0)}\" but id_registry.csv has {acc} accepted, {sup} superseded")
+    # (k) the first word of each ADR's Status line matches its registry status.
+    for m in ADR_STATUS_LINE_RE.finditer((REPO_ROOT / "DECISIONS.md").read_text(encoding="utf-8")):
+        adr, word = m.group(1), m.group(2).lower()
+        want = adr_status.get(adr)
+        if want and word != want:
+            errors.append(f"DECISIONS.md: {adr} Status starts with \"{m.group(2)}\" but id_registry.csv says \"{want}\"")
+    # (l) an unfilled "(this commit)" row in a session record older than the newest session.
+    for path in sorted((REPO_ROOT / "ai-sessions").glob("[0-9][0-9][0-9][0-9]_*_RESULT_*.md")):
+        if path.name[:4] == newest:
+            continue
+        for n, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if line.startswith("| (this commit) |"):
+                errors.append(f"ai-sessions/{path.name}:{n}: \"(this commit)\" not back-filled (AI_SESSION_LOG_PROCEDURE.md §4b)")
+    return errors
+
+
 def main() -> int:
     known_ids = load_registry()
     files = all_markdown_files()
@@ -469,7 +524,7 @@ def main() -> int:
     all_table_problems = check_table_cells(files)
     table_notes = [e for e in all_table_problems if is_history(e)]
     table_errors = [e for e in all_table_problems if not is_history(e)]
-    status_errors = check_status_values()
+    status_errors = check_status_values() + check_governance()
 
     if filename_errors:
         print("=== Dead filename references ===")

@@ -5,7 +5,7 @@
 **Date:** 2026-10-14
 **Title:** Point-by-point check of the pbpctrl-derived findings list (E-01 … E-23) against the external sources at pinned commits and this repository's own
 captures, APK notes and documents
-**Status:** complete — every proposal answered in chat 2026-10-14 and applied (branch `research/pbpctrl-crosscheck`, PR #55; the merge is the maintainer's act); the build of ADR-064 is `ai-sessions/0091` (corrected from "awaiting maintainer sign-off" on the maintainer's feedback, `AI_SESSION_LOG_PROCEDURE.md` §4a)
+**Status:** complete — every proposal answered in chat 2026-10-14 and applied (branch `research/pbpctrl-crosscheck`, PR #55; the merge is the maintainer's act); the build of ADR-064 is `ai-sessions/0091` (corrected from "awaiting maintainer sign-off" on the maintainer's feedback, `AI_SESSION_LOG_PROCEDURE.md` §4a) *(Status update 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-06/07: PR #55 merged 2026-10-14 as `c1d898b`.)*
 
 ## Summary
 
@@ -433,6 +433,12 @@ the same on the 33 OpenControl logs → `{'no report within 2.5 s': 18, 'first v
 
 **Maintainer's answer (chat 2026-10-14, `AskUserQuestion` "E-03 docs"):** *"🟡 strong + desk + script (Recommended)"* — applied: `PROTOCOL.md` §6 item of
 2026-10-14 updated, `DESKRESEARCH_FINDINGS.md` 2026-10-14 §9–§11, `scripts/wear_mode_crosscheck.py`; committed on `research/pbpctrl-crosscheck` (PR #55).
+
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- the ratios "73 of 73" and "12 of 77" — 75 of 89 Buds-side changes pushed, 12 of 89 lost to the Buds' `DISC` (`PROTOCOL.md` §4.1, Correction of 2026-10-15; A93-PROT-01).
+- the last Commits bullet "(the PR number: the follow-up commit that records it)" is a placeholder: PR #55, merged as `c1d898b`.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0090_CROSSCHECK_RESULT_2026_10_14.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0090_CROSSCHECK_RESULT_2026_10_14

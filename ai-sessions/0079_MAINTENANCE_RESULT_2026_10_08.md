@@ -4,7 +4,7 @@
 **Category:** MAINTENANCE
 **Date:** 2026-10-08
 **Title:** Prepare the next release — the toolchain and dependency upgrade of `ai-sessions/0078` shipped as a version of its own — up to the maintainer's `scripts/release.sh`; the skeleton of its hardware run; `RELEASING.md` brought in line with the repository rules; no tag, no build by the agent, no publication
-**Status:** complete (committed and pushed to `release/1.1.1`, pull request open, not merged — see Commits)
+**Status:** complete (committed and pushed to `release/1.1.1`, pull request open, not merged — see Commits) *(Status update 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-06/07: PR #15 merged 2026-10-08 as `f359aa2`; 1.1.1 released (tag `v1.1.1` on `86a6fb3`) after `CAP-071`.)*
 
 ## Progress
 
@@ -232,9 +232,14 @@ On `release/1.1.1` (from `origin/main` = `7101d9c`); the maintainer answered *"C
 | `68d214d` | docs(capture): CAP-071 skeleton (Group BG) for the 1.1.1 release run, registered planned |
 | `ab8c64b` | docs: TODO.md — items planned in CAP-071, repository proposals |
 | `22af9f1` | docs(session): ai-sessions/0079 result, INDEX row |
-| (this commit) | docs(session): ai-sessions/0079 commits back-filled |
+| `86a6fb3` *(back-filled 2026-10-15, `ai-sessions/0094`)* | docs(session): ai-sessions/0079 commits back-filled |
 
 Pull request: https://github.com/tedsluis/opencontrolpixelbudspro2/pull/15 — the release checklist; A6 is the maintainer's check, D1 waits for `CAP-071`.
+
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- "38 commits (31 without merges)" — `git log --oneline --no-merges v1.1.0..7101d9c | wc -l` gives 30.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0079_MAINTENANCE_RESULT_2026_10_08.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0079_MAINTENANCE_RESULT_2026_10_08

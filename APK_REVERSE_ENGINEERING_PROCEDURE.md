@@ -7,7 +7,8 @@ the *what we found*, and `reverse-engineering/APK_VERSIONS.md` is the *which APK
 looked at*.
 
 This procedure follows `AGENTS.md` §6/`DECISIONS.md` ADR-017's AI-assistance boundary throughout:
-an AI session may run the mechanical steps below (pulling, hashing, decompiling, running `pbtk`,
+an AI session may run the mechanical steps below (pulling, hashing, decompiling, running the schema decoder — `pbtk` does not apply to this
+APK, ADR-041 —
 keyword/string searching, explaining already-surfaced code or disassembly — including native `.so`
 disassembly output, per ADR-017 §4), but never decides which candidate is relevant to the protocol
 and never decides that something becomes a recorded HYPOTHESIS in `REVERSE_ENGINEERING.md`. Both of
@@ -257,7 +258,8 @@ Account-Linking/Non-Owner traffic in captures) and move on — do not follow the
 
 ## 7. Checklist for a new APK version or a new Buds firmware (added 2026-10-03, `ai-sessions/0069`)
 
-1. Pull and store the APK (§2); add its row to `reverse-engineering/APK_VERSIONS.md` with the tool versions.
+1. Pull and store the APK (§2); add its row to `reverse-engineering/APK_VERSIONS.md` **the day it is pulled** (files and SHA-256 at once; the tool
+   versions when it is decompiled) — 1.0.990706425 was pulled on 2026-10-05 and registered only on 2026-10-15 (`ai-sessions/0093` A93-HK-03).
 2. Decompile (§3). Re-run the schema decoder on the settings message (`qhr` in `v1.0.955078536`; the class name changes with every build —
    find it by its field count and by the string literals of its callers, `REVERSE_ENGINEERING.md`).
 3. Diff against the previous version (§2.1): the settings fields (numbers and types), the pw_rpc service and method name literals, the Fast Pair

@@ -57,7 +57,7 @@ motivated this).
 ## ADR-002 — License: GNU AGPL-3.0
 
 - **Date**: 2026-08-07
-- **Status**: Accepted
+- **Status**: Accepted *(provenance, 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "ADR-herkomst": decided by the maintainer at project start; no chat record exists — `ai-sessions/0093` A93-DEC-04)*
 - **Context**: The project is open source and reconstructs a protocol through
   reverse engineering; the license needs to protect that reverse-engineered
   knowledge and any modified version of the app — including one deployed as a
@@ -129,7 +129,7 @@ motivated this).
 ## ADR-004 — No dependency on Google Play Services or any network permission
 
 - **Date**: _(project start)_
-- **Status**: Accepted
+- **Status**: Accepted *(provenance, 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "ADR-herkomst": decided by the maintainer at project start; no chat record exists — `ai-sessions/0093` A93-DEC-04)*
 - **Context**: The project's core motivation is an app that works fully
   offline and independent of Google Play Services, including on GrapheneOS
   where GMS may be absent or sandboxed.
@@ -147,7 +147,7 @@ motivated this).
 ## ADR-005 — Device discovery via CompanionDeviceManager, no continuous BLE scanning
 
 - **Date**: _(project start)_
-- **Status**: Accepted
+- **Status**: Accepted *(provenance, 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "ADR-herkomst": decided by the maintainer at project start; no chat record exists — `ai-sessions/0093` A93-DEC-04)*
 - **Context**: Continuous background BLE scanning is fingerprintable and
   conflicts with GrapheneOS's threat model, which the app targets as its
   primary reference OS.
@@ -222,7 +222,7 @@ motivated this).
 ## ADR-007 — `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Groups are capture scenarios, not tests; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` is the test/behavior catalog
 
 - **Date**: 2026-08-08
-- **Status**: Accepted
+- **Status**: Accepted *(provenance, 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "ADR-herkomst": decided by the maintainer at project start; no chat record exists — `ai-sessions/0093` A93-DEC-04)*
 - **Context**: `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Groups A–Q and
   `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s four action tables had grown to
   describe largely the same ~66–70 Buds actions/behaviors, but with different
@@ -2697,7 +2697,7 @@ motivated this).
 ## ADR-061 — Hold the Message Stream claim while the noise-control tab is on screen
 
 - **Date**: 2026-10-10
-- **Status**: Accepted (maintainer, chat 2026-10-10, `ai-sessions/0083`) — built in the 1.2.0 rebuild (`ai-sessions/0084`). **Superseded by ADR-065 (2026-10-14,
+- **Status**: Superseded by ADR-065 (2026-10-14) — was: Accepted (maintainer, chat 2026-10-10, `ai-sessions/0083`) — built in the 1.2.0 rebuild (`ai-sessions/0084`). **Superseded by ADR-065 (2026-10-14,
   `ai-sessions/0091`): the hold is removed in 1.3.0 — the mode comes from the Buds' settings stream on the app's own channel.** The text below is kept as written.
 - **Note on process**: drafted by an AI agent (`ai-sessions/0083`); the decision is the maintainer's, given in the chat of 2026-10-10 (`AskUserQuestion` "Hold
   result", option *"Fix first: hold 0x04 on ANC tab"*, and "Hold ADR", option *"Accept as ADR-061 now (Recommended)"*, with this text in the preview), per
@@ -2733,7 +2733,7 @@ motivated this).
 ## ADR-062 — A user-selectable re-claim of the noise-control channel after a foreign close, with a back-off
 
 - **Date**: 2026-10-12
-- **Status**: Accepted (maintainer, chat 2026-10-12, `ai-sessions/0087`) — supersedes ADR-061's clause "the Buds (or another client) closing DLCI 0x04 ends it
+- **Status**: Superseded by ADR-065 (2026-10-14) — was: Accepted (maintainer, chat 2026-10-12, `ai-sessions/0087`) — supersedes ADR-061's clause "the Buds (or another client) closing DLCI 0x04 ends it
   without a re-claim" for the switch's mode "take it back" only; ADR-061's hold and ADR-032's claim model stand. Built in 1.2.1 (`ai-sessions/0087`);
   hardware-verified by `CAP-075` (its Update of 2026-10-13). **Superseded by ADR-065 (2026-10-14, `ai-sessions/0091`), with its Updates: the re-claim, the
   setting, its card and "Take it back again" are removed in 1.3.0; a stored `hold_reclaim_mode` is ignored.** The text below is kept as written.
@@ -2809,7 +2809,7 @@ motivated this).
 ## ADR-063 — The Settings card may say whether Google Play services is installed on this phone (information only)
 
 - **Date**: 2026-10-13
-- **Status**: Accepted (maintainer, chat 2026-10-13, `ai-sessions/0089`) — built in 1.2.2; never hardware-verified (1.2.2 was released without `CAP-076`).
+- **Status**: Superseded by ADR-065 (2026-10-14) — was: Accepted (maintainer, chat 2026-10-13, `ai-sessions/0089`) — built in 1.2.2; never hardware-verified (1.2.2 was released without `CAP-076`).
   **Superseded by ADR-065 (2026-10-14, `ai-sessions/0091`): the Play-services line, `PlayServicesProbe` and the `<queries>` entry are removed in 1.3.0.** The
   text below is kept as written.
 - **Note on process**: drafted by an AI agent (`ai-sessions/0089`); the information line is the maintainer's choice in chat 2026-10-13 (`AskUserQuestion` "Play
@@ -2838,7 +2838,7 @@ motivated this).
 ## ADR-064 — DLCI 0x02: `SubscribeToSettingsChanges` and `ReadSetting 4:13` — the noise-control mode on the app's own channel (read only)
 
 - **Date**: 2026-10-14
-- **Status**: Accepted (maintainer, chat 2026-10-14, `ai-sessions/0090`) — not yet built; its hardware run comes with the build
+- **Status**: Accepted (maintainer, chat 2026-10-14, `ai-sessions/0090`) — not yet built; its hardware run comes with the build *(Status pointer, 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "ADR-teksten", A93-DEC-01: built in 1.3.0 (`ai-sessions/0091`), hardware run `CAP-076` (`ai-sessions/0092`), released 2026-10-15; items 2 and 6 amended by ADR-065)*
 - **Note on process**: drafted by an AI agent (`ai-sessions/0090`); the decision is the maintainer's, given in the chat of 2026-10-14 (`AskUserQuestion`
   "ADR-064", option *"Accept now, build next (Recommended)"*, with this text in the preview), per `AGENTS.md` §6. It rests on the `PROTOCOL.md` §4.1 Update of
   2026-10-14 (setting 13 = the mode, 🟢), approved in the same chat.
@@ -2851,6 +2851,9 @@ motivated this).
   DLCI 0x02 is the app's own session channel, never contended by another client; the Buds close it themselves on some wear changes (L-1, ADR-044).
 - **Options considered**: (a) keep the Message Stream as the only source (ADR-061/062); (b) this decision, read only; (c) (b) plus switching ANC with
   `WriteSetting 4:{13:n}` — not now: no capture holds such a write (0 in 96 logs).
+- **Note (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "ADR-teksten", `ai-sessions/0093` A93-DEC-02):** the Context's "73 of 73 Buds-side … changes" counts the class defined as "pushed"; re-derived:
+  75 of 89 Buds-side changes pushed within 1 s, 12 of 89 lost to the Buds' `DISC` of MAESTRO, 2 at re-opens (`PROTOCOL.md` §4.1, Correction of 2026-10-15). The decision
+  is unchanged — ADR-065 covers the `DISC` case with the re-open's `ReadSetting 4:13`.
 - **Decision**:
   1. Once per MAESTRO session (Connect and every ADR-044 re-open), after `SubscribeRuntimeInfo`: one `SubscribeToSettingsChanges` REQUEST (empty payload,
      byte-identical to `CAP-051` 1177 on channel 21 — `7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 01 97 54 b0 7e` — or `CAP-056` 1451 on channel 19)

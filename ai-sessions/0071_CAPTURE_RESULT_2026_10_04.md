@@ -145,5 +145,10 @@ The maintainer said "yes" to commit, push and a pull request (chat 2026-10-04). 
 - `e16aeef` chore(capture): add CAP-069 film and HCI log (Group BE, official app 1.0.990706425) — LFS objects `c4f4678…` (film), `45d0aa9…` (log).
 - The documentation commit that carries this file (its hash is completed by the next session, `AI_SESSION_LOG_PROCEDURE.md` §4b item 2).
 
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- the commits not listed: `93a930c` (`CAP-069` analysed; ADR-052/053) and `874ec28` (the sign-off on `CAP-069` §13).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0071_CAPTURE_RESULT_2026_10_04.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0071_CAPTURE_RESULT_2026_10_04

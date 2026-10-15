@@ -6,8 +6,9 @@ markdown from GitHub Pages live, on every page load. What you need to do after a
 
 ## You edited the content of an existing file
 
-Nothing extra to do. Commit and push to `main` as normal — the live site reflects it within
-seconds (no rebuild, no regeneration).
+Nothing extra to do. Commit on a branch and open a pull request — `main` takes changes only by pull request (`RELEASING.md`,
+"Repository rules"); once it is merged the live site reflects it within seconds (no rebuild, no regeneration). *(Flow updated 2026-10-15,
+`ai-sessions/0094` — `ai-sessions/0093` A93-HK-04.)*
 
 ## You added a new capture, or renamed a capture folder (e.g. the `yyyy-MM-dd` placeholder
 ## became a real date after processing)
@@ -34,8 +35,9 @@ git push
 ## Fully automatic (optional)
 
 `.github/workflows/update-docs-sidebar.yml` (added alongside this file) re-runs
-`generate_sidebar.sh` and commits the result automatically on every push to `main` that touches
-`captures/**` or any `*.md` file — so the capture-rename/add case above needs no manual step
+`generate_sidebar.sh` on every push to `main` that touches
+`captures/**` or any `*.md` file and, because `main` takes no direct push, force-pushes the result to the branch `bot/docs-sidebar` and opens a pull
+request for the maintainer to merge (`bot/sitemap` likewise for the sitemap) — so the capture-rename/add case above needs no manual step
 either. New root-level docs still need the one-line addition to the script by hand, since the
 script can't guess which sidebar section a new doc belongs in.
 

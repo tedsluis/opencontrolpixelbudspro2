@@ -4,7 +4,7 @@
 **Category:** MAINTENANCE
 **Date:** 2026-10-07
 **Title:** Upgrade the build toolchain and every dependency of `android/gradle/libs.versions.toml` to current stable releases, each pinned and justified; re-check the Material 3 opt-ins and `TabRow`/`PrimaryTabRow`; add `distributionSha256Sum`; align the CI actions and the documents; prove with the gate, test counts, mutations and an APK comparison that the app's behaviour does not change
-**Status:** complete (committed and pushed to `maintenance/0078-toolchain-upgrade`, pull request opened — see Commits)
+**Status:** complete (committed and pushed to `maintenance/0078-toolchain-upgrade`, pull request opened — see Commits) *(Status update 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-06/07: PR #11 merged 2026-10-07 as `188d19e`.)*
 
 ## Progress
 
@@ -409,9 +409,14 @@ to the gated state.
 | `6f17d1f` | ci: actions/checkout v7.0.1 in all workflows; setup-python v7.0.0; setup-gradle v6.4.0 |
 | `462b829` | docs: toolchain versions, ADR-029 Update (compileSdk 37), TODO and CHANGELOG |
 | `a4cfaf1` | docs(session): ai-sessions/0078 prompt and result, INDEX row |
-| (this commit) | docs(session): ai-sessions/0078 commits back-filled |
+| `fea6618` *(back-filled 2026-10-15, `ai-sessions/0094`)* | docs(session): ai-sessions/0078 commits back-filled |
 
 Pull request: https://github.com/tedsluis/opencontrolpixelbudspro2/pull/11 — CI must be green before the maintainer merges.
+
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- "13 of 13" changed Kotlin files with the AGPL header — `git diff --name-only 42660fd a4cfaf1 -- '*.kt'` lists 14 (this RESULT's own list is also 14); all 14 carry the header.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0078_MAINTENANCE_RESULT_2026_10_07.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0078_MAINTENANCE_RESULT_2026_10_07

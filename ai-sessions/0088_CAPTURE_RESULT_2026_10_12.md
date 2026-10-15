@@ -153,5 +153,10 @@ Branch `capture/cap-075` on `main` `9c52a4e` (`git fetch`: nothing behind at com
 - **Next:** Checkpoint 0 and the Phase D checkpoint (`AskUserQuestion`), then the registers as approved, `ensure_footers.py` + `lint_docs.py`, the RESULT's summary and the INDEX row, then the commit question.
 - **Files touched but not yet verified by the maintainer:** captures/CAP-075-2026-10-12_17-22-31_2026-10-13_06-34-32-Group_BK/CAP-075-EVENT-NOTES.md (modified), captures/CAP-075-2026-10-12_17-22-31_2026-10-13_06-34-32-Group_BK/CAP-075-FINDINGS.md (new), this RESULT.
 
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- the commits not listed: `4a8929c` (the RESULT and INDEX row) and `a57cbed` (the push and PR #44 recorded).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0088_CAPTURE_RESULT_2026_10_12.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0088_CAPTURE_RESULT_2026_10_12

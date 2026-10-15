@@ -144,7 +144,7 @@ The maintainer's answer (chat 2026-10-12, `AskUserQuestion` "Commit"): *"Commit 
 2. `1343e97` `docs: record CAP-074 — ADR-061/ADR-032 Updates, PROTOCOL §4.1 note, registers, test plan, TODO, architecture` — `DECISIONS.md`, `PROTOCOL.md`,
    `CAPTURE_BLUETOOTH_HCI_SNOOP.md`, `id_registry.csv`, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, `TODO.md`, `ARCHITECTURE.md`.
 3. `5deb859` `docs(ai-sessions): 0086 CAPTURE result, 0087 FEATURE prompt, INDEX rows` — this file, `ai-sessions/0087_FEATURE_PROMPT_2026_10_12.md` and `ai-sessions/INDEX.md`.
-4. the back-fill of these hashes and the pull-request number (this commit).
+4. the back-fill of these hashes and the pull-request number (this commit — `c03faab`, back-filled 2026-10-15, `ai-sessions/0094`).
 
 `git fetch` (nothing behind `origin/main`, no rebase needed), pushed without force (7 LFS objects); **pull request #37** opened with `gh pr create --base main`
 (https://github.com/tedsluis/opencontrolpixelbudspro2/pull/37); not merged by this session — the maintainer merges with a merge commit when CI is green

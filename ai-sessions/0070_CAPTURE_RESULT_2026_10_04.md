@@ -145,5 +145,10 @@ Committed and pushed to `maintenance/0069` on the maintainer's word (chat 2026-1
 
 `git diff e1fc886..HEAD -- android` is empty: the tested APK stays the build commit's.
 
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- the commits not listed: `9507d39` (this RESULT's commits recorded) and `5a9de44` (after publishing 1.0.1).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0070_CAPTURE_RESULT_2026_10_04.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0070_CAPTURE_RESULT_2026_10_04

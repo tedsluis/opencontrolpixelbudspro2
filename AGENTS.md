@@ -238,6 +238,9 @@ order:
   cross-validation pass (`WORKSTATION_PREPARATIONS.md`) shows agreement
   between two models: model agreement raises confidence, it does not
   constitute the human review this rule requires.
+  - **Note (2026-10-15, maintainer-approved in chat, `ai-sessions/0094` — `ai-sessions/0093` A93-SES-08, D5):** a draft ADR may stand in
+    `DECISIONS.md` only with the maintainer's consent in chat, headed "(DRAFT — proposed, not accepted)" and registered `proposed` in `id_registry.csv`; it
+    decides nothing until the maintainer accepts it (as ADR-060).
 
 ## 7. Device Discovery & MAC Randomization
 

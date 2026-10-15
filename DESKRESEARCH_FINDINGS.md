@@ -488,13 +488,13 @@ re-pair). Every `0xe8` sample sits in a session where the buds are actively in u
 (`CAP-019`–`CAP-025`'s settings-toggle tests; `CAP-006`'s first, mid-ANC-test). **Revises
 `CAP-036-FINDINGS.md` §3/§11 and the previous entry's own over-generalization** ("this is a
 connect-time pattern") — it is not connect-time as such; 12 of 17 connect/reopen-time samples show
-`0xe8`. The sharper reading: `Settable=0x00` correlates with the Buds being physically in/near the
+`0xe8` *(14 of 19 — the count corrected above on 2026-10-03; this sentence corrected 2026-10-15, `ai-sessions/0094`)*. The sharper reading: `Settable=0x00` correlates with the Buds being physically in/near the
 case, independent of whether DLCI 0x04 just (re)opened.
 
 - **Promoted to:** `PROTOCOL.md` §4.1 (`Get ANC state` trigger-reliability — **promoted to 🟢 FACT,
   maintainer sign-off obtained 2026-09-04, `DECISIONS.md` ADR-022**); `PROTOCOL.md` §6's
   Settable-toggles item (corrected reading, in/near-case not connect-time);
-  `PROTOCOL.md` §4.3 (Option A GrapheneOS confirmation, Option E cross-mechanism note, cross-sync
+  `PROTOCOL.md` §4.3 (Option A GrapheneOS confirmation *(Option **C** — HFP — is meant: Result 1; corrected 2026-10-15, `ai-sessions/0094`)*, Option E cross-mechanism note, cross-sync
   caveat).
 
 ### 2026-09-05 — Video verification of the Settable-toggles "in-case vs. worn" hypothesis
@@ -969,6 +969,9 @@ gestures"; the case is open and empty, and the buds are out of frame for the who
 - 🔴 OPEN: what the wearer did at those four moments is not on film (a press-and-hold on a bud is
   the candidate; press-and-hold was set to the digital assistant during this capture). The reading
   "Buds microphone audio to the phone for the assistant" stays 🟡. Step for it: `CAP-069` (Group BE).
+- *Update (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15, `AskUserQuestion` "§6 en lead" — `ai-sessions/0093` lead L93-1):* the wire names the trigger's kind — each wave starts with
+  the Buds' GSND CONTROL `01 09 00 03 0a 01 03` 1–2 ms before its first DLCI 0x0a frame (2092, 2963, 3645, 4340), the assistant-session opener `CAP-069`
+  found at 3 of 3 filmed assistant sessions. 🟡 (strong): the four waves are assistant sessions (`PROTOCOL.md` §6, the DLCI 0x0a item's Update of 2026-10-15). Over every capture log (scratch script, `tshark` per log: DLCI 0x0a/0x0b payload frames grouped into waves at gaps > 2 s, and the opener on DLCI 0x08/0x09 within 0.2 s before each wave start): GSND AUDIO payload occurs only in `CAP-021` and `CAP-069`, and **8 of 8** waves start with the opener (`CAP-021` 2093/2964/3646/4341, `CAP-069` 3404/4085/4807/4829).
 
 **Proposals awaiting the maintainer (not applied as status changes):** (a) reword §4.3 Option E's
 "cross-confirms the Right value" to "equals the lower of the two bud levels (🟡)"; (b) add Code

@@ -141,7 +141,7 @@ On `feature/0074-settings-switches` (pull request #7), after the build commit `0
 | `4bcc409` | docs(capture): CAP-070 (Group BF) — the 1.1.0 release run, analysed |
 | `0f142e8` | docs: follow CAP-070 — known issues, L-1 update, hardware-verified switches |
 | `714694b` | docs(session): ai-sessions/0075 prompt and result, INDEX row, 0074 back-fill |
-| (this commit) | docs(session): ai-sessions/0075 commits back-filled, status complete |
+| `8256c74` *(back-filled 2026-10-15, `ai-sessions/0094`)* | docs(session): ai-sessions/0075 commits back-filled, status complete |
 
 The first push uploaded all LFS objects (1.4 GB) but the SSH connection closed before the refs; the second push moved the branch `0323849..714694b`.
 

@@ -70,8 +70,10 @@ Added 2026-10-04 (`ai-sessions/0069`, the maintainer's request). `X.Y.Z` is the 
 
 **E. After publishing — a small pull request of its own**
 
-- [ ] E1. `CHANGELOG.md`: the date in the `[X.Y.Z]` block, a new empty `[Unreleased]`. `README.md`: "Latest release", Status, known issues — on a branch,
-      by pull request (`main` takes no direct push); a bot pull request may follow its merge.
+- [ ] E1. `CHANGELOG.md`: the date in the `[X.Y.Z]` block, a new empty `[Unreleased]`. `README.md`: "Latest release", Status, known issues, "Current
+      state" (its date and counts); `PROJECT.md`: the Status section ("released", the tag); `ARCHITECTURE.md` §5a where the hardware run verified a feature;
+      then `grep -rn "<the version> … not released\|<the version> candidate" -- '*.md'` for leftovers — on a branch, by pull request (`main` takes no direct
+      push); a bot pull request may follow its merge. *(List extended 2026-10-15, `ai-sessions/0094` — `ai-sessions/0093` §6 row 17, A93-GOV-01/07.)*
 - [ ] E2. `RELEASING.md` §13: the Release log row (build commit, date, APK SHA-256, certificate SHA-256, capture).
 - [ ] E3. The session log that prepared the release: its "Commits" section and Status (`AI_SESSION_LOG_PROCEDURE.md` §4b); `TODO.md` §1 emptied.
 - [ ] E4. `scripts/release_notes.template`: remove this version's summary line, ready for the next one.
@@ -143,6 +145,10 @@ flowchart TD
   maintainer-attested row is allowed only when it is written down as such, with the capture that will replace it.
   *Closed 2026-10-04 (`ai-sessions/0070`, maintainer-approved in chat, `AskUserQuestion` "DoD text"):* `CAP-068` holds the ANC change by the release build
   1.0.1 with frames (`CAP-068-FINDINGS.md` §2); the exception applied to 1.0.0 only.
+  **Exception recorded for 1.2.2 (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 — `ai-sessions/0093` A93-SES-09, D10):** 1.2.2 was
+  published on 2026-10-14 after the maintainer's own test on the phone, without its hardware run (`CAP-076` was not run for it; the maintainer's choice in chat
+  2026-10-14, `ai-sessions/0089`) — checklist C1–C4 were skipped. Its Release log row says "— (CAP-076 not run)"; 1.3.0's run `CAP-076` covered the code that
+  followed. The exception applied to 1.2.2 only.
 - Every arrow that publishes (tag push, release create/edit/upload) is the maintainer's own act (see the top of this document).
 
 (GitHub renders the diagram; the docs site shows its source text.)
