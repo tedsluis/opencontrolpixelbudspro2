@@ -93,63 +93,24 @@ recovery from every failure (details: [`WORKSTATION_PREPARATIONS.md`](./WORKSTAT
 
 ## Status
 
-**1.0.1 is released** (2026-10-04, see above): a hotfix for 1.0.0 whose release APK passed its hardware run `CAP-068` in a GrapheneOS user without Google
-Play services — noise control from the app and the Quick Settings tile, the equalizer, Bluetooth off/on, "Use different Buds" and the connect error, all on film
-and in the Bluetooth log (`PROJECT.md` Definition of done ticked). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds firmware `release_5.203`.
-Per feature, what is hardware-verified and what is only unit-tested is in `ARCHITECTURE.md` §5a; the history of every change is in
-[`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) — a suspected
-security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
+**1.3.0 is the current release** (2026-10-15, build `ff27ee1`): the app asks the Buds to report every change of their settings on its own channel and reads
+the noise-control mode at every Connect (ADR-064/065), so **a press-and-hold on a bud shows on any tab, with or without Google Play services**, and every
+setting the app shows follows a change made elsewhere. Its hardware run `CAP-076` (`ai-sessions/0092`, both GrapheneOS users) showed every press-and-hold on the
+noise-control tab within 0.1 s — 29 of 29 with Google Play services, 12 of 12 without. Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds
+firmware `release_5.203`. Per feature, what is hardware-verified and what is only unit-tested is in `ARCHITECTURE.md` §5a; every release, its hardware run
+and its known issues are in [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) —
+a suspected security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
 
-**1.1.0 was released on 2026-10-07** (prepared in `ai-sessions/0074`): the switches for head gestures, Multipoint, the two case sounds and Volume EQ,
-and the screen-reader text for "—". Its hardware run (`CAP-070`, `ai-sessions/0075`) passed: every request of the five switches, on both control
-channels, byte-identical to the expected frames and confirmed by the Buds. Known issues of 1.1.0
-(also in [`CHANGELOG.md`](./CHANGELOG.md)): the app says what a switch sets; the screen-reader text for "—" is checked by the unit
-tests, not yet on a phone.
+**Known issues of 1.3.0** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
-**1.1.1** (2026-10-08, `ai-sessions/0079`): the same app built with current build tools and libraries — nothing changes for you. Its hardware run
-`CAP-071` passed (`ai-sessions/0080`: the update keeps your settings, every request and answer is the same as 1.1.0's). Known issues: as 1.1.0.
+- A tap on a noise-control mode can collide with Play's claim of the shared channel; it then usually fails with a message — tap again.
+- After the Buds' own close of the session (one bud out while both are worn) the mode shown can be a few seconds old until the re-open's read.
+- After a reconnect, a mode that changed meanwhile is shown without the "Changed since the app last saw it" line.
+- After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop (since 1.0.1).
 
-**1.2.0** (2026-10-10; prepared 2026-10-09 in `ai-sessions/0082`; rebuilt 2026-10-10 in `ai-sessions/0084` after its hardware run `CAP-072`
-(`ai-sessions/0083`): the app keeps its noise-control channel open while the noise-control tab is on screen, so a press-and-hold on a bud shows — ADR-061;
-re-test `CAP-073` passed, `ai-sessions/0085`: the hold works on the tab, a press-and-hold changes the mode on screen without a tap — verdict OK): "Changed by the Buds" in the noise-control details, the serial numbers on the Info tab, a "probably worn" line on the battery card, a finer
-balance slider, and the Case sounds switches on gear → Settings and Conversation detection on Controls. Known issues of 1.2.0 (also in
-[`CHANGELOG.md`](./CHANGELOG.md)): the worn line is a hedged reading of a hypothesis (the Buds say "at least one bud", never which, and have reported it for 40
-seconds or more with both buds on a table); the serial labels are the official app's reading of the answer's order; "Changed by the Buds" shows only what the
-Buds report while the noise-control tab is open.
-
-**1.2.1** (2026-10-13; prepared 2026-10-12 in `ai-sessions/0087` after `CAP-074`, `ai-sessions/0086`; build `31ee183`): a **Noise-control channel** setting on
-gear → Settings for phones with Google Play services, where Play's Fast Pair takes the channel back about 5 seconds after this app opened it on the noise-control
-tab — "Show a hint" (the default: the card says when it was taken) or "Take it back" (3, 6, 12 seconds later, three times per visit, a tug of war with Play
-meanwhile). Its hardware run `CAP-075` (Group BK, `ai-sessions/0088`, both users) passed — without Play services both choices are identical and every
-press-and-hold on the tab is shown (41 of 41); verdict: release build `31ee183`. Known issues of 1.2.1 (also in [`CHANGELOG.md`](./CHANGELOG.md)): in a user
-with Google Play services "Show a hint" shows a press-and-hold only while this app's claim lives (until Play's next connect, 5.3–5.8 s after Play lost the
-channel), then the hint; "Take it back" holds the channel about 43 % of a 44-second chain (three re-claims per visit of the tab), then nothing until a tap —
-the timings are one Play version's.
-
-**1.2.2** (2026-10-14; prepared 2026-10-13 in `ai-sessions/0089` after `CAP-075`; build `bfd7891`; tested by the maintainer on the phone without a recorded
-capture — `CAP-076`, Group BL, was not run): the setting is now called
-**Noise control with Google Play services**, and its options say which phone they are for — "This phone has no Google Play services" (the default) or "This
-phone has Google Play services"; a choice made in 1.2.1 is kept. The card says whether Android finds Google Play services on the phone (information only,
-ADR-063). With Google Play services the app takes the channel back **3 seconds after every time Play takes it, up to 20 times** (about 3 minutes) per visit of the
-noise-control tab, so a press-and-hold is shown about half of the time for the whole 3 minutes (ADR-062 Update 2); the hint has a **Take it back again** button
-(no mode written); and the noise-control (i) says when a mode the app read had changed while it did not have the channel. Expected numbers are `CAP-075`'s (one
-Play version), not measured with 1.2.2.
-
-**1.3.0** (2026-10-15; prepared 2026-10-14 in `ai-sessions/0091` after `ai-sessions/0090`'s cross-check of the official app; build `ff27ee1`): the app subscribes to the Buds'
-settings stream and reads the noise-control mode on its own channel at every Connect and re-open (ADR-064), so **a press-and-hold on a bud shows on any tab, with
-or without Google Play services**, and every setting the app shows follows a change made elsewhere; the hold, the re-claim, the "Noise control with Google Play
-services" setting and the Play-services line are removed (ADR-065; a stored choice is ignored). Its hardware run `CAP-076` (`ai-sessions/0092`, both users) showed
-every press-and-hold on the noise-control tab within 0.1 s — 29 of 29 with Google Play services, 12 of 12 without. Known issues of 1.3.0 (also in
-[`CHANGELOG.md`](./CHANGELOG.md)): a tap can still collide with Play's claim of the shared channel (it then usually fails with a message; tap again); after the
-Buds' own close of the session (one bud out while both are worn) the mode shown can be a few seconds old until the re-open's read; after a reconnect a mode
-that changed meanwhile is shown without the "Changed since the app last saw it" line.
-
-**Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
-
-- After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop.
-
-The three known issues of 1.0.0 (the connect error that blamed another app, values of the last connection shown as current, a silent choice between
-several paired Buds) are fixed in 1.0.1.
+**1.3.1 is prepared, not released** (`ai-sessions/0094`, 2026-10-15; its hardware run `CAP-077` is planned): it fixes the third issue above, makes "Use
+different Buds" forget the Buds for real (with a confirmation), keeps a tile tap right after a Connect from failing silently, gives each noise-control mode one
+name everywhere and lets TalkBack read the switches and the equalizer sliders — [`CHANGELOG.md`](./CHANGELOG.md) [1.3.1].
 
 ---
 
@@ -175,7 +136,7 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-14)
+## Current state (2026-10-15)
 
 - **Captures:** 76 registered sessions (`CAP-001`–`CAP-076`): 72 analyzed (the latest, `CAP-076` of 2026-10-15: the 1.3.0 release build in both GrapheneOS users — every press-and-hold on the noise-control tab shown through the settings stream, 29 of 29 with Google Play services and 12 of 12 without, `ai-sessions/0092`), 2 planned, 2 withdrawn (`CAP-052`,
   `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` and `CAP-070`–`CAP-075` are captures of this project's own app (`CAP-067`: the 1.0.0
@@ -183,7 +144,7 @@ to design, implement, test, and document a native Android app.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 63 accepted ADRs (ADR-065, 2026-10-14, the settings stream replaces the hold and the re-claim — built in 1.3.0, `ai-sessions/0091`; ADR-064, 2026-10-14, the subscription and the read of setting 13, `ai-sessions/0090`; ADR-061/062/063 superseded by ADR-065) and one labelled draft (ADR-060, proposed, not accepted) in `DECISIONS.md`; every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
+- **Decisions:** 58 accepted, 6 superseded and one labelled draft ADR in `DECISIONS.md` (ADR-065, 2026-10-14, the settings stream replaces the hold and the re-claim — built in 1.3.0, `ai-sessions/0091`; ADR-064, 2026-10-14, the subscription and the read of setting 13, `ai-sessions/0090`; ADR-061/062/063 superseded by ADR-065, the draft: ADR-060, proposed, not accepted); every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
   approval was given but whose record is missing (the ADR says so).
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
@@ -192,7 +153,7 @@ to design, implement, test, and document a native Android app.
   the "probably worn" line (ADR-059) and "Changed by the Buds" (`ai-sessions/0082`; 1.2.0 … 1.2.2 held the noise-control channel on its tab and re-claimed it from Play services — ADR-061/062/063, retired), from 1.3.0 the Buds' settings stream on the app's own channel (`SubscribeToSettingsChanges` and `ReadSetting 4:13` at every Connect and re-open: a press-and-hold shows on any tab and every setting follows a change made elsewhere — ADR-064/065, `ai-sessions/0091`),
   firmware line, ANC Quick Settings tile, Safe Mode (ADR-042), the session re-open while visible (ADR-044).
 - **Protocol-known but not built:** the "Volume level notifications" switch (`qhr` field 21, 🟢 since 2026-10-06) and the notification behind it — studied in
-  `ai-sessions/0082` (the phone decides, from the `Dosimeter` daily doses; draft ADR-060, a 1.3.0 candidate, needs `WELL-002` first); the BLE battery advertisement
+  `ai-sessions/0082` (the phone decides, from the `Dosimeter` daily doses; draft ADR-060, a candidate for a later release, needs `WELL-002` first); the BLE battery advertisement
   (never matched on the wire).
 - **Still open (protocol):** EQ field 16-vs-18 save semantics, DLCI 0x08's own identity, why the Buds sometimes close the
   RFCOMM channels, whether the announced Maestro channel names the hosting bud — see `PROTOCOL.md` §6.
@@ -245,9 +206,9 @@ environment, and without them the build stops with a clear message (it never sig
 the full procedure, including creating and backing up the key, is in [`RELEASING.md`](./RELEASING.md). A debug build and a release build are signed with
 different keys, so one cannot be installed over the other: uninstall first (this deletes the app's settings).
 
-**Before testing against real hardware**, read `APP_TESTPLAN.md` — it says, step by step, what is to be checked on hardware (`CAP-070-EVENT-NOTES.md`
+**Before testing against real hardware**, read `APP_TESTPLAN.md` — it says, step by step, what is to be checked on hardware (`CAP-076-EVENT-NOTES.md`
 shows how the last run followed it); the newest analysed run
-(`CAP-070-FINDINGS.md`, the 1.1.0 release APK) and `ARCHITECTURE.md` §5a say what was seen working and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
+(`CAP-076-FINDINGS.md`, the 1.3.0 release APK) and `ARCHITECTURE.md` §5a say what was seen working and what is only unit-tested. Given this project's own hardware-risk disclaimer above, do not assume "the tests pass" means "safe against your
 earbuds" — it means the wire bytes match known-good captures, nothing more.
 
 ## Approach

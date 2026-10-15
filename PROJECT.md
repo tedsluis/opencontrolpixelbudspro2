@@ -24,7 +24,7 @@ Buds app or Google Play Services.
 5. **Implementation** — build the Android app in Kotlin, based on the protocol
    specification, following the guardrails in `AGENTS.md` and `PROJECT_RULES.md`.
 6. **Test & validation** — functional testing against real hardware, preventing
-   regressions; see `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`.
+   regressions; see `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (the protocol behaviours) and `APP_TESTPLAN.md` (the app's own hardware runs).
 7. **Documentation** — keep every conclusion traceable and reproducible for
    future contributors, using each capture's `CAP-NNN-FINDINGS.md` (hypothesis
    → conclusion, next to the evidence it tests), `DECISIONS.md` (ADR-style
@@ -36,7 +36,7 @@ To be finalized based on what is actually found in the protocol. Candidate
 features offered by the official app (it still needs to be verified which of
 these run over local BLE/RFCOMM versus over the cloud/a Google account):
 
-> **Status (2026-09-24; updated 2026-10-06 for 1.1.0):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
+> **Status (2026-09-24; updated 2026-10-15 for 1.3.0):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
 > says so. The authoritative per-feature state (and its unblocking ADR) is `ARCHITECTURE.md` §5a.
 
 - [x] Read battery status (left, right: DLCI 0x04, ADR-033; case and per-bud "charging in the case": DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043 and its Update)
@@ -133,22 +133,18 @@ Without Google Play Services installed, the app can:
 > *Row 2 updated 2026-10-04 (`ai-sessions/0070`, maintainer-approved in chat, `AskUserQuestion` "DoD text", option *"Approve as shown (Recommended)"*):* the ANC change was
 > "maintainer-attested, not captured" for 1.0.0; `CAP-068` (`CAP-068-FINDINGS.md` §2; "A" = `CAP-068-btsnoop_hci2.log.last`) replaces it with frames.
 
-## Status after 1.0.x (added 2026-10-03, `ai-sessions/0069`; 1.1.0 added 2026-10-06, `ai-sessions/0074`)
+## Status (rewritten 2026-10-15, `ai-sessions/0094` — `ai-sessions/0093` A93-GOV-01/02)
 
-1.0.0 was published on 2026-10-03 (`RELEASING.md`, Release log); 1.0.1, a fix release prepared in `ai-sessions/0069`, was tested in `CAP-068` and released on 2026-10-04 (`ai-sessions/0070`). v1 contains: connection and Safe Mode,
-noise control with a Quick Settings tile, the equalizer, battery (Left / Right / Case), Find My Buds (Left / Right), touch controls, press and hold and its mode
-list, balance, mono audio, conversation detection and the in-ear detection setting. The next features the maintainer chose (chat 2026-10-03, "Features") reached
-🟢 FACT and their ADRs in `CAP-069` (`ai-sessions/0071`): head gestures (`qhr` field 29, ADR-052) and Multipoint (field 11, ADR-053); the case sounds (27, 28,
-ADR-054) and Volume EQ (15, ADR-055) followed on 2026-10-06. **1.1.0** (prepared in `ai-sessions/0074`, released 2026-10-07; 1.1.1 followed on 2026-10-08) builds all five switches and the
-screen-reader text for "—"; its release run `CAP-070` (`ai-sessions/0075`, 2026-10-07) passed — every switch request on both control channels confirmed by the Buds, the three forms not seen before now on the wire; verdict: release build `0323849`. The Battery Notification on case-open was tested in `CAP-054`: no clear battery field
-(ADR-006 Update of 2026-10-06).
-**1.1.1** (`ai-sessions/0078`/`0079`: the same app built with the current toolchain) passed its release run `CAP-071` (`ai-sessions/0080`, 2026-10-08) in the
-user without Play: installed over 1.1.0 it kept the data and settings, and every Connect read, write, ANC `Set` and Ring was byte-identical to 1.1.0's and answered;
-verdict: release build `86a6fb3` (the maintainer, chat 2026-10-08).
-**1.2.0** (prepared in `ai-sessions/0082`, 2026-10-09; published 2026-10-10, build `5b4d5db`): "Changed by the Buds" in the noise-control details, the component serial numbers on the
-Info tab (ADR-058), the "probably worn" indicator on the battery card (ADR-059), the Case sounds switches moved to gear → Settings and Conversation detection
-to Controls; volume-level notifications studied, not built (a draft ADR-060, a 1.3.0 candidate). Its hardware run `CAP-072` (`ai-sessions/0083`, 2026-10-09) found no heavy defect — every request answered and byte-identical, the serials and the worn line as specified — but showed that a press-and-hold is never shown (no claim open between actions, ADR-032); verdict **fix first** (the maintainer, chat 2026-10-10): ADR-061 holds the noise-control channel while that tab is on screen, then a short re-test. **Rebuilt** as the same version in `ai-sessions/0084` (2026-10-10): the hold built (`setAncTabShown`), the serial fixtures from OpenControl's own `CAP-072` exchange, a finer balance slider (the finger's value while dragging, steps of 1 near the centre); the re-test `CAP-073` (Group BI, `ai-sessions/0085`, 2026-10-10) found no heavy defect — the noise-control channel held on its tab, four press-and-holds shown without a tap, every request byte-identical to `CAP-072`; verdict **OK — ready to release** (the maintainer, chat 2026-10-10).
-**`CAP-074`** (`ai-sessions/0086`, 2026-10-12, the released 1.2.0 in the GrapheneOS user **with** Google Play services) found the limit of that user: Play's Fast Pair takes the held noise-control channel back ≈ 5 s later and the app did not re-claim, so only the first press-and-hold after a Connect was shown. **1.2.1** (prepared in `ai-sessions/0087`, 2026-10-12; published 2026-10-13, build `31ee183`): the Settings tab's "Noise-control channel" choice — "Show a hint, do not take it back" (the default) or "Take it back while the noise-control tab is open" (a re-claim 3, 6 and 12 s after the first, second and third foreign close, then the hint) — ADR-062; its hardware run `CAP-075` (Group BK, `ai-sessions/0088`, 2026-10-12/13, both users) passed: without Play services both choices are identical and every press-and-hold on the tab is shown (41 of 41); with Play services the hint shows the cut's time and "Take it back" holds the channel about 43 % of a 44-s chain (Play's recovery 5.3–5.8 s, retry 2.1–2.8 s) — verdict "no heavy issue — release as built" (the maintainer, chat 2026-10-13); the next step is a constant re-claim step with a longer chain (`TODO.md` §5). **1.2.2** (prepared in `ai-sessions/0089`, 2026-10-13; not released): the setting renamed "Noise control with Google Play services" with options that say whether the phone has Google Play services and a line whether Android finds it (ADR-063), the re-claim 3 s after every cut up to 20 times, "Take it back again" on the hint, and a cause line for a mode the app's own read found changed (ADR-062 Update 2); released 2026-10-14 (build `bfd7891`) without a hardware run. **1.3.0** (prepared in `ai-sessions/0091`, 2026-10-14; not released): the app subscribes to the Buds' settings stream and reads the noise-control mode on its own channel (ADR-064), so a press-and-hold on a bud shows on any tab and every setting follows a change made elsewhere; the hold, the re-claim, the "Noise control with Google Play services" setting and the Play-services line are removed (ADR-065); its hardware run `CAP-076` (Group BL, `ai-sessions/0092`, 2026-10-15, both users) passed: every press-and-hold on the noise-control tab shown within 0.1 s — 29 of 29 with Google Play services holding the shared channel, 12 of 12 without — and three minor defects; verdict "release as built + Known issues" (the maintainer, chat 2026-10-15).
+The current release is **1.3.0** (published 2026-10-15, tag `v1.3.0` on build `ff27ee1`; `RELEASING.md` §13): the app subscribes to the Buds' settings stream
+and reads the noise-control mode on its own channel (ADR-064/065), so a press-and-hold on a bud shows on any tab with or without Google Play services; its
+hardware run `CAP-076` (`ai-sessions/0092`) showed every hold on the noise-control tab within 0.1 s (29 of 29 with Play, 12 of 12 without). A fix release 1.3.1
+is prepared by `ai-sessions/0094` (one pairing memory for "Use different Buds" with a confirmation, the kept "changed since" line, no silent tile tap, stream
+pushes that no longer end a read, one name per mode, TalkBack labels; `CHANGELOG.md` [1.3.1]) — not released; its hardware run `CAP-077` is planned.
+
+v1 contains: connection and Safe Mode, noise control with a Quick Settings tile, the equalizer (with Volume EQ), battery (Left / Right / Case), Find My Buds
+(Left / Right), touch controls, press and hold and its mode list, head gestures, Multipoint on/off, balance, mono audio, conversation detection, in-ear
+detection, the case sounds, the component serial numbers and a "probably worn" line. Volume-level notifications are studied, not built (draft ADR-060).
+The release history, with each version's hardware run and known issues, is in `CHANGELOG.md`; the per-feature evidence is `ARCHITECTURE.md` §5a.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROJECT.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROJECT

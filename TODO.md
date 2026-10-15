@@ -13,20 +13,15 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 ## 1. After release 1.3.0 (published 2026-10-15, `ai-sessions/0092` and its continuation in chat)
 
-- [x] **1.2.2 published 2026-10-14** (tag `v1.2.2` on build commit `bfd7891`, PR #49 merged with `5b204ea`; E1–E4 by the pull request of `release/1.2.2-after`).
-      **No hardware capture:** the maintainer tested 1.2.2 on the phone and released it without `CAP-076` (chat 2026-10-14). **D4 done 2026-10-14:** the published APK
-      installed on the Pixel 9a with Obtainium (the maintainer, chat 2026-10-14: "Ik heb opencontrol for buds middels obtainium geupdate naar 1.2.2 op mijn pixel
-      9a telefoon"); the published APK's SHA-256 = the tested build's (`d750551a…8a6b`, re-checked with `gh release download`). E1–E4: PR #52.
-      (1.2.1: D4 done 2026-10-13 with Obtainium; E1–E4 by PR #45.)
-- [x] **1.3.0 published 2026-10-15** (tag `v1.3.0` on build commit `ff27ee1`, PR #56 merged with `aec17a5`; E1–E4 by the pull request of `release/1.3.0-after`)
-      after `CAP-076` (Group BL, `ai-sessions/0092`: every hold on the noise-control tab shown — 29/29 with Play, 12/12 without; verdict "release as built +
-      Known issues", the maintainer, chat 2026-10-15). **D4 done 2026-10-15:** installed with Obtainium on the Pixel 9a (the maintainer: "Het werkt!"). Not run
-      in `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25. Next: the fixes P1–P3 of §5 when the maintainer chooses (no FEATURE prompt yet).
+*(The finished release items of 1.2.2 and 1.3.0 were deleted 2026-10-15 by `ai-sessions/0094` — `ai-sessions/0093` A93-HK-01; they are in `CHANGELOG.md`,
+`RELEASING.md` §13 and the session RESULTs.)*
+- [ ] **1.3.1** (prepared by `ai-sessions/0094`, the maintainer's choice in chat 2026-10-15): the hardware run `CAP-077` (Group BM, `APP_TESTPLAN.md` §Z; the
+      skeleton captures/CAP-077-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BM/CAP-077-EVENT-NOTES.md), then `RELEASING.md` B1 … E4 (**M**); `CHANGELOG.md` [1.3.1] gets its date then. Not run in `CAP-076` and still open for a release run: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25.
 - **The Buds' state after `CAP-076` (2026-10-15):** EQ `[−1, 0, 4, 2, 1.69]`, **in-ear detection off** (written 07:06:56, not switched on again), all four
   press-and-hold modes, balance Centre — restore in-ear detection if wanted (**M**).
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
-  unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). The Owner user's stored "Noise-control channel" choice is "Take it back" and the secondary
-  user's too (`CAP-075-FINDINGS.md` §4) — the default "Show a hint" is not restored.
+  unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). (The stored "Noise-control channel" choice of 1.2.1/1.2.2 is ignored since 1.3.0, ADR-065 item 5 — nothing to
+  restore; sentence changed 2026-10-15, `ai-sessions/0094`, A93-HK-02.)
 
 ## 2. Hardware verification debt (the app, on film)
 
@@ -44,13 +39,6 @@ ADR-061, chat 2026-10-10).
 **`CAP-073`** (the rebuilt 1.2.0, analysed in `ai-sessions/0085`, verdict OK — ready to release) settled the ADR-061 hold's main path and balance "Right 4"
 (both removed here); the maintainer tested only the changed functionality, so T11, C12, S12, H5, Volume EQ and the worn line with in-ear detection off stay open,
 with the hold's untested branches below. **Next app run:** none planned — these items go into the hardware run of the next release (`RELEASING.md` §11a).
-- [x] ~~The ADR-061 hold's other branches on hardware~~ — **moot since 1.3.0** (`ai-sessions/0091`, ADR-065: the hold and the re-claim are removed; the tile, Home,
-      a loss and the re-open with the tab shown are in `CAP-076` as BL-8/BL-9/BL-10/BL-24 for the stream instead). History: (`CAP-073-FINDINGS.md` §4): the tile with the noise-control tab shown (no second `SABM`, no `DISC`); Home and
-      return (the `DISC` ≈ 1.5 s after Home, a new claim on return); a session loss and the ADR-044 re-open while the tab is shown (the snapshot kept); and the
-      noise-control (i) after a press-and-hold ("Changed by the Buds at HH:MM:SS …" and the ADR-061 sentence) — not run in `CAP-073`. **`CAP-074` (the Owner user with
-      Play services, `ai-sessions/0086`) ran the "another client closes DLCI 0x04 while the tab is shown" branch twelve times:** the hold ended "the channel was closed,
-      not by this app" and nothing re-claimed — as designed; the branch works, and it is the cause of the first-hold-only symptom (`CAP-074-FINDINGS.md` §4, §8). Still
-      not run: the tile, Home, a session loss / ADR-044 re-open with the tab shown, the (i) line. **`CAP-075` (Group BK, planned by `ai-sessions/0087`) takes the Play-user branch in both switch positions (BK-5 … BK-14) and, optionally, the tile, Home and the loss with the tab shown (BK-19 … BK-21).** **Run (`ai-sessions/0088`, `CAP-075-FINDINGS.md` §4): the Play-user branch in both positions done — hint only 2 cuts, take it back three chains of three re-claims; still not run: the tile, Home/return, a loss with the tab shown (BK-19 … BK-21), and BK-11 … BK-13 (a tab change, Home or the switch within 2 s of a cut — the cancel path ran once, pre-film).** **`CAP-076` (Group BL, skeleton by `ai-sessions/0089`) takes BK-11 … BK-13 again as BL-9 … BL-11 and the optional branches as BL-22 … BL-24.**
 
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
@@ -119,8 +107,8 @@ The five switches the maintainer chose (Multipoint, head gestures, the two case 
       (their answers carry fields 1.0.955078536 does not know), whether the `find_device` placeholder (Play services item 1002) is still requested,
       and why it calls the KPI stream and the jitter-buffer preference. Pulled 2026-10-05 from the Pixel 7a (`adb pull` of base + 2 splits, same
       signing certificate as 1.0.955078536) into `reverse-engineering/apk/v1.0.990706425-10260911/` (gitignored); not decompiled yet (**M**, chat
-      2026-10-05: *"Voer het nog niet uit. Dat kan later."*). Also add the three files' SHA-256 to `reverse-engineering/APK_VERSIONS.md`, whose
-      1.0.990706425 paragraph still says "Not pulled". Start with `citation_checker` and `pwrpc_name_table` on the new tree
+      2026-10-05: *"Voer het nog niet uit. Dat kan later."*). The three files are registered in `reverse-engineering/APK_VERSIONS.md` since 2026-10-15
+      (`ai-sessions/0094`). Start with `citation_checker` and `pwrpc_name_table` on the new tree
       (`APK_REVERSE_ENGINEERING_PROCEDURE.md` §7 steps 7–8; design notes for the diff in `reverse-engineering/tools/BACKLOG.md`).
 
 Open questions (each with where it is described):
@@ -202,14 +190,6 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
-- [x] **Done 2026-10-14 (`ai-sessions/0091`, branch `feature/settings-stream`): ADR-064 built as 1.3.0** — the stream feeding every read setting, ADR-061/062/063
-      superseded by ADR-065 (the hold, the re-claim, the card and the Play line removed), the cause line rewritten, `CAP-076` rewritten for 1.3.0; mutation
-      checks M1–M5 caught. **Next:** the maintainer's push, PR and CI; then `RELEASING.md` B1–B3 for 1.3.0 and `CAP-076` (C1–C2), analysed by a CAPTURE
-      session (C3/C4). Deferred documentation of 0091: none beyond the items in this file. The prompt's earlier outline (accepted 2026-10-14, `ai-sessions/0090`): one `SubscribeToSettingsChanges` and one `ReadSetting 4:13`
-      per MAESTRO session, field 13 only, the mode shown with "Changed by the Buds" without a Message Stream claim; fixtures from `CAP-051` 1177/1755 and `CAP-056`
-      1451; then its hardware run (skeleton written by that session — the maintainer's choice, chat 2026-10-14): both users, holds with the noise-control tab
-      closed, a wear-change re-home and the re-open's read; optionally the read-only `ReadSetting 4:8/9/10` (§4 — **not** in the 1.3.0 run, the maintainer's
-      choice in chat 2026-10-14; a later session may add it). The retirement of ADR-061/062's hold and re-claim is ADR-065 (done).
 - [ ] **The noise-control channel in the Play user — after 1.3.0 (ADR-065: the re-claim is gone, the holds no longer depend on the channel):** what remains is
       the per-tap collision with Play's claim (`CAP-075-FINDINGS.md` §5; 1.3.0's known issue) — P3 a shorter attempt-2 latency for the on-demand channel (§9:
       attempt 2 0.7–1.0 s after attempt 1's refusal) is still open (**M**). Whether repeated collisions drive Play's "Retry times remaining" to 0 and what Play
@@ -240,9 +220,7 @@ Open questions (each with where it is described):
       `Role.Switch` on the row, the `Switch` without its own click) would fix it; it changes every switch's semantics (and the tests that find a switch by its
       sibling label) — **M** decides whether and when.
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
-- [x] **M — the 1.2.1 release steps:** done — PR #39 merged (the build commit `31ee183`), `CAP-075` run and analysed (`ai-sessions/0088`, PR #44), verdict
-      "no heavy issue", tag `v1.2.1` and the release published 2026-10-13 (approved in chat); E1–E4 by the pull request of `release/1.2.1-after` (#45); D4 done 2026-10-13 (Obtainium, §1).
-- [ ] **1.3.0 candidate (M):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
+- [ ] **Candidate for a later release (M; "1.3.0 candidate" until 2026-10-15, `ai-sessions/0094`):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
@@ -273,9 +251,14 @@ Open questions (each with where it is described):
   — the helper prints every thread's stack if it recurs.
 - Keep in step: `android/ui/src/main/res/raw/license.txt` with `LICENSE` (`SettingsMenuTest` fails otherwise).
 
+- [ ] **targetSdk 34 → the current target** (lint `OldTargetApi`; ADR-029): the maintainer's choice 2026-10-15 (`ai-sessions/0094`, "34 houden, stap plannen"):
+      its own FEATURE session — an ADR-029 Update, the behaviour changes of each API level read from the Android Developer docs (foreground services,
+      broadcasts, Bluetooth permissions), and a hardware run in both users (**M**).
+
 ## 6. Documents
 
-Restructures the maintainer deferred (chat 2026-10-03, "Restructures"); each is a MAINTENANCE session of its own, with a before/after check that no
+Restructures the maintainer deferred (chat 2026-10-03, "Restructures"; re-confirmed 2026-10-15, `ai-sessions/0094` "Later, als eigen sessies in TODO.md" — with
+`ai-sessions/0093` §6 rows 6, 9 and 13 as the current proposals); each is a MAINTENANCE session of its own, with a before/after check that no
 statement is lost (`ai-sessions/0068` §6 has the proposal for each):
 
 - [ ] `ARCHITECTURE.md` — "as built" text; dated notes become current text or move to `DECISIONS.md`; §5a gets a "verified in capture" column (§6.1).
@@ -302,10 +285,19 @@ statement is lost (`ai-sessions/0068` §6 has the proposal for each):
 
 Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each with its check in that RESULT's appendix):
 
-- [ ] Slips still open after `ai-sessions/0081` (interpretive — with the rule-9a session): `CAP-008-FINDINGS.md:381` "eleven silent captures";
+- [ ] Slips still open after `ai-sessions/0081` (interpretive — with the rule-9a session; `CAP-008`'s "eleven silent captures" was corrected by `ai-sessions/0094`):
       `CAP-033-EVENT-NOTES.md:146–147`; `CAP-047-FINDINGS.md:305–306`, `:379–380`; `CAP-050-FINDINGS.md:81–97`, `:204`, `:210` (re-open/sample
       counts); `CAP-049` (capinfos start, the quoted tail) — `ai-sessions/0068` appendix capA/capB/capD. The 27 arithmetic slips of that list were
       corrected in place by `ai-sessions/0081` (its ledger §B.C).
+- [ ] Found while `ai-sessions/0094` re-checked the `ai-sessions/0093` capture items (each verified by its sub-agent, not yet corrected — outside the 0093 list):
+      `CAP-002-FINDINGS.md` §2a counts 39 DLCI 0x08 messages in 17:04:35–17:07:05 (a reassembled decode finds 27) and §2's "this session's own 371 frames" is
+      the whole log's DLCI 0x02 count (it includes `CAP-001`); `CAP-010-FINDINGS.md` "now four independent sessions" for the `0x0f2a` read (three: `CAP-002`,
+      `003`, `010` — `CAP-014` is the fourth later); `CAP-001-FINDINGS.md` §2's channel 1 row still says "structure suggests AVRCP", superseded by the pw_hdlc
+      upgrade below it; `CAP-012`'s film clock runs ≈ 1–2 s behind the log ("matches within 1 s" lines need a look); `CAP-022`'s `0x2001…0x2026` (38 values)
+      against "a 34-frame burst" (32 `ReadSetting` requests — what the `0x20NN` sequence counts is not derived); `CAP-050-EVENT-NOTES.md`'s Test-device row mixes
+      film-relative and wall-clock time; `CAP-058-FINDINGS.md:31` subtracts a laptop-clock time from a phone-clock time; `CAP-074` §7 "9 of 44" while its parts
+      add up to 49; the `CAP-072` skeleton sentence at line ≈ 303 miscounts the requests (historical plan text). Agent drafts:
+      `ai-sessions/0094` RESULT Appendix.
 - [ ] Folder-name end times: `CAP-036` (film ends 06:41:16), `CAP-041` (17:17:40), `CAP-042` (named after the log, not the film). A rename breaks
       every link to the folder — do it with the index restructure.
 - [ ] EVENT-NOTES left as templates: unticked "Next steps" (`CAP-037`…`042`), leftover placeholders (`CAP-035`, `CAP-036`), the placeholder timeline
@@ -313,7 +305,9 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
 - [ ] Rule 9a: FINDINGS with more than one dated layer (`CAP-036` 7+, `CAP-041` 5, `CAP-032`/`034` 4, `CAP-017` 5, and others) — fold into
       current text; FINDINGS without a status banner that still need none checked: `CAP-006`…`008`, `011`…`013`, `019`, `020`, `023`, `025`,
       `027`, `029`, `031`…`033`, `035`, `043`, `044`, `051`.
-- [ ] Reading and checks `ai-sessions/0073` owed (its "Files read" and "Deferred documentation"): `ARCHITECTURE.md`, the five older tool
+- *(The reading owed by `ai-sessions/0089` and `0090` was done by `ai-sessions/0093` — `PROTOCOL.md`, `ARCHITECTURE.md`, `REVERSE_ENGINEERING.md`, `RELEASING.md` in
+  full, the capture FINDINGS by its sub-reviews; items deleted 2026-10-15, `ai-sessions/0094`.)*
+- [ ] Reading and checks `ai-sessions/0073` owed (its "Files read" and "Deferred documentation"; `ARCHITECTURE.md` was read in full by `ai-sessions/0093`): the five older tool
       `SPEC.md` files and the earlier APK-session RESULTs were not read in full by the main session; `PROTOCOL.md` only in the sections it
       touched (three sub-reviews swept it); 63 of the citations its documentation edits added resolve inside their file but carry no quoted
       token for `citation_checker` to compare; the statements marked "per the trace" in its §4 were taken from a sub-review without
@@ -326,12 +320,6 @@ Corrections found by `ai-sessions/0068` and not yet made (sub-review items, each
       `pwrpc_name_table census` on the de-duplicated set and correct the figures as dated notes (**M** for the texts).
 - [ ] Reading owed by earlier sessions (`A68-SES-03`): `ai-sessions/0061` did not read `APP_TESTPLAN.md` and several app sources with their tests in
       full; `ai-sessions/0063` read its prompt's full-reading list only in part (its §B) — carry into the next MAINTENANCE reading pass (the rule-9a session).
-- [ ] Reading owed by `ai-sessions/0089` (its RESULT "Files read"): `RELEASING.md`, the `ai-sessions/0087`/`0088` PROMPT and RESULT files, `CAP-074-FINDINGS.md`
-      §4/§8/§9, `CAP-073-FINDINGS.md` §4 and `PROTOCOL.md` §2.3/§8 were not read in full (none of them was changed; the facts used were re-derived from `CAP-075`)
-      — carry into the next reading pass.
-- [ ] Reading owed by `ai-sessions/0090` (its RESULT "Files read"): `PROTOCOL.md`, `ARCHITECTURE.md` and `REVERSE_ENGINEERING.md` were read only in the sections
-      named by its prompt (and the sections it changed), not in full; the FINDINGS of `CAP-038`, `CAP-045`, `CAP-064`, `CAP-069`, `CAP-075` only at the cited frames
-      — carry into the next reading pass.
 - Order decided 2026-10-09 (maintainer, chat, `ai-sessions/0081`): all of the above after the 1.2.0 work — first the `ai-sessions/0073` reading and the census
   recount (one CROSSCHECK session), then the rule-9a folds with the slip residue (MAINTENANCE), then the EVENT-NOTES templates (MAINTENANCE), the
   folder renames with the index restructure.
