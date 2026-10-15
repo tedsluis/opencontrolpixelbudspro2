@@ -50,6 +50,7 @@ own rotation list.
 | 08:22:56.997 | Classic `Connect Complete` (stored key) | System | — | Log frame 294. |
 | 08:22:57.421–.471 | DLCI 0x04 `Get`/`Notify` (`Settable=0xe8`=undocked, `Current=0x40`=Adaptive) | System (auto) | — | Log frames 609/612. |
 | ~08:23:01–04 | Pixel Buds app opened, "Device details" screen — **the main ANC-toggle row, not the "Controls and gestures" rotation-checklist screen** | User (App) | — | Video `t=30` confirms: the top-level "Noise cancellation/Off/Adaptive/Transparency" row is visible, "Transparency" selected black. |
+| before 08:23:21.949 | Left earbud taken from the case and put in — **not visible on video** (the camera angle hides the case slots and the user's ears; stills at 08:22:52–08:23:19 show only the loose bud beside the case) — no row recorded it | User (Hardware) | — | no discrete frame identified |
 | **08:23:21.949** | **Physical long-press, Left earbud: Adaptive→Transparency** | User (Hardware) | `TOUCH-007` (not `HOLD-005`) | Log frame 1583, `Notify`-only (`0813000401e8e880`), **no preceding `08 12` Set frame** — matches `CAP-027-FINDINGS.md` §4's press-and-hold mechanism exactly. |
 | **08:23:32.507** | Physical long-press, Left: Transparency→Noise cancellation | User (Hardware) | `TOUCH-007` | Log frame 1755, `Notify`-only (`...e808`). |
 | **08:23:46.899** | Physical long-press, Left: Noise cancellation→Adaptive | User (Hardware) | `TOUCH-007` | Log frame 1818, `Notify`-only (`...e840`). |

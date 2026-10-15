@@ -15,7 +15,7 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 | Field | Value |
 |---|---|
 | Capture ID | `CAP-028` |
-| Purpose | Group O — physical head-gesture actions (Nod/Shake); requires Head gestures already enabled (`CAP-020`, Group F) |
+| Purpose | Group O — physical head-gesture actions (Nod/Shake); requires Head gestures enabled (on in this session per frame 1350, §2; `CAP-020`, Group F, left them off) |
 | Date | 2026-09-12 |
 | Firmware | ⚪ ASSUMPTION `release_5.203` (carried over) |
 | Test device | Pixel 7a, Android 17, official Pixel Buds Companion App `1.0.955078536`, Google Play services active |
@@ -24,7 +24,7 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 | Notes file | [`CAP-028-EVENT-NOTES.md`](./CAP-028-EVENT-NOTES.md) |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:...:07` |
 
-## 2. Precondition check — Head gestures already enabled (🟢 FACT, from `CAP-020`)
+## 2. Precondition check — Head gestures already enabled (from this session's ReadSetting answer, frame 1350, and DLCI 0x08 frame 795; 🟡 for the value's meaning)
 
 This session's own connect-time read shows the setting **on**: `python3 scripts/pwrpc_decode.py CAP-028-btsnoop_hci.log | grep "29:"` → frame 1350 `ReadSetting`
 answer `4:{29:2}` (🟡 2 = on, `PROTOCOL.md` §4.5.4), and DLCI 0x08 `04 16 00 02 08 01` at 795. (Rewritten 2026-10-03, `ai-sessions/0069`: this used to rest on
@@ -80,10 +80,16 @@ report.
 
 ```
 $ tshark -r CAP-028-btsnoop_hci.log -Y '(btrfcomm.dlci==2 or btrfcomm.dlci==4 or btrfcomm.dlci==8) \
-    and btrfcomm.len>0 and frame.time>="2026-09-12 07:16:25" and frame.time<="2026-09-12 07:17:15"' \
+    and btrfcomm.len>0 and frame.time>="2026-09-12 07:16:25.5" and frame.time<="2026-09-12 07:17:15"' \
     -T fields -e frame.number
-(0 rows)
+(0 rows, exit 0)
+$ # positive control: the same filter with frame.time>="2026-09-12 07:16:25" (the bound quoted here before)
+1442
+1443
+1444
+1448
 ```
+(Corrected 2026-10-15, `ai-sessions/0094`: the lower bound quoted before, `07:16:25`, returns the tail of the connect burst, frames 1442–1448 at 07:16:25.477–.488; the "0 rows" holds only from `07:16:25.5`.)
 
 From the end of the connect-time settling burst (`07:16:25.49`, frame 1448) through `07:17:15.55`
 (frame 1834, the next routine periodic push — see §5), **zero** DLCI 0x02/0x04/0x08 frames appear on

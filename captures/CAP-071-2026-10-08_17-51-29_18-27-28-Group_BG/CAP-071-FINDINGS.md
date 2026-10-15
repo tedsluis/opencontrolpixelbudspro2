@@ -14,7 +14,7 @@ announcements, 33 entries; Info tab on film) · **Phone:** Pixel 9a, GrapheneOS,
 Play** · **App under test:** OpenControl for Pixel Buds Pro 2 **1.1.1, build `86a6fb3`** (release-signed, versionCode 10101), installed over **1.1.0, build
 `0323849`** · **HCI logs:** Z `CAP-071-btsnoop_hci1.log.last` (854 packets, 17:37:32.758–17:51:34.615, before the film), A `CAP-071-btsnoop_hci2.log.last` (6,996,
 17:51:39.365–18:26:23.881), B `CAP-071-btsnoop_hci2.log` (760, 18:26:32.311–18:28:44.260); `CAP-071-btsnoop_hci1.log` = the first 319,218 bytes of A, not counted ·
-**Buds:** `04:00:6e:…:07`, classic handle `0x000b` in all 7 ACLs; no LE link to the Buds.
+**Buds:** `04:00:6e:…:07`, classic handle `0x000b` in all 6 ACLs; no LE link to the Buds.
 
 Commands used throughout (rule 4a; all on handle `0x000b`, shown matching the Connection Complete events Z187, A171, A5025, A5626, A6419, B159 — `tshark -r <log>
 -Y "bthci_evt.code==0x03 || bthci_evt.code==0x05 || bthci_cmd.opcode==0x0405 || bthci_evt.code==0x04" -T fields -e frame.number -e frame.time -e bthci_evt.bd_addr

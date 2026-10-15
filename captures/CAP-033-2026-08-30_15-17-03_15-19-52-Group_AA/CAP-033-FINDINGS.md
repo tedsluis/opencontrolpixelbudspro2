@@ -143,18 +143,18 @@ that 1232-byte blob):
 
 (Full 1232-byte blob available in the raw capture; the excerpt above is the tail containing the two
 records most relevant to `DECISIONS.md` ADR-018/this Group's stated purpose. The complete record
-set, decoded the same way — service-name string + UUID + `[Group:1][Code:1][Length:2][RFCOMM
-channel:1]` protocol descriptor — across the full response:)
+set, decoded the same way — service-name string + UUID + SDP ProtocolDescriptorList (L2CAP UUID16 `0x0100`, RFCOMM
+UUID16 `0x0003` with a uint8 channel number, e.g. `35 0c 35 03 19 01 00 35 05 19 00 03 08 03` = RFCOMM channel 3) — across the full response:)
 
 | SDP service name (wire string) | UUID | RFCOMM channel | Corresponding DLCI (`channel×2`) | Already documented as |
 |---|---|---|---|---|
 | **"MAESTRO APP"** | `25e97ff7-24ce-4c4c-8951-f764a708f7b5` | 1 | `0x02` | `libmaestro`/Pigweed channel — the "pigweed" UUID from `DECISIONS.md` ADR-018, byte-for-byte |
 | **"GFPS RFCOMM"** | `df21fe2c-2515-4fdb-8886-f12c4d67927c` | 2 | `0x04` | Official Fast Pair Message Stream (`PROTOCOL.md` §2.1/§4.1) |
-| **"DEBUG APP"** | `25e97ff7-24ce-4c4c-8951-f764a708f7b4` (last byte `b4`, one bit different from "pigweed"'s `b5`) | 3 | `0x06` | Not previously documented — no traffic on this DLCI observed in this session |
+| **"DEBUG APP"** | `25e97ff7-24ce-4c4c-8951-f764a708f7b4` (last byte `b4`, one bit different from "pigweed"'s `b5`) | 3 | `0x06` | Not previously documented — no traffic on this DLCI observed in this session (`tshark -Y 'btrfcomm.frame_type==0x2f'` → SABM only on 0x00/0x0c/0x08/0x0a/0x04; `-Y 'btrfcomm.len>0'` per DLCI → 0x00 30, 0x04 53, 0x08 41, 0x0c 52; exit 0) |
 | **"GSND CONTROL"** | `f8d1fbe4-7966-4334-8024-ff96c9330e15` | 4 | **`0x08`** | The private, 🔴-open-identity envelope (`PROTOCOL.md` §2.3) |
 | **"GSND AUDIO"** | `81c2e72a-0591-443e-a1ff-05f988593351` | 5 | `0x0a` | The unattributed DLCI 0x0a burst from `CAP-021-FINDINGS.md` §4a |
 | "Handsfree" (standard UUID16 `0x111E`) | — | 6 | `0x0c` | HFP AT-command channel (`PROTOCOL.md` §4.3 Option C) — traffic on this DLCI in this session is ordinary HFP SLC setup |
-| **"BTIS"** | `e7ab2241-ca64-4a69-ac02-05f5c6fe2d62` | 9 | `0x12` | Not previously documented — no traffic on this DLCI observed in this session |
+| **"BTIS"** | `e7ab2241-ca64-4a69-ac02-05f5c6fe2d62` | 9 | `0x12` | Not previously documented — no traffic on this DLCI observed in this session (same two commands as DLCI 0x06 above) |
 
 **Raw-byte scan confirms the "pigweed"/"MAESTRO APP" UUID is genuinely present** (not just in the
 dissected SDP record): `python3` scan of the raw log file finds `25e97ff724ce4c4c8951f764a708f7b5`
@@ -238,7 +238,7 @@ recorded here as `not attempted` rather than forced or left silently blank.
   `AGENTS.md` §6/`DECISIONS.md` ADR-017 mechanical-assistance boundary already used for the
   "pigweed"/"default" UUID discovery itself) — this is the natural next step to turn §3's lead into
   something promotable.
-- Decode DLCI 0x0a in a session that actually opens it (this one didn't) using the SDP-confirmed
+- Decode DLCI 0x0a in a session where it carries payload (this one opened it — SABM 1536 / UA 1548 — but sent nothing on it) using the SDP-confirmed
   "GSND AUDIO" identity as a naming anchor for `CAP-021-FINDINGS.md` §4a's still-unattributed
   1123-frame burst.
 

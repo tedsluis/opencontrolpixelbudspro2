@@ -84,16 +84,16 @@ Phone time. "A"/"B"/"Z" frame numbers as in Log Metadata; E5 line numbers; L = l
 | 07:25:09–07:25:13 | **A bud out of the case** → Buds `DISC` MAESTRO (A749 07:25:11.294) → card "The app's channel was closed while Android still shows the Buds connected — the Buds do this when a bud goes in or out of the case or an ear …" → automatic re-open 07:25:12.8, announcement **21** (A797). Which bud: the **Right** (A860 runtime info 6.3 field 2 = 1, 6.2 = 2; film 07:25:19 "Left 100 % ⚡ … Right 100 %") | User → Buds → App | (BD-1 pre) | — | `CASE-005` | A749, A797, A860; E5 45–74; film 1 |
 | 07:25:27–07:25:37 | **The other (Left) bud out** → Buds `DISC` (A883 07:25:34.474) → re-open, announcement **19** (A919) | User → Buds → App | (BD-1 pre) | — | `CASE-004` | A883, A919, A983 (no 6.1, 6.2/6.3 field 2 = 1); E5 93–120 |
 | 07:25:41 | ANC tab: Noise cancellation ✓ (Notify A971 `01 e8 e8 08`) | User | — | — | — | film 1 |
-| 07:25:50.5 | Tab **Transparency** → claim 4: Get → Notify `e8 e8 08` → `Set … 80` (A1039) → ACK `ff 01 00 06 08 12 01 e8 e8 80` (A1042) → Notify `… 80` | User | BD-1 | — | `ANC-002` | A1017–A1049; film 1 07:25:51 ✓ Transparency |
+| 07:25:50.5 | Tab **Transparency** → claim 4: Get → Notify `e8 e8 08` → `Set … 80` (A1039) → ACK `ff 01 00 06 08 12 01 e8 e8 80` (A1042) → Notify `… 80` | User | BD-1 | — | `ANC-004` | A1017–A1049; film 1 07:25:51 ✓ Transparency |
 | — | **Adaptive not tapped on the tab** | — | BD-2 skipped | — | `ANC-003` (tile only) | film 1; no `Set … 40` before 07:26:45 |
 | 07:25:59.9 | Tab **Off** → `Set … 20` (A1090) → ACK (A1093) | User | BD-3 | — | `ANC-001` | film 1 07:26:01 |
-| 07:26:15.8 | Tab **Noise cancellation** → `Set … 08` (A1146) → ACK (A1149); at the release the phone sent three `DM` on DLCI 4 (A1157/60/61) while the Buds' battery frames crossed its `DISC` (A1154/55) | User | BD-4 | — | `ANC-004` | A1124–A1164; film 1 07:26:17 |
+| 07:26:15.8 | Tab **Noise cancellation** → `Set … 08` (A1146) → ACK (A1149); at the release the phone sent three `DM` on DLCI 4 (A1157/60/61) while the Buds' battery frames crossed its `DISC` (A1154/55) | User | BD-4 | — | `ANC-002` | A1124–A1164; film 1 07:26:17 |
 | 07:26:28–29 | Shade: "Connected — ANC: ACTIVE" | — | — | — | — | film 1 |
-| 07:26:37.1 | **Tile** (shown ACTIVE) → Get → Notify `08` → `Set 80` (A1215) → ACK (A1218) → tile "Transparent" | User | BD-5 (1) | — | `ANC-002` | E5 171; A1193–A1225; film 1 07:26:39 |
+| 07:26:37.1 | **Tile** (shown ACTIVE) → Get → Notify `08` → `Set 80` (A1215) → ACK (A1218) → tile "Transparent" | User | BD-5 (1) | — | `ANC-004` | E5 171; A1193–A1225; film 1 07:26:39 |
 | 07:26:44.7 | Tile → Notify `80` → `Set 40` (A1266) → ACK (A1269) → "Adaptive" | User | BD-5 (2) | — | `ANC-003` | E5 183; film 1 07:26:45 |
 | 07:26:51.4 | Tile → Notify `40` → `Set 20` (A1323) → ACK → "Off" | User | BD-5 (3) | — | `ANC-001` | E5 195; film 1 07:26:53 |
-| 07:26:57.8 | Tile → Notify `20` → `Set 08` (A1375) → ACK → "Active" | User | BD-5 (4) | — | `ANC-004` | E5 209; film 1 07:26:59 |
-| 07:27:06.5 | Tile → Notify `08` → `Set 80` (A1426) → ACK → "Transparent" — **a fifth tile tap** (repeat) | User | BD-5 (5, repeated) | — | `ANC-002` | E5 221; film 1 07:27:07 |
+| 07:26:57.8 | Tile → Notify `20` → `Set 08` (A1375) → ACK → "Active" | User | BD-5 (4) | — | `ANC-002` | E5 209; film 1 07:26:59 |
+| 07:27:06.5 | Tile → Notify `08` → `Set 80` (A1426) → ACK → "Transparent" — **a fifth tile tap** (repeat) | User | BD-5 (5, repeated) | — | `ANC-004` | E5 221; film 1 07:27:07 |
 | 07:27:19–07:27:37 | **Both buds out of the ears onto the table** (head in view 07:27:19–21, the ear covered by the hand; no head-side assignment). No Buds `DISC` on this change | User | BD-6 | — | `INEAR-004` | film 1; A (no `DISC` 07:27:08–07:28:38) |
 | 07:27:51.1 | **Tile** → claim 12: Notify **`01 e8 00 20`** (A1508) → **no `Set`**; toast "The Buds don't allow changing noise control right now (usually because no b…"; tile "Not allowed now" | User | BD-6 | S11 | `INEAR-004` | E5 237, 245; A1486–A1511; film 1 07:27:53–55 |
 | 07:27:58–07:28:05 | Home, app reopened; ANC tab shows **Off** ✓ (the claim's Notify) with the "don't allow" note | User | BD-6 | — | — | film 1; L 67–72 |
@@ -101,7 +101,7 @@ Phone time. "A"/"B"/"Z" frame numbers as in Log Metadata; E5 line numbers; L = l
 | 07:28:33–07:28:41 | First bud into an ear (head not in view) → Buds `DISC` (A1635 07:28:38.960) → re-open, announcement **21** (A1673); claim 14 Notify `01 e8 e8 80` (A1719) — Transparent, the Buds' own mode | User → Buds → App | BD-7 pre | — | `INEAR-002`/`003` (bud not identifiable) | E5 265–303; film 1 07:28:39–43 |
 | 07:28:45–07:28:51 | Second bud into an ear → Buds `DISC` (A1744 07:28:50.960) → **"Automatic re-open skipped: the session was lost 9939 ms after an automatic re-open"** (ADR-044's 10-s guard); ANC tab "Not connected to the Buds …" | User → Buds → App | — | — | — | E5 307–311; film 1 07:28:51–07:29:21 |
 | 07:29:22–23 | **Pull-to-refresh on the ANC tab** (not in the plan) → Connect → ready on **19** (A1791) | User | extra | — | `PAIR-003` | film 1 4 fps 07:29:22.5; E5 312 |
-| 07:29:30.4 | Tab **Noise cancellation** (shown Transparency) → Notify `80` → `Set 08` (A1913) → ACK | User | BD-7 done differently (the shown mode was Transparency, not Active) | — | `ANC-004` | A1887–A1922; film 1 07:29:31 |
+| 07:29:30.4 | Tab **Noise cancellation** (shown Transparency) → Notify `80` → `Set 08` (A1913) → ACK | User | BD-7 done differently (the shown mode was Transparency, not Active) | — | `ANC-002` | A1887–A1922; film 1 07:29:31 |
 | 07:29:40.4 | Tab **Off** → Notify `08` → `Set 20` (A1967) → ACK (A1970) | User | BD-8 (1st) | — | `ANC-001` | A1943–A1990; film 1 07:29:41 |
 | 07:29:46.0 | Tab **Off again** (the current mode) → Notify **`01 e8 e8 20`** (A2033) → **`Set … 20` sent** (A2034) → **ACK** `ff 01 00 06 08 12 01 e8 e8 20` (A2036) → Notify `… 20` (A2037) | User | BD-8 (2nd) | — | **`ANC-006`** | A2009–A2042; screen unchanged |
 | 07:30:22–07:30:31 | Connection tab: Left 100 % / Case 80 % (dimmed, dot) / Right 98 % | — | — | — | — | film 1 |
@@ -144,7 +144,7 @@ Phone time. "A"/"B"/"Z" frame numbers as in Log Metadata; E5 line numbers; L = l
 | 07:49:06.6 | Buds `DISC` MAESTRO (B2434) → "Still connecting…" → re-open (ch 19) | Buds → App | extra loss | — | — | E5 822–841 |
 | 07:49:19–26 | Export (Debug mode on) → "Debug log saved (862 lines)." (E3) | User | (BD-25 pre) | — | — | film 2; E5 866 |
 | 07:49:28 | **Debug mode off** | User | BD-25 | — | — | film 2 |
-| 07:49:42–44 | ANC tab **Transparency** → Notify `08` → `Set 80` (B2629) → ACK (B2632) | User | BD-25 | — | `ANC-002` | B2605–B2639; film 2 |
+| 07:49:42–44 | ANC tab **Transparency** → Notify `08` → `Set 80` (B2629) → ACK (B2632) | User | BD-25 | — | `ANC-004` | B2605–B2639; film 2 |
 | 07:49:47–54 | Export → "Debug log saved (869 lines)." (E4): **no hex line** after the switch (E4 = E3 + 7 state lines; the claim's 12 inbound messages are not dumped) | User | BD-25 | — | — | E4 vs E3; film 2 |
 | 07:50:12–07:50:28 | Both buds out of the ears onto the table | User | BD-26 pre | — | — | film 2 |
 | 07:50:29–30 | **Debug mode on** again | User | BD-26 pre | — | — | film 2 4 fps |
@@ -210,14 +210,14 @@ Phone time. "A"/"B"/"Z" frame numbers as in Log Metadata; E5 line numbers; L = l
 - [x] Every filter scoped to handle `0x000b`; DLCIs identified by content (MAESTRO announcements on 0x02; `03 0a`/`03 01` on 0x04; AT commands on 0x0c/0x09).
 - [x] P0 and Info: user 10, no `com.google.android.gms`/`com.android.vending` (P0 exit status not recorded — the wire negative carries it); 1.0.1 `e1fc886`; APK and certificate SHA-256.
 - [x] Zero Play-services claims (0 in four logs; `CAP-066` 26).
-- [x] I: 11 `Set`s on film with ACK and Notify (tab 4, tile 5, BD-25 1, BD-7′ 1); the Definition-of-done note — the maintainer's decision (`ai-sessions/0070` checkpoint).
+- [x] I: 12 `Set`s on film with ACK and Notify (tab 5 — BD-1, BD-3, BD-4, BD-8 ×2 —, tile 5, BD-25 1, BD-7′ 1); the Definition-of-done note — the maintainer's decision (`ai-sessions/0070` checkpoint).
 - [x] II: a tap on the current mode sends a `Set` and the Buds ACK it (BD-8).
 - [x] III: the two exports against the app's adapter lines and the HCI logs (no system log).
 - [x] IV: BD-13/14 (S1 tile, S2 dimmed, S4 text), BD-15, BD-17, BD-19; BD-18 not identifiable.
 - [x] V: one row per step (above; `APP_TESTPLAN.md` Summary updated).
 - [x] VI: every `04 01`/`ff 01` frame by direction (`CAP-068-FINDINGS.md` §6).
 - [x] VII: page timeout `0x04` and the text on film.
-- [x] Traceability (`AGENTS.md` §13.7): `ANC-001` (BD-3, BD-5, BD-8), `ANC-002` (BD-1, BD-5, BD-25), `ANC-003` (tile only — tab skipped), `ANC-004` (BD-4, BD-5, BD-7′), `ANC-006` (BD-8), `PAIR-003` (BD-9…11, BD-13/14, BD-20, BD-29/30 and the losses), `BATT-004` (every connect), `EQS-001` (BD-15/16, BD-21), `FIND-001` (BD-24, BD-26, BD-28), `FIND-005` (BD-27 — no wire evidence, see FINDINGS §6), `INEAR-004` (BD-6) — each in the timeline.
+- [x] Traceability (`AGENTS.md` §13.7): `ANC-001` (BD-3, BD-5, BD-8), `ANC-002` (BD-4, BD-5, BD-7′), `ANC-003` (tile only — tab skipped), `ANC-004` (BD-1, BD-5, BD-25), `ANC-006` (BD-8), `PAIR-003` (BD-9…11, BD-13/14, BD-20, BD-29/30 and the losses), `BATT-004` (every connect), `EQS-001` (BD-15/16, BD-21), `FIND-001` (BD-24, BD-26, BD-28), `FIND-005` (BD-27 — no wire evidence, see FINDINGS §6), `INEAR-004` (BD-6) — each in the timeline.
 - [x] `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9, `id_registry.csv`, `APP_TESTPLAN.md`, `CAP-068-FINDINGS.md`.
 
 ## Appendix A — the planned procedure (skeleton as committed in `e1fc886`; text unchanged, heading levels lowered by one)

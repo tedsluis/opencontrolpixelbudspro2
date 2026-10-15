@@ -74,7 +74,7 @@ Buds Connection Complete (frame 393, 05:49:56.45, chandle `0x0002`) and ends wit
 chandle's own locally-terminated Disconnect Complete (frame 1746, 05:51:28.776, reason `0x16`),
 97.2s after its own start. The **main log begins independently** with its own fresh `Sent Reset`
 (frame 1, 05:51:30.682) — only 1.8s after `.log.last`'s last frame — and its own fresh Buds
-Connection Complete (frame 611, 05:51:39.91) lands 11s after Recording 1's own documented start
+Connection Complete (frame 611, 05:51:39.91) lands ~2s after Recording 1's own documented start (9.2s after the main log's first frame)
 (05:51:38, both Buds resting on the table, case closed, phone screen black/standby).
 
 Applying the `CAP-040`/`CAP-042`/`CAP-049` precedent's own diagnostic (`CAP-049-FINDINGS.md` §0):
@@ -296,17 +296,19 @@ artifact:**
   cycle.
 - Recording 2: **two** genuine ACL Disconnection Complete events, reason `0x13` (remote user
   terminated — i.e. Buds-initiated, matching `DECISIONS.md` ADR-016's own "Disconnect-on-redock"
-  mechanism), at `06:33:59.19` (frame 2033, ~2s after swap #2's both-docked moment) and
+  mechanism), at `06:33:59.19` (frame 2033, ~8–18 s after swap #2's both-docked moment, 06:33:41–51, and ~2 s *after* the screen already showed
+  "+ Connect" at 06:33:57 — corrected 2026-10-15, `ai-sessions/0094`) and
   `06:34:50.92` (frame 3443, essentially simultaneous with swap #3's second placement at `06:34:51`).
 
 `DECISIONS.md` ADR-016 (`PROTOCOL.md` §5.1/§7) documents disconnect-on-redock as firing "the
 instant the *second* bud is placed in the case" — with no qualification for slot correctness, since
 its own evidence base never included a swapped-slot seating. This session's own dock-state-byte
-evidence (§5 below) confirms the physical-presence sensor reads "both docked" identically in **all
-three** swapped-dock instances (`06:10:20.78`, and both of Recording 2's) — yet only two of the
-three produce a disconnect. **🔴 OPEN QUESTION, not resolved here:** why does Recording 1's
-swapped dock (`06:10:21`) not disconnect, when both Recording 2 swaps do, given the dock-sensor
-itself reports the identical "both docked" state in all three? No video-visible or wire-visible
+evidence (§5 below) shows a both-seated `0x00` reading only for Recording 1's swapped dock (frame 2803, `06:10:20.78`); Recording 2 has
+**no** Notify at all during swap #2 (06:33:41–06:33:59; `tshark -r CAP-047-btsnoop_hci-2.log -Y "btrfcomm.len>0 and data.data[0:2]==08:13"` → 952, 2673,
+3048, 3364, 3834, 3996, 4339), and its `0x00` readings around swap #3 (3048 empty case, 3364 one bud) are §5's counter-examples, not both-seated
+readings *(corrected 2026-10-15, `ai-sessions/0094`: this said the byte reads "both docked" identically in all three instances)*. Two of the
+three swapped docks produce a disconnect. **🔴 OPEN QUESTION, not resolved here:** why does Recording 1's
+swapped dock (`06:10:21`) not disconnect, when both Recording 2 swaps do? The dock-state byte cannot answer it — it was read while both buds were seated only in Recording 1. No video-visible or wire-visible
 difference between the three docking actions themselves was found that would explain this
 (all three are direct physical placements, not the CAP-016-style "both removed then case closed"
 sequence ADR-016's own evidence was originally built from) — reported plainly, not force-fit into a
@@ -331,7 +333,7 @@ essentially simultaneous with the video's own documented `06:10:21` "both buds a
 in swapped configuration" moment. (Frame 1048, at Recording 1's own start with both Buds resting
 outside, correctly reads `0xe8`.)
 
-**Secondary result — two new, unreconciled counter-examples to ADR-024 in Recording 2, additional to
+**Secondary result — four new, unreconciled counter-examples to ADR-024 in Recording 2 (952 below, 3364, 3834, 3048), additional to
 the two `CAP-048-FINDINGS.md` §5 already documents, of the same general character (a fresh
 channel-(re)establishment's Get/Notify returning a stale value):**
 ```
@@ -343,6 +345,10 @@ $ tshark -r CAP-047-btsnoop_hci-2.log -Y "btrfcomm.dlci==0x05 and btrfcomm.len>0
 3996  2026-09-14T06:35:02.195231+0200  1  0813000401e8e880
 4339  2026-09-14T06:35:15.170599+0200  1  0813000401e8e840
 ```
+- **Frame 952 (`06:33:12.44`, Connection 1, chandle `0x0005`, DLCI 0x04 — not covered by the DLCI 0x05 command above; `tshark -r CAP-047-btsnoop_hci-2.log
+  -Y "btrfcomm.len>0 and data.data[0:2]==08:13"` lists it) — Settable=`0x00`, counter-example under ADR-024's reading.** It is the connect-time answer
+  to Get 931 (06:33:12.25); per `CAP-047-EVENT-NOTES.md` the case is closed with both buds outside at this time (lid opened on an empty case at 06:33:31).
+  (Under ADR-049's 🟡 "`00` ⇒ no bud worn" it is consistent.) *(added 2026-10-15, `ai-sessions/0094`)*
 - Frame 2673 (`06:34:19.72`, Settable=`0xe8`) — correct: both buds are outside (removed `06:34:13`–15).
 - **Frame 3364 (`06:34:46.79`, Settable=`0x00`) — counter-example.** This Notify follows a DLCI
   0x05 channel-bounce reopen at `06:34:45.78`–`45.92` (SABM/UA, immediately preceding it). Per
@@ -376,8 +382,8 @@ $ tshark -r CAP-047-btsnoop_hci-2.log -Y "btrfcomm.dlci==0x05 and btrfcomm.len>0
 
 None of this contradicts ADR-024's own core finding (dock-state-vs-not, confirmed correct in the
 large majority of readings, including every genuinely-both-docked and genuinely-neither-docked
-sample in this session) — it adds three more single-session counter-examples (one video-time-clean,
-two with a plausible settling explanation, one without) to the same still-open reliability question
+sample in this session) — it adds four more single-session counter-examples (three with a plausible settling explanation — 952, 3364,
+3834 — and one without, 3048) to the same still-open reliability question
 `CAP-048-FINDINGS.md` §5 already flagged, now reproduced independently a second time.
 
 ## 6. Cross-checks
@@ -457,8 +463,8 @@ promotions of new protocol semantics):**
 ## 10. Open Questions
 
 - Why does Recording 1's swapped-slot dock (`06:10:21`) never trigger a disconnect, when both of
-  Recording 2's swapped-slot docks do, given the dock-sensor byte reads identically "both docked" in
-  all three (§4)? No video- or wire-visible procedural difference found.
+  Recording 2's swapped-slot docks do (§4)? The dock-state byte was read with both buds seated only in Recording 1 (frame 2803), so it cannot
+  be compared across the three. No video- or wire-visible procedural difference found.
 - What causes frame 3048's spontaneous "both docked" Notify (`06:34:39.51`) on an empty case, not
   preceded by any channel reopen (§5)? Possibly related to the immediately-following channel
   bounce (`06:34:39.92`), possibly not — not established.

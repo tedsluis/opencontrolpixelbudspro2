@@ -13,7 +13,9 @@ handle `0x0002`, 23 of the 73 frames containing a recurring `0xfea9` byte-pair m
 to a ~29s window right after the BLE link forms and before the classic link exists. Not yet
 isolated from a physical trigger — every capture that shows this burst to date also has a bud
 removal/insertion happening nearby in the same session. This Group isolates whether the burst is
-triggered by the BLE connection forming alone, independent of any bud/case action.
+triggered by the BLE connection forming alone, independent of any bud/case action. (Since
+2026-10-03, `CAP-016-FINDINGS.md` §2/§11: `CAP-016`'s burst came from another device on handle
+`0x0002`, a Heart-Rate wearable, not the Buds.)
 
 ## Log Metadata
 
@@ -66,11 +68,11 @@ bud/case events.
 | 06:07:24–06:08:25 | Paired-device row shows cached "L:100%, C:95%, R:100%" info, **not yet marked Active** — a client-side cached display, not a live connection (see Findings §2) | System (UI) | — | Video frames `t=6`…`t=65` (`h_006.png`…`g_065.png`) all show the identical non-Active state; log shows only background `LE Extended Advertising Report`s in this window, no `Create Connection`. |
 | 06:08:27.773 | Phone sends classic `Create Connection` to the Buds (`04:00:6e:cf:6e:07`) | System (OS, phone-initiated) | `GATT-002` | Log frame 761. |
 | 06:08:28.615 | Classic `Connect Complete` (status 0x00) — stored link key reused, no SSP | System | `GATT-002` | Log frame 763. |
-| 06:08:28.615–~06:08:30 | RFCOMM multiplexer + DLCIs `0x00/0x02/0x04/0x08/0x0a/0x0c` open; DLCI 0x04 `Get ANC state`(`08110000`)/`Notify`(`Settable=0x00`=docked, `Current=0x20`=Off) fires per ADR-021/022 | System (App/OS auto) | — | Log frames 1017–1041 (Get 1024, Notify 1041, `Settable=0x00` matches the buds visibly sitting in the open case on video). |
+| 06:08:28.615–~06:08:30 | RFCOMM multiplexer + DLCIs `0x00/0x02/0x04/0x08/0x0a/0x0c` open; DLCI 0x04 `Get ANC state`(`08110000`)/`Notify`(`Settable=0x00` — per `DECISIONS.md` ADR-049 the Buds refuse a `Set` (🟢), 🟡 no bud worn; read as "docked" under ADR-024 at the time — `Current=0x20`=Off) fires per ADR-021/022 | System (App/OS auto) | — | Log frames 1017–1041 (Get 1024, Notify 1041, `Settable=0x00` matches the buds visibly sitting in the open case on video). |
 | ~06:08:50 | Device row turns purple/"Active. L:100%, R:100% batte…"; bottom notification shows full "Left 100% Case 95% Right 100%" | System (UI) | `GATT-002` | Video frame `t=90` (`j_090.png`). |
 | 06:07:20–06:09:52 | **Isolation check: buds/case never touched, entire video** — same static framing/shadow in every reviewed frame (`t=0,2,4,6,20,35,45,55,65,90,120,151`) | — | `GATT-002` | Video review, full duration. |
 | 06:09:52 | Video ends (152.16s after start) | System | `GATT-002` | Video frame `t=151` (`j_151.png`, overlay `06:09:51`). |
-| 06:10:09.976–06:10:10.008 | **A *second*, unrelated LE connection forms** — `LE Extended Create Connection`/`Enhanced Connection Complete` to address `40:a8:ef:16:bb:35` (chandle `0x0004`) — **not** the Buds' own classic address, and **not video-covered** (20s after the video ends) | Buds/Case or unrelated device (Auto) | `GATT-002` | Log frames 1580/1589 — see Findings §3 for why this is attributed to an unrelated nearby device, not the Buds. |
+| 06:10:09.976–06:10:10.008 | **A *second*, unrelated LE connection forms** — `LE Extended Create Connection`/`Enhanced Connection Complete` to address `40:a8:ef:16:bb:35` (chandle `0x0004`) — **not** the Buds' own classic address, and **not video-covered** (18s after the video ends) | Buds/Case or unrelated device (Auto) | `GATT-002` | Log frames 1580/1589 — see Findings §3 for why this is attributed to an unrelated nearby device, not the Buds. |
 | 06:10:10.034–06:10:10.409 | Full bidirectional GATT primary-service discovery on chandle `0x0004`: GAP/GATT/Device Information, two "Unknown" 128-bit-UUID services (handles `0x0040–0x0045` and `0x0050–0x0054`), and a standard **Heart Rate** service (`0x180D`) | System ↔ peer | — | Log frames 1607–1690 (full walk); Heart Rate response at frame 1663. |
 | 06:10:12.474–06:11:00.457 | The `0x0044` `Handle Value Notification` burst (23 frames, chandle `0x0004`) — same shape/marker (`a9fe`) as `CAP-016-FINDINGS.md` §11's original burst | Peer device (Auto) | `GATT-002` | Log frames 1929–2089 (full range: `tshark -Y "btatt.opcode==0x1b && btatt.handle==0x0044"`); see Findings §3. |
 

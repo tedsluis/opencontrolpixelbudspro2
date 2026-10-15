@@ -37,15 +37,15 @@ comparable to log frame timestamps without offset correction.
 | 08:50:57 | Start video recording. Screen already shows buds recognized (Left 100%, Case 63%, Right 100%), `Connect`/`Forget` both enabled | — | — | A BLE link to the peer already exists from 08:50:36.27 (frame 290, `LE Enhanced Connection Complete`) — i.e. some association predates this recording |
 | 08:51:02–03 | Tap **Forget** | User (App) | — | No immediately visible log effect; a link key was still available and reused at 08:51:12 (frame 911) — see `CAP-001-FINDINGS.md` §6 open question |
 | 08:51:06–11 | Case lid opened; buds visible, case LED lit | User (Hardware) | `CASE-003` | 1st `Create Connection` (08:51:01.98, frame 732) fails with **Page Timeout** (frame 737, status `0x04`) — consistent with the peer not yet reachable until the lid was fully open |
-| 08:51:11 | System notification card appears: "Pixel Buds Pro 2 van Ted / Left 100% Case 62% Right 100%" | App (Auto) | — | — |
 | 08:51:07–09 | 2nd `Create Connection` attempt | — | — | Succeeds (frame 775, 08:51:09.33, status `0x00`) then is torn down ~0.24s later (`Disconnect Complete`, frame 831, 08:51:09.56) |
+| 08:51:11 | System notification card appears: "Pixel Buds Pro 2 van Ted / Left 100% Case 62% Right 100%" | App (Auto) | — | — |
 | 08:51:14–15 | App briefly shows **"Problem connecting. Turn device off & back on"** | App (Auto) | — | Coincides exactly with the connect-then-disconnect cycle above |
 | 08:51:09–12 | 3rd `Create Connection` attempt — this one persists | — | `PAIR-001` | Succeeds (frame 855, 08:51:12.10, status `0x00`); Link Key Request/Reply → Authentication Complete → Encryption Change all complete by 08:51:12.21 (frames 911–917), using a **stored** link key (no fresh pairing dialog) |
 | 08:51:12–15 | (not directly visible on screen — app UI mid-transition) | — | `PAIR-001` | RFCOMM channels 0, 1, 2, 4, 5 opened (frames 984–1070, 1334); SDP queries for Audio Sink/AVRCP/HFP/A2DP (frames 902–1231); full HFP AT-command handshake incl. `AT+BIEV=2,100` battery report (frames 1236–1310) — see `CAP-001-FINDINGS.md` §3 |
 | 08:51:16 | Hand touches left bud in case | User (Hardware) | — | — |
 | 08:51:17 | App shows **Disconnect** button, ANC row still greyed out, "Active" label under Case | App (Auto) | — | — |
 | 08:51:20–21 | Left earbud removed from case (held in hand) | User (Hardware) | `CASE-004` | — |
-| 08:51:23 | Left ring shows not-charging state ("0" instead of charging bolt) | App (Auto) | `INEAR-001`(partial) | — |
+| 08:51:23 | Left ring shows not-charging state ("0" instead of charging bolt) — app display following the `CASE-004` removal above | App (Auto) | — | — |
 | 08:51:32 | Tap **Transparency** (1st) — ANC row now fully active | User (App) | `ANC-004` | No confidently attributable command frame identified — see `CAP-001-FINDINGS.md` §5 |
 | 08:51:36 | Right earbud removed from case | User (Hardware) | `CASE-005` | — |
 | 08:51:39 | Tap **Off** | User (App) | `ANC-001` | See `CAP-001-FINDINGS.md` §5 |
@@ -65,8 +65,8 @@ comparable to log frame timestamps without offset correction.
   attempts, including one Page Timeout failure and one connect-then-immediately-disconnect cycle,
   with a corresponding transient "Problem connecting" warning shown in the app around
   08:51:14–15. The original draft only listed "08:51:17 Connected" with no indication of this.
-- The right-bud-removal and left-bud-removal timestamps were adjusted slightly (08:51:20/36
-  instead of 08:51:24/36) based on the actual video frames showing hands physically removing
+- The left-bud-removal timestamp was adjusted to 08:51:20 (from 08:51:24); the right-bud removal
+  stays at 08:51:36 — both based on the actual video frames showing hands physically removing
   each bud, rather than the resulting battery-icon state change (which lags the physical action
   by 1–3s).
 - Added explicit `CAP-001-btsnoop_hci.log` frame references for every event where log evidence exists,

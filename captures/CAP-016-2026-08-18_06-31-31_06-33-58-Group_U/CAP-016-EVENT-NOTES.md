@@ -64,7 +64,7 @@ extra `ffmpeg -vf fps=5`/`fps=10` passes are noted explicitly where used). `fram
 |---|---|---|---|---|
 | 06:31:31 | Start video recording. Screen: system **Bluetooth** settings sheet, "Bluetooth is off", `Use Bluetooth` toggled off. Case sits atop the phone, **lid already open**, both earbuds visible inside — case was opened before recording started (off-camera; not captured) | — | — | — |
 | 06:31:35 | Tap **Use Bluetooth** toggle | User (App) | — | — |
-| 06:31:40 | Quick Settings tile & notification shade show "Pixel Buds Pro 2 van Ted — Left 100% Case 100% Right 100% battery" (BLE-only battery info; no classic profile connected yet) | App (Auto) | — | `LE Enhanced Connection Complete` at **06:31:40.983** (frame 691) to peer `4f:25:00:85:9a:b1`, connection handle `0x0002` — 🟡 HYPOTHESIS this is the Buds' BLE/GATT link (address differs from the classic BD_ADDR; consistent with a resolvable/random BLE address, common for Fast-Pair-capable peripherals — not independently confirmed to be the same physical device beyond the exact timing match) |
+| 06:31:40 | Quick Settings tile & notification shade show "Pixel Buds Pro 2 van Ted — Left 100% Case 100% Right 100% battery" (BLE-only battery info; no classic profile connected yet) | App (Auto) | — | `LE Enhanced Connection Complete` at **06:31:40.983** (frame 691) to peer `4f:25:00:85:9a:b1`, connection handle `0x0002` — another device, not the Buds: its GATT table carries the Heart Rate service (frame 760), which the Buds' table lacks (`CAP-016-FINDINGS.md` §2, 🟢) |
 | 06:31:45 | Quick Settings panel shown, Bluetooth tile active (purple); Android build `17 (CP2A.260705.006)` visible on-screen | — | — | — |
 | 06:31:55 | **Device details** screen for "Pixel Buds Pro 2 van Ted": Left 100%/Case 100%/Right 100%, `Forget`/`Connect` buttons (classic profile **not yet connected**) | — | — | — |
 | 06:32:00–02 | Earbud in the slot **nearest the case hinge** lifted out by hand (held off-camera from here on) | User (Hardware) | `CASE-004`/`CASE-005` (see note below) | `Rcvd Connect Request` **06:32:02.531** (frame 1213, Buds-initiated) → `Sent Accept Connection Request` **06:32:02.545** (1214) → `Rcvd Connect Complete` **06:32:02.749** (1217, handle `0x0001`, `04:00:6e:cf:6e:07`, status `0x00`) — 🟢 FACT: this is a **Buds-initiated page**, not a phone-side `Create Connection` (contrast `CAP-001-FINDINGS.md` §1's three phone-initiated attempts) |
@@ -95,7 +95,7 @@ by physical position only, per `PROJECT_RULES.md` §1's "no invented interpretat
 
 - The placeholder draft contained only the video's start (06:31:31) and end (06:33:58) lines and an
   incomplete metadata table (missing firmware/device/file-duration fields, both marked blank). This
-  revision fills in the full metadata table and the complete 20-row event timeline above, all
+  revision fills in the full metadata table and the complete 23-row event timeline above, all
   independently re-derived from the video and log.
 
 ---

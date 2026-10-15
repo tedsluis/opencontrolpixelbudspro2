@@ -16,7 +16,7 @@ announcements, 66 entries; Info tab on film) · **Phone:** Pixel 9a, GrapheneOS,
 Play** · **App under test:** OpenControl for Pixel Buds Pro 2 **1.1.0, build `0323849`** (release-signed, versionCode 10100) · **HCI logs:** Z
 `CAP-070-btsnoop_hci1.log.last` (4,664 packets, 05:44:02.521–06:10:46.252, the unfilmed rehearsal), A `CAP-070-btsnoop_hci2.log.last` (5,285,
 06:10:52.690–06:37:28.403), B `CAP-070-btsnoop_hci2.log` (1,430, 06:39:36.576–06:42:06.705); `CAP-070-btsnoop_hci1.log` = the first 222,764 bytes of A, not
-counted · **Buds:** `04:00:6e:…:07`, classic handle `0x000b` in all 19 ACLs; no LE link to the Buds.
+counted · **Buds:** `04:00:6e:…:07`, classic handle `0x000b` in all 15 ACLs (Z 6, A 7, B 2); no LE link to the Buds.
 
 Commands used throughout (rule 4a; all on handle `0x000b`, shown matching the Connection Complete events Z161, A159, B159 — `tshark -r <log> -Y
 "bthci_evt.code==0x03 || bthci_evt.code==0x05 || bthci_cmd.opcode==0x0405" -T fields -e frame.number -e frame.time -e bthci_evt.bd_addr -e bthci_cmd.bd_addr -e
@@ -72,7 +72,7 @@ are in the session scratchpad (`ai-sessions/0075` RESULT).
 
 | ACL | Start | End | Note |
 |---|---|---|---|
-| Z1–Z8 | Z159 05:44:40 … Z3617 05:58:08 | Z4078 05:59:36 `0x13` | the rehearsal (8 MAESTRO sessions) |
+| Z1–Z6 | Z159 05:44:40 … Z3617 05:58:08 | Z4078 05:59:36 `0x13` | the rehearsal (6 ACLs — Connection Complete Z161, Z1086, Z1598, Z2086, Z2576, Z3619 — with 8 MAESTRO sessions) *(corrected 2026-10-15, `ai-sessions/0094`)* |
 | A1 | A157 phone page 06:11:26.924 (Connect) → A159 | A1044 06:15:25.096 `0x13` | Left back into the case |
 | A2 | **A1049 06:15:41.516, Buds-initiated** (no `Create Connection`) | A1526 06:15:58.630 `0x13` | the Buds opened the multiplexer (A1266) and HFP on DLCI 0x08 (A1272, `AT+BRSF` A1293) |
 | A3 | A1529 page 06:16:11.964 (pull) → A1531 | A2022 06:16:52.709 `0x13` | |
@@ -227,7 +227,7 @@ per-bud field 2 (2 = charging):
 - 🟢 Every loss was classified and recovered: Buds-side closes with the ACL up re-opened after 1.5 s (#3, #9); one loss within 10 s of an automatic re-open was
   not re-opened (#4, ADR-044's chain guard, `SessionReopener.kt:101–104`, `CHAIN_GUARD_MS = 10_000L` `:137`) — the next Buds ACL re-opened it; every ACL loss came
   back by LINK_BACK when the Buds reconnected, or by a pull/Connect while both stayed docked. No session was lost without a message.
-- 🟢 **The first LINK_BACK attempt fails on a multiplexer collision** (#4, #6, #8, #11 is clean): E3 232/371/532 "RFCOMM channel 0x02 connect failed after 84–106
+- 🟢 **The first LINK_BACK attempt fails on a multiplexer collision** (3 times: #4, #6, #8; #11 is clean): E3 232/371/532 "RFCOMM channel 0x02 connect failed after 84–106
   ms (attempt 1/3)", and on the wire the phone's `SABM` DLCI 0 crossed the Buds' own (A1252/A1266) or was repeated (A2241/A2274, A3351/A3385); attempt 2 succeeded
   400 ms later each time (`RfcommBudsTransport` retry, `DEFAULT_RETRY_DELAY_MS = 400L`, `RfcommBudsTransport.kt:386`). As designed (`ai-sessions/0039`).
 - 🟢 **Bluetooth off/on (BF-24/25):** final cause line, no "provisional"; the new process re-opened by itself on Bluetooth on (L2 478, trigger `LINK_BACK`) and read
@@ -257,7 +257,7 @@ per-bud field 2 (2 = charging):
 | 1 | The screen-reader text of "—" is unverified on a phone (no dump) | **open test item**, not a defect shown | §5 |
 | 2 | C12 (a tap during a re-open) not exercised | open test item | §5 |
 | 3 | Case-sound and Volume-EQ audibility not observable (no audio track) | open test item (observations, not app claims) | §0 |
-| 4 | The first LINK_BACK attempt collides with the Buds' own multiplexer `SABM` (4 times), the retry succeeds | observation — as designed | §6 |
+| 4 | The first LINK_BACK attempt collides with the Buds' own multiplexer `SABM` (3 times), the retry succeeds | observation — as designed | §6 |
 | 5 | One loss within 10 s of a re-open is not re-opened; the Buds' next ACL re-opened it | minor — ADR-044 as designed (already a 1.0.x known behaviour) | §6 #4 |
 | 6 | Two `SIGQUIT` stack dumps, cause unknown | 🔴 not an app defect shown (the process continued) | §0 |
 | 7 | P1: 1.1.0 was a first install in user 10, not the planned update over 1.0.1 | test-procedure gap; the update path stays untested on hardware | §0 |

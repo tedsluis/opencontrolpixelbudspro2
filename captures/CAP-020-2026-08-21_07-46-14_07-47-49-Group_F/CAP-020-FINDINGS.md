@@ -190,9 +190,10 @@ it "fired again 35 s after `HEAD-001` with no visible action" — that was the O
 
 ## 6. Conclusions & Next Steps
 
-- `TOUCH-001` and `HEAD-001` both isolate cleanly to a single `Sent` frame on DLCI 0x02, within
-  <1s of the video-confirmed action, with a verified CRC-32 and a consistent structural envelope —
-  🟡 HYPOTHESIS level, matching this project's usual bar for a first single-capture attribution.
+- `TOUCH-001` and `HEAD-001` each isolate to one DLCI 0x02 `Sent` write per filmed tap (touch
+  controls 1741 ON / 1995 OFF, head gestures 1935 ON / 2038 OFF), each within <1s of the action,
+  with a verified CRC-32: `qhr` field 4 = "Use touch controls" is 🟢 FACT (§3, ADR-019); field 29
+  (head gestures, 1 = off, 2 = on) stays 🟡 HYPOTHESIS (§4, `PROTOCOL.md` §4.5.4).
 - New structural finding: the DLCI 0x02 outer `field 5{ field 4{...} }` wrapper is shared across at
   least 3 different settings (EQ, touch controls, head gestures), distinct from any one setting's
   inner content. **Promoted 2026-08-23** (`PROTOCOL.md` §4.5's shared preamble, `DECISIONS.md`
@@ -207,8 +208,9 @@ it "fired again 35 s after `HEAD-001` with no visible action" — that was the O
 - 🔴 What do inner field numbers `4` (touch controls) and `29` (head gestures) represent inside the
   DLCI 0x02 `field 5{ field 4{...} }` wrapper — a per-setting message-type ID, a field-within-a-
   larger-schema position, or something else? → copied to `PROTOCOL.md` §6; answered for field 4 (and 7, 12) by the `qhr` schema, §8.
-- 🔴 Does the same `field 5{ field 4{...} }` wrapper generalize to *every* `libmaestro` setting
-  (§4.5's whole remaining list), or only to some? → copied to `PROTOCOL.md` §6.
+- ✅ Does the same `field 5{ field 4{...} }` wrapper generalize to *every* `libmaestro` setting
+  (§4.5's whole remaining list), or only to some? → copied to `PROTOCOL.md` §6; answered at the
+  schema level by §8 (it is `qhr`'s own oneof; only a subset of fields is wire-confirmed).
 
 ## 8. Addendum (2026-08-30) — inner field numbers resolved against a 2026-08-30 APK static-analysis
 pass (`REVERSE_ENGINEERING.md`'s `qjc`/`qja`/`qhr` entries); §7's first open question answered
@@ -286,7 +288,7 @@ mechanical search, not evidence the field is unwritten).
 
 **Answers §7's first open question directly**: inner field numbers 4/29 are not an arbitrary
 per-setting ID scheme — they are `qhr`'s own oneof field numbers (the same 38-field schema `PROTOCOL.md`
-§4.1's ANC command and §4.2's EQ quintet also live inside), addressed via standard protobuf wire-format
+§4.2's EQ quintet also lives inside; §4.1's ANC command is on DLCI 0x04, not in `qhr`), addressed via standard protobuf wire-format
 tags. §7's second question (does the wrapper generalize to every setting) is now also answered at the
 schema level: `qhr` has 38 fields total, of which this project's various captures have wire-confirmed
 only a subset — the wrapper itself generalizes by construction (it's just `qhr`'s own oneof), but

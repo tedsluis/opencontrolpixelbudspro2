@@ -86,7 +86,7 @@ app's claims start with `08 11` or `08 12` (FINDINGS §3).
 | 11:07:38–11:08:26 | Bluetooth list: "Charge 6 Verbonden", "Pixel Buds Pro 2 va Opgeslagen", "Niro Opgeslagen"; case closed above the phone; OpenControl stays resumed underneath (no `wm_on_*` between 09:00:31 and 09:10:41 UTC) | OS | — | film; LE Connection Complete 290; logcat |
 | 11:07:59.5 | Status bar 11:07 → 11:08 (overlay :59 + 0.5 s) | — | S0 var. (nothing spoken) | 5 fps crops |
 | 11:08:20.5 | **Lid opened, both buds docked**; no HCI event for the Buds until 11:08:27.10 | User | BA-1 var. | film; HCI (no event 290 → 596) |
-| 11:08:22–28 | Left-slot bud taken out (Right stays docked); head on the **right** of the frame ⇒ **Left** into the ear (≈ 11:08:28–30) | User | BA-1 [`CASE-005`, `INEAR-002`] | film; stream 1089 6.3.2 = 2 (Right charging), 6.2.2 = 1 |
+| 11:08:22–28 | Left-slot bud taken out (Right stays docked); head on the **right** of the frame ⇒ **Left** into the ear (≈ 11:08:28–30) | User | BA-1 [`CASE-004`, `INEAR-002`] | film; stream 1089 6.3.2 = 2 (Right charging), 6.2.2 = 1 |
 | 11:08:27.10 | **Buds' Connection Request** (596) → ACL (600) | Buds | — | HCI |
 | 11:08:27.8–11:08:28.8 | **Opened by itself:** link `CONNECTED` → "Automatic re-open (ADR-044, trigger: LINK_BACK)" → app `SABM` 0x02 (863) → announcement **ch 19** (884) → reads 16, 2, 4, 7, 12, 17, 19, 22 (923…1049) → `SubscribeRuntimeInfo` (1066; Case 89, 1089); snapshot claim `08 11` (973) → `Notify 01 e8 00 20` (990, Left in the hand) | App | BA-1 [`PAIR-003`, `EQS-001`] | export 11–58 |
 | 11:08:31.45 | Play services' claim: `Notify 01 e8 e8 40` — the Left bud is in the ear | Buds | [`INEAR-002`] | 1352 |
@@ -113,13 +113,13 @@ app's claims start with `08 11` or `08 12` (FINDINGS §3).
 | 11:12:34–38 | Right bud from the ear into the right slot ("Right 100 % ⚡") | User | (not planned) [`CASE-006`] | film; stream 3611 6.3.2 = 2 |
 | 11:12:42–46 | Left bud from the ear into the left slot (both docked, lid open) → `Notify 01 e8 00 20` (PS, 3641, 11:12:43.04) → ACL `0x13` (3646, 11:12:45.965); card: "Connected to this phone (Android) / App control: not open yet … IOException: bt socket closed, read return: -1", then "Paired — not connected …" | User / Buds / App | BA-5 pre-state | export 197–203; film |
 | 11:12:52–54 | **Right**-slot bud out onto the table right of the case (Left docked) → Connection Request (3689) → re-open (LINK_BACK; attempt 1 failed 84 ms) → announcement **ch 21** (4074) → ready; snapshot `Notify 01 e8 00 20` (4120); "Left 100 % ⚡" | User / Buds / App | **BA-11 by accident** (only the Right out) [`CASE-005`, `PAIR-003`] | export 204–245; stream 4162 6.2.2 = 2 |
-| 11:12:56–58 | **Left**-slot bud out onto the table left of the case; **both on the table**, case open and empty | User | **BA-5** [`CASE-005`] | film; stream 4321 none charging |
+| 11:12:56–58 | **Left**-slot bud out onto the table left of the case; **both on the table**, case open and empty | User | **BA-5** [`CASE-004`] | film; stream 4321 none charging |
 | 11:13:20–28 | Battery (i): "Left: 100% (updated 11:12:56) — not charging (out of the case) (11:13:07) … Case: 89% — last seen 11:12:56 (no bud charging in the case) / The Buds report the Case level only while a bud is in the case. / Firmware: release_5.203" | User / App | — [`BATT-004`] | film |
 | 11:13:30–34 | **Left** bud into the left slot; Right stays on the table | User | **BA-6** (BA-5 not yet refreshed) [`CASE-006`] | film; stream 4518 6.2.2 = 2 |
 | 11:13:46–52 | Battery (i): "Left: 100% (updated 11:12:56) — charging in the case (11:13:34) / Right: … not charging (out of the case) (11:13:34) / Case: 89% (updated 11:13:34)" | User / App | — | film |
 | 11:13:56–11:14:06 | ANC tab: "ANC can only be changed while you wear the Buds. Tapping a mode checks again first.", Off | App | BA-6 | film |
 | 11:14:12–14 | Right bud into the right slot (both docked) → ACL `0x13` (4653, 11:14:14.830); "Not connected to the Buds …" | User / Buds | (not planned) [`CASE-006`] | export 261–266 |
-| 11:14:20–22 | Right bud out onto the table, then the Left onto the table → Connection Request (4698) → re-open, announcement **ch 21** (4962) → snapshot `Notify 01 e8 00 20` (5280); the ANC note again | User / App | **BA-5 rep.** [`CASE-005`] | export 267–296; film |
+| 11:14:20–22 | Right bud out onto the table, then the Left onto the table → Connection Request (4698) → re-open, announcement **ch 21** (4962) → snapshot `Notify 01 e8 00 20` (5280); the ANC note again | User / App | **BA-5 rep.** [`CASE-005`, `CASE-004`] | export 267–296; film |
 | 11:14:31.6 | **ANC Refresh, both buds on the table** → claim 5443 → `Get` (5453) → **`Notify 01 e8 00 20`** (5465, 11:14:33.437) | User / App | **BA-5 ✓** [`ANC-001`] | export 306–314; film (finger on Refresh 11:14:30) |
 | 11:14:42–46 | **Left** bud into the left slot; Right stays on the table | User | **BA-6 rep.** | film; stream 5596 6.2.2 = 2 |
 | 11:14:58.4 | **Refresh** → `Get` (5694) → **`Notify 01 e8 00 20`** (5707, 11:15:00.485); (i) "ANC mode: OFF (updated 11:15:00) / ANC can only be changed while you wear the Buds (checked 11:15:00)…" | User / App | **BA-6 ✓** | export 319–329; film 11:15:04–10 |
@@ -127,7 +127,7 @@ app's claims start with `08 11` or `08 12` (FINDINGS §3).
 | 11:15:51.3 | **Refresh** (lid closed) → `Get` (6007) → battery **`03 03 00 03 ff 64 ff`** (6015 — Left unknown) → **`Notify 01 e8 00 20`** (6019, 11:15:53.518); (i) "(checked 11:15:53)" | User / App | **BA-7 ✓** | export 332–340; film 11:15:50–12:02 |
 | 11:16:14–16 | Lid opened (Left docked) | User | BA-7 → BA-8 | film; stream 6174 (11:16:19.21) 6.2.2 = 2, Case 89 again |
 | 11:16:18–22 | Right bud from the table, head on the **left** ⇒ **Right** into the ear → PS `Notify 01 e8 e8 40` (6224, 11:16:23.618) | User / Buds | BA-8 [`INEAR-003`] | film |
-| 11:16:26–30 | Left bud out of the slot, head on the **right** ⇒ **Left** into the ear → PS `Notify 01 e8 e8 20` (6257, 11:16:31.526); both worn | User / Buds | BA-8 [`INEAR-002`, `CASE-005`] | film; stream 6240 none charging |
+| 11:16:26–30 | Left bud out of the slot, head on the **right** ⇒ **Left** into the ear → PS `Notify 01 e8 e8 20` (6257, 11:16:31.526); both worn | User / Buds | BA-8 [`INEAR-002`, `CASE-004`] | film; stream 6240 none charging |
 | 11:16:40.2 | **Refresh, both worn** → `Get` (6322) → **`Notify 01 e8 e8 20`** (6334, 11:16:41.787) → the note disappears; (i) "ANC mode: OFF (updated 11:16:41) / Connection: Ready …" | User / App | **BA-8 ✓** | export 351–359; film 11:16:38–50 |
 | 11:16:52–54 | Lid closed (empty case) | User | — | film |
 | 11:17:00.6 | **Refresh** again → `Notify 01 e8 e8 20` (6532); (i) "updated 11:17:02" | User / App | BA-8 rep. | export 360–368; film 11:17:06 |
@@ -135,7 +135,7 @@ app's claims start with `08 11` or `08 12` (FINDINGS §3).
 | 11:18:30.4 | **Disconnect** (both worn) | User | **BA-9** | export 415 (11:18:31.908); film 11:18:30 |
 | 11:18:32–48 | Lid opened; a bud from an ear into the right slot (11:18:38–40), the other into the left slot (11:18:42–46); lid closed (11:18:46–48) → PS `Notify … 40` (7011) and `… 00 20` (7091) → ACL `0x13` (7094, 11:18:46.496); "Paired — not connected …" | User / Buds | BA-9 ✓ [`CASE-006`] | export 417; film |
 | 11:18:48–11:19:15 | Lid closed, both docked, 27 s | User | BA-9 | film |
-| 11:19:16–20 | Lid opened; **only the Left**-slot bud out, onto the table; Right docked | User | **BA-10** [`CASE-005`] | film; stream 8256 6.3.2 = 2 |
+| 11:19:16–20 | Lid opened; **only the Left**-slot bud out, onto the table; Right docked | User | **BA-10** [`CASE-004`] | film; stream 8256 6.3.2 = 2 |
 | 11:19:23.0–23.9 | Connection Request (7346) → ACL (7350) → link `CONNECTED`; **no re-open** (the Disconnect tap switched ADR-044 off): "App control: not open yet — tap Connect" | Buds / App | ADR-044 item 2 ✓ | export 418; film 11:19:24 |
 | 11:19:52.25 | **Connect** → ready → announcement **ch 19** (8190); snapshot `Notify 01 e8 00 20` (8269) | User / App | **BA-10 ✓** [`PAIR-003`] | export 419–455 |
 | 11:19:58.4 | **Disconnect** (Left still out) | User | BA-11 var. | export 456 (11:20:00.934) |
@@ -214,8 +214,9 @@ app's claims start with `08 11` or `08 12` (FINDINGS §3).
 
 **Traceability (`AGENTS.md` §13.7):** every skeleton step (S0–S2, BA-1 … BA-17, F7, K1–K5, L2/L3, A5, (E), B4, Z1/Z2) appears above with a result. Registry
 Test-IDs the skeleton names: exercised — `ANC-001` (tile 11:10:00, 11:11:24; BA-5 Refresh), `ANC-002` (tile 11:10:09, F7), `ANC-003` (tile 11:10:20),
-`ANC-004` (tile 11:10:14), `PAIR-003` (every automatic re-open and the Connect taps 11:19:52, 11:20:14, BA-16), `CASE-004` (lid closed with a bud inside,
-BA-7, BA-9), `CASE-005` (every bud out of the case), `CASE-006` (every bud into the case), `BATT-004` (every claim's `03 03` burst; BA-14), `EQS-001`
+`ANC-004` (tile 11:10:14), `PAIR-003` (every automatic re-open and the Connect taps 11:19:52, 11:20:14, BA-16), `CASE-004` (every Left bud out of the case),
+`CASE-005` (every Right bud out of the case), `CASE-006` (every bud into the case; lid closed with buds inside, BA-7, BA-9) (Left/Right tags corrected
+2026-10-15, `ai-sessions/0094`, to TESTPLAN's titles), `BATT-004` (every claim's `03 03` burst; BA-14), `EQS-001`
 (every Connect's `ReadSetting 4:16`; BA-13), `INEAR-001` (field 2 read at every Connect and in BA-12/13; no write), `HOLD-001` (field 7 read, Noise control
 both buds; no write), `AUDIO-003` (field 17 read `0` = Centre; no write). **Not exercised:** `PAIR-001` (B4/Z1 skipped — no pairing), `EQP-002` (no preset
 tapped), `AUDIO-001` (no music played: AVRCP "Stopped" in all seven ACLs).

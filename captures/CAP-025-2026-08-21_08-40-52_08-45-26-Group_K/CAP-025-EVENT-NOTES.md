@@ -33,7 +33,7 @@ app splits "Find My Buds" across **two distinct screens** with two distinct mech
 |   Test device    | Pixel 7a, Android 17 (⚪ ASSUMPTION), official Pixel Buds Companion App (version not visible on screen) |
 | Video file       |            `CAP-025-recording.mp4` (273.7s, 08:40:52–08:45:26 local time) |
 | Log file         |             `CAP-025-btsnoop_hci.log` (08:40:49.737–08:47:14.185, brackets the video) |
-| Buds MAC (partial, per `AGENTS.md` §7/§9) | Not independently confirmed this session |
+| Buds MAC (partial, per `AGENTS.md` §7/§9) | Confirmed on the wire: the only Connection Complete (`-Y 'bthci_evt.code==0x03'`, frame 349, 08:40:57.082, status `0x00`) has the Buds' classic address (`bthci_evt.bd_addr`, as in `CAP-025-FINDINGS.md` §1) |
 
 ## Procedure (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group K)
 
@@ -52,7 +52,7 @@ app splits "Find My Buds" across **two distinct screens** with two distinct mech
 | **08:41:41.243** (video: tap "Mute Right" ≈t=49s; status returns to "Connected") | Stop ringing Right (part of the `FIND-002` action's own lifecycle, not a separate Test-ID) | User (App) | `FIND-002` | Frame 2120 (+Buds' own message 2124); Buds' ACK 2123, phone's ACK 2127 |
 | **08:41:46.703** (video: tap "Ring Left" at t=54s; status → "Left earbud volume increasing…", button → "Mute Left") | **Play sound on Left earbud (start)** | User (App) | `FIND-001` | Frame 2131 (+Buds' own message 2134); Buds' ACK 2133, phone's ACK 2137 |
 | **08:41:58.882** (video: tap "Mute Left" at t=67s; status returns idle) | Stop ringing Left (part of `FIND-001`'s lifecycle) | User (App) | `FIND-001` | Frame 2180 (+Buds' own message 2183); Buds' ACK 2182, phone's ACK 2186 |
-| 08:42:02.900 | A 5th, asymmetric (single send + single ACK) instance of the same stop-shaped frame — see §Decode caveat | — | `FIND-001` (likely a residual retry) | Frame 2202; ACK 2204 |
+| 08:42:02.900 | A 5th, asymmetric (single send + single ACK) instance of the same stop-shaped frame — see §Decode caveat | — | `FIND-001` (no video-visible tap; the bud was not ringing) | Frame 2202; the Buds answer with their ACK only (2204), no status message — `CAP-025-FINDINGS.md` §4 |
 | **08:42:03–08:42:11** (video: t=71s tap "Most recent location" → t≈75s Find Hub map loads) | Navigate to Find Hub / Find My Device map view | User (App) | — | No DLCI 0x04 Group `0x04` traffic accompanies this navigation |
 | **~08:42:24–08:44:32** (video: "Connecting…"/"Stop sound" screen visible ≈t=95s/08:42:27 onward; map view with 3 per-target icons visible ≈t=150s/08:43:22 and ≈t=250s/08:45:02 — "Pixel Buds Pro 2 - Left" detail sheet with "Play sound"/"Share ownership") | **Attempted `FIND-003`(Case)/`FIND-004`(both) via Find Hub's own "Play sound" flow** | User (App) | `FIND-003`, `FIND-004` | **No `Group 0x04 Code 0x01` frame appears anywhere in this window** — instead, three full classic-RFCOMM reconnection bursts occur (08:43:42, 08:44:25, 08:45:04, ~40s apart, each matching the standard connection-open capability-handshake shape) — see §Decode |
 | 08:45:26 | Video end | — | — | Video last frame |
@@ -121,8 +121,8 @@ correlate with, but are not proven to be caused by, the Find Hub flow's own conn
       confirmed; `FIND-003`/`FIND-004` attempted but resolve to a different (network-mediated)
       mechanism, not a wire-visible local command — explicitly flagged, not silently missing.
 - [x] Write `CAP-025-FINDINGS.md` per `PROJECT_RULES.md` §2.
-- [ ] If confirmed, promote `PROTOCOL.md` §4.4 from 🟡 HYPOTHESIS to 🟢 FACT — **not done here**;
-      maintainer sign-off required per `AGENTS.md` §6.
+- [x] If confirmed, promote `PROTOCOL.md` §4.4 from 🟡 HYPOTHESIS to 🟢 FACT — **done 2026-08-23**
+      for Left/Right Ring, with maintainer sign-off (`DECISIONS.md` ADR-011; `CAP-025-FINDINGS.md` §8).
 - [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index.
 - [x] Rename this capture's folder to the actual session date/start-time/end-time (video-derived).
 

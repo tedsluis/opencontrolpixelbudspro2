@@ -53,7 +53,7 @@ throughout, no hand ever approaches them. Bluetooth was toggled on at video over
 (frames `t=2`→`t=4`), confirmed to within ~1s of wall-clock by the log's own classic-controller
 bring-up sequence (`Write Extended Inquiry Response`/`Write Scan Enable`, frames 328–363,
 `06:07:23.926–06:07:24.023`) — i.e. video-overlay time and log wall-clock time agree closely in this
-capture, consistent with every other capture in this project that has checked this.
+capture (other captures show offsets of ~1–5 s, e.g. `CAP-016-FINDINGS.md` §6, `CAP-012`, `CAP-008`).
 
 **Step 2 — the classic (RFCOMM) reconnect is slow this session, but clean.** The phone does not
 actually send `Create Connection` to the Buds' classic address until `06:08:27.773` (frame 761) —
@@ -104,8 +104,8 @@ $ tshark -r CAP-018-btsnoop_hci.log -Y 'bthci_acl.chandle==0x0004 and btatt.opco
 ```
 Decoded: ATT opcode `0x11` (Read By Group Type Response), group length `0x14`=20B, **start handle
 `0x0040`, end handle `0x0045`**, 128-bit UUID (wire bytes reversed:
-`abbaff00-e56a-484c-b8328b17cf6cbfe8`) — an unnamed/vendor UUID, same "Unknown Service" outcome
-`CAP-016-FINDINGS.md` §11 itself reported for this handle range. **This service's handle range
+`abbaff00-e56a-484c-b8328b17cf6cbfe8`) — an unnamed/vendor UUID (`CAP-016-FINDINGS.md` §11 captured
+no discovery response for this handle range, so there is nothing there to compare). **This service's handle range
 (`0x0040`–`0x0045`) contains handle `0x0044`** — the exact handle the burst occurs on. The same
 discovery walk on chandle `0x0004` also finds GAP, GATT, Device Information, a second unnamed 128-bit
 service (`0x0050`–`0x0054`), and, critically, a **standard, SIG-assigned Heart Rate service
@@ -163,10 +163,9 @@ procedure anticipated**: it isn't that the Buds' own BLE link independently trig
 regardless of physical action — in this capture, the burst isn't attributable to the Buds' link at
 all.
 
-**Does not resolve:** whether `CAP-016`'s *original* burst (same session that also had genuine bud
-removal/insertion activity nearby) was itself from the Buds or from a similarly-unrelated device —
-this capture cannot retroactively re-examine `CAP-016`'s own log, and no cross-capture check of
-`CAP-016-btsnoop_hci.log` was performed here (out of this task's per-phase scope). Also not resolved:
+**Resolved since, by `CAP-016`'s own log** (`CAP-016-FINDINGS.md` §2/§11, corrected 2026-10-03):
+`CAP-016`'s original burst was also another device's traffic — all 73 frames are on handle `0x0002`,
+whose peer exposes the Heart Rate service (frame 760), not the Buds. Not resolved:
 what device `40:a8:ef:16:bb:35` actually is (no Device Name characteristic read was observed in the
 frame range checked), or why the classic reconnect took ~64s this session.
 
@@ -179,7 +178,7 @@ happened off-camera in that window:
 ```
 $ tshark -r CAP-018-btsnoop_hci.log -Y 'bthci_acl.chandle==0x0003 and frame.time>="2026-09-12 06:09:52" and frame.time<="2026-09-12 06:10:10"' \
     -T fields -e frame.number -e _ws.col.Info
-(no RFCOMM data frames — only background BLE advertising reports and periodic Number-of-Completed-Packets in this window)
+(0 frames, exit 0; positive control: `bthci_acl.chandle==0x0003 and btrfcomm.len>0` without the time bound → 204 frames)
 ```
 No DLCI activity of any kind on the Buds' own chandle in this gap — consistent with (not proof of) the
 buds/case remaining untouched through the unvideoed 18s tail, matching the pattern of every reviewed
@@ -225,9 +224,8 @@ promotions):**
 
 ## 9. Open Questions
 
-- 🔴 Was `CAP-016`'s *original* `0x0044` burst genuinely Buds-originated, or could it too have been
-  an unrelated nearby device coincidentally connecting around the same time as the bud
-  removal/insertion that session's own procedure involved? Not checked by this capture.
+- ✅ Was `CAP-016`'s *original* `0x0044` burst genuinely Buds-originated? No — answered by
+  `CAP-016-FINDINGS.md` §2/§11 (2026-10-03): handle `0x0002`, a Heart-Rate wearable, not the Buds.
 - 🔴 What is `40:a8:ef:16:bb:35`'s actual identity (device name was not observed in the checked frame
   range)?
 - 🔴 Why did the classic reconnect take ~64s from Bluetooth-toggle to `Create Connection` this

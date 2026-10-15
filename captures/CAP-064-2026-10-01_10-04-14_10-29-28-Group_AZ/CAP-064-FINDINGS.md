@@ -91,7 +91,7 @@ Command: `tshark -r CAP-064-btsnoop_hci.log -Y "bthci_evt.code==0x03 || bthci_ev
 -T fields -e frame.number -e frame.time -e frame.p2p_dir -e bthci_evt.code -e bthci_cmd.opcode -e bthci_evt.status -e bthci_evt.connection_handle
 -e bthci_evt.reason` → exactly the rows above (plus the LE device's frame 284).
 
-- 🟢 **Positive control (`AGENTS.md` §13 step 8):** C, D, E and G — four automatic re-opens by LINK_BACK, each 6–8 ms after the reading turned `CONNECTED`;
+- 🟢 **Positive control (`AGENTS.md` §13 step 8):** C, D, E and G — four automatic re-opens by LINK_BACK, each 3–7 ms after the reading turned `CONNECTED` *(corrected 2026-10-15, `ai-sessions/0094`)*;
   plus 8 AFTER_LOSS re-opens (§6). The thing that differs between C/D/E/G and B/F: in C/D/E the **Buds** paged the phone the moment a bud left the case
   (HCI Connection Request event), in G **Android** re-paged the Buds 3.4 ms after an ACL drop; in B and F nobody paged.
 - 🟢 **Docked Buds accept a page when the lid is open** (F: Create Connection → Connection Complete in 0.96 s) and **not when it is closed** (A: Page Timeout

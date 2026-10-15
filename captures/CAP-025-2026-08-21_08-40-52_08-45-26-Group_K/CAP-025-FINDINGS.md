@@ -23,7 +23,7 @@ legend per `PROJECT_RULES.md` §1:
 | Log file | [`CAP-025-btsnoop_hci.log`](./CAP-025-btsnoop_hci.log) — 384.4s, 2026-08-21 08:40:49.737–08:47:14.185 (+0200) |
 | Notes file | [`CAP-025-EVENT-NOTES.md`](./CAP-025-EVENT-NOTES.md) |
 | Video file | [`CAP-025-recording.mp4`](./CAP-025-recording.mp4) — 273.7s, 08:40:52–08:45:26 local time |
-| Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` (confirmed via `bthci_evt.bd_addr` on the wire; DLCI-based filtering was used for the analysis below regardless) |
+| Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` (confirmed via `bthci_evt.bd_addr` on the wire: `-Y 'bthci_evt.code==0x03'` → frame 349, 08:40:57.082, the only Connection Complete; DLCI-based filtering was used for the analysis below regardless) |
 
 ## 2. Methodology & a key structural finding
 
@@ -109,7 +109,7 @@ Same envelope as `FIND-002`. `Value=0x02` = start-ring-**Left** (distinct from R
 
 | Value | Meaning | Evidence |
 |---|---|---|
-| `0x00` | Stop / mute ringing (shared, not per-earbud) | 3 occurrences, all following a video-confirmed "Mute Left/Right" tap or immediately after |
+| `0x00` | Stop / mute ringing (shared, not per-earbud) | 3 occurrences: two follow a video-confirmed "Mute Right"/"Mute Left" tap (2120, 2180); the third (2202) has no video-visible tap and is answered with an ACK only (§4) |
 | `0x01` | Start ringing **Right** | 1 start (2040; the Buds' own message 2045 carries the same value), video-confirmed |
 | `0x02` | Start ringing **Left** | 1 start (2131; the Buds' own message 2134), video-confirmed |
 
@@ -157,8 +157,10 @@ resolved to the same level as, `FIND-001`/`FIND-002`'s confirmed local mechanism
   the Left/Right Ring mechanism specifically, 2026-08-23 (`DECISIONS.md` ADR-011, maintainer
   sign-off obtained per `AGENTS.md` §6).
 - **`FIND-003`/`FIND-004` are structurally different** — not a gap in this capture's coverage, but
-  a genuine architectural finding: Case/combined ringing goes through Find Hub's network-mediated
-  path, not the direct local Message Stream command. This should be recorded as its own open
+  a genuine architectural finding: the official app routes Case/combined ringing through Find Hub's
+  network-mediated path, not the direct local Message Stream command. The Device Action spec does
+  define a local Ring value `0x03` = both buds, untested on this firmware (`DECISIONS.md` ADR-027
+  Update 2026-09-24; TESTPLAN `FIND-004`). This should be recorded as its own open
   question, not conflated with the Left/Right mechanism.
 - **Recommended next step:** if this project ever wants local, offline "ring the case" support (a
   Zero-GMS goal, `AGENTS.md` §1), the Find Hub/cloud path is out of scope by that same rule
@@ -170,7 +172,8 @@ resolved to the same level as, `FIND-001`/`FIND-002`'s confirmed local mechanism
 - 🟡 What the Buds' ACK's state byte (`ff 01 00 03 04 01 00` — `00` in all five) and their own `04 01 00 01 xx` message mean beyond "the new ring state": a
   Ring stopped on the bud itself is the test (`CAP-068`). The "two ACK variants" question is answered (§3; `PROTOCOL.md` §6 ticked 2026-10-03).
 - 🔴 Does `FIND-003`(Case)/`FIND-004`(both) genuinely require Find My Device Network/GMS, with no
-  local-only fallback? Directly relevant to this project's Zero-GMS goal. → copied to
+  local-only fallback? For `FIND-004` the spec's local Ring value `0x03` is a candidate, untested
+  (ADR-027 Update 2026-09-24). Directly relevant to this project's Zero-GMS goal. → copied to
   `PROTOCOL.md` §6.
 - 🔴 What triggers the repeated classic-connection reopen bursts during the Find Hub flow (three
   times, ~40s apart)? → copied to `PROTOCOL.md` §6.

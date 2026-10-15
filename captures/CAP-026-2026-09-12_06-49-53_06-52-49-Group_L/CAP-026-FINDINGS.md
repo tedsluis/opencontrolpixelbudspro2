@@ -93,7 +93,9 @@ Complete` (frame 413) and **zero** `Disconnection Complete` events for the entir
 
 ```
 $ tshark -r CAP-026-btsnoop_hci.log -Y "bthci_evt.code==0x05" -T fields -e frame.number
-(0 rows)
+(0 rows, exit 0)
+$ tshark -r CAP-026-btsnoop_hci.log -Y "bthci_evt.code==0x03" -T fields -e frame.number   # positive control
+413
 ```
 
 The video-observed app force-close (recent-apps screen at `t=86`, overlay `06:51:19`) and reopen
@@ -104,7 +106,12 @@ staying open throughout. Checked directly for any wire signal in and around this
 ```
 $ tshark -r CAP-026-btsnoop_hci.log -Y '(btrfcomm.dlci==2 or btrfcomm.dlci==4 or btrfcomm.dlci==8) \
     and btrfcomm.len>0 and frame.time>="2026-09-12 06:51:00"' -T fields -e frame.number
-(0 rows)
+(0 rows, exit 0)
+$ # positive control: the same filter with frame.time>="2026-09-12 06:50:05"
+1339
+1340
+1342
+1343
 ```
 
 **Zero DLCI 0x02/0x04/0x08 data frames anywhere from `06:51:00` (well before the multitask-switch

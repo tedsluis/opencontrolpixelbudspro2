@@ -2,7 +2,7 @@
 
 **Status:** ✅ **Captured 2026-10-05 and analysed 2026-10-05** (`ai-sessions/0072`). Film and both HCI logs reviewed in full; the analysis is in
 `CAP-053-FINDINGS.md`. **Central result:** field 18 was written **once**, 0.2–0.5 s after the filmed **Save** tap (frame 1838); the two release-only
-windows (12.8 s and 18.7 s) and the leave-the-screen condition wrote **no** field 18. The "navigate away" step was done differently from the plan: the
+windows (12.8 s and 18.5 s) and the leave-the-screen condition wrote **no** field 18. The "navigate away" step was done differently from the plan: the
 maintainer left the EQ screen with the **Home** gesture and came back through **Recents**, not with Back. The planned skeleton is kept unchanged as
 Appendix A (with the maintainer's app-version block).
 
@@ -116,7 +116,7 @@ Test-IDs named by the Group: `EQS-004` (Bass slider) — exercised (slider 4); `
 **Status:** 🔲 **Not yet captured — skeleton only.** Fill in every `TBD` below after recording,
 per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), and
 `PROJECT_RULES.md` rule 11/14 (reproducibility metadata). Once reviewed, rename this folder from
-the placeholder `CAP-053-2026-10-05_17-46-34_17-49-39-Group_AO` to the actual session
+the placeholder `CAP-053-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AO` to the actual session
 date/start-time/end-time, e.g. `CAP-053-2026-09-15_08-30-00_08-40-00-Group_AO`.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AO, added 2026-09-13,

@@ -116,7 +116,7 @@ Change:
 | 0 | `0x00` | 539/549, 17:11:50.113/118 | RFCOMM multiplexer control (PN negotiation) | 🟢 FACT |
 | 6 | `0x0c` | 556/564, 17:11:50.124/152 | HFP AT-command traffic — ASCII `AT` (`0x41 0x54`) and `\r\n` (`0x0d 0x0a`) prefixes visible before truncation, e.g. frame 597 (`4154`) and frame 600 (`0d0a2b`, `\r\n+`, consistent with an unsolicited result code such as `+CIEV`/`+BIEV`) | 🟢 FACT that this is the HFP AT channel (per `PROTOCOL.md` §4.3 Option C's established pattern); full command/argument content not recoverable this session due to truncation (§1) |
 | 4 | `0x08` | 559/574, 17:11:50.143/165 | Private `[Group][Code][Length][Value]` envelope (`PROTOCOL.md` §2.3) — Groups `0x04`,`0x03`,`0x09`,`0x0e` observed by their first 2 bytes; see §4 below | 🟢 FACT for channel identity/topology; 🔴 most payload content truncated |
-| 5 | `0x0a` | 596/605, 17:11:50.209/217 | Opens, no payload observed — consistent with `CAP-001-FINDINGS.md` §6's finding that this DLCI stays silent (SCO/eSCO ruled out there) | 🟢 FACT (silence reproduced a 5th time) |
+| 5 | `0x0a` | 596/605, 17:11:50.209/217 | Opens, no payload observed — consistent with `CAP-001-FINDINGS.md` §6's finding that this DLCI stays silent (SCO/eSCO ruled out there) | 🟢 FACT (silence reproduced again; cf. the silent captures listed in `CAP-008-FINDINGS.md` §6) |
 | 2 | `0x04` | 785/787, 17:11:51.780/785 | Official Fast Pair Message Stream — Device Information (Group `0x03`) and Hearable Controls ANC Get (Group `0x08` Code `0x11`) observed; see §4 | 🟢 FACT for channel identity |
 | 1 | `0x02` | 1170/1172, 17:12:51.981/985 | `libmaestro` candidate Pigweed `pw_hdlc` channel — opens **~61s later** than the other four, not during the initial multiplexer burst; see §5 | 🟢 FACT for channel identity/framing (per `PROTOCOL.md` §2.2a); 🟡 timing observation below is new and single-sample |
 
@@ -140,8 +140,8 @@ Representative hex (first bytes only, per §1's truncation):
 
 `Group 0x0e Code 0x01`/`0x02` traffic (per `ADR-014`, the confirmed per-earbud+case battery push) is
 **present** at connection time (frames 635/658/661) and again twice more later in the session (frames
-1423/1425, 1450/1451, 1580/1582) — consistent with a battery push recurring around the 17:13:47
-on-screen "Right 100% / Case 13% / Left 100%" reading. **The Length and Value bytes are truncated in
+1423/1425, 1450/1451, 1580/1582) — the first of these (1423/1425, 17:14:20.26) is ~33 s after the
+17:13:47 on-screen "Right 100% / Case 13% / Left 100%" reading and after the video ended (17:14:04). **The Length and Value bytes are truncated in
 every one of these frames** (`frame.cap_len` = 15 throughout, per §1), so the specific
 `[value, flag, index]` triplets cannot be decoded and cross-checked against the on-screen percentages
 this session — recorded as 🔴 OPEN for the *specific values* this session, while the *presence* of this
@@ -154,7 +154,7 @@ performed on screen this session).
 
 ## 5. DLCI 0x02 (`libmaestro` candidate) opens ~61s after the other channels (🟡 HYPOTHESIS, single sample)
 
-Unlike `CAP-001`–`CAP-004`/`CAP-006` (where DLCI `0x02` opens in the same initial multiplexer burst as
+Unlike `CAP-001`–`CAP-003`/`CAP-006` (where DLCI `0x02` opens in the same initial multiplexer burst as
 the other channels, `PROTOCOL.md` §2.2a), this session's DLCI `0x02` `SABM`/`UA` exchange (frames
 1170/1172) happens at 17:12:51.981–985 — **~61 seconds after** the other four channels opened
 (17:11:50.1–51.8). This timing lines up closely with the on-screen "Allow" tap on the Pixel Buds app's
@@ -217,7 +217,7 @@ not resolved by another session's absence of the phenomenon.
 ## 8. Other open questions raised by this capture
 
 - DLCI `0x02`'s delayed opening (§5) — is this driven by the companion app's setup-flow state, or
-  coincidental to this session? Needs a repeat with precise screen-to-SABM timing as the explicit goal.
+  coincidental to this session? Repeated by `CAP-031` (§5's 2026-08-27 note): not reproduced, read as a single-session artifact.
 - The second BLE link to a random address (§6) — is this the Buds' own GATT-side identity, or an
   unrelated device? Needs an explicit BLE-address-resolution check (e.g. via `Identity Address` in a
   Pairing/Bonding event, if one appears later in the log beyond this capture's own end, or a dedicated

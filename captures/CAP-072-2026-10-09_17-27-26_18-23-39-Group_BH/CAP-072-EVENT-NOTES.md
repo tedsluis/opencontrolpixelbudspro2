@@ -116,7 +116,7 @@ Columns: phone time · what happened (actor) · step / V / test-plan / Test-ID �
 
 | Phone time | Event | Step · V · IDs | Evidence |
 |---|---|---|---|
-| 08:43–15:04 (before) | the app (uid 10353) runs 7 sessions with the thirteen requests incl. `GetHardwareInfo`; 13:26:24–29 writes `28:0`, `27:0`, `28:1`, `27:1` (the release APK tried before the run) | not in the plan (P9) | Z 11373 … 26365, Z 21478–21569 |
+| 08:43–15:04 (before) | the app (uid 10353) runs 7 sessions with the fifteen requests (13 `ReadSetting` incl. 4:16, `SubscribeRuntimeInfo`, `GetHardwareInfo`); 13:26:24–29 writes `28:0`, `27:0`, `28:1`, `27:1` (the release APK tried before the run) | not in the plan (P9) | Z 11373 … 26365, Z 21478–21569 |
 | 15:40:24 | user switch 0 → 10; Bluetooth restarts; Z ends | — | system log `am_switch_user` |
 | 17:19:38 | a Connect of the uid-10353 app (12 reads, subscription, `GetHardwareInfo`) | P9 deviation | A 5589–5667 |
 | 17:24:06 | `cmd package uninstall` of the app (all users); PID 6994 killed | P1 done differently | X 817–826 |
@@ -143,19 +143,19 @@ Columns: phone time · what happened (actor) · step / V / test-plan / Test-ID �
 | 17:37:26 | pull → "Probably worn (checked 17:37:26)" | BH-6 | A 9103; S s600–601 |
 | 17:37:3x–17:38:0x | Settings and Info (serials again at 17:37:16 on ch 21) | BH-6/7 · V16 | S s607–s638 |
 | 17:38:19–23 | **Right** into the case (from the ear); Buds `DISC` 17:38:19.078 → re-open ch **19** (only the Left out); "Probably worn (17:38:22)" (Left worn); a short tone on the audio at the seating | not in the plan; `INEAR-006`, `CASE-001` | A 9334–9418; S s653–657; C |
-| 17:38:29 | **Left** into the case → both in; ACL `0x13` 17:38:29.17 ("Android no longer shows the Buds connected …", S s663) | BH-20 (early) · `CASE-004` | A 9492; E4 322–329 |
-| 17:38:49–17:39:01 | Left out (17:38:49), ACL back by the Buds (A 9506), re-open ch 19 "**Not worn (checked 17:38:50)**" (`00`, Left in the hand); Right out 17:39:01; Buds `DISC` 17:39:05 → ch 21 "Probably worn (17:39:08)" | BH-20 · `CASE-005`, `INEAR-006` | A 9506–10132; E4 330–443; S s683–702 |
+| 17:38:29 | **Left** into the case → both in; ACL `0x13` 17:38:29.17 ("Android no longer shows the Buds connected …", S s663) | BH-20 (early) · `CASE-006` | A 9492; E4 322–329 |
+| 17:38:49–17:39:01 | Left out (17:38:49), ACL back by the Buds (A 9506), re-open ch 19 "**Not worn (checked 17:38:50)**" (`00`, Left in the hand); Right out 17:39:01; Buds `DISC` 17:39:05 → ch 21 "Probably worn (17:39:08)" | BH-20 · `CASE-004`, `CASE-005`, `INEAR-006` | A 9506–10132; E4 330–443; S s683–702 |
 | 17:39:31, 17:40:31 | pulls → "Probably worn" (both worn, no music) | BH-6/7 | A 10266, 10531; S s723–785 |
 | 17:40:49–17:41:09 | both buds laid **on the table** (C); Buds `DISC` 17:41:06.482 → re-open ch 19, `DISC` again 17:41:09.690 (1.25 s later: re-open skipped, ADR-044 guard) | BH-8 · `INEAR-004` | A 10627–10728; E4 473–515 |
 | 17:41:28 | Connect tap → "**Not worn (checked 17:41:30)**" (`00`) | BH-8 · V7 · `INEAR-006` | A 10777–10842; S s842–844 |
 | 17:41:57–17:43:26 | ANC tab: **seven mode taps refused**, "The Buds don't allow changing noise control right now …"; each claim `Get` → `Notify` `00` → no `Set`; the (i) "checked HH:MM:SS" follows each | BH-8 (×7) · V7 · `ANC-004` | E4 565–631; A 10980 … 11705; S s853–s968 |
 | 17:44:03–13 | both buds from the table into the ears (C: hair at 17:44:13) | BH-10 | C |
-| 17:44:32 | ANC tap **Noise cancellation** → `Get` (TRN, `e8`) → **`Set` 08** → ACK → `Notify` NC; "Probably worn (17:44:32)" | BH-10 · V8 · `ANC-001` | A 11915–11949; S s1025–1026 |
+| 17:44:32 | ANC tap **Noise cancellation** → `Get` (TRN, `e8`) → **`Set` 08** → ACK → `Notify` NC; "Probably worn (17:44:32)" | BH-10 · V8 · `ANC-002` | A 11915–11949; S s1025–1026 |
 | 17:44:34–17:48:46 | **no Message Stream claim open** (DISC A 11947 … SABM A 12490); ANC tab on screen, (i) opened 4× (always "ACTIVE (updated 17:44:32)", no "Changed by the Buds"); AVRCP volume changes from the Buds 17:45:27, 17:45:55, 17:46:11, 17:46:30 and a PLAY 17:46:22 (gestures on a bud); speech 17:45:28–17:46:31, 17:48:01–11 — **the maintainer's press-and-holds** (the maintainer's statement; not visible on either film) | BH-11 done differently · V10 · `ANC-001`…`004` | A 11947, 12490, 12027–12132; S s1082–s1229 |
-| 17:48:46 | ANC tap **Off** → `Get` (NC) → `Set` 20 → ACK; (i) "OFF (updated 17:48:46)" | BH-12 · V11 | A 12490–12524; S s1280–1284 |
+| 17:48:46 | ANC tap **Off** → `Get` (NC) → `Set` 20 → ACK; (i) "OFF (updated 17:48:46)" | BH-12 · V11 · `ANC-001` | A 12490–12524; S s1280–1284 |
 | 17:49:12 | pull on the ANC tab → `Get` → `Notify` OFF; (i) "OFF (updated 17:49:12)" | BH-12 · V11 | A 12666; S s1305–1313 |
 | 17:49:2x–17:50:0x | Quick Settings: edit tiles, **the ANC tile added** to user 10 (not in QS before) | not in the plan · J-tile | S s1326–s1352 |
-| 17:50:03 / 17:50:23 | **tile** taps: OFF → Active (`Set` 08), Active → Transparent (`Set` 80); the app's (i) "updated 17:50:04 / 17:50:24", no line; notification "Connected — ANC: …" follows | BH-12 · V11 · `ANC-001`…`003` | E4 684–706; A 12845–13014; S s1354–1385 |
+| 17:50:03 / 17:50:23 | **tile** taps: OFF → Active (`Set` 08), Active → Transparent (`Set` 80); the app's (i) "updated 17:50:04 / 17:50:24", no line; notification "Connected — ANC: …" follows | BH-12 · V11 · `ANC-002`, `ANC-004` | E4 684–706; A 12845–13014; S s1354–1385 |
 | 17:50:55–17:51:03 | **Right** then **Left** into the case → ACL `0x13` 17:51:03.25 (both in); short tone at the Right's seating | BH-13 (first half) · `CASE-001` | A 13098; C 17:50:57–17:51:03 |
 | 17:51:08–10 | Android's link back (the Buds' ACL A 13104) → automatic re-open ch 21: `Get` → `Notify` OFF (`00`) → **unprovoked `Notify` TRN (`e8`) 63 ms later** while both buds are taken out of the case → the (i) shows **"Changed by the Buds at 17:51:10 (a press-and-hold on a bud, or the Buds' own change)."** | BH-11's line (seen once) · V10 | A 13484–13519; S s1424–1425; C 17:51:07–17 |
 | 17:51:13–19 | both buds laid **on the table** (C) | BH-13 · `INEAR-006` | C 17:51:13–19 |
@@ -190,33 +190,33 @@ Columns: phone time · what happened (actor) · step / V / test-plan / Test-ID �
 | 18:05:10 / 18:05:17 | **Other alerts OFF / ON** again → OK; (i) "Earbuds replaced: changed 18:01:53 / Other alerts: changed 18:05:10" | BH-14 (repeated) | A 18708–18763; S s2261–2271 |
 | 18:05:4x | music restarted in the browser | — | S s2294–2299 |
 | 18:06:08 / 18:06:20 | Controls: **Conversation detection OFF / ON** → `4:{22:0}` / `{22:1}` → OK; AVRCP PAUSE/PLAY 18:06:22–47 | BH-15 · V14 · `CONV-001` | A 18921–18947; S s2321–2334 |
-| 18:06:35 | ANC tap **Noise cancellation** (from TRN) → `Set` 08 → ACK (during music) | BH-10/16 · `ANC-001` | A 19008–19043; S s2348–2349 |
+| 18:06:35 | ANC tap **Noise cancellation** (from TRN) → `Set` 08 → ACK (during music) | BH-10/16 · `ANC-002` | A 19008–19043; S s2348–2349 |
 | 18:07:04 | Sound: preset **Balanced** → `4:{16:[-3.5,0.5,1.0,-1.0,2.5]}` → OK | BH-16 · V15 · `EQP-001` | A 19113/19115; S s2378 |
 | 18:07:14 / 18:07:21 | Upper treble dragged: writes `…4.66` and `…6.0` → OK; (i) "EQ updated: 18:07:21" | BH-16 · `EQS-001` | A 19133–19181; S s2387–2401 |
 | 18:07:49–18:08:57 | **balance**: 30 writes (`17:11, 0, 18, 0, 0, 15, 0, 0, 15, 0, 0, 0, 25, 105, 15, 0, 9, 0, 18, 18, 20, 0, 26, 20, 9, 24, 21, 0, 13, 0` — zigzag), labels on screen incl. "Right 6", "Left 9", "Right 53", "Right 8"; ends **Centre** (`17:0`) | BH-16 done differently · `AUDIO-003` | A 19287–19510; E4 1672–1765; S s2416–s2483 |
 | 18:09:03 / 18:09:06 | **Mono ON / OFF** → OK | BH-16 · `AUDIO-001` | A 19520, 19529 |
 | — | **Volume EQ** off/on and **Read EQ again** (H5) — not done | BH-16 partly skipped | no `4:{15:…}` write, no `ReadSetting 4:16` between connects |
-| 18:09:24 / 18:09:29 | **Use touch controls OFF / ON** → OK | BH-17 · `HOLD-005` | A 19573, 19583 |
-| 18:09:33 | mode list: **Adaptive ticked** → `4:{12:{1:1 2:0 3:1 4:1}}` → OK | BH-17 done differently | A 19595 |
-| 18:09:45–18:10:01 | press and hold: **Left** Digital assistant → Noise control, **Right** Digital assistant → Noise control → OK ×4 | BH-17 (both buds) · `HOLD-005` | A 19622–19659 |
-| 18:10:11 / 18:10:13 | mode list: Off box tapped twice (`4:{12:…}` ×2) → ends `{1:1 2:0 3:1 4:1}` (Off unticked, Adaptive ticked) | BH-17 | A 19682, 19690 |
+| 18:09:24 / 18:09:29 | **Use touch controls OFF / ON** → OK | BH-17 · `TOUCH-001` | A 19573, 19583 |
+| 18:09:33 | mode list: **Adaptive ticked** → `4:{12:{1:1 2:0 3:1 4:1}}` → OK | BH-17 done differently · `HOLD-005` | A 19595 |
+| 18:09:45–18:10:01 | press and hold: **Left** Digital assistant → Noise control, **Right** Digital assistant → Noise control → OK ×4 | BH-17 (both buds) · `HOLD-001`–`HOLD-004` | A 19622–19659 |
+| 18:10:11 / 18:10:13 | mode list: Off box tapped twice (`4:{12:…}` ×2) → ends `{1:1 2:0 3:1 4:1}` (Off unticked, Adaptive ticked) | BH-17 · `HOLD-005` | A 19682, 19690 |
 | 18:10:27 / 18:10:32 | **head gestures OFF / ON** → `29:1` / `29:2` → OK | BH-17 · `HEAD-001` | A 19716, 19726 |
 | 18:10:52 / 18:10:58 | **Multipoint OFF / ON** → OK | BH-17 · `MULTI-001` | A 19764, 19779 |
 | 18:11:18 / 18:11:19 | **Disconnect, Connect** → ch 19; every value read back; Info: build `ec6d163`, firmware 18:11:20, **serials 18:11:20 identical** | BH-18 · V16, V17 · `PAIR-003`, `FW-003` | A 19816–19942; S s2631–s2659 |
 | 18:12:04–11 | both buds from the ears onto the table; Buds `DISC` 18:12:04.334 → ch 21 (Info "Serial numbers: Not read from the Buds yet" for < 1 s, then 18:12:07) → `DISC` 18:12:09.737 (skipped) | BH-19 setup · V16 | A 20019–20160; S s2680–2691 |
 | 18:12:22 | re-open (a tap) ch 19, `Notify` `00` | BH-19 | A 20217–20348 |
 | 18:12:26 / 18:12:45 / 18:12:46 / 18:13:09 | **Ring Left** → ACK; **Stop** → ACK; **Ring Right** → ACK; **Stop** → ACK; ring on the audio both times | BH-19 · `FIND-001`, `FIND-002` | A 20379–20683; S s2699–2744 |
-| 18:13:13–17 | both buds from the table into the case → ACL `0x13` 18:13:15.94 | BH-20 · C8 · `CASE-004` | A 20717; C |
-| 18:13:31–37 | both taken out onto the table; the Buds' ACL back 18:13:34.9 → re-open ch 21 "**Not worn (checked 18:13:37)**" (`00`) → `DISC` 18:13:38.134 (skipped, 1.95 s) | BH-20 · C9 · `CASE-005` | A 20735–21181; S s2769–2772 |
+| 18:13:13–17 | both buds from the table into the case → ACL `0x13` 18:13:15.94 | BH-20 · C8 · `CASE-006` | A 20717; C |
+| 18:13:31–37 | both taken out onto the table; the Buds' ACL back 18:13:34.9 → re-open ch 21 "**Not worn (checked 18:13:37)**" (`00`) → `DISC` 18:13:38.134 (skipped, 1.95 s) | BH-20 · C9 · `CASE-004`, `CASE-005` | A 20735–21181; S s2769–2772 |
 | 18:13:44–18:15:20 | **Home** for 1 min 36 s (link observer stopped/started) → re-open on return ch 19 "Not worn (18:15:21)" | BH-21 · J4, K1, K2 | E4 2067–2119; S s2777–s2875 |
 | 18:15:3x | **Export 1** (2,121 lines) → E1 | BH-22 export | E4 2125; S s2886–2891 |
 | 18:16:0x–18:18:18 | bugreport 1 (pulls `…hci1.log`); SIGQUIT to 12137 at 18:16:33 | P6 note | X; L |
 | 18:18:32 | **Bluetooth off** (Quick Settings): "Bluetooth adapter: ON -> TURNING_OFF", "Session loss cause: Bluetooth was switched off on this phone" | BH-22 · V18 · `PAIR-003` | E4 2135–2141; A 21841–21859; S s3061–3080 |
-| 18:18:45 | **Bluetooth on** → the Buds' link 18:18:47.3 → automatic re-open ch 19, thirteen requests, serials 18:18:48 | BH-22 | E4 2142–2197; B 159–546 |
+| 18:18:45 | **Bluetooth on** → the Buds' link 18:18:47.3 → automatic re-open ch 19, fifteen requests, serials 18:18:48 | BH-22 | E4 2142–2197; B 159–546 |
 | 18:19:01 | **Export 2** (2,197 lines) → E2 | BH-end1 export (early) | E4 2201; S s3082–3098 |
 | 18:19:35–41 | both buds from the table to the ears → Buds `DISC` 18:19:37.17 → ch 21: `Get` → `Notify` TRN, **unprovoked `Notify` NC 18:19:41.644**, Buds `DISC` 3 ms later (skipped) | not in the plan | B 703–829 |
 | 18:20:03 | Connect tap → ch 19 | — | B 864 |
-| 18:20:09 / 18:20:13 | **In-ear detection OFF / ON** (Controls; buds worn; no pull, the Worn line not read) | BH-9 done differently · `INEAR-004` | B 980, 983; S s3161–3169 |
+| 18:20:09 / 18:20:13 | **In-ear detection OFF / ON** (Controls; buds worn; no pull, the Worn line not read) | BH-9 done differently · `INEAR-001` | B 980, 983; S s3161–3169 |
 | 18:20:44–18:20:49 | phone **rotated** (landscape) on the Debug tab and back (two Activity re-creations) | S12 part · K4 | E4 2322–2331; S s3198 |
 | 18:21:10 | **Export 3** (2,335 lines) → E3 (portrait, no rotation during the save dialog) | BH-24 done differently · S12 | E4 2340; S s3203–3226 |
 | 18:21:31–18:23:36 | bugreport 2 (pulls B); SIGQUIT 18:21:56 | P6 note | L 648 |
@@ -237,7 +237,7 @@ Columns: phone time · what happened (actor) · step / V / test-plan / Test-ID �
 | P7 ★ | partly | music from 17:54 (internet radio); **Do Not Disturb not on** (the call came through; Quick Settings "Modi" tile inactive on S 17:49) |
 | P8 ★ | done | lid open, Buds connected before 1.2.0 started |
 | P9 ★ | not kept | the release APK used today before the run (Z, A 5589) and 1.1.1 opened at 17:25 before the film |
-| BH-1 | done differently | session by itself, thirteen requests; Controls not opened within the first second (S6 caught at 17:31:28 instead) |
+| BH-1 | done differently | session by itself, fifteen requests; Controls not opened within the first second (S6 caught at 17:31:28 instead) |
 | BH-2 | done | build `ec6d163`, serials, Case sounds card and its (i), Debug on, Dark On |
 | BH-3 | done | "Both buds in the case" |
 | BH-4 | done differently | System → light at once, then Off, then **On** (not left on System) |
@@ -269,11 +269,12 @@ ANC tile added to QS; the internet radio; the lid closed/opened at 18:02:09–21
 pair (18:05); the unprovoked `Notify` at 18:19:41 when the buds were put in.
 
 **Test-IDs (`AGENTS.md` §13.7):** `PAIR-003` (17:29:26, 18:11:19, 17:38:49, 18:13:34, 18:18:47), `BATT-004` (17:29:27), `FW-003` (17:31:5x, 18:11:2x),
-`INEAR-006` (25 readings, FINDINGS §4), `INEAR-005` (17:35:55, 17:38:21, 17:38:50, 17:56:07 … 18:00:17), `INEAR-004` (17:41:06–17:43:26, 18:20:09/13),
-`ANC-001` (17:44:32, 18:06:35), `ANC-002`/`ANC-003` (17:48:46, 17:50:03/23 via tap and tile), `ANC-004` (17:41:57–17:43:26), `CASE-001` (17:55:50–18:01:53),
+`INEAR-006` (25 readings, FINDINGS §4), `INEAR-005` (17:35:55, 17:38:21, 17:38:50, 17:56:07 … 18:00:17), `INEAR-004` (17:41:06–17:43:26), `INEAR-001` (18:20:09/13),
+`ANC-001` (17:48:46), `ANC-002` (17:44:32, 17:50:03 tile, 18:06:35), `ANC-003` (**not exercised** — no Adaptive `Set`), `ANC-004` (17:41:57–17:43:26 refused, 17:50:23 tile), `CASE-001` (17:55:50–18:01:53),
 `CASE-002` (18:02:03/17, 18:05:10/17), `CONV-001` (18:06:08/20), `EQP-001` (18:07:04), `EQS-001` (18:07:14/21), `AUDIO-001` (18:09:03/06), `AUDIO-002`
-(**expected but not observed** — no Volume EQ write), `AUDIO-003` (18:07:49–18:08:57), `HOLD-005` (18:09:24–18:10:14), `HEAD-001` (18:10:27/32), `MULTI-001`
-(18:10:52/58), `CASE-004` (17:38:29, 17:51:03, 17:59:23, 18:13:15), `CASE-005` (17:38:49, 17:51:08, 17:59:29, 18:13:34), `FIND-001`/`FIND-002` (18:12:26–18:13:10).
+(**expected but not observed** — no Volume EQ write), `AUDIO-003` (18:07:49–18:08:57), `TOUCH-001` (18:09:24/29), `HOLD-001`–`HOLD-004` (18:09:45–18:10:01), `HOLD-005` (18:09:33, 18:10:11/13), `HEAD-001` (18:10:27/32), `MULTI-001`
+(18:10:52/58), `CASE-004`/`CASE-005` (bud removals: Left 17:38:49 / Right 17:39:01, both 17:51:08, Right 17:59:23 / Left 17:59:29, both 18:13:31–34), `CASE-006` (into the
+case, lid open: 17:38:29, 17:51:03, 17:59:23, 18:13:15), `FIND-001`/`FIND-002` (18:12:26–18:13:10).
 APP_TESTPLAN V1–V18 are mapped in FINDINGS §10; V19 (C12, S12, T11) is partly done (S12 differently); T11 moves to the rebuilt 1.2.0's run.
 
 ## Analysis checklist

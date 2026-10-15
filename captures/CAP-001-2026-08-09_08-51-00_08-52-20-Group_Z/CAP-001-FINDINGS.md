@@ -79,8 +79,8 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 > part replicates), but the *channel-2* traffic in that session was independently identified —
 > and spec-verified against Google's actual Fast Pair Message Stream / Device Information
 > documentation — as the **Fast Pair Message Stream, Device Information group (`0x03`)**, not
-> AVRCP. This document's own §2 already correctly flagged channel 2/DLCI 0x04 here (this
-> session) as unresolved (🔴 OPEN QUESTION, not attributed to AVRCP) — the AVRCP speculation was
+> AVRCP. This document's own §2 flagged channel 2/DLCI 0x04 here (this session) as unresolved at
+> the time (🔴 OPEN QUESTION, not attributed to AVRCP; 🟢 since 2026-08-12, §5) — the AVRCP speculation was
 > specifically about *channel 1*, which remains genuinely unresolved as of this correction; only
 > the *channel-2* content has since been identified, in the other capture. Per
 > `PROJECT_RULES.md` §3, this note supersedes the *channel 1 = possibly AVRCP* framing above
@@ -90,7 +90,7 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 >
 > **Reusable note for all future capture analysis — RFCOMM channel numbers are not stable
 > per-profile labels.** RFCOMM server channel numbers are negotiated per-connection, not fixed
-> per Bluetooth profile. `CAP-001` and `CAP-002-CAP-002` — two independent sessions against the same
+> per Bluetooth profile. `CAP-001` and `CAP-002` — two independent sessions against the same
 > physical device — assigned *different* channel numbers to structurally similar traffic (this
 > capture put HFP-adjacent Device-Information-group traffic on what was locally numbered
 > "channel 2"; `CAP-002` also happened to land it on "channel 2", but `CAP-002`'s HFP itself came
@@ -105,7 +105,7 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 > which — since it's the same shared buffer — includes this capture's own frames plus many more
 > hours) on the `0x7e` delimiter byte. Every one of the resulting sub-frames starts with a
 > consistent 3-byte micro-header: **byte 0 ∈ {`0x00`, `0x80`}, byte 1 ∈ {`0x3b`, `0x4b`, `0xa5`,
-> `0xa3`}, byte 2 = `0x03` always** (854 sub-frames checked across both files' full logs, zero
+> `0xa3`}, byte 2 = `0x03` always** (400 sub-frames checked in `CAP-002-btsnoop_hci.log`, whose DLCI 0x02 payloads include this capture's 160 — `tshark -Y 'btrfcomm.dlci==0x02 && btrfcomm.len>0'`, split on `0x7e`, unescaped *(corrected 2026-10-15, `ai-sessions/0094`)*; zero
 > exceptions to byte 2 being `0x03`). `{00,3b}`/`{00,4b}` only ever appear in "Sent" (phone→Buds)
 > frames; `{00,a5}`/`{80,a3}` only ever appear in "Rcvd" (Buds→phone) frames — direction-correlated,
 > not random. Two payload shapes follow this header:
@@ -153,7 +153,7 @@ throughout, single L2CAP connection carrying the whole multiplexer session.
 > empirically against every RFCOMM payload on this DLCI in `CAP-001`, `CAP-002`, and `CAP-003`
 > (`CAP-004` never opens it) — HDLC-unescaping each `0x7E`-delimited sub-frame (`0x7D <X>` → `X XOR
 > 0x20`, standard byte-stuffing) and computing a CRC-32 (IEEE 802.3/zlib polynomial, little-endian)
-> over everything but the trailing 4 bytes — gives a **640/640 (100%) match** against those
+> over everything but the trailing 4 bytes — gives a **640/640 (100%) match** (160 `CAP-001` + 400 `CAP-002` + 80 `CAP-003` sub-frames; `CAP-002`'s log contains `CAP-001`'s 160, so 480 distinct sub-frames *(corrected 2026-10-15, `ai-sessions/0094`)*) against those
 > trailing 4 bytes, with zero exceptions:
 > ```
 > CAP-001 frame 1348, raw (between flags): 004b0310151dea71de7d5e25e3a5ec28f96761b5
@@ -204,7 +204,7 @@ AT+VGM=7 / AT+VGS=8    → OK                          (mic/speaker gain)
 AT+NREC=0              → +CME ERROR: 4 (not supported)
 AT+COPS=3,0 / AT+CMEE=1 → OK
 AT+BIEV=2,100           → OK   ← repeats at 08:51:14.106, 20.070, 20.136, 34.392, 34.860,
-                                  41.410, 08:52:04.148, 08:52:04.438 — roughly every 6–7s (last two corrected 2026-10-08, `ai-sessions/0081`)
+                                  41.410, 08:52:04.148, 08:52:04.438 — irregular gaps of 0.07–22.7 s (frames 1303, 1558, 1572, 1949, 1968, 2027, 2245, 2268), not a fixed cadence; see CAP-009-FINDINGS.md §2 *(corrected 2026-10-15, `ai-sessions/0094`)*
 ```
 (Full frame list: 1236–1310, 1558–1574, 1949–1969, 2027–2028, 2245–2246, 2268–2269.)
 
@@ -221,8 +221,9 @@ mechanisms on this device, but they disagree — worth a dedicated follow-up cap
 real battery-level change to see which one (if either) tracks it accurately, and whether
 `battchg` is a stale/init-time-only value.
 
-Neither HFP indicator distinguishes Left/Right/Case — both appear to report a single aggregate
-value. The BLE Fast Pair Battery Notification advertisement (`PROTOCOL.md` §4.3 Option A, which
+This session cannot tell which bud or the case either HFP indicator reports (all values were 100%
+here); `CAP-009-FINDINGS.md` §3 later showed that `AT+BIEV=2` tracks the Right earbud and §1 that
+`battchg` is a one-time snapshot at SLC setup *(corrected 2026-10-15, `ai-sessions/0094`)*. The BLE Fast Pair Battery Notification advertisement (`PROTOCOL.md` §4.3 Option A, which
 *does* have separate L/R/Case fields) was not captured in this RFCOMM-focused pass — no
 `btle`-filtered advertising data was extracted from this log in this session.
 
@@ -231,9 +232,9 @@ value. The BLE Fast Pair Battery Notification advertisement (`PROTOCOL.md` §4.3
 | Video (wall-clock) | On-screen event | Correlated log evidence |
 |---|---|---|
 | 08:51:02–03 | Tap **Forget** | No log-visible effect before 08:51:12 (see §6 — a BLE link and cached link key both still existed afterward) |
-| 08:51:06–11 | Case lid opened, buds visible with case LED lit | 1st `Create Connection` at 08:51:01.98 fails with Page Timeout (frame 733/737) — consistent with the case/buds not yet reachable until the lid was fully open |
+| 08:51:06–11 | Case lid opened, buds visible with case LED lit | 1st `Create Connection` at 08:51:01.98 fails with Page Timeout (frames 732 → 737) — consistent with the case/buds not yet reachable until the lid was fully open |
 | 08:51:14–15 | App briefly shows **"Problem connecting. Turn device off & back on"** | Coincides with the successful-then-immediately-torn-down 2nd connection (frames 775 connect / 831 disconnect, 08:51:09.33–09.56) |
-| 08:51:12–15 | (not directly visible on screen) | RFCOMM channels 0, 2, 4, 5 opened (frames 984–1070); SDP queries for Audio Sink/AVRCP/HFP (frames 902–1231); HFP AT handshake (frames 1236–1310) |
+| 08:51:12–15 | (not directly visible on screen) | RFCOMM channels 0, 1, 2, 4, 5 opened (frames 984–1070, 1334); SDP queries for Audio Sink/AVRCP/HFP (frames 902–1231); HFP AT handshake (frames 1236–1310) |
 | 08:51:32 | Tap **Transparency** (1st) | See §5 — no confidently attributable command frame identified |
 | 08:51:39 | Tap **Off** | See §5 |
 | 08:51:43 | Tap **Adaptive** | See §5 |
@@ -242,7 +243,7 @@ value. The BLE Fast Pair Battery Notification advertisement (`PROTOCOL.md` §4.3
 | 08:52:00 | Tap **Off** (2nd) | See §5 |
 | 08:52:08–13 | Buds placed back in case, lid closed | `Disconnect Complete` at 08:52:08.343 (frame 2302) |
 
-## 5. ANC command attribution attempt — inconclusive (🔴 OPEN QUESTION)
+## 5. ANC command attribution — resolved: DLCI 0x04 Message Stream Group `0x08` (🟢 FACT, see "Full resolution" below; the first two taps stay unmatched)
 
 For each of the six ANC-mode taps above, the RFCOMM traffic in the surrounding ±3s window was
 inspected on every open channel. Findings:
@@ -272,7 +273,7 @@ capture with genuinely isolated actions (wait ~10s of silence, single ANC tap, w
 silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md`.
 
 > **Resolution (2026-08-12), deskresearch task — the `e8e8XX` open question closes to a 🟢 FACT
-> characterization, but NOT as an ANC opcode.** First, a channel-label correction: this bullet
+> characterization.** (Its "not an ANC opcode" reading is superseded by the "Full resolution" below: the one-hot byte is the ANC mode.) First, a channel-label correction: this bullet
 > says "Channel 4/DLCI 0x08" for the `e8e8` pattern, but §2's own table above (and this capture's
 > raw frames) place it on **Channel 2/DLCI 0x04** — §2's table was correct, this bullet's channel
 > label was not; flagged here rather than silently fixed. Second, and substantively: `CAP-002`'s
@@ -304,7 +305,7 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
 > semantic meaning of the bitmask remains 🔴 OPEN QUESTION, narrower and better-defined than the
 > original "ANC-mode byte?" framing this bullet started from. This capture's own six ANC taps
 > happened not to correlate with distinct `e8e8XX` values in any consistent way, which is now
-> understood as expected — this bitmask answers a different question than ANC state entirely.
+> explained by the "Full resolution" below: the bitmask is the ANC state, and the first two taps produced no `0x12` frame.
 
 > **Full resolution (2026-08-12), deskresearch task — this is not just "ANC-relevant," it is the
 > confirmed ANC set/get/notify command channel, byte-for-byte, spec- and capture-verified.** First
@@ -382,9 +383,10 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
   SSP handshake, not a reused key) across a combined seven confirming instances. Full evidence
   chain: `CAP-013-FINDINGS.md` §0, `CAP-031-FINDINGS.md` §0/§2/§7/§8, `CAP-032-FINDINGS.md`
   §0.3/§1/§2/§5/§7, and `PROTOCOL.md` §6's "Behavior" section.
-- Channel 1 (DLCI 0x02) and channel 2 (DLCI 0x04)'s exact protocol identity is still unconfirmed
-  — candidates are AVRCP and/or A2DP signaling (both present in SDP), but this was not verified
-  byte-for-byte against either spec in this pass.
+- Channel 1 (DLCI 0x02) and channel 2 (DLCI 0x04) are neither AVRCP nor A2DP signaling: DLCI 0x02
+  carries Pigweed `pw_hdlc` framing (§2's "Upgrade (2026-08-12)" note, CRC-32 match on every
+  sub-frame), and DLCI 0x04 is the Fast Pair Message Stream, including the Hearable Controls ANC
+  exchange (§5's "Full resolution", 🟢 FACT; `PROTOCOL.md` §4.1).
 - Channel 5 (DLCI 0x0a) opened/closed repeatedly but never carried a payload in this session —
   worth checking whether it's HFP's audio channel (SCO/eSCO, which wouldn't appear as RFCOMM
   data) or simply unused here.
@@ -402,6 +404,10 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
   > any of these four sessions, full stop** — this isn't a timing-correlation question (channel 5
   > opening lining up with a SCO event) because there is no SCO event to correlate against at all.
   > This rules out the SCO/eSCO hypothesis definitively rather than leaving it "worth checking."
+  > Command (re-run 2026-10-15, `ai-sessions/0094`): `tshark -r CAP-00N-btsnoop_hci.log -Y
+  > 'bthci_evt.code==0x2c || bthci_evt.code==0x2d || bthci_cmd.opcode==0x0428 ||
+  > bthci_cmd.opcode==0x043d'` → 0 frames, exit 0, for N = 1–4; positive control: the same filter
+  > on `CAP-008-btsnoop_hci.log` (a phone call) matches 4 frames (1646, 1656, 2274, 2282).
   > Channel 5/DLCI 0x0a's silence remains 🔴 OPEN QUESTION — genuinely unused in every capture to
   > date, not explained by an out-of-band audio path. (Unsurprising in hindsight: none of these
   > four sessions ever place or receive a live phone call, the only scenario that would trigger
@@ -410,17 +416,16 @@ silence, repeat) is needed before promoting any ANC-opcode claim to `PROTOCOL.md
 
 ## 7. Recommended next steps
 
-1. A properly isolated Group B capture (single ANC action per window, per
+1. (Done: `CAP-006`, Group B repeat.) A properly isolated Group B capture (single ANC action per window, per
    `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §4) to re-attempt ANC opcode attribution.
 2. A passive BLE scan (Group Q #18) to capture the Fast Pair Battery Notification advertisement
    independently, to cross-check against the two conflicting HFP battery indicators found here.
 3. Correlate channel 1/2 traffic against the AVRCP/A2DP specs directly (byte-level) before
    spending more capture time on them. ~~Partially done 2026-08-12~~ — see the "Follow-up
    (2026-08-12)" note under §2's table: channel 1/DLCI 0x02 is now characterized in detail
-   (HDLC/PPP-*style* flag-delimited framing, not AVRCP, not standard PPP either) but its exact
-   protocol identity is still unconfirmed; channel 2/DLCI 0x04's `e8e8XX` traffic is now resolved
-   to a Group `0x08` Message-Stream request/notify/ACK cycle with a one-hot state byte (§5's
-   "Resolution (2026-08-12)" note) — neither is AVRCP/A2DP, so this item's original premise (they
+   (Pigweed `pw_hdlc` framing, §2's "Upgrade (2026-08-12)" note — not AVRCP); channel 2/DLCI
+   0x04's `e8e8XX` traffic is the Hearable Controls Group `0x08` Get/Set/Notify ANC state cycle,
+   `XX` = the one-hot ANC mode (§5's "Full resolution", 🟢 FACT) — neither is AVRCP/A2DP, so this item's original premise (they
    might be AVRCP/A2DP signaling) is superseded rather than completed as originally framed.
 
 ---

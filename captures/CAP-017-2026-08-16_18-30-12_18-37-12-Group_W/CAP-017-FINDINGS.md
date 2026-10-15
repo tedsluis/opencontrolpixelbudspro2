@@ -3,8 +3,8 @@
 > **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): `0x0f32` = Battery Level (Battery Service `0x180F`), `0x0f2a` = Firmware Revision String — 🟢 `CAP-034` (`PROTOCOL.md` §6, §4.3 Option D).
 
 Standardized, evidence-based extraction from `CAP-017-btsnoop_hci.log` + `CAP-017-recording.mp4`,
-staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. This is a **second,
-independent `CAP-017` capture**, distinct from
+staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. This is the **second,
+independent Group W session** (`CAP-017`, 18:30), distinct from
 `captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/CAP-010-FINDINGS.md` (the 11:42 attempt).
 Every claim below carries a status per `PROJECT_RULES.md` §1:
 
@@ -73,7 +73,7 @@ discovery traffic:
 tshark -r CAP-017-btsnoop_hci.log -Y "btatt.opcode in {0x04,0x05,0x08,0x09,0x10,0x11}" \
   -T fields -e frame.number -e btatt.opcode | wc -l
 ```
-→ **137 matches** (vs. zero in the 11:42 `CAP-010`, `CAP-002`, `CAP-003`). This alone is a real,
+→ **137 matches** (0x04 ×28, 0x05 ×26, 0x08 ×52, 0x09 ×22, 0x10 ×5, 0x11 ×4); the same filter gives 6 in the 11:42 `CAP-010` and 2 in `CAP-003` — only `Read By Type` reads of known UUIDs — and none of the discovery opcodes `0x04`/`0x05`/`0x10`/`0x11` occur for the Buds in `CAP-010`, `CAP-002` or `CAP-003` *(corrected 2026-10-15, `ai-sessions/0094`)*. This alone is a real,
 positive result: a live `Read By Group Type`/`Read By Type`/`Find Information` walk of the full
 `0x0001–0xffff` handle range did happen on the wire, twice (once right after the BLE connection at
 18:31:39, once again right after classic pairing completes at 18:32:58).
@@ -159,7 +159,7 @@ at `t=189.0`, `189.6`, `190.0`, `190.5` (18:33:21–18:33:23), which agree byte-
 across five separate frames.
 
 **Cross-referenced against this project's own records:** `grep -rn "Accessory Non-Owner\|15190001\|109b862f\|FE2C" DESKRESEARCH_FINDINGS.md REVERSE_ENGINEERING.md PROTOCOL.md` returns **no
-prior hits** — both 128-bit UUIDs are new to this project as of this capture. `0xFE2C` (Google
+prior hits** — but both 128-bit UUIDs were already recorded from nRF Connect's UI in `CAP-004-FINDINGS.md` §6 (2026-08-11, a file the grep did not cover); this capture is their first session with live discovery on the wire. `0xFE2C` (Google
 Fast Pair Service) was already an ⚪ assumption/named hypothesis in `CAP-004-FINDINGS.md` §6; this
 is the first direct confirmation it's actually present on this device.
 
@@ -188,7 +188,7 @@ tshark -r CAP-017-btsnoop_hci.log -Y "btatt.opcode in {0x0a,0x0b,0x12,0x13} and 
 
 | Frame(s) | Time | Handle | Operation | Value (hex) | Note |
 |---|---|---|---|---|---|
-| 911→913 | 18:31:41.958→41.990 | `0x0f28` | Read Req/Resp | `31` | Same value as `CAP-002`, `CAP-003`, the 11:42 `CAP-010` — 5th confirming session |
+| 911→913 | 18:31:41.958→41.990 | `0x0f28` | Read Req/Resp | `31` | Same value as `CAP-003` and the 11:42 `CAP-010` — 3rd confirming session (`CAP-002` never reads `0x0f28`) |
 | 1570→1572 | 18:33:05.660→05.710 | `0x0f28` | Read Req/Resp | `31` | Re-read after classic pairing; identical value |
 | 1583→1604 | 18:33:07.650→07.689 | `0x0f32` | Read Req/Resp | `64` | **New handle, not seen in any prior capture of this device** |
 | 1605→1615 | 18:33:07.694→07.749 | `0x0f33` | Write Req/Resp | `0100` | CCCD-enable (Notify) immediately following the `0x0f32` read — standard "read once, then subscribe" pattern, consistent with `0x0f33` being `0x0f32`'s Client Characteristic Configuration Descriptor at handle+1 |
@@ -365,8 +365,8 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   identified as a candidate in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`/`CAPTURE_BLUETOOTH_HCI_SNOOP.md`.
   Recommend updating both documents' `GATT-001`/`CAP-014` entries to record this as a third proven
   path, alongside the still-untried `pm clear`/Pixel-9a options.
-- **The full 15-service primary/secondary GATT profile is now known (🟢 FACT, §3)** — five
-  standard LE Audio services (BASS/ASCS/PACS/VCS/MICS/AICS/CAS/TMAS-family), the standard
+- **The full 15-service primary/secondary GATT profile is now known (🟢 FACT, §3)** — eight
+  standard LE Audio services (BASS/ASCS/PACS/VCS/MICS/AICS/CAS/TMAS) *(corrected 2026-10-15, `ai-sessions/0094`)*, the standard
   Device Information and Battery services, the Google Fast Pair Service (`0xFE2C`), and two
   previously-undocumented 128-bit proprietary services (`15190001-…` "Accessory Non-Owner
   Service", `109b862f-…` "Unknown Service").
@@ -390,7 +390,7 @@ Wireshark's BLE handle-aware dissector against an untruncated capture) that does
   response bytes can be parsed directly for handle-range + UUID data (§2). A tool that does expose
   handles on-screen (e.g. `gatttool`, `bluetoothctl`, or a raw `BluetoothGatt` script) would also
   work and doesn't require fixing the snaplen.
-- Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index with this second `CAP-017` session
+- (Done: the Capture Index has its own `CAP-017` row.) Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index with this second Group W session
   (folder `captures/CAP-017-2026-08-16_18-30-12_18-37-12-Group_W/`) — the existing `CAP-010` row
   currently only describes the 11:42 attempt.
 

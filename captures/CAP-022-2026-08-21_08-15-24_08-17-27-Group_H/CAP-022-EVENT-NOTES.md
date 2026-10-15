@@ -41,7 +41,7 @@ sessions.
 |---|---|---|---|---|
 | 08:15:24 | Video start | — | — | Video first frame |
 | 08:15:2x–08:15:5x | Bluetooth reconnect; navigate Device details → Sound | User (App) | — | Connection handshake burst |
-| **08:15:53.965** (video-confirmed tap ≈t=33s) | **Mono audio OFF→ON** | User (App) | `AUDIO-001` | Frame 1621 |
+| **08:15:53.965** (video-confirmed: finger on the switch 08:15:53–54, t≈29–30s; ON from 08:15:55) | **Mono audio OFF→ON** | User (App) | `AUDIO-001` | Frame 1621 |
 | **08:16:04.605** (video-confirmed toggle OFF by t=41s/08:16:05) | **Mono audio ON→OFF** | User (App) | `AUDIO-001` | Frame 1823 (a second, opposite-direction sample of the same Test-ID) |
 | — | Navigate Sound → Equalizer (tap "Equalizer") | User (App) | — | No RFCOMM write (navigation only) |
 | **08:16:15.825** (video-confirmed toggle OFF by t=53s) | **Volume EQ ON→OFF** | User (App) | `AUDIO-002` | Frame 1871 |
@@ -78,10 +78,10 @@ happening in this window).
 **Not confirmed, flagged rather than guessed (`AGENTS.md` §13):** `field 17`'s numeric scale,
 range, and which direction (Left/Right) increasing values represent. The 7 sampled values
 (199, 123, 49, 30, 150, 200, 10) do not monotonically track the video's own coarse left-right
-description of the drag (center → right-extreme → back toward center) in an obvious way at 1fps
-video-sampling resolution — a continuous drag emits many wire updates per second (the video's 1s
-sampling only captures 3 checkpoints across 7 wire values), so this is most likely just
-under-sampling on the video side, not a contradiction, but it is **not resolved** which specific
+description of the drag (center → right-extreme → back toward center) in an obvious way — the 7
+writes are 6.6–8.8 s apart over 46 s (08:16:34.739 … 08:17:20.458), one per settle of repeated
+touches on the slider (film: finger on it at 08:16:35, :43, :51, 08:17:07, :13, :19, :21), not a
+burst from one continuous drag; it is **not resolved** here which specific
 wire value corresponds to which on-screen slider position. A future capture that pauses briefly at
 each slider extreme (rather than dragging continuously) would let a clean min/max/center range be
 read directly.

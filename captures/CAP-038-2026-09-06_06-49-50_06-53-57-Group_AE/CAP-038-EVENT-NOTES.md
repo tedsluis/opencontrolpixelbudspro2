@@ -1,5 +1,7 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AE, realistic physical reconnect trigger vs. a system-Bluetooth-toggle reconnect (`CAP-038`)
 
+> **Status as of 2026-09-30** (as in `CAP-038-FINDINGS.md`): the Settable byte's current reading is ADR-049 (supersedes ADR-024's "dock state"); "DOCKED"/"reconfirms ADR-024" below is the reading as written. The press-and-hold reading of 3695/3847 was confirmed by `CAP-051`.
+
 **Status:** ✅ **Captured and analyzed.** All blanks below are filled in from
 `CAP-038-btsnoop_hci.log` and `CAP-038-recording.mp4` per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5
 (analysis) and §8 (what to update), and `PROJECT_RULES.md` rule 11/14 (reproducibility metadata).
@@ -176,7 +178,7 @@ tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle>" \
          (`CAP-014-FINDINGS.md` §4a) — a clean negative once correctly attributed.
       5. **DLCI `0x0b`** opens on chandle `0x0001` (6 frames): server channel 5 ("GSND AUDIO") with the direction bit set — control frames only.
       Result: item 1 is the session's central tension (§3); item 2 is a new HYPOTHESIS-level
-      observation; items 3–4 are clean negatives (once correctly attributed away from the unrelated
+      observation; item 3 is an A2DP stream set up but never started (no media, `bta2dp` → 0); item 4 is a clean negative (once correctly attributed away from the unrelated
       BLE device).
 - [ ] **Window 2 (if run):** **not verifiably executed** — see Event Timeline correction. No video
       coverage (video ends ~06:53:57, before Window 2's documented 06:54:14 start) and no wire
@@ -190,12 +192,12 @@ tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle>" \
 
 ## Open Questions
 
-- 🔴 Why does the first reconnect's "Notify ANC state" frame read `Settable-toggles=0x00` (docked),
+- *(answered: part of ADR-049 — `CAP-038-FINDINGS.md` §9 status)* Why does the first reconnect's "Notify ANC state" frame read `Settable-toggles=0x00` (docked),
   immediately after the Buds were reported physically removed from the case for this Group's
   "realistic worn reconnect" test? Two explanations are equally consistent with this one data
   point and this capture cannot distinguish them (query timing vs. sensor lag) — see
   `CAP-038-FINDINGS.md` §3.
-- 🔴 What produced the two ANC-mode Notify frames (3695, 3847) on DLCI 0x04 with no preceding Get
+- *(answered: press-and-hold, confirmed by `CAP-051` — `CAP-038-FINDINGS.md` §9 status)* What produced the two ANC-mode Notify frames (3695, 3847) on DLCI 0x04 with no preceding Get
   and no Set(`0x12`) frame anywhere in the log? Plausibly a hardware press-and-hold gesture
   (matches `CAP-027-FINDINGS.md` §4's mechanism) but not video-confirmed.
 - 🔴 Window 2 (case-lid-only reconnect trigger) remains untested — needs a re-run with video
@@ -206,13 +208,12 @@ tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle>" \
 - [x] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13) — see
       `CAP-038-FINDINGS.md` §8.
 - [x] Write `CAP-038-FINDINGS.md` per `PROJECT_RULES.md` §2, hex & script rule (§1 rule 4a).
-- [ ] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
-      `id_registry.csv`'s `CAP-038` row. **(Owned centrally — not done by this pass.)**
-- [ ] Add `OBS-005`'s Evidence column pointer in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (pointer only).
-      **(Owned centrally — not done by this pass.)**
-- [ ] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8). **(Owned centrally —
-      not done by this pass; the three open questions are recorded above and in
-      `CAP-038-FINDINGS.md` §9 ready to be copied in.)**
+- [x] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
+      `id_registry.csv`'s `CAP-038` row. (Done centrally: both read `analyzed`.)
+- [x] Add `OBS-005`'s Evidence column pointer in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (pointer only).
+      (Done centrally.)
+- [x] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8). (Done centrally —
+      `CAP-038-FINDINGS.md` §9 status, 2026-09-30.)
 - [ ] **Do not** promote anything to 🟢 FACT or write a `DECISIONS.md` ADR without explicit
       maintainer sign-off (`AGENTS.md` §6, §15) — propose only. (Honored: nothing in this file or
       `CAP-038-FINDINGS.md` promotes a FACT beyond what was already an approved ADR/FACT before

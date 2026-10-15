@@ -24,7 +24,7 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 | Notes file | [`CAP-046-EVENT-NOTES.md`](./CAP-046-EVENT-NOTES.md) |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:...:07` |
 
-## 2. Central finding — polarity resolved, opposite of the draft's own assumption (🟢 FACT, 3× video-confirmed)
+## 2. Central finding — polarity resolved, opposite of the draft's own assumption (🟢 FACT, 4× video-confirmed) *(corrected 2026-10-15, `ai-sessions/0094`: said 3×)*
 
 **Method:** every DLCI 0x02 `Sent` frame (61 total) was HDLC-unescaped, CRC-32-verified, and searched
 for the `qhr` field-17 tag (`0x88 0x01`, per `PROTOCOL.md` §4.5.7):
@@ -59,7 +59,7 @@ identical to the structured decode. **8 `field17` writes total, zigzag-decoded:*
 | 1908 | 17:05:22.959 | 200 | **+100** | **Left** extreme again (`w_144.0.png`) |
 | 1957 | 17:05:46.275 | 2 | 1 | center |
 
-**Result, 3/3 extreme-position video confirmations, zero counter-examples:**
+**Result, 4/4 extreme-position video confirmations (1181, 1746, 1834, 1908), zero counter-examples:** *(corrected 2026-10-15, `ai-sessions/0094`)*
 - `field17 = -100` (negative extreme) → slider at the **Right** extreme.
 - `field17 = +100` (positive extreme) → slider at the **Left** extreme.
 - Center-return values cluster near zero (`0`, `1`, `1`, `2`) — consistent with a true center of `0`,
@@ -119,7 +119,7 @@ this question (does the field scale linearly at non-extreme positions?) remains 
 ## 6. Conclusions & proposed downstream updates
 
 **Recorded as this session's own factual result (no sign-off needed, purely descriptive):**
-- 8 `field17` writes, zigzag-decoded, 3 extreme positions video-confirmed.
+- 8 `field17` writes, zigzag-decoded, 4 extreme positions video-confirmed.
 - `field19` (Mono audio) fires in exact lockstep with every Balance-extreme/center transition.
 - Only 2 of the draft's claimed 4 samples actually occurred.
 

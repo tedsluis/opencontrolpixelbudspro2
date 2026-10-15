@@ -193,7 +193,7 @@ spec page, which states explicitly: *"Device action event"* = `0x04`, and define
 **Ring** (already known to this project via `PROTOCOL.md` §4.4's Ring/Find-My-Buds hypothesis).
 The page's visible content only documents code `0x01` in detail; codes `0x02`, `0x03`, `0x04`,
 `0x05`, `0x11`, `0x12`, `0x13`, `0x14`, `0x15`, `0x16` observed here are **not** covered by the
-fetched excerpt — group identity confirmed, individual code meanings within it remain 🔴 open.
+fetched excerpt. The page's group `0x04` is the Message Stream's (DLCI 0x04), so it does not identify this DLCI 0x08 envelope's group `0x04`, which stays open; individual code meanings within it remain 🔴 open.
 
 **Bonus, directly relevant to `CAP-002` §3's separate open item:** the same search pass also
 found Google's [SASS (Smart Audio Source Switching)](https://developers.google.com/nearby/fast-pair/specifications/extensions/sass)
@@ -202,7 +202,7 @@ including **`0x41` = "Indicate in use account key."** This is an exact match to 
 `CAP-002-FINDINGS.md` §3's Group `0x07` Code `0x41` `"in-use"` finding — previously 🟡 on the strength of
 an *English-phrase* match against a different (GATT-level) spec page. This SASS page gives the
 *same transport* (Message Stream) and the *exact* group/code pair, which is materially stronger
-evidence. Recommend `CAP-002` §3 be updated to 🟢 FACT for that specific bullet (not done in this
+evidence. (Done: `CAP-002-FINDINGS.md` §3 Task 3 upgraded that bullet to 🟢 FACT, 2026-08-12.) Recommend `CAP-002` §3 be updated to 🟢 FACT for that specific bullet (not done in this
 file — out of this session's scope, flagged for a maintainer/future pass, consistent with how
 `CAP-002` §7 item 4 already deferred a similar cross-file update).
 
@@ -312,7 +312,7 @@ directions answered explicitly:**
   of its two occurrences in `CAP-001`'s own log (frame 1113: single 31-byte frame containing header
   `03 01 00 1b` + the full 27-byte value together; frame 1673: single 35-byte frame containing an
   empty `09 03 00 00` message immediately followed by the same header+value, again packed whole) —
-  confirmed via `tshark -r CAP-004-btsnoop_hci.log -Y 'data.data contains "Europe/Amsterdam"' -e bthci_acl.pb_flag -e bthci_acl.continuation_to`
+  confirmed via `tshark -r CAP-001-btsnoop_hci.log -Y 'data.data contains "Europe/Amsterdam"' -e bthci_acl.pb_flag -e bthci_acl.continuation_to`
   against `CAP-001`'s log, no continuation flags set on either frame. **So this exact
   logical message is demonstrably NOT always packet-sized in a fixed way — it is sometimes sent as
   one write (`CAP-001`, twice) and sometimes split header/value across two writes (`CAP-004`,
@@ -368,14 +368,14 @@ channel-4/DLCI-0x08 burst) — full decode of the DLCI 0x08 private envelope, an
 
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index describes Message Stream groups `0x04`, `0x05`,
 `0x09` as newly discovered *in `CAP-004`*. A full-session, reassembling decode of DLCI 0x08 in
-**all three** captures that have this channel (`CAP-001`, `CAP-002`, `CAP-004` — `CAP-003` also has
-it, 67 payload frames — 27 reassembled messages per §5a; corrected 2026-10-08, `ai-sessions/0081`) shows this framing is **not new to `CAP-004` at all** — it is present,
+**all four** captures that have this channel (`CAP-001`, `CAP-002`, `CAP-003`, `CAP-004`; `CAP-003` has
+27 payload frames = 27 reassembled messages per §5a, `tshark -Y 'btrfcomm.dlci==0x08 && btrfcomm.len>0'` *(corrected 2026-10-15, `ai-sessions/0094`)*) shows this framing is **not new to `CAP-004` at all** — it is present,
 byte-for-byte structurally identical, from the very first capture (`CAP-001`, 2026-08-09 08:51) —
 simply never decoded before because both `CAP-001` §2 and `CAP-002` §2 explicitly deferred this
 channel as "not decoded in this pass." Corrected finding: **groups `0x01`, `0x02`, `0x03`, `0x04`,
-`0x05`, `0x09`, `0x0e` all appear on DLCI 0x08 in `CAP-001`, `CAP-002`, and `CAP-004` alike** (`0x01`
-and `0x02` additionally only surface in `CAP-002`'s richer, genuinely-fresh-pairing session — see
-below).
+`0x05`, `0x09`, `0x0e` all appear on DLCI 0x08 in `CAP-001`, `CAP-002`, `CAP-003`, and `CAP-004` alike**,
+including `0x01` and `0x02` (e.g. Group `0x01` Code `0x07`: `CAP-001` frame 1139, this capture frame 2358;
+Group `0x02` Code `0x05`: `CAP-001` frames [1141, 1142], this capture [2360, 2361]) *(corrected 2026-10-15, `ai-sessions/0094`)*.
 
 Unique Code/Value shapes for groups `0x04`/`0x05`/`0x09` (this file's `CAP-004-btsnoop_hci.log`, reassembled):
 
@@ -454,7 +454,7 @@ same-numbered *group*).
 `0x0a`'s embedded build-ID string, none of groups `0x04`/`0x05`/`0x09`'s values are ASCII —
 they're small, fixed-length (0/2/4/13 bytes) varint-encoded protobuf fragments, consistent with a
 capability/feature-flag negotiation rather than data transfer. Combined with (a) every one of these
-groups' *first* occurrence landing within ~1 second of DLCI 0x08 opening in all three captures, and
+groups' *first* occurrence landing within ~1 second of DLCI 0x08 opening in all four captures, and
 (b) Group `0x04` Code `0x12` being the only code that keeps recurring afterward — this reads as a
 **one-time capability/setup handshake for whatever runs on DLCI 0x08** (plausibly `libmaestro`
 itself, or a lower-level companion-device negotiation independent of Fast Pair — it survives GMS
@@ -572,16 +572,15 @@ traffic in this specific session. Full list observed on screen (`CAP-004-EVENT-N
 `Common Audio Service (0x1853)`, `Telephony and Media Audio Service (0x1855)`, **`Google Fast
 Pair Service (0xFE2C)`**, **`Accessory Non-Owner Service (15190001-12f4-c226-88ed-
 2ac5579f2a85)`**, `Device Information (0x180A)`, `Battery Service (0x180F)`, and an unnamed
-**`Unknown Service (109b8b21-50e3-45cc-8ea1-ac62de4846d1)`**.
+**`Unknown Service (109b862f-50e3-45cc-8ea1-ac62de4846d1)`** (corrected 2026-10-15, `ai-sessions/0094`: earlier transcribed `109b8b21-…`; the film frame at 06:23:36 shows `109b862f-…`, as do `CAP-014`/`CAP-017`).
 
 > **Correction, added 2026-08-28 (audit follow-up):** this UUID was originally transcribed as
 > `13190001-…`. `CAP-014-FINDINGS.md` §2 and `CAP-017-FINDINGS.md` §4c independently agree on
 > `15190001-…`, read from nRF Connect's own machine-generated text-log export rather than a video
 > screenshot transcription. Re-checked against this session's own video frame-by-frame
-> (06:23:55–56, 30fps): the relevant scroll is a fast swipe with no legible frame showing this
-> UUID at all, so the original digit could not be independently re-verified from its own source
-> material. Corrected to `15190001-…` on the strength of the two independently-agreeing,
-> more-reliably-sourced captures — not a re-confirmed read of this capture's own evidence.
+> (2026-10-15, `ai-sessions/0094`): the scrolled list is on screen at 06:23:35–36, not 06:23:55–56;
+> the frame at 06:23:36 (`ffmpeg -ss 60`) shows `15190001-12f4-c226-88ed-2ac5579f2a85` legibly,
+> so the corrected value is confirmed from this capture's own film as well.
 
 This is the first time this project has a candidate **named** service list for the Buds at all.
 Combined with `CAP-002`/`CAP-003`'s handle numbers, a structural hypothesis (not wire-confirmed):
@@ -622,8 +621,13 @@ frames and only four `Read By Type Response` frames, all resolving low, standard
 handles (`0x0002`–`0x0009`: `0x2a00` Device Name, `0x2a05` Service Changed, `0x2b29` Client
 Supported Features, `0x2b2a` Database Hash, `0x2b3a` Server Supported Features) — nowhere near the
 `0x0f2a`/`0x0f28`/`0x0c0X` range this task asked about. **Cross-checked against `CAP-002`'s own
-full, non-restarted 8h20m log for the same opcode/address combination — also zero results, across
-the entire day, not just the ~150s slice `CAP-002`'s own §7 already checked.** Combined with
+full, non-restarted 8h20m log — also no Buds discovery, across the entire day, not just the ~150s
+slice `CAP-002`'s own §7 already checked.** (Re-checked 2026-10-15, `ai-sessions/0094`, by service
+content, since the address filter matches nothing in that log: `tshark -r CAP-002-btsnoop_hci.log -Y
+'btatt.opcode==0x11 && (btatt.uuid16==0x184e || btatt.uuid16==0x184f || btatt.uuid16==0x1850)'` → 0
+frames, exit 0; positive control, the same filter on `CAP-034-btsnoop_hci.log` → frame 3273. The
+log's one `0xFE2C` discovery response, frame 18144 on LE handle 0x0003, is another device: FE2C at
+handles 0x0015–0x0020, not the Buds' 0x0c00.) Combined with
 `CAP-003` §1's identical finding, this makes it **three for three**: no capture taken so far has
 ever triggered a live GATT primary-service discovery against the Buds — Android's cached GATT
 database has survived every bond-removal/reconnect attempted to date. §6's handle→UUID hypotheses
@@ -667,8 +671,9 @@ never connected to this device) is the only path left untried.
    even though this capture's core `GFPS-001` answer (§4) is not expected to change.
 
    **Done, 2026-08-26 (`CAP-012`):** confirmed — classic SSP, not CTKD, in the no-BLE-tool repeat;
-   this session's own CTKD result is specifically attributable to nRF Connect's early BLE
-   connection, not to the GMS-disabled/no-app condition. See `CAP-012-FINDINGS.md` §2/§10. The
+   this session's own CTKD result is not attributable to the GMS-disabled/no-app condition; it
+   coincides with the SMP pairing on the LE link (frame 1856), which is the 🟡 candidate gate
+   (`DECISIONS.md` ADR-030 Update 2026-10-03). See `CAP-012-FINDINGS.md` §2/§10. The
    `GFPS-001` channel-topology result (§4 above) reproduced as expected, but `CAP-012`'s log was
    severely ACL-truncated, so its payload-content result is inconclusive rather than a second
    confirming data point for §4a/§4b specifically.
@@ -707,16 +712,14 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
 - RFCOMM channel numbers continue to vary session-to-session (channels 1/2 never opened this
   time at all) — a fourth confirming data point for the reusable note in `CAP-001`'s
   `CAP-001-FINDINGS.md` §2.
-- **Message Stream Group `0x04` = "Device action"**, spec-confirmed directly against Google's
-  own `deviceaction` page (§5) — corroborates `PROTOCOL.md` §4.4's existing Ring/Find-My-Buds
-  hypothesis (code `0x01` = Ring) with an authoritative source, and gives the group itself a
-  confirmed identity even though most individual codes within it (`0x02`–`0x16` observed here)
-  remain open.
+- ~~Message Stream Group `0x04` = "Device action" for this capture's group `0x04`~~ — withdrawn
+  (label correction 2026-10-08, §5): the Device action page defines group `0x04` on the Message
+  Stream (DLCI 0x04, `PROTOCOL.md` §4.4), while the group `0x04` observed here is DLCI 0x08's
+  private envelope, whose identity is open (`PROTOCOL.md` §2.3).
 - **Message Stream Group `0x07` Code `0x41` = "Indicate in use account key,"** spec-confirmed
   via the SASS extension page (§5), which names the exact group **and** code together over the
   same transport — materially stronger than `CAP-002`'s original phrase-match evidence. `CAP-002`
-  §3's corresponding bullet is flagged there for upgrade to 🟢 (not edited in that file this
-  round, per this session's scope).
+  §3's corresponding bullet was upgraded to 🟢 there (Task 3, 2026-08-12).
 - Fragmentation behavior discovered: a single Message Stream message can split its header and
   value across two consecutive RFCOMM packets (§5's frame 2272+2274 correction) — a
   methodological finding relevant to how *all* prior and future captures' RFCOMM data should be
@@ -735,7 +738,7 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
   DLCI-0x04 channel.
 
 **Not ready yet:**
-- **🟡 HYPOTHESIS: Cross-Transport Key Derivation as *the* alternate classic-bonding path used
+- (Resolved, see the 2026-08-26 update below — CTKD 🟢 per ADR-030, its gate 🟡.) **🟡 HYPOTHESIS: Cross-Transport Key Derivation as *the* alternate classic-bonding path used
   when an LE Secure Connections link already exists** (not yet a `PROTOCOL.md` §5
   connection-lifecycle mechanism). The wire evidence for what happened *in this specific
   session* is solid (frame-by-frame, §2, stays 🟢 FACT for this capture). Generalizing it into
@@ -746,9 +749,11 @@ different)** — more precisely, "present for one sub-mechanism, absent for anot
   of Group S without nRF Connect (§8 item 4, `CAP-012` planned).
 
   **Update 2026-08-26 (`CAP-012`):** the clean repeat happened — see §8 item 4's own update above.
-  Result confirms the hypothesis (classic SSP without an early BLE link, CTKD with one), but per
-  `AGENTS.md` §6 this was recorded in `PROTOCOL.md` §5.1 as a proposal; promoted to 🟢 FACT 2026-09-18 (`DECISIONS.md` ADR-030, `CAP-012`/`CAP-014`)
-  for promotion to 🟢 FACT, not committed as settled by either capture's findings file alone.
+  `CAP-012` used classic SSP without nRF Connect. CTKD as a third bonding path was promoted to
+  🟢 FACT 2026-09-18 (`DECISIONS.md` ADR-030, `CAP-012`/`CAP-014`, `PROTOCOL.md` §5.1); per ADR-030's
+  2026-10-03 Update the CTKD sessions are the ones with an SMP pairing on the LE link (`CAP-004`
+  frame 1856, `CAP-014` frame 2365), not merely an early LE link (`CAP-003` had one and used SSP) —
+  that the SMP pairing gates CTKD stays 🟡 HYPOTHESIS (`CAP-012-FINDINGS.md` §2).
 - Groups `0x05`/`0x09`'s identity (§5) — search results kept redirecting to Device Information
   (Group `0x03`) codes `0x05`/`0x06`/`0x09` instead of confirming standalone groups; **not a
   reassembly artifact (ruled out 2026-08-12, §5a — reassembly is confirmed correct and stable

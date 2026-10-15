@@ -50,7 +50,7 @@ session with no clearly camera-visible trigger for most of them (4 of 5 locally 
 | 18:13:54 | Video starts. Case visible (buds not in it — worn/off-frame). Bluetooth off. | User | `OBS-006` | Video `t=0`. |
 | ~18:13:56 | Bluetooth toggled on | User (OS) | `OBS-006` | — |
 | 18:13:55.218 | `.log.last`'s own fresh `Sent Reset` | System | — | Matches the toggle-on step to within ~2s. |
-| 18:14:05.361 / 18:14:09.395 | Classic `Connect Complete` (two chandles, `0x0002` then `0x0005` — a brief reconnect settling, not individually investigated further) | System | `OBS-006` | — |
+| 18:14:05.361 / 18:14:09.395 | Classic `Connect Complete` ×2: frame 691 is a failed page (status `0x04` Page Timeout, no connection), frame 736 the connection (handle `0x0005`) — `CAP-049-FINDINGS.md` §1 | System | `OBS-006` | — |
 | 18:14:10.186–.247 | DLCI 0x04 `Get`/`Notify` — `Settable=0xe8`(undocked), `Current=0x08`(Noise cancellation) | System (auto) | — | Matches on-screen "Noise cancellation" selected. |
 | **18:14:24.543–.987** | **ANC `Set`→`Notify` — user taps 'Adaptive'** | User (App) | `OBS-006` | Video `t=30` (`f_030.png`) shows "Device details," Adaptive selected — matches exactly. `Settable=0xe8` (Set-triggered sample). |
 | ~18:14:48 | Bluetooth toggled off (quick panel) | User (OS) | `OBS-006` | — |

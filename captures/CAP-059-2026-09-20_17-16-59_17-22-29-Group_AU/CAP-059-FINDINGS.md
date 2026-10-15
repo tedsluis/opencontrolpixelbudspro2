@@ -68,7 +68,7 @@ host (multipoint); (3) does the Buds' periodic `07 34` (SASS) message on DLCI 4 
 | `RFCOMM channel 0x02 lost (bt socket closed, read return: -1)` | 17:20:15.897 | frame 3358 `Sent DISC` on the HFP DLCI 0x0c 15:20:14.517Z, **Disconnect Complete reason 0x13** (remote user terminated) frame 3390 15:20:15.877Z; system log: `input_interaction … SystemUIDialog` 15:20:14.392Z, Settings unfrozen .535, Telecom HFP state 3(.547)→0(.689); film: Android's Bluetooth panel "Actief"→"Opgeslagen" at overlay 17:20:13→15 | **The user tapped the Buds' row in Android's own Bluetooth panel** (⚪ the tap itself is off-camera); Android tore down HFP then the ACL — a full disconnect. |
 | `RFCOMM channel 0x02 lost` | 17:21:16.028 | frame 4595 `Rcvd DISC Channel=1` (Buds→phone, DLCI 0x02) 15:21:16.023Z, frame 4597 `Rcvd DISC Channel=2` (DLCI 0x04) **+5ms**, then phone `DISC`+`DM` on DLCI 4 (4598/4599); **no** `Disconnect Complete` — ACL stays up (Spotify keeps playing, Android panel still "connected" at 17:21:29) | **The Buds closed both RFCOMM channels while the ACL/audio stayed up** — the phenomenon this capture was made to investigate. |
 
-Frames 4586–4595 (`tshark -Y "frame.number>=4562 && frame.number<=4600"`): app claim `SABM` DLCI 4
+Frames 4552–4597 (`tshark -Y "frame.number>=4552 && frame.number<=4600"`): app claim `SABM` DLCI 4
 frame 4552 (17:21:14.460), Buds' `07 34` at 4567 (+118ms, `01 2f 2e 65 82 90 4f a2 1d 6d d6 c8`), the
 app's `Set ANC` frame 4581 (17:21:15.565, `08 12 … 01 e8 e8 20`), Buds' ACK + Notify 4586–4589
 (`08 13 … 01 e8 e8 20`, 15.644–15.665), a Case-battery push on DLCI 8 (4593, 15.683), **0.34s of
@@ -84,7 +84,7 @@ lies between 4593 and 4595.
    originally planned were not performed this session (one continuous tour instead).
 3. See §5 below.
 
-**Same phenomenon as `LOG-001`'s originally-reported "89s deny-mode drop"?** 🟡 HYPOTHESIS yes (both
+**Same phenomenon as the "89s deny-mode drop" of `ai-sessions/0040` §2.1?** 🟡 HYPOTHESIS yes (both
 RFCOMM channels closed by the Buds within ms, audio link up); 🔴 OPEN why — here it came 1.56s after
 an app claim that had itself been re-opened only 0.56s after the previous release (`Sent DISC` 4528 at
 17:21:13.900, `SABM` 4552 at 17:21:14.460); no other claim in this capture was re-opened within <1.26s
@@ -220,7 +220,9 @@ payloads are `10 | 50 <5B account-key filter> | 21 <2B salt> | 46 <4B>` (e.g. `1
 73 ec 46 e2 dd f1 fb`) — a field of type `0x46`, where the official Fast Pair Battery Notification
 would carry `0x33`/`0x34` then three `0bSVVVVVVV` bytes; no payload here contains that marker at the
 expected field position. `PROTOCOL.md` §4.3 Option A's `CAP-011` result (inconclusive) stands and this
-is a second, cleaner non-match. GATT (Option D): LE discovery on handle `0x0041`
+is a second, cleaner non-match. (Later reading, `CAP-054-FINDINGS.md` §1/§6, 🟡: the leading `0x10` is the SASS "Version and flags"
+byte and `46 <4B>` is the SASS Random Resolvable Data field, `0bLLLL0110` with length 4 — the payload is the SASS form without the optional
+Battery Data; pointer added 2026-10-15, `ai-sessions/0094`.) GATT (Option D): LE discovery on handle `0x0041`
 (`tshark -Y "btatt.opcode==0x11" -T fields -e frame.number -e btatt.uuid16"`, frames 704, 768, 5275)
 lists services `0x1800 0x1801 0x1849 0x184c 0x1855 0x1858 0x185b 0xfcf1 0xfef3`, and on the second
 connection additionally `0x180a` — **no Battery Service `0x180f`**, zero `0x2a19` matches anywhere in
@@ -230,7 +232,7 @@ the log: 🟢 FACT for this firmware/capture.
 
 While the session was open the battery card showed "Left/Right 100%" from the last claim only, with
 nothing indicating its age — the film shows values from 17:17:55 still displayed at 17:19:37, after the
-buds had already left the case at 17:19:06 (the value shown happened to still be correct, from the
+buds had already left the case at ≈ 17:19:06 and ≈ 17:19:11 (`AT+BIEV` 2624/2631 and 2685/2694) (the value shown happened to still be correct, from the
 17:19:22 claim, but the card gave the viewer no way to know that at the time). Acceptable per
 `DECISIONS.md` ADR-032 ("only as fresh as the last claim"), but the card did not say *when* that claim
 happened — see `ai-sessions/0043` Phase H task 28 (replacing "(last known)" with an actual timestamp),

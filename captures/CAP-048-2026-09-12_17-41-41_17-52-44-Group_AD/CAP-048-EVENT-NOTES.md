@@ -55,7 +55,7 @@ state.
    dock state throughout (not just the phone screen) — the anomaly needs sub-second dock-state
    correlation that `CAP-037`'s own pass didn't have.
 
-## Event Timeline — corrected, wire-derived (the draft's per-reconnect table above did not survive verification)
+## Event Timeline — corrected, wire-derived (replaces the draft's per-reconnect table, which did not survive verification)
 
 **The draft's claimed 25-reconnect, rapid docked/undocked-alternating-every-~15s table does not
 match the wire or the video.** The actual classic-ACL reconnect cadence and dock-state changes were
@@ -78,7 +78,7 @@ events, not re-derived from the draft's own (unreliable) per-row claims.
 | 17:45:43.751–17:45:44.513 | Reconnect (chandle `0x0008`) | `0x00` Docked | Not independently video-checked this pass |
 | 17:46:49.025–.830 | Reconnect (chandle `0x0009`) | `0x00` Docked | Not independently video-checked this pass |
 | 17:47:41.535–17:47:42.136 | Reconnect (chandle `0x000a`) | `0x00` Docked | ❌ **video confirms both buds loose outside the case** (`t=358`–`362`, `pre742_358.png`/`mid_362.png`) — **second stale-reading counter-example, see Findings §5** |
-| 17:48:51.024–17:49:46.910 | **Connection-retry burst**: 7 `Create Connection`/`Connect Complete` cycles on the same chandle (`0x000b`), roughly every 5–20s, culminating in a stable connection | `0x00` Docked (final `Get`/`Notify`, `17:49:47.27`) | Video (`t≈450`, `17:49:11`) shows the app stuck on "Connecting…" during this window, case appears closed — plausible link between a closed case and repeated failed connection attempts, not confirmed further (see Findings §6, new open item) |
+| 17:48:51.024–17:49:46.910 | **Connection-retry burst**: 6 failed pages (Connection Complete status `0x04` Page Timeout, frames 7705/7712/7721/7741/7747/7753), roughly every 5–20s, then one connection (7781, handle `0x000b`) — `CAP-048-FINDINGS.md` §6 | `0x00` Docked (final `Get`/`Notify`, `17:49:47.27`) | Video (`t≈450`, `17:49:11`) shows the app stuck on "Connecting…" during this window, case appears closed — plausible link between a closed case and repeated failed connection attempts, not confirmed further (see Findings §6, new open item) |
 | 17:50:16.387–.934 | Reconnect (chandle `0x000c`) | `0x00` Docked | ✅ confirmed (`late_516.png`, `17:50:17`) |
 | 17:50:42.151–.164 | Same-chandle (`0x000c`) DLCI reopen | `0xe8` Undocked | ✅ confirmed — buds visibly removed by `17:50:43` (`late_542.png`) — **correctly, live-updated reading** |
 | 17:50:55.642–17:50:56.290 | Reconnect (chandle `0x000e`) | `0xe8` Undocked | Not independently video-checked this pass (consistent with the still-undocked state confirmed just before and after) |
@@ -97,7 +97,7 @@ video-cross-checked** against a specific extracted frame (✅/❌ above); the re
 not each individually re-verified against a fresh video extraction this pass, though every one falls
 inside a dock-state window already established by an adjacent, video-confirmed reading (i.e., no
 reading was left completely uncorroborated). A future pass could individually verify the remaining
-~5 reconnects for full exhaustiveness; this was not completed here given this capture's own size
+7 readings (0x0006 reopen, 0x0008, 0x0009, 0x000b, 0x000e, 0x000f, 0x0012) for full exhaustiveness; this was not completed here given this capture's own size
 (663.58s video, 13,301-packet log) relative to the rest of this task's scope.
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AD)

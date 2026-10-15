@@ -46,7 +46,9 @@ checked exhaustively, not assumed:
   pair (frames 1649, 1657, 20:59:38.38–38.42) — not a characteristic-discovery query.
 - This was checked against the **entire log**, not just the video-covered window, in case
   discovery happened outside the recorded portion — same result: zero discovery-opcode traffic
-  anywhere in the full 302s capture.
+  anywhere in the full 302s capture. Command: `tshark -r CAP-003-btsnoop_hci.log -Y 'btatt.opcode==0x10 ||
+  btatt.opcode==0x11'` → 0 frames, exit 0 (adding `0x08`/`0x09` → only 1649, 1657); positive control: the
+  same filter on `CAP-017-btsnoop_hci.log` (a live discovery) → 9 frames, first 678.
 - **Why:** the "Database Hash" mechanism (a standard BLE GATT Caching feature, Bluetooth Core
   Spec 5.1+) lets a GATT client skip re-discovery entirely if it already holds a cached copy of
   the server's database matching the advertised hash. Android's Bluetooth stack evidently still
@@ -150,8 +152,8 @@ carrying similarly-shaped data — itself informative:
 >   -T fields -e frame.number -e frame.time -e btatt.opcode -e btatt.handle -e btatt.value
 > ```
 > `CAP-002`: only `0x0f2a` (frames 49423→49425, value `"Revision 6"`). `CAP-003` (this file): only
-> `0x0f2a` (1819→1835) and `0x0f28` (eight reads total, four request/response pairs, each pair
-> itself two-back-to-back as already noted above — 2506/2508, 2510/2512, 2693/2695, 2697/2699,
+> `0x0f2a` (1819→1835) and `0x0f28` (eight request/response pairs in four polling instances
+> about 60 s apart, two back-to-back pairs each, as already noted above — 2506/2508, 2510/2512, 2693/2695, 2697/2699,
 > 2791/2793, 2794/2796, 2801/2803, 2804/2806). `CAP-004`: **zero** reads in this range at all
 > (expected — no Pixel Buds app ever ran there, so "More settings"/Device details, the screen that
 > triggers these reads, was never opened). **`0x0f26`, `0x0f27`, and `0x0f29` are never read in any
@@ -317,8 +319,8 @@ of the three captures to date. Not claimed as FACT; requires UUID confirmation.
 - Any UUID for handle `0x0f2a`, `0x0f28`, or the `0x0c0X` cluster — **this session's stated goal,
   still unresolved.** Needs the stronger cache-busting approach in §7 item 1. **Re-confirmed
   2026-08-12: `CAP-004` (a fourth, later session) also failed to trigger live discovery for the
-  Buds — see `CAP-004` `CAP-004-FINDINGS.md` §6's 2026-08-12 update — so this is now a four-for-four
-  negative result, not specific to this session's method.**
+  Buds — see `CAP-004` `CAP-004-FINDINGS.md` §6's 2026-08-12 update — so this is now a three-for-three
+  negative result (`CAP-002`'s full-day log, which includes `CAP-001`'s window, `CAP-003`, `CAP-004`), not specific to this session's method.**
 - The Passkey-characteristic hypothesis in §5 — **strengthened 2026-08-12 (§4 Task-5 addendum) to
   a precise byte-length/flow match against the spec**, but still not UUID-confirmed.
 - Neighboring handles `0x0f26`/`0x0f27`/`0x0f29` around the `0x0f28`/`0x0f2a` pair — **checked
@@ -329,9 +331,10 @@ of the three captures to date. Not claimed as FACT; requires UUID confirmation.
   yet correlated to any specific Bluetooth log traffic (a `PROTOCOL.md`-relevant gap: is this
   purely a cloud/GMS-side check, or does it involve a local protocol exchange? Not established
   here).
-- The `libmaestro`/ANC-EQ control channel identity — **still completely unaddressed by any of
-  `CAP-001`, `CAP-002`, or `CAP-003`**; all three captures so far cover pairing/setup/discovery,
-  not actual ANC/EQ commands under clean isolation.
+- The `libmaestro`/ANC-EQ control channel identity — not addressed by `CAP-001`, `CAP-002`, or
+  `CAP-003` (pairing/setup/discovery only); resolved since by other captures: ANC is the DLCI 0x04
+  Message Stream Hearable Control group (`DECISIONS.md` ADR-009) and DLCI 0x02 is pw_rpc
+  `maestro_pw.Maestro`, which carries EQ and the other settings (ADR-034).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-003-2026-08-10_20-59-16_21-00-37-Group_R/CAP-003-FINDINGS

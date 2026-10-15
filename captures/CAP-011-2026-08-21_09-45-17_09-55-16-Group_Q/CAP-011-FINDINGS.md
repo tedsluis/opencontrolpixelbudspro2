@@ -20,7 +20,7 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 | Log file | [`CAP-011-btsnoop_hci.log`](./CAP-011-btsnoop_hci.log) — 1,055.2s, 2026-08-21 09:45:01.437–10:02:36.612 (+0200) |
 | Notes file | [`CAP-011-EVENT-NOTES.md`](./CAP-011-EVENT-NOTES.md) |
 | Video file | [`CAP-011-recording.mp4`](./CAP-011-recording.mp4) — 599.9s, 09:45:17–09:55:16 local time |
-| Buds MAC (partial, per `AGENTS.md` §7/§9) | Classic peer not confirmed this session; BLE side uses 5 rotating private addresses, see §3 |
+| Buds MAC (partial, per `AGENTS.md` §7/§9) | Classic peer: the log's only Connection Complete (`-Y 'bthci_evt.code==0x03'`) is frame 728, 09:45:24.958, handle `0x0002`; all 338 RFCOMM payload frames are on that handle. BLE side uses 5 rotating private addresses, see §3 |
 
 ## 2. Methodology & procedure deviation
 
@@ -178,11 +178,12 @@ constant in all 4 samples):
 | 09:52:24.925 | value=**92**, flag=1 | value=**87**, flag=1 | value=92 |
 | 10:00:45.105 | value=**92**, flag=1 | value=**86**, flag=1 | value=92 |
 
-**Entries idx=1 and idx=2 match the on-screen Left/Right percentages exactly at every sampled
-point** — including the 09:45:26 sample (93/88, matching the screen's first-opened values,
-video-confirmed) and the 09:52:24→09:52:25.8 transition (92/87, this session's own finding, wire
-event **~0.86s before** the UI visibly updates — plausible app-side render latency, not
-independently measured further). Entry idx=2 (Right) also **keeps declining** across the two
+**Entries idx=1 and idx=2 carry the on-screen Left/Right values, but the screen lags the wire**
+*(corrected 2026-10-15, `ai-sessions/0094`)* — the 09:45:26 sample (93/88) matches the screen's
+first-opened values (video-confirmed); Left 93→92 is on the wire at 09:49:28.326 (frame 4222)
+while the screen keeps Left 93% until 09:52:25.8 (~2 min 57 s later, cf. `CAP-009-FINDINGS.md`
+§3's UI-lag observation); Right 88→87 (frame 6103, 09:52:24.925) precedes the same UI update by
+**~0.86s**. Entry idx=2 (Right) also **keeps declining** across the two
 off-camera recurrences (88→87→86), consistent with ongoing natural battery drain, not a one-off
 coincidence.
 
@@ -206,10 +207,10 @@ further decoded.
 
 **Method:** since the DLCI 0x08 `[Group:Length:2BE][Value]` envelope is the same shape used
 throughout this DLCI (§2.2a's sibling private envelope, `PROTOCOL.md` §2.3), the same decode
-pipeline from §7b was re-run against every other real capture with DLCI 0x08 traffic (18 sessions
-checked: `CAP-001`–`CAP-007`, `CAP-010`, `CAP-015`–`CAP-017`, `CAP-019`–`CAP-025`), each time
-picking a `Group 0x0e Code 0x01` frame near a moment where that session's own `CAP-NNN-EVENT-NOTES.md`
-independently records an on-screen Left/Case/Right triple:
+pipeline from §7b was re-run against the other real captures with DLCI 0x08 traffic (18 sessions:
+`CAP-001`–`CAP-007`, `CAP-010`, `CAP-015`–`CAP-017`, `CAP-019`–`CAP-025`); a comparison against an
+on-screen Left/Case/Right triple recorded in that session's own `CAP-NNN-EVENT-NOTES.md` is
+documented for two of them, `CAP-001` and `CAP-002` (no per-session outcome is recorded for the other 16):
 
 ```
 CAP-001 frame 1114 (08:51:12.657715+0200) — on-screen ref (CAP-001-EVENT-NOTES.md, 08:51:11
@@ -246,8 +247,7 @@ ADR-014): DLCI 0x08's `Group 0x0e Code 0x01` battery-status message's 3 repeated
 Left (index 1), Right (index 2), and Case (index 3) battery percentages, each with a `flag` field
 (`field2`) whose meaning is unconfirmed (observed as `1` whenever a value is fresh; absent when
 `CAP-011`'s idx=3 carries its stale reading — consistent with, not proof of, a "valid/fresh" bit).
-Pushed at irregular intervals (`CAP-011`: 4:02, 2:56, 8:21 apart — not a fixed cadence like HFP's
-~6–7s), independently of and in addition to the already-🟢-FACT HFP `AT+BIEV` mechanism
+Pushed at irregular intervals (`CAP-011`: 4:02, 2:57, 8:20 apart, frames 1156/4222/6103/11632 *(corrected 2026-10-15, `ai-sessions/0094`)*; HFP's `AT+BIEV` is irregular too, `CAP-009-FINDINGS.md` §2), independently of and in addition to the already-🟢-FACT HFP `AT+BIEV` mechanism
 (`PROTOCOL.md` §4.3 Option C). This is a **refinement of an already-known message shape**, not a
 newly-discovered packet type: `CAP-002-FINDINGS.md` §2a (2026-08-12) already documented this exact
 structure (`field1="all"` + "nested field2 x3 (varint triples)") but did not attempt a semantic

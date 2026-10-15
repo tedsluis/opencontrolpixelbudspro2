@@ -151,7 +151,7 @@ Times are phone local time (HCI / debug export). "Claim" = the app's on-demand D
       wording), C9 ✓, C10 ✓ (bottom bar; swipe not distinguishable on film); D1/D2 ✓; E1–E7 ✓; F1–F4 done with the buds **not worn** (NAK) and
       once worn (F4 ACK), **F5 not run** as written (no press-and-hold), **F6/F7 not run**, F8 ✓; G1–G4 ✓; H1 ✓, H2 partly (Clarity only),
       H3/H4 ✓, **H5 not run**, H6 ✓; I1–I3 ✓, I4 ✗; J1/J2 ✓, J3 ✓ (system log), **J4 not run**; **K1–K5 not run**; L1 ✓, L2 ✓ (off film),
-      **L3 not run**. Registry Test-IDs: `PAIR-001` ✓, `PAIR-003` ✓ (×14 app sessions), `CASE-004`/`CASE-005`/`CASE-006` ✓, `BATT-004` ✓,
+      **L3 not run**. Registry Test-IDs: `PAIR-001` ✓, `PAIR-003` ✓ (×15 app sessions), `CASE-004`/`CASE-005`/`CASE-006` ✓, `BATT-004` ✓,
       `ANC-001`–`ANC-004` ✓ (ACK worn, NAK not worn), `FIND-001`/`FIND-002` ✓, `EQS-001`/`EQP-*` ✓ (Clarity only).
 - [x] `ai-sessions/0046` §9: R1 ✓, R2 ✓, R3 ✓ (audibility not established), R4 ✓ (ringing heard until Stop), R5 ✓, R6 ✓, R7 ✓, R8 (E)/(F)
       **expected but not observed** (not run).

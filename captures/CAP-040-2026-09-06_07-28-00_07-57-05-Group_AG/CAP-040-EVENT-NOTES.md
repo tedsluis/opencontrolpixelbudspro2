@@ -84,7 +84,7 @@ traffic to CAP-040).
 - [x] Bluetooth HCI snoop logging enabled and the phone rebooted.
 - [x] Video recording with a visible wall-clock overlay ready, framed so the on-screen
       Left/Right/Case battery percentages are legible at every reconnect.
-- [x] **Record the starting on-screen battery values** (Left/Right/Case) before the session: Left: 95%, Case: 85%, Right: 100%. *(Note: These values remain exactly the same throughout the entire 24-minute video).*
+- [x] **Record the starting on-screen battery values** (Left/Right/Case) before the session: Left: 95%, Case: 85%, Right: 100%. *(Note: These values remain the same through 07:52:10, the first 24 minutes of the 29-minute (1745 s) video; in the tail Left goes to 100% and Case to 84% — `CAP-040-FINDINGS.md` §2.)*
 - [x] Decide which known-changing value to bracket:
       Chosen option: **Option B (case dock count/state)**. *Note: User execution deviated from the protocol's 4-state sequence, opting for a 2-state (Both Docked vs Both Undocked) high-repetition loop instead.*
 
@@ -111,13 +111,13 @@ traffic to CAP-040).
 
 | Time (local) | Action / Event | On-screen L/R/Case | Test-ID | Evidence in `CAP-040-btsnoop_hci.log` |
 |---|---|---|---|---|
-*Note: Because battery percentages remained static (95/85/100) for the entire duration, the only bracketed variable is the physical Dock State. The user repeated a specific cycle approximately 15 times. The cycle consists of: Auto-Connect via Case Open (Docked) -> App Connect (Undocked) -> App Connect (Docked) -> Case Close.*
+*Note: Because battery percentages remained static (95/85/100) through 07:52:10 (not in the video's tail — `CAP-040-FINDINGS.md` §2), the only bracketed variable is the physical Dock State. The user repeated a specific cycle approximately 15 times. The cycle consists of: Auto-Connect via Case Open (Docked) -> App Connect (Undocked) -> App Connect (Docked) -> Case Close.*
 
-| Time (local) | Action / Event | Dock State | Test-ID | Evidence in `CAP-040-btsnoop_hci.log` |
+| Time (local) | Action / Event | Dock State (hand-noted — unverified, contradicted by film and wire, see the correction below the table) | Test-ID | Evidence in `CAP-040-btsnoop_hci.log` |
 |---|---|---|---|---|
 | `07:28:00` | Start video recording | Unknown | — | — |
 | `07:28:16` | User navigates to Device Details | — | — | — |
-| `07:28:28` | Initial connection established | Undocked | `PRIV-001` | no discrete frame (channel stayed open, see Contamination log correction) |
+| `07:28:12` | Initial connection established | Undocked | `PRIV-001` | frame 646 (Connection Complete, 07:28:12.077) |
 | `07:28:36` | Buds placed in case | Docked | — | — |
 | `07:28:40` | Tapped 'Disconnect' in App | Docked | — | no discrete frame (channel stayed open, see Contamination log correction) |
 | `07:28:44` | Tapped 'Connect' in App | Docked | `PRIV-001` | no discrete frame (channel stayed open, see Contamination log correction) |
@@ -228,9 +228,16 @@ traffic to CAP-040).
 | `07:52:09` | Case closed (auto disconnect) | Docked | — | no discrete frame (channel stayed open, see Contamination log correction) |
 | `07:52:10` | End video recording | — | — | — |
 
+**Correction (2026-10-15, `ai-sessions/0094`) — the buds were not docked between 07:28:17 and 07:53:53.** The "Docked" rows above are hand-noted
+and do not hold: (1) DLCI 0x04 "Battery updated" reads `03 03 00 03 5f 64 ff` (Left 95, Right 100, **no charging bit**, ADR-031/033) 36 times, frames
+1337 (07:28:17.210) … 3987 (07:43:57.975); the first frame with a charging bit is 5729 (07:53:53.100, `df 64`, Left charging), Right only from 7266
+(07:55:25.504, `64 e4`) (`tshark -Y 'btrfcomm.len>0 and data.data[0:2]==03:03'`); (2) the only Disconnection Complete is 7784 (07:55:41.465) —
+no "auto disconnect" on any "Case closed" row (ADR-016); (3) film stills at 07:28:40, 07:39:40 and 07:52:09 show the case empty (open, closed, open)
+with both buds lying beside it. The first real docking is ~07:53:53 (Left), see `CAP-040-FINDINGS.md` §2/§4.
+
 **Contamination log:** The execution deviated from the suggested "Option B" protocol in two ways. First, the user did not test intermediate states (e.g., "only Left docked" or "only Right docked"); the test alternated strictly between "both docked" and "both out". Second, the user utilized the Pixel Buds app's "Connect/Disconnect" UI buttons for many of the reconnects, rather than the OS-level Bluetooth toggle. While this provides a huge volume of "Both Docked" vs. "Both Undocked" samples, the reliance on the App UI for reconnection is a slight methodological deviation from earlier baselines like `CAP-036`.
 
-**Wire-evidence correction to the above (found during Phase 1/3 analysis, see `CAP-040-FINDINGS.md` §1 for full evidence):** the deviation turned out to matter more than "slight." The app's own "Connect"/"Disconnect" button taps produce **zero** HCI/RFCOMM-visible traffic of any kind — checked directly (e.g. the `07:29:46`/`07:29:50` Disconnect/Connect pair: no frame at all on `chandle 0x0002` in that window). The classic ACL connection (`chandle 0x0002`) and DLCI 0x08 both stay open continuously from `07:28:12` onward; only DLCI 0x02/0x04 show occasional independent channel bounces, and only **one** genuine HCI `Disconnection Complete` occurs in the entire session — at `07:55:41.465` (reason `0x13`), inside a burst of real DLCI 0x04 `SABM`/`DISC` cycling from `07:54:33`–`07:55:41` that falls **after** this table's documented end (`07:52:10`) and inside the video's own previously-unreviewed tail (video runs to ~`07:57:05`, not `07:52:10` — see Log Metadata). Video frames at `07:52:28`/`07:56:20`/`07:57:00` confirm: still connected and undocked-then-redocked through most of the documented table, then genuinely disconnected (app shows "Connect", not "Disconnect") from `07:56:20` onward, matching the real `07:55:41` teardown. **Practical consequence: almost none of this table's ~30 individual "Tapped Disconnect/Connect"/"Case closed/opened" rows correspond to a distinguishable wire event** — the per-row frame-number blanks below are intentionally left as "no discrete frame (channel stayed open)" rather than filled with a misleading frame number; the one section of this session that *does* carry real, wire-confirmed reconnect activity is the `07:54:28`–`07:55:41` cluster near the end, addressed in full in `CAP-040-FINDINGS.md`.
+**Wire-evidence correction to the above (found during Phase 1/3 analysis, see `CAP-040-FINDINGS.md` §1 for full evidence):** the deviation turned out to matter more than "slight." The app's own "Connect"/"Disconnect" button taps produce **zero** HCI/RFCOMM-visible traffic of any kind — checked directly (e.g. the `07:29:46`/`07:29:50` Disconnect/Connect pair: no frame at all on `chandle 0x0002` in that window). The classic ACL connection (`chandle 0x0002`) and DLCI 0x08 both stay open continuously from `07:28:12` onward; only DLCI 0x02/0x04 show occasional independent channel bounces, and only **one** genuine HCI `Disconnection Complete` occurs in the entire session — at `07:55:41.465` (reason `0x13`), inside a burst of real DLCI 0x04 `SABM`/`DISC` cycling from `07:54:33`–`07:55:41` that falls **after** this table's documented end (`07:52:10`) and inside the video's own previously-unreviewed tail (video runs to ~`07:57:05`, not `07:52:10` — see Log Metadata). Video frames at `07:52:28`/`07:56:20`/`07:57:00` confirm: still connected and undocked-then-redocked through most of the documented table, then genuinely disconnected (app shows "Connect", not "Disconnect") from `07:56:20` onward, matching the real `07:55:41` teardown. **Practical consequence: almost none of this table's ~80 (81) individual "Tapped Disconnect/Connect"/"Case closed/opened" rows correspond to a distinguishable wire event** — the per-row frame-number blanks below are intentionally left as "no discrete frame (channel stayed open)" rather than filled with a misleading frame number; the one section of this session that *does* carry real, wire-confirmed reconnect activity is the `07:54:28`–`07:55:41` cluster near the end, addressed in full in `CAP-040-FINDINGS.md`.
 
 ## Decode / Analysis
 
@@ -239,7 +246,7 @@ tshark -r CAP-040-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
   -T fields -e frame.number -e frame.time -e frame.p2p_dir -e data.data
 ```
 
-- [ ] **For each of the 6 unmapped codes (`05 0c`, `04 02`, `04 04`, `04 11`, `04 13`, `04 15`,
+- [x] **For each of the 7 unmapped codes (`05 0c`, `04 02`, `04 04`, `04 11`, `04 13`, `04 15`,
       `0e 04`), find the `Sent` Get frame and the immediately-following `Rcvd` frame(s) on the same
       Group** (matching Group number, not necessarily the same Code — the response Code may
       differ, as it does for DLCI 0x04's own Get/Notify pair using Codes `0x11`/`0x13`). Record the
@@ -251,7 +258,7 @@ tshark -r CAP-040-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
       opens/closes in the entire 30-minute session (confirmed via `rfcomm.frametype`/`_ws.col.Info`
       filtered to `Channel=4`: one `SABM`→`UA` at session start, no `DISC` until the log ends) — see
       `CAP-040-FINDINGS.md` §1/§3 for the full command+hex.**
-- [ ] **Per repeat/bracket, decode each response's numeric fields** (protobuf-shaped tag/varint
+- [x] **Per repeat/bracket, decode each response's numeric fields** (protobuf-shaped tag/varint
       parsing, per `PROTOCOL.md` §2.2a's method) and check whether any field's value **changes**
       in step with the known bracketed value (on-screen battery, or which component is docked).
       A field that stays constant across all repeats is not this value; a field that tracks the
@@ -266,7 +273,7 @@ tshark -r CAP-040-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
       `100` from `07:54:29` onward — exactly coinciding with the video-confirmed real docking event
       in the previously-unreviewed tail. See `CAP-040-FINDINGS.md` §4 for the full table/hex — this
       is a new 🟡 HYPOTHESIS, not a FACT promotion.**
-- [ ] **Outcome classification: (c) inconclusive for the originally-designed bracketing method** —
+- [x] **Outcome classification: (c) inconclusive for the originally-designed bracketing method** —
       the procedure's own deviation (App Connect/Disconnect buttons instead of a real disconnect)
       meant the "~15 repeats" never actually re-triggered DLCI 0x08's channel at all, so the 7
       flagged codes could not be correlated against the dock-state bracket as intended. This is a
@@ -293,15 +300,15 @@ tshark -r CAP-040-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
 
 ## Next steps after filling this in
 
-- [ ] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13).
-- [ ] Write `CAP-040-FINDINGS.md` per `PROJECT_RULES.md` §2, hex & script rule (§1 rule 4a).
-- [ ] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
+- [x] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13).
+- [x] Write `CAP-040-FINDINGS.md` per `PROJECT_RULES.md` §2, hex & script rule (§1 rule 4a).
+- [x] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
       `id_registry.csv`'s `CAP-040` row.
-- [ ] Add `PRIV-001`'s Evidence column pointer in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (pointer only).
-- [ ] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8).
-- [ ] **Do not** promote anything to 🟢 FACT or write a `DECISIONS.md` ADR without explicit
+- [x] Add `PRIV-001`'s Evidence column pointer in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (pointer only).
+- [x] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8).
+- [x] **Do not** promote anything to 🟢 FACT or write a `DECISIONS.md` ADR without explicit
       maintainer sign-off (`AGENTS.md` §6, §15) — propose only.
-- [ ] Rename this capture's folder to the actual session date/start-time/end-time.
+- [x] Rename this capture's folder to the actual session date/start-time/end-time.
 
 ## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
 

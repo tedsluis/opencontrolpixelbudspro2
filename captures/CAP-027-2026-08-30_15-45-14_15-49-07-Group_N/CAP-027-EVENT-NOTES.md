@@ -40,7 +40,7 @@ phone)
 ## Event Timeline
 
 All wire-evidence timestamps below are `btsnoop_hci.log` frame times (local, +0200). Per-action
-video-overlay timestamps in the leftmost column run a consistent **~1.5–2.3s ahead of** the
+video-overlay timestamps in the leftmost column run a consistent **1.20–2.31s (one outlier, 3.15s, frame 1909) ahead of** the
 matching wire event across every action in this session (video shows the action slightly later
 than the wire event that caused it — encoding/registration lag, not a clock fault); this offset is
 noted once here rather than repeated per row. No frame of any kind is directly visible confirming
@@ -56,7 +56,7 @@ following the noted action, within the established offset), not a visual gesture
 | 15:45:30 | spotify app: user selects play, music starts playing | — | — | — |
 | 15:45:39 | Tap once on right bud | User (Hardware) | `TOUCH-002` | AVRCP frame 1580 @15:45:36.892 `Rcvd Pass Through: Control - PAUSE (Pushed)` (offset 2.11s) |
 | 15:45:48 | swipe on right bud (unintentionaly) | User (Hardware) | — | AVRCP frame 1794 @15:45:46.515 `Rcvd Pass Through: Control - PLAY (Pushed)` (offset 1.49s) — see `CAP-027-FINDINGS.md` §3.2: the "unintentional" contact still produced a Pass Through command, but a **tap-shaped** one (PLAY), not the swipe/volume shape |
-| 15:45:59 | Double-tap on right bud | User (Hardware) | `TOUCH-003` | AVRCP frame 1909 @15:45:55.855 `Rcvd Pass Through: Control - FORWARD (Pushed)` (offset 4.15s) |
+| 15:45:59 | Double-tap on right bud | User (Hardware) | `TOUCH-003` | AVRCP frame 1909 @15:45:55.855 `Rcvd Pass Through: Control - FORWARD (Pushed)` (offset 3.15s) |
 | 15:46:09 | Triple-tap on right bud | User (Hardware) | `TOUCH-004` | AVRCP frame 1980 @15:46:07.368 `Rcvd Pass Through: Control - BACKWARD (Pushed)` (offset 1.63s) |
 | 15:46:24 | Triple-tap on right bud | User (Hardware) | `TOUCH-004` | AVRCP frame 2066 @15:46:22.800 `Rcvd Pass Through: Control - BACKWARD (Pushed)` (offset 1.20s) |
 | 15:46:35 | Tap once on left bud | User (Hardware) | `TOUCH-002` | AVRCP frame 2139 @15:46:32.692 `Rcvd Pass Through: Control - PAUSE (Pushed)` (offset 2.31s) |
@@ -100,8 +100,8 @@ following the noted action, within the established offset), not a visual gesture
       evidence source, following the hex & script rule (§1 rule 4a).
 - [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
       from `planned` to `analyzed`, fill in Android/firmware/app-version columns and the log path.
-- [ ] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
-      actual session date/start-time/end-time. **Not done in this pass** — the placeholder folder
+- [x] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
+      actual session date/start-time/end-time. **n/a — folder already named** — the folder
       name already embeds the correct actual date/start/end (`2026-08-30_15-45-14_15-49-07`), so
       no rename is needed; only the `-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-` skeleton pattern from the
       template was ever a placeholder, and this folder does not use it.

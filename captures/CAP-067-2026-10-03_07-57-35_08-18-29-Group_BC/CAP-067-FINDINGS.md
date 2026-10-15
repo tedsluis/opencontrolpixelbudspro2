@@ -11,8 +11,8 @@ system log. The timeline these findings refer to is `CAP-067-EVENT-NOTES.md`.
 - ⚪ **ASSUMPTION** — not tested here.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
-**Capture ID:** `CAP-067` · **Date:** 2026-10-03, film overlay 07:57:35–08:18:29 (phone 07:57:33.9–08:18:27.9) · **Firmware:** 🟢 `release_5.203` (7 of 7
-announcements, Info tab on film) · **Phone:** Pixel 9a, GrapheneOS, Android 17 `CP3A.260905.009`, **secondary user (`full.secondary`), no Google Play** ·
+**Capture ID:** `CAP-067` · **Date:** 2026-10-03, film overlay 07:57:35–08:18:29 (phone 07:57:33.9–08:18:27.9) · **Firmware:** 🟢 `release_5.203` (6 of 6
+announcements *(corrected 2026-10-15, `ai-sessions/0094`)*, Info tab on film) · **Phone:** Pixel 9a, GrapheneOS, Android 17 `CP3A.260905.009`, **secondary user (`full.secondary`), no Google Play** ·
 **App under test:** OpenControl for Pixel Buds Pro 2 **1.0.0, build `8d8af4b`** (release-signed, versionCode 10000) · **HCI logs:** "A" = `.log.last` (1,563
 packets, 07:57:42.429–08:12:24.089), "B" = `.log` (1,810 packets, 08:12:38.178–08:20:05.132), 0 `cap_len≠len` · **Buds:** `04:00:6e:cf:6e:07`, classic handle
 `0x000b` for every ACL, the only handle in both files; no LE link. `bluetooth.addr` is empty with this `H4 with linux header` encapsulation, so every command

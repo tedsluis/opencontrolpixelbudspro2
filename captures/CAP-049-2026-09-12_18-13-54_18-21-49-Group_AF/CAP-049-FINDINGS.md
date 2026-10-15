@@ -38,7 +38,7 @@ $ xxd -l 16 CAP-049-btsnoop_hci.log
 
 ```
 $ capinfos CAP-049-btsnoop_hci.log.last | grep -E "Earliest|Latest"
-Earliest: 2026-09-12 18:13:55.523844   Latest: 2026-09-12 18:14:56.767281
+Earliest: 2026-09-12 18:13:55.218251   Latest: 2026-09-12 18:14:56.767281
 $ tshark -r CAP-049-btsnoop_hci.log.last -T fields -e frame.number -e frame.time -e _ws.col.Info | head -1
 1  2026-09-12T18:13:55.218251+0200  Sent Reset
 $ tshark -r CAP-049-btsnoop_hci.log.last -Y "bthci_evt.code==0x05" -T fields -e frame.number -e frame.time -e bthci_evt.reason

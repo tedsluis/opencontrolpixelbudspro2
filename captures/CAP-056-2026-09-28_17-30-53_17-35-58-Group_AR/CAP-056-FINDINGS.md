@@ -134,7 +134,8 @@ Raw bytes:
 ```
 
 - 🟢 Five filmed taps on the switch labelled **"In-ear detection — Earbuds automatically play audio when in and pause audio when out"** (label read
-  at t = 283 s) produced five `WriteSetting 4:{2:…}` with the value of the new switch position, each acknowledged OK. Together with `CAP-024`
+  at t = 283 s) produced six `WriteSetting 4:{2:…}` with the value of the new switch position — the fifth tap's 4344 was cancelled by the phone
+  (`CLIENT_ERROR CANCELLED` 4360) and re-sent as 4361 — each acknowledged OK *(corrected 2026-10-15, `ai-sessions/0094`)*. Together with `CAP-024`
   1850/1912 (byte-identical) the UI switch writes field 2 in both directions.
 - 🟢 **Independent confirmation from the Buds themselves:** after every field-2 write the Buds send the Fast Pair Audio-switch (SASS)
   "Notify capability" `07 11` with flags `0xb8`/`0xb0`, unprompted (no phone `07 10` before 2176, 2852, 3630, 4052). The official SASS page
@@ -194,8 +195,8 @@ Raw examples: 2253 `040500020804`, 2318 `040500020806`, 2453 `040500020805`, 368
   reported `0x40`), and with none worn the Buds report `13:0` / `Notify … 00 20`.
 - 🟢 **Settable `00` with no bud worn, in-ear detection on:** 3940 (17:35:28.123) `01 e8 00 20` while both buds were in the hands (film 17:35:22–28) —
   one more sample for ADR-024's 🟡 "`0x00` = no bud worn", no counter-example. Every other `Notify` of the session reads `e8` with at least one bud
-  worn. 🔴 **Settable with in-ear detection off and no bud worn — no sample** (no `Get` was sent in rows 11/12's window; the re-open `Get`s 3137
-  (17:34:37.601) and 3476 (17:34:56.721) fall during a re-insertion and read `e8 08`).
+  worn. 🔴 **Settable with in-ear detection off and no bud worn — no sample** (no `Get` was sent in rows 11/12's window; the re-open `Get`s 3133
+  (17:34:37.553) and 3472 (17:34:56.644) fall during a re-insertion and read `e8 08` — answers 3137 (17:34:37.601) and 3476 (17:34:56.721)).
 - 🟡 **DLCI 0x08 `04 05` (the `CAP-050` §4 "fluctuates near dock changes" code) tracks wear while in-ear detection is on:** `06` both worn, `04` / `05`
   one bud out (a different value for each side of the head — rows 1 vs 3, 9 first step), `03` both out, and it sits at `01` whenever in-ear detection is
   off (2854, 2920, 3187, 3259, 3518, 4054, 4099, 4166) and at connect with it off (1133). `01 09` `0a 03 0b 06 13|12` accompanies the changes (2254, 2320,

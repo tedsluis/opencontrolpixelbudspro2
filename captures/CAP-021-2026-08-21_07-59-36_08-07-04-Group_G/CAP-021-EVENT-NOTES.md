@@ -53,8 +53,8 @@ procedure's listed 1-2-3-4-5):**
 |---|---|---|---|---|
 | 07:59:36 | Video start | — | — | Video first frame |
 | 07:59:4x–08:00:5x | Bluetooth reconnect; navigate Device details → Controls and gestures; brief dead-end into "Touch controls" info screen (tap "Use touch controls" text, not the toggle) and back | User (App) | — | Connection handshake burst (DLCI 0x02/0x04/0x08); a `2001`→`2026` sequentially-incrementing DLCI 0x02 burst (38 frames, 07:59:42.9–07:59:44.5) matches the connection-time state-sync pattern, not a user action |
-| ~08:00:10 | Incidental re-send of the `TOUCH-001`-shaped write (`field4{field4=1}`) while navigating in/out of "Touch controls"/"Controls and gestures" | User (App, incidental) | — | Frame 1626, `08:00:09.891252` — not a new toggle (touch controls was already ON, per `CAP-020`); a re-affirm, not attributed to any Group G Test-ID |
-| **08:01:23.784** (video-confirmed: finger taps "Digital assistant" tab on "Customize left" at t≈108s/08:01:24) | **Set Left → Digital assistant** | User (App) | `HOLD-002` | **Frame 1895** — see §Decode. Rcvd echo: frame 1903 (08:01:24.230), which uniquely also echoes the *prior* value (`5` = Active noise control) alongside the new one (`6` = Digital assistant) |
+| **08:00:10** (film: switch OFF at 08:00:07–09, finger on it 08:00:10, ON from 08:00:11) | **Toggle 'Use touch controls' OFF→ON** on "Controls and gestures" (incidental to Group G) | User (App) | `TOUCH-001` | Frame 1626, `08:00:09.891252`, `WriteSetting 4:{4:1}`, mirrored 1633/1637 — a real OFF→ON write: the connect-time read 1140 is `4:{4:0}` (`CAP-020` ended with touch controls OFF, frame 1995) |
+| **08:01:23.784** (video-confirmed: finger taps "Digital assistant" tab on "Customize left" at t≈108s/08:01:24) | **Set Left → Digital assistant** | User (App) | `HOLD-002` | **Frame 1895** — see §Decode. Rcvd echo: frame 1903 (08:01:24.230), `4:{7:{1:{4:{1:6}} 2:{4:{1:5}}}}` — the mirror carries both sides' current values (Left `6` = Digital assistant, new; Right `5` = Active noise control, unchanged), as the later mirror 3623 does (`1:…6, 2:…6`) |
 | **08:03:16.151** (video-confirmed: finger taps "Digital assistant" tab on "Customize right" at t=220s) | **Set Right → Digital assistant** | User (App) | `HOLD-004` | **Frame 3619** — see §Decode |
 | **08:03:49.667** (video context: at t=253s, "Controls and gestures" shows Left/Right both "Digital assistant"; finger taps "Left" row, about to revert it) | **Set Left → Active noise control** (i.e. `HOLD-001`, executed *after* `HOLD-002` in this session, not before) | User (App) | `HOLD-001` | **Frame 4315** — see §Decode |
 | **08:04:09.920** | **Set Right → Active noise control** (`HOLD-003`, executed after `HOLD-004`) | User (App) | `HOLD-003` | **Frame 4976** — see §Decode |
@@ -138,20 +138,20 @@ Decoding `field 5{ field 4{ ... } }`'s inner content mechanically (`field=tag>>3
 `wiretype=tag&7`):
 
 ```
-1895: field7 wt=LD len=6 { field1 wt=LD len=4 { field4 wt=varint value=6 } }
-3619: field7 wt=LD len=6 { field2 wt=LD len=4 { field4 wt=varint value=6 } }
-4315: field7 wt=LD len=6 { field1 wt=LD len=4 { field4 wt=varint value=5 } }
-4976: field7 wt=LD len=6 { field2 wt=LD len=4 { field4 wt=varint value=5 } }
+1895: field7 wt=LD len=6 { field1 wt=LD len=4 { field4 wt=LD len=2 { field1 wt=varint value=6 } } }
+3619: field7 wt=LD len=6 { field2 wt=LD len=4 { field4 wt=LD len=2 { field1 wt=varint value=6 } } }
+4315: field7 wt=LD len=6 { field1 wt=LD len=4 { field4 wt=LD len=2 { field1 wt=varint value=5 } } }
+4976: field7 wt=LD len=6 { field2 wt=LD len=4 { field4 wt=LD len=2 { field1 wt=varint value=5 } } }
 ```
 
 **🟡 HYPOTHESIS, well-supported by a clean 2×2 cross-check:** `field 1` = Left, `field 2` = Right
-(within the outer `field 7`), and the innermost `field 4` varint value encodes the selected action:
+(within the outer `field 7`), and the innermost `field 4{ field 1 }` varint value encodes the selected action:
 `5` = Active noise control, `6` = Digital assistant. This is not a single-sample guess — all 4
 combinations (Left/Right × ANC/Assistant) were exercised this session and each produced exactly the
 predicted field/value pair, with no exceptions. **Additional corroboration:** frame 1903 (the Rcvd
 echo for 1895, `08:01:24.230`) contains **both** `field1{field4=6}` (the new value) **and**
-`field2{field4=5}` (a second, distinct sub-block) in the same message — read as an old/new or
-Left/Right status pair, consistent with this reading without requiring it.
+`field2{field4=5}` in the same message — Left's new value and Right's current value; the
+settings mirror carries both sides (3623 likewise, `1:…6, 2:…6`).
 
 ### HOLD-005: ANC-mode rotation checklist
 

@@ -51,7 +51,11 @@ check used to rest on `bluetooth.addr == <Buds address>` → 0 and a forward-byt
 `CAP-031` and `CAP-044`, where the Buds are connected, and a BD_ADDR is little-endian on the wire.)
 `tshark`'s own protocol-hierarchy stats (`-z io,phs`) confirm the **entire** log's non-HCI-command/
 event content is exactly `bthci_acl → btl2cap → btatt` (BLE GATT only) — there is no `btrfcomm`
-branch in the hierarchy at all. **This is a genuinely clean, connection-free capture** — the specific
+branch in the hierarchy at all. That GATT traffic is one LE connection, not the Buds' (added 2026-10-15, `ai-sessions/0094`): `tshark -Y
+"bthci_evt.le_meta_subevent==0x0a or bthci_evt.le_meta_subevent==0x01"` → frame 317 (09:50:36.133, handle `0x0002`, random peer address), carrying all
+345 ATT frames; its primary services (`-Y "btatt.opcode==0x11"`) are GAP, GATT, Device Information, **Heart Rate (`0x180D`)** and six 128-bit vendor
+services, and no Fast Pair Service (`-Y "btatt.uuid16==0xfe2c"` → 0) — unlike the Buds' map (`CAP-034-FINDINGS.md` §4, `0xFE2C` at `0x0c00`–`0x0c14`); the same
+Heart-Rate signature as the unrelated device in `CAP-018`/`CAP-028`. **This is a genuinely clean, connection-free capture** — the specific
 procedure deviation that capped `CAP-011` (an active classic RFCOMM+GATT connection present
 throughout) does not reproduce here.
 
@@ -159,7 +163,7 @@ scope), flagged only so it isn't silently lost.
 **A separate observation, worth surfacing since the system UI itself is informative here:** the
 system Bluetooth settings panel displays a live-looking `L/C/R` battery line for the bonded device
 for the *entire* session, despite this session's own isolation check (§2/§3) confirming **no**
-classic connection, **no** RFCOMM, and **no** GATT session to the Buds ever formed, and the one BLE
+classic connection, **no** RFCOMM, and **no** GATT session to the Buds ever formed (the log's one LE connection, handle `0x0002`, is an unrelated Heart-Rate device — §2), and the one BLE
 advertisement actually observed from the Buds does not structurally carry a battery value at all
 (§3). This value must therefore be a **cached, last-known reading** carried over from a previous
 session, not a value refreshed by anything observed on the wire in this capture — 🟡 HYPOTHESIS, not

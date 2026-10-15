@@ -7,7 +7,7 @@ the placeholder `CAP-030-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_Q` to the actual ses
 date/start-time/end-time, e.g. `CAP-030-2026-09-01_11-00-00_11-10-00-Group_Q`.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Q, items #19–20 specifically):** item #18
-(passive BLE scan for the Battery Notification) is already planned separately as `CAP-011`. This
+(passive BLE scan for the Battery Notification) is covered separately by `CAP-011` (analyzed) and its repeat `CAP-043`. This
 session covers the two remaining Group Q items: attempting to observe Loud Noise Protection and
 Adaptive Audio engaging. These are waiting periods to catch spontaneous hardware-initiated
 traffic — nothing to tap, just capture while the condition holds. Log explicit **observation
@@ -57,7 +57,7 @@ start** and **observation end** boundaries, not just a single timestamp.
     the buds, or a door closing firmly nearby) — loud enough to plausibly trigger volume-limiting
     DSP, not loud enough to risk hearing damage or device/microphone damage. Do not use impulse
     sounds (gunshots, fireworks, air horns) — these are explicitly out of scope per Google's own
-    documentation (see Purpose above).
+    documentation (see Procedure step 19 below and `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` row `LOUD-001`).
   - `ADAPT-002`: a "distinctly different acoustic environment" means a clear, sustained ambient-
     noise-level change, not a momentary one — e.g. a quiet indoor room → a room with music/TV
     playing, or indoors → outdoors near light traffic. Stay in each environment long enough

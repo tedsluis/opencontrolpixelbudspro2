@@ -54,7 +54,7 @@ this session's evidence below.**
 ```
 $ tshark -r CAP-048-btsnoop_hci.log -Y 'btrfcomm.dlci==4 and btrfcomm.len>0' -T fields \
     -e frame.number -e frame.time -e bthci_acl.chandle -e frame.p2p_dir -e data.data | grep -E "\s08(11|13)"
-(16 rows — 15 distinct Get(`08110000`)/Notify(`0813...`) pairs across 13 chandles, plus 1 extra
+(31 rows — 15 distinct Get(`08110000`)/Notify(`0813...`) pairs across 13 chandles, plus 1 extra
  Notify-only anomaly at 17:52:25.140, see §4)
 
 $ tshark -r CAP-048-btsnoop_hci.log -Y 'btrfcomm.dlci==4 and btrfcomm.len>0' -T fields -e bthci_acl.chandle | sort -u
@@ -157,14 +157,13 @@ instances from the four correct ones is not established.
 ## 6. New open item — a connection-retry burst, plausibly tied to a closed case (🔴 OPEN QUESTION, new)
 
 ```
-$ tshark -r CAP-048-btsnoop_hci.log -Y 'bthci_acl.chandle==0x000b' -T fields -e frame.number -e frame.time -e frame.p2p_dir -e _ws.col.Info \
-    | grep -E "Connect Complete|Create Connection"
-(7 "Rcvd Connect Complete" events, from 17:48:51.024 to 17:49:46.910, each preceded by its own "Sent Create Connection")
 $ tshark -r CAP-048-btsnoop_hci.log -Y 'bthci_evt.code==0x03 && frame.number>7700 && frame.number<7790' -T fields -e frame.number -e bthci_evt.status
 7705 0x04   7712 0x04   7721 0x04   7741 0x04   7747 0x04   7753 0x04   7781 0x00
 ```
 **Six of the seven are failed pages** (status `0x04`, Page Timeout); only the seventh (7781) is a connection — which is why no Disconnection Complete lies
-between them. So this is the phone paging Buds that do not answer, six times in a row, not seven connect/complete cycles. (Rewritten in place 2026-10-03,
+between them. So this is the phone paging Buds that do not answer, six times in a row, not seven connect/complete cycles. (2026-10-15, `ai-sessions/0094`: the
+`bthci_acl.chandle==0x000b` query quoted here before, with the output "7 'Rcvd Connect Complete' events", was removed — that filter matches no HCI event; it
+returns 0 Connect Complete/Create Connection lines.) (Rewritten in place 2026-10-03,
 `ai-sessions/0069`, A68-CAP-11.)
 Video at `t≈450` (`17:49:11`, mid-burst) shows the app UI stuck on "Connecting…", and the case
 appears closed (only the case's outer shell is visible, no loose buds in frame). 🟡 **HYPOTHESIS,

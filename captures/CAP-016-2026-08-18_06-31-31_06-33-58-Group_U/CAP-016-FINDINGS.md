@@ -123,8 +123,8 @@ tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm && frame.time_relative>=596.0 && 
 ```
 
 🟢 FACT (frame numbers independently re-checked): `DISC` (`0x43`) on DLCI `0x02`/`0x04`/`0x08`/`0x0a`
-between 06:33:15.941–06:33:17.985 (frames 2770, 2772, 2784, 2785 — corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-16`: the DLCI `0x04` `DISC` is frame 2772, and the first two, on DLCI `0x02` and `0x04`, are **Received**: the Buds closed their own two channels; the phone then closed DLCI `0x08`/`0x0a`, frames 2784/2785 Sent, and re-opened all four with `SABM` 2815/2843/2904 Sent), followed by `SABM`(`0x2f`)/`UA`
-(`0x63`) reopening each in turn, complete by **06:33:19.615** (frame 2906, DLCI `0x02` last). The
+between 06:33:15.941–06:33:16.126 *(corrected 2026-10-15, `ai-sessions/0094`)* (frames 2770, 2772, 2784, 2785 — corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-16`: the DLCI `0x04` `DISC` is frame 2772, and the first two, on DLCI `0x02` and `0x04`, are **Received**: the Buds closed their own two channels; the phone then closed DLCI `0x08`/`0x0a`, frames 2784/2785 Sent, and re-opened all four with `SABM` 2815/2843/2904/2980 Sent — DLCI `0x0a`/`0x08`/`0x02`/`0x04`), followed by `SABM`(`0x2f`)/`UA`
+(`0x63`) reopening each in turn, complete by **06:33:21.866** (frame 2982, DLCI `0x04` last) *(corrected 2026-10-15, `ai-sessions/0094`)*. The
 underlying ACL link (handle `0x0001`) is undisturbed throughout — no `Connect`/`Disconnect Complete`
 anywhere near this window (confirmed: the log's only such events are 06:32:02.749 and 06:33:45.152,
 both accounted for elsewhere).
@@ -177,7 +177,7 @@ All 8 ANC Notify frames this session, in order:
 
 | Frame | Time | Settable-toggles | Current-state | Context |
 |---|---|---|---|---|
-| 1521 | 06:32:03.567 | `0x00` | `0x20` (Off) | Right after classic connect, both buds still docked at this instant (first removed ~06:32:00–02, connect completes 06:32:02.749, this notify is part of the immediate post-connect RFCOMM-channel-open burst) |
+| 1521 | 06:32:03.567 | `0x00` | `0x20` (Off) | Right after classic connect: the Left bud is already out (removed ~06:32:00–02, the trigger of the connect, which completes 06:32:02.749), the Right still docked (§6, frame 1515 `64 e4`); this notify is part of the immediate post-connect RFCOMM-channel-open burst |
 | 2128 | 06:32:18.631 | `0xe8` | `0x80` (Transparency) | ~0s before the *second* bud is lifted from the case (≈06:32:19–20) |
 | 2220 | 06:32:23.195 | `0xe8` | `0x80` | Idle, both buds out |
 | 2245 | 06:32:25.013 | `0xe8` | `0x80` | Idle |
@@ -211,7 +211,7 @@ tshark -r CAP-016-btsnoop_hci.log -Y "btrfcomm.len>0 && frame.time_relative>=570
 
 | Action | Video time | Wire result |
 |---|---|---|
-| Case lid **closed** (empty) | 06:32:44–51 | Only routine periodic traffic in the surrounding window (device-info re-announce `google-pixel-buds-pro-v1`, `AT+BIEV`-shaped HFP heartbeat frames at their ordinary ~6–7s cadence) — **no frame timed to the lid closing specifically** |
+| Case lid **closed** (empty) | 06:32:44–51 | Only routine periodic traffic in the surrounding window (device-info re-announce `google-pixel-buds-pro-v1`, `AT+BIEV`-shaped HFP frames at their ordinary irregular cadence, `CAP-009-FINDINGS.md` §2) — **no frame timed to the lid closing specifically** |
 | Case lid **reopened** (empty) | 06:33:02–04 | Same — no dedicated frame |
 
 This is a second, independent confirmation of `CAP-007`(old) §3.4's finding ("closing the case lid,
@@ -296,7 +296,7 @@ encodes** — still 🔴 open, per `CAP-007`(old) §6.
 - 🔴 Why does the ANC Notify's settable-toggles byte revert from `0xe8` to `0x00` a second time at
   06:33:23.456 (frame 3054), after already having re-announced `0xe8`/Transparency twice during the
   same bounce (frames 2768, 3012)? Not resolved by any video-visible action in this capture.
-- 🔴 Does `4f:25:00:85:9a:b1` (the BLE link opened at 06:31:40.983, §2) actually belong to the same
+- ✅ (answered in §2: no — handle `0x0002`'s peer exposes the Heart Rate service, frame 760; it is another device) Does `4f:25:00:85:9a:b1` (the BLE link opened at 06:31:40.983, §2) actually belong to the same
   physical Buds unit as classic peer `04:00:6e:cf:6e:07`? Time-coincident but not content-verified
   in this pass — a GATT-level read of that handle's advertised service data would settle it.
 - 🔴 What is the black, non-Pixel-Buds earbud/case visible in frame from ≈06:33:16–45
@@ -331,8 +331,8 @@ tshark -r CAP-016-btsnoop_hci.log -Y "frame.number==1991" -x
 0030  6e 07                                             n.
 ```
 After the HCI ACL (`02 01 20 2d 00`) and L2CAP (`29 00 4d 00`) headers, the HID payload is `a3 02`
-(Transaction Type `DATA`, Report Type `Feature`, Report Id `0x02`) followed by 45 bytes that decode
-byte-for-byte as: ASCII `#AndroidHeadTracker#1.0` (24 bytes) + **exactly 8** `0x00` zero-padding
+(Transaction Type `DATA`, Report Type `Feature`, Report Id `0x02`) followed by 39 bytes (L2CAP length `0x0029` = 41 = 2 + 39) that decode
+byte-for-byte as: ASCII `#AndroidHeadTracker#1.0` (23 bytes) + **exactly 8** `0x00` zero-padding
 bytes + ASCII `BT` (2 bytes) + `04 00 6e cf 6e 07` — the Buds' own classic BD_ADDR, in the same byte
 order the `bthci_acl` dissector reports it elsewhere in this log (`[Source BD_ADDR: Google_cf:6e:07
 (04:00:6e:cf:6e:07)]`). Wireshark's own HID dissector misparses the leading bytes of this frame as
@@ -390,7 +390,7 @@ handle, and the recurring `0xfea9` byte pair.
 burst's own timing (06:31:43–06:32:12) sits immediately after the BLE connection completes
 (06:31:40.983, §2) and entirely **before** the classic connection even forms (06:32:02.749, §1) —
 i.e. it overlaps the BLE-link startup window, not the classic RFCOMM channel-open burst. It does
-**not** overlap the RFCOMM multiplexer channel bounce at 06:33:15.94–06:33:19.615 (§3) — that event
+**not** overlap the RFCOMM multiplexer channel bounce at 06:33:15.94–06:33:21.87 (§3) — that event
 starts roughly **63 seconds after** this burst's last frame (2082, 06:32:12.689), with no handle-
 `0x0044` traffic anywhere in between. So of the two events this project might guess this burst is
 tied to, the timing evidence supports only the BLE-connect correlation — the channel-bounce

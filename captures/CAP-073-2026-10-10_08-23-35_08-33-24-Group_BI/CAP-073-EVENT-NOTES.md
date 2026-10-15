@@ -72,8 +72,8 @@ The two `firstInstallTime` lines are per user. A full `dumpsys package` taken by
 
 - **B and A are consecutive:** A ends 2026-10-10 08:22:48.796, B starts 08:22:51.771 (`capinfos -a -e`); the user switch 0 → 10 is at 08:22:46.7–47.9 (system log
   `uc_switch_user` / `am_switch_user`). No Buds ACL spans the gap: A's last Buds ACL ended at 07:43:06 (A 26567, `0x13`), B's first starts at 08:23:01.706 (B 159).
-- **A is before the run:** OpenControl sessions on 2026-10-09 18:35, 19:29 and 2026-10-10 06:43–06:44, 07:07–07:08, 07:13, each with the thirteen requests and
-  `GetHardwareInfo` (a 1.2.0 build), plus EQ and Volume EQ writes (07:07:40–07:08:44, A 21952–22180) and Earbuds-replaced writes (06:43–06:44); the system log
+- **A is before the run:** OpenControl sessions on 2026-10-09 18:35, 19:29 and 2026-10-10 06:43–06:44, 07:07–07:08, 07:13, each with the fifteen requests
+  (13 `ReadSetting` incl. 4:16, `SubscribeRuntimeInfo`, `GetHardwareInfo`; a 1.2.0 build), plus EQ and Volume EQ writes (07:07:40–07:08:44, A 21952–22180) and Earbuds-replaced writes (06:43–06:44); the system log
   shows the app resumed **in user 0** at 07:07:08 (`wm_set_resumed_activity: [0,…]`), process 30161 died 07:57:45. Play services (the Owner user) claimed the
   Message Stream 14 times in A. **Not the run;** it explains the Buds' starting state (EQ = −2, 0, 2, 3, 5).
 - **The skeleton's P9 ("no app use before the film"):** the app was opened in user 10 at 08:22:59 and connected at 08:23:01 — 34 s before the film starts.
@@ -100,7 +100,7 @@ Columns: phone time · what happened (actor) · step / W / Test-ID · evidence.
 | 08:22:46.7–47.9 | user switch 0 → 10; the app's tile service bound in user 10 (process 15696, `ec6d163`) | — | X 2, X 4 |
 | 08:22:59.2 | the app opened (MainActivity resumed in user 10); "Android link: PENDING -> NOT_CONNECTED" | P9 deviation | X 32; system log 15696 lines |
 | 08:23:01.113 | `ConnectionState: Disconnected -> Connecting` with no "Automatic re-open" line (Android's link read NOT_CONNECTED, so ADR-044 could not fire) — 🟡 a Connect tap; the phone pages the Buds (Create Connection B 157, 17 ms later) | P9 deviation | system log 15696; B 157, 159 |
-| 08:23:01.9–08:23:03.5 | session 1 (ch 21): announcement B 258, the thirteen requests, `GetHardwareInfo` B 333 → 336 (46 ms); snapshot claim `SABM` B 270 → `08 11` B 280 → `Notify` `e8 00 20` (B 291, OFF, no bud worn) → the phone's `DISC` B 450 at 08:23:03.530 (**1.513 s** after B 291) | `PAIR-003`, `BATT-004` (old build) | B 236–469 |
+| 08:23:01.9–08:23:03.5 | session 1 (ch 21): announcement B 258, the thirteen `ReadSetting`s, `SubscribeRuntimeInfo`, `GetHardwareInfo` B 333 → 336 (46 ms); snapshot claim `SABM` B 270 → `08 11` B 280 → `Notify` `e8 00 20` (B 291, OFF, no bud worn) → the phone's `DISC` B 450 at 08:23:03.530 (**1.513 s** after B 291) | `PAIR-003`, `BATT-004` (old build) | B 236–469 |
 | 08:23:04.067 | the phone sets AVRCP absolute volume **0 %**; play status Stopped | — | B 575, 577 |
 | **08:23:35.3** | **screen recording starts** (t=0): Connection tab, dark, "App control: ready", Left 100 % ⚡, Case 100 %, Right 100 % ⚡, "Both buds in the case" | P4 · `INEAR-006` | S t=0 |
 | 08:23:44–08:24:01 | gear → Settings: Dark mode **On**, Case sounds both on; **Info: "App: 1.2.0, build ec6d163 (2026-10-09)"**, firmware ×3 `release_5.203` (08:23:01), control channel 21, serials (08:23:02) Case / Right bud / Left bud; Debug: **Debug mode on**, Unidentified frames (5); Settings; back to Connection | P1 (on film) · W1 (before) · `FW-003` | S t=9–26 |
@@ -133,7 +133,7 @@ Columns: phone time · what happened (actor) · step / W / Test-ID · evidence.
 | 08:28:33–08:28:50 | **Sound → Balance:** release 1 → `4:{17:9}` B 3679 → OK B 3681, "Right 5"; release 2 → `4:{17:27}` B 3682 → OK, "Right 14"; drag "Right 6 — release to set", "Right 3 — …", "Right 4 — …", release 3 → **`4:{17:7}`** B 3685 → OK B 3687, **"Right 4"**; drag "Right 2 — …", "Left 6 — …", "Left 43 — …", "Left 83 — …", "Left 77 — …", "Left 9 — …", "Left 3 — …", release 4 → `4:{17:8}` B 3691 → OK B 3694 (08:28:49.068), "Right 4" until the OK, then **"Left 4"** | **BI-20** · W12 · `AUDIO-003` | S t=298–314; E 167–178 |
 | 08:28:54–08:29:00 | Controls (touch on, both holds Noise control, the mode list Noise cancellation + Adaptive + Transparency, Off unticked); Find | — | S t=319–321 |
 | 08:29:46.094 | **Disconnect** tap (phone `DISC` DLCI 2 B 3761) | BI-3 · W2 · `PAIR-003` | E 183–184; S t=371 |
-| 08:29:48.237 | **Connect** tap; session 4 (ch 19), thirteen requests, `GetHardwareInfo` B 3878 → 3882 (57 ms); snapshot claim B 3823 … `DISC` B 3883 (**1.508 s**); "Probably worn (checked 08:29:48)" | BI-3 · W2 · `PAIR-003` | E 185–231; S t=373 |
+| 08:29:48.237 | **Connect** tap; session 4 (ch 19), thirteen `ReadSetting`s, `SubscribeRuntimeInfo`, `GetHardwareInfo` B 3878 → 3882 (57 ms); snapshot claim B 3823 … `DISC` B 3883 (**1.508 s**); "Probably worn (checked 08:29:48)" | BI-3 · W2 · `PAIR-003` | E 185–231; S t=373 |
 | 08:29:51–08:29:56 | battery (i): Left/Right "not charging (08:29:49)", Case "last seen 08:27:46 (last connection)", the Worn text | — | S t=376–380 |
 | 08:30:23.5 | the Right bud into the case (6.3 = 2) — Right ⚡ on screen | — | B 3953; S t=408 |
 | 08:30:30.238 | **ACL dropped by the Buds (`0x13`)**; "the Buds closed the channel" → "Android's link to the Buds went down around the loss"; screen "Android no longer shows the Buds connected …" | — | B 3968; E 238–244; S t=415 |
@@ -164,12 +164,12 @@ Columns: phone time · what happened (actor) · step / W / Test-ID · evidence.
 | P7 | not checked | — | no call came |
 | P8 | done | S t=0 | both buds in the case at the start |
 | P9 | **not done** | E/X 08:22:59–08:23:03 | the app opened and connected 34 s before the film |
-| BI-1 | done (old build at 08:23:01; new build at 08:27:07 by LINK_BACK) | E 1–52; B 3078–3145 | thirteen requests, one `GetHardwareInfo`; the snapshot claim released 1.511 s after its answer |
+| BI-1 | done (old build at 08:23:01; new build at 08:27:07 by LINK_BACK) | E 1–52; B 3078–3145 | fifteen requests (13 `ReadSetting` incl. 4:16, `SubscribeRuntimeInfo`, one `GetHardwareInfo`); the snapshot claim released 1.511 s after its answer |
 | BI-2 | done | S t=215–225 | build `5b4d5db`, no "-dirty"; firmware ×3; serials Case / Right / Left |
 | BI-3 | done | E 183–231 | Disconnect 08:29:46, Connect 08:29:48 |
 | BI-4 | **not done** | — | no Bluetooth off/on |
 | BI-5 | done once (at the end) | S t=555–560 | "Debug log saved (681 lines)." |
-| BI-6 | done (without camera; both buds out of the case, worn per the maintainer — not filmed) | B 3484–3504; E 131 | one `SABM`, `08 11`, the hold logged; **no `DISC` for 30.5 s** (08:27:59.8–08:28:30.9) while the tab was shown; the ANC (i) not opened |
+| BI-6 | done (without camera; both buds out of the case, worn per the maintainer — not filmed) | B 3484–3504; E 131 | one `SABM`, `08 11`, the hold logged; **no `DISC` for 31.1 s** (08:27:59.8–08:28:30.9) while the tab was shown; the ANC (i) not opened |
 | BI-7, BI-8 | done (four holds, the bud not identifiable) | B 3531, 3543, 3546, 3547 | the mode changed on screen without a tap each time; the (i) line **not looked at** |
 | BI-9 | done ×4 | B 3550–3602 | `08 11` → `Notify` → `Set` → ACK on the held channel, no `SABM`; the (i) not opened |
 | BI-10 | **not done** | — | the tile not used |
@@ -187,14 +187,14 @@ the skeleton's "Not in this run"); a Connect by pull-to-refresh on Controls (08:
 (08:23:02, 08:27:07), `FW-003` (S t=10–19, 217–225), `ANC-001` Off (set 08:28:20), `ANC-002` NC (read 08:27:59, set 08:28:22), `ANC-003` Adaptive (08:28:05 by the Buds, set 08:28:23), `ANC-004` Transparency (08:28:08 by the Buds, set 08:28:19), `TOUCH-007` (08:28:05,
 08:28:08, 08:28:11, 08:28:15 — four unprovoked `Notify`; the press-and-holds themselves are the maintainer's statement, not filmed), `CASE-004` Left out of the case (08:27:40, 08:30:47, 08:31:52,
 08:32:17 — runtime info 6.2 = 1), `CASE-005` Right out (08:27:57, 08:30:33, 08:31:45, 08:32:06 — 6.3 = 1), `INEAR-006` (the Worn line at 08:23:35, 08:27:44, 08:29:48, 08:30:33/34), `AUDIO-003`
-(08:28:34–08:28:49). **Expected but not observed:** `AUDIO-002` (BI-18, Volume EQ not run), `INEAR-004` (BI-19, in-ear detection not switched).
+(08:28:34–08:28:49). **Expected but not observed:** `AUDIO-002` (BI-18, Volume EQ not run), `INEAR-001` (BI-19, in-ear detection not switched).
 
 ## Analysis checklist
 
 - [x] Every filter scoped to the Buds' handle `0x000b` (Connection Complete B 159, 3973, 4483, 4953, 5589, 6069, 6581 for the Buds' address).
 - [x] P0, P1, the Info frame's hash = B1's; **the installed APK = B1's file** (pulled, SHA-256 equal).
 - [x] Zero Play-services claims in B (positive control `CAP-066`).
-- [x] I: every session's thirteen requests (11 of 11), one `GetHardwareInfo` per session; every snapshot claim released 1.507–1.513 s after its answer.
+- [x] I: every session's fifteen requests (11 of 11: 13 `ReadSetting` incl. 4:16, `SubscribeRuntimeInfo`, one `GetHardwareInfo`); every snapshot claim released 1.507–1.513 s after its answer.
 - [x] II (ADR-061) as far as run: the hold's start, no `DISC` while the tab was shown, the `DISC` 1.509 s after leaving; four unprovoked `Notify`, nothing from
       the app after them; the taps without `SABM`. Not run: the tile, Home, the re-open with the tab shown, the (i) line.
 - [x] III: BI-20 against the references; the others not run.

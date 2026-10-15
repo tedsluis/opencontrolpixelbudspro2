@@ -139,8 +139,8 @@ a9 7e` = `CAP-073` B 3375); the two strings not in `CAP-073` are this run's own 
 answer (E 49, 152, 254, …), the Info tab labels them Case / Right bud / Left bud (S t=6).
 
 - 🟢 **The snapshot claim of every Connect collided with Play services:** in **10 of 10** sessions the DLCI 0x04 attempt 1 failed after 56–363 ms with `IOException:
-  read failed, socket might closed or timeout, read ret: -1` (E 15, 84, 98, 119, 163, 191, 218, 280, 335, 396, 456, 513, 571, 626 — 14 such lines in the run incl. the
-  tap and tab claims) and attempt 2 connected 0.6–0.7 s later — the `ai-sessions/0039` collision shape: the app's failed attempt closes Play's port (the phone's `DISC`
+  read failed, socket might closed or timeout, read ret: -1` (E 15, 84, 98, 119, 163, 191, 218, 280, 335, 396, 456, 513, 571, 626 — 13 such lines in the run, E 84 … 626, incl. the
+  tap and tab claims; E 15 is 06:38:10, before the film) and attempt 2 connected 0.6–0.7 s later — the `ai-sessions/0039` collision shape: the app's failed attempt closes Play's port (the phone's `DISC`
   of Play's claim within 2 ms of E's "connect failed" line, e.g. B 14450 06:40:50.698 ↔ E 119 06:40:50.698), the retry finds the port free. **`CAP-073` (no Play): 0 of 12
   first attempts failed.**
 
@@ -162,8 +162,8 @@ first hold.
 **What the evidence shows (🟢 unless marked):**
 
 1. **Every entry of the noise-control tab started a hold, and every hold ended by a close the app did not make.** E logs "Message Stream hold started: the
-   noise-control tab is on screen (ADR-061)" 12 times in the run (06:40:38.936, 06:40:51.921, 06:40:59.801, 06:41:06.430, 06:41:12.441, 06:41:57.867, 06:42:31.044,
-   06:42:58.043, 06:43:27.434, 06:43:51.743, 06:44:24.476, 06:44:53.944, 06:45:14.634 — thirteen with the pre-film 06:38:24.617) and "hold ended" 13 times: **once "the
+   noise-control tab is on screen (ADR-061)" 13 times in the run (06:40:38.936, 06:40:51.921, 06:40:59.801, 06:41:06.430, 06:41:12.441, 06:41:57.867, 06:42:31.044,
+   06:42:58.043, 06:43:27.434, 06:43:51.743, 06:44:24.476, 06:44:53.944, 06:45:14.634 — fourteen with the pre-film 06:38:24.617) *(count corrected 2026-10-15, `ai-sessions/0094`)* and "hold ended" 13 times: **once "the
    noise-control tab was left"** (06:40:40.392 — the tab visit of t=22–25) and **twelve times "the channel was closed, not by this app"**, each 2–3 ms after "RFCOMM
    on-demand channel 0x04 closed (IOException: bt socket closed, read return: -1) — session channels untouched" (E 161/162, 176/177, 189/190, 204/205, 266/267, 321/322,
    380/381, 440/441, 497/498, 555/556, 610/611, 667/668). In `CAP-073` the one hold of the run ended by the tab (31 s), never by a close.
@@ -176,8 +176,8 @@ first hold.
    came 2.18 s after the previous cut — Play's *retry*, see 5). Measured from the app's own `SABM`: 4.68, 4.92, 4.82, 5.13, 4.66, 4.85, 4.66, 5.04, 4.88 s for the nine claims
    that followed a collision directly, and **1.03 s (15500), 1.61 s (16578), 0.38 s (14845)** for the three claims opened on attempt 1 into a free channel — their life
    is whatever was left of Play's 5.2–5.7 s. The same ≈ 5.3 s shows where the app had already released by itself: Play's re-open came 5.30, 5.32, 5.33, 5.30, 5.28 s
-   after it lost its socket (06:38:10.631 → 13047 06:38:15.937; 13168 → 13251; 13373 → 13450; 14072 → 14152; 14263 → 14346). **20 of 20 recoveries of the run fall in
-   5.2–5.7 s after the loss**; `ai-sessions/0040` measured 2.7–5.0 s on 2026-09-19 and `CAP-059` 1.7–3.1 s (a different Play version or state — ⚪ not resolved here).
+   after it lost its socket (06:38:10.631 → 13047 06:38:15.937; 13168 → 13251; 13373 → 13450; 14072 → 14152; 14263 → 14346). **16 of 16 measured recoveries of the run fall in
+   5.2–5.7 s after the loss** *(count corrected 2026-10-15, `ai-sessions/0094`)*; `ai-sessions/0040` measured 2.7–5.0 s on 2026-09-19 and `CAP-059` 1.7–3.1 s (a different Play version or state — ⚪ not resolved here).
 4. **What a recovery does to the app's claim:** no Play `SABM` is on the wire at the moment of a cut — the stack refuses Play's connect before anything reaches the
    Buds and, on that failure path, removes the **existing** port, which is the app's (§8: AOSP `port_api.cc` returns `PORT_ALREADY_OPENED` with the incumbent's handle,
    `bta_jv_act.cc` then calls `RFCOMM_RemoveConnection(handle)`). The wire shows only the resulting `DISC` of the app's DLCI; the stack's own log lines are not retained
@@ -194,7 +194,9 @@ first hold.
      06:45:17.550** — and **each of the nine is on screen** (S t=138 Transparency, 164 Transparency, 218 NC, 220 Transparency, 249 NC, 251 Off, 281 Adaptive, 299 NC, 302
      Off) with no touch indicator. The (i) line "Changed by the Buds …" was not opened (not on film).
    - on Play's claims: 13 answer Play's own `08 11` (one per claim; three of them already carry a changed mode — 15618 `80`, 15957 `08`, 16270 `08`, each 0.4–0.5 s
-     after Play's `SABM` with a cue word 0.2–0.4 s later: a hold at the moment of Play's open), **35 are unprovoked** (the bold frames of §1's table) — **none reached the
+     after Play's `SABM` with a cue word 0.2–0.4 s later: a hold at the moment of Play's open; by the same rule — a mode other than the channel's previous
+     `Notify` — two more do: 16999 `08` after the app's 16937 `80`, 17940 `40` after the app's 17848 `20`, cue words not checked; count added 2026-10-15,
+     `ai-sessions/0094`), **35 are unprovoked** (the bold frames of §1's table) — **none reached the
      app, none is on screen:** the screen keeps the last mode the app saw (Adaptive t=57–94 and t=102–129, Transparency t=138–156 and t=164–182 and t=220–242, Adaptive
      t=191–210, Off t=251–274, Adaptive t=281–295) while the Buds cycled through 5–7 modes each time.
    - **The order of the Buds' changes follows the press-and-hold list** written at 06:38:41 (all four: `40` → `80` → `08` → `20` → `40` …, e.g. 15204–15256; `CAP-073`'s
@@ -257,9 +259,9 @@ held the channel again — attempt 2 OK, hold 0.7 s, released by the tab) is the
 | Connect reads | the thirteen + `GetHardwareInfo`, byte-identical to `CAP-072` (11 of 11) | **byte-identical to `CAP-073`** (15 of 15 strings, 10 of 10 sessions; §2) |
 | Play-services marker | 0 in the run (`.last`: 14, the Owner user) | **22** (A: 7) |
 | DLCI 0x04 claim owner over time | the app only; between its claims nobody | **alternating app / Play**: Play holds it whenever the app does not (116 s, 34 s, 29 s, 18–24 s, 12 s, > 408 s); the app's claims last 0.4–5.1 s before the cut |
-| The app's first connect attempt on 0x04 | 0 of 12 failed | **14 of 16 failed** (56–363 ms), 2 connected into a free channel and were cut within 0.4–1.6 s |
+| The app's first connect attempt on 0x04 | 0 of 12 failed | **13 of 16 failed** (95–363 ms), 3 connected into a free channel and were cut within 0.4–1.6 s *(corrected 2026-10-15, `ai-sessions/0094`)* |
 | The hold's lifetime and end | 31 s, ended by leaving the tab (`DISC` 1.509 s later) | **0.4–5.1 s, ended twelve of twelve times by a foreign close** ("not by this app"), once by leaving the tab |
-| Play's recovery after losing the channel | n/a | **5.2–5.7 s, 20 of 20**; retry 2.2–2.6 s after a failed recovery |
+| Play's recovery after losing the channel | n/a | **5.2–5.7 s, 16 of 16**; retry 2.2–2.6 s after a failed recovery |
 | Unprovoked `Notify` received by the app | 4 of 4 of the run (B 3531, 3543, 3546, 3547 — on the 31-s hold) | **9 of 44** (the 35 on Play's claims + 3 at Play's opens unseen) |
 | Unprovoked `Notify` received by Play services | 0 (no Play) | 35 + 3 (one logged by `HearableControlManager`, 06:45:26.6) |
 | Unprovoked `Notify` received by nobody | 0 (the Buds send only to a connected Seeker: no claim ⇒ no frame — `CAP-072` §5) | 0 — Play is on the channel whenever the app is not; every hold is on the wire |

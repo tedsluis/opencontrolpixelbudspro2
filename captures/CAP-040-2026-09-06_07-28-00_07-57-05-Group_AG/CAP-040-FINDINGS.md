@@ -123,7 +123,9 @@ $ tshark -r CAP-040-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002" -T fields -e 
 ```
 $ tshark -r CAP-040-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002 and frame.time >= \"2026-09-06 07:29:44\" and frame.time <= \"2026-09-06 07:29:53\"" \
   -T fields -e frame.number -e frame.time -e frame.p2p_dir -e _ws.col.Info
-(0 rows)
+(0 rows, exit 0)
+$ # positive control: the same filter over 07:28:10–07:28:14
+648 … 1109
 ```
 
 **Conclusion:** the official app's own in-app "Connect"/"Disconnect" buttons, as tapped in this
@@ -132,7 +134,7 @@ link and DLCI 0x08 stay open continuously from `07:28:12` through `07:55:41`. Wh
 "Disconnect"/"Connect" button pair actually does (a local UI-state toggle, or a change scoped to a
 higher layer this project hasn't identified), it is not visible at the RFCOMM/HCI level in this
 session. **This invalidates the ~15-repeat bracketing this session's own procedure intended**: the
-documented Event Timeline's ~30 "Tapped Disconnect/Connect in App" and "Case closed/opened (auto)"
+documented Event Timeline's ~80 (81) "Tapped Disconnect/Connect in App" and "Case closed/opened (auto)"
 rows between `07:28:44` and `07:52:09` correspond to **zero** distinguishable wire events for the
 vast majority of them — see `CAP-040-EVENT-NOTES.md`'s corrected Contamination log for the full
 detail. The one place in this session with genuine, wire-confirmed channel/connection activity is
@@ -160,6 +162,14 @@ from its slowly-discharging `95` to `100` exactly across this real docking event
 same throughout the entire 24-minute video"): true for the documented 24-minute (1450s) window, but
 not for the video as a whole — Left and Case both change in the final, previously-unreviewed ~5
 minutes.
+
+**Correction (2026-10-15, `ai-sessions/0094`) — the buds were not docked before ~07:53:53, so the missing wire signal is not only the app buttons.**
+DLCI 0x04 "Battery updated" reads `03 03 00 03 5f 64 ff` (no charging bit) 36 times, frames 1337 (07:28:17.210) … 3987 (07:43:57.975); the
+first charging bit is frame 5729 (07:53:53.100, `df 64`, Left), Right from 7266 (07:55:25.504) (`tshark -r CAP-040-btsnoop_hci.log -Y
+'btrfcomm.len>0 and data.data[0:2]==03:03'`); the only Disconnection Complete is 7784 (07:55:41.465). Film stills at 07:28:40, 07:39:40 and
+07:52:09 show the case empty with both buds beside it. The Event Timeline's "Buds placed in case | Docked" / "Case closed (auto disconnect)"
+rows (07:28:36–07:52:09) are therefore not real docking events: with the buds outside the case, case open/close produces no disconnect.
+*(corrected 2026-10-15, `ai-sessions/0094`)*
 
 ## 3. `PRIV-001`'s central question: the 7 flagged unmapped codes fire exactly once (🟢 FACT for the observation; inconclusive for the correlation test)
 
@@ -211,7 +221,7 @@ $ awk -F'|' '{print substr($4,1,8)}' dlci08_all.tsv | sort | uniq -c | sort -rn
       1 050c0000   <- (one of the 7 flagged codes, bundled with the other 6 in frame 980)
 ```
 
-## 4. Bonus finding: DLCI 0x08's Left-earbud battery field reports the `0xff` sentinel at the exact moment of physical docking (🟡 HYPOTHESIS, new, single occurrence)
+## 4. Bonus finding: the Left-earbud battery field reports the `0xff` sentinel during the physical docking (🟡 HYPOTHESIS; on DLCI 0x04 and DLCI 0x08, not a single occurrence — re-timed 2026-10-15, see the note at the end of this section)
 
 Decoding every `Group 0x0e Code 0x01` occurrence (`ADR-014`'s already-FACT `[value, flag, index]`
 triple, `index=1`→Left/`2`→Right/`3`→Case) across the whole session:
@@ -245,6 +255,12 @@ DLCI 0x08's Left-earbud battery field may report the `0xff`/255 "unknown" sentin
 the point of physical case contact (sensor/contact-read gap), before settling to a value that looks
 like a charging-state placeholder (`100`) rather than a fresh percentage reading. Single occurrence,
 one session — not proposed for promotion.
+
+**Re-timing (2026-10-15, `ai-sessions/0094`):** the docking starts earlier and the sentinel is not single-channel. DLCI 0x04 "Battery updated"
+(`tshark -Y 'btrfcomm.len>0 and data.data[0:2]==03:03'`) already reports Left charging at 07:53:53.100 (frames 5729…5750, `03 03 00 03 df 64 ff`),
+Left `0xff` with the charging bit at 07:54:14.214 (6078/6079/6083, `ff 64`) — 14 s before frame 6243 — again `df 64` at 07:54:28.307 (6224–6226) and
+`ff 64` at 07:54:28.337 (6240/6246), then `e4 64` (100 %, charging) from 07:54:29.614 (6271). The physical docking of the Left bud is therefore
+~07:53:53 (first charging bit), and the `0xff` reading occurs on both channels and more than once. 🟡 unchanged as a reading; the timing above is 🟢 FACT for the frames.
 
 ## 5. Test-ID traceability (`AGENTS.md` §13)
 

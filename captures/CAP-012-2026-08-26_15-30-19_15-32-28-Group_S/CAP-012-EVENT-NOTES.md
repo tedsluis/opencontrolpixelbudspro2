@@ -12,7 +12,9 @@ whether `CAP-004`'s Cross-Transport Key Derivation bonding result was an artifac
 Connect's early BLE connection, or a genuine effect of GMS being disabled
 (`CAP-004-FINDINGS.md` §8 item 4). The core `GFPS-001` result itself is **not** expected to
 change — only the §2-equivalent CTKD-vs-classic-SSP bonding-mechanism finding.
-**Result: confirmed classic SSP, not CTKD — see `CAP-012-FINDINGS.md` §2/§10.**
+**Result: confirmed classic SSP, not CTKD — see `CAP-012-FINDINGS.md` §2/§10.** What gates CTKD is
+an SMP pairing on the LE link (🟡 HYPOTHESIS, `DECISIONS.md` ADR-030 Update 2026-10-03), not merely
+nRF Connect's early LE link (`CAP-003` had one and used SSP).
 
 **Setup, confirmed for this session:** Pixel Buds app uninstalled and Google Play Services
 disabled; paired via system Bluetooth settings only — **no BLE tool (nRF Connect or otherwise) is
@@ -46,7 +48,10 @@ unlike that earlier attempt.
 ## Event Timeline
 
 Timestamps are the video's own on-screen wall-clock overlay; the log uses the same wall clock
-(+0200), directly comparable. All timestamps below are video-confirmed to within 1s.
+(+0200), but the film clock runs ~1–2 s behind the log clock in this capture: tap-caused wire
+events precede the filmed taps by 0.2–2.0 s (`Delete Stored Link Key` 15:31:05.955 vs the 15:31:08
+tap; `User Confirmation Request Reply` 15:31:18.675, frame 515, vs the 15:31:20 Pair tap;
+`Create Connection` 15:32:07.802 vs the 15:32:08 tap). Video timestamps below are to within 1s of the film overlay.
 
 | Time | Action / Event | Initiator | Test-ID | Wire evidence / Notes |
 |----------|---|---|---|---|
@@ -59,7 +64,7 @@ Timestamps are the video's own on-screen wall-clock overlay; the log uses the sa
 | 15:30:58 | **"Pixel Buds Pro 2 van Ted"** appears in "Available devices" list | App (Auto) | — | — |
 | 15:31:08 | User taps "Pixel Buds Pro 2 van Ted" in the list | User (App) | `PAIR-001` | `Delete Stored Link Key` (frame 457, 15:31:05.955) → `Create Connection` (frame 459, 15:31:05.958) → `Connect Complete` (frame 463, 15:31:06.410) → classic `IO Capability Request/Response` (frames 485–495, 15:31:06.448–.466) — see `CAP-012-FINDINGS.md` §2 |
 | 15:31:09 | System **"Pair with Pixel Buds Pro 2 van Ted?"** dialog appears | App (Auto) | — | Coincides with the IO Capability exchange having just completed (frame 495, 15:31:06.466) |
-| 15:31:20 | User taps **Pair** | User (App) | — | `Simple Pairing Complete` (frame 517, 15:31:18.872) — ~1s before this on-screen tap timestamp, within this project's usual ±1–2s video/wire tolerance; `Link Key Notification`/`Authentication Complete`/`Encryption Change` follow through 15:31:19.008 (frames 518–526) |
+| 15:31:20 | User taps **Pair** | User (App) | — | `User Confirmation Request Reply` (frame 515, 15:31:18.675) → `Simple Pairing Complete` (frame 517, 15:31:18.872) — the reply is the wire effect of this tap, ~1.3 s before the filmed tap (film clock behind, see above); `Link Key Notification`/`Authentication Complete`/`Encryption Change` follow through 15:31:19.008 (frames 518–526) |
 | 15:31:21 | App returns to the phone's home screen (Bluetooth status-bar icon now shown) | App (Auto) | — | RFCOMM channels 0/4/5/6 open and settle 15:31:19.39–20.39; channels 4/5 (DLCI 0x08/0x0a) are torn down again (`DISC`, frames 897–902) once the connection-setup handshake completes, leaving only channels 0/6 (mux/HFP) open |
 | 15:31:35 | User opens system Bluetooth settings again: **"Pixel Buds Pro 2 van Ted — Active. 100% battery."** shown | User (App) | — | Generic Android per-device Bluetooth settings page, no ANC/EQ/Sound section — same as `CAP-004-FINDINGS.md` §7's identical observation for this GMS-disabled/no-app condition |
 | 15:32:04 | User taps the **"Pixel Buds Pro 2 van Ted"** device row itself (not the gear icon) — this disconnects the device; chip changes to **"Saved"** by 15:32:05 | User (App) | `PAIR-003` | `Sent DISC Channel=6` (frame 962, 15:32:03.203) → `Sent DISC Channel=0` (frame 971, 15:32:03.589) → L2CAP `Disconnection Request`/`Response` (15:32:03.652–.666) — phone-initiated, no hardware event nearby |
@@ -101,8 +106,8 @@ Timestamps are the video's own on-screen wall-clock overlay; the log uses the sa
   values above — no timestamp needed correcting.
 - **Added:** the 15:32:03–15:32:10 manual disconnect/reconnect (`PAIR-003`) — not present in the
   original draft at all. This is a real, on-screen, wire-confirmed event window (user taps the
-  device row twice), not a capture artifact, and it incidentally supplies this project's first
-  Pixel-7a `PAIR-003` data point — see `CAP-012-FINDINGS.md` §6.
+  device row twice), not a capture artifact, and it incidentally supplies a further Pixel-7a
+  `PAIR-003` data point (the first is `CAP-006`) — see `CAP-012-FINDINGS.md` §6.
 - **Added:** the 15:31:21 "app returns to home screen" / RFCOMM-channel-settling row, and precise
   wire-evidence citations (frame numbers) for every row, which the original draft's skeleton left
   as `-`/`TBD`.

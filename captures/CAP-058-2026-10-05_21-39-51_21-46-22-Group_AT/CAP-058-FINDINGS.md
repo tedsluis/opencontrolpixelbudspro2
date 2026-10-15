@@ -45,7 +45,7 @@ state by a "force stop"."* — so the stopped state does not block a bind; and `
 (`ActiveServices.java` ≈ lines 4313–4361 and 5726–5910 of that revision). 🟡 for this phone's build (the device may differ from `main`).
 
 **The revised Group AT's rule, applied literally:** outcome **(a)** — "no `am_proc_start` between the force stop and the SDP browse" — is **not met**:
-the process was present again 16 s after the force stop. Outcome **(b)** — "a restart with its cause" — is met **in part**: the restart is on record
+the process was present again at the next `dumpsys` run (21:40:51 laptop clock; laptop ↔ phone offset not measured, so its delay after the force stop is not known). Outcome **(b)** — "a restart with its cause" — is met **in part**: the restart is on record
 (two PIDs), its cause is not. 🟢 What can be concluded: through this path (force stop in Settings, then Settings' device pages, Forget, pairing) the
 companion app does **not** stay dead; "app never running" was not reached in this run. With the `CAP-054` observation (the app ran again after its
 force stop and opened MAESTRO at 18:06:22) and the context observation of the prompt (`am_proc_start … bound-service …
@@ -86,11 +86,11 @@ firmware does not publish `3a046f6d-…` at all; the "default internal rfcomm so
 
 | Pairing | LE (Fast Pair) | Classic SSP | Link key | Outcome |
 |---|---|---|---|---|
-| A, 21:36:28 (before the film) | key-based pairing `0x0c04`, passkey `0x0c07`, account key `0x0c0a` | Buds IO DisplayYesNo, phone confirms | type **0x05** (authenticated P-256) | SDP, RFCOMM 0x0c/0x0a/0x08/0x04, no MAESTRO; local disconnect, Forget at 21:36:42.545 |
+| A, 21:36:28 (before the film) | key-based pairing `0x0c04`, passkey `0x0c07`, account key `0x0c0a` | Buds IO DisplayYesNo, phone confirms | type **0x05** (Authenticated Combination Key, P-192; `.log.last` 10333) *(corrected 2026-10-15, `ai-sessions/0094`)* | SDP, RFCOMM 0x0c/0x0a/0x08/0x04, no MAESTRO; local disconnect, Forget at 21:36:42.545 |
 | B, 21:37:06 (before the film) | as A | as A | 0x05 | SDP, MAESTRO opened 21:37:10.627; ended 0x13 21:37:25.348 |
 | 1, 21:41:17.6 (film: half-sheet *Connect*) | KBP 2156–2170, account key 2334 | DisplayYesNo 2204, confirmation 2223 → reply **2232** (no dialog on film) | 0x05 (2235) | SDP, MAESTRO 2823; "Ready to use — connected to someone else's account"; ACL ended 0x13 21:41:25.421 |
 | (failed), 21:41:38.4 (film: *Connect* again) | KBP 3161–3173, LE dropped 3211 | three attempts, each `User Confirmation Request Negative Reply` from the phone (3341, 3410, 3478) | — | "Couldn't connect" 21:41:45.6 |
-| 2, 21:42:05.6 (film: Settings → Pair new device → *Pair*) | none before; KBP + account key `0x0c0a` on LE 0x000f afterwards (4627–4650, 21:42:30–32) | Buds IO **NoInputNoOutput** (3789), confirmation 3797 → reply **3801 (21:42:07.643)** = the filmed *Pair* tap (21:42:07.1–07.6) | type **0x04** (unauthenticated P-256) (3804) | SDP, MAESTRO 4284, connected to the end |
+| 2, 21:42:05.6 (film: Settings → Pair new device → *Pair*) | none before; KBP + account key `0x0c0a` on LE 0x000f afterwards (4627–4650, 21:42:30–32) | Buds IO **NoInputNoOutput** (3789), confirmation 3797 → reply **3801 (21:42:07.643)** = the filmed *Pair* tap (21:42:07.1–07.6) | type **0x04** (Unauthenticated Combination Key, P-192) (3804) *(corrected 2026-10-15, `ai-sessions/0094`)* | SDP, MAESTRO 4284, connected to the end |
 
 🟢 The Buds answer with a different IO capability in the two classic paths: DisplayYesNo after a Fast Pair key-based pairing, NoInputNoOutput for a
 Settings pairing — so Android's link key is authenticated (0x05) after Fast Pair and unauthenticated (0x04) after the Settings pairing. `PROTOCOL.md`

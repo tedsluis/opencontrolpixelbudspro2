@@ -28,7 +28,7 @@ classic connection. The planned skeleton is kept unchanged as Appendix A.
 
 ## Capture-integrity pre-flight
 
-- The log starts 18:02:45.507 with a `Reset` (13.7 s after the film starts at 18:02:31.4) and LE scanning on (`LE Set Extended Scan Enable` frames
+- The log starts 18:02:45.507 with a `Reset` (14.1 s after the film starts at 18:02:31.4) and LE scanning on (`LE Set Extended Scan Enable` frames
   101–107); the film shows Bluetooth **off** until the tap at 18:02:47.9–48.2 — the same LE-only restart as in `CAP-053`. Nothing in the film's first
   14 s needs the log (App info screen, notification shade, Quick Settings).
 - **The phone's controller was scanning throughout** (scan enables at 18:02:45, :48, :54, 18:04:20, 18:04:50, 18:05:37, 18:06:07, 18:06:37, 18:06:43,
@@ -54,7 +54,7 @@ Phone time = film + 18:02:31.4. Frames are `CAP-054-btsnoop_hci.log` (= `CAP-058
 | 18:02:47.9 – 18:02:48.2 | 16.59 – 16.86 | **Bluetooth on**; row "Pixel Buds Pro 2 van Ted · L: 100%, C: 54%, R: 100%" (not connected) | User | 1 | — | first `0xFE2C` report 18:02:47.764 (frame 129) |
 | 18:02:58.9 – 18:02:59.2 | 27.59 – 27.86 | **Force stop → OK** (Force stop greyed at 29.99 s) | User | 1 | — | none on the wire |
 | 18:03:05 – 18:03:13 | 31.99 – 41.99 | Recents → **Connected devices**: "Saved devices · …van Ted · L: 100%, C: 54%, R: 100%" (not connected) | User | 1/2 | — | — |
-| 18:02:47.8 – 18:04:13.5 | 16 – 102 | **Baseline, lid closed** (≈ 92 s from Bluetooth on to the opening) | — | 3 | `BATT-002` | only the closed-case advertiser `36:91:c4:7d:54:e4`: 25 reports, flags/filter type 2 (hide UI), salt, then byte **`0x2a`** (129–907) |
+| 18:02:47.8 – 18:04:13.5 | 16 – 102 | **Baseline, lid closed** (≈ 90 s from Bluetooth on to the opening) | — | 3 | `BATT-002` | only the closed-case advertiser `36:91:c4:7d:54:e4`: 25 reports, flags/filter type 2 (hide UI), salt, then byte **`0x2a`** (129–907) |
 | 18:04:16.511 | — | That advertiser's payload changes (new salt) | Buds | — | — | frame 917 |
 | 18:04:16.7 – 18:04:17.0 | 105.35 – 105.62 | **Settings: "C: 54%" → "C: 53%"** with the lid still closed | Android | not in the plan | `BATT-002` | no connection; nearest Buds frame 917 (0.2–0.5 s before) |
 | 18:04:18.2 – 18:04:19.5 | 106.85 – 108.12 | **Lid opened (#1)**; case LED lit | User | 4 | `BATT-007`, `CASE-003` | — |
@@ -63,7 +63,7 @@ Phone time = film + 18:02:31.4. Frames are `CAP-054-btsnoop_hci.log` (= `CAP-058
 | 18:04:21.0 – 18:04:21.2 | 109.62 – 109.85 | **Heads-up "Pixel Buds Pro 2 van Ted · Left 100% Case 53% Right 100%"**, headphone icon in the status bar | Android | 4 | `BATT-007` | **no connection** (no ACL/LE link to the Buds until 18:06:18) |
 | 18:04:21.512 → 18:05:03.919 | — | A second Buds advertiser `59:c2:44:e0:c7:4e`: filter type **0 (show UI)**, salt, Random Resolvable Data `0x46` + 4 bytes; **no battery field** | Buds | 4 | `BATT-007` | 78 reports, frames 967–1331 |
 | 18:04:22 – 18:05:03 | 110 – 152 | Lid open ≈ 44 s, nothing touched; panel stays "Saved devices … L 100 C 53 R 100" | — | 4 | `BATT-007` | — |
-| 18:05:03.5 – 18:05:04.0 | 152.12 – 152.62 | **Lid closed (#1)** (audio click 152.25 s); headphone icon gone | User | 4 | `CASE-006` (lid part) | closed-case advertiser back to `0x2a` from 18:05:05.320 (1336) |
+| 18:05:03.5 – 18:05:04.0 | 152.12 – 152.62 | **Lid closed (#1)** (audio click 152.25 s); headphone icon gone | User | 4 | — (buds never left the case, so not `CASE-006`) | closed-case advertiser back to `0x2a` from 18:05:05.320 (1336) |
 | 18:05:04 – 18:05:36.5 | 152.6 – 185 | Lid closed ≈ 33 s | — | 4 (wait 30 s) | — | 36:91 `0x2a` ×19+ |
 | 18:05:36.5 – 18:05:37.0 | 185.10 – 185.62 | **Lid opened (#2)** | User | 4 (repeat) | `BATT-007`, `CASE-003` | 36:91 → `0x29` at 18:05:37.278 (1414); scan restart 18:05:37.655 |
 | 18:05:37.949 → 18:06:15.226 | — | Show-UI advertiser `6e:e9:9a:a6:b7:26` (type 0, salt, RRD `0x46`), no battery field | Buds | 4 | `BATT-007` | 77 reports, 1451–1768 |
@@ -86,8 +86,8 @@ Phone time = film + 18:02:31.4. Frames are `CAP-054-btsnoop_hci.log` (= `CAP-058
 | Step | Plan | Done | Status |
 |---|---|---|---|
 | 1 | Bluetooth on, Buds bonded not connected, app force-stopped, panel on film | Bluetooth turned on, force stop on film, Connected devices "Saved devices" (not connected) | done (order: Bluetooth on before the force stop) |
-| 2 | Start log and film | film first, log 13.7 s later (LE-only restart) | done |
-| 3 | Lid closed ≥ 60 s | ≈ 92 s after Bluetooth on (≈ 80 s after the force stop) | done |
+| 2 | Start log and film | film first, log 14.1 s later (LE-only restart) | done |
+| 3 | Lid closed ≥ 60 s | ≈ 90 s after Bluetooth on (≈ 80 s after the force stop) | done |
 | 4 | Lid open ≥ 30 s, close, wait 30 s; repeat once | open 44 s, closed 33 s, open again — **never closed again** | done once; the repeat's close **skipped** |
 | 5 | One bud out ≥ 15 s, back, ≥ 15 s | Left out 20 s, back 26 s | done (the phone connected — see FINDINGS §3) |
 | 6 | The other bud | Right out 34 s, back | done (connected) |
@@ -115,7 +115,7 @@ Test-IDs named by the Group: `BATT-007` — exercised twice (lid openings); `BAT
 **Status:** 🔲 **Not yet captured — skeleton only.** Fill in every `TBD` below after recording,
 per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), and
 `PROJECT_RULES.md` rule 11/14 (reproducibility metadata). Once reviewed, rename this folder from
-the placeholder `CAP-054-2026-10-05_18-02-33_18-08-29-Group_AP` to the actual session
+the placeholder `CAP-054-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AP` to the actual session
 date/start-time/end-time, e.g. `CAP-054-2026-09-15_08-30-00_08-40-00-Group_AP`.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AP; redesigned 2026-10-03, `ai-sessions/0069`, lead L68-6):** the Fast Pair

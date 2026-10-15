@@ -71,7 +71,7 @@ video 1 (16 frames covering its entire 67.69s) and 10 sample points across video
 
 **Conclusion — interpretation, stated plainly:** this is **case (a) refined, not case (c)**: video 1
 and video 2 are two **sequential** recordings of the same real-time sequence, separated by only a
-short (~3–7s) recording-stop/restart gap — the user apparently stopped recording while the dialog
+short (~3 s) *(corrected 2026-10-15, `ai-sessions/0094`)* recording-stop/restart gap — the user apparently stopped recording while the dialog
 sat open and unconfirmed, then started a second recording ~3 s later (06:50:53 + 67.69 s = 06:52:00.7; video 2 starts 06:52:04 — corrected 2026-10-03, `ai-sessions/0069`, `A68-CAP-23`: this document said "~7s" here and in its §1 title) from the same still-pending
 state. It is *not* a "redo from the pairing dialog" (case (c)) in the sense of discarding and
 re-attempting the pairing flow — nothing was cancelled, re-tapped, or reset between the two videos;
@@ -282,8 +282,9 @@ CLI-hygiene artifact (§0, §3 rule out both).
 $ tshark -r CAP-035-btsnoop_hci.log -Y "btatt" -T fields -e frame.number -e btatt.handle -e _ws.col.Info
 ```
 38 ATT frames total, all incidental to the OS's own LE/CTKD bonding housekeeping (Model Number
-String, Device Name, Server/Client Supported Features, Database Hash — all standard GAP/GATT
-service handles `0x0001`–`0x0009` — plus `0x0f32`/`0x0f33`, the Battery Level characteristic and its
+String at `0x0f26` (frames 577/728, Device Information), Device Name at `0x0034` (711) and the phone-side `0x0016` (590/729),
+Server/Client Supported Features and Database Hash in the GATT service `0x0001`–`0x0009` (`0x000a` only in an Error Response, 780) *(corrected 2026-10-15, `ai-sessions/0094`: this said all were in `0x0001`–`0x0009`)*
+— plus `0x0f32`/`0x0f33`, the Battery Level characteristic and its
 CCCD per `CAP-034-FINDINGS.md` §4.5). **No handle in the `0x0c00`–`0x0c18` range (the Fast Pair
 Service or the Accessory Non-Owner Service, per `CAP-034-FINDINGS.md` §4) is ever touched** — no
 discovery walk, no read, no write. This session used system Bluetooth settings only, with no Fast
@@ -319,8 +320,8 @@ guardrail.
 - DLCI 0x0a opens in lockstep with DLCI 0x08 both times but never carries payload (🟢 FACT, §6) —
   consistent with the established multi-capture baseline, now confirmed once more under this
   Group's specific (verified-disabled-GMS) conditions.
-- DLCI 0x06 and 0x12 never open at all (🟢 FACT, §7) — first check of their existence under any
-  condition; clean negative.
+- DLCI 0x06 and 0x12 never open at all (🟢 FACT, §7) — first check of their existence under this
+  Group's conditions (`CAP-033-FINDINGS.md` §3 already saw no traffic on either, 2026-08-30) *(corrected 2026-10-15, `ai-sessions/0094`)*; clean negative.
 - ADR-008 compliant (🟢 FACT, §8).
 
 **Maintainer sign-off obtained 2026-09-02 — applied:**
