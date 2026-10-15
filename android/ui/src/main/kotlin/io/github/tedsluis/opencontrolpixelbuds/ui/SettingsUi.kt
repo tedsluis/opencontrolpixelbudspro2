@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -32,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -148,8 +150,12 @@ internal fun SettingSwitchRow(
     enabled: Boolean,
     onChange: (Boolean) -> Unit,
 ) {
+    // A93-APP-07 (`ai-sessions/0094`): the whole row is the switch, so TalkBack reads its title with its state ("Switch, on" had no name).
+    val toggle = reading?.let {
+        Modifier.toggleable(value = it.value, enabled = enabled, role = Role.Switch, onValueChange = onChange)
+    } ?: Modifier
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().then(toggle).padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -160,7 +166,7 @@ internal fun SettingSwitchRow(
         if (reading == null) {
             NotReadValue()
         } else {
-            Switch(checked = reading.value, onCheckedChange = { onChange(it) }, enabled = enabled)
+            Switch(checked = reading.value, onCheckedChange = null, enabled = enabled)
         }
     }
 }

@@ -115,8 +115,12 @@ internal object SettingsStream {
     /** `CAP-051` 1801 and 1530/1533 (Transparency); 1993 (21:45:45.603, before the Buds' own `DISC` 1996). */
     const val NOTIFY_TRANSPARENT_CAP051_1801 = "0813000401e8e880"
 
-    /** `CAP-051` 1527 (21:43:28.107): the app's own `Set` Transparency. */
-    const val SET_TRANSPARENT_CAP051_1527 = "0812001401e8e880" + "00000000000000000000000000000000"
+    /**
+     * `CAP-051` 1527 (21:43:28.107, handle `0x0002`, DLCI 0x04): the **official app's** `Set` Transparency, with its own 16 trailing bytes (OpenControl sends
+     * 16 zero bytes there). Real bytes since `ai-sessions/0094` (A93-APP-06; before, the trailing bytes were zeros): `tshark -r CAP-051-btsnoop_hci.log -Y
+     * "frame.number==1527" -T fields -e data.data` (exit 0).
+     */
+    const val SET_TRANSPARENT_CAP051_1527 = "0812001401e8e880e4e68882be02fffe63abde07ef49dae8"
 
     /** `CAP-051` 1529 (21:43:28.219): the Buds' ACK of that Set. */
     const val ACK_TRANSPARENT_CAP051_1529 = "ff010006081201e8e880"

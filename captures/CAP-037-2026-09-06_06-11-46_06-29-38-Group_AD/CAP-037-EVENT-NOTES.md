@@ -141,7 +141,7 @@ that all agree, is the authoritative record for this correction).
 | `06:14:14.04` | Reconnect 5 — Get/Notify (chandle `0x0008`) | docked (`0x00`, video-confirmed 06:14:13) — **all 5 "planned" repeats were docked, not alternating as written** | `OBS-004`, `PAIR-003` | frames 5989/6027 |
 | `~06:14:14`–`06:15:34` | Buds physically removed from case (undock event; exact moment not pinned to the second) | transition | — | — |
 | `06:15:34.39`–`06:18:05.75` | Reconnects 6–10 (chandles `0x0005`,`0x0006`,`0x0007`,`0x0008`,`0x0009`) | undocked (`0xe8`, video-confirmed 06:16:48) | `OBS-004`, `PAIR-003` | frames 8117–11507 (5 Get/Notify pairs) |
-| `06:18:24.27` | Extra Notify on chandle `0x0009` (no new Get) 18 s after its own Get (frame 11483, 06:18:05.75), Settable `0x00`; the link drops at 06:18:28.09 (frame 12065) | Settable flip within one connection — explained by `CAP-048` §4 as a docking in progress | 🟢 (corrected 2026-10-03: the time given here was frame 11507's) | frame 12008 |
+| `06:18:24.27` | Extra Notify on chandle `0x0009` (no new Get) 18 s after its own Get (frame 11483, 06:18:05.75), Settable `0x00`; the link drops at 06:18:28.09 (frame 12065) | Settable flip within one connection — explained by `CAP-048` §4 as a docking in progress | `OBS-004` | frame 12008 (🟢; corrected 2026-10-03: the time given here was frame 11507's) |
 | `06:18:51.72`–`06:20:02.03` | Reconnects 11–13 (chandles `0x000a`,`0x000b`,`0x000c`) | docked (`0x00`) | `OBS-004`, `PAIR-003` | frames 12700–14457 |
 | `06:21:13.95`–`06:23:45.96` | Reconnects 14–18 (chandles `0x0007`,`0x0008`,`0x000a`,`0x000b`,`0x000c`) | undocked (`0xe8`, video-confirmed 06:23:42) | `OBS-004`, `PAIR-003` | frames 16300–19778 |
 | `06:24:24.86`–`06:26:08.78` | Reconnects 19–23 (chandles `0x000d`,`0x000e`,`0x000f`,`0x0010`,`0x0011`) | docked (`0x00`) | `OBS-004`, `PAIR-003` | frames 20776–24400 |
@@ -180,7 +180,7 @@ tshark -r CAP-037-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
       planned 5 repeats (see corrected Event Timeline above; full per-reconnect table in
       CAP-037-FINDINGS.md §3). This is the largest single-session replication of ADR-022's trigger
       condition on file to date.
-- [x] **Does the `Settable-toggles` byte match dock state on every repeat**, per ADR-024? Result:
+- [x] **Does the `Settable-toggles` byte match dock state on every repeat**, per ADR-024 (since superseded by ADR-049 — see `CAP-037-FINDINGS.md` status banner)? Result:
       **Yes, 26/26** — every docked-block reconnect reads `0x00`, every undocked-block reconnect
       reads `0xe8`, cross-validated against 6 independent video spot-checks (all agree). One
       anomaly: chandle `0x0009` shows a second Notify 18s after its own Get, with no new Get frame,
@@ -203,12 +203,12 @@ tshark -r CAP-037-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
 *(Add every new 🔴 OPEN QUESTION found here — and copy each into `PROTOCOL.md` §6's matching
 subsection per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §8's mandatory rule.)*
 
-- 🔴 Chandle `0x0009`'s second "Notify ANC state" frame (frame 12008, 06:18:24.27 — corrected 2026-10-03; answered by `CAP-048` §4) fires ~18s after
+- 🟢 *(answered by `CAP-048` §4: a docking in progress; the link drops 3.8 s later — `CAP-037-FINDINGS.md` §8)* Chandle `0x0009`'s second "Notify ANC state" frame (frame 12008, 06:18:24.27 — corrected 2026-10-03) fires ~18s after
   its own Get (frame 11483/11507) with no new Get in between, and its `Settable-toggles` value
   flips from `0xe8` to `0x00` — implying either a dock-state change mid-connection without a
   disconnect (in tension with `DECISIONS.md` ADR-016's "disconnect fires the instant both buds are
   re-docked" finding) or a spontaneous, unprompted second Notify on this specific connection. Not
-  resolved by this capture (CAP-037-FINDINGS.md §5).
+  resolved by this capture itself; answered by `CAP-048` §4 (CAP-037-FINDINGS.md §5/§8).
 - 🔴 The planned Docked→Undocked→Docked→Undocked→Docked alternation did not happen on schedule —
   all 5 "planned" repeats were docked, and the real dock-state alternation began organically ~1–1.5
   minutes later than planned, continuing for many more cycles. Not itself a protocol open question,
@@ -217,22 +217,22 @@ subsection per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §8's mandatory rule.)*
 
 ## Next steps after filling this in
 
-- [ ] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13) —
+- [x] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13) —
       confirm `OBS-004`/`PAIR-003` are clearly referenced above.
-- [ ] Write `CAP-037-FINDINGS.md` per `PROJECT_RULES.md` §2, using this file's timeline as the
+- [x] Write `CAP-037-FINDINGS.md` per `PROJECT_RULES.md` §2, using this file's timeline as the
       evidence source, following the hex & script rule (§1 rule 4a).
-- [ ] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status from
+- [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status from
       `planned` to `captured`/`analyzed`, and fill in the Android/firmware/app-version columns and
       the log path. Update `id_registry.csv`'s `CAP-037` row to match.
-- [ ] Update `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `OBS-004` row with a **pointer only**, never a
+- [x] Update `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `OBS-004` row with a **pointer only**, never a
       restated finding.
-- [ ] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8).
-- [ ] **Do not** promote anything in `PROTOCOL.md` to 🟢 FACT, and **do not** write or amend a
+- [x] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8). (None remains — `CAP-037-FINDINGS.md` §8.)
+- [x] **Do not** promote anything in `PROTOCOL.md` to 🟢 FACT, and **do not** write or amend a
       `DECISIONS.md` ADR, without explicit maintainer sign-off — propose it, clearly labelled as a
       proposal (`AGENTS.md` §6, §15). Even a clean 5/5 reproduction of ADR-022/ADR-024 is
       *additional evidence for an already-FACT claim*, not itself grounds for the agent to write a
       new ADR unprompted.
-- [ ] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
+- [x] Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
       actual session date/start-time/end-time.
 
 ---

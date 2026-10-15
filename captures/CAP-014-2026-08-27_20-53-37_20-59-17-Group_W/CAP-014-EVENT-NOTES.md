@@ -15,7 +15,7 @@ Accessory-Non-Owner half conflicted with `DECISIONS.md` ADR-008 and was correctl
 (§"Procedure" step 4 below and `CAP-014-FINDINGS.md` §2)**.
 
 **Outcome (see `CAP-014-FINDINGS.md` for full detail): (1) succeeded — the snaplen is confirmed
-fixed (§0 there) — but the `0x0c0X`/`0x0f2X` handle↔UUID mapping is still 🔴 OPEN, for a newly
+fixed (§0 there) — but the `0x0c0X`/`0x0f2X` handle↔UUID mapping stayed 🔴 OPEN in this session (resolved later by `CAP-034`, 🟢, `CAP-034-FINDINGS.md` §4), for a newly
 identified reason unrelated to snaplen: this session reused an already-bonded phone/cached GATT
 client, so Android served cached declarations for that handle range instead of re-transmitting them
 on the wire (`CAP-014-FINDINGS.md` §4).** `pm clear com.android.bluetooth` and the Pixel 9a path —
@@ -127,8 +127,8 @@ source for this session, alongside the video and wire log):
 3. **Consequence, evidenced in `CAP-014-FINDINGS.md` §4/§5:** because the phone/GATT-client pairing
    was reused rather than fresh, the connection served a cached GATT database for the
    `0x0c0X`/`0x0f2X` handle range instead of re-declaring it live on the wire (§4), and bonding
-   used Cross-Transport Key Derivation rather than classic SSP (§5, matching `CAP-004`'s already-
-   established "BLE-tool-first → CTKD" pattern). Neither is a failure of this session's snaplen fix
+   used Cross-Transport Key Derivation rather than classic SSP (§5; like `CAP-004`, this session has
+   an SMP pairing on the LE link, frame 2365 — the 🟡 candidate gate, `DECISIONS.md` ADR-030 Update). Neither is a failure of this session's snaplen fix
    (§0, confirmed working) — both trace directly to procedure choices, not instrumentation.
 
 ## Analysis checklist (per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 step 6)
@@ -137,7 +137,7 @@ source for this session, alongside the video and wire log):
       confirm response frames are **not** truncated this time (`frame.cap_len == frame.len`).
       **Done — 0 mismatches across all 4,663 frames (`CAP-014-FINDINGS.md` §0).**
 - [x] Recover the `0x0c0X`/`0x0f2X` handle↔UUID mapping from the (now-untruncated) responses.
-      **Attempted — still 🔴 OPEN. No declaration response for this handle range exists on the
+      **Attempted — not recoverable from this session (resolved later by `CAP-034`, 🟢). No declaration response for this handle range exists on the
       wire this session (root cause identified, `CAP-014-FINDINGS.md` §4), not a truncation issue.**
 - [x] Confirm/refute the "Accessory Non-Owner Service" and "Unknown Service" (`109b862f-…`)
       identities against their on-screen characteristic reads. **Done — neither was actually read
@@ -152,8 +152,8 @@ source for this session, alongside the video and wire log):
       annotations above.**
 - [x] Write `CAP-014-FINDINGS.md` per `PROJECT_RULES.md` §2, using this file's timeline as the
       evidence source, following the hex & script rule (§1 rule 4a). **Done.**
-- [ ] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
-      from `planned` to `analyzed`, fill in Android/firmware/app-version columns and the log path.
+- [x] Update this session's row in `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index — status
+      from `planned` to `analyzed`, fill in Android/firmware/app-version columns and the log path. **Done.**
 - [x] ~~Rename this capture's folder from the `yyyy-MM-dd_HH-mm-ss_HH-mm-ss` placeholder to the
       actual session date/start-time/end-time.~~ **N/A — already named correctly:**
       `CAP-014-2026-08-27_20-53-37_20-59-17-Group_W`.

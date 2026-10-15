@@ -160,7 +160,7 @@ scenario) — X4/X5, X11/X12.
 registered `planned` on 2026-09-18 by `ai-sessions/0031` but, unlike `CAP-052`–`CAP-057`, had no placeholder folder). Fill in every
 `TBD` below after recording, per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5 (analysis) and §8 (what to update), and `PROJECT_RULES.md`
 rule 11/14 (reproducibility metadata). Once reviewed, rename this folder from the placeholder
-`CAP-058-2026-10-05_21-39-51_21-46-22-Group_AT` to the actual session date/start-time/end-time.
+`CAP-058-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_AT` to the actual session date/start-time/end-time.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AT, maintainer-approved 2026-09-18, `ai-sessions/0031`):** two prior attempts at
 `SDP-001` (`CAP-033`, `CAP-044`) were each capped at 🟡 HYPOTHESIS by a procedural gap (`CAP-033`: Forget before Force-stop; `CAP-044`:

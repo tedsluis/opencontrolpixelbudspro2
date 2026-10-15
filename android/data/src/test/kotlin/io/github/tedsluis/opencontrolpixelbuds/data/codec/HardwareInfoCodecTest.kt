@@ -124,11 +124,13 @@ class HardwareInfoCodecTest {
         }
         // Through the router, re-sealed with a valid CRC, so the reader is reached (the pattern of OversizedLengthTest).
         val router = CodecRouter()
+        var faults = 0 // A93-APP-06 (`ai-sessions/0094`): a decoder that threw is caught by decodeGuarded — a fuzz run must see none
         repeat(500) {
             val mutated = real.copyOf()
             repeat(random.nextInt(1, 4)) { mutated[random.nextInt(mutated.size)] = random.nextInt(256).toByte() }
-            router.feed(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, mutated), timestampMillis = 0)
+            router.feed(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, mutated), timestampMillis = 0, onDecoderFault = { faults++ })
         }
+        assertEquals(0, faults, "no decoder threw")
     }
 
     private fun ByteArray.toHex() = joinToString("") { "%02x".format(it) }

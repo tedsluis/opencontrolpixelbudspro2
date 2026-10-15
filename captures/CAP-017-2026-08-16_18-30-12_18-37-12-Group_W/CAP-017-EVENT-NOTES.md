@@ -2,7 +2,7 @@
 
 **Status:** Reviewed against `CAP-017-recording.mp4` frame-by-frame (sub-second resolution near
 key actions, using the video's burned-in wall-clock overlay) and cross-checked against
-`CAP-017-btsnoop_hci.log` via `tshark`. This is a **second, independent `CAP-017` capture**,
+`CAP-017-btsnoop_hci.log` via `tshark`. This is the **second, independent Group W session** (`CAP-017`, 18:30),
 distinct from `captures/CAP-010-2026-08-16_11-42-31_11-45-01-Group_W/` (the 11:42 attempt, which
 used the stock system Settings flow and produced zero discovery traffic — see that folder's
 `CAP-010-FINDINGS.md`). This 18:30 session instead drove **nRF Connect for Mobile** as a
@@ -56,7 +56,7 @@ matched to a video-visible action.
 | 18:32:52–53 | User opens nRF Connect's overflow menu (`Bond`, `Refresh`, `Parse known characteristics`, `Clone device's services`, …) | User (App) | — | — |
 | 18:32:57 | System SSP dialog appears: **"Pair with Pixel Buds Pro 2 van Ted?"** (contacts/call-history toggle, Cancel button) | App (Auto) | `PAIR-001` | — |
 | 18:32:58 | User confirms pairing (off-screen tap, dialog dismisses) | User (App) | `PAIR-001` | Classic BR/EDR `Connect Complete`, status `0x00`, handle `0x0003` — frame 994, **18:32:58.425331** |
-| 18:32:58.42–58.72 | *(not visible on screen)* A second short ATT burst runs immediately after classic pairing: `Read By Type`/`Find By Type Value` against low handles, a `Write Request` to handle `0x0005` (value `07`), and a `Find Information Response` identifying handle `0x0003` as the **Service Changed** characteristic | App (Auto) | `GATT-001` | Frames 960–1090, 18:32:58.150–58.719 |
+| 18:32:58.15–58.72 | *(not visible on screen)* A second short ATT burst runs around classic pairing, starting 0.28 s before the classic `Connect Complete` (frame 994): `Read By Type`/`Find By Type Value` against low handles, a `Write Request` to handle `0x0005` (value `07`), and a `Find Information Response` identifying handle `0x0003` as the **Service Changed** characteristic | App (Auto) | `GATT-001` | Frames 960–1090, 18:32:58.150–58.719 |
 | 18:33:22–29 | User scrolls nRF Connect's **CLIENT** service list to the bottom, revealing the remaining 6 services: Telephony and Media Audio Service, **Google Fast Pair Service**, **Accessory Non-Owner Service** (128-bit UUID), Device Information, Battery Service, **Unknown Service** (128-bit UUID) — then scrolls back up | User (App) | `GATT-001` | Not present in the log payload (truncated) — read directly from video frames (18:33:22, 18:33:25, 18:33:29); see `CAP-017-FINDINGS.md` §3 |
 | 18:33:33 | User backgrounds nRF Connect; phone quick-settings panel shows a **"Pixel Buds Pro · 100% battery"** tile (classic profile now connected) | User (Phone) | — | — |
 | 18:33:39 | *(not visible on screen)* BLE link torn down | — | — | `Disconnect Complete`, handle `0x0002`, reason `0x16` (Terminated by Local Host) — frame 1690, **18:33:39.461955** |

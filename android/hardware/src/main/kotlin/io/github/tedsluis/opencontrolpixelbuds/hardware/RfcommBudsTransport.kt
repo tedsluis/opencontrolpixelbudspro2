@@ -106,11 +106,22 @@ class RfcommBudsTransport(
 
         /** Cancels the readers, then closes every socket (session and on-demand). Idempotent. */
         fun closeAll() {
-            if (!closed.compareAndSet(false, true)) return
+            synchronized(this) { if (!closed.compareAndSet(false, true)) return }
             scope.cancel()
             sockets.values.forEach(::closeQuietly)
             auxSockets.values.forEach(::closeQuietly)
             auxSockets.clear()
+        }
+
+        /**
+         * Attaches an on-demand socket — only while this connection is not closed, in one step with [closeAll]'s flag (`ai-sessions/0094`, A93-APP-05:
+         * a check followed by a separate put could attach a DLCI 0x04 socket after [closeAll] had run, and leave it open — `ai-sessions/0039`'s
+         * one-connection-per-channel collision). False = closed: the caller closes the socket.
+         */
+        fun attach(channelId: Int, socket: RfcommSocket): Boolean = synchronized(this) {
+            if (closed.get()) return false
+            auxSockets[channelId] = socket
+            true
         }
     }
 
@@ -333,11 +344,10 @@ class RfcommBudsTransport(
             is ChannelOpen.Opened -> {
                 // The connection may have been lost or replaced while this (possibly retried) open
                 // was in flight — never attach a socket to a dead connection.
-                if (current !== connection || !connection.isOpen) {
+                if (current !== connection || !connection.attach(channelId, result.socket)) {
                     closeQuietly(result.socket)
                     return@withContext BudsResult.Failure(BudsError.ConnectionLost)
                 }
-                connection.auxSockets[channelId] = result.socket
                 connection.auxJobs[channelId] = startReader(connection, channelId, result.socket, onDemand = true)
                 BudsResult.Success(Unit)
             }

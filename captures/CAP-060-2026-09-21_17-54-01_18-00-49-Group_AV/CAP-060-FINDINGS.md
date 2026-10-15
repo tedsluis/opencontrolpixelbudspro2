@@ -22,8 +22,8 @@ present and active · **App under test:** OpenControl for Pixel Buds, `ai-sessio
 
 ## 1. Why did the session sometimes lose its connection? (`ai-sessions/0043` question 1)
 
-This capture shows **seven non-user session or link ends** (three Buds-side closes of the session channel with the ACL up, four ACL drops) plus **one deliberate
-user disconnect** and **two failed
+This capture shows **six non-user session or link ends** (three Buds-side closes of the session channel with the ACL up, three ACL drops #4–#6) plus **one ACL
+drop the user caused from Android's Bluetooth panel** (#3), **one deliberate in-app user disconnect** *(corrected 2026-10-15, `ai-sessions/0094`)* and **two failed
 reconnect attempts** — substantially more activity than `CAP-059`'s three drops, letting this capture
 distinguish several genuinely different mechanisms rather than one.
 
@@ -121,7 +121,7 @@ shows a clean, video-corroborated transition:
 | Time window | Value | Video correlation |
 |---|---|---|
 | 17:54:56.047–17:55:41.708 | `00` (both docked) | Session start — buds shown seated in the case |
-| 17:56:36.662–17:59:00.627 | `e8` (not both docked) | Spans the entire ANC-cycling window (17:56:36–17:58) and the EQ-preset window (17:57:45–18:06) — consistent with the buds being out/worn during active use |
+| 17:56:36.662–17:59:00.627 | `e8` (not both docked) | Spans the entire ANC-cycling window (17:56:36–17:58) and the EQ-preset window (17:57:45–17:58:06) *(corrected 2026-10-15, `ai-sessions/0094`)* — consistent with the buds being out/worn during active use |
 | 17:59:41.231–18:00:29.610 | `00` (both docked) again | Trailing part of the session |
 
 This is 🟢 FACT, directly matching the video's own "Both earbuds are in the case (as of the last

@@ -70,7 +70,7 @@ Checked exhaustively across the **entire** log, not just the video-covered windo
 tshark -r CAP-010-btsnoop_hci.log -Y "btatt.opcode in {0x04,0x05,0x10,0x11}"
 ```
 
-→ **zero matches.** No `Find Information` (`0x04`/`0x05` — characteristic/descriptor discovery)
+→ **zero matches**, exit 0 (positive control: the same filter on `CAP-034-btsnoop_hci.log`, a live discovery, matches 63 frames). No `Find Information` (`0x04`/`0x05` — characteristic/descriptor discovery)
 and no `Read By Group Type` (`0x10`/`0x11` — primary service discovery) request or response
 exists anywhere in this 2,903-packet, 350.7s capture.
 
@@ -80,7 +80,7 @@ Every one of the 35 ATT packets that *does* exist —
 tshark -r CAP-010-btsnoop_hci.log -Y "btatt" -T fields -e frame.number -e frame.time -e btatt.opcode -e _ws.col.Info
 ```
 
-— is one of three kinds, none of which is discovery:
+— is one of these kinds, none of which is discovery (35 = 2 `Exchange MTU` packets, frames 1985/1990, + 6 `Read By Type` + 27 handle-based packets) *(corrected 2026-10-15, `ai-sessions/0094`)*:
 
 1. **Three `Read By Type Request/Response` pairs for standard, well-known 16-bit GAP/GATT UUIDs**
    (`Device Name` `0x2a00` — frames 1988/1994; `Database Hash` `0x2b2a` — frames 1995/1997;
@@ -93,7 +93,7 @@ tshark -r CAP-010-btsnoop_hci.log -Y "btatt" -T fields -e frame.number -e frame.
 2. **The `Database Hash` read is specifically the standard GATT Caching mechanism** (Core Spec
    5.1+, already characterized in `CAP-003-FINDINGS.md` §1) — a client uses it to check whether
    its cached database is still valid, skipping full discovery if the hash matches.
-3. **Ten `Read`/`Write`/`Handle Value Notification` exchanges against raw, literal 16-bit
+3. **27 `Read`/`Write`/`Handle Value Notification` packets (frames 2003–2041, plus two more `0x0f28` read pairs 2084/2086 and 2087/2089) against raw, literal 16-bit
    handles** (`0x0f28`, `0x0f2a`, `0x0c04`, `0x0c05`, `0x0c0a`, `0x0c0c`, `0x0c0d`, `0x0c13`,
    `0x0c14`) — see §3. Accessing a handle directly by number is only possible if the client
    already knows that number; no ATT sub-procedure resolves an unknown handle from a UUID without
@@ -246,8 +246,8 @@ This is a **fourth** independent capture (`CAP-001` reconnect, `CAP-002`/`CAP-00
    Service 0xFE2C`, `Device Information 0x180A`) remain the leading hypotheses to check the
    resolved handles against. (`Accessory Non-Owner Service` is explicitly **not** a candidate to
    check against — investigating it is out of scope per `DECISIONS.md` ADR-008.)
-3. Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index row for `CAP-010` (currently
-   `*planned*`/`TBD`) and `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to record this
+3. (Done: the Capture Index row for `CAP-010` records this attempt.) Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index row for `CAP-010`
+   and `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row to record this
    attempt and its actual outcome, so a future session doesn't re-attempt the same
    already-insufficient method under the Group W label again.
 4. Investigate the ~11:46:58–11:47:04 post-video RFCOMM reconnect cycle (§5) with a session that

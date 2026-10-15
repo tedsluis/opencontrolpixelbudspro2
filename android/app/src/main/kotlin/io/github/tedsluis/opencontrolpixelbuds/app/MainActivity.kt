@@ -78,6 +78,7 @@ import io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothStateObserver
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BondedLookup
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
 import io.github.tedsluis.opencontrolpixelbuds.hardware.OsConnectionObserver
+import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingChoiceMemory
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingFailure
 import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingState
 import io.github.tedsluis.opencontrolpixelbuds.hardware.settled
@@ -138,9 +139,13 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var uiSession: AppUiSession
 
+    /** "Use different Buds", the same memory as the repository's pairing singleton (`ai-sessions/0094`, A93-APP-01). */
+    @Inject
+    lateinit var pairingChoiceMemory: PairingChoiceMemory
+
     // The system picker (associate) and the bonded lookup stay on this Activity-context instance; the bonding wait runs on the application-context
-    // singleton in [AppUiSession] (A58-APP-08), so a rotation no longer cancels it.
-    private val companionPairing by lazy { BudsCompanionPairing(this) }
+    // singleton in [AppUiSession] (A58-APP-08), so a rotation no longer cancels it. Both share [pairingChoiceMemory].
+    private val companionPairing by lazy { BudsCompanionPairing(this, pairingChoiceMemory) }
     private val bluetoothStateObserver by lazy { BluetoothStateObserver(this) }
     private val osConnectionObserver by lazy {
         OsConnectionObserver(this) { (companionPairing.lookupBonded() as? BondedLookup.Found)?.address }
@@ -214,7 +219,8 @@ class MainActivity : ComponentActivity() {
                 onFailure = { "The debug log could not be saved: ${BleLogger.describe(it)}" },
             )
             BleLogger.logConnectionEvent(if (result.isSuccess) "Debug log exported ($lines lines)" else message)
-            withContext(Dispatchers.Main) { Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show() }
+            // A93-APP-08: the application context — this runs on the application scope and may outlive the Activity (a rotation during the save).
+            withContext(Dispatchers.Main) { Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show() }
         }
     }
 

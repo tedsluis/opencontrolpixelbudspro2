@@ -8,8 +8,8 @@ correlation — this file is the *event timeline*, `CAP-010-FINDINGS.md` is *wha
 protocol*.
 
 **⚠️ Procedure note (see `CAP-010-FINDINGS.md` §1 for the full evidenced writeup):** this session
-is filed under Group W, but the video and log both show a standard "Forget Buds, re-pair via the
-official app" flow on the **same** Pixel 7a used for `CAP-001`–`CAP-007` — not Group W's actual
+is filed under Group W, but the video and log both show a standard "forget, re-pair via system
+Bluetooth settings, then the official app's setup" flow on the **same** Pixel 7a used for `CAP-001`–`CAP-007` — not Group W's actual
 defined cache-busting method (`adb shell pm clear com.android.bluetooth`, or a first-ever
 connection from the project's Pixel 9a). This does not make the capture useless — it independently
 reproduces several prior findings — but it does **not** achieve Group W's stated goal of forcing a
@@ -52,7 +52,7 @@ comparable to log frame timestamps without offset correction.
 | 11:43:35–41 | (not directly visible on screen) SDP service discovery, RFCOMM channel setup, HFP AT-command handshake | App (Auto) | `PAIR-001` | SDP `Service Search Attribute Request/Response` for PnP/L2CAP/Phonebook/Audio Sink/HID/Hands-Free/AVRCP (frames 1320–1844); RFCOMM channels 0, 6 (Hands-Free), 4, 5, 1, 2 opened (frames 1483–1853); `AT+BRSF`…`AT+CMEE` handshake incl. `AT+BIEV=2,100` battery report (frames 1515–1680) |
 | 11:43:40–44 | (not directly visible on screen) BLE GATT exchange — Fast Pair Key-based-Pairing-shaped write/notify cluster on handles `0x0c04`/`0x0c05`/`0x0c0a`/`0x0c0c`/`0x0c0d`/`0x0c13`/`0x0c14`, plus reads of `0x0f28` (`0x31`) and `0x0f2a` (`"Revision 6"`) — **no primary-service or characteristic discovery request anywhere** | App (Auto) / Buds (Auto) | `GATT-001` (attempted) | `LE Enhanced Connection Complete` 11:43:40.061 (frame 1965); full ATT exchange frames 1985–2089; see `CAP-010-FINDINGS.md` §2–§3 for the complete decode |
 | 11:43:42 | Popup: **"Pixel Buds Pro 2 — Save device to [account] to connect more quickly to your other devices"** (Cancel / Save) | App (Auto) | — | — |
-| 11:43:47 | Notification banner appears: **"Pixel Buds Pro 2: Left 100% Case 42% Right 100%"** (while the Save popup is still showing) | App (Auto) | — | `AT+BIEV=2,100` (frame 1671, 11:43:36.247) reports the same 100% aggregate battery indicator |
+| 11:43:47 | Notification banner appears: **"Pixel Buds Pro 2: Left 100% Case 42% Right 100%"** (while the Save popup is still showing) | App (Auto) | — | `AT+BIEV=2,100` (frame 1671, 11:43:36.247) reports 100% on the HF battery indicator (which tracks the Right earbud, `CAP-009-FINDINGS.md` §3) |
 | ~11:43:57 | User taps **Save** | User (App) | — | — |
 | ~11:43:58 | Popup: **"Allow a connection to your Pixel Buds — Continue"** (setup intro screen) | App (Auto) | — | — |
 | 11:44:07 | User taps **Set up** (from a Pixel Buds app card, distinct from the Continue screen above) | User (App) | — | — |
@@ -62,7 +62,7 @@ comparable to log frame timestamps without offset correction.
 | 11:44:34 | **Device details** screen shown: `Pixel Buds Pro 2 van Ted`, Left 100% / Case 42% / Right 100%, `Active`; Forget/Disconnect buttons; Digital assistant / Controls and gestures / Sound / Hearing wellness / More settings rows — setup complete | App (Auto) | — | — |
 | ~11:45:00 | Device details screen still shown, unchanged (Left 100%, Case 42%, Right 100%) | — | — | — |
 | 11:45:01 | End video recording | — | — | — |
-| *(after video ends)* | `LE Disconnect Complete` at 11:43:49.236 (frame 2195, inside the video window but not a visible on-screen event) and a full RFCOMM channel teardown/reopen cycle at ~11:46:58–11:47:04 (frames 2604–2837, well after recording stopped) | — | — | See `CAP-010-FINDINGS.md` §5 |
+| *(log-only events)* | `LE Disconnect Complete` at 11:43:49.236 (frame 2195, inside the video window but not a visible on-screen event) and a full RFCOMM channel teardown/reopen cycle at ~11:46:58–11:47:04 (frames 2604–2837, well after recording stopped) | — | — | See `CAP-010-FINDINGS.md` §5 |
 
 ## Corrections vs. the original draft of this file
 

@@ -41,7 +41,16 @@ fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ sudo chown -R $(whoami):$(w
 fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ npm config set allow-scripts=@anthropic-ai/claude-code,@github/keytar,node-pty --location=user
 ```
 
+*Recommended instead of the `chown` above (note 2026-10-15, `ai-sessions/0094` — `ai-sessions/0093` A93-GOV-10):* npm's own guidance for global installs is a Node version manager, or a user-owned
+prefix — `npm config set prefix ~/.local` and `~/.local/bin` on the `PATH` (docs.npmjs.com, "Resolving EACCES permissions errors when installing packages
+globally", fetched 2026-10-15). The `chown` of `/usr/local` recorded above works but is not what npm recommends.
+
 ## Install Claude-code
+
+*Recommended now (note 2026-10-15, `ai-sessions/0094` — `ai-sessions/0093` A93-GOV-10):* Claude Code's setup page (code.claude.com/docs/en/setup, fetched 2026-10-15) lists the **native installer**
+(`curl -fsSL https://claude.ai/install.sh | bash`, "Native Install (Recommended)", auto-updating) and a signed dnf repository (`gpgcheck=1`, key fingerprint
+`31DD DE24 DDFA B679 F42D 7BD2 BAA9 29FF 1A7E CACE`); npm stays supported, but "Do NOT use `sudo npm install -g`". The npm transcript below is what this
+workstation ran.
 
 ```bash
 # Install Claude Code
@@ -62,6 +71,10 @@ fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ claude --version
 ```
 
 ## Install Antigravity
+
+*Note (2026-10-15, `ai-sessions/0094` — `ai-sessions/0093` A93-GOV-10):* Antigravity's release page (antigravity.google/releases, fetched 2026-10-15) says: "These APT and RPM repositories were provided
+for legacy Antigravity 1.x releases and are no longer updated" — and its RPM example itself has `gpgcheck=0` (no signing key for the RPM repository). For
+current versions use the direct downloads of antigravity.google/download; do not rely on this unsigned repository for updates.
 
 ```bash
 # Add Antigravity repo
@@ -132,7 +145,7 @@ VSCODE_EXTENSIONS=(
   redhat.vscode-xml
 )
 fedora ~/git/opencontrolpixelbudspro2 [main L|✔] $ for ext in "${VSCODE_EXTENSIONS[@]}"; do
-  code-insiders --install-extension "$ext" || warn "Can not install extention $ext"
+  code-insiders --install-extension "$ext" || echo "[WARN] Can not install extension $ext" >&2   # `warn` is only defined further below
 done
 ```
 
@@ -170,6 +183,8 @@ ls ~/Android/Sdk/platforms ~/Android/Sdk/build-tools   # android-37.0, 36.0.0
 tshark --version | head -1                      # capture analysis, scripts/pwrpc_decode.py
 ffmpeg -version | head -1                       # film stills, scripts/readme_media.sh
 git lfs version                                 # the capture logs are LFS files: run `git lfs install` once
+capinfos --version | head -1                     # capture checks (CAPTURE_BLUETOOTH_HCI_SNOOP.md §3, DESKRESEARCH_FINDINGS.md)
+uv --version                                    # the reverse-engineering/tools/*/.venv set-ups (added 2026-10-15, ai-sessions/0094)
 adb version | head -1
 python3 --version                               # the scripts use the standard library only
 ```

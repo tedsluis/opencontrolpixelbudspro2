@@ -71,4 +71,16 @@ class DarkModeSettingsStoreTest {
         assertEquals(setOf("hold_reclaim_mode", "dark_mode"), prefs.asMap().keys.map { it.name }.toSet(), "no new key")
         second.cancel()
     }
+
+    @Test
+    @DisplayName("A93-APP-05 (`ai-sessions/0094`): a corrupt settings file reads as the defaults (dark mode System, Debug mode off) instead of failing the collector")
+    fun `a corrupt settings file reads as the defaults`() = runBlocking {
+        val file = File(dir, "opencontrol_settings.preferences_pb")
+        file.writeBytes(byteArrayOf(0x0a, 0x7f, 0x01, 0x02)) // a length-delimited field longer than the file: not a Preferences proto
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val dataStore = PreferenceDataStoreFactory.create(scope = scope) { file }
+        assertEquals(DarkMode.DEFAULT, DarkModeSettingsStore(dataStore).darkMode.first())
+        assertEquals(false, DebugSettingsStore(dataStore).debugModeEnabled.first())
+        scope.cancel()
+    }
 }

@@ -29,7 +29,7 @@ open question the earlier (2026-08-15) `CAP-005` capture left unresolved — **w
 in the 5-float quintet corresponds to which on-screen EQ band.** **Answer, per the evidence below:
 fully resolved.** This session's maintainer, apparently independently, ran a far more thorough
 procedure than the Group T minimum — 5 presets, then all 5 sliders each dragged to both extremes
-and back near zero (3 passes) — which directly supplies the missing per-band isolation the earlier
+and back near zero (two passes, 3 save cycles per band) — which directly supplies the missing per-band isolation the earlier
 capture called for.
 
 ---
@@ -110,8 +110,8 @@ frame — excluded here as out of scope for the EQ analysis, not counted as a CR
 
 ## 3. Analysis: EQ presets (`EQP-002` family)
 
-Six presets tapped in sequence, dropdown-list order (Default/`Last saved` baseline first, then
-Heavy bass → Light bass → Balanced → Vocal boost → Clarity), each an isolated action with the app
+Six preset frames: the `Last saved` baseline written when the Equalizer page opens (frame 2111, no
+tap), then five presets tapped in dropdown-list order, Heavy bass → Light bass → Balanced → Vocal boost → Clarity, each an isolated action with the app
 settling before the next tap (`CAP-015-EVENT-NOTES.md`'s timeline). All six are `Sent`, HDLC
 address `0x0000`, control `0x3b`, outer field 16 (see §4 for what that field means):
 
@@ -301,14 +301,14 @@ single value changed correlating with which single slider the user touched — n
 confirmed by decoding a second field's change, since only Bass was moved this session."*
 
 **This capture directly closes that gap.** §4's table shows the quintet's 5 elements change in a
-strict, repeating order — index 4, then 3, then 2, then 1, then 0 — across three full passes, and
+strict, repeating order — index 4, then 3, then 2, then 1, then 0 — in both passes (pass 1: two extreme cycles per band, pass 2: one near-zero cycle per band) *(corrected 2026-10-15, `ai-sessions/0094`)*, and
 §1's video review directly ties 4 of the 5 indices to a specific on-screen slider by finger
 position and (for index 4) an on-screen value tooltip:
 
 | Quintet index | Band | Evidence |
 |---|---|---|
 | 4 (last field, tag `0x2d`) | **Upper treble** | 🟢 Direct: video shows finger on the Upper treble slider with a `-60` tooltip exactly as this field drops to `-6.0` (frame 2573→2586) |
-| 3 (tag `0x25`) | **Treble** | 🟢 By elimination + structural consistency: always the 2nd field to change in every one of the 3 passes, matching Treble's position (2nd from top) in the fixed on-screen slider order confirmed in §1; a supporting (not fully clean) video frame at 06:16:35 shows Treble's bar already at its just-changed value while Bass's is still untouched |
+| 3 (tag `0x25`) | **Treble** | 🟢 By elimination + structural consistency: always the 2nd field to change in both passes, matching Treble's position (2nd from top) in the fixed on-screen slider order confirmed in §1; a supporting (not fully clean) video frame at 06:16:35 shows Treble's bar already at its just-changed value while Bass's is still untouched |
 | 2 (tag `0x1d`) | **Mid** | 🟢 Direct: video (t=239s/06:15:05) shows the finger directly over the "Mid" row exactly as this field starts changing |
 | 1 (tag `0x15`) | **Bass** | 🟢 Direct: video (t=266s/06:15:32) shows the finger on the "Bass" row mid-drag, `Save` button active, shortly before this field's cycle-1 save (frame 3083, 06:15:33.008) |
 | 0 (first field, tag `0x0d`) | **Low bass** | 🟢 Direct: video (t=293s/06:15:59) shows the finger at the "Low bass" row exactly as this field starts changing |
@@ -316,7 +316,7 @@ position and (for index 4) an on-screen value tooltip:
 This also matches, exactly, the earlier `CAP-005-FINDINGS.md` §5b's inferred mapping (field
 1↔Low bass … field 5↔Upper treble) — an independent capture, five days apart, landing on the
 identical field order. Combined with this capture's own internal repetition (the same order,
-independently, 3 times) and the direct video ties for 4/5 fields, this clears
+independently, in both passes) and the direct video ties for 4/5 fields, this clears
 `PROJECT_RULES.md` §1's promotion bar (byte-for-byte reproducible decode, cross-capture agreement,
 plus multiple independent within-capture confirmations) — **promoted to 🟢 FACT.**
 
@@ -344,11 +344,11 @@ an explicit re-index.
   — Rcvd direction, structurally distinct from every other frame in this capture (different tag
   byte after the `2a`, nested small-int fields resembling `08 64 10 01`/`08 64 10 01` repeated,
   possibly a preset-list or capability response, not a quintet write).
-- 🔴 **"Save" (outer field 18) trigger mechanism refined, not fully resolved.** The earlier capture
+- ✅ **"Save" (outer field 18) trigger mechanism — answered by `CAP-053`: field 18 is written on Save** (status banner above; `CAP-053-FINDINGS.md`). The analysis below is kept as written; its slider-release hypothesis is not supported. The earlier capture
   hypothesized field 18 = an explicit tap of the on-screen `Save` button, roughly 5s after the
   matching field-16 preview. In **this** capture, field 18 fires **1.1–8.9 s** (corrected 2026-10-08, `ai-sessions/0081`; "0.05–1.9s" was a slip) after the last
-  field-16 preview in every one of the 15 save cycles (§4's table) — far too fast for a deliberate,
-  separate tap on a UI element in a different screen region, and no video frame shows a distinct
+  field-16 preview in every one of the 15 save cycles (§4's table) — a range that does not rule
+  out a separate tap (e.g. 8.9 s, 2785 → 2819), and no video frame shows a distinct
   `Save`-button tap between drag and save for any of the 15 cycles. **Revised 🟡 HYPOTHESIS:**
   field 18 fires on **slider-release** (finger lift), not on a separate `Save` button tap — the
   `Save` button's own purpose may be to persist the *whole custom profile* as the account's

@@ -23,15 +23,15 @@ FACT either way. This repeat corrects both deviations in one session.
 |      Group(s)    |               AA (repeat, 2nd attempt)             |
 |       Date       |                     2026-09-13                     |
 | Firmware version | `release_5.203` (🟢 confirmed on-wire, frame 4416, DLCI 0x08 Group `0x03` Code `0x02`) |
-|   Test device    | Pixel 7a, Android 17 (🟢 FACT, MP4 container tag); app version `1.0.955078536`, Google Play services active (⚪ ASSUMPTION, maintainer-supplied context) |
+|   Test device    | Pixel 7a, Android 17 (⚪ ASSUMPTION — the MP4 container tag is the camera phone's, as established in `CAP-043-FINDINGS.md` §1) *(corrected 2026-10-15, `ai-sessions/0094`)*; app version `1.0.955078536`, Google Play services active (⚪ ASSUMPTION, maintainer-supplied context) |
 | Video file       |   `CAP-044-recording.mp4` — 316.42s, 13:05:51–13:11:07 local (burned-in overlay + `ffprobe`-cross-checked) |
 | Log file         |        `CAP-044-btsnoop_hci.log` — 6,363 packets, 850.35s, 12:59:08.43–13:13:18.78 local |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` (same unit as `CAP-001`/`CAP-002`/`CAP-032`/`CAP-033`) |
 
 **Isolation check (required — this is the whole point of the repeat) — 🟡 PARTIALLY ACHIEVED, for a
-different reason than `CAP-033`.** Force-stop *does* precede Forget in wall-clock order this time
-(the very first, off-camera Force-stop, then the in-app Forget at 13:05:59) — that specific ordering
-issue from `CAP-033` §1.1 does not reproduce. **However, no Force-stop action of any kind is
+different reason than `CAP-033`.** Force-stop nominally precedes Forget in wall-clock order this time
+(the very first, off-camera Force-stop, then the in-app Forget at 13:05:59) — but the app was relaunched from recents at 13:05:55, so it was running
+at the Forget, which nullifies that order: `CAP-033` §1.1's problem (app alive at the Forget) recurs (corrected 2026-10-15, `ai-sessions/0094`). **Moreover, no Force-stop action of any kind is
 observed anywhere in the video between the in-app Forget (13:05:59) and the actual "Pair" tap that
 triggers bonding + the SDP browse (13:08:07, not 13:07:00 as originally logged below — see
 `CAP-044-FINDINGS.md` §1)** — a 2m8s window during which the app may have remained resident in the

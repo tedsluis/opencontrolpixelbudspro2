@@ -317,6 +317,8 @@ class CodecRouterTest {
     @DisplayName("fuzz: random chunks on any in-scope or out-of-scope channel never throw")
     fun `random chunks never throw`(input: Pair<Int, ByteArray>) {
         val router = CodecRouter()
-        router.feed(input.first, input.second, timestampMillis = 0)
+        var faults = 0 // A93-APP-06 (`ai-sessions/0094`): decodeGuarded turns a throw into a malformed frame — count it, so a throwing decoder fails here
+        router.feed(input.first, input.second, timestampMillis = 0, onDecoderFault = { faults++ })
+        assertEquals(0, faults, "no decoder threw")
     }
 }

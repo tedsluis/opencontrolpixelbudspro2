@@ -1,5 +1,7 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AH, DLCI 0x02's connect-time RPC burst vs. non-default settings state (`CAP-041`)
 
+> **Status as of 2026-10-03** (as in `CAP-041-FINDINGS.md` — read this first; the text below is as written): the phone's **requests** in the DLCI 0x02 connect burst do not vary with the settings, but the Buds' **answers** in the same burst carry every setting (the official app's `ReadSetting` sweep — `CAP-041-FINDINGS.md` §3, frames 799 … 3279; the content diff is §8). The 79-valued sub-message is `SubscribeRuntimeInfo` entry 6.1 = Case % (Option F, ADR-043). The "clean negative" and the two related 🔴 items below are answered by that.
+
 **Status:** ✅ **Captured, video-reviewed, and decoded — see `CAP-041-FINDINGS.md`.** The session
 produced 3 wire-confirmed reconnects (not the 4 originally planned) against 3 genuinely distinct,
 non-default settings states; the DLCI 0x02 connect-time burst's length/shape signature was found
@@ -44,7 +46,7 @@ touch nothing else. The reconnect itself is the only in-session action.
 |       Date       |                     2026-09-06                      |
 | Firmware version | 🟢 **FACT** `release_5.203` (Confirmed on screen at 17:11:32) |
 |   Test device    | Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`). **Official Pixel Buds Companion App, Google Play Services enabled** |
-| Video file       | `CAP-041-recording.mp4` — `17:10:39`–`17:17:48` local time |
+| Video file       | `CAP-041-recording.mp4` — 421.23s (`ffprobe`), `17:10:39`–`17:17:40` local time (last frame's overlay; the folder name's `17-17-48` is the draft value) |
 | Log file         | `CAP-041-btsnoop_hci.log` |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
 
@@ -119,7 +121,7 @@ Untruncated, raw-path extraction. Video (`ffprobe`): 421.23s, wall-clock overlay
 | `17:16:55` | **Window 4 start** — Bluetooth toggled OFF | User (OS) | `OBS-007` | — |
 | `17:17:00` | Bluetooth toggled ON | User (OS) | `OBS-007` | — |
 | `17:17:05` | Connection established (Window 4 burst) | App/OS | `OBS-007` | — |
-| `17:17:48` | End video recording | — | — | — |
+| `17:17:40` | End video recording (last frame's overlay; `ffprobe` 421.23 s) | — | — | — |
 
 **🟢 FACT — video re-pass correction (`ffmpeg` frame extraction at t=0,46,66,72,80,95,101,163,224,277,286,300s):**
 the claimed per-window BT-toggle/connect timestamps above are placeholders and do **not** match
@@ -150,7 +152,7 @@ independently-known settings states from the Event Timeline's own settings-chang
 claimed window count.
 
 **Contamination log:** The ⚠️ Rule was completely violated. The user did not set the non-default values *before* the recording. Instead, the user actively navigated the app and changed settings *during* the recording. Furthermore, instead of one single idle reconnect window, the user performed four separate Bluetooth toggles (reconnects), changing the Equalizer, Touch Controls, Mono Audio, and Usage & Diagnostics settings between each reconnect. 
-**Positive aspect:** While this violates the single-variable test protocol, it provides an excellent multi-bracket dataset: we now have four distinct connect-time bursts, each with a known, different settings state. App navigation during the burst window might generate concurrent DLCI 0x02 traffic, which will need to be carefully separated from the automatic read-back burst during decoding.
+**Positive aspect:** While this violates the single-variable test protocol, it provides an excellent multi-bracket dataset: we now have three distinct connect-time bursts (three wire-confirmed reconnects, see the correction above), each with a known, different settings state. App navigation during the burst window might generate concurrent DLCI 0x02 traffic, which will need to be carefully separated from the automatic read-back burst during decoding.
 
 ## Decode / Analysis
 
@@ -192,7 +194,7 @@ into one RFCOMM I-frame — `DESKRESEARCH_FINDINGS.md`'s 2026-08-28 entry, `CAP-
       value never changes across this session, this is *consistent with* but does **not confirm**
       the field tracking Case battery — recorded as a strengthening data point for
       `CAP-036-FINDINGS.md` §12.6's existing 🔴 OPEN QUESTION, not a resolution.
-- [x] **Outcome classification: (b) — clean negative** at the length/shape level: this session's
+- [x] **Outcome classification (as written): (b) — clean negative** at the length/shape level *(superseded 2026-10-03: the Buds' answers in the same burst carry every setting — `CAP-041-FINDINGS.md` §3/§6)*: this session's
       three genuinely different settings states (touch controls off + 3 different EQ configs +
       mono on; +per-earbud touch off + different EQ; +per-earbud touch=Digital
       assistant/Adaptive+different EQ+diagnostics off) all produce a connect-time DLCI 0x02 burst
@@ -207,29 +209,29 @@ into one RFCOMM I-frame — `DESKRESEARCH_FINDINGS.md`'s 2026-08-28 entry, `CAP-
 - 🔴 Which of the four claimed BT-toggle actions in this session's procedure notes did **not**
   produce a distinct new ACL connection on the wire (only 3 Connection-Complete events exist for
   4 claimed windows) — not resolved by the available video frames this pass.
-- 🔴 `CAP-036-FINDINGS.md` §12.6's open question (does the DLCI 0x02 periodic push's 2-field,
+- 🟢 *(answered: `SubscribeRuntimeInfo` entry 6.1 = Case %, Option F, ADR-043 — `CAP-041-FINDINGS.md` §6)* `CAP-036-FINDINGS.md` §12.6's open question (does the DLCI 0x02 periodic push's 2-field,
   non-1/2/3-indexed sub-message track battery state?) is neither resolved nor contradicted by this
   session — the candidate field stayed constant at a value matching on-screen Case% (79) the whole
   session, which is consistent with, but doesn't prove, that reading.
-- 🔴 Whether the connect-time burst's payload *content* (not just its length signature) differs
+- 🟢 *(answered: it does — the Buds' `ReadSetting` answers differ per window, `CAP-041-FINDINGS.md` §3/§8)* Whether the connect-time burst's payload *content* (not just its length signature) differs
   with settings state remains untested — a full byte-for-byte HDLC-unescape+CRC-verify decode of
   every subframe across this session's 3 windows and `CAP-036`'s baseline was out of this pass's
   budget; see `CAP-041-FINDINGS.md`'s Recommended next steps.
 
 ## Next steps after filling this in
 
-- [ ] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13).
-- [ ] Write `CAP-041-FINDINGS.md` per `PROJECT_RULES.md` §2, hex & script rule (§1 rule 4a).
-- [ ] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
+- [x] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13).
+- [x] Write `CAP-041-FINDINGS.md` per `PROJECT_RULES.md` §2, hex & script rule (§1 rule 4a).
+- [x] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
       `id_registry.csv`'s `CAP-041` row.
-- [ ] Add `OBS-007`'s Evidence column pointer in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (pointer only).
-- [ ] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8).
-- [ ] **Do not** promote anything to 🟢 FACT or write a `DECISIONS.md` ADR without explicit
+- [x] Add `OBS-007`'s Evidence column pointer in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (pointer only).
+- [x] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8).
+- [x] **Do not** promote anything to 🟢 FACT or write a `DECISIONS.md` ADR without explicit
       maintainer sign-off (`AGENTS.md` §6, §15) — propose only, even for a positive finding this
       directly relevant to `ARCHITECTURE.md` §3.1.
 - [ ] Remember to set EQ/touch-controls back to their normal values after this session, if desired
       — this is a deliberate one-off non-default state for this capture only.
-- [ ] Rename this capture's folder to the actual session date/start-time/end-time.
+- [x] Rename this capture's folder to the actual session date/start-time/end-time.
 
 ## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
 

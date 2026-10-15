@@ -206,22 +206,21 @@ Extends `CAP-020-FINDINGS.md` §5's table with two more settings on the same DLC
 | Multipoint ON | 11 | 1 | `CAP-019` |
 
 Four different settings, four different inner field numbers, three sharing value `1` and one using
-value `2` — 🟡 HYPOTHESIS (strengthened by a 4th and 5th data point, still not 🟢 FACT): the outer
+value `2` — 🟡 HYPOTHESIS (strengthened by a 3rd and 4th data point, still not 🟢 FACT): the outer
 wrapper is a general-purpose `libmaestro` settings-write envelope, with each setting owning its own
 inner field number. **Not confirmed:** whether the field number is a stable per-setting identifier
 across firmware versions/sessions, or whether value `2` for head gestures specifically means
-something beyond "enabled" (e.g. a sub-mode). OFF writes were captured for conversation detection (this capture, frame 1720 `4:{22:0}`)
-and touch controls (`CAP-020` frame 1995 `4:{4:0}`); not for Multipoint or head gestures.
+something beyond "enabled" (e.g. a sub-mode). OFF writes were captured for all four: conversation detection (this capture, frame 1720 `4:{22:0}`),
+Multipoint (this capture, frame 2482 `4:{11:0}`), touch controls (`CAP-020` frame 1995 `4:{4:0}`) and head gestures (`CAP-020` frame 2038 `4:{29:1}`) *(corrected 2026-10-15, `ai-sessions/0094`)*.
 
 ## 6. Conclusions & Next Steps
 
 - `CONV-001` isolates to one DLCI 0x02 write per tap (1720 OFF, 1808 ON), both on film and acknowledged — 🟢 FACT (`PROTOCOL.md` §4.5.1).
   `MULTI-001` isolates to a single write (frame 2293), verified CRC-32, within ~1s of the video-confirmed action — its field identity is 🟢
   by ADR-019/025 (code); the OFF write is frame 2482, on film (§4).
-- **New, higher-confidence finding:** Multipoint's DLCI 0x02 write is immediately followed by a
-  DLCI 0x04 Group `0x07` (SASS) negotiation burst containing an ASCII `"in-use"` string — the first
-  content-level, action-correlated data for this previously only structurally-identified Message
-  Stream group.
+- Each Multipoint DLCI 0x02 write (ON 2293, OFF 2482) is immediately followed by a DLCI 0x04
+  Group `0x07` (SASS) round; only Code `0x21` (2301, after ON) and the flags byte are
+  Multipoint-specific — Codes `0x11`/`0x40`/`0x41` ("in-use")/`0x42` also run at connect (785–807, §4).
 - Toggling Multipoint back OFF is in this capture (frame 2482): `field 11` flips to `0` and the SASS flags byte goes `b8` → `98`. A third sample of the flags
   byte is planned in `CAP-069`.
 

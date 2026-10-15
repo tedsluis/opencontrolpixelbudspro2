@@ -60,11 +60,11 @@ frame extracted at that exact offset.
 | 17:04:15.680 | `field19` fires `=1` (ON) | System (auto?) | — | Log frame 1754. |
 | **17:04:38.261** | Slider returned to center — wire `field17=1` | User (App) | `AUDIO-003` | Log frame 1786. |
 | 17:04:38.712 | `field19` fires `=0` (OFF) | System (auto?) | — | Log frame 1806. |
-| **17:04:51.320** | Slider dragged to full extreme (2nd cycle) — wire `field17=-100` | User (App) | `AUDIO-003` | Log frame 1834. **Video (`w_112.3.png`) confirms RIGHT extreme again** — 2nd confirmation. |
+| **17:04:51.320** | Slider dragged to full extreme (2nd cycle) — wire `field17=-100` | User (App) | `AUDIO-003` | Log frame 1834. **Video (`w_112.3.png`) confirms RIGHT extreme again** — 3rd confirmation. |
 | 17:04:51.613 | `field19` fires `=1` (ON) | System (auto?) | — | Log frame 1843. |
 | **17:05:09.216** | Slider returned to center — wire `field17=0` | User (App) | `AUDIO-003` | Log frame 1873. |
 | 17:05:09.362 | `field19` fires `=0` (OFF) | System (auto?) | — | Log frame 1880. |
-| **17:05:22.959** | Slider dragged to full extreme (2nd cycle) — wire `field17=100` | User (App) | `AUDIO-003` | Log frame 1908. **Video (`w_144.0.png`) confirms LEFT extreme again** — 3rd confirmation. |
+| **17:05:22.959** | Slider dragged to full extreme (2nd cycle) — wire `field17=100` | User (App) | `AUDIO-003` | Log frame 1908. **Video (`w_144.0.png`) confirms LEFT extreme again** — 4th confirmation. |
 | 17:05:23.290 | `field19` fires `=1` (ON) | System (auto?) | — | Log frame 1916. |
 | ~17:05:39 | **No slider change** — handle remains at the Left extreme, unchanged | — | — | Video `t=160` (`f_160.png`) — the draft's claimed "Sample 4: intermediate -31" action **did not happen**; the slider is untouched here. |
 | **17:05:46.275** | Slider returned to center — wire `field17=1` (final write of the session) | User (App) | `AUDIO-003` | Log frame 1957. |
@@ -81,7 +81,7 @@ occurrences exist). No intermediate-position drag appears anywhere in the video 
 
 - [x] Zigzag-decode (`(n>>1) ^ -(n&1)`) each isolated sample's `field 17` value. → Done, 8 samples.
 - [x] Match each decoded value against the video-confirmed slider position/label at that exact
-      moment. → 3 extreme-position video confirmations (+ a 4th confirming the "no change" gap).
+      moment. → 4 extreme-position video confirmations (+ one more confirming the "no change" gap).
 - [x] Determine the field's numeric scale/range and which direction maps to negative vs. positive. →
       **Range ±100. Positive = Left, negative = Right — opposite of the draft's own labeling.**
 - [x] Record the result plainly either way. → Recorded, with the draft's polarity error corrected.

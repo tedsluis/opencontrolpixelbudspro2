@@ -87,7 +87,7 @@ Times are **phone local time** (HCI / debug export); film-only events are overla
 | 15:58:14.54–15:58:15.4 | **Opened by itself:** link CONNECTED → "Automatic re-open (ADR-044, trigger: LINK_BACK)" → app `SABM` DLCI 0x02 (1226) → announcement ch 21 (1261) → `ReadSetting 4:16` (1267 → 1279 `[-2.83,-5.89,2,3,5]`) → `4:2 4:4 4:7 4:17 4:19 4:22` (1293…1339: 1, 1, L/R 5, 7 = Right 4, 1, 1) → `SubscribeRuntimeInfo` (1340 → 1342: Case 37, L/R charging) | App | AY-0 var. (buds in the open case, right after pairing) [`PAIR-003`] | export 11–21; film "ready" 15:58:15 |
 | 15:58:15.0–15:58:17.4 | Snapshot claim: attempt 1 collides with Play services' fresh DLCI 0x04 open (1275; phone `DISC` 1320), attempt 2 (1369): `08 11` 1379 → `03 03 00 03 e4 e4 ff` ×3, `Notify 01 e8 00 20` (1389); released 1548 | App / Play services | D1 | export 19, 22, 23 |
 | 15:58:16 | Connection: "Firmware: release_5.203", no Safe Mode card; Left/Right "100% (updated 15:58:15) — charging in the case", "Case: 37% (updated 15:58:15)" | App | D1, E1, E2 [`BATT-004`] | film 15:58:15 |
-| 15:58:16.6–16.7 | The Google app opens DLCI 0x0a/0x08 (1441/1470); Play services re-opens DLCI 0x04 (1708: `03 08`, `07 10`, `06 01`) and holds it until 16:00:16.8 | Google app / Play services | — | HCI; system log 13:58:30.336 UTC "Waited long enough for … BistoRealService" |
+| 15:58:16.6–16.7 | The Google app opens DLCI 0x0a/0x08 (1441/1470); Play services re-opens DLCI 0x04 at 15:58:20.32 (1708: `03 08`, `07 10`, `06 01`) and holds it until 16:00:16.8 | Google app / Play services | — | HCI; system log 13:58:30.336 UTC "Waited long enough for … BistoRealService" |
 | 15:58:23 | Debug tab: **Debug mode on** | User | S3, L1 | film 15:58:21–22 |
 | 15:58:39.9 | The phone closes the LE link (Disconnect 2178 → 2180, `0x16`) after 58 Fast Pair Key-based Pairing writes, each "Error 0x81" | Play services | — | HCI (out of scope, ADR-008) |
 | 15:58:46–47 | ANC tab: "ANC mode: OFF (updated 15:58:15)", buttons disabled, "ANC can only be changed while you wear the Buds. Tap Refresh to check again." | App | F8 | film |
@@ -179,7 +179,7 @@ Times are **phone local time** (HCI / debug export); film-only events are overla
 | 16:17:05.83 | **Re-open by itself** (LINK_BACK, 7810); stream 8082 both charging, Case 34; `Notify 00 20` (8032) | App | ADR-044 (b) ✓ | export 700–735 |
 | 16:17:10–14 | Android's device-details screen (shows the Bluetooth address) | User | — | film (ADR-010) |
 | 16:17:18 / 28, 16:18:18 / 29 | Stream pushes while docked and idle, each with `AT+BIEV` (8165/8169, 8200/8201, 8306/8307, 8380/8381) | Buds | E6 ✓ | film (times re-stamped) |
-| 16:17:21–16:18:40 | Idle, both docked, lid open (≈ 93 s, not 2 min) | User | AY-14 var. | film |
+| 16:17:21–16:18:40 | Idle, both docked, lid open (79 s; ≈ 93–95 s counted from the re-open at 16:17:05.8 — not 2 min) | User | AY-14 var. | film |
 | 16:18:40.33 | **Refresh battery** → re-subscription 8417 → **answered** 8426 (+194 ms, Case 34) → "Case: 34% (updated 16:18:40)"; claim 8439: `e4 e4`, `Notify 00 20` | User / App | **AY-14 ✓ (answered)**, E9 | film 16:18:38–40 |
 | 16:18:48.22 | Find: **Ring Left**, both docked → `04 01 00 01 02` (8518) → ACK `ff 01 00 03 04 01 00` (8520) + echo (8521); "Ringing: Left earbud …" | User / App | **AY-1** [`FIND-001`] | film 16:18:45–47 |
 | 16:19:09.49 | **Stop** → `04 01 00 01 00` (8598) → ACK (8600) | User | AY-1 | film 16:19:07–08 |
@@ -236,7 +236,7 @@ Times are **phone local time** (HCI / debug export); film-only events are overla
 | H2 | partly (Heavy bass; Light bass and Balanced at other times) | 6009, 2374, 8633 |
 | H3, H4 | partly (+5.23, −5.71; no ±6 pair) | 6017, 6026 |
 | H5 | not run (button not shown) | film |
-| AY-13a | done, repeated (5×) ✓ | export 206, 257, 272, 535, 546 |
+| AY-13a | done, repeated (3× on its own; 8 Refreshes in all with AY-13b's 535/546/557/567 and AY-14's 16:18:40, FINDINGS §1) ✓ | export 206, 257, 272 |
 | AY-13b | done ✓ (16:14:49.9/50.7, 0.79 s) | export 557–568 |
 | AY-7 | done differently (both at once, 16:15:08–21), then per bud (16:15:48–16:16:34) ✓ | stream 6338 … 7555 |
 | AY-6 | done ✓ (16:15:22, 16:16:35) | 6378, 7566 |

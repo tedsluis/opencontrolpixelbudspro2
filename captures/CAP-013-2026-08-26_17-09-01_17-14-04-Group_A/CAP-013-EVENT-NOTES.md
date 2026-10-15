@@ -26,8 +26,9 @@ directly against both the video and the log rather than accepted as given, per t
    (17:11:25), "Pixel Buds Pro 2 van Ted" appeared in the discovery list (17:11:27), and the device was
    tapped in that list (~17:11:31–45). **None of that discovery/inquiry activity is in the log at all.**
    The log's first frame lands almost exactly on the moment the phone begins actively connecting (a
-   passive BLE advertising report at 17:11:45.799, immediately followed by `Delete Stored Link Key` at
-   17:11:46.737) — i.e. logging effectively started only once the user had already selected the device
+   `Sent Read By Type Request` on an LE/ATT link that already existed, 17:11:45.799, frame 1; frame 2
+   is the first LE Extended Advertising Report; `Delete Stored Link Key` follows at 17:11:46.737,
+   frame 117) — i.e. logging effectively started only once the user had already selected the device
    and the phone-side connect sequence was already underway.
 3. **The log is also severely ACL-truncated**, the same issue `CAP-012-FINDINGS.md` §1 documented for
    that session: `capinfos` reports an inferred 15-byte packet size limit, and every RFCOMM data frame
@@ -97,7 +98,7 @@ timestamp below.
 | 17:12:52 | "Allow" tapped on the find-my-device permission screen; a further "allow the Pixel Buds app to access..." permission screen appears | User (App) | — | — |
 | 17:13:02 | "Allow" tapped | User (App) | — | — |
 | 17:13:27 | Device details screen shows firmware **`release_5.203`** | App (Auto) | — | Consistent with `ADR-012`'s wire-baseline firmware string; not independently re-verified on the wire this session (truncation limits DLCI 0x08 Group `0x03` Code `0x02` payload recovery here, see `CAP-013-FINDINGS.md` §4) |
-| 17:13:47 | Device details panel fully shown: Right 100%, Case 13%, Left 100%, ANC controls (Transparency/Adaptive/Off/Noise cancellation), Forget/Disconnect | App (Auto) | incidental `BATT-004` | Screenshot `f_firmware.png`; DLCI `0x08` Group `0x0e` Code `0x01`/`0x02` battery-shaped traffic observed near this window (frames 1423–1425) but Length/Value bytes are truncated, so the 100/100/13 values cannot be cross-checked against the wire this session |
+| 17:13:47 | Device details panel fully shown: Right 100%, Case 13%, Left 100%, ANC controls (Transparency/Adaptive/Off/Noise cancellation), Forget/Disconnect | App (Auto) | incidental `BATT-004` | Screenshot `f_firmware.png`; DLCI `0x08` Group `0x0e` Code `0x01`/`0x02` battery-shaped traffic observed at 17:14:20.26 (frames 1423–1425), ~33 s later and after the video ended but Length/Value bytes are truncated, so the 100/100/13 values cannot be cross-checked against the wire this session |
 | 17:14:04 | End of video recording | — | — | — |
 
 ## Corrections vs. the original draft of this file
@@ -114,10 +115,10 @@ timestamp below.
 
 ## Traceability check (`AGENTS.md` §13 point 7, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s Group-A Test-IDs)
 
-Group A's associated Test-IDs are `PAIR-001` (primary) and incidental `BATT-004`; the Group-A-repeat note
-additionally targets `PAIR-004`. All three are referenced in the timeline above. `APP-001`/`APP-002`
-(Pixel Buds app onboarding permission taps) are incidentally exercised here too and referenced above,
-though they are not Group A's own assigned Test-IDs.
+Group A's associated Test-IDs (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`) are `PAIR-001` (primary), `BATT-004`,
+`APP-001`, `APP-002` and, incidental, `GFPS-002`; the Group-A-repeat note additionally targets `PAIR-004`.
+`PAIR-001`, `PAIR-004`, `BATT-004`, `APP-001` and `APP-002` are referenced in the timeline above;
+`GFPS-002` is not (next section).
 
 ## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
 

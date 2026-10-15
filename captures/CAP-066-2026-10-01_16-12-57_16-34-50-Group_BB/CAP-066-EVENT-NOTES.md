@@ -176,7 +176,7 @@ services (its first message is `03 08 00 02 01 25`); the app's claims start with
 | BB-8 Transparency, Off in the app | **done** → two claims, `08 11` first, ACK `80`, ACK `20` | A4855, A5007 |
 | BB-9 Disconnect / Connect, (i) at once | **done differently**: no Disconnect or Connect tap in the whole run; the session re-opened by itself when a bud left the case (16:22:21); the (i) was opened ≈ 6 s after ready — the "last connection" words were not seen | E1 620–629; film 16:22:28 |
 | BB-12 Left out with both worn on 19 | **not done** — on ch 19 with both worn (16:24:52 onwards) no bud was taken out on film | film; HCI (no `DISC` 16:24:52–16:32:17) |
-| BB-12m Right out with both worn on 21 | **done, repeated** (16:16:46 → 19, 16:24:10 → 19), plus a variant (16:21:36, the Right from the ear into the case, on 19 → 19) and a new case (16:22:50, the Right **into** the ear with the Left on the table: 19 → 21) | FINDINGS §4 |
+| BB-12m Right out with both worn on 21 | **done, repeated** (16:16:46 → 19, 16:24:10 → 19), plus a variant (16:21:36, the Right from the ear into the case, on 21 → 19: announcements A3267 ch 21, A5268 ch 19 — a switch) and a new case (16:22:50, the Right **into** the ear with the Left on the table: 19 → 21) | FINDINGS §4 |
 | BB-13 tile large | **done** (before the film, and again on film 16:25:06–30) | film |
 | BB-14 force-stop, tile within 3 s | **done differently**: real force-stop ✓ (16:26:54); the tile read ≈ 9 s after ready: "ANC / Off" — never "Open the app" while ready | film; system log |
 | BB-15 cut-off watch | **watched — no cut-off occurred**: 0 of 23 app claims had an answer after the claim's close; no "answer cut off" line | FINDINGS §2 |

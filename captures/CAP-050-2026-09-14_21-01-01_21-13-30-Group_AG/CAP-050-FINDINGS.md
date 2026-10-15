@@ -144,8 +144,8 @@ zero-length ones (`02`, `04`, `11`, `13`, `15`), in the same burst, every time**
 | `04.12` | `08 02 10 01` — **byte-identical in all 14 bursts** | **Constant — not a match** |
 | `04.14` | `08 01` — **byte-identical in all 14 bursts** | **Constant — not a match** |
 | `09.02` | `08 00` — **byte-identical in all 14 bursts** | **Constant — not a match** |
-| `04.05` | `08 03` in 11 of 14 bursts; `08 04` once (chandle `0x0002`-second, mid-burst, see §4); `08 05` once (chandle `0x0008`) | **Fluctuates, but does not cleanly track the dock-state bracket — see §4. Reported as 🔴 OPEN QUESTION, not a confirmed semantic reading** |
-| `04.16` | `08 02` in 11 of 14 bursts; `08 01` twice (chandle `0x0002`-second mid-burst, and chandle `0x0008`) | Same pattern/verdict as `04.05` — see §4 |
+| `04.05` | whole log, 42 `Rcvd` frames: `08 03` ×37; `08 04` ×3 (5966/6082/6350, chandle `0x0002`-second, 21:03:07–21:03:24, see §4); `08 05` ×2 (11017/11438, chandle `0x0008`, 21:08:19–21:08:30) *(corrected 2026-10-15, `ai-sessions/0094`: the per-burst counts "11 of 14 + once + once" summed to 13)* | **Fluctuates, but does not cleanly track the dock-state bracket — see §4. Reported as 🔴 OPEN QUESTION, not a confirmed semantic reading** |
+| `04.16` | whole log, 21 `Rcvd` frames: `08 02` ×18; `08 01` ×3 (5973/6090, chandle `0x0002`-second mid-burst, and 11051, chandle `0x0008`) *(corrected 2026-10-15, `ai-sessions/0094`: "11 of 14 + twice" summed to 13)* | Same pattern/verdict as `04.05` — see §4 |
 
 **Outcome for `PRIV-001`'s own 7 flagged codes, stated per the three-way framework this Test-ID's own
 Analysis checklist requires:**
@@ -201,13 +201,13 @@ not* distinction, confirmed correct at every *other* reconnect this session — 
 the same "reconnects can catch a stale in-flight reading" caveat ADR-024's own 2026-09-13 Update
 already documents.
 
-## 5. `Settable-toggles` cross-check against `DECISIONS.md` ADR-022/ADR-024 — 16/16 `Get`/`Notify` pairs, zero misses; dock-state reading correct at every other reconnect (🟢 FACT, reconfirms both ADRs)
+## 5. `Settable-toggles` cross-check against `DECISIONS.md` ADR-022/ADR-024 — 16 reconnects, 19 `Get`s each answered, 23 `Notify` frames, zero misses (🟢 FACT for ADR-022); under ADR-024's both-vs-not-both reading five `0x00` readings with not-both docked are counter-examples (21:01:14, 21:02:04, 21:03:04, 21:04:07, 21:13:01) *(corrected 2026-10-15, `ai-sessions/0094`: said "16/16 pairs … dock-state reading correct at every other reconnect")*
 
 ```
 $ tshark -r CAP-050-btsnoop_hci.log -Y 'btrfcomm.len>0 and data.data contains 08:11:00:00' \
   -T fields -e frame.number -e frame.time -e bthci_acl.chandle -e btrfcomm.dlci
 ```
-19 `08 11 00 00` "Get ANC state" `Sent` frames total (across all 16 reconnects — the same
+19 `08 11 00 00` "Get ANC state" `Sent` frames total (23 `08 13` Notify frames in all — 19 answers plus 4 without a Get) (across all 16 reconnects — the same
 session-local-DLCI caveat applies here too: `btrfcomm.dlci` alone is not `4` for every occurrence,
 matching `CAP-038-FINDINGS.md` §3's own finding for the *official* Fast Pair Message Stream, distinct
 from the private envelope checked above), each answered by a matching `08 13 00 04 ...` Notify —
@@ -217,12 +217,12 @@ reconnect:
 
 | Reconnect time | `Settable-toggles` | Video-confirmed dock state (where checked, §4/§6) |
 |---|---|---|
-| 21:01:14, 21:01:40 | `0x00` (docked) | not individually checked this pass |
-| 21:02:04 | `0x00` (docked) | `21:02:37` (disconnect moment, same window): **both docked**, confirmed §6 |
+| 21:01:14, 21:01:40 | `0x00` (docked) | 21:01:13: **both buds outside the case** (`CAP-050-EVENT-NOTES.md`) — 21:01:14 is a **counter-example** under ADR-024's binary; 21:01:40: both being seated (21:01:38–44, disconnect 21:01:41) |
+| 21:02:04 | `0x00` (docked) | 21:01:49–21:01:58: Right removed, **Left docked, Right out** at this reconnect (3219, 21:01:59.937; `CAP-050-EVENT-NOTES.md`) — a **counter-example** under ADR-024's binary (the both-docked moment cited here before, 21:02:37, is the later disconnect) |
 | 21:03:04 | `0x00` (docked) | `21:03:00`: **Left docked, Right out — a counter-example, see §4** |
 | 21:03:08, 21:03:15 | `0xe8` (undocked) | `21:03:08`: **both out**, confirmed §4 |
 | 21:03:34 | `0x00` (docked) | not individually checked |
-| 21:04:07, 21:05:01 | `0x00` (docked) | 21:04:04: **Left docked, Right out** — also `Settable=00`, i.e. this reconnect's reading is internally consistent with itself even though it doesn't distinguish "one docked" from "both docked" (ADR-024 only ever claimed a both-vs-not-both binary, not a 3-way split — this is expected, not a counter-example) |
+| 21:04:07, 21:05:01 | `0x00` (docked) | 21:04:04: **Left docked, Right out** — `Settable=00` with not-both docked is a **counter-example** under ADR-024's both-vs-not-both binary (as 21:03:04 above; corrected 2026-10-15, `ai-sessions/0094`: this said "expected, not a counter-example") |
 | 21:05:42 | `0x00` (docked) | not individually checked |
 | 21:06:35 | `0x00` (docked) | not individually checked |
 | 21:08:19 | `0xe8` (undocked) | `21:08:19`: **Left docked, Right out — consistent with ADR-024's own not-both-docked reading (only "both docked" maps to 0x00; "Left only" correctly reads as not-both, 0xe8)** |
@@ -234,16 +234,16 @@ reconnect:
 | 21:11:30, 21:12:12 | `0x00` (docked) | not individually checked |
 | 21:12:38 | `0xe8` (undocked) | not individually checked |
 | 21:12:41 | `0x00` (docked) | not individually checked |
-| 21:13:01 | `0x00` (docked) | not individually checked |
+| 21:13:01 | `0x00` (docked) | 21:12:59–21:13:09: **Left docked, Right out** (`CAP-050-EVENT-NOTES.md`) — a **counter-example** under ADR-024's binary |
 
 **Consistency with the wider `CAP-036`–`CAP-042`/`CAP-048`/`CAP-049` lineage (per this phase's own
 cross-check instruction):** the pattern here — mostly `0x00`, with `0xe8` appearing exactly at the
 sessions' genuine not-both-docked moments — matches `CAP-037`'s 26/26 and `CAP-039`'s 10/10
-same-session confirmations, and the one flagged discrepancy (§4's `21:03:04` stale-reading case)
-matches, rather than contradicts, `CAP-048-FINDINGS.md` §5's own two counter-examples of the same
-"fresh reconnect catches a pre-transition value" shape — **no contradiction with the established
-lineage is found; this session's own single anomaly fits an already-documented, still-🟡-HYPOTHESIS
-pattern rather than opening a new one.**
+same-session confirmations; but under ADR-024's both-vs-not-both binary this session has **five** counter-examples, not one — `0x00` while
+not both buds were seated at 21:01:14 (both outside), 21:02:04, 21:03:04, 21:04:07 and 21:13:01 (Left docked, Right out) — against one consistent
+not-both reading (21:08:19, `0xe8`). The five are many more than a "stale reading after a fresh reconnect" (`CAP-048-FINDINGS.md` §5) explains;
+they fit ADR-049 (which superseded ADR-024's Decision): 🟡 `0x00` ⇔ no bud worn — the out-of-case bud was in hand or on the table each time.
+*(corrected 2026-10-15, `ai-sessions/0094`: this said "this session's own single anomaly")*
 
 ## 6. Recalled mis-docking (wrong-orientation) event — **no clear video evidence found; a confirmed absence, not a guess** (🟡 targeted re-check, not exhaustive)
 

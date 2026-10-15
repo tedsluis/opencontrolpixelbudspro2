@@ -33,6 +33,18 @@ enum class AncMode(val wireBit: Int) {
     ;
 
     /**
+     * The one name a person sees for the mode — on the buttons, the (i) line, the Quick Settings tile and the notification (`ai-sessions/0094`, A93-APP-08:
+     * four spellings before — "ACTIVE", "Noise cancellation", "Active", "ANC: ACTIVE"); the official app's words (`CAP-056` film, 17:31:33).
+     */
+    val label: String
+        get() = when (this) {
+            ACTIVE -> "Noise cancellation"
+            OFF -> "Off"
+            ADAPTIVE -> "Adaptive"
+            TRANSPARENT -> "Transparency"
+        }
+
+    /**
      * The mode a Quick Settings tap moves to (`ai-sessions/0042`): Noise cancelling → Transparent → Adaptive → Off → Noise
      * cancelling. A fixed, documented order so the tile is predictable; an unknown current mode starts the cycle.
      */

@@ -32,7 +32,7 @@ adjacent controls.
 **Actual session shape (video-confirmed):** t=0–~28s is Bluetooth reconnect + app navigation
 (quick-settings → connect → open app → briefly detour into system audio volume, not part of either
 Test-ID) → "Device details". Conversation detection was found **ON**, switched **OFF** at 07:36:29 and back **ON** at 07:36:41 (both
-taps on film, each with its own DLCI 0x02 write — frames 1720 and 1808); Multipoint was found **OFF** and switched **ON** once.
+taps on film, each with its own DLCI 0x02 write — frames 1720 and 1808); Multipoint was found **OFF**, switched **ON** at 07:38:02 (frame 2293) and back **OFF** at 07:39:14 (frame 2482), both on film.
 
 ## Event Timeline
 
@@ -45,6 +45,7 @@ taps on film, each with its own DLCI 0x02 write — frames 1720 and 1808); Multi
 | 07:36:5x–07:37:5x | Navigate back to Device details → "More settings" | User (App) | — | No RFCOMM data (navigation only) |
 | **~07:38:01.6** (wire write; on-screen toggle transition visible at t≈132s/07:38:02, confirmed ON by 07:38:03) | **Toggle 'Multipoint' OFF→ON**, under Device details → More settings | User (App) | `MULTI-001` | **Frame 2293** (DLCI 0x02, `Sent`/ctrl `0x4b`, 07:38:01.609130) — see §Decode. Rcvd echo: frame 2295 (07:38:01.640548). **Also triggers a Fast Pair Message Stream SASS burst** on DLCI 0x04 (Group `0x07`, frames 2296–2319, 07:38:01.641–07:38:02.047) — see §Decode. |
 | 07:38:06 | A push group: ANC `Notify` on DLCI 0x04 (2326 `08 13 00 04 01 e8 e8 08`), a settings-change stream packet on DLCI 0x02 (2329), DLCI 0x08 `0e 02` and `0e 01` (2330, 2332) — no Group `0x04` Code `0x12` among them (corrected 2026-10-03) | Buds (Auto) | — | Not attributable to either Test-ID — same already-documented periodic/channel-reopen pattern as `CAP-020-FINDINGS.md` §5 |
+| **07:39:14** (film: ON at 07:39:11 and :13, finger on the switch 07:39:14, OFF at 07:39:16) | **Toggle 'Multipoint' ON→OFF**, More settings | User (App) | `MULTI-001` | **Frame 2482** (DLCI 0x02, phone → Buds, 07:39:13.782) `WriteSetting 4:{11:0}`, mirrored 2486/2489; followed by a DLCI 0x04 Group `0x07` (SASS) round, frames 2487–2496 (07:39:13.886–.927) — `CAP-019-FINDINGS.md` §4 |
 | 07:39:30 | Video end | — | — | Video last frame |
 
 ## Decode (DLCI 0x02, `libmaestro` Pigweed `pw_hdlc` channel, `PROTOCOL.md` §2.2a)
@@ -104,7 +105,7 @@ MULTI-001: [off 13] field=5 wt=LD len=4  span=15..19
 ```
 
 Both match the same `field 5{ field 4{ <inner field>=<value> } }` outer wrapper first identified
-in `CAP-020-FINDINGS.md` §5 for touch controls/head gestures — a fourth and fifth data point for
+in `CAP-020-FINDINGS.md` §5 for touch controls/head gestures — a third and fourth data point for
 that wrapper being general-purpose, not feature-specific. Running field-number table so far (all
 🟡 HYPOTHESIS, one capture each):
 
@@ -124,10 +125,11 @@ that wrapper being general-purpose, not feature-specific. Running field-number t
 len 17, opaque), `07 34 00 0c 01 ...` (Code `0x34`, len 12, opaque — 15× across the whole log, a periodic SASS code, not
 Multipoint-specific; Codes `0x11`/`0x40`/`0x41`/`0x42` also run at connect (785–807) and at 07:39:13 (2487–2496), only `0x21` is unique to this
 burst — FINDINGS §4), ACKs `ff 01 00 03 07 40 00` / `ff 01 00 03 07 42 00` /
-`ff 01 00 08 07 41 69 6e 2d 75 73 65`. **This directly confirms
-`CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s own Group C hint** ("Multipoint may trigger an SDP/connection
-update, not just an RFCOMM command") — Multipoint activates SASS (Smart Audio Source Switching)
-Message Stream traffic, previously only structurally identified (`PROTOCOL.md` §2.3) with no
+`ff 01 00 08 07 41 69 6e 2d 75 73 65`. On `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s own Group C hint
+("Multipoint may trigger an SDP/connection update, not just an RFCOMM command"): no SDP traffic
+follows either Multipoint write (`-Y btsdp` in 07:38:00–10 and 07:39:13–20 → 0 frames; 20 elsewhere);
+each write is followed by a SASS (Smart Audio Source Switching) round whose Code `0x21` is the only
+Multipoint-specific code — Message Stream traffic previously only structurally identified (`PROTOCOL.md` §2.3) with no
 content correlated to any specific user action.
 
 **Not decoded further, flagged rather than guessed:** the remaining Group `0x07` codes' non-ASCII

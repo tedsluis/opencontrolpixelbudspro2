@@ -22,6 +22,7 @@ package io.github.tedsluis.opencontrolpixelbuds.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Checkbox
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
@@ -164,12 +166,8 @@ internal fun showAncModeList(settings: BudsSettings): Boolean =
     settings.holdLeft?.value == HoldAction.NOISE_CONTROL || settings.holdRight?.value == HoldAction.NOISE_CONTROL
 
 /** The four boxes in the official app's on-screen order (`CAP-056` film, 17:31:33) — which wire boolean each sets is [AncModeList]'s job. */
-internal val ANC_MODE_LIST_ORDER: List<Pair<AncMode, String>> = listOf(
-    AncMode.ACTIVE to "Noise cancellation",
-    AncMode.OFF to "Off",
-    AncMode.ADAPTIVE to "Adaptive",
-    AncMode.TRANSPARENT to "Transparency",
-)
+internal val ANC_MODE_LIST_ORDER: List<Pair<AncMode, String>> =
+    listOf(AncMode.ACTIVE, AncMode.OFF, AncMode.ADAPTIVE, AncMode.TRANSPARENT).map { it to it.label }
 
 internal const val ANC_MODE_LIST_TITLE: String = "Modes for press and hold (both buds)"
 
@@ -209,12 +207,15 @@ private fun AncModeListSection(reading: SettingReading<AncModeList>?, enabled: B
         Text(ANC_MODE_LIST_TITLE, style = MaterialTheme.typography.titleMedium)
         val list = reading?.value
         ANC_MODE_LIST_ORDER.forEach { (mode, label) ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = list?.isSelected(mode) ?: false,
-                    onCheckedChange = { onChange(mode, it) },
-                    enabled = enabled && list != null && !list.isLocked(mode),
-                )
+            val checked = list?.isSelected(mode) ?: false
+            val boxEnabled = enabled && list != null && !list.isLocked(mode)
+            // A93-APP-07 (`ai-sessions/0094`): the row is the checkbox — TalkBack reads the mode's name with its state.
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .toggleable(value = checked, enabled = boxEnabled, role = Role.Checkbox, onValueChange = { onChange(mode, it) }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(checked = checked, onCheckedChange = null, enabled = boxEnabled)
                 Text(label, style = MaterialTheme.typography.bodyLarge)
             }
         }

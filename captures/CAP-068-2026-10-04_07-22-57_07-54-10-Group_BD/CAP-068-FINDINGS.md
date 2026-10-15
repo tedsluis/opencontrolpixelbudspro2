@@ -16,7 +16,7 @@ exports and the one app logcat, per `ai-sessions/0070`. There is no system log. 
 **HCI logs:** "Z" = `CAP-068-btsnoop_hci.log.last` (1,413 packets, 07:11:25.133–07:23:02.020, before the film), "A" = `CAP-068-btsnoop_hci2.log.last` (2,314,
 07:23:07.514–07:34:58.304), "B" = `CAP-068-btsnoop_hci2.log` (3,563, 07:35:44.243–07:56:06.298); `CAP-068-btsnoop_hci.log` is a byte-for-byte prefix of A
 (2,219 packets) and is not counted · **Exports:** E1…E5, each a prefix of the next; E5 = `…-075355.txt` · **Buds:** `04:00:6e:cf:6e:07`, classic handle
-`0x000b` for all six ACLs; no LE link.
+`0x000b` for all five ACLs (plus one page timeout, §1); no LE link.
 
 Commands used throughout (rule 4a; all on handle `0x000b`, shown matching the Connection Complete events A160, B159, B1092, B2844): the control-frame
 inventory `tshark -r <log> -Y "bthci_acl.chandle==0x000b && btrfcomm && (btrfcomm.frame_type==0x2f || btrfcomm.frame_type==0x63 || btrfcomm.frame_type==0x43
@@ -162,7 +162,7 @@ scripts/message_stream_tally.py -v` (`CAP-068-btsnoop_hci2.log.last {'get': 19, 
   recovered on the next tap; no session was lost without a message. Criterion 3 ("stable across multiple connect/disconnect cycles") holds over 15 ends.
 - 🟢 **Lead L-1 (the hosting bud):** with both docked on 19, the **Right** out ⇒ `DISC` + **21**; then the Left out ⇒ `DISC` + **19** (#1, #2). Fits the 🟡 reading of
   `PROTOCOL.md` §2.2a ("the channel names the bud hosting the link") but does not test the open case (the Left out with both **worn** on 19). No status change.
-- 🟡 #11 and #13: no action on film; the ring tone became audible 13 s after the Ring (07:48:44.8) — consistent with a bud being taken out of an ear while ringing
+- 🟡 #11 and #13: no action on film; the ring tone became audible at 07:48:44.8, 28 s after the Ring (07:48:16.9) and 13 s after loss #11 — consistent with a bud being taken out of an ear while ringing
   (#11) and put back (#13). Head not in view; not settled.
 - 🟢 **J4 (BD-23):** app paused 07:45:47.552 → resumed 07:47:59.548 (logcat); MAESTRO stayed open (runtime info B2051, B2059, B2065 received), no `DISC`; on
   return "Noise cancellation", no message.

@@ -1106,10 +1106,15 @@ or `reverse-engineering/apk/`, no `.venv/`, no cache directory, no JSON or CSV d
 | `0a27276` | chore(scripts): name the Kpi and JitterBuffer ids in pwrpc_decode, remove decode_qhr_settings |
 | `b4405d8` | docs: apply the approved results of the second APK pass (ai-sessions/0073) |
 | `04a4070` | docs: add ai-sessions/0073 (second reverse-engineering pass over the companion APK) — this file, its prompt and the `INDEX.md` row |
-| (this commit) | docs: record the commits of ai-sessions/0073 |
+| `4a709c8` *(back-filled 2026-10-15, `ai-sessions/0094`)* | docs: record the commits of ai-sessions/0073 |
 
 Pushed on 2026-10-06; pull request: https://github.com/tedsluis/opencontrolpixelbudspro2/pull/5 (open, not merged when this was written). The hash
 of the last commit above and the merge: to be completed by the next session's first step (`AI_SESSION_LOG_PROCEDURE.md` §4b item 2).
+
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- "968 citations in 19 documents (850 of them in `REVERSE_ENGINEERING.md`)" — the appendix gives 758 for `REVERSE_ENGINEERING.md` and sums to 968 with 758; 850 is wrong.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0073_CROSSCHECK_RESULT_2026_10_06

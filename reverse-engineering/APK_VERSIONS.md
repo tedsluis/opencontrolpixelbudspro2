@@ -31,6 +31,9 @@ the same version subfolder — record each file's own SHA-256 in the table below
 | `v1.0.955078536-10253511/` | `base.apk` | `b12d75d07f7743b83ed0d507a9d6b7b2abf61d8f1e7c3e63aadc442c097d6c86` | `1.0.955078536` | `10253511` | 2026-08-30 | Pixel 7a (`lynx`, serial `38021JEHN07835`), maintainer's own device | Play Store, maintainer's own Google account, installed on the maintainer's own device | `1.5.1` | `3.0.3` | `pbtk 1.1.3` (pipx) |
 | `v1.0.955078536-10253511/` | `split_config.arm64_v8a.apk` | `ae63526672528d4fbed3086c2cd8280966bdd9ce9e764d2f00456f5b7698f3ba` | `1.0.955078536` | `10253511` | 2026-08-30 | Pixel 7a (`lynx`, serial `38021JEHN07835`), maintainer's own device | Play Store, maintainer's own Google account, installed on the maintainer's own device | `1.5.1` | `3.0.3` | `pbtk 1.1.3` (pipx) |
 | `v1.0.955078536-10253511/` | `split_config.xxhdpi.apk` | `a759ef5bdf17aa431fa58f64c27ea5e2801b114b7436ca785834012126286c46` | `1.0.955078536` | `10253511` | 2026-08-30 | Pixel 7a (`lynx`, serial `38021JEHN07835`), maintainer's own device | Play Store, maintainer's own Google account, installed on the maintainer's own device | `1.5.1` | `3.0.3` | `pbtk 1.1.3` (pipx) |
+| `v1.0.990706425-10260911/` | `base.apk` | `16b7e8f77e6e9a473f31b7636b5b9ee1021f921e439fe48d1491d0a6b64b3aa5` | `1.0.990706425` | `10260911` | 2026-10-05 | Pixel 7a (`lynx`), maintainer's own device | Play Store, maintainer's own Google account, installed on the maintainer's own device (`adb pull` of base + 2 splits, same signing certificate as 1.0.955078536) | — (not decompiled) | — | — |
+| `v1.0.990706425-10260911/` | `split_config.arm64_v8a.apk` | `4b493b23a6cafbb3de9d492b122815974c69e7ab6a8763ed1764a86c6ee80d5f` | `1.0.990706425` | `10260911` | 2026-10-05 | Pixel 7a (`lynx`), maintainer's own device | Play Store, maintainer's own Google account, installed on the maintainer's own device (`adb pull` of base + 2 splits, same signing certificate as 1.0.955078536) | — (not decompiled) | — | — |
+| `v1.0.990706425-10260911/` | `split_config.xxhdpi.apk` | `f0d065232de7eefc05ae2315983762b2f94a4e7098fa51289f54f63fce9b4952` | `1.0.990706425` | `10260911` | 2026-10-05 | Pixel 7a (`lynx`), maintainer's own device | Play Store, maintainer's own Google account, installed on the maintainer's own device (`adb pull` of base + 2 splits, same signing certificate as 1.0.955078536) | — (not decompiled) | — | — |
 
 minSdk=32, targetSdk=36 (from `dumpsys package`, recorded here for reference; not part of the
 table's own columns).
@@ -48,6 +51,9 @@ not finished — further passes remain valuable (see `TODO.md` Phase 2).
 **Used in a capture, not pulled (2026-10-04, `ai-sessions/0071`, maintainer-approved in chat, `AskUserQuestion` "New APK"):** the official app
 **1.0.990706425** (Play Store "Updated on Sep 30, 2026", on film) ran `CAP-069`. It has no "Find device" screen, calls `maestro_pw.JitterBuffer` and an unnamed MAESTRO
 service `0xbf6c9399` on the wire (`CAP-069-FINDINGS.md` §9). Not pulled or decompiled; a follow-up session is planned (`TODO.md` §4).
+*(Update 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat — `ai-sessions/0093` A93-HK-03, D8: it **was** pulled on 2026-10-05 into
+`reverse-engineering/apk/v1.0.990706425-10260911/` and is now registered in the table above — `sha256sum *.apk` and `aapt2 dump badging base.apk`
+(`versionCode='10260911' versionName='1.0.990706425'`); not decompiled — that is a later CROSSCHECK session, `TODO.md` §4.)*
 
 ## Why provenance matters here
 

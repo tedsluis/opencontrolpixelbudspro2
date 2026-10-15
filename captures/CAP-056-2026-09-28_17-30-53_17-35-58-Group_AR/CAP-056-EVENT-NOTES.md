@@ -130,7 +130,7 @@ Frame numbers: `CAP-056-btsnoop_hci.log`. Checklist state written as `{NC Off Ad
       1815 = 1959, 1843 = 1991); only the film tells them apart (FINDINGS §2).
 - [x] (A) which bit clears: Adaptive → boolean **4**, Transparency → boolean **3** (FINDINGS §1).
 - [ ] (A) whether "Customize right" shows a change made on "Customize left" — **not tested** (A2 skipped) (FINDINGS §2).
-- [x] (B) W2/W5: every field-2 write against the filmed switch labelled "In-ear detection" — 5 writes, 5 filmed taps (FINDINGS §3).
+- [x] (B) W2/W5: every field-2 write against the filmed switch labelled "In-ear detection" — 5 filmed taps, 6 writes (the fifth tap's 4344 was cancelled by the phone, 4360, and re-sent as 4361) (FINDINGS §3).
 - [x] (B) W1 vs W3: pause, Buds `DISC`, Settable, other pushes with OHD on vs off (FINDINGS §4).
 
 ## Open questions — carried into `CAP-056-FINDINGS.md`
@@ -146,7 +146,8 @@ Frame numbers: `CAP-056-btsnoop_hci.log`. Checklist state written as `{NC Off Ad
       `INEAR-003`, `INEAR-004` and `PAIR-003` are referenced.
 - [x] `CAP-056-FINDINGS.md` written (rule 4a: commands + raw hex).
 - [x] Folder renamed to `CAP-056-2026-09-28_17-30-53_17-35-58-Group_AR` (overlay clock, maintainer-approved in chat 2026-09-28).
-- [ ] Capture Index / `id_registry.csv` / `TESTPLAN` rows — after the checkpoint (`ai-sessions/0055` Phase D).
+- [x] Capture Index / `id_registry.csv` / `TESTPLAN` rows — after the checkpoint (`ai-sessions/0055` Phase D) — done: Capture Index row `analyzed`,
+      `id_registry.csv` row `analyzed`, `TESTPLAN` rows `HOLD-005`, `INEAR-001`, `INEAR-002`, `INEAR-004` cite `CAP-056` (checked 2026-10-15, `ai-sessions/0094`).
 
 ---
 

@@ -108,7 +108,7 @@ field4(len2){ field1=varint(5|6) } } } } }` — e.g. 1895 `3a 06 0a 04 22 02 08 
 (08:03:49, "Controls and gestures" shows both Left/Right already "Digital assistant", finger
 tapping "Left" row to revert it).
 
-**Status:** 🟡 **HYPOTHESIS**, but a comparatively strong one — all 4 of the 2×2 (earbud × action)
+**Status:** 🟢 **FACT** since 2026-08-30 (`qhr` field 7, `DECISIONS.md` ADR-019, §8; the text below is the original 🟡 reasoning) *(corrected 2026-10-15, `ai-sessions/0094`)* — all 4 of the 2×2 (earbud × action)
 combinations were exercised and each produced exactly the field/value pair a consistent scheme
 predicts, with frame 1903 (Rcvd echo of 1895) independently containing *both* `field1{field4=6}`
 (new) and `field2{field4=5}` (a second value) in one message, consistent with — though not
@@ -214,16 +214,16 @@ added from a 2026-08-23 external-audit re-analysis of all 1,123 frames — see `
   decode was performed to support any specific payload semantics. Per `AGENTS.md` §13's
   zero-creativity rule, this is left as an open question rather than a guessed interpretation.
 - Whether this recurs in any other capture, or is specific to whatever incidental
-  app/OS/connection state was active in this one session (e.g. the earlier `TOUCH-001`-shaped
-  re-send noted in `CAP-021-EVENT-NOTES.md` around 08:00:10, or some other incidental state) is
+  app/OS/connection state was active in this one session (e.g. the earlier filmed `TOUCH-001`
+  OFF→ON write, frame 1626, noted in `CAP-021-EVENT-NOTES.md` at 08:00:10, or some other incidental state) is
   unknown — no other capture in this batch shows any DLCI 0x0a payload to compare against.
-- `TODO.md`'s `CAP-008` item already earmarks DLCI 0x0a for a phone-call capture; this finding
-  shows the channel is not exclusively call-related, since nothing here involved a call.
+- `CAP-008` (2026-08-26, a real phone call) found DLCI 0x0a silent during the call
+  (`CAP-008-FINDINGS.md` §6), so this burst is not call-related either.
 
 ## 5. Cross-command structural comparison
 
-Extends `CAP-019-FINDINGS.md` §5's table — `HOLD-001`–`HOLD-004` are the first settings observed to
-nest a **third** level (`field5{field4{field7{field1|2{field4=N}}}}`) rather than the two-level
+Extends `CAP-019-FINDINGS.md` §5's table — `HOLD-001`–`HOLD-004` nest further levels
+(`field5{field4{field7{field1|2{field4{field1=N}}}}}`; the EQ write of `CAP-005`/`CAP-015` already nests `field5{field4{field16{…}}}`) rather than the two-level
 `field5{field4{<value>}}` seen for `TOUCH-001`/`HEAD-001`/`CONV-001`/`MULTI-001`. 🟡 HYPOTHESIS
 (new): the outer `field5{field4{...}}` wrapper's *inner* content structure scales with how much the
 setting needs to express — a plain boolean toggle uses a single varint; a per-earbud, multi-value
@@ -234,8 +234,8 @@ earbud, before the value itself.
 
 - All 5 Test-IDs (`HOLD-001`–`HOLD-005`) isolate to DLCI 0x02 writes, cross-checked against video
   at each write's exact timestamp — the clean 2×2 combination coverage for `HOLD-001`–`HOLD-004`
-  is stronger evidence than a single-sample capture, though still 🟡 HYPOTHESIS overall (no
-  official spec).
+  is stronger evidence than a single-sample capture; `HOLD-001`–`HOLD-004`'s field 7 is 🟢 FACT
+  (ADR-019, §8), `HOLD-005`'s field 12 bit order is 🟢 per ADR-046 (status banner).
 - **Recommended next step:** an isolated single-checkbox-toggle-on-one-earbud-only capture would
   resolve `HOLD-005`'s open Left/Right attribution question.
 - **New, unattributed finding (§4a):** this session is the first to record any payload on DLCI

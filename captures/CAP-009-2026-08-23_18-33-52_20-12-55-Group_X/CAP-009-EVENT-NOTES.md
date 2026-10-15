@@ -55,7 +55,7 @@ in `recording1`'s last ~70 seconds, not inferred from the log alone.
 
 ### MAC verification (independent re-derivation, not taken on trust)
 
-The task brief's MAC placeholder was not filled in. Re-derived and cross-checked four independent
+The task brief's MAC placeholder was not filled in. Re-derived and cross-checked five independent
 ways before filtering on it:
 
 1. **Connection-event address.** The log's only `HCI_Connection_Complete` events
@@ -73,9 +73,9 @@ ways before filtering on it:
    75
    ```
 
-   (Note: `tshark -Y 'frame contains "google-pixel-buds-pro-v1"'` returned 0 matches for reasons
-   not fully diagnosed — likely a display-filter string-escaping quirk with the embedded hyphens —
-   so this check was done as a raw byte search instead; the hex is directly visible in every
+   (Note: `tshark -r CAP-009-btsnoop_hci.log -Y 'frame contains "google-pixel-buds-pro-v1"'` matches
+   75 frames, exit 0 — the same count as the raw byte search above (re-run 2026-10-15,
+   `ai-sessions/0094`; an earlier "0 matches" did not reproduce); the hex is directly visible in every
    `Group 0x0e Code 0x02` frame preceding a `Code 0x01` battery push, e.g. frame 875's payload.)
 3. **SDP profile fingerprint.** The peer at this connection advertises/queries Hands-Free (HFP),
    Audio Sink/A2DP, and AVRCP service records (frames 736, 861, 931, 1367, 1403, ...) — consistent
@@ -108,7 +108,7 @@ $ ffmpeg -ss <chunk_start> -t 600 -i CAP-009-recording1.mp4 \
 each step rather than trusting the coarse pass's own row/column reading — **this caught and
 corrected several misreadings in the coarse pass itself** (see the two flagged rows below), which
 is exactly the kind of self-check `PROJECT_RULES.md`'s evidence bar calls for: a "clean match" at
-low resolution turned out, on close reading, to be off by minutes in more than one case, until
+low resolution turned out, on close reading, to be off by ~9 s and ~35–45 s in two cases, until
 verified at 1-frame precision.
 
 **Mandatory full-density coverage of 19:50:00–20:12:55:** this window (both buds going into the
@@ -124,7 +124,7 @@ a value change, since a percentage-only crop cannot show *why* a value changed.
 ## Independent findings — diff against the maintainer's original notes
 
 All 7 value-change events the maintainer had noted **exist and are confirmed** by the independent
-pass. Two of the maintainer's own timestamps are **refined by minutes** (not contradicted — the
+pass. Several of the maintainer's own timestamps are **refined by a few seconds** (B 2–5 s, C ~2 s, E ~1 s; not contradicted — the
 maintainer's times were "when I happened to check," not "when it changed," which is exactly the
 periodic-manual-check limitation the capture design (§Procedure) anticipated). No event the
 maintainer noted was found to be spurious, and no *additional* battery-value change was found
@@ -244,8 +244,9 @@ numbering happens to match several prior sessions', but that is not guaranteed i
       own notes (this session's specific requirement, beyond the original Group X checklist).
 - [x] Extract every `AT+CIND?` (`battchg`) value across the session with its timestamp. → exactly
       **one** occurrence (frame 884, 18:34:01.90); never repeated. See `CAP-009-FINDINGS.md` §1.
-- [x] Extract every `AT+BIEV=2,...` value across the session with its timestamp. → 69 pushes (73
-      total `AT+BIEV`/`AT+CIND` frames combined), 5 distinct values, irregular cadence. See
+- [x] Extract every `AT+BIEV=2,...` value across the session with its timestamp. → 68 pushes (71
+      total `AT+BIEV`/`AT+CIND` frames combined: plus `AT+BIEV=1,1`, `AT+CIND=?`, `AT+CIND?` —
+      `tshark -Y 'frame contains "AT+BIEV" or frame contains "AT+CIND"'`), 5 distinct values, irregular cadence. See
       `CAP-009-FINDINGS.md` §2.
 - [x] Compare both trends against the on-screen battery percentage — done independently (video)
       and cross-checked against the maintainer's notes, table above.

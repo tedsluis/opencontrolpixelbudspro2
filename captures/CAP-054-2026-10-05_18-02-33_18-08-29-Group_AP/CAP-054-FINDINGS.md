@@ -52,7 +52,7 @@ closed-case form (`52:39:01:d3:49:1e`: `10 52 13d3802844 21 54a6 2a b029be65f6a0
 removal. 🟡 `36:91…`: the closed-case form of `CAP-043`, RSSI −13 to −28 dBm next to the phone, its post-salt byte follows the filmed lid state in
 225 of 225 reports, its payload changed at 18:04:16.511 — 0.2–0.5 s before Settings changed "C: 54%" to "C: 53%".
 
-**Answer.** 🟢 With this firmware the Buds send **no** Battery Notification field in clear — not with the lid closed, not in the ≈ 44 s and ≈ 50 s after
+**Answer.** 🟢 With this firmware the Buds send **no** Battery Notification field in clear — not with the lid closed, not in the ≈ 44 s and ≈ 39 s *(corrected 2026-10-15, `ai-sessions/0094`)* after
 each lid opening, not with one bud out — and on lid open they switch to a **show-UI** account-key advertisement (filter type 0) with Random Resolvable
 Data. The spec's "use case" sentence is not followed in the documented form.
 

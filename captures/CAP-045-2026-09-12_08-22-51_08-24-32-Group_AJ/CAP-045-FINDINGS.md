@@ -70,9 +70,10 @@ $ tshark -r CAP-045-btsnoop_hci.log -Y 'btrfcomm.dlci==4 and btrfcomm.len>0' -T 
 **Every state transition after the connect-time pair is a bare `Notify` (`08 13`) with no preceding
 `08 12` Set frame** — exactly `CAP-027-FINDINGS.md` §4's already-documented press-and-hold mechanism
 (a hardware gesture drives the Buds to report a Notify directly, bypassing the app-initiated Set
-path). All 10 transitions correlate to a video-confirmed action within ≤1s (see the corrected Event
-Timeline), 8 of them clean ANC-mode-cycle transitions (Adaptive→Transparency→Noise
-cancellation→Adaptive, repeating) matching the physical long-press gestures, and 2 of them
+path). 9 of the 10 transitions correlate to a video-confirmed action within ≤1s (see the corrected Event
+Timeline): 7 clean ANC-mode-cycle transitions (Adaptive→Transparency→Noise
+cancellation→Adaptive, repeating) matching the physical long-press gestures (3 Left: 1583/1755/1818; 4 Right: 2168/2218/2237/2254); one further
+cycle transition, 2122 (08:24:02.089, →Adaptive), has no video-visible gesture; and 2 of them *(corrected 2026-10-15, `ai-sessions/0094`)*
 (`08:23:54`, `08:24:30`) matching in-ear-removal moments (`Current` reads `Off`, the same value a
 genuine "ANC off" selection would produce — no distinct removal-specific value exists in this
 message).
@@ -83,7 +84,7 @@ carries no side field (🟢 FACT, structural):**
 [Group:1][Code:1][Len:2BE=0004][Version:1][UI toggles:1][Settable toggles:1][Current state:1]
 ```
 Per `PROTOCOL.md` §4.1's already-confirmed layout, this 8-byte frame has no field capable of
-encoding which earbud triggered it. All 5 Left-attributed and 5 Right-attributed Notify frames in
+encoding which earbud triggered it. All 4 Left-cluster (1583–1849) and 6 Right-cluster (2122–2273) Notify frames in
 this session are structurally identical in shape — differing only in the `Current state` byte value,
 which reflects the *new ANC mode*, not the *triggering side*. **The only way to attribute a frame to
 Left vs. Right is timing/video correlation** — which this session's own corrected Event Timeline
@@ -103,11 +104,11 @@ re-run of Group AJ's own procedure is still needed.**
 ## 5. Test-ID traceability
 
 - **`HOLD-005`**: **not exercised** — the checklist screen was never opened.
-- **`TOUCH-007`** (incidental, not this Group's own target): exercised 8 times (4 per earbud),
+- **`TOUCH-007`** (incidental, not this Group's own target): exercised 7 times (3 Left, 4 Right; plus one gesture-less transition, 2122),
   cleanly video/wire-correlated — a further replication of `CAP-027-FINDINGS.md` §4's finding, and
-  the first to show it holds for the Right earbud specifically (`CAP-027`'s own Right-side sample
-  was ambiguous between "one long hold" and "two presses," per that file's own open item — this
-  session's 4 clean Right-side samples don't resolve that ambiguity either, since this session's own
+  the first multi-sample replication on the Left earbud (`CAP-027`'s own Left-side sample, frames 3056/3091,
+  was ambiguous between "one long hold" and "two presses," per that file's own open item; its Right-side sample, 2930, was a single clean frame — this
+  session's 3 clean Left-side samples don't resolve that ambiguity either, since this session's own
   gestures weren't individually video-timed to sub-second precision).
 
 ## 6. Conclusions & proposed downstream updates

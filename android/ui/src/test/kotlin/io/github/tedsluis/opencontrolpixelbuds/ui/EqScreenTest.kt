@@ -24,6 +24,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnySibling
+import androidx.compose.ui.test.hasContentDescriptionExactly
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.assertIsEnabled
@@ -102,7 +103,7 @@ class EqScreenTest {
         val sliders = compose.onAllNodes(eqSlider)
         sliders.assertCountEquals(5)
         for (i in 0 until 5) sliders[i].assertIsNotEnabled()
-        compose.onNodeWithText(EqPreset.entries.first().name.replace('_', ' ')).assertIsEnabled()
+        compose.onNodeWithText(presetLabel(EqPreset.entries.first())).assertIsEnabled()
     }
 
     @Test
@@ -111,6 +112,21 @@ class EqScreenTest {
         val sliders = compose.onAllNodes(eqSlider)
         sliders.assertCountEquals(5)
         for (i in 0 until 5) sliders[i].assertIsEnabled()
+    }
+
+    @Test
+    fun `A93-APP-07 - each band slider is named by its band and says its gain in dB, or not read`() {
+        show(gains = EqBandGains(upperTreble = 0f, treble = 0f, mid = 0f, bass = 3.0f, lowBass = 5.0f))
+        val bass = compose.onNode(eqSlider and hasContentDescriptionExactly("Bass")).fetchSemanticsNode()
+        assertEquals("3.0 dB", bass.config.getOrNull(SemanticsProperties.StateDescription))
+        compose.onAllNodes(eqSlider and hasContentDescriptionExactly("Low bass")).assertCountEquals(1)
+    }
+
+    @Test
+    fun `A93-APP-07 - an unread band slider says not read`() {
+        show(gains = null)
+        val mid = compose.onNode(eqSlider and hasContentDescriptionExactly("Mid")).fetchSemanticsNode()
+        assertEquals(NOT_READ_DESCRIPTION, mid.config.getOrNull(SemanticsProperties.StateDescription))
     }
 
     // ---- `ai-sessions/0069` A68-APP-08 (visible text only) and A68-APP-16 ----
@@ -160,7 +176,7 @@ class EqScreenTest {
     fun `an unread switch on Sound shows the dash with the screen-reader text instead of a switch`() {
         show(gains = EqBandGains.FLAT) // Volume EQ not read
         compose.onNode(notReadDash and hasAnySibling(hasText(VOLUME_EQ_LABEL))).assertExists()
-        compose.onAllNodes(isToggleable() and hasAnySibling(hasText(VOLUME_EQ_LABEL))).assertCountEquals(0)
+        compose.onAllNodes(isToggleable() and hasText(VOLUME_EQ_LABEL)).assertCountEquals(0)
     }
 
     @Test
@@ -187,7 +203,7 @@ class EqScreenTest {
                 EqScreen(ConnectionState.Ready, EqBandGains.FLAT, null, null, {}, { chosen += it }, {})
             }
         }
-        compose.onNodeWithText("FLAT").performScrollTo().performClick()
+        compose.onNodeWithText("Flat").performScrollTo().performClick()
         assertEquals(listOf(EqPreset.FLAT), chosen)
     }
 
@@ -217,7 +233,7 @@ class EqScreenTest {
         compose.onNodeWithContentDescription("Equalizer: $DETAILS_DESCRIPTION").performClick()
         compose.onNodeWithText("Volume EQ: changed ${formatUpdatedAt(at)}").assertExists()
         compose.onNodeWithText("Close").performClick()
-        compose.onNode(isToggleable() and hasAnySibling(hasText(VOLUME_EQ_LABEL))).performScrollTo().assertIsOn().performClick()
+        compose.onNode(isToggleable() and hasText(VOLUME_EQ_LABEL)).performScrollTo().assertIsOn().performClick()
         assertEquals(listOf(false), volumeEqTaps)
     }
 

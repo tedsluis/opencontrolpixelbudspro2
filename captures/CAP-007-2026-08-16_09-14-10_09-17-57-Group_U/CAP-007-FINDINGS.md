@@ -157,8 +157,10 @@ phone-side query. This directly answers Group U's own research question:
 > **🟢 FACT: Code `0x12` is autonomously pushed by the Buds, not a phone-polled value.** The 14
 > pushes between 09:18:43 and 09:19:45 (§3.2's table, frames 2074–2463) fire with **no**
 > corresponding RFCOMM channel reopen, no Sent-side query, and — per §3.5 below — no camera
-> coverage of any physical action at all, on a channel that had otherwise been completely silent
-> for the preceding ~184s. This rules out "value only changes because the phone just asked" and
+> coverage of any physical action at all, after ~184 s without any Code `0x12` frame (1444 at
+> 09:15:39.285 → 2074 at 09:18:43.428) during which DLCI 0x08 carried only the periodic `0e 02`/`0e 01`/`04 03`
+> push groups (09:16:02, 09:16:23, 09:17:02, 09:17:52; e.g. frames 1632/1633/1642) and no channel was
+> opened or closed *(corrected 2026-10-15, `ai-sessions/0094`)*. This rules out "value only changes because the phone just asked" and
 > rules out "value only changes because the channel/session was just re-established" as the sole
 > explanations — some of these pushes are genuinely autonomous, buds-initiated events on an
 > already-idle, already-open channel.
@@ -168,8 +170,8 @@ phone-side query. This directly answers Group U's own research question:
 Extraction:
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "frame.time_relative>=90.0 && frame.time_relative<=96.1" \
-  -Y "btrfcomm.frame_type or bthci_evt"
+tshark -r CAP-007-btsnoop_hci.log \
+  -Y "frame.time_relative>=90.0 && frame.time_relative<=96.1 && (btrfcomm.frame_type or bthci_evt)"
 ```
 
 🟢 FACT, all frame numbers/timestamps independently re-checked:
@@ -219,7 +221,7 @@ the physical event** (§3.5).
 
 **One value did change (added 2026-10-03, `ai-sessions/0069`, lead L68-5; 🟢 FACT for the bytes,
 🟡 for the meaning):** DLCI 0x08 Group `0x04` Code `0x05` reads `04 05 00 02 08 06` in frame 717
-(09:14:17, both buds worn) and `04 05 00 02 08 05` in frame 1345 (8 ms before frame 1350's Notify,
+(09:14:17, both buds in the open case) and `04 05 00 02 08 05` in frame 1345 (8 ms before frame 1350's Notify,
 at the removal) and again in 1434 after the re-open. So the earlier statement "no byte anywhere
 changed" is withdrawn. The cross-capture tabulation of this code is in `DESKRESEARCH_FINDINGS.md`
 (entry of 2026-10-03).
@@ -234,7 +236,7 @@ in the log).
 tshark -r CAP-007-btsnoop_hci.log -Y "btrfcomm.channel && data.data && frame.time_relative>=145 && frame.time_relative<=165"
 ```
 
-Zero results — 🟢 FACT. Not one RFCOMM data-carrying frame, on any DLCI, appears in a ±10s window
+Zero results, exit 0 (positive control: the same filter without the time bound matches 310 frames) — 🟢 FACT. Not one RFCOMM data-carrying frame, on any DLCI, appears in a ±10s window
 around the lid closing. This directly answers Group U step 2's own question: **closing the case
 lid, while a bud remains outside the case and the connection stays active, produces no observable
 RFCOMM wire signal** in this capture — no ANC-state re-announcement, no Group `0x04` Code `0x12`
@@ -247,13 +249,15 @@ The app's "Active noise control" row greys out at 09:15:38 (same second as the b
 re-enables at 09:15:52–53, while the Left bud stays physically out of the case the whole time.
 
 ```
-tshark -r CAP-007-btsnoop_hci.log -Y "frame.time_relative>=95 && frame.time_relative<=108"
+tshark -r CAP-007-btsnoop_hci.log -Y "frame.time_relative>=97 && frame.time_relative<=108"
+# with "&& btrfcomm.len>0" → 0 frames, exit 0; from rel 95 the same filter matches 32 RFCOMM data frames
+# (1545–1607, 09:15:43.738–09:15:45.125: the end of the DLCI 0x04/0x02 re-open burst) — positive control
 ```
 
 Result (🟢 FACT, full frame list in `CAP-007-EVENT-NOTES.md`'s companion analysis): the only events
 in this window are HCI-level `Mode Change` (frame 1621, 09:15:51.916) and `Sniff Subrating` (frame
 1623, 09:15:53.899) baseband events, plus unrelated `LE Extended Advertising Report` events from
-other nearby BLE devices — **zero RFCOMM/L2CAP data frames of any kind**. The `Mode Change` event's
+other nearby BLE devices — **zero RFCOMM/L2CAP data frames of any kind** between 09:15:45.125 (frame 1607) and 09:16:02.052 (frame 1632) *(corrected 2026-10-15, `ai-sessions/0094`)*. The `Mode Change` event's
 timing (~1–2s before the visible re-enable) is suggestively close, but a baseband
 active/sniff-mode transition has no documented mechanism for driving an app-level UI control
 directly — 🔴 **not attributable**. The more likely explanation, 🟡 HYPOTHESIS: the ANC row's
@@ -274,7 +278,7 @@ bounce**, not about in-ear/out-of-case sensing at all.
   channel-reopen traffic already characterized in `CAP-001-FINDINGS.md`/`CAP-004-FINDINGS.md`).
 - **Does not unblock `FrameEncoder`/`FrameDecoder` for any in-ear/wear-state feature.** Per
   `AGENTS.md` §6, the promotion gate is per channel/feature, evidenced with a 🟢 FACT entry in
-  `PROTOCOL.md`. This capture found **no byte, on any DLCI, that changed value in response to the
+  `PROTOCOL.md`. Apart from DLCI 0x08 Group `0x04` Code `0x05` (`08 06` → `08 05`, frames 717 → 1345, meaning 🟡, §3.3), this capture found **no byte, on any DLCI, that changed value in response to the
   one physical bud-removal event it captured** (§3.3, §3.5) — the opposite of what would be needed
   to propose a FACT-level wear-state opcode. `INEAR-004` remains without protocol evidence.
 - **Proposed update to `CAP-004-FINDINGS.md` §5a / `PROTOCOL.md`'s characterization of DLCI 0x08
@@ -282,11 +286,11 @@ bounce**, not about in-ear/out-of-case sensing at all.
   this document): revise from "alternates 2↔3, irregular interval, 🟡 HYPOTHESIS free-running
   liveness/sequence bit" to "🟢 FACT: Buds-initiated (Rcvd-only, never seen as a direct reply to a
   Sent query), fires (a) immediately after DLCI 0x08 is opened or re-opened — at least once with
-  value unchanged across a real physical event (§3.3) — and (b) autonomously during an otherwise
-  fully idle connection, with a `0x02`↔`0x04` steady-state alternation (one `0x03` transitional
+  value unchanged across a real physical event (§3.3) — and (b) autonomously on an open connection
+  with no channel churn and no user action, with a `0x02`↔`0x04` steady-state alternation (one `0x03` transitional
   value seen at a resumption boundary) at irregular ~1–12s intervals; 🔴 still unresolved what
   real-world condition the value itself encodes — not confirmed to be in-ear state, not confirmed
-  to be a simple counter (a true free-running counter would not go fully silent for ~184s, §3.2)."
+  to be a simple counter (a true free-running counter would not pause for ~184s while the other DLCI 0x08 pushes continue, §3.2)."
   *(Done: the event-driven-and-autonomous behaviour was promoted with `CAP-016` — `DECISIONS.md` ADR-016 item 7, `PROTOCOL.md` §6 Resolved; the value's meaning stays 🔴.)*
 
 ## 5. Conclusions & Next Steps
@@ -294,7 +298,7 @@ bounce**, not about in-ear/out-of-case sensing at all.
 **Group U's own research question (is Code `0x12` event-driven or free-running?) is answered: 🟢
 FACT, neither, cleanly.** It is Buds-initiated and can fire with no phone-side trigger and no
 channel churn (ruling out "purely a reaction to phone queries or channel reopening"), but it also
-goes completely silent for ~184s during genuine idle time (ruling out "purely free-running,
+pauses for ~184s while DLCI 0x08's periodic `0e`/`04 03` push groups continue (ruling out "purely free-running,
 fixed-period"). The most defensible reading is an event-driven push tied to some *internal* Buds
 condition not observed directly in this capture — plausibly connection-supervision/heartbeat-
 adjacent, given its behavior around the channel bounce, but this is 🔴 not confirmed.
@@ -306,8 +310,8 @@ reasons, both stated plainly per `PROJECT_RULES.md` §1 rather than papered over
 
 1. **No earbud was ever inserted into an ear in this capture** (§3.1) — only removed from the open
    case. Whatever in-ear sensing does on the wire, if anything, was not exercised here.
-2. **The one physical case-removal event that *was* captured produced no value change on any
-   byte, on any DLCI, that could be attributed to it** (§3.3, §3.5) — every candidate signal near
+2. **The one physical case-removal event that *was* captured produced one value change only —
+   DLCI 0x08 Group `0x04` Code `0x05` `08 06` → `08 05` (frames 717 → 1345), meaning 🟡** (§3.3, §3.5) — every other candidate signal near
    that moment (ANC re-announcement, Group `0x04` Code `0x12`) turned out to be a generic
    channel-(re)initialization side effect with an unchanged value, not a state-specific signal.
 
@@ -332,8 +336,9 @@ matched against a *known* physical state rather than inferred after the fact.
   channel bounce (🟡 leading hypothesis, §3.5) or to something else entirely? No wire-level frame
   of any kind is attributable to the 09:15:52–53 re-enable moment specifically.
 - 🔴 Does DLCI 0x08 Group `0x04` have other Codes/values that *do* respond to in-ear state
-  specifically? Only Code `0x12` (and empty `0x11`/`0x13` placeholders) were observed on this DLCI
-  in this capture — a Get-all/enumerate pass against a firmware reference (if one becomes
+  specifically? Group `0x04` on this DLCI in this capture: Rcvd Codes `0x03`, `0x05`, `0x12`,
+  `0x14`, `0x16` with values (e.g. frames 714, 717, 721, 723, 727) and Sent empty `0x02`/`0x04`/`0x11`/`0x13`/`0x15`
+  placeholders (frames 698–703, 1426); only `0x05` changed value (§3.3) — a Get-all/enumerate pass against a firmware reference (if one becomes
   available) could reveal Codes not exercised by this particular session's actions.
 - 🔴 Right earbud was never removed in this capture — whether Group `0x04` Code `0x12` (or
   anything else) carries any Left/Right distinction at all remains completely untested; this

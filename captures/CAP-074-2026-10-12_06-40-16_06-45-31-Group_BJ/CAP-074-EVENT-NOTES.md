@@ -224,8 +224,8 @@ Connect) · BJ-27 ANC tab; holds (06:45:18 shown — then 06:45:27 not) · BJ-28
   read" ×10, 130 `ReadSetting` answers).
 - `ANC-001`…`ANC-004` — four taps in the app (Transparency 06:40:54, Off :59, Noise cancellation 06:41:06, Adaptive :12), 4 `Set` → 4 ACK, 0 NAK; every mode also
   shown from a `Notify` (Off 06:44:27, 06:45:18; NC 06:43:54, 06:44:24, 06:45:14; Adaptive 06:44:57; Transparency 06:42:33, 06:43:00, 06:43:56).
-- `TOUCH-007` — **47 mode changes the app did not request** in the run: 9 arrived on the app's claims and are on screen; 35 are unprovoked `Notify` frames on Play
-  services' claims; 3 are Play's own `Get` answers that already carry a changed mode. The press-and-holds themselves are the maintainer's statement (no camera; the
+- `TOUCH-007` — **49 mode changes the app did not request** in the run: 9 arrived on the app's claims and are on screen; 35 are unprovoked `Notify` frames on Play
+  services' claims; 5 are Play's own `Get` answers that already carry a changed mode (15618, 15957, 16270, 16999, 17940; FINDINGS §4 item 6). The press-and-holds themselves are the maintainer's statement (no camera; the
   cue words are 0.1–1.5 s after a `Notify` in 33 of 33 cases).
 - `BATT-004` — "Battery updated" ×3 on every claim's open (E 39, 58–59, 73–74, …; 100 %/100 %/`ff`).
 - `FW-003` — the Info tab on film (t=6): firmware ×3, the three serials with their labels (06:38:11).

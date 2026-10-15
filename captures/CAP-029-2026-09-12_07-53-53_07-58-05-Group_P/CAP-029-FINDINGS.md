@@ -44,7 +44,9 @@ $ tshark -r CAP-029-btsnoop_hci.log -Y 'btrfcomm.dlci==4 and btrfcomm.len>0 and 
 **No `0x12` Set / `0x13` Notify ANC-state frame occurs anywhere near the pause (checked the full
 `07:54:00`–`07:54:30` window, and separately the entire pre-reset session `07:53:51`–`07:54:55`) —
 the ANC mode never changes from the connect-time `Adaptive` reading.** Also checked and ruled out:
-no AVRCP pass-through from the Buds and no DLCI 0x02 write (no `field5{field4{...}}` settings-write shape appears). AVRCP carries only the
+no AVRCP pass-through from the Buds and no DLCI 0x02 write (`python3 -I scripts/pwrpc_decode.py CAP-029-btsnoop_hci.log | grep -c WriteSetting` → 0, whole log;
+positive control: the same command on `CAP-046-btsnoop_hci.log` finds `WriteSetting` frame 1181). The pre-reset ANC check `tshark -Y 'btrfcomm.dlci==4 and btrfcomm.len>0 and
+frame.time>="2026-09-12 07:53:51" and frame.time<="2026-09-12 07:54:55" and data.data[0:1]==08'` returns only 756/777 (the connect-time Get/Notify, exit 0). AVRCP carries only the
 phone's own play-status notifications to the Buds:
 ```
 $ tshark -r CAP-029-btsnoop_hci.log -Y 'btavctp or btavrcp' -T fields -e frame.number -e frame.time -e frame.p2p_dir -e _ws.col.Info
@@ -57,12 +59,14 @@ $ tshark -r CAP-029-btsnoop_hci.log -Y 'btavrcp.opcode==0x7c' | wc -l     # AV/C
 0            (exit 0; positive control: the same filter finds CAP-063 frame 5389, "Rcvd Pass Through: Control - PAUSE")
 ```
 (The filter `avctp or avrcp` is not valid in tshark — it exits with status 4, *"avctp" is not a valid protocol or protocol field*; the dissector names
-are `btavctp`/`btavrcp`.) The only RFCOMM activity in the exact
-pause window (`07:54:14`–`07:54:17`) is routine zero-length DLCI-0x02 flow-control `UIH` frames at
-roughly 1-per-second — background keepalive, not a data payload.
+are `btavctp`/`btavrcp`.) RFCOMM activity in the exact pause window (`07:54:14`–`07:54:18`): DLCI 0x02 `Dosimeter/SubscribeToLiveDb` stream packets
+Buds → phone (1573…1590, `scripts/pwrpc_decode.py`) with empty flow-control `UIH` frames between them, and **one DLCI 0x08 frame, 1592 (07:54:17.547, Buds → phone)
+`01 09 00 05 0a 03 0b 06 13`** — 0.12 s before the phone's `PlaybackStatusChanged` → Paused (1593). Its sibling 1711 (07:54:32.736, `… 06 12`) comes 0.07 s
+before the Playing at 1713 (07:54:32.809); the Paused at 1910 (07:54:43.070) has no such frame (`tshark -Y 'btrfcomm.dlci==8 and btrfcomm.len>0 and
+data.data[0:2]==01:09'` → 1592, 1711 only, exit 0). 🔴 Meaning of DLCI 0x08 Group `0x01` Code `0x09` open (`PROTOCOL.md` §6). *(corrected 2026-10-15, `ai-sessions/0094`: this said only zero-length flow-control frames occur in the window)*
 
-**Conclusion:** no Buds-side command accompanies the pause — no ANC Set/Notify, no settings write, no AVRCP pass-through; the only wire signal is the
-phone's own `PlaybackStatusChanged` → Paused (1593, phone → Buds), i.e. the player paused and told the Buds so.
+**Conclusion:** no known Buds-side command accompanies the pause — no ANC Set/Notify, no settings write, no AVRCP pass-through; besides the
+phone's own `PlaybackStatusChanged` → Paused (1593, phone → Buds) the only Buds → phone frame near it is the unidentified DLCI 0x08 frame 1592 (above). *(corrected 2026-10-15, `ai-sessions/0094`)*
 Either (a) the "switch to Transparency" behavior `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s own note
 describes did not actually trigger this time (ANC was already Adaptive, which functionally already
 lets outside sound through — a plausible reason no mode switch was needed), or (b) the media-pause
@@ -71,7 +75,7 @@ show (e.g. a phone-side/app-side decision from the Buds' own mic stream, not a d
 control message). Not resolved either way — recorded as a genuine open question, not force-fit into
 either explanation.
 
-## 3. `CASE-007` — factory reset reproduces the established pattern (🟢 FACT)
+## 3. `CASE-007` — factory reset, first wire record in this project (🟢 FACT for frames 2091/2497/2860/3316)
 
 ```
 $ tshark -r CAP-029-btsnoop_hci.log -Y 'bthci_cmd.opcode==0x0c12' -T fields -e frame.number -e frame.time
@@ -84,8 +88,7 @@ $ tshark -r CAP-029-btsnoop_hci.log -Y 'bthci_cmd.opcode==0x0c12' -T fields -e f
 Four `Delete Stored Link Key` events across the reset/re-pair sequence (video: button held
 `t=68`–`t=98`, overlay `07:55:02`–`07:55:32`), interleaved with reconnect attempts (Connection
 Complete at `07:55:44.76`, `07:56:13.37`, `07:56:22.37`, `07:56:34.35` — each followed by a fresh
-disconnect except the last). This matches the already-documented factory-reset pattern from
-`CAP-001`/`CAP-002`'s own Group P precedent — a third/fourth confirming instance, not a new finding.
+disconnect except the last). No earlier capture records a factory reset (`CAP-001` is Group Z, `CAP-002` Group A; neither mentions one) — this is the project's first wire record of a factory reset, not a confirming instance. *(corrected 2026-10-15, `ai-sessions/0094`)*
 
 ## 4. `PAIR-002` — genuine fresh SSP handshake, not a key-reuse reconnect (🟢 FACT)
 

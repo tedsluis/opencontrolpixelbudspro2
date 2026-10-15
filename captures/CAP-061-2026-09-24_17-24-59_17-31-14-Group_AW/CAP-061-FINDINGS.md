@@ -90,9 +90,10 @@ input, not in the gate. The gate behaved as designed for the input it had. A sec
 - 🟢 FACT: **20 of 20** app opens received **no** Buds frame. **12** were closed by a Buds-side `DISC` 10–198 ms after the `SABM` — each
   right after the app's attempt 1 had failed and the stack had closed the other owner's 0x08 (phone `DISC` 1621, 2116, 2528, 2916, 3368,
   3626: ADR-032's mechanism) — so the request was never sent (export: "RFCOMM on-demand channel 0x08 closed (IOException …)" then
-  "Case battery not read: ChannelLost", lines 30–33 … 90–93). **8** were held 2.1–5.2 s after the other owner had gone (from 17:27:24),
-  sent **exactly** `0e 04 00 00` (ADR-039) and received nothing (export "Case battery not read: Timeout", lines 169, 180, 195, 266, 294,
-  321, 369).
+  "Case battery not read: ChannelLost", lines 30–33 … 90–93). **8** were held after the other owner had gone (from 17:27:24),
+  sent **exactly** `0e 04 00 00` (ADR-039) and received nothing — 7 held 2.1–5.2 s until the app's Timeout (export "Case battery not read:
+  Timeout", lines 169, 180, 195, 266, 294, 321, 369), and 5585 held 0.69 s until the ACL ended (5597; export lines 345–347, session lost)
+  *(corrected 2026-10-15, `ai-sessions/0094`)*.
 - **Therefore ADR-039's 🟡 HYPOTHESIS "sending `0e 04 00 00` is sufficient" is refuted by this capture**: 8/8 app claims that sent it
   got no answer on an open no other client held. 🟡 HYPOTHESIS for why: the Buds answer on this channel only after (or as part of) the
   other opener's burst, whose first message is `05 0c` (answered by `05 0a`); which of the burst's messages is needed is 🔴 open, and
@@ -143,8 +144,8 @@ All 20 `Notify ANC state` frames (`08 13 00 04 01 e8 <settable> <mode>`) against
 |---|---|---|---|---|
 | 1594, 2085, 2502, 2896 | 17:25:46–17:26:31 | `00` / `20` (OFF) | `e4 e4` (both charging) | both seated ✓ |
 | 3197 (Play-services channel) | 17:26:45.720 | `e8` / `40` | `e4 64` (L charging, R not) | Right out since 17:26:36–37 ✓ |
-| 3272, 3346, 3604, 3996, 4309 … 5392 (12) | 17:26:57–17:30:39 | `e8` / `08` | `64 64` | both out ✓ |
-| **5560** | **17:30:58.806** | **`00` / `20`** | **`64 e4`** (5557, 2 ms earlier: **Left not charging**, Right charging) | **Right seated (17:30:52.4–53.0), Left in the hand beside the case** (30 fps: seated only at t ≈ 360.45 s = 17:30:59.4–59.6 phone time) ✗ |
+| 3272, 3346, 3604, 3996, 4309 … 5392 (13) *(corrected 2026-10-15, `ai-sessions/0094`)* | 17:26:57–17:30:39 | `e8` / `08` | `64 64` | both out ✓ |
+| **5560** | **17:30:58.806** | **`00` / `20`** | **`64 e4`** (5557, 2 ms earlier: **Left not charging**, Right charging) | **Right seated (17:30:51.5–52.2; film t = 352.5–353.0) *(corrected 2026-10-15, `ai-sessions/0094`)*, Left in the hand beside the case** (30 fps: seated only at t ≈ 360.45 s = 17:30:59.4–59.6 phone time) ✗ |
 | 5741 | 17:31:06.765 | `00` / `20` | `e4 e4` | both seated ✓ |
 
 - 🟢 FACT: **one counter-example to the derived reading "`0x00` = both earbuds in the case"**: frame 5560 reads `0x00` 0.6–0.8 s before the

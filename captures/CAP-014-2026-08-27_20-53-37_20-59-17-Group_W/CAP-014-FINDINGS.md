@@ -159,9 +159,9 @@ This connection (chandle `0x0003`) is active through the end of the log (no disc
 it appears anywhere in the file).
 
 **4a. CLI hygiene / cross-device contamination check (🟢 FACT — required before trusting any
-handle-name resolution below):** three *other* LE connections exist in this same capture, to a
+handle-name resolution below):** five *other* LE connections exist in this same capture *(corrected 2026-10-15, `ai-sessions/0094`)*, to a
 **different** peer (`67:6d:32:c1:30:07`, resolvable/random address, not the Buds), on chandles
-`0x0002`/`0x0006`/`0x0009`:
+`0x0002`/`0x0006`/`0x0007`/`0x0008`/`0x0009` (frames 500, 4006, 4483, 4531, 4570):
 
 ```
 $ tshark -r CAP-014-btsnoop_hci.log -Y "bthci_evt.le_meta_subevent==0x0a or bthci_evt.le_meta_subevent==0x01" \
@@ -235,7 +235,7 @@ never sent.
 | `0x0007` | Read Resp (2262) | `8b447e7c056554c09c1c4ac90f6f771c` | Database Hash | matches nRF log 20:56:03.316 |
 | `0x0f32` | Read Resp (2615) | `64` | 1 byte, `100` decimal | **matches `CAP-017-FINDINGS.md` §6's `0x0f32 = 0x64`** exactly — see §6 below |
 | `0x0f33` | Write Req (2616) | `0100` | CCCD-shaped enable (handle = `0x0f32`+1) | new this session vs. `CAP-002`/`CAP-003`/`CAP-010` |
-| `0x0f2a` | Read Resp (2973) | `5265766973696f6e2036` | ASCII `"Revision 6"` | **byte-for-byte identical to `CAP-002-FINDINGS.md` §4** (frame 1441 there) — 3rd session now confirming this exact string on this exact handle |
+| `0x0f2a` | Read Resp (2973) | `5265766973696f6e2036` | ASCII `"Revision 6"` | **byte-for-byte identical to `CAP-002-FINDINGS.md` §4** (frame 1441 there) — 4th session (after `CAP-002`, `CAP-003`, `CAP-010`) confirming this exact string on this exact handle |
 | `0x0c04` | Write Req (2954) | `c916abcc85ee00fa1e6a9e5b448bc59686c8e978ff46d6a1a7616772aedf081f6effaf6d88bd9f99f90e2480f91c21941362b035170cd6804f3d7ef8377e2b44a140da5d8c447e71fa9aab6d3f5a0cae` | 80 bytes, opaque | reproduces the `0x0c04` write-then-notify shape from `CAP-002-FINDINGS.md` §4 |
 | `0x0c04` | Notify (2961) | `7dac8090ac7052714274f2ab09627cbd` | 16 bytes, opaque | — |
 | `0x0c0c` | Notify (2962) | `b76223856d8393eca0eb175f757eba157a3f9121fa0dd1684c19021d39fdcfb3e4999cbb7a11a427` | 40 bytes, opaque | reproduces `CAP-010-FINDINGS.md` §3's `0x0c0c` 40-byte notify exactly (`btatt.value` of 2962 = 40 bytes) |
@@ -293,9 +293,10 @@ Request`/`Simple Pairing Complete` anywhere in this window) — the exact patter
 which `CAP-012-FINDINGS.md` §2 confirmed does **not** happen when only system Bluetooth Settings is
 used (no BLE tool). `CAP-014` uses nRF Connect (a BLE tool) to initiate bonding, and reproduces
 CTKD — this is the **2nd** independently confirmed CTKD instance (`CAP-004`, now `CAP-014`),
-consistent with `CAP-012`'s already-established explanation ("CTKD when a BLE tool connects first,
-classic SSP when only system settings is used") rather than new evidence toward a different
-mechanism. No promotion proposed here — `CAP-012-FINDINGS.md` §2 already carries this as 🟢 FACT;
+consistent with `CAP-012-FINDINGS.md` §2's reading (rewritten 2026-10-03): the CTKD sessions are
+those with an SMP pairing on the LE link (this capture's frame 2365, `CAP-004`'s 1856), not merely
+an early LE link (`CAP-003` had one and used SSP); that the SMP pairing gates CTKD is 🟡 HYPOTHESIS
+(`DECISIONS.md` ADR-030 Update). No promotion proposed here;
 this section only records that `CAP-014` is a further reproducing data point, worth noting for
 future sessions choosing a bonding method.
 
@@ -372,11 +373,10 @@ future sessions choosing a bonding method.
   shape now has a spec-verified name. See
   `captures/CAP-034-2026-09-01_06-46-31_06-52-45-Group_W/CAP-034-FINDINGS.md` §4 and
   `PROTOCOL.md` §6.
-- 🔴 Handle `0x0034`'s real identity and the "missing first 3 bytes" of its device-name-like read
-  value (§4c) — reported as raw bytes, not explained. **Not resolved by `CAP-034`** — that capture's
-  own handle `0x0034` belonged to a different, legitimately-declared GAP Device Name characteristic
-  on the Buds' own attribute table, not this section's cross-connection-contaminated handle from a
-  different peer device; the two are unrelated, still open on its own terms.
+- ~~Handle `0x0034`'s real identity and the "missing first 3 bytes" of its read value~~ —
+  **resolved (§4c, 2026-10-03, 🟢):** frame 3353 is a complete Device Name read; the "missing"
+  bytes were a dissector artefact (a handle→UUID mapping carried over from the other connection),
+  and handle `0x0034` is the GAP Device Name on the Buds' own attribute table, as in `CAP-034-FINDINGS.md` §4.
 - 🔴 `0x0f32`/`0x0f33`'s semantic meaning (value `100`) — reproduces exactly across `CAP-017` and
   `CAP-014`, still no UUID or meaning (§6). **Resolved 2026-09-01 (`CAP-034`):** `0x0f32` is the
   standard Battery Level characteristic (`0x2A19`) within the Battery Service (`0x0f30`–`0x0f33`);

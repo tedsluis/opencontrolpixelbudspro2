@@ -16,8 +16,8 @@ packets, 2026-08-30 15:44:22.07–15:51:47.04 local/+0200 — wider than the vid
 `CAP-027-recording.mp4` (233.77s, 15:45:14–15:49:07 local, on-screen wall-clock overlay) · **Buds
 MAC (partial):** `04:00:6e:cf:6e:07` — same physical device as `CAP-021`/`CAP-033`.
 
-**Scope note:** Group N covers `TOUCH-002`–`TOUCH-007` (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` line
-165–170). Spotify was playing throughout (started 15:45:30), which turned out to be essential —
+**Scope note:** Group N covers `TOUCH-002`–`TOUCH-007` (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md`, rows
+`TOUCH-002`–`TOUCH-007`). Spotify was playing throughout (started 15:45:30), which turned out to be essential —
 see §3.
 
 ---
@@ -32,7 +32,7 @@ frame-level detail sought here — out of this Group's scope). Spotify playback 
 
 **Timing-offset note (applies to every correlation in this file):** across all 15 timestamped
 actions in this session that have an unambiguous single wire match, the video-overlay timestamp
-runs a consistent **1.20–2.31s ahead of** the wire event it corresponds to (one outlier at 4.15s,
+runs a consistent **1.20–2.31s ahead of** the wire event it corresponds to (one outlier at 3.15s, frame 1909 @15:45:55.855,
 `TOUCH-003` @15:45:59). This is consistent with encoding/registration lag on the video side, not a
 clock fault, and matches the same-direction offset independently observed in `CAP-033` (this
 project's other 2026-08-30 session). All attributions below are **timing correlations** (nearest
@@ -68,13 +68,13 @@ capture with the command below.
 
 ### 3.1 Mapping table
 
-| Test-ID | Gesture | AVRCP event | Frame(s) (representative) | Semantics match `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` line |
+| Test-ID | Gesture | AVRCP event | Frame(s) (representative) | Semantics match `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` row (same Test-ID) |
 |---|---|---|---|---|
-| `TOUCH-002` | Tap once | `Pass Through: PAUSE` or `PLAY` (Pushed), toggling on current play state | 1580, 2139 (PAUSE); 2251, 2464, 2642 (PLAY) | 165: "Play/pause" ✅ |
-| `TOUCH-003` | Double-tap | `Pass Through: FORWARD` (Pushed) | 1909, 2313 | 166: "Next track" ✅ |
-| `TOUCH-004` | Triple-tap | `Pass Through: BACKWARD` (Pushed) | 1980, 2066, 2396, 2575, 2746 | 167: "Previous track" ✅ |
-| `TOUCH-005` | Swipe forward | `RegisterNotification: VolumeChanged` (increase) | 2822 (59→65%), 2999 (59→65%) | 168: "Raise volume" ✅ |
-| `TOUCH-006` | Swipe backward | `RegisterNotification: VolumeChanged` (decrease) | 2873 (65→59%), 3032 (65→59%) | 169: "Lower volume" ✅ |
+| `TOUCH-002` | Tap once | `Pass Through: PAUSE` or `PLAY` (Pushed), toggling on current play state | 1580, 2139 (PAUSE); 2251, 2464, 2642 (PLAY) | "Play/pause" ✅ |
+| `TOUCH-003` | Double-tap | `Pass Through: FORWARD` (Pushed) | 1909, 2313 | "Next track" ✅ |
+| `TOUCH-004` | Triple-tap | `Pass Through: BACKWARD` (Pushed) | 1980, 2066, 2396, 2575, 2746 | "Previous track" ✅ |
+| `TOUCH-005` | Swipe forward | `RegisterNotification: VolumeChanged` (increase) | 2822 (59→65%), 2999 (59→65%) | "Raise volume" ✅ |
+| `TOUCH-006` | Swipe backward | `RegisterNotification: VolumeChanged` (decrease) | 2873 (65→59%), 3032 (65→59%) | "Lower volume" ✅ |
 
 Every occurrence, its exact frame number, and its video timestamp/offset is listed in
 `CAP-027-EVENT-NOTES.md`'s Event Timeline — not repeated here to avoid duplicating a table across
@@ -145,13 +145,13 @@ touch-gesture signal. **Not decoded further in this file** — doing so is out o
 (no Test-ID this Group covers predicts DLCI 0x02 content), and `PROTOCOL.md` §2.2a's own open
 question about this channel's Sent-direction payload semantics is unaffected either way by this
 observation. (Decoded 2026-10-08, `ai-sessions/0081`: `scripts/pwrpc_decode.py` names the 30-byte frames `maestro_pw.Dosimeter`/`SubscribeToLiveDb`
-server-stream packets — 416, 208 per channel 19/21, of 426 stream packets — the live hearing-wellness feed, `PROTOCOL.md` §2.2a; `ai-sessions/0068`
+server-stream packets — 416, 208 per channel 19/21, of 426 stream packets (decoded pw_rpc packets; the "398 of 511" above counts RFCOMM payload frames of exactly 30 bytes, a different unit) — the live hearing-wellness feed, `PROTOCOL.md` §2.2a; `ai-sessions/0068`
 counted 420.)
 
 ## 4. `TOUCH-007` (press-and-hold): carried on DLCI 0x04, the *official* Fast Pair Message Stream — not `libmaestro` (🟢 FACT for the frame content; 🟡 HYPOTHESIS for the gesture attribution)
 
 Unlike `TOUCH-002`–`TOUCH-006`, `TOUCH-007`'s two occurrences (right bud, then left bud — both
-un-timestamped `TBD`/`TDB` in the original procedure notes) show up as RFCOMM traffic, on **DLCI
+`TBD`/`TDB` in the draft procedure notes, timestamps since recovered from the wire) show up as RFCOMM traffic, on **DLCI
 0x04** — the same officially-documented Fast Pair Message Stream channel already confirmed 🟢 FACT
 for ANC control in `PROTOCOL.md` §4.1, **not** DLCI 0x02 (`libmaestro`/pigweed).
 

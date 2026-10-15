@@ -24,7 +24,7 @@ buffer) — add a constant offset of `+47984` to translate a frame number cited 
 current file's own numbering (e.g. this document's "frame 1578" = the current file's frame 49562;
 independently confirmed via two more citation pairs in this same file, `ai-sessions/0012_CROSSCHECK_RESULT_2026_09_12.md`
 Finding 6).** The rule above holds for frame numbers ≤ 1,877; any larger number in
-this file (e.g. 17233, 17610, 48642, 49024, 49136) is already the stored file's own numbering. The stored file's first 2,663 frames are `CAP-001`'s
+this file (e.g. 17233, 17610, 48642, 49024, 49136) is already the stored file's own numbering, and so are frames 1004 and 1826 in §3's Task 1/Task 6 lists (08:51:12 / 08:51:26, inside `CAP-001`'s window — exceptions to the ≤ 1,877 rule). The stored file's first 2,663 frames are `CAP-001`'s
 (`PROTOCOL.md` §2.2a, `DECISIONS.md` ADR-018 2026-09-30 Update). **Video:** `CAP-002-recording.mp4` (114.2s, 17:04:53–17:06:46 local, on-screen
 wall-clock overlay). **Devices:** phone `Google_7e:ca:81` (Pixel 7a, `E8:D5:2B:7E:CA:81`,
 BD_ADDR partially visible on-screen in this capture — same phone as `CAP-001`), peer
@@ -72,7 +72,7 @@ session over PSM 0x0003, starting immediately after encryption completes.
 |---|---|---|---|---|
 | 0 | 0x00 | 908 | Multiplexer control (PN negotiation) | 🟢 FACT |
 | 6 | 0x0c | 930 / 937, labeled **"Hands-Free"** directly by Wireshark's SDP-driven heuristic | The HFP Service Level Connection handshake (`AT+BRSF=921` … `AT+BIEV=2,100`), frames 48954–49079 of the shared log (17:05:34.541–.759) — see §5 (rewritten 2026-10-03: the earlier "no AT-command byte stream" was a filter artefact) | 🟢 FACT |
-| 4 | 0x08 | 933 | Short frames (4–69 bytes) in the initial 17:05:34.5–34.8 burst only; not decoded in this pass | 🔴 OPEN QUESTION |
+| 4 | 0x08 | 933 | Short frames (4–69 bytes) in the initial 17:05:34.5–34.8 burst only; decoded in §2a as the private `[Group][Code][Len:2B-BE][Value]` envelope | 🟢 FACT for the envelope (§2a); the protocol's identity/purpose stays 🔴 OPEN QUESTION |
 | 5 | 0x0a | 978 | No data-carrying frames observed | 🔴 OPEN QUESTION (same as `CAP-001`) |
 | 1 | 0x02 | 1125 | `0x7e`-delimited HDLC-style frames, same shape as `CAP-001`'s channel-1 traffic | 🟢 FACT (2026-08-12) — confirmed as Pigweed `pw_hdlc` framing (CRC-32 FCS verified 100% match, including this session's own 371 frames); see `CAP-001-FINDINGS.md` §2 "Upgrade (2026-08-12)" and `PROTOCOL.md` §2.2a for the full evidence |
 | 2 | 0x04 | 1251, closed 17:05:42 (frame 1486), reopened 17:05:47 (frame 1541) | **Fast Pair Message Stream, Device Information group — spec-verified, see §3** | 🟢 FACT (framing + group + two field codes spec-verified 2026-08-10; upgraded from `CAP-001`'s 🔴) |
@@ -140,8 +140,9 @@ frame 49028  0302003f08061001220d72656c656173655f352e3230332a0030e60138004a07373
 frame 49030  090200020800                                                          Group=0x09 Code=0x02 Len=2   pb: field1=0
 ```
 
-Immediately followed, still within the same burst window (frames 49052–49089), by content **not
-seen in `CAP-001` or `CAP-004`'s captured windows at all** — new groups `0x01` and `0x02`:
+Immediately followed, still within the same burst window (frames 49052–49089), by groups `0x01`
+and `0x02` — the same messages also occur in `CAP-001` (frames 1139–1151) and `CAP-004` (frames
+2358–2372), reassembled DLCI 0x08 decode *(corrected 2026-10-15, `ai-sessions/0094`)*:
 
 ```
 frame 49066  0107000e08807d101818b009200228003001                                 Group=0x01 Code=0x07 Len=14  pb: field1=16000 field2=24 field3=1200 field4=2 field5=0 field6=1
@@ -327,7 +328,7 @@ pages directly (not a search-summary), specifically
 > **Follow-up (2026-08-12), source: `CAP-004`'s `CAP-004-FINDINGS.md` §5a.** The correction directly above
 > already separates this section's DLCI-0x04 content from `CAP-001`'s DLCI-0x08 content. `CAP-004`'s
 > 2026-08-12 addendum sharpens this further: `CAP-004` frame 2305 and this file's own frame 49028
-> (§2a below) are byte-for-byte identical 67-byte messages, both on DLCI 0x08, both reading
+> (§2a above) are byte-for-byte identical 67-byte messages, both on DLCI 0x08, both reading
 > `Group 0x03 Code 0x02` — the exact same Group/Code label this section uses for its own
 > spec-verified DLCI-0x04 content. A pure-protobuf reading of that header's first byte is provably
 > invalid (protobuf field number 0 does not exist), which rules out "coincidence" and confirms DLCI
@@ -341,7 +342,7 @@ pages directly (not a search-summary), specifically
 > below for this file's own copy of the byte-identical frame.
 >
 > **Task 3 (2026-08-12): Group `0x07` Code `0x41` = `"in-use"` — upgraded from 🟡 HYPOTHESIS to 🟢
-> FACT.** §3's bullet above (line ~205) found the phrase "Indicate in-use Account Key" on a
+> FACT.** §3's Group `0x07` Code `0x41` bullet above found the phrase "Indicate in-use Account Key" on a
 > *GATT-level* Fast Pair spec page (phrase-match only, kept at 🟡). `CAP-004` `CAP-004-FINDINGS.md` §5
 > subsequently found Google's [SASS (Smart Audio Source Switching)](https://developers.google.com/nearby/fast-pair/specifications/extensions/sass)
 > extension page, which states explicitly that it uses **Message Group `0x07`** and gives a code
@@ -383,7 +384,7 @@ pages directly (not a search-summary), specifically
 > co-occurring BLE address (Code `0x02`)** — twice in this data the address stays identical between
 > two consecutive occurrences (17610↔18895, 49251↔49538) while the Code `0x0a` value still changes
 > completely both times, ruling out any static function of the address alone. Consistent with a
-> per-message nonce or salt; actual purpose remains 🔴 OPEN QUESTION — Google's own spec table for
+> per-message nonce or salt — resolved 2026-09-24 as the Fast Pair MAC extension's session nonce (🟢 FACT, see §3's Code `0x0a` bullet); Google's own spec table for
 > this Message Group (fetched 2026-08-10, above) does not list code `0x0a` at all.
 >
 > **Task 4 (2026-08-12): searched every other known Fast Pair extension page for code `0x0a` under
@@ -409,9 +410,11 @@ pages directly (not a search-summary), specifically
 ## 4. No RFCOMM traffic during app setup — resolved: it moves to BLE/GATT (🟢 FACT)
 
 All RFCOMM data-carrying frames in this entire ~150s capture window fall inside two short
-bursts: **17:05:34.56–17:05:38.92** (the post-pairing SDP/profile-probing burst) and
+bursts: **17:05:34.54–17:05:38.92** (frames 48954–49366, from the first HFP frame on DLCI 0x0c; multiplexer PN frames on DLCI 0x00 start at 17:05:34.443, frame 48900 *(corrected 2026-10-15, `ai-sessions/0094`)*; the post-pairing SDP/profile-probing burst) and
 **17:05:47.62–17:05:47.90** (channel 2's brief reopen). **Nothing at all** was found on RFCOMM
-between 17:05:48 and the end of the sliced window (17:07:05).
+between 17:05:48 and the end of the sliced window (17:07:05): `tshark -r CAP-002-btsnoop_hci.log -Y
+'frame.time >= "2026-08-09 17:05:48" && frame.time <= "2026-08-09 17:07:05" && btrfcomm.len>0'` → 0
+frames, exit 0; positive control: the same filter for 17:05:30–17:05:48 matches 213 frames (48900–49578).
 
 **Update 2026-08-10 — explanation #2 from the previous version of this document is confirmed
 correct:** the app-setup activity has a clear local Bluetooth footprint, it is simply on the
@@ -543,7 +546,7 @@ of the whole 8h20m log) was checked directly, without slicing to this device.
 
 ## 8. Recommended next steps
 
-1. **Highest priority:** a capture that includes a **full GATT service discovery** against the
+1. (Done: `CAP-034` resolved the handle↔UUID map, see `CAP-034-FINDINGS.md`.) **Highest priority:** a capture that includes a **full GATT service discovery** against the
    Buds (not a cached-database-hash reconnect) — e.g. by having Android forget and re-discover
    the device, or by using a generic BLE scanner tool — to resolve handle `0x0f2a` and the
    `0x0c0X` handle cluster from §4 to real UUIDs. §7 confirms this cannot be recovered from
@@ -599,12 +602,12 @@ this document already clears that bar:
   addendum rules out two candidate explanations (simple counter; simple function of the
   co-occurring BLE address) but does not resolve the actual meaning — still needs a more complete
   spec source or its own targeted investigation.
-- The `0x0c0X` GATT handle cluster's identity — needs the UUID-resolving capture from §8 item 1
+- ~~The `0x0c0X` GATT handle cluster's identity~~ — **resolved by `CAP-034`: `0x0c00`–`0x0c14` = the Fast Pair Service `0xFE2C` (🟢).** Original note: needs the UUID-resolving capture from §8 item 1
   before any claim beyond "structurally resembles"; **the structural resemblance itself was
   substantially strengthened 2026-08-12** — see `CAP-003` `CAP-003-FINDINGS.md` §4's own 2026-08-12
   addendum for exact byte-length validation against the official Key-based Pairing/Passkey spec
   (16-byte AES blocks, CCCD-gated flow, cross-confirmed in `CAP-002` and `CAP-003`).
-- The HFP handshake at a fresh pairing (§5) — 🟢 FACT: it occurs (frames 48954–49079); `PROTOCOL.md` §6's "never recurs" item was ticked 2026-10-03.
+- ~~The HFP handshake at a fresh pairing (§5)~~ — no longer "not ready": 🟢 FACT, it occurs (frames 48954–49079); `PROTOCOL.md` §6's "never recurs" item was ticked 2026-10-03.
 - DLCI 0x08's private Group/Code/Length envelope's *purpose/identity* (§2a) — decodability is now
   a 🟢 FACT, but whether it's `libmaestro`'s own handshake or an unrelated companion-device
   negotiation remains 🔴 open.

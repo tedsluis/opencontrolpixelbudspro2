@@ -130,14 +130,14 @@ class AncScreenTest {
     fun `a mode reported before this connection opened marks the (i) and says so`() {
         show(sessionSince = at + 5_000) // a new Connect five seconds after the last report
         compose.onNodeWithContentDescription("Noise control: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
-        compose.onNodeWithText("ANC mode: OFF — from the last connection (updated ${formatUpdatedAt(at)})").assertExists()
+        compose.onNodeWithText("ANC mode: Off — from the last connection (updated ${formatUpdatedAt(at)})").assertExists()
     }
 
     @Test
     fun `after Disconnect the last mode stays, marked as from the last connection`() {
         show(connectionState = ConnectionState.Disconnected)
         compose.onNodeWithContentDescription("Noise control: $DETAILS_NOT_CURRENT_DESCRIPTION").performClick()
-        compose.onNodeWithText("ANC mode: OFF — from the last connection (updated ${formatUpdatedAt(at)})").assertExists()
+        compose.onNodeWithText("ANC mode: Off — from the last connection (updated ${formatUpdatedAt(at)})").assertExists()
     }
 
     // ---- `ai-sessions/0082` item 1: "Changed by the Buds" in the (i), only for a Notify the app did not provoke ----
@@ -147,14 +147,14 @@ class AncScreenTest {
         show(cause = AncModeCause.CHANGED_BY_BUDS)
         compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick() // the (i) is plain: the mode is current
         compose.onNodeWithText("Changed by the Buds at ${formatUpdatedAt(at)}: the Buds reported a new mode — a press-and-hold on a bud, or a change they made themselves.").assertExists()
-        compose.onNodeWithText("ANC mode: OFF (updated ${formatUpdatedAt(at)})").assertExists()
+        compose.onNodeWithText("ANC mode: Off (updated ${formatUpdatedAt(at)})").assertExists()
     }
 
     @Test
     fun `a mode read from the Buds has no changed-by-the-Buds line`() {
         show(cause = AncModeCause.READ)
         compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick()
-        compose.onNodeWithText("ANC mode: OFF (updated ${formatUpdatedAt(at)})").assertExists()
+        compose.onNodeWithText("ANC mode: Off (updated ${formatUpdatedAt(at)})").assertExists()
         compose.onNodeWithText("Changed by the Buds", substring = true).assertDoesNotExist()
     }
 
@@ -162,7 +162,7 @@ class AncScreenTest {
     fun `a mode set by this app has no changed-by-the-Buds line`() {
         show(cause = AncModeCause.SET_BY_APP)
         compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick()
-        compose.onNodeWithText("ANC mode: OFF (updated ${formatUpdatedAt(at)})").assertExists()
+        compose.onNodeWithText("ANC mode: Off (updated ${formatUpdatedAt(at)})").assertExists()
         compose.onNodeWithText("Changed by the Buds", substring = true).assertDoesNotExist()
     }
 
@@ -170,7 +170,7 @@ class AncScreenTest {
     fun `the changed-by-the-Buds line leaves the time out when there is none, and needs a mode`() {
         assertEquals("Changed by the Buds: the Buds reported a new mode — a press-and-hold on a bud, or a change they made themselves.", ancChangedByBudsLine(null))
         assertEquals(
-            listOf("ANC mode: unknown", "Connection: Ready", ANC_STREAM_HINT_TEXT),
+            listOf("ANC mode: unknown", "Connection: connected", ANC_STREAM_HINT_TEXT),
             ancDetailLines(ConnectionState.Ready, null, null, notAllowed = false, checkedAt = null, cause = AncModeCause.CHANGED_BY_BUDS),
         )
     }
@@ -198,7 +198,7 @@ class AncScreenTest {
 
     @Test
     fun `the mode line of a current mode is unchanged`() {
-        assertEquals("ANC mode: OFF (updated ${formatUpdatedAt(at)})", ancModeLine(AncMode.OFF, at))
+        assertEquals("ANC mode: Off (updated ${formatUpdatedAt(at)})", ancModeLine(AncMode.OFF, at))
         assertEquals("ANC mode: unknown", ancModeLine(null, null, fromLastConnection = true))
     }
 
@@ -214,7 +214,7 @@ class AncScreenTest {
         compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick()
         compose.onNodeWithText(expected).assertExists()
         assertEquals(
-            listOf("ANC mode: OFF (updated $time)", expected, "Connection: Ready", ANC_STREAM_HINT_TEXT),
+            listOf("ANC mode: Off (updated $time)", expected, "Connection: connected", ANC_STREAM_HINT_TEXT),
             ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null, cause = AncModeCause.CHANGED_BY_BUDS),
         )
     }
@@ -234,7 +234,7 @@ class AncScreenTest {
         compose.onNodeWithText(expected).assertExists()
         compose.onNodeWithText("Changed by the Buds", substring = true).assertDoesNotExist()
         assertEquals(
-            listOf("ANC mode: OFF (updated $time)", expected, "Connection: Ready", ANC_STREAM_HINT_TEXT),
+            listOf("ANC mode: Off (updated $time)", expected, "Connection: connected", ANC_STREAM_HINT_TEXT),
             ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null, cause = AncModeCause.CHANGED_SINCE_LAST_READ),
         )
     }

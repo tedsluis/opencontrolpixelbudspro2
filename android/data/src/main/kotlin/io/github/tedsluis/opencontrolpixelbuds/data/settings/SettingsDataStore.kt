@@ -20,7 +20,14 @@
 package io.github.tedsluis.opencontrolpixelbuds.data.settings
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import java.io.IOException
 
 /**
  * The app's one local settings file (plain AndroidX DataStore Preferences, `opencontrol_settings`), shared by [DebugSettingsStore] and [DarkModeSettingsStore]
@@ -28,3 +35,14 @@ import androidx.datastore.preferences.preferencesDataStore
  * Nothing here is sensitive (a Debug-mode switch and a dark-mode choice), so it is not encrypted (`ARCHITECTURE.md` §2/§9, `AGENTS.md` §10).
  */
 internal val Context.openControlSettings by preferencesDataStore(name = "opencontrol_settings")
+
+/**
+ * [DataStore.data] that reads a file it cannot read (a corrupt file — `CorruptionException` is an [IOException] — or an I/O error) as empty preferences,
+ * i.e. every setting at its default, instead of ending the collector with an exception (`ai-sessions/0094`, A93-APP-05; `AGENTS.md` §8). Logged without a
+ * payload. Writes are unchanged: the next write replaces the unreadable file.
+ */
+internal fun DataStore<Preferences>.readableData(): Flow<Preferences> = data.catch { e ->
+    if (e !is IOException) throw e
+    BleLogger.logConnectionEvent("Settings file unreadable (${e.javaClass.simpleName}): the defaults are used")
+    emit(emptyPreferences())
+}

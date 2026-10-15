@@ -42,7 +42,7 @@ trailing 4 bytes little-endian, the RpcPacket read with `scripts/pwrpc_decode.py
   itself 0.15 s after the start (E 4, LINK_BACK; ADR-044).
 - **The 2026-10-09 18:33:54 install:** `dumpsys package` (2026-10-10, phone attached) prints `firstInstallTime=2026-10-09 18:33:54` under **User 0** and
   `17:24:41` under User 10 — `ec6d163` was installed into the **Owner user** after `CAP-072` ended; one APK serves both users. A (the Owner's day) shows that app
-  in use at 18:35, 19:29, 06:43–06:44, 07:07–07:08 and 07:13 (each session with the thirteen requests and `GetHardwareInfo`; EQ and Volume-EQ writes at 07:07–07:08,
+  in use at 18:35, 19:29, 06:43–06:44, 07:07–07:08 and 07:13 (each session with the fifteen requests — 13 `ReadSetting` incl. 4:16, `SubscribeRuntimeInfo`, `GetHardwareInfo`; EQ and Volume-EQ writes at 07:07–07:08,
   A 21952–22180; `wm_set_resumed_activity: [0,…]` at 07:07:08). Not the run.
 - **No Google Play in user 10:** P0 lists only `app.grapheneos.gmscompat.config`, `…lib`, `gmscompat`, `exit=0` (as `CAP-072-FINDINGS.md` §0). Not made:
   `am get-current-user` and the P0 positive control; the user is in X 2 (`am_switch_user: 10`, 08:22:47.871).
@@ -98,7 +98,7 @@ trailing 4 bytes little-endian, the RpcPacket read with `scripts/pwrpc_decode.py
   "disconnected mode" response; no source found that names this case, `ai-sessions/0085` search); harmless — the app had released the channel.
 - 🟢 **Another LE device** ("Charge 6", handle `0x0040`, 08:23:51–08:26:06, ATT only) — excluded by the handle filter.
 
-## 2. The Connect read — thirteen requests (BI-1, BI-3; W1–W3; ADR-058)
+## 2. The Connect read — fifteen requests (BI-1, BI-3; W1–W3; ADR-058)
 
 🟢 **11 sessions** (1 by `ec6d163`, 10 by `5b4d5db`): the Buds' unsolicited `GetSoftwareInfo` → `ReadSetting` **16, 2, 4, 7, 11, 12, 15, 17, 19, 22, 27, 28, 29** →
 one `SubscribeRuntimeInfo` → **one `GetHardwareInfo`**, in that order, **in 11 of 11 sessions**; every request answered `status=OK` (E "Settings read" ×10 + X ×1).
@@ -151,7 +151,7 @@ Command for an "Equal" check: `tshark -r <reference log> -Y "frame contains <byt
   `BudsRepositoryImpl.kt:477–488`: the claim's `finally` keeps the channel while the tab is shown and the app visible).
 - **No `DISC` while the tab is shown:** no RFCOMM control frame on DLCI 4/5 from B 3486 to B 3654 (inventory; `tshark -r B -Y "bthci_acl.chandle==0x000b && btrfcomm.dlci==4
   && btrfcomm.frame_type!=0xef && frame.number>=3480 && frame.number<=3660"` → B 3484 `0x2f`, 3486 `0x63`, 3654 `0x43`, 3656 `0x63` (exit 0) — the positive control is the claim's own `SABM`/`UA`). The channel stayed open
-  **30.97 s** (08:27:59.763–08:28:30.890) — `ec6d163` released every claim 1.5 s after its answer (B 450; `CAP-072` A 11947).
+  **31.13 s** (08:27:59.763–08:28:30.890, `SABM` 3484 → `DISC` 3654) *(corrected 2026-10-15, `ai-sessions/0094`)* — `ec6d163` released every claim 1.5 s after its answer (B 450; `CAP-072` A 11947).
 - **Four unprovoked `Notify`** on the held channel: B 3531 08:28:05.455 `e8 e8 40` (Adaptive), B 3543 08:28:08.072 `e8 e8 80` (Transparency), B 3546 08:28:11.877
   `e8 e8 08` (NC), B 3547 08:28:15.749 `e8 e8 40` (Adaptive). **No `08 11` in the 2 s before any of them** (the app's last `08 11` before them is B 3492, 5.6 s
   earlier) and **nothing from the app after them** (the phone's only frames on DLCI 4 are zero-length UIH credit frames, `btrfcomm.len==0`, B 3532, 3544, 3548).
@@ -228,7 +228,7 @@ Connection screen's own button"; the phone paged the Buds, B 4951). 🟢 No sess
 
 | Aspect | `ec6d163` (08:22:59–08:27:05) | `5b4d5db` (08:27:07 →) | Same? |
 |---|---|---|---|
-| Connect read | the thirteen, one `GetHardwareInfo` (session 1) | the same (sessions 2–11) | ✓ byte-identical (§2) |
+| Connect read | the fifteen (13 `ReadSetting` incl. 4:16, `SubscribeRuntimeInfo`, one `GetHardwareInfo`) (session 1) | the same (sessions 2–11) | ✓ byte-identical (§2) |
 | Snapshot claim | released 1.513 s after its answer (B 450) | 1.504–1.511 s (10 claims) | ✓ |
 | Noise-control tab | not opened on film; no claim between 08:23:03.5 and 08:27:05 | **held 31 s** while shown | the change of ADR-061 (`CAP-072` §5 is the old behaviour) |
 | Settings, permissions, association | Dark mode On, Debug mode on | kept; no dialog | ✓ |
@@ -239,12 +239,12 @@ Connection screen's own button"; the phone paged the Buds, B 4951). 🟢 No sess
 
 ## 8. The skeleton's "Refuted if", applied literally per step that was run
 
-- **BI-1** (crash; light theme; a request missing or out of order; DLCI 0x04 open 3 s after the snapshot): not refuted — dark, 13 requests in order in 11/11
+- **BI-1** (crash; light theme; a request missing or out of order; DLCI 0x04 open 3 s after the snapshot): not refuted — dark, 15 requests in order in 11/11
   sessions, every snapshot released ≤ 1.513 s after its answer.
 - **BI-2** ("-dirty"; another hash; no serials): not refuted — `5b4d5db`, serials Case/Right/Left.
 - **BI-3**: not refuted. **BI-4**: not run.
 - **BI-5** (an empty file): not refuted — 681 lines, 66.75 kB (S t=584).
-- **BI-6** (a `DISC` while the tab is shown): **not refuted** — none in 30.5 s.
+- **BI-6** (a `DISC` while the tab is shown): **not refuted** — none in 31.1 s.
 - **BI-7/BI-8** (no `Notify`; the `Notify` but no line; the app sending anything in reaction): no `Notify` — not refuted (four); the app sending — not refuted;
   **"the line" — not checked** (the (i) not opened).
 - **BI-9** (a second `SABM`; the line still shown): `SABM` — not refuted; the line — not checked.
@@ -270,7 +270,7 @@ Connection screen's own button"; the phone paged the Buds, B 4951). 🟢 No sess
 | 10 | P9: the app opened and connected 34 s before the film; the Owner user used the app before the run | test-procedure deviation | §0 |
 
 **No heavy defect:** no crash or ANR; every write answered and byte-identical where a reference exists; no write before its answer; no Safe Mode on `release_5.203`;
-every session end explained and recovered; no setting lost by the update; no request outside the thirteen + the user's writes; nothing on DLCI 0x08/0x0a from the app.
+every session end explained and recovered; no setting lost by the update; no request outside the fifteen + the user's writes; nothing on DLCI 0x08/0x0a from the app.
 
 **The analysing session's view (the decision is the maintainer's):** what ADR-061 was built for — a press-and-hold shown on the noise-control tab — is on the wire
 and on screen; the untested branches are release-and-close paths whose failure mode is a channel released too late or early (the ADR-032 behaviour), not a wrong

@@ -149,7 +149,7 @@ Phone time = overlay + 0.43 s. Frames: `CAP-069-btsnoop_hci.log`. "MS" = Message
 | BE-14 | **done** (Adaptive → Noise cancellation) |
 | BE-15 | **done** (tap on Adaptive after NC → Adaptive) |
 | BE-16 | **done** (Transparency), and **repeated** (Off) |
-| BE-17 | **done early** (16:07:17, from Balanced) and **repeated** four more times (16:17:36, 16:18:43, 16:19:07; from Heavy bass, Heavy bass, Last saved) |
+| BE-17 | **done early** (16:07:17, from Balanced) and **repeated** three more times (16:17:36, 16:18:43, 16:19:07; from Heavy bass, Heavy bass, Last saved) |
 | BE-18 | **done differently** — "Last saved" (a new custom curve saved at 16:18:59) instead of Balanced; the run ends with the EQ **not** restored |
 | BE-19 | **done differently** — both buds docked at 16:19:42 dropped the link (expected, ADR-016); the "connected, both in the case" state did not exist |
 | BE-20 … BE-27 | **done** in order (BE-26/27 also once out of order at 16:19:37–42, before BE-19) |

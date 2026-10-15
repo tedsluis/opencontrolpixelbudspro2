@@ -245,7 +245,7 @@ class BudsRepositoryImpl(
     override val sessionSince: StateFlow<Long?> = _sessionSince
 
     /** replay=0 counterpart of [_ancMode], used only so [refreshAncMode] waits for a
-     * genuinely fresh response rather than immediately observing [_ancMode]'s current value. */
+     * genuinely fresh response rather than immediately observing [_ancMode]'s current value. Fed only by a Message Stream `Notify` (A93-APP-04). */
     private val _ancModeFresh = MutableSharedFlow<AncMode>(extraBufferCapacity = 8)
 
     private val _ancModeUpdatedAt = MutableStateFlow<Long?>(null)
@@ -276,6 +276,20 @@ class BudsRepositoryImpl(
 
     @Volatile
     private var lastSetAt: Long = Long.MIN_VALUE
+
+    /**
+     * A93-APP-02 (`ai-sessions/0094`, `CAP-076` §6.2 / P1): a session reads the mode twice — the Connect's snapshot `Get` and `ReadSetting 4:13` — and in 12 of
+     * 12 `CAP-076` sessions the `Get`'s `Notify` came first. [readRound] counts the sessions' read sequences ([launchInitialEqRead]); [changedSinceBy] is the
+     * round and the source of the read answer that last gave "changed since the app last saw it", so the other read of the same round, finding the same mode,
+     * keeps that cause instead of replacing it with a reading.
+     */
+    @Volatile
+    private var readRound = 0
+
+    @Volatile
+    private var changedSinceBy: Pair<Int, ReadSource>? = null
+
+    private enum class ReadSource { GET, READ_SETTING }
 
     private val _eqProfile = MutableStateFlow<EqBandGains?>(null)
     override val eqProfile: StateFlow<EqBandGains?> = _eqProfile
@@ -374,16 +388,31 @@ class BudsRepositoryImpl(
      * run is a reading (nothing was shown that could have changed); the same mode again changes nothing (`null`).
      */
     private fun causeOfNotify(mode: AncMode, answersGet: Boolean): AncModeCause? = when {
-        answersGet -> causeOfReadAnswer(mode)
+        answersGet -> causeOfReadAnswer(mode, ReadSource.GET)
         setPendingMode == mode -> AncModeCause.SET_BY_APP
         _ancMode.value == null -> AncModeCause.READ
         mode != _ancMode.value -> AncModeCause.CHANGED_BY_BUDS
         else -> null
     }
 
-    /** ADR-065 item 4: the cause of a read answer — the `Notify` to the app's `Get`, or the RESPONSE to its `ReadSetting 4:13`. */
-    private fun causeOfReadAnswer(mode: AncMode): AncModeCause =
-        if (_ancMode.value != null && mode != _ancMode.value) AncModeCause.CHANGED_SINCE_LAST_READ else AncModeCause.READ
+    /**
+     * ADR-065 item 4: the cause of a read answer — the `Notify` to the app's `Get`, or the RESPONSE to its `ReadSetting 4:13`: one that differs from the shown
+     * mode is "changed since the app last saw it"; the same mode is a reading — except the other read of the same session after such an answer, which keeps
+     * the cause (`null`, A93-APP-02: before `ai-sessions/0094` the equal `4:13` answer replaced it, `CAP-076` H1 4094 → 4135).
+     */
+    private fun causeOfReadAnswer(mode: AncMode, source: ReadSource): AncModeCause? {
+        val shown = _ancMode.value
+        val changedSince = changedSinceBy
+        return when {
+            shown != null && mode != shown -> {
+                changedSinceBy = readRound to source
+                AncModeCause.CHANGED_SINCE_LAST_READ
+            }
+            _ancModeCause.value == AncModeCause.CHANGED_SINCE_LAST_READ && changedSince != null &&
+                changedSince.first == readRound && changedSince.second != source -> null
+            else -> AncModeCause.READ
+        }
+    }
 
     /**
      * ADR-065 item 4 (`ai-sessions/0091`): the cause of a `4:{13:n}` settings-stream packet — the app's own `Set` of that mode within [ANC_SET_WINDOW_MS]
@@ -412,11 +441,12 @@ class BudsRepositoryImpl(
             BleLogger.logConnectionEvent("Noise-control mode from $source: no mode settable")
             return
         }
-        val cause = if (stream) causeOfStream(mode) else causeOfReadAnswer(mode)
+        val cause = if (stream) causeOfStream(mode) else causeOfReadAnswer(mode, ReadSource.READ_SETTING)
         _ancModeUnconfirmedAt.value = null // the Buds' own report — whatever a cut-off answer would have said, this is their mode now (F-3)
         emitAncMode(mode, cause)
-        _ancModeFresh.tryEmit(mode)
-        BleLogger.logConnectionEvent("Noise-control mode from $source (${(cause ?: _ancModeCause.value)?.name?.lowercase() ?: "unchanged"})")
+        // No [_ancModeFresh] here (A93-APP-04): a Refresh waits for the Message Stream `Notify` to its own `Get` — a Maestro packet is not that answer.
+        // A93-APP-08 (`CAP-076` defect (c)): a packet that changes nothing logs "unchanged", not the cause it kept from an earlier packet.
+        BleLogger.logConnectionEvent("Noise-control mode from $source (${cause?.name?.lowercase() ?: "unchanged"})")
     }
 
     private fun updateEqProfile(gains: EqBandGains?) {
@@ -705,7 +735,9 @@ class BudsRepositoryImpl(
                         _ancModeUnconfirmedAt.value = null
                         emitAncMode(it, causeOfNotify(it, answersGet))
                         _ancModeFresh.tryEmit(it)
-                        _ancOutcomes.tryEmit(AncOutcome.Notified(it))
+                        // A93-APP-03 (`ai-sessions/0094`, `CAP-076` §5.3 / P2): the Get's own answer never answers a Set — the Get's waiter can resume on
+                        // another thread, send the Set and subscribe before this line runs; only a later Notify (or the ACK/NAK) ends the Set's wait.
+                        if (!answersGet) _ancOutcomes.tryEmit(AncOutcome.Notified(it))
                     }
                 }
                 is AncFrame.Set -> emitAncMode(anc.mode)
@@ -738,7 +770,7 @@ class BudsRepositoryImpl(
                     updateEqProfile(frame.frame.gains)
                     _eqError.value = null
                 }
-                _maestroReplies.tryEmit(MaestroReply.Value(frame.frame))
+                _maestroReplies.tryEmit(MaestroReply.Value(frame.frame, frame.stream))
             }
 
             is RoutedFrame.MaestroHello -> {
@@ -770,7 +802,7 @@ class BudsRepositoryImpl(
             is RoutedFrame.Setting -> {
                 val value = frame.value
                 if (value is SettingValue.AncState) applyAncState(value, frame.stream) else applySetting(value, clock())
-                _maestroReplies.tryEmit(MaestroReply.Setting(value))
+                _maestroReplies.tryEmit(MaestroReply.Setting(value, frame.stream))
             }
 
             // ADR-065 item 2: a pushed change of a field this app does not read — said (payload-free, AGENTS.md §9), not shown, not an UnidentifiedFrame.
@@ -1101,7 +1133,7 @@ class BudsRepositoryImpl(
         val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(request))
         // An OK answer that is not a decodable EQ value ends the wait too (A58-APP-03): reported as unreadable, not as "no answer".
         val accept: (MaestroReply) -> Boolean = {
-            (it is MaestroReply.Value && !it.frame.persist) ||
+            (it is MaestroReply.Value && !it.stream && !it.frame.persist) ||
                 (it is MaestroReply.Result && it.result.methodId == Maestro.METHOD_READ_SETTING)
         }
         awaitWriteQuarantine()
@@ -1486,6 +1518,7 @@ class BudsRepositoryImpl(
      * `internal` so a test can start it without a `BluetoothDevice`.
      */
     internal fun launchInitialEqRead() {
+        readRound++ // A93-APP-02: a new session's reads (the snapshot `Get` launched just before belongs to it — its answer needs a Buds round trip)
         eqReadJob?.cancel()
         eqReadJob = scope.launch {
             readEq()
@@ -1543,7 +1576,7 @@ class BudsRepositoryImpl(
         val request = Maestro.readSettingRequest(channel.channelId, SettingsCodec.FIELD_ANC_STATE) ?: return@withLock
         val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(request))
         val accept: (MaestroReply) -> Boolean = {
-            (it is MaestroReply.Setting && it.value.field == SettingsCodec.FIELD_ANC_STATE) ||
+            (it is MaestroReply.Setting && !it.stream && it.value.field == SettingsCodec.FIELD_ANC_STATE) ||
                 (it is MaestroReply.Result && it.result.methodId == Maestro.METHOD_READ_SETTING)
         }
         awaitWriteQuarantine()
@@ -1616,7 +1649,7 @@ class BudsRepositoryImpl(
             // A58-APP-03 (`ai-sessions/0059`): an OK `ReadSetting` answer whose value the codec rejects arrives as an OK [MaestroReply.Result] — it ends
             // the wait at once as [BudsError.UnreadableAnswer] (the field stays "not read") instead of a 2 s `Timeout` that would say the Buds did not answer.
             val accept: (MaestroReply) -> Boolean = {
-                (it is MaestroReply.Setting && it.value.field == field) ||
+                (it is MaestroReply.Setting && !it.stream && it.value.field == field) ||
                     (it is MaestroReply.Result && it.result.methodId == Maestro.METHOD_READ_SETTING)
             }
             awaitWriteQuarantine()
@@ -1727,7 +1760,7 @@ class BudsRepositoryImpl(
         /** Wait for the ANC state during the Connect-time snapshot. */
         private const val SNAPSHOT_TIMEOUT_MS = 1_000L
 
-        /** How long the channel stays claimed after an action so replies land, then it is released — also after the noise-control tab or the app is left (ADR-061). */
+        /** How long the channel stays claimed after an action so replies land, then it is released (ADR-065 item 5: no hold — `ai-sessions/0094` dropped ADR-061's tab clause). */
         private const val MESSAGE_STREAM_LINGER_MS = 1_500L
 
         /**
@@ -1782,11 +1815,14 @@ private fun BatteryLevel.stamped(atMillis: Long): BatteryLevel = if (this is Bat
 private fun BatteryLevel.chargingReading(atMillis: Long): ChargingReading? =
     (this as? BatteryLevel.Known)?.isCharging?.let { ChargingReading(it, atMillis, ChargingSource.MESSAGE_STREAM) }
 
-/** What the Buds answered to one of our Maestro requests (DECISIONS.md ADR-034). */
+/**
+ * What the Buds answered to one of our Maestro requests (DECISIONS.md ADR-034) — or pushed: [Value.stream] / [Setting.stream] mark a settings-stream packet,
+ * which never ends a read's wait (`ai-sessions/0094`, A93-APP-04 — only the read's RESPONSE does).
+ */
 private sealed class MaestroReply {
-    data class Value(val frame: EqFrame) : MaestroReply()
+    data class Value(val frame: EqFrame, val stream: Boolean = false) : MaestroReply()
     data class Result(val result: RoutedFrame.RpcResult) : MaestroReply()
-    data class Setting(val value: SettingValue) : MaestroReply()
+    data class Setting(val value: SettingValue, val stream: Boolean = false) : MaestroReply()
 
     /** The `GetHardwareInfo` answer carried serials (ADR-058) — only their [count] travels here; the strings went straight to `deviceInfo`. */
     data class Hardware(val count: Int) : MaestroReply()

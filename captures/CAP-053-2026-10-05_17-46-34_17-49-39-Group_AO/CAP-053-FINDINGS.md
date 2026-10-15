@@ -30,10 +30,10 @@ grep WriteSetting`; exit 0; raw frames and CRC below):
 |---|---|---|---|---|---|---|
 | 1577 | 17:47:35.998 | **16** | −1.0, 0.0, 4.0, 2.0, **5.0** | Upper treble drag 62.6–63.62 | during the drag | 1583 / OK 1584 |
 | 1639 | 17:47:50.268 | **16** | −1.0, 0.0, 4.0, **−4.8**, 5.0 | Treble drag 76.6–77.85 | during the drag | 1643 / 1644 |
-| 1727 | 17:48:10.180 | **16** | −1.0, 0.0, **0.3**, −4.8, 5.0 | Mid drag 96.6–97.59 | 0.2 s | 1733 / 1734 |
+| 1727 | 17:48:10.180 | **16** | −1.0, 0.0, **0.3**, −4.8, 5.0 | Mid drag 96.6–97.59 | ≈ 0.1 s (film 97.68 ± 0.13 s) *(corrected 2026-10-15, `ai-sessions/0094`)* | 1733 / 1734 |
 | 1799 | 17:48:29.824 | **16** | −1.0, 0.0, **4.2**, −4.8, 5.0 | second Mid drag 116.36–117.36 | during the drag | 1804 / 1805 |
 | 1838 | 17:48:40.823 | **18** | −1.0, 0.0, 4.2, −4.8, 5.0 | **Save tap** 127.86–128.10 (toast "EQ saved" 128.36) | **0.2–0.5 s** | 1844 / 1845 |
-| 1914 | 17:48:52.515 | **16** | −1.0, **4.3**, 4.2, −4.8, 5.0 | Bass drag 138.87–139.87 | during the drag | 1916 / 1917 |
+| 1914 | 17:48:52.515 | **16** | −1.0, **4.3**, 4.2, −4.8, 5.0 | Bass drag 138.87–139.87 | ≈ 0.15 s after the release (film 140.02 ± 0.13 s) *(corrected 2026-10-15, `ai-sessions/0094`)* | 1916 / 1917 |
 
 | Condition (Group AO) | Window | Field-18 writes | Result |
 |---|---|---|---|
@@ -71,6 +71,8 @@ Command: `python3 scripts/pwrpc_decode.py CAP-053-btsnoop_hci.log` (119 lines; s
 
 Opening Device details, Sound and the EQ screen sent **nothing** on any channel (no RFCOMM data frame on handle 0x0002 between 17:47:08.512 — frame 1083, the end of the connect
 sweep — and 1577 at 17:47:35.998; the screens were opened at 17:47:09.4, 17:47:16.7, 17:47:18.5) — 🟢, as `CAP-036`'s screen-open negative.
+Command: `tshark -r CAP-053-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002 && btrfcomm.len>0 && frame.number>1083 && frame.number<1577"` → 0 frames,
+exit 0; positive control: the same filter with `frame.number>=1083 && frame.number<=1577` lists 1083 and 1577 *(command added 2026-10-15, `ai-sessions/0094`)*.
 
 ## 3. Wire against the code (`v1.0.955078536-10253511`, the run's version)
 
@@ -97,7 +99,8 @@ the repeated drag in step 4.
   `[Group][Code][Len BE][Value]`; 0 leftover bytes): Play-services claim `03 08 00 02 01 25` (702), session nonce `03 0a` (704), Model ID `03 01 …
   da 2d b1`, BLE address `03 02 … 56 30 04 c9 fd b5`, `03 09` "Revision 6", `03 0b` (25 bytes, FHN, out of scope), battery `03 03 00 03 64 64 ff` ×3 per
   push, `08 11` → `08 13 00 04 01 e8 e8 40` (Adaptive, Settable `e8`), SASS `07 10`/`07 11`/`07 21`/`07 40`/`07 41 "in-use"`/`07 42`/`07 34`, ACKs. 🟢
-  No `08 12` (no ANC change). The Buds repeat battery every push (17:47:51, 17:48:11, 17:48:41, 17:48:51, 17:49:21, 17:49:51, 17:50:01) together with
+  No `08 12` (no ANC change; `tshark -r CAP-053-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002 && btrfcomm.dlci==0x04 && btrfcomm.len>0 && data.data
+  contains 08:12"` → 0 frames, exit 0; the same filter with `08:11` finds 720 `08110000` — command added 2026-10-15, `ai-sessions/0094`). The Buds repeat battery every push (17:47:51, 17:48:11, 17:48:41, 17:48:51, 17:49:21, 17:49:51, 17:50:01) together with
   GSND `0e 02`/`0e 01`/`04 03` and `AT+BIEV=2,100` within 10 ms — not tied to any filmed action.
 - **GSND CONTROL (DLCI 0x08):** the phone's opening burst (`05 0c`, `04 02`, `04 04`, `04 11`, `04 13`, `04 15`, `0e 04`, `09 03`, `03 01` with the time
   zone "Europe/Amsterdam", `01 07`, `02 05`, `02 0b`, `01 08`, `09 02`) and the Buds' answers incl. `03 02 … release_5.203` (822); `0e 01` entry 3 = 0x37 =

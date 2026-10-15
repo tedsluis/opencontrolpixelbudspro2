@@ -250,7 +250,7 @@ Times: phone clock (log times exact; film-only events = overlay + 1.25 s, rounde
 
 | Step | Result | Where |
 |---|---|---|
-| P0 | done (outputs below, exit statuses recorded) | before the film |
+| P0 | done (outputs above, "The maintainer's P0/P1 outputs"; exit statuses recorded) | before the film |
 | P1 | done differently: 1.1.0 newly installed in user 10 at 17:40 and used off film; Dark mode On on film; Debug mode on not shown in 1.1.0 (on in 1.1.1 without a tap); Info 1.1.0 on film; `dumpsys` before/after without `lastUpdateTime`; installed from `dist/1.1.1/` | 17:40–17:54 |
 | P2 | done | 17:51:33/39 |
 | P3 | done differently: sound yes; the head in view once (18:06:57) | — |

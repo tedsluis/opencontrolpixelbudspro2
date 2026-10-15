@@ -1,6 +1,6 @@
 # Findings: `CAP-039` (Group AF — `Settable-toggles` byte: Set-tap vs. reconnect-Get, fixed dock state, `OBS-006`)
 
-> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): `03 03 …` is 🟢 "Battery updated" (ADR-031/033); the ~300-frame DLCI 0x02 burst is the official app's `ReadSetting` sweep (`PROTOCOL.md` §6 2026-09-24); Settable: ADR-049.
+> **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): `03 03 …` is 🟢 "Battery updated" (ADR-031/033); the 47-frame (Sent) DLCI 0x02 burst is the official app's `ReadSetting` sweep (`PROTOCOL.md` §6 2026-09-24); Settable: ADR-049.
 
 Standardized, evidence-based extraction from `CAP-039-btsnoop_hci.log` + `CAP-039-recording.mp4`,
 staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. Every claim below
@@ -197,13 +197,13 @@ duration. Strengthens, does not promote, the existing HYPOTHESIS.
 
 ## 7. Conclusions — awaiting maintainer sign-off for anything beyond factual record
 
-> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** the 10-sample Settable fold is superseded by ADR-049; the Option B data point is superseded (Option B 🟢, ADR-031/033); both 🔴 items are in `PROTOCOL.md` §6 (the "~300-frame burst" is the official app's connect-time `ReadSetting` sweep, §6 2026-09-24).
+> **Status of the proposals below (2026-09-30, `ai-sessions/0059`, maintainer's choice "Pointer per item"):** the 10-sample Settable fold is superseded by ADR-049; the Option B data point is superseded (Option B 🟢, ADR-031/033); both 🔴 items are in `PROTOCOL.md` §6 (the 47-frame Sent burst is the official app's connect-time `ReadSetting` sweep, §6 2026-09-24).
 
 **Confirmed by this session's own evidence (factual record, no promotion needed — restates
 already-FACT `DECISIONS.md` ADR-024 with new same-session evidence):**
 - `Settable-toggles=0xe8` on all 10 Set/Get Notify occurrences in a single session with dock state
   held constant (undocked) — supports ADR-024's dock-state reading as trigger-independent, per
-  §3. No counter-example found; ADR-024 does not need revisiting.
+  §3. No counter-example found; ADR-024 did not need revisiting on this session's evidence (ADR-024's "dock state" Decision was later superseded by ADR-049 — status note above).
 - The originally-documented Event Timeline (single Set at `07:07:23` "Off→Noise cancellation",
   single Get at `07:08:16`) is factually incorrect on the mode, the trigger count, and (partially)
   the timestamps — corrected in `CAP-039-EVENT-NOTES.md` with video+wire evidence, per §2.
@@ -218,7 +218,7 @@ already-FACT `DECISIONS.md` ADR-024 with new same-session evidence):**
 **Recorded as open, not resolved (§6 items, copy into `PROTOCOL.md` §6):**
 - 🔴 What triggers the 5 mid-session disconnect/reconnect cycles (reason `0x16`/`0x13`) with no
   clearly camera-visible cause for most of them?
-- 🔴 The ~300-frame DLCI 0x02 burst's exact purpose remains undecoded (same open item as
+- *(answered: the official app's connect-time `ReadSetting` sweep, `PROTOCOL.md` §6 2026-09-24)* The 47-frame (Sent) DLCI 0x02 burst's exact purpose remained undecoded here (same open item as
   `CAP-036-FINDINGS.md` §4/§11, reconfirmed not-EQ here).
 
 ---

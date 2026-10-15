@@ -29,9 +29,12 @@ import io.github.tedsluis.opencontrolpixelbuds.data.BudsRepositoryImpl
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DarkModeSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
+import io.github.tedsluis.opencontrolpixelbuds.hardware.BleLogger
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsCompanionPairing
 import io.github.tedsluis.opencontrolpixelbuds.hardware.BudsTransport
 import io.github.tedsluis.opencontrolpixelbuds.hardware.ConnectionStateMachine
+import io.github.tedsluis.opencontrolpixelbuds.hardware.PairingChoiceMemory
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,7 +57,12 @@ object RepositoryModule {
      * any single screen's lifecycle). */
     @Provides
     @Singleton
-    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    fun provideApplicationScope(): CoroutineScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Default +
+            // A93-APP-05 (`ai-sessions/0094`): an exception no action caught is logged (no payload, the address redacted by [BleLogger.describe]) instead of
+            // ending the process; the SupervisorJob keeps every other coroutine of the scope running.
+            CoroutineExceptionHandler { _, e -> BleLogger.logConnectionEvent("Uncaught error in a background action: ${BleLogger.describe(e)}") },
+    )
 
     @Provides
     @Singleton
@@ -67,10 +75,15 @@ object RepositoryModule {
     fun provideDarkModeSettingsStore(@ApplicationContext context: Context): DarkModeSettingsStore =
         DarkModeSettingsStore(context)
 
+    /** "Use different Buds", shared by the Activity's pairing instance and this singleton (`ai-sessions/0094`, A93-APP-01). */
     @Provides
     @Singleton
-    fun provideBudsCompanionPairing(@ApplicationContext context: Context): BudsCompanionPairing =
-        BudsCompanionPairing(context)
+    fun providePairingChoiceMemory(): PairingChoiceMemory = PairingChoiceMemory()
+
+    @Provides
+    @Singleton
+    fun provideBudsCompanionPairing(@ApplicationContext context: Context, choiceMemory: PairingChoiceMemory): BudsCompanionPairing =
+        BudsCompanionPairing(context, choiceMemory)
 
     @Provides
     @Singleton

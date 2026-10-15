@@ -8,8 +8,9 @@ settings-write shape across the whole session, cross-checked against video timin
 detection and the two case-sound settings.
 
 **Location note:** In-ear detection lives on **Device details → More settings** (top item under
-"Device settings", alongside Multipoint — confirming `CAP-019`'s Multipoint change persisted
-across sessions, both still showing ON at this session's start). Case sounds is a separate
+"Device settings", alongside Multipoint — both showing ON at this session's start; `CAP-019` had
+left Multipoint OFF (frame 2482 `4:{11:0}`), so it was switched on again between the sessions
+(this capture's connect read 1014: `4:{11:1}`). Case sounds is a separate
 sub-screen (**More settings → Case sounds**) with two toggles labeled **"Bud return"** (=
 `CASE-001`, "Earbuds replaced" in the skeleton's wording) and **"Other alerts"** (= `CASE-002`,
 "Other notifications").

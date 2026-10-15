@@ -443,5 +443,12 @@ this session. The intermediate commits were not gated one by one — the gate ra
 
 Next, by the maintainer: `RELEASING.md`, "Release checklist", from step A5 (push, pull request) on.
 
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- the Summary's "Nothing is committed, tagged or published." was written before the commit; the Status line is right (committed, released as 1.0.1).
+- "59 short rows in five capture notes" (Summary) and "68 short rows" (ledger A68-HK-08) describe the same item — the ledger's 68 is the count of record.
+- the commit that recorded this RESULT's commits is `e1fc886` (also the build commit tagged `v1.0.1`).
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0069_MAINTENANCE_RESULT_2026_10_03.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0069_MAINTENANCE_RESULT_2026_10_03

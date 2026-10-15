@@ -12,8 +12,8 @@
 |       Date       |                     2026-08-27                     |
 | Firmware version | release_5.203 (screen-confirmed, see timeline) |
 |   Test device    | Pixel 7a, Android 17 (⚪ assumed — build number not screen-confirmed this session), system Bluetooth settings + Pixel Buds companion app for setup steps only |
-| Video file       | `CAP-031-recording.mp4` —  |
-| Log file         | `CAP-031-btsnooz_hci.log` —  |
+| Video file       | `CAP-031-recording.mp4` — 202.4s, overlay `06:04:48`–`06:08:10` (per `CAP-031-FINDINGS.md`) |
+| Log file         | `CAP-031-btsnooz_hci.log` — 1,747 packets, 227.98s, `06:06:37.160`–`06:10:25.142`, `btsnooz` format, truncated frames (per `CAP-031-FINDINGS.md`) |
 
 ## Event Timeline
 

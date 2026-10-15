@@ -12,7 +12,7 @@ staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. S
 
 **Capture ID:** `CAP-042` · **Date:** 2026-09-06 · **Firmware:** ⚪ ASSUMPTION `release_5.203`
 (carried over, not re-checked on screen this session — screen stayed off). **Phone:** Pixel 7a,
-Android ⚪ ASSUMPTION (carried from `CAP-036`, not visible this session). **App:** official Pixel
+Android ⚪ not recorded (17 assumed, as in neighbouring captures; `CAP-036` did not record it either — not visible this session). **App:** official Pixel
 Buds Companion App, connected but **backgrounded** (not kept open — this is the deliberate
 difference from `CAP-036`'s open-app baseline). **Google Play Services:** ⚪ ASSUMPTION enabled
 (carried forward, not re-verified). **Buds MAC (partial):** `04:00:6e:cf:6e:07`.
@@ -164,9 +164,11 @@ absence, not a filtering artifact (re-checked with a plain `contains "BIEV"` gre
 
 ## 3. Cross-channel timing — near-lockstep holds *within* each push cluster, but HFP drops out entirely (🟡 HYPOTHESIS, single session)
 
+> *Note (2026-10-15, `ai-sessions/0094`): the DLCI 0x02 packets in Push #1/#2 are `Dosimeter/SubscribeToLiveDb` stream packets (4518 … 4582, 7627 … 7646, `scripts/pwrpc_decode.py`), not the `SubscribeRuntimeInfo` stream that `CAP-036`'s push is (`CAP-036-FINDINGS.md` §12.6) — so the DLCI 0x02 column below is not the same push as `CAP-036` §12.5's; see the status banner.*
+
 | Event | DLCI 0x02 | DLCI 0x04 | DLCI 0x08 | HFP `AT+BIEV` |
 |---|---|---|---|---|
-| Connect burst | 3.403–6.526s | 2.596–6.53s (approx, spans SLC+Info) | 2.680–4.346s | 2.264s, 2.343s |
+| Connect burst | 3.403–6.526s | 2.345–6.53s (approx, spans SLC+Info; Get frame 598 at 2.345s) | 2.680–4.346s | 2.264s, 2.343s |
 | Push #1 | 974.056–977.146s | 974.086s, 977.378s | 974.084s, 977.350s | **absent** |
 | Push #2 | 2101.353–2103.412s | 2101.036s, 2104.154s | 2101.036s, 2104.301s | **absent** |
 
@@ -203,6 +205,8 @@ substantially longer than 14.6 minutes without firing. This does **not** contrad
 "not a fixed cadence" finding — it extends it.
 
 ## 5. Candidate explanation, flagged not claimed: app-foreground state, not connection-supervision (🔴 OPEN QUESTION)
+
+> *Note (2026-10-15, `ai-sessions/0094`): the comparison below treats this session's idle DLCI 0x02 packets as `CAP-036`'s push; they are `Dosimeter/SubscribeToLiveDb` packets, not `SubscribeRuntimeInfo` (§3 note, status banner), so the DLCI 0x02 part of the comparison does not hold as written.*
 
 `CAP-036-FINDINGS.md` §12.5 speculated the near-lockstep push's shared trigger is "plausibly
 Buds-side, e.g. a periodic connection-supervision tick." That session ran with the official app

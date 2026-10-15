@@ -133,7 +133,7 @@ Per `AGENTS.md` §13.6, no forced reconciliation is offered — this is reported
 future capture (one that holds the connection open longer before checking, or that independently
 video-confirms the dock sensor's own physical state at the query's exact timestamp) to resolve.
 
-`libmaestro`'s own channel (DLCI `0x03`, 155 non-empty frames total) is not decoded field-by-field
+`libmaestro`'s own channel (DLCI `0x03`, 155 frames total, 132 non-empty, 61 of them `Sent`) is not decoded field-by-field
 this pass — see §7 for its role in the mid-session settings contamination. DLCI `0x0b` (6 frames) is server channel 5, "GSND AUDIO" — the channel this
 project otherwise sees as DLCI `0x0a`; it carries control frames only here.
 
@@ -170,10 +170,13 @@ Frames 3695 (`Current=0x08`) and 3847 (`Current=0x80`) are DLCI 0x04 "Notify ANC
 with **no immediately-preceding `08 11` Get** and — checked exhaustively — **no `08 12` "Set ANC
 state" frame anywhere in this entire log**:
 ```
-$ tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==0x0004 and data.data contains 08:12" \
-  -T fields -e frame.number
-(0 rows)
+$ tshark -r CAP-038-btsnoop_hci.log -Y "data.data contains 08:12" -T fields -e frame.number    # whole log, both connections
+(0 rows, exit 0)
+$ tshark -r CAP-038-btsnoop_hci.log -Y "btrfcomm.len>0 and data.data[0:2]==08:13" -T fields -e frame.number   # positive control
+1154    (chandle 0x0001, DLCI 0x05)
+3282, 3695, 3847, 4122, 4158    (chandle 0x0004, DLCI 0x04)
 ```
+(Corrected 2026-10-15, `ai-sessions/0094`: the command quoted here before was restricted to chandle `0x0004`, so it did not cover the first connection's Message Stream on DLCI 0x05; the whole-log result is the same, 0 rows.)
 Also confirmed DLCI 0x04 never bounces (no SABM/UA) between the two clear Get/Notify pairs
 (3261/3282 and 4116/4122) — these two frames appear on an already-open, continuously-open
 channel. This matches `CAP-027-FINDINGS.md` §4's already-established mechanism exactly: a
@@ -209,7 +212,7 @@ $ tshark -r CAP-038-btsnoop_hci.log -Y "bthci_acl.chandle==0x0001 and btrfcomm.d
 ```
 All 63 `Sent`-direction DLCI `0x02`-*numbered* frames in this log occur on chandle `0x0004`
 (06:52:53.26 onward) — zero on chandle `0x0001` (which, per §3's correction, uses DLCI `0x03` for
-the equivalent `libmaestro` channel instead, carrying 155 non-empty frames of its own). This means
+the equivalent `libmaestro` channel instead, carrying 155 frames — 132 non-empty, 61 `Sent` — of its own). This means
 the EQ/In-Ear/Multipoint/Touch-Controls settings-browsing that spans both connections likely
 produced writes on **both** chandles' respective `libmaestro` DLCI (`0x03` on the first, `0x02` on
 the second) — not, as an earlier pass concluded, exclusively on the second. **Not individually
@@ -222,8 +225,8 @@ deskresearch pass could decode these frames against the known `field5{field4{...
 
 - **`OBS-005`** (primary): exercised via both reconnects. The first (chandle `0x0001`, immediately
   after physical removal from the case — the more "realistic" trigger) reads
-  **`Settable-toggles=0x00` (docked)**, a genuine tension with the intended test condition (§3); no
-  A2DP/GATT-battery traffic found on either connection (clean negative, §6). The second (chandle
+  **`Settable-toggles=0x00` (docked)**, a genuine tension with the intended test condition (§3); an
+  A2DP stream is set up (AVDTP SetConfiguration/Open) but never started on either connection, and no Buds GATT battery traffic (§6, §1). The second (chandle
   `0x0004`) reads undocked as expected, then correctly flips to docked (§4). Window 2 (case-lid-only
   trigger) not verifiably executed (§2).
 - **`PAIR-003`** (incidental): two reconnects to an already-bonded device, exercised cleanly (§1).

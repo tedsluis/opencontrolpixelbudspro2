@@ -5,9 +5,10 @@ wire/video correlation. Every timestamp below was independently re-verified agai
 recording's burned-in camera clock (1s resolution) and matches to within 1 second — no
 corrections were needed. Folder already renamed to its actual session date/start/end time.
 
-**Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group V):** `CAP-002-FINDINGS.md` §5 found zero
-`AT+` traffic anywhere outside `CAP-001`'s own pairing-time handshake across a full 8+ hour log,
-and `CAP-001-FINDINGS.md` §6 Task 6 ruled out any SCO/eSCO HCI event in all four captures to
+**Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group V):** `CAP-002-FINDINGS.md` §5 then reported zero
+`AT+` traffic outside `CAP-001`'s own pairing-time handshake (a filter artefact: §5, rewritten
+2026-10-03, finds the SLC handshake at `CAP-002`'s fresh pairing, frames 48954–49079, and three
+more in that log), and `CAP-001-FINDINGS.md` §6 Task 6 ruled out any SCO/eSCO HCI event in all four captures to
 date — both findings converge on the same missing scenario: **none of the captures so far ever
 contains an actual phone call**, the one trigger that would exercise HFP's Service Level
 Connection setup and channel 5/DLCI 0x0a's audio path.

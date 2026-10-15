@@ -15,7 +15,7 @@ the *event timeline*, `CAP-002-FINDINGS.md` is *what it means for the protocol*.
 |       Date       |                  2026-08-09                  |
 | Firmware version | release_5.203 |
 |   Test device    | Pixel 7a, Android 17 (Official Pixel Buds Companion App v1.0.955078536) |
-| Video file       | `CAP-002-recording.mp4` — 114.2s, starts 08:04:53(=17:04:53 local), ends 17:06:46 (wall clock, +0200) |
+| Video file       | `CAP-002-recording.mp4` — 114.2s, starts 17:04:53, ends 17:06:46 (wall clock, +0200) |
 | Log file         | `CAP-002-btsnoop_hci.log` — **note: this is a long-running, non-restarted snoop log spanning 08:50:32–17:10:58 (~8h20m), the same buffer used since `CAP-001`.** 50,468 packets total; this capture's actual window is only the ~150s slice 17:04:35–17:07:05 (1,877 packets), everything else is unrelated background Bluetooth activity accumulated over the day. |
 
 **Scope note:** unlike `CAP-001` (a reconnection to an already-bonded device), this session is a
@@ -50,7 +50,7 @@ log uses the same wall clock (+0200), directly comparable.
 | 17:05:33 | Tap **Pair** | User (App) | `PAIR-001` | `Simple Pairing Complete` (17:05:33.608) → `Link Key Notification` (new key stored, 17:05:33.622) → `Authentication Complete` → `Set Connection Encryption` → `Encryption Change` (17:05:33.721) |
 | 17:05:34–48 | (not directly visible — app UI transitioning) | — | `PAIR-001` | Large SDP/L2CAP service-enumeration burst (Audio Sink, AVRCP, HFP, HID-Control, HID-Interrupt, generic RFCOMM — frames 48710–49215); RFCOMM channels opened: **6 (labeled "Hands-Free" by Wireshark)**, 4, 5, 1, 2 (frames 48892–49238); channel 2 closed then reopened (frames 49470–49527) |
 | 17:05:53 | Notification banner: **"Pixel Buds Pro 2 van Ted connected — Left 100% Case 57% Right 100%"** | App (Auto) | — | Lags the actual technical connection (complete by ~17:05:48) by ~5–15s — UI/notification delay, not a protocol event |
-| 17:05:51–17:06:03 | **"Save device to ted.sluis@gmail.com..."** dialog shown (Fast Pair account-linking prompt) | App (Auto) | `GFPS-001` | No further RFCOMM activity during this window — this step appears to be cloud/GMS-side, not locally observable |
+| 17:05:51–17:06:03 | **"Save device to ted.sluis@gmail.com..."** dialog shown (Fast Pair account-linking prompt) | App (Auto) | — | No further RFCOMM activity during this window — this step appears to be cloud/GMS-side, not locally observable |
 | 17:06:04 | Tap **Save** | User (App) | `GFPS-002` | No corresponding local Bluetooth traffic — consistent with this being an account-linking (cloud) action |
 | 17:06:06 | **"Set up device"** prompt appears | App (Auto) | — | — |
 | 17:06:09 | Tap **Set up** | User (App) | `APP-001` | — |
@@ -78,18 +78,18 @@ log uses the same wall clock (+0200), directly comparable.
   Permission prompt / Click 'Allow'" at 17:06:34 was really this CDM dialog, occurring earlier
   (tap at 17:06:31) and specifically evidencing CDM usage, which is architecturally significant
   (`DECISIONS.md` ADR-005).
-- Flagged that the log evidence for `GFPS-001`/`GFPS-002` (Save-to-account) is **absent** —
+- Flagged that the log evidence for `GFPS-002` (Save-to-account) is **absent** —
   this is expected if that step is cloud-side, but it means this capture cannot confirm or refute
   anything about the Fast Pair account-linking protocol itself, only that the local Bluetooth link
   showed no activity during it.
-- Flagged that **no RFCOMM data traffic occurs anywhere after ~17:05:48**, including during the
+- Flagged that **no RFCOMM data traffic occurs anywhere after ~17:05:48** (`-Y 'frame.time >= "2026-08-09 17:05:48" && frame.time <= "2026-08-09 17:07:05" && btrfcomm.len>0'` → 0 frames, exit 0; the same filter from 17:05:30 → 213), including during the
   entire app setup / CDM permission / "Device details" loading sequence (17:06:04–17:06:46) — see
   `CAP-002-FINDINGS.md` §4 for what this means and possible explanations.
 
 ## Traceability check (2026-10-03, `ai-sessions/0069`, `A68-CAP-15`, `AGENTS.md` §13 step 7)
 
 - `BATT-004` — **present on the wire, not referenced in the timeline** (see `CAP-002-FINDINGS.md`).
-- `APP-001` (one mention) and `GFPS-002` (two) are referenced; `APP-002` is not — **expected, not observed in the notes**.
+- `APP-001` (Tap **Set up**, 17:06:09), `APP-002` (Tap **Continue**, 17:06:23) and `GFPS-002` (Tap **Save**, 17:06:04) are referenced in the timeline.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-002-2026-08-09_17-04-53_17-06-46-Group_A/CAP-002-EVENT-NOTES

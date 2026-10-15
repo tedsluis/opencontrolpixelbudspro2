@@ -79,8 +79,8 @@ for name, hx in frames.items():
 Output: `ON -> ...2a052203980101` / `OFF -> ...2a0522039801 00`, decoding (offset 13) to
 `field5(len5){ field4(len3){ field19=1|0 } }`.
 
-Video: toggle tapped ON at t≈33s (08:15:57), tapped OFF at t≈41s (08:16:05) — both within a few
-seconds of frames 1621 (`08:15:53.965`) and 1823 (`08:16:04.605`) respectively.
+Video: toggle tapped ON at t≈29–30s (finger on the switch 08:15:53–54, ON from 08:15:55), tapped OFF at t≈41s (08:16:05) — each within ~1 s
+of frames 1621 (`08:15:53.965`) and 1823 (`08:16:04.605`) respectively *(corrected 2026-10-15, `ai-sessions/0094`)*.
 
 **Status:** 🟢 **FACT** — `field 19` = Mono audio, promoted 2026-09-03 (`DECISIONS.md` ADR-019
 Update, maintainer-approved), based on this wire evidence (2 samples, ON and OFF, both within the
@@ -101,7 +101,7 @@ Both CRC-32 verified. Video: toggle already ON at t=49s (08:16:13), OFF by t=53s
 matching frame 1871), ON again by the time the user leaves the Equalizer page (matching frame 1895
 at 08:16:24).
 
-**Status:** 🟡 **HYPOTHESIS** — `field 15` = Volume EQ, 2 samples (both directions), clean timing
+**Status:** 🟢 **FACT** since 2026-09-08 (`DECISIONS.md` ADR-025 Update; status banner) *(corrected 2026-10-15, `ai-sessions/0094`)* — `field 15` = Volume EQ, 2 samples (both directions), clean timing
 match.
 
 ## 5. Analysis: `AUDIO-003` (Volume balance)
@@ -171,9 +171,10 @@ types field 17 as `SINT32` (`REVERSE_ENGINEERING.md` line 856), so these raw var
 zigzag-decoded (`(n>>1) ^ -(n&1)`), not read as plain unsigned values as this section originally
 did — the `zigzag=` column in the script output above is the correct reading.
 
-Video confirms this whole window (08:16:34–08:17:20) is a single continuous drag gesture on the
-"Balance" slider, with no other action happening — centered at t=70s (08:16:34), toward the right
-edge by t=78s (08:16:42), back toward center-right by t=86s (08:16:50).
+Video shows this whole window (08:16:34–08:17:20) as repeated separate touches on the "Balance"
+slider (finger on it at 08:16:35, 08:16:43, 08:16:51, 08:17:07, 08:17:13, 08:17:19, 08:17:21), with
+no other action happening; the seven writes (1922–2099) are 6.6–8.8 s apart, one per settle, not a
+stream from one continuous drag *(corrected 2026-10-15, `ai-sessions/0094`)*.
 
 **Status:** 🟢 **FACT** for the field-number identity and semantic name ("Volume balance") —
 promoted 2026-09-03 (`DECISIONS.md` ADR-019 Update), based on this wire evidence plus,
@@ -210,14 +211,14 @@ finding first raised in `CAP-020-FINDINGS.md` §5 was **promoted to 🟢 FACT 20
 (`DECISIONS.md` ADR-013) for the outer wrapper shape itself — this capture's 7 field numbers are
 part of the cross-capture evidence base for that promotion. Field 19's ("Mono audio") and field
 17's ("Volume balance") own meanings were independently **promoted to 🟢 FACT 2026-09-03**
-(`DECISIONS.md` ADR-019 Update, per §3/§5 above); field 15's ("Volume EQ") own meaning stays 🟡
-HYPOTHESIS, unaffected by this update.
+(`DECISIONS.md` ADR-019 Update, per §3/§5 above); field 15's ("Volume EQ") own meaning was promoted
+to 🟢 FACT on 2026-09-08 (ADR-025 Update).
 
 ## 7. Conclusions & Next Steps
 
 - All 3 Test-IDs (`AUDIO-001`–`AUDIO-003`) isolate cleanly to DLCI 0x02 writes, each cross-checked
   against video timing, each with at least 2 samples (except `AUDIO-003`, which has 7 samples from
-  one continuous gesture).
+  repeated touches on the Balance slider, 6.6–8.8 s apart).
 - **Recommended next step:** a capture that pauses at each Balance slider extreme (rather than a
   continuous drag) would let the value range/direction be read directly (done: `CAP-046`, ADR-026). Persistence is settled (§5).
 

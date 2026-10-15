@@ -15,7 +15,7 @@ app's own claim lives only until Play's next connect, which is **5.33–5.82 s a
 1.2 s for two of them). "Take it back" ran three chains of exactly three re-claims (3 000 / 6 000 / 12 000 ms after the cut, as scheduled); **every re-claim
 collided**: Play's retry came 2.2–2.8 s after each cut, so attempt 1 was refused by the Bluetooth stack ("already at opened state") and attempt 2, 0.9–1.5 s
 later, connected by killing Play's socket; every re-claimed hold was cut again 5.3–5.8 s after that. The app held the channel **≈ 43 % of each 44-s chain**,
-then nothing until a tap. Of the 31 holds made in set 2's film, 8 were on screen within a second, 16 never. The back-off buys nothing: Play's timers did not
+then nothing until a tap. Of the 31 holds made in set 2's film, 8 were on screen within a second, 2 late by a re-claim, 3 for < 0.3 s or overdrawn, 2 only after a user action, 16 never (§4). The back-off buys nothing: Play's timers did not
 change over 15 cycles. The two best next steps for the Play user are a constant 3-s step with a longer chain (§9 P1) and a way to restart the chain from the
 hint (§9 P2). No crash, no write, no Safe Mode, no session lost by the app (§11).
 
@@ -31,8 +31,8 @@ hint (§9 P2). No crash, no write, no Safe Mode, no session lost by the app (§1
   2026-10-13). Set 2 = the Owner (user 0): `am_proc_start: [0,17838,10354,io.github.tedsluis.opencontrolpixelbuds,…]` (L line for 06:18:58.248; X the same at
   04:18:58.248 UTC); 0 `am_switch_user` lines in X (`grep -c am_switch_user` → 0, exit 1; positive control `grep -c am_proc_start` → 123, exit 0). The
   maintainer can still confirm with `adb shell am get-current-user` / `pm list users` (Checkpoint 0).
-- **Play.** Set 2: present and active — uid 10205 / process 7277 (`NearbyDiscovery`, `HearableControl` lines in L), 19 claims of its own on DLCI 0x04 in H2 and
-  3 + 2 in H2L, 33 `cleanup_rfc_slot … scn: 2, app_uid: 10205` lines; `frame contains 03:08:00:02:01:25` → **6 (H2L) + 18 (H2)**, exit 0. Set 1: **0** in H1L
+- **Play.** Set 2: present and active — uid 10205 / process 7277 (`NearbyDiscovery`, `HearableControl` lines in L), 18 claims of its own on DLCI 0x04 in H2 and
+  4 + 2 in H2L *(counts corrected 2026-10-15, `ai-sessions/0094`)*, 33 `cleanup_rfc_slot … scn: 2, app_uid: 10205` lines; `frame contains 03:08:00:02:01:25` → **6 (H2L) + 18 (H2)**, exit 0. Set 1: **0** in H1L
   and 0 in H1 (the same filter, exit 0; positive control `CAP-074-btsnoop_hci.log` → 22). Play's *Nearby devices* permission and version: not on film (P0's
   item not done — `TODO.md` §3's standing item stays open).
 - **Other clients on the Buds' ACL in set 2.** The Google app (uid 10302, `com.google.android.googlequicksearchbox` per L's `am_pss` lines) opened RFCOMM
@@ -69,8 +69,8 @@ the non-initiating device are reachable on DLCIs 2, 4, 6, …" (RFCOMM §5.2, qu
 |---|---|---|---|---|---|
 | H1L | 501 17:22:45.301 → 1097 17:23:04.162 `0x16` | 1 | 1 (#1 `SABM` 617 → `DISC` 841, 1.55 s) | 0 | the phone (the app's release) |
 | H1 | 151 17:23:09.631 → 1814 17:28:47.531 `0x13` | 10 | 10 (#1 … #10, below) | 0 | the phone, 1.50–1.51 s after the hold's end or 1.54–1.64 s after a snapshot/Refresh answer |
-| H2L | 18:13:17 → 18:14:11 `0x13`; 18:14:11 → 18:14:12 `0x13`; 18119 06:19:00.784 → 21818 06:29:13.490 `0x16` | 12 | 7 (#1, #2, #4, #6, #8 on 2026-10-12; #10 06:19:01) | 5 (#3, #5, #7, #9; #11 06:19:05–06:28:49, 583 s, closed **by the Buds** 21491; #12 06:28:54–06:29:13) | the phone; #10 cut by Play (18576 06:19:03.666) |
-| H2 | 469 06:29:21.136 → open at the end | 38 | 19 | 19 (#38 open at the end) | the phone: 15 cut by Play's connect, 4 released by the app (#2, #16, #19, #37) or its Disconnect (#12) |
+| H2L | 18:13:17 → 18:14:11 `0x13`; 18:14:11 → 18:14:12 `0x13`; 18119 06:19:00.784 → 21818 06:29:13.490 `0x16` | 12 | 6 (#1, #2, #4, #6, #8 on 2026-10-12; #10 06:19:01) | 6 (#3, #5, #7, #9; #11 06:19:05–06:28:49, 583 s, closed **by the Buds** 21491; #12 06:28:54–06:29:13) | the phone; #10 cut by Play (18576 06:19:03.666) |
+| H2 | 469 06:29:21.136 → open at the end | 38 | 20 | 18 (#38 open at the end) | the phone: 15 cut by Play's connect, 4 released by the app (#2, #16, #19, #37) or its Disconnect (#12) |
 
 **Set 1's ten claims (H1, all the app's, every `Notify` on them):** #1 460 17:23:10.055 → 546 (1.54 s, snapshot, `…00 20`), #2 615 17:23:23.003 → 640 (4.07 s,
 the 1.2.0 ANC tab), #3 782 17:25:20.575 → 845 (1.55 s, the 1.2.1 snapshot), #4 868 17:25:24.563 → 954 (5.33 s, H1 hold, Settable `00`), #5 1111 17:26:03.977 →
@@ -122,7 +122,7 @@ The 1.2.1 sequences were compared request by request (`tshark … -Y 'btrfcomm.d
 ## 3. Every write — byte for byte
 
 The app wrote, on DLCI 0x02, only the sequences of §2 (3 + 5 sessions × 15 requests; nothing else: `pwrpc_decode` lists no other method — GetSoftwareInfo 1/2/2/4
-are the Buds' announcements); on DLCI 0x04 only `SABM`, `08 11 00 00` (one per claim: 1 / 10 / 7 / 19 — the `data.data[0:2]==08:11` count per log 1 / 10 / 12 / 38
+are the Buds' announcements); on DLCI 0x04 only `SABM`, `08 11 00 00` (one per claim: 1 / 10 / 6 / 20 — the `data.data[0:2]==08:11` count per log 1 / 10 / 12 / 38
 includes Play's own `Get`s) and the phone's `DISC`/`UA`. **0 `Set` frames** (`bthci_acl.chandle==0x000b && btrfcomm.dlci==4 && frame.p2p_dir==0 &&
 data.data[0:2]==08:12` → 0 / 0 / 0 / 0, `tshark` exit 0 each; positive control `CAP-074-btsnoop_hci.log` → 5). Nothing from the app on DLCI 0x08/0x0a (the
 Google app's channels, §0). 🟢 FACT: 1.2.1 wrote nothing new to the Buds; `ANC-001`…`ANC-004`'s `Set` path was not exercised in this run (no mode tap).
@@ -299,7 +299,7 @@ change, Home, the switch within 2 s of a cut) are untested. Play's timers equal 
 
 | Step | Refuted if … | Outcome |
 |---|---|---|
-| BK-1 | a crash; a request missing or out of order; Safe Mode | **not refuted**: 0 crashes; the thirteen requests in order in all 8 sessions; `release_5.203` |
+| BK-1 | a crash; a request missing or out of order; Safe Mode | **not refuted**: 0 crashes; the fifteen requests (13 `ReadSetting` incl. 4:16, `SubscribeRuntimeInfo`, `GetHardwareInfo`) in order in all 8 sessions; `release_5.203` |
 | BK-2 | "-dirty"; another hash; the card missing or the other row selected on a fresh update | **not refuted** for set 1 (the fresh update: "Show a hint" selected, s181); set 2's card showed "Take it back" — not a fresh update but the Owner's stored choice from before the film (E2 06:19:04 "re-claim cancelled" proves the mode was set by then) |
 | BK-5 | an app `SABM` after the cut without a tap (hint only); no hint line; the hint without a time | **not refuted**: 0 app `SABM` between the cuts 06:31:33.02 / 06:32:02.20 and the next user action (claims #16 = the Connect 06:31:55, #19 = the tab re-entry 06:32:33); the hint with "06:31:33" / "06:32:02" |
 | BK-6 | the hint not cleared by the tap; the old (i) sentence | partly tested: the hint cleared by Refresh and by a Connect (no mode tap in the run); the corrected (i) sentence on film ×2 |
@@ -319,7 +319,7 @@ change, Home, the switch within 2 s of a cut) are untested. Play's timers equal 
 
 | C4 category | Found? | Evidence |
 |---|---|---|
-| Crash | no | `am_crash` 0 / `am_anr` 0 (X, L); both app logcats without an exception; 8 sessions, 49 app claims |
+| Crash | no | `am_crash` 0 / `am_anr` 0 (X, L); both app logcats without an exception; 8 sessions, 32 app claims (37 in the four logs incl. the Owner's 2026-10-12 connection in H2L; §1) |
 | Wrong write | no | 0 `Set` frames; the Connect reads byte-identical to `CAP-073`/`CAP-074`; nothing on other DLCIs |
 | Safe Mode on the verified firmware | no | `release_5.203` ×3 in both users; no Safe Mode screen |
 | Lost session | **not by the app**: two Buds-initiated closes with the app in the background (17:28:47, 06:28:49) and the ADR-044 re-open on return; no loss while the app was in use | §7 |

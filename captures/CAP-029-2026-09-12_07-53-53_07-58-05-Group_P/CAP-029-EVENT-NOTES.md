@@ -27,7 +27,7 @@ without a full factory reset, since no officially documented duration exists for
 > fixed on 2026-08-20, see `CHANGELOG.md`).
 >
 > **Decide before capturing:** run items 15 and 17 only in this session (skip the destructive
-> item 16), or run all three including the factory reset. Record the decision here: TBD.
+> item 16), or run all three including the factory reset. Decision: **Run** — recorded in the Log Metadata table below ("Decision on item 16").
 >
 > **Decision guidance (not a decision made on the maintainer's behalf):** items 15/17 alone are
 > non-destructive and sufficient to close this session's own open questions (`CONV-002` wire
@@ -86,11 +86,11 @@ without a full factory reset, since no officially documented duration exists for
 | 07:54:02.767 | Classic `Connect Complete` (stored key, no SSP) | System | — | Log frame 370. |
 | 07:54:03.253–.269 | DLCI 0x04 `Get`(`08110000`)/`Notify`(`Settable=0xe8`=undocked,`Current=0x40`=Adaptive) | System (auto) | — | Log frames 756/777 — this is the **only** Group `0x08` (ANC) traffic anywhere before the reset (checked, see Findings §2). |
 | ~07:54:08–14 | Spotify opened, "Amy Winehouse Best Of" playing | User (App) | — | Video `t=20`, still playing. |
-| ~07:54:14–16 | **Media pauses on screen** (play/pause icon flips from pause to play) | User (Hardware) → Buds (Auto)? | `CONV-002` | Video `t=20`→`t=22`: still playing at overlay `07:54:14`, already paused at `07:54:16`. **No DLCI 0x02/0x04/0x08 command accompanies this transition** (checked `07:54:00`–`07:54:30` in full); AVRCP shows only the phone's `PlaybackStatusChanged` → Paused (frame 1593, 07:54:17.670, phone → Buds) and no pass-through key from the Buds — see Findings §2. |
+| ~07:54:14–16 | **Media pauses on screen** (play/pause icon flips from pause to play) | User (Hardware) → Buds (Auto)? | `CONV-002` | Video `t=20`→`t=22`: still playing at overlay `07:54:14`, already paused at `07:54:16`. **No known DLCI 0x02/0x04/0x08 command accompanies this transition** (DLCI 0x04 Group `0x08` checked `07:54:00`–`07:54:30` in full; no settings write); DLCI 0x02 carries only `SubscribeToLiveDb` stream packets, and DLCI 0x08 carries one unidentified Buds → phone frame, 1592 (07:54:17.547, `01 09 00 05 0a 03 0b 06 13`), 0.12 s before the AVRCP pause — Findings §2; AVRCP shows only the phone's `PlaybackStatusChanged` → Paused (frame 1593, 07:54:17.670, phone → Buds) and no pass-through key from the Buds — see Findings §2. |
 | ~07:54:55 | Buds "forgotten" in Bluetooth settings (in preparation for the reset) | User (Phone) | — | Video-inferred from the draft's own note; ACL disconnect (reason `0x16`, locally-terminated) at `07:54:54.532` (log frame 2034) matches closely. |
 | ~07:55:03–07:55:33 | Case button held for ~30s (case open, buds inside) | User (Hardware) | `CASE-007` | Video `t=68` (button being held, `07:55:02`) through `t=98` (case closed/lifted, `07:55:32`) — a full factory reset, per the app's already-confirmed behavior. |
 | 07:55:13.695 | First `Delete Stored Link Key` (during the hold) | System | — | Log frame 2091. |
-| 07:55:44.765–07:56:34.348 | Several reconnect/disconnect cycles as the reset settles (4 total `Delete Stored Link Key` events: `07:55:13`, `07:56:12`, `07:56:19`, `07:56:34`) | System (auto) | — | Log frames 2091/2497/2860/3316 — see Findings §3. |
+| 07:55:44.765–07:56:34.348 | Several reconnect/disconnect cycles as the reset settles (3 further `Delete Stored Link Key` events: `07:56:12`, `07:56:19`, `07:56:34` — 4 in total with `07:55:13` in the row above) | System (auto) | — | Log frames 2091/2497/2860/3316 — see Findings §3. |
 | ~07:56:01–07:56:09 | Reset "Pixel Buds Pro 2" reappears in "Pair new device" list | System/User | `PAIR-002` | Video `t=135` (`07:56:09`), user's finger tapping the entry. |
 | 07:56:34.035–07:56:34.653 | **Fresh classic SSP handshake**: `Link Key Request Negative Reply`→`IO Capability Request/Response`→`User Confirmation Request` | System | `PAIR-002` | Log frames 3316–3370 — genuine fresh pairing, not a key-reuse reconnect. |
 | ~07:56:45–07:57:09 | First-run onboarding: SDP browse, RFCOMM/HID/AVDTP connects, permission grants (Phone calls/Media audio/Input device) | System/User | `APP-001`/`APP-002` (incidental) | Video `t=195` (`07:57:09`). |
@@ -103,10 +103,9 @@ without a full factory reset, since no officially documented duration exists for
 
 - [x] `CONV-002`: check whether the Conversation Detection trigger (pause media, switch to
       Transparency) produces a wire-visible command, and if so on which DLCI/channel. → **Clean
-      negative**: media visibly pauses, but zero DLCI 0x02/0x04/0x08 traffic of any kind accompanies
-      it, and no ANC mode change occurs anywhere in the pre-reset session.
+      negative** for known commands: media visibly pauses with no ANC Set/Notify, no settings write and no AVRCP pass-through, and no ANC mode change occurs anywhere in the pre-reset session; one unidentified DLCI 0x08 frame (1592, `01 09 … 13`) precedes the AVRCP pause by 0.12 s (🔴, Findings §2).
 - [x] `CASE-007` (if run): confirm this reproduces the previously-documented factory-reset
-      behavior. → Confirmed — matches the established pattern (bond removed, multiple
+      behavior. → Run and recorded — the project's first wire record of a factory reset (no earlier capture has one; `CAP-029-FINDINGS.md` §3): bond removed, multiple
       `Delete Stored Link Key`/reconnect cycles, followed by a fresh device advertisement).
 - [ ] `CASE-008`: record the exact press duration tried and whether pairing mode triggered. →
       **Not attempted this session** — no second case-button interaction occurs anywhere after the

@@ -34,7 +34,7 @@ around every timestamp below (video start = 18:30:15, so offset = wall-clock tim
 | 18:30:44 | "Connected devices" screen shown (post-Forget). Screenshot-confirmed at 18:30:43 the transition is already complete. | - | - | - |
 | 18:30:51 | user selects "See all" under "Saved devices" — section present but empty of the Buds entry (Forget succeeded). | User | `PAIR-004` | - |
 | 18:31:08 | user opens the Buds case, case visible open, phone still on "Connected devices". | User | `PAIR-001` | - |
-| 18:31:11 | user presses the pair button on the case. | User | `PAIR-001` | LE Extended Advertising Reports from the Buds' public address (`04:00:6e:cf:6e:07`) begin at 18:31:14.998 (frame 991), ~3.6s later |
+| 18:31:11 | user presses the pair button on the case. | User | `PAIR-001` | LE Extended Advertising Reports from the Buds' public address (`04:00:6e:cf:6e:07`) begin at 18:31:14.998 (frame 991), ~4.0s later |
 | 18:31:14 | Pop-up appears: "Pair with Pixel Buds Pro 2". | - | - | - |
 | 18:31:24 | user taps **"Connect"** on the pairing pop-up. | User | `PAIR-001`/`PAIR-004` | Matches `Sent Delete Stored Link Key` at 18:31:26.776 (frame 1090) — 0 keys deleted again (already deleted at the Forget tap) — full fresh-SSP sequence follows, frames 1090–1153, see `CAP-032-FINDINGS.md` §2 |
 | 18:31:36 | user taps "Start using the device" — Buds now paired. | User | `PAIR-001` | - |
@@ -87,7 +87,7 @@ Group-A-repeat note: `PAIR-001`, `PAIR-004`, incidental `BATT-004`.
 - **`PAIR-004`** (does Forget clear a pre-existing BLE association/link-key completely, even one
   not established via the Pixel Buds app?) — ✅ **fully exercised for the first time in four
   attempts**: unlike `CAP-013`/`CAP-031`, this capture's log genuinely covers the window before the
-  Forget tap (log starts 18:29:45.722, ~58s before the 18:30:42 tap, and ~30s before the video
+  Forget tap (log starts 18:29:45.722, ~56s before the 18:30:42 tap — ~58s before its HCI effect, frame 768 — and ~30s before the video
   itself even starts) — see `CAP-032-FINDINGS.md` §0. Both the primary claim (state *before* the
   Forget tap) and the secondary claim (fresh SSP on re-pairing) are answered — see
   `CAP-032-FINDINGS.md` §0/§1/§2/§7.

@@ -21,7 +21,7 @@ a status per `PROJECT_RULES.md` §1:
 | Test device | Pixel 7a, Android 17 (official Pixel Buds Companion App v1.0.955078536) |
 | Log file | [`CAP-006-btsnoop_hci.log`](./CAP-006-btsnoop_hci.log) — 233.16s, 2026-08-15 17:23:37.30–17:27:30.45 (+0200), 3,441 packets |
 | Notes file | [`CAP-006-EVENT-NOTES.md`](./CAP-006-EVENT-NOTES.md) — full event timeline with tap-level video↔log correlation |
-| Video file | [`CAP-006-recording.mp4`](./CAP-006-recording.mp4) — nominal 17:23:49–17:25:07; container index corrupted (see `CAP-006-EVENT-NOTES.md`'s video recovery note), recovered up to 17:25:05 via VLC's `scene` filter, which covers every action in this session |
+| Video file | [`CAP-006-recording.mp4`](./CAP-006-recording.mp4) — 17:23:49–~17:25:08 (79.49 s, 1280×720); the originally corrupted file was re-pulled from the phone and now decodes cleanly in `ffmpeg`/`ffprobe` (see `CAP-006-EVENT-NOTES.md`'s video recovery note); covers every action in this session |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `...cf:6e:07` — same physical device as `CAP-001`/`CAP-002`/`CAP-004` |
 | Phone MAC (partial) | `...7e:ca:81` — same phone as `CAP-001` |
 
@@ -83,7 +83,7 @@ $ tshark -r CAP-006-btsnoop_hci.log -Y "btrfcomm.dlci == 0x04 and data.data[0:2]
 | `ANC-003` Adaptive | 17:24:38 | 1731 | 17:24:38.666 | +0.7s |
 | `ANC-004` Transparency | 17:24:51 | 1862 | 17:24:50.825 | −0.2s |
 
-All four offsets are within this capture's own ±1s video-sampling tolerance (in fact, tighter than
+All four offsets are within −0.2…+1.3 s of the filmed tap (three within this capture's ±1s video-sampling tolerance, `ANC-002` at +1.3 s; no wider than
 `CAP-001`'s already-accepted ~1–1.5s window). **This directly closes the open question `DECISIONS.md`
 ADR-009 was blocking `FrameEncoder` implementation on**: with genuinely isolated, single taps
 against an already-active ANC row, the hit rate is 4/4 (100%), not `CAP-001`'s 4/6 (67%). The
@@ -155,9 +155,8 @@ for this capture's purpose).
 ## 5. Conclusions & Next Steps
 
 - **The ANC command channel is fully confirmed. `FrameEncoder`/`FrameDecoder` implementation for
-  this specific command is unblocked**, pending the maintainer's own review and a `DECISIONS.md`
-  entry recording this capture's result (per `AGENTS.md` §6 — this document proposes that
-  conclusion; it does not itself promote `PROTOCOL.md` or write the ADR). Both conditions
+  this specific command is unblocked** — recorded by the maintainer as `DECISIONS.md` ADR-009's
+  Update (2026-08-15). Both conditions
   `DECISIONS.md` ADR-009 set are now met on the same evidence base:
   1. Opcode/payload structure — already 🟢 FACT since `CAP-001` (`PROTOCOL.md` §4.1), unchanged
      and reconfirmed byte-for-byte by this capture's four frames.
@@ -165,7 +164,7 @@ for this capture's purpose).
      already-active ANC row produced a matching `0x12` frame, at the expected mode value, in the
      expected order, within video-sampling tolerance. `CAP-001`'s 2/6 miss rate does not reproduce
      under the isolated single-tap protocol this capture used.
-- **Recommended next step:** the maintainer records a `DECISIONS.md` update (superseding/extending
+- **Done (ADR-009 Update, 2026-08-15).** Original recommended next step: the maintainer records a `DECISIONS.md` update (superseding/extending
   ADR-009, not a fresh independent decision — see `PROJECT_RULES.md` §3) stating the `CAP-006`
   result and formally lifting the `FrameEncoder` block for this command, then implementation of
   the ANC `FrameEncoder`/`FrameDecoder` may proceed per `AGENTS.md` §6.
@@ -183,14 +182,14 @@ for this capture's purpose).
 - **Post-Transparency RFCOMM channel renegotiation (~17:24:56–17:25:02, `CAP-006-EVENT-NOTES.md`'s
   timeline)** — RFCOMM channels 1 and 2 are cleanly torn down and a full SDP + multiplexer
   renegotiation runs across DLCIs 0x02/0x04/0x08/0x0a, without any HCI-level `Disconnect`/`Create
-  Connection` in between (the underlying ACL link never drops). Not attributable to a specific
-  on-screen action since the video decode is truncated in this exact window (see
-  `CAP-006-EVENT-NOTES.md`'s video recovery note). 🔴 Not investigated further here — out of scope
+  Connection` in between (the underlying ACL link never drops). The re-pulled film shows no user
+  action in this window; the app greys out the ANC row 17:24:58–17:25:03 and re-enables it, still
+  on Transparency, from 17:25:04 (after Notify frame 2115). 🔴 Its trigger is not investigated further here — out of scope
   for this capture's ANC-focused purpose. A repeat capture with an intact video recording through
   this window (or a targeted repeat isolating whatever triggers it — e.g., the app being
   backgrounded) would be needed to attribute a cause.
-- **Recording pipeline reliability** — this is the second capture in a row (after none previously
-  reported) where the screen-recording `.mp4` itself was corrupted (truncated `mdat` relative to
+- **Recording pipeline reliability** — the first copy of this capture's screen recording was
+  corrupted (the re-pulled file decodes cleanly, `CAP-006-EVENT-NOTES.md`; truncated `mdat` relative to
   its own `moov` sample tables). Worth a note for the maintainer's own recording workflow (e.g.,
   whether the recorder app was force-stopped rather than stopped normally) — not a protocol
   finding, but noted here since it materially affected this capture's analysis effort.

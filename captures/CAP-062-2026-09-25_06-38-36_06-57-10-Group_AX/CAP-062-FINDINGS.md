@@ -77,8 +77,8 @@ The build is the `0046` one: "Runtime info requested (channel 19)" (export line 
   ears; "worn" is inferred from the buds leaving the table/case during the test plan's in-ear steps. **Settling experiment:** one bud in an ear,
   the other on the table, filmed; then swap; read `08 11` → `08 13` each time (no `Set` needed).
 - 🟢 FACT (all captures, same command over every `*btsnoop_hci.log`): every official-app and earlier app `Set` (31 in `CAP-001`, `-006`, `-039`,
-  `-051`, `-059`, `-060` — `CAP-002` holds none; the full tally is 70 `Set`s in 13 captures, 59 ACKed, 11 NAKed, all NAKs in `CAP-062`: `PROTOCOL.md`
-  §4.1 Update of 2026-10-03, `scripts/message_stream_tally.py`; list corrected 2026-10-08, `ai-sessions/0081`) was ACKed and each was answered by a `Notify` with Settable `e8`; `CAP-062` holds the only NAKs. `CAP-036` (buds in
+  `-051`, `-059`, `-060` — `CAP-002` holds none; the full tally is 70 `Set`s in 13 captures, 59 ACKed, 11 NAKed — 10 in `CAP-062`, 1 in `CAP-064` (3440): `PROTOCOL.md`
+  §4.1 Update of 2026-10-03, `scripts/message_stream_tally.py`; list corrected 2026-10-08, `ai-sessions/0081`) was ACKed and each was answered by a `Notify` with Settable `e8`; `CAP-062` holds 10 of the 11 NAKs, `CAP-064` 3440 the eleventh *(corrected 2026-10-15, `ai-sessions/0094`)*. `CAP-036` (buds in
   the case for the whole session) contains **no** `Set` at all — only a `Get`/`Notify 01 e8 00 20` pair (frame 1182). 🟡 HYPOTHESIS: the official
   app does not offer ANC while the Buds report no settable mode (`CAP-001-EVENT-NOTES.md` records the ANC row "greyed out" until shortly before the
   first real `Set`).
@@ -141,7 +141,7 @@ The `SubscribeRuntimeInfo` stream the app has subscribed to since ADR-043 (paylo
 | Stream frame (time) | `6.2.2` | `6.3.2` | `7.1` | `7.2` | 6.1 (Case) | Battery frame (L, R) | Film |
 |---|---|---|---|---|---|---|---|
 | 2782, 2927, 3236, 3488, 5508, 7118, 8612 … 11447 | 1 | 1 | 0 | 0 | absent | `64 64` (neither charging) | both out (table or ears) |
-| 3760 (06:42:28.851) | 1 | **2** | **1** | 0 | 60 | `64 e4` (4520) | Right seated, Left out |
+| 3760 (06:42:28.851) | 1 | **2** | **1** | 0 | 60 | `64 e4` (4520, 06:43:04.000 — the next claim, 35 s later; no battery frame within ±3 s) | Right seated, Left out |
 | 4845, 6429, 7447, 7649 | **2** | **2** | **1** | **1** | 60 | `e4 e4` | both seated |
 | 7033 (06:46:25.732) | **2** | 1 | 0 | **1** | 60 | `e4 64` (7058) | Right taken out, Left seated |
 
@@ -222,7 +222,7 @@ consent (I-5).
 ## 8. What works (evidence as above)
 
 - 🟢 Pairing through the app (second attempt; the first, with the lid closed, found nothing and was cancelled cleanly), permissions, the
-  Android-link mirror, 14 Connect/Disconnect cycles, the foreground service start/stop at every Connect/Disconnect/loss (system log
+  Android-link mirror, 15 Connects (14 sessions ended, §3; the 15th ran to the end), the foreground service start/stop at every Connect/Disconnect/loss (system log
   `am_foreground_service_start/stop`), the notification text following the ANC mode (film t=940, 1009, 1022).
 - 🟢 The firmware line and no Safe Mode (R1); ANC write with ACK (6/6 worn) and honest NAK reporting (10/10); the Quick Settings tile (G1–G4);
   EQ read on channels 19 and 21, 7/7 writes OK, one write per release, persistence across a reconnect (H6).
@@ -234,7 +234,7 @@ consent (I-5).
 
 | Channel / protocol | What the app does | What the Buds answer | Goes well | Goes wrong / to improve |
 |---|---|---|---|---|
-| **DLCI 0x02/0x03 pw_rpc** (`maestro_pw.Maestro`) | per Connect: waits for `GetSoftwareInfo`, `ReadSetting 4:16`, `SubscribeRuntimeInfo`; EQ `WriteSetting` | announcement 22–250 ms after `UA`; RESPONSE OK; stream on dock changes | 14/14 announcements, 14/14 reads, 7/7 writes, stream (§4) | the Buds `DISC` it on every wear/dock change (§3); only 6.1 is used — 6.2/6.3/7 are dropped (§4) |
+| **DLCI 0x02/0x03 pw_rpc** (`maestro_pw.Maestro`) | per Connect: waits for `GetSoftwareInfo`, `ReadSetting 4:16`, `SubscribeRuntimeInfo`; EQ `WriteSetting` | announcement 22–250 ms after `UA`; RESPONSE OK; stream on dock changes | 15/15 announcements, 15/15 reads, 7/7 writes, stream (§4) | the Buds `DISC` it on every wear/dock change (§3); only 6.1 is used — 6.2/6.3/7 are dropped (§4) |
 | **DLCI 0x04/0x05 Message Stream** | on-demand claims: snapshot (`08 11`), ANC `Set`, Ring/Stop, Refresh | Device Info (`03 0a`, `03 01 da 2d b1`, `03 02`, `03 09`, `03 0b`), `07 34`, battery ×3, `Notify`, ACK/NAK, Ring echo | 40 claims, all on attempt 1 after the first collision; every answer decoded | ANC `Set` sent while the claim's own `Notify` says no mode is settable (§2) |
 | **DLCI 0x08/0x0a** (GSND) | nothing (ADR-043) | Case push to the Google app | no contention with the app | — (owner lead §6) |
 | **HFP** (DLCI 0x0c/0x09) | nothing (ADR-040) | `AT+BIEV` in 65 frames (15 dissected as `bthfp` + 50 raw on the undissected DLCI; "×14" corrected 2026-10-03, A68-CAP-08) | — | — |

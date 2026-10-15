@@ -1,6 +1,6 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AL, DLCI 0x0a burst trigger, purpose-built hypothesis test (`CAP-047`)
 
-**Status:** ⚪ **Captured, video-analyzed (incl. a targeted dense re-check of Recording 2's tail), and wire-level analyzed.** See `CAP-047-FINDINGS.md` for the full log analysis and hypothesis-test conclusion.
+**Status:** ✅ **Captured, video-analyzed (incl. a targeted dense re-check of Recording 2's tail), and wire-level analyzed.** See `CAP-047-FINDINGS.md` for the full log analysis and hypothesis-test conclusion.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group AL, added 2026-09-09):** `CAP-021`'s 1123-frame
 DLCI 0x0a burst (`PROTOCOL.md` §6) has recurred in exactly 1 of 16+ sessions checked — passively

@@ -60,8 +60,8 @@ the OFF tap on film) and the smali write site (`PROTOCOL.md` §4.5.4, 2026-10-03
 filmed samples on the current firmware and app, zero counter-examples. 🟢 FACT for this capture.
 
 **GSND CONTROL Code `0x16` (🟡, refines lead L68-4):** its value is **not** a copy of field 29 — it is `08 01` after every ON and `08 02` after every OFF
-(6/6), i.e. **inverted** against the skeleton's prediction (`BE-2`'s "Expected": `08 01` after ON — that matched; `BE-3`'s `08 02` after OFF — matched; the
-skeleton therefore predicted it right, field 29 and Code `0x16` simply use opposite numbers). It also changes without a write: `08 02` with the setting ON when no
+(6/6), i.e. **inverted** against field 29's numbering (1 = off, 2 = on), as the skeleton predicted (`BE-2`'s "Expected": `08 01` after ON — matched; `BE-3`'s
+`08 02` after OFF — matched; field 29 and Code `0x16` simply use opposite numbers). It also changes without a write: `08 02` with the setting ON when no
 bud is worn (6329 16:19:40 both docked; 6880 and 8359 at connect; 7521 both buds on the table) and `08 01` when a bud goes into an ear (2262, 7320). 🟡
 HYPOTHESIS: Code `0x16` = "head gestures active" (1 = active: setting on and worn; 2 = inactive). Test: a head-gesture toggle with no bud worn (predict no
 `04 16` change, or `02` both ways).
@@ -132,7 +132,7 @@ ACK it. The decision is the maintainer's (§12 item 3, checkpoint).
 
 ## 5. `EQP-001` — the official "Default" preset writes 0.0 × 5 = OpenControl's "Flat" (🟢 FACT for this capture)
 
-Five Default taps, five writes `4:{16:{0.0, 0.0, 0.0, 0.0, 0.0}}`, raw RpcPacket payload
+Five Default selections, four writes `4:{16:{0.0, 0.0, 0.0, 0.0, 0.0}}` *(corrected 2026-10-15, `ai-sessions/0094`)*, raw RpcPacket payload
 `2a 1e 22 1c 82 01 19 0d 00 00 00 00 15 00 00 00 00 1d 00 00 00 00 25 00 00 00 00 2d 00 00 00 00` in 1990 (16:07:18.544, from Balanced), 5803 (16:17:36.77, from
 Heavy bass), 5965 (16:18:44.02, from Heavy bass), 6066 (16:19:07.80, from Last saved) — every one OK — byte-identical in payload to OpenControl 1.0.1's "Flat"
 (`CAP-015` frame 2111, `PROTOCOL.md` §4.2 2026-10-03 Update). (Four writes for five filmed selections: the menu opened at 16:19:10 and 16:19:14 with Default
@@ -215,7 +215,7 @@ Readings (each a 🟡 HYPOTHESIS unless marked):
   charging and the MS battery flipped only at 16:20:46.06 (7404), 0.26 s before `04 05 06` — when the bud went into the ear, 11.7 s later. Elsewhere the bit
   changed within 0.5 s of the movement (2217, 2306). 🔴 why; relevant to OpenControl's "charging in the case" line (§12 item 7).
 - **Field 13 on the settings stream (🟡, `PROTOCOL.md` §6 item of 2026-09-28):** `13:2` NC, `13:4` Adaptive, `13:3` Transparency, `13:1` Off — 4/4 with the four `Set`s
-  (5528, 5611, 5656, 5701) and 6/6 with the unsolicited Notifies (2270, 2367, 7327, 7419, 7459), `13:0` with Settable `00` (7530). Strengthened; field 13 is
+  (5528, 5611, 5656, 5701) and 5/5 with the unsolicited Notifies that kept MAESTRO open (2270, 2367, 7327, 7419, 7459; the sixth, 6156, had no push — the Buds `DISC`ed MAESTRO with it, 6157), `13:0` with Settable `00` (7530). Strengthened; field 13 is
   readable (`ReadSetting 4:13` → `13:0`, 933).
 - **The MAESTRO channel follows the hosting bud (🟡, `PROTOCOL.md` §2.2a):** announcement ch 21 with both buds in the case (907), ch 19 when only the Left was
   out (6336, 7089), ch 21 with both taken out together (8139) — consistent with "the channel names the bud that hosts the link".

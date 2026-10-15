@@ -20,7 +20,7 @@ shown. With Play (set 2) the behaviour of `CAP-074` is back: Play's Fast Pair ta
 and showed none of the 9 holds made while it was selected as they happened. **"Take it back"** ran three chains of exactly three re-claims (3 000 / 6 000 /
 12 000 ms in the export), every re-claim colliding with Play's retry (attempt 1 refused by the stack, attempt 2 connecting ≈ 0.9 s later and killing Play's
 socket), every re-claimed hold cut again 5.3–5.8 s after Play's loss; of the 31 holds made in set 2's film, 8 were on screen within a second (5 on the app's own
-claim, 3 by a re-claim's own read), 2 only after the maintainer tapped, and 16 never. The stack path `CAP-074-FINDINGS.md` §8/§10 left 🟡 is on the system log
+claim, 3 by a re-claim's own read), 2 late by a re-claim, 3 for < 0.3 s or overdrawn, 2 only after the maintainer tapped, and 16 never. The stack path `CAP-074-FINDINGS.md` §8/§10 left 🟡 is on the system log
 for 15 of 15 cuts in the log's reach.
 
 **Not in this run** (as the skeleton allowed): BK-11 … BK-13 (a tab change, Home or the switch *within 2 s of a cut* — the one "re-claim cancelled" of the run
@@ -39,7 +39,7 @@ version are **not** on film (P0's "on film" item not done).
 | Phone | Pixel 9a, GrapheneOS, Android 17 (`CP3A.261005.005` in `CAP-074`; not re-read here). **Set 1: the secondary user** (the app logcat's header `userType: full.secondary`; the 1.2.0 process of 17:22 and the 1.2.1 process of 17:25 both `package … :10201`). **Set 2: the Owner user 0** (`am_proc_start: [0,17838,10354,io.github.tedsluis.opencontrolpixelbuds,…]` at 06:18:58.248 in CAP-075-logcat-all.txt and the same line, in UTC, in the System log; the app logcat's header has no `userType` line) |
 | App under test | OpenControl for Pixel Buds Pro 2 **1.2.1** (versionCode 10201) — **Info tab on film in both users: "App: 1.2.1, build 31ee183 (2026-10-12)"**, no "-dirty" (film 1 s187–189 = 17:25:38.9–40.9; film 2 s23–36 = 06:29:27–40). Installed over 1.2.0 `5b4d5db` during set 1's film (Android's "Updaten…" overlay film 1 s166–168 = 17:25:17.9–19.9; the 1.2.0 process 11917 lost the foreground 17:25:17.843, the 1.2.1 process 14361 was created 17:25:20.128 — app logcat 1, UTC 15:25:17.843 / 15:25:20.128). The installed APK's hash: **not pulled** (⚪, Checkpoint 0) |
 | Previous version in each user | 1.2.0 build `5b4d5db` — on film in set 1 (s0–4, "App: 1.2.0, build 5b4d5db (2026-10-10)", Settings without the "Noise-control channel" card, s7–10); the update kept the app's data (Debug mode and Dark mode as before; `firstInstallTime` not read: P1 not run) |
-| Google Play services | **set 2: present and active** — uid 10205, process 7277, 19 Message Stream claims of its own in the live HCI log and 33 `cleanup_rfc_slot … app_uid: 10205` lines in the system log; its notification "Google Play-services needs to sho…" on film 2 s3–5. **Set 1: absent** — 0 frames with Play's first message `03 08 00 02 01 25` in both set-1 HCI logs (positive control: 22 in `CAP-074-btsnoop_hci.log`, 6 + 18 in set 2's two logs), 0 "closed, not by this app" lines in export 1. *Nearby devices* permission and Play's version: **not on film** |
+| Google Play services | **set 2: present and active** — uid 10205, process 7277, 18 Message Stream claims of its own in the live HCI log and 33 `cleanup_rfc_slot … app_uid: 10205` lines in the system log; its notification "Google Play-services needs to sho…" on film 2 s3–5. **Set 1: absent** — 0 frames with Play's first message `03 08 00 02 01 25` in both set-1 HCI logs (positive control: 22 in `CAP-074-btsnoop_hci.log`, 6 + 18 in set 2's two logs), 0 "closed, not by this app" lines in export 1. *Nearby devices* permission and Play's version: **not on film** |
 | Official Pixel Buds app | not used |
 | Buds | Pixel Buds Pro 2, firmware **`release_5.203` ×3** (film 1 s16–22 and s187; film 2 s24–36; `GetSoftwareInfo` answers hci1.log 7xx / hci2.log 1190); the three serials on film (not written here). **Worn** for every hold of set 1 from 17:26:04 (Settable byte `e8` from claim #5; `00` at 17:22:45, 17:23:10, 17:23:23, 17:25:20 and 17:25:24 — the buds were in the case until after 17:25:24, "Not worn (checked 17:25:24)" film 1 s209) and for every hold of set 2's film (`e8` from 06:28:55; `00` at 06:19:01 — in the case) |
 | Video files | **set 1:** CAP-075-recording1.mp4 (Android's name carried the stamp 20261012-172842 = the end) — 370.84 s, 4 203 frames at 11.33 fps (variable), 1080×2424, **with sound** (AAC); **set 2:** CAP-075-recording2.mp4 (Android's stamp 20261013-063431 = the end; its epoch stamp 1791865743.758 = the start 06:29:03.758) — 327.89 s, **with sound**. No camera. Both **committed as is** (Checkpoint 0) |
@@ -178,7 +178,7 @@ and the Play alternation as set 2's film and is **not** analysed further (no scr
 
 - **Before the recording.** 06:18:58.248 the app process 17838 starts in user 0 (L/X `am_proc_start`); E2 06:18:58.764 "start", 06:18:59.018 the Android link
   observer: NOT_CONNECTED. **06:19:00.638 Connect** (no "automatic re-open" line: a tap — not on film): the phone pages the Buds (H2L 18117 06:19:00.677; the ACL
-  18119 06:19:00.784), **channel 21**, the thirteen requests + `GetHardwareInfo` (H2L 18253–18326, byte-identical to set 1's 17:25:20 sequence), the snapshot
+  18119 06:19:00.784), **channel 21**, the thirteen `ReadSetting`s + `SubscribeRuntimeInfo` + `GetHardwareInfo` (H2L 18253–18326, byte-identical to set 1's 17:25:20 sequence), the snapshot
   claim #10 of H2L (`SABM` 18257 06:19:01.110, attempt 1 OK — the channel was free; `Notify` 18288 `…e8 00 20`: Off, **in the case**). **06:19:02.593 "hold
   started"** (the ANC tab was opened within 1.5 s: the snapshot claim became the hold — BK-4's path) → **06:19:03.666 the phone's `DISC`** (18576; E2 03.674
   "closed (IOException: bt socket closed, read return: -1)" + 03.675 "hold ended: the channel was closed, not by this app") → **06:19:04.522 "Message Stream
@@ -243,7 +243,7 @@ and the Play alternation as set 2's film and is **not** analysed further (no scr
   after 777 ms (E2 06:31:24.949; Play's #11 `DISC` 3273 06:31:24.948), **claim #12** `SABM` 3297 06:31:25.871, `Notify` 3321 `…20` (Off — the hold of 06:31:06,
   read now); **the tab left at once** (Connection s141, 06:31:25: "Probably worn (checked 06:30:58)" → s142 "(checked 06:31:26)") — no "hold started" line
   (the tab was left before the claim's answer); **06:31:26.627 Disconnect** (s143 "not open yet — tap Connect"): the app's `DISC` 3325 06:31:26.633 and of
-  DLCI 0x02. **06:31:28.158 Connect** (s144 "connecting…"; channel 19; the thirteen requests): **the snapshot claim connects at attempt 1** (claim #13 `SABM`
+  DLCI 0x02. **06:31:28.158 Connect** (s144 "connecting…"; channel 19; the fifteen requests): **the snapshot claim connects at attempt 1** (claim #13 `SABM`
   3392 06:31:29.508 — the channel was free: Play's socket had died at 06:31:24.948 and its recovery timer was running; `Notify` 3423 `…20`; s145 ready, s146
   "Probably worn (checked 06:31:29)") → **cut by Play's recovery 06:31:30.508** (`DISC` 3463; E2 "closed not by this app" 06:31:30.576; **5.560 s after Play's
   loss** — the Connection tab was shown, so no hold, no hint, no re-claim: the snapshot claim was simply gone; BK-14's path with the tab not shown). → Play's
@@ -257,7 +257,7 @@ and the Play alternation as set 2's film and is **not** analysed further (no scr
   its `Get` answered `40` (3646: a hold in the gap 33.0–37.6), then `80` 3688 39.801, `08` 3711 43.527, `80` 3731 45.847, `08` 3801 51.482 — **none shown** (Off
   s150–159; the volume panel s151). Cue 06:31:33.72. BK-5/BK-6's family, `TOUCH-007`.
 - **06:31:50–55 Disconnect / Connect (BK-14, hint only):** Connection s166 ("Probably worn (checked 06:31:32)"), **Disconnect 06:31:51.824** (s168–169; the app's
-  `DISC` of 0x02), **Connect 06:31:55.535** (s171 "connecting…"; channel 19; the thirteen requests): the snapshot claim — attempt 1 fails 408 ms (Play's #15
+  `DISC` of 0x02), **Connect 06:31:55.535** (s171 "connecting…"; channel 19; the fifteen requests): the snapshot claim — attempt 1 fails 408 ms (Play's #15
   killed: `DISC` 3879 06:31:56.779), attempt 2 = claim #16 `SABM` 3924 06:31:57.639, `Notify` 3964 `…08` (NC — the hold of 06:31:51.48, read now), released
   `DISC` 3992 06:31:59.647 (the Connection tab: s172 ready, s174 "Probably worn (checked 06:31:58)"). **The hint was gone at the Connect** (s171–176) ✓.
   **06:32:00.2 the ANC tab** (s176, NC): claim #17 `SABM` 4025 06:32:00.579 (attempt 1 OK — Play's recovery timer running), `Notify` 4046 `…08`, "hold started"
@@ -270,7 +270,7 @@ and the Play alternation as set 2's film and is **not** analysed further (no scr
   981 ms (E2 06:32:32.136; Play's #18 `DISC` 4374 06:32:32.135), claim #19 `SABM` 4408 06:32:33.157, `Notify` 4434 `…08`; **the tab left** (Connection s209,
   06:32:33.2; s210 "checked 06:32:33") → released `DISC` 4446 06:32:35.246 (no hold line: the tab was left before the answer); **06:32:35.405 Disconnect**
   (s211). Play's recovery #20 `SABM` 4489 06:32:37.707 (5.572 s after 32.135).
-- **06:32:38.747 Connect (s214; BK-3/BK-4's path under "Take it back"):** the thirteen requests; the snapshot claim — attempt 1 fails 501 ms (Play's #20 killed:
+- **06:32:38.747 Connect (s214; BK-3/BK-4's path under "Take it back"):** the fifteen requests; the snapshot claim — attempt 1 fails 501 ms (Play's #20 killed:
   `DISC` 4600 06:32:39.714), attempt 2 = **claim #21** `SABM` 4639 06:32:40.490, `Notify` 4673 `…08` 06:32:41.002 (s215 ready, s217 "Probably worn (checked
   06:32:41)"); **the ANC tab within 1.5 s (s218, 06:32:42.2) → "hold started" 06:32:41.966 on the snapshot claim** (BK-4 ✓: no second `SABM`) → **the cut 4738
   06:32:45.240** (5.526 s after Play's loss) → **chain 2:** Play #22 4768 47.774 (2.534 s) → "re-claim 1/3 … 3000 ms" 06:32:48.332 → fails 792 ms (Play's `DISC`
@@ -317,7 +317,7 @@ and the Play alternation as set 2's film and is **not** analysed further (no scr
 | P1 | partly | the update over 1.2.0 on film 1 (17:25:17.9–19.9, no uninstall: the app's data kept); no `dumpsys` saved; **no APK pull** (Checkpoint 0) |
 | P2–P5, P7–P9 | ✓ (P7 not verifiable) | HCI snoop on across both sets (the rotation at each Bluetooth off/on); screen recordings with sound; the status bar across minute changes in both films; buds charged (100 %/100 %); **P9 not kept in set 2** (the app was opened at 06:18:58, ten minutes before the film) and in set 1 the 1.2.0 app was open before the update by design |
 | P6 | ✓ (set 2) | `bugreportz` at 06:35:41 (the main buffer from 04:34:02 UTC — too late for the cuts) **and** the GrapheneOS log viewer's export whose main buffer starts 06:26:54 and covers **all 15 cuts of the film** (the stack lines are present for 15 of 15) |
-| BK-1 (Play: open the app) | ✓ differently | the session of 06:19:00 (a Connect tap; the thirteen requests; the snapshot claim at attempt 1 — Play was not on the channel yet) and the re-open of 06:29:27 (attempt 1 fails 433 ms, attempt 2 connects) |
+| BK-1 (Play: open the app) | ✓ differently | the session of 06:19:00 (a Connect tap; the fifteen requests; the snapshot claim at attempt 1 — Play was not on the channel yet) and the re-open of 06:29:27 (attempt 1 fails 433 ms, attempt 2 connects) |
 | BK-2 (Play: Info, Settings card) | ✓ | film 2 s24–36 Info ("App: 1.2.1, build 31ee183 (2026-10-12)", `release_5.203` ×3, the serials); the card on s41–52 — **"Take it back" already selected** (not the fresh default: set before the film) |
 | BK-3 (Disconnect / Connect) | ✓ ×3 | 06:31:26.6/06:31:28.2, 06:31:51.8/06:31:55.5, 06:32:35.4/06:32:38.7 |
 | BK-4 (the ANC tab within 1.5 s of ready) | ✓ ×2 | 06:19:02.593 and 06:32:41.966: "hold started" on the snapshot claim, no second `SABM` |
@@ -332,16 +332,16 @@ and the Play alternation as set 2's film and is **not** analysed further (no scr
 | BK-end1 | ✓ | the export 06:35:33 (513 lines), `bugreportz` 06:35:41, the status bar across minutes; the switch to the other user was the evening before (set 1 came first) |
 | BK-15 (no Play: open the app; Info; the card) | ✓ | film 1 s168–189 (the LINK_BACK re-open after the update; Info; the card with "Show a hint" — the default on the update) |
 | BK-16 (hint only: the ANC tab, holds for 30 s) | ✓ ×3 | H2 (4 holds), H3 (9), H5 (12): every hold shown, **no `DISC` while the tab was shown**, no hint, 0 Play claims |
-| BK-17 ("Take it back"; holds for 30 s) | ✓ ×2 | the switch 17:26:58; H4 (12 holds, 34 s, no `DISC`), H6 (4 holds, 21 s) — no re-claim line, no extra `SABM`, no hint |
+| BK-17 ("Take it back"; holds for 30 s) | ✓ ×2 | the switch 17:26:58; H4 (12 holds; held 34.1 s, 17:27:04.9–38.99; claim `SABM` → `DISC` 35.72 s, no foreign `DISC`), H6 (4 holds; held 21 s; claim 22.62 s) — no re-claim line, no extra `SABM`, no hint |
 | BK-18 (leave the tab) | ✓ ×5 | every hold ended "the noise-control tab was left" → the phone's `DISC` 1.50–1.51 s later (H1 … H5); H6 "the app is not visible" → 1.51 s |
 | BK-19 / BK-20 / BK-21 (optional) | ✗ | not run in either set |
 | BK-end2 | partly | the export 17:31:58 (228 lines); **the switch not set back** to "Show a hint" (set 1 ends on "Take it back" since 17:28:19); no APK pull |
 
 ## Test-IDs (`AGENTS.md` §13 step 7; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`)
 
-- `PAIR-003` — set 1: the Connect 17:22:44, the ADR-044 re-open 17:23:10, the re-open after the update 17:25:20 (three sessions, each with the thirteen requests
-  and one `GetHardwareInfo` answered); set 2: the Connect 06:19:00, the LINK_BACK re-open 06:29:27, the Disconnect/Connect pairs 06:31:26/28, 06:31:51/55,
-  06:32:35/38 (five sessions, the same thirteen requests, byte-identical to `CAP-073`/`CAP-074`).
+- `PAIR-003` — set 1: the Connect 17:22:44, the ADR-044 re-open 17:23:10, the re-open after the update 17:25:20 (three sessions, each with the thirteen `ReadSetting`s,
+  `SubscribeRuntimeInfo` and one `GetHardwareInfo` answered); set 2: the Connect 06:19:00, the LINK_BACK re-open 06:29:27, the Disconnect/Connect pairs 06:31:26/28, 06:31:51/55,
+  06:32:35/38 (five sessions, the same fifteen requests, byte-identical to `CAP-073`/`CAP-074`).
 - `BATT-004` — "Battery updated" (`03 03 00 03 …`) on every claim's open in both sets (E1 lines 51–52 at 17:25:20.5; E2 55–56 at 06:19:03.6); the Case from the
   runtime-info stream (74 → 73 % set 1; 71 → 69 % set 2).
 - `FW-003` — the Info tab on film in both users: `release_5.203` ×3, the serials with their labels, the 1.2.1 build line (film 1 s187–189; film 2 s24–36); the 1.2.0
@@ -361,7 +361,7 @@ and the Play alternation as set 2's film and is **not** analysed further (no scr
 - [x] Every filter scoped to the Buds' handle `0x000b` (shown matching hci2.log 2298); the Play marker's positive control (`CAP-074` 22); DLCIs by content.
 - [x] P0 by the logs (set 1 `full.secondary` + 0 Play; set 2 user 0 + Play uid 10205) — the shell outputs and the permission/version film **not** made; P1 the
       update on film, **no APK pull** (⚪ — Checkpoint 0); the Info frame's hash = B1's `31ee183` in both users.
-- [x] The claim inventory of DLCI 0x04 with both clients (`CAP-075-FINDINGS.md` §1): 1 + 10 (set 1, all the app's), 12 + 38 (set 2: 6 + 19 the app's, 3 + 19 Play's),
+- [x] The claim inventory of DLCI 0x04 with both clients (`CAP-075-FINDINGS.md` §1): 1 + 10 (set 1, all the app's), 12 + 38 (set 2: 6 + 20 the app's, 6 + 18 Play's),
       every `SABM`/`DISC` with its time and closer, every `Notify` attributed (§4).
 - [x] Part 1 hint only: the cuts at Play's recovery **5.33–5.82 s after Play's loss** (not a fixed time after the app's `SABM` — 0.42 s and 1.2 s for #14 and #17);
       no app `SABM` after a cut without a tap, re-entry or Connect; the hint line with the cut's time (06:31:33, 06:32:02); cleared by the Connect and by Refresh;

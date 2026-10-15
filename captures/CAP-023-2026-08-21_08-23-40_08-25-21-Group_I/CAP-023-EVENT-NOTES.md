@@ -46,7 +46,7 @@ numbers, and m[ore]"*). Only `FW-001` and `FW-002` were captured.
 | 08:23:40 | Video start | — | — | Video first frame |
 | 08:23:4x–08:24:1x | Bluetooth reconnect; navigate Device details → More settings → Firmware update | User (App) | — | Connection handshake burst (DLCI 0x02/0x04/0x08); DLCI 0x08 frame 849 (`08:23:46.038`) carries the ASCII string `release_5.203` — see §Decode |
 | **~08:24:17** (t=37s) | **Firmware update screen fully loaded** — "Left earbud: release_5.203", "Right earbud: release_5.203", "Case: release_5.203" all shown | — | `FW-002` | No new wire traffic accompanies this — the displayed strings match frame 849's connection-time value exactly (see §Decode); the screen reads from an already-cached value, not a live query |
-| **~08:24:23** (t=43s) | **Tap 'Up to date' status row** (manual re-check) | User (App) | `FW-001` | **Zero RFCOMM traffic** in a ±15s window around this tap (checked explicitly, not assumed) — see §Decode |
+| **~08:24:23** (t=43s) | **Tap 'Up to date' status row** (manual re-check) | User (App) | `FW-001` | **Zero RFCOMM traffic** in 08:24:02–08:24:45 (checked explicitly with a positive control) — see §Decode |
 | ~08:24:30 (t=50s) | Incidental tap on 'Automatic updates' toggle (off then back on) | User (App, incidental) | — | Zero RFCOMM traffic — not part of any Group I Test-ID |
 | 08:24:5x–08:25:1x | Navigate back to More settings, then back into Firmware update again | User (App) | — | No RFCOMM traffic |
 | 08:25:21 | Video end | — | — | Video last frame |
@@ -88,8 +88,9 @@ confirms what the *app* calls "firmware version" for the *user-facing* display, 
 
 **Firmware check is cached, not live-queried:** tapping "Up to date" (`FW-001`) and opening the
 Firmware update screen (`FW-002`) produced **zero** RFCOMM traffic on any DLCI, checked explicitly
-across the whole ±15s window around each action (`tshark -Y "btrfcomm.len>0 and frame.time_epoch>X
-and frame.time_epoch<Y"` returned no rows). Per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Q's
+across 08:24:02–08:24:45 (`tshark -Y 'btrfcomm.len>0 && frame.time>="2026-08-21 08:24:02" &&
+frame.time<="2026-08-21 08:24:45"'` → 0 rows, exit 0; the same filter without the time bound matches
+212 frames, the last at 08:23:49.761). Per `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Q's
 three-way-outcome convention (applied here even though this isn't a Group Q item, since the same
 "confirmed local action, no wire traffic" shape applies): this is a **positive finding**, not a
 gap — the "Device firmware status: Up to date" and per-component version strings are read from

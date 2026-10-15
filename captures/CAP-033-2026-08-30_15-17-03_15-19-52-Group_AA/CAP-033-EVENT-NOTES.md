@@ -79,7 +79,7 @@ session (same-direction offset as independently observed in `CAP-027`, this proj
 |---|---|---|---|---|
 | 15:17:03 | start of the video | — | — | — |
 | 15:17:10 | user enables bluetooth | — | — | — |
-| 15:17:23 | "Forget" via system Bluetooth settings | User (Hardware) | `SDP-001` | Video-confirmed: "Forget device?" dialog shown 15:17:22, "Forget" tapped 15:17:24 (`CAP-033-FINDINGS.md` §1.1) — **before** Force-stop below, contrary to procedure |
+| 15:17:24 | "Forget" via system Bluetooth settings | User (Hardware) | `SDP-001` | Video-confirmed: "Forget device?" dialog shown 15:17:22, "Forget" tapped 15:17:24 (`CAP-033-FINDINGS.md` §1.1) — **before** Force-stop below, contrary to procedure |
 | 15:17:34 | Companion app force-stopped | User (Hardware) | `SDP-001` | Video-confirmed: Settings → Apps → Pixel Buds → App info → "Force stop" tapped 15:17:34, confirmed 15:17:36 (`CAP-033-FINDINGS.md` §1.1) |
 | 15:17:52 | user selects "pair new device" | — | — | — |
 | 15:17:53 | user opens case | — | — | — |

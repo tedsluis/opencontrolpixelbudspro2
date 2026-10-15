@@ -337,5 +337,10 @@ per concern, each with its *why* and the attribution line:
 
 **Release (E3, added 2026-10-13):** PR #39 merged with a merge commit on 2026-10-12 → `31ee183`, built by the maintainer (`scripts/release.sh 1.2.1`, 2026-10-12 17:17, kept as ~/opencontrol-1.2.1-tested; APK SHA-256 `a60a3cc9b2a80e9dc5fecb8810c9cb8e7cbb20fa9eb7a2a0ce663b89e964963e`, certificate `a7530f5ceadcdfc9cddcbb0e9889e7699961e8a4ef18898c4ec7738cc79d8dcb`); the hardware run `CAP-075` (both users) analysed in `ai-sessions/0088` (PR #44, merged 2026-10-13) with the verdict "no heavy issue — release as built"; tag `v1.2.1` on `31ee183`, the release published 2026-10-13 (`RELEASING.md` §13).
 
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- the commit that back-filled the hashes: `3950736`.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0087_FEATURE_RESULT_2026_10_12.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0087_FEATURE_RESULT_2026_10_12

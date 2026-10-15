@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.UnidentifiedFrame
 
@@ -58,9 +60,14 @@ fun DebugScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // Reached from the settings menu's Debug tab (`ai-sessions/0062`); the bar shows "Settings" and the back arrow.
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            // A93-APP-07 (`ai-sessions/0094`): the row is the switch — TalkBack reads its label with its state.
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .toggleable(value = debugModeEnabled, role = Role.Switch, onValueChange = onDebugModeChanged),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
                 Text("Debug mode (verbose hex-dump logging)")
-                Switch(checked = debugModeEnabled, onCheckedChange = onDebugModeChanged)
+                Switch(checked = debugModeEnabled, onCheckedChange = null)
             }
 
             // Local-only (AGENTS.md §9) — the system's "save as" dialog writes the whole ring buffer to a file the user picks

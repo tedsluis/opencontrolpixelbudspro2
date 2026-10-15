@@ -1,9 +1,19 @@
 # Contributing
 
-This project is currently a solo reverse-engineering effort (see `TODO.md` for
-status), but is open source and PRs are welcome. Before contributing, read
-`AGENTS.md`, `PROJECT_RULES.md`, and `PROJECT.md` — the same rules that bind
-AI agents working on this project bind human contributors too.
+This project is maintained by one person: an Android app with public releases (see `README.md` and
+`CHANGELOG.md`) built on a reverse-engineered protocol (`PROTOCOL.md`). It is open source and PRs are
+welcome. Before contributing, read `AGENTS.md`, `PROJECT_RULES.md`, and `PROJECT.md` — the same rules that
+bind AI agents working on this project bind human contributors too.
+
+## How a change gets in
+
+`main` accepts changes only through a pull request (`RELEASING.md`, "Repository rules"). Fork, work on a
+branch, and open a pull request against `main`. Two CI jobs must be green: `.github/workflows/android.yml`
+(build, unit tests, lint, and the no-`INTERNET` check on the source and merged manifests) for a change under
+`android/`, and `.github/workflows/lint-docs.yml` (`python3 scripts/lint_docs.py`) for a Markdown, registry or
+lint-script change — run both locally first (`cd android && ./gradlew assembleDebug testDebugUnitTest test lint`;
+`python3 scripts/lint_docs.py`). The maintainer reviews and merges. *(Section added 2026-10-15,
+`ai-sessions/0094` — `ai-sessions/0093` A93-GOV-09.)*
 
 ## Code contributions
 

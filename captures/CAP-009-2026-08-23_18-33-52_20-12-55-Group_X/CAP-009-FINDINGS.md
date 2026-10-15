@@ -117,10 +117,10 @@ RFCOMM/HFP):
 | 20632 | 19:26:28.135 | 89 | `41 54 2b 42 49 45 56 3d 32 2c 38 39 0d` |
 | 26459 | 19:50:29.368 | 88 | `41 54 2b 42 49 45 56 3d 32 2c 38 38 0d` |
 
-**Timing is not a fixed ~6–7s cadence over this session.** Gap statistics across all 68
-consecutive-frame intervals (`frame.time` deltas, computed from the full 69-row extraction above):
+**Timing is not a fixed ~6–7s cadence over this session.** Gap statistics across the 67
+intervals between the 68 `AT+BIEV=2` pushes (`frame.time` deltas; the `AT+BIEV=1,1` row excluded):
 minimum 0.015s (a near-duplicate retransmission), maximum 878.9s (≈14.6 min), median 20.5s; 15 of
-68 gaps are under 10s, 5 are over 5 minutes. **This does not contradict `CAP-001-FINDINGS.md`
+67 gaps are under 10s, 5 are over 5 minutes *(corrected 2026-10-15, `ai-sessions/0094`)*. **This does not contradict `CAP-001-FINDINGS.md`
 §3's ~6–7s observation** — that observation was made in the few seconds immediately following SLC
 setup (a plausible "settling burst"), which this capture also shows (frames 972 and the next
 several pushes cluster tightly after 18:34:02). What this capture adds is that the cadence does
@@ -143,8 +143,8 @@ timeline (`CAP-009-EVENT-NOTES.md`):
 | Left earbud | 96 → 95 (19:26:28.02–29.02) → 94 (19:50:29.02–30.02) → 100 (20:00:01.68–02.01, placed in case) | No — none of 96/95/94/100 appear in the `AT+BIEV` sequence |
 | Case | 72 → 71 (19:02:47.35–48.02) → 68 (20:00:01.68–02.01) → 75 (20:11:02.03–05.70) | No — none of 72/71/68/75 appear in the `AT+BIEV` sequence |
 
-Every `AT+BIEV` transition lands at or *extremely close to* the on-screen change for R (within
-~1s), but *minutes before* the on-screen change for L (which `AT+BIEV` doesn't carry at all — the
+Every `AT+BIEV` transition lands at or before the on-screen change for R — the first (frame 14612)
+within ~1s, the later two ~3 min and ~9.5 min earlier (table below) *(corrected 2026-10-15, `ai-sessions/0094`)* — and *minutes before* the on-screen change for L (which `AT+BIEV` doesn't carry at all — the
 L values below are `PROTOCOL.md` §4.3 Option E's DLCI `0x08` timestamps, §6) — independently
 confirming the on-screen UI does not repaint on every individual wire push, but on some other,
 coarser trigger (see the case-jump timing in §4 for the clearest example of this):
@@ -280,7 +280,7 @@ recorded in `PROTOCOL.md` §4.3 Option A at this same HYPOTHESIS level (`AGENTS.
 | Does `AT+CIND?`'s `battchg` track a real battery-level change over time? | 🟢 **No** — it is queried exactly once, at SLC setup, and never refreshes again, even across 5 percentage points (93 → 88; corrected 2026-10-03, was "~13") of real, confirmed change on the peer's Right earbud during the same HFP session. |
 | Does `AT+BIEV=2` track a real battery-level change over time? | 🟢 **Yes, for the Right earbud specifically**, in this session — 5 distinct values over 86 minutes, each matching R's on-screen value, each landing at or before the corresponding on-screen check. |
 | Is either indicator a case- or Left-earbud-aware aggregate? | 🟢 **No** — neither indicator's value ever matches Left or Case at any point in this 101-minute session (§3). |
-| Is `AT+BIEV`'s push cadence a fixed ~6–7s regardless of value change (as `AGENTS.md` §5 currently states, based on `CAP-001`)? | 🟡 **Not over this session's idle stretches** — tight (~6–7s-class) spacing is seen right after SLC setup, consistent with `CAP-001`, but gaps widen to multiple minutes (max ≈14.6 min) later in the same session. Flagged for maintainer review, not silently corrected here (`AGENTS.md` §6). |
+| Is `AT+BIEV`'s push cadence a fixed ~6–7s regardless of value change (as `AGENTS.md` §5 stated before it was updated to cite this capture)? | 🟡 **Not over this session's idle stretches** — tight (~6–7s-class) spacing is seen right after SLC setup, consistent with `CAP-001`, but gaps widen to multiple minutes (max ≈14.6 min) later in the same session. Flagged for maintainer review, not silently corrected here (`AGENTS.md` §6). |
 | Does the on-screen UI repaint immediately on each wire push? | 🟡 **Evidence points to no** — R's on-screen lag behind its own wire value grows from sub-second to ~9.5 minutes across the session; a coarser repaint trigger (foreground/timer/connection-state-change) is a plausible explanation, not confirmed (§3). |
 | Does a second, independent RFCOMM battery mechanism exist on DLCI `0x04`? | 🟡 **Likely** — `Group 0x03 Code 0x03` tracks Left/Right in near-lockstep with `AT+BIEV`/Option E for the whole session outside the L-charging period, and is proposed as a candidate for `PROTOCOL.md` §4.3 Option B's still-unconfirmed battery code (§7). |
 | What updates the screen after the HFP/Option E channels close post-reconnect (20:02:27+)? | 🟡 **Likely a BLE Fast Pair Battery Notification scan** (`PROTOCOL.md` §4.3 Option A) — a `LE Set Extended Scan Enable` + advertising-report stream starts within ~0.5s of the reconnect and brackets the on-screen R update, but the specific advertisement wasn't confirmed as belonging to this device (§4). |
@@ -323,7 +323,7 @@ frame 28698  19:59:33.360  0e0100230a210a03616c6c121a0a060864100118010a060858100
 ```
 
 **🟢 FACT (this capture, 4th independent confirming session):** across all 75 occurrences, L and R
-track the maintainer's on-screen Left/Right values exactly, at every transition, for the entire
+match the maintainer's on-screen Left/Right values in value and order at every transition (the screen updates up to ~13 min later, §3) *(corrected 2026-10-15, `ai-sessions/0094`)*, for the entire
 101-minute session — the same result as §3's `AT+BIEV` cross-check for R, now independently
 reproduced via a structurally unrelated channel/message (DLCI `0x08` vs. DLCI `0x0c`/HFP), and
 extended to L (which HFP's `AT+BIEV=2` does **not** carry — §3). This is also the **first**
@@ -378,7 +378,7 @@ $ tshark -r CAP-009-btsnoop_hci.log -Y 'bthci_acl.chandle==0x0002 and btrfcomm.d
 
 **208 occurrences** (dominant message on this DLCI — see the full Group/Code inventory below).
 Decoding each as `03 03 00 03 <b1> <b2> ff` and printing only the frames where `(b1,b2)` changes
-from the previous one gives **14 transitions across the whole session**:
+from the previous one gives **13 transitions across the whole session** (14 rows incl. the first frame):
 
 | Frame | Time | b1 | b2 | Note |
 | --- | --- | --- | --- | --- |
@@ -437,7 +437,7 @@ out of `BATT-006` scope):**
 ```
 $ tshark -r CAP-009-btsnoop_hci.log -Y 'bthci_acl.chandle==0x0002 and btrfcomm.dlci==0x04 and btrfcomm.len>0' \
     -T fields -e data.data | cut -c1-4 | sort | uniq -c | sort -rn
-    208 0303   (this section)      6 0813      6 030a ("Revision 6" device-info string, cf. CAP-002-FINDINGS.md §2a)
+    208 0303   (this section)      6 0813      6 030a (Device Information burst, starting with the session nonce 03 0a; "Revision 6" is code 03 09; cf. CAP-002-FINDINGS.md §3)
      34 ff01                       6 0811      6 0308
      29 0734                       6 0741      3 030b
      18 0711                       6 0740

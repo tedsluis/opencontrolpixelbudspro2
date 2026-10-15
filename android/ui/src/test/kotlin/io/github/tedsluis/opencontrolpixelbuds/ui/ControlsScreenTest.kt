@@ -105,7 +105,7 @@ class ControlsScreenTest {
         compose.onNodeWithContentDescription("Multipoint: $DETAILS_DESCRIPTION").performScrollTo().performClick()
         compose.onNodeWithText("Multipoint: changed ${formatUpdatedAt(at)}").assertExists()
         compose.onNodeWithText("Close").performClick()
-        compose.onNode(isToggleable() and hasAnySibling(hasText(MULTIPOINT_LABEL))).performScrollTo().assertIsOn().performClick()
+        compose.onNode(isToggleable() and hasText(MULTIPOINT_LABEL)).performScrollTo().assertIsOn().performClick()
         assertEquals("one call with the other value; the switch itself follows only the Buds' answer", listOf("multipoint=false"), taps)
     }
 
@@ -115,7 +115,7 @@ class ControlsScreenTest {
         compose.onNodeWithContentDescription("Head gestures: $DETAILS_DESCRIPTION").performScrollTo().performClick()
         compose.onNodeWithText("Use head gestures: read ${formatUpdatedAt(at)}").assertExists()
         compose.onNodeWithText("Close").performClick()
-        compose.onNode(isToggleable() and hasAnySibling(hasText(HEAD_GESTURES_LABEL))).performScrollTo().assertIsOff().performClick()
+        compose.onNode(isToggleable() and hasText(HEAD_GESTURES_LABEL)).performScrollTo().assertIsOff().performClick()
         assertEquals(listOf("headGestures=true"), taps)
     }
 
@@ -127,7 +127,7 @@ class ControlsScreenTest {
         compose.onNodeWithText("Close").performClick()
         compose.onNodeWithText(CONVERSATION_DETECTION_SUBTITLE).performScrollTo().assertExists()
         compose.onNodeWithText("Switch from noise cancellation to transparency when you talk").assertExists() // the literal `0052` wording
-        compose.onNode(isToggleable() and hasAnySibling(hasText(CONVERSATION_DETECTION_LABEL))).performScrollTo().assertIsOn().performClick()
+        compose.onNode(isToggleable() and hasText(CONVERSATION_DETECTION_LABEL)).performScrollTo().assertIsOn().performClick()
         assertEquals(listOf("conversationDetection=false"), taps)
         // Order on the tab (by position): In-ear detection, then Conversation detection, then Multipoint; no Case sounds card any more.
         val top = { title: String -> compose.onNodeWithContentDescription("$title: $DETAILS_DESCRIPTION").performScrollTo().getBoundsInRoot().top }
@@ -177,14 +177,14 @@ class ControlsScreenTest {
         show(ConnectionState.Ready, read.copy(multipoint = null))
         compose.onNode(notReadDash and hasAnySibling(hasText(MULTIPOINT_LABEL))).performScrollTo().assertExists()
         compose.onAllNodes(notReadDash).assertCountEquals(1)
-        compose.onAllNodes(isToggleable() and hasAnySibling(hasText(MULTIPOINT_LABEL))).assertCountEquals(0)
+        compose.onAllNodes(isToggleable() and hasText(MULTIPOINT_LABEL)).assertCountEquals(0)
     }
 
     @Test
     fun `not connected with the last connection's values - switches stay switches, no dash`() {
         show(ConnectionState.Disconnected, read)
         compose.onAllNodes(notReadDash).assertCountEquals(0)
-        compose.onNode(isToggleable() and hasAnySibling(hasText(MULTIPOINT_LABEL))).performScrollTo().assertIsNotEnabled()
+        compose.onNode(isToggleable() and hasText(MULTIPOINT_LABEL)).performScrollTo().assertIsNotEnabled()
     }
 
     @Test

@@ -43,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
@@ -204,7 +205,7 @@ private fun EqPresetRows(enabled: Boolean, onPresetSelected: (EqPreset) -> Unit)
                         modifier = Modifier.weight(1f),
                         label = {
                             Text(
-                                preset.name.replace('_', ' '),
+                                presetLabel(preset),
                                 style = MaterialTheme.typography.labelMedium,
                                 maxLines = 1,
                                 textAlign = TextAlign.Center,
@@ -362,6 +363,14 @@ private fun EqBandSlider(label: String, value: Float, enabled: Boolean, known: B
             },
             enabled = enabled,
             valueRange = EqBandGains.RANGE.start..EqBandGains.RANGE.endInclusive,
+            // A93-APP-07 (`ai-sessions/0094`): a screen reader names the band and says its gain in dB, as the balance slider says its side — not a percentage.
+            modifier = Modifier.semantics {
+                contentDescription = label
+                stateDescription = if (known) "%.1f dB".format(shown) else NOT_READ_DESCRIPTION
+            },
         )
     }
 }
+
+/** A preset's name in words — "Heavy bass", not the enum's "HEAVY BASS" (`ai-sessions/0094`, A93-APP-08). */
+internal fun presetLabel(preset: EqPreset): String = preset.name.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }

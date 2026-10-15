@@ -1,5 +1,7 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AC, settings-state read-back on (re)connect and on settings-screen open (`CAP-036`)
 
+> **Status as of 2026-09-30** (as in `CAP-036-FINDINGS.md`): the DLCI 0x02 connect burst is decoded (`PROTOCOL.md` §6 2026-09-24); the "2-field sub-message" is Option F (ADR-043); Settable: ADR-049. The text below is as written.
+
 **Status:** ✅ **Captured and analyzed 2026-09-04.** Full decode/analysis in
 `CAP-036-FINDINGS.md` — this file carries the corrected Event Timeline (verified via a
 frame-by-frame video re-pass) and a summary pointer to that decode, per
@@ -97,7 +99,7 @@ frames). Not truncated. See `CAP-036-FINDINGS.md` §0 for the full command/outpu
 **CLI-hygiene correction found this session:** the `bluetooth.addr == 04:00:6e:cf:6e:07` filter
 this file's own §8 command (below) and `AGENTS.md` §13 both specify **returns zero matches** in
 this log for RFCOMM/`btrfcomm` frames — Wireshark's `bluetooth.addr` aggregate field is not
-populated for ACL/RFCOMM traffic in this particular btsnoop capture, only for the HCI event layer
+populated for any frame in this particular btsnoop capture (`-Y "bluetooth.addr"` alone → 0 frames, HCI events included); the HCI event layer's own field
 (`bthci_evt.bd_addr`). Verified workaround: `bthci_evt.bd_addr == 04:00:6e:cf:6e:07` **does**
 match (3 frames, including the Connection Complete event, frame 906), which identifies
 `bthci_acl.chandle == 0x0005` as the Buds' connection handle for the rest of this session — used
@@ -332,7 +334,7 @@ another paired device, not the Buds, and structurally never touches DLCI 0x02/0x
       android.permission.CHANGE_COMPONENT_ENABLED_STATE: granted=true
       android.permission.PROVIDE_DEFAULT_ENABLED_CREDENTIAL_SERVICE: granted=true
       ```
-      Record the exact output verbatim, even if unexpected: `___`
+      Recorded output: above (`enabled=0` for both users).
       (`enabled=0`/`COMPONENT_ENABLED_STATE_DEFAULT` = enabled; `enabled=3` = disabled-by-user,
       which would mean this session is *not* the intended baseline — say so rather than proceeding
       as if it were.)
@@ -400,15 +402,15 @@ verified ones.**
 | Time (local) | Action / Event | Initiator | Test-ID | Evidence in `CAP-036-btsnoop_hci.log` |
 |---|---|---|---|---|
 | `06:35:47.35` | btsnoop log starts | — | — | frame 1 |
-| `06:35:58` | Start video recording (Bluetooth off, Buds already out of case) | — | — | — |
+| `06:35:58` | Start video recording (Bluetooth off; both buds seated in the open case, on camera from `t=0` through the end — corrected 2026-10-15, `ai-sessions/0094`: this said "already out of case") | — | — | Wire agrees: every DLCI 0x04 "Battery updated" frame reads `03 03 00 03 e4 e4 ff` (100 %, charging bit set — frames 1165 … 2355) |
 | `06:36:05` | **Window 1 start** — "Use Bluetooth" toggled ON | User (App) | `OBS-004`, `PAIR-003` | — (no wire event yet) |
 | `06:36:28.61` | Phone sends HCI `Create Connection` to the Buds (reconnect actually begins — ~23s after the toggle, not immediately) | OS (Auto) | `PAIR-003` | frame 898 |
 | `06:36:30.96` | HCI `Connection Complete`, BD_ADDR `04:00:6e:cf:6e:07`, `chandle 0x0005` | OS (Auto) | `PAIR-003` | frame 906 |
 | `06:36:31.30`–`31.33` | DLCI 0x04 (Fast Pair Message Stream) opens: `SABM`→`UA` | OS/App (Auto) | `OBS-004` | frames 1109, 1125 |
 | `06:36:31.359` | **`08 11 00 00` — "Get ANC state" query, Sent, DLCI 0x04** (documented-but-never-before-observed opcode, `PROTOCOL.md` §4.1) | App (Auto) | `OBS-004` | frame 1169 |
 | `06:36:31.369` | **`08 13 00 04 01 e8 00 20` — "Notify ANC state" response, Rcvd, DLCI 0x04** (current_state=`0x20`=Off, ~10.7ms after the query) | Buds (Auto) | `OBS-004` | frame 1182 |
-| `06:36:31.37`–`31.81` | DLCI 0x08 opens and exchanges its connect-time capability/firmware/battery burst (Option E, `PROTOCOL.md` §4.3) | OS/App/Buds (Auto) | — | frames 1186–1372 |
-| `06:36:32.57`–`35.66` | DLCI 0x02 (`libmaestro`) opens and exchanges a dense RPC-shaped burst (not decoded further this session — connection-settling traffic, see `CAP-036-FINDINGS.md` §4) | OS/App/Buds (Auto) | — | frames 1392–1591 |
+| `06:36:31.37`–`31.81` | DLCI 0x08 opens and exchanges its connect-time capability/firmware/battery burst (Option E, `PROTOCOL.md` §4.3) | OS/App/Buds (Auto) | — | frames 1186–1372 (SABM 1186; payload 1273–1372) |
+| `06:36:32.57`–`35.66` | DLCI 0x02 (`libmaestro`) opens and exchanges a dense RPC-shaped burst (not decoded further this session — connection-settling traffic, see `CAP-036-FINDINGS.md` §4) | OS/App/Buds (Auto) | — | frames 1392–1591 (SABM 1392; payload 1404–1591) |
 | `~06:36:40`–`06:36:41` | Connection established (on-screen confirmation: "Active", L:100% C:100% R:100%) — note the ~9s gap between wire-level completion (above) and this UI confirmation | App/OS (Auto) | `OBS-004`, `PAIR-003` | — (UI-only; wire side already complete) |
 | `06:36:40`–`~06:37:03` | Idle, nothing touched, nothing navigated — **zero DLCI 2/4/8 frames in this span** | — | `OBS-004` | none (checked) |
 | `~06:37:04` | **Window 1 end** — user taps gear icon → Device details screen (ANC row shows "Off" selected — matches the wire decode above exactly) | User (App) | `OBS-004` | — |
@@ -423,11 +425,11 @@ verified ones.**
 | `~06:38:46` | **Window 3 end** — navigated back to "Controls and gestures", then (~06:38:53–58) back to Device details | User (App) | `OBS-004` | — |
 | `~06:39:08`–`06:39:16` | Navigated to "More settings" list (In-ear detection=ON, Multipoint=ON already visible here, before either sub-screen opened) | User (App) | `OBS-004` | — |
 | `06:39:16`–`~06:39:43` | Idle on "More settings", nothing touched — **zero DLCI 2/4/8 frames in this span** | — | `OBS-004` | none (checked) |
-| `06:39:51` | First periodic DLCI 0x02/0x04/0x08 push burst begins (~10s-ish cadence thereafter; same known content as the connect-time pushes, all Rcvd-direction) — **begins ~3s before the Multipoint screen even renders, i.e. time-triggered, not screen-open-triggered** | Buds (Auto) | — | frames 1999–2007 (DLCI 0x08), 2009 (DLCI 0x02) |
+| `06:39:51` | First periodic DLCI 0x02/0x04/0x08 push burst begins (irregular thereafter — gaps 10.1, 70.1, 10.1, 9.6, 50.4, 9.6 s, `CAP-036-FINDINGS.md` §12.1; same known content as the connect-time pushes, all Rcvd-direction) — **begins ~3s before the Multipoint screen even renders, i.e. time-triggered, not screen-open-triggered** | Buds (Auto) | — | frames 1999–2007 (DLCI 0x08), 2009 (DLCI 0x02) |
 | `~06:39:53`–`06:39:54` | **Window 5 start** — Multipoint screen opened (Use multipoint=ON) | User (App) | `OBS-004` | — |
 | `06:39:54`–`06:41:16` | Idle on Multipoint screen, nothing touched — **only the already-known periodic push (above) recurs (frames through 2361, continuing to 06:42:31, well past this video); no new Sent/query frame anywhere in this span** | — | `OBS-004` | frames 1999–2361 (periodic push only) |
 | `06:41:16` | **Window 5 end** — video ends here, screen still untouched | User (App) | `OBS-004` | — |
-| `06:41:18` | End video recording | — | — | — |
+| `06:41:16` | End video recording (`ffprobe` 317.95 s from 06:35:58; the folder name's `06-41-18` is the draft value) | — | — | — |
 | `not run` | *(optional)* Window 4 — in-ear detection screen — skipped this session (time) | — | `OBS-004` | — |
 
 **Contamination log:** None on the Buds' own connection. Windows were clean and no sliders or
@@ -473,7 +475,7 @@ tshark -r CAP-036-btsnoop_hci.log -Y "bluetooth.addr == <buds MAC> and btrfcomm.
       35.66, frames 1404–1591) — none inside Window 1/2/3/5's stated idle spans. That burst itself
       is not decoded further this session (RPC-shaped, not matching the write envelope's specific
       inner-field shape on inspection) — see `CAP-036-FINDINGS.md` §4. A separate, periodic
-      Rcvd-only push (frames 2009/2048/2164/2204/2237/2334/2360, ~10s-ish cadence from 06:39:51
+      Rcvd-only push (frames 2009/2048/2164/2204/2237/2334/2360, irregular 10–70 s gaps from 06:39:51
       onward) recurs during Window 5 but is never `Sent`-direction and is not write-shaped.**
 - [x] **DLCI 0x08 — do not mistake a known push for a query.** This channel already pushes
       unsolicited content on connect (battery, the `google-pixel-buds-pro-v1` capability blob,
@@ -486,7 +488,7 @@ tshark -r CAP-036-btsnoop_hci.log -Y "bluetooth.addr == <buds MAC> and btrfcomm.
       Group/Code pairs are not mapped to any known setting (`PROTOCOL.md` §6 already lists DLCI
       0x08's Groups as largely unresolved) — flagged as a new 🔴 open question, not claimed as a
       settings query. The same connect-time content (Option E) recurs verbatim during Window 5's
-      idle period (~10s-ish cadence from 06:39:51), always `Rcvd`, never a new `Sent` frame.**
+      idle period (irregular 10–70 s gaps from 06:39:51), always `Rcvd`, never a new `Sent` frame.**
 - [x] **Per-window attribution:** for each frame found, state which window it falls in and how far
       it sits from that window's start — a frame arriving 12s into an idle window means something
       different from one arriving 200ms after the screen opened. **Result: the only query/response
@@ -525,12 +527,12 @@ if unresolved, or it becomes invisible to future sessions.)*
   `04 04`, `04 11`, `04 13`, `04 15`, `0e 04`) are structurally identical to DLCI 0x04's confirmed
   "Get" pattern, but none of these Group/Code pairs is mapped to any known setting — genuinely
   open, not a settings query claim (`CAP-036-FINDINGS.md` §5).
-- 🔴 The dense RPC-shaped burst on DLCI 0x02 immediately after channel establishment (frames
+- 🟢 *(answered: decoded — `PROTOCOL.md` §6 2026-09-24, `CAP-036-FINDINGS.md` status banner)* The dense RPC-shaped burst on DLCI 0x02 immediately after channel establishment (frames
   1404–1591, 06:36:32.57–35.66) is not decoded this session beyond noting it shares a partial
   constant prefix with §4.5's documented correlation-ID pattern (`03 10 XX 1d ea 71 de 7e 25`) —
   whether it carries any settings-state read-back via `libmaestro`'s own channel (as opposed to the
   DLCI 0x04 mechanism this session did confirm) is unresolved (`CAP-036-FINDINGS.md` §4).
-- 🔴 The "Notify ANC state" frame found this session (`08 13 00 04 01 e8 00 20`) decodes its
+- *(answered: ADR-049)* The "Notify ANC state" frame found this session (`08 13 00 04 01 e8 00 20`) decodes its
   "Settable toggles" byte as `0x00`, whereas every previously-documented "Set ANC state" frame
   (`PROTOCOL.md` §4.1, `CAP-001`) shows `settable=0xe8` in the same byte position — not reconciled;
   either this byte means something different in a `Notify` triggered by an explicit `Get` versus one

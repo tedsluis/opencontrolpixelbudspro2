@@ -4,7 +4,7 @@
 **Category:** FEATURE
 **Date:** 2026-10-07
 **Title:** Replace the labelled, derived test fixtures of `ai-sessions/0074` with the real `CAP-070` frames and remove the `// TODO(verify)` on `SettingsCodec.FIELD_VOLUME_EQ` (ADR-055); test and comment changes only
-**Status:** complete (checkpoint approved in chat 2026-10-07; committed and pushed to `feature/0076-capture-fixtures`, pull request opened — see Commits)
+**Status:** complete (checkpoint approved in chat 2026-10-07; committed and pushed to `feature/0076-capture-fixtures`, pull request opened — see Commits) *(Status update 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-06/07: PR #9 merged 2026-10-07 as `6167843`.)*
 
 ## Progress
 
@@ -128,7 +128,7 @@ On `feature/0076-capture-fixtures` (from `bdcc583`); the maintainer answered *"C
 | `cfc8537` | test(data): CAP-070's real frames replace the derived 1.1.0 fixtures |
 | `ba804c5` | docs: ADR-055 Update — the channel-21 Volume EQ on frame is captured |
 | `ad4fe6b` | docs(session): ai-sessions/0076 prompt and result, INDEX row |
-| (this commit) | docs(session): ai-sessions/0076 commits back-filled |
+| `2d39048` *(back-filled 2026-10-15, `ai-sessions/0094`)* | docs(session): ai-sessions/0076 commits back-filled |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0076_FEATURE_RESULT_2026_10_07.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0076_FEATURE_RESULT_2026_10_07

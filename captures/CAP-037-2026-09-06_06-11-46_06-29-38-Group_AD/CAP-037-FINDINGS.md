@@ -125,13 +125,15 @@ both earbuds are seated in the case, so "Current ANC state" trivially reads "Off
 `Settable-toggles` also reads "docked" — but this capture only shows correlation, not the
 underlying mechanism, so it stays HYPOTHESIS.
 
-## 4. DLCI 0x02 — silent throughout (🟢 FACT, clean negative, consistent with "nothing else touched")
+## 4. DLCI 0x02 — no `Sent` frame outside each connection's settling window (🟢 FACT, clean negative, consistent with "nothing else touched") *(heading corrected 2026-10-15, `ai-sessions/0094`: it said "silent throughout")*
 
 ```
 $ tshark -r CAP-037-btsnoop_hci.log -Y "btrfcomm.dlci==2 and frame.p2p_dir==0 and btrfcomm.len>0" \
   -T fields -e frame.number
+(1,266 frames, exit 0, in per-connection clusters: 1376–1558, 1743–1745, 3443–3637, 3756–3758, …, 29264–29520;
+ every one ≤ 28.0 s after the preceding Connection Complete from -Y "bthci_evt.code==0x03 and bthci_evt.status==0" — 31 events, 863 … 28715)
 ```
-No `Sent`-direction DLCI 0x02 traffic outside each reconnect's own brief connection-settling burst
+No `Sent`-direction DLCI 0x02 traffic outside each reconnect's own connection-settling window (main burst plus a 2–5-frame follow-up ~20–28 s after connect)
 (matching `CAP-036-FINDINGS.md` §4's already-documented pattern) — confirms no setting was touched
 by accident anywhere in this 20-minute session, consistent with the Contamination log's "no settings
 screens opened" note.
@@ -144,6 +146,7 @@ $ tshark -r CAP-037-btsnoop_hci.log -Y "btrfcomm.dlci==4 and bthci_acl.chandle==
 11483  06:18:05.748367  Sent  08110000
 11507  06:18:06.031360  Rcvd  0813000401e8e880   <- Settable=0xe8
 12008  06:18:24.272960  Rcvd  0813000401e80020   <- Settable=0x00, NO preceding Get
+$ tshark -r CAP-037-btsnoop_hci.log -Y "bthci_evt.code==0x05 and bthci_evt.connection_handle==0x0009"   # separate query
 12065  06:18:28.089732  Rcvd  Disconnect Complete, reason 0x13
 ```
 Rewritten 2026-10-03 (`ai-sessions/0069`, `A68-CAP-23`). On this one handle a **second** "Notify ANC

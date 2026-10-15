@@ -75,7 +75,7 @@ $ tshark -r CAP-036-btsnoop_hci.log -Y "bluetooth.addr == 04:00:6e:cf:6e:07" -T 
 ```
 
 Wireshark's `bluetooth.addr` aggregate field is not populated for ACL/RFCOMM frames in this
-particular btsnoop capture — only for the HCI event layer. The working substitute:
+particular btsnoop capture — nor for any other frame (`-Y "bluetooth.addr"` alone → 0 frames, exit 0); `bthci_evt.bd_addr` is. The working substitute:
 
 ```
 $ tshark -r CAP-036-btsnoop_hci.log -T fields -e bthci_evt.bd_addr 2>/dev/null | grep -v "^$" | sort -u
@@ -136,7 +136,7 @@ two separate, both-clean sub-windows — "Controls and gestures" (parent, `06:38
 starting at `06:38:46` as originally guessed. Both sub-windows are unaffected by this correction
 (nothing was toggled in either), so the DLCI 2/4/8 decode in §§3–5 covers both.
 
-**On-screen values captured this pass** (satisfying `CAP-036-EVENT-NOTES.md` line ~329's
+**On-screen values captured this pass** (satisfying `CAP-036-EVENT-NOTES.md` Preparation checklist's "on-screen current values" item's
 requirement, previously blank):
 - ANC mode: **Off** (the "Off" tile alone shows a tinted/selected background at `06:37:04`,
   cropped and confirmed pixel-for-pixel against the other three tiles' flat grey).
@@ -217,7 +217,7 @@ $ tshark -r CAP-036-btsnoop_hci.log -Y "bthci_acl.chandle==0x0005 and btrfcomm.d
 
 All 99 DLCI 0x02 frames in this session fall into exactly two clusters:
 
-1. **Connection-settling burst, frames 1392–1591 (06:36:32.570–35.655), ~3.1s** — `SABM`/`UA`
+1. **Connection-settling burst, frames 1392–1591 (06:36:32.570–35.655; SABM 1392, payload 1404–1591), ~3.1s** — `SABM`/`UA`
    followed by a dense back-and-forth of small `Sent`/`Rcvd` payloads, including three ASCII
    `"release_5.203"` firmware-version strings (frame 1405) and many short request/response pairs
    sharing a partial constant prefix (`03 10 15 1d ea 71 de 7e 25...`, matching — up to that
@@ -281,7 +281,7 @@ $ tshark -r CAP-036-btsnoop_hci.log -Y "bthci_acl.chandle==0x0005 and btrfcomm.d
 ```
 
 The same connect-time content (capability blob + firmware string + battery-like value) recurs
-verbatim during Window 5 (frames 1999–2357, ~10s-ish cadence from `06:39:51` onward, matching
+verbatim during Window 5 (frames 1999–2357, irregular 10–70 s gaps from `06:39:51` onward, §12.1, *(corrected 2026-10-15, `ai-sessions/0094`)* matching
 DLCI 0x02/0x04's periodic push documented in §4/§3) — always `Rcvd`, always immediately
 acknowledged by an empty `Sent` frame, never a new query.
 
@@ -373,10 +373,10 @@ conclusions.
 - 🔴 DLCI 0x08's connect-time zero-length `[Group][Code][00 00]`-shaped `Sent` frames (`04 02`,
   `04 04`, `04 11`, `04 13`, `04 15`, `0e 04`) are structurally identical to DLCI 0x04's confirmed
   "Get" pattern, but none of these Group/Code pairs is mapped to any known setting (§5).
-- 🔴 The dense RPC-shaped burst on DLCI 0x02 immediately after channel establishment (frames
+- 🟢 *(answered: decoded — `GetSoftwareInfo`, `SubscribeRuntimeInfo`, `GetHardwareInfo`, `SetWallclock`, `ReadSetting` sweep; `PROTOCOL.md` §6 2026-09-24)* The dense RPC-shaped burst on DLCI 0x02 immediately after channel establishment (frames
   1404–1591) is not decoded beyond noting its partial match to §4.5's correlation-ID prefix —
   whether it carries any settings-state read-back via `libmaestro`'s own channel is unresolved (§4).
-- 🔴 This session's "Notify ANC state" frame (`08 13 00 04 01 e8 00 20`) decodes "Settable
+- *(answered: ADR-049)* This session's "Notify ANC state" frame (`08 13 00 04 01 e8 00 20`) decodes "Settable
   toggles" as `0x00`, versus `0xe8` in every previously-documented "Set ANC state" frame in the
   same byte position — not reconciled (§3).
 - 🟢 DLCI 0x02's periodic push (§12.6) is the `SubscribeRuntimeInfo` stream — Case / Left / Right
@@ -552,7 +552,7 @@ the structure was left as an open question because it has two fields per entry w
 triple has three, and the trailing numbers were misread as "01, 01, 02". Read from the bytes above,
 the three entries are `08 64 10 01`, `08 64 10 02`, `08 64 10 02`: field 1 = 100 in each, field 2 =
 **1, 2, 2**. With the Option F reading that is Case 100 % (field 2 = 1), Left 100 % charging and
-Right 100 % charging (field 2 = 2) — both buds were in the case when this frame was sent. The same
+Right 100 % charging (field 2 = 2) — both buds were in the case when this frame was sent (the video shows both buds seated in the open case for the whole recording, and every DLCI 0x04 `03 03` frame, 1165 … 2355, carries the charging bit; `CAP-036-EVENT-NOTES.md`'s "already out of case" was corrected 2026-10-15). The same
 frame carries entry 7 (`3a 06 08 01 10 01 18 00`) and the stream's method id. Nothing in this
 section is an open question any more; the wire evidence that settled the entry order is in
 `CAP-050`/`CAP-056` (ADR-043), not in this capture.

@@ -24,9 +24,9 @@ Buds/case) — same physical units as every prior capture in this project.
 
 **Scope note:** this session's purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group V) is
 `CALL-001` — the first capture in this project containing an actual phone call, closing
-the gap `CAP-001-FINDINGS.md` §6 Task 6 and `CAP-002-FINDINGS.md` §5 both flagged (no
-prior capture ever exercised HFP's Service Level Connection re-setup or a real
-SCO/eSCO audio path). The session also incidentally exercises a Bluetooth-radio
+the gap `CAP-001-FINDINGS.md` §6 Task 6 flagged (no prior capture ever exercised a real
+SCO/eSCO audio path; `CAP-002-FINDINGS.md` §5's "no SLC re-setup" was later found to be a
+filter artefact, §3 below). The session also incidentally exercises a Bluetooth-radio
 power-cycle (radio was off at the start), a Spotify play/pause sequence, and opening
 the Pixel Buds companion app — none of these are Group V's own scope, but are noted
 where they help correlate wire evidence to on-screen timing.
@@ -42,7 +42,7 @@ overlay directly — all match the maintainer's manual notes to within 1 second 
 ## 1. Connection lifecycle (🟢 FACT)
 
 Bluetooth was off at the start of `CAP-008-recording1.mp4` (09:38:44, screen shows
-"Bluetooth is off") and switched on by the user at 09:38:48 (video). This produced a
+"Bluetooth is off") and switched on by the user at 09:38:48 (video; the wire's `Create Connection`, frame 230, is at 09:38:47.919 — before the filmed tap, so the film clock runs at least ~0.1 s behind the log clock). This produced a
 single, successful classic BR/EDR connection — no failed attempts, unlike `CAP-001`'s
 three-attempt sequence:
 
@@ -75,16 +75,16 @@ link authenticates:
 | Order | DLCI | RFCOMM channel | Opened (frame / time) | Content this session | Cross-session identity |
 |---|---|---|---|---|---|
 | 1 | 0x00 | 0 | 734 / 09:38:50.624 | Multiplexer control (PN/MSC negotiation for the other 5) | Always channel 0 |
-| 2 | 0x0c | **6**, Wireshark-labelled "(Hands-Free)" | 749 / 09:38:50.640 | Full HFP AT-command SLC handshake, then both calls' RING/CIEV/BCS traffic — see §3/§4 | `CAP-001` put this content on channel 4/DLCI 0x08–0x09; **channel numbers are session-local**, per `CAP-001-FINDINGS.md` §2's own reusable note — reconfirmed here with a third distinct channel-number assignment for the same profile |
+| 2 | 0x0c | **6**, Wireshark-labelled "(Hands-Free)" | 749 / 09:38:50.640 | Full HFP AT-command SLC handshake, then both calls' RING/CIEV/BCS traffic — see §3/§4 | `CAP-001` put this content on channel 4/DLCI 0x08–0x09; **channel numbers are session-local**, per `CAP-001-FINDINGS.md` §2's own reusable note — here channel 6, the same as `CAP-002`, while `CAP-001`/`CAP-003` used channel 4 *(corrected 2026-10-15, `ai-sessions/0094`)* |
 | 3 | 0x04 | 2 | 924 / 09:38:51.004 | Official Fast Pair Message Stream (ANC Notify, Device Information) — not specifically exercised this session, background traffic only | `PROTOCOL.md` §2.1/§4.1 |
 | 4 | 0x0a | 5 | 1042 / 09:38:51.196 | **SABM/UA only — zero payload for the rest of the 309s session** | Silent in this capture too — see §6 |
 | 5 | 0x08 | 4 | 1076 / 09:38:51.238 | Private `[Group][Code][Length][Value]` envelope — periodic capability/firmware/status traffic (incl. the `release_5.203` string, frame 1116) | `PROTOCOL.md` §2.3 |
 | 6 | 0x02 | 1 | 1222 / 09:38:51.935 | `libmaestro`/Pigweed `pw_hdlc` channel (§2.2a) — a steady ~3 exchanges/second heartbeat (43-byte Rcvd + 14-byte Sent UID-ack pairs) that continues completely unperturbed through both calls, their RING/answer/hangup transitions, and the eSCO setup/teardown | `PROTOCOL.md` §2.2a |
 
 **HFP's RFCOMM channel assignment is new information, not a contradiction:** this is
-the third distinct RFCOMM channel number this project has seen HFP-adjacent AT-command
-traffic land on (channel 4/DLCI 0x09 in `CAP-001` — corrected 2026-10-08, `ai-sessions/0081`; channel 6/DLCI 0x0c here), which
-reinforces — with a third independent data point — that RFCOMM server channel numbers
+the same channel as `CAP-002` (channel 6/DLCI 0x0c), while `CAP-001` and `CAP-003` put HFP on
+channel 4/DLCI 0x09 (`tshark -Y 'frame contains "AT+BRSF"' -e btrfcomm.channel`) *(corrected 2026-10-15, `ai-sessions/0094`)*, which
+reinforces that RFCOMM server channel numbers
 are negotiated per-connection and must never be treated as a stable per-profile label
 (the point `CAP-001-FINDINGS.md` §2 already made from two sessions).
 
@@ -148,8 +148,9 @@ including the one of its own fresh pairing (`CAP-002-FINDINGS.md` §5, rewritten
 handshake has been seen on every classic connect examined (`CAP-001`, `CAP-002`, this capture,
 `CAP-012`'s reconnect without a radio toggle).
 
-**No second full handshake precedes call 2** (§4) — only a codec renegotiation
-(`AT+BCS`, §5) and the same RING/CIEV sequence repeat. The SLC, once established,
+**No second full handshake precedes call 2** (§4) — not even a codec renegotiation: the
+`AT+BCS` exchange occurs only before call 1 (frames 1641/1644/1645, `tshark -Y 'frame contains "BCS"'`);
+call 2 reuses mSBC, its eSCO setup (2274) follows `+CIEV: 2,1` (2273) directly *(corrected 2026-10-15, `ai-sessions/0094`)*; the same RING/CIEV sequence repeats. The SLC, once established,
 persists across both calls in this session.
 
 ## 4. Both calls, cross-correlated wire ↔ video (🟢 FACT)
@@ -161,7 +162,7 @@ persists across both calls in this session.
 | `+CIEV: 2,1` (CALLSETUP=1, alerting begins) | 09:39:19.689 | 1639 | *(end of recording1, not on camera — see gap note below)* |
 | `RING` ×3 (5.000s apart: .823, 24.826, 29.827) | 09:39:19.823–29.827 | 1658, 1730, 1767 | Incoming-call screen already showing at 09:39:29 (recording2 start) |
 | `+CIEV: 1,1` + `+CIEV: 2,0` (CALL=1, answered) | 09:39:33.861 | 1842/1843 | Finger taps green Answer button at 09:39:34 (Δ≈0.14s) |
-| `+CIEV: 1,0` (CALL=0, call ends) | 09:39:51.694 | 2022 | Finger taps red hang-up at 09:39:49–50, screen shows "Device details" by 09:39:51 (Δ≈0s) |
+| `+CIEV: 1,0` (CALL=0, call ends) | 09:39:51.694 | 2022 | Finger taps red hang-up at 09:39:49–50, screen shows "Device details" by 09:39:51 (Δ ≈ 1.7–2.7 s from the tap) |
 
 Talk time: 09:39:33.861–09:39:51.694 ≈ **17.8s**. `AVDTP Start` (podcast A2DP media
 resumes) fires 0.21s after call end (frame 2034, 09:39:51.904) — matches the
@@ -180,7 +181,7 @@ already up when recording2 starts 10s later, consistent with the wire timeline.
 | `+CIEV: 2,1` (CALLSETUP=1, alerting begins) | 09:40:23.468 | 2273 | Incoming-call screen visible from 09:40:56 (recording4 start) |
 | `RING` ×8 (5.000s apart, .732 → 58.734) | 09:40:23.732–58.734 | 2284…2627 | — |
 | `+CIEV: 1,1` + `+CIEV: 2,0` (answered) | 09:40:59.340 | 2632/2633 | Finger taps green Answer button at 09:40:59–41:00 (Δ≈0.7s) |
-| `+CIEV: 1,0` (call ends) | 09:41:18.344 | 2797 | Finger taps red hang-up at 09:41:16–17, note's 09:41:18 (Δ≈0s) |
+| `+CIEV: 1,0` (call ends) | 09:41:18.344 | 2797 | Finger taps red hang-up at 09:41:16–17, note's 09:41:18 (Δ ≈ 1.3–2.3 s from the tap) |
 
 Talk time: 09:40:59.340–09:41:18.344 ≈ **19.0s**. Ringing this time lasted ~35.9s (8
 full RING cycles) before answer, vs. call 1's ~14.2s (3 RING cycles) — both consistent
@@ -203,10 +204,10 @@ Sent Enhanced Setup Synchronous Connection (0x043d), Connection Handle 0x0002
 Rcvd Synchronous Connection Complete (0x2c), Status Success
   → new sync Connection Handle (0x0005 for call 1, 0x0006 for call 2), Link Type: eSCO
 ```
-Call 1: frames 1646 (cmd) / 1656 (complete), 09:39:19.697/.821 — **7.6ms after**
-`+CIEV: 2,1` and 76ms before the first `RING`. Call 2: frames 2274/2282,
-09:40:23.468/.731 — essentially identical timing relative to that call's own
-`+CIEV: 2,1`. Both sync connections are cleanly torn down (`Disconnect Complete`,
+Call 1: frames 1646 (cmd) / 1656 (complete), 09:39:19.697/.821 — the command **7.8 ms after**
+`+CIEV: 2,1` (1639), the complete 1.8 ms before the first `RING` (1658, 09:39:19.823) *(corrected 2026-10-15, `ai-sessions/0094`)*. Call 2: frames 2274/2282,
+09:40:23.468/.731 — the command 0.3 ms after that call's own `+CIEV: 2,1` (2273, no `+BCS` in
+between), the complete 0.8 ms before its first `RING` (2284). Both sync connections are cleanly torn down (`Disconnect Complete`,
 reason `0x16`) at the same moment their respective call's `+CIEV: 1,0` fires (§1, §4).
 
 **Reproduction (added 2026-09-03, same hex-and-script-rule gap as §3 above):**
@@ -236,13 +237,13 @@ Raw HCI command/event bytes, via `tshark -r CAP-008-btsnoop_hci.log -Y "frame.nu
 ```
 Per Wireshark's own HCI dissector (`tshark -r CAP-008-btsnoop_hci.log -Y "frame.number==1646" -V`,
 not a hand-decode of the raw bytes above): both the Transmit and Receive Coding Format fields
-report `Codec: mSBC (0x05)`, `Transmit`/`Receive Codec Frame Size: 60`, `Input`/`Output Bandwidth:
-32000` — an exact match to this section's "mSBC (wideband speech), Tx/Rx bandwidth 8000 B/s, frame
-size 60" summary.
+report `Codec: mSBC (0x05)`, `Transmit`/`Receive Codec Frame Size: 60`, and `Tx`/`Rx Bandwidth
+(bytes/s): 8000` (bytes `40 1f 00 00` ×2) — an exact match to this section's "mSBC (wideband speech), Tx/Rx bandwidth 8000 B/s, frame
+size 60" summary; `Input`/`Output Bandwidth: 32000` are separate fields *(corrected 2026-10-15, `ai-sessions/0094`)*.
 
 `mSBC` (wideband) was selected via a standard Codec Connection Setup exchange just
-before each eSCO setup: `Sent +BCS: 2` → `Rcvd AT+BCS=2` → `OK` (frames 1641/1644/1645
-for call 1). This matches `AT+BAC=1,2,3`'s advertised codec list from §3 (codec ID 2 =
+before call 1's eSCO setup: `Sent +BCS: 2` → `Rcvd AT+BCS=2` → `OK` (frames 1641/1644/1645);
+call 2 has no `+BCS` exchange and reuses the codec *(corrected 2026-10-15, `ai-sessions/0094`)*. This matches `AT+BAC=1,2,3`'s advertised codec list from §3 (codec ID 2 =
 mSBC); codec ID 3 (LC3/Super Wideband) was offered but not selected in either call.
 
 **This closes `CAP-001-FINDINGS.md` §6 Task 6's open question**: SCO/eSCO absence in
@@ -250,7 +251,7 @@ every prior capture was correctly attributed to "no capture ever contained a rea
 call," not to the Buds/phone never using this mechanism — confirmed here with two
 clean, matching occurrences.
 
-## 6. DLCI 0x0a (RFCOMM channel 5) — 14th consecutive silent result, now narrowed further (🔴 OPEN QUESTION, narrowed)
+## 6. DLCI 0x0a (RFCOMM channel 5) — 14th silent result, now narrowed further (🔴 OPEN QUESTION, narrowed)
 
 Channel 5/DLCI 0x0a opens (`SABM`/`UA`, frames 1042/1049) exactly like every other
 DLCI, but carries **zero payload frames** for the rest of the 309s session — the same
@@ -378,7 +379,7 @@ noted for a future capture if that data point is wanted.
    watching for further unsolicited `+CIEV: 6,...` events would help confirm whether
    this is a real, general mechanism or a one-off.
 5. DLCI 0x0a (§6) remains unidentified — now with "the call's audio path" ruled out on
-   top of the existing eleven silent captures. No further hypothesis is currently
+   top of the 13 earlier silent captures (§6). No further hypothesis is currently
    proposed for what would trigger payload on it.
 
 ---

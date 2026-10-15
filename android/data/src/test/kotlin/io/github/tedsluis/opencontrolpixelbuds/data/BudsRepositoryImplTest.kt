@@ -30,6 +30,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap065
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap066Balance
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap072
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap075
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap076
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.HardwareInfoFixtures
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
@@ -71,6 +72,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.currentAncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
 import io.github.tedsluis.opencontrolpixelbuds.hardware.FakeBudsTransport
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import android.bluetooth.BluetoothDevice
@@ -78,6 +80,7 @@ import android.bluetooth.stubBluetoothDevice
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runCurrent
@@ -189,6 +192,20 @@ class BudsRepositoryImplTest {
         assertEquals(listOf(Dlci.FAST_PAIR_MESSAGE_STREAM, Dlci.FAST_PAIR_MESSAGE_STREAM), transport.sent.map { it.first })
         assertEquals(listOf("08110000", "0812001401e8e840" + "00".repeat(16)), transport.sent.map { it.second.toHex() })
         assertEquals(AncMode.ADAPTIVE, repo.ancMode.first())
+    }
+
+    @Test
+    @DisplayName("A93-APP-03 (`ai-sessions/0094`, CAP-076 §5.3 / P2): the Get's own Notify never answers the Set that follows it — even when that Notify resumes the caller in place (unconfined; on hardware the repository's Dispatchers.Default can run the Set before the Notify's handling ends), the Set waits for its own answer")
+    fun `the Get's Notify does not answer the following Set`() = runTest {
+        val (repo, transport) = buildRepository()
+        // Only the Get is answered (CAP-065 6334, OFF); the Set gets no ACK.
+        transport.onSent = { ch, frame -> if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM && frame.toHex().startsWith("0811")) transport.emit(ch, hex(Cap065.NOTIFY_E8_OFF_6334)) }
+
+        val result = withContext(UnconfinedTestDispatcher(testScheduler)) { repo.setAncMode(AncMode.ADAPTIVE) }
+
+        assertEquals(listOf("08110000", "0812001401e8e840" + "00".repeat(16)), transport.sent.map { it.second.toHex() }, "the Get, then the Set")
+        assertEquals(BudsResult.Failure(BudsError.Timeout), result, "no ACK and no Notify of its own: the Set was not answered")
+        assertEquals(AncMode.OFF, repo.ancMode.first(), "the Get's answer is shown")
     }
 
     @Test
@@ -3094,10 +3111,10 @@ class BudsRepositoryImplTest {
         assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first(), "and so is its cause (before 0091 it was reset to null here)")
     }
 
-    // ---- DECISIONS.md ADR-062 Update 2 (`ai-sessions/0089`): the cause of a mode learned by the app's own Get (CAP-075 H2's bytes) -------------------------------
+    // ---- ADR-065 item 4 (first ADR-062 Update 2, `ai-sessions/0089`): the cause of a mode learned by the app's own Get (CAP-075 H2's bytes; renamed `ai-sessions/0094`) ---
 
     @Test
-    @DisplayName("ADR-062 Update 2: a re-claim's Get answer that differs from the mode last seen on this connection is changed since last read (CAP-075 2735 → 2980, 4893 → 5102, 5102 → 5361)")
+    @DisplayName("ADR-065 item 4: a Get answer (a Refresh or a tap's claim) that differs from the mode last shown is changed since the app last saw it (CAP-075 2735 → 2980, 4893 → 5102, 5102 → 5361)")
     fun `a differing Get answer is changed since the last read`() = runTest {
         val (repo, transport) = buildRepository()
         transport.onSent = null
@@ -3114,7 +3131,7 @@ class BudsRepositoryImplTest {
         assertEquals(AncModeCause.CHANGED_SINCE_LAST_READ, repo.ancModeCause.first(), "2980: TRANSPARENT after 2735's ADAPTIVE")
         assertEquals(currentTime, repo.ancModeUpdatedAt.first(), "the line's time is the read's receive time")
 
-        // An unprovoked Notify on the held claim stays the Buds' change (3006).
+        // A Notify with no Get waiting, while the claim is still open, stays the Buds' change (3006).
         transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap075.NOTIFY_ACTIVE_3006)); settle()
         assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first())
 
@@ -3166,7 +3183,7 @@ class BudsRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("ADR-062 Update 2: the app's own Set stays set by this app when its Get found another mode first")
+    @DisplayName("ADR-065 item 4: the app's own Set stays set by this app when its Get found another mode first")
     fun `the app's own Set after a differing Get stays set by this app`() = runTest {
         val (repo, transport) = buildRepository() // autoAck: the Get answered by CAP-065 6334 (OFF), the Set ACKed
         transport.onSent = null
@@ -3366,6 +3383,131 @@ class BudsRepositoryImplTest {
         assertNull(repo2.ancMode.first(), "13:0 at Connect: no mode")
         assertEquals(AncAvailability.NOT_ALLOWED, repo2.ancAvailability.first())
         assertEquals(true, "Noise-control mode from the mode read: no mode settable" in BleLogger.exportLog())
+    }
+
+    @Test
+    @DisplayName("A93-APP-02 (`ai-sessions/0094`, CAP-076 P1): a session's snapshot Get that finds another mode stays changed since the app last saw it when the same session's ReadSetting 4:13 answers that mode (CAP-076 H1 4094 → 4135, +747 ms); a later Refresh of the same mode is a reading")
+    fun `the equal read after a differing Get keeps changed since`() = runTest {
+        val (repo, transport) = connectedLikeCap051()
+        advanceTimeBy(10_000)
+        transport.emit(Dlci.MAESTRO, hex(SettingsStream.STREAM_13_TRANSPARENT_CH21_CAP051_1802)); settle()
+        assertEquals(AncMode.TRANSPARENT, repo.ancMode.first(), "the last push before the session ended (CAP-076 H1 3972: Transparency)")
+
+        // A new session's sequence; the 4:13 answer is held back so the Get's Notify comes first, as in 12 of 12 CAP-076 sessions (§6.2).
+        answerReadsLikeCap051(transport, read13 = null)
+        val maestroOnly = transport.onSent!!
+        transport.onSent = { ch, frame -> if (ch == Dlci.MAESTRO) maestroOnly(ch, frame) }
+        advanceTimeBy(10_000)
+        repo.launchInitialEqRead()
+        val get = launch { repo.refreshAncMode() }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap076.NOTIFY_ACTIVE_H1_4094))
+        get.join()
+        assertEquals(AncMode.ACTIVE, repo.ancMode.first())
+        assertEquals(AncModeCause.CHANGED_SINCE_LAST_READ, repo.ancModeCause.first(), "4094: Noise cancellation after Transparency")
+
+        advanceTimeBy(747)
+        transport.emit(Dlci.MAESTRO, hex(Cap076.READ_13_RESP_ACTIVE_CH21_H1_4135)); settle()
+        assertEquals(AncMode.ACTIVE, repo.ancMode.first())
+        assertEquals(AncModeCause.CHANGED_SINCE_LAST_READ, repo.ancModeCause.first(), "4135, the same mode by the other read of the same session, keeps the cause")
+        assertEquals(currentTime, repo.ancModeUpdatedAt.first(), "the time moves to the later answer")
+
+        // A Refresh (the same source again) that finds the same mode is a reading.
+        val refresh = launch { repo.refreshAncMode() }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap076.NOTIFY_ACTIVE_H1_4094))
+        refresh.join()
+        assertEquals(AncModeCause.READ, repo.ancModeCause.first())
+
+        // The next session's 4:13 read of the same mode is a reading, even after this session's Get found a change.
+        transport.emit(Dlci.MAESTRO, hex(SettingsStream.STREAM_13_TRANSPARENT_CH21_CAP051_1802)); settle()
+        val again = launch { repo.refreshAncMode() }
+        runCurrent()
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap076.NOTIFY_ACTIVE_H1_4094))
+        again.join()
+        assertEquals(AncModeCause.CHANGED_SINCE_LAST_READ, repo.ancModeCause.first())
+        answerReadsLikeCap051(transport, read13 = Cap076.READ_13_RESP_ACTIVE_CH21_H1_4135)
+        val maestroOnlyNext = transport.onSent!!
+        transport.onSent = { ch, frame -> if (ch == Dlci.MAESTRO) maestroOnlyNext(ch, frame) }
+        advanceTimeBy(10_000)
+        repo.launchInitialEqRead(); settle()
+        assertEquals(AncModeCause.READ, repo.ancModeCause.first(), "another session's read: nothing changed since this app last saw it")
+    }
+
+    /** The settings reads answered as [answerReadsLikeCap051], except the fields in [heldBack]; nothing on the Message Stream is answered. */
+    private fun answerMaestroReadsExcept(transport: FakeBudsTransport, read13: String?, vararg heldBack: Int) {
+        answerReadsLikeCap051(transport, read13)
+        val answers = transport.onSent!!
+        transport.onSent = { ch, frame ->
+            if (ch == Dlci.MAESTRO) {
+                val rpc = (PwRpc.decode((Hdlc.decode(frame) as BudsResult.Success).value.payload) as BudsResult.Success).value
+                val field = if (rpc.methodId == Maestro.METHOD_READ_SETTING) rpc.payload[1].toInt() else null
+                if (field == null || field !in heldBack) answers(ch, frame)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("A93-APP-04 (`ai-sessions/0094`): a settings-stream push of 13 (CAP-051 1802) while ReadSetting 4:13 waits does not end that read — GetHardwareInfo follows only the RESPONSE (CAP-051 1225)")
+    fun `a stream push does not end the read of 13`() = runTest {
+        BleLogger.clear()
+        val (repo, transport) = buildRepository()
+        answerMaestroReadsExcept(transport, read13 = null)
+        fun hardwareRequests() = transport.maestroHex().count { it == HardwareInfoFixtures.REQUEST_CH21_CAP072_A7593 }
+        repo.launchInitialEqRead(); settle()
+        assertEquals(1, transport.maestroHex().count { it == SettingsStream.READ_13_REQ_CH21_CAP051_1178 }, "the read of 13 is out, unanswered")
+
+        transport.emit(Dlci.MAESTRO, hex(SettingsStream.STREAM_13_TRANSPARENT_CH21_CAP051_1802)); settle()
+        assertEquals(AncMode.TRANSPARENT, repo.ancMode.first(), "the push is shown")
+        assertEquals(0, hardwareRequests(), "the push is not the read's answer: the sequence still waits")
+
+        advanceTimeBy(300)
+        transport.emit(Dlci.MAESTRO, hex(SettingsStream.READ_13_RESP_ADAPTIVE_CH21_CAP051_1225)); settle()
+        assertEquals(1, hardwareRequests(), "the RESPONSE ends the read")
+        assertEquals(true, "Noise-control mode read (channel 21)" in BleLogger.exportLog())
+    }
+
+    @Test
+    @DisplayName("A93-APP-04 (`ai-sessions/0094`): a settings-stream push of field 16 (CAP-015 2116) while ReadSetting 4:16 waits does not end the EQ read — the read times out without its RESPONSE")
+    fun `a stream push does not end the EQ read`() = runTest {
+        val (repo, transport) = buildRepository()
+        answerMaestroReadsExcept(transport, read13 = null, Maestro.FIELD_EQ_ACTIVE)
+        repo.launchInitialEqRead(); settle()
+        assertEquals(1, transport.maestroHex().size, "only the EQ read is out")
+
+        transport.emit(Dlci.MAESTRO, hex(SettingsStream.STREAM_16_FLAT_CH19_CAP015_2116)); settle()
+        assertEquals(1, transport.maestroHex().size, "the push is not the read's answer: the settings reads still wait")
+
+        advanceTimeBy(2_100); settle()
+        assertEquals(BudsError.Timeout, repo.eqError.first(), "no RESPONSE: the EQ read timed out")
+    }
+
+    @Test
+    @DisplayName("A93-APP-04 (`ai-sessions/0094`): a settings-stream push of field 12 (CAP-056 1696) while ReadSetting 4:12 waits does not end that read")
+    fun `a stream push does not end a settings read`() = runTest {
+        val (repo, transport) = buildRepository()
+        answerMaestroReadsExcept(transport, read13 = null, 12)
+        repo.launchInitialEqRead(); settle()
+        val sentBefore = transport.maestroHex().size
+        assertEquals(true, sentBefore >= 2, "the EQ read answered, the reads up to field 12 out")
+
+        transport.emit(Dlci.MAESTRO, hex(SettingsStream.STREAM_12_CH19_CAP056_1696)); settle()
+        assertEquals(sentBefore, transport.maestroHex().size, "the push is not the read's answer: the next read is not sent yet")
+    }
+
+    @Test
+    @DisplayName("A93-APP-04 (`ai-sessions/0094`): a settings-stream push of 13 while a Refresh's Get waits does not end the Refresh — the Notify that follows is its answer (CAP-051 1802, CAP-076 H1 4094)")
+    fun `a stream push does not end a Refresh`() = runTest {
+        val (repo, transport) = connectedLikeCap051()
+        transport.onSent = null
+        val refresh = async { repo.refreshAncMode() }
+        runCurrent()
+        transport.emit(Dlci.MAESTRO, hex(SettingsStream.STREAM_13_TRANSPARENT_CH21_CAP051_1802)); settle()
+        assertEquals(AncModeCause.CHANGED_BY_BUDS, repo.ancModeCause.first(), "the push: Transparency after Adaptive, nothing set by the app")
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap076.NOTIFY_ACTIVE_H1_4094))
+
+        assertEquals(BudsResult.Success(AncMode.ACTIVE), refresh.await(), "the Get's answer is the Notify, not the push")
+        assertEquals(AncModeCause.CHANGED_SINCE_LAST_READ, repo.ancModeCause.first(), "a read answer that differs from the shown mode")
     }
 
     @Test

@@ -74,10 +74,13 @@ Tapping "Up to date" (t≈43s/08:24:23) and opening the Firmware update screen (
 produced **zero** RFCOMM traffic on any DLCI:
 
 ```
-$ tshark -r CAP-023-btsnoop_hci.log -Y "btrfcomm.len>0 and frame.time_epoch>1787293445 and frame.time_epoch<1787293475" \
+$ tshark -r CAP-023-btsnoop_hci.log -Y 'btrfcomm.len>0 && frame.time>="2026-08-21 08:24:02" && frame.time<="2026-08-21 08:24:45"' \
     -T fields -e frame.number
-(no output)
+(no output; exit 0)
 ```
+Positive control: `-Y 'btrfcomm.len>0'` alone matches 212 frames, the last one 1132 at 08:23:49.761
+(e.g. frame 849, 08:23:46.038) — there is no RFCOMM data from 08:23:49.8 to the log's end.
+(The earlier epoch window 1787293445–1787293475 was 08:24:05–08:24:35, not ±15 s around both actions.)
 
 **Status:** 🟢 **FACT** (a checked negative, not an absence of checking — per
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group Q's three-way-outcome convention, applied here by analogy):
@@ -112,8 +115,9 @@ traceability check, not silently left blank.
 
 - 🔴 What does DLCI 0x04's `"Revision 6"` string represent, if not the user-facing firmware
   version? → already tracked in `PROTOCOL.md` §0.1/§6, unchanged by this capture.
-- 🔴 `FW-003` (serial numbers) and `FW-004` (connection status) remain unattributed — no capture
-  has visited the "About" page yet. → copied to `PROTOCOL.md` §6.
+- 🔴 `FW-004` (connection status) remains unattributed — not exercised in any capture → copied to
+  `PROTOCOL.md` §6. `FW-003` (serial numbers) is covered since: OpenControl reads the serials with
+  one `GetHardwareInfo` per Connect (`DECISIONS.md` ADR-058; `CAP-072-FINDINGS.md` §2; TESTPLAN `FW-003`).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-023-2026-08-21_08-23-40_08-25-21-Group_I/CAP-023-FINDINGS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-023-2026-08-21_08-23-40_08-25-21-Group_I/CAP-023-FINDINGS

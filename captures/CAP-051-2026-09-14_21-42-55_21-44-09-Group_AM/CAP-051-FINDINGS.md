@@ -69,6 +69,7 @@ $ tshark -r CAP-051-btsnoop_hci.log -Y "btrfcomm.dlci==4 and btrfcomm.len>0" \
 | **1527** | **21:43:28.107** | **Sent** | `08 12 00 14 01 e8 e8 80 <16 reserved bytes>` | **Set ANC state, new_mode=`0x80`=Transparency** |
 | 1529 | 21:43:28.219 | Rcvd | `ff 01 00 06 08 12 01 e8 e8 80` | ACK for the Set above |
 | 1530 | 21:43:28.299 | Rcvd | `08 13 00 04 01 e8 e8 80` | Notify, Current=`0x80`=Transparency |
+| 1533 | 21:43:28.375 | Rcvd | `08 13 00 04 01 e8 e8 80` | Notify repeated, same bytes as 1530 *(row added 2026-10-15, `ai-sessions/0094`)* |
 | **1707** | **21:43:43.336** | Rcvd | `08 13 00 04 01 e8 e8 08` | Notify, Current=`0x08`=**Noise cancellation** — **no `08 12` Set and no `08 11` Get anywhere nearby** |
 | **1754** | **21:43:56.002** | Rcvd | `08 13 00 04 01 e8 e8 40` | Notify, Current=`0x40`=**Adaptive** — again no Set/Get nearby |
 | **1801** | **21:44:05.102** | Rcvd | `08 13 00 04 01 e8 e8 80` | Notify, Current=`0x80`=**Transparency** — again no Set/Get nearby |
@@ -95,7 +96,7 @@ tolerance, `PROTOCOL.md` §4.1):**
 reproduced here for the first time with a positively-identified, video-confirmed trigger**: the
 in-app tap produces a genuine `Set`(`0x12`)+ACK+`Notify` sequence on DLCI 0x04 (the confirmed,
 official path, `PROTOCOL.md` §4.1), while all three physical press-and-hold gestures produce only a
-spontaneous `Notify`(`0x13`) with no preceding `Set` or `Get` anywhere in the log — matching
+spontaneous `Notify`(`0x13`) with no `Set` or `Get` between the previous Notify and it (the log's only `08 12` is the tap's 1527, its only `08 11` the connect read 1072) *(corrected 2026-10-15, `ai-sessions/0094`)* — matching
 `CAP-027-FINDINGS.md` §4's established mechanism (the Buds decide the mode change on-device and only
 report it out). **This resolves `CAP-038-FINDINGS.md` §5's own open item as a confirmed positive**:
 its "plausibly a hardware press-and-hold gesture" reading (offered without video evidence, since that
@@ -126,10 +127,10 @@ acknowledgement, not a data-carrying UIH frame:
 ```
 **The only non-empty traffic in this window is `Rcvd`-direction** (Buds→phone), and it is of two kinds (`python3 scripts/pwrpc_decode.py
 CAP-051-btsnoop_hci.log`, frames 1520–1811):
-- the runtime-info stream (`SubscribeRuntimeInfo`, every ~10 s: 1517/1565/1711/1796 at `21:43:23`/`33`/`43`/`44:03`, not tied to the actions), e.g. 1565
+- the runtime-info stream (`SubscribeRuntimeInfo`, every ~10 s with one 20 s gap — no push decoded at `21:43:53`: 1517/1565/1711/1796 at `21:43:23`/`33`/`43`/`44:03`, not tied to the actions), e.g. 1565
   `7e00a5032a1f10e2f3c88b8a341800320c1204086410011a04086410013a06080010001800080710151dea71de7d5e2590821ee64863cfb07e`;
 - the **settings stream** (`SubscribeToSettingsChanges`, subscribed at 1177): one `SERVER_STREAM` `4:{13:n}` right after each of the four Notifies — 1534
-  `13:3` (the tap, 0.001 s after Notify 1533), **1717 `13:2`** (gesture #1, +0.144 s after 1707), **1755 `13:4`** (gesture #2, +0.002 s after 1754), **1802
+  `13:3` (the tap, 0.077 s after Notify 1530 and 0.001 s after its byte-identical repeat 1533), **1717 `13:2`** (gesture #1, +0.144 s after 1707), **1755 `13:4`** (gesture #2, +0.002 s after 1754), **1802
   `13:3`** (gesture #3, +0.048 s after 1801); raw 1755 `7e 00 a5 03 2a 04 22 02 68 04 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 39 67 a2 f7 7e` (`2a 04 22 02
   68 04` = `4:{13:4}`, `08 07` = `SERVER_STREAM`, `10 15` = channel 21). 🟢 FACT (this capture): each hold is reported twice — on the Message Stream and on
   MAESTRO setting 13 (`PROTOCOL.md` §4.1, Update of 2026-10-14; `DESKRESEARCH_FINDINGS.md` 2026-10-14). The Notify at 1993 (21:45:45.603) has no stream
@@ -183,7 +184,7 @@ Per `ai-sessions/0023_CROSSCHECK_PROMPT_2026_09_15.md` Phase 1: traced `fye.a(qh
 - **`ANC`-family / `TOUCH-007`**: all four transitions individually confirmed and time-correlated
   against DLCI 0x04's already-FACT ANC path (§2) — the in-app tap is the first video-confirmed,
   wire-correlated `Set` frame for a `QuickActionsFragment` tap specifically (as opposed to the
-  Device-details-screen ANC row used by `CAP-001`/`CAP-006`); `TOUCH-007` gains a third confirming
+  Device-details-screen ANC row used by `CAP-001`/`CAP-006`); `TOUCH-007` gains a second confirming
   session (after `CAP-027`) with, for the first time, both physical-gesture video *and* a positively
   matched "Notify without Set" wire signature in the same session.
 - **This Group's own primary question (no assigned Test-ID, per `CAP-051-EVENT-NOTES.md`'s own

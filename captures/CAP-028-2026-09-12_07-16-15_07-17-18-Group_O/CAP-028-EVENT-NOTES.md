@@ -7,7 +7,7 @@ camera (matching the draft's own "outside of video" note), so this session's evi
 for the gesture window itself; the surrounding connect/app-navigation sequence is video-confirmed.
 
 **Purpose (`CAPTURE_BLUETOOTH_HCI_SNOOP.md` Group O):** main run-through group, never yet
-captured. **Requires 'Head gestures' enabled first (Group F, `CAP-020`)** — do not run this
+captured. **Requires 'Head gestures' enabled first (Group F, `CAP-020`; note: `CAP-020` left it off, frame 2038 there — it was on in this session per ReadSetting frame 1350, `CAP-028-FINDINGS.md` §2)** — do not run this
 session before `CAP-020` has toggled Head gestures on. Head gestures are a Pixel Buds Pro
 2-exclusive feature, officially confirmed present (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` `HEAD-001`);
 this session tests whether the gestures themselves (Nod/Shake) generate any wire-visible traffic,
@@ -20,7 +20,7 @@ or are purely on-device given they only act on an already-active call/notificati
 |    Capture ID    |                      `CAP-028`                     |
 |      Group(s)    |                         O                          |
 |       Date       |                     2026-09-12                     |
-| Firmware version | ⚪ ASSUMPTION `release_5.203` (carried over; already known working for Head gestures since `CAP-020`, per `PROTOCOL.md` §0.1's `XC-03` note — not re-checked on-screen this session) |
+| Firmware version | ⚪ ASSUMPTION `release_5.203` (carried over; Head gestures read back as on in this session, frame 1350, `CAP-028-FINDINGS.md` §2 — `CAP-020` left it off; `PROTOCOL.md` §0.1's `XC-03` note; not re-checked on-screen this session) |
 |   Test device    | Pixel 7a, Android 17, Pixel Buds Companion App `1.0.955078536`, Google Play services active |
 | Video file       | `CAP-028-recording.mp4` — 62.68s, overlay `07:16:15`–`07:17:18`. **Camera points at the phone screen, not the user's head — the physical Nod/Shake gestures are not visible on camera.** |
 | Log file         | `CAP-028-btsnoop_hci.log` — 2,187 packets, 227.71s, `07:16:14.148`–`07:20:01.855`, untruncated |
@@ -35,8 +35,8 @@ or are purely on-device given they only act on an already-active call/notificati
   states Head Gestures require firmware ≥4.467, a version scheme distinct from this project's own
   confirmed wire-baseline `"release_5.203"` — `PROTOCOL.md` §0.1's `XC-03` note leaves the numeric
   relationship between the two schemes unreconciled, but also confirms this isn't currently
-  blocking anything: Head gestures are already known working on this project's own test device
-  since `CAP-020`. Record the firmware version shown on screen for this session regardless, per
+  blocking anything: Head gestures read back as on in this session (frame 1350,
+  `CAP-028-FINDINGS.md` §2; `CAP-020` left them off). Record the firmware version shown on screen for this session regardless, per
   `PROJECT_RULES.md` rule 11's reproducibility requirement.
 - Confirm HCI snoop logging is already enabled and running, and the Buds are connected, before
   either the Head-gestures-enable step (if needed) or the Nod/Shake actions begin.
@@ -58,11 +58,11 @@ or are purely on-device given they only act on an already-active call/notificati
 | 07:16:15 | Video starts; Bluetooth Settings sheet open, "Bluetooth is off." | User | — | Video `t=0`. |
 | ~07:16:19–20 | Bluetooth toggled ON | User (Hardware) | — | (not individually re-checked at 1s resolution this pass; draft's `07:16:20` accepted, consistent with the log's own timing below). |
 | 07:16:20.912 | Classic `Connect Complete` (stored key, no SSP) | System | — | Log frame 241. |
-| 07:16:21.719–.742 | DLCI 0x04 `Get`(`08110000`)/`Notify`(`Settable=0xe8`=**undocked**, `Current=0x40`=Adaptive) | System (auto) | — | Log frames 759/765 — confirms the Buds were **not** in the case at connect time (consistent with being worn for this Group's own test, though this could not be independently confirmed on video — see Findings §2). |
 | 07:16:21.689 | **A second, distinct LE connection forms** (chandle `0x0003`, address `7d:0a:16:e6:10:68` — not the Buds' classic address) | Peer device (Auto) | — | Log frame 736 — see Findings §3; this connection's own GATT discovery finds a standard Heart Rate service, matching `CAP-018`'s already-documented unrelated-device pattern. |
+| 07:16:21.719–.742 | DLCI 0x04 `Get`(`08110000`)/`Notify`(`Settable=0xe8`=**undocked**, `Current=0x40`=Adaptive) | System (auto) | — | Log frames 759/765 — confirms the Buds were **not** in the case at connect time (consistent with being worn for this Group's own test, though this could not be independently confirmed on video — see Findings §2). |
 | ~07:16:27–29 | User navigates to home screen, reopens the Pixel Buds app ("Device details") | User | — | Video `t=12`–`t=14` (app screen shows "Device details," ANC "Adaptive" selected, `L:100% C:93% R:100%`). |
 | 07:16:25.29–07:17:02.87 | The second LE connection's own ATT traffic (`Write Command`→handle `0x0042`, `Handle Value Notification`←handle `0x0044`, the same handle `CAP-016`/`CAP-018` flagged) — dense, recurring | Peer device (Auto) | — | 62 Notify + 40 Write frames, chandle `0x0003` only — **not** the Buds' own classic connection (chandle `0x0002`), which carries zero ATT traffic throughout this session. |
-| 07:16:29–07:17:15 | **Head-gesture testing window (physical Nod/Shake, per the draft) — not camera-visible; app screen stays on "Device details," unchanged** | User (Hardware) | `HEAD-002`, `HEAD-003` | Video spot-checked at `t=30,38,42,46,50,54,58` — identical static screen throughout, buds/case position ambiguous on video (see Findings §2). **Zero DLCI 0x02/0x04/0x08 traffic on the Buds' own chandle anywhere in this entire window** (log query `07:16:25`→`07:17:15` returns 0 rows) — see Findings §4. |
+| 07:16:29–07:17:15 | **Head-gesture testing window (physical Nod/Shake, per the draft) — not camera-visible; app screen stays on "Device details," unchanged** | User (Hardware) | `HEAD-002`, `HEAD-003` | Video spot-checked at `t=30,38,42,46,50,54,58` — identical static screen throughout, buds/case position ambiguous on video (see Findings §2). **Zero DLCI 0x02/0x04/0x08 traffic on the Buds' own chandle anywhere in this entire window** (log query `07:16:25.5`→`07:17:15` returns 0 rows, exit 0; from `07:16:25` it returns the connect burst's last frames 1442–1448 as positive control) — see Findings §4. |
 | 07:17:15.550 | The periodic DLCI 0x02/0x04/0x08 cross-channel push fires (routine, not gesture-related — matches the already-documented `CAP-036`/`CAP-042` pattern) | System (auto) | — | Log frames 1834–1847. |
 | 07:17:18 | Video ends (62.68s) | System | — | Video `t=62`. |
 | 07:17:15–07:20:02 (log tail, beyond video) | Log continues past video end; two further periodic pushes (07:18:02, 07:19:35), no other Buds-attributable RFCOMM traffic | System (auto) | — | Log frames 1925–2120. |

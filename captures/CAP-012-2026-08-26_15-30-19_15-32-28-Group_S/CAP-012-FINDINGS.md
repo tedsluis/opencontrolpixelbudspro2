@@ -131,7 +131,7 @@ its own classic inquiry/pairing.
 | `Connect Complete` (status `0x00`) | 15:31:06.410 | 463 | |
 | `Authentication Requested` → `Link Key Request` → **`Link Key Request Negative Reply`** | 15:31:06.439–.446 | 479–484 | No stored key available — consistent with the just-deleted key above |
 | `IO Capability Request` → `IO Capability Request Reply` (io_capability=`0x01`, DisplayYesNo) → `IO Capability Response` (Buds report io_capability=`0x03`, NoInputNoOutput) | 15:31:06.448–.466 | 485–495 | **Classic SSP negotiation — this step alone already rules out CTKD**, which requires an SMP `Pairing Request` over an LE link instead of this classic IO-capability exchange |
-| `Simple Pairing Complete` | 15:31:18.872 | 517 | ~12.4s after the IO Capability exchange, matching the on-screen "Pair with Pixel Buds Pro 2 van Ted?" confirmation dialog being shown (video: appears 15:31:09, tapped 15:31:20 — see §7) rather than a passkey step; no passkey digits are ever shown, same "silent SSP behind a confirmation dialog" shape as `CAP-002-FINDINGS.md` §1 |
+| `Simple Pairing Complete` | 15:31:18.872 | 517 | ~12.4s after the IO Capability exchange, matching the on-screen "Pair with Pixel Buds Pro 2 van Ted?" confirmation dialog being shown (video: appears 15:31:09, tapped 15:31:20 — the tap's `User Confirmation Request Reply`, frame 515, is at 15:31:18.675, so the film clock runs ~1–2 s behind the log here; see §7) rather than a passkey step; no passkey digits are ever shown, same "silent SSP behind a confirmation dialog" shape as `CAP-002-FINDINGS.md` §1 |
 | `Link Key Notification` (new key stored) → `Authentication Complete` | 15:31:18.881 | 518–519 | |
 | `Set Connection Encryption` → `Encryption Change [v2]` | 15:31:18.900–15:31:19.008 | 521–526 | |
 
@@ -155,10 +155,10 @@ triggers this) — reuses the just-established stored key, no SSP at all:**
 **Conclusion, answering this session's own hypothesis test directly:** with no BLE tool used and
 no pre-existing BLE link to the Buds at any point, classic bonding follows the **same classic SSP
 path as `CAP-002`/`CAP-003`** (`PROTOCOL.md` §5.1's "fresh pairing" state machine) — **not**
-`CAP-004`'s Cross-Transport Key Derivation path. This directly confirms the hypothesis
-`CAP-004-FINDINGS.md` §8 item 4 raised: **CTKD was an artifact of nRF Connect's early BLE
-connection specifically, not a genuine effect of GMS being disabled or the Pixel Buds app being
-absent.** Three independent sessions (`CAP-002`, `CAP-003`, `CAP-012`) show classic SSP under
+`CAP-004`'s Cross-Transport Key Derivation path. This answers the question
+`CAP-004-FINDINGS.md` §8 item 4 raised: **CTKD in `CAP-004` was not an effect of GMS being
+disabled or the Pixel Buds app being absent** *(corrected 2026-10-15, `ai-sessions/0094`: the
+attribution to nRF Connect's early BLE connection as such is withdrawn, see below)*. Three independent sessions (`CAP-002`, `CAP-003`, `CAP-012`) show classic SSP under
 three different conditions (official app; nRF Connect; GMS-disabled/no-app, no BLE tool at all) and `CAP-004` (and later `CAP-014`) shows CTKD. What separates
 them is **not** the mere existence of an LE link: `CAP-003` had an LE link before classic pairing (frame 1621 `LE Enhanced Connection Complete`, 1689 `Create
 Connection`, 1750 `Simple Pairing Complete`) and still used SSP. The CTKD sessions are the ones with an **SMP pairing on the LE link** (`CAP-004` frame 1856,
@@ -211,7 +211,7 @@ Extraction command:
 tshark -r CAP-012-btsnooz_hci.log -Y "btrfcomm.dlci==0x08" -T fields -E separator='|' \
   -e frame.number -e frame.time_epoch -e _ws.col.Info -e frame.len -e frame.cap_len -e data.data
 ```
-Header bytes recovered, Sequence 1 (frames 854–895, 15:31:19.850–.965 — 13 header pairs, in
+Header bytes recovered, Sequence 1 (frames 854–895, 15:31:19.850–.965 — 18 header pairs, in
 order): `05 0c`, `05 0a`, `04 02`, `04 03`, `04 04`, `04 11`, `04 05`, `04 13`, `04 12`, `04 15`,
 `04 14`, `04 16`, `0e 04`, `09 03`, `03 01`, `0e 02`, `0e 01`, `09 02` (plus several
 zero-payload/header-only frames, e.g. 878/889/895, and one ambiguous 3-byte fragment at frame 882,
@@ -265,9 +265,9 @@ taps the same row again at 15:32:08 ("Connecting…" shown by 15:32:10), produci
 `Create Connection` at 15:32:07.802 (frame 1001).
 
 This is a clean, on-screen-confirmed instance of `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `PAIR-003`
-("Disconnect and reconnect to an already-bonded device") — previously captured only on the
-Pixel 9a (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` row for `PAIR-003`: "no dedicated Pixel 7a scenario
-yet"). **`CAP-012` supplies that missing Pixel 7a data point, incidentally, not by design.**
+("Disconnect and reconnect to an already-bonded device") — a further Pixel 7a data point,
+incidentally, not by design; the first Pixel 7a occurrences are `CAP-006` (2026-08-15) and
+`CAP-007` (`TESTPLAN_BLUETOOTH_HCI_SNOOP.md` `PAIR-003` row, corrected 2026-08-28).
 
 **Relevant to `PROTOCOL.md` §6's open HFP-recurrence question** (`CAP-008-FINDINGS.md` §3's
 narrowing: "does a reconnect that does *not* involve a full radio power-cycle also retrigger the
@@ -323,7 +323,7 @@ against `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`:
   already established elsewhere, and no Fast Pair popup is expected or seen under this session's
   GMS-disabled condition (consistent with `CAP-004-FINDINGS.md` §7).
 - **`PAIR-003`** (disconnect/reconnect to an already-bonded device) — exercised incidentally, §6;
-  not part of Group S's own written procedure, but the first Pixel-7a occurrence of this Test-ID
+  not part of Group S's own written procedure (a further Pixel-7a occurrence; the first is `CAP-006`)
   (see §6 and §9).
 
 **No gap to flag**: every Test-ID this Group's own procedure calls for (`GFPS-001`) is clearly
@@ -336,11 +336,11 @@ untracked behavior.
    §3 step 3's raw-log path, or a confirmed-larger snaplen if step 4 must be used) — the single
    highest-value follow-up, since §1's truncation is the only reason this session cannot give
    `GFPS-001` as clean an answer as `CAP-004` did for the nRF-Connect variant.
-2. Fold this capture's §6 finding (a non-power-cycle reconnect retriggers the full HFP handshake)
+2. (Obsolete: `CAP-002`'s "silent session" was a filter artefact, §6.) Fold this capture's §6 finding (a non-power-cycle reconnect retriggers the full HFP handshake)
    into a dedicated look at whether `CAP-002`'s original silent session ever tore down its ACL
    link at all — `CAP-002`'s own ~8h20m shared log likely already contains the answer and would
    not require a new capture.
-3. `PAIR-003` now has a Pixel 7a data point (§6) — update `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s row
+3. (Done 2026-08-28; the first Pixel 7a data point is `CAP-006`.) `PAIR-003` now has a Pixel 7a data point (§6) — update `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s row
    accordingly (see §10).
 
 ## 10. Hypothesis test record (`PROJECT_RULES.md` rule 10/11 template)
@@ -362,9 +362,10 @@ untracked behavior.
   zero SMP frames anywhere in the 542s log, and zero LE Connection Complete/LE Enhanced Connection
   Complete events of any kind (only passive LE Extended Advertising Reports, which do not
   constitute a connection).
-- **Conclusion:** 🟢 **FACT — hypothesis confirmed.** `CAP-004`'s CTKD bonding mechanism was
-  specifically caused by nRF Connect's early BLE connection existing before classic pairing began,
-  not by the GMS-disabled/no-app condition. With that confound removed, classic bonding under
+- **Conclusion:** 🟢 **FACT — classic SSP without an LE SMP pairing; GMS-disabled/no-app is not
+  the cause of `CAP-004`'s CTKD** *(corrected 2026-10-15, `ai-sessions/0094`)*. That an SMP pairing
+  on the LE link (not merely an early LE link — `CAP-003` had one and used SSP) gates CTKD is 🟡
+  HYPOTHESIS (§2, `DECISIONS.md` ADR-030 Update 2026-10-03). Without that SMP pairing, classic bonding under
   GMS-disabled/no-app conditions follows the same classic-SSP state machine as every other fresh
   pairing this project has captured (`PROTOCOL.md` §5.1). This is a genuine resolution, not an
   inconclusive result — unlike §4/§5's payload-content questions, which §1's truncation finding

@@ -13,9 +13,7 @@ conclusive "genuinely absent" confirmation this Group was originally designed to
 `CAP-035-FINDINGS.md` §2 for the full reasoning.
 
 **Method for this session:** Pixel 9a (GrapheneOS), system Bluetooth settings only — no Pixel Buds
-Companion App, no nRF Connect, no other BLE/GATT tool. Fill in each `[ ]`/`___` below as the session
-happens — do not pre-fill any log-derived value (frame numbers, exact timestamps) before the capture
-exists.
+Companion App, no nRF Connect, no other BLE/GATT tool.
 
 ## Log Metadata
 
@@ -120,7 +118,7 @@ the `btsnooz.py` fallback.
       package:com.google.android.apps.adm
       package:com.google.android.overlay.glanceablehubsettings2022
       ```
-      Record the exact output here, verbatim, even if empty: `___`
+      Recorded output: the package list above (`com.google.android.gms` present, disabled — `CAP-035-FINDINGS.md` §2).
       If any GMS-related package **is** present, also record its enabled/disabled state
       (`adb shell dumpsys package <package> | grep -i enabled`) — "absent" and "present but
       disabled" are different conditions and change how strong this session's result is. Do not
@@ -452,7 +450,7 @@ video 1's guessed rows or video 2's own original (unverified, and as it turned o
 | `06:51:40` | Buds no longer listed as "Opgeslagen" in the Bluetooth panel — Forget confirmed complete | User (OS) | Pre-condition | — |
 | — | **Not shown on camera in either video** — no Settings→Apps→Google Play Services (or any GMS app-info) screen appears anywhere in video 1 (checked exhaustively, 5s-interval contact sheet, full 67.69s) or at any of 10 sampled points across video 2's 317.57s. **Since independently confirmed off-camera via `dumpsys`** (added to the Preparation checklist above): `com.google.android.gms` shows `enabled=3` (`COMPONENT_ENABLED_STATE_DISABLED_USER`) — a verified disabled state, not merely a handwritten claim. See `CAP-035-FINDINGS.md` §2. | User (OS) | Pre-condition | — |
 | ~`06:51:50`–`06:51:53` | Buds appear in scan list; tap to connect | User (OS) | `PAIR-001`, `GSND-001` | frame 552 (`LE Enhanced Connection Complete`, 06:51:53.610, handle `0x0040`) |
-| `06:52:00` | "Koppelen met Pixel Buds Pro 2 van Ted?" dialog appears on screen — **left unconfirmed**; video 1 stops recording ~1s later while it is still showing | User (OS) | `PAIR-001` | — |
+| `06:51:55`–`06:51:57` | "Koppelen met Pixel Buds Pro 2 van Ted?" dialog appears on screen (not yet at video 1 `t=62`, overlay 06:51:54; open at `t=65`, overlay 06:51:57) — **left unconfirmed**; video 1 stops recording ~4s later (06:52:00.7) while it is still showing | User (OS) | `PAIR-001` | — |
 | `06:52:00.69` (approx.) | **End video 1 recording** (67.69s duration) | — | — | — |
 | — | *(~3 s gap — video 1 stopped, video 2 started; dialog remains on screen, untouched, throughout)* | — | — | — |
 | **`06:52:04`** | **Start video 2 recording.** Same still-unconfirmed pairing dialog visible (confirmed identical to video 1's last frame). | — | — | — |
@@ -475,9 +473,7 @@ confirmed via a full-file DLCI census (`tshark -Y btrfcomm -T fields -e btrfcomm
 
 ## Decode / Analysis
 
-*(Fill in after capture — isolate the Buds' own `chandle`/RFCOMM traffic first per `AGENTS.md` §13's
-CLI-hygiene rule. Then check each of the four named channels — command + raw hex per finding, per
-`PROJECT_RULES.md` §1 rule 4a.)*
+Done — results in `CAP-035-FINDINGS.md` §3–§8; the commands below are the ones used.
 
 ```
 tshark -r CAP-035-btsnoop_hci.log -Y "bthci_acl.chandle==0x000b and btrfcomm.dlci in {6,8,10,18}" \     # 96 frames; handle 0x000b = the Buds (Connection Complete 792, 1455). Corrected 2026-10-03: the address filter matched nothing.
@@ -507,7 +503,7 @@ directly.
 
 ## Open Questions
 
-- 🔴 *(carry forward any that remain unresolved after this session)*
+- See `CAP-035-FINDINGS.md` §11.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-035-2026-09-02_06-50-53_06-57-24-Group_AB/CAP-035-EVENT-NOTES

@@ -75,9 +75,8 @@ internal enum class SettingsTab(val label: String) { SETTINGS("Settings"), DEBUG
 
 /**
  * The settings menu (`ai-sessions/0062` F-4, the maintainer's design in chats 2026-10-01): a full-screen destination reached from the top app bar's gear, outside
- * the five bottom tabs (ARCHITECTURE.md §2.4), with three tabs — **Settings** (dark mode; since `ai-sessions/0087` the "Noise-control channel" card, ADR-062 — renamed
- * "Noise control with Google Play services" by ADR-062 Update 2, `ai-sessions/0089`;
- * since `ai-sessions/0082` item 5 also the "Case sounds" card, moved from Controls; "Use different Buds"), **Debug** (today's [DebugScreen], unchanged) and
+ * the five bottom tabs (ARCHITECTURE.md §2.4), with three tabs — **Settings** (dark mode; since `ai-sessions/0082` item 5 the "Case sounds" card, moved from
+ * Controls; "Use different Buds", confirmed in a dialog since `ai-sessions/0094`), **Debug** (today's [DebugScreen], unchanged) and
  * **Info** (the app's build, the Buds' firmware and — ADR-058 — their serial numbers). The selected tab survives a rotation; back (the top bar's arrow or the
  * system's) returns to the tab the menu was opened from.
  */
@@ -91,9 +90,9 @@ fun SettingsMenuScreen(
     onExportLog: () -> Unit,
     appBuild: AppBuildInfo,
     deviceInfo: DeviceInfo?,
+    modifier: Modifier = Modifier,
     /** Hands a URL to another app (the browser) — `:app` starts `Intent.ACTION_VIEW` (`ai-sessions/0064` F-6, DECISIONS.md ADR-050); injected so `:ui` stays testable. */
     onOpenUrl: (String) -> Unit = {},
-    modifier: Modifier = Modifier,
     /** "Use different Buds" (`ai-sessions/0069`, A68-APP-05): `:app` disconnects and removes this app's own pairing association. */
     onUseDifferentBuds: () -> Unit = {},
     /** Why the serial numbers were not read on this connection (DECISIONS.md ADR-058, `ai-sessions/0082`); `null` = read, or not attempted yet. */
@@ -104,8 +103,6 @@ fun SettingsMenuScreen(
     settingsError: SettingsFailure? = null,
     onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit = {},
     onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
-    /** DECISIONS.md ADR-062 (`ai-sessions/0087`): the "Noise control with Google Play services" choice (1.2.1: "Noise-control channel") — stored by `:app`, applied by the repository at once. */
-    /** DECISIONS.md ADR-063 (`ai-sessions/0089`): whether Android finds Google Play services on this phone — information only; `null` = no line. */
 ) {
     var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
     Column(modifier = modifier.fillMaxSize()) {
@@ -198,12 +195,31 @@ private fun SettingsTabContent(
             // `ai-sessions/0069` A68-APP-05 (the maintainer's wording, chat 2026-10-03): the only way to control other Buds used to be clearing the app's data.
             Text(USE_DIFFERENT_BUDS_TITLE, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
             Text(USE_DIFFERENT_BUDS_TEXT, style = MaterialTheme.typography.bodyMedium)
-            OutlinedButton(onClick = onUseDifferentBuds) { Text(USE_DIFFERENT_BUDS_TITLE) }
+            // A93-APP-08 (`ai-sessions/0094`): removing the association is confirmed first — a stray tap no longer forgets the Buds.
+            var confirming by rememberSaveable { mutableStateOf(false) }
+            OutlinedButton(onClick = { confirming = true }) { Text(USE_DIFFERENT_BUDS_TITLE) }
+            if (confirming) {
+                AlertDialog(
+                    onDismissRequest = { confirming = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            confirming = false
+                            onUseDifferentBuds()
+                        }) { Text(USE_DIFFERENT_BUDS_CONFIRM) }
+                    },
+                    dismissButton = { TextButton(onClick = { confirming = false }) { Text("Cancel") } },
+                    title = { Text("$USE_DIFFERENT_BUDS_TITLE?") },
+                    text = { Text(USE_DIFFERENT_BUDS_TEXT) },
+                )
+            }
         }
     }
 }
 
 internal const val USE_DIFFERENT_BUDS_TITLE: String = "Use different Buds"
+
+/** The dialog's confirm button (`ai-sessions/0094`, A93-APP-08). */
+internal const val USE_DIFFERENT_BUDS_CONFIRM: String = "Forget these Buds"
 
 /**
  * `ai-sessions/0074`: the "Case sounds" card — ADR-054's labels, chosen by the maintainer in chat 2026-10-06: 28 = "Earbuds replaced" (the official settings

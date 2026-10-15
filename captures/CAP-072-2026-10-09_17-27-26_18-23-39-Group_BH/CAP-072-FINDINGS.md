@@ -105,7 +105,7 @@ positive control: `python3 -I scripts/pwrpc_decode.py <CAP-036 log>` decodes `CA
   (Owner user, the Google app) — not the run.
 - 🟢 **ANC `Notify` Settable** (the third value byte, `01 e8 [S] mode`): `00` in 18 claims (both buds in the case, in the hand or on the table — §4; at 17:51:10 followed by `e8` 63 ms later), `e8` in the other 31 claims with a `Notify` (43 `e8` messages).
 
-## 2. The Connect read — thirteen requests (BH-1, BH-18, BH-20, BH-22; V1, V2, V16, V17; ADR-058)
+## 2. The Connect read — fifteen requests (BH-1, BH-18, BH-20, BH-22; V1, V2, V16, V17; ADR-058)
 
 🟢 **31 sessions** (A 28 from 17:29:26, B 3; plus the release APK's at 17:19 and 1.1.1's at 17:25): the Buds' unsolicited `GetSoftwareInfo` → `ReadSetting 4:16` →
 `ReadSetting` **2, 4, 7, 11, 12, 15, 17, 19, 22, 27, 28, 29** → one `SubscribeRuntimeInfo` → **one `GetHardwareInfo`**, in that order, in **30 of 30 complete
@@ -281,7 +281,7 @@ by one reviewer):
     above). A dropped session cannot undo an ACKed write. **Refuted as stated**; the Buds' session drop is real but harmless to the setting.
   - (b) The write not acknowledged / sent on a closing channel: 🟢 refuted (all ACKed, 6–35 s before).
   - (c) Field 28 does not mean "a chime at every return": 🟡 **supported** — with the switch on, a tone was found at 2 of 2 clear Right entries (E1, E9) and faint at
-    E3, E11, but at none of the five Left entries (E4, E7, E8, E10 and E2 faint); with it off, at none of 7 except a faint candidate at E5. 🟡 The chime may depend on
+    E3, E11, but clearly at none of the five Left entries (E2, E4, E7, E8, E10; faint at E2); with it off, at none of 7 except a faint candidate at E5. 🟡 The chime may depend on
     which bud is replaced, on the lid, on both buds, or play from the bud rather than the case.
   - (d) Another sound (field 27, a charging or low-battery sound): 🔴 not distinguishable here; "Other alerts" was on throughout the entries.
   - (e) A stale switch on screen: 🟢 refuted — the switch on S matched every read (e.g. S s1722 "off" after the 17:56:08 re-open read `28:0`).
@@ -299,15 +299,16 @@ by one reviewer):
 (cause "the Buds closed the channel"), 4 with the ACL dropped by the Buds (17:38:29, 17:51:03, 17:59:23, 18:13:15 — both buds into the case;
 cause "Android's link to the Buds went down"), 1 while the app was hidden (17:55:15), 1 Bluetooth off (final at once). Every automatic re-open after a loss came **1.498–1.503 s after
 "Ready -> Disconnected"** (AFTER_LOSS, 15 times, E4; `SessionReopener.kt` `LOSS_REOPEN_DELAY_MS = 1_500L`) or when Android's link came back (LINK_BACK, 8 times, the first attempt failing on
-the multiplexer 4 times and the 400-ms retry succeeding — as `CAP-070`/`071`); the 10-s chain guard skipped 8 re-opens (losses 1.25–9.9 s after a re-open), after
-which a Connect tap followed (17:41:28, 17:51:40, 18:00:16, 18:01:47, 18:12:22, 18:20:03). 🟢 No session stayed lost without the documented reason.
+the multiplexer 4 times and the 400-ms retry succeeding — as `CAP-070`/`071`); the 10-s chain guard skipped 8 re-opens (losses 1.25–9.9 s after a re-open); six were
+followed by a Connect tap (17:41:28, 17:51:40, 18:00:16, 18:01:47, 18:12:22, 18:20:03), two by Android's link coming back (LINK_BACK 17:38:49.6 after the skip of
+17:38:29, 18:15:20.4 after the skip of 18:13:38; E4). 🟢 No session stayed lost without the documented reason.
 
 - 🟢 **BH-20 (both into the case and out):** the ACL dropped (`0x13`), "Paired — not connected to this phone / Open the case or put the Buds in your ears …" (S
   s665), the Buds' own ACL came back when the buds left the case (A 9506, 13104, 16151, 20735) and the app re-opened by itself 0.27–0.52 s later — **C9 "ready again by
   itself" ×4**.
 - 🟢 **BH-21:** Home 18:13:44–18:15:20 (1 min 36 s), the session was lost at 18:13:38 just before; on return LINK_BACK re-opened it (E4 2069–2119).
 - 🟢 **BH-22:** export E1 at 18:15:3x before the off; "Bluetooth adapter: ON -> TURNING_OFF" 18:18:32.433, cause "Bluetooth was switched off on this phone" (final);
-  on 18:18:45.967 → the Buds' link 18:18:47.3 → automatic re-open, thirteen requests, serials 18:18:48 (E4 2135–2197). "Bluetooth is disabled." is not on S (Android's
+  on 18:18:45.967 → the Buds' link 18:18:47.3 → automatic re-open, fifteen requests, serials 18:18:48 (E4 2135–2197). "Bluetooth is disabled." is not on S (Android's
   Bluetooth dialog covered the app). Info's "Not read …" while off: not looked at.
 - **The exports:** E1 (18:15:3x, 2,121 lines) before the off; E2 (18:19:01) after the on; E3 (18:21:10) after the rotation; E4 (18:23:3x). 🟢 **No serial and no MAC
   as text** in any export or in L: `grep -c "<serial>"` for each of the three full strings and `grep -c -i "04:00:6e:cf:6e:07"` → 0 each (exit 1); positive control

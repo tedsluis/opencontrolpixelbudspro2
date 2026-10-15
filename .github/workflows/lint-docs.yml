@@ -20,6 +20,10 @@ on:
       - "id_registry.csv"
       - "scripts/lint_docs.py"
 
+# Least privilege for the job's GITHUB_TOKEN (added 2026-10-15, ai-sessions/0094 — ai-sessions/0093 A93-APP-09): it only reads the repository.
+permissions:
+  contents: read
+
 jobs:
   lint-docs:
     runs-on: ubuntu-latest

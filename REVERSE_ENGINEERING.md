@@ -985,7 +985,7 @@ the first time against every one of its 20 real discriminators + default branch.
   --class gcn` shows `defpackage.gck` (the already-known `device_info` sink this document and
   `DECISIONS.md` ADR-025 already cite) **holds a `gcn`-typed field** (`gck.b`) — i.e. `gck` itself
   wraps this exact DAO internally. Reading `gcn.java` directly (the abstract base `gcp extends gcn`)
-  confirms it: `gcn.f(String, gcm)` — the very method `esk`'s default branch (line 894 above) calls —
+  confirms it: `gcn.f(String, gcm)` — the very method `esk`'s default branch (the "Default branch" bullet above) calls —
   is `gcn`'s own inherited implementation, and its body **constructs `new gcl(...)`** (`gcn.java`:
   `gwv gwvVar = new gwv((Object) str, (Object) Long.valueOf(...), (Object) new gcl(gcmVar.a(...)), ...)`
   ) before calling the abstract `g(gwvVar)` write — i.e. `gcl` (the domain/value-object type) is
@@ -1152,7 +1152,7 @@ the first time against every one of its 20 real discriminators + default branch.
     | 2 | BOOL | `fyo.java:169-188` (`l`) | case 2 (`:52-59`), no distinct log | **On-Head/In-ear Detection — category-level identity confirmed 2026-09-08**, via `MaestroDeviceSettingsProviderService` case `2102`'s internal category log `CATEGORY_OHD` (see that entry's update) |
     | 3 | BOOL | `fyo.java:212-232` (`n`) | case 3 (`:60-78`), `"Log OOBE Is Finished setting"` | **OOBE (out-of-box-experience) completion flag** |
     | 4 | BOOL | `fyo.java:124-144` (`h`) | case 4 (`:79-97`), `"Log Gestures Enable setting"` | **Head/touch gestures master enable toggle** |
-    | 5 | BOOL | `fyo.java:102-122` (`f`) | case 5 (`:98-105`), no distinct log | not independently named |
+    | 5 | BOOL | `fyo.java:102-122` (`f`) | case 5 (`:98-105`), no distinct log | not independently named *(named since 2026-10-06: "diagnostics" — the `0073` Update below; pointer 2026-10-15, `ai-sessions/0094`)* |
     | 6 | BOOL | `fyo.java:191-210` (`m`) — **found 2026-09-08, corrects this row's prior "not found" entry**; own caller not located (checked `fyb`'s cases 0-18 and `hqy.java`, neither reaches `.m()`) | unhandled (default) | write site exists; still read-inert and un-triggered from any found caller |
     | 7 | MESSAGE→`qju` | `fyo.java:300-374` (`t(gdx)`) | case 7 (`:124-219`), `"Log Gestures Customization for touch and hold setting, left: %s, right: %s"` | **touch-and-hold gesture customization, Left/Right** — see updated `qju` entry below |
     | 8 | BOOL | not found | unhandled (default) | write-silent, read-inert |
@@ -1161,7 +1161,7 @@ the first time against every one of its 20 real discriminators + default branch.
     | 11 | BOOL | `fyo.java:146-166` (`j`) | case 11 (`:220-227`), no distinct log | **Multipoint — confirmed** (self-describing log one layer up, at the ViewModel: `hiy.java:32`'s `"Set device Multipoint as: %s"`, reached from `MultipointFragment`'s toggle — see 2026-09-08 update below) |
     | 12 | MESSAGE→`qht` | `hgj.java:216-331` (ANC gesture-loop preference screen) | case 12 (`:228-277`), `"Log ANC gesture loop to Clearcut"` | **ANC gesture-loop membership (On/Off/Transparency/Adaptive)** — see updated `qjg`/`qht` entry below |
     | 13 | ENUM `qhs` | `fye.java:17-39` (2 callers, see main finding above) | case 13 (`:278-311`), `"Log ANC settings to Clearcut"` | **ANC state (Off/Active/Aware/Adaptive) — confirmed** |
-    | 14 | BOOL | `fyo.java:234-254` (`o`) | unhandled (default) | write-only; response ignored |
+    | 14 | BOOL | `fyo.java:234-254` (`o`) | unhandled (default) | write-only; response ignored *(the eartip seal test, OTTS — the `0073` Update below; pointer 2026-10-15, `ai-sessions/0094`)* |
     | 15 | BOOL | `fyo.java:168-188`→`u` (`fyo.java:376-396`) | case 15 (`:312-319`), no distinct log | **Volume EQ — confirmed** (self-describing log + literal preference-key string one layer up: `hlv.java:2127`'s `"Set volume eq: %s"`, gated on `str.equals("volume_eq_switch")` — see 2026-09-08 update below) |
     | 16 | MESSAGE→`qjw` | `fyp.java:301-322` (`f`, "update user eq") | case 16 (`:320-323`), `"received user eq setting value"` | **live/current user EQ curve** — see updated `qjw` entry below |
     | 17 | `SINT32` (per this entry's own field register above, line 856) | `fxf.java:82-133` (case 16 of that dispatcher) | case 17 (`:324-327`), `"received last saved volume balance setting value"` | **volume balance** |
@@ -1231,7 +1231,7 @@ the first time against every one of its 20 real discriminators + default branch.
   raw logs, plus the same static call-site tracing already used above):
   - **Field 17 ("volume balance") — full identity promoted.** `CAP-022` frames
     1922/1944/2019/2039/2056/2073/2099, CRC-32 verified, decode to `qhr` field 17 across a
-    continuous drag gesture. This entry's own field register (line 856) already types field 17 as
+    continuous drag gesture. This entry's own field register (the 38-field decode at the top of this entry) already types field 17 as
     `SINT32`; the bonus table above previously mistyped it as "INT32/BOOL-adjacent" (corrected in
     place this session) — re-reading the 7 sampled wire values as zigzag-encoded `SINT32` (not raw
     unsigned varints) gives `-100, -62, -25, 15, 75, 100, 5` (previously `199, 123, 49, 30, 150, 200,
@@ -1244,7 +1244,7 @@ the first time against every one of its 20 real discriminators + default branch.
     independent write paths to the same field, not one:** (a) the dedicated Mono-audio toggle
     (`fyo.java:278-298`, `s(boolean)`) — this field's established, primary identity, unchanged by
     the below; and (b) `fxf.java:113-133`'s volume-balance-extreme-value side effect (part of the
-    same case-16 dispatcher that writes field 17, line 999 above) — a genuine **secondary** write
+    same case-16 dispatcher that writes field 17, the register's row 17 above) — a genuine **secondary** write
     to field 19, triggered when an extreme balance value is set, not an alternative identity for
     the field. Both write sites were independently re-confirmed maintainer-side (`ai-sessions/
     0008_CROSSCHECK_RESULT_2026_09_11.md` §1.18/§1.22); "Mono audio" remains field 19's sole
@@ -1430,7 +1430,7 @@ the first time against every one of its 20 real discriminators + default branch.
   duplicate. Not promoted (per dimension (a)/(b) of `DECISIONS.md` ADR-019's 2026-09-03 clarifying
   note: an independent code-side path now exists and is self-describing, but no wire capture has
   ever observed field 6, so this is a code-level HYPOTHESIS only). This closes the field-6-specific
-  part of item G; the field 6 row in this entry's own bonus register (line ~1068) should be read
+  part of item G; the field 6 row in this entry's own bonus register (the table above) should be read
   together with this update.
 
 - **Correction (2026-10-06, `ai-sessions/0073`, citation check; maintainer-approved in chat 2026-10-06, `AskUserQuestion` "Corrections", option *"Apply all eight (Recommended)"*):** in the register above, row 15's first citation
@@ -2504,8 +2504,8 @@ MaestroEmptyMarker entry above).
 - **Update (2026-10-07, `ai-sessions/0077`, maintainer-approved in chat 2026-10-07, `AskUserQuestion` "D3 Wallclock"):** the wire carries a top-level field 2 in the `qiy` (`SubscribeRuntimeInfo`) and `qjb` (`GetSoftwareInfo`) answers that this schema does not name — 🟡 HYPOTHESIS: the Buds' wall clock in ms since the Unix epoch, present only after a `SetWallclock` (52–548 ms before the capture time in `CAP-036`/`042`/`050`; absent in OpenControl's `CAP-062`, `CAP-067` and `CAP-070` — 0 of 155 — which send no `SetWallclock`). `DESKRESEARCH_FINDINGS.md` 2026-10-03 item 3. Field 3 stays open.
 
 **Open questions**: none of the "plausibly" readings above are anything more than ⚪ ASSUMPTION from
-field count/type/RPC-name context — none is capture-correlated. Included here only to keep this *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: `qiy` (`SubscribeRuntimeInfo`) and `qiv` (`GetHardwareInfo`) are capture-correlated since ADR-043 / `PROTOCOL.md` §6, 2026-09-24)*
-register complete for whoever picks up the corresponding capture-correlation work next.
+field count/type/RPC-name context — none is capture-correlated. Included here only to keep this
+register complete for whoever picks up the corresponding capture-correlation work next. *(pointer 2026-10-03, `ai-sessions/0069`, A68-RE-03: `qiy` (`SubscribeRuntimeInfo`) and `qiv` (`GetHardwareInfo`) are capture-correlated since ADR-043 / `PROTOCOL.md` §6, 2026-09-24)* *(moved out of the sentence 2026-10-15, `ai-sessions/0094`, A93-RE-06)*
 
 **Update (2026-09-13, `ai-sessions/0017_MAINTENANCE_RESULT_2026_09_13.md` Phase 3) — `qin`'s single
 `ENUM` field's own validity range decoded; no Nod/Shake-named constant found anywhere in the
@@ -3228,6 +3228,8 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   either); case 2104's `CATEGORY_MULTIPOINT`-vs-`fpm.ENABLED_HEAD_GESTURES` naming tension; what
   `"Feature A"`/`kjj`/"premiumAudioHelper" actually is (cases 2104's side effect, 2115's direct
   toggle); `fyo.m()` (field 6)'s own caller.
+  *(Pointer 2026-10-15, `ai-sessions/0094`, A93-RE-06: field 5 is named "diagnostics" and field 6's caller is `guy`'s OOBE mode — the `qhr` entry's
+  Updates of 2026-09-16 (`0025`) and 2026-10-06 (`0073`); "Feature A" = "Quartz", the Resource/string-table sweep.)*
 - **Hypothesis test**: none required for the case-ID→accessor traces above (🟢 FACT, static
   call-graph tracing with no ambiguous branch); the remaining open questions are further
   static-analysis tasks (field 5/32/6/"Feature A" naming) or a capture task (wire-confirming field
@@ -3281,7 +3283,7 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
     RxJava-style hot-publisher field) — the log fires whenever something else pushes a new `goq`
     value onto that field, not on a fixed schedule or directly on connect.
   - `fuh` — a two-method start/stop-shaped lifecycle interface (`void b(); void i();`); 6 classes
-    implement it: `fxm`, `fvp` (Dosimeter), `fwc`, `fwx` (RuntimeInfo/low-latency-mode), `fxg`,
+    implement it *(seven — the count "6" corrected 2026-10-15, `ai-sessions/0094`, A93-RE-02)*: `fxm`, `fvp` (Dosimeter), `fwc`, `fwx` (RuntimeInfo/low-latency-mode), `fxg`,
     `fyq`, `geg`.
   - `glk.j():530-534` — `if (optional.isPresent() && this.g.F() && this.v.q()) { fuh.i() }`, inside
     a class whose surrounding code (`glk.java:220-260`, `500-530`) is unambiguously **firmware OTA
@@ -3345,6 +3347,7 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
           ftjVar.i(str).p();   // == gjv.p(), since gjv is giz's sole subclass
       }
   ```
+  *(Correction 2026-10-15, `ai-sessions/0094`, A93-RE-02: `ai-sessions/0013` had already found this call site on 2026-09-13 — its Update is the one placed below this one; "both prior passes" means the two `giz`-field searches.)*
   This was missed by both prior passes because the call is an **inline chain**
   (`ftjVar.i(str).p()`, the `giz` result never stored in a field) rather than a call through a
   `giz`-typed field — the prior strategy ("find classes holding a `giz`-typed field, check if any
@@ -3371,7 +3374,8 @@ natural next step for whoever picks this up (search for `X.class` and `X.a` refe
   obtained 2026-09-16** (chat session continuing `ai-sessions/0023`): the call-site finding is a
   direct code fact; the interpretive "OTA-lifecycle, not connect-lifecycle" reading is accepted at
   🟡 HYPOTHESIS in `PROTOCOL.md` §6, per `AGENTS.md` §6.
-  decoded shape) is now the more promising route — pursued this same session, see `PROTOCOL.md` §6's
+  *(Restored 2026-10-15, `ai-sessions/0094`, `ai-sessions/0093` A93-RE-02: an edit of 2026-09-15 cut this sentence; its start, from commit `08fc3ad`, was "the byte-level
+  capture-correlation path (against `qjb`'s")* decoded shape) is now the more promising route — pursued this same session, see `PROTOCOL.md` §6's
   `CAP-041`/`CAP-036` connect-time-burst item and `ai-sessions/0003_MAINTENANCE_RESULT_2026_09_08.md`
   Phase 4 item 1.
 - **Correlation with `PROTOCOL.md`**: §6 Commands & schemas' existing open item on the connect-time
@@ -4074,7 +4078,7 @@ via a capture, update its status here **and** promote it into `PROTOCOL.md`.
 | UUID | Found in (file:line) | Suspected function | Status |
 |---|---|---|---|
 | `3a046f6d-24d2-7655-6534-0d7ecb759709` (byte-reversed alias: `099775cb-7e0d-3465-5576-d2246d6f043a`) | `fzd.java:9`, `gbm.java:38` | App's own log label: "default internal rfcomm socket" | 🟡 HYPOTHESIS — not yet matched against a capture's SDP record *(status 2026-10-03, A68-RE-03: never seen in any capture — exhaustive negative in the `gbm` entry; not DLCI 0x08, whose SDP record is "GSND CONTROL", `CAP-033` frame 1279)* |
-| `25e97ff7-24ce-4c4c-8951-f764a708f7b5` (byte-reversed alias: `b5f708a7-64f7-5189-4c4c-ce24f77fe925`) | `fzd.java:9`, `gbm.java:35` | App's own log label: "pigweed internal rfcomm socket" — SDP-confirmed (`CAP-001`/`CAP-002`/`CAP-032`) as RFCOMM server channel 1 = DLCI 0x02, AGENTS.md §6's Pigweed `pw_hdlc` channel | 🟢 FACT for channel ownership (confirmed by capture IDs `CAP-001`/`CAP-002`/`CAP-032`, `DECISIONS.md` ADR-018, `PROTOCOL.md` §2.2a); 🟡 HYPOTHESIS (strong) that Sent-direction payload content specifically carries `libmaestro`'s settings commands |
+| `25e97ff7-24ce-4c4c-8951-f764a708f7b5` (byte-reversed alias: `b5f708a7-64f7-5189-4c4c-ce24f77fe925`) | `fzd.java:9`, `gbm.java:35` | App's own log label: "pigweed internal rfcomm socket" — SDP-confirmed (`CAP-001`/`CAP-002`/`CAP-032`) as RFCOMM server channel 1 = DLCI 0x02, AGENTS.md §6's Pigweed `pw_hdlc` channel | 🟢 FACT for channel ownership (confirmed by capture IDs `CAP-001`/`CAP-002`/`CAP-032`, `DECISIONS.md` ADR-018, `PROTOCOL.md` §2.2a); 🟡 HYPOTHESIS (strong) that Sent-direction payload content specifically carries `libmaestro`'s settings commands *(🟢 since ADR-019 (2026-08-30) and ADR-034 (2026-09-20): pw_rpc `maestro_pw.Maestro`, `WriteSetting`/`ReadSetting` — pointer 2026-10-15, `ai-sessions/0094`, A93-RE-05)* |
 | `00001124-0000-1000-8000-00805f9b34fb` | `fxm.java:12` | Bluetooth SIG-assigned HID Profile UUID (public spec, not project-specific) — app checks for it before triggering `fetchUuidsWithSdp()` | 🟢 FACT (that this official UUID is checked for); whether the Buds actually expose it is capture-dependent — cross-reference `CAP-002`/`CAP-016` |
 
 **Checked and confirmed absent, 2026-09-09 (`ai-sessions/0004_MAINTENANCE_RESULT_2026_09_09.md`
@@ -4141,7 +4145,7 @@ smali). **0 hits** for the 19 UUIDs the captures show: the Buds' SDP/EIR UUIDs `
 
 ## Message Group / Code register (Fast Pair Message Stream)
 
-If the Message Stream framing hypothesis (`PROTOCOL.md` §2.1) is confirmed,
+If the Message Stream framing hypothesis (`PROTOCOL.md` §2.1) is confirmed *(it is — 🟢 since ADR-009; pointer 2026-10-15, `ai-sessions/0094`)*,
 use this table for vendor-specific Message Group/Code values found in the
 APK, in addition to the officially documented ones.
 
@@ -4482,7 +4486,7 @@ only the same two files listed above — no new native library has appeared for 
 
 > **Updated 2026-08-30 (`DECISIONS.md` ADR-017, superseding ADR-003):** native
 > `.so` disassembly is now in scope for AI *mechanical* assistance, on the
-> same terms as DEX/Java-level work — an AI session may run `pbtk-from-binary`
+> same terms as DEX/Java-level work *(`pbtk` does not apply to this APK — ADR-041; pointer 2026-10-15, `ai-sessions/0094`)* — an AI session may run `pbtk-from-binary`
 > or disassembler tooling (Ghidra/radare2), search its output, and explain the
 > syntax/structure of already-surfaced disassembly. An AI session still does
 > **not** decide which disassembled function/struct is relevant, and does
@@ -4509,7 +4513,9 @@ gbm.a()  [InternalRfcommSocketSelector]
   -> gbd (via b or b2)  [InternalRfcommConnection — wraps BluetoothSocket]
 
 fxm.i()  [MaestroSoftwareInfoAndHidUuidCheck]
-  -> fxm.c(goq, goq) x4  [maestro_pw.Maestro/GetSoftwareInfo pw_rpc unary,
+  -> fxm.c(goq, goq) x4  [opens 4 pending GetSoftwareInfo unary calls — no request is sent;
+                          the Buds' unsolicited announcement completes them (corrected 2026-10-15, 0094, A93-RE-04;
+                          the qjb entry's Update of 2026-10-06) — maestro_pw.Maestro/GetSoftwareInfo pw_rpc unary,
                           one per {MAESTRO_A,MAESTRO_B} x {LEFT_BT_CORE,RIGHT_BT_CORE}]
   -> BluetoothDevice.fetchUuidsWithSdp()  [only if HID UUID 0x1124 not yet present]
 
@@ -4577,7 +4583,12 @@ promoted into the protocol documentation, to avoid the same finding being
 | `qie` entries 1/2/3 → Case / Left / Right (the official app's firmware screen) | §2.2a | 2026-10-01 | `ai-sessions/0062`; 191 announcements |
 | `qhr` field 29 write site (`cmi`, discriminator 5, `key_head_gestures_toggle`) — recorded, **not promoted** (🟡 1 = off, 2 = on) | §4.5.4 (2026-10-03 Update) | 2026-10-03 | `CAP-020` 1183/1935/2038; `ai-sessions/0069` |
 | The pw_rpc name table (`0xbf6c9399` = `a10a20.kpi.Kpi`/`KpiStream`, `0x8d99df93` = `JitterBuffer.SetJitterBufferSizePreference`), the sweep `fyo.a()`, the write census, the device-type → schema map, the announcement path, the charger-type enum — recorded, **not promoted** | §2.2a, §4.2, §4.3 Option F, §4.5.9, §6 (dated notes) | 2026-10-06 | 80 logs; `CAP-069` 965/1894; `ai-sessions/0073` |
-| | | | |
+| `qhr` field 21 = the switch "Volume level notifications" (Device details → Hearing wellness; the write site `hey.java:165–190`) | §4.5.8a | 2026-10-06 | `CAP-058` 5747/5753/5767/5790; `ai-sessions/0072` |
+| The wall-clock field 2 of the `qiy`/`qjb` answers — recorded 🟡, **not promoted** | §6 / this document's schema table (2026-10-07 Update) | 2026-10-07 | `CAP-036`/`042`/`050`; `ai-sessions/0077` |
+| `GetHardwareInfo` field 7 read by position (7.1 Case, 7.2 Right, 7.3 Left; `gaa.java:45–96`, `fwg.java:182–215`) | §6 (2026-10-09 Update) | 2026-10-09 | `ai-sessions/0082`; ADR-058 |
+| Setting 13 = the companion app's only ANC-state source (`fxb.smali:1237` → `gea.I`); the stream path `fxg` → `fvo` → `fxb` | §4.1 (2026-10-14 Update) | 2026-10-14 | 46 official-app captures; `ai-sessions/0090`; ADR-064 |
+
+*(Rows added 2026-10-15, `ai-sessions/0094` — `ai-sessions/0093` A93-RE-03; the empty template row removed.)*
 
 ## Known limitations of this analysis
 
@@ -4592,7 +4603,7 @@ promoted into the protocol documentation, to avoid the same finding being
   or capture correlation before being treated as 🟢 FACT.
 - A class or method being present in the APK does not prove it is actually
   exercised by the specific user actions listed in
-  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` — treat static findings as 🟡 HYPOTHESIS
+  `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` — treat static findings *(as a reading of protocol behaviour; that the code exists is 🟢 (code) — clarified 2026-10-15, `ai-sessions/0094`)* as 🟡 HYPOTHESIS
   until correlated with a capture showing the corresponding traffic.
 - **Low priority, noted 2026-09-07 (`EXTERNAL_REVIEW_VALIDATION_2026-09-07.md` — *retired after processing, `CHANGELOG.md`*):** file+line
   citations in this document are only reproducible against the exact decompiler version that produced

@@ -3,6 +3,9 @@
 **/.claude/
 
 # Android / Gradle build output (once app development starts — see ARCHITECTURE.md §14)
+# IDE (Eclipse/VS Code Java) output: copies of the Kotlin sources under a module's bin/ — never project files
+# (added 2026-10-15, ai-sessions/0094 — ai-sessions/0093 A93-HK-07)
+android/**/bin/
 build/
 .gradle/
 local.properties

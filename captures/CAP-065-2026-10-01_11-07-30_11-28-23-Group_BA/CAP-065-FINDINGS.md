@@ -92,8 +92,8 @@ Whenever that link came up while the app was visible and ADR-044 was on, the app
 Command: as in the header (HCI connection events) → exactly the seven Connection Request / Connection Complete pairs and six `0x13` (1498, 3646, 4653, 7094, 8613, 9683) / one LE `0x08` (12282) — `tshark -r CAP-065-btsnoop_hci.log -Y 'bthci_evt.code==0x05' -T fields -e frame.number -e bthci_evt.reason`; "five" corrected 2026-10-03, `ai-sessions/0069`
 Disconnection Complete events; `-Y "bthci_cmd.opcode==0x0405"` → 0 frames (positive control: the same filter matches `CAP-064` frames 673, 7201 and 8399).
 
-- 🟢 Opening the lid with both buds docked produced **no HCI event** in A, E (after the lid had been closed), F and G; the link came 3.5–7 s after the lid
-  opened, each time 1–4 s after a bud left its slot. In `CAP-064` the same held (B, F there). No case in this run of Android re-paging the Buds after an ACL
+- 🟢 Opening the lid with both buds docked produced **no HCI event** in A, E (after the lid had been closed), F and G; the link came 5.4–7.4 s after the lid
+  opened *(corrected 2026-10-15, `ai-sessions/0094`)*, each time 1–4 s after a bud left its slot. In `CAP-064` the same held (B, F there). No case in this run of Android re-paging the Buds after an ACL
   drop (all six drops were the Buds' `0x13` on docking; `CAP-064`'s 🔴 G-vs-F question gets no new sample).
 - 🟢 The ACL drops when the **last bud is docked**, also with the lid open (11:08:53.56 lid open, 11:12:45.97 lid open, 11:14:14.83 lid open), and does **not**
   drop when the lid is closed with one bud outside (BA-7, 11:15:30–11:16:14: ACL `0x000b` stayed up). 🟢 With the lid closed and the Left bud inside, the
@@ -179,8 +179,8 @@ Command: the scratch decoder's message list filtered to `08 13`; raw example 546
 | 9 | 10123, 11:21:34.62 | **19** | only the **Left** | 10405: Right charging | ✓ |
 | 10 | 12062, 11:27:35.99 (BA-16) | **19** | both worn (same ACL as #9) | 12124: none charging | ✓ (unchanged) |
 
-- 🟢 FACT (this capture): with only one bud out of the case the Buds announced **19 when it was the Left and 21 when it was the Right — 7 of 7** (incl. #4's
-  first-out); the request addresses were the tabulated pairs (19 ↔ `00 3b`/`80 a3`, 21 ↔ `00 4b`/`00 a5`), matching `fux.java:90–103` (19 = `LEFT_BT_CORE`,
+- 🟢 FACT (this capture): with only one bud out of the case the Buds announced **19 when it was the Left and 21 when it was the Right — 8 of 8** (#1, #2, #6, #7, #9 Left; #3, #4's
+  first-out, #8 Right) *(corrected 2026-10-15, `ai-sessions/0094`)*; the request addresses were the tabulated pairs (19 ↔ `00 3b`/`80 a3`, 21 ↔ `00 4b`/`00 a5`), matching `fux.java:90–103` (19 = `LEFT_BT_CORE`,
   21 = `RIGHT_BT_CORE` on `MAESTRO_A`). 24/26 (`MAESTRO_B`) never occurred.
 - 🟡 HYPOTHESIS (strong): the announced channel names the bud that **currently hosts the phone's link** (the "primary"), not merely the first bud out —
   #5 shows the channel changing 21 → 19 within one ACL after a Buds-side close with both buds worn. The Message Stream's Device Information `03 02` ("BLE

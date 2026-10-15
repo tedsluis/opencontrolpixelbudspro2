@@ -15,7 +15,8 @@ What the code does about it (added 2026-09-24, `ai-sessions/0045`; corrected 202
 `MalformedFrame`/`UnidentifiedFrame` instead of throwing — **in 1.0.0 two length checks did not hold that promise** (a declared length near the top of
 its integer range overflowed the check and the reader threw or looped; found by the `ai-sessions/0068` audit, fixed in 1.0.1). Since 1.0.1 the router
 also decodes each frame inside a guard, so a reader that fails costs that one frame and never the stream, and the fuzz tests mutate real captured frames
-*inside* their payload and re-seal them with a valid CRC (random bytes rarely get past the CRC, so the older fuzz tests did not reach those readers); the per-channel frame splitters are reset
+*inside* their payload and re-seal them with a valid CRC (random bytes rarely get past the CRC, so the older fuzz tests did not reach those readers) — and since
+`ai-sessions/0094` they also count the guard's catches and require none, so a reader that throws fails the test instead of being hidden as a malformed frame; the per-channel frame splitters are reset
 whenever a channel opens, closes or is lost, and cap a single frame (1024 data bytes on the Message
 Stream channels, 4096 bytes for a pw_hdlc frame), so one corrupted length field cannot stall later
 frames; and every write — ANC, Find My Buds, EQ and the settings (ADR-045/046/047) — passes the Safe-Mode gate
@@ -23,6 +24,11 @@ frames; and every write — ANC, Find My Buds, EQ and the settings (ADR-045/046/
 announced the Pixel Buds Pro 2's Fast Pair Model ID; on DLCI 0x02 (EQ, settings) no other Model ID may have been seen
 (`BudsRepositoryImpl.writeGate`; corrected 2026-09-30, `ai-sessions/0059` A58-HK-05). A report that one of these can be
 bypassed is in scope.
+
+Since 1.3.0 (ADR-064/065) the app also parses the Buds' **settings stream** on DLCI 0x02 (`SERVER_STREAM` packets of
+`SubscribeToSettingsChanges`) through the same settings decoders as a read answer; it is fuzzed like the other decoders
+(random, truncated, oversized and unknown-field packets, field 13 with every byte value — `SettingsStreamCodecTest`). Nothing is
+written in reaction to a stream packet. *(Added 2026-10-15, `ai-sessions/0094` — `ai-sessions/0093` §6 row 18.)*
 
 Out of scope: the reverse-engineering research itself (`REVERSE_ENGINEERING.md`,
 `captures/`) is not a security-sensitive artifact — it documents protocol

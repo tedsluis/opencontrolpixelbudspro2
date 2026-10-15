@@ -10,8 +10,8 @@ staged here for later promotion into `PROTOCOL.md` per `PROJECT_RULES.md` §2. M
 - 🟢 **FACT** — directly observed in this capture, with a frame number, and (per `PROJECT_RULES.md`
   §1 item 4a) reproducible via the stated command/script against the stated hex.
 - 🟡 **HYPOTHESIS** — plausible reading of the capture, not yet independently confirmed (this is the
-  *first* pass at decoding this content — nothing here is promoted past 🟡, per this session's own
-  task instructions).
+  *first* pass at decoding this content — no payload *meaning* here is promoted past 🟡, per this
+  session's own task instructions; the HDLC framing/CRC checks are 🟢 FACT).
 - ⚪ **ASSUMPTION** — not tested here, carried over from other sources.
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
@@ -105,8 +105,10 @@ tshark -r CAP-005-btsnoop_hci.log \
 ```
 
 **Result: traffic appears on DLCI 0x02 only** — DLCI 0x04 (official Fast Pair Message Stream) and
-DLCI 0x08 (private envelope) are completely silent in this window (checked explicitly, zero rows —
-see §4's identical check reused for both windows). Three frames, one Sent + two Rcvd:
+DLCI 0x08 (private envelope) are completely silent in this window: the command above with
+`btrfcomm.dlci==0x04` or `btrfcomm.dlci==0x08` added → 0 rows each, exit 0; positive control, the
+same filters without the time bound → 79 (DLCI 0x04, 660 … 2381) and 65 (DLCI 0x08, 790 … 2241)
+frames. Three frames, one Sent + two Rcvd:
 
 | Frame | Time | Dir | DLCI | Raw hex |
 |---|---|---|---|---|
@@ -166,6 +168,7 @@ Again, **DLCI 0x02 only** — explicitly re-checked for DLCI 0x04 and 0x08 in th
 ```
 tshark -r CAP-005-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002 and btrfcomm.dlci==0x04 and btrfcomm.len>0 and frame.time>=\"2026-08-15 15:03:20\" and frame.time<=\"2026-08-15 15:03:30\"" -T fields -e frame.number   # 0 rows
 tshark -r CAP-005-btsnoop_hci.log -Y "bthci_acl.chandle==0x0002 and btrfcomm.dlci==0x08 and btrfcomm.len>0 and frame.time>=\"2026-08-15 15:03:20\" and frame.time<=\"2026-08-15 15:03:30\"" -T fields -e frame.number   # 0 rows
+# positive control: both filters without the time bound → 79 (DLCI 0x04) and 65 (DLCI 0x08) rows
 ```
 
 **Result: two separate, structurally-identical-shaped bursts, not one** — this is the direct wire
@@ -195,7 +198,7 @@ HDLC decode method as §3:
 
 ## 5. Cross-command correlation & hypothesis (🟡 all HYPOTHESIS — first pass on this channel's content)
 
-All four `Sent` payloads (1245, 1321, 1338, and 1321≡1338's shared value) line up byte-for-byte
+All three `Sent` payloads (1245, 1321, 1338; 1321 and 1338 share one value) line up byte-for-byte
 except in two narrow regions. Byte offsets below are relative to the 45-byte payload (i.e. *after*
 the HDLC address+control, *before* the 4-byte CRC trailer):
 
@@ -367,7 +370,7 @@ tshark -r CAP-005-btsnoop_hci.log \
 
 ## 6. Open Questions
 
-- 🔴 **Field-to-band mapping (§5b) is inferred from a single changed field, not confirmed.** Needs a
+- 🟢 (resolved by `CAP-015`, see below) **Field-to-band mapping (§5b) was inferred here from a single changed field.** It needed a
   follow-up capture isolating one *different* single slider (e.g. Treble or Upper treble alone) to
   confirm field 3/4/5's assignment, and ideally one isolating Low bass alone to confirm field 1.
   **Resolved 2026-08-18**, superseded by `CAP-015` — see `CAP-015-FINDINGS.md` §5 and `PROTOCOL.md`
@@ -428,8 +431,8 @@ file's own changelog for the corresponding addition.)
 - This is the first concrete candidate wire format for `PROTOCOL.md` §4.2 ("Opcode/payload
   structure: not yet extracted" → a specific, byte-verified 🟡 HYPOTHESIS now exists).
 
-**Not ready:** the field-to-band mapping, the field-16/18 preview/save interpretation, and any
-generalization to ANC or other `libmaestro` commands — all explicitly flagged 🔴 in §6, needing
+**Not ready:** the field-16/18 preview/save interpretation and any generalization to ANC or other
+`libmaestro` commands — flagged 🔴/🟡 in §6 (the field-to-band mapping is 🟢 since `CAP-015`), needing
 further isolated captures before any promotion to FACT.
 
 ---

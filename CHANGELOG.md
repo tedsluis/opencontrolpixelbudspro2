@@ -16,6 +16,34 @@ build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phon
 
 ## [Unreleased]
 
+## [1.3.1]
+
+Prepared in `ai-sessions/0094` (2026-10-15) from the audit `ai-sessions/0093` and the `CAP-076` findings (the maintainer's choice in chat 2026-10-15, "1.3.1 met
+APP-01…06"). Nothing new on the wire: the app's requests are 1.3.0's. Not yet on hardware: the run is `CAP-077` (Group BM, planned).
+
+### Fixed
+
+- **"Use different Buds" now really forgets the Buds.** Before, the app could still connect to the same Buds by their name right afterwards; now it asks you to
+  pair (*Pair a device*) until you choose Buds in Android's picker. It also asks first, with **Cancel** and **Forget these Buds**.
+- **After a reconnect, a mode that changed while the app was not connected keeps its line** "Changed since the app last saw it" (1.3.0's known issue, `CAP-076`).
+- **A tap on the tile right after a Connect no longer does nothing without a word** (`CAP-076`): it changes the mode or says why not.
+- A change the Buds push while the app is reading a setting no longer counts as the answer to that read; the read waits for its own answer.
+- A settings file that cannot be read now gives the default settings instead of stopping the app's dark-mode and Debug-mode switches.
+
+### Changed
+
+- **One name for each noise-control mode everywhere**: "Noise cancellation", "Off", "Adaptive", "Transparency" — on the buttons, the (i), the Quick Settings tile
+  and the notification ("Connected — noise control: …"). The (i) says "Connection: connected" instead of a class name; the presets read "Heavy bass", not "HEAVY
+  BASS".
+- **TalkBack** reads each switch with its name ("Earbuds replaced, switch, on"), each equalizer slider with its band and gain in dB, and each bottom tab once.
+
+### Known issues
+
+- As in 1.3.0: a tap on a noise-control mode claims the channel shared with Google Play services for about 1.5 seconds; on a phone with Play it may fail with a
+  message — tap again.
+- As in 1.3.0: when the Buds close the session themselves, the mode shown can be a few seconds old until the re-open has read it again.
+- Since 1.0.1: after you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop.
+
 ## [1.3.0] - 2026-10-15
 
 Prepared in `ai-sessions/0091` (2026-10-14) after `ai-sessions/0090`'s cross-check of the official app (`DECISIONS.md` ADR-064, ADR-065): the Buds report every
@@ -44,6 +72,7 @@ Connect, both byte-identical to the official app's.
   moment (about 5 seconds after a claim) — the tap then usually fails with a message (in `CAP-076` once without one, from the tile: nothing changed); tap again.
 - When the Buds close the session themselves (one bud out while both are worn — 12 of 77 such changes in the captures), the app re-opens it and reads the mode
   again; in between, the mode shown can be a few seconds old.
+  *(Corrected 2026-10-15, `ai-sessions/0094`: 12 of **89** Buds-side changes in the official app's captures, not "12 of 77" — `PROTOCOL.md` §4.1, Correction of 2026-10-15.)*
 - After a reconnect (or when the Buds re-open the session themselves), a mode that changed while the app was not connected shows as read: the (i) line
   "Changed since the app last saw it" does not appear (`CAP-076`). A fix follows.
 
@@ -140,7 +169,7 @@ places, a held noise-control channel on its tab, a finer balance slider, and one
   their (i) adds "These settings live on the case and are read when the app connects." The requests are unchanged.
 - **Conversation detection** moved from Sound to **Controls** (its own card after In-ear detection, the same subtitle). Sound keeps Balance, Mono audio and Volume
   EQ. The request is unchanged.
-- The app sends thirteen requests at connect instead of twelve settings reads plus the EQ read and the subscription: the one `GetHardwareInfo` above.
+- The app sends thirteen requests at connect instead of twelve settings reads plus the EQ read and the subscription: the one `GetHardwareInfo` above. *(Corrected 2026-10-15, `ai-sessions/0094`, A93-CAP-01: fifteen requests at connect — thirteen `ReadSetting`s (the EQ's `4:16` and twelve settings), `SubscribeRuntimeInfo` and the new `GetHardwareInfo`; `CAP-073`, 11 of 11 sessions.)*
 
 ### Studied, not built
 
@@ -173,7 +202,7 @@ AndroidX) so later work starts from a supported base. Prepared in `ai-sessions/0
   9.3.3 with its built-in Kotlin, Kotlin 2.0.20 → 2.4.20, KSP → 2.3.12, Hilt 2.52 → 2.60.1, Compose BOM 2024.09.00 → 2026.09.00 (material3 1.4.0), AndroidX
   and coroutines to their current stable releases, JUnit 5 → 6.1.3, Robolectric 4.17; Kotest removed (never used). Compiled against API 37; `minSdk` and
   `targetSdk` stay 34 (`DECISIONS.md` ADR-029 Update). The app's permissions, components, texts and bytes on the wire are unchanged — same unit-test
-  counts (plus one new test for the settings-menu tab order), the same mutations caught; not yet hardware-tested (with the next release's run).
+  counts (plus one new test for the settings-menu tab order), the same mutations caught; not yet hardware-tested (with the next release's run). *(Hardware run `CAP-071`, `ai-sessions/0080`, 2026-10-08: passed — noted 2026-10-15, `ai-sessions/0094`, A93-HK-06.)*
 - CI: `actions/checkout` v7.0.1 in all four workflows, `setup-python` v7.0.0, `setup-gradle` v6.4.0.
 
 ### Known issues

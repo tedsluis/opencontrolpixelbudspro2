@@ -72,7 +72,7 @@ done. See §8 below for the proposed documentation update this motivates.
   "Forget device" button; the destination "Connected devices" screen is already showing by
   18:30:43). The log's `Sent Delete Stored Link Key` for the Buds' address is at **18:30:43.927732**
   (frame 768) — within ~1–2s of the on-screen tap, matching the same tap-to-HCI-effect lag pattern.
-- **Net coverage: the log's first frame precedes the Forget tap by ~58 seconds, and precedes the
+- **Net coverage: the log's first frame precedes the Forget tap by ~56 seconds (~58 s before its HCI effect, frame 768), and precedes the
   video's own start by ~30 seconds.** This is the first of four attempts (`CAP-001`, `CAP-013`,
   `CAP-031`, `CAP-032`) where the pre-clearing-action window is actually inside the logged window,
   not before it.
@@ -230,7 +230,7 @@ Forget tap — but that search only catches HCI opcodes Wireshark has a dissecto
 grep across every raw frame in the pre-Forget window found one match Wireshark's dissector doesn't
 tag as an address field at all:
 
-**Frame 91, 18:29:45.827476 (+0200)** — 105ms after the log's very first frame, and ~58 seconds
+**Frame 91, 18:29:45.827476 (+0200)** — 105ms after the log's very first frame, and ~56 seconds
 before the Forget tap:
 `tshark -r CAP-032-btsnoop_hci.log -Y "frame.number==91" -x` →
 `01 57 fd 0a 02 00 04 07 6e cf 6e 00 04 02` — HCI command opcode `0xFD57` (a Google/vendor-specific
@@ -245,12 +245,13 @@ LE-only opening window), 213–278 (30, the 18:30:22 classic-radio-enable burst)
 721–732 (6) (`tshark -r CAP-032-btsnoop_hci.log -Y "frame.number<=768 and bthci_cmd.opcode==0xfd57" -T fields -e frame.number`; corrected 2026-10-03, the text said "two bursts").
 Decoding every occurrence's raw payload shows a repeating pattern: a `02 00 NN <6-byte-addr> 02`
 entry (assigning list index `NN` to an address) is followed by a `01 00 NN <bytes>` entry with HCI parameter length `0x12` (the `12` is the length byte, not part of the entry)
-(apparently setting per-index flags/parameters), across a total of 22 distinct addresses and indices
-`0x04`–`0x1a` — matching exactly the 22 distinct `bd_addr` values independently found elsewhere in
-this log (§0.3). The Buds' address is assigned index `0x04` (frame 91) with what looks like a
+(apparently setting per-index flags/parameters), across indices from `0x04` upward (the earlier "22 distinct addresses … matching exactly the 22
+distinct `bd_addr` values (§0.3)" is withdrawn 2026-10-15, `ai-sessions/0094`: §0.3 gives no such count; the whole log has 24 distinct dissected
+`bd_addr` values, and only 5 `02 00 NN` entries exist, with 2 distinct addresses — the other entries are `07 00 NN …`, `01 00 NN …`, `01 01 …`, `03 00 …`, `00 01` shapes;
+`tshark -Y "bthci_cmd.opcode==0xfd57" -T fields -e bthci_cmd.parameter | cut -c1-4 | sort | uniq -c`). The Buds' address is assigned index `0x04` (frame 91) with what looks like a
 flags/parameter sub-command immediately after (frame 93, all 18 parameter bytes: `01 00 04 01 00 11 11 01 80 01 f4 01 01 80 10 27 02 00`) that
 structurally differs from most other indices' own follow-up (e.g. index `0x06`, frame 113:
-`01 00 06 40 00 11 11 01 80 00 00 00`) — indices `0x04`/`0x05` share one parameter pattern, `0x06`
+all 18 parameter bytes: `01 00 06 40 00 11 11 01 80 00 00 00 00 00 00 00 00 00`) — indices `0x04`/`0x05` share one parameter pattern, `0x06`
 onward another. What this command actually configures (most plausibly a bulk push of all
 currently-bonded devices' identities into the controller's own address/resolving-list at
 Bluetooth-stack bring-up, given the timing and the one-entry-per-bonded-device shape) is **not**
@@ -299,7 +300,7 @@ recurrence of either of theirs.
   (version not screen-confirmed). Capture method: raw `btsnoop_hci.log` (untruncated, §0.1).
 - **Expected outcome:** log's first frame timestamp ≤ the video's own Forget-tap timestamp
   (18:30:42).
-- **Actual outcome:** log's first frame is 18:29:45.722826 — **~58 seconds *before*** the Forget
+- **Actual outcome:** log's first frame is 18:29:45.722826 — **~56 seconds *before*** (~58 s before its HCI effect, frame 768) *(corrected 2026-10-15, `ai-sessions/0094`)* the Forget
   tap, and ~30 seconds before the video itself starts (§0.2).
 - **Conclusion:** 🟢 **CONFIRMED** — the pre-clearing-action window is captured for the first time in
   four attempts. Given that coverage, the primary question itself is answerable for this session:

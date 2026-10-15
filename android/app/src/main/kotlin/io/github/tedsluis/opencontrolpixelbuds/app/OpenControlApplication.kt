@@ -93,6 +93,6 @@ class OpenControlApplication : Application() {
             ConnectionState.Disconnected, is ConnectionState.Failed -> null
             ConnectionState.Connecting -> "Connecting…"
             ConnectionState.Discovering -> "Discovering services…"
-            ConnectionState.Ready -> mode?.let { "Connected — ANC: ${it.name}" } ?: "Connected"
+            ConnectionState.Ready -> mode?.let { "Connected — noise control: ${it.label}" } ?: "Connected" // A93-APP-08: the same label as the app
         }
 }

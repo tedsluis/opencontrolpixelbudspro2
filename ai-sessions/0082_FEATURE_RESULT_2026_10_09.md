@@ -9,7 +9,7 @@ indicator built on ADR-049's Settable byte and the runtime-info in-case flags, s
 the Controls tab to gear → Settings; (6) the Conversation detection switch moved from Sound to Controls — plus (4) a design study, no code, of
 volume-level notifications from `maestro_pw.Dosimeter`. Real capture bytes as fixtures, a green gate with mutation checks, the documents, the
 hardware-run skeleton and the release preparation for 1.2.0 (no tag, no publication)
-**Status:** complete (the task was resumed once after a context reset; finished 2026-10-09 — commits pending the maintainer's answer, "Commits" below)
+**Status:** complete (the task was resumed once after a context reset; finished 2026-10-09 — commits pending the maintainer's answer, "Commits" below) *(Status update 2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-06/07: committed (`531c99d` and the feature commits); PR #21 merged 2026-10-09 as `ec6d163`; released as 1.2.0 after the rebuild of `ai-sessions/0084`.)*
 
 ---
 
@@ -585,6 +585,11 @@ Proposed draft; `CAP-072` in one sitting). Six commits, not the nine sketched in
 
 Not staged: `android/domain/bin/` (an untracked build-tool output that appeared during the session; not the project's). Then `git push -u origin
 feature/1.2.0` and a pull request to `main` (not merged by the agent).
+
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- the `:ui` test delta "+14" — the per-phase counts add to 15 (4 + 3 + 3 + 3 + 1 + 1); one of the two figures is off (the gate's JUnit total is the count of record).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0082_FEATURE_RESULT_2026_10_09.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0082_FEATURE_RESULT_2026_10_09

@@ -1,5 +1,7 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AI, long pure-idle bracket for the periodic DLCI 0x02/0x04/0x08/HFP push cadence (`CAP-042`)
 
+> **Status as of 2026-09-30** (as in `CAP-042-FINDINGS.md`): Settable: ADR-049; the two idle DLCI 0x02 pushes are `maestro_pw.Dosimeter/SubscribeToLiveDb` stream packets (4518 …, 7627 …), not the runtime-info stream of `CAP-036`'s push (its only packet here is in the connect burst, frame 800). The text below is as written.
+
 **Status:** ✅ **Captured and decoded — see `CAP-042-FINDINGS.md`.** Central result: after the
 initial connect-settling burst, the DLCI 0x02/0x04/0x08 push recurs only twice in the whole
 ~37m39s session (~16m and ~19m apart), far sparser than `CAP-036`'s short-session sample, and
@@ -46,7 +48,7 @@ genuinely idle — a single accidental tap invalidates the whole point.
 |      Group(s)    | AI (`OBS-002` — long idle bracket for background/battery-polling behavior) |
 |       Date       |                     2026-09-06                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` |
-|   Test device    | Pixel 7a, Android ⚪ ASSUMPTION (carried from `CAP-036`, not visible this session — screen off throughout). **Official Pixel Buds Companion App (backgrounded), Google Play Services enabled (⚪ ASSUMPTION, not re-verified)** |
+|   Test device    | Pixel 7a, Android ⚪ not recorded (17 assumed, as in neighbouring captures; `CAP-036` did not record it either — not visible this session, screen off throughout). **Official Pixel Buds Companion App (backgrounded), Google Play Services enabled (⚪ ASSUMPTION, not re-verified)** |
 | Video file       | `CAP-042-recording.mp4` — 2119.65s (~35m20s), 17:29:53–~18:05:13 local (wall-clock overlay); two spot-check frames (start ~17:29:53, mid ~18:04:48) confirm an undisturbed scene: buds resting loose beside the open, empty case, phone screen off |
 | Log file         | `CAP-042-btsnoop_hci.log` — 2258.87s (~37m39s), 8,560 packets, 2026-09-06 17:30:02.871–18:07:41.746 local time (see §0 of `CAP-042-FINDINGS.md` — this is the MAIN log only; `.log.last` is leftover `CAP-041`-session content, not part of this session — do not merge) |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
@@ -67,7 +69,7 @@ is fully and cleanly contained in the main log alone (starts fresh at frame 1, 1
 - [x] Google Play Services **enabled** — carried `CAP-036`'s verification forward as ⚪ ASSUMPTION.
 - [x] No third-party BLE/GATT tool used.
 - [x] Bluetooth HCI snoop logging enabled and the phone rebooted.
-- [x] **Fixed dock state: undocked/worn** (both earbuds resting loose beside the open, empty case — video-confirmed at start and mid-session; wire-confirmed via `Settable-toggles=0xe8` per `DECISIONS.md` ADR-024, see `CAP-042-FINDINGS.md` §1). Held constant for the entire session.
+- [x] **Fixed dock state: undocked, not worn** (both earbuds resting loose beside the open, empty case — video-confirmed at start and mid-session; wire-confirmed via `Settable-toggles=0xe8` per `DECISIONS.md` ADR-024, see `CAP-042-FINDINGS.md` §1). Held constant for the entire session.
 - [x] Video recording with a visible wall-clock overlay ready — a static framing with periodic implicit confirmation (long single take, no edits) rather than per-minute stills.
 - [x] Session ran ~37m39s of idle time after the initial connect settled — well over the 15-minute minimum.
 
@@ -154,17 +156,17 @@ tshark -r CAP-042-btsnoop_hci.log -Y "btrfcomm.len>0" -T fields -e frame.number 
 
 ## Next steps after filling this in
 
-- [ ] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13).
-- [ ] Write `CAP-042-FINDINGS.md` per `PROJECT_RULES.md` §2, hex & script rule (§1 rule 4a).
-- [ ] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
+- [x] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13).
+- [x] Write `CAP-042-FINDINGS.md` per `PROJECT_RULES.md` §2, hex & script rule (§1 rule 4a).
+- [x] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
       `id_registry.csv`'s `CAP-042` row.
-- [ ] Update `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `OBS-002` row — this is its first dedicated
+- [x] Update `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `OBS-002` row — this is its first dedicated
       capture scenario; update the "Capture scenario(s)" column accordingly (pointer only, no
       restated finding).
-- [ ] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8).
-- [ ] **Do not** promote anything to 🟢 FACT or write a `DECISIONS.md` ADR without explicit
+- [x] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8).
+- [x] **Do not** promote anything to 🟢 FACT or write a `DECISIONS.md` ADR without explicit
       maintainer sign-off (`AGENTS.md` §6, §15) — propose only.
-- [ ] Rename this capture's folder to the actual session date/start-time/end-time.
+- [x] Rename this capture's folder to the actual session date/start-time/end-time.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-042-2026-09-06_17-30-02_18-07-42-Group_AI/CAP-042-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-042-2026-09-06_17-30-02_18-07-42-Group_AI/CAP-042-EVENT-NOTES

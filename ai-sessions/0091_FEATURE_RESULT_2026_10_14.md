@@ -277,5 +277,12 @@ ADR-065 and the documents, `CAP-076`, 1.3.0. The split is by file and concern �
 `scripts/release.sh 1.3.0`, B2, B3; C1–C2 the `CAP-076` run in both users (the skeleton); a CAPTURE session for C3/C4 and the verdict; only then the
 release (never by this session: no tag, no `dist/`, no merge).
 
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- §D's compliance line lists `BLUETOOTH_SCAN` among the manifest's permissions — it is not declared (removed 2026-09-24; `android/app/src/main/AndroidManifest.xml:10`, `android/hardware/src/main/AndroidManifest.xml:17`); the permissions are `BLUETOOTH_CONNECT`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`.
+- §C "the Connect-sequence counts (15 requests)" — the test asserts `5 + settingReads.size` = 17 (`BudsRepositoryImplTest.kt:467–471`).
+- §G's "next steps: push … and open the PR" were already done (Commits paragraph); PR #56 merged 2026-10-15 as `aec17a5`, released as 1.3.0.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0091_FEATURE_RESULT_2026_10_14.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0091_FEATURE_RESULT_2026_10_14

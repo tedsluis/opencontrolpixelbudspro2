@@ -66,8 +66,8 @@ are directly comparable to log frame timestamps without offset correction.
 | 17:24:38 | Tap **Adaptive** | User (App) | `ANC-003` | `Set ANC state`, `new_mode=0x40` (Adaptive) — frame 1731, 17:24:38.666; ACK frame 1735, 17:24:38.708; Notify frames 1736/1738, 17:24:38.709/38.711 |
 | 17:24:51 | Tap **Transparency** | User (App) | `ANC-004` | `Set ANC state`, `new_mode=0x80` (Transparent/Aware) — frame 1862, 17:24:50.825 (0.2s *before* the observed on-screen tap, within this capture's ±1s video-sampling tolerance); ACK frame 1864, 17:24:50.862; Notify frames 1865/1867, 17:24:50.863/50.864 |
 | 17:24:52–55 | UI shows a brief transitional/all-muted button state, then **Transparency** fully selected/active | App (Auto) | — | Matches the Notify frames above; no further `0x12` frames follow |
-| ~17:24:56–17:25:02 | (not directly visible on screen — video decode is truncated in this window, see video recovery note) RFCOMM channels 1 and 2 are cleanly torn down (`DISC`/`UA`) and a fresh SDP query + full channel/multiplexer renegotiation runs on DLCIs 0x02/0x04/0x08/0x0a, without any preceding HCI `Disconnect` or `Create Connection` event — the underlying ACL link is never dropped | — | — | `DISC` Channel=1/2 (frames 1888/1890, 17:24:56.689–.690); fresh SDP Service Search (frame 1908, 17:24:58.398); RFCOMM SABM on DLCI 0x0a/0x08/0x02/0x04 (frames 1920/1949/2030/2091, 17:24:58.450–17:25:01.828); a repeat Device-Information/capability burst and a fresh ANC Notify (`e8e880`, still Transparent — frame 2115, 17:25:02.084) follow, consistent with a full profile/channel re-sync rather than a new user action — see `CAP-006-FINDINGS.md` §6 |
-| ~17:25:07 | End video recording (nominal, per file naming/original draft — last independently recovered frame is 17:25:05) | — | — | — |
+| ~17:24:56–17:25:02 | (on film: no user action; the ANC button row is greyed out 17:24:58–17:25:03 and active again, Transparency selected, from 17:25:04) RFCOMM channels 1 and 2 are cleanly torn down (`DISC`/`UA`) and a fresh SDP query + full channel/multiplexer renegotiation runs on DLCIs 0x02/0x04/0x08/0x0a, without any preceding HCI `Disconnect` or `Create Connection` event — the underlying ACL link is never dropped | — | — | `DISC` Channel=1/2 (frames 1888/1890, 17:24:56.689–.690); fresh SDP Service Search (frame 1908, 17:24:58.398); RFCOMM SABM on DLCI 0x0a/0x08/0x02/0x04 (frames 1920/1949/2030/2091, 17:24:58.450–17:25:01.828); a repeat Device-Information/capability burst and a fresh ANC Notify (`e8e880`, still Transparent — frame 2115, 17:25:02.084) follow, consistent with a full profile/channel re-sync rather than a new user action — see `CAP-006-FINDINGS.md` §6 |
+| ~17:25:07 | End video recording (the re-pulled file's last frame shows 17:25:08) | — | — | — |
 
 ## Corrections vs. the original draft of this file
 
@@ -89,8 +89,8 @@ are directly comparable to log frame timestamps without offset correction.
   `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §5's correlation workflow and `AGENTS.md` §13's traceability
   check.
 - Added the post-Transparency RFCOMM channel renegotiation window (~17:24:56–17:25:02), which the
-  original draft did not mention at all — flagged as not independently attributable to an on-screen
-  action since the video decode is truncated in that exact window.
+  original draft did not mention at all — the re-pulled film shows no user action in that window,
+  only the ANC row greyed out 17:24:58–17:25:03 while the channels re-open.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-006-2026-08-15_17-23-49_17-25-06-Group_B/CAP-006-EVENT-NOTES

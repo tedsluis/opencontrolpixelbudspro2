@@ -76,7 +76,7 @@ Decodes to `field5(len4){ field4(len2){ field2=0|1 } }`. Video: In-ear detection
 start (persisted from a prior session), tapped OFF (t≈44–52s, matching frame 1850 at
 `08:32:10.980`), tapped back ON (t≈58s, matching frame 1912 at `08:32:23.091`).
 
-**Status:** 🟡 **HYPOTHESIS** — `field 2` = In-ear detection, clean 2-sample ON/OFF match.
+**Status:** 🟢 **FACT** since 2026-09-28 (`DECISIONS.md` ADR-019 Update; status banner) *(corrected 2026-10-15, `ai-sessions/0094`)* — `field 2` = In-ear detection, clean 2-sample ON/OFF match.
 
 ## 4. Analysis: `CASE-001` ("Bud return", labeled "Earbuds replaced" in the app's own settings list)
 
@@ -179,11 +179,11 @@ Extends the running table (`CAP-022-FINDINGS.md` §6):
 
 No case-specific vs. bud-specific channel/address distinction was found — case sounds use the
 same DLCI 0x02 envelope as every bud-targeted setting in this batch, just their own field numbers.
-Now 9 distinct settings across `CAP-019`–`CAP-024`, each with its own distinct inner field number
+Now 12 distinct settings (`qhr` fields 2, 4, 7, 11, 12, 15, 17, 19, 22, 27, 28, 29) across `CAP-019`–`CAP-024`, each with its own distinct inner field number
 inside the shared `field5{field4{...}}` wrapper — the general-purpose-envelope finding
 (`CAP-020-FINDINGS.md` §5) held with no counter-examples across this whole batch and was
 **promoted to 🟢 FACT 2026-08-23** (`DECISIONS.md` ADR-013) for the outer wrapper shape. `field2`
-(In-ear detection) remains its own, separately-labeled 🟡 HYPOTHESIS; `field28` ("Bud return") was
+(In-ear detection) was promoted to 🟢 FACT 2026-09-28 (ADR-019 Update); `field28` ("Bud return") was
 **promoted to 🟢 FACT in full, and `field27` to 🟢 FACT at the category level, 2026-09-03**
 (`DECISIONS.md` ADR-019 Update, per §4/§5 above) — `field27`'s specific "Other alerts" label stays
 🟡 HYPOTHESIS.
@@ -191,8 +191,8 @@ inside the shared `field5{field4{...}}` wrapper — the general-purpose-envelope
 ## 7. Conclusions & Next Steps
 
 - All 3 Test-IDs isolate cleanly to DLCI 0x02 writes with video-timing correlation; `INEAR-001`
-  and `CASE-002` have unambiguous 2-sample (both-direction) evidence, `CASE-001` has one
-  unambiguous and one weakly-correlated sample.
+  and `CASE-002` have unambiguous 2-sample (both-direction) evidence, and so does `CASE-001`
+  (connect read 1096 `28:1` → 1988 `28:0` → 2023 `28:1`, both real changes, §4).
 - **Recommended next step:** none specific to this capture — the pattern is now well-established
   across 6 captures in this batch.
 

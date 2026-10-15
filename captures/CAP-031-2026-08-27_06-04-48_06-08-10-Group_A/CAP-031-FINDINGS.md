@@ -184,7 +184,7 @@ permission-granting setup flow, rather than unconditionally during the initial R
 burst. This capture is a direct, higher-precision test of that hypothesis (the plan's Step 3
 explicitly asked for it): **DLCI `0x02` opens at 06:07:19.202 (frames 1122/1124) — only ~1.64s
 after DLCI `0x00`'s own `SABM` at 06:07:17.561, and *before* DLCI `0x04` (06:07:24.342)**. This is
-squarely within the initial multiplexer-open burst (all 5 DLCIs opened within ~6.85s of each
+squarely within the initial multiplexer-open burst (all 6 DLCIs — 5 data channels plus the 0x00 mux control — opened within ~6.85s of each
 other), matching `CAP-001`/`CAP-002`/`CAP-004`/`CAP-006`'s pattern, not `CAP-013`'s outlier. The
 first app-permission "Allow" tap this session doesn't occur until 06:07:41 (per
 `CAP-031-EVENT-NOTES.md`), over 20 seconds after DLCI `0x02` already opened — there is no timing
@@ -204,7 +204,8 @@ checked for the same pattern:
 
 - **Zero occurrences of `43:8a:82:03:4b:f2`** anywhere in this log
   (`tshark -r CAP-031-btsnooz_hci.log -Y "bthci_evt.bd_addr == 43:8a:82:03:4b:f2 or bthci_cmd.bd_addr == 43:8a:82:03:4b:f2"` → 0 matches).
-- **Exactly one `LE Enhanced Connection Complete` event in the entire log** (frame 529,
+  (Exit 0; positive control: the same `bd_addr` filter with the Buds' own address, below, matches 84 frames, 417…760, including 529 and the classic Connection Complete 615.)
+- **Exactly one `LE Enhanced Connection Complete` event in the entire log** (`tshark -r CAP-031-btsnooz_hci.log -Y "bthci_evt.le_meta_subevent==0x0a"` → 529 only, exit 0; `le_meta_subevent==0x01`, legacy LE Connection Complete → 0 rows, exit 0) (frame 529,
   06:07:14.645649), and it resolves to the Buds' own address:
   `tshark -r CAP-031-btsnooz_hci.log -Y "frame.number==529" -V` shows `Peer Address Type: Public
   Device Address (0x00)`, `BD_ADDR: Google_cf:6e:07 (04:00:6e:cf:6e:07)` — the same public address
@@ -263,7 +264,7 @@ capture simply didn't reproduce the phenomenon a third time.
 
 - **Hypothesis:** DLCI `0x02` opens later than the other RFCOMM channels, plausibly gated on an
   app-permission step.
-- **Setup:** same as Test A; DLCI open times compared across all 5 channels.
+- **Setup:** same as Test A; DLCI open times compared across all 6 channels (5 data channels plus the 0x00 mux control).
 - **Expected outcome (if hypothesis held):** DLCI `0x02`'s `SABM` tens of seconds after DLCI
   `0x00`'s, coinciding with an on-screen "Allow" tap.
 - **Actual outcome:** DLCI `0x02` opens 1.64s after DLCI `0x00`, within the initial multiplexer
@@ -303,9 +304,8 @@ capture simply didn't reproduce the phenomenon a third time.
   available in the log for a future battery-tracking pass if needed.
 
 > **Update (2026-08-27), approved as recorded (maintainer, chat 2026-09-30, `ai-sessions/0059`):** the fourth attempt proposed
-> above, `CAP-032`, succeeded — extracted via the raw BTSnoop file path (§8's proposed root-cause
-> guess, "extraction path vs. session-specific," is now supported: `CAP-032`'s raw-path log is
-> genuinely untruncated). Its log's first frame lands ~58s *before* the on-screen Forget tap,
+> above, `CAP-032`, succeeded — extracted via the raw BTSnoop file path (`CAP-032`'s raw-path log is
+> genuinely untruncated; §8's guesses (a)/(b) are superseded by this extraction-path explanation, see below). Its log's first frame lands ~56s *before* the on-screen Forget tap (~58s before its HCI effect, `CAP-032` frame 768),
 > finally covering the pre-clearing-action window. For that session: no BLE link and no valid
 > classic link key existed for the Buds before the Forget tap — the opposite of `CAP-001`'s original
 > finding, read as a clean counter-example rather than a resolution of `CAP-001`'s own puzzle. See

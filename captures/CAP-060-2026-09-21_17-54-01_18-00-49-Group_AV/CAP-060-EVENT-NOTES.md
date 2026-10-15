@@ -79,9 +79,9 @@ video/log evidence together.
 | 17:55:47.287–17:56:24.269 | Find My Buds exercised: 4 ring/stop commands cycling Left/Right/Stop; video confirms the Find screen and finger taps at `t=139s` ("Ringing: Right earbud"). | User (app) | `FIND-001`, `FIND-002` | debug export lines 81–113; frame `t=139` |
 | 17:56:36.558–17:56:58.494 | ANC cycled 6 times: Transparency(`80`)→Adaptive(`40`)→Off(`20`)→Active(`08`)→Transparency(`80`)→Adaptive(`40`) — each `Set`/`Notify` pair on DLCI 4. | User (app) | `ANC-001`, `ANC-002`, `ANC-003`, `ANC-004` | debug export lines 121–180 |
 | 17:57:11 | Maintainer switches to Spotify. | User | — | video `t=190s` |
-| 17:57:38.283–17:57:41.658 | Reconnect after `PAIR-003`-style drop (see Drop 2 below is later — this is a routine app-triggered reconnect cycle continuing the session); DLCI 0x08 opened and released cleanly this time (no Timeout logged for this cycle alone, but a further Timeout follows immediately at 17:57:40.645). | App | — | debug export lines 201–221 |
-| 17:57:45.421–17:58:06.476 | EQ screen used: 13 `WriteSetting` calls in ~21s (video `t=228s` shows the Presets row, finger over Vocal Boost/Clarity) — a preset-tapping sequence, not isolated single-slider drags (the film does not show which preset(s) were tapped, so individual `EQS-*`/`EQP-*` Test-IDs are not claimed with confidence). | User (app) | `EQP-005`/`EQP-006` (🟡 — preset area confirmed on video, exact preset(s) not disambiguated) | debug export lines 222–253; frame `t=228.5s` |
 | 17:57:29.912 | **Drop 2 (non-user):** Buds `DISC` on DLCI 0x02 only (DLCI 4 already on-demand-released at the time); ACL stays up. | Hardware (Buds) | — | frames 3651/3652 |
+| 17:57:38.283–17:57:41.658 | Reconnect after Drop 2 (debug export 17:57:37.926 `Disconnected -> Connecting`, 17:57:38.283 attempt 1/3); DLCI 0x08 opened and released cleanly this time (no Timeout logged for this cycle alone, but a further Timeout follows immediately at 17:57:40.645). | App | `PAIR-003` | debug export lines 201–221 |
+| 17:57:45.421–17:58:06.476 | EQ screen used: 13 `WriteSetting` calls in ~21s (video `t=228s` shows the Presets row, finger over Vocal Boost/Clarity) — a preset-tapping sequence, not isolated single-slider drags (the film does not show which preset(s) were tapped, so individual `EQS-*`/`EQP-*` Test-IDs are not claimed with confidence). | User (app) | `EQP-005`/`EQP-006` (🟡 — preset area confirmed on video, exact preset(s) not disambiguated) | debug export lines 222–253; frame `t=228.5s` |
 | 17:58:37.339 | **User's own Disconnect tap** — phone-initiated `DISC` on DLCI 0x02, confirmed on the wire (dir=0). | User (app) | — | frame 4116 (dir=0, `DISC`); debug export line 281 |
 | 17:58:41.172 | Reconnect. | App | `PAIR-003` | debug export lines 283–286 |
 | 17:58:53.164–53.417 | **User taps the Buds' row in Android's own Bluetooth settings panel** — video-confirmed directly: `t=292s` frame shows the panel open, "Pixel Buds Pro 2 van Ted — Actief. Batterijniveau 100%" highlighted, finger touching that row. System log confirms `input_interaction: … SystemUIDialog` and a `com.android.settings` unfreeze at the same instant. Android tears down HFP first (phone-initiated `DISC` on DLCI 0x0c, frame 4263). | User (Android Settings) | — | frame `t=292s` (visual confirmation); system log 15:58:53.164/.275; HCI frames 4263/4276 |
@@ -105,7 +105,7 @@ video/log evidence together.
       done, `CAP-060-FINDINGS.md`.
 - [x] Answer `ai-sessions/0043`'s four specific questions — done, `CAP-060-FINDINGS.md` §1 (Case
       battery/drops), §2 (per-earbud dock state), §3 (ANC tile).
-- [x] Cross-reference Test-IDs actually exercised — `PAIR-001`, `PAIR-003` (four reconnect cycles),
+- [x] Cross-reference Test-IDs actually exercised — `PAIR-001`, `PAIR-003` (six reconnect cycles: 17:55:29, 17:57:38, 17:58:41, 17:59:00, 17:59:40, 18:00:29),
       `ANC-001`–`004`, `FIND-001`/`002` are 🟢-confirmed. `EQP-005`/`EQP-006` are 🟡 (preset-area
       video confirmation, not individually disambiguated). No `EQS-*` Test-ID is claimed — the
       13-write burst is more consistent with preset taps than slider drags, unconfirmed either way.

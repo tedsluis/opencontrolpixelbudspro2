@@ -263,5 +263,10 @@ merged with merge commit `5b204ea` (`gh pr merge --merge`); tag `v1.2.2` (SSH-si
 2026-10-14 ("Ik heb versie 1.2.2 getest zonder CAP-076 uit te voeren en het werkt"). E1–E4: PR #52 (`release/1.2.2-after`). D4 done 2026-10-14: the published
 1.2.2 installed with Obtainium on the Pixel 9a (the maintainer, chat).
 
+
+## Corrections (2026-10-15, `ai-sessions/0094`, maintainer-approved in chat 2026-10-15 (`AskUserQuestion` "Sessieverslagen") — `ai-sessions/0093` A93-SES-03/05/06/07)
+
+- "+8" tests in `BudsRepositoryImplTest` with "one rewritten" — §D lists 7 new tests; the gate's `:data` delta is +8 including the store test.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0089_FEATURE_RESULT_2026_10_13.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0089_FEATURE_RESULT_2026_10_13

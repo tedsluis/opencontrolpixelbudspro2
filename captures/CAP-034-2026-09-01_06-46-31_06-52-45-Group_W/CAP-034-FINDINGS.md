@@ -2,7 +2,7 @@
 
 > **Status as of 2026-09-30** (`ai-sessions/0059`, A58-CAP-04 — read this first; the body below is the analysis as written): this capture's GATT map was promoted to 🟢 on 2026-09-01 (`PROTOCOL.md` §6); `FE2C1238…` = Find Hub "Beacon actions" (🟢, `PROTOCOL.md` §6 2026-09-26).
 
-**✅ Maintainer sign-off obtained 2026-09-01, per `AGENTS.md` §6/§15.** All four promotions proposed
+**✅ Maintainer sign-off obtained 2026-09-01, per `AGENTS.md` §6/§15.** All four promotions proposed (§9 items 1–4; item 5 = no ADR)
 in §9 (`PROTOCOL.md` §6/§4.3 Option D, `TESTPLAN_BLUETOOTH_HCI_SNOOP.md`'s `GATT-001` row,
 `CAPTURE_BLUETOOTH_HCI_SNOOP.md`'s Capture Index + Group W section, and the cross-reference notes in
 `CAP-010`/`CAP-017`/`CAP-014-FINDINGS.md`) have been applied.
@@ -138,7 +138,7 @@ never went away.
   3691  2026-09-01T06:51:22.212250+0200  0x09  Rcvd Read By Type Response, Attribute List Length: 1
   ```
   This is the standard GATT-caching hash check (`CAP-003-FINDINGS.md` §1) — it confirms the client
-  still trusts its already-resolved database (the one just declared 20s earlier in the same LE
+  still trusts its already-resolved database (the one declared ~3.5 minutes earlier, discovery burst ending at frame 3469, 06:47:45.471, in the same LE
   session) and explicitly does **not** re-walk it. **This capture therefore has no second,
   independent confirmation of the structure — only one discovery pass exists in the whole log.**
   This is a stronger, more precise version of the guardrail's prediction: not "treat window 2 as
@@ -447,15 +447,17 @@ characteristics, **before** bonding:
 Cross-checked against the wire — **zero** matching frames exist:
 ```
 $ tshark -r CAP-034-btsnoop_hci.log -Y "bthci_acl.chandle==0x0040 and frame.time>=\"2026-09-01 06:49:55\" and frame.time<=\"2026-09-01 06:50:02\""
-(no output)
+(no output, exit 0)
+$ # positive control: the same filter over 06:47:42–06:47:46
+3264 … 3469   (the discovery burst, §4)
 ```
 Every attempt throws its exception **~1ms** after the call — far too fast for a real BLE round trip
 (the discovery burst's own request/response pairs took 30–65ms each, §4). 🟡 HYPOTHESIS, not
 confirmed: this is consistent with a local Android-API-level rejection (e.g. firing a new GATT
 operation before a prior one's callback returns, a well-known `BluetoothGatt` pitfall) rather than
 any wire-level ATT error or encryption requirement — the official Fast Pair spec's own
-characteristics table (§4.2) lists these as "Encrypted: No," so an encryption-gate explanation is
-not supported by the cited spec text either. Reported as an open, unresolved observation (§8), not a
+characteristics table is said to list these as "Encrypted: No" — ⚪ not quoted in this file (§4.2 quotes names and properties only; its one quoted "No" is the
+Find Hub `FE2C1238` row), so an encryption-gate explanation is neither supported nor ruled out here. Reported as an open, unresolved observation (§8), not a
 guessed mechanism.
 
 ### 6c. The "reconnect" / "drill into Unknown Service" steps — already covered in §3
@@ -508,7 +510,7 @@ second confirmation — this capture's resolution rests on one discovery pass, n
 is judged sufficient because it is a full, genuine `0x0001..0xffff` walk with an untruncated log and
 independent video corroboration.
 
-**Maintainer sign-off obtained 2026-09-01 — all four applied:**
+**Maintainer sign-off obtained 2026-09-01 — items 1–4 applied (item 5: no ADR):**
 
 1. **`PROTOCOL.md` §6**'s `0x0c0X`/`0x0f2X` open item — closed, citing this capture (§4.1–§4.7) as
    🟢 FACT, with the full handle/UUID/name table added in place of the "🔴 OPEN QUESTION" framing.

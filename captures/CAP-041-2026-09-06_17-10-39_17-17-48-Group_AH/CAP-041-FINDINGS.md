@@ -133,8 +133,11 @@ across all four. The only positional differences are in the early header frames'
 don't reproduce at the same position) — none of these differences are large enough, or shaped like
 a known settings payload (see §3), to read as settings-content.
 
-**Settings states compared** (from the Event Timeline, all four genuinely different, none matching
-`CAP-036`'s all-defaults baseline):
+**Settings states compared** (from the Event Timeline as hand-noted, all four genuinely different, none matching
+`CAP-036`'s all-defaults baseline). *Note 2026-10-15 (`ai-sessions/0094`): the per-window states below are the hand-noted ones and are not
+confirmed by the wire — §3's decoded answers are the record: Windows A and B return the same EQ `[6.00 × 5]` (871/2010) although an EQ change is
+logged between them, A's all-equal EQ does not match "Bass high, Treble low", and Window C returns mono `0` (3252) and Volume EQ `0` (3239) though
+neither change is logged. Treat the timeline's settings rows as unverified.*
 - `CAP-036` (baseline): every setting at default (EQ centered, touch controls on).
 - Window A: touch controls fully off, one non-default EQ config, mono audio on.
 - Window B: + both earbuds' touch customization off, a different EQ config.
@@ -161,7 +164,7 @@ CAP-041-btsnoop_hci.log` (pw_hdlc + pw_rpc, CRC-32 checked; 96 `ReadSetting` req
 asking, not by the Buds volunteering. (Rewritten in place 2026-10-03, `ai-sessions/0069`, A68-CAP-18: this section and §8 used to conclude "no settings read-back
 of any kind" from the request side alone.)
 
-## 4. Bonus/incidental finding: the DLCI 0x02 periodic push's constant field matches on-screen Case% (🟡 HYPOTHESIS, strengthens but does not resolve `CAP-036-FINDINGS.md` §12.6's open question)
+## 4. Bonus/incidental finding: the DLCI 0x02 periodic push's constant field matches on-screen Case% (🟡 HYPOTHESIS as written, strengthens but does not resolve `CAP-036-FINDINGS.md` §12.6's open question — answered since: Option F, ADR-043, see §6)
 
 Within each window's connect-time burst (not a separate later push — this occurs ~4s after
 channel-open, still inside the burst window itself), a recurring sub-message structurally identical

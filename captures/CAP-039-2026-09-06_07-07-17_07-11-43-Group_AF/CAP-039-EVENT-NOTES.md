@@ -1,5 +1,7 @@
 # Event Notes: Pixel Buds Pro 2 (`libmaestro` / `libgfps`) — Group AF, `Settable-toggles` byte: Set-tap vs. reconnect-Get, same session/dock-state (`CAP-039`)
 
+> **Status as of 2026-09-30** (as in `CAP-039-FINDINGS.md`): `03 03 …` is 🟢 "Battery updated" (ADR-031/033); the DLCI 0x02 burst is the official app's `ReadSetting` sweep (`PROTOCOL.md` §6 2026-09-24); the Settable byte's reading is ADR-049 (supersedes ADR-024's "dock state"). The text below is as written.
+
 **Status:** ✅ **Captured, video-reviewed, and decoded — see `CAP-039-FINDINGS.md`.** The session
 ran 6 reconnects and 4 ANC taps, not the planned 1 Get + 1 Set. Folder renamed to
 `CAP-039-2026-09-06_07-07-17_07-11-43-Group_AF`.
@@ -37,7 +39,7 @@ in the case at any point, or the dock-state variable stops being held constant.
 |       Date       |                     2026-09-06                      |
 | Firmware version | ⚪ ASSUMPTION `release_5.203` |
 |   Test device    | Pixel 7a, Android version ⚪ not recorded in this session (this file said "14"; the same phone is recorded as 17 in the captures before and after — unreconciled, `ai-sessions/0069` `A68-CAP-23`). **Official Pixel Buds Companion App, Google Play Services enabled** |
-| Video file       | `CAP-039-recording.mp4` — 05:03s, `07:07:17`–`07:12:20` local time |
+| Video file       | `CAP-039-recording.mp4` — 265.62s (`ffprobe`), `07:07:17`–~`07:11:43` local time |
 | Log file         | `CAP-039-btsnoop_hci.log` — 372.04s, 6,184 packets, 2026-09-06 07:07:28.040–07:13:40.082 local time |
 | Buds MAC (partial, per `AGENTS.md` §7/§9) | `04:00:6e:cf:6e:07` |
 
@@ -98,11 +100,11 @@ not silently reconciled.**
 | `07:07:17` | Start video recording | — | — | — |
 | `07:07:22` | Phone shown in system Bluetooth quick-panel, Buds already "Active" (L:98%/R:100%); user's finger near the Buds row (video-confirmed, `t6.png`) — the log has not started yet (first log frame is `07:07:28.040`, a full `Sent Reset` HCI re-init sequence) | User (OS) | — | — (predates log) |
 | `07:07:28.040` | Log starts — HCI controller Reset/init sequence (consistent with the "phone rebooted" prep step) | — | — | frame 1 |
-| `07:07:33`–`34` | "Pixel Buds Pro 2 van Ted — Connecting…" shown on screen (video-confirmed, `t17.png`); wire Connection Complete chandle `0x0002` (BLE) @`07:07:34.091`, chandle `0x0005` (classic) @`07:07:35.111` | App/OS (Auto) | `PAIR-003` | frames 653, 683 |
+| `07:07:33`–`34` | "Pixel Buds Pro 2 van Ted — Connecting…" shown on screen (video-confirmed, `t17.png`); wire: failed classic page @`07:07:34.091` (frame 653, Connection Complete status `0x04` Page Timeout, link type ACL — no connection), then the classic connection chandle `0x0005` @`07:07:35.111` | App/OS (Auto) | `PAIR-003` | frames 653, 683 |
 | `07:07:39.230`/`.412` | DLCI 0x04 Get (`08 11 00 00`) / Notify (`08 13 00 04 01 e8 08 08`) immediately after reconnect — Current state `0x08` = Noise cancellation (pre-existing mode, matches on-screen "Noise cancellation" selected at `t40.png`) | App/OS (Auto) | `OBS-006` (Get #1) | frames 890/909 |
+| `~07:07:43`–`46` | 47-frame (Sent) DLCI 0x02 burst, 07:07:43.76–07:07:47.40 — the official app's `ReadSetting` sweep, not an EQ write (`CAP-039-FINDINGS.md` §4 and status banner) | User (App) | — | frames 1203–1362 (representative) |
 | `07:07:56`–`57` | **Real "Window 1" tap** — Device details screen, user taps **"Adaptive"** tile (video-confirmed, `t40.png` — finger on 3rd tile; mode was Noise cancellation, NOT "Off" as originally documented) | User (App) | `ANC`-family | Set frame 1411 @`07:07:57.588` |
 | `07:07:57.896` | Notify: Current `0x40` = Adaptive | App (Auto) | — | frame 1416 |
-| `~07:07:43`–`46` | Rapid ~300-frame DLCI 0x02 write burst (consistent with an EQ slider drag — see Decode/Analysis §, bonus) | User (App) | — | frames 1203–1362 (representative) |
 | `07:08:11.861` | Disconnection Complete, chandle `0x0005`, reason `0x16` (Terminated by Local Host) | User (OS)/App | `PAIR-003` | frame 1628 |
 | `07:08:25.794`; `07:08:29.785`/`.980` | Reconnect #2 — chandle `0x0006` (Connect Complete 1711); DLCI 0x04 Get/Notify, Current `0x40` (still Adaptive) | App/OS (Auto) | `OBS-006` (Get #2) | frames 1951/1967 |
 | `07:08:51.455` | Disconnection Complete, chandle `0x0006`, reason `0x16` | User (OS)/App | `PAIR-003` | frame 2461 |
@@ -120,8 +122,8 @@ not silently reconciled.**
 | `~07:11:43` | Video ends (ffprobe duration 265.62s; 07:07:17+265.62s) — log continues to `07:13:40.082` with idle BLE advertising only, nothing further of interest | — | — | frame 6184 (log end) |
 
 **Contamination log:** The originally-documented "one Set, one Get" plan was not followed. The
-user instead performed **6 reconnects** (5 of them locally-initiated disconnect/reconnect cycles,
-reason `0x16`, matching the same button-mashing pattern `CAP-040`'s own procedure used
+user instead performed **6 reconnects** (the initial one plus 5 disconnect/reconnect cycles — 4 locally-initiated,
+reason `0x16`, and 1 remote, `0x13`, frame 5184 — matching the same button-mashing pattern `CAP-040`'s own procedure used
 deliberately) and **4 ANC taps** alternating Noise cancellation ↔ Adaptive (never "Off"), all
 interleaved with a mid-session EQ-slider-drag-shaped DLCI 0x02 burst and other settings navigation
 (In-Ear Detection, Touch Controls, Multipoint — not individually decoded, see Decode/Analysis).
@@ -154,7 +156,7 @@ tshark -r CAP-039-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
 ## Open Questions
 
 - 🔴 What causes the app/OS to disconnect-and-immediately-reconnect 5 times in ~3.5 minutes with no
-  visible on-screen trigger for most of them (reason `0x16`, locally-initiated)? Not resolved by
+  visible on-screen trigger for most of them (reason `0x16`, locally-initiated, on 4; `0x13`, remote, on frame 5184)? Not resolved by
   this capture — flagged for a future session with continuous full-screen video coverage of the
   Bluetooth quick-panel/app, since this session's camera was mostly on the Device details screen
   and did not show whichever UI action triggered each disconnect.
@@ -167,16 +169,16 @@ tshark -r CAP-039-btsnoop_hci.log -Y "bthci_acl.chandle==<Buds chandle> and btrf
 
 ## Next steps after filling this in
 
-- [ ] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13).
-- [ ] Write `CAP-039-FINDINGS.md` per `PROJECT_RULES.md` §2, hex & script rule (§1 rule 4a).
-- [ ] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
+- [x] Cross-reference every Test-ID this Group is supposed to exercise (`AGENTS.md` §13).
+- [x] Write `CAP-039-FINDINGS.md` per `PROJECT_RULES.md` §2, hex & script rule (§1 rule 4a).
+- [x] Update `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 Capture Index (status → `captured`/`analyzed`) and
       `id_registry.csv`'s `CAP-039` row.
-- [ ] Add `OBS-006`'s Evidence column pointer in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (pointer only).
-- [ ] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8).
-- [ ] **Do not** promote anything to 🟢 FACT or write/amend a `DECISIONS.md` ADR without explicit
+- [x] Add `OBS-006`'s Evidence column pointer in `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` (pointer only).
+- [x] Copy every new 🔴 OPEN QUESTION into `PROTOCOL.md` §6 (mandatory, §8).
+- [x] **Do not** promote anything to 🟢 FACT or write/amend a `DECISIONS.md` ADR without explicit
       maintainer sign-off (`AGENTS.md` §6, §15) — propose only, even if this session's result
       would revise ADR-024.
-- [ ] Rename this capture's folder to the actual session date/start-time/end-time.
+- [x] Rename this capture's folder to the actual session date/start-time/end-time.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/captures/CAP-039-2026-09-06_07-07-17_07-11-43-Group_AF/CAP-039-EVENT-NOTES.md - https://tedsluis.github.io/opencontrolpixelbudspro2/captures/CAP-039-2026-09-06_07-07-17_07-11-43-Group_AF/CAP-039-EVENT-NOTES

@@ -9,8 +9,8 @@ staged here per `PROJECT_RULES.md` §2. Every claim below carries a status per `
 - 🔴 **OPEN QUESTION** — genuinely unresolved by this capture.
 
 **Capture ID:** `CAP-044` · **Date:** 2026-09-13 · **Firmware:** `release_5.203` (🟢 confirmed
-on-wire, frame 4416, DLCI 0x08 Group `0x03` Code `0x02`) · **Phone:** Pixel 7a, Android 17 (🟢
-FACT, MP4 container tag) · **App version:** `1.0.955078536` (⚪ ASSUMPTION, maintainer-supplied
+on-wire, frame 4416, DLCI 0x08 Group `0x03` Code `0x02`) · **Phone:** Pixel 7a, Android 17 (⚪
+ASSUMPTION — the MP4 container tag is the camera phone's, `CAP-043-FINDINGS.md` §1) *(corrected 2026-10-15, `ai-sessions/0094`)* · **App version:** `1.0.955078536` (⚪ ASSUMPTION, maintainer-supplied
 context) · **Google Play services:** active (⚪ ASSUMPTION, maintainer-supplied context) ·
 **Log file:** `CAP-044-btsnoop_hci.log` (6,363 packets, 850.35s, 12:59:08.43–13:13:18.78 local) ·
 **Video:** `CAP-044-recording.mp4` (316.42s, 13:05:51–13:11:07 local) · **Buds MAC (partial):**
@@ -70,9 +70,9 @@ the picture:
 - This means `SDP-001`'s isolation requirement ("force-stop the app first, so it cannot react to the
   pairing at all") is **not cleanly satisfied in this session either**, for a different, more precise
   reason than `CAP-033`'s violation (`CAP-033-FINDINGS.md` §1.1's Forget-before-Force-stop ordering
-  issue): here the *order* was correct (Force-stop before Forget, at least for the very first
-  force-stop before the video started), but there is no confirmed force-stop covering the actual
-  window in which the pairing and SDP browse happened.
+  issue): here the *order* was nominally correct (Force-stop before Forget, for the very first
+  force-stop before the video started), but the relaunch at 13:05:55 put the app back in the foreground for the Forget at 13:05:59, so the order
+  was nullified, and there is no confirmed force-stop covering the actual window in which the pairing and SDP browse happened. *(corrected 2026-10-15, `ai-sessions/0094`)*
 - **This is directly relevant to interpreting §3's positive finding below** — see §5's discussion of
   why the SDP query *pattern* observed in this session is unusually informative regardless of this
   gap.
@@ -134,7 +134,7 @@ Service Attribute: Service Name (0x100), value = MAESTRO APP
 byte-for-byte identically in this independent session, 14 days later** — a second, independent
 wire-level confirmation of "MAESTRO APP"=DLCI 0x02, "GSND CONTROL"=DLCI 0x08, "GSND AUDIO"=DLCI
 0x0a, and "GFPS RFCOMM" (official Fast Pair Message Stream)=DLCI 0x04. This further strengthens
-`DECISIONS.md` ADR-018's DLCI-0x02-channel-ownership FACT (now a 5th/6th confirming instance,
+`DECISIONS.md` ADR-018's DLCI-0x02-channel-ownership FACT (now a 5th confirming instance,
 counting `CAP-001`/`CAP-002`/`CAP-032`/`CAP-033`/this capture) and adds a second wire-level data
 point for the `CAP-033`-introduced "GSND CONTROL"/"GSND AUDIO" naming lead.
 
@@ -198,8 +198,8 @@ independently-comparable SDP transaction exists in this log to check against.
 - **What actually happened, per §1/§2:** the isolation gap in this session is that no Force-stop is
   confirmed to cover the ~2m8s window between the in-app "Forget" and the actual "Pair" tap that
   triggers the SDP browse — not (as `CAP-033` had) a Forget-before-Force-stop ordering violation, and
-  not (as `CAP-033` had) a never-executed step 3. This session fixes both of `CAP-033`'s specific
-  gaps (§1.1/§1.3 there) but introduces a different one of its own.
+  not (as `CAP-033` had) a never-executed step 3. This session fixes `CAP-033`'s step-3 gap (§1.3 there); the ordering gap (§1.1) is only
+  nominally fixed — the app was relaunched before the Forget (13:05:55) — and a different gap of its own is added. *(corrected 2026-10-15, `ai-sessions/0094`)*
 - **What the SDP browse itself looked like, per §3, is a genuinely new and informative data point,
   independent of the isolation question**: this session's SDP transaction is a set of *targeted*,
   one-UUID-at-a-time queries (GSND CONTROL, GSND AUDIO, GFPS RFCOMM ×2, MAESTRO APP) rather than
