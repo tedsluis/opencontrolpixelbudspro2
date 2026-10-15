@@ -4,7 +4,7 @@
 **Category:** FEATURE
 **Date:** 2026-10-14
 **Prompt:** `ai-sessions/0091_FEATURE_PROMPT_2026_10_14.md`
-**Status:** complete (not committed — awaiting the maintainer's yes in chat)
+**Status:** complete (committed and pushed 2026-10-14, PR #56; released as 1.3.0 on 2026-10-15 after `CAP-076`, `ai-sessions/0092`)
 
 ## Progress
 

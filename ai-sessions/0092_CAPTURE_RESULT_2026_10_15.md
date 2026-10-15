@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-15
 **Title:** Full analysis of `CAP-076` (Group BL): two screen recordings, four HCI snoop logs, two app debug exports, two app logcats, a system log, a full logcat and an adb shell log — part 1 (Owner, Play, 1.2.2 → 1.3.0) and part 2 (secondary user, no Play)
-**Status:** awaiting maintainer sign-off (the analysis, the documents and the verdict done; the commit and push await the maintainer's yes)
+**Status:** complete (signed off by the maintainer in chat 2026-10-15; committed and pushed; 1.3.0 released the same day)
 
 ## Summary (plain language first)
 
@@ -170,7 +170,17 @@ folder renamed. **Next for the maintainer:** the commit/push answer, then `RELEA
 
 ## Commits
 
-Not committed — awaiting the maintainer's yes in chat (the RESULT's next session back-fills the hashes, `AI_SESSION_LOG_PROCEDURE.md` §4b).
+On `feature/settings-stream` after the build commit `ff27ee1`, pushed 2026-10-15 without force (the maintainer's yes, "Commit+push"):
+- `c32b297` docs(capture): CAP-076 — the 1.3.0 run in both GrapheneOS users, analysed (ai-sessions/0092)
+- `0f96949` chore(scripts): the four tools behind CAP-076's counts
+- `191dbc3` docs: CAP-076 into the registers — ADR-065 Update, PROTOCOL §4.1 note, Known issues
+- `b06181e` docs: ai-sessions/0092 RESULT and the INDEX rows
+
+**The release, continued in chat 2026-10-15** (the maintainer: "Merge PR 56 en release 1.3.0"): the PR #56 body ticked (B3, C1–C4); PR #56 merged with a merge
+commit (`aec17a5`, CI green) and the bot sitemap PR #57 after it; the signed tag `v1.3.0` on `ff27ee1` (on `origin/main`); the draft from the kept copy (APK,
+`.sha256`, notices; notes with "Known issues in 1.3.0"), the uploaded APK re-downloaded — SHA-256 `03272c6f…a96c`; published 2026-10-15T07:09:03Z. D4 by the
+maintainer: "Ik heb de 1.3.0 app geinstalleerd op mijn telefoon met obtainium. Het werkt!" E1–E4 on `release/1.3.0-after` by pull request (E4: the template
+holds no 1.3.0-specific line — nothing to remove).
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0092_CAPTURE_RESULT_2026_10_15.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0092_CAPTURE_RESULT_2026_10_15

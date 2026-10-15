@@ -7,7 +7,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **Latest release: [1.2.2](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.2)** (2026-10-14). You can also
+> **Latest release: [1.3.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.3.0)** (2026-10-15). You can also
 > [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
@@ -135,12 +135,14 @@ noise-control tab, so a press-and-hold is shown about half of the time for the w
 (no mode written); and the noise-control (i) says when a mode the app read had changed while it did not have the channel. Expected numbers are `CAP-075`'s (one
 Play version), not measured with 1.2.2.
 
-**1.3.0** (prepared 2026-10-14 in `ai-sessions/0091` after `ai-sessions/0090`'s cross-check of the official app; not released): the app subscribes to the Buds'
+**1.3.0** (2026-10-15; prepared 2026-10-14 in `ai-sessions/0091` after `ai-sessions/0090`'s cross-check of the official app; build `ff27ee1`): the app subscribes to the Buds'
 settings stream and reads the noise-control mode on its own channel at every Connect and re-open (ADR-064), so **a press-and-hold on a bud shows on any tab, with
 or without Google Play services**, and every setting the app shows follows a change made elsewhere; the hold, the re-claim, the "Noise control with Google Play
-services" setting and the Play-services line are removed (ADR-065; a stored choice is ignored). Its hardware run is `CAP-076` (Group BL, rewritten). Known issues
-of 1.3.0 (also in [`CHANGELOG.md`](./CHANGELOG.md)): a tap can still collide with Play's claim of the shared channel (then tap again); after the Buds' own close
-of the session (one bud out while both are worn) the mode shown can be a few seconds old until the re-open's read.
+services" setting and the Play-services line are removed (ADR-065; a stored choice is ignored). Its hardware run `CAP-076` (`ai-sessions/0092`, both users) showed
+every press-and-hold on the noise-control tab within 0.1 s — 29 of 29 with Google Play services, 12 of 12 without. Known issues of 1.3.0 (also in
+[`CHANGELOG.md`](./CHANGELOG.md)): a tap can still collide with Play's claim of the shared channel (it then usually fails with a message; tap again); after the
+Buds' own close of the session (one bud out while both are worn) the mode shown can be a few seconds old until the re-open's read; after a reconnect a mode
+that changed meanwhile is shown without the "Changed since the app last saw it" line.
 
 **Known issue since 1.0.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
@@ -175,7 +177,7 @@ to design, implement, test, and document a native Android app.
 
 ## Current state (2026-10-14)
 
-- **Captures:** 76 registered sessions (`CAP-001`–`CAP-076`): 71 analyzed (the latest, `CAP-075` of 2026-10-12/13: the 1.2.1 release build in both GrapheneOS users — without Google Play services every press-and-hold on the tab shown, with Play services the hint and the re-claims measured against Play's timers, `ai-sessions/0088`), 3 planned (among them `CAP-076`, the 1.3.0 run, skeleton by `ai-sessions/0089`, rewritten for 1.3.0 by `ai-sessions/0091`), 2 withdrawn (`CAP-052`,
+- **Captures:** 76 registered sessions (`CAP-001`–`CAP-076`): 72 analyzed (the latest, `CAP-076` of 2026-10-15: the 1.3.0 release build in both GrapheneOS users — every press-and-hold on the noise-control tab shown through the settings stream, 29 of 29 with Google Play services and 12 of 12 without, `ai-sessions/0092`), 2 planned, 2 withdrawn (`CAP-052`,
   `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` and `CAP-070`–`CAP-075` are captures of this project's own app (`CAP-067`: the 1.0.0
   release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, `CAP-071`: the 1.1.1 release APK, `CAP-072`: the 1.2.0 release APK, `CAP-073`: the rebuilt 1.2.0 release APK, all without Google Play services; `CAP-074`: the released 1.2.0 in the Owner user with Play services; `CAP-075`: the 1.2.1 release APK in both users); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see

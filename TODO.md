@@ -11,17 +11,17 @@ pre-restructure file (same command). The `pbtk` root cause those pointers most o
 
 Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maintainer (a decision, a sign-off, or an action only they can do).
 
-## 1. After release 1.2.2 (published 2026-10-14, `ai-sessions/0089` and its continuation in chat)
+## 1. After release 1.3.0 (published 2026-10-15, `ai-sessions/0092` and its continuation in chat)
 
 - [x] **1.2.2 published 2026-10-14** (tag `v1.2.2` on build commit `bfd7891`, PR #49 merged with `5b204ea`; E1–E4 by the pull request of `release/1.2.2-after`).
       **No hardware capture:** the maintainer tested 1.2.2 on the phone and released it without `CAP-076` (chat 2026-10-14). **D4 done 2026-10-14:** the published APK
       installed on the Pixel 9a with Obtainium (the maintainer, chat 2026-10-14: "Ik heb opencontrol for buds middels obtainium geupdate naar 1.2.2 op mijn pixel
       9a telefoon"); the published APK's SHA-256 = the tested build's (`d750551a…8a6b`, re-checked with `gh release download`). E1–E4: PR #52.
       (1.2.1: D4 done 2026-10-13 with Obtainium; E1–E4 by PR #45.)
-- [x] `CAP-076` (Group BL), **the 1.3.0 run**, captured 2026-10-15 in both users and analysed by `ai-sessions/0092` (`CAP-076-FINDINGS.md`): the two requests
-      once per session (12 of 12), every hold on the noise-control tab shown (29 of 29 with Play, 12 of 12 without), three minor defects (§5 below); **verdict
-      "release as built + Known issues"** (the maintainer, chat 2026-10-15) — next: `RELEASING.md` D1–D4 (the maintainer's), then E1–E4. Not run (the maintainer
-      tested only the changed functionality): BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25.
+- [x] **1.3.0 published 2026-10-15** (tag `v1.3.0` on build commit `ff27ee1`, PR #56 merged with `aec17a5`; E1–E4 by the pull request of `release/1.3.0-after`)
+      after `CAP-076` (Group BL, `ai-sessions/0092`: every hold on the noise-control tab shown — 29/29 with Play, 12/12 without; verdict "release as built +
+      Known issues", the maintainer, chat 2026-10-15). **D4 done 2026-10-15:** installed with Obtainium on the Pixel 9a (the maintainer: "Het werkt!"). Not run
+      in `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25. Next: the fixes P1–P3 of §5 when the maintainer chooses (no FEATURE prompt yet).
 - **The Buds' state after `CAP-076` (2026-10-15):** EQ `[−1, 0, 4, 2, 1.69]`, **in-ear detection off** (written 07:06:56, not switched on again), all four
   press-and-hold modes, balance Centre — restore in-ear detection if wanted (**M**).
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
