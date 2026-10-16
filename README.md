@@ -141,7 +141,7 @@ to design, implement, test, and document a native Android app.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 58 accepted, 6 superseded and one labelled draft ADR in `DECISIONS.md` (ADR-065, 2026-10-14, the settings stream replaces the hold and the re-claim — built in 1.3.0, `ai-sessions/0091`; ADR-064, 2026-10-14, the subscription and the read of setting 13, `ai-sessions/0090`; ADR-061/062/063 superseded by ADR-065, the draft: ADR-060, proposed, not accepted); every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
+- **Decisions:** 59 accepted, 6 superseded and one labelled draft ADR in `DECISIONS.md` (ADR-066, 2026-10-16, capture files without Git LFS from `CAP-077` on; ADR-065, 2026-10-14, the settings stream replaces the hold and the re-claim — built in 1.3.0, `ai-sessions/0091`; ADR-064, 2026-10-14, the subscription and the read of setting 13, `ai-sessions/0090`; ADR-061/062/063 superseded by ADR-065, the draft: ADR-060, proposed, not accepted); every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
   approval was given but whose record is missing (the ADR says so).
 - **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
   (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),

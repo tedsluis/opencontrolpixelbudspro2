@@ -268,10 +268,6 @@ Restructures the maintainer deferred (chat 2026-10-03, "Restructures"; re-confir
 `ai-sessions/0093` §6 rows 6, 9 and 13 as the current proposals); each is a MAINTENANCE session of its own, with a before/after check that no
 statement is lost (`ai-sessions/0068` §6 has the proposal for each):
 
-- [ ] **CAP-077's data files are not committed** (`ai-sessions/0095`, the maintainer's choice in chat 2026-10-16): Git LFS refuses every upload (the account's LFS
-      budget is exceeded and cannot be raised). When LFS accepts uploads again (**M**): remove the CAP-077 lines from `.gitignore` and commit the folder's data files
-      (the two HCI logs, the export, the app logcat, the logcat extract, the shell log, the checks log, the hashes; the 188-MB recording only if wanted) — they
-      are in the folder and in ~/opencontrol-capture-originals/CAP-077/. Until then the frame and line numbers of `CAP-077-FINDINGS.md` can be checked only there.
 - [ ] `ARCHITECTURE.md` — "as built" text; dated notes become current text or move to `DECISIONS.md`; §5a gets a "verified in capture" column (§6.1).
 - [ ] `PROTOCOL.md` — a "Current" block per entry with the history below it; a one-page wire summary; §6 open items only (§6.13). All FACT-text
       changes as dated proposals for **M**.

@@ -201,6 +201,8 @@ document disconnected from the capture it belongs to.
     finding).
 18. Captures and large binary files go through Git LFS, never directly into the
     main repository (see `.gitattributes`).
+    **From `CAP-077` on (2026-10-16, maintainer-approved in chat, `DECISIONS.md` ADR-066):** the Git LFS budget is exceeded — a capture's files of at most
+    5 MB each are committed as ordinary git files; films, full logcats and system logs stay local with their SHA-256 in the committed hash list.
 19. Sensitive or personal data (e.g. MAC addresses of your own devices, account
     details) is anonymized or excluded before committing — consistent with the
     MAC-address handling rules in `AGENTS.md` §7 and §9 (which govern the

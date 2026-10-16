@@ -1,0 +1,39 @@
+# Fri Oct 16 07:42:23 AM CEST 2026 — ai-sessions/0095, read-only checks
+$ adb shell am get-current-user
+10
+exit=0
+$ adb shell pm path --user 10 io.github.tedsluis.opencontrolpixelbuds
+package:/data/app/~~J4-NLlgSIGkECkJTtzNfcg==/io.github.tedsluis.opencontrolpixelbuds-njCHV0guxkJ0X0sMjMNUHQ==/base.apk
+exit=0
+$ adb pull /data/app/~~J4-NLlgSIGkECkJTtzNfcg==/io.github.tedsluis.opencontrolpixelbuds-njCHV0guxkJ0X0sMjMNUHQ==/base.apk
+/data/app/~~J4-NLlgSIGkECkJTtzNfcg==/io.github.tedsluis.opencontrolpixelbuds-njCHV0guxkJ0X0sMjMNUHQ==/base.apk: 1 file pulled, 0 skipped. 36.0 MB/s (27312153 bytes in 0.723s)
+exit=0
+$ sha256sum base.apk
+9be3a89c94d3db7236416a244d2fea51e0524c6e5806d2e648faf4ca0611ee0a  base.apk
+$ cat ~/opencontrol-1.3.1-tested/opencontrol-pixelbudspro2-1.3.1.apk.sha256
+9be3a89c94d3db7236416a244d2fea51e0524c6e5806d2e648faf4ca0611ee0a  opencontrol-pixelbudspro2-1.3.1.apk
+$ adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -E "versionCode|versionName|lastUpdateTime|firstInstallTime|User 0:|User 10:"
+    versionCode=10301 minSdk=34 targetSdk=34
+    versionName=1.3.1
+    lastUpdateTime=2026-10-16 06:58:05
+    User 0: ceDataInode=491093 deDataInode=474245 pccCeDataInode=0 pccDeDataInode=0 installed=true hidden=false suspended=false appLockEnabled=false distraction
+      firstInstallTime=2026-10-09 18:33:54
+    User 10: ceDataInode=291801 deDataInode=250032 pccCeDataInode=0 pccDeDataInode=0 installed=true hidden=false suspended=false appLockEnabled=false distractio
+      firstInstallTime=2026-10-09 17:24:41
+    User 0:
+    User 10:
+$ adb shell pm list packages --user 10 | grep -E "com.google.android.gms$|com.android.vending$"; echo exit
+exit=1
+$ adb shell pm list packages --user 0 | grep -E "com.google.android.gms$|com.android.vending$"  (positive control)
+package:com.android.vending
+package:com.google.android.gms
+exit=0
+
+# Fri Oct 16 07:56:33 AM CEST 2026 — ai-sessions/0095, read-only: CompanionDeviceManager associations of this app (other apps' lines left out; addresses not copied)
+$ adb shell dumpsys companiondevice     (exit 0; the four lines naming io.github.tedsluis.opencontrolpixelbuds, summarised)
+Associations:
+  mId=51 mUserId=10 mTimeApprovedMs=Fri Oct 16 07:00:24 GMT+02:00 2026
+  mId=52 mUserId=0  mTimeApprovedMs=Fri Oct 16 07:55:44 GMT+02:00 2026
+Last Removed Association:
+  1791703049741 (= 2026-10-11 09:17:29 CEST) pkg-data-cleared  mId=50 mUserId=0  mTimeApprovedMs=Sun Oct 11 09:15:34 GMT+02:00 2026
+  1791120128744 (= 2026-10-04 15:22:08 CEST) pkg-data-cleared  mId=48 mUserId=10 mTimeApprovedMs=Sun Oct 04 07:41:04 GMT+02:00 2026

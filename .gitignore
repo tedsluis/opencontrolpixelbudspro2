@@ -72,8 +72,8 @@ dist/
 THIRD_PARTY_NOTICES.txt
 release-notes.md
 
-# CAP-077: only the two notes are committed; every data file stays local until Git LFS accepts uploads again (the LFS budget was
-# exceeded and cannot be raised — the maintainer, chat 2026-10-16; ai-sessions/0095; TODO.md §6).
-captures/CAP-077-2026-10-16_06-56-14_07-10-38-Group_BM/*
-!captures/CAP-077-2026-10-16_06-56-14_07-10-38-Group_BM/CAP-077-EVENT-NOTES.md
-!captures/CAP-077-2026-10-16_06-56-14_07-10-38-Group_BM/CAP-077-FINDINGS.md
+# DECISIONS.md ADR-066 (2026-10-16): films, full logcats and system logs are never committed (kept in ~/opencontrol-capture-originals/CAP-NNN/,
+# their SHA-256 in the committed CAP-NNN-sha256sums.txt). Files already tracked in Git LFS (CAP-001 … CAP-076) are not affected.
+captures/**/*.mp4
+captures/**/*logcat-all*
+captures/**/*System-log*

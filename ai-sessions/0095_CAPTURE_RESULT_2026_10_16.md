@@ -101,6 +101,10 @@ verhogen, pas de commit aan, houdt de grote bestanden lokaal." The commits were 
 the two notes and the documents are committed; every CAP-077 data file stays local (the folder and ~/opencontrol-capture-originals/CAP-077/), ignored by
 `.gitignore`, to be committed when LFS accepts uploads again (`TODO.md` §6).
 
+**Continuation (chat 2026-10-16, after the release):** the capture storage was settled by **ADR-066** (maintainer-approved, `AskUserQuestion` "ADR-066" → *"ADR-066
+zoals getoond (Recommended)"*, "Regel 18" → *"Ja, gedateerde verwijzing (Recommended)"*): from `CAP-077` on, files of at most 5 MB are ordinary git files, films and
+full logcats stay local. `CAP-077`'s data files (≈ 4.3 MB) were committed under it; the film stays local.
+
 ## Files read
 
 **In full:** `AGENTS.md`, `PROJECT_RULES.md`, `PROJECT.md`, `AI_SESSION_LOG_PROCEDURE.md`, `DECISIONS.md` (ADR-001 … ADR-065 with every Update, the draft ADR-060), the
