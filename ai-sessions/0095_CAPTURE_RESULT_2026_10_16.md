@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-16
 **Title:** Full analysis of `CAP-077` (Group BM): one screen recording (no audio), two HCI snoop logs, one app debug export, one app logcat, a full logcat and an adb shell log — the update 1.3.0 → 1.3.1 on film, secondary user without Play
-**Status:** complete (the maintainer's verdict and approvals in chat 2026-10-16; committed and pushed on `release/1.3.1`)
+**Status:** complete (the maintainer's verdict and approvals in chat 2026-10-16; committed and pushed on `release/1.3.1`; 1.3.1 published 2026-10-16)
 
 ## Summary (plain language first)
 
@@ -124,7 +124,11 @@ Each also in `TODO.md`:
 
 ## Commits
 
-On `release/1.3.1` after the build commit `7aa524b` (no app file changed): see the next session's back-fill for the hashes (written before the commits).
+- `302b521` docs: CAP-077 (Group BM) analysed — notes, findings, registers; ADR-065 Update, PROTOCOL.md §6 note; ai-sessions/0095 (on `release/1.3.1`; two earlier
+  local attempts with the capture data were not pushed — Git LFS refused them).
+- PR #64 merged by this session at the maintainer's request (chat 2026-10-16, "merge de PR en maak de release"): merge commit `67efae9`; signed tag `v1.3.1` on
+  `7aa524b`; release published 2026-10-16T06:50:17Z. D4 by the maintainer (Obtainium).
+- `RELEASING.md` E1–E4: branch `release/1.3.1-after` (this commit), its own pull request, merged at the maintainer's request.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0095_CAPTURE_RESULT_2026_10_16.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0095_CAPTURE_RESULT_2026_10_16
