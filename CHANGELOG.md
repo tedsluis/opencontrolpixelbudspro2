@@ -16,7 +16,7 @@ build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phon
 
 ## [Unreleased]
 
-## [1.3.1]
+## [1.3.1] - not yet released
 
 Prepared in `ai-sessions/0094` (2026-10-15) from the audit `ai-sessions/0093` and the `CAP-076` findings (the maintainer's choice in chat 2026-10-15, "1.3.1 met
 APP-01…06"). Nothing new on the wire: the app's requests are 1.3.0's. Not yet on hardware: the run is `CAP-077` (Group BM, planned).
