@@ -11,13 +11,11 @@ pre-restructure file (same command). The `pbtk` root cause those pointers most o
 
 Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maintainer (a decision, a sign-off, or an action only they can do).
 
-## 1. After release 1.3.0 (published 2026-10-15, `ai-sessions/0092` and its continuation in chat)
+## 1. After release 1.3.1 (published 2026-10-16, `ai-sessions/0095` and its continuation in chat)
 
 *(The finished release items of 1.2.2 and 1.3.0 were deleted 2026-10-15 by `ai-sessions/0094` — `ai-sessions/0093` A93-HK-01; they are in `CHANGELOG.md`,
 `RELEASING.md` §13 and the session RESULTs.)*
-- [ ] **1.3.1** (prepared by `ai-sessions/0094`): the hardware run `CAP-077` was analysed by `ai-sessions/0095` (2026-10-16) — verdict "release as built" (the
-      maintainer, chat 2026-10-16); next `RELEASING.md` D1 … E4 (**M**); `CHANGELOG.md` [1.3.1] gets its date then. Not run in `CAP-077` (A93-APP-02/04/07 rest on
-      their unit tests): BM-3, BM-4 as planned, BM-6, BM-7 and the rotation — see §2. Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25.
+- 1.3.1 published 2026-10-16 (`v1.3.1` on `7aa524b`, `RELEASING.md` §13). Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25; from `CAP-077`: §2.
 - **The Buds' state after `CAP-077` (2026-10-16):** EQ `[−1, 0, 4, 2, 5.87]` (Upper treble raised in the run), **in-ear detection on again** (07:01:07), all four
   press-and-hold modes, balance Centre, every switch as before the run.
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;

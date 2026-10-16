@@ -7,7 +7,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## Download & install
 
-> **Latest release: [1.3.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.3.0)** (2026-10-15). You can also
+> **Latest release: [1.3.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.3.1)** (2026-10-16). You can also
 > [build the app from source](#building-from-source).
 
 - Get the APK from the [Releases page](https://github.com/tedsluis/opencontrolpixelbudspro2/releases) — the only place it is published.
@@ -93,24 +93,21 @@ recovery from every failure (details: [`WORKSTATION_PREPARATIONS.md`](./WORKSTAT
 
 ## Status
 
-**1.3.0 is the current release** (2026-10-15, build `ff27ee1`): the app asks the Buds to report every change of their settings on its own channel and reads
-the noise-control mode at every Connect (ADR-064/065), so **a press-and-hold on a bud shows on any tab, with or without Google Play services**, and every
-setting the app shows follows a change made elsewhere. Its hardware run `CAP-076` (`ai-sessions/0092`, both GrapheneOS users) showed every press-and-hold on the
-noise-control tab within 0.1 s — 29 of 29 with Google Play services, 12 of 12 without. Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds
+**1.3.1 is the current release** (2026-10-16, build `7aa524b`), a fix release of 1.3.0: "Use different Buds" now really forgets the Buds (with a
+confirmation), a mode that changed while the app was not connected keeps its "Changed since the app last saw it" line, a tile tap right after a Connect no longer
+fails silently, each noise-control mode has one name everywhere, and TalkBack reads the switches and the equalizer sliders. Since 1.3.0 the app asks the Buds to
+report every change of their settings on its own channel (ADR-064/065), so **a press-and-hold on a bud shows on any tab, with or without Google Play services**.
+Its hardware run `CAP-077` (`ai-sessions/0095`, the user without Google Play) showed every press-and-hold (8 of 8) and every tile tap answered; 1.3.0's
+`CAP-076` showed the holds in both users (29 of 29 with Play, 12 of 12 without). Tested on one phone — a Pixel 9a with GrapheneOS (Android 17) — with Buds
 firmware `release_5.203`. Per feature, what is hardware-verified and what is only unit-tested is in `ARCHITECTURE.md` §5a; every release, its hardware run
 and its known issues are in [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) —
 a suspected security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
 
-**Known issues of 1.3.0** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
+**Known issues of 1.3.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
 - A tap on a noise-control mode can collide with Play's claim of the shared channel; it then usually fails with a message — tap again.
 - After the Buds' own close of the session (one bud out while both are worn) the mode shown can be a few seconds old until the re-open's read.
-- After a reconnect, a mode that changed meanwhile is shown without the "Changed since the app last saw it" line.
 - After you stop a ring by touching the bud, the app keeps saying it is ringing until you tap Stop (since 1.0.1).
-
-**1.3.1 is prepared, not released** (`ai-sessions/0094`, 2026-10-15; its hardware run `CAP-077` is planned): it fixes the third issue above, makes "Use
-different Buds" forget the Buds for real (with a confirmation), keeps a tile tap right after a Connect from failing silently, gives each noise-control mode one
-name everywhere and lets TalkBack read the switches and the equalizer sliders — [`CHANGELOG.md`](./CHANGELOG.md) [1.3.1].
 
 ---
 
@@ -136,9 +133,9 @@ the Pixel Buds Pro 2 first has to be reconstructed through Bluetooth traffic
 analysis and reverse engineering of the Android APK. That knowledge is then used
 to design, implement, test, and document a native Android app.
 
-## Current state (2026-10-15)
+## Current state (2026-10-16)
 
-- **Captures:** 76 registered sessions (`CAP-001`–`CAP-076`): 72 analyzed (the latest, `CAP-076` of 2026-10-15: the 1.3.0 release build in both GrapheneOS users — every press-and-hold on the noise-control tab shown through the settings stream, 29 of 29 with Google Play services and 12 of 12 without, `ai-sessions/0092`), 2 planned, 2 withdrawn (`CAP-052`,
+- **Captures:** 77 registered sessions (`CAP-001`–`CAP-077`): 73 analyzed (the latest, `CAP-077` of 2026-10-16: the 1.3.1 release build in the user without Google Play — 8 of 8 press-and-holds shown, every tile tap answered, `ai-sessions/0095`; its data files are kept local, only its notes are committed), 2 planned, 2 withdrawn (`CAP-052`,
   `CAP-057`) — see `CAPTURE_BLUETOOTH_HCI_SNOOP.md` §9 and `id_registry.csv`. `CAP-059`–`CAP-068` and `CAP-070`–`CAP-075` are captures of this project's own app (`CAP-067`: the 1.0.0
   release APK, `CAP-068`: the 1.0.1 release APK, `CAP-070`: the 1.1.0 release APK, `CAP-071`: the 1.1.1 release APK, `CAP-072`: the 1.2.0 release APK, `CAP-073`: the rebuilt 1.2.0 release APK, all without Google Play services; `CAP-074`: the released 1.2.0 in the Owner user with Play services; `CAP-075`: the 1.2.1 release APK in both users); the Safe-Mode fix of `ai-sessions/0046` was hardware-verified in `CAP-062`/`CAP-063`.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see

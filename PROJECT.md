@@ -133,13 +133,14 @@ Without Google Play Services installed, the app can:
 > *Row 2 updated 2026-10-04 (`ai-sessions/0070`, maintainer-approved in chat, `AskUserQuestion` "DoD text", option *"Approve as shown (Recommended)"*):* the ANC change was
 > "maintainer-attested, not captured" for 1.0.0; `CAP-068` (`CAP-068-FINDINGS.md` §2; "A" = `CAP-068-btsnoop_hci2.log.last`) replaces it with frames.
 
-## Status (rewritten 2026-10-15, `ai-sessions/0094` — `ai-sessions/0093` A93-GOV-01/02)
+## Status (rewritten 2026-10-16 for 1.3.1)
 
-The current release is **1.3.0** (published 2026-10-15, tag `v1.3.0` on build `ff27ee1`; `RELEASING.md` §13): the app subscribes to the Buds' settings stream
-and reads the noise-control mode on its own channel (ADR-064/065), so a press-and-hold on a bud shows on any tab with or without Google Play services; its
-hardware run `CAP-076` (`ai-sessions/0092`) showed every hold on the noise-control tab within 0.1 s (29 of 29 with Play, 12 of 12 without). A fix release 1.3.1
-is prepared by `ai-sessions/0094` (one pairing memory for "Use different Buds" with a confirmation, the kept "changed since" line, no silent tile tap, stream
-pushes that no longer end a read, one name per mode, TalkBack labels; `CHANGELOG.md` [1.3.1]) — not released; its hardware run `CAP-077` (`ai-sessions/0095`, 2026-10-16) showed every press-and-hold (8 of 8) and every tile tap answered; verdict "release as built" (the maintainer).
+The current release is **1.3.1** (published 2026-10-16, tag `v1.3.1` on build `7aa524b`; `RELEASING.md` §13), a fix release of 1.3.0 (`ai-sessions/0094`): one
+pairing memory for "Use different Buds" with a confirmation, the kept "changed since" line, no silent tile tap, stream pushes that no longer end a read, one name
+per mode, TalkBack labels (`CHANGELOG.md` [1.3.1]). Its hardware run `CAP-077` (`ai-sessions/0095`, 2026-10-16, the user without Google Play) showed every
+press-and-hold (8 of 8) and every tile tap answered; the kept "changed since", a push during a read and TalkBack were not exercised on hardware (unit tests only).
+1.3.0 (2026-10-15, `ff27ee1`) brought the settings stream on the app's own channel (ADR-064/065): a press-and-hold on a bud shows on any tab with or without
+Google Play services (`CAP-076`: 29 of 29 with Play, 12 of 12 without).
 
 v1 contains: connection and Safe Mode, noise control with a Quick Settings tile, the equalizer (with Volume EQ), battery (Left / Right / Case), Find My Buds
 (Left / Right), touch controls, press and hold and its mode list, head gestures, Multipoint on/off, balance, mono audio, conversation detection, in-ear
