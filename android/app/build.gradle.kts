@@ -76,6 +76,20 @@ android {
         release {
             if (missingReleaseSigning.isEmpty()) signingConfig = signingConfigs.getByName("release")
         }
+        // `ai-sessions/0096` (the maintainer's choice in chat 2026-10-16, "BuildType 'experiment'"): round 1's experiment build — debug-signed, a package of
+        // its own (it installs beside the release app), never built by scripts/release.sh or CI. Only this build type compiles src/experiment (the Debug-tab
+        // card); debug and release compile src/noExperiment (an empty slot). :ui, :domain and :hardware have no experiment type and fall back to debug.
+        create("experiment") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".experiment"
+            versionNameSuffix = "-exp.1"
+            matchingFallbacks += "debug"
+        }
+    }
+
+    sourceSets {
+        getByName("debug").kotlin.srcDir("src/noExperiment/kotlin")
+        getByName("release").kotlin.srcDir("src/noExperiment/kotlin")
     }
 
     compileOptions {

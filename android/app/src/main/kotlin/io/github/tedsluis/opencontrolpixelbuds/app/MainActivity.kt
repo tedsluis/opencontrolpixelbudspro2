@@ -571,7 +571,8 @@ class MainActivity : ComponentActivity() {
 
             // F-6: the stored choice, or Android's own setting for "System" — recomposed (not recreated) when either changes.
             OpenControlTheme(darkTheme = darkMode.isDark(isSystemInDarkTheme())) {
-                OpenControlNavHost(state = state, actions = actionsWithPull)
+                // `ai-sessions/0096`: [ExperimentHook] is an empty slot in debug and release (src/noExperiment) and round 1's card in the experiment build type.
+                OpenControlNavHost(state = state, actions = actionsWithPull, debugExtra = { debugOn -> ExperimentHook.Content(budsRepository, applicationScope, debugOn) })
             }
         }
     }

@@ -56,6 +56,8 @@ fun DebugScreen(
     unidentifiedFrames: List<UnidentifiedFrame>,
     onExportLog: () -> Unit,
     modifier: Modifier = Modifier,
+    /** A slot below the export button; empty in every released build (`ai-sessions/0096`: the experiment build type fills it). */
+    extra: @Composable (debugModeEnabled: Boolean) -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -74,6 +76,8 @@ fun DebugScreen(
             // (`ai-sessions/0052` follow-up: the old share-sheet hand-off was cut at 64 KiB); never a network call this app makes itself.
             Button(onClick = onExportLog) { Text("Export debug log") }
             Text("Saves the log (up to the last 20,000 lines) as a text file.", style = MaterialTheme.typography.bodySmall)
+
+            extra(debugModeEnabled)
 
             HorizontalDivider()
 
