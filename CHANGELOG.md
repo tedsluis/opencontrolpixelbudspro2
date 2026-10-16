@@ -19,7 +19,7 @@ build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phon
 ## [1.3.1] - not yet released
 
 Prepared in `ai-sessions/0094` (2026-10-15) from the audit `ai-sessions/0093` and the `CAP-076` findings (the maintainer's choice in chat 2026-10-15, "1.3.1 met
-APP-01…06"). Nothing new on the wire: the app's requests are 1.3.0's. Not yet on hardware: the run is `CAP-077` (Group BM, planned).
+APP-01…06"). Nothing new on the wire: the app's requests are 1.3.0's. Hardware run `CAP-077` (Group BM, `ai-sessions/0095`, 2026-10-16, the user without Google Play): the update path, "Use different Buds", the tile taps, the labels and every press-and-hold verified; the kept "changed since" line, a push during a read and TalkBack not exercised on hardware (their unit tests stand). Verdict: release as built (the maintainer, chat 2026-10-16).
 
 ### Fixed
 

@@ -139,7 +139,7 @@ The current release is **1.3.0** (published 2026-10-15, tag `v1.3.0` on build `f
 and reads the noise-control mode on its own channel (ADR-064/065), so a press-and-hold on a bud shows on any tab with or without Google Play services; its
 hardware run `CAP-076` (`ai-sessions/0092`) showed every hold on the noise-control tab within 0.1 s (29 of 29 with Play, 12 of 12 without). A fix release 1.3.1
 is prepared by `ai-sessions/0094` (one pairing memory for "Use different Buds" with a confirmation, the kept "changed since" line, no silent tile tap, stream
-pushes that no longer end a read, one name per mode, TalkBack labels; `CHANGELOG.md` [1.3.1]) — not released; its hardware run `CAP-077` is planned.
+pushes that no longer end a read, one name per mode, TalkBack labels; `CHANGELOG.md` [1.3.1]) — not released; its hardware run `CAP-077` (`ai-sessions/0095`, 2026-10-16) showed every press-and-hold (8 of 8) and every tile tap answered; verdict "release as built" (the maintainer).
 
 v1 contains: connection and Safe Mode, noise control with a Quick Settings tile, the equalizer (with Volume EQ), battery (Left / Right / Case), Find My Buds
 (Left / Right), touch controls, press and hold and its mode list, head gestures, Multipoint on/off, balance, mono audio, conversation detection, in-ear

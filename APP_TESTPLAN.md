@@ -455,20 +455,22 @@ or a Connect's snapshot; the own tap's stream packet ≈ 0.3 s after the `Set`.
 
 ## Z. 1.3.1 (`ai-sessions/0094`: the fixes of `ai-sessions/0093` A93-APP-01 … 04, 07, 08 — in the user without Google Play)
 
-In `CAP-077` as BM-1 … BM-9 (captures/CAP-077-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BM/CAP-077-EVENT-NOTES.md, which has the reference frames). Nothing new on the
+In `CAP-077` as BM-1 … BM-9 (captures/CAP-077-2026-10-16_06-56-14_07-10-38-Group_BM/CAP-077-EVENT-NOTES.md, which has the reference frames). Nothing new on the
 wire: the requests are 1.3.0's.
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| Z1 | **User 10 (no Play).** Update over 1.3.0 (Debug mode on); open the app; Info; gear → Settings. | "App: 1.3.1, build <B1 hash>", no "-dirty" | the seventeen requests | | BM-1 (`PAIR-003`, `FW-003`) |
-| Z2 | The ANC tab and its (i); the notification; the tile; the Sound tab's presets. | one name per mode everywhere ("Noise cancellation", "Off", "Adaptive", "Transparency"); "Connection: connected"; "Heavy bass" | — | | BM-2 (A93-APP-08) |
-| Z3 | TalkBack on: the Case sounds switches, a Controls switch, the Bass slider, the bottom tabs; TalkBack off. | each switch read with its name and state; the slider "Bass, … dB"; each tab named once | — | | BM-3 (A93-APP-07) |
-| Z4 | Disconnect; two holds while disconnected; Connect; the ANC (i). | **"Changed since the app last saw it (read at HH:MM:SS) …"** stays after the Connect | the `Get`'s `Notify`, then the equal `4:13` answer (`CAP-076` H1 4094 → 4135) | | BM-4 (A93-APP-02; `PAIR-003`, `TOUCH-007`) |
-| Z5 | Within ≈ 2 s of "Ready": ten tile taps ≈ 3 s apart. | every tap changes the mode or says why not — none silent | per tap `08 11`, its `Notify`, `08 12 …`, the ACK | | BM-5 (A93-APP-03; `ANC-001`…`ANC-004`) |
-| Z6 | A hold within ≈ 1 s of tapping Connect. | the held mode | the export's "Noise-control mode read" after the RESPONSE, not the push | | BM-6 (A93-APP-04) |
-| Z7 | Use different Buds → Cancel; then → Forget these Buds; rotate; Connect. | Cancel changes nothing; after Forget the app asks to pair — not connected by name | no `SABM` on DLCI 0x02 after the Forget | | BM-7, BM-8 (A93-APP-01, A93-APP-08; `PAIR-003`) |
-| Z8 | *Pair a device* → the same Buds in Android's picker. | connected | the seventeen requests | | BM-9 (`PAIR-003`) |
-| Z9 | Export; the app logcat; the APK pull. | "Debug log saved (N lines)." | — | | BM-end |
+| Z1 | **User 10 (no Play).** Update over 1.3.0 (Debug mode on); open the app; Info; gear → Settings. | "App: 1.3.1, build <B1 hash>", no "-dirty" | the seventeen requests | ✅ `CAP-077` s127–133; 6 of 6 sessions | BM-1 (`PAIR-003`, `FW-003`) |
+| Z2 | The ANC tab and its (i); the notification; the tile; the Sound tab's presets. | one name per mode everywhere ("Noise cancellation", "Off", "Adaptive", "Transparency"); "Connection: connected"; "Heavy bass" | — | ✅ one name per mode on film (s307, s333, s334–363, s379); "Heavy bass" (s302) | BM-2 (A93-APP-08) |
+| Z3 | TalkBack on: the Case sounds switches, a Controls switch, the Bass slider, the bottom tabs; TalkBack off. | each switch read with its name and state; the slider "Bass, … dB"; each tab named once | — | not run (no TalkBack on film) | BM-3 (A93-APP-07) |
+| Z4 | Disconnect; two holds while disconnected; Connect; the ANC (i). | **"Changed since the app last saw it (read at HH:MM:SS) …"** stays after the Connect | the `Get`'s `Notify`, then the equal `4:13` answer (`CAP-076` H1 4094 → 4135) | not run as planned — no hold while disconnected; A93-APP-02 not exercised | BM-4 (A93-APP-02; `PAIR-003`, `TOUCH-007`) |
+| Z5 | Within ≈ 2 s of "Ready": ten tile taps ≈ 3 s apart. | every tap changes the mode or says why not — none silent | per tap `08 11`, its `Notify`, `08 12 …`, the ACK | ⚠️ run differently: 6 taps, 66 s after Ready — 6 of 6 answered by `Set` + ACK | BM-5 (A93-APP-03; `ANC-001`…`ANC-004`) |
+| Z6 | A hold within ≈ 1 s of tapping Connect. | the held mode | the export's "Noise-control mode read" after the RESPONSE, not the push | not run — no push during a read | BM-6 (A93-APP-04) |
+| Z7 | Use different Buds → Cancel; then → Forget these Buds; rotate; Connect. | Cancel changes nothing; after Forget the app asks to pair — not connected by name | no `SABM` on DLCI 0x02 after the Forget | ⚠️ Forget ✅ (no connection by name, no `SABM` 07:00:05–07:00:35); Cancel and the rotation not run | BM-7, BM-8 (A93-APP-01, A93-APP-08; `PAIR-003`) |
+| Z8 | *Pair a device* → the same Buds in Android's picker. | connected | the seventeen requests | ✅ CDM dialog → association → Connect, 17 requests | BM-9 (`PAIR-003`) |
+| Z9 | Export; the app logcat; the APK pull. | "Debug log saved (N lines)." | — | ✅ export, app logcat; APK pulled by `ai-sessions/0095` (SHA-256 = B1) | BM-end |
+
+**Run note (`CAP-077`, 2026-10-16, `ai-sessions/0095`, `CAP-077-FINDINGS.md`):** the maintainer did not keep to the plan — Z1, Z2, Z8, Z9 as planned; Z5 and Z7 in part; Z3, Z4 (as planned), Z6 not run. Beyond the plan: eight holds on the noise-control tab (8 of 8 shown), five tab taps, 21 setting writes, Ring/Stop, two pulls. Verdict "release as built" (the maintainer, chat 2026-10-16).
 
 ## After the run (within 1 minute of the last action)
 

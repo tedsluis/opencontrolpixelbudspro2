@@ -15,10 +15,11 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 *(The finished release items of 1.2.2 and 1.3.0 were deleted 2026-10-15 by `ai-sessions/0094` — `ai-sessions/0093` A93-HK-01; they are in `CHANGELOG.md`,
 `RELEASING.md` §13 and the session RESULTs.)*
-- [ ] **1.3.1** (prepared by `ai-sessions/0094`, the maintainer's choice in chat 2026-10-15): the hardware run `CAP-077` (Group BM, `APP_TESTPLAN.md` §Z; the
-      skeleton captures/CAP-077-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BM/CAP-077-EVENT-NOTES.md), then `RELEASING.md` B1 … E4 (**M**); `CHANGELOG.md` [1.3.1] gets its date then. Not run in `CAP-076` and still open for a release run: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25.
-- **The Buds' state after `CAP-076` (2026-10-15):** EQ `[−1, 0, 4, 2, 1.69]`, **in-ear detection off** (written 07:06:56, not switched on again), all four
-  press-and-hold modes, balance Centre — restore in-ear detection if wanted (**M**).
+- [ ] **1.3.1** (prepared by `ai-sessions/0094`): the hardware run `CAP-077` was analysed by `ai-sessions/0095` (2026-10-16) — verdict "release as built" (the
+      maintainer, chat 2026-10-16); next `RELEASING.md` D1 … E4 (**M**); `CHANGELOG.md` [1.3.1] gets its date then. Not run in `CAP-077` (A93-APP-02/04/07 rest on
+      their unit tests): BM-3, BM-4 as planned, BM-6, BM-7 and the rotation — see §2. Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25.
+- **The Buds' state after `CAP-077` (2026-10-16):** EQ `[−1, 0, 4, 2, 5.87]` (Upper treble raised in the run), **in-ear detection on again** (07:01:07), all four
+  press-and-hold modes, balance Centre, every switch as before the run.
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
   unchanged by `CAP-075`: 0 writes) — restore if wanted (**M**). (The stored "Noise-control channel" choice of 1.2.1/1.2.2 is ignored since 1.3.0, ADR-065 item 5 — nothing to
   restore; sentence changed 2026-10-15, `ai-sessions/0094`, A93-HK-02.)
@@ -40,6 +41,9 @@ ADR-061, chat 2026-10-10).
 (both removed here); the maintainer tested only the changed functionality, so T11, C12, S12, H5, Volume EQ and the worn line with in-ear detection off stay open,
 with the hold's untested branches below. **Next app run:** none planned — these items go into the hardware run of the next release (`RELEASING.md` §11a).
 
+- [ ] **1.3.1 fixes not exercised in `CAP-077`** (`ai-sessions/0095`, `CAP-077-FINDINGS.md` §5): BM-3 TalkBack on the switch rows, an EQ slider and the tabs
+      (A93-APP-07); BM-4 two holds while disconnected, then Connect — the (i) "Changed since …" kept (A93-APP-02); BM-6 a hold within ≈ 1 s of Connect (A93-APP-04);
+      BM-7 "Use different Buds" → Cancel; the dialog across a rotation. Into the next app run (`RELEASING.md` §11a).
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
 - [ ] C12 — a tap during an automatic re-open ("The app's channel is being reopened …", no write afterwards): not done in `CAP-070` (the tap came after
@@ -90,6 +94,8 @@ From `ai-sessions/0072` (`CAP-053`/`054`/`058`, analysed 2026-10-06) — procedu
 
 ## 4. Protocol: leads and open questions
 
+- [ ] ❓ `CAP-077` (`ai-sessions/0095`, `PROTOCOL.md` §6 item of 2026-10-16): writes of fields 4, 11, 15, 27, 28 echoed by three stream packets, of 2, 12, 16, 19, 22,
+      29 by one — count the same around the official app's writes (`CAP-069`, `CAP-070`) with `scripts/pwhdlc_crc_table.py`.
 - [ ] `CAP-075-FINDINGS.md` §12 (`ai-sessions/0088`): (1) what triggers the Buds' own closes of DLCI 0x02 (17:28:47) and 0x02 + 0x04 (06:28:49) with the app
       in the background, after an `AT+BIEV` — the buds into/out of the case off screen? a run with the case moves on camera (`CASE-004`/`005`); (2) what Play's
       `RfcommEventStreamMedium` does when "Retry times remaining" reaches 0 (seen 5 → 4 once, back at 5 next time); (3) the Google app's (uid 10302)
@@ -201,6 +207,9 @@ Open questions (each with where it is described):
       push as "unchanged" (§4.4) (**XS**); P4 the two packets per change with both buds out — one Connect on a fresh ACL, then the official app on the same
       ACL (§4.3, a capture); P5 the shorter attempt-2 latency (above); P6 a mode line on the Connection tab (§4.2) (**S**). The seven CloseGuard lines of
       `CAP-076` A1 (06:47:10/44, §0) — which sockets (❓).
+- [ ] **After `CAP-077` (`ai-sessions/0095`, `CAP-077-FINDINGS.md` §14; the maintainer's choice in chat 2026-10-16: no FEATURE prompt now):** P1 log the EQ write like
+      the other writes ("EQ written (channel N)" — today only the pw_rpc summary) (**XS**); P2 the tile's one- or two-frame "unavailable" look right after an update
+      (§5.3, `AncTileService`) (**XS–S**); ❓ the SIGQUIT the app got at 07:10:55 after the film — which tool sent it.
 - [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
       (a) hardware-tested in `CAP-071` (`ai-sessions/0080`): no behaviour change found — the same reads, request bytes, answers, re-opens and screens as 1.1.0;
       (b) **M** — raising `targetSdk` (lint `OldTargetApi` now reports 34) is its own session with a hardware run: Android 15 enforces edge-to-edge,
@@ -261,6 +270,10 @@ Restructures the maintainer deferred (chat 2026-10-03, "Restructures"; re-confir
 `ai-sessions/0093` §6 rows 6, 9 and 13 as the current proposals); each is a MAINTENANCE session of its own, with a before/after check that no
 statement is lost (`ai-sessions/0068` §6 has the proposal for each):
 
+- [ ] **CAP-077's data files are not committed** (`ai-sessions/0095`, the maintainer's choice in chat 2026-10-16): Git LFS refuses every upload (the account's LFS
+      budget is exceeded and cannot be raised). When LFS accepts uploads again (**M**): remove the CAP-077 lines from `.gitignore` and commit the folder's data files
+      (the two HCI logs, the export, the app logcat, the logcat extract, the shell log, the checks log, the hashes; the 188-MB recording only if wanted) — they
+      are in the folder and in ~/opencontrol-capture-originals/CAP-077/. Until then the frame and line numbers of `CAP-077-FINDINGS.md` can be checked only there.
 - [ ] `ARCHITECTURE.md` — "as built" text; dated notes become current text or move to `DECISIONS.md`; §5a gets a "verified in capture" column (§6.1).
 - [ ] `PROTOCOL.md` — a "Current" block per entry with the history below it; a one-page wire summary; §6 open items only (§6.13). All FACT-text
       changes as dated proposals for **M**.
