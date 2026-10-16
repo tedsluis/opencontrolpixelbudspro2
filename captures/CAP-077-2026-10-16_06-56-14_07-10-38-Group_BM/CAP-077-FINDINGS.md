@@ -45,7 +45,7 @@ during all eight holds (§8).
 - **Logs.** HL 06:48:05–06:56:37 and H 06:56:41–07:12:00 (the snoop log restarts with the Bluetooth on); E from 1.3.1's first line (06:58:07.853) to 07:11:14;
   A (the app logcat) and L (`adb logcat -b all`, ending 07:10:32). **The "System log" the maintainer named was not made** (Checkpoint 0: "Niet gemaakt"); L's
   system and main buffers cover the whole film.
-- **The data files are not in the repository** (only the two notes are; Git LFS refused every upload on 2026-10-16 — EVENT-NOTES, header; `TODO.md` §6). The film: CAP-077-recording1.mp4 is **kept local, not committed** (the repository's Git LFS budget was exceeded at the push of 2026-10-16 and cannot be raised — the maintainer, chat 2026-10-16; the original is in ~/opencontrol-capture-originals/CAP-077/, SHA-256 `0c6e0318…`); every film second cited here can be checked against that original.
+- **The film is not in the repository** (`DECISIONS.md` ADR-066): CAP-077-recording1.mp4 is kept local (~/opencontrol-capture-originals/CAP-077/, SHA-256 `0c6e0318…` in CAP-077-sha256sums.txt); the other data files are committed.
 - **Privacy.** The film shows the Wi-Fi network's name and the serial numbers (allowed on film; not written in any text here). The full logcat is committed only as
   CAP-077-logcat-extract.txt (window 06:47:00–07:12:30; every line of the app's, Bluetooth's and the CDM dialog's PIDs and every line naming them; the update's
   installer lines; the Buds' full address redacted in 5 lines and the six Debug-mode `GetHardwareInfo` hex answers redacted — the command is in its header).

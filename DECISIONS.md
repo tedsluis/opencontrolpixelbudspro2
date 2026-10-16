@@ -2938,5 +2938,29 @@ motivated this).
   open; 6 of 6 tile taps and 5 tab taps answered by `Set` + ACK and classed as the app's; a same-mode push logged "(unchanged)" (`CAP-077-FINDINGS.md` §4–§6). The
   re-open's kept "changed since" cause (A93-APP-02) was not exercised. The decision is unchanged.
 
+
+## ADR-066 — Capture files without Git LFS from `CAP-077` on: small files in git, films and full logcats local with their hash
+
+- **Date**: 2026-10-16
+- **Status**: Accepted (maintainer, chat 2026-10-16, continuation of `ai-sessions/0095`)
+- **Supersedes**: `PROJECT_RULES.md` rule 18 ("Captures and large binary files go through Git LFS") for `CAP-077` and every later capture.
+- **Note on process**: drafted by an AI agent; the decision is the maintainer's, given in the chat of 2026-10-16 (`AskUserQuestion` "ADR-066", option *"ADR-066
+  zoals getoond (Recommended)"*, with this text in the preview, and "Regel 18", option *"Ja, gedateerde verwijzing (Recommended)"*), per `AGENTS.md` §6.
+- **Context**: on 2026-10-16 GitHub refused every Git LFS upload of `CAP-077` ("This repository exceeded its LFS budget"), also the ≈ 4.3 MB of logs without
+  the film; the maintainer cannot raise the budget. The repository's LFS holds ≈ 27 GB, 99 % of it screen recordings and camera films (83 `.mp4`, ≈ 26.9 GB;
+  `.txt` ≈ 122 MB, `.log`/`.log.last` ≈ 44 MB — `git lfs ls-files -s`). Removing files in a commit frees no LFS storage (the history keeps them).
+- **Options considered**: (a) keep everything local and commit only the notes (as `CAP-077` was first committed) — no evidence file in the repository at all;
+  (b) this decision; (c) wait for LFS — blocks every capture.
+- **Decision** (for `CAP-077` and later):
+  1. A capture's files of **at most 5 MB each** — HCI snoop logs, debug exports, app logcats, logcat extracts, shell and check logs, the hash list — are committed as
+     **ordinary git files** (`.gitattributes` unsets the LFS filter for `captures/CAP-077-*` and later folders).
+  2. **Films, full logcats and system logs are never committed**: they are kept in ~/opencontrol-capture-originals/CAP-NNN/, and the committed
+     CAP-NNN-sha256sums.txt carries their hashes; `.gitignore` blocks `*.mp4`, `*logcat-all*` and `*System-log*` under `captures/`.
+  3. A larger file needed as evidence is cut to an extract (as the logcat extract of `CAP-076`/`CAP-077`) or stays local, named in the EVENT-NOTES.
+  4. Captures up to `CAP-076` stay in Git LFS unchanged (their tracked files keep the LFS filter).
+- **Consequences**: no new LFS traffic; the films are verifiable only on the maintainer's machine (the FINDINGS cite film seconds, the hash list pins the
+  file); the repository grows by the small files only (`CAP-077`: ≈ 4.3 MB). `PROJECT_RULES.md` rule 18 gets a dated pointer here; `CAP-077`'s data files are
+  committed under this rule.
+
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

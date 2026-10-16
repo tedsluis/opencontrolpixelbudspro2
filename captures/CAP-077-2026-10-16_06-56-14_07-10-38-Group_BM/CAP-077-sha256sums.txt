@@ -1,0 +1,8 @@
+a580d38fc24a1ba5223a8b696b2c3c50c4e2401b8b2363ac3602c32576f803b3  CAP-077-adb-shell.log
+989a9df0d47dbb7fc11c62e18858ab036295ba7f41d40e37fc66f09604f9cc6e  CAP-077-btsnoop_hci.log
+5c61200fdd38974b4f25f7d7d70ab6b0c8b476e709c60b46e9e9daf61e13e7ed  CAP-077-btsnoop_hci.log.last
+6f88e5ae62b089fe431aba15ea31ebaa82c1ea2bd9bf8bf5100902ccef2b81f3  CAP-077-EVENT-NOTES.md
+d3568e5a71ca2732ec08c03f21770a41f0212263e9cc8e6ae16e0ca3b34fd65a  CAP-077-logcat-all.txt
+b01f40d31c07ba1aaf1670d6d6201e4d094ed7ae2060a1d40ca0dfa4f80aa589  CAP-077-opencontrol-debug-20261016-071117.txt
+9b9beef5336b3c0a0ce2f70795ccd55e8e295fd2aa8bb85f6d48a66938443e33  CAP-077-OpenControl-for-Pixel-Buds-Pro-2-log-124d87c06bf0.txt
+0c6e0318b618d3211bfd71243d5f9b489bb1e1e3ced7af689b87f4fe145f0769  CAP-077-recording.mp4

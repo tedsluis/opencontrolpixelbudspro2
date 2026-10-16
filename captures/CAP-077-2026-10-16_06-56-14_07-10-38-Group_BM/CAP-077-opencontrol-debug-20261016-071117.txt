@@ -1,0 +1,707 @@
+06:58:07.853 Permissions (start): Bluetooth NOT_REQUESTED -> GRANTED, notifications NOT_REQUESTED -> GRANTED
+06:58:07.994 Android link observer started
+06:58:08.003 Android link: PENDING -> CONNECTED (trigger: profile 2 bound) via profiles [2]
+06:58:08.007 Automatic re-open of the session (ADR-044, trigger: LINK_BACK)
+06:58:08.009 ConnectionState: Disconnected -> Connecting
+06:58:08.269 RFCOMM channel 0x02 connected (attempt 1/3)
+06:58:08.270 ConnectionState: Connecting -> Discovering
+06:58:08.271 ConnectionState: Discovering -> Ready
+06:58:08.435 DLCI 0x02: 7e 00 a5 03 2a 64 22 57 0a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 12 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 1a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 29 34 29 3f c2 f6 cb d8 1a 30 00 08 01 10 15 1d ea 71 de 7d 5e 25 44 fa 99 71 38 ff ff ff ff 0f e8 a9 58 66 7e
+06:58:08.437 pw_rpc RESPONSE ch=21 method=GetSoftwareInfo status=OK
+06:58:08.438 Maestro channel announced by the Buds: 21
+06:58:08.532 DLCI 0x02: 7e 00 a5 03 2a 1e 22 1c 82 01 19 0d 00 00 80 bf 15 00 00 00 00 1d 00 00 80 40 25 00 00 00 40 2d b8 fe d7 3f 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 9e ba 83 0d 7e
+06:58:08.533 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:08.533 EQ read ok (channel 21)
+06:58:08.555 RFCOMM channel 0x04 connected (attempt 1/3)
+06:58:08.569 DLCI 0x04: 03 0a 00 08 19 b6 7c 42 c1 8f e5 cb 03 01 00 03 da 2d b1 03 02 00 06 51 86 d6 a8 30 3d 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+06:58:08.571 DLCI 0x04: 07 34 00 0c 01 4d c2 86 26 ca 45 8a cb c9 43 e6
+06:58:08.574 DLCI 0x04: 03 03 00 03 e4 e4 ff
+06:58:08.575 DLCI 0x04: 03 03 00 03 e4 e4 ff
+06:58:08.576 DLCI 0x04: 03 03 00 03 e4 e4 ff
+06:58:08.580 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 10 00 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 33 37 7d 5d b8 7e
+06:58:08.581 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:08.582 DLCI 0x04: 08 13 00 04 01 e8 00 20
+06:58:08.647 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 20 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 38 a9 9e f0 7e
+06:58:08.647 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:08.690 DLCI 0x02: 7e 00 a5 03 2a 10 22 0e 3a 0c 0a 04 22 02 08 05 12 04 22 02 08 05 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 1d ff 38 c9 7e
+06:58:08.691 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:08.741 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 58 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 6e 85 eb 5c 7e
+06:58:08.741 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:08.803 DLCI 0x02: 7e 00 a5 03 2a 0c 22 0a 62 08 08 01 10 01 18 01 20 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 49 d7 66 9f 7e
+06:58:08.803 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:08.848 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 78 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 13 fe d4 4b 7e
+06:58:08.849 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:08.903 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 88 01 00 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 16 62 e1 cc 7e
+06:58:08.904 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:08.954 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 98 01 00 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 6b fb b0 db 7e
+06:58:08.955 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:09.021 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 b0 01 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae e7 5d f8 aa 7e
+06:58:09.021 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:09.154 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 d8 01 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 77 45 0d 3f 7e
+06:58:09.155 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:09.257 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 e0 01 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 6e a1 ef e0 7e
+06:58:09.259 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:09.276 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 e8 01 02 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 89 84 82 17 7e
+06:58:09.277 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:09.278 Settings read (channel 21)
+06:58:09.281 Runtime info requested (channel 21)
+06:58:09.282 Settings stream subscribed (channel 21)
+06:58:09.348 DLCI 0x02: 7e 00 a5 03 2a 1e 18 00 32 12 0a 04 08 64 10 01 12 04 08 64 10 02 1a 04 08 64 10 02 3a 06 08 01 10 01 18 00 08 07 10 15 1d ea 71 de 7d 5e 25 90 82 1e e6 85 db b5 d7 7e 7e 00 a5 03 2a 04 22 02 68 00 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 65 1b 08 14 7e
+06:58:09.348 pw_rpc SERVER_STREAM ch=21 method=SubscribeRuntimeInfo status=OK
+06:58:09.349 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+06:58:09.349 Noise-control mode from the mode read: no mode settable
+06:58:09.350 Noise-control mode read (channel 21)
+06:58:09.395 DLCI 0x02: 7e 00 a5 03 2a 44 08 06 10 11 28 09 30 07 3a 30 0a 0e 35 37 30 37 31 57 52 42 45 43 30 32 35 31 12 0e 35 37 30 38 31 57 52 42 44 52 33 32 30 39 1a 0e 35 37 30 37 31 57 52 42 44 4c 33 31 34 37 42 08 30 30 31 33 32 30 39 33 08 01 10 15 1d ea 71 de 7d 5e 25 e3 a5 ec 28 36 db 71 c0 7e
+06:58:09.397 pw_rpc RESPONSE ch=21 method=GetHardwareInfo status=OK
+06:58:09.399 Hardware info read (channel 21): 3 serial numbers
+06:58:10.089 RFCOMM on-demand channel 0x04 released
+06:58:26.564 DLCI 0x02: 7e 00 a5 03 2a 1e 18 00 32 12 0a 04 08 64 10 01 12 04 08 64 10 02 1a 04 08 64 10 02 3a 06 08 01 10 01 18 00 08 07 10 15 1d ea 71 de 7d 5e 25 90 82 1e e6 85 db b5 d7 7e
+06:58:26.566 pw_rpc SERVER_STREAM ch=21 method=SubscribeRuntimeInfo status=OK
+06:58:26.916 DLCI 0x02: 7e 00 a5 03 2a 1e 18 00 32 12 0a 04 08 64 10 01 12 04 08 64 10 02 1a 04 08 64 10 02 3a 06 08 01 10 01 18 00 08 07 10 15 1d ea 71 de 7d 5e 25 90 82 1e e6 85 db b5 d7 7e
+06:58:26.917 pw_rpc SERVER_STREAM ch=21 method=SubscribeRuntimeInfo status=OK
+06:58:32.212 DLCI 0x02: 7e 00 a5 03 2a 1e 18 00 32 12 0a 04 08 62 10 01 12 04 08 64 10 02 1a 04 08 64 10 02 3a 06 08 01 10 01 18 00 08 07 10 15 1d ea 71 de 7d 5e 25 90 82 1e e6 45 a5 77 63 7e
+06:58:32.213 pw_rpc SERVER_STREAM ch=21 method=SubscribeRuntimeInfo status=OK
+06:59:42.279 DLCI 0x02: 7e 00 a5 03 2a 1e 18 00 32 12 0a 04 08 62 10 01 12 04 08 64 10 02 1a 04 08 64 10 02 3a 06 08 01 10 01 18 00 08 07 10 15 1d ea 71 de 7d 5e 25 90 82 1e e6 45 a5 77 63 7e
+06:59:42.281 pw_rpc SERVER_STREAM ch=21 method=SubscribeRuntimeInfo status=OK
+07:00:05.202 Session ended by the user's Disconnect tap (was Ready)
+07:00:05.205 ConnectionState: Ready -> Disconnected
+07:00:05.206 Pairing: use different Buds — removed 0 association(s) of this app; the next Pair a device opens the picker
+07:00:05.214 Android link: CONNECTED -> UNKNOWN (trigger: refresh)
+07:00:18.280 Pairing: association requested (CDM picker)
+07:00:24.052 Pairing: association created
+07:00:24.053 Pairing: device resolved from the association's own device
+07:00:24.061 Pairing: already bonded — no createBond()
+07:00:24.095 Android link: UNKNOWN -> NOT_CONNECTED (trigger: refresh)
+07:00:35.352 ConnectionState: Disconnected -> Connecting
+07:00:35.751 RFCOMM channel 0x02 connected (attempt 1/3)
+07:00:35.753 ConnectionState: Connecting -> Discovering
+07:00:35.754 ConnectionState: Discovering -> Ready
+07:00:35.829 DLCI 0x02: 7e 00 a5 03 2a 64 22 57 0a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 12 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 1a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 29 34 29 3f c2 f6 cb d8 1a 30 00 08 01 10 15 1d ea 71 de 7d 5e 25 44 fa 99 71 38 ff ff ff ff 0f e8 a9 58 66 7e
+07:00:35.830 pw_rpc RESPONSE ch=21 method=GetSoftwareInfo status=OK
+07:00:35.831 Maestro channel announced by the Buds: 21
+07:00:35.891 DLCI 0x02: 7e 00 a5 03 2a 1e 22 1c 82 01 19 0d 00 00 80 bf 15 00 00 00 00 1d 00 00 80 40 25 00 00 00 40 2d b8 fe d7 3f 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 9e ba 83 0d 7e
+07:00:35.892 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:35.893 EQ read ok (channel 21)
+07:00:35.942 RFCOMM channel 0x04 connected (attempt 1/3)
+07:00:35.991 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 10 00 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 33 37 7d 5d b8 7e
+07:00:35.992 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:35.994 DLCI 0x04: 03 0a 00 08 4c c8 3a 0d 10 8b d6 ba 03 01 00 03 da 2d b1 03 02 00 06 47 08 e0 4b 52 9a 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:00:35.997 DLCI 0x04: 07 34 00 0c 01 f8 dd f8 42 d2 1b f3 da 19 bf 14
+07:00:35.998 DLCI 0x04: 03 03 00 03 e4 e4 ff
+07:00:35.999 DLCI 0x04: 03 03 00 03 e4 e4 ff
+07:00:36.000 DLCI 0x04: 03 03 00 03 e4 e4 ff
+07:00:36.001 DLCI 0x04: 08 13 00 04 01 e8 00 20
+07:00:36.014 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 20 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 38 a9 9e f0 7e
+07:00:36.015 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.114 DLCI 0x02: 7e 00 a5 03 2a 10 22 0e 3a 0c 0a 04 22 02 08 05 12 04 22 02 08 05 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 1d ff 38 c9 7e
+07:00:36.115 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.244 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 58 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 6e 85 eb 5c 7e
+07:00:36.245 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.365 DLCI 0x02: 7e 00 a5 03 2a 0c 22 0a 62 08 08 01 10 01 18 01 20 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 49 d7 66 9f 7e
+07:00:36.367 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.383 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 78 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 13 fe d4 4b 7e
+07:00:36.383 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.439 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 88 01 00 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 16 62 e1 cc 7e
+07:00:36.439 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.496 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 98 01 00 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 6b fb b0 db 7e
+07:00:36.496 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.565 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 b0 01 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae e7 5d f8 aa 7e
+07:00:36.566 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.603 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 d8 01 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 77 45 0d 3f 7e
+07:00:36.603 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.656 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 e0 01 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 6e a1 ef e0 7e
+07:00:36.657 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.711 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 e8 01 02 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 89 84 82 17 7e
+07:00:36.711 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.712 Settings read (channel 21)
+07:00:36.714 Runtime info requested (channel 21)
+07:00:36.714 Settings stream subscribed (channel 21)
+07:00:36.764 DLCI 0x02: 7e 00 a5 03 2a 1e 18 00 32 12 0a 04 08 62 10 01 12 04 08 64 10 02 1a 04 08 64 10 02 3a 06 08 01 10 01 18 00 08 07 10 15 1d ea 71 de 7d 5e 25 90 82 1e e6 45 a5 77 63 7e 7e 00 a5 03 2a 04 22 02 68 00 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 65 1b 08 14 7e
+07:00:36.764 pw_rpc SERVER_STREAM ch=21 method=SubscribeRuntimeInfo status=OK
+07:00:36.764 pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+07:00:36.765 Noise-control mode from the mode read: no mode settable
+07:00:36.765 Noise-control mode read (channel 21)
+07:00:36.856 DLCI 0x02: 7e 00 a5 03 2a 44 08 06 10 11 28 09 30 07 3a 30 0a 0e 35 37 30 37 31 57 52 42 45 43 30 32 35 31 12 0e 35 37 30 38 31 57 52 42 44 52 33 32 30 39 1a 0e 35 37 30 37 31 57 52 42 44 4c 33 31 34 37 42 08 30 30 31 33 32 30 39 33 08 01 10 15 1d ea 71 de 7d 5e 25 e3 a5 ec 28 36 db 71 c0 7e
+07:00:36.857 pw_rpc RESPONSE ch=21 method=GetHardwareInfo status=OK
+07:00:36.858 Hardware info read (channel 21): 3 serial numbers
+07:00:37.447 Android link: NOT_CONNECTED -> CONNECTED (trigger: CONNECTION_STATE_CHANGED) via profiles [2]
+07:00:37.504 RFCOMM on-demand channel 0x04 released
+07:00:37.733 DLCI 0x02: 7e 00 a5 03 2a 1e 18 00 32 12 0a 04 08 62 10 01 12 04 08 64 10 02 1a 04 08 64 10 02 3a 06 08 01 10 01 18 00 08 07 10 15 1d ea 71 de 7d 5e 25 90 82 1e e6 45 a5 77 63 7e
+07:00:37.733 pw_rpc SERVER_STREAM ch=21 method=SubscribeRuntimeInfo status=OK
+07:00:43.370 RFCOMM channel 0x02 lost (IOException: bt socket closed, read return: -1) — all channels of this connection closed
+07:00:43.373 Session lost: channel 0x02 closed (IOException: bt socket closed, read return: -1); last inbound frame was on channel 0x02, 5640 ms earlier; not a user disconnect
+07:00:43.374 Session loss cause: undetermined (no reading of Android's link close to the loss) (provisional: a reading of Android's link within 1 s of the loss may still change it)
+07:00:43.376 ConnectionState: Ready -> Disconnected
+07:00:43.415 Session loss cause: Android still showed the Buds connected right after the loss — the Buds closed the channel (provisional: a reading of Android's link within 1 s of the loss may still change it)
+07:00:44.877 Automatic re-open of the session (ADR-044, trigger: AFTER_LOSS)
+07:00:44.881 ConnectionState: Disconnected -> Connecting
+07:00:45.456 RFCOMM channel 0x02 connected (attempt 1/3)
+07:00:45.457 ConnectionState: Connecting -> Discovering
+07:00:45.457 ConnectionState: Discovering -> Ready
+07:00:45.659 DLCI 0x02: 7e 80 a3 03 2a 64 22 57 0a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 12 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 1a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 29 34 29 3f c2 f6 cb d8 1a 30 00 08 01 10 13 1d ea 71 de 7d 5e 25 44 fa 99 71 38 ff ff ff ff 0f b5 f9 b0 f5 7e
+07:00:45.660 pw_rpc RESPONSE ch=19 method=GetSoftwareInfo status=OK
+07:00:45.660 Maestro channel announced by the Buds: 19
+07:00:45.748 DLCI 0x02: 7e 80 a3 03 2a 1e 22 1c 82 01 19 0d 00 00 80 bf 15 00 00 00 00 1d 00 00 80 40 25 00 00 00 40 2d b8 fe d7 3f 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 7b ec 4a 76 7e
+07:00:45.749 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:45.750 EQ read ok (channel 19)
+07:00:45.867 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 10 00 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 90 95 ad 29 7e
+07:00:45.867 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:45.989 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 20 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 9b 0b 4e 61 7e
+07:00:45.989 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:46.065 DLCI 0x02: 7e 80 a3 03 2a 10 22 0e 3a 0c 0a 04 22 02 08 05 12 04 22 02 08 05 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 71 fb c1 e8 7e
+07:00:46.065 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:46.104 RFCOMM channel 0x04 connected (attempt 1/3)
+07:00:46.172 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 58 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae cd 27 3b cd 7e
+07:00:46.173 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:46.306 DLCI 0x02: 7e 80 a3 03 2a 0c 22 0a 62 08 08 01 10 01 18 01 20 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae be 26 a1 e0 7e
+07:00:46.306 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:46.308 DLCI 0x04: 03 0a 00 08 f4 47 b6 fa f5 c0 b1 bc 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:00:46.370 DLCI 0x04: 03 0b 00 19 02 70 26 be 1e f8 ba f9 c3 b4 d3 37 d1 f7 17 b6 fe ea 93 e5 91 c2 44 f7 01
+07:00:46.372 DLCI 0x04: 07 34 00 0c 01 af af f5 48 36 92 07 9f a5 c8 0b
+07:00:46.437 DLCI 0x04: 03 03 00 03 64 e4 ff
+07:00:46.437 DLCI 0x04: 03 03 00 03 64 e4 ff 03 03 00 03 64 e4 ff
+07:00:46.476 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:00:46.545 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 78 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae b0 5c 04 da 7e
+07:00:46.546 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:46.547 DLCI 0x04: 07 34 00 0c 01 59 59 bf 76 fe 94 48 fa c7 83 81
+07:00:46.675 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 88 01 00 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 45 2f 27 84 7e
+07:00:46.676 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:46.855 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 98 01 00 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 38 b6 76 93 7e
+07:00:46.856 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:46.977 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 b0 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae b4 10 3e e2 7e
+07:00:46.978 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:47.110 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 d8 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 24 08 cb 77 7e
+07:00:47.110 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:47.245 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e0 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 3d ec 29 a8 7e
+07:00:47.247 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:47.350 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e8 01 02 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae da c9 44 5f 7e
+07:00:47.351 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:47.352 Settings read (channel 19)
+07:00:47.353 Runtime info requested (channel 19)
+07:00:47.355 Settings stream subscribed (channel 19)
+07:00:47.456 DLCI 0x02: 7e 80 a3 03 2a 1e 18 00 32 12 0a 04 08 62 10 01 12 04 08 64 10 01 1a 04 08 64 10 02 3a 06 08 01 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 8f 53 10 3a 7e
+07:00:47.456 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:00:47.547 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 2e 62 23 3c 7e
+07:00:47.548 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:00:47.549 Noise-control mode from the mode read (read)
+07:00:47.550 Noise-control mode read (channel 19)
+07:00:47.669 DLCI 0x02: 7e 80 a3 03 2a 44 08 06 10 11 28 09 30 07 3a 30 0a 0e 35 37 30 37 31 57 52 42 45 43 30 32 35 31 12 0e 35 37 30 38 31 57 52 42 44 52 33 32 30 39 1a 0e 35 37 30 37 31 57 52 42 44 4c 33 31 34 37 42 08 30 30 31 33 32 30 39 34 08 01 10 13 1d ea 71 de 7d 5e 25 e3 a5 ec 28 a4 a6 c5 17 7e
+07:00:47.670 pw_rpc RESPONSE ch=19 method=GetHardwareInfo status=OK
+07:00:47.672 Hardware info read (channel 19): 3 serial numbers
+07:00:47.982 RFCOMM on-demand channel 0x04 released
+07:00:48.131 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:00:48.132 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:00:48.172 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:00:48.173 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:00:48.668 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 04 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 9a c5 72 66 7e
+07:00:48.669 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:00:48.670 Noise-control mode from the settings stream (changed_by_buds)
+07:01:04.140 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:01:04.141 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:01:07.154 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 10 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 47 57 80 f9 7e
+07:01:07.155 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:01:07.156 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:01:07.156 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:01:07.157 Setting 2 written (channel 19)
+07:01:28.199 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:01:28.201 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:01:44.250 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:01:44.252 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:01:51.969 ANC tile tapped (shown: ADAPTIVE): the claim asks the Buds first and steps from their answer
+07:01:52.700 RFCOMM channel 0x04 connected (attempt 1/3)
+07:01:52.900 DLCI 0x04: 03 0a 00 08 8d 64 73 b8 56 64 bf 10 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:01:52.971 DLCI 0x04: 03 0b 00 19 02 70 27 01 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:01:52.972 DLCI 0x04: 07 34 00 0c 01 21 74 89 a5 2e d1 53 07 9b b7 37
+07:01:53.014 DLCI 0x04: 03 03 00 03 64 64 ff
+07:01:53.080 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:01:53.081 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:01:53.202 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 20
+07:01:53.240 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:01:53.277 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:01:53.346 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 11 7b f5 55 7e
+07:01:53.347 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:01:53.347 Noise-control mode from the settings stream (set_by_app)
+07:01:53.348 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 b2 d9 25 c4 7e
+07:01:53.349 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:01:53.349 Noise-control mode from the settings stream (set_by_app)
+07:01:54.680 ANC tile tapped (shown: OFF): the claim asks the Buds first and steps from their answer
+07:01:54.810 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:01:54.939 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 08
+07:01:54.941 DLCI 0x04: 08 13 00 04 01 e8 e8 08
+07:01:55.010 DLCI 0x04: 08 13 00 04 01 e8 e8 08
+07:01:55.012 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 02 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 68 11 88 44 7e
+07:01:55.013 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:01:55.014 Noise-control mode from the settings stream (set_by_app)
+07:01:55.050 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 02 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 cb b3 58 d5 7e
+07:01:55.050 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:01:55.051 Noise-control mode from the settings stream (set_by_app)
+07:01:56.447 RFCOMM on-demand channel 0x04 released
+07:01:58.938 ANC tile tapped (shown: ACTIVE): the claim asks the Buds first and steps from their answer
+07:01:59.633 RFCOMM channel 0x04 connected (attempt 1/3)
+07:01:59.739 DLCI 0x04: 03 0a 00 08 54 e4 a9 45 98 de 2a 96 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:01:59.806 DLCI 0x04: 03 0b 00 19 02 70 27 08 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:01:59.808 DLCI 0x04: 07 34 00 0c 01 af 38 d5 f3 cb cc 2c a9 b8 3f d7
+07:01:59.870 DLCI 0x04: 03 03 00 03 64 64 ff
+07:01:59.872 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:01:59.873 DLCI 0x04: 08 13 00 04 01 e8 e8 08
+07:01:59.979 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 80
+07:02:00.046 DLCI 0x04: 08 13 00 04 01 e8 e8 80
+07:02:00.048 DLCI 0x04: 08 13 00 04 01 e8 e8 80
+07:02:00.086 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 03 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 80 ca 73 fd 7e
+07:02:00.088 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:02:00.090 Noise-control mode from the settings stream (set_by_app)
+07:02:00.153 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 03 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 23 68 a3 6c 7e
+07:02:00.154 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:02:00.155 Noise-control mode from the settings stream (set_by_app)
+07:02:01.486 RFCOMM on-demand channel 0x04 released
+07:02:04.669 ANC tile tapped (shown: TRANSPARENT): the claim asks the Buds first and steps from their answer
+07:02:05.153 RFCOMM channel 0x04 connected (attempt 1/3)
+07:02:05.360 DLCI 0x04: 03 0a 00 08 7e 44 38 b2 04 f4 df 9e 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:02:05.427 DLCI 0x04: 03 0b 00 19 02 70 27 0d 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:02:05.512 DLCI 0x04: 07 34 00 0c 01 c3 f8 19 cb 51 15 7f 3f 7e fc 8a
+07:02:05.513 DLCI 0x04: 03 03 00 03 64 64 ff
+07:02:05.591 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:02:05.627 DLCI 0x04: 08 13 00 04 01 e8 e8 80
+07:02:05.731 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 40
+07:02:05.841 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:02:05.844 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:02:05.892 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 04 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 9a c5 72 66 7e
+07:02:05.893 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:02:05.893 Noise-control mode from the settings stream (set_by_app)
+07:02:05.930 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 04 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 39 67 a2 f7 7e
+07:02:05.930 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:02:05.932 Noise-control mode from the settings stream (set_by_app)
+07:02:07.235 RFCOMM on-demand channel 0x04 released
+07:02:09.608 ANC tile tapped (shown: ADAPTIVE): the claim asks the Buds first and steps from their answer
+07:02:10.213 RFCOMM channel 0x04 connected (attempt 1/3)
+07:02:10.391 DLCI 0x04: 03 0a 00 08 18 43 8a 37 cc 29 8b 2c 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:02:10.467 DLCI 0x04: 03 0b 00 19 02 70 27 12 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:02:10.470 DLCI 0x04: 07 34 00 0c 01 00 b4 bf db f1 6f f1 e9 66 c9 6f
+07:02:10.520 DLCI 0x04: 03 03 00 03 64 64 ff
+07:02:10.559 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:02:10.610 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:02:10.762 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 20
+07:02:10.802 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:02:10.867 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:02:10.869 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 11 7b f5 55 7e
+07:02:10.869 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:02:10.870 Noise-control mode from the settings stream (set_by_app)
+07:02:10.935 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 b2 d9 25 c4 7e
+07:02:10.937 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:02:10.940 Noise-control mode from the settings stream (set_by_app)
+07:02:12.267 RFCOMM on-demand channel 0x04 released
+07:02:15.532 ANC tile tapped (shown: OFF): the claim asks the Buds first and steps from their answer
+07:02:16.119 RFCOMM channel 0x04 connected (attempt 1/3)
+07:02:16.395 DLCI 0x04: 03 0a 00 08 6b 6a c0 44 e1 cc c8 4f 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:02:16.398 DLCI 0x04: 03 0b 00 19 02 70 27 18 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:02:16.440 DLCI 0x04: 07 34 00 0c 01 72 c9 ff 88 17 50 47 da 71 b6 1a
+07:02:16.477 DLCI 0x04: 03 03 00 03 64 64 ff
+07:02:16.515 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:02:16.582 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:02:16.698 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 08
+07:02:16.766 DLCI 0x04: 08 13 00 04 01 e8 e8 08
+07:02:16.767 DLCI 0x04: 08 13 00 04 01 e8 e8 08
+07:02:16.833 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 02 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 68 11 88 44 7e
+07:02:16.834 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:02:16.834 Noise-control mode from the settings stream (set_by_app)
+07:02:16.834 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 02 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 cb b3 58 d5 7e
+07:02:16.835 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:02:16.835 Noise-control mode from the settings stream (set_by_app)
+07:02:18.205 RFCOMM on-demand channel 0x04 released
+07:02:18.291 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:02:18.292 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:02:27.600 RFCOMM channel 0x04 connected (attempt 1/3)
+07:02:27.671 DLCI 0x04: 03 0a 00 08 8f 91 6e 4f 84 72 83 1c 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:02:27.673 DLCI 0x04: 03 0b 00 19 02 70 27 24 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:02:27.678 DLCI 0x04: 07 34 00 0c 01 5d 87 79 d4 a1 bb f1 01 ae 8a b2
+07:02:27.680 DLCI 0x04: 03 03 00 03 64 64 ff
+07:02:27.680 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:02:27.682 DLCI 0x04: 08 13 00 04 01 e8 e8 08
+07:02:27.736 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 20
+07:02:27.738 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:02:27.740 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:02:27.752 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 11 7b f5 55 7e
+07:02:27.753 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:02:27.753 Noise-control mode from the settings stream (set_by_app)
+07:02:27.791 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 b2 d9 25 c4 7e
+07:02:27.792 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:02:27.793 Noise-control mode from the settings stream (set_by_app)
+07:02:29.242 RFCOMM on-demand channel 0x04 released
+07:02:30.179 RFCOMM channel 0x04 connected (attempt 1/3)
+07:02:30.256 DLCI 0x04: 03 0a 00 08 57 78 97 16 05 79 e3 b7 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:02:30.258 DLCI 0x04: 03 0b 00 19 02 70 27 26 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:02:30.260 DLCI 0x04: 07 34 00 0c 01 d8 62 40 c0 20 b2 91 04 e2 cf 94
+07:02:30.260 DLCI 0x04: 03 03 00 03 64 64 ff
+07:02:30.261 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:02:30.290 DLCI 0x04: 08 13 00 04 01 e8 e8 20
+07:02:30.380 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 80
+07:02:30.392 DLCI 0x04: 08 13 00 04 01 e8 e8 80
+07:02:30.396 DLCI 0x04: 08 13 00 04 01 e8 e8 80
+07:02:30.401 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 03 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 80 ca 73 fd 7e
+07:02:30.402 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:02:30.403 Noise-control mode from the settings stream (set_by_app)
+07:02:30.435 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 03 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 23 68 a3 6c 7e
+07:02:30.435 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:02:30.436 Noise-control mode from the settings stream (set_by_app)
+07:02:31.884 RFCOMM on-demand channel 0x04 released
+07:02:34.249 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:02:34.250 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:02:38.623 RFCOMM channel 0x04 connected (attempt 1/3)
+07:02:38.741 DLCI 0x04: 03 0a 00 08 4b 38 fe 7f 56 09 e3 4e 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:02:38.743 DLCI 0x04: 03 0b 00 19 02 70 27 2f 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:02:38.748 DLCI 0x04: 07 34 00 0c 01 04 84 42 3e f1 38 96 1f 7b 2c d3
+07:02:38.749 DLCI 0x04: 03 03 00 03 64 64 ff
+07:02:38.750 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:02:38.770 DLCI 0x04: 08 13 00 04 01 e8 e8 80
+07:02:38.844 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 40
+07:02:38.845 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:02:38.849 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:02:38.851 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 04 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 9a c5 72 66 7e
+07:02:38.852 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:02:38.852 Noise-control mode from the settings stream (set_by_app)
+07:02:38.911 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 04 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 39 67 a2 f7 7e
+07:02:38.912 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:02:38.913 Noise-control mode from the settings stream (set_by_app)
+07:02:40.350 RFCOMM on-demand channel 0x04 released
+07:02:42.103 RFCOMM channel 0x04 connected (attempt 1/3)
+07:02:42.201 DLCI 0x04: 03 0a 00 08 41 aa 65 67 5d 3f c0 37 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:02:42.209 DLCI 0x04: 03 0b 00 19 02 70 27 32 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:02:42.228 DLCI 0x04: 07 34 00 0c 01 44 d5 32 a5 4d 83 96 5e e0 06 bf
+07:02:42.231 DLCI 0x04: 03 03 00 03 64 64 ff
+07:02:42.231 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:02:42.233 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:02:42.301 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 08
+07:02:42.302 DLCI 0x04: 08 13 00 04 01 e8 e8 08
+07:02:42.303 DLCI 0x04: 08 13 00 04 01 e8 e8 08
+07:02:42.332 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 02 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 68 11 88 44 7e
+07:02:42.334 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:02:42.335 Noise-control mode from the settings stream (set_by_app)
+07:02:42.336 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 02 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 cb b3 58 d5 7e
+07:02:42.336 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:02:42.337 Noise-control mode from the settings stream (set_by_app)
+07:02:43.807 RFCOMM on-demand channel 0x04 released
+07:02:47.114 RFCOMM channel 0x04 connected (attempt 1/3)
+07:02:47.224 DLCI 0x04: 03 0a 00 08 79 af 74 53 97 d8 fe 2b 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:02:47.233 DLCI 0x04: 03 0b 00 19 02 70 27 37 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:02:47.234 DLCI 0x04: 07 34 00 0c 01 9e 1a b7 c5 27 79 e5 31 9a e0 c8
+07:02:47.252 DLCI 0x04: 03 03 00 03 64 64 ff
+07:02:47.254 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:02:47.255 DLCI 0x04: 08 13 00 04 01 e8 e8 08
+07:02:47.326 DLCI 0x04: ff 01 00 06 08 12 01 e8 e8 40
+07:02:47.331 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:02:47.347 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:02:47.349 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 04 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 9a c5 72 66 7e
+07:02:47.349 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:02:47.350 Noise-control mode from the settings stream (set_by_app)
+07:02:47.394 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 04 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 39 67 a2 f7 7e
+07:02:47.395 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:02:47.395 Noise-control mode from the settings stream (set_by_app)
+07:02:48.832 RFCOMM on-demand channel 0x04 released
+07:03:08.497 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:03:08.498 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:03:18.093 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 03 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 80 ca 73 fd 7e
+07:03:18.094 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:03:18.095 Noise-control mode from the settings stream (changed_by_buds)
+07:03:18.096 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 03 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 23 68 a3 6c 7e
+07:03:18.096 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:03:18.097 Noise-control mode from the settings stream (unchanged)
+07:03:22.516 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 02 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 68 11 88 44 7e
+07:03:22.517 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:03:22.518 Noise-control mode from the settings stream (changed_by_buds)
+07:03:22.580 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 02 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 cb b3 58 d5 7e
+07:03:22.581 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:03:22.581 Noise-control mode from the settings stream (unchanged)
+07:03:26.904 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 11 7b f5 55 7e 7e 00 a5 03 2a 04 22 02 68 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 b2 d9 25 c4 7e
+07:03:26.906 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:03:26.906 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:03:26.907 Noise-control mode from the settings stream (changed_by_buds)
+07:03:26.908 Noise-control mode from the settings stream (unchanged)
+07:03:31.367 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 04 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 9a c5 72 66 7e
+07:03:31.369 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:03:31.370 Noise-control mode from the settings stream (changed_by_buds)
+07:03:31.434 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 04 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 39 67 a2 f7 7e
+07:03:31.434 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:03:31.435 Noise-control mode from the settings stream (unchanged)
+07:03:41.133 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 03 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 80 ca 73 fd 7e
+07:03:41.133 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:03:41.134 Noise-control mode from the settings stream (changed_by_buds)
+07:03:41.180 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 03 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 23 68 a3 6c 7e
+07:03:41.180 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:03:41.181 Noise-control mode from the settings stream (unchanged)
+07:03:44.305 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:03:44.306 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:03:47.642 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 02 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 68 11 88 44 7e
+07:03:47.644 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:03:47.644 Noise-control mode from the settings stream (changed_by_buds)
+07:03:47.704 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 02 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 cb b3 58 d5 7e
+07:03:47.705 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:03:47.705 Noise-control mode from the settings stream (unchanged)
+07:03:52.644 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 11 7b f5 55 7e
+07:03:52.645 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:03:52.645 Noise-control mode from the settings stream (changed_by_buds)
+07:03:52.710 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 b2 d9 25 c4 7e
+07:03:52.710 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:03:52.711 Noise-control mode from the settings stream (unchanged)
+07:03:58.206 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 04 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 9a c5 72 66 7e
+07:03:58.207 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:03:58.208 Noise-control mode from the settings stream (changed_by_buds)
+07:03:58.273 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 04 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 39 67 a2 f7 7e
+07:03:58.274 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:03:58.275 Noise-control mode from the settings stream (unchanged)
+07:04:18.323 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:04:18.324 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:04:19.802 DLCI 0x02: 7e 80 a3 03 2a 1e 22 1c 82 01 19 0d 00 00 80 bf 15 00 00 00 00 1d 00 00 80 40 25 00 00 00 40 2d a2 e8 bb 40 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 d8 05 68 5f 7e
+07:04:19.804 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:04:19.805 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:04:19.806 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:04:26.756 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 78 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 67 9e 29 0a 7e
+07:04:26.757 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:04:26.792 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 04 22 02 78 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 67 9e 29 0a 7e
+07:04:26.793 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:04:26.794 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:04:26.795 Setting 15 written (channel 19)
+07:04:26.830 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 78 00 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 c4 3c f9 9b 7e
+07:04:26.831 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:04:28.674 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 98 01 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 ef 74 5b 43 7e
+07:04:28.675 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:04:28.681 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:04:28.682 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:04:28.682 Setting 19 written (channel 19)
+07:04:34.444 Session ended by the user's Disconnect tap (was Ready)
+07:04:34.445 ConnectionState: Ready -> Disconnected
+07:04:36.709 ConnectionState: Disconnected -> Connecting
+07:04:37.011 RFCOMM channel 0x02 connected (attempt 1/3)
+07:04:37.013 ConnectionState: Connecting -> Discovering
+07:04:37.014 ConnectionState: Discovering -> Ready
+07:04:37.045 DLCI 0x02: 7e 80 a3 03 2a 64 22 57 0a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 12 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 1a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 29 34 29 3f c2 f6 cb d8 1a 30 00 08 01 10 13 1d ea 71 de 7d 5e 25 44 fa 99 71 38 ff ff ff ff 0f b5 f9 b0 f5 7e
+07:04:37.047 pw_rpc RESPONSE ch=19 method=GetSoftwareInfo status=OK
+07:04:37.048 Maestro channel announced by the Buds: 19
+07:04:37.095 DLCI 0x02: 7e 80 a3 03 2a 1e 22 1c 82 01 19 0d 00 00 80 bf 15 00 00 00 00 1d 00 00 80 40 25 00 00 00 40 2d a2 e8 bb 40 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae e7 1c be 36 7e
+07:04:37.096 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.096 EQ read ok (channel 19)
+07:04:37.135 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 10 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 78 4e 56 90 7e
+07:04:37.136 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.173 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 20 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 9b 0b 4e 61 7e
+07:04:37.174 RFCOMM channel 0x04 connected (attempt 1/3)
+07:04:37.175 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.218 DLCI 0x02: 7e 80 a3 03 2a 10 22 0e 3a 0c 0a 04 22 02 08 05 12 04 22 02 08 05 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 71 fb c1 e8 7e
+07:04:37.219 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.221 DLCI 0x04: 03 0a 00 08 bd cc 38 4a 73 a5 07 b2 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:04:37.225 DLCI 0x04: 03 0b 00 19 02 70 27 a6 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:04:37.236 DLCI 0x04: 07 34 00 0c 01 cb fd 28 b9 43 c9 d9 27 88 fb c8
+07:04:37.238 DLCI 0x04: 03 03 00 03 64 64 ff
+07:04:37.240 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:04:37.241 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:04:37.310 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 58 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae cd 27 3b cd 7e
+07:04:37.310 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.371 DLCI 0x02: 7e 80 a3 03 2a 0c 22 0a 62 08 08 01 10 01 18 01 20 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae be 26 a1 e0 7e
+07:04:37.371 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.424 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 78 00 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 58 87 ff 63 7e
+07:04:37.425 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.504 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 88 01 00 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 45 2f 27 84 7e
+07:04:37.506 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.572 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 98 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae d0 6d 8d 2a 7e
+07:04:37.573 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.647 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 b0 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae b4 10 3e e2 7e
+07:04:37.647 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.711 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 d8 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 24 08 cb 77 7e
+07:04:37.712 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.772 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e0 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 3d ec 29 a8 7e
+07:04:37.772 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.853 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e8 01 02 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae da c9 44 5f 7e
+07:04:37.854 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.855 Settings read (channel 19)
+07:04:37.856 Runtime info requested (channel 19)
+07:04:37.857 Settings stream subscribed (channel 19)
+07:04:37.877 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:04:37.878 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:04:37.952 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 04 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae a5 dc a4 0f 7e
+07:04:37.954 pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+07:04:37.955 Noise-control mode from the mode read (read)
+07:04:37.956 Noise-control mode read (channel 19)
+07:04:38.016 DLCI 0x02: 7e 80 a3 03 2a 44 08 06 10 11 28 09 30 07 3a 30 0a 0e 35 37 30 37 31 57 52 42 45 43 30 32 35 31 12 0e 35 37 30 38 31 57 52 42 44 52 33 32 30 39 1a 0e 35 37 30 37 31 57 52 42 44 4c 33 31 34 37 42 08 30 30 31 33 32 30 39 34 08 01 10 13 1d ea 71 de 7d 5e 25 e3 a5 ec 28 a4 a6 c5 17 7e
+07:04:38.016 pw_rpc RESPONSE ch=19 method=GetHardwareInfo status=OK
+07:04:38.021 Hardware info read (channel 19): 3 serial numbers
+07:04:38.747 RFCOMM on-demand channel 0x04 released
+07:04:47.278 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 78 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 8f 45 d2 b3 7e
+07:04:47.279 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:04:47.292 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 04 22 02 78 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 8f 45 d2 b3 7e
+07:04:47.293 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:04:47.294 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:04:47.295 Setting 15 written (channel 19)
+07:04:47.299 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 78 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 2c e7 02 22 7e
+07:04:47.300 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:04:48.993 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 98 01 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 07 af a0 fa 7e
+07:04:48.994 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:04:49.032 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:04:49.033 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:04:49.033 Setting 19 written (channel 19)
+07:05:14.418 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:05:14.419 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:05:51.536 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 20 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 4c c9 63 b1 7e
+07:05:51.537 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:05:51.571 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 04 22 02 20 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 4c c9 63 b1 7e
+07:05:51.572 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:05:51.572 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:05:51.575 Setting 4 written (channel 19)
+07:05:51.613 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 20 00 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 ef 6b b3 20 7e
+07:05:51.614 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:05:58.440 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:05:58.442 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:06:02.618 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 20 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 a4 12 98 08 7e
+07:06:02.618 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:06:02.635 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 04 22 02 20 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 a4 12 98 08 7e
+07:06:02.636 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:06:02.637 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:06:02.638 Setting 4 written (channel 19)
+07:06:02.698 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 20 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 07 b0 48 99 7e
+07:06:02.698 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:06:14.724 DLCI 0x02: 7e 80 a3 03 2a 0c 22 0a 62 08 08 01 10 00 18 01 20 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 d9 bf 95 5e 7e
+07:06:14.725 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:06:14.728 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:06:14.728 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:06:14.728 Setting 12 written (channel 19)
+07:06:23.861 DLCI 0x02: 7e 80 a3 03 2a 0c 22 0a 62 08 08 01 10 01 18 01 20 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 81 3f 77 89 7e
+07:06:23.862 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:06:23.883 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:06:23.884 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:06:23.885 Setting 12 written (channel 19)
+07:06:35.823 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e8 01 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 9c ba ef 27 7e
+07:06:35.825 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:06:35.828 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:06:35.829 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:06:35.830 Setting 29 written (channel 19)
+07:06:43.485 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e8 01 02 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 e5 d0 92 36 7e
+07:06:43.486 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:06:43.489 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:06:43.491 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:06:43.492 Setting 29 written (channel 19)
+07:06:51.822 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 10 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 af 8c 7b 40 7e
+07:06:51.822 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:06:51.823 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:06:51.823 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:06:51.824 Setting 2 written (channel 19)
+07:06:55.912 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 10 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 47 57 80 f9 7e
+07:06:55.912 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:06:55.913 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:06:55.913 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:06:55.914 Setting 2 written (channel 19)
+07:07:09.058 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 b0 01 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 63 d2 13 32 7e
+07:07:09.059 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:07:09.059 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:07:09.060 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:07:09.061 Setting 22 written (channel 19)
+07:07:20.142 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 b0 01 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 8b 09 e8 8b 7e
+07:07:20.143 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:07:20.144 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+07:07:20.145 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:07:20.145 Setting 22 written (channel 19)
+07:07:26.832 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 58 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 1a e5 16 1d 7e
+07:07:26.833 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:07:26.836 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 04 22 02 58 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 1a e5 16 1d 7e
+07:07:26.838 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:07:26.838 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:07:26.839 Setting 11 written (channel 19)
+07:07:26.879 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 58 00 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 b9 47 c6 8c 7e
+07:07:26.880 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:07:34.550 DLCI 0x02: 7e 80 a3 03 2a 04 22 02 58 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 f2 3e ed a4 7e
+07:07:34.551 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:07:34.562 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 04 22 02 58 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 f2 3e ed a4 7e
+07:07:34.563 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:07:34.563 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:07:34.564 Setting 11 written (channel 19)
+07:07:34.611 DLCI 0x02: 7e 00 a5 03 2a 04 22 02 58 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 51 9c 3d 35 7e
+07:07:34.612 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:07:47.959 RFCOMM channel 0x04 connected (attempt 1/3)
+07:07:48.076 DLCI 0x04: 03 0a 00 08 22 82 24 2d 93 88 62 2e 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:07:48.110 DLCI 0x04: 03 0b 00 19 02 70 28 64 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:07:48.118 DLCI 0x04: 07 34 00 0c 01 18 2e 18 25 6d f8 77 e2 b5 bb ec
+07:07:48.136 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:07:48.140 DLCI 0x04: ff 01 00 03 04 01 00
+07:07:48.142 DLCI 0x04: 04 01 00 01 02
+07:07:49.645 RFCOMM on-demand channel 0x04 released
+07:07:59.480 RFCOMM channel 0x04 connected (attempt 1/3)
+07:07:59.623 DLCI 0x04: 03 0a 00 08 dd 78 ab e3 c6 e4 0e 39 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:07:59.634 DLCI 0x04: 03 0b 00 19 02 70 28 70 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:07:59.635 DLCI 0x04: 07 34 00 0c 01 db ef 42 f3 35 6b e8 39 a4 58 6b
+07:07:59.637 DLCI 0x04: 03 03 00 03 64 64 ff
+07:07:59.640 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:07:59.642 DLCI 0x04: ff 01 00 03 04 01 00
+07:07:59.680 DLCI 0x04: 04 01 00 01 00
+07:08:00.628 DLCI 0x04: ff 01 00 03 04 01 00
+07:08:00.630 DLCI 0x04: 04 01 00 01 01
+07:08:02.132 RFCOMM on-demand channel 0x04 released
+07:08:11.185 RFCOMM channel 0x04 connected (attempt 1/3)
+07:08:11.267 DLCI 0x04: 03 0a 00 08 95 49 75 2f 6f 9b b0 d3 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:08:11.269 DLCI 0x04: 03 0b 00 19 02 70 28 7c 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:08:11.276 DLCI 0x04: 07 34 00 0c 01 9e 3c 0a c3 57 65 88 4d 1f d7 c4
+07:08:11.279 DLCI 0x04: 03 03 00 03 64 64 ff
+07:08:11.281 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:08:11.321 DLCI 0x04: ff 01 00 03 04 01 00
+07:08:11.323 DLCI 0x04: 04 01 00 01 00
+07:08:12.827 RFCOMM on-demand channel 0x04 released
+07:08:34.628 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:08:34.630 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:08:40.028 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e0 01 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 ea 2e 04 78 7e
+07:08:40.029 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:08:40.030 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 05 22 03 e0 01 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 ea 2e 04 78 7e
+07:08:40.030 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:08:40.031 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:08:40.031 Setting 28 written (channel 19)
+07:08:40.091 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 e0 01 00 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 b9 63 c2 30 7e
+07:08:40.092 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:08:49.233 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e0 01 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 02 f5 ff c1 7e
+07:08:49.235 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:08:49.240 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 05 22 03 e0 01 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 02 f5 ff c1 7e
+07:08:49.241 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:08:49.241 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:08:49.242 Setting 28 written (channel 19)
+07:08:49.276 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 e0 01 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 51 b8 39 89 7e
+07:08:49.277 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:08:57.142 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 d8 01 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 f3 ca e6 a7 7e
+07:08:57.143 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:08:57.144 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 05 22 03 d8 01 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 f3 ca e6 a7 7e
+07:08:57.144 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:08:57.147 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:08:57.148 Setting 27 written (channel 19)
+07:08:57.197 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 d8 01 00 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 a0 87 20 ef 7e
+07:08:57.198 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:08:58.587 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:08:58.588 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:09:03.643 DLCI 0x02: 7e 80 a3 03 2a 05 22 03 d8 01 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 1b 11 1d 1e 7e
+07:09:03.644 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:09:03.645 DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e 7e 80 a3 03 2a 05 22 03 d8 01 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 1b 11 1d 1e 7e
+07:09:03.645 pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+07:09:03.645 pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+07:09:03.645 Setting 27 written (channel 19)
+07:09:03.693 DLCI 0x02: 7e 00 a5 03 2a 05 22 03 d8 01 01 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 48 5c db 56 7e
+07:09:03.694 pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+07:09:31.252 Runtime info re-requested on Refresh (channel 19)
+07:09:31.358 DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+07:09:31.359 pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+07:09:31.783 RFCOMM channel 0x04 connected (attempt 1/3)
+07:09:31.899 DLCI 0x04: 03 0a 00 08 b7 91 9d f0 61 23 6a e1 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:09:31.940 DLCI 0x04: 03 0b 00 19 02 70 28 cc 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:09:32.004 DLCI 0x04: 07 34 00 0c 01 67 a5 c4 fe dd ca c8 48 f9 aa 94
+07:09:32.005 DLCI 0x04: 03 03 00 03 64 64 ff
+07:09:32.119 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:09:32.121 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:09:33.497 DLCI 0x04: 07 34 00 0c 01 6d 13 e7 59 85 1a 68 ee ca 7a bd
+07:09:33.628 RFCOMM on-demand channel 0x04 released
+07:09:43.242 RFCOMM channel 0x04 connected (attempt 1/3)
+07:09:43.329 DLCI 0x04: 03 0a 00 08 95 28 1c 37 f9 d1 25 7b 03 01 00 03 da 2d b1 03 02 00 06 56 05 49 04 5a 7e 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+07:09:43.342 DLCI 0x04: 03 0b 00 19 02 70 28 d8 3e e8 b2 72 1e 20 a6 d4 51 05 28 d8 98 b1 53 3f 07 d1 f4 9c fe
+07:09:43.387 DLCI 0x04: 07 34 00 0c 01 75 b1 b5 32 c5 26 df 56 a1 c2 d3
+07:09:43.389 DLCI 0x04: 03 03 00 03 64 64 ff
+07:09:43.389 DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+07:09:43.390 DLCI 0x04: 08 13 00 04 01 e8 e8 40
+07:09:43.784 DLCI 0x04: 07 34 00 0c 01 2d b6 3e 50 19 59 a6 5c 22 d4 cf
+07:09:44.894 RFCOMM on-demand channel 0x04 released
+07:10:39.183 Android link observer stopped
+07:10:39.189 Android link: CONNECTED -> PENDING (trigger: profile 2 unbound)
+07:10:47.052 Android link observer started
+07:10:47.062 Android link: PENDING -> CONNECTED (trigger: profile 2 bound) via profiles [2]
+07:10:49.550 Android link observer stopped
+07:10:49.562 Android link: CONNECTED -> PENDING (trigger: profile 2 unbound)
+07:11:14.271 Android link observer started
+07:11:14.281 Android link: PENDING -> CONNECTED (trigger: profile 1 bound) via profiles [1]

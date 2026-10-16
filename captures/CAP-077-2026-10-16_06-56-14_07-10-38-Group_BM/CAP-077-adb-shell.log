@@ -1,0 +1,20 @@
+# date >> adb-shell.log ; adb shell am get-current-user; adb shell pm list packages --user 10 | grep -i -E "gms|vending" >> adb-shell.log; echo "exit=$?" >> adb-shell.log
+Fri Oct 16 06:53:39 AM CEST 2026
+package:app.grapheneos.gmscompat.config
+package:app.grapheneos.gmscompat.lib
+package:app.grapheneos.gmscompat
+exit=0
+
+# date >> adb-shell.log ; adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -E "firstInstallTime|lastUpdateTime|versionCode" >> adb-shell.log
+Fri Oct 16 06:54:22 AM CEST 2026
+    versionCode=10300 minSdk=34 targetSdk=34
+    lastUpdateTime=2026-10-15 09:11:11
+      firstInstallTime=2026-10-09 18:33:54
+      firstInstallTime=2026-10-09 17:24:41
+
+# date >> adb-shell.log ; adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -E "firstInstallTime|lastUpdateTime|versionCode" >> adb-shell.log
+Fri Oct 16 06:58:37 AM CEST 2026
+    versionCode=10301 minSdk=34 targetSdk=34
+    lastUpdateTime=2026-10-16 06:58:05
+      firstInstallTime=2026-10-09 18:33:54
+      firstInstallTime=2026-10-09 17:24:41
