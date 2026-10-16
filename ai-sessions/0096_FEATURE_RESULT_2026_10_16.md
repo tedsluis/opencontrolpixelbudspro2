@@ -54,6 +54,9 @@ for every step, three parts (the release app's missing 1.3.1 steps; the experime
   **`4e5facfa3b6178f518750578f3e1ccc5de169103fd619120ac21740eceadd422`**, kept at ~/opencontrol-1.3.1-exp.1/opencontrol-pixelbudspro2-1.3.1-exp.1.apk with its
   .sha256 (not committed).
 - **Checkpoint 2 answered** (below). Committed and pushed; draft PR "do not merge before `CAP-078` is analysed".
+- **CI on PR #68:** the first run failed in `:data:testReleaseUnitTest` — `DarkModeSettingsStoreTest` ("multiple DataStores active", FileStorage.kt:52): an
+  existing race in the test (the first instance's scope was cancelled without waiting), exposed by a third test variant running in parallel. Fixed in the test
+  only (`cancelAndJoin`; `e9e5d09`); three local reruns in all three variants pass; the second CI run is green. Not an app change.
 
 ## Checkpoints
 
@@ -88,7 +91,8 @@ workflow (its Gradle tasks). **Not read in full** in this session: `ARCHITECTURE
 
 ## Commits
 
-On `feature/0096-experiment-build` after `61a59b9` (the prompt): see the next session's back-fill for the hashes.
+On `feature/0096-experiment-build` after `61a59b9` (the prompt): `0292e59` feat(experiment) the build type and the card; `f92eb7f` docs(capture) the CAP-078
+skeleton and the registers; `e9e5d09` test: the DataStore test race; this RESULT update. Draft PR #68, not merged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0096_FEATURE_RESULT_2026_10_16.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0096_FEATURE_RESULT_2026_10_16
