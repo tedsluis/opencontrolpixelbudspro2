@@ -255,7 +255,7 @@ The maintainer approved in chat 2026-10-15 ("Ja, commit en push het"), on branch
 | `f483b98` | documents, scripts and CI of Phases 3–5 |
 | `bbc45fe` | the capture corrections, the test plans and the `CAP-077` skeleton |
 | `9999d28` | the app 1.3.1 with its tests |
-| (this commit) | `ARCHITECTURE.md`, `CHANGELOG.md`, `README.md`, `PROJECT.md`, `SECURITY.md`, `TODO.md`, this prompt and RESULT, the INDEX row |
+| `cf986f4` | `ARCHITECTURE.md`, `CHANGELOG.md`, `README.md`, `PROJECT.md`, `SECURITY.md`, `TODO.md`, this prompt and RESULT, the INDEX row |
 
 ## Appendix A.4 — the capture sub-agents
 

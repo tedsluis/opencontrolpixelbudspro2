@@ -2932,6 +2932,11 @@ motivated this).
   overwritten by the equal `ReadSetting 4:13` answer that follows the snapshot's `Get` (12 of 12 sessions in that order — `CAP-076-FINDINGS.md` §6.2); a tile
   tap cut right after the `Get`'s answer sends nothing and says nothing (§5.3). Not verified: holds on other tabs on screen, Home, another phone's changes. The
   decision is unchanged.
+- **Update (2026-10-16, `ai-sessions/0095`, `CAP-077`, maintainer-approved in chat 2026-10-16, `AskUserQuestion` "Notities", option *"ADR-065 Update + §6-notitie
+  (Recommended)"*, with this text in the preview): 1.3.1 in the secondary user.** 1.3.1 (`7aa524b`) sent the same seventeen requests as 1.3.0, byte-identical to
+  `CAP-076`'s, in 6 of 6 MAESTRO sessions (two of them 1.3.0's, before the update on film); 8 of 8 press-and-holds shown 6–20 ms from the Buds' push with no claim
+  open; 6 of 6 tile taps and 5 tab taps answered by `Set` + ACK and classed as the app's; a same-mode push logged "(unchanged)" (`CAP-077-FINDINGS.md` §4–§6). The
+  re-open's kept "changed since" cause (A93-APP-02) was not exercised. The decision is unchanged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS

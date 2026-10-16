@@ -3734,6 +3734,16 @@ leaving them buried in prose elsewhere.
   the app set Off while both were worn (5524 … 5698); `CAP-045` one-bud holds 4 → 3 → 2 → 4 (1583, 1755, 1818), the next one-bud entry (2122) → 4. Command:
   `python3 scripts/wear_mode_crosscheck.py --restore <logs>` (`DESKRESEARCH_FINDINGS.md` 2026-10-14 §9). Not shown: that settings 9/10 hold these stores
   (never read or streamed on any wire: 0 in 96 logs, positive control fields 7/11/12 → 2327).
+  **Note (2026-10-16, `ai-sessions/0095`, maintainer-approved in chat 2026-10-16, `AskUserQuestion` "Notities"; no status change):** `CAP-077` adds a sample
+  with **in-ear detection off**: the stream pushed `4:{13:4}` (Adaptive) at H 2339, 07:00:48.664, 0.5 s after the runtime info showed the second bud out of the
+  case (H 2326, both `6.x` field 2 = 1) and 1.1 s after the last read gave Off (H 2317) — no app `Set`, no claim open, no film of the ears
+  (`CAP-077-FINDINGS.md` §4.2). Whether the switch follows the case or the ears is not settled by it.
+- [ ] **Added 2026-10-16, `ai-sessions/0095` (maintainer-approved in chat 2026-10-16, `AskUserQuestion` "Notities") — ❓ OPEN QUESTION: three stream packets per
+  write for some settings.** In `CAP-077` (OpenControl 1.3.1, both buds out of the case) a `WriteSetting` of field 4, 11, 15, 27 or 28 was echoed on
+  `SubscribeToSettingsChanges` **three** times — channel 19 before the `RESPONSE`, channel 19 again in the same RFCOMM frame as the `RESPONSE`, channel 21 (e.g.
+  `4:{15:0}`: H 4260, 4262, 4265) — and a write of 2, 12, 16, 19, 22 or 29 **once** (channel 19): 10 × 3 + 13 × 1 = 43 packets (`python3
+  scripts/pwhdlc_crc_table.py CAP-077-btsnoop_hci.log 0x000b`, `CAP-077-FINDINGS.md` §9.1). Test: the same count around the official app's writes (`CAP-069`,
+  `CAP-070`) — field-dependent or client-dependent. Harmless for the app (the last value wins).
 
 ### Resolved
 
@@ -3827,6 +3837,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-14 | **`ai-sessions/0090` — the pbpctrl cross-check (E-01 … E-23), maintainer-approved in chat 2026-10-14.** **§4.1** 🟢 FACT: setting 13 = the noise-control mode on DLCI 0x02, pushed on the settings stream to a subscribed client for every reported change (73/73 Buds-side, 39/39 Set-driven), incl. while no client holds the Message Stream; `ReadSetting 4:13` = the latest mode (359/382) — used by ADR-064; §6's two 🟡 items on field 13 point there. **§6** 🟡 one-bud / two-bud mode (pbpctrl names 9/10). **§2.2** correction: the format was never pbpctrl's. **§4.5.7** note: pbpctrl's balance = −zigzag (same mapping). **§0.1** note: Class of Device `0x244404`. | Claude (AI), maintainer-approved |
 | 2026-10-15 | **`ai-sessions/0092` — `CAP-076` (Group BL, OpenControl 1.3.0 in both GrapheneOS users), maintainer-approved in chat 2026-10-15.** §4.1: a note — the settings stream in OpenControl's own logs (12 of 12 sessions subscribed, 41 of 41 holds pushed while Play held the Message Stream), every change pushed twice with both buds out of the case (🟡 one per bud core). No status change; §6's wear item unchanged. | Claude (AI), maintainer-approved |
 | 2026-10-15 | **`ai-sessions/0094` — the 0093 audit processed, maintainer-approved in chat 2026-10-15** (`AskUserQuestion` "FACT-teksten", "§6 en lead"). §4.1: a Correction — the setting-13 ratios (75 of 89 pushed, 12 of 89 lost to the Buds' `DISC`, 2 at re-opens; not "73 of 73" / "12 of 77") and the two users of `CAP-076` (29 of 29 with Play, 12 of 12 without). §5: link-key types are P-192 (0x04/0x05), not P-256. §2.2a: L-1 "8 of 8" in `CAP-065`. §1/§4.3 Option A: 🔴 not observed from the Pro 2. §4.5.2: "in-use" is Code `0x41`. §4.5.3/§4.5.4: Status pointers. §6: SASS item answered from the spec; ATT `0x0044` item closed (103-log scan); DLCI 0x0a item — 🟡 the `CAP-021` waves are assistant sessions (L93-1); field-13 mirror item ticked; pointers on the `CAP-038` and DLCI 0x08 Get-code items. One frame number 1509 → 1508. No FACT promoted or withdrawn. | Claude (AI), maintainer-approved |
+| 2026-10-16 | **`ai-sessions/0095` — `CAP-077` (Group BM, OpenControl 1.3.1 in the secondary user without Play), maintainer-approved in chat 2026-10-16** (`AskUserQuestion` "Notities"). §6: a note on the wear-state item (a mode switch with in-ear detection off, H 2339) and a new ❓ item — three stream packets per write for fields 4, 11, 15, 27, 28. No status change. | Claude (AI), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL
