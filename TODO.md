@@ -170,6 +170,7 @@ Open questions (each with where it is described):
   of setting 13, although the app's own ANC row writes only that (`ai-sessions/0073` §4.9) — in the next official-app capture, film which
   control is tapped (the app's row or the Play-services/Settings one). 🟡 what the Buds mean by the "primary" bud of the announcement (field 6;
   the app-side routing is answered, `PROTOCOL.md` §2.2a note of 2026-10-06).
+- [ ] **Round 1 (`ai-sessions/0096`, 2026-10-16):** E-01, E-03, E-04, E-05 and E-12 have an experiment build (1.3.1-exp.1, build type `experiment`, never released; every send approved in chat 2026-10-16) and a skeleton, `CAP-078` (Group BN) — the maintainer runs it (**M**); a CAPTURE session analyses it; then the FACTs and ADRs for round 2 (release 1.4.0).
 - [ ] **Experiment (`ai-sessions/0090` E-01, needs its own approval — a new write):** `WriteSetting 4:{13:n}` from a debug build — n = 1…4 with the
   `RESPONSE` status, the `08 13` Notify on DLCI 0x04 (to whom, if Play holds it), the audible change; variants with one bud worn and with Settable `00`. A
   positive result needs a `PROTOCOL.md` entry first and its own ADR (like ADR-045). Not on any wire yet (0 in 96 logs).

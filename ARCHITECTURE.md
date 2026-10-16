@@ -521,6 +521,12 @@ summary), the current state is (every write below additionally passes the Safe-M
 > pbpctrl's help: 6 "is used to intercept and block touch gestures during the setup wizard", 3 "You normally do not want to change this flag"). No ADR may
 > unblock a write of either without first superseding this rule.
 
+> **Experiment build (2026-10-16, `ai-sessions/0096`) — not a release, nothing in this table changes:** the Gradle build type `experiment` (`:app` and `:data`
+> only; package `….experiment`, versionName `1.3.1-exp.1`, debug-signed) adds a Debug-tab card that sends, one tap each and after a confirmation, the round-1
+> requests approved in chat 2026-10-16 (`WriteSetting 4:{13:n}`, `ReadSetting 4:8/9/10`, `SubscribeToOobeActions`, a Ring held until the Buds report it stopped,
+> with and without the phone's ACK, Ring both `0x03`) for `CAP-078`. Its code is in `src/experiment` only (debug and release compile an empty slot; the release
+> APK holds no experiment class); `BudsRepositoryImpl` gave twelve members `internal` visibility for it, without a behaviour change.
+
 This table is this project's authoritative implementation-readiness list until superseded by a new ADR
 — a future session should re-derive it from `DECISIONS.md` directly rather than copying it forward
 uncritically, the same discipline this refresh itself applied.
