@@ -68,6 +68,7 @@ with the hold's untested branches below. **Next app run:** none planned — thes
 
 | Capture | Group | What | Phone / app |
 |---|---|---|---|
+| `CAP-079` | BO | Round 2: release candidate 1.4.0 in both users (ADR-067 … ADR-070, TalkBack, a hold and a Disconnect during a Connect) and the Dosimeter experiment F1–F4 with a sound-level meter (skeleton by `ai-sessions/0098`) | Pixel 9a (users 10 and 0), OpenControl 1.4.0 + 1.4.0-exp.1 |
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
 | `CAP-030` | Q #19–20 | Loud Noise Protection / Adaptive Audio (firmware naming never reconciled with `release_5.203`, `PROTOCOL.md` §0.1) | Pixel 7a, official app |
 
@@ -173,10 +174,9 @@ Open questions (each with where it is described):
   of setting 13, although the app's own ANC row writes only that (`ai-sessions/0073` §4.9) — in the next official-app capture, film which
   control is tapped (the app's row or the Play-services/Settings one). 🟡 what the Buds mean by the "primary" bud of the announcement (field 6;
   the app-side routing is answered, `PROTOCOL.md` §2.2a note of 2026-10-06).
-- [ ] **Round 2 → `ai-sessions/0098` (FEATURE, release 1.4.0; the maintainer's choice in chat 2026-10-17):** noise control through `WriteSetting 4:{13:n}` (an ADR
-  first; the own write counted as `set_by_app`, `FAILED_PRECONDITION` shown as "no bud worn"), the ring status and its ACK while the app holds the claim, Ring
-  both (a draft superseding ADR-027 for "both", accepted in chat first), the L/R battery from runtime info, `TODO.md` §5 items 2.1/2.2/2.4/2.5, P1/P2; the next
-  capture skeleton that also runs what `CAP-078` did not (TalkBack — A93-APP-07; a hold during a Connect — A93-APP-04). Draft PR #68 stays open until then.
+- [ ] **Round 2 built — 1.4.0 prepared by `ai-sessions/0098` (2026-10-17; ADR-067 … ADR-070):** its hardware run is `CAP-079` (Group BO, §3), including
+  TalkBack (A93-APP-07), a hold during a Connect (A93-APP-04) and the Dosimeter experiment F1–F4 with a sound-level meter (`WELL-002`, `WELL-003`); then the
+  release steps (`RELEASING.md`, the maintainer's).
 - [ ] **Experiment (`ai-sessions/0090` E-12):** a read-only `SubscribeToOobeActions` **without** OOBE mode (setting 6 is never written, `ARCHITECTURE.md` §5a
   rule) — do per-bud `LEFT_ON_HEAD` … `RIGHT_OFF_HEAD` events (`qhp` 10–13) arrive? Would refine ADR-059's "probably worn" (never per bud).
 - Idea, low priority (`ai-sessions/0090` E-17): an explicit `GetSoftwareInfo` as a fallback after `MAESTRO_ANNOUNCE_WAIT_MS` — one MAESTRO open in 523 stayed
@@ -217,7 +217,8 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
-- [ ] **The noise-control channel in the Play user — after 1.3.0 (ADR-065: the re-claim is gone, the holds no longer depend on the channel):** what remains is
+- [ ] **The noise-control channel in the Play user — after 1.3.0 (ADR-065: the re-claim is gone, the holds no longer depend on the channel):** *since 1.4.0
+      (ADR-067) a mode change does not use the shared channel; what follows applies to Find only.* What remains is
       the per-tap collision with Play's claim (`CAP-075-FINDINGS.md` §5; 1.3.0's known issue) — P3 a shorter attempt-2 latency for the on-demand channel (§9:
       attempt 2 0.7–1.0 s after attempt 1's refusal) is still open (**M**). Whether repeated collisions drive Play's "Retry times remaining" to 0 and what Play
       does then stays ❓ (§4). **`CAP-076` (§5.2 of its findings):** 13 taps with Play present in 12 claims — 8 refused at attempt 1 and done at attempt 2 (0.87–1.11 s later), 2 cut in their linger, 1 cut before the `Get`'s answer (a toast), 1 after it (silent, P2 below); Play's counter went 5 → 4 once (06:46:28) and back.
@@ -226,11 +227,11 @@ Open questions (each with where it is described):
       snapshot's `Notify` came first in 12 of 12 sessions — §6.2) (**S**); P2 a tile tap whose claim closes after the `Get`'s answer and before its `Set`
       reports a failure (§5.3; a `Set` wait that ignores a `Notify` received before the `Set` was written; a test with the delay) (**S–M**); P3 log a same-mode
       push as "unchanged" (§4.4) (**XS**); P4 the two packets per change with both buds out — one Connect on a fresh ACL, then the official app on the same
-      ACL (§4.3, a capture); P5 the shorter attempt-2 latency (above); P6 a mode line on the Connection tab (§4.2) (**S**). The seven CloseGuard lines of
+      ACL (§4.3, a capture); P5 the shorter attempt-2 latency (above — **kept at 400 ms**, the maintainer's choice in chat 2026-10-17, `ai-sessions/0098`: attempt 2 succeeded 8 of 8
+      in `CAP-078`; P6 built in 1.4.0). The seven CloseGuard lines of
       `CAP-076` A1 (06:47:10/44, §0) — which sockets (❓).
-- [ ] **After `CAP-077` (`ai-sessions/0095`, `CAP-077-FINDINGS.md` §14; the maintainer's choice in chat 2026-10-16: no FEATURE prompt now):** P1 log the EQ write like
-      the other writes ("EQ written (channel N)" — today only the pw_rpc summary) (**XS**); P2 the tile's one- or two-frame "unavailable" look right after an update
-      (§5.3, `AncTileService`) (**XS–S**); ❓ the SIGQUIT the app got at 07:10:55 after the film — which tool sent it.
+- [ ] **After `CAP-077` (`ai-sessions/0095`, `CAP-077-FINDINGS.md` §14):** P1 and P2 built in 1.4.0 (`ai-sessions/0098`); still ❓ the SIGQUIT the app got at
+      07:10:55 after the film — which tool sent it.
 - [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
       (a) hardware-tested in `CAP-071` (`ai-sessions/0080`): no behaviour change found — the same reads, request bytes, answers, re-opens and screens as 1.1.0;
       (b) **M** — raising `targetSdk` (lint `OldTargetApi` now reports 34) is its own session with a hardware run: Android 15 enforces edge-to-edge,
@@ -252,7 +253,8 @@ Open questions (each with where it is described):
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
 - [ ] **Candidate for a later release (M; "1.3.0 candidate" until 2026-10-15, `ai-sessions/0094`):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
-      field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
+      field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢. Since `ai-sessions/0098`
+      the experiment build's card sends the four requests one tap each (F1–F4, approved in chat 2026-10-17); `CAP-079` BO-21 … BO-28 runs them.
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.
@@ -263,19 +265,14 @@ Open questions (each with where it is described):
       readable but not shown — 11, 15, 27, 28 — are built in 1.1.0 with ADR-053, ADR-055, ADR-054, as is 29 with ADR-052.)
 - [ ] Safe Mode: grey out Sound/Controls (offered in `ai-sessions/0057`, not chosen) — revisit only if a Safe-Mode run shows the per-tap refusal
       confuses.
-- [ ] From `ai-sessions/0068` `A68-APP-13`, not changed in 1.0.1 — each needs a test that forces the interleaving, which the present test set-up
-      cannot produce (no `BluetoothDevice` in unit tests): `disconnect()` runs outside the connect mutex (a Disconnect during a Connect);
-      `reclassifyLoss` is reached from three paths without a common lock; a write's call-id quarantine is set on timeout but not on cancellation;
-      a profile proxy bound after `closeAll` is never closed. And one design question: after an ANC `Set`, a `Notify` of the *old* mode ends the wait
-      as success, so a NAK that follows is not reported (the mode shown is right; a labelled test records it; no capture shows that order). An ACK
-      applies the requested mode, not the bytes the ACK echoes.
-- [ ] From `A68-APP-10`, 🟡 not tested: the on-demand channel insert in `RfcommBudsTransport.openChannel` is not atomic with `closeAll` (a socket
-      could be left open); `startForegroundService` followed at once by `stopService` on a connect that fails fast (`CAP-068` BD-29: no crash in
+- [ ] From `ai-sessions/0068` `A68-APP-13` — fixed in 1.4.0 (`ai-sessions/0098`) apart from one limit: `reclassifyLoss` now stores its cause with one
+      compare-and-set, but no unit test can force its three-caller race (the loss tests cover each path alone).
+- [ ] From `A68-APP-10`, 🟡 not tested (the `openChannel` insert was made atomic in 1.3.1, A93-APP-05): `startForegroundService` followed at once by `stopService` on a connect that fails fast (`CAP-068` BD-29: no crash in
       the app's buffers; no system log in the user without Play, so a system-side exception stays unverified); bonded-device lookups run on the main thread.
 - [ ] From `A68-APP-09`: the pull-to-refresh guard and the action buttons have no in-flight guard that survives a rotation — a second tap starts a
       second call, which the repository serialises; not shown to be a defect.
-- [ ] Tests for `:app` (the module has no test set-up): the tile service's rendering, the foreground-service start/stop, `MainActivity` as the state
-      holder, "Use different Buds" end to end (`A68-APP-06`).
+- [ ] Tests for `:app` — a JUnit 5 set-up and `AppTextsTest` since 1.4.0 (`ai-sessions/0098`: the pairing texts, the tile's result codes); still missing: the
+      tile service's rendering, the foreground-service start/stop, `MainActivity` as the state holder, "Use different Buds" end to end (`A68-APP-06`).
 - Known limits, left as they are: a loss cause logged "(provisional)" stays the last line when no later link reading arrives (T-1, `0062`); the
   notification flashes on a connect that fails fast (**M**, 2026-10-01); `RfcommBudsTransportTest`'s 10 s timeout was not reproduced in 200 runs
   — the helper prints every thread's stack if it recurs.

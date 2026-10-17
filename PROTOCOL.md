@@ -897,6 +897,11 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   of the table above); in user 10 nobody held DLCI 0x04 and no `Notify` was sent. Command: `python3 scripts/pwhdlc_crc_table.py <log> 0x000b > t.tsv; python3
   scripts/rpc_request_answers.py t.tsv WriteSetting`. ❓ Audibility of each switch (the run's speech was not transcribed); the meaning of status 9 beyond "no bud
   worn" (one condition seen).
+- **Implementation note (2026-10-17, `ai-sessions/0098`, `DECISIONS.md` ADR-067 accepted in chat 2026-10-17; no status change):** OpenControl 1.4.0 switches
+  the mode only this way — `SettingsCodec.ancStateRequest` builds `22 02 68 n` (n = 1 … 4, pinned to `CAP-078` H 7277/6491/6540/7298 and H 5921 in
+  `SettingsCodecTest`), sent only for a mode ticked in field 12; status 0 shows the mode, status 9 is "not allowed", no answer starts the write quarantine.
+  The Message Stream `Get`/`Set` of this section are no longer sent by the app; a `Notify` that reaches it while Find holds the claim is still read. To be
+  verified on hardware by `CAP-079` (Group BO).
 
 ### 4.2 Equalizer (EQ)
 
@@ -1536,6 +1541,10 @@ event-observation coroutines.
   Evidence and command: `CAP-062-FINDINGS.md` §4 (raw frame 7033); the cross-capture check runs `scripts/pwrpc_decode.py` and a per-packet
   comparison with `tshark … -Y "btrfcomm.len>0" … data.data` matches of `03 03 00 03 <L> <R> ff` (`ai-sessions/0047` RESULT). Decode unblocked by
   ADR-043's 2026-09-25 Update.
+- **Implementation note (2026-10-17, `ai-sessions/0098`, `DECISIONS.md` ADR-068 accepted in chat 2026-10-17; no status change):** since 1.4.0 entries 6.2/6.3
+  field 1 are the app's Left/Right battery (`RuntimeInfo.left/right`; 0–100, anything else "unavailable"; an entry absent from a packet keeps the last value as
+  "last seen"); *Refresh battery* re-subscribes (the 2026-09-28 Update below) and waits ≤ 2 s for a packet. Option B's `03 03` is no longer claimed for. To be
+  verified on hardware by `CAP-079`.
 
 - **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "FACT P-1") — a second subscription is answered, 🟢 FACT.** A second
   `SubscribeRuntimeInfo` REQUEST on an already subscribed, open DLCI 0x02 channel is answered by a `SERVER_STREAM` packet: 8 of 8 in `CAP-063` (3863→3870,
@@ -1627,6 +1636,10 @@ option (C), even though its per-earbud content is now FACT-confirmed.
   sounded is the status byte and the specification's "0x03 … Ring both left and right" (Device Action page, fetched 2026-10-17), not a measurement. This
   contradicts the reasoning of ADR-027 ("no local mechanism") — the maintainer decides in round 2 (chat 2026-10-17, "ADR-027": *"Besluit in ronde 2
   (Recommended)"*); ADR-027 is unchanged until then.
+- **Implementation note (2026-10-17, `ai-sessions/0098`, `DECISIONS.md` ADR-069 and ADR-070 accepted in chat 2026-10-17 — ADR-070 supersedes ADR-027 for
+  "both"; no status change):** OpenControl 1.4.0 sends Ring both `04 01 00 01 03` from the Find tab and, after any Ring, holds the claim until the Buds' status
+  `04 01 00 01 00`, its own Stop, a new Ring, a foreign close or 20 s; each status that arrives while DLCI 0x04 is open is ACKed `ff 01 00 02 04 01` (pinned to
+  `CAP-078` H 7970 in `RingCodecTest`); a stop status that does not answer the app's Stop is shown as "Stopped on the bud". To be verified by `CAP-079`.
 - **Sent to**: RFCOMM Message Stream channel, DLCI 0x04, per §2.1.
 - **Expected response**: confirmed — see the two ACK variants above.
 - **Major structural finding — Case/"both" use a different mechanism entirely**: the official app
@@ -3869,6 +3882,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-15 | **`ai-sessions/0094` — the 0093 audit processed, maintainer-approved in chat 2026-10-15** (`AskUserQuestion` "FACT-teksten", "§6 en lead"). §4.1: a Correction — the setting-13 ratios (75 of 89 pushed, 12 of 89 lost to the Buds' `DISC`, 2 at re-opens; not "73 of 73" / "12 of 77") and the two users of `CAP-076` (29 of 29 with Play, 12 of 12 without). §5: link-key types are P-192 (0x04/0x05), not P-256. §2.2a: L-1 "8 of 8" in `CAP-065`. §1/§4.3 Option A: 🔴 not observed from the Pro 2. §4.5.2: "in-use" is Code `0x41`. §4.5.3/§4.5.4: Status pointers. §6: SASS item answered from the spec; ATT `0x0044` item closed (103-log scan); DLCI 0x0a item — 🟡 the `CAP-021` waves are assistant sessions (L93-1); field-13 mirror item ticked; pointers on the `CAP-038` and DLCI 0x08 Get-code items. One frame number 1509 → 1508. No FACT promoted or withdrawn. | Claude (AI), maintainer-approved |
 | 2026-10-16 | **`ai-sessions/0095` — `CAP-077` (Group BM, OpenControl 1.3.1 in the secondary user without Play), maintainer-approved in chat 2026-10-16** (`AskUserQuestion` "Notities"). §6: a note on the wear-state item (a mode switch with in-ear detection off, H 2339) and a new ❓ item — three stream packets per write for fields 4, 11, 15, 27, 28. No status change. | Claude (AI), maintainer-approved |
 | 2026-10-17 | `CAP-078` (round 1, the experiment build 1.3.1-exp.1; `ai-sessions/0097`, maintainer-approved in chat 2026-10-17): §4.1 Update — `WriteSetting 4:{13:n}` switches the mode without the Message Stream (🟢, 22 sends); §4.4 Update — `FIND-005` ring-status sync 🟢, Ring both `0x03` ACKed and reported 🟢 (both sounding 🟡); §6 — settings 8/9/10 answer status 2 (🟢), `SubscribeToOobeActions` answered then status 14 (🟢 / ❓) | Claude Opus 5.5 (AI), approved by the maintainer |
+| 2026-10-17 | `ai-sessions/0098` (release 1.4.0; ADR-067 … ADR-070 accepted in chat 2026-10-17): implementation notes only — §4.1 (the mode written with `WriteSetting 4:{13:n}`), §4.3 Option F (Left/Right from 6.2/6.3), §4.4 (the ring status ACKed, Ring both); no status changed | AI (Claude Opus 5.5), the ADRs accepted by the maintainer |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

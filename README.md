@@ -26,7 +26,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 - **Noise control:** Noise cancellation, Adaptive, Transparency, Off — plus a Quick Settings tile.
 - **Equalizer:** five bands and the presets (a "Flat" preset from 1.0.1).
 - **Battery:** Left and Right (with "charging in the case") and the Case.
-- **Find My Buds:** ring the Left or Right bud.
+- **Find My Buds:** ring the Left or Right bud, or both (from 1.4.0); the app shows when the Buds stop ringing (from 1.4.0).
 - **Controls:** touch controls on/off, press and hold per bud (noise control or digital assistant) and which noise-control modes it cycles through;
   from 1.1.0 also **head gestures**, **Multipoint** and the two **case sounds** ("Earbuds replaced", "Other alerts") on/off.
 - **Sound:** balance, mono audio, conversation detection, **Volume EQ** (from 1.1.0); **in-ear detection** on/off.
@@ -37,7 +37,7 @@ It works fully offline: no `INTERNET` permission, no location permission, no acc
 
 ## What it does not do
 
-- Ring the Case, or both buds at once (in the official app this goes through Google's Find My Device network — `DECISIONS.md` ADR-027).
+- Ring the Case (in the official app this goes through Google's Find My Device network — `DECISIONS.md` ADR-027). Both buds at once: from 1.4.0 (ADR-070).
 - Firmware updates.
 - Choose the devices of a multipoint connection — the app switches Multipoint on or off only.
 - Anything that needs a Google account.
@@ -103,6 +103,10 @@ firmware `release_5.203`. Per feature, what is hardware-verified and what is onl
 and its known issues are in [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) —
 a suspected security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
 
+**1.4.0 is prepared, not released** (`ai-sessions/0098`; its hardware run `CAP-079` is planned): the mode is switched on the app's own channel and the battery
+read from it too, so the shared Fast Pair channel is used only for Find My Buds — no more collision with Google Play services for a mode change; Ring both;
+"Stopped on the bud" after a ring you stop by touching a bud; a noise-control line on the Connection tab (`CHANGELOG.md` [1.4.0]).
+
 **Known issues of 1.3.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 
 - A tap on a noise-control mode can collide with Play's claim of the shared channel; it then usually fails with a message — tap again.
@@ -141,10 +145,10 @@ to design, implement, test, and document a native Android app.
 - **APK analysis:** one companion-app version fully pulled, decompiled, and analyzed (`v1.0.955078536-10253511`) — see
   `reverse-engineering/APK_VERSIONS.md`. DLCI 0x04/0x08's transport code is not in it (ADR-025): both channels are implemented
   independently, from wire-capture evidence (and, for DLCI 0x04, the public Fast Pair spec).
-- **Decisions:** 59 accepted, 6 superseded and one labelled draft ADR in `DECISIONS.md` (ADR-066, 2026-10-16, capture files without Git LFS from `CAP-077` on; ADR-065, 2026-10-14, the settings stream replaces the hold and the re-claim — built in 1.3.0, `ai-sessions/0091`; ADR-064, 2026-10-14, the subscription and the read of setting 13, `ai-sessions/0090`; ADR-061/062/063 superseded by ADR-065, the draft: ADR-060, proposed, not accepted); every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
+- **Decisions:** 63 accepted, 6 superseded and one labelled draft ADR in `DECISIONS.md` (ADR-067 … ADR-070, 2026-10-17, round 2: noise control through setting 13, the L/R battery from runtime info, the ring status, Ring both; ADR-066, 2026-10-16, capture files without Git LFS from `CAP-077` on; ADR-065, 2026-10-14, the settings stream replaces the hold and the re-claim — built in 1.3.0, `ai-sessions/0091`; ADR-064, 2026-10-14, the subscription and the read of setting 13, `ai-sessions/0090`; ADR-061/062/063 superseded by ADR-065, the draft: ADR-060, proposed, not accepted); every 🟢 FACT in `PROTOCOL.md` has a recorded maintainer sign-off, except ADR-009, whose
   approval was given but whose record is missing (the ADR says so).
-- **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009), Find My Buds Left/Right (ADR-011), EQ read and write
-  (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
+- **Implemented in the app:** ANC/Transparency/Adaptive (DLCI 0x04, ADR-009; from 1.4.0 `WriteSetting 4:{13:n}` on DLCI 0x02, ADR-067), Find My Buds Left/Right (ADR-011; both and the ringing status from 1.4.0, ADR-069/070), EQ read and write
+  (DLCI 0x02 pw_rpc, ADR-020/034), battery Left/Right with charging (ADR-033; from 1.4.0 runtime info 6.2/6.3, ADR-068) and the Case (DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043),
   the settings reads (ADR-036) and writes (touch controls, press and hold, conversation detection, balance, mono, in-ear detection — ADR-045/046/047;
   from 1.1.0 head gestures, Multipoint, case sounds and Volume EQ — ADR-052…055), from 1.2.0 the serial numbers (one `GetHardwareInfo` per connection, ADR-058),
   the "probably worn" line (ADR-059) and "Changed by the Buds" (`ai-sessions/0082`; 1.2.0 … 1.2.2 held the noise-control channel on its tab and re-claimed it from Play services — ADR-061/062/063, retired), from 1.3.0 the Buds' settings stream on the app's own channel (`SubscribeToSettingsChanges` and `ReadSetting 4:13` at every Connect and re-open: a press-and-hold shows on any tab and every setting follows a change made elsewhere — ADR-064/065, `ai-sessions/0091`),
