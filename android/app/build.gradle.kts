@@ -39,6 +39,10 @@ val releaseSigning: Map<String, String> = releaseSigningKeys.mapNotNull { key ->
 val missingReleaseSigning: List<String> = releaseSigningKeys.filterNot { it in releaseSigning }
 
 android {
+    testOptions {
+        unitTests.isReturnDefaultValues = true // `ai-sessions/0098`: `:app`'s JVM tests touch android.* constants only
+    }
+
     namespace = "io.github.tedsluis.opencontrolpixelbuds"
     // DECISIONS.md ADR-029 and its Update of 2026-10-07 (`ai-sessions/0078`): compile against API 37 — required by the AndroidX/Compose releases of
     // the toolchain upgrade; compile-time only (minSdk and targetSdk stay 34).
@@ -134,6 +138,15 @@ dependencies {
     // DECISIONS.md ADR-028: Hilt.
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    // `ai-sessions/0098` (TODO 2.5): `:app`'s first JVM tests — the same JUnit 5 entries the other modules use (test scope only, nothing reaches the APK).
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
 
 // The clear failure of `ai-sessions/0065`: checked when the release APK is packaged, not at configuration, so debug builds, tests and lint run without keys.

@@ -56,6 +56,18 @@ class ProfileProxiesTest {
     }
 
     @Test
+    @DisplayName("A68-APP-13 (fixed `ai-sessions/0098`): a proxy the stack delivers after the flow ended is closed at once, not kept or read")
+    fun `a proxy bound after closeAll is closed at once`() {
+        val proxies = ProfileProxies<FakeProxy>()
+        val closed = mutableListOf<Pair<Int, FakeProxy>>()
+        proxies.closeAll { profile, proxy -> closed += profile to proxy }
+        val late = FakeProxy("A2DP late") // getProfileProxy's onServiceConnected after awaitClose
+        proxies.onBound(a2dp, late)
+        assertEquals(listOf(a2dp to late), closed)
+        assertTrue(proxies.bound.isEmpty(), "never readable")
+    }
+
+    @Test
     fun `the same proxy bound again after Bluetooth comes back is closed once, a new proxy object for the same profile too`() {
         val proxies = ProfileProxies<FakeProxy>()
         val le = FakeProxy("LE_AUDIO"); val le2 = FakeProxy("LE_AUDIO-2")

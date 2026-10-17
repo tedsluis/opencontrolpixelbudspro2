@@ -50,18 +50,18 @@ import javax.inject.Inject
  * A Quick Settings tile that switches the ANC mode with one tap (`ai-sessions/0042`, maintainer-approved in chat 2026-09-20: an ANC tile, no
  * EQ preset export/import).
  *
- * **Only a user action, nothing in the background** (`ARCHITECTURE.md` §6, DECISIONS.md ADR-032): a tap on the tile is the user's own ANC
- * tap — it claims the Message Stream channel exactly like the ANC screen does. **It never opens the session:** when the app's session is
+ * **Only a user action, nothing in the background** (`ARCHITECTURE.md` §6): a tap on the tile is the user's own ANC tap — since DECISIONS.md ADR-067
+ * (`ai-sessions/0098`) one `WriteSetting 4:{13:n}` on the open session, exactly like the ANC screen (no Message Stream claim). **It never opens the session:** when the app's session is
  * not `Ready` the tile says so and a tap opens the app instead (no background connect, no service start from the tile). The tile only
  * reads the repository while it is visible (`onStartListening` … `onStopListening`).
  *
  * The cycle is fixed and documented ([AncMode.nextInTileCycle]): Noise cancelling → Transparent → Adaptive → Off. No new permission:
  * `BIND_QUICK_SETTINGS_TILE` is required *of the caller that binds this service* (only the system), not requested by the app.
  *
- * **`ai-sessions/0062` F-1/F-2/F-3 (the maintainer's choices, chat 2026-10-01; extends `0054` I-1):** a tap goes to [BudsRepository.stepAncMode]: its claim
- * sends the `Get` first and switches to the mode after the one **that `Notify`** reports — not after the mode shown, which can be old — and only if the
- * Buds allow a change. If they refuse, or the answer is cut off by the claim's close, a toast says so. While the Buds' last `Notify` reported Settable
- * `0x00` ([AncAvailability.NOT_ALLOWED]) the subtitle says "Not allowed now".
+ * **ADR-067:** a tap goes to [BudsRepository.stepAncMode]: the mode after the shown one (the settings stream keeps it current, ADR-064/065), stepping
+ * over a mode not ticked for press and hold. If the Buds refuse (`FAILED_PRECONDITION` — no bud worn) or the write fails, a toast says why. While setting
+ * 13 reads 0 ([AncAvailability.NOT_ALLOWED]) the subtitle says "Not allowed now". **`CAP-077` P2 (`ai-sessions/0098`):** nothing is rendered before the
+ * first state arrives — the default "not connected" no longer flashes for a frame or two after an update.
  *
  * Shown, kept and tapped on GrapheneOS in `CAP-062` (R7) and `CAP-063` (J1–J4). **`ai-sessions/0059` (A58-APP-01):** the state comes from
  * [ancTileStates], which starts the ANC mode at `null` — before, `combine` waited for the first ANC report of the process and the tile could say
@@ -99,7 +99,6 @@ class AncTileService : TileService() {
                 render()
             }
         }
-        render()
     }
 
     override fun onStopListening() {
@@ -129,7 +128,7 @@ class AncTileService : TileService() {
         BleLogger.logConnectionEvent(
             "ANC tile tapped (shown: ${latestMode ?: "unknown"}" +
                 (if (latestAvailability == AncAvailability.NOT_ALLOWED) ", the Buds last allowed no change" else "") +
-                "): the claim asks the Buds first and steps from their answer",
+                "): the mode after it is written on the session channel",
         )
         // The application scope, not this service's: the claim outlives the tile's short lifetime (the release job is the repository's).
         val appContext = applicationContext

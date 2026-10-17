@@ -55,6 +55,21 @@ class SettingsCodecTest {
     // ---- writes: byte-identical to the official app's, whole frame incl. CRC ----
 
     @Test
+    @DisplayName("ADR-067 (`ai-sessions/0098`): WriteSetting 4:{13:n} is byte-identical to CAP-078 H 7277 / 6491 / 6540 / 7298 (channel 21) and 5921 (channel 19); 0 is never encodable")
+    fun ancStateWrites() {
+        assertEquals(Cap078.WRITE_13_OFF_REQ_CH21_7277, wire(SettingsCodec.ancStateRequest(21, AncMode.OFF)))
+        assertEquals(Cap078.WRITE_13_ACTIVE_REQ_CH21_6491, wire(SettingsCodec.ancStateRequest(21, AncMode.ACTIVE)))
+        assertEquals(Cap078.WRITE_13_TRANSPARENT_REQ_CH21_6540, wire(SettingsCodec.ancStateRequest(21, AncMode.TRANSPARENT)))
+        assertEquals(Cap078.WRITE_13_ADAPTIVE_REQ_CH21_7298, wire(SettingsCodec.ancStateRequest(21, AncMode.ADAPTIVE)))
+        assertEquals(Cap078.WRITE_13_OFF_REQ_CH19_5921, wire(SettingsCodec.ancStateRequest(19, AncMode.OFF)))
+        // The encoder and the decoder agree on every mode: the value written is the value the Buds push back (CAP-078 6493 for 2).
+        AncMode.entries.forEach { mode ->
+            assertEquals(mode, (SettingsCodec.decode(rpcPayload(wire(SettingsCodec.ancStateRequest(21, mode)))) as SettingValue.AncState).mode)
+        }
+        assertEquals(setOf(1, 2, 3, 4), AncMode.entries.map(SettingsCodec::ancStateValue).toSet(), "no 0 (no mode settable) and nothing else")
+    }
+
+    @Test
     @DisplayName("conversation detection: CAP-019 1720 (4:{22:0}) and 1808 (4:{22:1}) on channel 21")
     fun conversationDetection() {
         assertEquals(SettingsWrites.CONV_OFF_1720, wire(SettingsCodec.flagRequest(21, SettingsCodec.FIELD_CONVERSATION_DETECTION, false)!!))

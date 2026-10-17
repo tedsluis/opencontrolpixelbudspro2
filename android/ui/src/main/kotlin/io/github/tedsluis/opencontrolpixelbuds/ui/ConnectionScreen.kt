@@ -107,6 +107,9 @@ fun ConnectionScreen(
     sessionSince: Long? = null,
     /** DECISIONS.md ADR-059 (`ai-sessions/0082` item 3): the "probably worn" reading, a line on the battery card. */
     wornReading: WornReading = WornReading.NotRead,
+    /** `CAP-076` P6 (`ai-sessions/0098`, TODO 2.1): the Buds' noise-control mode as a line under the connection card — the ANC tab's own value. */
+    ancMode: io.github.tedsluis.opencontrolpixelbuds.domain.AncMode? = null,
+    ancModeUpdatedAt: Long? = null,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
@@ -146,6 +149,10 @@ fun ConnectionScreen(
                         ConnectionStateCard(card, connectionState, lastConnectionError, lastLossCause, messageStreamError, onConnect, onDisconnect)
                     }
                     if (connectionState is ConnectionState.Ready) {
+                        Text(
+                            noiseControlLine(ancMode, fromLastConnection = ancMode != null && !io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent(true, ancModeUpdatedAt, sessionSince)),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
                         safeMode?.let { SafeModeCard(it) }
                         // `ai-sessions/0057`: the firmware line (formerly its own card) is in the battery card's (i) details.
                         BatteryCard(batteryStatus, batteryStatusUpdatedAt, caseBatteryError, batteryRefreshError, deviceInfo, onRefreshBattery, sessionSince, wornReading)
@@ -489,6 +496,8 @@ internal fun BudsError.userMessage(lossCause: SessionLossCause? = null): String 
     BudsError.NoNewBatteryReading -> NO_NEW_BATTERY_READING_TEXT
     BudsError.AncModeListTooShort -> ANC_MODE_LIST_MIN_TEXT
     BudsError.AncModeListNotRead -> "The list of modes has not been read from the Buds on this connection, so nothing was sent."
+    // DECISIONS.md ADR-067 item 3 (`ai-sessions/0098`).
+    is BudsError.AncModeNotInHoldList -> "${mode.label} is not among the modes for press and hold — tick it under Controls to choose it here. Nothing was sent."
     BudsError.SessionOpening -> SESSION_OPENING_TEXT
     BudsError.UnreadableAnswer -> "The Buds answered with a value this app cannot read."
     BudsError.SettingNotReadable -> "This setting cannot be read by this app."
@@ -659,3 +668,10 @@ internal const val CASE_NOT_REPORTED: String =
 
 /** Why the Case level was not requested (ADR-043: one runtime-info request per Connect, on the channel the Buds announced). */
 internal fun caseErrorText(error: BudsError): String = "The Case level couldn't be requested: ${error.userMessage()}"
+
+/** `CAP-076` P6 (`ai-sessions/0098`): "Noise control: Transparency" — the same mode and "from the last connection" rule as the ANC tab ([isCurrent]). */
+internal fun noiseControlLine(ancMode: io.github.tedsluis.opencontrolpixelbuds.domain.AncMode?, fromLastConnection: Boolean): String = when {
+    ancMode == null -> "Noise control: unknown"
+    fromLastConnection -> "Noise control: ${ancMode.label} — from the last connection"
+    else -> "Noise control: ${ancMode.label}"
+}

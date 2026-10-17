@@ -359,6 +359,9 @@ class MainActivity : ComponentActivity() {
             val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
             val serialsError by budsRepository.serialsError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val ringing by budsRepository.ringing.collectAsStateWithLifecycle(initialValue = null as RingNotice?)
+            // DECISIONS.md ADR-067/069 (`ai-sessions/0098`): the ANC tab's failure reason and the Find tab's "stopped on the bud".
+            val ancError by budsRepository.ancError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
+            val ringStoppedOnBudAt by budsRepository.ringStoppedOnBudAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val lastConnectionError by budsRepository.lastConnectionError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val lastLossCause by budsRepository.lastLossCause.collectAsStateWithLifecycle(initialValue = null as SessionLossCause?)
@@ -454,6 +457,8 @@ class MainActivity : ComponentActivity() {
                 lastLossCause = lastLossCause,
                 androidLink = androidLink,
                 messageStreamError = messageStreamError,
+                ancError = ancError,
+                ringStoppedOnBudAt = ringStoppedOnBudAt,
                 ancMode = ancMode,
                 ancModeUpdatedAt = ancModeUpdatedAt,
                 sessionSince = sessionSince,

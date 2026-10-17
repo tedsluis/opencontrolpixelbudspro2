@@ -78,7 +78,11 @@ class FakeBudsTransport : BudsTransport {
         _connectionLost.emit(loss)
     }
 
+    /** When set, [connect] waits for it before it returns — a test can run a Disconnect while a Connect is in flight (`ai-sessions/0098`, A68-APP-13). */
+    var connectGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
     override suspend fun connect(device: BluetoothDevice, channels: Map<Int, UUID>): BudsResult<Unit> {
+        connectGate?.await()
         connectShouldFail?.let { return BudsResult.Failure(it) }
         connected = true
         return BudsResult.Success(Unit)

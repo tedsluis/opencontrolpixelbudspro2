@@ -28,14 +28,23 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
  * carries **no** 6.1 — which the Buds do whenever no bud is charging (PROTOCOL.md §4.3 Option F, 397/403; `CAP-062` frames 2782, 7118).
  * @param leftCharging / [rightCharging] whether that bud is charging (🟢 FACT: 6.2/6.3 field 2 = `2` exactly when its charging bit is set, 401/403;
  * 7.2/7.1 = `1` when charging, 397/403); `null` = not reported. 🟡 "charging" = "in the case" (untested with an empty case).
+ * @param left / [right] entry 6.2 / 6.3 field 1 = that bud's % (🟢 FACT 2026-09-25, PROTOCOL.md §4.5; DECISIONS.md ADR-068, `ai-sessions/0098`):
+ * [BatteryLevel.Known] with [isCharging][BatteryLevel.Known.isCharging] from the same packet, [BatteryLevel.Unavailable] when the entry is present without a
+ * value in `0..100`, `null` when the packet carries no entry for that bud (a bud in the closed case, `CAP-065` 5874).
  */
-data class RuntimeInfo(val case: BatteryLevel?, val leftCharging: Boolean?, val rightCharging: Boolean?)
+data class RuntimeInfo(
+    val case: BatteryLevel?,
+    val leftCharging: Boolean?,
+    val rightCharging: Boolean?,
+    val left: BatteryLevel? = null,
+    val right: BatteryLevel? = null,
+)
 
 /**
  * The Buds' `maestro_pw.Maestro/SubscribeRuntimeInfo` stream on DLCI 0x02 (DECISIONS.md ADR-043 and its 2026-09-25 Update; PROTOCOL.md §4.3
  * Option F). The payload is `2:<epoch ms> 3:0 6:{1:{1:<case %> 2:…} 2:{1:<%> 2:1|2} 3:{1:<%> 2:1|2}} 7:{1:0|1 2:0|1 3:…}`.
  *
- * Read — and nothing else (field 3, the entries' field 1 for the buds, field 7.3 stay uninterpreted; the bud percentages come from DLCI 0x04):
+ * Read — and nothing else (field 3 and field 7.3 stay uninterpreted; since ADR-068 the buds' field 1 gives their % — before 1.4.0 it came from DLCI 0x04):
  * - 6.1 field 1 = Case % (🟢, `CAP-061-FINDINGS.md` §2a, 13/13 + `CAP-062`);
  * - 6.2 = Left, 6.3 = Right, their field 2: `2` = charging, `1` = not (🟢, 401/403);
  * - 7.2 = Left, 7.1 = Right: `1` = charging, `0` = not (🟢, 397/403) — used only when 6.x field 2 is absent or another value. Where the two
@@ -76,6 +85,12 @@ internal object RuntimeInfoDecoder {
                 else -> null
             }
         }
-        return RuntimeInfo(case, charging(ENTRY_LEFT, IN_CASE_LEFT), charging(ENTRY_RIGHT, IN_CASE_RIGHT))
+        val leftCharging = charging(ENTRY_LEFT, IN_CASE_LEFT)
+        val rightCharging = charging(ENTRY_RIGHT, IN_CASE_RIGHT)
+        fun bud(number: Int, isCharging: Boolean?): BatteryLevel? = entries.firstOrNull { it.number == number && it.bytes != null }?.let {
+            val level = entry(number)?.firstOrNull { f -> f.number == FIELD_LEVEL && f.bytes == null }?.varint
+            if (level != null && level in 0..100) BatteryLevel.Known(level, isCharging = isCharging, isStale = false) else BatteryLevel.Unavailable
+        }
+        return RuntimeInfo(case, leftCharging, rightCharging, bud(ENTRY_LEFT, leftCharging), bud(ENTRY_RIGHT, rightCharging))
     }
 }

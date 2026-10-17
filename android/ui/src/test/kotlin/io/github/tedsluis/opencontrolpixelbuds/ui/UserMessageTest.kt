@@ -19,6 +19,7 @@
  */
 package io.github.tedsluis.opencontrolpixelbuds.ui
 
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryLevel
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingReading
@@ -51,6 +52,9 @@ class UserMessageTest {
             BudsError.CommandRejected(2, "not allowed") to "The Buds refused the command (not allowed).",
             BudsError.AncNotAllowed to "The Buds don't allow changing noise control right now (usually because no bud is in an ear).",
             BudsError.NoNewBatteryReading to "No new battery reading from the Buds — try again.",
+            // 0098 (ADR-067 Note): a mode not ticked for press and hold is refused before anything is sent.
+            BudsError.AncModeNotInHoldList(AncMode.ADAPTIVE) to
+                "Adaptive is not among the modes for press and hold — tick it under Controls to choose it here. Nothing was sent.",
             BudsError.AncModeListTooShort to "At least two modes must stay selected.",
             BudsError.AncModeListNotRead to "The list of modes has not been read from the Buds on this connection, so nothing was sent.",
             BudsError.SessionOpening to "The app's channel is being reopened — try again in a moment.",
@@ -94,6 +98,7 @@ class UserMessageTest {
         BudsError.NoNewBatteryReading -> "NoNewBatteryReading"
         BudsError.AncModeListTooShort -> "AncModeListTooShort"
         BudsError.AncModeListNotRead -> "AncModeListNotRead"
+        is BudsError.AncModeNotInHoldList -> "AncModeNotInHoldList"
         BudsError.SessionOpening -> "SessionOpening"
         BudsError.UnreadableAnswer -> "UnreadableAnswer"
         BudsError.SettingNotReadable -> "SettingNotReadable"
@@ -105,7 +110,7 @@ class UserMessageTest {
     private companion object {
         val ALL_TYPE_NAMES = setOf(
             "ConnectionLost", "ChannelUnavailable", "ChannelLost", "AnswerCutOff", "Timeout", "MalformedFrame", "UnsupportedFirmware", "PermissionDenied",
-            "NotPaired", "CommandRejected", "AncNotAllowed", "NoNewBatteryReading", "AncModeListTooShort", "AncModeListNotRead", "SessionOpening",
+            "NotPaired", "CommandRejected", "AncNotAllowed", "NoNewBatteryReading", "AncModeListTooShort", "AncModeListNotRead", "AncModeNotInHoldList", "SessionOpening",
             "UnreadableAnswer", "SettingNotReadable", "MaestroChannelUnknown", "MaestroRejected", "Unknown",
         )
     }

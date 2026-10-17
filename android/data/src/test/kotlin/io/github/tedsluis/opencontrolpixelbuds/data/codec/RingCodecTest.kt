@@ -110,8 +110,16 @@ class RingFrameDecoderTest {
         }
 
         @Test
+        @DisplayName("ADR-070 (`ai-sessions/0098`): 0x03 is Ring both — CAP-078 8203 (sent) and 8211 (the Buds' status) decode as Start(BOTH), and the encoder gives 8203's bytes")
+        fun `ring both is decoded and encoded`() {
+            assertEquals(BudsResult.Success(RingFrame.Start(RingTarget.BOTH)), RingFrameDecoder.decode(hex(Cap078.RING_STATUS_BOTH_8211)))
+            assertEquals(Cap078.RING_BOTH_8203, RingFrameEncoder.encode(RingFrame.Start(RingTarget.BOTH)).joinToString("") { "%02x".format(it) })
+        }
+
+        @Test
         fun `unrecognized ring value never throws`() {
-            assertTrue(RingFrameDecoder.decode(hex("0401000103")) is BudsResult.Failure)
+            // 0x04 is not a Device Action ring value (0x00 stop, 0x01 right, 0x02 left, 0x03 both — fetched 2026-10-17).
+            assertTrue(RingFrameDecoder.decode(hex("0401000104")) is BudsResult.Failure)
         }
 
         @Test

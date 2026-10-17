@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
@@ -75,14 +76,18 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.isCurrent
  *
  * **DECISIONS.md ADR-064/065 (`ai-sessions/0091`, the maintainer's texts in chat 2026-10-14):** the mode reaches the app on its own channel (the settings
  * stream), whatever tab is shown and without a claim — ADR-061's hold, ADR-062's channel-taken line with "Take it back again" and ADR-063's Play line are gone;
- * the (i) ends with [ANC_STREAM_HINT_TEXT]. A stream value that differs from the shown mode is [ancChangedByBudsLine]; a mode a read (the `Get` of a tap or
- * Refresh, the `ReadSetting 4:13` of a Connect or re-open) found changed since the app last saw it ([AncModeCause.CHANGED_SINCE_LAST_READ]) gets
+ * the (i) ends with [ANC_STREAM_HINT_TEXT]. A stream value that differs from the shown mode is [ancChangedByBudsLine]; a mode a read (the `ReadSetting 4:13`
+ * of a Connect, a re-open or a Refresh) found changed since the app last saw it ([AncModeCause.CHANGED_SINCE_LAST_READ]) gets
  * [ancChangedSinceLastReadLine] in the (i).
+ *
+ * **DECISIONS.md ADR-067 (`ai-sessions/0098`):** a tap writes the mode on the app's own channel; [ancError] is why the last change or Refresh failed. A mode
+ * not ticked in [ancModeList] (Controls → "Modes for press and hold") is disabled with [ANC_HOLD_LIST_HINT_TEXT] — the app switches only to a ticked mode
+ * (ADR-067 item 3 and its Note of 2026-10-17).
  */
 @Composable
 fun AncScreen(
     connectionState: ConnectionState,
-    messageStreamError: BudsError?,
+    ancError: BudsError?,
     ancMode: AncMode?,
     ancModeUpdatedAt: Long?,
     ancAvailability: AncAvailability,
@@ -94,8 +99,10 @@ fun AncScreen(
     ancModeUnconfirmedAt: Long? = null,
     sessionSince: Long? = null,
     ancModeCause: AncModeCause? = null,
+    ancModeList: AncModeList? = null,
 ) {
     val ready = connectionState.isReady()
+    val someUnticked = ancModeList != null && AncMode.entries.any { !ancModeList.isSelected(it) }
     val notAllowed = ready && ancAvailability == AncAvailability.NOT_ALLOWED
     val unconfirmed = ancModeUnconfirmedAt != null
     // `ai-sessions/0069` A68-APP-02: a mode the Buds reported on an earlier connection (or while nothing is connected now) is kept, dimmed and marked —
@@ -109,7 +116,7 @@ fun AncScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             NotConnectedBanner(connectionState)
-            MessageStreamNotice(messageStreamError)
+            MessageStreamNotice(ancError)
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     CardTitle(
@@ -128,10 +135,12 @@ fun AncScreen(
                         val rowModifier = Modifier.fillMaxWidth().alpha(if (notCurrent) NOT_CURRENT_ALPHA else 1f)
                         Row(modifier = rowModifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             row.forEach { (mode, label) ->
-                                AncModeButton(label, selected = ancMode == mode, enabled = ready, modifier = Modifier.weight(1f)) { onAncModeSelected(mode) }
+                                val ticked = ancModeList?.isSelected(mode) ?: true
+                                AncModeButton(label, selected = ancMode == mode, enabled = ready && ticked, modifier = Modifier.weight(1f)) { onAncModeSelected(mode) }
                             }
                         }
                     }
+                    if (ready && someUnticked) Text(ANC_HOLD_LIST_HINT_TEXT, style = MaterialTheme.typography.bodyMedium)
                     TextButton(onClick = onRefreshAncMode, enabled = ready, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("Refresh") }
                 }
             }
@@ -195,6 +204,10 @@ internal fun ancDetailLines(
 internal const val ANC_STREAM_HINT_TEXT: String = "The Buds report every change of the mode on the app's own channel. A press-and-hold on a bud is one " +
     "cause; on film the Buds also switched the mode by themselves when a bud was put in or taken out — that part is a hypothesis."
 
+/** DECISIONS.md ADR-067 item 3 (`ai-sessions/0098`): why a mode button is disabled while that mode is not ticked for press and hold. */
+internal const val ANC_HOLD_LIST_HINT_TEXT: String =
+    "Only the modes ticked under Controls → \"Modes for press and hold\" can be chosen here. Tick a mode there to use it."
+
 /**
  * `ai-sessions/0062` F-2 (the maintainer's wording, chat 2026-10-01): "The Buds don't allow changing noise control right now (usually because no bud is in an
  * ear; checked 10:07:54). Tapping a mode checks again first." — the time is when the Buds last answered; without one it is left out (the main surface).
@@ -233,7 +246,7 @@ private fun AncScreenPreview() {
     MaterialTheme {
         AncScreen(
             connectionState = ConnectionState.Ready,
-            messageStreamError = null,
+            ancError = null,
             ancMode = AncMode.ADAPTIVE,
             ancModeUpdatedAt = System.currentTimeMillis(),
             ancAvailability = AncAvailability.ALLOWED,

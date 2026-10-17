@@ -52,15 +52,30 @@ class RuntimeInfoCodecTest {
     @Test
     @DisplayName("CAP-041 frame 782: entry 6.1 = Case 79 %, both buds charging (a 64-bit timestamp in field 2 must not make the packet unreadable)")
     fun `stream packet with the Case entry`() {
-        assertEquals(RuntimeInfo(BatteryLevel.Known(79, null, false), true, true), RuntimeInfoDecoder.decode(packet(withCase).payload))
+        // ADR-068 (`ai-sessions/0098`): 6.2/6.3 field 1 = 100 / 100 (`08 64`), both with field 2 = 2 (charging).
+        val expected = RuntimeInfo(BatteryLevel.Known(79, null, false), true, true, BatteryLevel.Known(100, true), BatteryLevel.Known(100, true))
+        assertEquals(expected, RuntimeInfoDecoder.decode(packet(withCase).payload))
         val routed = CodecRouter().feed(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, withCase), timestampMillis = 0)
-        assertEquals(RoutedFrame.RuntimeInfo(RuntimeInfo(BatteryLevel.Known(79, null, false), true, true)), routed.single())
+        assertEquals(RoutedFrame.RuntimeInfo(expected), routed.single())
     }
 
     @Test
     @DisplayName("CAP-050 frame 1163: no entry 6.1 → the Case is absent (null), not a value; neither bud charging")
     fun `stream packet without the Case entry`() {
-        assertEquals(RuntimeInfo(null, false, false), RuntimeInfoDecoder.decode(packet(withoutCase).payload))
+        // ADR-068: Left 37 % (`08 25`), Right 45 % (`08 2d`), neither charging — the percentages the old DLCI 0x04 path never read from this stream.
+        assertEquals(
+            RuntimeInfo(null, false, false, BatteryLevel.Known(37, false), BatteryLevel.Known(45, false)),
+            RuntimeInfoDecoder.decode(packet(withoutCase).payload),
+        )
+    }
+
+    @Test
+    @DisplayName("ADR-068, labelled supplementary structural test (the CAP-050 1163 layout with Left's field 1 set to 0xc8 = 200): a bud % outside 0..100 is unavailable, never shown")
+    fun `a bud percentage outside 0 to 100 is unavailable`() {
+        val outOfRange = hex("1800" + "320d" + "120508c801" + "1001" + "1a04082d1001" + "3a06080010001800")
+        val info = RuntimeInfoDecoder.decode(outOfRange)!!
+        assertEquals(BatteryLevel.Unavailable, info.left)
+        assertEquals(BatteryLevel.Known(45, false), info.right)
     }
 
     @Test
@@ -78,24 +93,32 @@ class RuntimeInfoCodecTest {
     @DisplayName("CAP-062 3760 (Right seated), 4845 (both), 7033 (Left only), 7118 / 2782 (none, no 6.1)")
     fun `per-bud charging and the Case from CAP-062`() {
         val case60 = BatteryLevel.Known(60, null, false)
-        assertEquals(RuntimeInfo(case60, leftCharging = false, rightCharging = true), routed(Cap062.STREAM_RIGHT_3760))
-        assertEquals(RuntimeInfo(case60, leftCharging = true, rightCharging = true), routed(Cap062.STREAM_BOTH_4845))
-        assertEquals(RuntimeInfo(case60, leftCharging = true, rightCharging = false), routed(Cap062.STREAM_LEFT_7033))
-        assertEquals(RuntimeInfo(null, leftCharging = false, rightCharging = false), routed(Cap062.STREAM_NONE_7118))
-        assertEquals(RuntimeInfo(null, leftCharging = false, rightCharging = false), routed(Cap062.STREAM_NONE_2782))
+        // ADR-068: every CAP-062 packet carries 6.2/6.3 field 1 = 100 (`08 64`); the bud's isCharging is its own field 2 of the same packet.
+        fun bud(charging: Boolean) = BatteryLevel.Known(100, charging)
+        assertEquals(RuntimeInfo(case60, false, true, bud(false), bud(true)), routed(Cap062.STREAM_RIGHT_3760))
+        assertEquals(RuntimeInfo(case60, true, true, bud(true), bud(true)), routed(Cap062.STREAM_BOTH_4845))
+        assertEquals(RuntimeInfo(case60, true, false, bud(true), bud(false)), routed(Cap062.STREAM_LEFT_7033))
+        assertEquals(RuntimeInfo(null, false, false, bud(false), bud(false)), routed(Cap062.STREAM_NONE_7118))
+        assertEquals(RuntimeInfo(null, false, false, bud(false), bud(false)), routed(Cap062.STREAM_NONE_2782))
     }
 
     @Test
     @DisplayName("CAP-062 frame 4500: 6.3 field 2 (charging) wins over 7.1 (not) — the DLCI 0x05 battery frame 4520 agrees with 6.3.2")
     fun `6x field 2 wins over 7x`() {
-        assertEquals(RuntimeInfo(null, leftCharging = false, rightCharging = true), routed(Cap062.STREAM_DISAGREE_4500))
+        assertEquals(
+            RuntimeInfo(null, false, true, BatteryLevel.Known(100, false), BatteryLevel.Known(100, true)),
+            routed(Cap062.STREAM_DISAGREE_4500),
+        )
     }
 
     @Test
     fun `7x is used only when 6x field 2 is absent, and 7_3 is never read`() {
         // Structural, built on the CAP-062 layout (no capture has entries without field 2): 6:{2:{1:100} 3:{1:100}} 7:{1:1 2:0 3:1}.
         val entriesWithoutField2 = hex("1800" + "3208" + "12020864" + "1a020864" + "3a06" + "0801" + "1000" + "1801")
-        assertEquals(RuntimeInfo(null, leftCharging = false, rightCharging = true), RuntimeInfoDecoder.decode(entriesWithoutField2))
+        assertEquals(
+            RuntimeInfo(null, false, true, BatteryLevel.Known(100, false), BatteryLevel.Known(100, true)),
+            RuntimeInfoDecoder.decode(entriesWithoutField2),
+        )
     }
 
     @Test
