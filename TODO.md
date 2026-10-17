@@ -196,6 +196,19 @@ Open questions (each with where it is described):
   `ai-sessions/0082` (item 4): the phone decides (the official app's worker, 67 % of a 7-day constant, once per 7 days; field 21 only gates it; the Buds push
   nothing) — draft ADR-060 (proposed, not accepted) and the 🟡 that block it; a capture with a sound-level meter (`WELL-002`, no Group yet) comes first.
 
+- [ ] **After 1.4.0 is published — a research session (category CROSSCHECK, a new prompt) on per-bud in-ear detection: how does the official app know
+  which bud is in an ear?** (The maintainer's choice in chat 2026-10-17: research first, after the 1.4.0 release; not in round 2.) The official app shows at
+  once which bud goes into or out of an ear; OpenControl shows only "probably worn" (ADR-059). Known so far: `SubscribeToOobeActions` reports `10`/`12`
+  (`LEFT_ON_HEAD`/`RIGHT_ON_HEAD`) at subscribe and ended with status 14 after 15.7 s, no later events (`CAP-078` §6, one trial; setting 6 / OOBE mode never read);
+  the official app never sent that request in 96 logs, so it is probably not its source; GSND CONTROL Code `0x05` on DLCI 0x08 (Play services' channel) carries a
+  count — `03` none, `04` one, `06` two worn (🟡, `CAP-069` §8), not which bud; the runtime-info stream has undecoded fields (field 3, 7.3 — `PROTOCOL.md` §4.5 🔴);
+  `gvj` handles `qhp` events incl. `LEFT_ON_HEAD` (`REVERSE_ENGINEERING.md` ≈ line 1081). The session's tasks: (1) in the APK, find the screen that shows
+  in-ear per bud (strings, the device image, its view model) and trace its data back to the source — a runtime-info field, a `qhr` setting,
+  `SubscribeToOobeActions`, or data from Play services; (2) when the app calls `SubscribeToOobeActions` (only in the OOBE tutorial, or also otherwise);
+  (3) over every official-app capture with a bud in/out (film or speech, the charging flags, GSND `0x05`), test each candidate field per bud; (4) a proposal:
+  the mechanism OpenControl could use, what is already 🟢, and the experiment that settles the rest (e.g. a read-only `ReadSetting 4:6`, re-subscribing to
+  `SubscribeToOobeActions` per wear state, a camera on the ears) — proposals only, no app code, no send, no FACT or ADR without the maintainer (`AGENTS.md` §6).
+  A feature "which bud is in an ear" would then need an ADR amending or superseding ADR-059.
 - [ ] **From `CAP-078` (`ai-sessions/0097`, 2026-10-17) — open:** the audibility of the `WriteSetting 4:{13:n}` switches (the speech was timed, not transcribed);
   `FAILED_PRECONDITION` in conditions other than "no bud worn"; why `SubscribeToOobeActions` ended with status 14 after 15.7 s; both buds sounding on Ring both (a
   second microphone or the maintainer's ear); the user-0 ACL end `0x13` at 17:09:23 before the app started; what updated the release app at 2026-10-16 14:56:46;
