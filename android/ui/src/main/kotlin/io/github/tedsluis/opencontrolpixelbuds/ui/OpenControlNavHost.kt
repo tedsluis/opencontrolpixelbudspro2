@@ -248,7 +248,12 @@ data class OpenControlUiState(
 // TopAppBarScrollBehavior is `@ExperimentalMaterial3Api` (AppBar.kt:1401), and the compiler reports OPT_IN_USAGE_ERROR without the opt-in.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
+fun OpenControlNavHost(
+    state: OpenControlUiState,
+    actions: OpenControlActions,
+    /** The Debug tab's slot — empty in every released build (`ai-sessions/0096`: only the experiment build type passes content). */
+    debugExtra: @Composable (debugModeEnabled: Boolean) -> Unit = {},
+) {
     val navController = rememberNavController()
     val pagerState = rememberPagerState(pageCount = { TAB_DESTINATIONS.size })
 
@@ -350,6 +355,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 settingsError = state.settingsError,
                 onCaseSoundEarbudsReplacedChanged = actions.onCaseSoundEarbudsReplacedChanged,
                 onCaseSoundOtherAlertsChanged = actions.onCaseSoundOtherAlertsChanged,
+                debugExtra = debugExtra,
                 modifier = Modifier.padding(padding),
             )
         } else {

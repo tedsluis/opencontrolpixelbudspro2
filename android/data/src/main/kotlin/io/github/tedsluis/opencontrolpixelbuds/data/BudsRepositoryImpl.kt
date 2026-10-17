@@ -133,7 +133,9 @@ import kotlinx.coroutines.withTimeoutOrNull
  * after this repository singleton is built, `ai-sessions/0037`).
  */
 class BudsRepositoryImpl(
-    private val transport: BudsTransport,
+    // `internal` (was `private`) for the experiment build type's ExperimentRunner (`ai-sessions/0096`, src/experiment) — here and on the twelve members
+    // marked "(experiment seam)" below: a visibility change only; debug and release have no caller outside this class.
+    internal val transport: BudsTransport,
     private val connectionStateMachine: ConnectionStateMachine,
     private val bondedDeviceProvider: () -> BluetoothDevice?,
     debugModeEnabled: Flow<Boolean>,
@@ -183,10 +185,10 @@ class BudsRepositoryImpl(
     private val _maestroChannelId = MutableStateFlow<Int?>(null)
 
     /** Answers to our Maestro requests (an EQ value, or an empty/error result) — what a read/write waits for. */
-    private val _maestroReplies = MutableSharedFlow<MaestroReply>(extraBufferCapacity = 16)
+    internal val _maestroReplies = MutableSharedFlow<MaestroReply>(extraBufferCapacity = 16) // (experiment seam)
 
     /** One EQ read or write at a time, so a reply can only belong to the request that is waiting for it. */
-    private val eqMutex = Mutex()
+    internal val eqMutex = Mutex() // (experiment seam)
 
     @Volatile
     private var eqReadJob: Job? = null
@@ -358,7 +360,7 @@ class BudsRepositoryImpl(
     private var modelIdSeen: String? = null
 
     /** Every ACK/NAK on the Message Stream (its own routed type, 0044 APP-3) — what a command waits for. */
-    private val _replies = MutableSharedFlow<MessageStreamReply>(extraBufferCapacity = 16)
+    internal val _replies = MutableSharedFlow<MessageStreamReply>(extraBufferCapacity = 16) // (experiment seam)
 
     /** What an ANC `Set` waits for: the Buds' ACK/NAK for `08 12`, or any `Notify` with a known mode. */
     private sealed class AncOutcome {
@@ -1156,7 +1158,7 @@ class BudsRepositoryImpl(
     }
 
     /** The channel the Buds announced and its known request address — or the reason there is none (never guessed). */
-    private suspend fun awaitMaestroChannel(): BudsResult<MaestroChannel> {
+    internal suspend fun awaitMaestroChannel(): BudsResult<MaestroChannel> { // (experiment seam)
         val id = _maestroChannelId.value
             ?: withTimeoutOrNull(MAESTRO_ANNOUNCE_WAIT_MS) { _maestroChannelId.filterNotNull().first() }
             ?: return BudsResult.Failure(BudsError.MaestroChannelUnknown(null))
@@ -1165,7 +1167,7 @@ class BudsRepositoryImpl(
     }
 
     /** Waits out a running write quarantine (A58-APP-04) — one bounded delay, called inside [eqMutex] right before a Maestro request is sent. */
-    private suspend fun awaitWriteQuarantine() {
+    internal suspend fun awaitWriteQuarantine() { // (experiment seam)
         val until = writeQuarantineUntil
         val now = clock()
         if (now < until) { // compare first: `until - now` would overflow while `until` is still Long.MIN_VALUE
@@ -1175,7 +1177,7 @@ class BudsRepositoryImpl(
         }
     }
 
-    private fun startWriteQuarantine() {
+    internal fun startWriteQuarantine() { // (experiment seam)
         writeQuarantineUntil = clock() + EQ_WRITE_ACK_TIMEOUT_MS
     }
 
@@ -1345,7 +1347,7 @@ class BudsRepositoryImpl(
      * Waits a bounded time for what the Buds announce on their own (firmware at connect; Model ID right after a claim opens) —
      * never guesses either.
      */
-    private suspend fun writeGate(requireModelIdOfClaim: Boolean): BudsError? {
+    internal suspend fun writeGate(requireModelIdOfClaim: Boolean): BudsError? { // (experiment seam)
         val firmware = _deviceInfo.value?.firmware
             ?: withTimeoutOrNull(MAESTRO_ANNOUNCE_WAIT_MS) { _deviceInfo.filterNotNull().first() }?.firmware
         val modelId = if (requireModelIdOfClaim) {
@@ -1448,7 +1450,7 @@ class BudsRepositoryImpl(
      * If the channel dies under [action] (another client's failed connect closed it) the claim is
      * retried **once** — the failed attempt has just freed the port.
      */
-    private suspend fun <T> withMessageStream(freshOpen: Boolean = false, action: suspend () -> BudsResult<T>): BudsResult<T> {
+    internal suspend fun <T> withMessageStream(freshOpen: Boolean = false, action: suspend () -> BudsResult<T>): BudsResult<T> { // (experiment seam)
         if (connectionStateMachine.state.value !is ConnectionState.Ready) {
             return BudsResult.Failure(BudsError.ConnectionLost)
         }
@@ -1686,7 +1688,7 @@ class BudsRepositoryImpl(
      * Subscribing first matters: the Buds answer within tens of milliseconds, and a subscription made
      * after `send()` returns can miss a fast reply. A send failure cancels the wait.
      */
-    private suspend fun <R, T> sendAndAwait(
+    internal suspend fun <R, T> sendAndAwait( // (experiment seam)
         reply: SharedFlow<R>,
         timeoutMs: Long,
         accept: (R) -> Boolean,
@@ -1749,7 +1751,7 @@ class BudsRepositoryImpl(
         private const val GET_RESPONSE_TIMEOUT_MS = 2_000L
 
         /** Wait for the Buds' ACK/Notify after a Set or Ring before the channel may be released. */
-        private const val ACK_WAIT_MS = 1_000L
+        internal const val ACK_WAIT_MS = 1_000L // (experiment seam)
 
         /** After the claim's close, how long an answer that arrived just before it may still take through the codec (F-3) — in-process, milliseconds. */
         private const val CUT_OFF_GRACE_MS = 100L
@@ -1797,7 +1799,7 @@ class BudsRepositoryImpl(
         private const val SETTING_READ_TIMEOUT_MS = 2_000L
 
         /** How long a `WriteSetting` waits for its empty RESPONSE (`CAP-015`: ~50 ms after the request). */
-        private const val EQ_WRITE_ACK_TIMEOUT_MS = 1_500L
+        internal const val EQ_WRITE_ACK_TIMEOUT_MS = 1_500L // (experiment seam)
 
         /** How long a Message Stream command waits for the claim's Model ID frame (observed 30–340 ms after the open, `CAP-059`). */
         private const val MODEL_ID_WAIT_MS = 1_000L
@@ -1819,7 +1821,7 @@ private fun BatteryLevel.chargingReading(atMillis: Long): ChargingReading? =
  * What the Buds answered to one of our Maestro requests (DECISIONS.md ADR-034) — or pushed: [Value.stream] / [Setting.stream] mark a settings-stream packet,
  * which never ends a read's wait (`ai-sessions/0094`, A93-APP-04 — only the read's RESPONSE does).
  */
-private sealed class MaestroReply {
+internal sealed class MaestroReply { // (experiment seam: was file-private)
     data class Value(val frame: EqFrame, val stream: Boolean = false) : MaestroReply()
     data class Result(val result: RoutedFrame.RpcResult) : MaestroReply()
     data class Setting(val value: SettingValue, val stream: Boolean = false) : MaestroReply()

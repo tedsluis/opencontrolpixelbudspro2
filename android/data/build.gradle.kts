@@ -33,6 +33,15 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+
+    // `ai-sessions/0096` (the maintainer's choice in chat 2026-10-16, "BuildType 'experiment'"): the experiment build type of round 1 — never released.
+    // Its code lives only in src/experiment (ExperimentRunner); debug and release compile without it.
+    buildTypes {
+        create("experiment") {
+            initWith(getByName("debug"))
+            matchingFallbacks += "debug" // :domain and :hardware have no experiment type
+        }
+    }
 }
 
 kotlin {
