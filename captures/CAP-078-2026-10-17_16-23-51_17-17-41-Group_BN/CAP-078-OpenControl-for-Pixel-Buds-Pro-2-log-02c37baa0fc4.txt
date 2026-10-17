@@ -1,0 +1,430 @@
+type: logcat
+osVersion: google/tegu/tegu:17/CP3A.261005.005/2026100601:user/release-keys
+flags: dev options enabled
+package: io.github.tedsluis.opencontrolpixelbuds.experiment:10301, targetSdk 34
+buffers: main,system,crash,events,kernel
+level: verbose
+
+--------- beginning of system
+10-17 15:09:35.069 25531 25558 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+--------- beginning of events
+10-17 15:09:35.221 25531 25531 I wm_on_create_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performCreate,time=119ms]
+10-17 15:09:35.222 25531 25531 I wm_on_start_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=0ms]
+10-17 15:09:35.226 25531 25531 I wm_on_resume_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=4ms]
+10-17 15:09:35.242 25531 25531 I wm_on_top_resumed_gained_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-17 15:09:35.402 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=applyTransactionOnDraw applyImmediately]
+10-17 15:09:35.451 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=reportDrawFinished seqId=1]
+10-17 15:09:35.487 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:09:35.524 25531 25531 D InsetsController: hide(ime())
+10-17 15:09:35.527 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:aa5acea8: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:09:38.787 25531 25531 I wm_on_top_resumed_lost_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-17 15:09:38.789 25531 25531 I wm_on_paused_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+10-17 15:09:38.820 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:09:39.847 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+10-17 15:09:39.909 25531 25531 I wm_on_stop_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=1ms]
+10-17 15:09:49.779 25531 25531 I wm_on_restart_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performRestart,time=0ms]
+10-17 15:09:49.780 25531 25531 I wm_on_start_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=0ms]
+10-17 15:09:49.785 25531 25531 I wm_on_resume_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=0ms]
+10-17 15:09:49.791 25531 25531 I wm_on_top_resumed_gained_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-17 15:09:49.799 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=applyTransactionOnDraw applyImmediately]
+10-17 15:09:49.799 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=Start draw after previous draw not visible]
+10-17 15:09:49.806 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=reportDrawFinished seqId=1]
+10-17 15:09:49.892 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:09:49.896 25531 25531 D InsetsController: hide(ime())
+10-17 15:09:49.896 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:6862d3ad: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:10:11.804 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]f60606a,event=applyTransactionOnDraw applyImmediately]
+10-17 15:10:11.823 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]f60606a,event=reportDrawFinished seqId=1]
+10-17 15:10:11.837 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:10:11.883 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:10:11.887 25531 25531 D InsetsController: hide(ime())
+10-17 15:10:11.888 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:11b18a07: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:10:15.571 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:10:15.588 25531 25531 D InsetsController: hide(ime())
+10-17 15:10:15.588 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:a89edf5d: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:10:31.467 25531 25531 I wm_on_top_resumed_lost_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-17 15:10:31.468 25531 25531 I wm_on_paused_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+10-17 15:10:32.094 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:10:34.717 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:10:34.717 25531 25531 I wm_on_activity_result_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=ACTIVITY_RESULT]
+10-17 15:10:34.717 25531 25531 I wm_on_resume_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=0ms]
+10-17 15:10:34.721 25531 25531 I wm_on_top_resumed_gained_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+--------- switch to system
+10-17 15:10:34.751 25531 25531 D InsetsController: hide(ime())
+10-17 15:10:34.751 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:2be851e2: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:10:49.891 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]ef21bab,event=applyTransactionOnDraw applyImmediately]
+10-17 15:10:49.907 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]ef21bab,event=reportDrawFinished seqId=1]
+10-17 15:10:49.923 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:10:49.973 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:10:49.976 25531 25531 D InsetsController: hide(ime())
+10-17 15:10:49.977 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:d8bb0b75: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:10:56.195 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:10:56.201 25531 25531 D InsetsController: hide(ime())
+10-17 15:10:56.201 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:9fb7524b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:11:01.178 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]55fdd45,event=applyTransactionOnDraw applyImmediately]
+10-17 15:11:01.190 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]55fdd45,event=reportDrawFinished seqId=1]
+10-17 15:11:01.233 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:11:01.253 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:11:01.257 25531 25531 D InsetsController: hide(ime())
+10-17 15:11:01.258 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:69f12925: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:11:05.502 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:11:05.507 25531 25531 D InsetsController: hide(ime())
+10-17 15:11:05.507 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:5862a012: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:12:53.163 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]90d6ed5,event=applyTransactionOnDraw applyImmediately]
+10-17 15:12:53.176 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]90d6ed5,event=reportDrawFinished seqId=1]
+10-17 15:12:53.190 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:12:53.239 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:12:53.247 25531 25531 D InsetsController: hide(ime())
+10-17 15:12:53.247 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:30594c01: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:12:57.428 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:12:57.437 25531 25531 D InsetsController: hide(ime())
+10-17 15:12:57.438 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:ec5aeb4: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:04.398 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]1e2aed1,event=applyTransactionOnDraw applyImmediately]
+10-17 15:13:04.412 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]1e2aed1,event=reportDrawFinished seqId=1]
+10-17 15:13:04.434 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:13:04.468 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:04.472 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:04.472 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:bdf87794: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:09.330 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:09.335 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:09.335 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:d97d407e: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:14.377 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]1a0b2b6,event=applyTransactionOnDraw applyImmediately]
+10-17 15:13:14.391 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]1a0b2b6,event=reportDrawFinished seqId=1]
+10-17 15:13:14.406 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:13:14.452 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:14.456 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:14.456 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:d1a213ea: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:19.459 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:19.466 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:19.466 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:49df02f1: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:25.420 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]84b8cf8,event=applyTransactionOnDraw applyImmediately]
+10-17 15:13:25.438 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]84b8cf8,event=reportDrawFinished seqId=1]
+10-17 15:13:25.456 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:13:25.486 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:25.492 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:25.492 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:59ba65c8: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:28.408 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:28.412 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:28.412 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:fb84aa62: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:42.552 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]b5b5151,event=applyTransactionOnDraw applyImmediately]
+10-17 15:13:42.568 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]b5b5151,event=reportDrawFinished seqId=1]
+10-17 15:13:42.574 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:13:42.626 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:42.630 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:42.631 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:3090ab6d: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:45.473 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:45.482 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:45.482 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:f4f9606e: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:49.325 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]aad665e,event=applyTransactionOnDraw applyImmediately]
+10-17 15:13:49.339 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]aad665e,event=reportDrawFinished seqId=1]
+10-17 15:13:49.352 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:13:49.402 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:49.407 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:49.407 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:dbfcad9e: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:53.076 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:53.080 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:53.080 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:d3d01bc2: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:13:58.043 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]8415206,event=applyTransactionOnDraw applyImmediately]
+10-17 15:13:58.060 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]8415206,event=reportDrawFinished seqId=1]
+10-17 15:13:58.082 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:13:58.118 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:13:58.122 25531 25531 D InsetsController: hide(ime())
+10-17 15:13:58.122 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:c543446a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:14:04.420 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:14:04.423 25531 25531 D InsetsController: hide(ime())
+10-17 15:14:04.423 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:96fd7f16: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:14:15.832 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]c940529,event=applyTransactionOnDraw applyImmediately]
+10-17 15:14:15.848 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]c940529,event=reportDrawFinished seqId=1]
+10-17 15:14:15.864 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:14:15.904 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:14:15.908 25531 25531 D InsetsController: hide(ime())
+10-17 15:14:15.908 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:a604d5a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:14:18.996 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:14:19.010 25531 25531 D InsetsController: hide(ime())
+10-17 15:14:19.010 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:9cd4ff61: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:14:54.923 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]3bea6b4,event=applyTransactionOnDraw applyImmediately]
+10-17 15:14:54.939 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]3bea6b4,event=reportDrawFinished seqId=1]
+10-17 15:14:54.948 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:14:55.000 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:14:55.003 25531 25531 D InsetsController: hide(ime())
+10-17 15:14:55.003 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:feb6e1f9: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:14:57.870 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:14:57.875 25531 25531 D InsetsController: hide(ime())
+10-17 15:14:57.875 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:65d8757f: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:15:27.544 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]14b7cc9,event=applyTransactionOnDraw applyImmediately]
+10-17 15:15:27.560 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]14b7cc9,event=reportDrawFinished seqId=1]
+10-17 15:15:27.576 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:15:27.609 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:15:27.613 25531 25531 D InsetsController: hide(ime())
+10-17 15:15:27.613 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:ef202eac: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:15:29.524 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:15:29.529 25531 25531 D InsetsController: hide(ime())
+10-17 15:15:29.529 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:539ada2d: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:15:51.887 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]66205b9,event=applyTransactionOnDraw applyImmediately]
+10-17 15:15:51.904 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]66205b9,event=reportDrawFinished seqId=1]
+10-17 15:15:51.918 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:15:51.971 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:15:51.978 25531 25531 D InsetsController: hide(ime())
+10-17 15:15:51.978 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:a6baf89a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:15:52.896 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:15:52.901 25531 25531 D InsetsController: hide(ime())
+10-17 15:15:52.902 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:597a5fd2: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:16:03.079 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]128bfb,event=applyTransactionOnDraw applyImmediately]
+10-17 15:16:03.093 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]128bfb,event=reportDrawFinished seqId=1]
+10-17 15:16:03.116 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:16:03.149 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:16:03.153 25531 25531 D InsetsController: hide(ime())
+10-17 15:16:03.153 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:aefe919f: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:16:07.322 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:16:07.326 25531 25531 D InsetsController: hide(ime())
+10-17 15:16:07.327 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:a09ca0fe: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:16:32.046 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]396874f,event=applyTransactionOnDraw applyImmediately]
+10-17 15:16:32.064 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]396874f,event=reportDrawFinished seqId=1]
+10-17 15:16:32.079 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:16:32.113 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:16:32.119 25531 25531 D InsetsController: hide(ime())
+10-17 15:16:32.119 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:9c234142: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:16:33.699 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:16:33.706 25531 25531 D InsetsController: hide(ime())
+10-17 15:16:33.706 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:5cd95012: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:16:50.743 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]26c01a9,event=applyTransactionOnDraw applyImmediately]
+10-17 15:16:50.754 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]26c01a9,event=reportDrawFinished seqId=1]
+10-17 15:16:50.774 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:16:50.808 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:16:50.812 25531 25531 D InsetsController: hide(ime())
+10-17 15:16:50.813 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:446a930e: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- beginning of main
+10-17 15:16:54.102 25531 25531 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-17 15:16:54.105 25531 25555 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@495108e}
+10-17 15:16:54.110 25531 25558 D HWUI    : endAllActiveAnimators on 0xbe81e102c400 (UnprojectedRipple) with handle 0xbd4e16a9d1b0
+10-17 15:16:54.114 25531 25531 W InputEventReceiver: Failed to send outbound event on channel 'c929ede io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity'.  status=DEAD_OBJECT(-32)
+10-17 15:16:54.114 25531 25531 W InputEventReceiver: channel 'c929ede io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity' ~ Could not send 0 outbound event(s), status:DEAD_OBJECT
+--------- switch to events
+10-17 15:16:54.139 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:16:54.143 25531 25531 D InsetsController: hide(ime())
+10-17 15:16:54.144 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:ce5584bc: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-17 15:16:54.286 25531 25555 D BluetoothSocket: close() XX:XX:XX:XX:6E:07 channel=2 mSocketIS=android.net.LocalSocketImpl$SocketInputStream@6d14cbc mSocketOS=android.net.LocalSocketImpl$SocketOutputStream@1e72445 mSocket=android.net.LocalSocket@ed5a79a impl:android.net.LocalSocketImpl@52578cb fd:java.io.FileDescriptor@495108e mSocketState=INIT
+10-17 15:16:54.287 25531 25555 D BluetoothSocket: Closing mSocket: android.net.LocalSocket@ed5a79a impl:android.net.LocalSocketImpl@52578cb fd:java.io.FileDescriptor@495108e
+10-17 15:16:54.290 25531 25555 D OpenControlBuds: RFCOMM channel 0x04 connect failed after 192 ms (attempt 1/3): IOException: read failed, socket might closed or timeout, read ret: -1
+10-17 15:16:54.707 25531 25555 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@15abfc1}
+10-17 15:16:54.921 25531 25555 I BluetoothSocket: connect(), socket connected. mPort=2
+10-17 15:16:54.922 25531 25555 D SocketMetrics: No metrics for connection type 1
+10-17 15:16:54.923 25531 25555 D OpenControlBuds: RFCOMM channel 0x04 connected (attempt 2/3)
+10-17 15:16:55.021 25531 25977 D OpenControlBuds: DLCI 0x04: 03 0a 00 08 5f b1 41 dc 70 d4 6f 9e 03 01 00 03 da 2d b1 03 02 00 06 64 97 b7 01 dd e8 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+10-17 15:16:55.026 25531 25555 D OpenControlBuds: Experiment C: sending 04 01 00 01 03 on DLCI 0x04
+10-17 15:16:55.027 25531 25977 D OpenControlBuds: DLCI 0x04: 03 0b 00 19 02 72 08 97 24 68 72 84 10 4a ad e8 af 47 13 98 32 0b 6d c8 86 0a 38 3f fe
+10-17 15:16:55.031 25531 25977 D OpenControlBuds: DLCI 0x04: 07 34 00 0c 01 e7 7d 32 05 c7 c6 54 04 d1 56 46
+10-17 15:16:55.033 25531 25977 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff
+10-17 15:16:55.036 25531 25977 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+10-17 15:16:55.052 25531 25977 D OpenControlBuds: DLCI 0x04: ff 01 00 03 04 01 00
+10-17 15:16:55.054 25531 25977 D OpenControlBuds: Experiment C: ACK
+10-17 15:16:56.559 25531 25553 D BluetoothSocket: close() XX:XX:XX:XX:6E:07 channel=2 mSocketIS=android.net.LocalSocketImpl$SocketInputStream@9998ff2 mSocketOS=android.net.LocalSocketImpl$SocketOutputStream@76a3643 mSocket=android.net.LocalSocket@f93b4c0 impl:android.net.LocalSocketImpl@f76a5f9 fd:java.io.FileDescriptor@15abfc1 mSocketState=CONNECTED
+10-17 15:16:56.559 25531 25553 D BluetoothSocket: Closing mSocket: android.net.LocalSocket@f93b4c0 impl:android.net.LocalSocketImpl@f76a5f9 fd:java.io.FileDescriptor@15abfc1
+10-17 15:16:56.562 25531 25553 D OpenControlBuds: RFCOMM on-demand channel 0x04 released
+10-17 15:17:03.640 25531 25553 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@25f5cec}
+10-17 15:17:03.797 25531 25553 D BluetoothSocket: close() XX:XX:XX:XX:6E:07 channel=2 mSocketIS=android.net.LocalSocketImpl$SocketInputStream@372b4a mSocketOS=android.net.LocalSocketImpl$SocketOutputStream@bea2abb mSocket=android.net.LocalSocket@35b5bd8 impl:android.net.LocalSocketImpl@4f21b31 fd:java.io.FileDescriptor@25f5cec mSocketState=INIT
+10-17 15:17:03.798 25531 25553 D BluetoothSocket: Closing mSocket: android.net.LocalSocket@35b5bd8 impl:android.net.LocalSocketImpl@4f21b31 fd:java.io.FileDescriptor@25f5cec
+10-17 15:17:03.799 25531 25553 D OpenControlBuds: RFCOMM channel 0x04 connect failed after 165 ms (attempt 1/3): IOException: read failed, socket might closed or timeout, read ret: -1
+10-17 15:17:04.215 25531 25553 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@686b797}
+10-17 15:17:04.466 25531 25553 I BluetoothSocket: connect(), socket connected. mPort=2
+10-17 15:17:04.466 25531 25553 D SocketMetrics: No metrics for connection type 1
+10-17 15:17:04.467 25531 25553 D OpenControlBuds: RFCOMM channel 0x04 connected (attempt 2/3)
+10-17 15:17:04.586 25531 25556 D OpenControlBuds: DLCI 0x04: 03 0a 00 08 7e 85 3c 47 5f 56 47 91 03 01 00 03 da 2d b1 03 02 00 06 64 97 b7 01 dd e8 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+10-17 15:17:04.591 25531 25556 D OpenControlBuds: DLCI 0x04: 03 0b 00 19 02 72 08 a0 24 68 72 84 10 4a ad e8 af 47 13 98 32 0b 6d c8 86 0a 38 3f fe
+10-17 15:17:04.594 25531 25556 D OpenControlBuds: DLCI 0x04: 07 34 00 0c 01 12 a1 d4 be 69 fa 05 c8 64 5e 77
+10-17 15:17:04.596 25531 25556 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff
+10-17 15:17:04.604 25531 25556 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+10-17 15:17:04.648 25531 25556 D OpenControlBuds: DLCI 0x04: ff 01 00 03 04 01 00
+10-17 15:17:04.652 25531 25556 D OpenControlBuds: DLCI 0x04: 04 01 00 01 00
+10-17 15:17:06.159 25531 25555 D BluetoothSocket: close() XX:XX:XX:XX:6E:07 channel=2 mSocketIS=android.net.LocalSocketImpl$SocketInputStream@25dcdf0 mSocketOS=android.net.LocalSocketImpl$SocketOutputStream@e4fff69 mSocket=android.net.LocalSocket@c17edee impl:android.net.LocalSocketImpl@4c3028f fd:java.io.FileDescriptor@686b797 mSocketState=CONNECTED
+10-17 15:17:06.160 25531 25555 D BluetoothSocket: Closing mSocket: android.net.LocalSocket@c17edee impl:android.net.LocalSocketImpl@4c3028f fd:java.io.FileDescriptor@686b797
+10-17 15:17:06.162 25531 25555 D OpenControlBuds: RFCOMM on-demand channel 0x04 released
+--------- switch to events
+10-17 15:17:19.008 25531 25531 I wm_on_top_resumed_lost_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-17 15:17:19.010 25531 25531 I wm_on_paused_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=1ms]
+10-17 15:17:19.040 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-17 15:17:19.569 25531 25531 D VRI[MainActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-17 15:17:19.584 25531 25558 D HWUI    : endAllActiveAnimators on 0xbe81e1004e00 (UnprojectedRipple) with handle 0xbd4e16bfb240
+--------- switch to events
+10-17 15:17:19.586 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+--------- switch to main
+10-17 15:17:21.303 25531 25531 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@99c7c6
+--------- switch to events
+10-17 15:17:21.329 25531 25531 I wm_on_stop_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=0ms]
+--------- switch to main
+10-17 15:17:21.346 25531 25531 D BluetoothAdapter: A2DP disconnected
+10-17 15:17:21.346 25531 25531 D BluetoothAdapter: HEADSET disconnected
+10-17 15:17:21.346 25531 25531 D BluetoothAdapter: LE_AUDIO disconnected
+10-17 15:17:21.346 25531 25531 D OpenControlBuds: Android link observer stopped
+10-17 15:17:21.364 25531 25531 D OpenControlBuds: Android link: CONNECTED -> PENDING (trigger: profile 2 unbound)
+10-17 15:17:22.787 25531 25531 D ViewRootImpl: Skipping stats log for color mode
+--------- switch to events
+10-17 15:17:22.788 25531 25531 I wm_on_restart_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performRestart,time=0ms]
+10-17 15:17:22.788 25531 25531 I wm_on_start_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=0ms]
+--------- switch to main
+10-17 15:17:22.793 25531 25531 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@86b9012
+--------- switch to events
+10-17 15:17:22.795 25531 25531 I wm_on_activity_result_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=ACTIVITY_RESULT]
+10-17 15:17:22.795 25531 25531 I wm_on_resume_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=1ms]
+10-17 15:17:22.801 25531 25531 I wm_on_top_resumed_gained_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+--------- switch to main
+10-17 15:17:22.808 25531 25531 D OpenControlBuds: Android link observer started
+10-17 15:17:22.811 25531 25576 D BluetoothAdapter: A2DP connected
+10-17 15:17:22.813 25531 25531 I Surface : Creating surface for consumer unnamed-25531-19 with slotExpansion=1 for 64 slots
+10-17 15:17:22.814 25531 25531 I Surface : Creating surface for consumer VRI[MainActivity]#19(BLAST Consumer)19 with slotExpansion=1 for 64 slots
+10-17 15:17:22.814 25531 25545 D BluetoothAdapter: LE_AUDIO connected
+--------- switch to events
+10-17 15:17:22.814 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=applyTransactionOnDraw applyImmediately]
+--------- switch to main
+10-17 15:17:22.814 25531 26702 D BluetoothAdapter: HEADSET connected
+--------- switch to events
+10-17 15:17:22.815 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=Start draw after previous draw not visible]
+10-17 15:17:22.836 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=reportDrawFinished seqId=1]
+--------- switch to main
+10-17 15:17:22.839 25531 25531 D OpenControlBuds: Android link: PENDING -> CONNECTED (trigger: profile 2 bound) via profiles [2]
+10-17 15:17:22.850 25531 25556 D OpenControlBuds: Debug log exported (599 lines)
+--------- switch to events
+10-17 15:17:22.869 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-17 15:17:22.871 25531 25531 D InsetsController: hide(ime())
+10-17 15:17:22.872 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:23a7bf7: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-17 15:17:25.493 25531 25543 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-17 15:17:25.493 25531 25543 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-17 15:17:25.494 25531 25543 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-17 15:17:25.494 25531 25543 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-17 15:17:25.504 25531 25543 D StrictMode: StrictMode policy violation: android.os.strictmode.LeakedClosableViolation: A resource was acquired at attached stack trace but never released. See java.io.Closeable for information on avoiding resource leaks.
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.os.StrictMode$AndroidCloseGuardReporter.report(StrictMode.java:2168)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at dalvik.system.CloseGuard.warnIfOpen(CloseGuard.java:349)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.util.CloseGuard.warnIfOpen(CloseGuard.java:170)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.os.ParcelFileDescriptor.finalize(ParcelFileDescriptor.java:1107)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at java.lang.Daemons$FinalizerDaemon.doFinalize(Daemons.java:389)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at java.lang.Daemons$FinalizerDaemon.processReference(Daemons.java:369)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at java.lang.Daemons$FinalizerDaemon.runInternal(Daemons.java:341)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at java.lang.Daemons$Daemon.run(Daemons.java:135)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at java.lang.Thread.run(Thread.java:1572)
+10-17 15:17:25.504 25531 25543 D StrictMode: Caused by: dalvik.system.CloseGuard$CloseGuardException: Explicit termination method 'close' not called
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at dalvik.system.CloseGuard.openWithCallSite(CloseGuard.java:287)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at dalvik.system.CloseGuard.open(CloseGuard.java:257)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.util.CloseGuard.open(CloseGuard.java:153)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.os.ParcelFileDescriptor.<init>(ParcelFileDescriptor.java:212)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.os.ParcelFileDescriptor$2.createFromParcel(ParcelFileDescriptor.java:1167)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.os.ParcelFileDescriptor$2.createFromParcel(ParcelFileDescriptor.java:1158)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.os.Parcel.readTypedObject(Parcel.java:4402)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.bluetooth.IBluetoothSocketManager$Stub$Proxy.connectSocket(IBluetoothSocketManager.java:261)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at android.bluetooth.BluetoothSocket.connect(BluetoothSocket.java:655)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at io.github.tedsluis.opencontrolpixelbuds.hardware.BluetoothRfcommSocket.connect(RfcommSocket.kt:58)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at io.github.tedsluis.opencontrolpixelbuds.hardware.RfcommBudsTransport.openSocketWithRetry(RfcommBudsTransport.kt:208)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at io.github.tedsluis.opencontrolpixelbuds.hardware.RfcommBudsTransport.access$openSocketWithRetry(RfcommBudsTransport.kt:81)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at io.github.tedsluis.opencontrolpixelbuds.hardware.RfcommBudsTransport$openChannel$2.invokeSuspend(RfcommBudsTransport.kt:342)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+10-17 15:17:25.504 25531 25543 D StrictMode: 	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+10-17 15:17:25.505 25531 25543 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+--------- switch to events
+10-17 15:17:40.063 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-17 15:17:40.918 25531 25556 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+10-17 15:17:40.921 25531 25556 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+--------- switch to events
+10-17 15:17:42.075 25531 25531 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-17 15:17:42.077 25531 25531 I wm_on_top_resumed_lost_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-17 15:17:42.080 25531 25531 I wm_on_paused_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+--------- switch to system
+10-17 15:17:42.086 25531 25531 D InsetsController: hide(ime())
+10-17 15:17:42.087 25531 25531 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:c83d68e3: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-17 15:17:42.109 25531 25531 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-17 15:17:42.656 25531 25531 D VRI[MainActivity]: visibilityChanged oldVisibility=true newVisibility=false
+--------- switch to events
+10-17 15:17:42.674 25531 25531 I viewroot_draw_event: [window=VRI[MainActivity]72685e7,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+--------- switch to main
+10-17 15:17:42.674 25531 25531 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@99c7c6
+--------- switch to events
+10-17 15:17:42.682 25531 25531 I wm_on_stop_called: [Token=105430047,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=0ms]
+--------- switch to main
+10-17 15:17:42.688 25531 25531 D BluetoothAdapter: A2DP disconnected
+10-17 15:17:42.688 25531 25531 D BluetoothAdapter: LE_AUDIO disconnected
+10-17 15:17:42.688 25531 25531 D BluetoothAdapter: HEADSET disconnected
+10-17 15:17:42.688 25531 25531 D OpenControlBuds: Android link observer stopped
+10-17 15:17:42.702 25531 25531 D OpenControlBuds: Android link: CONNECTED -> PENDING (trigger: profile 2 unbound)
+10-17 15:18:04.793 25531 25556 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+10-17 15:18:04.800 25531 25556 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
