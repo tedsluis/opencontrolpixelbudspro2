@@ -39,13 +39,12 @@ import io.github.tedsluis.opencontrolpixelbuds.data.BudsRepositoryImpl
 import io.github.tedsluis.opencontrolpixelbuds.data.experiment.ExperimentRunner
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
-import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * Round 1's experiment card (`ai-sessions/0096`, approved per request by the maintainer in chat 2026-10-16) — **only in the `experiment` build type**.
+ * The experiment card (`ai-sessions/0096` round 1's A; `ai-sessions/0098` round 2's F, the Dosimeter — each request approved by the maintainer in chat
+ * 2026-10-17, Checkpoint 1) — **only in the `experiment` build type**.
  * Shown while Debug mode is on and the session is ready; every button asks first (the exact bytes), then sends one request. Nothing runs by itself.
  */
 object ExperimentHook {
@@ -59,10 +58,9 @@ object ExperimentHook {
         val state by repository.connectionState.collectAsState(initial = ConnectionState.Disconnected)
         val last by runner.lastResult.collectAsState()
         var pending by remember { mutableStateOf<Action?>(null) }
-        var holdJob by remember { mutableStateOf<Job?>(null) }
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Experiments (round 1, not a release)", style = MaterialTheme.typography.titleMedium)
+            Text("Experiments (round 2, not a release)", style = MaterialTheme.typography.titleMedium)
             if (!debugModeEnabled || state !is ConnectionState.Ready) {
                 Text("Turn Debug mode on and connect to use them.", style = MaterialTheme.typography.bodySmall)
                 return@Column
@@ -73,37 +71,32 @@ object ExperimentHook {
                     OutlinedButton(onClick = { pending = Action("A: write 13 = $n ($name)", "WriteSetting payload 22 02 68 0$n", { it.writeAncState(n) }) }) { Text(name) }
                 }
             }
-            Text("E — read settings 8, 9, 10", style = MaterialTheme.typography.labelLarge)
+            Text("F — Dosimeter (raw values in the log; no unit, not a health reading)", style = MaterialTheme.typography.labelLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                listOf(8, 9, 10).forEach { f ->
-                    OutlinedButton(onClick = { pending = Action("E: ReadSetting 4:$f", "ReadSetting payload 20 %02x".format(f), { it.readSetting(f) }) }) { Text("Read $f") }
+                OutlinedButton(onClick = {
+                    pending = Action("F1: SetWallclock", "SetWallclock payload 08 <the phone's clock now, ms>", { it.setWallclock() })
+                }) { Text("F1 Clock") }
+                listOf(19, 21).forEach { ch ->
+                    OutlinedButton(onClick = {
+                        pending = Action("F2: SubscribeToLiveDb (channel $ch)", "Dosimeter 0x73d5d805 method 0x4d93b6e2, empty request", { it.subscribeToLiveDb(ch) })
+                    }) { Text("F2 Live $ch") }
+                }
+                listOf(19, 21).forEach { ch ->
+                    OutlinedButton(onClick = {
+                        pending = Action("F3: FetchDailySummaries (channel $ch)", "Dosimeter 0x73d5d805 method 0x73b772ce, empty request", { it.fetchDailySummaries(ch) })
+                    }) { Text("F3 Daily $ch") }
                 }
             }
-            Text("D — on/off-head events", style = MaterialTheme.typography.labelLarge)
-            OutlinedButton(onClick = { pending = Action("D: SubscribeToOobeActions", "method 0x57f3becb, empty request", { it.subscribeToOobeActions() }) }) {
-                Text("Subscribe")
-            }
-            Text("B — ring and hold the channel until stopped on the bud (max 30 s)", style = MaterialTheme.typography.labelLarge)
+            Text("F4 — setting 21 (Volume level notifications)", style = MaterialTheme.typography.labelLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                listOf(false, true).forEach { ack ->
-                    listOf(RingTarget.LEFT to "Left", RingTarget.RIGHT to "Right").forEach { (target, name) ->
-                        val label = if (ack) "B2 $name + ACK" else "B1 $name"
+                listOf(19, 21).forEach { ch ->
+                    listOf(true to "on", false to "off").forEach { (on, name) ->
                         OutlinedButton(onClick = {
-                            pending = Action(
-                                "$label: ring and hold",
-                                "04 01 00 01 %02x".format(target.wireValue) + if (ack) "; each Buds status answered with ff 01 00 02 04 01" else "; no ACK",
-                                { r -> r.ringAndHold(target, ack) },
-                            )
-                        }) { Text(label) }
+                            pending = Action("F4: write 21 = $name (channel $ch)", "WriteSetting payload 22 03 a8 01 0${if (on) 1 else 0}", { it.writeField21(ch, on) })
+                        }) { Text("$ch $name") }
                     }
                 }
-                OutlinedButton(onClick = {
-                    holdJob?.cancel()
-                    holdJob = scope.launch { repository.stopRinging() }
-                }) { Text("Stop") }
             }
-            Text("C — ring both buds (take them out of your ears first)", style = MaterialTheme.typography.labelLarge)
-            OutlinedButton(onClick = { pending = Action("C: ring both — buds out of the ears!", "04 01 00 01 03", { it.ringBoth() }) }) { Text("Ring both") }
             last?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         }
 
@@ -115,7 +108,7 @@ object ExperimentHook {
                 confirmButton = {
                     TextButton(onClick = {
                         pending = null
-                        holdJob = scope.launch { action.run(runner) }
+                        scope.launch { action.run(runner) }
                     }) { Text("Send") }
                 },
                 dismissButton = { TextButton(onClick = { pending = null }) { Text("Cancel") } },
