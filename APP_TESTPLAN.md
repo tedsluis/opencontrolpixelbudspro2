@@ -474,21 +474,21 @@ wire: the requests are 1.3.0's.
 
 ## AA. Round 1 — the experiment build 1.3.1-exp.1 and the 1.3.1 steps not run in `CAP-077` (`ai-sessions/0096`)
 
-In `CAP-078` as BN-1 … BN-19 (captures/CAP-078-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BN/CAP-078-EVENT-NOTES.md, with the reference frames and the run card). The
+In `CAP-078` as BN-1 … BN-19 (captures/CAP-078-2026-10-17_16-23-51_17-17-41-Group_BN/CAP-078-EVENT-NOTES.md, with the reference frames and the run card). The
 experiment build is never released; every request on its card was approved by the maintainer in chat 2026-10-16.
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| AA1 | Release app, user 10: TalkBack on the switch rows, the Bass slider, the tabs | each read with its name and state | — | | BN-1 (A93-APP-07) |
-| AA2 | Release app: two holds while disconnected, Connect, the ANC (i) | "Changed since the app last saw it" stays | the `Get`'s `Notify`, the equal `4:13` answer | | BN-2 (A93-APP-02) |
-| AA3 | Release app: a hold within ≈ 1 s of Connect | the held mode | a push during a read; the read ends with its RESPONSE | | BN-3 (A93-APP-04) |
-| AA4 | Release app: Use different Buds → Cancel; rotate; Cancel | nothing changes | no `DISC` | | BN-4 |
-| AA5 | Experiment app: A — four modes; one bud worn; no bud worn; in-ear detection off | "Experiment A: RESPONSE …" | `WriteSetting 4:{13:n}`, its `RESPONSE`, the stream | | BN-7, BN-9 … BN-11 (`ANC-007`) |
-| AA6 | Experiment app: E — Read 8, 9, 10 before and after A and a wear change | "Experiment E: sent" | the three answers | | BN-6, BN-8, BN-9 (`ANC-008`) |
-| AA7 | Experiment app: D — subscribe, each bud out of/into the ear on camera | "Experiment D: sent" | any `SubscribeToOobeActions` stream packet | | BN-12 (`INEAR-007`) |
-| AA8 | Experiment app: B1, B2 — ring, touch the bud to stop | "the Buds reported 00 (stopped)" or "no stop report" | the Buds' status `…00`; B2's ACKs | | BN-13, BN-14 (`FIND-005`) |
-| AA9 | Experiment app: C — Ring both (buds out of the ears) | "Experiment C: ACK" / "NAK …" | `04 01 00 01 03` and its answer | | BN-15 (`FIND-004`) |
-| AA10 | Owner user with Play: A per mode, B1, C | as above | who gets the `Notify`; how long the held claim lives | | BN-17 … BN-19 |
+| AA1 | Release app, user 10: TalkBack on the switch rows, the Bass slider, the tabs | each read with its name and state | — | not run | BN-1 (A93-APP-07) |
+| AA2 | Release app: two holds while disconnected, Connect, the ANC (i) | "Changed since the app last saw it" stays | the `Get`'s `Notify`, the equal `4:13` answer | ⚠️ done in the experiment app, twice: the (i) kept "Changed since …" (A93-APP-02 verified) | BN-2 (A93-APP-02) |
+| AA3 | Release app: a hold within ≈ 1 s of Connect | the held mode | a push during a read; the read ends with its RESPONSE | not run (0 of 18 reads had a push inside) | BN-3 (A93-APP-04) |
+| AA4 | Release app: Use different Buds → Cancel; rotate; Cancel | nothing changes | no `DISC` | ⚠️ done in the experiment app: Cancel × 2, rotation with the dialog open, no `DISC` | BN-4 |
+| AA5 | Experiment app: A — four modes; one bud worn; no bud worn; in-ear detection off | "Experiment A: RESPONSE …" | `WriteSetting 4:{13:n}`, its `RESPONSE`, the stream | ✅ 18 OK pushed back; 4 `FAILED_PRECONDITION` with no bud worn | BN-7, BN-9 … BN-11 (`ANC-007`) |
+| AA6 | Experiment app: E — Read 8, 9, 10 before and after A and a wear change | "Experiment E: sent" | the three answers | ✅ 15 of 15 status 2 (`UNKNOWN`), value 0 | BN-6, BN-8, BN-9 (`ANC-008`) |
+| AA7 | Experiment app: D — subscribe, each bud out of/into the ear on camera | "Experiment D: sent" | any `SubscribeToOobeActions` stream packet | ⚠️ two events at subscribe (10, 12), then status 14; none for the outs/ins (not filmed) | BN-12 (`INEAR-007`) |
+| AA8 | Experiment app: B1, B2 — ring, touch the bud to stop | "the Buds reported 00 (stopped)" or "no stop report" | the Buds' status `…00`; B2's ACKs | ✅ 4 of 4 stop reports; B2 ACKs sent | BN-13, BN-14 (`FIND-005`) |
+| AA9 | Experiment app: C — Ring both (buds out of the ears) | "Experiment C: ACK" / "NAK …" | `04 01 00 01 03` and its answer | ✅ ACK + status `03` | BN-15 (`FIND-004`) |
+| AA10 | Owner user with Play: A per mode, B1, C | as above | who gets the `Notify`; how long the held claim lives | ✅ Play gets the `Notify`; held claims cut 4.5–4.9 s, Play ACKs the stop | BN-17 … BN-19 |
 
 ## After the run (within 1 minute of the last action)
 
@@ -529,6 +529,11 @@ experiment build is never released; every request on its card was approved by th
 | W 1.2.0 rebuilt | 12 | 3 | 0 | 6 | 3 |
 | X 1.2.1 | 12 | 6 | 0 | 5 | 1 |
 | Y 1.3.0 | 22 | 10 | 0 | 7 | 5 |
+| AA round 1 (experiment build) | 10 | 5 | 0 | 3 | 2 |
+
+**Run `CAP-078` (2026-10-17, the experiment build 1.3.1-exp.1, user 10 without Play and the Owner with Play; `ai-sessions/0097`, `CAP-078-FINDINGS.md`):** section
+AA — ✅ AA5, AA6, AA8, AA9, AA10; ⚠️ AA2 and AA4 (done in the experiment app, both as expected), AA7 (events only at subscribe); not run AA1 (TalkBack), AA3 (a
+hold during a Connect). The release app was not opened.
 
 **Run `CAP-076` (2026-10-15, 1.3.0 `ff27ee1`, part 1 the Owner with Play, part 2 the secondary user without; `ai-sessions/0092`, `CAP-076-FINDINGS.md`):** section Y — ✅ Y1, Y2, Y4, Y9, Y11, Y12, Y15, Y16, Y19, Y22; ⚠️ Y3 (the Connection tab shows no mode), Y5 (one tile tap lost silently), Y6 (the "changed since" line overwritten), Y8 (the per-tap collision with Play, measured), Y13/Y14 (BL-15/BL-18 not run), Y18 (no hold while disconnected); not run Y7, Y10, Y17, Y20, Y21 (the maintainer tested only the changed functionality). Every hold on the noise-control tab shown: 29 of 29 with Play, 12 of 12 without. Verdict: release as built with two Known issues (the maintainer, chat 2026-10-15).
 

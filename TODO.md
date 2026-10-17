@@ -16,6 +16,9 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 *(The finished release items of 1.2.2 and 1.3.0 were deleted 2026-10-15 by `ai-sessions/0094` — `ai-sessions/0093` A93-HK-01; they are in `CHANGELOG.md`,
 `RELEASING.md` §13 and the session RESULTs.)*
 - 1.3.1 published 2026-10-16 (`v1.3.1` on `7aa524b`, `RELEASING.md` §13). Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25; from `CAP-077`: §2.
+- **The Buds' state after `CAP-078` (2026-10-17, `ai-sessions/0097`):** EQ preset `[0, 2, 4, 0, −1]` (upper treble … low bass; set 16:30:26 and still so in user 0,
+  film s2 79–86), Volume EQ on, **balance Right 1** (was Centre), mono off, in-ear detection on (off 16:51:01 – 16:52:31), all four press-and-hold modes, every
+  switch as before — restore balance and EQ if wanted (**M**).
 - **The Buds' state after `CAP-077` (2026-10-16):** EQ `[−1, 0, 4, 2, 5.87]` (Upper treble raised in the run), **in-ear detection on again** (07:01:07), all four
   press-and-hold modes, balance Centre, every switch as before the run.
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
@@ -170,10 +173,10 @@ Open questions (each with where it is described):
   of setting 13, although the app's own ANC row writes only that (`ai-sessions/0073` §4.9) — in the next official-app capture, film which
   control is tapped (the app's row or the Play-services/Settings one). 🟡 what the Buds mean by the "primary" bud of the announcement (field 6;
   the app-side routing is answered, `PROTOCOL.md` §2.2a note of 2026-10-06).
-- [ ] **Round 1 (`ai-sessions/0096`, 2026-10-16):** E-01, E-03, E-04, E-05 and E-12 have an experiment build (1.3.1-exp.1, build type `experiment`, never released; every send approved in chat 2026-10-16) and a skeleton, `CAP-078` (Group BN) — the maintainer runs it (**M**); a CAPTURE session analyses it; then the FACTs and ADRs for round 2 (release 1.4.0).
-- [ ] **Experiment (`ai-sessions/0090` E-01, needs its own approval — a new write):** `WriteSetting 4:{13:n}` from a debug build — n = 1…4 with the
-  `RESPONSE` status, the `08 13` Notify on DLCI 0x04 (to whom, if Play holds it), the audible change; variants with one bud worn and with Settable `00`. A
-  positive result needs a `PROTOCOL.md` entry first and its own ADR (like ADR-045). Not on any wire yet (0 in 96 logs).
+- [ ] **Round 2 → `ai-sessions/0098` (FEATURE, release 1.4.0; the maintainer's choice in chat 2026-10-17):** noise control through `WriteSetting 4:{13:n}` (an ADR
+  first; the own write counted as `set_by_app`, `FAILED_PRECONDITION` shown as "no bud worn"), the ring status and its ACK while the app holds the claim, Ring
+  both (a draft superseding ADR-027 for "both", accepted in chat first), the L/R battery from runtime info, `TODO.md` §5 items 2.1/2.2/2.4/2.5, P1/P2; the next
+  capture skeleton that also runs what `CAP-078` did not (TalkBack — A93-APP-07; a hold during a Connect — A93-APP-04). Draft PR #68 stays open until then.
 - [ ] **Experiment (`ai-sessions/0090` E-12):** a read-only `SubscribeToOobeActions` **without** OOBE mode (setting 6 is never written, `ARCHITECTURE.md` §5a
   rule) — do per-bud `LEFT_ON_HEAD` … `RIGHT_OFF_HEAD` events (`qhp` 10–13) arrive? Would refine ADR-059's "probably worn" (never per bud).
 - Idea, low priority (`ai-sessions/0090` E-17): an explicit `GetSoftwareInfo` as a fallback after `MAESTRO_ANNOUNCE_WAIT_MS` — one MAESTRO open in 523 stayed
@@ -192,6 +195,12 @@ Open questions (each with where it is described):
   `maestro_pw.Dosimeter`: values on the wire, meaning 🟡; a display is out of scope (**M**, 2026-09-30). **Volume-level notifications** studied in
   `ai-sessions/0082` (item 4): the phone decides (the official app's worker, 67 % of a 7-day constant, once per 7 days; field 21 only gates it; the Buds push
   nothing) — draft ADR-060 (proposed, not accepted) and the 🟡 that block it; a capture with a sound-level meter (`WELL-002`, no Group yet) comes first.
+
+- [ ] **From `CAP-078` (`ai-sessions/0097`, 2026-10-17) — open:** the audibility of the `WriteSetting 4:{13:n}` switches (the speech was timed, not transcribed);
+  `FAILED_PRECONDITION` in conditions other than "no bud worn"; why `SubscribeToOobeActions` ended with status 14 after 15.7 s; both buds sounding on Ring both (a
+  second microphone or the maintainer's ear); the user-0 ACL end `0x13` at 17:09:23 before the app started; what updated the release app at 2026-10-16 14:56:46;
+  the three-pushes-per-write question (`PROTOCOL.md` §6) now also for field 13 on both channels (`CAP-078-FINDINGS.md` §3.5). Housekeeping: the `CAP-077` logcat
+  extract still carries 484 unmasked MAC addresses (`CAP-078`'s are masked).
 
 ## 5. App: later work
 

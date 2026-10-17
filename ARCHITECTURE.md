@@ -526,6 +526,9 @@ summary), the current state is (every write below additionally passes the Safe-M
 > requests approved in chat 2026-10-16 (`WriteSetting 4:{13:n}`, `ReadSetting 4:8/9/10`, `SubscribeToOobeActions`, a Ring held until the Buds report it stopped,
 > with and without the phone's ACK, Ring both `0x03`) for `CAP-078`. Its code is in `src/experiment` only (debug and release compile an empty slot; the release
 > APK holds no experiment class); `BudsRepositoryImpl` gave twelve members `internal` visibility for it, without a behaviour change.
+> **Run (2026-10-17, `CAP-078`, `ai-sessions/0097`):** the five requests answered (`PROTOCOL.md` §4.1/§4.4/§6 Updates of 2026-10-17); on the same code the kept
+> "changed since" cause of 1.3.1 (A93-APP-02) showed on film twice after holds made while disconnected — verified on hardware; the push during a read
+> (A93-APP-04) and TalkBack (A93-APP-07) were not exercised. Nothing in the table changes until round 2.
 
 This table is this project's authoritative implementation-readiness list until superseded by a new ADR
 — a future session should re-derive it from `DECISIONS.md` directly rather than copying it forward

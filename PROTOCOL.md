@@ -887,6 +887,16 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   (setting 13 is the mode and is pushed to a subscriber) is unchanged. (2) The Note of 2026-10-15: "41 of 41 holds … while Google Play services held the Message
   Stream" joins two users — **29 of 29** in the Owner user, where Play held the Message Stream, and **12 of 12** in the secondary user without Play, where nobody
   held it (`CAP-076-FINDINGS.md` §4.2).
+- **Update (2026-10-17, `ai-sessions/0097`, maintainer-approved in chat 2026-10-17, `AskUserQuestion` "A → PROTOCOL", option *"🟢 FACT-notitie (Recommended)"* —
+  `CAP-078` §3) — 🟢 FACT (wire): `WriteSetting 4:{13:n}` on DLCI 0x02 switches the noise-control mode with no Message Stream claim.** 22 sends by the experiment
+  build 1.3.1-exp.1 (n = 1 … 4; channel 19 or 21; the frames of `ai-sessions/0096`'s reference table byte for byte, e.g. `CAP-078` H 5921 `00 3b 03 10 13 1d ea 71
+  de 7e 25 1d 9a 8c 9e 2a 04 22 02 68 01 …`): **18 `RESPONSE` status 0, each pushed back on `SubscribeToSettingsChanges` as `13 = n` within 0.15 s** (H 5923, …);
+  **4 `RESPONSE` status 9 (`FAILED_PRECONDITION`), no push** — all four while no bud was worn (the stream had pushed `13 = 0` at H 6756; H 6775 → 6777). In-ear
+  detection off did not prevent it (H 7277 … 7301, 4 of 4 OK). In the Owner user the client holding DLCI 0x04 (Google Play services) received the Buds'
+  `Notify` for each write — H3 17:12:57.512 `08 13 00 04 01 e8 e8 20`, 17:13:09.401 `… 08`, 17:13:19.502 `… 80`, 17:13:28.437 `… 40` for n = 1, 2, 3, 4 (the bits
+  of the table above); in user 10 nobody held DLCI 0x04 and no `Notify` was sent. Command: `python3 scripts/pwhdlc_crc_table.py <log> 0x000b > t.tsv; python3
+  scripts/rpc_request_answers.py t.tsv WriteSetting`. ❓ Audibility of each switch (the run's speech was not transcribed); the meaning of status 9 beyond "no bud
+  worn" (one condition seen).
 
 ### 4.2 Equalizer (EQ)
 
@@ -1607,6 +1617,16 @@ option (C), even though its per-earbud content is now FACT-confirmed.
   > "Can't play sound" with the Buds connected, and put **no** `04 01` on the wire (`tshark -Y "btrfcomm.len>0 && frame contains 04:01:00:01"` → 0, positive control
   > `CAP-068`). `FIND-005` cannot be tested with the official app any more; status unchanged (🟡). Test with OpenControl's own Ring while a client holds the Message
   > Stream. Evidence: `CAP-069-FINDINGS.md` §7.
+- **Update (2026-10-17, `ai-sessions/0097`, maintainer-approved in chat 2026-10-17, `AskUserQuestion` "B/C → §4.4", option *"🟢 FACT B + C (Recommended)"* —
+  `CAP-078` §4–§5).** 🟢 **FACT — `FIND-005`, the ringing-status sync:** after each Ring the Buds send their own status `04 01 00 01 <value>` (equal to the
+  command) and, when the ringing stops, `04 01 00 01 00` — once each, to the client then holding the Message Stream (8 rings: `CAP-078` H 7775/7816, 7877/7907,
+  7968/8013, 8104/8145 with OpenControl holding; H3 5814 …: OpenControl's claims were cut by Play services' re-claim and **Play received and ACKed** the stop status
+  `ff 01 00 02 04 01`, H3 6833→6836, 7204→7206, 7605→7606). An unACKed status was not repeated (4 of 4, the B1 rings); the phone's ACK `ff 01 00 02 04 01` (B2, the
+  official app's `CAP-025` 2048) changed nothing on the wire. 🟢 **FACT — Ring both:** `04 01 00 01 03` is ACKed `ff 01 00 03 04 01 00` and reported as status `03`
+  (H 8203 → 8210/8211; H3 7792 → 7796/7797; a second `03` while ringing got the ACK only, H3 8074/8078); a tone of 19.2 s followed (`CAP-078` §5). 🟡 That both buds
+  sounded is the status byte and the specification's "0x03 … Ring both left and right" (Device Action page, fetched 2026-10-17), not a measurement. This
+  contradicts the reasoning of ADR-027 ("no local mechanism") — the maintainer decides in round 2 (chat 2026-10-17, "ADR-027": *"Besluit in ronde 2
+  (Recommended)"*); ADR-027 is unchanged until then.
 - **Sent to**: RFCOMM Message Stream channel, DLCI 0x04, per §2.1.
 - **Expected response**: confirmed — see the two ACK variants above.
 - **Major structural finding — Case/"both" use a different mechanism entirely**: the official app
@@ -3738,6 +3758,16 @@ leaving them buried in prose elsewhere.
   with **in-ear detection off**: the stream pushed `4:{13:4}` (Adaptive) at H 2339, 07:00:48.664, 0.5 s after the runtime info showed the second bud out of the
   case (H 2326, both `6.x` field 2 = 1) and 1.1 s after the last read gave Off (H 2317) — no app `Set`, no claim open, no film of the ears
   (`CAP-077-FINDINGS.md` §4.2). Whether the switch follows the case or the ears is not settled by it.
+  **Note (2026-10-17, `ai-sessions/0097`, maintainer-approved in chat 2026-10-17, `AskUserQuestion` "D/E → §6", option *"🟢 wire-notities (Recommended)"*; no
+  status change of the hypothesis):** `ReadSetting 4:8`, `4:9`, `4:10` were sent for the first time (`CAP-078` §7): **15 of 15 answered with status 2
+  (`UNKNOWN`) and the value 0** (`4:{8:0}` / `4:{9:0}` / `4:{10:0}`; e.g. H 5992 → 5994 `… 2a 04 22 02 40 00 … 30 02 …`) — both buds worn, one bud, no bud, in-ear
+  detection on, and in the Owner user alike. 🟢 FACT for the answer; the firmware `release_5.203` does not serve these settings (as pbpctrl's "code: 2" on the gen
+  1). Whether the Buds store a per-wear mode stays the hypothesis above; settings 9/10 do not expose it.
+- [ ] **Added 2026-10-17, `ai-sessions/0097` (maintainer-approved in chat 2026-10-17, `AskUserQuestion` "D/E → §6") — 🟢 FACT (wire) / ❓ OPEN QUESTION:
+  `SubscribeToOobeActions` is answered.** `CAP-078` H 7388 (16:53:15.779, channel 21, method `0x57f3becb`, empty request) → H 7390/7391 SERVER_STREAM `08 0a`,
+  `08 0c` at once (`qhp` 10 `LEFT_ON_HEAD`, 12 `RIGHT_ON_HEAD` — `REVERSE_ENGINEERING.md`; both buds were worn) → **H 7429 RESPONSE status 14 (`UNAVAILABLE`)
+  15.7 s later**, empty; no event for the bud-out/in that followed (positive control: the settings stream on the same channel pushed `13 = 3`/`4` at H 7432,
+  7436). ❓ Why the call ended (the maintainer took a bud out at about that second — speech at 16:53:31.1); not usable as an in-ear source as seen. Run once.
 - [ ] **Added 2026-10-16, `ai-sessions/0095` (maintainer-approved in chat 2026-10-16, `AskUserQuestion` "Notities") — ❓ OPEN QUESTION: three stream packets per
   write for some settings.** In `CAP-077` (OpenControl 1.3.1, both buds out of the case) a `WriteSetting` of field 4, 11, 15, 27 or 28 was echoed on
   `SubscribeToSettingsChanges` **three** times — channel 19 before the `RESPONSE`, channel 19 again in the same RFCOMM frame as the `RESPONSE`, channel 21 (e.g.
@@ -3838,6 +3868,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-15 | **`ai-sessions/0092` — `CAP-076` (Group BL, OpenControl 1.3.0 in both GrapheneOS users), maintainer-approved in chat 2026-10-15.** §4.1: a note — the settings stream in OpenControl's own logs (12 of 12 sessions subscribed, 41 of 41 holds pushed while Play held the Message Stream), every change pushed twice with both buds out of the case (🟡 one per bud core). No status change; §6's wear item unchanged. | Claude (AI), maintainer-approved |
 | 2026-10-15 | **`ai-sessions/0094` — the 0093 audit processed, maintainer-approved in chat 2026-10-15** (`AskUserQuestion` "FACT-teksten", "§6 en lead"). §4.1: a Correction — the setting-13 ratios (75 of 89 pushed, 12 of 89 lost to the Buds' `DISC`, 2 at re-opens; not "73 of 73" / "12 of 77") and the two users of `CAP-076` (29 of 29 with Play, 12 of 12 without). §5: link-key types are P-192 (0x04/0x05), not P-256. §2.2a: L-1 "8 of 8" in `CAP-065`. §1/§4.3 Option A: 🔴 not observed from the Pro 2. §4.5.2: "in-use" is Code `0x41`. §4.5.3/§4.5.4: Status pointers. §6: SASS item answered from the spec; ATT `0x0044` item closed (103-log scan); DLCI 0x0a item — 🟡 the `CAP-021` waves are assistant sessions (L93-1); field-13 mirror item ticked; pointers on the `CAP-038` and DLCI 0x08 Get-code items. One frame number 1509 → 1508. No FACT promoted or withdrawn. | Claude (AI), maintainer-approved |
 | 2026-10-16 | **`ai-sessions/0095` — `CAP-077` (Group BM, OpenControl 1.3.1 in the secondary user without Play), maintainer-approved in chat 2026-10-16** (`AskUserQuestion` "Notities"). §6: a note on the wear-state item (a mode switch with in-ear detection off, H 2339) and a new ❓ item — three stream packets per write for fields 4, 11, 15, 27, 28. No status change. | Claude (AI), maintainer-approved |
+| 2026-10-17 | `CAP-078` (round 1, the experiment build 1.3.1-exp.1; `ai-sessions/0097`, maintainer-approved in chat 2026-10-17): §4.1 Update — `WriteSetting 4:{13:n}` switches the mode without the Message Stream (🟢, 22 sends); §4.4 Update — `FIND-005` ring-status sync 🟢, Ring both `0x03` ACKed and reported 🟢 (both sounding 🟡); §6 — settings 8/9/10 answer status 2 (🟢), `SubscribeToOobeActions` answered then status 14 (🟢 / ❓) | Claude Opus 5.5 (AI), approved by the maintainer |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL
