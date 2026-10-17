@@ -4,7 +4,7 @@
 **Category:** CAPTURE
 **Date:** 2026-10-17
 **Title:** Full analysis of `CAP-078` (Group BN), per `ai-sessions/0097_CAPTURE_PROMPT_2026_10_17.md`
-**Status:** awaiting maintainer sign-off
+**Status:** complete
 
 ## Summary (plain language)
 
@@ -70,7 +70,7 @@ The release app was never opened, so part 1 of the plan did not run as written. 
   summary row, run note; `TESTPLAN_BLUETOOTH_HCI_SNOOP.md` — no change (every exercised Test-ID already carries BN); `TODO.md` §1 (the Buds' state, round 2) and
   §4 (the open items), finished items removed; `ARCHITECTURE.md` §5a run note; `ai-sessions/INDEX.md` 0097 row and the 0096 back-fill; scripts
   `scripts/ring_tone_windows.py` and `scripts/rpc_request_answers.py` (rule 4a; checked against the scratch results). `ensure_footers.py`; `lint_docs.py` exit 0.
-- **Next:** the commit question (step 17).
+- **Done.** Committed and pushed (see Commits).
 - **Scratchpad:** /tmp/claude-1000/-home-tedsluis-git-opencontrolpixelbudspro2/aa9a8659-d019-41cc-a793-56b16454fad0/scratchpad/c078 (scripts, sheets, tables).
 
 ## Checkpoint 0 (chat 2026-10-17, `AskUserQuestion`, verbatim answers)
@@ -116,7 +116,9 @@ https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0097_
 
 ## Commits
 
-Not committed yet — waiting for the maintainer's "yes" in chat (step 17).
+On `feature/0096-experiment-build` after `3bb3bf9` (the prompt), the maintainer's "yes" in chat 2026-10-17 (*"Ja, commit en push (Recommended)"*):
+`b2b641b` docs(capture) the CAP-078 folder; `2b7eeea` docs the protocol and registers; `fdadd2c` docs the RESULT, INDEX and scripts; this back-fill. Pushed;
+draft PR #68 not merged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0097_CAPTURE_RESULT_2026_10_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0097_CAPTURE_RESULT_2026_10_17
