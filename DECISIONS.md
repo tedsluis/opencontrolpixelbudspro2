@@ -310,6 +310,8 @@ motivated this).
 
 - **Date**: 2026-08-15
 - **Status**: Accepted
+- **Update (2026-10-17, `ai-sessions/0098`, pointer only — maintainer-approved in chat 2026-10-17, "ADR A"):** the ANC `Set` moves to `WriteSetting 4:{13:n}` on
+  DLCI 0x02 — **ADR-067** supersedes this ADR for the channel of the `Set`; the opcode findings stay.
 - **Note on process (added 2026-09-30, `ai-sessions/0059`):** this ADR names no maintainer approval, and where or when one was given is **not recorded**
   (found by `ai-sessions/0058`, A58-GOV-04). The maintainer confirmed in chat on 2026-09-30 (`AskUserQuestion` "ADR-009", option *"Not recorded
   (Recommended)"*) that the provenance is not recorded; the decision stands as written.
@@ -1536,6 +1538,8 @@ motivated this).
 
 - **Date**: 2026-09-13
 - **Status**: Accepted
+- **Update (2026-10-17, `ai-sessions/0098`, pointer only — maintainer-approved in chat 2026-10-17, "ADR D"):** "both simultaneously" is superseded by
+  **ADR-070** (a local Ring both exists, `CAP-078` §5); the Case stays out of scope as decided here.
 - **Context**: `PROTOCOL.md` §4.4's "Major structural finding" and §6 Behavior's matching open item
   established that Case ring and "ring both simultaneously" are reachable, in the official app, only
   via a separate Find Hub/Find My Device map-view flow that is account/cloud-mediated
@@ -1688,6 +1692,8 @@ motivated this).
 
 - **Date**: 2026-09-18
 - **Status**: Accepted
+- **Update (2026-10-17, `ai-sessions/0098`, pointer only — maintainer-approved in chat 2026-10-17, "ADR B"):** the left/right percentage comes from the
+  runtime-info stream since **ADR-068**; the `03 03` message stays decoded (a Find claim may still bring it).
 - **Context**: `PROTOCOL.md` §4.3 Option B tracked a candidate battery message on DLCI 0x04
   (`03 03 00 03 <b1> <b2> ff`), originally recorded as 🟡 HYPOTHESIS per maintainer sign-off
   (`CAP-009-FINDINGS.md` §7). The 2026-08-28 project-wide audit (`EXT-01`) found Google's official
@@ -1796,6 +1802,8 @@ motivated this).
 
 - **Date**: 2026-09-19
 - **Status**: Accepted; the charging flag accepted 2026-09-20 (Update) *(Status line corrected 2026-10-03, maintainer-approved in chat, `ai-sessions/0069` — it
+- **Update (2026-10-17, `ai-sessions/0098`, pointer only — maintainer-approved in chat 2026-10-17, "ADR B"):** **ADR-068** supersedes this ADR as the L/R
+  source; the decoder stays.
   still called the charging-flag reading an unaccepted proposal)*
 - **Note on process**: drafted by an AI agent; the unblock is the maintainer's explicit instruction in the
   chat session of 2026-09-19 ("een ADR vrijgeven voor de batterijdecoder op 0x04"), per `AGENTS.md` §6/
@@ -2961,6 +2969,95 @@ motivated this).
 - **Consequences**: no new LFS traffic; the films are verifiable only on the maintainer's machine (the FINDINGS cite film seconds, the hash list pins the
   file); the repository grows by the small files only (`CAP-077`: ≈ 4.3 MB). `PROJECT_RULES.md` rule 18 gets a dated pointer here; `CAP-077`'s data files are
   committed under this rule.
+
+## ADR-067 — Noise control through `WriteSetting 4:{13:n}` on the app's own channel (DLCI 0x02)
+
+- **Date**: 2026-10-17
+- **Status**: Accepted (maintainer, chat 2026-10-17, `ai-sessions/0098`) — to be built in 1.4.0
+- **Supersedes**: ADR-009 for the channel of the ANC `Set` (the Message Stream `08 12` is no longer sent); amends ADR-032 (no ANC claim) and ADR-065 item 4
+  (the app's own change is now its `WriteSetting`).
+- **Note on process**: drafted by an AI agent (`ai-sessions/0098`); the decision is the maintainer's, given in the chat of 2026-10-17 (`AskUserQuestion`
+  "ADR A", option *"Accepteren zoals getoond (Recommended)"*, with this text in the preview), per `AGENTS.md` §6.
+- **Context**: `CAP-078` §3 (`PROTOCOL.md` §4.1 Update 2026-10-17, 🟢): 22 sends of `WriteSetting 4:{13:n}` — 18 `RESPONSE` status 0, each pushed back on the
+  settings stream as `13 = n` within 0.15 s; 4 `FAILED_PRECONDITION` with no push, all while no bud was worn; no Message Stream claim needed. The Message
+  Stream `Set` collided with Google Play services' claim in the Owner user (1.3.0's known issue, `CAP-075`/`CAP-076`).
+- **Options considered**: (a) keep ADR-009; (b) setting 13 with the Message Stream `Set` as a fallback; (c) setting 13 only — chosen.
+- **Decision**:
+  1. The noise-control tab and the Quick Settings tile send `WriteSetting 4:{13:n}` (1 Off, 2 Noise cancellation, 3 Transparency, 4 Adaptive) on the existing
+     settings write path: a Ready session, the announced channel and its ADR-034 address, the Maestro lock, the write quarantine, the Safe-Mode gate (firmware).
+     No Message Stream claim.
+  2. Done = `RESPONSE` status 0: the mode is shown with the cause "set by this app"; the push `13 = n` within `ANC_SET_WINDOW_MS` is the app's own.
+     `FAILED_PRECONDITION` → "no bud worn" (`AncNotAllowed`), nothing more sent; another status or no answer → an error, the previous mode stays (the
+     quarantine on a timeout, as every write).
+  3. Only 1 … 4 and only a mode in the list in force (field 12); the tile steps from the shown mode (no `Get`).
+  4. No fallback to the Message Stream `Set` (the same Settable rule; keeps the Play contention away). The `08 11`/`08 12` codec stays for decoding.
+- **Consequences**: no ANC claim on DLCI 0x04 at all; the tile needs a Ready session (as today); the "set by this app" window covers the write's push; the
+  hardware run confirms the switch is audible.
+- **Note (2026-10-17, `ai-sessions/0098`, maintainer-approved in chat 2026-10-17, `AskUserQuestion` "ADR-067 §3", option *"Weigeren + experiment
+  (Recommended)"*):** field 12 is the press-and-hold list (ADR-046), not a list of modes the app may choose — item 3 stands as written: a mode not ticked there is
+  refused by the app (the tab says so, the tile skips it; an unread list refuses with "not read" — nothing sent), whereas 1.3.x's Message Stream `Set` offered
+  all four. What the Buds answer to such a write is tested on the experiment card in the hardware run before any change.
+
+## ADR-068 — The left/right battery from runtime info; no Message Stream claim at Connect
+
+- **Date**: 2026-10-17
+- **Status**: Accepted (maintainer, chat 2026-10-17, `ai-sessions/0098`) — to be built in 1.4.0
+- **Supersedes**: ADR-031/033 as the source of the left/right percentage (the `03 03` decoder stays); amends ADR-032 (the Connect snapshot claim is dropped),
+  ADR-043 (the runtime-info stream also gives L/R) and ADR-059 (its availability input).
+- **Note on process**: drafted by an AI agent (`ai-sessions/0098`); the decision is the maintainer's, given in the chat of 2026-10-17 (`AskUserQuestion`
+  "ADR B", option *"Accepteren zoals getoond (Recommended)"*, with this text in the preview), per `AGENTS.md` §6.
+- **Context**: `PROTOCOL.md` §4.5's runtime-info entry: 6.2 = Left, 6.3 = Right, field 1 = % (🟢 FACT 2026-09-25, 401/403). The Connect's snapshot claim on DLCI
+  0x04 existed for the ANC mode (now ADR-064's `ReadSetting 4:13`) and the `03 03` battery burst. Setting 13 = 0 exactly when the Settable byte is `00`
+  (`CAP-069` §8, `DESKRESEARCH_FINDINGS.md` 2026-10-04).
+- **Options considered**: (a) keep the snapshot; (b) runtime info with the `03 03` burst at Connect as a second source; (c) runtime info only — chosen.
+- **Decision**:
+  1. L/R % from runtime-info entries 6.2/6.3 field 1 with the packet's receive time; an entry absent → that bud's value "last seen" with its time (as the Case);
+     a value outside 0 … 100 → unavailable.
+  2. The Connect's snapshot claim on DLCI 0x04 is dropped: the mode comes from `ReadSetting 4:13` and the settings stream (ADR-064/065), "changeable" from
+     `13 = 0` vs 1 … 4.
+  3. Refresh battery = `SubscribeRuntimeInfo` again on DLCI 0x02 (no claim); "no new reading" if no packet within 2 s.
+  4. A `03 03` "Battery updated" on a Find claim still updates L/R (newest wins).
+  5. ADR-059's "probably worn" reads the availability from setting 13 instead of the Settable byte.
+- **Consequences**: with ADR-067 DLCI 0x04 is claimed only for Find; the Model ID is checked on Find claims only. 🟡 how often 6.2/6.3 change while worn —
+  measured in the hardware run.
+
+## ADR-069 — The Buds' ringing status and its ACK
+
+- **Date**: 2026-10-17
+- **Status**: Accepted (maintainer, chat 2026-10-17, `ai-sessions/0098`) — to be built in 1.4.0
+- **Amends**: ADR-011 (Find) and ADR-032 (the claim's length for a ring); replaces the "read nothing, ACK nothing" choice of 2026-10-03 (`ai-sessions/0069`).
+- **Note on process**: drafted by an AI agent (`ai-sessions/0098`); the decision is the maintainer's, given in the chat of 2026-10-17 (`AskUserQuestion`
+  "ADR C", option *"Accepteren zoals getoond (Recommended)"*, with this text in the preview), per `AGENTS.md` §6.
+- **Context**: `PROTOCOL.md` §4.4 Update 2026-10-17 (🟢 `FIND-005`): after a Ring the Buds report `04 01 00 01 <status>` and at the stop `04 01 00 01 00`,
+  once each, to the Message Stream holder; the specification's Seeker ACKs it (Device Action page, fetched 2026-10-17); `CAP-078` B2 sent the ACK 4 of 4.
+- **Options considered**: (a) unchanged; (b) the status without the ACK; (c) the status and the ACK — chosen.
+- **Decision**:
+  1. While the app's Ring claim is open, the Buds' `04 01 00 01 xx` sets the ring state: `01`/`02`/`03` ringing (right/left/both), `00` stopped → the notice
+     clears with "Stopped on the bud".
+  2. Each status is ACKed with `ff 01 00 02 04 01` (the official app's `CAP-025` 2048).
+  3. The claim is held until the stop status, the user's Stop or `RING_HOLD_MAX_MS` = 20 s (observed stops 14.8–17.1 s), then released as today (1.5 s linger).
+  4. A claim cut by another client (Play services, ≈ 4.5 s) ends the hold without a re-claim; the screen keeps "may still be ringing" (I-6) — never a
+     "stopped" the app did not hear.
+  5. No timeout byte is sent.
+- **Consequences**: a ring holds DLCI 0x04 up to 20 s in the user without Play services; in the Play user the hold ends with Play's re-claim.
+
+## ADR-070 — Ring both buds
+
+- **Date**: 2026-10-17
+- **Status**: Accepted (maintainer, chat 2026-10-17, `ai-sessions/0098`) — to be built in 1.4.0
+- **Supersedes**: ADR-027 for "both simultaneously" (the Case stays out of scope).
+- **Note on process**: drafted by an AI agent (`ai-sessions/0098`); the decision is the maintainer's, given in the chat of 2026-10-17 (`AskUserQuestion`
+  "ADR D", option *"Accepteren zoals getoond (Recommended)"*, with this text in the preview), per `AGENTS.md` §6.
+- **Context**: ADR-027 held that only Find Hub offered "both" and that no local mechanism existed. `CAP-078` §5 (`PROTOCOL.md` §4.4 Update 2026-10-17, 🟢):
+  `04 01 00 01 03` is ACKed and reported as status `03` in both users (H 8203–8211; H3 7792–7797), followed by a 19-s tone; the Device Action page: "0x03
+  (0b00000011): Ring both left and right". 🟡 both buds sounding.
+- **Options considered**: (a) keep ADR-027; (b) a Ring both action — chosen.
+- **Decision**:
+  1. A "Ring both" action on the Find tab sends `04 01 00 01 03` on the same claim path as Ring Left/Right (ADR-011), behind the same "take the Buds out of
+     your ears" warning; Stop (`00`) stops both.
+  2. Done = the Buds' ACK; the ringing state follows ADR-069 (status `03`).
+  3. `PROJECT.md`'s non-goal gets a dated note (`PROJECT_RULES.md` rule 9).
+- **Consequences**: the hardware run checks by ear that both buds sound.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/DECISIONS.md - https://tedsluis.github.io/opencontrolpixelbudspro2/DECISIONS
