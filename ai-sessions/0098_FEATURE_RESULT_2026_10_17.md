@@ -4,7 +4,7 @@
 **Category:** FEATURE
 **Date:** 2026-10-17
 **Title:** Round 2 (release 1.4.0), per `ai-sessions/0098_FEATURE_PROMPT_2026_10_17.md`
-**Status:** awaiting maintainer sign-off (Checkpoint 2: commit, push, the pull request)
+**Status:** complete
 
 ## Summary (plain language)
 
@@ -199,9 +199,16 @@ touched.
 
 ## Commits
 
-None yet — awaiting Checkpoint 2 (the maintainer's answer in chat). Proposed per concern: (1) docs — ADR-067 … ADR-070 and the registers; (2) feat(data/ui/app)
-— the 1.4.0 code and tests; (3) feat(experiment) — the round-2 card; (4) build — 1.4.0; (5) docs — the `CAP-079` skeleton, the test plans, ARCHITECTURE,
-PROTOCOL notes, PROJECT, README, CHANGELOG, TODO, the release-notes template, this RESULT and the INDEX row.
+On `feature/0098-round-2` (from `feature/0096-experiment-build` at `d6661be`), pushed without force (Checkpoint 2):
+
+- `20dec98` docs(decisions): ADR-067 … ADR-070 for round 2 (release 1.4.0)
+- `ccc0af8` feat(app): 1.4.0 — noise control through setting 13, L/R from runtime info, the ring status, Ring both
+- `97d440f` feat(experiment): round-2 card — A plus the Dosimeter F1–F4
+- `09e901b` build: version 1.4.0 (versionCode 10400)
+- `a7e765d` docs: 1.4.0 release preparation, the CAP-079 (Group BO) skeleton, ai-sessions/0098 RESULT — and this status commit after it
+
+Draft pull request **#69** against `main` ("do not merge before CAP-079 is analysed"); draft PR **#68** closed with a pointer to #69 (its branch kept). No
+merge, no tag, no release build.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0098_FEATURE_RESULT_2026_10_17.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0098_FEATURE_RESULT_2026_10_17
