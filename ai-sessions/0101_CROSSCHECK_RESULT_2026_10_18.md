@@ -287,7 +287,7 @@ The maintainer's "yes" in chat 2026-10-18 (`AskUserQuestion` "Commit", *"Commit 
 `98ad4bf`), pushed to `origin`:
 - `efeedc8` — docs(re): ai-sessions/0101 — the companion APK for CAP-079's questions: per-bud wear, stream lifecycle, write route, Set
 - the commit after it: "docs: ai-sessions/0101 RESULT — commits" (this line; its own hash is in `git log`)
-No pull request was opened by the agent (the maintainer's step).
+Pull request #75 (`crosscheck/0101-apk-wear-streams` → `main`), opened on the maintainer's request in chat 2026-10-18 ("Open de PR").
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0101_CROSSCHECK_RESULT_2026_10_18.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0101_CROSSCHECK_RESULT_2026_10_18
