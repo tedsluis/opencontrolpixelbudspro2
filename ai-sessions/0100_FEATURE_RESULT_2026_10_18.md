@@ -182,7 +182,15 @@ documents (the parts edited).
 
 ## Commits
 
-The maintainer's "commit en push" (chat 2026-10-18): see below.
+The maintainer's "commit en push" (chat 2026-10-18), on `feature/0100-fixes` (from `30ac14b`), pushed without force, not merged:
+- `2c68118` fix(data): 65-s ring hold, clear "not allowed" on a settable mode, SetWallclock's answer
+- `b34bc6c` fix(ui): noise-control, battery and Find texts describe 1.4
+- `0da66b8` build: version 1.4.1 (versionCode 10401)
+- `5fd8be1` docs(decisions,protocol): ADR-069 and ADR-060 Updates, the Dosimeter dose note
+- `1f75de9` docs(capture): CAP-080 (Group BP) skeleton — the 1.4.1 run
+- `634122b` docs: 1.4.1 in CHANGELOG, README, ARCHITECTURE, APP_TESTPLAN and TODO
+- `862e1ca` docs: ai-sessions/0100 RESULT and INDEX row
+- this list: its own commit.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0100_FEATURE_RESULT_2026_10_18.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0100_FEATURE_RESULT_2026_10_18
