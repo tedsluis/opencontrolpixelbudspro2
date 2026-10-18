@@ -11,11 +11,11 @@ pre-restructure file (same command). The `pbtk` root cause those pointers most o
 
 Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maintainer (a decision, a sign-off, or an action only they can do).
 
-## 1. After release 1.3.1 (published 2026-10-16, `ai-sessions/0095` and its continuation in chat)
+## 1. After release 1.4.0 (published 2026-10-18; the release steps in the chat after `ai-sessions/0100`)
 
 *(The finished release items of 1.2.2 and 1.3.0 were deleted 2026-10-15 by `ai-sessions/0094` — `ai-sessions/0093` A93-HK-01; they are in `CHANGELOG.md`,
 `RELEASING.md` §13 and the session RESULTs.)*
-- 1.3.1 published 2026-10-16 (`v1.3.1` on `7aa524b`, `RELEASING.md` §13). Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25; from `CAP-077`: §2.
+- 1.4.0 published 2026-10-18 (`v1.4.0` on `e2b1c06`, `RELEASING.md` §13). D4 done 2026-10-18 (installed from the release page, the maintainer). Next, in the maintainer's order: test 1.4.1 (`CAP-080`, PR #70) and release it, then `ai-sessions/0101`. Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25; from `CAP-077`: §2.
 - **The Buds' state after `CAP-079` (2026-10-18, `ai-sessions/0099`):** all four press-and-hold modes ticked again (part 4, 08:34:50), in-ear detection on, EQ
   `[0, 2, 4, 0, −1]`, balance Right 1 (unchanged since `CAP-078`), **setting 21 "Volume level notifications" written off last (channel 19, 08:41:56)**, the
   Buds' clock set by `SetWallclock` (08:36:17) — restore balance/EQ/21 if wanted (**M**). Also: the phone's Dosimeter live stream may still be subscribed (the
@@ -178,8 +178,8 @@ Open questions (each with where it is described):
   of setting 13, although the app's own ANC row writes only that (`ai-sessions/0073` §4.9) — in the next official-app capture, film which
   control is tapped (the app's row or the Play-services/Settings one). 🟡 what the Buds mean by the "primary" bud of the announcement (field 6;
   the app-side routing is answered, `PROTOCOL.md` §2.2a note of 2026-10-06).
-- [ ] **1.4.0 after `CAP-079` (`ai-sessions/0099`, 2026-10-18):** verdict "release with Known issues" (the maintainer, chat 2026-10-18) — the release steps
-  (`RELEASING.md` B–D) are the maintainer's. **`ai-sessions/0100` (FEATURE, agreed in chat 2026-10-18):** (1) the ring hold — 20 s is shorter than the Buds'
+- [ ] **1.4.0 after `CAP-079` (`ai-sessions/0099`, 2026-10-18):** verdict "release with Known issues" (the maintainer, chat 2026-10-18) — **published
+  2026-10-18** (`v1.4.0`, §1). **`ai-sessions/0100` (FEATURE, agreed in chat 2026-10-18):** (1) the ring hold — 20 s is shorter than the Buds'
   ring (≈ 63 s untouched; a touch after 18.6 s not heard), an ADR-069 Update; (2) clear the red "don't allow" line when a push makes the mode settable; (3) the three
   1.3.x texts (ANC "checks again first", battery (i) "Message Stream", Find (i) "briefly claims"); (4) the experiment's `SetWallclock` answer is never an
   `RpcResult` (`CodecRouter.kt:328`) — F1 reports a time-out; tests with `CAP-079` bytes; a skeleton for the short run (§3).

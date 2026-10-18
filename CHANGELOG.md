@@ -12,11 +12,13 @@ build commit `86a6fb3`, hardware run `CAP-071`, `ai-sessions/0080`); 1.2.0 on 20
 build commit `5b4d5db`, hardware runs `CAP-072` and `CAP-073`, `ai-sessions/0083`, `0085`); 1.2.1 on 2026-10-13 ([v1.2.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.1),
 build commit `31ee183`, hardware run `CAP-075`, `ai-sessions/0088`); 1.2.2 on 2026-10-14 ([v1.2.2](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.2.2),
 build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phone without a recorded capture — `CAP-076` was not run); 1.3.0 on 2026-10-15
-([v1.3.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.3.0), build commit `ff27ee1`, hardware run `CAP-076`, `ai-sessions/0092`). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
+([v1.3.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.3.0), build commit `ff27ee1`, hardware run `CAP-076`, `ai-sessions/0092`); 1.3.1 on 2026-10-16
+([v1.3.1](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.3.1), build commit `7aa524b`, hardware run `CAP-077`, `ai-sessions/0095`); 1.4.0 on 2026-10-18
+([v1.4.0](https://github.com/tedsluis/opencontrolpixelbudspro2/releases/tag/v1.4.0), build commit `e2b1c06`, hardware run `CAP-079`, `ai-sessions/0099`). See `TODO.md` for current status and `RELEASING.md` for how a release is made.
 
 ## [Unreleased]
 
-## [1.4.0] - not yet released
+## [1.4.0] - 2026-10-18
 
 Prepared in `ai-sessions/0098` from the round-1 run `CAP-078` (`ai-sessions/0097`) and `DECISIONS.md` ADR-067 … ADR-070 (accepted by the maintainer in chat
 2026-10-17). **Hardware run `CAP-079`** (Group BO, `ai-sessions/0099`, 2026-10-18, both GrapheneOS users): 26 mode writes on the app's own channel (22 OK,
