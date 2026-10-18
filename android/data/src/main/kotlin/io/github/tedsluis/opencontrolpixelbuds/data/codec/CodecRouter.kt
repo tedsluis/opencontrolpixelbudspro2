@@ -79,7 +79,7 @@ sealed class RoutedFrame {
 
     /**
      * The Buds' answer to one of *our* Maestro requests that carries no EQ value: the empty `RESPONSE` to a
-     * `WriteSetting`, or an error (`status != OK`, or a `CLIENT_ERROR`/`SERVER_ERROR` packet) for a read or write.
+     * `WriteSetting` or `SetWallclock` (the experiment build's F1), or an error (`status != OK`, or a `CLIENT_ERROR`/`SERVER_ERROR` packet) for a read or write.
      * [status] is `null` when the field is absent — OK on the wire (`CAP-015` frame 2117).
      */
     data class RpcResult(val channelId: Int, val methodId: Int, val type: Int, val status: Int?) : RoutedFrame() {
@@ -325,7 +325,9 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
         val serials = HardwareInfo.serials(packet.payload)
         if (serials.isNotEmpty()) return RoutedFrame.HardwareInfo(serials)
     }
-    val answersUs = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING || method == Maestro.METHOD_GET_HARDWARE_INFO
+    // `ai-sessions/0100` (`CAP-079` §11): SetWallclock's empty RESPONSE (H3 2563) — sent only by the experiment build's F1, which waits for this result.
+    val answersUs = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING ||
+        method == Maestro.METHOD_GET_HARDWARE_INFO || method == Maestro.METHOD_SET_WALLCLOCK
     val isError = packet.type == PwRpc.TYPE_CLIENT_ERROR || packet.type == PwRpc.TYPE_SERVER_ERROR
     if (answersUs && (packet.type == PwRpc.TYPE_RESPONSE || isError)) {
         return RoutedFrame.RpcResult(packet.channelId, method, packet.type, packet.status)

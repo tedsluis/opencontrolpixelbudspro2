@@ -32,6 +32,7 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap072
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap075
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap076
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap078
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Cap079
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.HardwareInfoFixtures
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Hdlc
@@ -3022,6 +3023,22 @@ class BudsRepositoryImplTest {
     }
 
     @Test
+    @DisplayName("ai-sessions/0100 (CAP-079 §3.3): after a status 9 the Buds' push of a settable mode (H1 2742, 13 = 4) clears the 'not allowed' error; 13 = 0 (CAP-078 6756) does not")
+    fun `a settable mode from the Buds clears not allowed`() = runTest {
+        val (repo, transport) = connectedLikeCap051()
+        answerAncWritesLikeCap078(transport, noBud = true)
+        assertEquals(BudsResult.Failure(BudsError.AncNotAllowed), repo.setAncMode(AncMode.ACTIVE))
+
+        transport.emit(Dlci.MAESTRO, hex(Cap078.STREAM_13_NONE_CH21_6756)); settle()
+        assertEquals(BudsError.AncNotAllowed, repo.ancError.first(), "still nothing settable")
+
+        transport.emit(Dlci.MAESTRO, hex(Cap079.STREAM_13_ADAPTIVE_CH19_2742)); settle() // a push on channel 19 counts too (ADR-065 item 3)
+        assertNull(repo.ancError.first())
+        assertEquals(AncAvailability.ALLOWED, repo.ancAvailability.first())
+        assertEquals(AncMode.ADAPTIVE, repo.ancMode.first())
+    }
+
+    @Test
     @DisplayName("ADR-067 item 3 and its Note: a mode not ticked in the press-and-hold list (CAP-056 1516: Off unticked) is refused before anything is sent")
     fun `a mode outside the hold list is refused`() = runTest {
         val (repo, transport) = connectedLikeCap051()
@@ -3255,6 +3272,47 @@ class BudsRepositoryImplTest {
         assertEquals(BudsResult.Success(Unit), repo.ringBud(RingTarget.BOTH)); settle()
         assertEquals(Cap078.RING_BOTH_8203, transport.messageStreamHex().first())
         assertEquals(RingNotice(RingTarget.BOTH), repo.ringing.first())
+    }
+
+    // ---- `ai-sessions/0100` (DECISIONS.md ADR-069 Update 2026-10-18): the 65-s hold — CAP-079's ring ----
+
+    /** The Buds of `CAP-079` §5.1: Ring Left (H1 3848) is ACKed (3856) and followed by the ringing status (3859); nothing else until the stop. */
+    private fun ringLikeCap079(transport: FakeBudsTransport) {
+        transport.onSent = { ch, frame ->
+            if (ch == Dlci.FAST_PAIR_MESSAGE_STREAM && frame.toHex() == Cap079.RING_LEFT_3848) {
+                transport.emit(ch, hex(Cap079.RING_ACK_3856))
+                transport.emit(ch, hex(Cap079.RING_STATUS_LEFT_3859))
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("ADR-069 Update: the hold outlasts CAP-079's rings — a stop 23.9 s after the Ring (BO-10's touch, H1 3848 → tone end) is heard, ACKed (3862's bytes) and shown")
+    fun `a stop after twenty seconds is still heard`() = runTest {
+        val (repo, transport) = buildRepository()
+        ringLikeCap079(transport)
+        assertEquals(BudsResult.Success(Unit), repo.ringBud(RingTarget.LEFT)); settle()
+        assertEquals(listOf(Cap079.RING_LEFT_3848, Cap079.RING_STATUS_ACK_3862), transport.messageStreamHex())
+
+        advanceTimeBy(23_900); runCurrent() // 07:21:19.36 → 07:21:43.3; the 20-s hold of 1.4.0 had ended at 07:21:39.4
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls, "still held")
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap078.RING_STATUS_STOPPED_7816)); settle() // CAP-079 has no stop on the wire; CAP-078's bytes
+        assertNull(repo.ringing.first())
+        assertEquals(currentTime, repo.ringStoppedOnBudAt.first())
+        assertEquals(Cap079.RING_STATUS_ACK_3862, transport.messageStreamHex().last())
+    }
+
+    @Test
+    @DisplayName("ADR-069 Update: an untouched ring (CAP-079 §5.2: the last pulse 62.9 s after the Ring) still ends inside the 65-s hold")
+    fun `an untouched ring's stop is inside the hold`() = runTest {
+        val (repo, transport) = buildRepository()
+        ringLikeCap079(transport)
+        assertEquals(BudsResult.Success(Unit), repo.ringBud(RingTarget.LEFT)); settle()
+        advanceTimeBy(62_900); runCurrent()
+        assertEquals(emptyList<Int>(), transport.closeChannelCalls)
+        transport.emit(Dlci.FAST_PAIR_MESSAGE_STREAM, hex(Cap078.RING_STATUS_STOPPED_7816)); settle()
+        assertEquals(currentTime, repo.ringStoppedOnBudAt.first())
+        assertEquals(65_000L, BudsRepositoryImpl.RING_HOLD_MAX_MS, "the Update's limit")
     }
 
 

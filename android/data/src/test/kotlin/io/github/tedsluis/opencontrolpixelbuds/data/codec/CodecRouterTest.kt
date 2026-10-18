@@ -171,6 +171,18 @@ class CodecRouterTest {
     }
 
     @Test
+    @DisplayName("ai-sessions/0100: the empty RESPONSE to SetWallclock (CAP-079 H3 2563, the experiment's F1) is an OK RpcResult, not an UnidentifiedFrame")
+    fun `routes a SetWallclock acknowledgement`() {
+        val unidentified = mutableListOf<UnidentifiedFrame>()
+        val routed = CodecRouter().feed(Dlci.MAESTRO, hex(Cap079.SET_WALLCLOCK_RESP_OK_CH19_2563), timestampMillis = 0, onUnidentified = { unidentified += it })
+        val result = routed.single() as RoutedFrame.RpcResult
+        assertEquals(Maestro.METHOD_SET_WALLCLOCK, result.methodId)
+        assertTrue(result.isOk)
+        assertEquals(19, result.channelId)
+        assertEquals(emptyList<UnidentifiedFrame>(), unidentified)
+    }
+
+    @Test
     @DisplayName("DLCI 0x02: a RESPONSE with status UNKNOWN / an error packet for our request is a non-OK RpcResult")
     fun `routes error results`() {
         val router = CodecRouter()

@@ -421,6 +421,8 @@ class BudsRepositoryImpl(
             BleLogger.logConnectionEvent("Noise-control mode from $source: no mode settable")
             return
         }
+        // `ai-sessions/0100` (`CAP-079` §3.3): a settable mode reported by the Buds ends an earlier "not allowed" — the red line must not outlive it.
+        if (_ancError.value == BudsError.AncNotAllowed) _ancError.value = null
         val cause = if (stream) causeOfStream(mode) else causeOfReadAnswer(mode, ReadSource.READ_SETTING)
         _ancModeUnconfirmedAt.value = null // the Buds' own report — whatever a cut-off answer would have said, this is their mode now (F-3)
         emitAncMode(mode, cause)
@@ -1831,8 +1833,11 @@ class BudsRepositoryImpl(
         /** How long a battery Refresh waits for a runtime-info packet after its re-subscription (ADR-068; observed 19–355 ms, `CAP-063` 3863→3870 … 8417→8426). */
         private const val BATTERY_BURST_WAIT_MS = 2_000L
 
-        /** DECISIONS.md ADR-069 item 3: the longest a Ring's claim is held for the Buds' stop report (observed stops 14.8–17.1 s, `CAP-078` §4.1). */
-        internal const val RING_HOLD_MAX_MS = 20_000L
+        /**
+         * DECISIONS.md ADR-069 item 3 (its Update of 2026-10-18): the longest a Ring's claim is held for the Buds' stop report — 65 s, just above the
+         * 62.9 s an untouched ring lasted in `CAP-079` (`CAP-079-FINDINGS.md` §5.2); touched stops came 14.8–17.1 s in (`CAP-078` §4.1).
+         */
+        internal const val RING_HOLD_MAX_MS = 65_000L
 
         /** DECISIONS.md ADR-069 item 2: the Seeker's ACK of a ringing status — `ff 01 00 02 04 01` (`CAP-025` 2048, `CAP-078` 7970). */
         private val RING_STATUS_ACK = byteArrayOf(0xff.toByte(), 0x01, 0x00, 0x02, 0x04, 0x01)
