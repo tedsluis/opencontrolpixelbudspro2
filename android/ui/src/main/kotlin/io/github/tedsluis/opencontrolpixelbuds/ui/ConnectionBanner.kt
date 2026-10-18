@@ -79,8 +79,9 @@ internal fun MessageStreamNotice(error: BudsError?, modifier: Modifier = Modifie
 }
 
 /**
- * What a tap on the ANC / Find screens does to the shared channel (ADR-032) — shown in those screens' (i) details since `ai-sessions/0057` (the proposal's
- * "hide the 'Each action briefly claims…' text behind an Info icon").
+ * What a tap on the Find screen does to the shared channel (ADR-032) — shown in its (i) details since `ai-sessions/0057`; reworded by `ai-sessions/0100` (the
+ * maintainer's choice in chat 2026-10-18) for ADR-069's hold: a Ring keeps the claim until the Buds report the stop, at most 65 s (`BudsRepositoryImpl.RING_HOLD_MAX_MS`).
  */
-internal const val MESSAGE_STREAM_HINT_TEXT: String = "Each action briefly claims the Buds' Message Stream channel. Another app that uses it " +
-    "(for example Google Play services' Fast Pair) may lose it for a moment."
+internal const val MESSAGE_STREAM_HINT_TEXT: String = "Ring and Stop use the Buds' Message Stream channel. While a bud rings the app keeps that " +
+    "channel (up to about a minute) to hear when the ringing stops. Another app that uses it (for example Google Play services' Fast Pair) may " +
+    "take it back; the app then cannot see the stop."

@@ -109,6 +109,16 @@ class BatteryCardTest {
     }
 
     @Test
+    fun `the (i) explains where the values come from, literally (ai-sessions 0100)`() {
+        show(BatteryStatus(left = BatteryLevel.Known(97, isCharging = false, receivedAtMillis = at)))
+        compose.onNodeWithContentDescription("Battery: $DETAILS_DESCRIPTION").performClick()
+        compose.onNodeWithText(
+            "Left, Right and the Case: sent by the Buds on their own on the app's channel — when the app connects, on Refresh battery and " +
+                "whenever a value changes. The Case is reported only while a bud is charging in the case.",
+        ).assertExists()
+    }
+
+    @Test
     fun `a current reading has a plain (i), a last-seen one marks it`() {
         show(BatteryStatus(left = BatteryLevel.Known(97, isCharging = false, receivedAtMillis = at)))
         compose.onNodeWithContentDescription("Battery: $DETAILS_DESCRIPTION").assertExists()
