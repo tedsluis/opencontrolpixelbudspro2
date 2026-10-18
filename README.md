@@ -107,6 +107,8 @@ a suspected security problem goes through [`SECURITY.md`](./SECURITY.md) instead
 read from it too, so the shared Fast Pair channel is used only for Find My Buds — no more collision with Google Play services for a mode change; Ring both;
 a noise-control line on the Connection tab. On hardware "Stopped on the bud" did not appear — the app listens for at most 20 s and the
 Buds ring longer (`CHANGELOG.md` [1.4.0], Known issues).
+**1.4.1 is prepared, not released** (`ai-sessions/0100`, 2026-10-18; hardware run `CAP-080` planned): the app listens up to 65 s for the Buds' stop, so
+"Stopped on the bud" can appear; the red "don't allow" line goes away by itself once the Buds allow a change; three texts updated (`CHANGELOG.md` [1.4.1]).
 
 **Known issues of 1.3.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 

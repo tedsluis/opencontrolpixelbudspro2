@@ -16,6 +16,28 @@ build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phon
 
 ## [Unreleased]
 
+## [1.4.1] - not yet released
+
+Prepared in `ai-sessions/0100` (2026-10-18) from the `CAP-079` findings (`ai-sessions/0099`); the maintainer's choices in chat 2026-10-18 (1.4.1 on a new
+branch, the ring hold, the red line, the texts, F1). **Nothing new on the wire:** the app's requests are 1.4.0's. Hardware run: `CAP-080` (Group BP), planned.
+
+### Fixed
+
+- **"Stopped on the bud" can now appear.** While a bud rings the app keeps the shared channel up to 65 s instead of 20 s (`DECISIONS.md` ADR-069 Update), longer
+  than the Buds ring when nothing is touched (≈ 63 s in `CAP-079`), so a stop by touch or the Buds' own stop is heard (1.4.0's third known issue). In the user
+  with Google Play services Play still takes the channel back after ≈ 5 s (the first known issue below).
+- **The red "The Buds don't allow changing noise control right now …" line goes away by itself** as soon as the Buds report a mode that can be set (for example
+  when a bud goes into an ear) — no tap or Refresh needed (1.4.0's fourth known issue).
+- **Three texts now describe 1.4:** the noise-control line ends "A tap still sends the mode; the Buds answer whether they accept it."; the battery details say
+  Left, Right and the Case are sent by the Buds on the app's own channel; Find's details say a ring keeps the channel up to about a minute and that another app
+  may take it back.
+
+### Known issues
+
+- In the user with Google Play services, Play takes the shared channel back ≈ 4.5–5 s into a ring (`CAP-078`, `CAP-079`); the app then no longer hears the
+  Buds' stop and keeps "Ringing …" until you tap Stop. A Ring can still collide with Play's claim (it then usually works at the second attempt).
+- After the Buds' own close of the session (one bud out while both are worn) the mode shown can be a few seconds old until the re-open's read (as in 1.3.1).
+
 ## [1.4.0] - not yet released
 
 Prepared in `ai-sessions/0098` from the round-1 run `CAP-078` (`ai-sessions/0097`) and `DECISIONS.md` ADR-067 … ADR-070 (accepted by the maintainer in chat

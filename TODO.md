@@ -49,6 +49,8 @@ with the hold's untested branches below. **Next app run:** none planned — thes
 - [ ] **1.3.1 fixes not exercised in `CAP-077`** (`ai-sessions/0095`, `CAP-077-FINDINGS.md` §5): BM-3 TalkBack on the switch rows, an EQ slider and the tabs
       (A93-APP-07); BM-4 two holds while disconnected, then Connect — the (i) "Changed since …" kept (A93-APP-02); BM-6 a hold within ≈ 1 s of Connect (A93-APP-04);
       BM-7 "Use different Buds" → Cancel; the dialog across a rotation. Into the next app run (`RELEASING.md` §11a).
+- [ ] **TalkBack (A93-APP-07; `CAP-077` BM-3 and `CAP-079` BO-14, never run):** the switch rows (Settings → Case sounds, Controls), an EQ slider ("Bass, … dB"), the
+      bottom tabs, Find's buttons — each read with its name and state. The maintainer will test it later (chat 2026-10-18); not in `CAP-080`.
 - [ ] The screen-reader text on the phone: every "—" with the description "Not read from the Buds yet" — two `uiautomator dump`s (Controls, Sound) with
       Bluetooth off; not done in `CAP-070` (no dump; "—" itself is on film). (`APP_TESTPLAN.md` T11) — not done in `CAP-071` (no film 2, no dump).
 - [ ] C12 — a tap during an automatic re-open ("The app's channel is being reopened …", no write afterwards): not done in `CAP-070` (the tap came after
@@ -72,7 +74,7 @@ with the hold's untested branches below. **Next app run:** none planned — thes
 
 | Capture | Group | What | Phone / app |
 |---|---|---|---|
-| (next) | — | After `ai-sessions/0100`: a short run of the 1.4.0 fixes — Ring and touch after > 20 s, a ring left to the Buds' own stop (BO-10, BO-13), TalkBack (BO-14, never run), a Disconnect during a Connect (BO-16, not hit), `WELL-002` with a sound-level meter in frame (P7 not done in `CAP-079`) | Pixel 9a (users 10 and 0) |
+| `CAP-080` | BP | After `ai-sessions/0100` (skeleton written): 1.4.1 — Ring touched after ≈ 30 s, a ring left to the Buds' own stop, Ring both + touch, Stop; the red line cleared by a push; the new texts; a Disconnect during a Connect (step-by-step); the experiment build: F1 answered, `WELL-002` without a meter (a 10-dB-step test file; the day dose against the live integral). TalkBack not in it (§2) | Pixel 9a (users 10 and 0) |
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
 | `CAP-030` | Q #19–20 | Loud Noise Protection / Adaptive Audio (firmware naming never reconciled with `release_5.203`, `PROTOCOL.md` §0.1) | Pixel 7a, official app |
 
@@ -182,7 +184,8 @@ Open questions (each with where it is described):
   (`RELEASING.md` B–D) are the maintainer's. **`ai-sessions/0100` (FEATURE, agreed in chat 2026-10-18):** (1) the ring hold — 20 s is shorter than the Buds'
   ring (≈ 63 s untouched; a touch after 18.6 s not heard), an ADR-069 Update; (2) clear the red "don't allow" line when a push makes the mode settable; (3) the three
   1.3.x texts (ANC "checks again first", battery (i) "Message Stream", Find (i) "briefly claims"); (4) the experiment's `SetWallclock` answer is never an
-  `RpcResult` (`CodecRouter.kt:328`) — F1 reports a time-out; tests with `CAP-079` bytes; a skeleton for the short run (§3).
+  `RpcResult` (`CodecRouter.kt:328`) — F1 reports a time-out; tests with `CAP-079` bytes; a skeleton for the short run (§3). **Built 2026-10-18 as 1.4.1**
+  (`feature/0100-fixes`, `ai-sessions/0100` RESULT): all four, with tests and mutation checks; to verify in `CAP-080` (§3), then the release steps (the maintainer's).
 - 🔴/🟡 **From `CAP-079` (`CAP-079-FINDINGS.md` §18):** the ACL connection timeout (0x08) at a Disconnect tap (07:26:49); the Buds' default ring time-out (one
   sample ≈ 60 s) and whether a timeout byte is honoured; whether a touch stops the ring at once; what the live-dB value is (no meter) and why one bud's day index
   moved at F1; why field 21 is refused on the non-hosting core; how long a stream subscription survives without a client (the app never cancels its
@@ -204,7 +207,7 @@ Open questions (each with where it is described):
 - Candidates without a capture scenario: Audio switch (`SWITCH-001`), Hearing wellness (`WELL-001`), eartip fit test (`FIT-001`).
   `maestro_pw.Dosimeter`: values on the wire, meaning 🟡; a display is out of scope (**M**, 2026-09-30). **Volume-level notifications** studied in
   `ai-sessions/0082` (item 4): the phone decides (the official app's worker, 67 % of a 7-day constant, once per 7 days; field 21 only gates it; the Buds push
-  nothing) — draft ADR-060 (proposed, not accepted) and the 🟡 that block it; a capture with a sound-level meter (`WELL-002`, no Group yet) comes first.
+  nothing) — draft ADR-060 (proposed, not accepted) and the 🟡 that block it; `WELL-002` without a meter (`CAP-080` BP-13/BP-14, ADR-060 Update 2026-10-18) comes first.
 
 - [ ] **After 1.4.0 is published — a research session (category CROSSCHECK, a new prompt) on per-bud in-ear detection: how does the official app know
   which bud is in an ear?** (The maintainer's choice in chat 2026-10-17: research first, after the 1.4.0 release; not in round 2.) The official app shows at
@@ -263,7 +266,7 @@ Open questions (each with where it is described):
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
 - [ ] **Candidate for a later release (M; "1.3.0 candidate" until 2026-10-15, `ai-sessions/0094`):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
-      field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢. Since `ai-sessions/0098`
+      field-21 switch. Blocked until `WELL-002` (since 2026-10-18 without a meter: 10-dB steps in a test file, `CAP-080`; ADR-060 Update) and the other 🟡 of the draft are 🟢. Since `ai-sessions/0098`
       the experiment build's card sends the four requests one tap each (F1–F4, approved in chat 2026-10-17); `CAP-079` ran them (`ai-sessions/0099`, ADR-060 Update
       of 2026-10-18: (iv), (v) settled; (i) still open — no meter filmed).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
