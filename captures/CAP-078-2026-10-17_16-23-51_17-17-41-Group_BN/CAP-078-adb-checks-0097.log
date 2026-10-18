@@ -1,0 +1,28 @@
+# 2026-10-17 18:03:06 CEST adb shell pm path --user 10 io.github.tedsluis.opencontrolpixelbuds.experiment
+package:/data/app/~~rVU65jvRbrLQxVERAtWwvQ==/io.github.tedsluis.opencontrolpixelbuds.experiment-sN243X2oEq1q7-TJVTJhRg==/base.apk
+exit=0
+# 2026-10-17 18:03:06 CEST adb shell pm path --user 0 io.github.tedsluis.opencontrolpixelbuds.experiment
+package:/data/app/~~rVU65jvRbrLQxVERAtWwvQ==/io.github.tedsluis.opencontrolpixelbuds.experiment-sN243X2oEq1q7-TJVTJhRg==/base.apk
+exit=0
+# 2026-10-17 18:03:07 CEST adb pull (user 10 path) ; sha256sum
+/data/app/~~rVU65jvRbrLQxVERAtWwvQ==/io.github.tedsluis.opencontrolpixelbuds.experiment-sN243X2oEq1q7-TJVTJhRg==/base.apk: 1 file pulled, 0 skipped. 35.4 MB/s (35567305 bytes in 0.958s)
+exit=0
+4e5facfa3b6178f518750578f3e1ccc5de169103fd619120ac21740eceadd422  base10.apk
+# 2026-10-17 18:03:08 CEST adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds.experiment | grep -E 'User [0-9]+:|versionName|versionCode|lastUpdateTime|firstInstallTime|signatures'
+    versionCode=10301 minSdk=34 targetSdk=34
+    versionName=1.3.1-exp.1
+    lastUpdateTime=2026-10-16 10:30:27
+    signatures=PackageSignatures{478d058 version:2, signatures:[caab680], past signatures:[]}
+    User 0: ceDataInode=467957 deDataInode=496587 pccCeDataInode=0 pccDeDataInode=0 installed=true hidden=false suspended=false appLockEnabled=false distractionFlags=0 stopped=false notLaunched=false enabled=0 instant=false virtual=false quarantined=false
+      firstInstallTime=2026-10-16 10:30:27
+    User 10: ceDataInode=469227 deDataInode=451435 pccCeDataInode=0 pccDeDataInode=0 installed=true hidden=false suspended=false appLockEnabled=false distractionFlags=0 stopped=true notLaunched=false enabled=0 instant=false virtual=false quarantined=false
+      firstInstallTime=2026-10-16 10:30:10
+    User 0:
+    User 10:
+# release app
+    versionName=1.3.1
+    lastUpdateTime=2026-10-16 14:56:46
+    User 0: ceDataInode=491093 deDataInode=474245 pccCeDataInode=0 pccDeDataInode=0 installed=true hidden=false suspended=false appLockEnabled=false distractionFlags=0 stopped=false notLaunched=false enabled=0 instant=false virtual=false quarantined=false
+    User 10: ceDataInode=291801 deDataInode=250032 pccCeDataInode=0 pccDeDataInode=0 installed=true hidden=false suspended=false appLockEnabled=false distractionFlags=0 stopped=false notLaunched=false enabled=0 instant=false virtual=false quarantined=false
+    User 0:
+    User 10:

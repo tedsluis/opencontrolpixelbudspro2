@@ -103,6 +103,8 @@ fun SettingsMenuScreen(
     settingsError: SettingsFailure? = null,
     onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit = {},
     onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
+    /** The Debug tab's slot ([DebugScreen]'s `extra`) — empty in every released build (`ai-sessions/0096`). */
+    debugExtra: @Composable (debugModeEnabled: Boolean) -> Unit = {},
 ) {
     var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
     Column(modifier = modifier.fillMaxSize()) {
@@ -124,6 +126,7 @@ fun SettingsMenuScreen(
                 onDebugModeChanged = onDebugModeChanged,
                 unidentifiedFrames = unidentifiedFrames,
                 onExportLog = onExportLog,
+                extra = debugExtra,
             )
             SettingsTab.INFO -> InfoTab(appBuild, deviceInfo, onOpenUrl, serialsError)
         }

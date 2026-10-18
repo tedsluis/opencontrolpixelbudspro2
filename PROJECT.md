@@ -36,17 +36,17 @@ To be finalized based on what is actually found in the protocol. Candidate
 features offered by the official app (it still needs to be verified which of
 these run over local BLE/RFCOMM versus over the cloud/a Google account):
 
-> **Status (2026-09-24; updated 2026-10-15 for 1.3.0):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
+> **Status (2026-09-24; updated 2026-10-15 for 1.3.0; 2026-10-17 for 1.4.0, prepared — not released):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
 > says so. The authoritative per-feature state (and its unblocking ADR) is `ARCHITECTURE.md` §5a.
 
-- [x] Read battery status (left, right: DLCI 0x04, ADR-033; case and per-bud "charging in the case": DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043 and its Update)
-- [x] Switch Active Noise Cancelling / Transparency / Adaptive mode (ADR-009)
+- [x] Read battery status (left, right: DLCI 0x04, ADR-033 — since 1.4.0 runtime info 6.2/6.3 on DLCI 0x02, ADR-068; case and per-bud "charging in the case": DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043 and its Update)
+- [x] Switch Active Noise Cancelling / Transparency / Adaptive mode (ADR-009; since 1.4.0 `WriteSetting 4:{13:n}` on the app's own channel, ADR-067 — only the modes ticked for press and hold)
 - [x] Configure equalizer / sound profile (presets and custom bands) (ADR-020/034); Volume EQ on/off (field 15, read + write, ADR-055, `ai-sessions/0074`, 1.1.0)
 - [x] Configure touch controls and head gestures — "Use touch controls" and press-and-hold per bud built (read + write, ADR-036/045, `ai-sessions/0052`); the press-and-hold ANC-mode list built (field 12, read + write, ADR-046, `ai-sessions/0056`); "Use head gestures" built (field 29, read + write, ADR-052, `ai-sessions/0074`, 1.1.0)
 - [x] Volume balance, mono audio, conversation detection (read + write, ADR-036/045, `ai-sessions/0052`)
 - [x] Read firmware version and serial numbers per component (firmware since `ai-sessions/0062`; serial numbers since 1.2.0 — one `GetHardwareInfo` per Connect, ADR-058, `ai-sessions/0082`; labelled Case / Right bud / Left bud by position, the official app's reading)
-- [x] "Find my Buds" functionality — Left/Right only (ADR-011); Case/"both" out of scope (ADR-027)
-- [x] In-ear detection status — the in-ear detection **setting** is read and written (field 2, ADR-047, `ai-sessions/0056`); whether a bud is worn is shown as **"probably worn"** since 1.2.0 (ADR-059, `ai-sessions/0082`: derived from the Settable byte, field 2 and the charging flags — a hypothesis, labelled as such; never per bud)
+- [x] "Find my Buds" functionality — Left/Right (ADR-011); **both** since 1.4.0 (ADR-070) with the Buds' ringing status and "Stopped on the bud" (ADR-069); the Case out of scope (ADR-027)
+- [x] In-ear detection status — the in-ear detection **setting** is read and written (field 2, ADR-047, `ai-sessions/0056`); whether a bud is worn is shown as **"probably worn"** since 1.2.0 (ADR-059, `ai-sessions/0082`: derived from the Settable byte — since 1.4.0 from setting 13, ADR-068 —, field 2 and the charging flags — a hypothesis, labelled as such; never per bud)
 - [~] Manage multipoint connections — the Multipoint switch is built (field 11, read + write, ADR-053, `ai-sessions/0074`, 1.1.0); choosing or listing the connected devices is not
 - [x] Case sound settings (earbuds replaced, other notifications) — fields 28 and 27, read + write, ADR-054, `ai-sessions/0074`, 1.1.0
 
@@ -78,6 +78,8 @@ these run over local BLE/RFCOMM versus over the cloud/a Google account):
   `DECISIONS.md` ADR-011). This is a deliberate, permanent v1 scope decision, not a placeholder for
   future work — see `DECISIONS.md` ADR-027; revisit only if a future capture or protocol change
   finds a genuine local mechanism.
+  *Note (2026-10-17, `DECISIONS.md` ADR-070, maintainer-approved in chat, `ai-sessions/0098`):* a local "ring both" exists (`04 01 00 01 03`, `CAP-078` §5) —
+  **"both simultaneously" is in scope from 1.4.0**; the Case stays out of scope.
 - No reverse-engineering of Google Play Services' own Fast Pair/Nearby module. DLCI 0x04's Fast
   Pair Message Stream and DLCI 0x08's private envelope appear to be implemented entirely inside
   GMS rather than the companion app itself (no trace of either transport was found anywhere in the
@@ -141,6 +143,11 @@ per mode, TalkBack labels (`CHANGELOG.md` [1.3.1]). Its hardware run `CAP-077` (
 press-and-hold (8 of 8) and every tile tap answered; the kept "changed since", a push during a read and TalkBack were not exercised on hardware (unit tests only).
 1.3.0 (2026-10-15, `ff27ee1`) brought the settings stream on the app's own channel (ADR-064/065): a press-and-hold on a bud shows on any tab with or without
 Google Play services (`CAP-076`: 29 of 29 with Play, 12 of 12 without).
+
+**1.4.0 is prepared, not released** (`ai-sessions/0098`, 2026-10-17; `CHANGELOG.md` [1.4.0]): the mode written on the app's own channel (ADR-067), Left/Right
+battery from runtime info with no Message Stream claim at Connect (ADR-068) — the Message Stream is claimed only for Find —, the Buds' ringing status and
+"Stopped on the bud" (ADR-069), Ring both (ADR-070), a mode line on the Connection tab. Its hardware run is `CAP-079` (Group BO, planned); the release steps
+are the maintainer's after that run.
 
 v1 contains: connection and Safe Mode, noise control with a Quick Settings tile, the equalizer (with Volume EQ), battery (Left / Right / Case), Find My Buds
 (Left / Right), touch controls, press and hold and its mode list, head gestures, Multipoint on/off, balance, mono audio, conversation detection, in-ear

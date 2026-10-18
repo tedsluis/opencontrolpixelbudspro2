@@ -30,6 +30,7 @@ import androidx.compose.ui.test.performClick
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
+import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import org.junit.Assert.assertEquals
@@ -54,7 +55,8 @@ class AncScreenTest {
 
     private fun show(
         availability: AncAvailability = AncAvailability.ALLOWED,
-        messageStreamError: BudsError? = null,
+        ancError: BudsError? = null,
+        ancModeList: AncModeList? = null,
         unconfirmedAt: Long? = null,
         connectionState: ConnectionState = ConnectionState.Ready,
         sessionSince: Long? = at - 1_000, // the connection opened a second before the Buds reported the mode
@@ -63,7 +65,8 @@ class AncScreenTest {
         OpenControlTheme(darkTheme = false) {
             AncScreen(
                 connectionState = connectionState,
-                messageStreamError = messageStreamError,
+                ancError = ancError,
+                ancModeList = ancModeList,
                 ancMode = AncMode.OFF,
                 ancModeUpdatedAt = at,
                 ancAvailability = availability,
@@ -100,7 +103,7 @@ class AncScreenTest {
 
     @Test
     fun `an answer cut off is said as such, never as no response`() {
-        show(messageStreamError = BudsError.AnswerCutOff(0x04, "IOException: bt socket closed, read return: -1"))
+        show(ancError = BudsError.AnswerCutOff(0x04, "IOException: bt socket closed, read return: -1"))
         compose.onNodeWithText(
             "The channel was closed before the Buds' answer arrived (possibly by another app using it). Tap Refresh to see the current mode.",
         ).assertExists()
@@ -245,5 +248,22 @@ class AncScreenTest {
             val lines = ancDetailLines(ConnectionState.Ready, AncMode.OFF, at, notAllowed = false, checkedAt = null, cause = cause)
             assertEquals("$cause", false, lines.any { it.startsWith("Changed since the app last saw it") })
         }
+    }
+
+    @Test
+    fun `a mode not ticked for press and hold is disabled and the line says why (ADR-067)`() {
+        show(ancModeList = AncModeList(noiseCancellation = true, off = true, transparency = true, adaptive = false))
+        compose.onNodeWithText(AncMode.ADAPTIVE.label).assertIsNotEnabled()
+        compose.onNodeWithText(AncMode.TRANSPARENT.label).assertIsEnabled()
+        compose.onNodeWithText(
+            "Only the modes ticked under Controls → \"Modes for press and hold\" can be chosen here. Tick a mode there to use it.",
+        ).assertExists()
+    }
+
+    @Test
+    fun `an unread hold list disables nothing and shows no line`() {
+        show(ancModeList = null)
+        compose.onNodeWithText(AncMode.ADAPTIVE.label).assertIsEnabled()
+        compose.onNodeWithText(ANC_HOLD_LIST_HINT_TEXT).assertDoesNotExist()
     }
 }

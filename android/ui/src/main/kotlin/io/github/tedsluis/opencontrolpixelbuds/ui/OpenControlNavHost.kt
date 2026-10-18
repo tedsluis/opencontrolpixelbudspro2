@@ -182,6 +182,10 @@ data class OpenControlUiState(
     val androidLink: AndroidLink,
     /** Why the last action needing the shared Message Stream channel could not claim it (ADR-032). */
     val messageStreamError: BudsError?,
+    /** DECISIONS.md ADR-067 (`ai-sessions/0098`): why the last noise-control change or Refresh failed — shown on the ANC tab. */
+    val ancError: BudsError? = null,
+    /** DECISIONS.md ADR-069: when the Buds last reported the ringing stopped without the app's Stop. */
+    val ringStoppedOnBudAt: Long? = null,
     val ancMode: AncMode?,
     /** When the current connection was requested (`BudsRepository.sessionSince`) — a value reported before it is "from the last connection" (A68-APP-02). */
     val sessionSince: Long? = null,
@@ -248,7 +252,12 @@ data class OpenControlUiState(
 // TopAppBarScrollBehavior is `@ExperimentalMaterial3Api` (AppBar.kt:1401), and the compiler reports OPT_IN_USAGE_ERROR without the opt-in.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
+fun OpenControlNavHost(
+    state: OpenControlUiState,
+    actions: OpenControlActions,
+    /** The Debug tab's slot — empty in every released build (`ai-sessions/0096`: only the experiment build type passes content). */
+    debugExtra: @Composable (debugModeEnabled: Boolean) -> Unit = {},
+) {
     val navController = rememberNavController()
     val pagerState = rememberPagerState(pageCount = { TAB_DESTINATIONS.size })
 
@@ -350,6 +359,7 @@ fun OpenControlNavHost(state: OpenControlUiState, actions: OpenControlActions) {
                 settingsError = state.settingsError,
                 onCaseSoundEarbudsReplacedChanged = actions.onCaseSoundEarbudsReplacedChanged,
                 onCaseSoundOtherAlertsChanged = actions.onCaseSoundOtherAlertsChanged,
+                debugExtra = debugExtra,
                 modifier = Modifier.padding(padding),
             )
         } else {
@@ -384,6 +394,8 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             safeMode = state.safeMode,
             batteryRefreshError = state.batteryRefreshError,
             wornReading = state.wornReading,
+            ancMode = state.ancMode,
+            ancModeUpdatedAt = state.ancModeUpdatedAt,
             onRequestEnableBluetooth = actions.onRequestEnableBluetooth,
             onPair = actions.onPair,
             onRequestPermissions = actions.onRequestPermissions,
@@ -393,7 +405,8 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
         )
         Routes.ANC -> AncScreen(
             connectionState = state.connectionState,
-            messageStreamError = state.messageStreamError,
+            ancError = state.ancError,
+            ancModeList = state.settings.ancModeList?.value,
             ancMode = state.ancMode,
             ancModeUpdatedAt = state.ancModeUpdatedAt,
             ancAvailability = state.ancAvailability,
@@ -437,6 +450,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             ringing = state.ringing,
             onRing = actions.onRing,
             onStop = actions.onStopRinging,
+            ringStoppedOnBudAt = state.ringStoppedOnBudAt,
         )
     }
 }

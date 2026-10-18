@@ -205,19 +205,30 @@ interface BudsRepository {
     suspend fun refreshBattery(): BudsResult<Unit>
 
     /**
-     * ANC `Set` (ADR-009), on a Message Stream claim (ADR-032). **Since `ai-sessions/0062` (F-1)** every claim first sends the `Get` (ADR-021/022, ADR-032
-     * item 5): the `Set` follows in the same claim only if that claim's `Notify` reads Settable non-zero; on `0x00` it fails with
-     * [BudsError.AncNotAllowed] and nothing more is sent (before, only a known "not allowed" asked first — `ai-sessions/0054` I-1). An answer cut off by
-     * the claim's close is [BudsError.AnswerCutOff] (F-3).
+     * The noise-control mode through `WriteSetting 4:{13:n}` on the session channel (DECISIONS.md ADR-067, `ai-sessions/0098`; before 1.4.0 a Message Stream
+     * `Set`, ADR-009). Done on the Buds' `RESPONSE` status 0 — the mode is shown as set by this app; `FAILED_PRECONDITION` is [BudsError.AncNotAllowed]
+     * (no bud worn); a mode not ticked in the press-and-hold list is refused before anything is sent ([BudsError.AncModeNotInHoldList]; an unread list:
+     * [BudsError.AncModeListNotRead]). Requires a Ready session. A failure is also in [ancError].
      */
     suspend fun setAncMode(mode: AncMode): BudsResult<Unit>
 
     /**
-     * The Quick Settings tile's tap (`ai-sessions/0062` F-1): as [setAncMode], but the mode to set is [next] of the mode the **same claim's** `Notify`
-     * reports — not of the mode shown before the tap, which can be old (the known limit "ANC tile after re-wearing", `ai-sessions/0054`).
+     * The Quick Settings tile's tap: as [setAncMode] for [next] of the shown mode — repeated while the result is not ticked in the press-and-hold list
+     * (ADR-067 item 3; at most once around the four modes).
      */
     suspend fun stepAncMode(next: (current: AncMode?) -> AncMode): BudsResult<Unit>
+
+    /** Re-reads the mode: one `ReadSetting 4:13` on the session channel (ADR-067/068 — no Message Stream claim); 0 is [BudsError.AncNotAllowed]. */
     suspend fun refreshAncMode(): BudsResult<AncMode>
+
+    /**
+     * DECISIONS.md ADR-069 (`ai-sessions/0098`): when the Buds last reported, on the app's own Ring claim, that the ringing stopped without the app's Stop
+     * (`04 01 00 01 00` — touched on the bud or their own time-out); `null` while a ring is started or none was seen.
+     */
+    val ringStoppedOnBudAt: Flow<Long?> get() = kotlinx.coroutines.flow.flowOf(null)
+
+    /** Why the last noise-control change or Refresh failed (ADR-067) — `null` after a success or before any attempt. */
+    val ancError: Flow<BudsError?> get() = kotlinx.coroutines.flow.flowOf(null)
 
     /**
      * When the last ANC change's answer was cut off (`ai-sessions/0062` F-3) — the Buds may or may not have switched, so the shown [ancMode] is "not

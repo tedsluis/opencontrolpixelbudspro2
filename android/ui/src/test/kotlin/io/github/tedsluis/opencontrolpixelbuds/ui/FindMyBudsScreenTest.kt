@@ -42,11 +42,13 @@ class FindMyBudsScreenTest {
     @get:Rule
     val compose = createComposeRule()
 
-    private fun show(connectionState: ConnectionState, ringing: RingNotice?): MutableList<String> {
+    private fun show(connectionState: ConnectionState, ringing: RingNotice?, stoppedOnBudAt: Long? = null): MutableList<String> {
         val calls = mutableListOf<String>()
         compose.setContent {
             OpenControlTheme(darkTheme = false) {
-                FindMyBudsScreen(connectionState, null, ringing, onRing = { calls += "ring $it" }, onStop = { calls += "stop" })
+                FindMyBudsScreen(
+                    connectionState, null, ringing, onRing = { calls += "ring $it" }, onStop = { calls += "stop" }, ringStoppedOnBudAt = stoppedOnBudAt,
+                )
             }
         }
         return calls
@@ -57,14 +59,15 @@ class FindMyBudsScreenTest {
         val calls = show(ConnectionState.Ready, null)
         compose.onNodeWithText("Ring Left").performClick()
         compose.onNodeWithText("Ring Right").performClick()
+        compose.onNodeWithText("Ring both").performClick()
         compose.onNodeWithText("Stop").performClick()
-        assertEquals(listOf("ring LEFT", "ring RIGHT", "stop"), calls)
+        assertEquals(listOf("ring LEFT", "ring RIGHT", "ring BOTH", "stop"), calls)
     }
 
     @Test
     fun `not connected - the buttons are off and a running ring says how to end it`() {
         show(ConnectionState.Disconnected, RingNotice(RingTarget.LEFT))
-        for (label in listOf("Ring Left", "Ring Right", "Stop")) compose.onNodeWithText(label).assertIsNotEnabled()
+        for (label in listOf("Ring Left", "Ring Right", "Ring both", "Stop")) compose.onNodeWithText(label).assertIsNotEnabled()
         compose.onNodeWithText("A ring was started on the Left earbud — reconnect and tap Stop to end it.").assertExists()
     }
 
@@ -78,5 +81,21 @@ class FindMyBudsScreenTest {
         show(ConnectionState.Ready, RingNotice(RingTarget.RIGHT))
         compose.onNodeWithText("Ringing: Right earbud — tap Stop to end it.").assertExists()
         compose.onNodeWithText("Stop").assertIsEnabled()
+    }
+
+    @Test
+    fun `ADR-070 - one warning caption above the rings, and Ring both has its own notice`() {
+        show(ConnectionState.Ready, RingNotice(RingTarget.BOTH))
+        compose.onNodeWithText("Take the Buds out of your ears before ringing — the sound is loud.").assertExists()
+        compose.onNodeWithText(ringingNoticeText(RingNotice(RingTarget.BOTH), sessionReady = true)).assertExists()
+        assertEquals(true, ringingNoticeText(RingNotice(RingTarget.BOTH), sessionReady = true).contains("both earbuds", ignoreCase = true))
+    }
+
+    @Test
+    fun `ADR-069 - a stop on the bud is said with its time`() {
+        val at = 1_727_600_000_000L
+        show(ConnectionState.Ready, null, stoppedOnBudAt = at)
+        compose.onNodeWithText(ringStoppedOnBudText(at)).assertExists()
+        assertEquals(true, ringStoppedOnBudText(at).startsWith("Stopped on the bud at "))
     }
 }

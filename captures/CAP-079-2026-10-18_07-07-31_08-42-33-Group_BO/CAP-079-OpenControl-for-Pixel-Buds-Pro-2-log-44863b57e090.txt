@@ -1,0 +1,1484 @@
+type: logcat
+osVersion: google/tegu/tegu:17/CP3A.261005.005/2026100601:user/release-keys
+flags: dev options enabled
+package: io.github.tedsluis.opencontrolpixelbuds.experiment:10400, targetSdk 34
+buffers: main,system,crash,events,kernel
+level: verbose
+
+--------- beginning of system
+10-18 06:31:17.980 32392 32419 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+--------- beginning of events
+10-18 06:31:18.138 32392 32392 I wm_on_create_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performCreate,time=119ms]
+10-18 06:31:18.139 32392 32392 I wm_on_start_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=1ms]
+10-18 06:31:18.145 32392 32392 I wm_on_resume_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=4ms]
+10-18 06:31:18.159 32392 32392 I wm_on_top_resumed_gained_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 06:31:18.416 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=applyTransactionOnDraw applyImmediately]
+10-18 06:31:18.468 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=reportDrawFinished seqId=1]
+10-18 06:31:18.507 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:31:18.562 32392 32392 D InsetsController: hide(ime())
+10-18 06:31:18.564 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:dfbb1c28: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:31:29.858 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]7f656da,event=applyTransactionOnDraw applyImmediately]
+10-18 06:31:29.872 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]7f656da,event=reportDrawFinished seqId=1]
+10-18 06:31:29.897 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:31:29.925 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:31:29.928 32392 32392 D InsetsController: hide(ime())
+10-18 06:31:29.928 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:31daa1c5: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:31:30.796 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:31:30.809 32392 32392 D InsetsController: hide(ime())
+10-18 06:31:30.810 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:b45401c7: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:31:32.691 32392 32392 I wm_on_top_resumed_lost_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 06:31:32.692 32392 32392 I wm_on_paused_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+10-18 06:31:33.182 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:31:38.775 32392 32392 I wm_on_activity_result_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=ACTIVITY_RESULT]
+10-18 06:31:38.775 32392 32392 I wm_on_resume_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=0ms]
+10-18 06:31:38.784 32392 32392 I wm_on_top_resumed_gained_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 06:31:38.796 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:31:38.849 32392 32392 D InsetsController: hide(ime())
+10-18 06:31:38.849 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:b8dc244: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:33:39.479 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:33:45.456 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:33:45.463 32392 32392 D InsetsController: hide(ime())
+10-18 06:33:45.463 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:139d7f61: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:33:45.489 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:33:49.148 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:33:49.159 32392 32392 D InsetsController: hide(ime())
+10-18 06:33:49.160 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:6048c16e: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:33:55.713 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]101c2da,event=applyTransactionOnDraw applyImmediately]
+10-18 06:33:55.731 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]101c2da,event=reportDrawFinished seqId=2]
+10-18 06:33:55.746 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:33:55.793 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:33:55.797 32392 32392 D InsetsController: hide(ime())
+10-18 06:33:55.797 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:ce33b587: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:34:00.018 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:34:00.023 32392 32392 D InsetsController: hide(ime())
+10-18 06:34:00.023 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:5e3c273b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:34:25.450 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]d7ecff3,event=applyTransactionOnDraw applyImmediately]
+10-18 06:34:25.469 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]d7ecff3,event=reportDrawFinished seqId=1]
+10-18 06:34:25.482 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:34:25.514 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:34:25.519 32392 32392 D InsetsController: hide(ime())
+10-18 06:34:25.520 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:d59f4851: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:34:29.125 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:34:29.131 32392 32392 D InsetsController: hide(ime())
+10-18 06:34:29.132 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:a77c3179: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:34:38.714 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]e957f2a,event=applyTransactionOnDraw applyImmediately]
+10-18 06:34:38.732 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]e957f2a,event=reportDrawFinished seqId=1]
+10-18 06:34:38.749 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:34:38.784 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:34:38.788 32392 32392 D InsetsController: hide(ime())
+10-18 06:34:38.788 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:88d9709c: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:34:42.914 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:34:42.923 32392 32392 D InsetsController: hide(ime())
+10-18 06:34:42.923 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:77400fb: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:35:35.269 32392 32392 I wm_on_top_resumed_lost_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 06:35:35.271 32392 32392 I wm_on_paused_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+10-18 06:35:35.320 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:35:36.358 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+10-18 06:35:36.368 32392 32392 I wm_on_stop_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=0ms]
+10-18 06:35:52.680 32392 32392 I wm_on_restart_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performRestart,time=0ms]
+10-18 06:35:52.681 32392 32392 I wm_on_start_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=0ms]
+10-18 06:35:52.701 32392 32392 I wm_on_resume_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=0ms]
+10-18 06:35:52.712 32392 32392 I wm_on_top_resumed_gained_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 06:35:52.738 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=applyTransactionOnDraw applyImmediately]
+10-18 06:35:52.742 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=Start draw after previous draw not visible]
+10-18 06:35:52.762 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=reportDrawFinished seqId=1]
+10-18 06:35:52.790 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:35:52.794 32392 32392 D InsetsController: hide(ime())
+10-18 06:35:52.795 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:cb74571e: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:36:14.304 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]776afd3,event=applyTransactionOnDraw applyImmediately]
+10-18 06:36:14.319 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]776afd3,event=reportDrawFinished seqId=1]
+10-18 06:36:14.329 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:36:14.381 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:36:14.384 32392 32392 D InsetsController: hide(ime())
+10-18 06:36:14.384 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:e49a4d48: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:36:17.591 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:36:17.595 32392 32392 D InsetsController: hide(ime())
+10-18 06:36:17.595 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:334687e5: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:36:24.562 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]d6367a1,event=applyTransactionOnDraw applyImmediately]
+10-18 06:36:24.579 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]d6367a1,event=reportDrawFinished seqId=1]
+10-18 06:36:24.595 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:36:24.645 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:36:24.650 32392 32392 D InsetsController: hide(ime())
+10-18 06:36:24.650 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:b5eb5675: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:36:28.128 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:36:28.137 32392 32392 D InsetsController: hide(ime())
+10-18 06:36:28.137 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:5fdb6325: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:36:46.887 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]da6ac51,event=applyTransactionOnDraw applyImmediately]
+10-18 06:36:46.901 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]da6ac51,event=reportDrawFinished seqId=1]
+10-18 06:36:46.907 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:36:46.966 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:36:46.972 32392 32392 D InsetsController: hide(ime())
+10-18 06:36:46.972 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:deabe92a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:36:53.286 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:36:53.292 32392 32392 D InsetsController: hide(ime())
+10-18 06:36:53.293 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:6f1eb4e9: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:38:07.200 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]3145ba0,event=applyTransactionOnDraw applyImmediately]
+10-18 06:38:07.211 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]3145ba0,event=reportDrawFinished seqId=1]
+10-18 06:38:07.232 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:38:07.268 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:38:07.273 32392 32392 D InsetsController: hide(ime())
+10-18 06:38:07.274 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:e8a1d296: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:38:09.301 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:38:09.304 32392 32392 D InsetsController: hide(ime())
+10-18 06:38:09.304 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:59161866: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:38:15.952 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]94450b2,event=applyTransactionOnDraw applyImmediately]
+10-18 06:38:15.967 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]94450b2,event=reportDrawFinished seqId=1]
+10-18 06:38:15.992 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:38:16.023 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:38:16.028 32392 32392 D InsetsController: hide(ime())
+10-18 06:38:16.028 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:9ff5abf: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:38:20.283 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:38:20.288 32392 32392 D InsetsController: hide(ime())
+10-18 06:38:20.288 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:bdfe45aa: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:39:12.987 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]3230507,event=applyTransactionOnDraw applyImmediately]
+10-18 06:39:13.004 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]3230507,event=reportDrawFinished seqId=1]
+10-18 06:39:13.022 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:39:13.051 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:39:13.055 32392 32392 D InsetsController: hide(ime())
+10-18 06:39:13.056 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:f7fe04cb: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:39:15.852 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:39:15.876 32392 32392 D InsetsController: hide(ime())
+10-18 06:39:15.876 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:b1fb30d3: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:39:29.156 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]16da529,event=applyTransactionOnDraw applyImmediately]
+10-18 06:39:29.170 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]16da529,event=reportDrawFinished seqId=2]
+10-18 06:39:29.182 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:39:29.214 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:39:29.218 32392 32392 D InsetsController: hide(ime())
+10-18 06:39:29.218 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:62cfdc91: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:39:30.918 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:39:30.926 32392 32392 D InsetsController: hide(ime())
+10-18 06:39:30.926 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:4f7243a2: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:39:39.036 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]12f6789,event=applyTransactionOnDraw applyImmediately]
+10-18 06:39:39.050 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]12f6789,event=reportDrawFinished seqId=1]
+10-18 06:39:39.070 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:39:39.103 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:39:39.108 32392 32392 D InsetsController: hide(ime())
+10-18 06:39:39.109 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:a2efaa21: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:39:40.376 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:39:40.380 32392 32392 D InsetsController: hide(ime())
+10-18 06:39:40.380 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:cbbb2646: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:40:02.639 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]50734f5,event=applyTransactionOnDraw applyImmediately]
+10-18 06:40:02.654 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]50734f5,event=reportDrawFinished seqId=1]
+10-18 06:40:02.678 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:40:02.709 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:02.716 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:02.717 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:7bc4fe69: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:40:04.429 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:04.438 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:04.438 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:7117f59b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:40:17.110 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]134ee2f,event=applyTransactionOnDraw applyImmediately]
+10-18 06:40:17.122 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]134ee2f,event=reportDrawFinished seqId=1]
+10-18 06:40:17.140 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:40:17.188 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:17.191 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:17.191 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:44e7caf9: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:40:18.919 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:18.925 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:18.926 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:829c902f: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 06:40:28.375 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]596978f,event=applyTransactionOnDraw applyImmediately]
+10-18 06:40:28.390 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]596978f,event=reportDrawFinished seqId=1]
+10-18 06:40:28.407 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:40:28.437 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:28.440 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:28.441 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:c3982465: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- beginning of main
+10-18 06:40:28.964 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 7d 5d cc 6e 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 12 83 25 8c 7e
+10-18 06:40:28.967 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:29.571 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(117939592.00)
+10-18 06:40:29.581 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 b1 f3 e0 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d a7 a2 f3 4f 7e
+10-18 06:40:29.584 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:29.933 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(83220720.00)
+10-18 06:40:29.942 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 1e bb 9e 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d f5 7a d5 46 7e
+10-18 06:40:29.945 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:30.299 32392 32417 D OpenControlBuds: Experiment F2: sending 7e 00 3b 03 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d e4 61 0c 6a 7e (channel 19)
+10-18 06:40:30.301 32392 32417 D OpenControlBuds: Experiment F2: sent (answers in the log: "Experiment F: …" and the hex dump)
+10-18 06:40:30.304 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:40:30.311 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c13918200 (UnprojectedRipple) with handle 0xcb5cbf7d77b0
+--------- switch to events
+10-18 06:40:30.348 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:30.356 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:30.356 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:3c88a2ab: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:40:30.561 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(74396952.00)
+10-18 06:40:30.570 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 a3 e6 8d 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 13 2f 70 b7 7e
+10-18 06:40:30.572 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:30.954 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(64479120.00)
+10-18 06:40:30.961 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 e4 f7 75 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d d8 8b 6a c4 7e
+10-18 06:40:30.965 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:31.601 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(44272372.00)
+10-18 06:40:31.607 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 bd e2 28 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d d2 0d 6d c2 7e
+10-18 06:40:31.611 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:31.957 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(24893244.00)
+10-18 06:40:31.967 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 9e eb bd 4b 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 68 a0 5f 07 7e
+10-18 06:40:31.969 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:32.602 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(39772864.00)
+10-18 06:40:32.609 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 b0 b8 17 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 30 c3 0f 36 7e
+10-18 06:40:32.615 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:32.939 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(28392344.00)
+10-18 06:40:32.948 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 cc 9d d8 4b 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 79 ce 3d 16 7e
+10-18 06:40:32.952 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:33.597 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(15289991.00)
+10-18 06:40:33.607 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 87 4e 69 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 47 d5 2d b9 7e
+10-18 06:40:33.612 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:33.923 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(3783147.00)
+10-18 06:40:33.933 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 ac e7 66 4a 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 57 92 f2 93 7e
+10-18 06:40:33.938 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:34.581 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(17552970.00)
+10-18 06:40:34.585 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 25 eb 85 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 50 46 cb ed 7e
+10-18 06:40:34.587 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:34.963 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(17753078.00)
+10-18 06:40:34.971 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 fb 71 87 4b 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d dc 7b 34 9e 7e
+10-18 06:40:34.973 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:35.618 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(36620308.00)
+10-18 06:40:35.628 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 05 b2 0b 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 71 92 52 7c 7e
+10-18 06:40:35.630 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:35.951 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(42513084.00)
+10-18 06:40:35.962 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 af 2c 22 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d bc 9b 81 f3 7e
+10-18 06:40:35.965 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:36.574 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(64269084.00)
+10-18 06:40:36.579 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 c7 2a 75 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d aa 37 49 d9 7e
+10-18 06:40:36.583 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:36.940 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(37408704.00)
+10-18 06:40:36.952 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 f0 b3 0e 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 59 da 92 4a 7e
+10-18 06:40:36.956 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:37.579 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(39309972.00)
+10-18 06:40:37.584 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 a5 f4 15 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 09 d6 a8 b3 7e
+10-18 06:40:37.585 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:37.973 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(28983734.00)
+10-18 06:40:37.984 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 db 20 dd 4b 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 6e 86 29 32 7e
+10-18 06:40:37.987 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:38.595 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(57771152.00)
+10-18 06:40:38.600 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 24 61 5c 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 54 c0 e7 58 7e
+10-18 06:40:38.605 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:38.962 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(41442720.00)
+10-18 06:40:38.971 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 68 17 1e 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 8f 2e 0b dc 7e
+10-18 06:40:38.975 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:39.582 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(31951538.00)
+10-18 06:40:39.582 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 59 c5 f3 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 83 bb 2a db 7e
+10-18 06:40:39.591 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:39.963 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(12304989.00)
+10-18 06:40:39.973 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 5d c2 3b 4b 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d dc d9 46 b9 7e
+10-18 06:40:39.978 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:40.292 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@34b0e79
+10-18 06:40:40.292 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@ff437be
+10-18 06:40:40.320 32392 32392 I Surface : Creating surface for consumer unnamed-32392-17 with slotExpansion=1 for 64 slots
+10-18 06:40:40.321 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#17(BLAST Consumer)17 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:40:40.321 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]c84ee01,event=applyTransactionOnDraw applyImmediately]
+10-18 06:40:40.336 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]c84ee01,event=reportDrawFinished seqId=1]
+10-18 06:40:40.352 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:40:40.387 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:40.392 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:40.392 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:b408bba0: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:40:40.607 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(15819420.00)
+10-18 06:40:40.613 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 9c 62 71 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 4b 01 d6 44 7e
+10-18 06:40:40.616 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:40.956 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(4442981.00)
+10-18 06:40:40.966 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 ca 96 87 4a 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 50 12 83 52 7e
+10-18 06:40:40.968 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:41.621 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(31815776.00)
+10-18 06:40:41.625 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 30 bc f2 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 01 b0 88 6f 7e
+10-18 06:40:41.627 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:41.956 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(60958904.00)
+10-18 06:40:41.966 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 2e 8a 68 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 10 c9 6e 5b 7e
+10-18 06:40:41.969 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:42.623 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(174216816.00)
+10-18 06:40:42.632 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 67 25 26 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d b0 fd 8c b4 7e
+10-18 06:40:42.635 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:42.980 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(136858352.00)
+10-18 06:40:42.991 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 af 84 02 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d a5 8d 7a 2f 7e
+10-18 06:40:42.993 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:43.575 32392 32417 D OpenControlBuds: Experiment F2: sending 7e 00 4b 03 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e2 18 d6 68 7e (channel 21)
+10-18 06:40:43.579 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:40:43.579 32392 32417 D OpenControlBuds: Experiment F2: sent (answers in the log: "Experiment F: …" and the hex dump)
+10-18 06:40:43.586 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c13933200 (UnprojectedRipple) with handle 0xcb5cbf9174e0
+10-18 06:40:43.593 32392 32392 W InputEventReceiver: Failed to send outbound event on channel 'f2c627b io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity'.  status=DEAD_OBJECT(-32)
+10-18 06:40:43.593 32392 32392 W InputEventReceiver: channel 'f2c627b io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity' ~ Could not send 0 outbound event(s), status:DEAD_OBJECT
+10-18 06:40:43.619 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(85792920.00)
+10-18 06:40:43.628 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 13 a3 a3 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 14 29 ab f4 7e
+10-18 06:40:43.631 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+--------- switch to events
+10-18 06:40:43.635 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:43.656 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:43.656 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:31b1cf48: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:40:43.963 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 51 b2 82 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 76 c7 94 2a 7e
+10-18 06:40:43.964 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(68522632.00)
+10-18 06:40:43.965 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:44.609 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(46827688.00)
+10-18 06:40:44.617 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 2a a2 32 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 69 5c 59 ec 7e
+10-18 06:40:44.621 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:44.972 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(26699412.00)
+10-18 06:40:44.979 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 4a b3 cb 4b 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 7d 5d d4 42 16 7e
+10-18 06:40:44.983 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:45.652 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(28247512.00)
+10-18 06:40:45.661 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 ec 82 d7 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 88 f6 84 5c 7e
+10-18 06:40:45.664 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:45.958 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(59205200.00)
+10-18 06:40:45.970 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 94 d9 61 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d e5 a7 93 50 7e
+10-18 06:40:45.973 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:46.615 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(120432424.00)
+10-18 06:40:46.624 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 e5 b4 e5 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 70 9d f8 d7 7e
+10-18 06:40:46.629 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:46.952 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(99425152.00)
+10-18 06:40:46.964 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 70 a3 bd 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 40 b9 85 77 7e
+10-18 06:40:46.966 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:47.632 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(91599848.00)
+10-18 06:40:47.636 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 7d 5d b6 ae 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 65 c4 f8 e0 7e
+10-18 06:40:47.638 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:47.983 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(58311656.00)
+10-18 06:40:47.990 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 fa 70 5e 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 2a 22 1e 24 7e
+10-18 06:40:47.993 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:48.643 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(63076516.00)
+10-18 06:40:48.655 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 29 9e 70 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 44 91 eb 03 7e
+10-18 06:40:48.659 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:48.984 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(59345832.00)
+10-18 06:40:48.994 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 ea 62 62 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d a3 e1 ea 9f 7e
+10-18 06:40:48.998 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:49.643 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(56148100.00)
+10-18 06:40:49.650 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 21 30 56 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 55 2c 1f 85 7e
+10-18 06:40:49.652 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:50.003 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(45637600.00)
+10-18 06:40:50.011 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 f8 17 2e 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d f5 d1 db ad 7e
+10-18 06:40:50.016 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:50.653 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(61368040.00)
+10-18 06:40:50.663 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 ba 19 6a 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d ae c5 2f e1 7e
+10-18 06:40:50.667 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:50.980 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(49933864.00)
+10-18 06:40:50.990 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 8a 7b 3e 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d ff 2f bd 61 7e
+10-18 06:40:50.994 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:51.685 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(28217408.00)
+10-18 06:40:51.694 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 20 48 d7 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 26 68 7d 5d 81 7e
+10-18 06:40:51.698 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:51.983 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(52705852.00)
+10-18 06:40:51.994 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 8f 0e 49 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 8b 27 c2 37 7e
+10-18 06:40:51.999 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:52.666 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(26901332.00)
+10-18 06:40:52.673 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 aa 3d cd 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 65 ed 1d bf 7e
+10-18 06:40:52.676 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:52.980 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(24417700.00)
+10-18 06:40:52.989 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 d2 4a ba 4b 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 26 63 5b 4f 7e
+10-18 06:40:52.994 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:53.632 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(54128020.00)
+10-18 06:40:53.637 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 65 7b 4e 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 0c 5b c2 49 7e
+10-18 06:40:53.646 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:54.004 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(74516864.00)
+10-18 06:40:54.010 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 30 21 8e 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 1e 63 68 7b 7e
+10-18 06:40:54.014 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:54.673 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(138281696.00)
+10-18 06:40:54.680 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 2e e0 03 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c6 71 00 88 7e
+10-18 06:40:54.685 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:54.964 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(173588928.00)
+10-18 06:40:54.972 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 1c 8c 25 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d f8 9e a4 14 7e
+10-18 06:40:54.975 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:55.657 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(130934824.00)
+10-18 06:40:55.661 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 05 bd f9 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 2a da eb be 7e
+10-18 06:40:55.665 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:55.979 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(106503704.00)
+10-18 06:40:55.987 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 c3 23 cb 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 9e 77 f6 76 7e
+10-18 06:40:55.991 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:56.687 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(190033712.00)
+10-18 06:40:56.694 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 f3 3a 35 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d eb b0 d0 21 7e
+10-18 06:40:56.697 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:56.977 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(161240096.00)
+10-18 06:40:56.985 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 42 c5 19 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 0b d7 6d f3 7e
+10-18 06:40:56.989 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:57.210 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@ea01a26
+10-18 06:40:57.210 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@186e667
+10-18 06:40:57.236 32392 32392 I Surface : Creating surface for consumer unnamed-32392-18 with slotExpansion=1 for 64 slots
+10-18 06:40:57.238 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#18(BLAST Consumer)18 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:40:57.239 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]be61a0e,event=applyTransactionOnDraw applyImmediately]
+10-18 06:40:57.252 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]be61a0e,event=reportDrawFinished seqId=1]
+10-18 06:40:57.269 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:40:57.312 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:57.315 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:57.316 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:40842835: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:40:57.639 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(106248976.00)
+10-18 06:40:57.641 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 62 a7 ca 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 2b af a3 45 7e
+10-18 06:40:57.644 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:57.985 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(94179520.00)
+10-18 06:40:57.998 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 18 a2 b3 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d f4 e2 3b 20 7e
+10-18 06:40:58.001 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:58.409 32392 32417 D OpenControlBuds: Experiment F2: sending 7e 00 4b 03 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e2 18 d6 68 7e (channel 21)
+10-18 06:40:58.411 32392 32417 D OpenControlBuds: Experiment F2: sent (answers in the log: "Experiment F: …" and the hex dump)
+10-18 06:40:58.427 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:40:58.437 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c1393f800 (UnprojectedRipple) with handle 0xcb5cbf7cd000
+10-18 06:40:58.443 32392 32392 W InputEventReceiver: Failed to send outbound event on channel 'cd5c341 io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity'.  status=DEAD_OBJECT(-32)
+10-18 06:40:58.443 32392 32392 W InputEventReceiver: channel 'cd5c341 io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity' ~ Could not send 0 outbound event(s), status:DEAD_OBJECT
+--------- switch to events
+10-18 06:40:58.478 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:40:58.489 32392 32392 D InsetsController: hide(ime())
+10-18 06:40:58.489 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:52f0a982: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:40:58.651 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(52794708.00)
+10-18 06:40:58.654 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 55 65 49 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d ba 26 ab 91 7e
+10-18 06:40:58.657 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:59.026 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(49268536.00)
+10-18 06:40:59.036 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 ce f1 3b 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 3e 41 61 22 7e
+10-18 06:40:59.040 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:40:59.652 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(29464084.00)
+10-18 06:40:59.659 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 0a cb e0 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 63 38 49 2b 7e
+10-18 06:40:59.661 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:00.021 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(41433116.00)
+10-18 06:41:00.027 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 07 0e 1e 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 17 5f 58 bb 7e
+10-18 06:41:00.028 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:00.673 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(223407264.00)
+10-18 06:41:00.681 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 ca 0e 55 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e1 4d 8d d9 7e
+10-18 06:41:00.683 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:00.989 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(246053200.00)
+10-18 06:41:00.998 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 95 a7 6a 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d b4 d7 71 79 7e
+10-18 06:41:01.001 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:01.694 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(183328112.00)
+10-18 06:41:01.700 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 d7 d5 2e 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d cd 65 29 c4 7e
+10-18 06:41:01.702 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:01.990 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(262904240.00)
+10-18 06:41:02.003 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 9b b9 7a 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 48 9a 0e d0 7e
+10-18 06:41:02.006 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:02.657 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(270429760.00)
+10-18 06:41:02.665 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 72 f3 80 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 4b bf 29 31 7e
+10-18 06:41:02.669 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:03.000 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(233104608.00)
+10-18 06:41:03.007 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 4e 4e 5e 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 7c 7f 15 33 7e
+10-18 06:41:03.009 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:03.692 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(204950288.00)
+10-18 06:41:03.700 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 b1 74 43 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 97 ec 1c 0e 7e
+10-18 06:41:03.704 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:04.039 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(179616528.00)
+10-18 06:41:04.049 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 b1 4b 2b 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 5e 2b f8 f3 7e
+10-18 06:41:04.052 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:04.672 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(113837912.00)
+10-18 06:41:04.681 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 eb 20 d9 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 88 6c 3a 46 7e
+10-18 06:41:04.686 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:05.014 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(65605476.00)
+10-18 06:41:05.025 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 d9 43 7a 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 81 80 b8 3a 7e
+10-18 06:41:05.030 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:05.664 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(30874552.00)
+10-18 06:41:05.671 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 dc 8d eb 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 5e b7 d9 bf 7e
+10-18 06:41:05.673 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:06.033 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(63551520.00)
+10-18 06:41:06.042 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 08 6e 72 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 3e f2 a1 a0 7e
+10-18 06:41:06.045 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:06.675 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(27186582.00)
+10-18 06:41:06.676 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 cb 6a cf 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 75 36 a1 5a 7e
+10-18 06:41:06.689 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:07.038 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(65745804.00)
+10-18 06:41:07.045 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 e3 cc 7a 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 1b 59 d6 27 7e
+10-18 06:41:07.048 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:07.355 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@8985d48
+10-18 06:41:07.356 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@2fbd7e1
+10-18 06:41:07.377 32392 32392 I Surface : Creating surface for consumer unnamed-32392-19 with slotExpansion=1 for 64 slots
+10-18 06:41:07.377 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#19(BLAST Consumer)19 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:41:07.377 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]c2314f0,event=applyTransactionOnDraw applyImmediately]
+10-18 06:41:07.393 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]c2314f0,event=reportDrawFinished seqId=1]
+10-18 06:41:07.411 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:41:07.449 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:07.454 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:07.454 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:b4622cbe: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:07.679 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 cc 3f 06 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 36 ed 34 88 7e
+10-18 06:41:07.681 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:07.681 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(140770496.00)
+10-18 06:41:08.018 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(130673528.00)
+10-18 06:41:08.028 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 6f 3d f9 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 4e 51 ef b9 7e
+10-18 06:41:08.031 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:08.678 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(147347600.00)
+10-18 06:41:08.687 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 89 85 0c 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d ab f9 a2 93 7e
+10-18 06:41:08.689 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:09.026 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(147084176.00)
+10-18 06:41:09.029 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 39 45 0c 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 4d 18 20 e1 7e
+10-18 06:41:09.038 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:09.685 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(140178560.00)
+10-18 06:41:09.691 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 48 af 05 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d d6 3a e2 a9 7e
+10-18 06:41:09.693 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:10.047 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(160457568.00)
+10-18 06:41:10.059 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 36 06 19 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d dd 61 fd 85 7e
+10-18 06:41:10.061 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:10.694 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(115260392.00)
+10-18 06:41:10.698 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 7d 5d d7 db 4c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 27 36 84 b1 7e
+10-18 06:41:10.703 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:11.009 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(179148992.00)
+10-18 06:41:11.014 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 8c d9 2a 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 5e 53 3f a4 7e
+10-18 06:41:11.020 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:11.681 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(213365056.00)
+10-18 06:41:11.689 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 14 7b 4b 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 5b 7f 5a ac 7e
+10-18 06:41:11.691 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:12.031 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(226606592.00)
+10-18 06:41:12.032 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 e0 1b 58 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d a5 4a 3d 34 7e
+10-18 06:41:12.037 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:12.124 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:41:12.126 32392   865 D OpenControlBuds: Experiment F2: sending 7e 00 4b 03 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e2 18 d6 68 7e (channel 21)
+10-18 06:41:12.129 32392 32417 D OpenControlBuds: Experiment F2: sent (answers in the log: "Experiment F: …" and the hex dump)
+10-18 06:41:12.132 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c1391b200 (UnprojectedRipple) with handle 0xcb5cbf8a18d0
+--------- switch to events
+10-18 06:41:12.174 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:12.179 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:12.179 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:71606ebf: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:12.712 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(171887984.00)
+10-18 06:41:12.719 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 d7 ec 23 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d ce 08 27 95 7e
+10-18 06:41:12.723 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:13.020 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(213684064.00)
+10-18 06:41:13.027 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 f6 c8 4b 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d b1 4c 0c 78 7e
+10-18 06:41:13.029 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:13.693 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 db 55 8c 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c5 64 3e ae 7e
+10-18 06:41:13.693 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(294304608.00)
+10-18 06:41:13.695 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:14.034 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(388144032.00)
+10-18 06:41:14.042 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 dd 14 b9 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 51 a3 25 b9 7e
+10-18 06:41:14.045 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:14.727 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(381517376.00)
+10-18 06:41:14.737 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 f2 eb b5 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d dc 17 42 e5 7e
+10-18 06:41:14.742 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:15.021 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(440103360.00)
+10-18 06:41:15.031 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 8e db d1 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 4a dd 97 ac 7e
+10-18 06:41:15.034 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:15.675 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1394552448.00)
+10-18 06:41:15.685 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 5d 3e a6 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d fd d6 b7 3a 7e
+10-18 06:41:15.690 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:16.025 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1681942528.00)
+10-18 06:41:16.034 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 d0 80 c8 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 11 51 28 f4 7e
+10-18 06:41:16.035 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:16.704 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1514532992.00)
+10-18 06:41:16.705 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 e1 8b b4 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 40 3a 97 ed 7e
+10-18 06:41:16.711 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:17.043 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1023868608.00)
+10-18 06:41:17.052 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 fb 1b 74 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 1f a7 29 46 7e
+10-18 06:41:17.056 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:17.701 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 7f d9 9a 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c8 73 e4 dd 7e
+10-18 06:41:17.701 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1298972544.00)
+10-18 06:41:17.705 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:18.023 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(937005056.00)
+10-18 06:41:18.032 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 40 66 5f 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 79 eb 9e 5d 7e
+10-18 06:41:18.036 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:18.563 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@ae84641
+10-18 06:41:18.563 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@193e7e6
+10-18 06:41:18.586 32392 32392 I Surface : Creating surface for consumer unnamed-32392-20 with slotExpansion=1 for 64 slots
+10-18 06:41:18.586 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#20(BLAST Consumer)20 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:41:18.587 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]a951cc9,event=applyTransactionOnDraw applyImmediately]
+10-18 06:41:18.601 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]a951cc9,event=reportDrawFinished seqId=1]
+10-18 06:41:18.615 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:41:18.663 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:18.666 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:18.667 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:311e2892: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:18.689 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1590804224.00)
+10-18 06:41:18.690 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 7d 5e a3 bd 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 0b 57 e8 8e 7e
+10-18 06:41:18.696 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:19.037 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(2497349888.00)
+10-18 06:41:19.043 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 89 da 14 4f 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d e4 6b 43 6a 7e
+10-18 06:41:19.045 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:19.720 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(2493275392.00)
+10-18 06:41:19.730 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 5d 9c 14 4f 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d b4 e9 1a e9 7e
+10-18 06:41:19.735 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:20.022 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1433939968.00)
+10-18 06:41:20.031 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 60 f0 aa 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 2f 35 f3 f3 7e
+10-18 06:41:20.034 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:20.713 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(826959232.00)
+10-18 06:41:20.724 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 96 29 45 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c5 02 31 a8 7e
+10-18 06:41:20.728 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:21.040 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(679847360.00)
+10-18 06:41:21.048 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 97 16 22 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d d7 14 6d 34 7e
+10-18 06:41:21.052 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:21.741 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(969620608.00)
+10-18 06:41:21.751 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 f2 2c 67 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 01 af 63 20 7e
+10-18 06:41:21.756 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:22.062 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1645647232.00)
+10-18 06:41:22.072 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 2b 2d c4 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 7d 5e d9 4f 4f 7e
+10-18 06:41:22.074 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:22.661 32392 32417 D OpenControlBuds: Experiment F2: sending 7e 00 4b 03 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e2 18 d6 68 7e (channel 21)
+10-18 06:41:22.663 32392 32410 D OpenControlBuds: Experiment F2: sent (answers in the log: "Experiment F: …" and the hex dump)
+10-18 06:41:22.672 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:41:22.681 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c1390f800 (UnprojectedRipple) with handle 0xcb5cbf8c39f0
+10-18 06:41:22.684 32392 32392 W InputEventReceiver: Failed to send outbound event on channel '4400b5c io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity'.  status=DEAD_OBJECT(-32)
+10-18 06:41:22.684 32392 32392 W InputEventReceiver: channel '4400b5c io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity' ~ Could not send 0 outbound event(s), status:DEAD_OBJECT
+10-18 06:41:22.711 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1963467520.00)
+10-18 06:41:22.721 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 46 10 ea 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d d5 16 18 0f 7e
+--------- switch to events
+10-18 06:41:22.723 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 06:41:22.724 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+--------- switch to system
+10-18 06:41:22.726 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:22.727 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:e739bd1c: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:23.071 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1373283840.00)
+10-18 06:41:23.078 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 4c b5 a3 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d b3 73 df c6 7e
+10-18 06:41:23.079 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:23.705 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1562726272.00)
+10-18 06:41:23.708 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 9f 4a ba 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 75 2f 3c 7d 5d 7e
+10-18 06:41:23.711 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:24.053 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1304860544.00)
+10-18 06:41:24.060 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 2f 8d 9b 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 34 58 7b 96 7e
+10-18 06:41:24.066 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:24.741 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1939861248.00)
+10-18 06:41:24.744 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 de 3f e7 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 36 41 ea 79 7e
+10-18 06:41:24.751 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:25.080 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1950344832.00)
+10-18 06:41:25.088 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 cd 7f e8 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d d1 8f a5 26 7e
+10-18 06:41:25.093 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:25.717 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1136454272.00)
+10-18 06:41:25.729 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 d5 79 87 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 23 6d 0e 47 7e
+10-18 06:41:25.734 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:26.075 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(994281280.00)
+10-18 06:41:26.083 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 1d 0e 6d 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d fa 70 56 d9 7e
+10-18 06:41:26.084 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:26.453 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@80b03a2
+10-18 06:41:26.453 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@9181833
+10-18 06:41:26.480 32392 32392 I Surface : Creating surface for consumer unnamed-32392-21 with slotExpansion=1 for 64 slots
+10-18 06:41:26.480 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#21(BLAST Consumer)21 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:41:26.481 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]5ce1c0a,event=applyTransactionOnDraw applyImmediately]
+10-18 06:41:26.491 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]5ce1c0a,event=reportDrawFinished seqId=1]
+10-18 06:41:26.517 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:41:26.552 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:26.556 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:26.556 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:948b351e: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:26.743 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 e3 77 d2 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 6a d8 b3 c9 7e
+10-18 06:41:26.745 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1765536128.00)
+10-18 06:41:26.745 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:27.061 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1629532928.00)
+10-18 06:41:27.069 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 66 41 c2 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 4e 30 05 b3 7e
+10-18 06:41:27.072 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:27.726 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1420022272.00)
+10-18 06:41:27.734 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 a4 47 a9 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 4d 91 5f 2e 7e
+10-18 06:41:27.738 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:28.070 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1302275328.00)
+10-18 06:41:28.071 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 4a 3e 9b 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 68 ca ae 45 7e
+10-18 06:41:28.075 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:28.750 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(2095136512.00)
+10-18 06:41:28.755 32392   865 D OpenControlBuds: Experiment F: 120 live-stream packets in the last 60 s
+10-18 06:41:28.758 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 7d 5e c2 f9 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 3b 71 e4 80 7e
+10-18 06:41:28.761 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:29.039 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1872246272.00)
+10-18 06:41:29.046 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 6c 30 df 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 36 8c ff ad 7e
+10-18 06:41:29.051 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:29.718 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1160174080.00)
+10-18 06:41:29.725 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 b4 4d 8a 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 83 dd 27 0c 7e
+10-18 06:41:29.727 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:30.062 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(837272128.00)
+10-18 06:41:30.069 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 09 9f 47 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 63 a3 aa 35 7e
+10-18 06:41:30.072 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:30.510 32392 32410 D OpenControlBuds: Experiment F2: sending 7e 00 4b 03 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e2 18 d6 68 7e (channel 21)
+10-18 06:41:30.513 32392 32417 D OpenControlBuds: Experiment F2: sent (answers in the log: "Experiment F: …" and the hex dump)
+10-18 06:41:30.518 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:41:30.525 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c13844400 (UnprojectedRipple) with handle 0xcb5cbf9233c0
+10-18 06:41:30.530 32392 32392 W InputEventReceiver: Failed to send outbound event on channel '45e9884 io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity'.  status=DEAD_OBJECT(-32)
+10-18 06:41:30.530 32392 32392 W InputEventReceiver: channel '45e9884 io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity' ~ Could not send 0 outbound event(s), status:DEAD_OBJECT
+--------- switch to events
+10-18 06:41:30.568 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:30.571 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:30.572 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:f2f31416: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:30.720 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(966927936.00)
+10-18 06:41:30.728 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 99 88 66 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 73 5b 30 73 7e
+10-18 06:41:30.730 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:31.071 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1076732160.00)
+10-18 06:41:31.083 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 42 5b 80 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d c5 ca 48 69 7e
+10-18 06:41:31.086 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:31.724 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1670059520.00)
+10-18 06:41:31.733 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 2c 16 c7 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 26 95 17 43 7e
+10-18 06:41:31.735 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:32.092 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1723014656.00)
+10-18 06:41:32.103 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 3c 66 cd 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 32 f0 75 b5 7e
+10-18 06:41:32.106 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:32.739 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1304116736.00)
+10-18 06:41:32.748 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 7c 76 9b 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d fc f5 a7 cb 7e
+10-18 06:41:32.751 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:33.090 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(792148224.00)
+10-18 06:41:33.091 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 e4 dc 3c 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 8d e4 c0 04 7e
+10-18 06:41:33.101 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:33.227 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@99cf6d2
+10-18 06:41:33.227 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@37543a3
+10-18 06:41:33.254 32392 32392 I Surface : Creating surface for consumer unnamed-32392-22 with slotExpansion=1 for 64 slots
+10-18 06:41:33.255 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#22(BLAST Consumer)22 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:41:33.255 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]8c493a,event=applyTransactionOnDraw applyImmediately]
+10-18 06:41:33.269 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]8c493a,event=reportDrawFinished seqId=1]
+10-18 06:41:33.291 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:41:33.327 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:33.331 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:33.331 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:c0359757: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:33.773 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(784022720.00)
+10-18 06:41:33.782 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 f3 ec 3a 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c1 3d e8 e9 7e
+10-18 06:41:33.786 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:34.076 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(820806592.00)
+10-18 06:41:34.076 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 0f b2 43 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 89 c2 fa d3 7e
+10-18 06:41:34.085 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:34.363 32392 32413 D OpenControlBuds: Experiment F3: sending 7e 00 3b 03 10 13 1d 05 d8 d5 73 25 ce 72 b7 73 f3 b3 c7 26 7e (channel 19)
+10-18 06:41:34.365 32392   865 D OpenControlBuds: Experiment F3: sent (answers in the log: "Experiment F: …" and the hex dump)
+10-18 06:41:34.371 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:41:34.379 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c138c5a00 (UnprojectedRipple) with handle 0xcb5cbf7dd6c0
+10-18 06:41:34.411 32392 32413 D OpenControlBuds: Experiment F: RESPONSE ch=19 FetchDailySummaries OK 1:475 2:{1:471 6:f32(350744640.00)} 2:{1:472 6:f32(23517202.00)} 2:{1:473 6:f32(79997728.00)} 2:{1:474 6:f32(62259949568.00)} 2:{1:475 6:f32(3794701824.00)} 2:{1:468 6:f32(2839914752.00)} 2:{1:469 6:f32(249938032.00)} 2:{1:470 6:f32(202348176.00)} 5:f32(66036535296.00)
+--------- switch to events
+10-18 06:41:34.416 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 06:41:34.416 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 58 08 db 03 12 08 08 d7 03 35 82 3f a7 4d 12 08 08 d8 03 35 09 6c b3 4b 12 08 08 d9 03 35 64 95 98 4c 12 08 08 da 03 35 b7 ef 67 51 12 08 08 db 03 35 8e 2e 62 4f 12 08 08 d4 03 35 a9 45 29 4f 12 08 08 d5 03 35 07 5c 6e 4d 12 08 08 d6 03 35 69 f9 40 4d 2d 59 01 76 51 08 01 10 13 1d 05 d8 d5 73 25 ce 72 b7 73 3b a1 f2 56 7e
+10-18 06:41:34.417 32392   865 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=0x73d5d805/0x73b772ce status=OK
+--------- switch to system
+10-18 06:41:34.451 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:34.451 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:d62d5b16: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:34.758 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1398050176.00)
+10-18 06:41:34.764 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 1b a9 a6 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c6 34 09 03 7e
+10-18 06:41:34.766 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:35.091 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1742926208.00)
+10-18 06:41:35.098 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 e3 c5 cf 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 56 19 5a 39 7e
+10-18 06:41:35.102 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:35.778 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1928095232.00)
+10-18 06:41:35.786 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 cc d8 e5 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 63 b3 c6 3c 7e
+10-18 06:41:35.790 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:36.101 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1693779200.00)
+10-18 06:41:36.109 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 0a ea c9 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d a1 47 49 33 7e
+10-18 06:41:36.113 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:36.753 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1545020672.00)
+10-18 06:41:36.761 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 4a 2e b8 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c9 d1 ce 24 7e
+10-18 06:41:36.765 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:37.077 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1299589632.00)
+10-18 06:41:37.087 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 54 ec 9a 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d ce b2 ef f8 7e
+10-18 06:41:37.091 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:37.675 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@531baa
+10-18 06:41:37.676 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@54cc39b
+10-18 06:41:37.698 32392 32392 I Surface : Creating surface for consumer unnamed-32392-23 with slotExpansion=1 for 64 slots
+10-18 06:41:37.698 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#23(BLAST Consumer)23 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:41:37.699 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]118a312,event=applyTransactionOnDraw applyImmediately]
+10-18 06:41:37.714 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]118a312,event=reportDrawFinished seqId=1]
+10-18 06:41:37.738 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 06:41:37.751 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1893321088.00)
+10-18 06:41:37.760 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 93 b3 e1 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e0 34 c9 4c 7e
+10-18 06:41:37.762 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+--------- switch to events
+10-18 06:41:37.769 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:37.772 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:37.773 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:4e4de1a0: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:38.060 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1797716992.00)
+10-18 06:41:38.062 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 f8 4d d6 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 16 82 ee 8d 7e
+10-18 06:41:38.066 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:38.741 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1420496512.00)
+10-18 06:41:38.750 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 1d 56 a9 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 37 d9 25 9b 7e
+10-18 06:41:38.755 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:39.060 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1678290688.00)
+10-18 06:41:39.066 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 5e 11 c8 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d cf 3c 15 69 7e
+10-18 06:41:39.071 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:39.779 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(2204968960.00)
+10-18 06:41:39.791 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 28 6d 03 4f 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 28 14 c8 86 7e
+10-18 06:41:39.793 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:40.103 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1760837888.00)
+10-18 06:41:40.114 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 82 e8 d1 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 3a 3e 7b cb 7e
+10-18 06:41:40.119 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:40.534 32392   865 D OpenControlBuds: Experiment F3: sending 7e 00 4b 03 10 15 1d 05 d8 d5 73 25 ce 72 b7 73 f5 ca 1d 24 7e (channel 21)
+10-18 06:41:40.536 32392 32417 D OpenControlBuds: Experiment F3: sent (answers in the log: "Experiment F: …" and the hex dump)
+10-18 06:41:40.544 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:41:40.550 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c13988a00 (UnprojectedRipple) with handle 0xcb5cbf8f16f0
+--------- switch to events
+10-18 06:41:40.585 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:40.590 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:40.591 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:96168e0: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:40.651 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 58 08 db 03 12 08 08 d7 03 35 f5 b7 a6 4d 12 08 08 d8 03 35 93 ef 88 4b 12 08 08 d9 03 35 c1 01 b6 4c 12 08 08 da 03 35 66 a3 11 4c 12 08 08 db 03 35 3f 99 48 51 12 08 08 d4 03 35 d4 0a a7 4b 12 08 08 d5 03 35 01 d9 7a 4d 12 08 08 d6 03 35 0f 5a 42 4d 2d 75 ac 48 51 08 01 10 15 1d 05 d8 d5 73 25 ce 72 b7 73 04 11 f3 7f 7e
+10-18 06:41:40.652 32392   865 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=0x73d5d805/0x73b772ce status=OK
+10-18 06:41:40.659 32392 32413 D OpenControlBuds: Experiment F: RESPONSE ch=21 FetchDailySummaries OK 1:475 2:{1:471 6:f32(349634208.00)} 2:{1:472 6:f32(17948454.00)} 2:{1:473 6:f32(95424008.00)} 2:{1:474 6:f32(38178200.00)} 2:{1:475 6:f32(53847781376.00)} 2:{1:468 6:f32(21894568.00)} 2:{1:469 6:f32(263032848.00)} 2:{1:470 6:f32(203792624.00)} 5:f32(53867925504.00)
+10-18 06:41:40.797 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(2046862336.00)
+10-18 06:41:40.803 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 48 01 f4 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 57 9e 67 40 7e
+10-18 06:41:40.806 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:41.113 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1740819200.00)
+10-18 06:41:41.121 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 96 85 cf 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 0d 89 8e 49 7e
+10-18 06:41:41.124 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:41.759 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(2636815104.00)
+10-18 06:41:41.763 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 9b 2a 1d 4f 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 69 1a b1 0a 7e
+10-18 06:41:41.769 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:42.093 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1463157248.00)
+10-18 06:41:42.102 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 04 6c ae 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 3a 5c 64 f3 7e
+10-18 06:41:42.103 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:42.774 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1430211968.00)
+10-18 06:41:42.779 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 9b 7d 5e aa 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d a5 4a 49 da 7e
+10-18 06:41:42.783 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:43.091 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1161011712.00)
+10-18 06:41:43.098 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 44 67 8a 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d ba 0f 6d 3f 7e
+10-18 06:41:43.103 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:43.758 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1099314688.00)
+10-18 06:41:43.759 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 6c 0c 83 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1f 19 a8 26 7e
+10-18 06:41:43.766 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:44.089 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(780691072.00)
+10-18 06:41:44.099 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 9a 21 3a 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 21 ad 92 4b 7e
+10-18 06:41:44.102 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:44.370 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@a90ae7
+10-18 06:41:44.370 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@ef63694
+10-18 06:41:44.397 32392 32392 I Surface : Creating surface for consumer unnamed-32392-24 with slotExpansion=1 for 64 slots
+10-18 06:41:44.397 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#24(BLAST Consumer)24 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:41:44.398 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]46a20af,event=applyTransactionOnDraw applyImmediately]
+10-18 06:41:44.424 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]46a20af,event=reportDrawFinished seqId=1]
+10-18 06:41:44.425 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:41:44.478 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:44.482 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:44.482 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:ff0c6e50: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:44.782 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(875075136.00)
+10-18 06:41:44.784 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 59 a2 50 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 36 0c d0 d9 7e
+10-18 06:41:44.791 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:45.100 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(803739008.00)
+10-18 06:41:45.106 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 56 a0 3f 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 77 9f fe 04 7e
+10-18 06:41:45.107 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:45.770 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1686860672.00)
+10-18 06:41:45.778 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 e7 16 c9 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 02 86 a4 8a 7e
+10-18 06:41:45.782 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:46.093 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1858562304.00)
+10-18 06:41:46.100 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 d2 8e dd 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 8c 21 a6 2c 7e
+10-18 06:41:46.102 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:46.799 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1558885376.00)
+10-18 06:41:46.812 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 68 d5 b9 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 6a 82 86 b9 7e
+10-18 06:41:46.816 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:47.100 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1434471296.00)
+10-18 06:41:47.108 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 97 00 ab 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 88 d9 8e 05 7e
+10-18 06:41:47.112 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:47.786 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 11 f2 a3 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d cc c4 48 94 7e
+10-18 06:41:47.787 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1375275136.00)
+10-18 06:41:47.788 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:47.799 32392   865 D OpenControlBuds: Experiment F4: sending 7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 a8 01 01 3c 5b 40 f4 7e (channel 19)
+10-18 06:41:47.809 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:41:47.815 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c13927800 (UnprojectedRipple) with handle 0xcb5cbf919390
+10-18 06:41:47.855 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 22 03 a8 01 01 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 68 df a9 7a 7e
+--------- switch to events
+10-18 06:41:47.856 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 06:41:47.857 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+--------- switch to system
+10-18 06:41:47.860 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:47.860 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:c7723523: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:47.863 32392   865 D OpenControlBuds: Settings stream: field 21 not shown (not read by this app)
+10-18 06:41:47.867 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+10-18 06:41:47.868 32392   865 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+10-18 06:41:47.870 32392   865 D OpenControlBuds: Experiment F4: RESPONSE OK
+10-18 06:41:48.088 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(976007616.00)
+10-18 06:41:48.090 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 c7 b2 68 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d a4 aa a9 9d 7e
+10-18 06:41:48.094 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:48.786 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(708923328.00)
+10-18 06:41:48.798 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 3f 05 29 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 7d 5d 40 c7 86 7e
+10-18 06:41:48.802 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:49.117 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(629996416.00)
+10-18 06:41:49.126 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 ee 33 16 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 60 4f 22 fa 7e
+10-18 06:41:49.130 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:49.781 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1020085440.00)
+10-18 06:41:49.790 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 13 35 73 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 88 58 60 c2 7e
+10-18 06:41:49.793 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:50.141 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(630731712.00)
+10-18 06:41:50.150 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 cf 60 16 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d bc e6 bb 51 7e
+10-18 06:41:50.153 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:50.774 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(918741504.00)
+10-18 06:41:50.784 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 88 0b 5b 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 5c 26 85 a3 7e
+10-18 06:41:50.788 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:51.107 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1094109952.00)
+10-18 06:41:51.114 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 96 6d 82 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d d6 ee c3 41 7e
+10-18 06:41:51.118 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:51.405 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@af68861
+10-18 06:41:51.405 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@48bcf86
+10-18 06:41:51.440 32392 32392 I Surface : Creating surface for consumer unnamed-32392-25 with slotExpansion=1 for 64 slots
+10-18 06:41:51.440 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#25(BLAST Consumer)25 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:41:51.441 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]48cdae9,event=applyTransactionOnDraw applyImmediately]
+10-18 06:41:51.458 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]48cdae9,event=reportDrawFinished seqId=1]
+10-18 06:41:51.466 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:41:51.517 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:41:51.521 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:51.522 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:e6d9ec5b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:51.779 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(486198880.00)
+10-18 06:41:51.779 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 73 d6 e7 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 2e a2 ce c0 7e
+10-18 06:41:51.785 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:52.130 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(828183808.00)
+10-18 06:41:52.135 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 54 74 45 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 6f ed 6c a9 7e
+10-18 06:41:52.138 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:52.776 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1165358464.00)
+10-18 06:41:52.785 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 eb eb 8a 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 89 1b 6d 5d 7e
+10-18 06:41:52.788 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:53.119 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(954629632.00)
+10-18 06:41:53.129 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 f8 99 63 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d b9 e7 c1 d9 7e
+10-18 06:41:53.132 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:53.773 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(665428160.00)
+10-18 06:41:53.780 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 83 a6 1e 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d de 24 e4 8c 7e
+10-18 06:41:53.781 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:54.117 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(739634560.00)
+10-18 06:41:54.117 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3
+10-18 06:41:54.128 32392 32413 D OpenControlBuds: DLCI 0x02: 03 2a 05 15 b6 57 30 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 4c af 1e 3d 7e
+10-18 06:41:54.133 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:54.836 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1183279488.00)
+10-18 06:41:54.845 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 d3 0e 8d 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d b2 d9 e7 f9 7e
+10-18 06:41:54.848 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:55.136 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(867567488.00)
+10-18 06:41:55.148 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 1e d8 4e 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 7d 5e e2 88 5a 7e
+10-18 06:41:55.152 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:55.847 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(401061568.00)
+10-18 06:41:55.855 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 b6 3d bf 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d ff 8a 7b f7 7e
+10-18 06:41:55.859 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:56.159 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(301817216.00)
+10-18 06:41:56.166 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 ec ea 8f 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 92 20 07 18 7e
+10-18 06:41:56.168 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:56.210 32392 32413 D OpenControlBuds: Experiment F4: sending 7e 00 3b 03 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 a8 01 00 aa 6b 47 83 7e (channel 19)
+10-18 06:41:56.212 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:41:56.217 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c138a2c00 (UnprojectedRipple) with handle 0xcb5cbf943f60
+10-18 06:41:56.254 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 22 03 a8 01 00 08 07 10 13 1d ea 71 de 7d 5e 25 f5 ad 21 28 80 04 52 c3 7e
+10-18 06:41:56.256 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=SubscribeToSettingsChanges status=OK
+--------- switch to events
+10-18 06:41:56.257 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 06:41:56.259 32392   865 D OpenControlBuds: Settings stream: field 21 not shown (not read by this app)
+--------- switch to system
+10-18 06:41:56.262 32392 32392 D InsetsController: hide(ime())
+10-18 06:41:56.263 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:28b95ee: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:41:56.266 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 08 01 10 13 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 4c 05 e6 d9 7e
+10-18 06:41:56.268 32392   865 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=WriteSetting status=OK
+10-18 06:41:56.271 32392   865 D OpenControlBuds: Experiment F4: RESPONSE OK
+10-18 06:41:56.780 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(413218944.00)
+10-18 06:41:56.789 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 c4 09 c5 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 49 f0 e8 5a 7e
+10-18 06:41:56.794 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:57.136 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(378694112.00)
+10-18 06:41:57.142 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 4f 93 b4 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d b1 87 6d af 7e
+10-18 06:41:57.147 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:57.813 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(435280192.00)
+10-18 06:41:57.821 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 ca 8e cf 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 4f ef 68 2d 7e
+10-18 06:41:57.826 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:58.119 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(736233216.00)
+10-18 06:41:58.120 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 1c 88 2f 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 62 69 62 82 7e
+10-18 06:41:58.122 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:58.850 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1219043840.00)
+10-18 06:41:58.856 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 44 52 91 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c1 10 0b 06 7e
+10-18 06:41:58.860 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:59.141 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(919371712.00)
+10-18 06:41:59.151 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 ff 31 5b 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d fd 81 db c8 7e
+10-18 06:41:59.152 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:59.831 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(870363968.00)
+10-18 06:41:59.832 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 cd 82 4f 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d f7 0a de 14 7e
+10-18 06:41:59.837 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:41:59.947 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@8ba6faf
+10-18 06:41:59.948 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@5c30fbc
+10-18 06:41:59.977 32392 32392 I Surface : Creating surface for consumer unnamed-32392-26 with slotExpansion=1 for 64 slots
+10-18 06:41:59.978 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#26(BLAST Consumer)26 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:41:59.978 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]8fedc77,event=applyTransactionOnDraw applyImmediately]
+10-18 06:41:59.994 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]8fedc77,event=reportDrawFinished seqId=1]
+10-18 06:42:00.019 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:42:00.051 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:42:00.054 32392 32392 D InsetsController: hide(ime())
+10-18 06:42:00.055 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:1c5ac0b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:42:00.143 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(758887168.00)
+10-18 06:42:00.144 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 cc ee 34 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d be 56 0a d0 7e
+10-18 06:42:00.154 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:00.819 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1804308736.00)
+10-18 06:42:00.833 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 22 17 d7 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 72 72 bb 3b 7e
+10-18 06:42:00.836 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:01.123 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(2048799744.00)
+10-18 06:42:01.131 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 68 3c f4 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d a1 63 ab 7d 5e 7e
+10-18 06:42:01.135 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:01.835 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(869881920.00)
+10-18 06:42:01.836 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 61 65 4f 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e1 cd f1 12 7e
+10-18 06:42:01.847 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:02.127 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(748946624.00)
+10-18 06:42:02.134 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 13 90 32 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 2e 67 31 6a 7e
+10-18 06:42:02.141 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:02.837 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(642552960.00)
+10-18 06:42:02.847 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 52 32 19 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e9 d5 df 7a 7e
+10-18 06:42:02.851 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:03.145 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(512988384.00)
+10-18 06:42:03.154 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 a7 9c f4 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 43 c2 60 19 7e
+10-18 06:42:03.159 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:03.854 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(448882464.00)
+10-18 06:42:03.867 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 39 0b d6 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c0 57 93 d5 7e
+10-18 06:42:03.869 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:04.156 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(545258816.00)
+10-18 06:42:04.166 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 f5 ff 01 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d b0 60 5a 40 7e
+10-18 06:42:04.171 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:04.644 32392 32410 D OpenControlBuds: Experiment F4: sending 7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 a8 01 01 7c 9d f1 d2 7e (channel 21)
+10-18 06:42:04.658 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:42:04.664 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c13954200 (UnprojectedRipple) with handle 0xcb5cbf8cb900
+10-18 06:42:04.669 32392 32392 W InputEventReceiver: Failed to send outbound event on channel '9b245df io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity'.  status=DEAD_OBJECT(-32)
+10-18 06:42:04.669 32392 32392 W InputEventReceiver: channel '9b245df io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity' ~ Could not send 0 outbound event(s), status:DEAD_OBJECT
+--------- switch to events
+10-18 06:42:04.696 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:42:04.701 32392 32392 D InsetsController: hide(ime())
+10-18 06:42:04.701 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:9f520f90: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:42:04.738 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 08 01 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 30 09 c0 0a 6d ff 7e
+10-18 06:42:04.741 32392 32417 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=WriteSetting status=FAILED_PRECONDITION
+10-18 06:42:04.745 32392 32417 D OpenControlBuds: Experiment F4: RESPONSE FAILED_PRECONDITION
+10-18 06:42:04.843 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1276474112.00)
+10-18 06:42:04.847 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 e6 2a 98 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d c0 aa 2d af 7e
+10-18 06:42:04.850 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:05.135 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1163353728.00)
+10-18 06:42:05.141 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 bd ae 8a 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 5f 4f 11 26 7e
+10-18 06:42:05.146 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:05.822 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1070585216.00)
+10-18 06:42:05.830 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 56 3f 7f 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 9e 45 19 09 7e
+10-18 06:42:05.835 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:06.121 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(821849536.00)
+10-18 06:42:06.134 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 b7 f1 43 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 5c 50 f9 17 7e
+10-18 06:42:06.138 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:06.813 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(880327808.00)
+10-18 06:42:06.822 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 f2 e2 51 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 8c d5 04 24 7e
+10-18 06:42:06.826 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:07.140 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1247643776.00)
+10-18 06:42:07.142 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 11 bb 94 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 20 d5 9f ec 7e
+10-18 06:42:07.147 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:07.159 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@b2f493b
+10-18 06:42:07.160 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@a145858
+10-18 06:42:07.185 32392 32392 I Surface : Creating surface for consumer unnamed-32392-27 with slotExpansion=1 for 64 slots
+10-18 06:42:07.186 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#27(BLAST Consumer)27 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:42:07.186 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]33dac83,event=applyTransactionOnDraw applyImmediately]
+10-18 06:42:07.201 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]33dac83,event=reportDrawFinished seqId=1]
+10-18 06:42:07.226 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:42:07.257 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:42:07.261 32392 32392 D InsetsController: hide(ime())
+10-18 06:42:07.261 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:b592d275: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:42:07.812 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1603468672.00)
+10-18 06:42:07.820 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 fb 25 bf 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d ee 89 61 5e 7e
+10-18 06:42:07.822 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:08.134 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1009473536.00)
+10-18 06:42:08.143 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 60 ad 70 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 08 f5 4d cb 7e
+10-18 06:42:08.148 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:08.826 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(954398976.00)
+10-18 06:42:08.835 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 e4 8b 63 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 42 86 30 60 7e
+10-18 06:42:08.837 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:09.164 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1115248512.00)
+10-18 06:42:09.176 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 af f2 84 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d b7 1a eb f2 7e
+10-18 06:42:09.179 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:09.885 32392 32417 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1978772224.00)
+10-18 06:42:09.895 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 56 e3 eb 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 43 85 71 02 7e
+10-18 06:42:09.898 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:10.142 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(2416527104.00)
+10-18 06:42:10.149 32392 32417 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 47 09 10 4f 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d ee cf b8 10 7e
+10-18 06:42:10.152 32392 32417 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:10.555 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 06:42:10.557 32392 32413 D OpenControlBuds: Experiment F4: sending 7e 00 4b 03 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 2a 05 22 03 a8 01 00 ea ad f6 a5 7e (channel 21)
+10-18 06:42:10.562 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c13870800 (UnprojectedRipple) with handle 0xcb5cbf8dd300
+--------- switch to events
+10-18 06:42:10.603 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:42:10.607 32392 32392 D InsetsController: hide(ime())
+10-18 06:42:10.607 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:6fd1583c: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:42:10.654 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 08 01 10 15 1d ea 71 de 7d 5e 25 1d 9a 8c 9e 30 09 c0 0a 6d ff 7e
+10-18 06:42:10.656 32392 32413 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=WriteSetting status=FAILED_PRECONDITION
+10-18 06:42:10.658 32392 32413 D OpenControlBuds: Experiment F4: RESPONSE FAILED_PRECONDITION
+10-18 06:42:10.859 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1591004928.00)
+10-18 06:42:10.868 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 9e a9 bd 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 83 a6 64 f5 7e
+10-18 06:42:10.870 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:11.164 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1205253376.00)
+10-18 06:42:11.172 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 6a ad 8f 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 50 09 b9 d4 7e
+10-18 06:42:11.175 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:11.849 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1167723008.00)
+10-18 06:42:11.858 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 14 34 8b 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 0d 58 60 54 7e
+10-18 06:42:11.862 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:12.158 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(925806848.00)
+10-18 06:42:12.169 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 c4 ba 5c 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 3c 31 16 b4 7e
+10-18 06:42:12.172 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:12.844 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(541811200.00)
+10-18 06:42:12.852 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 88 2d 01 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d e6 d1 f8 16 7e
+10-18 06:42:12.857 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:13.157 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(513463936.00)
+10-18 06:42:13.170 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 b4 d6 f4 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 94 f9 2f b2 7e
+10-18 06:42:13.173 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:13.863 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(732916800.00)
+10-18 06:42:13.871 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 b1 bd 2e 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d f1 63 16 a9 7e
+10-18 06:42:13.873 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:14.193 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1004870144.00)
+10-18 06:42:14.194 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 68 94 6f 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d fa 2d 95 ec 7e
+10-18 06:42:14.202 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:14.838 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(1763763200.00)
+10-18 06:42:14.849 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 c8 41 d2 4e 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d bb 0f e4 f7 7e
+10-18 06:42:14.852 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+--------- switch to events
+10-18 06:42:14.975 32392 32392 I wm_on_top_resumed_lost_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 06:42:14.980 32392 32392 I wm_on_paused_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=1ms]
+10-18 06:42:15.010 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 06:42:15.161 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1852247936.00)
+10-18 06:42:15.169 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 1f ce dc 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d e3 8c c5 38 7e
+10-18 06:42:15.172 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:15.838 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(2654327040.00)
+10-18 06:42:15.846 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 d1 35 1e 4f 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d dc b1 a2 5a 7e
+10-18 06:42:15.850 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:16.027 32392 32392 D VRI[MainActivity]: visibilityChanged oldVisibility=true newVisibility=false
+--------- switch to events
+10-18 06:42:16.043 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+--------- switch to main
+10-18 06:42:16.044 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@f8b0b5c
+--------- switch to events
+10-18 06:42:16.055 32392 32392 I wm_on_stop_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=1ms]
+--------- switch to main
+10-18 06:42:16.067 32392 32392 D BluetoothAdapter: A2DP disconnected
+10-18 06:42:16.067 32392 32392 D BluetoothAdapter: HEADSET disconnected
+10-18 06:42:16.067 32392 32392 D BluetoothAdapter: LE_AUDIO disconnected
+10-18 06:42:16.067 32392 32392 D OpenControlBuds: Android link observer stopped
+10-18 06:42:16.085 32392 32392 D OpenControlBuds: Android link: CONNECTED -> PENDING (trigger: profile 2 unbound)
+10-18 06:42:16.178 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(2469157376.00)
+10-18 06:42:16.187 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 5a 2c 13 4f 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 99 36 75 3e 7e
+10-18 06:42:16.192 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:16.859 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(2580906496.00)
+10-18 06:42:16.860 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 82 d5 19 4f 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 55 24 9a 10 7e
+10-18 06:42:16.862 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:17.164 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(2511385088.00)
+10-18 06:42:17.177 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 b2 b0 15 4f 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 64 e5 d0 0b 7e
+10-18 06:42:17.181 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:17.852 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 58 e5 56 4f 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 64 11 3c a1 7e
+10-18 06:42:17.853 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(3605354496.00)
+10-18 06:42:17.867 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:18.149 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(3394380288.00)
+10-18 06:42:18.150 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 22 52 4a 4f 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 82 fc fe d0 7e
+10-18 06:42:18.156 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:18.891 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(3291094528.00)
+10-18 06:42:18.897 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 1e 2a 44 4f 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d b5 5b 02 55 7e
+10-18 06:42:18.898 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:19.138 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(3304448768.00)
+10-18 06:42:19.139 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 e3 f5 44 4f 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 70 af 75 bf 7e
+10-18 06:42:19.145 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:19.883 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(3251335936.00)
+10-18 06:42:19.884 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 73 cb 41 4f 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d bd d6 f4 75 7e
+10-18 06:42:19.897 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:20.195 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1889961728.00)
+10-18 06:42:20.202 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 0e 4d e1 4e 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d cc f1 70 e8 7e
+10-18 06:42:20.208 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:20.881 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:20.891 32392 32413 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 7b 60 ff 1c 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 4e 45 83 51 7e
+10-18 06:42:20.895 32392 32413 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:21.171 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(58882.80)
+10-18 06:42:21.179 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 cc 02 66 47 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 61 58 f0 b5 7e
+10-18 06:42:21.182 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:21.849 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(62549.57)
+10-18 06:42:21.856 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 91 55 74 47 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 9e 6d b1 91 7e
+10-18 06:42:21.862 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:22.159 32392 32413 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(58015.95)
+10-18 06:42:22.160 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 f4 9f 62 47 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 45 af 16 ba 7e
+10-18 06:42:22.166 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:22.717 32392 32392 D ViewRootImpl: Skipping stats log for color mode
+--------- switch to events
+10-18 06:42:22.717 32392 32392 I wm_on_restart_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performRestart,time=0ms]
+10-18 06:42:22.717 32392 32392 I wm_on_start_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=0ms]
+--------- switch to main
+10-18 06:42:22.721 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@a70e189
+--------- switch to events
+10-18 06:42:22.722 32392 32392 I wm_on_resume_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=0ms]
+10-18 06:42:22.729 32392 32392 I wm_on_top_resumed_gained_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+--------- switch to main
+10-18 06:42:22.735 32392 32392 D OpenControlBuds: Android link observer started
+10-18 06:42:22.737 32392 32435 D BluetoothAdapter: A2DP connected
+10-18 06:42:22.747 32392 32418 D BluetoothAdapter: HEADSET connected
+10-18 06:42:22.747 32392 32567 D BluetoothAdapter: LE_AUDIO connected
+10-18 06:42:22.748 32392 32392 I Surface : Creating surface for consumer unnamed-32392-28 with slotExpansion=1 for 64 slots
+10-18 06:42:22.748 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#28(BLAST Consumer)28 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:42:22.748 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=applyTransactionOnDraw applyImmediately]
+10-18 06:42:22.749 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=Start draw after previous draw not visible]
+10-18 06:42:22.763 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=reportDrawFinished seqId=1]
+--------- switch to main
+10-18 06:42:22.769 32392 32392 D OpenControlBuds: Android link: PENDING -> CONNECTED (trigger: profile 2 bound) via profiles [2]
+--------- switch to events
+10-18 06:42:22.807 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:42:22.810 32392 32392 D InsetsController: hide(ime())
+10-18 06:42:22.810 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:da7058e9: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:42:22.848 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(63360.05)
+10-18 06:42:22.855 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 0c 80 77 47 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d f3 77 2f cf 7e
+10-18 06:42:22.856 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:23.152 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:23.157 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 01 f5 9f 22 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d e0 d3 4e 83 7e
+10-18 06:42:23.159 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:23.897 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(59689.28)
+10-18 06:42:23.899 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 47 29 69 47 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 07 c1 49 bb 7e
+10-18 06:42:23.900 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:24.201 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(61396.67)
+10-18 06:42:24.211 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 ac d4 6f 47 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 86 1e ef d8 7e
+10-18 06:42:24.214 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+--------- switch to events
+10-18 06:42:24.446 32392 32392 I wm_on_top_resumed_lost_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 06:42:24.447 32392 32392 I wm_on_paused_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+10-18 06:42:24.486 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 06:42:24.882 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 00 00 00 00 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1a fa 3f 1a 7e
+10-18 06:42:24.883 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:24.883 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:24.994 32392 32392 D VRI[MainActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-18 06:42:25.009 32392 32419 D HWUI    : endAllActiveAnimators on 0xcc8c13897800 (UnprojectedRipple) with handle 0xcb5cbf79b9f0
+--------- switch to events
+10-18 06:42:25.011 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+--------- switch to main
+10-18 06:42:25.152 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(61596.24)
+10-18 06:42:25.153 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 3e 9c 70 47 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 52 bc 68 8e 7e
+10-18 06:42:25.154 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:25.893 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(62467.31)
+10-18 06:42:25.894 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 4f 03 74 47 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 6f fe fa 5f 7e
+10-18 06:42:25.895 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:26.168 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 cd 4c 13 23 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 6d 3d bd 2b 7e
+10-18 06:42:26.168 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:26.169 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:26.659 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@f8b0b5c
+--------- switch to events
+10-18 06:42:26.669 32392 32392 I wm_on_stop_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=1ms]
+--------- switch to main
+10-18 06:42:26.681 32392 32392 D BluetoothAdapter: A2DP disconnected
+10-18 06:42:26.681 32392 32392 D BluetoothAdapter: HEADSET disconnected
+10-18 06:42:26.681 32392 32392 D BluetoothAdapter: LE_AUDIO disconnected
+10-18 06:42:26.681 32392 32392 D OpenControlBuds: Android link observer stopped
+10-18 06:42:26.699 32392 32392 D OpenControlBuds: Android link: CONNECTED -> PENDING (trigger: profile 2 unbound)
+10-18 06:42:26.868 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:26.869 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 00 00 00 00 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1a fa 3f 1a 7e
+10-18 06:42:26.870 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:27.196 32392   865 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:27.204 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:27.210 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:27.902 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:27.910 32392   865 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 00 00 00 00 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1a fa 3f 1a 7e
+10-18 06:42:27.914 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:28.047 32392 32392 D ViewRootImpl: Skipping stats log for color mode
+--------- switch to events
+10-18 06:42:28.047 32392 32392 I wm_on_restart_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performRestart,time=0ms]
+10-18 06:42:28.048 32392 32392 I wm_on_start_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=0ms]
+--------- switch to main
+10-18 06:42:28.052 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@a70e189
+--------- switch to events
+10-18 06:42:28.059 32392 32392 I wm_on_activity_result_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=ACTIVITY_RESULT]
+10-18 06:42:28.059 32392 32392 I wm_on_resume_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=0ms]
+10-18 06:42:28.067 32392 32392 I wm_on_top_resumed_gained_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+--------- switch to main
+10-18 06:42:28.072 32392 32392 D OpenControlBuds: Android link observer started
+10-18 06:42:28.076 32392 32435 D BluetoothAdapter: HEADSET connected
+10-18 06:42:28.076 32392 32567 D BluetoothAdapter: LE_AUDIO connected
+10-18 06:42:28.077 32392 32418 D BluetoothAdapter: A2DP connected
+10-18 06:42:28.085 32392 32392 I Surface : Creating surface for consumer unnamed-32392-29 with slotExpansion=1 for 64 slots
+10-18 06:42:28.086 32392 32392 I Surface : Creating surface for consumer VRI[MainActivity]#29(BLAST Consumer)29 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 06:42:28.086 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=applyTransactionOnDraw applyImmediately]
+10-18 06:42:28.087 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=Start draw after previous draw not visible]
+10-18 06:42:28.098 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=reportDrawFinished seqId=1]
+--------- switch to main
+10-18 06:42:28.103 32392 32392 D OpenControlBuds: Android link: PENDING -> CONNECTED (trigger: profile 1 bound) via profiles [1]
+--------- switch to events
+10-18 06:42:28.131 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 06:42:28.133 32392 32392 D InsetsController: hide(ime())
+10-18 06:42:28.134 32392 32392 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds.experiment:2c6bac88: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 06:42:28.172 32392   865 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:28.173 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:28.173 32392   865 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:28.177 32392 32410 D OpenControlBuds: Debug log exported (2949 lines)
+10-18 06:42:28.869 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(3799.44)
+10-18 06:42:28.871 32392 32408 D OpenControlBuds: Experiment F: 120 live-stream packets in the last 60 s
+10-18 06:42:28.871 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 16 77 6d 45 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 97 a2 b1 b7 7e
+10-18 06:42:28.873 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:29.184 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(3658.95)
+10-18 06:42:29.197 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 20 af 64 45 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 48 c1 1e 49 7e
+10-18 06:42:29.201 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:29.873 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:29.880 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 00 00 00 00 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1a fa 3f 1a 7e
+10-18 06:42:29.885 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:30.191 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:30.193 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:30.194 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:30.901 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:30.910 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 00 00 00 00 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1a fa 3f 1a 7e
+10-18 06:42:30.914 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:31.217 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:31.221 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:31.224 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+--------- switch to events
+10-18 06:42:31.622 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 06:42:33.218 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:33.221 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:33.222 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+--------- switch to events
+10-18 06:42:33.270 32392 32392 I wm_on_top_resumed_lost_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 06:42:33.272 32392 32392 I wm_on_paused_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=1ms]
+10-18 06:42:33.284 32392 32392 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 06:42:33.305 32392 32392 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds.experiment/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 06:42:33.851 32392 32392 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@f8b0b5c
+--------- switch to events
+10-18 06:42:33.863 32392 32392 I wm_on_stop_called: [Token=75076865,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=1ms]
+--------- switch to main
+10-18 06:42:33.877 32392 32392 D BluetoothAdapter: HEADSET disconnected
+10-18 06:42:33.877 32392 32392 D BluetoothAdapter: LE_AUDIO disconnected
+10-18 06:42:33.877 32392 32392 D BluetoothAdapter: A2DP disconnected
+10-18 06:42:33.877 32392 32392 D OpenControlBuds: Android link observer stopped
+--------- switch to events
+10-18 06:42:33.889 32392 32392 I viewroot_draw_event: [window=VRI[MainActivity]4240227,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+--------- switch to main
+10-18 06:42:33.890 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(4325.82)
+10-18 06:42:33.895 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 90 2e 87 45 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 98 5a 08 ad 7e
+10-18 06:42:33.897 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:33.901 32392 32392 D OpenControlBuds: Android link: CONNECTED -> PENDING (trigger: profile 1 unbound)
+10-18 06:42:34.201 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(3714.48)
+10-18 06:42:34.202 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 ab 27 68 45 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 19 03 1c e1 7e
+10-18 06:42:34.205 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:34.889 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(188319584.00)
+10-18 06:42:34.889 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 76 98 33 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d bc 37 c3 78 7e
+10-18 06:42:34.892 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:35.192 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(310458656.00)
+10-18 06:42:35.198 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 c9 09 94 4d 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 04 2b b4 87 7e
+10-18 06:42:35.204 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:35.917 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(185109600.00)
+10-18 06:42:35.922 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 c6 88 30 4d 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 9a 18 d4 9b 7e
+10-18 06:42:35.926 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:36.194 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(47611532.00)
+10-18 06:42:36.206 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 a3 9f 35 4c 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d b6 1f 42 24 7e
+10-18 06:42:36.210 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:36.922 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(80581.71)
+10-18 06:42:36.935 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 db 62 9d 47 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 10 61 1e 98 7e
+10-18 06:42:36.940 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:37.201 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(1324.55)
+10-18 06:42:37.202 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 7a 91 a5 44 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d d9 2a 73 d2 7e
+10-18 06:42:37.205 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:37.918 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:37.919 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 00 00 00 00 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1a fa 3f 1a 7e
+10-18 06:42:37.924 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:38.197 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:38.209 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:38.217 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:38.928 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:38.939 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 00 00 00 00 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1a fa 3f 1a 7e
+10-18 06:42:38.946 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:41.208 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:41.215 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:41.218 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:41.941 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(4567.60)
+10-18 06:42:41.948 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 d4 bc 8e 45 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 72 31 b7 b8 7e
+10-18 06:42:41.951 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:42.202 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(3699.68)
+10-18 06:42:42.210 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 dd 3a 67 45 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 81 76 0d ad 7e
+10-18 06:42:42.213 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:42.916 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:42.922 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 22 1a 4a 14 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 77 d9 03 73 7e
+10-18 06:42:42.925 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:43.239 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:43.247 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:43.252 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:43.927 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:43.928 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 00 00 00 00 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1a fa 3f 1a 7e
+10-18 06:42:43.939 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:44.192 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:44.194 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:44.195 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:44.938 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:44.938 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 00 00 00 00 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 1a fa 3f 1a 7e
+10-18 06:42:44.942 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:45.239 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:45.246 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 00 00 00 00 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 49 b7 f9 52 7e
+10-18 06:42:45.251 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:45.913 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(30978724.00)
+10-18 06:42:45.924 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 52 59 ec 4b 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 8d ab f5 76 7e
+10-18 06:42:45.927 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:46.208 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(32337844.00)
+10-18 06:42:46.224 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 da b7 f6 4b 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 91 4e d0 1d 7e
+10-18 06:42:46.232 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:46.948 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(2880015.00)
+10-18 06:42:46.965 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 3c c8 2f 4a 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 96 9c d8 40 7e
+10-18 06:42:46.973 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:47.217 32392 32408 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(242870.31)
+10-18 06:42:47.230 32392 32410 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 94 2d 6d 48 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d 1a 33 fd d0 7e
+10-18 06:42:47.233 32392 32410 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:47.933 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=21 SubscribeToLiveDb OK 2:f32(29.50)
+10-18 06:42:47.940 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 05 15 dd 06 ec 41 08 07 10 15 1d 05 d8 d5 73 25 e2 b6 93 4d 2e 5b 7b c5 7e
+10-18 06:42:47.944 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=0x73d5d805/0x4d93b6e2 status=OK
+10-18 06:42:48.220 32392 32410 D OpenControlBuds: Experiment F: SERVER_STREAM ch=19 SubscribeToLiveDb OK 2:f32(0.00)
+10-18 06:42:48.225 32392 32408 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 15 b7 fd 8c 27 08 07 10 13 1d 05 d8 d5 73 25 e2 b6 93 4d b5 16 c4 4a 7e
+10-18 06:42:48.228 32392 32408 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=0x73d5d805/0x4d93b6e2 status=OK

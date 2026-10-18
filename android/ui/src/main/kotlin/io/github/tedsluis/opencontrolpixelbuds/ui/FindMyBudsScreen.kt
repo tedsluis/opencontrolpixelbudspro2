@@ -43,12 +43,10 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 
 /**
- * Find My Buds screen (ARCHITECTURE.md §2.4/§6). **Left/Right only, by
- * design** — DECISIONS.md ADR-027 makes Case ring and "ring both
- * simultaneously" a deliberate v1 exclusion, so this screen has no
- * disabled-looking "Case"/"Both" affordance that would imply a capability this
- * project does not provide. (ADR-027's 2026-09-24 Update: the spec's `0x03`
- * "ring both" exists but is untested here; offering it needs its own ADR.)
+ * Find My Buds screen (ARCHITECTURE.md §2.4/§6): Ring Left, Ring Right and — since DECISIONS.md ADR-070 (`ai-sessions/0098`, superseding ADR-027 for
+ * "both") — Ring both; the Case stays out of scope and has no affordance. **DECISIONS.md ADR-069:** the notice follows the Buds' own ringing status, and a
+ * stop they report without the app's Stop says "Stopped on the bud at …" ([ringStoppedOnBudAt]). **ADR-070 item 1:** one caption above the buttons says to
+ * take the Buds out of the ears first (none existed before 1.4.0; it covers all three rings).
  * **`ai-sessions/0057`:** tonal Ring buttons and an outlined Stop; the ringing notice stays visible, the channel explanation is in the card's (i).
  */
 @Composable
@@ -59,6 +57,7 @@ fun FindMyBudsScreen(
     onRing: (RingTarget) -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
+    ringStoppedOnBudAt: Long? = null,
 ) {
     val ready = connectionState.isReady()
     Surface(modifier = modifier.fillMaxSize()) {
@@ -73,9 +72,12 @@ fun FindMyBudsScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     CardTitle("Find My Buds", listOf(MESSAGE_STREAM_HINT_TEXT))
                     RingingNotice(ringing, ready)
+                    if (ringing == null) ringStoppedOnBudAt?.let { Text(ringStoppedOnBudText(it), style = MaterialTheme.typography.bodyMedium) }
+                    Text(RING_EARS_WARNING_TEXT, style = MaterialTheme.typography.bodyMedium)
                     val buttonModifier = Modifier.fillMaxWidth().height(56.dp)
                     FilledTonalButton(onClick = { onRing(RingTarget.LEFT) }, enabled = ready, modifier = buttonModifier) { Text("Ring Left") }
                     FilledTonalButton(onClick = { onRing(RingTarget.RIGHT) }, enabled = ready, modifier = buttonModifier) { Text("Ring Right") }
+                    FilledTonalButton(onClick = { onRing(RingTarget.BOTH) }, enabled = ready, modifier = buttonModifier) { Text("Ring both") }
                     OutlinedButton(onClick = onStop, enabled = ready, modifier = buttonModifier) { Text("Stop") }
                 }
             }
@@ -95,10 +97,21 @@ internal fun RingingNotice(ringing: RingNotice?, sessionReady: Boolean) {
 }
 
 internal fun ringingNoticeText(ringing: RingNotice, sessionReady: Boolean): String {
-    val side = if (ringing.target == RingTarget.LEFT) "Left" else "Right"
+    val which = when (ringing.target) {
+        RingTarget.LEFT -> "the Left earbud"
+        RingTarget.RIGHT -> "the Right earbud"
+        RingTarget.BOTH -> "both earbuds"
+    }
     return when {
-        !sessionReady -> "A ring was started on the $side earbud — reconnect and tap Stop to end it."
-        ringing.fromEarlierSession -> "A ring was started on the $side earbud before the app reconnected — it may still be ringing. Tap Stop to end it."
-        else -> "Ringing: $side earbud — tap Stop to end it."
+        !sessionReady -> "A ring was started on $which — reconnect and tap Stop to end it."
+        ringing.fromEarlierSession -> "A ring was started on $which before the app reconnected — it may still be ringing. Tap Stop to end it."
+        // The 1.3.x wording without "the" ("Ringing: Right earbud"); both: "Ringing: Both earbuds".
+        else -> "Ringing: ${which.removePrefix("the ").replaceFirstChar { it.uppercase() }} — tap Stop to end it."
     }
 }
+
+/** DECISIONS.md ADR-069: the Buds reported the ringing stopped without the app's Stop — touched on the bud, or their own time-out. */
+internal fun ringStoppedOnBudText(at: Long): String = "Stopped on the bud" + (formatUpdatedAt(at)?.let { " at $it" } ?: "") + "."
+
+/** DECISIONS.md ADR-070 item 1: the ring is loud — said once, above the three Ring buttons. */
+internal const val RING_EARS_WARNING_TEXT: String = "Take the Buds out of your ears before ringing — the sound is loud."

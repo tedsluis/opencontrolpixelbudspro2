@@ -39,21 +39,36 @@ class ProfileProxies<P : Any> {
     /** The proxies bound now, by profile — what an evaluation reads. */
     val bound: Map<Int, P> get() = current
 
-    /** The listener's `onServiceConnected`. */
+    /** Set by [closeAll]: a proxy the stack delivers after it is closed at once with it (`ai-sessions/0068` A68-APP-13, fixed `ai-sessions/0098`). */
+    private var closedWith: ((profile: Int, proxy: P) -> Unit)? = null
+
+    /** The listener's `onServiceConnected` — after [closeAll] the late proxy is closed instead of kept (it was never closed before 1.4.0). */
     fun onBound(profile: Int, proxy: P) {
-        current[profile] = proxy
-        if (obtained.none { it.second === proxy }) obtained += profile to proxy
+        val close = synchronized(this) {
+            closedWith ?: run {
+                current[profile] = proxy
+                if (obtained.none { it.second === proxy }) obtained += profile to proxy
+                null
+            }
+        }
+        close?.invoke(profile, proxy)
     }
 
     /** The listener's `onServiceDisconnected`: no longer readable, still to be closed. */
-    fun onUnbound(profile: Int) {
+    fun onUnbound(profile: Int) = synchronized(this) {
         current.remove(profile)
+        Unit
     }
 
     /** Closes every proxy obtained — bound or not — exactly once, then forgets them all. */
     fun closeAll(close: (profile: Int, proxy: P) -> Unit) {
-        obtained.forEach { (profile, proxy) -> close(profile, proxy) }
-        obtained.clear()
-        current.clear()
+        val toClose = synchronized(this) {
+            closedWith = close
+            obtained.toList().also {
+                obtained.clear()
+                current.clear()
+            }
+        }
+        toClose.forEach { (profile, proxy) -> close(profile, proxy) }
     }
 }

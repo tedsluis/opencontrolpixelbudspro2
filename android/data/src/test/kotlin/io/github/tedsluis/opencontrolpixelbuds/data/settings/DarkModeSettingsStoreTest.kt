@@ -25,8 +25,10 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.tedsluis.opencontrolpixelbuds.domain.DarkMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -58,7 +60,9 @@ class DarkModeSettingsStoreTest {
             prefs[holdReclaimKey] = "RECLAIM" // 1.2.2's "This phone has Google Play services"
             prefs[darkModeKey] = "ON"
         }
-        first.cancel() // DataStore allows one active instance per file
+        // DataStore allows one active instance per file; wait until the first has really closed — a plain cancel() raced with the second create
+        // ("multiple DataStores active", CI of `ai-sessions/0096`, where three test variants ran at once).
+        first.coroutineContext[Job]!!.cancelAndJoin()
 
         val second = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val dataStore = PreferenceDataStoreFactory.create(scope = second) { file }

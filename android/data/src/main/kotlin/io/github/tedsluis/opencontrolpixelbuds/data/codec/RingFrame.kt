@@ -33,11 +33,9 @@ object RingMessageStream {
 }
 
 /**
- * One decoded/encodable Find My Buds Ring frame (Left/Right only —
- * ARCHITECTURE.md §5a/DECISIONS.md ADR-027: Case and "ring both" are out of
- * v1 scope, so this type has no representation for them at all). ADR-027's
- * 2026-09-24 Update: the Device Action spec does define `0x03` = ring both,
- * untested on this firmware; sending it needs its own ADR (`FIND-004`).
+ * One decoded/encodable Find My Buds Ring frame: Left, Right and — since DECISIONS.md ADR-070 (`ai-sessions/0098`, `CAP-078` §5: `04 01 00 01 03`
+ * ACKed and reported as status `03`) — both; the Case stays out of scope. Inbound, the same frame is the Buds' ringing status (ADR-069, `CAP-078` 7775/7816):
+ * [Start] = ringing that side, [Stop] = stopped.
  */
 sealed class RingFrame {
     /** Seeker -> Provider. Modeled on `CAP-025` frames 2040/2131 (Start). */

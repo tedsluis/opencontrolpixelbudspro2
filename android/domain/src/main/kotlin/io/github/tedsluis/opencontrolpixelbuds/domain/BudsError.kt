@@ -78,10 +78,17 @@ sealed class BudsError {
     data class CommandRejected(val reasonCode: Int, val detail: String) : BudsError()
 
     /**
-     * An ANC `Set` was not sent because the Buds' `Notify ANC state` — the one the tap's own claim asked for (`ai-sessions/0054` I-1) — reported no
-     * switchable mode (Settable `0x00`); they NAK a `Set` then (reason `0x02`, `CAP-062` 10/10; DECISIONS.md ADR-049).
+     * The Buds allow no noise-control change right now — usually no bud is worn. Since DECISIONS.md ADR-067 (`ai-sessions/0098`): their `RESPONSE` to the
+     * app's `WriteSetting 4:{13:n}` carried status `FAILED_PRECONDITION` (`CAP-078` H 6775 → 6777, 4 of 4 with no bud worn), or a Refresh read setting 13 = 0.
+     * (Before 1.4.0: the Message Stream `Notify` reported Settable `0x00` — ADR-049.)
      */
     data object AncNotAllowed : BudsError()
+
+    /**
+     * DECISIONS.md ADR-067 item 3 and its Note of 2026-10-17: [mode] is not ticked in the press-and-hold mode list (field 12, ADR-046), and the app switches only
+     * to a ticked mode — what the Buds answer otherwise is still untested. Nothing was sent.
+     */
+    data class AncModeNotInHoldList(val mode: AncMode) : BudsError()
 
     /**
      * *Refresh battery* reached the Message Stream but the Buds sent no "Battery updated" (`03 03`) frame on that claim (`ai-sessions/0052`): the

@@ -16,6 +16,13 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 *(The finished release items of 1.2.2 and 1.3.0 were deleted 2026-10-15 by `ai-sessions/0094` — `ai-sessions/0093` A93-HK-01; they are in `CHANGELOG.md`,
 `RELEASING.md` §13 and the session RESULTs.)*
 - 1.3.1 published 2026-10-16 (`v1.3.1` on `7aa524b`, `RELEASING.md` §13). Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25; from `CAP-077`: §2.
+- **The Buds' state after `CAP-079` (2026-10-18, `ai-sessions/0099`):** all four press-and-hold modes ticked again (part 4, 08:34:50), in-ear detection on, EQ
+  `[0, 2, 4, 0, −1]`, balance Right 1 (unchanged since `CAP-078`), **setting 21 "Volume level notifications" written off last (channel 19, 08:41:56)**, the
+  Buds' clock set by `SetWallclock` (08:36:17) — restore balance/EQ/21 if wanted (**M**). Also: the phone's Dosimeter live stream may still be subscribed (the
+  subscription outlives the session, `CAP-079-FINDINGS.md` §11).
+- **The Buds' state after `CAP-078` (2026-10-17, `ai-sessions/0097`):** EQ preset `[0, 2, 4, 0, −1]` (upper treble … low bass; set 16:30:26 and still so in user 0,
+  film s2 79–86), Volume EQ on, **balance Right 1** (was Centre), mono off, in-ear detection on (off 16:51:01 – 16:52:31), all four press-and-hold modes, every
+  switch as before — restore balance and EQ if wanted (**M**).
 - **The Buds' state after `CAP-077` (2026-10-16):** EQ `[−1, 0, 4, 2, 5.87]` (Upper treble raised in the run), **in-ear detection on again** (07:01:07), all four
   press-and-hold modes, balance Centre, every switch as before the run.
 - The Buds' state after `CAP-074`/`CAP-075`: a custom EQ `[−3.5, 0.5, 1.0, −1.0, 2.5]`, all four press-and-hold modes, balance Centre (`CAP-074-FINDINGS.md` §0;
@@ -65,6 +72,7 @@ with the hold's untested branches below. **Next app run:** none planned — thes
 
 | Capture | Group | What | Phone / app |
 |---|---|---|---|
+| (next) | — | After `ai-sessions/0100`: a short run of the 1.4.0 fixes — Ring and touch after > 20 s, a ring left to the Buds' own stop (BO-10, BO-13), TalkBack (BO-14, never run), a Disconnect during a Connect (BO-16, not hit), `WELL-002` with a sound-level meter in frame (P7 not done in `CAP-079`) | Pixel 9a (users 10 and 0) |
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
 | `CAP-030` | Q #19–20 | Loud Noise Protection / Adaptive Audio (firmware naming never reconciled with `release_5.203`, `PROTOCOL.md` §0.1) | Pixel 7a, official app |
 
@@ -170,9 +178,15 @@ Open questions (each with where it is described):
   of setting 13, although the app's own ANC row writes only that (`ai-sessions/0073` §4.9) — in the next official-app capture, film which
   control is tapped (the app's row or the Play-services/Settings one). 🟡 what the Buds mean by the "primary" bud of the announcement (field 6;
   the app-side routing is answered, `PROTOCOL.md` §2.2a note of 2026-10-06).
-- [ ] **Experiment (`ai-sessions/0090` E-01, needs its own approval — a new write):** `WriteSetting 4:{13:n}` from a debug build — n = 1…4 with the
-  `RESPONSE` status, the `08 13` Notify on DLCI 0x04 (to whom, if Play holds it), the audible change; variants with one bud worn and with Settable `00`. A
-  positive result needs a `PROTOCOL.md` entry first and its own ADR (like ADR-045). Not on any wire yet (0 in 96 logs).
+- [ ] **1.4.0 after `CAP-079` (`ai-sessions/0099`, 2026-10-18):** verdict "release with Known issues" (the maintainer, chat 2026-10-18) — the release steps
+  (`RELEASING.md` B–D) are the maintainer's. **`ai-sessions/0100` (FEATURE, agreed in chat 2026-10-18):** (1) the ring hold — 20 s is shorter than the Buds'
+  ring (≈ 63 s untouched; a touch after 18.6 s not heard), an ADR-069 Update; (2) clear the red "don't allow" line when a push makes the mode settable; (3) the three
+  1.3.x texts (ANC "checks again first", battery (i) "Message Stream", Find (i) "briefly claims"); (4) the experiment's `SetWallclock` answer is never an
+  `RpcResult` (`CodecRouter.kt:328`) — F1 reports a time-out; tests with `CAP-079` bytes; a skeleton for the short run (§3).
+- 🔴/🟡 **From `CAP-079` (`CAP-079-FINDINGS.md` §18):** the ACL connection timeout (0x08) at a Disconnect tap (07:26:49); the Buds' default ring time-out (one
+  sample ≈ 60 s) and whether a timeout byte is honoured; whether a touch stops the ring at once; what the live-dB value is (no meter) and why one bud's day index
+  moved at F1; why field 21 is refused on the non-hosting core; how long a stream subscription survives without a client (the app never cancels its
+  subscriptions — a design question for ADR-060 and for the settings stream).
 - [ ] **Experiment (`ai-sessions/0090` E-12):** a read-only `SubscribeToOobeActions` **without** OOBE mode (setting 6 is never written, `ARCHITECTURE.md` §5a
   rule) — do per-bud `LEFT_ON_HEAD` … `RIGHT_OFF_HEAD` events (`qhp` 10–13) arrive? Would refine ADR-059's "probably worn" (never per bud).
 - Idea, low priority (`ai-sessions/0090` E-17): an explicit `GetSoftwareInfo` as a fallback after `MAESTRO_ANNOUNCE_WAIT_MS` — one MAESTRO open in 523 stayed
@@ -192,9 +206,29 @@ Open questions (each with where it is described):
   `ai-sessions/0082` (item 4): the phone decides (the official app's worker, 67 % of a 7-day constant, once per 7 days; field 21 only gates it; the Buds push
   nothing) — draft ADR-060 (proposed, not accepted) and the 🟡 that block it; a capture with a sound-level meter (`WELL-002`, no Group yet) comes first.
 
+- [ ] **After 1.4.0 is published — a research session (category CROSSCHECK, a new prompt) on per-bud in-ear detection: how does the official app know
+  which bud is in an ear?** (The maintainer's choice in chat 2026-10-17: research first, after the 1.4.0 release; not in round 2.) The official app shows at
+  once which bud goes into or out of an ear; OpenControl shows only "probably worn" (ADR-059). Known so far: `SubscribeToOobeActions` reports `10`/`12`
+  (`LEFT_ON_HEAD`/`RIGHT_ON_HEAD`) at subscribe and ended with status 14 after 15.7 s, no later events (`CAP-078` §6, one trial; setting 6 / OOBE mode never read);
+  the official app never sent that request in 96 logs, so it is probably not its source; GSND CONTROL Code `0x05` on DLCI 0x08 (Play services' channel) carries a
+  count — `03` none, `04` one, `06` two worn (🟡, `CAP-069` §8), not which bud; the runtime-info stream has undecoded fields (field 3, 7.3 — `PROTOCOL.md` §4.5 🔴);
+  `gvj` handles `qhp` events incl. `LEFT_ON_HEAD` (`REVERSE_ENGINEERING.md` ≈ line 1081). The session's tasks: (1) in the APK, find the screen that shows
+  in-ear per bud (strings, the device image, its view model) and trace its data back to the source — a runtime-info field, a `qhr` setting,
+  `SubscribeToOobeActions`, or data from Play services; (2) when the app calls `SubscribeToOobeActions` (only in the OOBE tutorial, or also otherwise);
+  (3) over every official-app capture with a bud in/out (film or speech, the charging flags, GSND `0x05`), test each candidate field per bud; (4) a proposal:
+  the mechanism OpenControl could use, what is already 🟢, and the experiment that settles the rest (e.g. a read-only `ReadSetting 4:6`, re-subscribing to
+  `SubscribeToOobeActions` per wear state, a camera on the ears) — proposals only, no app code, no send, no FACT or ADR without the maintainer (`AGENTS.md` §6).
+  A feature "which bud is in an ear" would then need an ADR amending or superseding ADR-059.
+- [ ] **From `CAP-078` (`ai-sessions/0097`, 2026-10-17) — open:** the audibility of the `WriteSetting 4:{13:n}` switches (the speech was timed, not transcribed);
+  `FAILED_PRECONDITION` in conditions other than "no bud worn"; why `SubscribeToOobeActions` ended with status 14 after 15.7 s; both buds sounding on Ring both (a
+  second microphone or the maintainer's ear); the user-0 ACL end `0x13` at 17:09:23 before the app started; what updated the release app at 2026-10-16 14:56:46;
+  the three-pushes-per-write question (`PROTOCOL.md` §6) now also for field 13 on both channels (`CAP-078-FINDINGS.md` §3.5). Housekeeping: the `CAP-077` logcat
+  extract still carries 484 unmasked MAC addresses (`CAP-078`'s are masked).
+
 ## 5. App: later work
 
-- [ ] **The noise-control channel in the Play user — after 1.3.0 (ADR-065: the re-claim is gone, the holds no longer depend on the channel):** what remains is
+- [ ] **The noise-control channel in the Play user — after 1.3.0 (ADR-065: the re-claim is gone, the holds no longer depend on the channel):** *since 1.4.0
+      (ADR-067) a mode change does not use the shared channel; what follows applies to Find only.* What remains is
       the per-tap collision with Play's claim (`CAP-075-FINDINGS.md` §5; 1.3.0's known issue) — P3 a shorter attempt-2 latency for the on-demand channel (§9:
       attempt 2 0.7–1.0 s after attempt 1's refusal) is still open (**M**). Whether repeated collisions drive Play's "Retry times remaining" to 0 and what Play
       does then stays ❓ (§4). **`CAP-076` (§5.2 of its findings):** 13 taps with Play present in 12 claims — 8 refused at attempt 1 and done at attempt 2 (0.87–1.11 s later), 2 cut in their linger, 1 cut before the `Get`'s answer (a toast), 1 after it (silent, P2 below); Play's counter went 5 → 4 once (06:46:28) and back.
@@ -203,11 +237,11 @@ Open questions (each with where it is described):
       snapshot's `Notify` came first in 12 of 12 sessions — §6.2) (**S**); P2 a tile tap whose claim closes after the `Get`'s answer and before its `Set`
       reports a failure (§5.3; a `Set` wait that ignores a `Notify` received before the `Set` was written; a test with the delay) (**S–M**); P3 log a same-mode
       push as "unchanged" (§4.4) (**XS**); P4 the two packets per change with both buds out — one Connect on a fresh ACL, then the official app on the same
-      ACL (§4.3, a capture); P5 the shorter attempt-2 latency (above); P6 a mode line on the Connection tab (§4.2) (**S**). The seven CloseGuard lines of
+      ACL (§4.3, a capture); P5 the shorter attempt-2 latency (above — **kept at 400 ms**, the maintainer's choice in chat 2026-10-17, `ai-sessions/0098`: attempt 2 succeeded 8 of 8
+      in `CAP-078`; P6 built in 1.4.0). The seven CloseGuard lines of
       `CAP-076` A1 (06:47:10/44, §0) — which sockets (❓).
-- [ ] **After `CAP-077` (`ai-sessions/0095`, `CAP-077-FINDINGS.md` §14; the maintainer's choice in chat 2026-10-16: no FEATURE prompt now):** P1 log the EQ write like
-      the other writes ("EQ written (channel N)" — today only the pw_rpc summary) (**XS**); P2 the tile's one- or two-frame "unavailable" look right after an update
-      (§5.3, `AncTileService`) (**XS–S**); ❓ the SIGQUIT the app got at 07:10:55 after the film — which tool sent it.
+- [ ] **After `CAP-077` (`ai-sessions/0095`, `CAP-077-FINDINGS.md` §14):** P1 and P2 built in 1.4.0 (`ai-sessions/0098`); still ❓ the SIGQUIT the app got at
+      07:10:55 after the film — which tool sent it.
 - [ ] **After the toolchain upgrade of `ai-sessions/0078`** (Gradle 9.7.1, AGP 9.3.3, Kotlin 2.4.20, BOM 2026.09.00, compileSdk 37):
       (a) hardware-tested in `CAP-071` (`ai-sessions/0080`): no behaviour change found — the same reads, request bytes, answers, re-opens and screens as 1.1.0;
       (b) **M** — raising `targetSdk` (lint `OldTargetApi` now reports 34) is its own session with a hardware run: Android 15 enforces edge-to-edge,
@@ -229,7 +263,9 @@ Open questions (each with where it is described):
 - [ ] `CAP-064` §10: whether the stale "100 %⚡" (I-4a) is drawn dimmed — a `:ui` Robolectric screenshot test settles it without hardware.
 - [ ] **Candidate for a later release (M; "1.3.0 candidate" until 2026-10-15, `ai-sessions/0094`):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
-      field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢.
+      field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢. Since `ai-sessions/0098`
+      the experiment build's card sends the four requests one tap each (F1–F4, approved in chat 2026-10-17); `CAP-079` ran them (`ai-sessions/0099`, ADR-060 Update
+      of 2026-10-18: (iv), (v) settled; (i) still open — no meter filmed).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.
@@ -240,19 +276,14 @@ Open questions (each with where it is described):
       readable but not shown — 11, 15, 27, 28 — are built in 1.1.0 with ADR-053, ADR-055, ADR-054, as is 29 with ADR-052.)
 - [ ] Safe Mode: grey out Sound/Controls (offered in `ai-sessions/0057`, not chosen) — revisit only if a Safe-Mode run shows the per-tap refusal
       confuses.
-- [ ] From `ai-sessions/0068` `A68-APP-13`, not changed in 1.0.1 — each needs a test that forces the interleaving, which the present test set-up
-      cannot produce (no `BluetoothDevice` in unit tests): `disconnect()` runs outside the connect mutex (a Disconnect during a Connect);
-      `reclassifyLoss` is reached from three paths without a common lock; a write's call-id quarantine is set on timeout but not on cancellation;
-      a profile proxy bound after `closeAll` is never closed. And one design question: after an ANC `Set`, a `Notify` of the *old* mode ends the wait
-      as success, so a NAK that follows is not reported (the mode shown is right; a labelled test records it; no capture shows that order). An ACK
-      applies the requested mode, not the bytes the ACK echoes.
-- [ ] From `A68-APP-10`, 🟡 not tested: the on-demand channel insert in `RfcommBudsTransport.openChannel` is not atomic with `closeAll` (a socket
-      could be left open); `startForegroundService` followed at once by `stopService` on a connect that fails fast (`CAP-068` BD-29: no crash in
+- [ ] From `ai-sessions/0068` `A68-APP-13` — fixed in 1.4.0 (`ai-sessions/0098`) apart from one limit: `reclassifyLoss` now stores its cause with one
+      compare-and-set, but no unit test can force its three-caller race (the loss tests cover each path alone).
+- [ ] From `A68-APP-10`, 🟡 not tested (the `openChannel` insert was made atomic in 1.3.1, A93-APP-05): `startForegroundService` followed at once by `stopService` on a connect that fails fast (`CAP-068` BD-29: no crash in
       the app's buffers; no system log in the user without Play, so a system-side exception stays unverified); bonded-device lookups run on the main thread.
 - [ ] From `A68-APP-09`: the pull-to-refresh guard and the action buttons have no in-flight guard that survives a rotation — a second tap starts a
       second call, which the repository serialises; not shown to be a defect.
-- [ ] Tests for `:app` (the module has no test set-up): the tile service's rendering, the foreground-service start/stop, `MainActivity` as the state
-      holder, "Use different Buds" end to end (`A68-APP-06`).
+- [ ] Tests for `:app` — a JUnit 5 set-up and `AppTextsTest` since 1.4.0 (`ai-sessions/0098`: the pairing texts, the tile's result codes); still missing: the
+      tile service's rendering, the foreground-service start/stop, `MainActivity` as the state holder, "Use different Buds" end to end (`A68-APP-06`).
 - Known limits, left as they are: a loss cause logged "(provisional)" stays the last line when no later link reading arrives (T-1, `0062`); the
   notification flashes on a connect that fails fast (**M**, 2026-10-01); `RfcommBudsTransportTest`'s 10 s timeout was not reproduced in 200 runs
   — the helper prints every thread's stack if it recurs.

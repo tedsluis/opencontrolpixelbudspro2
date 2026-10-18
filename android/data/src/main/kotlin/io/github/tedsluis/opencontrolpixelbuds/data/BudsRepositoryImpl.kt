@@ -21,7 +21,6 @@ package io.github.tedsluis.opencontrolpixelbuds.data
 
 import android.bluetooth.BluetoothDevice
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncFrame
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncFrameEncoder
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.CodecRouter
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.EqFrame
@@ -33,7 +32,6 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.MessageStreamAck
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.MessageStreamReply
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.PW_HDLC_CONTROL_UI
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.PwRpc
-import io.github.tedsluis.opencontrolpixelbuds.data.codec.AncMessageStream
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingFrame
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingMessageStream
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.RingFrameEncoder
@@ -108,14 +106,14 @@ import kotlinx.coroutines.withTimeoutOrNull
  * own [CodecRouter] to the domain-facing interface. Implements
  * ARCHITECTURE.md §3.1's per-feature state-reconciliation table:
  *
- * - **ANC**: each Message Stream claim sends this app's own `Get` (a client that sends nothing gets no `Notify`, ARCHITECTURE.md
- *   §3.1); a `Set` counts as done only on the Buds' ACK or `Notify` — a NAK or no answer keeps the previous mode (0044 APP-3).
+ * - **ANC** (DECISIONS.md ADR-067, `ai-sessions/0098`): a change is one `WriteSetting 4:{13:n}` on the session channel — done only on the Buds' `RESPONSE`
+ *   status 0; `FAILED_PRECONDITION` = no bud worn; no answer keeps the previous mode. No Message Stream claim (before 1.4.0: the `Set` of ADR-009).
  * - **EQ**: [eqProfile] is reset to `null` ("unknown, not stale-and-trusted") inside [connect], before the session is
  *   `Ready`, and filled by the Connect sequence's `ReadSetting 4:16` (DECISIONS.md ADR-034); a failed
  *   read or write is reported through [eqError] with its reason instead of being assumed to have worked.
- * - **Battery**: push-based — Left/Right from the Message Stream's `Group 0x03 Code 0x03` (ADR-033, each claim yields
- *   a reading), the Case from the `SubscribeRuntimeInfo` stream on the session channel, requested once per Connect (ADR-043;
- *   DLCI 0x08 is no longer opened). HFP `AT+BIEV` is not consumed (ADR-040).
+ * - **Battery**: push-based — Left, Right and the Case from the `SubscribeRuntimeInfo` stream on the session channel, requested once per Connect
+ *   (ADR-043, ADR-068 — no Message Stream claim at Connect since 1.4.0); a `03 03` on a Find claim still updates Left/Right (ADR-033, newest wins).
+ *   HFP `AT+BIEV` is not consumed (ADR-040).
  * - **Safe Mode** (ARCHITECTURE.md §8.1, ADR-042): every write/control command passes [SafeModeGate] first.
  * - **Find My Buds**: no persisted state to reconcile.
  * - **The noise-control mode without a claim** (DECISIONS.md ADR-064/065, `ai-sessions/0091`): once per MAESTRO session the Connect sequence subscribes to
@@ -133,7 +131,9 @@ import kotlinx.coroutines.withTimeoutOrNull
  * after this repository singleton is built, `ai-sessions/0037`).
  */
 class BudsRepositoryImpl(
-    private val transport: BudsTransport,
+    // `internal` (was `private`) for the experiment build type's ExperimentRunner (`ai-sessions/0096`, src/experiment) — here and on the twelve members
+    // marked "(experiment seam)" below: a visibility change only; debug and release have no caller outside this class.
+    internal val transport: BudsTransport,
     private val connectionStateMachine: ConnectionStateMachine,
     private val bondedDeviceProvider: () -> BluetoothDevice?,
     debugModeEnabled: Flow<Boolean>,
@@ -179,14 +179,18 @@ class BudsRepositoryImpl(
     private val _eqError = MutableStateFlow<BudsError?>(null)
     override val eqError: Flow<BudsError?> = _eqError
 
+    /** ADR-067: why the last noise-control change or Refresh failed (`null` after a success). */
+    private val _ancError = MutableStateFlow<BudsError?>(null)
+    override val ancError: Flow<BudsError?> = _ancError
+
     /** The pw_rpc channel the Buds announced for this connection (their unsolicited `GetSoftwareInfo`, ADR-034). */
     private val _maestroChannelId = MutableStateFlow<Int?>(null)
 
     /** Answers to our Maestro requests (an EQ value, or an empty/error result) — what a read/write waits for. */
-    private val _maestroReplies = MutableSharedFlow<MaestroReply>(extraBufferCapacity = 16)
+    internal val _maestroReplies = MutableSharedFlow<MaestroReply>(extraBufferCapacity = 16) // (experiment seam)
 
     /** One EQ read or write at a time, so a reply can only belong to the request that is waiting for it. */
-    private val eqMutex = Mutex()
+    internal val eqMutex = Mutex() // (experiment seam)
 
     @Volatile
     private var eqReadJob: Job? = null
@@ -210,13 +214,16 @@ class BudsRepositoryImpl(
     private var releaseJob: Job? = null
 
     @Volatile
-    private var snapshotJob: Job? = null
-
-    @Volatile
     private var resubscribeJob: Job? = null
 
     /** One [connect] at a time — a double tap must not start two overlapping socket-opening runs. */
     private val connectMutex = Mutex()
+
+    /**
+     * `ai-sessions/0068` A68-APP-13 (fixed `ai-sessions/0098`): [disconnect] runs outside [connectMutex] — a Disconnect tapped while a Connect waits for its
+     * sockets must win. Each Disconnect counts up; a Connect whose sockets open after a Disconnect it did not see closes them again and stays disconnected.
+     */
+    private val disconnectGeneration = java.util.concurrent.atomic.AtomicInteger(0)
 
     private val codecRouter = CodecRouter()
 
@@ -244,23 +251,12 @@ class BudsRepositoryImpl(
     private val _sessionSince = MutableStateFlow<Long?>(null)
     override val sessionSince: StateFlow<Long?> = _sessionSince
 
-    /** replay=0 counterpart of [_ancMode], used only so [refreshAncMode] waits for a
-     * genuinely fresh response rather than immediately observing [_ancMode]'s current value. Fed only by a Message Stream `Notify` (A93-APP-04). */
-    private val _ancModeFresh = MutableSharedFlow<AncMode>(extraBufferCapacity = 8)
-
     private val _ancModeUpdatedAt = MutableStateFlow<Long?>(null)
     override val ancModeUpdatedAt: StateFlow<Long?> = _ancModeUpdatedAt
 
     /** Why the current [_ancMode] is what it is (`ai-sessions/0082` item 1, the maintainer's rule in chat 2026-10-09); `null` until this connection's first report. */
     private val _ancModeCause = MutableStateFlow<AncModeCause?>(null)
     override val ancModeCause: StateFlow<AncModeCause?> = _ancModeCause
-
-    /**
-     * Item 1's bookkeeping, inside the existing claim code and without a timer: set when the app's `Get` is written, cleared by the first `Notify` after it (its
-     * answer — a reading, [AncModeCause.READ]) or when that wait ends.
-     */
-    @Volatile
-    private var getPending = false
 
     /** The mode of the app's `Set` from its write until its wait ends (ACK, NAK, timeout, cut-off): a `Notify` of that mode meanwhile is [AncModeCause.SET_BY_APP]. */
     @Volatile
@@ -278,8 +274,8 @@ class BudsRepositoryImpl(
     private var lastSetAt: Long = Long.MIN_VALUE
 
     /**
-     * A93-APP-02 (`ai-sessions/0094`, `CAP-076` §6.2 / P1): a session reads the mode twice — the Connect's snapshot `Get` and `ReadSetting 4:13` — and in 12 of
-     * 12 `CAP-076` sessions the `Get`'s `Notify` came first. [readRound] counts the sessions' read sequences ([launchInitialEqRead]); [changedSinceBy] is the
+     * A93-APP-02 (`ai-sessions/0094`, `CAP-076` §6.2 / P1): a session read the mode twice — the Connect's snapshot `Get` and `ReadSetting 4:13` — and in 12 of
+     * 12 `CAP-076` sessions the `Get`'s `Notify` came first. Since ADR-068 (`ai-sessions/0098`) only the `ReadSetting 4:13` remains (and a Refresh's). [readRound] counts the sessions' read sequences ([launchInitialEqRead]); [changedSinceBy] is the
      * round and the source of the read answer that last gave "changed since the app last saw it", so the other read of the same round, finding the same mode,
      * keeps that cause instead of replacing it with a reading.
      */
@@ -315,8 +311,8 @@ class BudsRepositoryImpl(
     private val _batteryRefreshError = MutableStateFlow<BudsError?>(null)
     override val batteryRefreshError: Flow<BudsError?> = _batteryRefreshError
 
-    /** Every "Battery updated" frame as it arrives (replay 0) — what a Refresh waits for to know a new reading came (`ai-sessions/0052`). */
-    private val _batteryFrames = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
+    /** Every runtime-info packet as it arrives (replay 0) — what a battery Refresh waits for (ADR-068). */
+    private val _runtimeInfoPackets = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
 
     private val _ancAvailability = MutableStateFlow(AncAvailability.UNKNOWN)
     override val ancAvailability: Flow<AncAvailability> = _ancAvailability
@@ -326,13 +322,6 @@ class BudsRepositoryImpl(
 
     private val _ancAvailabilityProvisional = MutableStateFlow(false)
     override val ancAvailabilityProvisional: StateFlow<Boolean> = _ancAvailabilityProvisional
-
-    /** One `Notify ANC state` as it arrives: its availability and its mode (`null` = a mode byte that is not one of the four known modes). */
-    private data class AncNotify(val availability: AncAvailability, val mode: AncMode?)
-
-    /** Every `Notify` as it arrives (replay 0) — what an ANC tap's `Get` waits for before its `Set` (`ai-sessions/0062` F-1); unlike
-     * [_ancModeFresh] it also fires for a `Notify` whose mode byte is not one of the four known modes. */
-    private val _ancNotifies = MutableSharedFlow<AncNotify>(extraBufferCapacity = 8)
 
     private val _ancModeUnconfirmedAt = MutableStateFlow<Long?>(null)
     override val ancModeUnconfirmedAt: StateFlow<Long?> = _ancModeUnconfirmedAt
@@ -358,16 +347,7 @@ class BudsRepositoryImpl(
     private var modelIdSeen: String? = null
 
     /** Every ACK/NAK on the Message Stream (its own routed type, 0044 APP-3) — what a command waits for. */
-    private val _replies = MutableSharedFlow<MessageStreamReply>(extraBufferCapacity = 16)
-
-    /** What an ANC `Set` waits for: the Buds' ACK/NAK for `08 12`, or any `Notify` with a known mode. */
-    private sealed class AncOutcome {
-        data object Acked : AncOutcome()
-        data class Rejected(val reason: Int) : AncOutcome()
-        data class Notified(val mode: AncMode) : AncOutcome()
-    }
-
-    private val _ancOutcomes = MutableSharedFlow<AncOutcome>(extraBufferCapacity = 16)
+    internal val _replies = MutableSharedFlow<MessageStreamReply>(extraBufferCapacity = 16) // (experiment seam)
 
     /** Sibling helpers so every mutation of the value above also stamps its own [System.currentTimeMillis]
      * timestamp, in one place (`ai-sessions/0043` Phase H) — never a polling timer, only recorded when a
@@ -435,7 +415,7 @@ class BudsRepositoryImpl(
      */
     private fun applyAncState(state: SettingValue.AncState, stream: Boolean) {
         val mode = state.mode
-        updateAncAvailability(if (mode == null) AncAvailability.NOT_ALLOWED else AncAvailability.ALLOWED)
+        updateAncAvailability(if (mode == null) AncAvailability.NOT_ALLOWED else AncAvailability.ALLOWED, fromClaim = false)
         val source = if (stream) "the settings stream" else "the mode read"
         if (mode == null) {
             BleLogger.logConnectionEvent("Noise-control mode from $source: no mode settable")
@@ -444,7 +424,7 @@ class BudsRepositoryImpl(
         val cause = if (stream) causeOfStream(mode) else causeOfReadAnswer(mode, ReadSource.READ_SETTING)
         _ancModeUnconfirmedAt.value = null // the Buds' own report — whatever a cut-off answer would have said, this is their mode now (F-3)
         emitAncMode(mode, cause)
-        // No [_ancModeFresh] here (A93-APP-04): a Refresh waits for the Message Stream `Notify` to its own `Get` — a Maestro packet is not that answer.
+        // A93-APP-04: a Refresh waits for its own `ReadSetting 4:13` RESPONSE — a stream packet never ends that wait (`MaestroReply.Setting.stream`).
         // A93-APP-08 (`CAP-076` defect (c)): a packet that changes nothing logs "unchanged", not the cause it kept from an earlier packet.
         BleLogger.logConnectionEvent("Noise-control mode from $source (${cause?.name?.lowercase() ?: "unchanged"})")
     }
@@ -459,12 +439,17 @@ class BudsRepositoryImpl(
         _batteryStatusUpdatedAt.value = clock()
     }
 
-    private fun updateAncAvailability(availability: AncAvailability) {
+    /**
+     * [fromClaim]: the reading is a Message Stream `Notify` (ADR-024: provisional within ~2 s of the claim's open); a setting-13 reading (ADR-067/068) is
+     * the Buds' own current report and never provisional.
+     */
+    private fun updateAncAvailability(availability: AncAvailability, fromClaim: Boolean = true) {
         _ancAvailability.value = availability
         _ancAvailabilityUpdatedAt.value = clock() // the injected wall clock (a test's virtual one) — shown as "(checked HH:MM:SS)", I-1
         // ADR-024 (2026-09-18 consequence): a reading within ~2 s of the channel opening may be stale; a later Notify in the same claim
-        // replaces it (the last value wins while the claim lingers).
-        _ancAvailabilityProvisional.value = clock() - messageStreamOpenedAt < AVAILABILITY_PROVISIONAL_MS
+        // replaces it (the last value wins while the claim lingers). Compared only once a claim has opened (`Long.MIN_VALUE` would overflow).
+        _ancAvailabilityProvisional.value = fromClaim && messageStreamOpenedAt != Long.MIN_VALUE &&
+            clock() - messageStreamOpenedAt < AVAILABILITY_PROVISIONAL_MS
     }
 
     override fun onAndroidLink(link: AndroidLink) {
@@ -583,8 +568,10 @@ class BudsRepositoryImpl(
                 synchronized(adapterOffReadings) { adapterOffReadings.toList() },
             )
         }
-        if (_lastLossCause.value != cause) {
-            _lastLossCause.value = cause
+        // A68-APP-13 (fixed `ai-sessions/0098`): three callers (a link reading, an adapter reading, a loss) can run this at once — one compare-and-set, so a
+        // cause is stored and logged once, never twice or overwritten by an older evaluation.
+        val previous = _lastLossCause.value
+        if (previous != cause && _lastLossCause.compareAndSet(previous, cause)) {
             if (cause != null && lossAt != null) {
                 val provisional = cause != SessionLossCause.ANDROID_LINK_LOST && cause != SessionLossCause.BLUETOOTH_OFF &&
                     clock() < lossAt + LINK_LOST_AFTER_MS
@@ -632,6 +619,18 @@ class BudsRepositoryImpl(
 
     private val _ringing = MutableStateFlow<RingNotice?>(null)
     override val ringing: Flow<RingNotice?> = _ringing
+
+    /** ADR-069: when the Buds last said the ringing stopped without the app's Stop (`null` while ringing or none seen). */
+    private val _ringStoppedOnBudAt = MutableStateFlow<Long?>(null)
+    override val ringStoppedOnBudAt: Flow<Long?> = _ringStoppedOnBudAt
+
+    /** ADR-069: the job that holds the Ring's claim until the Buds' stop status, the user's Stop or [RING_HOLD_MAX_MS]. */
+    @Volatile
+    private var ringHoldJob: Job? = null
+
+    /** ADR-069: when the app last sent its own Stop — a status `00` within [ACK_WAIT_MS] + [MESSAGE_STREAM_LINGER_MS] answers it, not a stop on the bud. */
+    @Volatile
+    private var stopSentAt: Long = Long.MIN_VALUE
 
     private val _unidentifiedFrames = MutableSharedFlow<UnidentifiedFrame>(extraBufferCapacity = 32)
     override val unidentifiedFrames: Flow<UnidentifiedFrame> = _unidentifiedFrames
@@ -723,21 +722,15 @@ class BudsRepositoryImpl(
         when (frame) {
             is RoutedFrame.Anc -> when (val anc = frame.frame) {
                 is AncFrame.Notify -> {
-                    // Item 1 (`ai-sessions/0082`): the first Notify after the app's Get is its answer — a reading, whatever mode it carries.
-                    val answersGet = getPending
-                    getPending = false
+                    // Since ADR-067/068 (`ai-sessions/0098`) the app sends no `Get`: a `Notify` arrives only on a Find claim and is never the answer to a read.
+                    val answersGet = false
                     // I-3 (`ai-sessions/0048`, ADR-024 Update 2026-09-25): Settable 0x00 = the Buds refuse a Set (NAK 0x02); non-zero = allowed.
                     val availability = AncAvailability.fromSettableToggles(anc.settableToggles)
                     updateAncAvailability(availability)
-                    _ancNotifies.tryEmit(AncNotify(availability, anc.currentMode))
                     anc.currentMode?.let {
                         // F-3: the Buds' own report — whatever a cut-off answer would have said, this is their mode now.
                         _ancModeUnconfirmedAt.value = null
                         emitAncMode(it, causeOfNotify(it, answersGet))
-                        _ancModeFresh.tryEmit(it)
-                        // A93-APP-03 (`ai-sessions/0094`, `CAP-076` §5.3 / P2): the Get's own answer never answers a Set — the Get's waiter can resume on
-                        // another thread, send the Set and subscribe before this line runs; only a later Notify (or the ACK/NAK) ends the Set's wait.
-                        if (!answersGet) _ancOutcomes.tryEmit(AncOutcome.Notified(it))
                     }
                 }
                 is AncFrame.Set -> emitAncMode(anc.mode)
@@ -745,17 +738,7 @@ class BudsRepositoryImpl(
             }
 
             // ACK/NAK for any Message Stream command (0044 APP-3): the command that waits picks its own by the echoed Group/Code.
-            is RoutedFrame.Reply -> {
-                _replies.tryEmit(frame.reply)
-                if (frame.reply.answers(AncMessageStream.GROUP, AncMessageStream.CODE_SET)) {
-                    _ancOutcomes.tryEmit(
-                        when (val r = frame.reply) {
-                            is MessageStreamReply.Ack -> AncOutcome.Acked
-                            is MessageStreamReply.Nak -> AncOutcome.Rejected(r.reason)
-                        },
-                    )
-                }
-            }
+            is RoutedFrame.Reply -> _replies.tryEmit(frame.reply)
 
             // The Buds' Fast Pair Model ID for this claim (ADR-042's gate).
             is RoutedFrame.ModelId -> {
@@ -808,11 +791,9 @@ class BudsRepositoryImpl(
             // ADR-065 item 2: a pushed change of a field this app does not read — said (payload-free, AGENTS.md §9), not shown, not an UnidentifiedFrame.
             is RoutedFrame.UnreadSetting -> BleLogger.logConnectionEvent("Settings stream: field ${frame.field} not shown (not read by this app)")
 
-            // No persisted state (ARCHITECTURE.md §3.1's table). The Buds **do** send this frame themselves (corrected `ai-sessions/0069`, A68-APP-12): after the
-            // app's Ring or Stop they send their own copy `04 01 00 01 xx` — the ringing-status sync of the Fast Pair spec (`CAP-059` 2312, 2494, 2507, 2604;
-            // PROTOCOL.md §4.4) — besides their ACK (a Reply). The app reads nothing from it and sends no acknowledgement for it: an ACK would be a new send and
-            // needs its own ADR (the maintainer's choice in chat 2026-10-03, "Nothing new on the wire; test first"; `CAP-068` section VI films a stop on the bud).
-            is RoutedFrame.Ring -> Unit
+            // DECISIONS.md ADR-069 (`ai-sessions/0098`, 🟢 FIND-005 — PROTOCOL.md §4.4 Update 2026-10-17): the Buds' own ringing status `04 01 00 01 xx`,
+            // sent once to the Message Stream holder after a Ring and at its stop (`CAP-078` 7775, 7816).
+            is RoutedFrame.Ring -> onRingStatus(frame.frame)
 
             // ADR-033. A byte the decoder does not interpret arrives as Unavailable and *replaces* any
             // earlier Known value: a stale percentage must never linger once the Buds report a
@@ -828,7 +809,6 @@ class BudsRepositoryImpl(
                         rightCharging = frame.frame.right.chargingReading(now) ?: it.rightCharging,
                     )
                 }
-                _batteryFrames.tryEmit(Unit)
             }
 
             // ADR-035's DLCI 0x08 decode stays in the codec, but the app no longer opens that channel (ADR-043) — nothing arrives here.
@@ -840,18 +820,23 @@ class BudsRepositoryImpl(
             is RoutedFrame.RuntimeInfo -> {
                 val now = clock()
                 val info = frame.info
+                // ADR-068 (`ai-sessions/0098`): Left/Right from 6.2/6.3 as the Case — an absent entry keeps the last value "last seen" with its own time.
+                fun current(reported: BatteryLevel?, kept: BatteryLevel): BatteryLevel = when (reported) {
+                    null -> (kept as? BatteryLevel.Known)?.copy(isStale = true) ?: kept
+                    is BatteryLevel.Known -> reported.copy(receivedAtMillis = now)
+                    BatteryLevel.Unavailable -> BatteryLevel.Unavailable
+                }
                 updateBatteryStatus {
                     it.copy(
-                        case = when (val case = info.case) {
-                            null -> (it.case as? BatteryLevel.Known)?.copy(isStale = true) ?: it.case
-                            is BatteryLevel.Known -> case.copy(receivedAtMillis = now)
-                            BatteryLevel.Unavailable -> BatteryLevel.Unavailable
-                        },
+                        case = current(info.case, it.case),
+                        left = current(info.left, it.left),
+                        right = current(info.right, it.right),
                         leftCharging = info.leftCharging?.let { c -> ChargingReading(c, now, ChargingSource.RUNTIME_INFO) } ?: it.leftCharging,
                         rightCharging = info.rightCharging?.let { c -> ChargingReading(c, now, ChargingSource.RUNTIME_INFO) } ?: it.rightCharging,
                     )
                 }
                 _caseBatteryError.value = null
+                _runtimeInfoPackets.tryEmit(Unit)
             }
         }
     }
@@ -881,13 +866,14 @@ class BudsRepositoryImpl(
         // that differs from it is "changed since the app last saw it" (before `0091`, item 1 of `ai-sessions/0082` reset the cause here and a connection's
         // first read was always a reading). The Settable byte is re-read (I-3: unknown ⇒ enabled; ADR-059's reading then starts at "—" with the settings,
         // which are reset above).
-        _ancAvailability.value = AncAvailability.UNKNOWN // re-read by this connection's snapshot claim and its ReadSetting 4:13
+        _ancAvailability.value = AncAvailability.UNKNOWN // re-read by this connection's ReadSetting 4:13 (ADR-068)
         // 0044 APP-8: no bonded device is "not paired", not a missing permission (AGENTS.md §8 — a specific message per cause).
         val device = bondedDeviceProvider()
             ?: return@withLock BudsResult.Failure(BudsError.NotPaired)
         _lastConnectionError.value = null
         clearLoss()
         _eqError.value = null
+        _ancError.value = null
         _maestroChannelId.value = null // announced afresh by this connection's first Buds packet (ADR-034)
         _deviceInfo.value = null
         _caseBatteryError.value = null
@@ -899,20 +885,27 @@ class BudsRepositoryImpl(
         modelIdSeen = null
         lastInboundChannel = null
         codecRouter.resetAll() // a new connection starts with empty per-channel buffers (0044 APP-2)
+        val generation = disconnectGeneration.get()
         connectionStateMachine.onConnectRequested()
         // ADR-032: the session is the MAESTRO channel only. The Message Stream channel (DLCI 0x04) is shared
         // with Google Play services' Fast Pair, so it is claimed on demand, never held by Connect.
         val channels = mapOf(Dlci.MAESTRO to BudsSdpUuids.MAESTRO)
         try {
             when (val result = transport.connect(device, channels)) {
+                is BudsResult.Success if disconnectGeneration.get() != generation -> {
+                    // A68-APP-13: the user disconnected while the sockets were opening — close them again; the Disconnect's state stands.
+                    BleLogger.logConnectionEvent("Connect finished after a Disconnect tap: its channels are closed again")
+                    transport.disconnect()
+                    connectionStateMachine.onDisconnected()
+                    BudsResult.Failure(BudsError.ConnectionLost)
+                }
                 is BudsResult.Success -> {
                     connectionStateMachine.onLinkEstablished()
                     // `Discovering` is a zero-length pass-through (ARCHITECTURE.md §2.1): SDP resolution already happened inside
                     // createRfcommSocketToServiceRecord(); `Ready` means "the MAESTRO channel is open" (ADR-032).
                     connectionStateMachine.onReady()
-                    // ADR-032 (agent detail): one short claim, started by this Connect tap, so the ANC mode
-                    // and the battery the Buds push on DLCI 0x04 are known without a further tap.
-                    launchInitialSnapshot()
+                    // DECISIONS.md ADR-068 (`ai-sessions/0098`): no Message Stream claim at Connect — the mode comes from `ReadSetting 4:13` and the settings
+                    // stream, Left/Right/Case from the runtime-info stream, all on this channel.
                     launchInitialEqRead()
                     BudsResult.Success(Unit)
                 }
@@ -932,12 +925,14 @@ class BudsRepositoryImpl(
     }
 
     override suspend fun disconnect(): BudsResult<Unit> {
+        disconnectGeneration.incrementAndGet()
         reopener.onUserDisconnect()
         BleLogger.logConnectionEvent(SessionDiagnostics.userDisconnectLine(connectionStateMachine.state.value::class.simpleName ?: "?"))
         _lastConnectionError.value = null
         clearLoss()
         _messageStreamError.value = null
         _eqError.value = null
+        _ancError.value = null
         _caseBatteryError.value = null
         _serialsError.value = null
         _batteryRefreshError.value = null
@@ -955,108 +950,106 @@ class BudsRepositoryImpl(
     }
 
     /**
-     * ANC `Set` (ADR-009). Counts as done only when the Buds answer (0044 APP-3; ARCHITECTURE.md §3.1 "provisional until the
-     * acknowledgement confirms it"): their ACK applies the requested mode, their `Notify` has already applied the real one; a NAK is
-     * [BudsError.CommandRejected] and no answer is [BudsError.Timeout] — in both cases the previous mode stays.
-     *
-     * **`ai-sessions/0062` F-1 (the maintainer's choice, chats 2026-10-01):** every tap's claim sends the `Get` first and the `Set` only if that claim's
-     * `Notify` reads Settable non-zero — the app's own last reading can be old (`CAP-064`: an 18-s-old `e8` led to `Set` 3433 → NAK 3440 → `Notify … 00`
-     * 3443; `CAP-065` F7: an unknown availability sent `Set` 10790 without a `Get`). No new message: the claim's `Get` is ADR-021/022, ADR-032 item 5.
+     * The noise-control mode (DECISIONS.md ADR-067, `ai-sessions/0098`): one `WriteSetting 4:{13:n}` on the session channel — no Message Stream claim.
      */
-    override suspend fun setAncMode(mode: AncMode): BudsResult<Unit> = setAncModeAfterGet { mode }
-
-    /** The tile (F-1): the mode after the one **this claim's** `Notify` reports. */
-    override suspend fun stepAncMode(next: (current: AncMode?) -> AncMode): BudsResult<Unit> = setAncModeAfterGet(next)
+    override suspend fun setAncMode(mode: AncMode): BudsResult<Unit> = writeAncMode { _ -> mode }
 
     /**
-     * One claim: the Safe-Mode gate (a refused write sends nothing at all, not even the `Get` — ADR-042), the `Get`, then the `Set` of [choose] of the
-     * `Notify`'s mode — only if that `Notify` allows a change; on Settable `0x00` nothing more is sent ([BudsError.AncNotAllowed], `ai-sessions/0054`
-     * I-1's rule, now on every tap). A `Notify` whose mode byte is unknown passes `null` to [choose].
+     * The tile: [next] of the shown mode, stepped on while the result is not ticked in the press-and-hold list (ADR-067 item 3 — at most once around the four
+     * modes; the list is read under the Maestro lock, so the step and the write see the same list).
      */
-    private suspend fun setAncModeAfterGet(choose: (current: AncMode?) -> AncMode): BudsResult<Unit> = withMessageStream {
-        writeGate(requireModelIdOfClaim = true)?.let { return@withMessageStream BudsResult.Failure(it) }
-        when (val got = sendAncGetAndAwait(_ancNotifies, GET_RESPONSE_TIMEOUT_MS)) {
-            is ClaimWait.SendFailed -> BudsResult.Failure(got.error)
-            is ClaimWait.TimedOut -> BudsResult.Failure(BudsError.Timeout)
-            is ClaimWait.CutOff -> BudsResult.Failure(answerCutOff("ANC Get", got.detail))
-            is ClaimWait.Answered -> if (got.value.availability == AncAvailability.NOT_ALLOWED) {
-                BleLogger.logConnectionEvent("ANC Set not sent: this claim's Notify reports no switchable mode (Settable 0x00)")
-                BudsResult.Failure(BudsError.AncNotAllowed)
-            } else {
-                ancSetOnClaim(choose(got.value.mode))
-            }
-        }
+    override suspend fun stepAncMode(next: (current: AncMode?) -> AncMode): BudsResult<Unit> = writeAncMode { list ->
+        var mode = next(_ancMode.value)
+        repeat(AncMode.entries.size - 1) { if (!list.isSelected(mode)) mode = next(mode) }
+        mode
     }
 
     /**
-     * The ANC `Set` on the already-claimed Message Stream: the Safe-Mode gate (Model ID of this claim, ADR-042), then the frame, then the Buds' answer
-     * within [ACK_WAIT_MS] — only their ACK (requested mode) or `Notify` (their own mode) counts as done. A claim closed before the answer (F-3) marks the
-     * shown mode "not confirmed" ([ancModeUnconfirmedAt]) — the Buds may have switched (`CAP-065` 2640 → `DISC` 2649 → ACK 2651).
+     * ADR-067: the write itself, through the settings write path's lock, channel, Safe-Mode gate (firmware) and quarantine. [choose] gets the press-and-hold
+     * list in force (field 12) and returns the mode to write; a mode not ticked there, or an unread list, is refused before anything is sent (ADR-067 item 3
+     * and its Note of 2026-10-17). Done on `RESPONSE` status 0 — the mode is shown as set by this app (the Buds' push of it within [ANC_SET_WINDOW_MS] is
+     * the app's own, [causeOfStream]); status 9 `FAILED_PRECONDITION` is [BudsError.AncNotAllowed] (`CAP-078` H 6775 → 6777, no bud worn) and marks the
+     * mode not changeable; another status is [BudsError.MaestroRejected]; no answer is [BudsError.Timeout] and starts the write quarantine. The previous
+     * mode stays on every failure.
      */
-    private suspend fun ancSetOnClaim(mode: AncMode): BudsResult<Unit> {
-        writeGate(requireModelIdOfClaim = true)?.let { return BudsResult.Failure(it) }
-        val sentAt = clock() // "the change at HH:MM:SS" of the not-confirmed mark
-        // Item 1 (`ai-sessions/0082`): while this Set waits, a Notify of the requested mode is the app's own change — not one by the Buds. ADR-065 item 4: the
-        // settings stream's packet for it may come after the wait ended — remembered with its time for [causeOfStream].
-        setPendingMode = mode
-        lastSetMode = mode
-        lastSetAt = sentAt
-        val wait = try {
-            sendAndAwaitOnClaim(_ancOutcomes, ACK_WAIT_MS) {
-                transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, AncFrameEncoder.encode(AncFrame.Set(mode)))
-            }
-        } finally {
-            setPendingMode = null
+    private suspend fun writeAncMode(choose: (list: io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList) -> AncMode): BudsResult<Unit> {
+        when (connectionStateMachine.state.value) {
+            is ConnectionState.Ready -> Unit
+            is ConnectionState.Connecting, is ConnectionState.Discovering -> return ancFailed(BudsError.SessionOpening)
+            else -> return ancFailed(BudsError.ConnectionLost)
         }
-        return when (wait) {
-            is ClaimWait.SendFailed -> BudsResult.Failure(wait.error)
-            is ClaimWait.TimedOut -> BudsResult.Failure(BudsError.Timeout)
-            is ClaimWait.CutOff -> {
-                _ancModeUnconfirmedAt.value = sentAt
-                BudsResult.Failure(answerCutOff("ANC Set", wait.detail))
+        return eqMutex.withLock {
+            val channel = when (val c = awaitMaestroChannel()) {
+                is BudsResult.Failure -> return@withLock ancFailed(c.error)
+                is BudsResult.Success -> c.value
             }
-            is ClaimWait.Answered -> when (val outcome = wait.value) {
-                is AncOutcome.Rejected -> BudsResult.Failure(rejected(outcome.reason))
-                is AncOutcome.Acked -> {
+            // ADR-042: the Safe-Mode gate first — on an unverified firmware the refusal says why, whatever the list.
+            writeGate(requireModelIdOfClaim = false)?.let { return@withLock ancFailed(it) }
+            val list = _settings.value.ancModeList?.value ?: return@withLock ancFailed(BudsError.AncModeListNotRead)
+            val mode = choose(list)
+            if (!list.isSelected(mode)) return@withLock ancFailed(BudsError.AncModeNotInHoldList(mode))
+            val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(SettingsCodec.ancStateRequest(channel.channelId, mode)))
+            awaitWriteQuarantine()
+            // Item 1 (`ai-sessions/0082`) / ADR-065 item 4: while this write waits, and for [ANC_SET_WINDOW_MS] after it, a push of this mode is the app's own.
+            setPendingMode = mode
+            lastSetMode = mode
+            lastSetAt = clock()
+            val (sent, reply) = try {
+                awaitWriteOrQuarantine { sendAndAwait(_maestroReplies, EQ_WRITE_ACK_TIMEOUT_MS, { it.isResultFor(Maestro.METHOD_WRITE_SETTING) }) { transport.send(Dlci.MAESTRO, wire) } }
+            } finally {
+                setPendingMode = null
+            }
+            when {
+                sent is BudsResult.Failure -> ancFailed(sent.error)
+                reply == null -> {
+                    startWriteQuarantine()
+                    ancFailed(BudsError.Timeout)
+                }
+                reply is MaestroReply.Result && reply.result.isOk -> {
                     emitAncMode(mode, AncModeCause.SET_BY_APP)
                     _ancModeUnconfirmedAt.value = null
+                    _ancError.value = null
+                    BleLogger.logConnectionEvent("Noise-control mode written (channel ${channel.channelId}): ${mode.label}")
                     BudsResult.Success(Unit)
                 }
-                is AncOutcome.Notified -> BudsResult.Success(Unit) // handleRoutedFrame already applied the Buds' own mode.
+                reply is MaestroReply.Result && reply.result.status == PW_STATUS_FAILED_PRECONDITION -> {
+                    updateAncAvailability(AncAvailability.NOT_ALLOWED, fromClaim = false)
+                    BleLogger.logConnectionEvent("Noise-control mode not written: the Buds allow no change (FAILED_PRECONDITION — no bud worn?)")
+                    ancFailed(BudsError.AncNotAllowed)
+                }
+                reply is MaestroReply.Result ->
+                    ancFailed(BudsError.MaestroRejected("${PwRpc.typeName(reply.result.type)} ${PwRpc.statusName(reply.result.status)}"))
+                else -> ancFailed(BudsError.Unknown(IllegalStateException("unexpected reply to WriteSetting")))
             }
         }
     }
 
-    /** The ANC `Get` (`08 11 00 00`, ADR-021) on the claimed Message Stream, then the first emission of [reply] within [timeoutMs] — or the claim's close. */
-    private suspend fun <R> sendAncGetAndAwait(reply: SharedFlow<R>, timeoutMs: Long): ClaimWait<R> {
-        getPending = true // item 1 (`ai-sessions/0082`): the first Notify after this Get is its answer — a reading, not a change
-        try {
-            return sendAndAwaitOnClaim(reply, timeoutMs) { transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, AncFrameEncoder.encode(AncFrame.Get)) }
-        } finally {
-            getPending = false
-        }
+    private fun <T> ancFailed(error: BudsError): BudsResult<T> {
+        BleLogger.logConnectionEvent("Noise-control request failed: ${eqErrorLogText(error)}")
+        _ancError.value = error
+        return BudsResult.Failure(error)
     }
 
-    private fun answerCutOff(what: String, detail: String?): BudsError {
-        BleLogger.logConnectionEvent("$what: the Message Stream claim was closed before the Buds' answer arrived (answer cut off, not retried)")
-        return BudsError.AnswerCutOff(Dlci.FAST_PAIR_MESSAGE_STREAM, detail)
-    }
-
+    /** A Message Stream command the Buds refused (NAK) — logged with the reason's name (Find's Ring/Stop). */
     private fun rejected(reason: Int): BudsError {
         val name = MessageStreamAck.reasonName(reason)
         BleLogger.logConnectionEvent("Message Stream command rejected by the Buds: NAK $name")
         return BudsError.CommandRejected(reason, name)
     }
 
-    override suspend fun refreshAncMode(): BudsResult<AncMode> = refreshAncMode(GET_RESPONSE_TIMEOUT_MS)
-
-    private suspend fun refreshAncMode(timeoutMs: Long, freshOpen: Boolean = false): BudsResult<AncMode> = withMessageStream(freshOpen) {
-        when (val got = sendAncGetAndAwait(_ancModeFresh, timeoutMs)) {
-            is ClaimWait.SendFailed -> BudsResult.Failure(got.error)
-            is ClaimWait.TimedOut -> BudsResult.Failure(BudsError.Timeout)
-            // F-3: `CAP-065` 11:21:35 — the snapshot's Get (10321) was answered (10356) after the close (10344); "didn't respond in time" was wrong.
-            is ClaimWait.CutOff -> BudsResult.Failure(answerCutOff("ANC Get", got.detail))
-            is ClaimWait.Answered -> BudsResult.Success(got.value)
+    /** ADR-067/068: a Refresh is one `ReadSetting 4:13` on the session channel; 0 (no mode settable) is [BudsError.AncNotAllowed]. */
+    override suspend fun refreshAncMode(): BudsResult<AncMode> {
+        when (connectionStateMachine.state.value) {
+            is ConnectionState.Ready -> Unit
+            is ConnectionState.Connecting, is ConnectionState.Discovering -> return ancFailed(BudsError.SessionOpening)
+            else -> return ancFailed(BudsError.ConnectionLost)
+        }
+        return when (val read = readAncSetting()) {
+            is BudsResult.Failure -> ancFailed(read.error)
+            is BudsResult.Success -> read.value?.let {
+                _ancError.value = null
+                BudsResult.Success(it)
+            } ?: ancFailed(BudsError.AncNotAllowed)
         }
     }
 
@@ -1079,9 +1072,9 @@ class BudsRepositoryImpl(
             val payload = EqFrameEncoder.encode(EqFrame(clamped, persist = false, channelId = channel.channelId))
             val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, payload)
             awaitWriteQuarantine()
-            val (sent, reply) = sendAndAwait(_maestroReplies, EQ_WRITE_ACK_TIMEOUT_MS, { it.isResultFor(Maestro.METHOD_WRITE_SETTING) }) {
+            val (sent, reply) = awaitWriteOrQuarantine { sendAndAwait(_maestroReplies, EQ_WRITE_ACK_TIMEOUT_MS, { it.isResultFor(Maestro.METHOD_WRITE_SETTING) }) {
                 transport.send(Dlci.MAESTRO, wire)
-            }
+            } }
             when {
                 sent is BudsResult.Failure -> eqFailed(sent.error)
                 reply == null -> {
@@ -1091,6 +1084,8 @@ class BudsRepositoryImpl(
                 reply is MaestroReply.Result && reply.result.isOk -> {
                     updateEqProfile(clamped)
                     _eqError.value = null
+                    // `CAP-077` P1 (`ai-sessions/0098`): the EQ write is logged like every other write — before, only the pw_rpc summary line said it.
+                    BleLogger.logConnectionEvent("EQ written (channel ${channel.channelId})")
                     BudsResult.Success(Unit)
                 }
                 reply is MaestroReply.Result -> eqFailed(
@@ -1156,7 +1151,7 @@ class BudsRepositoryImpl(
     }
 
     /** The channel the Buds announced and its known request address — or the reason there is none (never guessed). */
-    private suspend fun awaitMaestroChannel(): BudsResult<MaestroChannel> {
+    internal suspend fun awaitMaestroChannel(): BudsResult<MaestroChannel> { // (experiment seam)
         val id = _maestroChannelId.value
             ?: withTimeoutOrNull(MAESTRO_ANNOUNCE_WAIT_MS) { _maestroChannelId.filterNotNull().first() }
             ?: return BudsResult.Failure(BudsError.MaestroChannelUnknown(null))
@@ -1165,7 +1160,7 @@ class BudsRepositoryImpl(
     }
 
     /** Waits out a running write quarantine (A58-APP-04) — one bounded delay, called inside [eqMutex] right before a Maestro request is sent. */
-    private suspend fun awaitWriteQuarantine() {
+    internal suspend fun awaitWriteQuarantine() { // (experiment seam)
         val until = writeQuarantineUntil
         val now = clock()
         if (now < until) { // compare first: `until - now` would overflow while `until` is still Long.MIN_VALUE
@@ -1175,8 +1170,19 @@ class BudsRepositoryImpl(
         }
     }
 
-    private fun startWriteQuarantine() {
+    internal fun startWriteQuarantine() { // (experiment seam)
         writeQuarantineUntil = clock() + EQ_WRITE_ACK_TIMEOUT_MS
+    }
+
+    /**
+     * `ai-sessions/0068` A68-APP-13 (fixed `ai-sessions/0098`): a write cancelled while it waits for its answer (a tap's coroutine ended, a Disconnect) starts the
+     * quarantine as a timeout does — its late answer must not be taken as the next request's (A58-APP-04: pw_rpc answers carry no call id to match).
+     */
+    private suspend fun <T> awaitWriteOrQuarantine(wait: suspend () -> T): T = try {
+        wait()
+    } catch (e: CancellationException) {
+        startWriteQuarantine()
+        throw e
     }
 
     private fun <T> eqFailed(error: BudsError): BudsResult<T> {
@@ -1281,9 +1287,9 @@ class BudsRepositoryImpl(
                 ?: return@withLock settingFailed(BudsError.Unknown(IllegalStateException("setting ${value.field} is not writable")))
             val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(packet))
             awaitWriteQuarantine()
-            val (sent, reply) = sendAndAwait(_maestroReplies, EQ_WRITE_ACK_TIMEOUT_MS, { it.isResultFor(Maestro.METHOD_WRITE_SETTING) }) {
+            val (sent, reply) = awaitWriteOrQuarantine { sendAndAwait(_maestroReplies, EQ_WRITE_ACK_TIMEOUT_MS, { it.isResultFor(Maestro.METHOD_WRITE_SETTING) }) {
                 transport.send(Dlci.MAESTRO, wire)
-            }
+            } }
             when {
                 sent is BudsResult.Failure -> settingFailed(sent.error)
                 reply == null -> {
@@ -1309,18 +1315,104 @@ class BudsRepositoryImpl(
         return BudsResult.Failure(error)
     }
 
-    override suspend fun ringBud(target: RingTarget): BudsResult<Unit> = withMessageStream {
-        val result = sendRing(RingFrame.Start(target))
-        // The ring keeps sounding after the channel is released (`ai-sessions/0042`, heard on the recording), so this state stays
-        // until Stop succeeds — a failed, refused or unanswered ring is never claimed.
-        if (result is BudsResult.Success) _ringing.value = RingNotice(target)
-        result
+    override suspend fun ringBud(target: RingTarget): BudsResult<Unit> {
+        endRingHold() // a new Ring while one is held: the hold ends first (its claim is reused)
+        val result = withMessageStream {
+            val sent = sendRing(RingFrame.Start(target))
+            // The ring keeps sounding after the channel is released (`ai-sessions/0042`, heard on the recording), so this state stays
+            // until Stop succeeds or the Buds report the stop (ADR-069) — a failed, refused or unanswered ring is never claimed.
+            if (sent is BudsResult.Success) {
+                _ringing.value = RingNotice(target)
+                _ringStoppedOnBudAt.value = null
+            }
+            sent
+        }
+        if (result is BudsResult.Success) startRingHold()
+        return result
     }
 
-    override suspend fun stopRinging(): BudsResult<Unit> = withMessageStream {
-        val result = sendRing(RingFrame.Stop)
-        if (result is BudsResult.Success) _ringing.value = null
-        result
+    override suspend fun stopRinging(): BudsResult<Unit> {
+        endRingHold()
+        return withMessageStream {
+            stopSentAt = clock()
+            val result = sendRing(RingFrame.Stop)
+            if (result is BudsResult.Success) _ringing.value = null
+            result
+        }
+    }
+
+    /**
+     * DECISIONS.md ADR-069 item 3: hold the Ring's claim — the release scheduled by [withMessageStream] is cancelled under [claimMutex] — until the Buds report
+     * the stop, the user's Stop or a new Ring ([endRingHold]), the channel's close by another client (Play services, ≈ 4.5 s — item 4: no re-claim) or
+     * [RING_HOLD_MAX_MS]; then the usual release after [MESSAGE_STREAM_LINGER_MS]. Not a timer that sends anything: it only keeps the socket open.
+     */
+    private fun startRingHold() {
+        val startedAt = clock()
+        ringHoldJob = scope.launch {
+            try {
+                claimMutex.withLock {
+                    releaseJob?.cancel()
+                    releaseJob = null
+                    if (!transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM)) return@withLock
+                    BleLogger.logConnectionEvent("Ring: claim held until the Buds report the stop (at most ${RING_HOLD_MAX_MS / 1000} s)")
+                    coroutineScope {
+                        val stopped = async(start = CoroutineStart.UNDISPATCHED) { _ringStoppedOnBudAt.first { it != null && it >= startedAt } }
+                        val closed = async(start = CoroutineStart.UNDISPATCHED) {
+                            transport.channelClosed.first { it.channelId == Dlci.FAST_PAIR_MESSAGE_STREAM }
+                        }
+                        val why = withTimeoutOrNull(RING_HOLD_MAX_MS) {
+                            select<String> {
+                                stopped.onAwait { "the Buds reported the stop" }
+                                closed.onAwait { "the claim was closed by another client" }
+                            }
+                        } ?: "no stop report within ${RING_HOLD_MAX_MS / 1000} s"
+                        stopped.cancel()
+                        closed.cancel()
+                        BleLogger.logConnectionEvent("Ring: hold ended — $why")
+                    }
+                }
+            } finally {
+                scheduleRelease()
+            }
+        }
+    }
+
+    /** Ends a running Ring hold (the user's Stop, a new Ring, Disconnect) and waits until its claim is free again. */
+    private suspend fun endRingHold() {
+        ringHoldJob?.let {
+            it.cancel()
+            it.join()
+        }
+        ringHoldJob = null
+    }
+
+    /**
+     * DECISIONS.md ADR-069 items 1–2: a ringing status from the Buds. While the app holds the claim it is ACKed with `ff 01 00 02 04 01` (the specification's
+     * Seeker rule; the official app's `CAP-025` 2048, `CAP-078` B2 7970); `01`/`02`/`03` mark the ring as running on that side, `00` ends it — "stopped on the
+     * bud" unless it answers the app's own Stop. Nothing else is sent.
+     */
+    private fun onRingStatus(frame: RingFrame) {
+        val now = clock()
+        val text = when (frame) {
+            is RingFrame.Start -> "ringing ${frame.target.name.lowercase()}"
+            RingFrame.Stop -> "stopped"
+        }
+        BleLogger.logConnectionEvent("Ring status from the Buds: $text")
+        if (transport.isChannelOpen(Dlci.FAST_PAIR_MESSAGE_STREAM)) {
+            scope.launch {
+                if (transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, RING_STATUS_ACK) is BudsResult.Success) {
+                    BleLogger.logConnectionEvent("Ring status acknowledged (ff 01 00 02 04 01)")
+                }
+            }
+        }
+        when (frame) {
+            is RingFrame.Start -> _ringing.value = (_ringing.value?.copy(target = frame.target) ?: RingNotice(frame.target)).copy(fromEarlierSession = false)
+            RingFrame.Stop -> {
+                _ringing.value = null
+                // `Long.MIN_VALUE` = no Stop sent yet (compared first: `now - Long.MIN_VALUE` would overflow).
+                if (stopSentAt == Long.MIN_VALUE || now - stopSentAt > ACK_WAIT_MS + MESSAGE_STREAM_LINGER_MS) _ringStoppedOnBudAt.value = now
+            }
+        }
     }
 
     /** One Ring command: gated (ADR-042), then its ACK (done), NAK ([BudsError.CommandRejected]) or nothing within 1 s — which the
@@ -1345,7 +1437,7 @@ class BudsRepositoryImpl(
      * Waits a bounded time for what the Buds announce on their own (firmware at connect; Model ID right after a claim opens) —
      * never guesses either.
      */
-    private suspend fun writeGate(requireModelIdOfClaim: Boolean): BudsError? {
+    internal suspend fun writeGate(requireModelIdOfClaim: Boolean): BudsError? { // (experiment seam)
         val firmware = _deviceInfo.value?.firmware
             ?: withTimeoutOrNull(MAESTRO_ANNOUNCE_WAIT_MS) { _deviceInfo.filterNotNull().first() }?.firmware
         val modelId = if (requireModelIdOfClaim) {
@@ -1374,30 +1466,20 @@ class BudsRepositoryImpl(
     // ---- battery ---------------------------------------------------------------------------------
 
     /**
-     * Left/Right: the Buds push their battery burst (ADR-033) only when the Message Stream channel **opens** (120 of 120 app opens,
-     * `ai-sessions/0051` §9) — so a Refresh always uses a fresh claim: a channel still lingering from an earlier action is released and opened
-     * again (two ordinary ADR-032 claim operations, no new message type; `ai-sessions/0052`). If no `03 03` frame arrives on that claim the
-     * values and their times stay as they were and [batteryRefreshError] says so ([BudsError.NoNewBatteryReading]) — never a suggested new
-     * reading. Each value keeps its own receive time.
+     * DECISIONS.md ADR-068 (`ai-sessions/0098`): one `SubscribeRuntimeInfo` on the session channel (no Message Stream claim) — a second subscription is answered
+     * by a stream packet (`PROTOCOL.md` §4.5 Update 2026-09-28, 8 of 8 in `CAP-063`, 19–355 ms). Done when a runtime-info packet arrives within
+     * [BATTERY_BURST_WAIT_MS]; none is [BudsError.NoNewBatteryReading] — the values and their times stay as they were, never a suggested new reading.
      */
     override suspend fun refreshBattery(): BudsResult<Unit> {
         if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
-        // DECISIONS.md ADR-043 Update 2026-09-26: one SubscribeRuntimeInfo per Refresh (the Connect-time bytes), no wait, no retry — an answer, if
-        // the Buds give one, arrives on the stream like any other packet; none changes nothing. Queued behind any running settings request.
-        resubscribeJob = scope.launch { subscribeRuntimeInfo(fromRefresh = true) }
         val result = coroutineScope {
-            // Subscribed before the claim opens: the burst arrives tens to hundreds of ms after the open, before the Notify (CAP-062 7106/7109 → 7110).
-            val burst = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(BATTERY_BURST_WAIT_MS) { _batteryFrames.first() } }
-            when (val claim = refreshAncMode(GET_RESPONSE_TIMEOUT_MS, freshOpen = true)) {
+            val packet = async(start = CoroutineStart.UNDISPATCHED) { withTimeoutOrNull(BATTERY_BURST_WAIT_MS) { _runtimeInfoPackets.first() } }
+            when (val sent = subscribeRuntimeInfo(fromRefresh = true)) {
                 is BudsResult.Failure -> {
-                    // F-3 (the maintainer's choice, chat 2026-10-01): a Get whose answer was cut off still counts for the battery when the burst arrived
-                    // before the close (`CAP-065` 10341 before the DISC 10344). Otherwise a burst can still have arrived (e.g. the Notify timed out):
-                    // that is a new reading, but the claim's error is shown.
-                    val burstBeforeCutOff = claim.error is BudsError.AnswerCutOff && burst.isCompleted && burst.await() != null
-                    burst.cancel()
-                    if (burstBeforeCutOff) BudsResult.Success(Unit) else BudsResult.Failure(claim.error)
+                    packet.cancel()
+                    sent
                 }
-                is BudsResult.Success -> if (burst.await() != null) BudsResult.Success(Unit) else BudsResult.Failure(BudsError.NoNewBatteryReading)
+                is BudsResult.Success -> if (packet.await() != null) BudsResult.Success(Unit) else BudsResult.Failure(BudsError.NoNewBatteryReading)
             }
         }
         _batteryRefreshError.value = (result as? BudsResult.Failure)?.error
@@ -1448,7 +1530,7 @@ class BudsRepositoryImpl(
      * If the channel dies under [action] (another client's failed connect closed it) the claim is
      * retried **once** — the failed attempt has just freed the port.
      */
-    private suspend fun <T> withMessageStream(freshOpen: Boolean = false, action: suspend () -> BudsResult<T>): BudsResult<T> {
+    internal suspend fun <T> withMessageStream(freshOpen: Boolean = false, action: suspend () -> BudsResult<T>): BudsResult<T> { // (experiment seam)
         if (connectionStateMachine.state.value !is ConnectionState.Ready) {
             return BudsResult.Failure(BudsError.ConnectionLost)
         }
@@ -1503,13 +1585,6 @@ class BudsRepositoryImpl(
         }
     }
 
-    private fun launchInitialSnapshot() {
-        snapshotJob?.cancel()
-        snapshotJob = scope.launch {
-            refreshAncMode(SNAPSHOT_TIMEOUT_MS)
-        }
-    }
-
     /**
      * Started by [openSession] once the session is `Ready` — at Connect and at every ADR-044 re-open (ADR-034): the EQ read, the settings reads (ADR-036,
      * `ai-sessions/0052`), the one runtime-info subscription (ADR-043), then — DECISIONS.md ADR-064/065, `ai-sessions/0091`, the order the maintainer chose in
@@ -1518,7 +1593,7 @@ class BudsRepositoryImpl(
      * `internal` so a test can start it without a `BluetoothDevice`.
      */
     internal fun launchInitialEqRead() {
-        readRound++ // A93-APP-02: a new session's reads (the snapshot `Get` launched just before belongs to it — its answer needs a Buds round trip)
+        readRound++ // A93-APP-02: a new session's reads (since ADR-068 only its ReadSetting 4:13 — no snapshot `Get`)
         eqReadJob?.cancel()
         eqReadJob = scope.launch {
             readEq()
@@ -1563,17 +1638,18 @@ class BudsRepositoryImpl(
      * `ReadSetting 4:13` (DECISIONS.md ADR-064 item 1, ADR-065 item 1): one read of the noise-control mode per MAESTRO session, right after the subscription —
      * byte-identical to `CAP-051` 1178 / `CAP-056` 1450 — waiting ≤ [SETTING_READ_TIMEOUT_MS] for its answer, never retried. The answer reaches
      * [applyAncState] through [handleRoutedFrame] (a read answer: "changed since the app last saw it" when it differs from the shown mode, ADR-065 item 4);
-     * a failure is logged only — the Connect's snapshot claim and the stream are the other sources of the mode.
+     * a failure is logged; the settings stream is the other source of the mode (no Connect snapshot claim since ADR-068). Also a Refresh's read (ADR-067).
      */
-    private suspend fun readAncSetting(): Unit = eqMutex.withLock {
+    private suspend fun readAncSetting(): BudsResult<AncMode?> = eqMutex.withLock {
         val channel = when (val c = awaitMaestroChannel()) {
             is BudsResult.Failure -> {
                 BleLogger.logConnectionEvent("Noise-control mode not read: ${eqErrorLogText(c.error)}")
-                return@withLock
+                return@withLock BudsResult.Failure(c.error)
             }
             is BudsResult.Success -> c.value
         }
-        val request = Maestro.readSettingRequest(channel.channelId, SettingsCodec.FIELD_ANC_STATE) ?: return@withLock
+        val request = Maestro.readSettingRequest(channel.channelId, SettingsCodec.FIELD_ANC_STATE)
+            ?: return@withLock BudsResult.Failure(BudsError.SettingNotReadable)
         val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(request))
         val accept: (MaestroReply) -> Boolean = {
             (it is MaestroReply.Setting && !it.stream && it.value.field == SettingsCodec.FIELD_ANC_STATE) ||
@@ -1590,8 +1666,10 @@ class BudsRepositoryImpl(
         }
         if (error != null) {
             BleLogger.logConnectionEvent("Noise-control mode read failed: ${eqErrorLogText(error)}")
+            BudsResult.Failure(error)
         } else {
             BleLogger.logConnectionEvent("Noise-control mode read (channel ${channel.channelId})")
+            BudsResult.Success(((reply as MaestroReply.Setting).value as SettingValue.AncState).mode)
         }
     }
 
@@ -1671,12 +1749,12 @@ class BudsRepositoryImpl(
     }
 
     private fun cancelClaimJobs() {
+        ringHoldJob?.cancel()
+        ringHoldJob = null
         eqReadJob?.cancel()
         eqReadJob = null
         releaseJob?.cancel()
         releaseJob = null
-        snapshotJob?.cancel()
-        snapshotJob = null
         resubscribeJob?.cancel()
         resubscribeJob = null
     }
@@ -1686,7 +1764,7 @@ class BudsRepositoryImpl(
      * Subscribing first matters: the Buds answer within tens of milliseconds, and a subscription made
      * after `send()` returns can miss a fast reply. A send failure cancels the wait.
      */
-    private suspend fun <R, T> sendAndAwait(
+    internal suspend fun <R, T> sendAndAwait( // (experiment seam)
         reply: SharedFlow<R>,
         timeoutMs: Long,
         accept: (R) -> Boolean,
@@ -1744,21 +1822,23 @@ class BudsRepositoryImpl(
     }
 
     companion object {
-        /** Wait for a fresh ANC Notify after a manual Refresh. Kept short: the channel is held meanwhile,
-         * and Google Play services re-opens it 2.7–5.0 s after losing it (`ai-sessions/0040` §2.1). */
-        private const val GET_RESPONSE_TIMEOUT_MS = 2_000L
-
         /** Wait for the Buds' ACK/Notify after a Set or Ring before the channel may be released. */
-        private const val ACK_WAIT_MS = 1_000L
+        internal const val ACK_WAIT_MS = 1_000L // (experiment seam)
 
         /** After the claim's close, how long an answer that arrived just before it may still take through the codec (F-3) — in-process, milliseconds. */
         private const val CUT_OFF_GRACE_MS = 100L
 
-        /** How long a Refresh waits for the Buds' battery burst on its fresh claim (observed 0.3 s after the open, `CAP-062` 7088 → 7106). */
+        /** How long a battery Refresh waits for a runtime-info packet after its re-subscription (ADR-068; observed 19–355 ms, `CAP-063` 3863→3870 … 8417→8426). */
         private const val BATTERY_BURST_WAIT_MS = 2_000L
 
-        /** Wait for the ANC state during the Connect-time snapshot. */
-        private const val SNAPSHOT_TIMEOUT_MS = 1_000L
+        /** DECISIONS.md ADR-069 item 3: the longest a Ring's claim is held for the Buds' stop report (observed stops 14.8–17.1 s, `CAP-078` §4.1). */
+        internal const val RING_HOLD_MAX_MS = 20_000L
+
+        /** DECISIONS.md ADR-069 item 2: the Seeker's ACK of a ringing status — `ff 01 00 02 04 01` (`CAP-025` 2048, `CAP-078` 7970). */
+        private val RING_STATUS_ACK = byteArrayOf(0xff.toByte(), 0x01, 0x00, 0x02, 0x04, 0x01)
+
+        /** pw_rpc status 9 (`FAILED_PRECONDITION`, pigweed `PW_STATUS_FAILED_PRECONDITION`): the Buds' answer to a mode write with no bud worn (ADR-067). */
+        private const val PW_STATUS_FAILED_PRECONDITION = 9
 
         /** How long the channel stays claimed after an action so replies land, then it is released (ADR-065 item 5: no hold — `ai-sessions/0094` dropped ADR-061's tab clause). */
         private const val MESSAGE_STREAM_LINGER_MS = 1_500L
@@ -1797,7 +1877,7 @@ class BudsRepositoryImpl(
         private const val SETTING_READ_TIMEOUT_MS = 2_000L
 
         /** How long a `WriteSetting` waits for its empty RESPONSE (`CAP-015`: ~50 ms after the request). */
-        private const val EQ_WRITE_ACK_TIMEOUT_MS = 1_500L
+        internal const val EQ_WRITE_ACK_TIMEOUT_MS = 1_500L // (experiment seam)
 
         /** How long a Message Stream command waits for the claim's Model ID frame (observed 30–340 ms after the open, `CAP-059`). */
         private const val MODEL_ID_WAIT_MS = 1_000L
@@ -1819,7 +1899,7 @@ private fun BatteryLevel.chargingReading(atMillis: Long): ChargingReading? =
  * What the Buds answered to one of our Maestro requests (DECISIONS.md ADR-034) — or pushed: [Value.stream] / [Setting.stream] mark a settings-stream packet,
  * which never ends a read's wait (`ai-sessions/0094`, A93-APP-04 — only the read's RESPONSE does).
  */
-private sealed class MaestroReply {
+internal sealed class MaestroReply { // (experiment seam: was file-private)
     data class Value(val frame: EqFrame, val stream: Boolean = false) : MaestroReply()
     data class Result(val result: RoutedFrame.RpcResult) : MaestroReply()
     data class Setting(val value: SettingValue, val stream: Boolean = false) : MaestroReply()

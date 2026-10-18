@@ -20,15 +20,14 @@
 package io.github.tedsluis.opencontrolpixelbuds.domain
 
 /**
- * Find My Buds ring target. Left/Right only, per DECISIONS.md ADR-011's
- * implementation-unblock scope — Case and "ring both simultaneously" are a
- * deliberate, permanent v1 exclusion (DECISIONS.md ADR-027, PROJECT.md
- * non-goals), not represented here at all so the UI cannot imply a
- * capability this project does not provide (ARCHITECTURE.md §5a).
+ * Find My Buds ring target — the Device Action ring value (DECISIONS.md ADR-011). [BOTH] (`0x03`, "Ring both left and right") since DECISIONS.md ADR-070
+ * (`ai-sessions/0098`, which supersedes ADR-027 for "both": `CAP-078` §5, ACKed and reported as status `03`). The Case stays out of scope and is not
+ * represented here (ARCHITECTURE.md §5a).
  */
 enum class RingTarget(val wireValue: Int) {
     RIGHT(0x01),
     LEFT(0x02),
+    BOTH(0x03),
     ;
 
     companion object {

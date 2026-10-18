@@ -359,6 +359,9 @@ class MainActivity : ComponentActivity() {
             val deviceInfo by budsRepository.deviceInfo.collectAsStateWithLifecycle(initialValue = null as DeviceInfo?)
             val serialsError by budsRepository.serialsError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val ringing by budsRepository.ringing.collectAsStateWithLifecycle(initialValue = null as RingNotice?)
+            // DECISIONS.md ADR-067/069 (`ai-sessions/0098`): the ANC tab's failure reason and the Find tab's "stopped on the bud".
+            val ancError by budsRepository.ancError.collectAsStateWithLifecycle(initialValue = null as BudsError?)
+            val ringStoppedOnBudAt by budsRepository.ringStoppedOnBudAt.collectAsStateWithLifecycle(initialValue = null as Long?)
             val lastConnectionError by budsRepository.lastConnectionError
                 .collectAsStateWithLifecycle(initialValue = null as BudsError?)
             val lastLossCause by budsRepository.lastLossCause.collectAsStateWithLifecycle(initialValue = null as SessionLossCause?)
@@ -454,6 +457,8 @@ class MainActivity : ComponentActivity() {
                 lastLossCause = lastLossCause,
                 androidLink = androidLink,
                 messageStreamError = messageStreamError,
+                ancError = ancError,
+                ringStoppedOnBudAt = ringStoppedOnBudAt,
                 ancMode = ancMode,
                 ancModeUpdatedAt = ancModeUpdatedAt,
                 sessionSince = sessionSince,
@@ -571,7 +576,8 @@ class MainActivity : ComponentActivity() {
 
             // F-6: the stored choice, or Android's own setting for "System" — recomposed (not recreated) when either changes.
             OpenControlTheme(darkTheme = darkMode.isDark(isSystemInDarkTheme())) {
-                OpenControlNavHost(state = state, actions = actionsWithPull)
+                // `ai-sessions/0096`: [ExperimentHook] is an empty slot in debug and release (src/noExperiment) and round 1's card in the experiment build type.
+                OpenControlNavHost(state = state, actions = actionsWithPull, debugExtra = { debugOn -> ExperimentHook.Content(budsRepository, applicationScope, debugOn) })
             }
         }
     }

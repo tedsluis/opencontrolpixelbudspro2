@@ -66,7 +66,8 @@ sealed class SettingValue {
      * Field 13, the noise-control mode as a setting (🟢 PROTOCOL.md §4.1 Update of 2026-10-14; DECISIONS.md ADR-064, ADR-065; `ai-sessions/0091`):
      * 1 = Off, 2 = Noise cancellation, 3 = Transparency, 4 = Adaptive — `CAP-051` 1225 (`13:4`), 1717 (`13:2`), 1802 (`13:3`), `CAP-021` 1089 (`13:1`);
      * 0 = no mode settable ([mode] `null` — ADR-049's Settable `00`: `CAP-045` 2033/2277, `CAP-051` 2247 after the Buds' own `DISC`), never shown as a mode.
-     * Any other value is not interpreted (the decoder returns `null`). **Read only** — never encoded (ADR-064 item 4: `WriteSetting 4:{13:n}` stays gated).
+     * Any other value is not interpreted (the decoder returns `null`). Encoded only by [SettingsCodec.ancStateRequest] (DECISIONS.md ADR-067, `ai-sessions/0098`:
+     * the tab and the tile switch the mode with `WriteSetting 4:{13:n}`, n = 1 … 4; 0 is never written).
      */
     data class AncState(val mode: AncMode?) : SettingValue() {
         override val field: Int get() = SettingsCodec.FIELD_ANC_STATE
@@ -186,6 +187,21 @@ object SettingsCodec {
      */
     fun headGesturesRequest(channelId: Int, on: Boolean): RpcPacket =
         writeRequest(channelId, tag(FIELD_HEAD_GESTURES, WIRETYPE_VARINT) + Varint.encode(if (on) HEAD_GESTURES_ON else HEAD_GESTURES_OFF))
+
+    /**
+     * `WriteSetting 4:{13:n}` (DECISIONS.md ADR-067, `ai-sessions/0098`): the noise-control mode, n = 1 Off, 2 Noise cancellation, 3 Transparency, 4 Adaptive —
+     * byte-identical to the experiment build's `CAP-078` H 5921 (`22 02 68 01`, channel 19) and H 6775 (`… 68 02`, channel 21), each answered `RESPONSE` and
+     * pushed back as `13 = n`. Never 0 (no mode settable is the Buds' report, not a request).
+     */
+    fun ancStateRequest(channelId: Int, mode: AncMode): RpcPacket = writeRequest(channelId, tag(FIELD_ANC_STATE, WIRETYPE_VARINT) + Varint.encode(ancStateValue(mode)))
+
+    /** The wire value of [mode] in field 13 — the inverse of the decoder's mapping. */
+    fun ancStateValue(mode: AncMode): Int = when (mode) {
+        AncMode.OFF -> ANC_STATE_OFF
+        AncMode.ACTIVE -> ANC_STATE_ACTIVE
+        AncMode.TRANSPARENT -> ANC_STATE_TRANSPARENT
+        AncMode.ADAPTIVE -> ANC_STATE_ADAPTIVE
+    }
 
     private fun writeRequest(channelId: Int, inner: ByteArray) = RpcPacket(
         type = PwRpc.TYPE_REQUEST,

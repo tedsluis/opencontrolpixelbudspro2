@@ -39,6 +39,10 @@ val releaseSigning: Map<String, String> = releaseSigningKeys.mapNotNull { key ->
 val missingReleaseSigning: List<String> = releaseSigningKeys.filterNot { it in releaseSigning }
 
 android {
+    testOptions {
+        unitTests.isReturnDefaultValues = true // `ai-sessions/0098`: `:app`'s JVM tests touch android.* constants only
+    }
+
     namespace = "io.github.tedsluis.opencontrolpixelbuds"
     // DECISIONS.md ADR-029 and its Update of 2026-10-07 (`ai-sessions/0078`): compile against API 37 — required by the AndroidX/Compose releases of
     // the toolchain upgrade; compile-time only (minSdk and targetSdk stay 34).
@@ -55,8 +59,8 @@ android {
         // above the previous release. 1.0.1 = the hotfix of `ai-sessions/0069` (the maintainer's choice in chat 2026-10-03); 1.1.1 = the toolchain of `ai-sessions/0078`
         // (`ai-sessions/0079`, the maintainer's choice in chat 2026-10-08); 1.2.1 = the Noise-control channel switch of `ai-sessions/0087` (chat 2026-10-12).
         // 1.2.2 = the constant re-claim step, "Take it back again" and the renamed card of `ai-sessions/0089` (chat 2026-10-13, "Version").
-        versionCode = 10301
-        versionName = "1.3.1"
+        versionCode = 10400
+        versionName = "1.4.0"
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
         buildConfigField("String", "GIT_COMMIT_DATE", "\"$gitCommitDate\"")
     }
@@ -76,6 +80,20 @@ android {
         release {
             if (missingReleaseSigning.isEmpty()) signingConfig = signingConfigs.getByName("release")
         }
+        // `ai-sessions/0096` (the maintainer's choice in chat 2026-10-16, "BuildType 'experiment'"): round 1's experiment build — debug-signed, a package of
+        // its own (it installs beside the release app), never built by scripts/release.sh or CI. Only this build type compiles src/experiment (the Debug-tab
+        // card); debug and release compile src/noExperiment (an empty slot). :ui, :domain and :hardware have no experiment type and fall back to debug.
+        create("experiment") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".experiment"
+            versionNameSuffix = "-exp.1"
+            matchingFallbacks += "debug"
+        }
+    }
+
+    sourceSets {
+        getByName("debug").kotlin.srcDir("src/noExperiment/kotlin")
+        getByName("release").kotlin.srcDir("src/noExperiment/kotlin")
     }
 
     compileOptions {
@@ -120,6 +138,15 @@ dependencies {
     // DECISIONS.md ADR-028: Hilt.
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    // `ai-sessions/0098` (TODO 2.5): `:app`'s first JVM tests — the same JUnit 5 entries the other modules use (test scope only, nothing reaches the APK).
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
 
 // The clear failure of `ai-sessions/0065`: checked when the release APK is packaged, not at configuration, so debug builds, tests and lint run without keys.
