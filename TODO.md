@@ -15,7 +15,7 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 
 *(The finished release items of 1.2.2 and 1.3.0 were deleted 2026-10-15 by `ai-sessions/0094` — `ai-sessions/0093` A93-HK-01; they are in `CHANGELOG.md`,
 `RELEASING.md` §13 and the session RESULTs.)*
-- 1.4.0 published 2026-10-18 (`v1.4.0` on `e2b1c06`, `RELEASING.md` §13). D4 (install from the release page) is the maintainer's. Next, in the maintainer's order: test 1.4.1 (`CAP-080`, PR #70) and release it, then `ai-sessions/0101`. Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25; from `CAP-077`: §2.
+- 1.4.0 published 2026-10-18 (`v1.4.0` on `e2b1c06`, `RELEASING.md` §13). D4 done 2026-10-18 (installed from the release page, the maintainer). Next, in the maintainer's order: test 1.4.1 (`CAP-080`, PR #70) and release it, then `ai-sessions/0101`. Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25; from `CAP-077`: §2.
 - **The Buds' state after `CAP-079` (2026-10-18, `ai-sessions/0099`):** all four press-and-hold modes ticked again (part 4, 08:34:50), in-ear detection on, EQ
   `[0, 2, 4, 0, −1]`, balance Right 1 (unchanged since `CAP-078`), **setting 21 "Volume level notifications" written off last (channel 19, 08:41:56)**, the
   Buds' clock set by `SetWallclock` (08:36:17) — restore balance/EQ/21 if wanted (**M**). Also: the phone's Dosimeter live stream may still be subscribed (the
