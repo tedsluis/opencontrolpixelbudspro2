@@ -167,6 +167,18 @@ The APK says nothing about the unit of the dose. That is answered from the wire.
 - **Dependencies:** unchanged. The only `.gradle.kts` change is the version (`git diff --stat`).
 - **`lint_docs.py`:** exit 0 after the INDEX row. The "dead filename references" section is informational: renamed skeleton paths in historical logs.
 
+
+## The APKs for `CAP-080` (built 2026-10-18 after the 1.4.0 release, the maintainer's "Ik wil CAP-080 uitvoeren")
+
+Both from **`b0a9283`** (the tip of `feature/0100-fixes` after `main` was merged in; CI green on PR #70) — the build commit of 1.4.1 (checklist B1):
+- **Release 1.4.1:** `scripts/release.sh 1.4.1 b0a9283` → `dist/1.4.1/opencontrol-pixelbudspro2-1.4.1.apk`, 10401 / 1.4.1, SHA-256
+  **`45e21482ccccf90b1a3106b7afc8a2b4433b43d6d372694440f16d8966db522d`**, certificate `a7530f5c…dcb` (the release key). Kept copy
+  `~/opencontrol-1.4.1-tested` (B3, made at once this time).
+- **Experiment 1.4.1-exp.1:** `./gradlew --offline assembleExperiment` in a clean detached worktree at `b0a9283` (removed afterwards) →
+  `~/opencontrol-1.4.1-exp.1/opencontrol-pixelbudspro2-1.4.1-exp.1.apk`, `….experiment`, 10401 / 1.4.1-exp.1, SHA-256
+  **`f031ca5f6df7b226a6f067a626221ed15669df7a36df84cdc979be51c4a3688c`**, the debug key (`67e29f38…`), as 1.4.0-exp.1; never released. `b0a9283` in both dex files.
+- **The WELL-002 test file** `~/opencontrol-1.4.1-exp.1/levels.wav` (the skeleton's `ffmpeg` command), SHA-256 `6c111d5b0cf2acf669210e1249ab43df5631130d5c02959e08d532ccb9eaa423`.
+
 ## Files read
 
 `AGENTS.md` and its reading block (in the 0099 session, the same conversation); the 0100 prompt; `CAP-079-FINDINGS.md` §0, §3.3, §5, §8 – §11; `CAP-079-EVENT-NOTES.md`
