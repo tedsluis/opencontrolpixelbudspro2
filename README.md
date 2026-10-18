@@ -103,9 +103,10 @@ firmware `release_5.203`. Per feature, what is hardware-verified and what is onl
 and its known issues are in [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) —
 a suspected security problem goes through [`SECURITY.md`](./SECURITY.md) instead.
 
-**1.4.0 is prepared, not released** (`ai-sessions/0098`; its hardware run `CAP-079` is planned): the mode is switched on the app's own channel and the battery
+**1.4.0 is prepared, not released** (`ai-sessions/0098`; hardware run `CAP-079`, `ai-sessions/0099`, 2026-10-18 — verdict: release with known issues): the mode is switched on the app's own channel and the battery
 read from it too, so the shared Fast Pair channel is used only for Find My Buds — no more collision with Google Play services for a mode change; Ring both;
-"Stopped on the bud" after a ring you stop by touching a bud; a noise-control line on the Connection tab (`CHANGELOG.md` [1.4.0]).
+a noise-control line on the Connection tab. On hardware "Stopped on the bud" did not appear — the app listens for at most 20 s and the
+Buds ring longer (`CHANGELOG.md` [1.4.0], Known issues).
 
 **Known issues of 1.3.1** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 

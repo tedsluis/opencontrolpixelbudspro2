@@ -486,6 +486,12 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
     (`gck.java:198`). The 🔴 on fields 5 and 6 (2026-09-24 Update) and the 🟡 on the routing through `gaa.d` (2026-10-01 Update) are answered **on
     the code side**; what the Buds mean by them stays 🟡. `REVERSE_ENGINEERING.md`, `qjb` entry.
 
+- **Note (2026-10-18, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL", option *"Alle vijf zoals voorgesteld (Recommended)"* — `CAP-079`, `ai-sessions/0099`; no status change) — 🟢 server-streaming subscriptions outlive the MAESTRO session.** `CAP-079`: settings-stream pushes
+  arrived in a session before its own `SubscribeToSettingsChanges` (H1 4877/4878 07:26:26.172, after the phone had closed the previous session at 07:26:23.368;
+  H2 5110 in a session closed by the Buds before any request), and `maestro_pw.Dosimeter` live packets arrived on channels 21 and 19 0.48 s after the first `SABM`
+  of a new ACL in the other GrapheneOS user with no `SubscribeToLiveDb` in that ACL (H4 1038 08:31:19.235; the subscriptions were made in user 10 before the session
+  close, the ACL loss and the user switch). 🟡 the Buds keep the stream calls per pw_rpc channel; how long is open (H1/H2/H3/H4 = `CAP-079-btsnoop_hci1.log` / `CAP-079-btsnoop_hci3.log.last` / `CAP-079-btsnoop_hci4.log.last` / `CAP-079-btsnoop_hci4.log`; `CAP-079-FINDINGS.md` §11, §14).
+
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
 `[Group:1][Code:1][Length:2B-BE][Value]` envelope (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md`
@@ -902,6 +908,14 @@ never decides which extracted finding is relevant (see `AGENTS.md` §4/§6,
   `SettingsCodecTest`), sent only for a mode ticked in field 12; status 0 shows the mode, status 9 is "not allowed", no answer starts the write quarantine.
   The Message Stream `Get`/`Set` of this section are no longer sent by the app; a `Notify` that reaches it while Find holds the claim is still read. To be
   verified on hardware by `CAP-079` (Group BO).
+
+- **Note (2026-10-18, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL", option *"Alle vijf zoals voorgesteld (Recommended)"* — `CAP-079`, `ai-sessions/0099`; no status change) — the 1.4.0 write path on hardware, 🟢 for `CAP-079`.** OpenControl 1.4.0 (release key, `e2b1c06`) sent 26
+  `WriteSetting 4:{13:n}` in both GrapheneOS users: 22 RESPONSE OK, each pushed back as `13 = n` on the write's channel and on the other bud's channel 2–87 ms
+  later; 4 `FAILED_PRECONDITION`, each with no bud worn (H1 2501, 3222, 3230, 3245); no Message Stream claim for any of them. **In-ear detection off makes setting 13
+  settable with no bud worn:** `4:{2:0}` → push 13 = 4, `{2:1}` → 13 = 0, both buds on the table on film (H1 2736 → 2742, 3118 → 3128); the four writes then were
+  OK. **A mode not ticked in field 12 is accepted and applied:** with `4:{12:{1:1 2:1 3:1 4:0}}` in force, `4:{13:4}` → OK and the push 13 = 4 on both channels (H3
+  2426 → 2433, 2430/2434). ("H1" = `CAP-079-btsnoop_hci1.log`, "H3" = `CAP-079-btsnoop_hci4.log.last`; `CAP-079-FINDINGS.md` §3, §10; `python3 scripts/pwhdlc_crc_table.py <log>
+  0x000b > t.tsv; python3 scripts/rpc_request_answers.py t.tsv WriteSetting`.)
 
 ### 4.2 Equalizer (EQ)
 
@@ -1546,6 +1560,10 @@ event-observation coroutines.
   "last seen"); *Refresh battery* re-subscribes (the 2026-09-28 Update below) and waits ≤ 2 s for a packet. Option B's `03 03` is no longer claimed for. To be
   verified on hardware by `CAP-079`.
 
+- **Note (2026-10-18, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL", option *"Alle vijf zoals voorgesteld (Recommended)"* — `CAP-079`, `ai-sessions/0099`; no status change) — field 2 is the Buds' clock, present only after `SetWallclock`, 🟢 for `CAP-079`.** Every runtime-info
+  packet and announcement before the experiment's first `SetWallclock` lacks field 2 (H1 81, H2 36, the `CAP-078` tail 64, H3 28); every one after it carries
+  `2:<epoch ms>` (H3 11, H4 27; H3 2596 08:13:22.765 `2:1792304002562` = 08:13:22.562 local). `SetWallclock` `1:<ms>` was answered OK (H3 2559 → 2563, 78 ms).
+  Left/Right on the app's card equalled 6.2/6.3 field 1 in every packet compared; *Refresh battery* (re-subscription) got a packet in 49–86 ms, 4 of 4 (H1/H2/H3/H4 = `CAP-079-btsnoop_hci1.log` / `CAP-079-btsnoop_hci3.log.last` / `CAP-079-btsnoop_hci4.log.last` / `CAP-079-btsnoop_hci4.log`; `CAP-079-FINDINGS.md` §4, §11).
 - **Update (2026-09-28, `ai-sessions/0053`, maintainer-approved in chat 2026-09-28, `AskUserQuestion` "FACT P-1") — a second subscription is answered, 🟢 FACT.** A second
   `SubscribeRuntimeInfo` REQUEST on an already subscribed, open DLCI 0x02 channel is answered by a `SERVER_STREAM` packet: 8 of 8 in `CAP-063` (3863→3870,
   4066→4078, 4143→4152, 6057→6064, 6107→6114, 6195→6202, 6239→6249, 8417→8426; 19–355 ms), including both buds docked after 93 s idle (8426, Case 34).
@@ -1640,6 +1658,11 @@ option (C), even though its per-earbud content is now FACT-confirmed.
   "both"; no status change):** OpenControl 1.4.0 sends Ring both `04 01 00 01 03` from the Find tab and, after any Ring, holds the claim until the Buds' status
   `04 01 00 01 00`, its own Stop, a new Ring, a foreign close or 20 s; each status that arrives while DLCI 0x04 is open is ACKed `ff 01 00 02 04 01` (pinned to
   `CAP-078` H 7970 in `RingCodecTest`); a stop status that does not answer the app's Stop is shown as "Stopped on the bud". To be verified by `CAP-079`.
+- **Note (2026-10-18, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL", option *"Alle vijf zoals voorgesteld (Recommended)"* — `CAP-079`, `ai-sessions/0099`; no status change) — 🟡 the Buds ring ≈ 60 s without a timeout byte.** `CAP-079`: a Ring Left with nothing touched (H1 4535
+  07:23:52.116) sounded until 07:24:55.0 (camera audio, 21 pulses of the 3.14-kHz tone) — 62.9 s; no stop status reached the app, whose hold had ended after 20 s.
+  The Device Action page (fetched 2026-10-18): the Ring's second byte, "if present, represents the timeout in seconds"; ringing continues "until an additional action
+  is received directing a stop, or a timeout value has passed" — no default is given. So `CAP-078`'s stops at 14.8–17.1 s were most likely touches, not a time-out
+  (one sample; H1/H2/H3/H4 = `CAP-079-btsnoop_hci1.log` / `CAP-079-btsnoop_hci3.log.last` / `CAP-079-btsnoop_hci4.log.last` / `CAP-079-btsnoop_hci4.log`; `CAP-079-FINDINGS.md` §5.2). In the Owner user a touch's stop status went to Google Play services, which ACKed it (H2 4785 → 4788, 5059 → 5061) — `FIND-005` again.
 - **Sent to**: RFCOMM Message Stream channel, DLCI 0x04, per §2.1.
 - **Expected response**: confirmed — see the two ACK variants above.
 - **Major structural finding — Case/"both" use a different mechanism entirely**: the official app
@@ -2093,6 +2116,11 @@ implementation gate.
   field 21 = 0). A search of every capture for this write (`frame contains 1d:9a:8c:9e:2a:05:22:03:a8:01`) finds only these four frames. Code side:
   `REVERSE_ENGINEERING.md`'s `qhr` register, field 21 (`hey.java:165–190`, `HearingWellnessFragment`). Opening the Hearing wellness page calls
   `maestro_pw.Dosimeter.FetchDailySummaries` (5736). Nothing is built (no ADR). Evidence: `CAP-058-FINDINGS.md` §6.
+
+- **Note (2026-10-18, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL", option *"Alle vijf zoals voorgesteld (Recommended)"* — `CAP-079`, `ai-sessions/0099`; no status change) — field 21 on both channels, 🟢 for `CAP-079`.** The never-captured channel-19 form `22 03 a8 01 b` was
+  answered OK and pushed back on channel 19 (H3 4278 → 4281, 4368 → 4371; part 4 likewise) while the session was on 19; the same write on channel 21 got
+  `FAILED_PRECONDITION` 4 of 4 (H3 4415 → 4418, 4497 → 4499) — 🟡 a write on the bud core that does not host the session is refused, while `FetchDailySummaries`
+  and `SubscribeToLiveDb` were answered on both (H1/H2/H3/H4 = `CAP-079-btsnoop_hci1.log` / `CAP-079-btsnoop_hci3.log.last` / `CAP-079-btsnoop_hci4.log.last` / `CAP-079-btsnoop_hci4.log`; `CAP-079-FINDINGS.md` §11).
 
 #### 4.5.9 Not yet mapped
 
@@ -3883,6 +3911,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-16 | **`ai-sessions/0095` — `CAP-077` (Group BM, OpenControl 1.3.1 in the secondary user without Play), maintainer-approved in chat 2026-10-16** (`AskUserQuestion` "Notities"). §6: a note on the wear-state item (a mode switch with in-ear detection off, H 2339) and a new ❓ item — three stream packets per write for fields 4, 11, 15, 27, 28. No status change. | Claude (AI), maintainer-approved |
 | 2026-10-17 | `CAP-078` (round 1, the experiment build 1.3.1-exp.1; `ai-sessions/0097`, maintainer-approved in chat 2026-10-17): §4.1 Update — `WriteSetting 4:{13:n}` switches the mode without the Message Stream (🟢, 22 sends); §4.4 Update — `FIND-005` ring-status sync 🟢, Ring both `0x03` ACKed and reported 🟢 (both sounding 🟡); §6 — settings 8/9/10 answer status 2 (🟢), `SubscribeToOobeActions` answered then status 14 (🟢 / ❓) | Claude Opus 5.5 (AI), approved by the maintainer |
 | 2026-10-17 | `ai-sessions/0098` (release 1.4.0; ADR-067 … ADR-070 accepted in chat 2026-10-17): implementation notes only — §4.1 (the mode written with `WriteSetting 4:{13:n}`), §4.3 Option F (Left/Right from 6.2/6.3), §4.4 (the ring status ACKed, Ring both); no status changed | AI (Claude Opus 5.5), the ADRs accepted by the maintainer |
+| 2026-10-18 | `CAP-079` (round 2, release 1.4.0 and the experiment build 1.4.0-exp.1; `ai-sessions/0099`, maintainer-approved in chat 2026-10-18): notes only — §2.2a (stream subscriptions outlive the session, 🟢), §4.1 (the 1.4.0 write path; in-ear detection off makes setting 13 settable; a mode outside field 12 accepted — 🟢), §4.3 Option F (field 2 = the clock after `SetWallclock`, 🟢), §4.4 (a ring ≈ 60 s without a timeout byte, 🟡), §4.5.8a (field 21 on channel 19 OK, the other channel status 9, 🟢); no status changed | AI (Claude Opus 5.5), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL

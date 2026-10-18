@@ -492,32 +492,36 @@ experiment build is never released; every request on its card was approved by th
 
 ## AB. 1.4.0 (`ai-sessions/0098`: ADR-067 … ADR-070 in both users) and round 2's Dosimeter experiment
 
-In `CAP-079` as BO-1 … BO-28 (captures/CAP-079-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BO/CAP-079-EVENT-NOTES.md, with the reference frames and the run card). The
+In `CAP-079` as BO-1 … BO-28 (captures/CAP-079-2026-10-18_07-07-31_08-42-33-Group_BO/CAP-079-EVENT-NOTES.md, with the reference frames and the run card). The
 experiment build 1.4.0-exp.1 is never released; F1 … F4 were approved by the maintainer in chat 2026-10-17.
 
 | ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
 |---|---|---|---|---|---|
-| AB1 | Connect (both worn) | L, R and Case %; "Noise control: <mode>" on the Connection tab | runtime info 6.1–6.3; **no DLCI 0x04** at Connect | | BO-1 (ADR-068, P6) |
-| AB2 | Refresh battery | the values renewed | one `SubscribeRuntimeInfo`; no DLCI 0x04 | | BO-2 |
-| AB3 | ANC tab: four modes, both worn | the mode follows | `WriteSetting 4:{13:n}`, the push, `RESPONSE` OK | | BO-3 (ADR-067) |
-| AB4 | One bud worn; in-ear detection off | as AB3 | as AB3 | | BO-4, BO-6 |
-| AB5 | No bud worn: a mode | "The Buds don't allow changing noise control right now …" | status 9 `FAILED_PRECONDITION` | | BO-5 |
-| AB6 | The tile × 3 | steps through the ticked modes; no "unavailable" flash | one write per tap | | BO-7 (P2) |
-| AB7 | Off unticked for press and hold: tab, tile | Off disabled with the hint line; the tile skips Off | no `4:{13:1}` | | BO-8 (ADR-067 Note) |
-| AB8 | Press and hold × 2 | "Changed by the Buds" | the push on both channels | | BO-9 |
-| AB9 | Ring Left, touch the bud | "Ringing: Left earbud …" → "Stopped on the bud at …" | the status `…02`/`…00`, each ACKed `ff 01 00 02 04 01` | | BO-10 (ADR-069) |
-| AB10 | Ring Right, Stop in the app | no "Stopped on the bud" | Stop, the status `00` | | BO-11 |
-| AB11 | Ring both, Stop | "Ringing: Both earbuds …" | `04 01 00 01 03`, ACK, status `03` | | BO-12 (ADR-070) |
-| AB12 | Ring Left, let it run | "Stopped on the bud at …" after the Buds' own stop | the status `00`; the hold ends ≤ 20 s | | BO-13 |
-| AB13 | TalkBack on the switch rows, the Bass slider, the tabs, Find's buttons | each read with its name and state | — | | BO-14 (A93-APP-07) |
-| AB14 | Connect and hold a bud at once (repeat) | the held mode | a push during the `ReadSetting 4:13`; the read ends with its RESPONSE | | BO-15 (A93-APP-04) |
-| AB15 | Connect and Disconnect at once | Disconnected, stays so | the opened channels closed again | | BO-16 (A68-APP-13) |
-| AB16 | Owner user with Play: battery, two modes, the tile, two holds | as AB1/AB3/AB8 | no app claim on DLCI 0x04 | | BO-18 |
-| AB17 | Owner user with Play: Ring Left, 10 s, Stop | no "Stopped on the bud" the app did not hear | Play's cut; "hold ended — the claim was closed by another client" | | BO-19 |
-| AB18 | Experiment app: A Adaptive with Adaptive unticked | "Experiment A: …" | the Buds' answer to a write outside field 12 | | BO-21 |
-| AB19 | Experiment app: F1, F3 before, F2 19/21 at four levels with the meter, F3 after | "Experiment F…" lines; the per-minute count | the Dosimeter answers and stream | | BO-22 … BO-25 (`WELL-002`, `WELL-003`) |
-| AB20 | Experiment app: F4 21 on/off, 19 on/off | "Experiment F4: RESPONSE …" | the writes and their answers | | BO-26 |
-| AB21 | Owner user, experiment app: F2 21 one minute, F3 21 | as AB19 | as AB19, with Play present | | BO-28 |
+| AB1 | Connect (both worn) | L, R and Case %; "Noise control: <mode>" on the Connection tab | runtime info 6.1–6.3; **no DLCI 0x04** at Connect | ✅ (Connect with both in the case) | BO-1 (ADR-068, P6) |
+| AB2 | Refresh battery | the values renewed | one `SubscribeRuntimeInfo`; no DLCI 0x04 | ✅ 4 of 4, 49–86 ms | BO-2 |
+| AB3 | ANC tab: four modes, both worn | the mode follows | `WriteSetting 4:{13:n}`, the push, `RESPONSE` OK | ✅ 4 of 4 | BO-3 (ADR-067) |
+| AB4 | One bud worn; in-ear detection off | as AB3 | as AB3 | ✅ 4 + 4 (in-ear off with no bud worn) | BO-4, BO-6 |
+| AB5 | No bud worn: a mode | "The Buds don't allow changing noise control right now …" | status 9 `FAILED_PRECONDITION` | ✅ status 9 | BO-5 |
+| AB6 | The tile × 3 | steps through the ticked modes; no "unavailable" flash | one write per tap | ✅ 4 worn; 3 unworn → status 9 + toast | BO-7 (P2) |
+| AB7 | Off unticked for press and hold: tab, tile | Off disabled with the hint line; the tile skips Off | no `4:{13:1}` | ✅ no `13:1` (Off ticked again only in part 2) | BO-8 (ADR-067 Note) |
+| AB8 | Press and hold × 2 | "Changed by the Buds" | the push on both channels | ✅ 23 holds | BO-9 |
+| AB9 | Ring Left, touch the bud | "Ringing: Left earbud …" → "Stopped on the bud at …" | the status `…02`/`…00`, each ACKed `ff 01 00 02 04 01` | ❌ no "Stopped on the bud" — the hold ended at 20 s, the touch came at 18.6 s and the tone ended after it | BO-10 (ADR-069) |
+| AB10 | Ring Right, Stop in the app | no "Stopped on the bud" | Stop, the status `00` | ⚠️ the bud touched instead of Stop (session loss); the Stop path in AB11 | BO-11 |
+| AB11 | Ring both, Stop | "Ringing: Both earbuds …" | `04 01 00 01 03`, ACK, status `03` | ✅ status 03; Stop → 00, no "Stopped on the bud" | BO-12 (ADR-070) |
+| AB12 | Ring Left, let it run | "Stopped on the bud at …" after the Buds' own stop | the status `00`; the hold ends ≤ 20 s | ❌ the ring ran ≈ 63 s, no stop status within the 20-s hold | BO-13 |
+| AB13 | TalkBack on the switch rows, the Bass slider, the tabs, Find's buttons | each read with its name and state | — | not run | BO-14 (A93-APP-07) |
+| AB14 | Connect and hold a bud at once (repeat) | the held mode | a push during the `ReadSetting 4:13`; the read ends with its RESPONSE | ✅ the push before the read's RESPONSE (H1 4806); the read ended normally | BO-15 (A93-APP-04) |
+| AB15 | Connect and Disconnect at once | Disconnected, stays so | the opened channels closed again | ⚠️ the Disconnect came after Ready; the race not hit | BO-16 (A68-APP-13) |
+| AB16 | Owner user with Play: battery, two modes, the tile, two holds | as AB1/AB3/AB8 | no app claim on DLCI 0x04 | ⚠️ ✅ battery, two modes, 10 holds, no app claim; the tile not tapped | BO-18 |
+| AB17 | Owner user with Play: Ring Left, 10 s, Stop | no "Stopped on the bud" the app did not hear | Play's cut; "hold ended — the claim was closed by another client" | ✅ cut 4.75–4.81 s, no re-claim; the stop went to Play (Known issue as predicted) | BO-19 |
+| AB18 | Experiment app: A Adaptive with Adaptive unticked | "Experiment A: …" | the Buds' answer to a write outside field 12 | ✅ accepted and applied (OK, push 13 = 4) | BO-21 |
+| AB19 | Experiment app: F1, F3 before, F2 19/21 at four levels with the meter, F3 after | "Experiment F…" lines; the per-minute count | the Dosimeter answers and stream | ⚠️ no meter filmed; F1 OK on the wire but "Timeout" in the app; the value followed the volume steps | BO-22 … BO-25 (`WELL-002`, `WELL-003`) |
+| AB20 | Experiment app: F4 21 on/off, 19 on/off | "Experiment F4: RESPONSE …" | the writes and their answers | ✅ ch 19 OK ×2, ch 21 status 9 ×2 | BO-26 |
+| AB21 | Owner user, experiment app: F2 21 one minute, F3 21 | as AB19 | as AB19, with Play present | ✅ with Play; 120 packets/min with music | BO-28 |
+
+**Run note (`CAP-079`, 2026-10-18, `ai-sessions/0099`):** both users, 1.4.0 `e2b1c06` and 1.4.0-exp.1. ADR-067/068/070 as decided; ADR-069 ACKed every status but
+"Stopped on the bud" never appeared (AB9, AB12: the 20-s hold is shorter than the ring); TalkBack (AB13) not run; no sound-level meter on film (AB19). Details:
+`CAP-079-FINDINGS.md`. Verdict: release with Known issues (the maintainer, chat 2026-10-18); fixes in `ai-sessions/0100`.
 
 ## After the run (within 1 minute of the last action)
 
@@ -559,7 +563,7 @@ experiment build 1.4.0-exp.1 is never released; F1 … F4 were approved by the m
 | X 1.2.1 | 12 | 6 | 0 | 5 | 1 |
 | Y 1.3.0 | 22 | 10 | 0 | 7 | 5 |
 | AA round 1 (experiment build) | 10 | 5 | 0 | 3 | 2 |
-| AB 1.4.0 and round 2 (experiment build) | 21 | | | | |
+| AB 1.4.0 and round 2 (experiment build) | 21 | 14 | 2 | 4 | 1 |
 
 **Run `CAP-078` (2026-10-17, the experiment build 1.3.1-exp.1, user 10 without Play and the Owner with Play; `ai-sessions/0097`, `CAP-078-FINDINGS.md`):** section
 AA — ✅ AA5, AA6, AA8, AA9, AA10; ⚠️ AA2 and AA4 (done in the experiment app, both as expected), AA7 (events only at subscribe); not run AA1 (TalkBack), AA3 (a

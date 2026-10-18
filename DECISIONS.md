@@ -2701,6 +2701,16 @@ motivated this).
   `maestro_pw.proto:44`) — the day index of (iii) may depend on it. The draft stays Proposed.
 - **Consequences, if accepted**: a Dosimeter codec, two requests in the Connect sequence, a notification channel (`POST_NOTIFICATIONS` is already held), the
   switch on a tab, DataStore for one timestamp; its own hardware run with the meter. Until then: `TODO.md` §5 carries the candidate.
+- **Update (2026-10-18, `ai-sessions/0099`, `CAP-079`, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "ADR-060", option *"Update met deze cijfers
+  (Recommended)"*) — the draft stays Proposed; nothing is accepted.** The experiment build 1.4.0-exp.1 sent F1 … F4 in both GrapheneOS users
+  (`CAP-079-FINDINGS.md` §11). Of the 🟡 above: **(iv) settled 🟢** — the Buds answered OpenControl's `FetchDailySummaries` (8 of 8) and `SubscribeToLiveDb`
+  (1,707 packets) on channels 19 and 21, with and without Google Play services; **(v) settled 🟢** — the channel-19 form `22 03 a8 01 b` is answered OK when the
+  session is on 19, and refused `FAILED_PRECONDITION` on the other channel (4 of 4); **(vi)** ≈ 1 live packet/s per channel while audio plays, 3–10 per minute in
+  silence, and **the subscription outlives the session, the ACL and a user switch** (packets 0.48 s after a new ACL's first `SABM` with no request) — a design
+  would have to bound or cancel it; **(vii)** `SetWallclock` is answered OK and puts the clock (field 2) into runtime info and the announcement; **(i) not settled**
+  — no sound-level meter was filmed; the live value followed the phone's media-volume steps with a constant program level (≈ 1.5 × 10⁶ → 2 × 10⁴ → 4 × 10⁸ →
+  4 × 10⁹ → 1.6 × 10⁶) and did not react to room sound — 🟡 a level of the buds' playback; **(iii)** day 475 = 2026-10-18 (`CAP-058`: 462 = 2026-10-05) — 🟡 day 0 =
+  2025-06-30; (ii) open. The decision is unchanged (not accepted).
 
 ## ADR-061 — Hold the Message Stream claim while the noise-control tab is on screen
 

@@ -547,6 +547,10 @@ summary), the current state is (every write below additionally passes the Safe-M
 > (`1.4.0-exp.1`); its card now holds A (a write outside field 12, ADR-067 Note) and F, the Dosimeter (F1 `SetWallclock`, F2 `SubscribeToLiveDb`, F3
 > `FetchDailySummaries`, F4 `WriteSetting 4:{21:b}`, each approved in chat 2026-10-17) — raw values in the log, no unit, no health wording; draft ADR-060 is
 > unchanged. The "(experiment seam)" members stay `internal` (reviewed: no behaviour depends on them).
+> **Run (2026-10-18, `CAP-079`, `ai-sessions/0099`, both users, 1.4.0 `e2b1c06`):** ANC through setting 13 — 26 writes, 22 OK, 4 status 9 with no bud worn,
+> the hold list respected; DLCI 0x04 claimed only for Find (8 of 8); Left/Right and *Refresh battery* from runtime info; every ring status ACKed (9 of 9) and
+> Ring both reported (`03`) — **hardware-verified**. "Stopped on the bud" never shown: `RING_HOLD_MAX_MS` (20 s) is shorter than the Buds' ring (≈ 63 s
+> untouched) — a known issue of 1.4.0, the fix in `ai-sessions/0100`. Not exercised: TalkBack, a Disconnect during a Connect. `CAP-079-FINDINGS.md`.
 
 This table is this project's authoritative implementation-readiness list until superseded by a new ADR
 — a future session should re-derive it from `DECISIONS.md` directly rather than copying it forward

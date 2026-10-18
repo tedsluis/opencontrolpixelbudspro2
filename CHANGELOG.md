@@ -19,7 +19,10 @@ build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phon
 ## [1.4.0] - not yet released
 
 Prepared in `ai-sessions/0098` from the round-1 run `CAP-078` (`ai-sessions/0097`) and `DECISIONS.md` ADR-067 … ADR-070 (accepted by the maintainer in chat
-2026-10-17). **Not yet run on hardware** — its run is `CAP-079` (Group BO, planned); every line below is what the code and its tests do, not a measurement.
+2026-10-17). **Hardware run `CAP-079`** (Group BO, `ai-sessions/0099`, 2026-10-18, both GrapheneOS users): 26 mode writes on the app's own channel (22 OK,
+4 refused with no bud worn), the shared channel opened only for Find (8 of 8 claims), Left/Right and *Refresh battery* from runtime info, every ringing status
+acknowledged, Ring both reported by the Buds; TalkBack and a Disconnect during a Connect not exercised. Verdict: release with the known issues below (the
+maintainer, chat 2026-10-18); fixes follow in `ai-sessions/0100`.
 
 ### Changed
 
@@ -51,6 +54,11 @@ Prepared in `ai-sessions/0098` from the round-1 run `CAP-078` (`ai-sessions/0097
 - In the user with Google Play services, Play takes the shared channel back ≈ 4.5–5 s into a ring (`CAP-078`); the app then no longer hears the Buds' stop and
   keeps "Ringing …" until you tap Stop. A Ring can still collide with Play's claim (it then usually works at the second attempt, as in 1.3.1).
 - After the Buds' own close of the session (one bud out while both are worn) the mode shown can be a few seconds old until the re-open's read (as in 1.3.1).
+- **"Stopped on the bud" did not appear on hardware** (`CAP-079`): the app holds the channel at most 20 s, but the Buds ring longer — about a minute when
+  nothing is touched — so a stop by touch after 20 s, or the Buds' own stop, is not heard and "Ringing …" stays until you tap Stop.
+- The red "The Buds don't allow changing noise control right now …" line can stay after the Buds allow a change again (until a mode tap or Refresh).
+- Three texts still describe 1.3.x: the noise-control card's "Tapping a mode checks again first", the battery details' "read … when the app last reached
+  their Message Stream", and Find's "Each action briefly claims …" (a ring now holds the channel up to 20 s).
 
 ## [1.3.1] - 2026-10-16
 

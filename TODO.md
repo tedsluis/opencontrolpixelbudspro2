@@ -16,6 +16,10 @@ Legend: 🔴 open question · 🟡 hypothesis to test · **M** = needs the maint
 *(The finished release items of 1.2.2 and 1.3.0 were deleted 2026-10-15 by `ai-sessions/0094` — `ai-sessions/0093` A93-HK-01; they are in `CHANGELOG.md`,
 `RELEASING.md` §13 and the session RESULTs.)*
 - 1.3.1 published 2026-10-16 (`v1.3.1` on `7aa524b`, `RELEASING.md` §13). Still open from `CAP-076`: BL-10, BL-13, BL-15, BL-18, BL-21, BL-24, BL-25; from `CAP-077`: §2.
+- **The Buds' state after `CAP-079` (2026-10-18, `ai-sessions/0099`):** all four press-and-hold modes ticked again (part 4, 08:34:50), in-ear detection on, EQ
+  `[0, 2, 4, 0, −1]`, balance Right 1 (unchanged since `CAP-078`), **setting 21 "Volume level notifications" written off last (channel 19, 08:41:56)**, the
+  Buds' clock set by `SetWallclock` (08:36:17) — restore balance/EQ/21 if wanted (**M**). Also: the phone's Dosimeter live stream may still be subscribed (the
+  subscription outlives the session, `CAP-079-FINDINGS.md` §11).
 - **The Buds' state after `CAP-078` (2026-10-17, `ai-sessions/0097`):** EQ preset `[0, 2, 4, 0, −1]` (upper treble … low bass; set 16:30:26 and still so in user 0,
   film s2 79–86), Volume EQ on, **balance Right 1** (was Centre), mono off, in-ear detection on (off 16:51:01 – 16:52:31), all four press-and-hold modes, every
   switch as before — restore balance and EQ if wanted (**M**).
@@ -68,7 +72,7 @@ with the hold's untested branches below. **Next app run:** none planned — thes
 
 | Capture | Group | What | Phone / app |
 |---|---|---|---|
-| `CAP-079` | BO | Round 2: release candidate 1.4.0 in both users (ADR-067 … ADR-070, TalkBack, a hold and a Disconnect during a Connect) and the Dosimeter experiment F1–F4 with a sound-level meter (skeleton by `ai-sessions/0098`) | Pixel 9a (users 10 and 0), OpenControl 1.4.0 + 1.4.0-exp.1 |
+| (next) | — | After `ai-sessions/0100`: a short run of the 1.4.0 fixes — Ring and touch after > 20 s, a ring left to the Buds' own stop (BO-10, BO-13), TalkBack (BO-14, never run), a Disconnect during a Connect (BO-16, not hit), `WELL-002` with a sound-level meter in frame (P7 not done in `CAP-079`) | Pixel 9a (users 10 and 0) |
 | `CAP-055` | AQ | Nod/Shake head gestures with an active call or notification (needs a second phone) | Pixel 7a, official app |
 | `CAP-030` | Q #19–20 | Loud Noise Protection / Adaptive Audio (firmware naming never reconciled with `release_5.203`, `PROTOCOL.md` §0.1) | Pixel 7a, official app |
 
@@ -174,9 +178,15 @@ Open questions (each with where it is described):
   of setting 13, although the app's own ANC row writes only that (`ai-sessions/0073` §4.9) — in the next official-app capture, film which
   control is tapped (the app's row or the Play-services/Settings one). 🟡 what the Buds mean by the "primary" bud of the announcement (field 6;
   the app-side routing is answered, `PROTOCOL.md` §2.2a note of 2026-10-06).
-- [ ] **Round 2 built — 1.4.0 prepared by `ai-sessions/0098` (2026-10-17; ADR-067 … ADR-070):** its hardware run is `CAP-079` (Group BO, §3), including
-  TalkBack (A93-APP-07), a hold during a Connect (A93-APP-04) and the Dosimeter experiment F1–F4 with a sound-level meter (`WELL-002`, `WELL-003`); then the
-  release steps (`RELEASING.md`, the maintainer's).
+- [ ] **1.4.0 after `CAP-079` (`ai-sessions/0099`, 2026-10-18):** verdict "release with Known issues" (the maintainer, chat 2026-10-18) — the release steps
+  (`RELEASING.md` B–D) are the maintainer's. **`ai-sessions/0100` (FEATURE, agreed in chat 2026-10-18):** (1) the ring hold — 20 s is shorter than the Buds'
+  ring (≈ 63 s untouched; a touch after 18.6 s not heard), an ADR-069 Update; (2) clear the red "don't allow" line when a push makes the mode settable; (3) the three
+  1.3.x texts (ANC "checks again first", battery (i) "Message Stream", Find (i) "briefly claims"); (4) the experiment's `SetWallclock` answer is never an
+  `RpcResult` (`CodecRouter.kt:328`) — F1 reports a time-out; tests with `CAP-079` bytes; a skeleton for the short run (§3).
+- 🔴/🟡 **From `CAP-079` (`CAP-079-FINDINGS.md` §18):** the ACL connection timeout (0x08) at a Disconnect tap (07:26:49); the Buds' default ring time-out (one
+  sample ≈ 60 s) and whether a timeout byte is honoured; whether a touch stops the ring at once; what the live-dB value is (no meter) and why one bud's day index
+  moved at F1; why field 21 is refused on the non-hosting core; how long a stream subscription survives without a client (the app never cancels its
+  subscriptions — a design question for ADR-060 and for the settings stream).
 - [ ] **Experiment (`ai-sessions/0090` E-12):** a read-only `SubscribeToOobeActions` **without** OOBE mode (setting 6 is never written, `ARCHITECTURE.md` §5a
   rule) — do per-bud `LEFT_ON_HEAD` … `RIGHT_OFF_HEAD` events (`qhp` 10–13) arrive? Would refine ADR-059's "probably worn" (never per bud).
 - Idea, low priority (`ai-sessions/0090` E-17): an explicit `GetSoftwareInfo` as a fallback after `MAESTRO_ANNOUNCE_WAIT_MS` — one MAESTRO open in 523 stayed
@@ -254,7 +264,8 @@ Open questions (each with where it is described):
 - [ ] **Candidate for a later release (M; "1.3.0 candidate" until 2026-10-15, `ai-sessions/0094`):** volume-level notifications from `maestro_pw.Dosimeter` — draft ADR-060 (`DECISIONS.md`, proposed, not accepted; `ai-sessions/0082`
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (the stream against a sound-level meter on film) and the other 🟡 of the draft are 🟢. Since `ai-sessions/0098`
-      the experiment build's card sends the four requests one tap each (F1–F4, approved in chat 2026-10-17); `CAP-079` BO-21 … BO-28 runs them.
+      the experiment build's card sends the four requests one tap each (F1–F4, approved in chat 2026-10-17); `CAP-079` ran them (`ai-sessions/0099`, ADR-060 Update
+      of 2026-10-18: (iv), (v) settled; (i) still open — no meter filmed).
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.
