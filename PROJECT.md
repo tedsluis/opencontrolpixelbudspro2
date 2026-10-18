@@ -36,7 +36,7 @@ To be finalized based on what is actually found in the protocol. Candidate
 features offered by the official app (it still needs to be verified which of
 these run over local BLE/RFCOMM versus over the cloud/a Google account):
 
-> **Status (2026-09-24; updated 2026-10-15 for 1.3.0; 2026-10-17 for 1.4.0, prepared — not released):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
+> **Status (2026-09-24; updated 2026-10-15 for 1.3.0; 2026-10-18 for 1.4.0, released):** a tick means *implemented in the app*; nothing is claimed hardware-verified unless `ARCHITECTURE.md` §5a
 > says so. The authoritative per-feature state (and its unblocking ADR) is `ARCHITECTURE.md` §5a.
 
 - [x] Read battery status (left, right: DLCI 0x04, ADR-033 — since 1.4.0 runtime info 6.2/6.3 on DLCI 0x02, ADR-068; case and per-bud "charging in the case": DLCI 0x02 `SubscribeRuntimeInfo`, ADR-043 and its Update)
@@ -135,19 +135,14 @@ Without Google Play Services installed, the app can:
 > *Row 2 updated 2026-10-04 (`ai-sessions/0070`, maintainer-approved in chat, `AskUserQuestion` "DoD text", option *"Approve as shown (Recommended)"*):* the ANC change was
 > "maintainer-attested, not captured" for 1.0.0; `CAP-068` (`CAP-068-FINDINGS.md` §2; "A" = `CAP-068-btsnoop_hci2.log.last`) replaces it with frames.
 
-## Status (rewritten 2026-10-16 for 1.3.1)
+## Status (rewritten 2026-10-18 for 1.4.0)
 
-The current release is **1.3.1** (published 2026-10-16, tag `v1.3.1` on build `7aa524b`; `RELEASING.md` §13), a fix release of 1.3.0 (`ai-sessions/0094`): one
-pairing memory for "Use different Buds" with a confirmation, the kept "changed since" line, no silent tile tap, stream pushes that no longer end a read, one name
-per mode, TalkBack labels (`CHANGELOG.md` [1.3.1]). Its hardware run `CAP-077` (`ai-sessions/0095`, 2026-10-16, the user without Google Play) showed every
-press-and-hold (8 of 8) and every tile tap answered; the kept "changed since", a push during a read and TalkBack were not exercised on hardware (unit tests only).
-1.3.0 (2026-10-15, `ff27ee1`) brought the settings stream on the app's own channel (ADR-064/065): a press-and-hold on a bud shows on any tab with or without
-Google Play services (`CAP-076`: 29 of 29 with Play, 12 of 12 without).
-
-**1.4.0 is prepared, not released** (`ai-sessions/0098`, 2026-10-17; `CHANGELOG.md` [1.4.0]): the mode written on the app's own channel (ADR-067), Left/Right
-battery from runtime info with no Message Stream claim at Connect (ADR-068) — the Message Stream is claimed only for Find —, the Buds' ringing status and
-"Stopped on the bud" (ADR-069), Ring both (ADR-070), a mode line on the Connection tab. Its hardware run is `CAP-079` (Group BO, planned); the release steps
-are the maintainer's after that run.
+The current release is **1.4.0** (published 2026-10-18, tag `v1.4.0` on build `e2b1c06`; `RELEASING.md` §13; `ai-sessions/0098`, `CHANGELOG.md` [1.4.0]): the
+mode written on the app's own channel (ADR-067), Left/Right battery from runtime info with no Message Stream claim at Connect (ADR-068) — the Message Stream is
+claimed only for Find —, the Buds' ringing status read and acknowledged (ADR-069), Ring both (ADR-070), a mode line on the Connection tab. Its hardware run
+`CAP-079` (`ai-sessions/0099`, 2026-10-18, both GrapheneOS users) confirmed ADR-067, ADR-068 and ADR-070; "Stopped on the bud" did not appear (the 20-s hold is
+shorter than the ring) — a known issue, fixed in 1.4.1 (`ai-sessions/0100`, pull request #70, hardware run `CAP-080` planned). 1.3.0 (2026-10-15, `ff27ee1`)
+brought the settings stream on the app's own channel (ADR-064/065); 1.3.1 (2026-10-16, `7aa524b`) its fixes.
 
 v1 contains: connection and Safe Mode, noise control with a Quick Settings tile, the equalizer (with Volume EQ), battery (Left / Right / Case), Find My Buds
 (Left / Right), touch controls, press and hold and its mode list, head gestures, Multipoint on/off, balance, mono audio, conversation detection, in-ear
