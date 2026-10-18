@@ -492,6 +492,19 @@ about every field of every message). Evidence and commands (`PROJECT_RULES.md` r
   of a new ACL in the other GrapheneOS user with no `SubscribeToLiveDb` in that ACL (H4 1038 08:31:19.235; the subscriptions were made in user 10 before the session
   close, the ACL loss and the user switch). 🟡 the Buds keep the stream calls per pw_rpc channel; how long is open (H1/H2/H3/H4 = `CAP-079-btsnoop_hci1.log` / `CAP-079-btsnoop_hci3.log.last` / `CAP-079-btsnoop_hci4.log.last` / `CAP-079-btsnoop_hci4.log`; `CAP-079-FINDINGS.md` §11, §14).
 
+- **Note (2026-10-18, `ai-sessions/0101`, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL"; no status change) — how the companion app ends a
+  stream call, 🟢 (code) and 🟢 (wire).** The official app ends a server-streaming call with a `CLIENT_ERROR` packet, status `CANCELLED` (`nps.java:65–113`:
+  type 4, the call's channel, service and method ids, status 1) — on a route change (each stream is re-opened on the new route), when its last observer leaves,
+  and at its own socket close (`fut.smali:1209` → every per-session subscriber's disposer) — and answers a packet of a call it no longer holds with `CLIENT_ERROR`
+  `FAILED_PRECONDITION` (`gon.java:238`, `:248` "Ignoring packet for %s, which isn't pending"). Wire (`python3 scripts/pwrpc_decode.py <log> | grep CLIENT_ERROR`
+  over all 117 capture logs; nested `.log`/`.log.last` counted as they are): 374 such packets, every one from the official app, 0 from OpenControl — `CANCELLED`:
+  `SubscribeToLiveDb` 100, `SubscribeToQuietModeStatus` 94, `SubscribeRuntimeInfo` 57, `SubscribeToSettingsChanges` 56, `WriteSetting` 13 (all `CAP-050`: a
+  pending write cancelled by the next write of the same field, 0.00–0.01 s apart), `KpiStream` 2; `FAILED_PRECONDITION`: `SubscribeToLiveDb` 24, `WriteSetting` 13,
+  `SubscribeToSettingsChanges` 8, `ReadSetting` 3, `GetStatus` 2, `FetchDailySummaries` 2 (the replies to late answers). In `CAP-037` each cancel set precedes the
+  phone's own `DISC` of MAESTRO by 0–100 ms (1743/1744/1745 → `DISC` 1746 at +7 ms, sent): cancel, then close. 🔴 whether the Buds stop a running stream on a
+  `CANCELLED` with the channel left open — every such cancel in the logs fell in a silent stream or just before a `DISC` (experiment E2, `ai-sessions/0101` RESULT
+  §3.3; a new send, its own ADR first). `REVERSE_ENGINEERING.md`, entry "the life of a server-streaming call" (2026-10-18).
+
 **DLCI 0x08, by contrast, does not match this framing at all** (checked and ruled out, not
 assumed): no `0x7E` flag bytes delimit its frames, no escaping, and its own
 `[Group:1][Code:1][Length:2B-BE][Value]` envelope (`CAP-001-FINDINGS.md` §2, `CAP-004-FINDINGS.md`
@@ -1588,6 +1601,13 @@ event-observation coroutines.
   2 and 3 are not in app 1.0.955078536's schema (`qiy` has fields 4–7 only), so the app cannot name them. The app's field 7 flags gate its
   live-dB subscription per bud: 7.2 Left, 7.1 Right (`fsy.java:122–170`).
 
+- **Note (2026-10-18, `ai-sessions/0101`, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL"; no status change) — entry 7's three booleans
+  in the app's words, 🟢 (code).** 7.2 (Left) and 7.1 (Right): `true` makes the official app end that bud's `SubscribeToLiveDb` and report 0.0, `false` makes it
+  subscribe (`fsy.java:122–169`) — so they gate the Dosimeter per bud, consistent with "charging"; **7.3 is "Low latency mode"** (`fwx.java:22`, the default branch of
+  `fst`, `fst.java:73–79`; the log "Low latency mode change to %s", `frb.java:70`). The 🔴 "7.3" of this Option is answered on the code side; what the Buds mean by
+  it is 🟡. The stream's top-level fields 2 and 3 stay outside the app's schema. No code reads a per-bud worn state from runtime info
+  (`REVERSE_ENGINEERING.md`, entry "the on-head state per bud", 2026-10-18).
+
 **Implementation priority (superseded 2026-09-24 — see the "Current state" note at the top of §4.3: B and E are implemented *(correction 2026-09-30:
 **B and F** are implemented; E is a FACT source the app no longer opens, ADR-043)*, A unmatched, C removed
 (ADR-040), D contested; "already-periodic HFP" below is wrong per ADR-015):** 0 (cheap to rule in/out) → A → B → C → D (see
@@ -1967,6 +1987,18 @@ implementation gate.
   OpenControl's writes behave as the official app's, 🟢 for `CAP-064`.** `4:{2:0}` (9922) → OK → SASS `07 11 00 04 01 02 b0 00` (9927); `4:{2:1}` (10817) → OK →
   `… b8 00` (10822). With it off: no AVRCP pause on a bud removal during playback (none between frames 10047 and 10494), the Buds still `DISC` the MAESTRO
   channel on wear changes (10102, 10309), and the Settable byte reads `e8` with no bud worn (10394, 10600 — the 🔴 above is answered). `CAP-064-FINDINGS.md` §2–§3.
+- **Note (2026-10-18, `ai-sessions/0101`, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL"; no status change) — how the official app knows
+  which bud is in an ear, 🟢 (code).** Its per-bud on/off-head state is the server stream `maestro_pw.Maestro/SubscribeToOobeActions` (`gav.java:46–66`: one
+  call per primary route, each `qje` field 1 a `qhp` — `LEFT_ON_HEAD(10)`, `LEFT_OFF_HEAD(11)`, `RIGHT_ON_HEAD(12)`, `RIGHT_OFF_HEAD(13)`), chosen for device
+  type 6 (`fqg.java:369–376`; the Pro 2 answers `GetHardwareInfo` field 1 = 6 in all 82 logs that carry it). It is read **only** by the eartip seal test
+  (`hmw.java:67`, states `NONE`/`RUN_LEFT`/`RUN_RIGHT`/`RUN_BOTH`/`INTERRUPTED`/`NO_BUD_ON_HEAD`), the setup wizard's music demo (`gvj.java:124/133`), the
+  OOBE-mode lifecycle (which writes setting 6, `guy.java:25/39`) and the OTA screens (`hkf.java:12`); no settings, status or battery screen reads a per-bud
+  state, no string names one, and nothing in the APK reads GSND CONTROL `0x05`. The call is open only while such a screen observes it. Wire: the method id
+  occurs in `CAP-078` only (`tshark -r <log> -Y "frame contains 25:cb:be:f3:57" | wc -l` → 0 in the other 115 logs, 4 there); there it ended with status 14
+  at 16:53:31.516 — 65 ms before the settings push of the bud-out (H 7432) and 16 s before the Buds' `DISC` (7441) — at the wear change, not with the session.
+  🟡 the firmware keeps the stream open only while setting 6 (OOBE mode) or 14 (OTTS mode, written by the fit test, `hmw.java:76`) is on; a client that
+  re-subscribes after each `UNAVAILABLE` may get the new state — experiment E1 (`ai-sessions/0101` RESULT §3.3, read-only). `REVERSE_ENGINEERING.md`, entry
+  "the on-head state per bud" (2026-10-18).
 
 #### 4.5.5a Mono audio
 
@@ -2121,6 +2153,17 @@ implementation gate.
   answered OK and pushed back on channel 19 (H3 4278 → 4281, 4368 → 4371; part 4 likewise) while the session was on 19; the same write on channel 21 got
   `FAILED_PRECONDITION` 4 of 4 (H3 4415 → 4418, 4497 → 4499) — 🟡 a write on the bud core that does not host the session is refused, while `FetchDailySummaries`
   and `SubscribeToLiveDb` were answered on both (H1/H2/H3/H4 = `CAP-079-btsnoop_hci1.log` / `CAP-079-btsnoop_hci3.log.last` / `CAP-079-btsnoop_hci4.log.last` / `CAP-079-btsnoop_hci4.log`; `CAP-079-FINDINGS.md` §11).
+
+- **Note (2026-10-18, `ai-sessions/0101`, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL"; no status change) — which core a setting is
+  written to, 🟢 (code) and 🟢 (wire).** The official app sends every `maestro_pw.Maestro` request to its **primary route** — the core of the `GetSoftwareInfo`
+  answer, unless that answer's field 6 is set ("Update primary to %d", `fxk.java:30–35`; `fyv.java:44–49`, `fsz.java:62–74`) — and only the Dosimeter calls
+  to both bud cores by name (`fyh.java:28–36`, `fvp.java:55–58`). Wire (the channel of each request against the latest announcement before it, all 117 logs):
+  `WriteSetting` 1,044 of 1,044 and `ReadSetting` 8,852 of 8,852 on the announced channel (the only exceptions are OpenControl's experiment F4 on channel 21 in
+  `CAP-079`, refused); `SubscribeRuntimeInfo`, `SubscribeToSettingsChanges`, `SetWallclock`, `GetHardwareInfo` likewise; `FetchDailySummaries` 220 / 222 and
+  `SubscribeToLiveDb` 213 / 209 — the per-core pairs; no request on channels 18/23 (the Case core) in any log. `CAP-058`'s four field-21 writes (5747 … 5790)
+  were on channel 21 = the announced channel. So the 🟡 above ("refused on the non-hosting core") rests on OpenControl's 4 samples with no counter-sample, and
+  **a `ReadSetting` on the non-hosting core has never been sent by anyone** (🔴) — experiment E3 (`ai-sessions/0101` RESULT §3.3). ADR-034 item 3 is what the
+  official app does. `REVERSE_ENGINEERING.md`, entry "the route of a write, and the wall clock" (2026-10-18).
 
 #### 4.5.9 Not yet mapped
 
@@ -3809,6 +3852,24 @@ leaving them buried in prose elsewhere.
   `08 0c` at once (`qhp` 10 `LEFT_ON_HEAD`, 12 `RIGHT_ON_HEAD` — `REVERSE_ENGINEERING.md`; both buds were worn) → **H 7429 RESPONSE status 14 (`UNAVAILABLE`)
   15.7 s later**, empty; no event for the bud-out/in that followed (positive control: the settings stream on the same channel pushed `13 = 3`/`4` at H 7432,
   7436). ❓ Why the call ended (the maintainer took a bud out at about that second — speech at 16:53:31.1); not usable as an in-ear source as seen. Run once.
+  **Note (2026-10-18, `ai-sessions/0101`, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL"; no status change):** this is the official app's
+  per-bud source (§4.5.5, Note of 2026-10-18), opened only on its OOBE, fit-test and OTA screens, with setting 6 or 14 on; here the status 14 came 65 ms before
+  the push 13 = 3 of the bud-out (7432) and 16 s before the Buds' `DISC` (7441). The official app re-subscribes up to three times on an error
+  (`gav.java:81`); 🟡 a re-subscribe after each `UNAVAILABLE` yields the new state — experiment E1.
+- [ ] **Added 2026-10-18, `ai-sessions/0101` (maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL") — 🟢 (code) / 🟢 (wire) / 🔴: `SetWallclock`
+  and the Dosimeter day index.** The official app sends `SetWallclock` once per connection, before its `ReadSetting` sweep (`fyo.java:18–19` → `fua.java:183–187` →
+  "Set wall clock time", `fst.java:53–59` → `gcc.java:21–48` "syncWallclock to %s"), on the primary route, with the phone's `Instant.now()`, retry 3; wire: 144
+  requests in 57 official-app logs, every one on the announced channel, one per connection (41 logs exactly one; `CAP-037` 30 = its 30 connections), 0 in
+  OpenControl's logs except the experiment. The app **never converts the day index to a date** (no `toEpochDay`/`ofEpochDay` in its Maestro code); `hwy.ai`
+  (`hwy.java:1971–1989`) sums the entries `c − 6 … c` with `c` the Buds' current index (`gdg.c`, the larger of the two buds, `hwy.aj`). Wire (field 1 of every
+  `FetchDailySummaries` answer, 57 logs, `python3 scripts/pwrpc_decode.py <log> | grep FetchDailySummaries`): **three regimes** — 2026-08-09 … 09-14: 11 … 47, one
+  per 24 h with the boundary ≈ 05:30–05:50 UTC (`CAP-026`/`028` 44 before 07:16, `CAP-029` 45 after 07:53 local on 09-12; `CAP-040` 38 → 39 between 07:28 and
+  07:57 on 09-06), i.e. day 0 ≈ 2026-07-29/30; 2026-09-28 (`CAP-056`): 227; 2026-10-04 … 10-18 (`CAP-069`, `053`/`054`/`058`, `079`): 461, 462, 475 — one per day
+  again (day 0 = 2025-06-30). The Buds' clock (runtime-info field 2) was real time in all three regimes (`CAP-050` −0.2 s, `CAP-056` −0.1 s, `CAP-069` −0.1 s,
+  `CAP-058` −0.1 s against the capture time); the two jumps (+180 in 14 days, +234 in 6 days) fall in the periods of OpenControl's runs without `SetWallclock`.
+  🔴 what the index counts; the 🟡 "day 0 = 2025-06-30" holds since 10-04 only. For draft ADR-060 (iii) the epoch does not matter if the app does what the
+  official app does — the Buds' current index is "today". Experiment E4 (`ai-sessions/0101` RESULT §3.3). `REVERSE_ENGINEERING.md`, entry "the route of a
+  write, and the wall clock" (2026-10-18).
 - [ ] **Added 2026-10-16, `ai-sessions/0095` (maintainer-approved in chat 2026-10-16, `AskUserQuestion` "Notities") — ❓ OPEN QUESTION: three stream packets per
   write for some settings.** In `CAP-077` (OpenControl 1.3.1, both buds out of the case) a `WriteSetting` of field 4, 11, 15, 27 or 28 was echoed on
   `SubscribeToSettingsChanges` **three** times — channel 19 before the `RESPONSE`, channel 19 again in the same RFCOMM frame as the `RESPONSE`, channel 21 (e.g.
@@ -3912,6 +3973,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-17 | `CAP-078` (round 1, the experiment build 1.3.1-exp.1; `ai-sessions/0097`, maintainer-approved in chat 2026-10-17): §4.1 Update — `WriteSetting 4:{13:n}` switches the mode without the Message Stream (🟢, 22 sends); §4.4 Update — `FIND-005` ring-status sync 🟢, Ring both `0x03` ACKed and reported 🟢 (both sounding 🟡); §6 — settings 8/9/10 answer status 2 (🟢), `SubscribeToOobeActions` answered then status 14 (🟢 / ❓) | Claude Opus 5.5 (AI), approved by the maintainer |
 | 2026-10-17 | `ai-sessions/0098` (release 1.4.0; ADR-067 … ADR-070 accepted in chat 2026-10-17): implementation notes only — §4.1 (the mode written with `WriteSetting 4:{13:n}`), §4.3 Option F (Left/Right from 6.2/6.3), §4.4 (the ring status ACKed, Ring both); no status changed | AI (Claude Opus 5.5), the ADRs accepted by the maintainer |
 | 2026-10-18 | `CAP-079` (round 2, release 1.4.0 and the experiment build 1.4.0-exp.1; `ai-sessions/0099`, maintainer-approved in chat 2026-10-18): notes only — §2.2a (stream subscriptions outlive the session, 🟢), §4.1 (the 1.4.0 write path; in-ear detection off makes setting 13 settable; a mode outside field 12 accepted — 🟢), §4.3 Option F (field 2 = the clock after `SetWallclock`, 🟢), §4.4 (a ring ≈ 60 s without a timeout byte, 🟡), §4.5.8a (field 21 on channel 19 OK, the other channel status 9, 🟢); no status changed | AI (Claude Opus 5.5), maintainer-approved |
+| 2026-10-18 | `ai-sessions/0101` (CROSSCHECK, the companion APK `v1.0.955078536-10253511` for `CAP-079`'s questions; maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL"): notes only, no status change — §4.5.5 and §6 (the official app's per-bud source is `SubscribeToOobeActions`, read by its OOBE/fit-test/OTA screens only; `CAP-078`'s status 14 at the wear change), §4.3 Option F (entry 7.3 = "Low latency mode", 7.1/7.2 gate the live-dB subscription), §2.2a (streams are ended with `CLIENT_ERROR CANCELLED`, stray packets answered `FAILED_PRECONDITION` — 374 packets in 117 logs), §4.5.8a (every Maestro request goes to the primary route — 1,044/1,044 writes, 8,852/8,852 reads on the announced channel), §6 (`SetWallclock` once per connection; the day index in three regimes, 🔴) | AI (Claude Fable 5.1), maintainer-approved |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL
