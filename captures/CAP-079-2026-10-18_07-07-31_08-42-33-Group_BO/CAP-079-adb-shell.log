@@ -1,0 +1,56 @@
+#  date >> adb-shell.log ; adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds.experiment | grep -E "versionName|lastUpdateTime" >> adb-shell.log
+Sun Oct 18 06:26:18 AM CEST 2026
+    versionName=1.3.1-exp.1
+    lastUpdateTime=2026-10-16 10:30:27
+
+# date >> adb-shell.log ; adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -E "firstInstallTime|lastUpdateTime|versionCode" >> adb-shell.log
+Sun Oct 18 06:27:47 AM CEST 2026
+    versionCode=10301 minSdk=34 targetSdk=34
+    lastUpdateTime=2026-10-16 14:56:46
+      firstInstallTime=2026-10-09 18:33:54
+      firstInstallTime=2026-10-09 17:24:41
+
+# date >> adb-shell.log ; adb shell am get-current-user; adb shell pm list packages --user 10 | grep -i -E "gms|vending" >> adb-shell.log; echo "exit=$?" >> adb-shell.log 
+Sun Oct 18 06:28:27 AM CEST 2026
+package:app.grapheneos.gmscompat.config
+package:app.grapheneos.gmscompat.lib
+package:app.grapheneos.gmscompat
+exit=0
+
+# date >> adb-shell.log ; adb shell am get-current-user; adb shell pm list packages --user 0 | grep -i -E "gms|vending" >> adb-shell.log; echo "exit=$?" >> adb-shell.log
+Sun Oct 18 06:28:49 AM CEST 2026
+package:app.grapheneos.gmscompat.config
+package:app.grapheneos.gmscompat.lib
+package:app.grapheneos.gmscompat
+package:com.android.vending
+package:com.google.android.gms
+exit=0
+
+# date
+Sun Oct 18 06:42:03 AM CEST 2026
+
+# adb install --user 10 -r opencontrol-1.4.0.apk
+Performing Streamed Install
+Success
+
+# adb install --user 0 -r opencontrol-1.4.0.apk
+Performing Streamed Install
+Success
+# adb install --user 10 -r opencontrol-1.4.0-exp.1.apk
+Performing Streamed Install
+Success
+# adb install --user 0 -r opencontrol-1.4.0-exp.1.apk
+Performing Streamed Install
+Success
+
+# date >> adb-shell.log ; adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds | grep -E "firstInstallTime|lastUpdateTime|versionCode" >> adb-shell.log
+Sun Oct 18 06:46:11 AM CEST 2026
+    versionCode=10400 minSdk=34 targetSdk=34
+    lastUpdateTime=2026-10-18 06:42:10
+      firstInstallTime=2026-10-09 18:33:54
+      firstInstallTime=2026-10-09 17:24:41
+
+#  date >> adb-shell.log ; adb shell dumpsys package io.github.tedsluis.opencontrolpixelbuds.experiment | grep -E "versionName|lastUpdateTime" >> adb-shell.log
+Sun Oct 18 06:46:17 AM CEST 2026
+    versionName=1.4.0-exp.1
+    lastUpdateTime=2026-10-18 06:42:28

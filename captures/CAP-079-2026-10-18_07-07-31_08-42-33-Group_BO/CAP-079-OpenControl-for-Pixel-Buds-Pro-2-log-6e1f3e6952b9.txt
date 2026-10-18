@@ -1,0 +1,422 @@
+type: logcat
+osVersion: google/tegu/tegu:17/CP3A.261005.005/2026100601:user/release-keys
+flags: dev options enabled
+package: io.github.tedsluis.opencontrolpixelbuds:10400, targetSdk 34
+buffers: main,system,crash,events,kernel
+level: verbose
+
+--------- beginning of system
+10-18 05:36:36.604 14309 14309 I ActivityThread: ApplicationInfo updating for io.github.tedsluis.opencontrolpixelbuds, new timestamp: 433039309
+10-18 05:36:36.604 14309 14309 I ActivityThread: assets removed: [/data/resource-cache/com.android.systemui-neutral-ZbX8.frro, /data/resource-cache/com.android.systemui-accent-BoaQ.frro, /data/resource-cache/com.android.systemui-dynamic-zrcT.frro]
+10-18 05:36:36.604 14309 14309 I ActivityThread: assets added: [/data/resource-cache/com.android.systemui-neutral-ChRP.frro, /data/resource-cache/com.android.systemui-accent-ZMXO.frro, /data/resource-cache/com.android.systemui-dynamic-vAFj.frro]
+10-18 05:42:05.011 14309 16902 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+--------- beginning of events
+10-18 05:42:05.129 14309 14309 I wm_on_create_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performCreate,time=51ms]
+10-18 05:42:05.130 14309 14309 I wm_on_start_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=0ms]
+10-18 05:42:05.132 14309 14309 I wm_on_resume_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=2ms]
+10-18 05:42:05.150 14309 14309 I wm_on_top_resumed_gained_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 05:42:05.310 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=applyTransactionOnDraw applyImmediately]
+10-18 05:42:05.366 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=reportDrawFinished seqId=1]
+10-18 05:42:05.398 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:42:05.407 14309 14309 D InsetsController: hide(ime())
+10-18 05:42:05.407 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:dc4f2aea: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:42:36.195 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]95634ab,event=applyTransactionOnDraw applyImmediately]
+10-18 05:42:36.202 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]95634ab,event=reportDrawFinished seqId=1]
+10-18 05:42:36.235 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:42:36.269 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:42:36.273 14309 14309 D InsetsController: hide(ime())
+10-18 05:42:36.273 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:c3f843a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:42:37.580 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:42:37.582 14309 14309 D InsetsController: hide(ime())
+10-18 05:42:37.582 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:1d73f77a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:43:01.415 14309 14309 I wm_on_top_resumed_lost_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 05:43:01.418 14309 14309 I wm_on_paused_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+10-18 05:43:02.328 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:43:04.434 14309 14309 I wm_on_activity_result_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=ACTIVITY_RESULT]
+10-18 05:43:04.434 14309 14309 I wm_on_resume_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=0ms]
+10-18 05:43:04.449 14309 14309 I wm_on_top_resumed_gained_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 05:43:04.469 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:43:04.485 14309 14309 D InsetsController: hide(ime())
+10-18 05:43:04.485 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:73bec413: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:43:13.636 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]275039,event=applyTransactionOnDraw applyImmediately]
+10-18 05:43:13.654 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]275039,event=reportDrawFinished seqId=1]
+10-18 05:43:13.665 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:43:13.720 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:43:13.723 14309 14309 D InsetsController: hide(ime())
+10-18 05:43:13.723 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:540a2112: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:43:18.847 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:43:18.851 14309 14309 D InsetsController: hide(ime())
+10-18 05:43:18.851 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:6798bdfa: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:43:59.024 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]8230470,event=applyTransactionOnDraw applyImmediately]
+10-18 05:43:59.029 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]8230470,event=reportDrawFinished seqId=1]
+10-18 05:43:59.053 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:43:59.086 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:43:59.091 14309 14309 D InsetsController: hide(ime())
+10-18 05:43:59.091 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:bef59936: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:44:03.748 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:44:03.752 14309 14309 D InsetsController: hide(ime())
+10-18 05:44:03.752 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:73c330f9: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:44:40.149 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]2f43257,event=applyTransactionOnDraw applyImmediately]
+10-18 05:44:40.154 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]2f43257,event=reportDrawFinished seqId=1]
+10-18 05:44:40.186 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:44:40.217 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:44:40.221 14309 14309 D InsetsController: hide(ime())
+10-18 05:44:40.222 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:e3bdfd0: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:44:51.950 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:44:51.954 14309 14309 D InsetsController: hide(ime())
+10-18 05:44:51.954 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:73bf6f9f: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:45:20.619 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]dc239f7,event=applyTransactionOnDraw applyImmediately]
+10-18 05:45:20.627 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]dc239f7,event=reportDrawFinished seqId=1]
+10-18 05:45:20.646 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:45:20.679 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:45:20.682 14309 14309 D InsetsController: hide(ime())
+10-18 05:45:20.682 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:87e33e38: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:45:26.023 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:45:26.027 14309 14309 D InsetsController: hide(ime())
+10-18 05:45:26.027 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:48d69fa5: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:45:32.321 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]f770474,event=applyTransactionOnDraw applyImmediately]
+10-18 05:45:32.328 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]f770474,event=reportDrawFinished seqId=1]
+10-18 05:45:32.347 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:45:32.382 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:45:32.385 14309 14309 D InsetsController: hide(ime())
+10-18 05:45:32.385 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:de3308d7: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:45:37.442 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:45:37.446 14309 14309 D InsetsController: hide(ime())
+10-18 05:45:37.446 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:2e2af201: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:45:43.482 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]57dca97,event=applyTransactionOnDraw applyImmediately]
+10-18 05:45:43.487 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]57dca97,event=reportDrawFinished seqId=1]
+10-18 05:45:43.516 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:45:43.550 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:45:43.553 14309 14309 D InsetsController: hide(ime())
+10-18 05:45:43.553 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:37b527a1: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:45:46.898 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:45:46.902 14309 14309 D InsetsController: hide(ime())
+10-18 05:45:46.902 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:73e437bd: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- beginning of main
+10-18 05:48:09.402 14309 14403 D OpenControlBuds: DLCI 0x04: 07 34 00 0c 01 00 11 1a 8f b2 3d 3c 31 eb 0d 11
+10-18 05:48:11.538 14309 17129 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:11.538 14309 17129 D OpenControlBuds: RFCOMM on-demand channel 0x04 closed (IOException: bt socket closed, read return: -1) — session channels untouched
+10-18 05:48:11.539 14309 17129 D OpenControlBuds: Ring: hold ended — the claim was closed by another client
+10-18 05:48:17.259 14309 17128 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+10-18 05:48:17.262 14309 17128 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+10-18 05:48:25.266 14309 14399 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:25.266 14309 14399 D OpenControlBuds: RFCOMM channel 0x02 lost (IOException: bt socket closed, read return: -1) — all channels of this connection closed
+10-18 05:48:25.270 14309 14399 D OpenControlBuds: Session lost: channel 0x02 closed (IOException: bt socket closed, read return: -1); last inbound frame was on channel 0x02, 8009 ms earlier; not a user disconnect
+10-18 05:48:25.270 14309 14399 D OpenControlBuds: Session loss cause: undetermined (no reading of Android's link close to the loss) (provisional: a reading of Android's link within 1 s of the loss may still change it)
+10-18 05:48:25.271 14309 14399 D OpenControlBuds: ConnectionState: Ready -> Disconnected
+10-18 05:48:25.322 14309 14309 D OpenControlBuds: Session loss cause: Android still showed the Buds connected right after the loss — the Buds closed the channel (provisional: a reading of Android's link within 1 s of the loss may still change it)
+10-18 05:48:26.776 14309 14403 D OpenControlBuds: Automatic re-open of the session (ADR-044, trigger: AFTER_LOSS)
+10-18 05:48:26.789 14309 14403 D OpenControlBuds: ConnectionState: Disconnected -> Connecting
+10-18 05:48:26.794 14309 14403 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@679d418}
+10-18 05:48:27.363 14309 14403 I BluetoothSocket: connect(), socket connected. mPort=1
+10-18 05:48:27.363 14309 14403 D SocketMetrics: No metrics for connection type 1
+10-18 05:48:27.363 14309 14403 D OpenControlBuds: RFCOMM channel 0x02 connected (attempt 1/3)
+10-18 05:48:27.366 14309 14396 D OpenControlBuds: ConnectionState: Connecting -> Discovering
+10-18 05:48:27.369 14309 14396 D OpenControlBuds: ConnectionState: Discovering -> Ready
+10-18 05:48:27.538 14309 14398 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 64 22 57 0a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 12 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 1a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 29 34 29 3f c2 f6 cb d8 1a 30 00 08 01 10 15 1d ea 71 de 7d 5e 25 44 fa 99 71 38 ff ff ff ff 0f e8 a9 58 66 7e
+10-18 05:48:27.539 14309 14398 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=GetSoftwareInfo status=OK
+10-18 05:48:27.539 14309 14398 D OpenControlBuds: Maestro channel announced by the Buds: 21
+10-18 05:48:27.667 14309 17128 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 1e 22 1c 82 01 19 0d 00 00 80 bf 15 00 00 00 00 1d 00 00 80 40 25 00 00 00 40 2d 00 00 00 00 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 9f 54 32 a9 7e
+10-18 05:48:27.668 14309 17128 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+10-18 05:48:27.669 14309 17128 D OpenControlBuds: EQ read ok (channel 21)
+10-18 05:48:27.734 14309 14398 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 04 22 02 68 00 08 07 10 15 1d ea 71 de 7d 5e 25 f5 ad 21 28 5a 02 de 7d 5d 7e
+10-18 05:48:27.735 14309 14398 D OpenControlBuds: pw_rpc SERVER_STREAM ch=21 method=SubscribeToSettingsChanges status=OK
+10-18 05:48:27.735 14309 14398 D OpenControlBuds: Noise-control mode from the settings stream: no mode settable
+10-18 05:48:27.801 14309 14398 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 04 22 02 10 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae db ec 86 01 7e
+10-18 05:48:27.802 14309 14398 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+10-18 05:48:27.945 14309 14398 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 04 22 02 20 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 38 a9 9e f0 7e
+10-18 05:48:27.946 14309 14398 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+10-18 05:48:28.012 14309 14350 W System  : A resource failed to call close. 
+10-18 05:48:28.013 14309 14350 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:28.013 14309 14350 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:28.017 14309 14350 W System  : A resource failed to call close. 
+10-18 05:48:28.018 14309 14350 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:28.018 14309 14350 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:28.077 14309 14398 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 10 22 0e 3a 0c 0a 04 22 02 08 05 12 04 22 02 08 05 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 1d ff 38 c9 7e
+10-18 05:48:28.079 14309 14398 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+10-18 05:48:28.206 14309 18046 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 04 22 02 58 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 6e 85 eb 5c 7e
+10-18 05:48:28.208 14309 18046 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+10-18 05:48:28.339 14309 18046 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 0c 22 0a 62 08 08 01 10 01 18 01 20 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 49 d7 66 9f 7e
+10-18 05:48:28.340 14309 18046 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+10-18 05:48:28.468 14309 14396 D OpenControlBuds: DLCI 0x02: 7e 00 a5 03 2a 04 22 02 78 01 08 01 10 15 1d ea 71 de 7d 5e 25 51 ae d0 ae 13 fe d4 4b 7e
+10-18 05:48:28.469 14309 14396 D OpenControlBuds: pw_rpc RESPONSE ch=21 method=ReadSetting status=OK
+10-18 05:48:28.528 14309 14403 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:28.529 14309 14403 D OpenControlBuds: RFCOMM channel 0x02 lost (IOException: bt socket closed, read return: -1) — all channels of this connection closed
+10-18 05:48:28.530 14309 18046 D OpenControlBuds: Session lost: channel 0x02 closed (IOException: bt socket closed, read return: -1); last inbound frame was on channel 0x02, 62 ms earlier; not a user disconnect
+10-18 05:48:28.531 14309 18046 D OpenControlBuds: Session loss cause: undetermined (no reading of Android's link close to the loss) (provisional: a reading of Android's link within 1 s of the loss may still change it)
+10-18 05:48:28.531 14309 18046 D OpenControlBuds: Automatic re-open skipped: the session was lost 1161 ms after an automatic re-open
+10-18 05:48:28.536 14309 18046 D OpenControlBuds: ConnectionState: Ready -> Disconnected
+10-18 05:48:28.560 14309 14309 D OpenControlBuds: Session loss cause: Android still showed the Buds connected right after the loss — the Buds closed the channel (provisional: a reading of Android's link within 1 s of the loss may still change it)
+10-18 05:48:36.514 14309 14396 D OpenControlBuds: ConnectionState: Disconnected -> Connecting
+10-18 05:48:36.518 14309 14396 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@914a808}
+10-18 05:48:37.072 14309 14396 I BluetoothSocket: connect(), socket connected. mPort=1
+10-18 05:48:37.072 14309 14396 D SocketMetrics: No metrics for connection type 1
+10-18 05:48:37.072 14309 14396 D OpenControlBuds: RFCOMM channel 0x02 connected (attempt 1/3)
+10-18 05:48:37.074 14309 14404 D OpenControlBuds: ConnectionState: Connecting -> Discovering
+10-18 05:48:37.075 14309 14404 D OpenControlBuds: ConnectionState: Discovering -> Ready
+10-18 05:48:37.275 14309 17129 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 64 22 57 0a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 12 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 1a 1b 0a 0a 31 37 37 39 32 39 38 36 39 34 12 0d 72 65 6c 65 61 73 65 5f 35 2e 32 30 33 29 34 29 3f c2 f6 cb d8 1a 30 00 08 01 10 13 1d ea 71 de 7d 5e 25 44 fa 99 71 38 ff ff ff ff 0f b5 f9 b0 f5 7e
+10-18 05:48:37.276 14309 17129 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=GetSoftwareInfo status=OK
+10-18 05:48:37.276 14309 17129 D OpenControlBuds: Maestro channel announced by the Buds: 19
+10-18 05:48:37.413 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 1e 22 1c 82 01 19 0d 00 00 80 bf 15 00 00 00 00 1d 00 00 80 40 25 00 00 00 40 2d 00 00 00 00 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 7a 02 fb d2 7e
+10-18 05:48:37.414 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:37.416 14309 14404 D OpenControlBuds: EQ read ok (channel 19)
+10-18 05:48:37.541 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 04 22 02 10 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 78 4e 56 90 7e
+10-18 05:48:37.542 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:37.673 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 04 22 02 20 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 9b 0b 4e 61 7e
+10-18 05:48:37.675 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:37.812 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 10 22 0e 3a 0c 0a 04 22 02 08 05 12 04 22 02 08 05 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 71 fb c1 e8 7e
+10-18 05:48:37.813 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:37.947 14309 17129 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 04 22 02 58 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae cd 27 3b cd 7e
+10-18 05:48:37.947 14309 17129 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:38.049 14309 17129 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 0c 22 0a 62 08 08 01 10 01 18 01 20 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae be 26 a1 e0 7e
+10-18 05:48:38.050 14309 17129 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:38.182 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 04 22 02 78 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae b0 5c 04 da 7e
+10-18 05:48:38.183 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:38.312 14309 14399 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 22 03 88 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae ad f4 dc 3d 7e
+10-18 05:48:38.313 14309 14399 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:38.447 14309 17129 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 22 03 98 01 00 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 38 b6 76 93 7e
+10-18 05:48:38.448 14309 17129 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:38.552 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 22 03 b0 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae b4 10 3e e2 7e
+10-18 05:48:38.554 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:38.652 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 22 03 d8 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 24 08 cb 77 7e
+10-18 05:48:38.653 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:38.780 14309 17129 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e0 01 01 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae 3d ec 29 a8 7e
+10-18 05:48:38.781 14309 17129 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:38.916 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 05 22 03 e8 01 02 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae da c9 44 5f 7e
+10-18 05:48:38.917 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:38.919 14309 14404 D OpenControlBuds: Settings read (channel 19)
+10-18 05:48:38.923 14309 14404 D OpenControlBuds: Runtime info requested (channel 19)
+10-18 05:48:38.924 14309 14399 D OpenControlBuds: Settings stream subscribed (channel 19)
+10-18 05:48:39.020 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+10-18 05:48:39.020 14309 14404 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+10-18 05:48:39.123 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 04 22 02 68 00 08 01 10 13 1d ea 71 de 7d 5e 25 51 ae d0 ae c6 b9 d8 85 7e
+10-18 05:48:39.123 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=ReadSetting status=OK
+10-18 05:48:39.124 14309 14404 D OpenControlBuds: Noise-control mode from the mode read: no mode settable
+10-18 05:48:39.125 14309 14404 D OpenControlBuds: Noise-control mode read (channel 19)
+10-18 05:48:39.303 14309 14404 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 44 08 06 10 11 28 09 30 07 3a 30 0a 0e 35 37 30 37 31 57 52 42 45 43 30 32 35 31 12 0e 35 37 30 38 31 57 52 42 44 52 33 32 30 39 1a 0e 35 37 30 37 31 57 52 42 44 4c 33 31 34 37 42 08 30 30 31 33 32 30 39 34 08 01 10 13 1d ea 71 de 7d 5e 25 e3 a5 ec 28 a4 a6 c5 17 7e
+10-18 05:48:39.304 14309 14404 D OpenControlBuds: pw_rpc RESPONSE ch=19 method=GetHardwareInfo status=OK
+10-18 05:48:39.306 14309 14404 D OpenControlBuds: Hardware info read (channel 19): 3 serial numbers
+10-18 05:48:40.368 14309 17129 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@3b4a92b}
+10-18 05:48:40.702 14309 17129 D BluetoothSocket: close() XX:XX:XX:XX:6E:07 channel=2 mSocketIS=android.net.LocalSocketImpl$SocketInputStream@9ef5721 mSocketOS=android.net.LocalSocketImpl$SocketOutputStream@bfa5746 mSocket=android.net.LocalSocket@652ad07 impl:android.net.LocalSocketImpl@c55fe34 fd:java.io.FileDescriptor@3b4a92b mSocketState=INIT
+10-18 05:48:40.702 14309 17129 D BluetoothSocket: Closing mSocket: android.net.LocalSocket@652ad07 impl:android.net.LocalSocketImpl@c55fe34 fd:java.io.FileDescriptor@3b4a92b
+10-18 05:48:40.705 14309 17129 D OpenControlBuds: RFCOMM channel 0x04 connect failed after 342 ms (attempt 1/3): IOException: read failed, socket might closed or timeout, read ret: -1
+10-18 05:48:41.117 14309 17129 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@2f4a1d2}
+10-18 05:48:41.438 14309 17129 I BluetoothSocket: connect(), socket connected. mPort=2
+10-18 05:48:41.438 14309 17129 D SocketMetrics: No metrics for connection type 1
+10-18 05:48:41.438 14309 17129 D OpenControlBuds: RFCOMM channel 0x04 connected (attempt 2/3)
+10-18 05:48:41.509 14309 14404 D OpenControlBuds: DLCI 0x04: 03 0a 00 08 3a fb 21 9a bf be 74 10 03 01 00 03 da 2d b1 03 02 00 06 75 f2 59 bc fd ae 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+10-18 05:48:41.520 14309 14403 D OpenControlBuds: DLCI 0x04: 03 0b 00 19 02 72 d4 e4 98 b7 12 0a 70 64 e9 e4 80 a0 25 5e 68 25 e1 1a 55 70 83 a3 fe
+10-18 05:48:41.522 14309 14403 D OpenControlBuds: DLCI 0x04: 07 34 00 0c 01 7e 91 61 47 71 57 ed f2 2b 29 37
+10-18 05:48:41.523 14309 14403 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff
+10-18 05:48:41.525 14309 14403 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+10-18 05:48:41.529 14309 14403 D OpenControlBuds: DLCI 0x04: ff 01 00 03 04 01 00
+10-18 05:48:41.530 14309 18046 D OpenControlBuds: DLCI 0x04: 04 01 00 01 03
+10-18 05:48:41.530 14309 18046 D OpenControlBuds: Ring status from the Buds: ringing both
+10-18 05:48:41.531 14309 14399 D OpenControlBuds: Ring: claim held until the Buds report the stop (at most 20 s)
+10-18 05:48:41.532 14309 14403 D OpenControlBuds: Ring status acknowledged (ff 01 00 02 04 01)
+10-18 05:48:44.063 14309 14399 D OpenControlBuds: DLCI 0x04: 07 34 00 0c 01 ff 61 55 46 1e 78 9d d7 bb 5f ed
+10-18 05:48:46.195 14309 17129 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:46.195 14309 17129 D OpenControlBuds: RFCOMM on-demand channel 0x04 closed (IOException: bt socket closed, read return: -1) — session channels untouched
+10-18 05:48:46.197 14309 14399 D OpenControlBuds: Ring: hold ended — the claim was closed by another client
+10-18 05:48:55.553 14309 14350 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:55.554 14309 14350 W System  : A resource failed to call close. 
+10-18 05:48:55.554 14309 14350 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:55.554 14309 14350 W System  : A resource failed to call close. 
+10-18 05:48:55.555 14309 14350 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:55.555 14309 14350 V BluetoothSocket: close() XX:XX:XX:XX:6E:07: Already closed
+10-18 05:48:55.555 14309 14350 W System  : A resource failed to call close. 
+10-18 05:49:06.696 14309 14399 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@a282cb8}
+10-18 05:49:07.095 14309 14399 D BluetoothSocket: close() XX:XX:XX:XX:6E:07 channel=2 mSocketIS=android.net.LocalSocketImpl$SocketInputStream@5ad1df6 mSocketOS=android.net.LocalSocketImpl$SocketOutputStream@c1ae5f7 mSocket=android.net.LocalSocket@d8f5c64 impl:android.net.LocalSocketImpl@d88fecd fd:java.io.FileDescriptor@a282cb8 mSocketState=INIT
+10-18 05:49:07.095 14309 14399 D BluetoothSocket: Closing mSocket: android.net.LocalSocket@d8f5c64 impl:android.net.LocalSocketImpl@d88fecd fd:java.io.FileDescriptor@a282cb8
+10-18 05:49:07.096 14309 14399 D OpenControlBuds: RFCOMM channel 0x04 connect failed after 403 ms (attempt 1/3): IOException: read failed, socket might closed or timeout, read ret: -1
+10-18 05:49:07.286 14309 14399 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+10-18 05:49:07.287 14309 14399 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+10-18 05:49:07.502 14309 14399 I BluetoothSocket: connect(), SocketState: INIT, mPfd: {ParcelFileDescriptor: java.io.FileDescriptor@1b3bac9}
+10-18 05:49:07.719 14309 14399 I BluetoothSocket: connect(), socket connected. mPort=2
+10-18 05:49:07.719 14309 14399 D SocketMetrics: No metrics for connection type 1
+10-18 05:49:07.719 14309 14399 D OpenControlBuds: RFCOMM channel 0x04 connected (attempt 2/3)
+10-18 05:49:07.759 14309 14404 D OpenControlBuds: DLCI 0x04: 03 0a 00 08 bb 87 15 05 59 27 42 54 03 01 00 03 da 2d b1 03 02 00 06 75 f2 59 bc fd ae 03 09 00 0a 52 65 76 69 73 69 6f 6e 20 36 07 10 00 00
+10-18 05:49:07.761 14309 14404 D OpenControlBuds: DLCI 0x04: 03 0b 00 19 02 72 d4 fe 98 b7 12 0a 70 64 e9 e4 80 a0 25 5e 68 25 e1 1a 55 70 83 a3 fe
+10-18 05:49:07.769 14309 18046 D OpenControlBuds: DLCI 0x04: 07 34 00 0c 01 5f f6 27 5b 24 da b8 5d 53 ea fc
+10-18 05:49:07.770 14309 18046 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff
+10-18 05:49:07.787 14309 18046 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff 03 03 00 03 64 64 ff
+10-18 05:49:07.831 14309 18046 D OpenControlBuds: DLCI 0x04: ff 01 00 03 04 01 00
+10-18 05:49:07.834 14309 17128 D OpenControlBuds: DLCI 0x04: 04 01 00 01 00
+10-18 05:49:07.834 14309 17128 D OpenControlBuds: Ring status from the Buds: stopped
+10-18 05:49:07.835 14309 17128 D OpenControlBuds: Ring status acknowledged (ff 01 00 02 04 01)
+10-18 05:49:08.324 14309 17128 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff
+10-18 05:49:08.327 14309 17128 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff
+10-18 05:49:08.329 14309 17128 D OpenControlBuds: DLCI 0x04: 03 03 00 03 64 64 ff
+10-18 05:49:08.331 14309 17128 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+10-18 05:49:08.332 14309 17128 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+10-18 05:49:09.335 14309 17128 D BluetoothSocket: close() XX:XX:XX:XX:6E:07 channel=2 mSocketIS=android.net.LocalSocketImpl$SocketInputStream@cb6f0a6 mSocketOS=android.net.LocalSocketImpl$SocketOutputStream@d9b3ae7 mSocket=android.net.LocalSocket@cb4a694 impl:android.net.LocalSocketImpl@e24353d fd:java.io.FileDescriptor@1b3bac9 mSocketState=CONNECTED
+10-18 05:49:09.336 14309 17128 D BluetoothSocket: Closing mSocket: android.net.LocalSocket@cb4a694 impl:android.net.LocalSocketImpl@e24353d fd:java.io.FileDescriptor@1b3bac9
+10-18 05:49:09.336 14309 17128 D OpenControlBuds: RFCOMM on-demand channel 0x04 released
+10-18 05:49:13.372 14309 14309 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Dialog$$ExternalSyntheticLambda2@2cefef4
+10-18 05:49:13.373 14309 14309 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@889161d
+10-18 05:49:13.383 14309 14309 I Surface : Creating surface for consumer unnamed-14309-8 with slotExpansion=1 for 64 slots
+10-18 05:49:13.383 14309 14309 I Surface : Creating surface for consumer VRI[MainActivity]#8(BLAST Consumer)8 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 05:49:13.383 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]264f69,event=applyTransactionOnDraw applyImmediately]
+10-18 05:49:13.390 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]264f69,event=reportDrawFinished seqId=1]
+10-18 05:49:13.407 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:49:13.441 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:49:13.448 14309 14309 D InsetsController: hide(ime())
+10-18 05:49:13.449 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:2a83f684: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 05:49:17.379 14309 14309 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+10-18 05:49:17.388 14309 16902 D HWUI    : endAllActiveAnimators on 0xd3d858c5e200 (UnprojectedRipple) with handle 0xd2aae0358780
+--------- switch to events
+10-18 05:49:17.419 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:49:17.422 14309 14309 D InsetsController: hide(ime())
+10-18 05:49:17.423 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:44ce3520: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:49:33.033 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:49:35.882 14309 14309 I wm_on_top_resumed_lost_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 05:49:35.886 14309 14309 I wm_on_paused_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+10-18 05:49:35.893 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+10-18 05:49:35.927 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 05:49:36.441 14309 14309 D VRI[MainActivity]: visibilityChanged oldVisibility=true newVisibility=false
+--------- switch to events
+10-18 05:49:36.462 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+--------- switch to main
+10-18 05:49:36.463 14309 14309 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@75beb6e
+--------- switch to events
+10-18 05:49:36.467 14309 14309 I wm_on_stop_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=0ms]
+--------- switch to main
+10-18 05:49:36.480 14309 14309 D BluetoothAdapter: A2DP disconnected
+10-18 05:49:36.480 14309 14309 D BluetoothAdapter: HEADSET disconnected
+10-18 05:49:36.480 14309 14309 D BluetoothAdapter: LE_AUDIO disconnected
+10-18 05:49:36.480 14309 14309 D OpenControlBuds: Android link observer stopped
+10-18 05:49:36.485 14309 14309 D OpenControlBuds: Android link: CONNECTED -> PENDING (trigger: profile 2 unbound)
+10-18 05:49:39.642 14309 14309 D ViewRootImpl: Skipping stats log for color mode
+--------- switch to events
+10-18 05:49:39.642 14309 14309 I wm_on_restart_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performRestart,time=0ms]
+10-18 05:49:39.642 14309 14309 I wm_on_start_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=0ms]
+--------- switch to main
+10-18 05:49:39.642 14309 14309 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@6d030f5
+--------- switch to events
+10-18 05:49:39.643 14309 14309 I wm_on_resume_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=0ms]
+10-18 05:49:39.648 14309 14309 I wm_on_top_resumed_gained_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+--------- switch to main
+10-18 05:49:39.649 14309 14309 D OpenControlBuds: Android link observer started
+10-18 05:49:39.650 14309 16063 D BluetoothAdapter: A2DP connected
+10-18 05:49:39.650 14309 16901 D BluetoothAdapter: HEADSET connected
+10-18 05:49:39.651 14309 16901 D BluetoothAdapter: LE_AUDIO connected
+10-18 05:49:39.652 14309 14309 I Surface : Creating surface for consumer unnamed-14309-9 with slotExpansion=1 for 64 slots
+10-18 05:49:39.652 14309 14309 I Surface : Creating surface for consumer VRI[MainActivity]#9(BLAST Consumer)9 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 05:49:39.652 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=applyTransactionOnDraw applyImmediately]
+10-18 05:49:39.653 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=Start draw after previous draw not visible]
+10-18 05:49:39.660 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=reportDrawFinished seqId=1]
+--------- switch to main
+10-18 05:49:39.663 14309 14309 D OpenControlBuds: Android link: PENDING -> CONNECTED (trigger: profile 2 bound) via profiles [2]
+--------- switch to events
+10-18 05:49:39.710 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:49:39.712 14309 14309 D InsetsController: hide(ime())
+10-18 05:49:39.712 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:70984d54: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to events
+10-18 05:49:43.332 14309 14309 I wm_on_top_resumed_lost_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 05:49:43.333 14309 14309 I wm_on_paused_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+10-18 05:49:43.368 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 05:49:43.865 14309 14309 D VRI[MainActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-18 05:49:43.880 14309 16902 D HWUI    : endAllActiveAnimators on 0xd3d858b19000 (UnprojectedRipple) with handle 0xd2aae04c6ba0
+10-18 05:49:43.880 14309 16902 D HWUI    : endAllActiveAnimators on 0xd3d858b89200 (UnprojectedRipple) with handle 0xd2aae0510f90
+--------- switch to events
+10-18 05:49:43.882 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+--------- switch to main
+10-18 05:49:46.530 14309 14309 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@75beb6e
+--------- switch to events
+10-18 05:49:46.533 14309 14309 I wm_on_stop_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=1ms]
+--------- switch to main
+10-18 05:49:46.537 14309 14309 D BluetoothAdapter: A2DP disconnected
+10-18 05:49:46.537 14309 14309 D BluetoothAdapter: HEADSET disconnected
+10-18 05:49:46.537 14309 14309 D BluetoothAdapter: LE_AUDIO disconnected
+10-18 05:49:46.537 14309 14309 D OpenControlBuds: Android link observer stopped
+10-18 05:49:46.547 14309 14309 D OpenControlBuds: Android link: CONNECTED -> PENDING (trigger: profile 2 unbound)
+10-18 05:49:48.280 14309 14309 D ViewRootImpl: Skipping stats log for color mode
+--------- switch to events
+10-18 05:49:48.280 14309 14309 I wm_on_restart_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performRestart,time=0ms]
+10-18 05:49:48.281 14309 14309 I wm_on_start_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=handleStartActivity,time=0ms]
+--------- switch to main
+10-18 05:49:48.281 14309 14309 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@6d030f5
+--------- switch to events
+10-18 05:49:48.286 14309 14309 I wm_on_activity_result_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=ACTIVITY_RESULT]
+10-18 05:49:48.286 14309 14309 I wm_on_resume_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=RESUME_ACTIVITY,time=0ms]
+10-18 05:49:48.290 14309 14309 I wm_on_top_resumed_gained_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+--------- switch to main
+10-18 05:49:48.291 14309 14309 D OpenControlBuds: Android link observer started
+10-18 05:49:48.293 14309 14353 D BluetoothAdapter: A2DP connected
+10-18 05:49:48.293 14309 14353 D BluetoothAdapter: HEADSET connected
+10-18 05:49:48.294 14309 17492 D BluetoothAdapter: LE_AUDIO connected
+10-18 05:49:48.294 14309 14309 I Surface : Creating surface for consumer unnamed-14309-10 with slotExpansion=1 for 64 slots
+10-18 05:49:48.295 14309 14309 I Surface : Creating surface for consumer VRI[MainActivity]#10(BLAST Consumer)10 with slotExpansion=1 for 64 slots
+--------- switch to events
+10-18 05:49:48.295 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=applyTransactionOnDraw applyImmediately]
+10-18 05:49:48.296 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=Start draw after previous draw not visible]
+10-18 05:49:48.304 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=reportDrawFinished seqId=1]
+--------- switch to main
+10-18 05:49:48.308 14309 14309 D OpenControlBuds: Android link: PENDING -> CONNECTED (trigger: profile 2 bound) via profiles [2]
+10-18 05:49:48.311 14309 14398 D OpenControlBuds: Debug log exported (449 lines)
+--------- switch to events
+10-18 05:49:48.347 14309 14309 I input_focus: window=ViewRootImpl focus=true for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to system
+10-18 05:49:48.349 14309 14309 D InsetsController: hide(ime())
+10-18 05:49:48.350 14309 14309 I ImeTracker: io.github.tedsluis.opencontrolpixelbuds:542c6e61: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+--------- switch to main
+10-18 05:49:48.379 14309 14398 D OpenControlBuds: DLCI 0x02: 7e 80 a3 03 2a 18 18 00 32 0c 12 04 08 64 10 01 1a 04 08 64 10 01 3a 06 08 00 10 00 18 00 08 07 10 13 1d ea 71 de 7d 5e 25 90 82 1e e6 22 7f a4 2c 7e
+10-18 05:49:48.381 14309 14398 D OpenControlBuds: pw_rpc SERVER_STREAM ch=19 method=SubscribeRuntimeInfo status=OK
+--------- switch to events
+10-18 05:49:49.571 14309 14309 I wm_on_top_resumed_lost_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=topStateChangedWhenResumed]
+10-18 05:49:49.571 14309 14309 I wm_on_paused_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=performPause,time=0ms]
+10-18 05:49:49.591 14309 14309 I input_focus: window=ViewRootImpl focus=false for io.github.tedsluis.opencontrolpixelbuds/io.github.tedsluis.opencontrolpixelbuds.app.MainActivity
+--------- switch to main
+10-18 05:49:50.614 14309 14309 D VRI[MainActivity]: visibilityChanged oldVisibility=true newVisibility=false
+--------- switch to events
+10-18 05:49:50.626 14309 14309 I viewroot_draw_event: [window=VRI[MainActivity]56b3981,event=Not drawing due to not visible. Reason=!mAppVisible && !mForceDecorViewVisibility]
+--------- switch to main
+10-18 05:49:50.626 14309 14309 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@75beb6e
+--------- switch to events
+10-18 05:49:50.628 14309 14309 I wm_on_stop_called: [Token=219961808,Component Name=io.github.tedsluis.opencontrolpixelbuds.app.MainActivity,Reason=STOP_ACTIVITY_ITEM,time=0ms]
+--------- switch to main
+10-18 05:49:50.631 14309 14309 D BluetoothAdapter: A2DP disconnected
+10-18 05:49:50.631 14309 14309 D BluetoothAdapter: HEADSET disconnected
+10-18 05:49:50.631 14309 14309 D BluetoothAdapter: LE_AUDIO disconnected
+10-18 05:49:50.631 14309 14309 D OpenControlBuds: Android link observer stopped
+10-18 05:49:50.648 14309 14309 D OpenControlBuds: Android link: CONNECTED -> PENDING (trigger: profile 2 unbound)
