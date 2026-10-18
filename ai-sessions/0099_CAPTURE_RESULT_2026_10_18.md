@@ -126,7 +126,8 @@ and push (below).
 
 ## Commits
 
-Not committed yet — waiting for the maintainer's "yes" in chat.
+On `feature/0098-round-2` after `e2b1c06`, the maintainer's "ga verder" in chat 2026-10-18: `b065a25` docs(capture) the CAP-079 folder; `4e5b17c` docs the
+PROTOCOL notes, ADR-060 Update, registers and 1.4.0 known issues; `46d0815` docs the prompt, RESULT and INDEX; this back-fill. Pushed; draft PR #69 not merged.
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/ai-sessions/0099_CAPTURE_RESULT_2026_10_18.md - https://tedsluis.github.io/opencontrolpixelbudspro2/ai-sessions/0099_CAPTURE_RESULT_2026_10_18
