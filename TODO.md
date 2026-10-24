@@ -189,7 +189,13 @@ Open questions (each with where it is described):
 - 🔴/🟡 **From `CAP-079` (`CAP-079-FINDINGS.md` §18):** the ACL connection timeout (0x08) at a Disconnect tap (07:26:49); the Buds' default ring time-out (one
   sample ≈ 60 s) and whether a timeout byte is honoured; whether a touch stops the ring at once; what the live-dB value is (no meter) and why one bud's day index
   moved at F1; why field 21 is refused on the non-hosting core; how long a stream subscription survives without a client (the app never cancels its
-  subscriptions — a design question for ADR-060 and for the settings stream).
+  subscriptions — a design question for ADR-060 and for the settings stream). **`ai-sessions/0101` (2026-10-18):** the stream question → `PROTOCOL.md` §2.2a Note
+  of 2026-10-18 (the official app cancels every stream with `CLIENT_ERROR CANCELLED` before its own `DISC` and answers stray stream packets with
+  `FAILED_PRECONDITION`) and experiment **E2** (a cancel on an open channel — a new send, its own ADR first); **the rule "cancel what you subscribed to before the
+  app's own DISC; answer a stream packet of a call the app does not hold with `FAILED_PRECONDITION`" is a TODO, not a draft ADR** (the maintainer's choice, chat
+  2026-10-18) — for the next FEATURE session that touches the Connect/Disconnect sequence; field 21 → §4.5.8a Note of 2026-10-18 and **E3** (F4 after a re-home,
+  plus one `ReadSetting 4:21` on the non-hosting core); the day index → §6 item of 2026-10-18 and **E4** (daily for a week, after a Buds reboot and after an
+  official-app connection).
 - [ ] **Experiment (`ai-sessions/0090` E-12):** a read-only `SubscribeToOobeActions` **without** OOBE mode (setting 6 is never written, `ARCHITECTURE.md` §5a
   rule) — do per-bud `LEFT_ON_HEAD` … `RIGHT_OFF_HEAD` events (`qhp` 10–13) arrive? Would refine ADR-059's "probably worn" (never per bud).
 - Idea, low priority (`ai-sessions/0090` E-17): an explicit `GetSoftwareInfo` as a fallback after `MAESTRO_ANNOUNCE_WAIT_MS` — one MAESTRO open in 523 stayed
@@ -200,7 +206,10 @@ Open questions (each with where it is described):
 - 🔴 `CAP-072` §4: why the Buds kept Settable `e8` ≥ 42 s with both buds on a table (17:51:19 → 17:52:00.9) while `CAP-065`/`CAP-066` read `00` within 2.6 s.
 - 🔴 Remaining battery time (Fast Pair Device Information code `0x04`): never seen on the wire. Ring "both" (`0x03`, `FIND-004`): never sent, never
   captured — sending it needs its own ADR. (The Device Action page, re-fetched 2026-10-14 by `ai-sessions/0090`, still defines `0x03` "Ring both left and
-  right"; one ACK per command; a filmed test with the buds out of the ears; the Case has no receiver of its own — pbpctrl `README.md:52`.) Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
+  right"; one ACK per command; a filmed test with the buds out of the ears; the Case has no receiver of its own — pbpctrl `README.md:52`, re-read 2026-10-18 by
+  `ai-sessions/0101`: "the case does not have a Bluetooth receiver itself". **No local Case mechanism in the APK (`ai-sessions/0101`, 2026-10-18):** the pw_rpc
+  catalogue has no ring/find method, `goq.CASE` (channels 18/23) is used by the OTA transfer only and never seen on any wire, `qhr` 23/30/31/34–39 have no write
+  site, the FHN UUIDs are absent — `REVERSE_ENGINEERING.md`, entry "Find negatives" (2026-10-18); ADR-027 stands.) Spatial audio / LE Audio (`SPATIAL-001`, `LEAUDIO-001`): not captured.
 - 🔴 `PROTOCOL.md` §5.2 steps 4 and 6 of the connection lifecycle (handshake content order, user-command timing); DLCI 0x08's protocol identity.
 - 🔴 Why Android's CDM picker listed nothing twice and then offered the bonded Buds directly (`CAP-068-FINDINGS.md` §8).
 - 🔴 `CAP-013`'s second BLE link (not re-examined; `CAP-016`'s was a heart-rate wearable — `PROTOCOL.md` §6, Update of 2026-10-03).
@@ -209,7 +218,11 @@ Open questions (each with where it is described):
   `ai-sessions/0082` (item 4): the phone decides (the official app's worker, 67 % of a 7-day constant, once per 7 days; field 21 only gates it; the Buds push
   nothing) — draft ADR-060 (proposed, not accepted) and the 🟡 that block it; `WELL-002` without a meter (`CAP-080` BP-13/BP-14, ADR-060 Update 2026-10-18) comes first.
 
-- [ ] **After 1.4.0 is published — a research session (category CROSSCHECK, a new prompt) on per-bud in-ear detection: how does the official app know
+- [ ] **Per-bud in-ear detection — answered on the code side by `ai-sessions/0101` (2026-10-18; `REVERSE_ENGINEERING.md`, entry "the on-head state per bud";
+  `PROTOCOL.md` §4.5.5 Note of 2026-10-18):** the official app's source is `SubscribeToOobeActions`, read only by its OOBE, fit-test and OTA screens — never by a
+  settings or status screen; in `CAP-078` the firmware ended the stream at the first wear change without OOBE mode. **Next: experiment E1** (the stream re-subscribed
+  after each `UNAVAILABLE`, read-only, ears on film; the maintainer's choice, chat 2026-10-18) before any per-bud feature; settings 6 and 14 stay unwritten; a
+  feature would still need an ADR amending ADR-059. *The original task, kept for the record:* **After 1.4.0 is published — a research session (category CROSSCHECK, a new prompt) on per-bud in-ear detection: how does the official app know
   which bud is in an ear?** (The maintainer's choice in chat 2026-10-17: research first, after the 1.4.0 release; not in round 2.) The official app shows at
   once which bud goes into or out of an ear; OpenControl shows only "probably worn" (ADR-059). Known so far: `SubscribeToOobeActions` reports `10`/`12`
   (`LEFT_ON_HEAD`/`RIGHT_ON_HEAD`) at subscribe and ended with status 14 after 15.7 s, no later events (`CAP-078` §6, one trial; setting 6 / OOBE mode never read);
@@ -268,7 +281,9 @@ Open questions (each with where it is described):
       RESULT §C.4): two new requests per Connect (`SubscribeToLiveDb`, `FetchDailySummaries`), the 7-day dose on the phone, a notification channel, the
       field-21 switch. Blocked until `WELL-002` (since 2026-10-18 without a meter: 10-dB steps in a test file, `CAP-080`; ADR-060 Update) and the other 🟡 of the draft are 🟢. Since `ai-sessions/0098`
       the experiment build's card sends the four requests one tap each (F1–F4, approved in chat 2026-10-17); `CAP-079` ran them (`ai-sessions/0099`, ADR-060 Update
-      of 2026-10-18: (iv), (v) settled; (i) still open — no meter filmed).
+      of 2026-10-18: (iv), (v) settled; (i) still open — no meter filmed). **(iii), `ai-sessions/0101` (2026-10-18):** the day index runs in three regimes across
+      the captures (`PROTOCOL.md` §6 item of 2026-10-18) — a design must use the Buds' current index as "today", as the official app does (`hwy.ai`), never an
+      epoch; the official app sends `SetWallclock` once per connection, first thing, on the primary route.
 - [ ] **String resources:** the UI texts are Kotlin literals; moving them to `strings.xml` is the precondition for any translation.
 - [ ] **Instrumented tests** — none exist: `OsConnectionObserver`, `BudsForegroundService`/`AncTileService`, the `BluetoothDevice`-dependent part
       of `BudsRepositoryImpl.connect()` and all of `:app` are covered only by pure-function and Robolectric tests.
