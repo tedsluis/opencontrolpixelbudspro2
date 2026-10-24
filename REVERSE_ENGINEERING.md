@@ -4036,6 +4036,134 @@ read); nothing built — the design and the draft ADR are in `ai-sessions/0082` 
       class-merging ambiguity rather than a traceable single-purpose class, this is reported as this
       pass's own honest stopping point per `AGENTS.md` §13.6, not pressed into a guess.
 
+### `gao` / `gav` / `gam` / `qhp` / `qje` / `hmw` / `hmv` / `gvj` / `gux` / `guy` / `hkf` — the on-head state per bud, and what reads it (added 2026-10-18, `ai-sessions/0101`; read-only, ADR-017 boundary)
+
+Question (the maintainer, chat 2026-10-18): how does the official app know which bud is in an ear? Answered on the code side (JADX and smali,
+`v1.0.955078536-10253511`); the relevance of each reading is the maintainer's call. Every claim: `file:line`; 🟢 = this code exists and does this.
+
+- **The source is `maestro_pw.Maestro/SubscribeToOobeActions`, behind the interface `gao`** (`gao.java:6–12`: `a()` a LiveData of the raw `qhp` action,
+  `b()` the Left stream, `c()` the Right stream, `d(qhp)` an injection). Two implementations, chosen **by device type** in the per-device component
+  (`fqg.java:369–376`: types 1 and 2 → `gam`, types 4, 5, 6 and 9 → `gav`; `fzg.java:93–96` `h()`, `fst.java:44–45`, `ftf.java:204–207` `m()`). The
+  type names of `fsf.java:9–15` (1 PRESTO, 2 STRETTO, 4/5 ALLEGRO, 6 LARGO, 9 AG12AG22) and the SKU colours of `ijf.java:41–55` are the app's words;
+  on the wire `GetHardwareInfo` field 1 = **6** in every answer that carries it (82 logs, `scripts/pwrpc_decode.py`), so the Pro 2 gets `gav`.
+- **`gav` (`gav.java:34–93`):** on every change of the primary route (`fwv.a()`, "Route change to %d", `:39`) it opens one `SubscribeToOobeActions` on that
+  route's channel ("Init oobe actions rpc call", `:46–52`; `fvl.a(goq)` = the channel), publishes each `qje` field 1 as a `qhp` ("Received oobe action: %s",
+  `:59–66`), retries the call three times on an error (`.J(3L)`, `:81` — `oql.J` = `oys`/`oyr`, a resubscribe-on-error with a count, `oql.java:187–189`,
+  `oyr.java:30–45`) and cancels it when the last observer leaves (`Observable.using`, disposer `frb(14)`: "Try to cancel oobe action rpc" / "Close rpc, since
+  downstream all unsubscribe." → `nqd.l()`, `frb.java:86–93`). `b()`/`c()` keep only `LEFT_*`/`RIGHT_*`/`ACTION_TYPE_UNKNOWN` and map ON_HEAD → 2, OFF_HEAD and
+  UNKNOWN → 1 (`gav.java:17–31`). All three outputs are LiveData-wrapped (`crr.b`, `:82–88`): **the RPC is open only while a screen observes it.**
+  `qhp` (`qhp.java:8–24`): `ACTION_TYPE_UNKNOWN(0)` … `HOLD(4)` … `LEFT_ON_HEAD(10)`, `LEFT_OFF_HEAD(11)`, `RIGHT_ON_HEAD(12)`, `RIGHT_OFF_HEAD(13)`,
+  `SPECULATIVE_TAP(14)`, `HOLD_END(15)`, `HOLD_CANCEL(16)`; `qje` = {1 `ENUM` `qhp`} (`qje.java:28`).
+- **Who observes it (the whole list — `grep -rn "grj(2)\|grj(3)\|grj(16)\|grj(17)\|hmk(6)\|hmk(7)\|guq(9)"`):**
+  1. **The eartip seal test** (`…/ui/settings/sound/eartipseal/TestingFragment`): `hmw.java:67` combines Left (`hmk(6)` = `gao.b()`) and Right (`hmk(7)`)
+     through `frk(this, 20)` into `hmv` {`NONE`, `RUN_LEFT`, `RUN_RIGHT`, `RUN_BOTH`, `INTERRUPTED`, `NO_BUD_ON_HEAD`} (`hmv.java:17–28`); JADX skipped
+     `frk.a()`, the smali's default branch holds the strings "Got either buds detected, start OTTS test.", "OTTS interrupted." and "No bud detected for
+     OTTS." (`frk.smali:1300–1385`); `hmw.i()` (`hmw.java:131–161`) starts the test per state and shows `show_no_earbud_on_head_dialog` for
+     `NO_BUD_ON_HEAD`; the test writes `qhr` field 14 ("Init OTTS test.", `hmw.java:76`; `fya.o`, the 2026-10-06 Update of the `qhr` register).
+  2. **The OOBE audio controller `gvj`** (`gvj.java:47–137`; built in `gih.java:62` from `gux` instances, `gfp.java:70/80`, `fqe.java:489–493`, used by
+     `OobeActivity` through `gvn`): "Control audio with left OHD changed: %d" / "… right …" (`:124`, `:133`), "Buds off head, do nothing" (`:53`) —
+     the setup wizard's music demo ("Put in your earbuds to hear music during setup", `strings.xml:354`). `gux` (`gux.java:8`, `:34`) is a LiveData of
+     one bud's 1/2 value.
+  3. **The OOBE-mode lifecycle `guy`** (`guy.java:12–46`): observes `gao.a()` (`guq(9)`) and writes `qhr` field 6 — "Enable OOBE mode" on activation
+     (`:25`), "Disable OOBE mode" on deactivation (`:39`).
+  4. **The OTA flow**: `hkf.java:12` — both buds on head (`grj(16)`/`grj(17)`) within 5 s, else `false` — read by `TransferFragment` (`hkk.java:48`) and
+     `ApplyRequestFragment` (`hjd.java:25`).
+  No other reader exists: the settings screens, the device status and the battery UI do not observe `gao`. The app's resources name only the in-ear
+  detection *setting* (`OhdFragment`, `label_ohd`, `ic_ohd_off*`) and the fit test's "Put one or both earbuds in before starting"
+  (`fit_test_no_earbud_on_head_title`) — no string for a per-bud in-ear display.
+- **A second, legacy path is not the Pro 2's:** `gaa.java:301–377` parses a `qiw` {1 `qjl`, 2 `qje`} ("Error parsing MaestroOobeAction") from the
+  group-numbered TLV router and `gam` (`gam.java:9–59`) turns it into the same 1/2 values; the TLV style throws "Unsupported legacy communication style."
+  on the pigweed socket (`fut.java:130–131`, ADR-025 Update of 2026-09-30) and `gam` is bound for device types 1 and 2 only.
+- **Runtime info field 7 (`qhy`, 3 × `BOOL`) is not a wear state:** 7.2 and 7.1 gate the Dosimeter live subscription per bud (`fsy.java:122–169`: field 2
+  `false` → subscribe `LEFT_BT_CORE`, `true` → unsubscribe and report 0.0; field 1 ↔ `RIGHT_BT_CORE`), and **7.3 is "Low latency mode"** (`fwx.java:22`,
+  `fst.java:73–79` — the default branch of `fst`, `frb.java:70` "Low latency mode change to %s"). The stream's top-level fields 2 and 3 are not in the
+  schema (`qiy`, the 2026-10-06 Update above). No code reads a per-bud worn state from runtime info, and nothing in the APK reads GSND CONTROL.
+- **Wire (🟢):** the method id `0x57f3becb` is in `CAP-078` only (4 frames; `tshark -r <log> -Y "frame contains 25:cb:be:f3:57" | wc -l` over all 117
+  logs → 0 elsewhere): H 7388 request → 7390 `1:10`, 7391 `1:12` → **7429 RESPONSE status 14 at 16:53:31.516**, 65 ms before the settings push 13 = 3 (7432,
+  the left bud out, `CAP-078-FINDINGS.md` §6) and 16 s before the Buds' `DISC` of MAESTRO (7441, 16:53:47.86) — the call ended at the wear change, not
+  with the session. 🟡 the firmware serves the stream only while OOBE mode (6) or OTTS mode (14) is on and ends it otherwise at the first wear change;
+  one trial, the official app never opened it in 115 logs (it does so only on the OOBE, fit-test and OTA screens). Proposals: `ai-sessions/0101` RESULT.
+
+### `nps` / `nqb` / `frb` / `fmp` / `gah` / `fws` / `esa` / `fvp` / `fut` — the life of a server-streaming call in the companion app (added 2026-10-18, `ai-sessions/0101`; read-only, ADR-017 boundary)
+
+- **Cancel = a `CLIENT_ERROR` packet with status `CANCELLED`:** `nps.l()` (`nps.java:65–113`) removes the call from the pending map and writes an
+  `RpcPacket` with type `a.at(6)` = 4 (`a.java:842–843`: `i - 2`), the call's channel, service and method ids and `nqt.CANCELLED` (`:99–104`); `nps.m()`
+  (`:116–126`) abandons a call without a packet ("Abandoning %s"). **A packet for a call that is not pending** is answered with a `CLIENT_ERROR`
+  `FAILED_PRECONDITION` (`gon.java:238`, `:248` "Ignoring packet for %s, which isn't pending" → `nqb.j`, `nqb.java:35–62`).
+- **Every stream is opened with `Observable.using` and its disposer cancels the call** when the last subscriber leaves, if the call is still open
+  (`mne.F(call)` = both statuses `null`, `mne.java:61–63`): runtime info (`fws.java:80` → `frb.java:73–81` "Try to cancel runtime info rpc"), quiet mode
+  (`fws.java:38` → `frb.java:56–65`), the settings stream (`esa.java:150–155` "Start stream setting value with Route %d" → `fmp` discriminator 7,
+  `fmp.smali:556` "Try to cancel setting rpc", `:601`, `:610` `nqd.l()`), the Dosimeter live stream per bud (`fvp.java:55–58`, retry 3 → `frb.java:46–55`
+  "Try to cancel SubscribeToLiveDb rpc on route"), the OOBE actions (`gav.java:43–79` → `frb.java:86–93`), head gestures (`gah.java:35–37`). The
+  `using` source is the primary-route stream, so **a route change re-opens each stream on the new channel and cancels the old call**; the runtime-info and
+  quiet-mode chains retry with a 1-s delay (`fwu.java:14` `.L(fst(18))`, `fst.java:70–72` "Retry with delay"). **At session end** `fut.e()`
+  (`fut.smali:1209`, the socket close) calls `fuh.b()` on every per-session subscriber (`fwx`, `fvp`, `fxg`, …; also `fun.smali:313`, `gld.smali:261`),
+  whose disposers then send the cancels — if the socket is already gone, "Failed to send cancellation packet for %s" (`nqf.java:23–30`).
+- **Writes:** `fyv.c()` (`fyv.java:56–83`) coalesces per `qhr` field and cancels a pending write of the same field (`aie` discriminator 7, the 2026-09-15
+  Update of the `qhr` register).
+- **Wire (🟢; `scripts/pwrpc_decode.py` over all 117 logs, nested `.log`/`.log.last` counted as they are):** 374 phone-side `CLIENT_ERROR` packets, all in
+  official-app logs, 0 in OpenControl's. `CANCELLED`: `SubscribeToLiveDb` 100, `SubscribeToQuietModeStatus` 94, `SubscribeRuntimeInfo` 57,
+  `SubscribeToSettingsChanges` 56, `WriteSetting` 13 (all `CAP-050`, each 0.00–0.01 s before the next `WriteSetting` — the coalescer), `KpiStream` 2.
+  `FAILED_PRECONDITION`: `SubscribeToLiveDb` 24, `WriteSetting` 13, `SubscribeToSettingsChanges` 8, `ReadSetting` 3, `GetStatus` 2,
+  `FetchDailySummaries` 2 — the "isn't pending" replies to late answers. In `CAP-037` (30 reconnects) every cancel set precedes the phone's own `DISC` of
+  MAESTRO by 0–100 ms (e.g. 1743/1744/1745 → `DISC` 1746 at +7 ms, sent): the official app cancels its streams and then closes the channel. The Buds never
+  send a `SERVER_ERROR` (unchanged, 2026-09-30). Not shown by the logs: whether the Buds stop a running stream on a `CANCELLED` with the channel left open
+  (every such cancel fell in a silent stream or just before a `DISC`).
+
+### `fyv` / `fsz` / `esk` / `fxm` / `fxk` / `fyf` / `gcc` / `gca` / `fua` / `fyo` — the route of a write, and the wall clock (added 2026-10-18, `ai-sessions/0101`; read-only, ADR-017 boundary)
+
+- **A `WriteSetting` goes to the primary route:** `fyv.a(qjc)` (`fyv.java:44–49`) takes the first value of `fwv.a()` — `fxm.j`, the route published by
+  "Update primary to %d" (`fxk.java:30–35`: the target of the `GetSoftwareInfo` answer unless its field 6 is set; "Blocking downstream until receive
+  primary route", `fxm.java:34–43`) — then `fsz` case 2 (`fsz.java:62–74`) picks that route's client and channel (`fvl.a(goq)`, "Client not found for
+  route") and `esk` discriminator 19 sends the unary call with a 5-s timeout and a retry (`esk.java:129–148`). `ReadSetting` (`fyv.b`, `:51–54`) uses the
+  same client map. **The Dosimeter calls address both bud cores by name:** `FetchDailySummaries` per `goq` from `fyh.java:28–36` (`fyf.java`'s
+  Dosimeter branch, `fyf.smali:294` `fvl.a(goq)`), the live stream per `goq` (`fvp.c`, `fvp.java:55–58`; subscribed per bud by `fsy.java:122–169`).
+- **Wire (🟢; the channel of each request against the latest `GetSoftwareInfo` announcement before it, all 117 logs):** `WriteSetting` 1,044 on the
+  announced channel, 6 on another — the six are OpenControl's experiment F4 on channel 21 in `CAP-079` (counted in its nested logs), all refused;
+  `ReadSetting` 8,852 / 0; `SubscribeRuntimeInfo` 574 / 0; `SubscribeToSettingsChanges` 281 / 0; `SetWallclock` 144 / 0; `GetHardwareInfo` 341 / 0;
+  `FetchDailySummaries` 220 / 222 (+ 76 before any announcement); `SubscribeToLiveDb` 213 / 209. No request on channels 18 or 23 (`goq.CASE`) or 20, 22,
+  25, 27 in any log. `CAP-058`'s four field-21 writes (5747 … 5790) were on channel 21, the announced channel (4 of 4).
+- **`SetWallclock` is sent once per connection, first thing, on the primary route:** `fyo.a()` (`fyo.java:18–19`) calls `ftm.i()` before the
+  `ReadSetting` sweep; `fua.i()` (`fua.java:183–187`) → `fst` cases 11–13 ("Set wall clock time", `fst.java:53–59`) → `gcd.a()`; `gcc.a()`
+  (`gcc.java:21–48`, "syncWallclock to %s") takes the primary route's channel, `Instant.now().toEpochMilli()` as field 1, retry 3; `gca` (device types 1/2)
+  sends the same value as legacy TLV 136/7 (`fwg.java:54–66`). Wire: 144 requests in 57 official-app logs (41 logs exactly one; `CAP-037` 30 = its 30
+  connections), every one on the announced channel; 0 in OpenControl's logs apart from the experiment (`CAP-079`, 2).
+- **The day index of `FetchDailySummaries` is never converted to a date by the app:** no `toEpochDay`/`ofEpochDay` in the app's packages (the 16 hits are
+  `j$.time` and `ccs`/`cdb` library code); `hwy.ai` (`hwy.java:1971–1989`) sums the entries with index `c − 6 … c` where `c` is the Buds' own current index
+  (`gdg.c`, the larger of the two buds, `hwy.aj`, `:1991–1998`). Wire (field 1 of every answer, 57 logs, with the Buds' clock from runtime info field 2 real
+  in all of them — `CAP-050` −0.2 s, `CAP-056` −0.1 s, `CAP-069` −0.1 s, `CAP-058` −0.1 s): **three regimes** — 2026-08-09 … 09-14: 11 … 47, one per
+  24 h with the boundary ≈ 05:30–05:50 UTC (`CAP-026`/`028` 44 before 07:16, `CAP-029` 45 after 07:53 local on 09-12; `CAP-040` 38 → 39 between 07:28
+  and 07:57 on 09-06), i.e. day 0 ≈ 2026-07-29/30; 2026-09-28 (`CAP-056`): 227; 2026-10-04 … 10-18 (`CAP-069`, `053`/`054`/`058`, `079`): 461, 462, 475 —
+  one per day again. The two jumps (+180 in 14 days, +234 in 6 days) fall in the periods of OpenControl's runs without `SetWallclock`; 🔴 what the index
+  counts. The official app does not need to know: it uses the Buds' current index as "today".
+
+### Find negatives — ring, Case, the unmapped `qhr` fields, the FHN UUIDs (added 2026-10-18, `ai-sessions/0101`; read-only, ADR-017 boundary; each negative with its command and positive control)
+
+- **No pw_rpc method rings anything:** the complete method catalogue of `fux.java` (`grep -o 'nqs\.[abc]("[A-Za-z]*"' fux.java | sort -u`): `Abort`,
+  `Apply`, `ConfigureTransferParameters`, `Echo`, `EndDetection`, `EndTest`, `EraseBundle`, `FetchDailySummaries`, `ForceMultipointSwitch`,
+  `GetHardwareInfo`, `GetRunningVersion`, `GetSoftwareInfo`, `GetStagedVersion`, `GetStatus`, `KpiStream`, `Listen`, `ReadSetting`,
+  `RequestOtaRoleSwitch`, `Reset`, `ResetOtaStore`, `SetJitterBufferSizePreference`, `SetManualOta`, `SetTransferred`, `SetWallclock`, `Start`,
+  `StartDetection`, `StartRightBudUpdate`, `StartTest`, `SubscribeRuntimeInfo`, `SubscribeToLiveDb`, `SubscribeToOobeActions`,
+  `SubscribeToQuietModeStatus`, `SubscribeToResults`, `SubscribeToSettingsChanges`, `Verify`, `WriteSetting` (positive control: `WriteSetting`).
+- **No ring/find/beacon/earcon command builder:** `grep -rniE "ring(ing)?(device|buds|left|right|both|case)|startring|stopring|play_?sound|playsound|
+  find_?my|finddevice|beacon|earcon"` over `com/google/android/apps/wearables/maestro` and `defpackage/[fgh]*.java` → the OOBE `FindMyDeviceFragment`
+  (the Find My Device terms page, `gtc.java:63–91`, `hy.java:145–154`; ADR-027's `FmdWorker`), `gsz` "FindMyProxyLiveData" (the GMS proxy, ADR-025
+  Update of 2026-09-08) and the `case_earcon` preference (setting 27) — nothing else (positive control: `case_earcon`, `fxb.java:359`).
+- **`goq.CASE` (channels 18/23, addresses `00 2b`/`80 2d`) is used by the OTA machinery only:** `fux.java:91`, `:99` (the channel map), `frg.java:51–228`
+  (the per-route pw_hdlc channel outputs, built for every route), `fsg.java:112` → `fvk.b` (`fvk.java:19–34`: `pw.transfer.Transfer` Read/Write clients
+  for the CASE route), `glk.java:374` (the OTA transfer of the `charging_case` bundle), `glm.java:79` (the OTA route object), `fqg.java:265` (the DI map).
+  In the smali the enum is referenced by its obfuscated field letter, so `grep "Lgoq;->CASE:"` → 0 is not a negative (positive control `Lgoq;->LEFT_BT_CORE:`
+  → 0 as well; the JADX grep is the evidence). Wire: no request on channels 18/23 in any log (above).
+- **The unmapped `qhr` fields 23, 30, 31, 34–39 have no write site:** of the 23 `iput …, Lqhr;->b:I` sites in the smali, none is preceded within eight
+  lines by `const/16 vN, 0x17|0x1e|0x1f|0x22…0x27` (`grep -rn -B8 … | grep -E "const/16 v[0-9]+, 0x(17|1e|1f|22|23|24|25|26|27)$"` → 0); positive
+  control: field 29, `cmi.smali:3495` `const/16 v2, 0x1d` → `:3499`. Field 23 has a reader (`fxb` case 23, `gea.H`), 30/31/34–39 none (the register above).
+- **The FHN "Beacon actions" characteristic and the "Unknown Service" are not in the APK:** `grep -rqi "fe2c1238\|109b862f"` over `jadx-output/sources`,
+  the three smali trees and `apktool-output/res` → exit 1; no `fe2c` string at all (the app holds no Fast Pair GATT UUID — ADR-025); positive control
+  `25e97ff7` (the pigweed socket UUID) → `fzd.java`, `gbm.java`, `fqg.java`.
+- **External, re-read 2026-10-18 (https://raw.githubusercontent.com/qzed/pbpctrl/2620367/README.md, line 52):** "This also allows reading of the case battery
+  as long as one bud is placed in the case (note that the case does not have a Bluetooth receiver itself)." No sentence of that README mentions ringing
+  or finding the case.
+
 ---
 
 > Template per class — copy for each new finding. **Every finding must cite
