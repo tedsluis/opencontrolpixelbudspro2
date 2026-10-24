@@ -103,7 +103,9 @@ hardware-verified and what is only unit-tested is in `ARCHITECTURE.md` §5a; eve
 [`CHANGELOG.md`](./CHANGELOG.md). Found a bug? [Open an issue](https://github.com/tedsluis/opencontrolpixelbudspro2/issues/new/choose) — a suspected security
 problem goes through [`SECURITY.md`](./SECURITY.md) instead.
 
-**1.4.1 is prepared** (pull request #70, hardware run `CAP-080` planned): it fixes the first three known issues below.
+**1.4.1 is prepared, not released** (`ai-sessions/0100`, pull request #70, hardware run `CAP-080` planned): the app listens up to 65 s for the Buds'
+stop, so "Stopped on the bud" can appear; the red "don't allow" line goes away by itself once the Buds allow a change; three texts updated — the first three known
+issues below (`CHANGELOG.md` [1.4.1]).
 
 **Known issues of 1.4.0** (also in [`CHANGELOG.md`](./CHANGELOG.md)):
 

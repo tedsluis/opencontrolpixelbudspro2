@@ -68,6 +68,18 @@ class ExperimentFramesTest {
     }
 
     @Test
+    fun `F1 - SetWallclock on channel 19 equals CAP-079 and its answer is the RpcResult the runner waits for`() {
+        // CAP-079 H3 = CAP-079-btsnoop_hci4.log.last 2559 (08:13:11.642), channel 19: SetWallclock 1:1792303991632 — the whole pw_hdlc frame, real bytes.
+        assertEquals("7e003b0310131dea71de7d5e254eed3b672a0708d09692ed9434473d2f287e", wire(ExperimentFrames.setWallclock(19, 1_792_303_991_632L), 19))
+        // H3 2563 (08:13:11.720): its empty RESPONSE — since `ai-sessions/0100` an RpcResult with the method the runner's `awaitResult` matches (F1 reported a time-out).
+        val routed = io.github.tedsluis.opencontrolpixelbuds.data.codec.CodecRouter()
+            .feed(io.github.tedsluis.opencontrolpixelbuds.data.codec.Dlci.MAESTRO, bytes("7e80a303080110131dea71de7d5e254eed3b6712a9053e7e"), timestampMillis = 0)
+        val result = routed.single() as io.github.tedsluis.opencontrolpixelbuds.data.codec.RoutedFrame.RpcResult
+        assertEquals(Maestro.METHOD_SET_WALLCLOCK, result.methodId)
+        assertEquals(true, result.isOk)
+    }
+
+    @Test
     fun `F2 F3 - the Dosimeter requests equal CAP-027 and CAP-058`() {
         assertEquals(0x73d5d805, ExperimentFrames.SERVICE_DOSIMETER)
         assertEquals(0x4d93b6e2, ExperimentFrames.METHOD_SUBSCRIBE_TO_LIVE_DB)

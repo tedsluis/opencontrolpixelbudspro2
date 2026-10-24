@@ -22,6 +22,7 @@ package io.github.tedsluis.opencontrolpixelbuds.ui
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
@@ -89,6 +90,16 @@ class FindMyBudsScreenTest {
         compose.onNodeWithText("Take the Buds out of your ears before ringing — the sound is loud.").assertExists()
         compose.onNodeWithText(ringingNoticeText(RingNotice(RingTarget.BOTH), sessionReady = true)).assertExists()
         assertEquals(true, ringingNoticeText(RingNotice(RingTarget.BOTH), sessionReady = true).contains("both earbuds", ignoreCase = true))
+    }
+
+    @Test
+    fun `the (i) says a ring holds the channel, literally (ai-sessions 0100)`() {
+        show(ConnectionState.Ready, null)
+        compose.onNodeWithContentDescription("Find My Buds: $DETAILS_DESCRIPTION").performClick()
+        compose.onNodeWithText(
+            "Ring and Stop use the Buds' Message Stream channel. While a bud rings the app keeps that channel (up to about a minute) to hear when " +
+                "the ringing stops. Another app that uses it (for example Google Play services' Fast Pair) may take it back; the app then cannot see the stop.",
+        ).assertExists()
     }
 
     @Test

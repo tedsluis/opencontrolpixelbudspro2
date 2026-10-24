@@ -85,7 +85,7 @@ class AncScreenTest {
     fun `the not-allowed note says what the byte means, the checked time is in the (i)`() {
         show(availability = AncAvailability.NOT_ALLOWED)
         compose.onNodeWithText(
-            "The Buds don't allow changing noise control right now (usually because no bud is in an ear). Tapping a mode checks again first.",
+            "The Buds don't allow changing noise control right now (usually because no bud is in an ear). A tap still sends the mode; the Buds answer whether they accept it.",
         ).assertExists()
         compose.onNodeWithContentDescription("Noise control: $DETAILS_DESCRIPTION").performClick()
         compose.onNodeWithText(ancNotAllowedLine(at)).assertExists()
@@ -96,7 +96,7 @@ class AncScreenTest {
         val line = ancNotAllowedLine(at)
         val time = formatUpdatedAt(at)!!
         assertEquals(
-            "The Buds don't allow changing noise control right now (usually because no bud is in an ear; checked $time). Tapping a mode checks again first.",
+            "The Buds don't allow changing noise control right now (usually because no bud is in an ear; checked $time). A tap still sends the mode; the Buds answer whether they accept it.",
             line,
         )
     }

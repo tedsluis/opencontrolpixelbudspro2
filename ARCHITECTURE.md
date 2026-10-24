@@ -298,7 +298,8 @@ change state while this app is disconnected or backgrounded.
   (`SettingsCodec.ancStateRequest`, `writeAncMode`): status OK → the mode is shown as `SET_BY_APP`; status 9 (`FAILED_PRECONDITION`, no bud worn, `CAP-078`
   6777) → `AncNotAllowed` and the availability "not allowed"; another status → `MaestroRejected`; no answer → `Timeout` and the write quarantine; a mode not
   ticked in field 12's press-and-hold list is refused before anything is sent (`AncModeNotInHoldList`; an unread list → `AncModeListNotRead`), and the tile
-  steps over it. Refresh is the `ReadSetting 4:13` (13 = 0 → `AncNotAllowed`). `ANC_SET_WINDOW_MS` now counts from the write. The Connect snapshot, the
+  steps over it. Refresh is the `ReadSetting 4:13` (13 = 0 → `AncNotAllowed`). **Since 1.4.1 (`ai-sessions/0100`):** any later report of a settable mode (a push
+  or a read with 13 = 1–4) clears `AncNotAllowed` from `ancError` — the red line no longer outlives it (`CAP-079` §3.3). `ANC_SET_WINDOW_MS` now counts from the write. The Connect snapshot, the
   Message Stream `Get`/`Set` paths and their waits are gone; the availability comes from setting 13 only (never provisional). **The Message Stream (DLCI
   0x04) is claimed only for Find** (Ring, Stop; ADR-032's on-demand claim; ADR-069's hold).
 - **One rule for "current" (built `ai-sessions/0069`, 1.0.1; `ai-sessions/0068` A68-APP-02; the maintainer's choice in chat 2026-10-03, "Keep the value,
@@ -374,7 +375,7 @@ is met by the value here. Check with `grep -rn "const val .*_MS" android/*/src/m
 | `MODEL_ID_WAIT_MS` | 1 000 ms | a Message Stream command waits for the claim's Model ID frame | `BudsRepositoryImpl` | ADR-042 |
 | ~~`SNAPSHOT_TIMEOUT_MS`~~, ~~`GET_RESPONSE_TIMEOUT_MS`~~ | — | removed in 1.4.0 (ADR-067/068): no Connect snapshot, no Message Stream `Get`; a Refresh is `ReadSetting 4:13` (`SETTING_READ_TIMEOUT_MS`) | — | ADR-067 |
 | `ACK_WAIT_MS` | 1 000 ms | a Ring or a Stop waits for the Buds' ACK/NAK (since 1.4.0 no ANC `Set` on the Message Stream) | `BudsRepositoryImpl` | ADR-032 |
-| `RING_HOLD_MAX_MS` | 20 000 ms | the longest the claim is held after a Ring for the Buds' stop status (observed stops 14.8–17.1 s, `CAP-078`); then the linger | `BudsRepositoryImpl` | ADR-069 |
+| `RING_HOLD_MAX_MS` | 65 000 ms (20 000 ms in 1.4.0) | the longest the claim is held after a Ring for the Buds' stop status — above the ≈ 63 s an untouched ring lasted (`CAP-079` §5.2; touched stops 14.8–17.1 s, `CAP-078`); then the linger | `BudsRepositoryImpl` | ADR-069 (its Update 2026-10-18, `ai-sessions/0100`) |
 | `CUT_OFF_GRACE_MS` | 100 ms | after a claim's close, an answer already received may still pass the codec | `BudsRepositoryImpl` | `ai-sessions/0062` F-3 |
 | `BATTERY_BURST_WAIT_MS` | 2 000 ms | *Refresh battery* waits for a runtime-info packet after its re-subscription (until 1.3.1: the `03 03` burst on a fresh claim) | `BudsRepositoryImpl` | ADR-068 (ADR-031) |
 | `MESSAGE_STREAM_LINGER_MS` | 1 500 ms | the Message Stream stays claimed after an action, then is released (1.2.0 … 1.2.2 held it while the noise-control tab was on screen — ADR-061, gone since 1.3.0, ADR-065) | `BudsRepositoryImpl` | ADR-032 |
@@ -551,6 +552,9 @@ summary), the current state is (every write below additionally passes the Safe-M
 > the hold list respected; DLCI 0x04 claimed only for Find (8 of 8); Left/Right and *Refresh battery* from runtime info; every ring status ACKed (9 of 9) and
 > Ring both reported (`03`) — **hardware-verified**. "Stopped on the bud" never shown: `RING_HOLD_MAX_MS` (20 s) is shorter than the Buds' ring (≈ 63 s
 > untouched) — a known issue of 1.4.0, the fix in `ai-sessions/0100`. Not exercised: TalkBack, a Disconnect during a Connect. `CAP-079-FINDINGS.md`.
+> **1.4.1 (`ai-sessions/0100`, 2026-10-18, the maintainer's choices in chat; no new bytes):** `RING_HOLD_MAX_MS` 65 s (ADR-069 Update); `applyAncState` clears
+> `AncNotAllowed` when the Buds report a settable mode (13 = 1–4; `CAP-079` §3.3); the noise-control, battery and Find texts reworded; `routeMaestro` classifies
+> `SetWallclock`'s `RESPONSE` as an `RpcResult` (the experiment's F1 waited in vain, `CAP-079` §11; the release never sends it). Hardware run: `CAP-080`, planned.
 
 This table is this project's authoritative implementation-readiness list until superseded by a new ADR
 — a future session should re-derive it from `DECISIONS.md` directly rather than copying it forward
@@ -683,11 +687,11 @@ stack, not a new architectural choice (no `DECISIONS.md` entry; nothing here cha
   **Since 1.4.0 (`DECISIONS.md` ADR-067 … ADR-070, `ai-sessions/0098`): the Message Stream is claimed only for Find.** A mode change (tab, tile), Refresh, the
   battery and Connect use DLCI 0x02 only — no snapshot claim at Connect, no claim for a tap. A Ring (Left, Right, both) claims DLCI 0x04 on demand as before and
   then **holds** the claim (`startRingHold`, under `claimMutex`) until the Buds report the stop (`04 01 00 01 00`), the app's Stop, a new Ring, a foreign close
-  (`channelClosed`) or `RING_HOLD_MAX_MS` (20 s), then releases after `MESSAGE_STREAM_LINGER_MS`; each Buds status arriving while DLCI 0x04 is open is ACKed
+  (`channelClosed`) or `RING_HOLD_MAX_MS` (65 s since 1.4.1 — ADR-069 Update; 20 s in 1.4.0), then releases after `MESSAGE_STREAM_LINGER_MS`; each Buds status arriving while DLCI 0x04 is open is ACKed
   `ff 01 00 02 04 01` (ADR-069). A foreign close ends the hold; nothing re-claims by itself. In the user with Google Play services Play cuts the hold ≈ 4.5–5 s in
   (`CAP-078` BN-18) — the screen then says nothing it did not hear. Always-on, payload-free lines: "Noise-control mode written (channel N): <mode>",
   "Noise-control mode not written: the Buds allow no change (FAILED_PRECONDITION — no bud worn?)", "Noise-control request failed: …", "Ring status from the Buds:
-  ringing left|right|both / stopped", "Ring status acknowledged (ff 01 00 02 04 01)", "Ring: claim held until the Buds report the stop (at most 20 s)", "Ring:
+  ringing left|right|both / stopped", "Ring status acknowledged (ff 01 00 02 04 01)", "Ring: claim held until the Buds report the stop (at most 65 s)", "Ring:
   hold ended — …", "Connect finished after a Disconnect tap: its channels are closed again" (A68-APP-13), "EQ written (channel N)".
 
 - **Observing Android's own state is read-only and visibility-bound (`ai-sessions/0041`).** The Connection screen mirrors what Android's

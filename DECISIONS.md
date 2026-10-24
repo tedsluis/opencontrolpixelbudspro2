@@ -2711,6 +2711,13 @@ motivated this).
   — no sound-level meter was filmed; the live value followed the phone's media-volume steps with a constant program level (≈ 1.5 × 10⁶ → 2 × 10⁴ → 4 × 10⁸ →
   4 × 10⁹ → 1.6 × 10⁶) and did not react to room sound — 🟡 a level of the buds' playback; **(iii)** day 475 = 2026-10-18 (`CAP-058`: 462 = 2026-10-05) — 🟡 day 0 =
   2025-06-30; (ii) open. The decision is unchanged (not accepted).
+- **Update (2026-10-18, `ai-sessions/0100`, maintainer-approved in chat 2026-10-18: "Ja, vervang de voorwaarde") — the draft stays Proposed; nothing is accepted.**
+  The maintainer has no sound-level meter. **(i) is replaced:** instead of "values against a sound-level meter on film", (i) is settled when a test file with
+  steps of exactly 10 dB at a fixed media volume gives steps of ≈ 10 in `round(10·log10(v))` (the official app's own display rule, `hiw.java:32–37`) — `CAP-080`
+  BP-13/BP-14, `WELL-002` without a meter. Google's absolute calibration is not tested; the app would show the Buds' own figure, as the official app does.
+  **(ii)** 🟡 supported: in `CAP-079` the day dose grew by the integral of the live value in value × minutes (ratio 1/60 in six intervals, `PROTOCOL.md` §6 item of
+  2026-10-18, `scripts/dosimeter_dose_vs_live.py`); `CAP-080` repeats it with steady levels. The Consequences' "its own hardware run with the meter" reads "its own
+  hardware run" (the meter-free test).
 
 ## ADR-061 — Hold the Message Stream claim while the noise-control tab is on screen
 
@@ -3050,6 +3057,12 @@ motivated this).
      "stopped" the app did not hear.
   5. No timeout byte is sent.
 - **Consequences**: a ring holds DLCI 0x04 up to 20 s in the user without Play services; in the Play user the hold ends with Play's re-claim.
+- **Update (2026-10-18, `ai-sessions/0100`, maintainer-approved in chat 2026-10-18, `AskUserQuestion` "Ring-hold", option *"65 s, geen nieuwe bytes
+  (Recommended)"*, with this text in the preview) — item 3's limit is 65 s.** The claim is held until the stop status, the user's Stop, a new Ring, a foreign close
+  or `RING_HOLD_MAX_MS` = **65 s**, then the 1.5-s linger. Why: in `CAP-079` (`ai-sessions/0099`) an untouched ring lasted 62.9 s (H1 4535 07:23:52.116 → the tone's
+  end 07:24:55.0) and a touch 18.6 s after a Ring was missed by the 20-s hold, so "Stopped on the bud" never appeared (`CAP-079-FINDINGS.md` §5.2); the 20 s rested
+  on `CAP-078`'s 14.8–17.1 s, most likely touches (`PROTOCOL.md` §4.4 Note of 2026-10-18). No new bytes on the wire (no timeout byte). In the user with Google Play
+  services nothing changes (Play cuts the claim ≈ 4.8 s in). Built in 1.4.1.
 
 ## ADR-070 — Ring both buds
 

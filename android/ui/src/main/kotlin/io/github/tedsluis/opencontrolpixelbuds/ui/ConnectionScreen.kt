@@ -336,10 +336,13 @@ internal fun safeModeText(state: SafeModeState): String {
 internal fun firmwareLine(deviceInfo: DeviceInfo?): String? =
     deviceInfo?.firmware?.takeIf { it.isNotEmpty() }?.joinToString(" / ")?.let { "Firmware: $it" }
 
-/** The battery card's explanation (`ai-sessions/0052`), shown in its (i) details since `ai-sessions/0057`. */
+/**
+ * The battery card's explanation (`ai-sessions/0052`), shown in its (i) details since `ai-sessions/0057`; reworded by `ai-sessions/0100` (the maintainer's
+ * choice in chat 2026-10-18) — since ADR-068 Left and Right come from runtime info on the app's own channel, not the Message Stream.
+ */
 internal const val BATTERY_EXPLANATION: String =
-    "Left/Right %: read from the Buds when the app last reached their Message Stream (at Connect, Refresh and each ANC / Find " +
-        "action). Charging and the Case: sent by the Buds on their own whenever a bud goes into or out of the case."
+    "Left, Right and the Case: sent by the Buds on their own on the app's channel — when the app connects, on Refresh battery and " +
+        "whenever a value changes. The Case is reported only while a bud is charging in the case."
 
 /**
  * The battery card's (i) lines (`ai-sessions/0057` D-7): the explanation, then **the same lines the card showed before** — [budLine] for Left and Right,

@@ -199,7 +199,7 @@ internal fun ancDetailLines(
 /**
  * DECISIONS.md ADR-065 (`ai-sessions/0091`; the maintainer's text in chat 2026-10-14, "ANC (i)"): the noise-control card's (i) says where the mode comes from.
  * The wear-change part is a hypothesis (🟡 PROTOCOL.md §6, item of 2026-10-14) and is said so — never a fact in the UI. Replaces ADR-061's hold explanation
- * (1.2.0 … 1.2.2). Find keeps [MESSAGE_STREAM_HINT_TEXT], since its taps still claim briefly.
+ * (1.2.0 … 1.2.2). Find keeps [MESSAGE_STREAM_HINT_TEXT], since its taps still claim the channel (a Ring holds it, ADR-069).
  */
 internal const val ANC_STREAM_HINT_TEXT: String = "The Buds report every change of the mode on the app's own channel. A press-and-hold on a bud is one " +
     "cause; on film the Buds also switched the mode by themselves when a bud was put in or taken out — that part is a hypothesis."
@@ -209,11 +209,13 @@ internal const val ANC_HOLD_LIST_HINT_TEXT: String =
     "Only the modes ticked under Controls → \"Modes for press and hold\" can be chosen here. Tick a mode there to use it."
 
 /**
- * `ai-sessions/0062` F-2 (the maintainer's wording, chat 2026-10-01): "The Buds don't allow changing noise control right now (usually because no bud is in an
- * ear; checked 10:07:54). Tapping a mode checks again first." — the time is when the Buds last answered; without one it is left out (the main surface).
+ * `ai-sessions/0062` F-2 (the maintainer's wording, chat 2026-10-01), its last sentence reworded by `ai-sessions/0100` (the maintainer's choice in chat
+ * 2026-10-18 — since ADR-067 a tap writes the mode without a check first): "The Buds don't allow changing noise control right now (usually because no bud is
+ * in an ear; checked 10:07:54). A tap still sends the mode; the Buds answer whether they accept it." — the time is when the Buds last answered; without one it
+ * is left out (the main surface).
  */
 internal fun ancNotAllowedLine(checkedAt: Long?): String =
-    ANC_NOT_ALLOWED_TEXT.removeSuffix(").") + (formatUpdatedAt(checkedAt)?.let { "; checked $it" } ?: "") + "). Tapping a mode checks again first."
+    ANC_NOT_ALLOWED_TEXT.removeSuffix(").") + (formatUpdatedAt(checkedAt)?.let { "; checked $it" } ?: "") + "). A tap still sends the mode; the Buds answer whether they accept it."
 
 /**
  * `ai-sessions/0082` item 1 (the maintainer's wording, chat 2026-10-09), reworded by ADR-065 (`ai-sessions/0091`, the maintainer's text in chat 2026-10-14,

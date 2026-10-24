@@ -523,6 +523,27 @@ experiment build 1.4.0-exp.1 is never released; F1 … F4 were approved by the m
 "Stopped on the bud" never appeared (AB9, AB12: the 20-s hold is shorter than the ring); TalkBack (AB13) not run; no sound-level meter on film (AB19). Details:
 `CAP-079-FINDINGS.md`. Verdict: release with Known issues (the maintainer, chat 2026-10-18); fixes in `ai-sessions/0100`.
 
+## AC. 1.4.1 (`ai-sessions/0100`: the fixes after `CAP-079`) and the Dosimeter without a sound-level meter
+
+In `CAP-080` as BP-1 … BP-15 (captures/CAP-080-yyyy-MM-dd_HH-mm-ss_HH-mm-ss-Group_BP/CAP-080-EVENT-NOTES.md, with the reference frames, step-by-step instructions
+for AC9 and AC11 – AC12, and the run card). Nothing new on the wire. The experiment build 1.4.1-exp.1 is never released. TalkBack (AB13) is not in this run
+(`TODO.md`).
+
+| ID | Steps | Expected on screen | Expected on the wire | Result | Notes |
+|---|---|---|---|---|---|
+| AC1 | Connect; the Info tab | "1.4.1, build …" | the MAESTRO session; no DLCI 0x04 | | BP-1 |
+| AC2 | The battery (i) and Find's (i) | the 1.4.1 texts ("Left, Right and the Case: sent by the Buds on their own on the app's channel …"; "Ring and Stop use the Buds' Message Stream channel. While a bud rings …") | — | | BP-2 |
+| AC3 | Both buds out: tap Noise cancellation | the red line ending "A tap still sends the mode; the Buds answer whether they accept it." | status 9 | | BP-3 |
+| AC4 | One bud into an ear; touch nothing | the red line disappears by itself | a push `4:{13:n}`, n = 1–4 | | BP-4 |
+| AC5 | Ring Left; touch the bud at ≈ 30 s | "Stopped on the bud at …" | status `00` ≈ 30 s in, ACKed; "hold ended — the Buds reported the stop" | | BP-5 (ADR-069 Update) |
+| AC6 | Ring Right; touch nothing | "Stopped on the bud at …" after ≈ 63 s | status `00` without a Stop; within the 65-s hold | | BP-6 |
+| AC7 | Ring both; touch one bud, then the other | "Ringing: Both earbuds …"; then "Stopped on the bud …" | `03`, then the statuses after each touch (observation) | | BP-7 |
+| AC8 | Ring Left; Stop after ≈ 5 s | no "Stopped on the bud" | Stop, status `00` | | BP-8 |
+| AC9 | A Disconnect during a Connect (the recipe in the skeleton) | Disconnected, "Pair a device"; never Connected after the confirm | "Connect finished after a Disconnect tap …"; the channels closed again | | BP-9 (A68-APP-13) |
+| AC10 | Owner user with Play: Ring Left, 10 s, Stop | no "Stopped on the bud" the app did not hear | Play's cut; no re-claim | | BP-11 |
+| AC11 | Experiment app: F1 | "Experiment F1: RESPONSE OK" | `SetWallclock`, its `RESPONSE` | | BP-12 (`WELL-003`) |
+| AC12 | Experiment app: F3 19/21, F2 19/21, levels.wav (four 10-dB steps, buds out, in-ear detection off), F3 19/21 | — | per step ≈ 10 apart in `10·log10(v)`; Δ day dose ≈ ∫ v dt / 60 | | BP-13, BP-14 (`WELL-002`) |
+
 ## After the run (within 1 minute of the last action)
 
 | # | Collect | Done |
@@ -564,6 +585,7 @@ experiment build 1.4.0-exp.1 is never released; F1 … F4 were approved by the m
 | Y 1.3.0 | 22 | 10 | 0 | 7 | 5 |
 | AA round 1 (experiment build) | 10 | 5 | 0 | 3 | 2 |
 | AB 1.4.0 and round 2 (experiment build) | 21 | 14 | 2 | 4 | 1 |
+| AC 1.4.1 and the meter (experiment build) | 12 | | | | |
 
 **Run `CAP-078` (2026-10-17, the experiment build 1.3.1-exp.1, user 10 without Play and the Owner with Play; `ai-sessions/0097`, `CAP-078-FINDINGS.md`):** section
 AA — ✅ AA5, AA6, AA8, AA9, AA10; ⚠️ AA2 and AA4 (done in the experiment app, both as expected), AA7 (events only at subscribe); not run AA1 (TalkBack), AA3 (a
