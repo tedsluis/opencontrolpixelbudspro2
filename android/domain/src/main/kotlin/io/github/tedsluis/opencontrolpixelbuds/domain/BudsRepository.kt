@@ -292,6 +292,12 @@ interface BudsRepository {
     /** "Volume EQ" (`qhr` field 15, ADR-055): `WriteSetting 4:{15:0|1}`. */
     suspend fun setVolumeEq(on: Boolean): BudsResult<Unit>
 
+    /**
+     * Gen 1 diagnostics: opens the Fast Pair Message Stream, waits for the Model ID the Buds send when it opens, logs it and releases the channel.
+     * **Sends nothing to the Buds** — opening the channel is all. Returns the Model ID as lower-case hex. Requires an open session.
+     */
+    suspend fun probeModelId(): BudsResult<String> = BudsResult.Failure(BudsError.ConnectionLost)
+
     suspend fun ringBud(target: RingTarget): BudsResult<Unit>
     suspend fun stopRinging(): BudsResult<Unit>
 }

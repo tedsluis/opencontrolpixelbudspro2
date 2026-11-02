@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingNotice
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsModel
 import io.github.tedsluis.opencontrolpixelbuds.domain.RingTarget
 
 /**
@@ -58,6 +59,7 @@ fun FindMyBudsScreen(
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
     ringStoppedOnBudAt: Long? = null,
+    model: BudsModel = BudsModel.DEFAULT,
 ) {
     val ready = connectionState.isReady()
     Surface(modifier = modifier.fillMaxSize()) {
@@ -77,7 +79,9 @@ fun FindMyBudsScreen(
                     val buttonModifier = Modifier.fillMaxWidth().height(56.dp)
                     FilledTonalButton(onClick = { onRing(RingTarget.LEFT) }, enabled = ready, modifier = buttonModifier) { Text("Ring Left") }
                     FilledTonalButton(onClick = { onRing(RingTarget.RIGHT) }, enabled = ready, modifier = buttonModifier) { Text("Ring Right") }
-                    FilledTonalButton(onClick = { onRing(RingTarget.BOTH) }, enabled = ready, modifier = buttonModifier) { Text("Ring both") }
+                    if (model.hasRingBoth) {
+                        FilledTonalButton(onClick = { onRing(RingTarget.BOTH) }, enabled = ready, modifier = buttonModifier) { Text("Ring both") }
+                    }
                     OutlinedButton(onClick = onStop, enabled = ready, modifier = buttonModifier) { Text("Stop") }
                 }
             }

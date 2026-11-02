@@ -48,6 +48,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsModel
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
@@ -100,9 +101,11 @@ fun AncScreen(
     sessionSince: Long? = null,
     ancModeCause: AncModeCause? = null,
     ancModeList: AncModeList? = null,
+    /** Gen 1 support: the connected model; only its noise-control modes are shown (no Adaptive on the Gen 1). */
+    model: BudsModel = BudsModel.DEFAULT,
 ) {
     val ready = connectionState.isReady()
-    val someUnticked = ancModeList != null && AncMode.entries.any { !ancModeList.isSelected(it) }
+    val someUnticked = ancModeList != null && model.ancModes.any { !ancModeList.isSelected(it) }
     val notAllowed = ready && ancAvailability == AncAvailability.NOT_ALLOWED
     val unconfirmed = ancModeUnconfirmedAt != null
     // `ai-sessions/0069` A68-APP-02: a mode the Buds reported on an earlier connection (or while nothing is connected now) is kept, dimmed and marked —
@@ -129,7 +132,7 @@ fun AncScreen(
                     if (ancMode == null) Text(ancModeLine(null, null), style = MaterialTheme.typography.bodyLarge)
                     // The reason a tap may not switch stays visible; its time is in the (i).
                     if (notAllowed) Text(ancNotAllowedLine(null), style = MaterialTheme.typography.bodyMedium)
-                    ANC_MODE_LIST_ORDER.chunked(2).forEach { row ->
+                    ANC_MODE_LIST_ORDER.filter { model.hasAncMode(it.first) }.chunked(2).forEach { row ->
                         // F-3 / A68-APP-02: a mode that is not confirmed or not current is dimmed — always together with the (i) dot and its line, never alone
                         // (WCAG 1.4.1).
                         val rowModifier = Modifier.fillMaxWidth().alpha(if (notCurrent) NOT_CURRENT_ALPHA else 1f)

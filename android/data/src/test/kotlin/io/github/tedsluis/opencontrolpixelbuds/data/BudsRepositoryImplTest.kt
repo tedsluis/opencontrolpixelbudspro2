@@ -45,6 +45,11 @@ import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings056
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings070
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.Settings074
 import io.github.tedsluis.opencontrolpixelbuds.data.codec.SettingsStream
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsModel
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Gen1MacOsFixtures
+import io.github.tedsluis.opencontrolpixelbuds.data.codec.Gen1OwnFixtures
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.HoldAction
@@ -3294,6 +3299,124 @@ class BudsRepositoryImplTest {
         assertEquals(true, "an earlier WriteSetting got no answer" in BleLogger.exportLog(), "held: the cancelled write's late answer must not be taken")
         advanceTimeBy(2_000); settle()
         assertEquals(BudsResult.Success(AncMode.ADAPTIVE), refresh.await())
+    }
+
+    // ---- Gen 1 support (GEN1_SUPPORT_INVESTIGATION.md): recognised, read-only ----------------------------------------------------------
+
+    /** A `ReadSetting` RESPONSE on channel 21 (address `00 a5`) carrying [payload] — hand-built around a payload, a labelled structural fixture. */
+    private fun readAnswer21(payload: String) =
+        rpcFrame(10496, RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_READ_SETTING, hex(payload)))
+
+    @Test
+    fun `a Gen 1 announcement is recognised, the read sweep skips 27 28 29, and nothing is written before its device type is read`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        settle()
+        repo.launchInitialEqRead()
+        transport.emit(Dlci.MAESTRO, hex(Gen1OwnFixtures.HELLO_CH21_1458)) // the user's Gen 1 (channel 21, release_5.11_signed)
+        settle()
+        repeat(20) { advanceTimeBy(2_500); settle() } // nothing answers: every read times out in turn
+
+        assertEquals(BudsModel.PIXEL_BUDS_PRO, repo.deviceInfo.first()?.model)
+        assertNull(repo.safeMode.first(), "a Gen 1 is not in Safe Mode")
+        val requests = transport.maestroRequests()
+        assertTrue(requests.all { it.channelId == 21 })
+        val reads = requests.filter { it.methodId == Maestro.METHOD_READ_SETTING }.map { it.payload[1].toInt() }
+        assertEquals(listOf(16, 2, 4, 7, 11, 12, 15, 17, 19, 22, 13), reads, "EQ, the Gen 1 sweep (no 27, 28, 29), then the mode")
+        assertTrue(requests.none { it.methodId == Maestro.METHOD_WRITE_SETTING })
+
+        transport.sent.clear()
+        assertEquals(BudsError.SessionOpening, (repo.setMonoAudio(true) as BudsResult.Failure).error, "no device type read yet")
+        assertEquals(BudsError.SessionOpening, (repo.setEqGains(EqBandGains(0f, 0f, 1f, 0f, 0f)) as BudsResult.Failure).error)
+        assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent)
+        assertNull(repo.safeMode.first(), "held back, not Safe Mode")
+    }
+
+    /** A Gen 1 session as the user's unit opened it (`CAP-081` 1458/1509/1522/1591): the announcement, the reads of 7 and 12, the hardware info (device type 4); every write ACKed. */
+    private suspend fun TestScope.gen1Session(): Pair<BudsRepositoryImpl, FakeBudsTransport> {
+        val (repo, transport) = buildRepository(verified = false)
+        listOf(Gen1OwnFixtures.HELLO_CH21_1458, Gen1OwnFixtures.READ_7_RESP_1509, Gen1OwnFixtures.READ_12_RESP_1522, Gen1OwnFixtures.HARDWARE_INFO_RESP_1591_REDACTED)
+            .forEach { transport.emit(Dlci.MAESTRO, hex(it)) }
+        settle()
+        ackWrites(transport, 21)
+        return repo to transport
+    }
+
+    private fun FakeBudsTransport.writePayloads() =
+        maestroRequests().filter { it.methodId == Maestro.METHOD_WRITE_SETTING }.map { it.payload.toHex() }
+
+    @Test
+    fun `Gen 1 writes go out on its channel in its own shapes, and the Pro 2-only ones never do`() = runTest {
+        val (repo, transport) = gen1Session()
+        assertEquals(4, repo.deviceInfo.first()?.deviceType)
+
+        assertEquals(BudsResult.Success(Unit), repo.setAncMode(AncMode.ACTIVE))
+        assertEquals(BudsResult.Success(Unit), repo.setTouchControls(false))
+        assertEquals(BudsResult.Success(Unit), repo.setVolumeBalance(-20))
+        assertEquals(BudsResult.Success(Unit), repo.setPressAndHold(Bud.RIGHT, HoldAction.ASSISTANT))
+        assertEquals(BudsResult.Success(Unit), repo.setAncModeSelected(AncMode.OFF, false))
+        val sent = transport.writePayloads()
+        assertEquals("22026802", sent[0], "4:{13:2}")
+        assertEquals("22022000", sent[1], "4:{4:0}")
+        assertEquals("2203880127", sent[2], "4:{17:zigzag(-20) = 39}")
+        assertEquals("22083a06120422020806", sent[3], "4:{7:{2:{4:{1:6}}}} — the right bud only, as the official app writes it (CAP-081 1924)")
+        assertEquals("22086206080110001801", sent[4], "4:{12:{1:1 2:0 3:1}} — three booleans (CAP-081 5205)")
+        assertTrue(sent.all { !it.startsWith("2204e8") }, "no head-gestures write")
+        assertTrue(transport.maestroRequests().all { it.channelId == 21 })
+
+        transport.sent.clear()
+        listOf(repo.setHeadGestures(true), repo.setCaseSoundOtherAlerts(true), repo.setCaseSoundEarbudsReplaced(true), repo.setAncMode(AncMode.ADAPTIVE))
+            .forEach { assertInstanceOf(BudsResult.Failure::class.java, it) }
+        assertEquals(BudsResult.Failure(BudsError.AncModeListTooShort).javaClass, repo.setAncModeSelected(AncMode.ADAPTIVE, true).javaClass)
+        assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent, "no Pro 2-only write and no Adaptive reaches a Gen 1")
+    }
+
+    @Test
+    fun `a Gen 1 firmware with a Pro 2 device type is refused and nothing is sent`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        transport.emit(Dlci.MAESTRO, hex(Gen1OwnFixtures.HELLO_CH21_1458))
+        transport.emit(Dlci.MAESTRO, hex(HardwareInfoFixtures.RESPONSE_CH19_CAP072_A8620_REDACTED)) // device type 6
+        settle()
+        assertEquals(BudsError.UnsupportedFirmware, (repo.setMonoAudio(true) as BudsResult.Failure).error)
+        assertEquals(BudsModel.PIXEL_BUDS_PRO, repo.safeMode.first()?.model)
+        assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent)
+    }
+
+    @Test
+    fun `the three-boolean ANC-mode list is shown for a Gen 1 and not interpreted for a Pro 2 (structural)`() = runTest {
+        val threeFlags = "22086206080110001801" // 4:{12:{1:1 2:0 3:1}} — hand-built, the expected Gen 1 form
+        val (pro2, pro2Transport) = buildRepository() // announces release_5.203
+        pro2Transport.emit(Dlci.MAESTRO, readAnswer21(threeFlags)); settle()
+        assertNull(pro2.settings.first().ancModeList, "ADR-046: only the four-boolean form is interpreted on the Pro 2")
+
+        val (gen1, gen1Transport) = buildRepository(verified = false)
+        gen1Transport.emit(Dlci.MAESTRO, hex(Gen1MacOsFixtures.GEN1_HELLO))
+        gen1Transport.emit(Dlci.MAESTRO, readAnswer21(threeFlags)); settle()
+        val list = gen1.settings.first().ancModeList?.value
+        assertNotNull(list)
+        assertEquals(true, list!!.noiseCancellation)
+        assertEquals(false, list.off)
+        assertEquals(true, list.transparency)
+        assertEquals(false, list.adaptive)
+    }
+
+    @Test
+    fun `probeModelId opens the Message Stream, returns the Model ID the Buds send, and sends nothing`() = runTest {
+        val (repo, transport) = buildRepository(verified = false)
+        transport.emit(Dlci.MAESTRO, hex(Gen1MacOsFixtures.GEN1_HELLO)); settle()
+        transport.onOpenChannel = { channel -> if (channel == Dlci.FAST_PAIR_MESSAGE_STREAM) transport.emit(channel, hex("03010003aabbcc")) }
+        assertEquals(BudsResult.Success("aabbcc"), repo.probeModelId())
+        assertTrue("Fast Pair Model ID: aabbcc" in BleLogger.exportLog())
+        assertEquals(emptyList<Pair<Int, ByteArray>>(), transport.sent)
+    }
+
+    @Test
+    fun `the device type of GetHardwareInfo reaches deviceInfo and is logged without serials`() = runTest {
+        val (repo, transport) = buildRepository()
+        transport.emit(Dlci.MAESTRO, hex(HardwareInfoFixtures.RESPONSE_CH21_CAP072_A7596_REDACTED)); settle()
+        assertEquals(6, repo.deviceInfo.first()?.deviceType)
+        assertEquals(BudsModel.PIXEL_BUDS_PRO_2, repo.deviceInfo.first()?.model)
+        assertNull(repo.safeMode.first(), "the Pro 2 with device type 6 is not in Safe Mode")
+        assertTrue("Hardware info: device type 6; fields 1=6 2=17 5=9 6=7 7=<3 serials>" in BleLogger.exportLog())
     }
 
 }

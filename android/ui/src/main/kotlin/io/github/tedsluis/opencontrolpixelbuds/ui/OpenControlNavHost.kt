@@ -47,6 +47,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsModel
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
 import io.github.tedsluis.opencontrolpixelbuds.domain.BatteryStatus
@@ -148,6 +149,8 @@ data class OpenControlActions(
      * (`CreateDocument`) — local-only (AGENTS.md §9), the destination is the user's own choice, never an
      * automatic network call this app makes itself. */
     val onExportLog: () -> Unit,
+    /** Gen 1 support: Debug → "Read Fast Pair model ID" ([io.github.tedsluis.opencontrolpixelbuds.domain.BudsRepository.probeModelId]). */
+    val onProbeModelId: () -> Unit = {},
     /**
      * Settings → Info's links (`ai-sessions/0064` F-6, DECISIONS.md ADR-050): `:app` hands the URL to another app (`Intent.ACTION_VIEW`) on the user's tap — this
      * app makes no network request itself.
@@ -209,6 +212,8 @@ data class OpenControlUiState(
     val safeMode: io.github.tedsluis.opencontrolpixelbuds.domain.SafeModeState? = null,
     /** What the Buds announced at connect (firmware); `null` = nothing yet; since ADR-058 also the serial numbers once read. */
     val deviceInfo: DeviceInfo? = null,
+    /** Gen 1 support: the last "Read Fast Pair model ID" result, for the Debug tab. */
+    val modelIdProbeText: String? = null,
     /** Why the serial numbers were not read this connection (ADR-058, `ai-sessions/0082`); `null` = read / not attempted. */
     val serialsError: BudsError? = null,
     /** The "probably worn" reading of the battery card (ADR-059, `ai-sessions/0082`). */
@@ -360,6 +365,8 @@ fun OpenControlNavHost(
                 onCaseSoundEarbudsReplacedChanged = actions.onCaseSoundEarbudsReplacedChanged,
                 onCaseSoundOtherAlertsChanged = actions.onCaseSoundOtherAlertsChanged,
                 debugExtra = debugExtra,
+                onProbeModelId = actions.onProbeModelId,
+                modelIdProbeText = state.modelIdProbeText,
                 modifier = Modifier.padding(padding),
             )
         } else {
@@ -417,6 +424,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             onAncModeSelected = actions.onAncModeSelected,
             onRefreshAncMode = actions.onRefreshAncMode,
             onRequestAddAncTile = actions.onRequestAddAncTile,
+            model = state.deviceInfo?.model ?: BudsModel.DEFAULT,
         )
         Routes.EQ -> EqScreen(
             connectionState = state.connectionState,
@@ -443,6 +451,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             onMultipointChanged = actions.onMultipointChanged,
             onHeadGesturesChanged = actions.onHeadGesturesChanged,
             onConversationDetectionChanged = actions.onConversationDetectionChanged,
+            model = state.deviceInfo?.model ?: BudsModel.DEFAULT,
         )
         Routes.FIND_MY_BUDS -> FindMyBudsScreen(
             connectionState = state.connectionState,
@@ -451,6 +460,7 @@ private fun TabContent(route: String, state: OpenControlUiState, actions: OpenCo
             onRing = actions.onRing,
             onStop = actions.onStopRinging,
             ringStoppedOnBudAt = state.ringStoppedOnBudAt,
+            model = state.deviceInfo?.model ?: BudsModel.DEFAULT,
         )
     }
 }

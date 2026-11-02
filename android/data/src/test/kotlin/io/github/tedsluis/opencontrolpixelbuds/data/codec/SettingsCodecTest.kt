@@ -392,7 +392,8 @@ class SettingsCodecTest {
     @DisplayName("supplementary structural (hand-built, labelled): a field-12 shape other than the four booleans 1-4, each 0/1 once, is not interpreted")
     fun ancModeListOtherShapes() {
         assertNull(SettingsCodec.decode(hex("2209620808011001180120")), "a declared length longer than the bytes")
-        assertNull(SettingsCodec.decode(hex("22086206080110011801")), "only three booleans")
+        // Gen 1 support: exactly booleans 1-3 is the expected Gen 1 form — decoded and marked; the repository interprets it only for a Gen 1.
+        assertEquals(false, (SettingsCodec.decode(hex("22086206080110011801")) as SettingValue.AncModes).adaptiveReported, "only three booleans")
         assertNull(SettingsCodec.decode(hex("220c620a08011001180120012801")), "a fifth field")
         assertNull(SettingsCodec.decode(hex("220a62080801100118012002")), "a boolean with value 2")
         assertNull(SettingsCodec.decode(hex("220a62080801080118012001")), "field 1 twice, field 2 missing")

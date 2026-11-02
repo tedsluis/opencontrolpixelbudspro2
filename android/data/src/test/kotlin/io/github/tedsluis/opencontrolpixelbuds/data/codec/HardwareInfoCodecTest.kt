@@ -67,15 +67,18 @@ class HardwareInfoCodecTest {
     }
 
     @Test
-    @DisplayName("the router: the whole real frame routes to RoutedFrame.HardwareInfo; an OK answer without field 7 is an RpcResult (UnreadableAnswer upstream)")
+    @DisplayName("the router: the whole real frame routes to RoutedFrame.HardwareInfo; an OK answer without field 7 keeps its device type (UnreadableAnswer upstream)")
     fun `the router routes the answer, and an answer without serials as a plain result`() {
         val routed = CodecRouter().feed(Dlci.MAESTRO, hex(HardwareInfoFixtures.RESPONSE_CH21_CAP072_A7596_REDACTED), timestampMillis = 0)
-        assertEquals(RoutedFrame.HardwareInfo(HardwareInfoFixtures.SERIALS_REDACTED.mapIndexed { i, s -> ComponentSerial(i + 1, s) }), routed.single())
+        val info = routed.single() as RoutedFrame.HardwareInfo
+        assertEquals(HardwareInfoFixtures.SERIALS_REDACTED.mapIndexed { i, s -> ComponentSerial(i + 1, s) }, info.serials)
+        assertEquals(6, info.deviceType) // Gen 1 support: field 1, the Pro 2's device type
 
         // A labelled supplementary structural case (no capture holds it): the same answer with field 7 absent — fields 1, 2, 5, 6 only.
         val withoutSerials = RpcPacket(PwRpc.TYPE_RESPONSE, 21, Maestro.SERVICE_ID, Maestro.METHOD_GET_HARDWARE_INFO, hex("08061011280930 07".replace(" ", "")))
         val plain = CodecRouter().feed(Dlci.MAESTRO, Hdlc.encode(10496, PW_HDLC_CONTROL_UI, PwRpc.encode(withoutSerials)), timestampMillis = 0)
-        assertEquals(RoutedFrame.RpcResult(21, Maestro.METHOD_GET_HARDWARE_INFO, PwRpc.TYPE_RESPONSE, null), plain.single())
+        // Gen 1 support: routed for its device type (field 1 = 6) with no serials; the repository reports UnreadableAnswer for the serials as before.
+        assertEquals(RoutedFrame.HardwareInfo(emptyList(), 6, "1=6 2=17 5=9 6=7"), plain.single())
         assertTrue(HardwareInfo.serials(withoutSerials.payload).isEmpty())
 
         // An error status for the method is a result too (never a serial).
@@ -90,7 +93,7 @@ class HardwareInfoCodecTest {
         val routed = CodecRouter().feed(Dlci.MAESTRO, hex(HardwareInfoFixtures.RFCOMM_CH21_CAP072_A7596_REDACTED), timestampMillis = 0)
         assertEquals(2, routed.size, "two pw_hdlc frames, two routed frames")
         assertTrue(routed[0] is RoutedFrame.RuntimeInfo, "the runtime-info packet first: ${routed[0]}")
-        assertEquals(RoutedFrame.HardwareInfo(HardwareInfoFixtures.SERIALS_REDACTED.mapIndexed { i, s -> ComponentSerial(i + 1, s) }), routed[1])
+        assertEquals(HardwareInfoFixtures.SERIALS_REDACTED.mapIndexed { i, s -> ComponentSerial(i + 1, s) }, (routed[1] as RoutedFrame.HardwareInfo).serials)
     }
 
     @Test
