@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsModel
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsSettings
 import io.github.tedsluis.opencontrolpixelbuds.domain.ConnectionState
@@ -105,6 +106,9 @@ fun SettingsMenuScreen(
     onCaseSoundOtherAlertsChanged: (Boolean) -> Unit = {},
     /** The Debug tab's slot ([DebugScreen]'s `extra`) — empty in every released build (`ai-sessions/0096`). */
     debugExtra: @Composable (debugModeEnabled: Boolean) -> Unit = {},
+    /** Gen 1 support: the Debug tab's "Read Fast Pair model ID" (sends nothing) and its last result. */
+    onProbeModelId: () -> Unit = {},
+    modelIdProbeText: String? = null,
 ) {
     var selected by rememberSaveable { mutableIntStateOf(SettingsTab.SETTINGS.ordinal) }
     Column(modifier = modifier.fillMaxSize()) {
@@ -120,6 +124,7 @@ fun SettingsMenuScreen(
         when (SettingsTab.entries[selected]) {
             SettingsTab.SETTINGS -> SettingsTabContent(
                 darkMode, onDarkModeChanged, onUseDifferentBuds, connectionState, settings, settingsError, onCaseSoundEarbudsReplacedChanged, onCaseSoundOtherAlertsChanged,
+                deviceInfo?.model ?: BudsModel.DEFAULT,
             )
             SettingsTab.DEBUG -> DebugScreen(
                 debugModeEnabled = debugModeEnabled,
@@ -127,6 +132,8 @@ fun SettingsMenuScreen(
                 unidentifiedFrames = unidentifiedFrames,
                 onExportLog = onExportLog,
                 extra = debugExtra,
+                onProbeModelId = onProbeModelId.takeIf { connectionState.isReady() },
+                modelIdProbeText = modelIdProbeText,
             )
             SettingsTab.INFO -> InfoTab(appBuild, deviceInfo, onOpenUrl, serialsError)
         }
@@ -157,6 +164,7 @@ private fun SettingsTabContent(
     settingsError: SettingsFailure?,
     onCaseSoundEarbudsReplacedChanged: (Boolean) -> Unit,
     onCaseSoundOtherAlertsChanged: (Boolean) -> Unit,
+    model: BudsModel,
 ) {
     val enabled = connectionState.isReady()
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -182,7 +190,8 @@ private fun SettingsTabContent(
             }
             // `ai-sessions/0082` item 5: the Case sounds card, moved from Controls (ADR-054's labels of `ai-sessions/0074`); a failed write says so here too.
             if (enabled) SettingsFailureNotice(settingsError)
-            SettingsCard(
+            // Gen 1 support: the Gen 1 has no case-sound settings (fields 27/28 are Pro 2-only).
+            if (model.hasCaseSounds) SettingsCard(
                 CASE_SOUNDS_TITLE,
                 listOf(
                     "$CASE_SOUND_EARBUDS_REPLACED_LABEL: ${settingTime(settings.caseSoundEarbudsReplaced)}",
@@ -264,7 +273,11 @@ internal fun firmwareInfoLines(deviceInfo: DeviceInfo?): List<String> {
     val heading = "Firmware (from the Buds' announcement" + (formatUpdatedAt(deviceInfo.announcedAtMillis)?.let { ", $it" } ?: "") + "):"
     val entries = deviceInfo.entries.sortedBy { it.index }.map { "${firmwareComponentLabel(it.index)}: ${it.firmware}" }
         .ifEmpty { deviceInfo.firmware.map { "Firmware: $it" } }
-    return listOf(heading) + entries + listOfNotNull(deviceInfo.maestroChannel?.let { "Control channel: $it" })
+    return listOf(heading) + entries + listOfNotNull(
+        "Model: " + (deviceInfo.model?.label ?: "not recognised from this firmware"),
+        deviceInfo.deviceType?.let { "Device type: $it" },
+        deviceInfo.maestroChannel?.let { "Control channel: $it" },
+    )
 }
 
 /**

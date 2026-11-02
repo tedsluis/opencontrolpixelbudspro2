@@ -64,7 +64,13 @@ sealed class RoutedFrame {
     data class RuntimeInfo(val info: io.github.tedsluis.opencontrolpixelbuds.data.codec.RuntimeInfo) : RoutedFrame()
 
     /** The answer to the app's `GetHardwareInfo` (DECISIONS.md ADR-058): field 7's component serials, never empty here (an answer without them is an [RpcResult]). */
-    data class HardwareInfo(val serials: List<io.github.tedsluis.opencontrolpixelbuds.domain.ComponentSerial>) : RoutedFrame()
+    data class HardwareInfo(
+        val serials: List<io.github.tedsluis.opencontrolpixelbuds.domain.ComponentSerial>,
+        /** Field 1, the device type (Gen 1 support); `null` if absent. */
+        val deviceType: Int? = null,
+        /** The answer's field layout without the serials' text, for the log ([io.github.tedsluis.opencontrolpixelbuds.data.codec.HardwareInfo.shape]). */
+        val shape: String = "",
+    ) : RoutedFrame()
 
     /**
      * The Buds' unsolicited `GetSoftwareInfo` push announcing the pw_rpc channel of this connection (ADR-034); [firmware] = the
@@ -323,7 +329,11 @@ internal fun routeMaestro(packet: RpcPacket): RoutedFrame? {
     // ADR-058 (`ai-sessions/0082`): the unary answer to the app's GetHardwareInfo — field 7's serials; an OK answer without them falls through to RpcResult.
     if (method == Maestro.METHOD_GET_HARDWARE_INFO && packet.type == PwRpc.TYPE_RESPONSE && (packet.status == null || packet.status == 0)) {
         val serials = HardwareInfo.serials(packet.payload)
-        if (serials.isNotEmpty()) return RoutedFrame.HardwareInfo(serials)
+        val deviceType = HardwareInfo.deviceType(packet.payload)
+        // Gen 1 support: an answer with a device type but no serials is still routed, so the device type is not lost.
+        if (serials.isNotEmpty() || deviceType != null) {
+            return RoutedFrame.HardwareInfo(serials, deviceType, HardwareInfo.shape(packet.payload))
+        }
     }
     val answersUs = method == Maestro.METHOD_READ_SETTING || method == Maestro.METHOD_WRITE_SETTING || method == Maestro.METHOD_GET_HARDWARE_INFO
     val isError = packet.type == PwRpc.TYPE_CLIENT_ERROR || packet.type == PwRpc.TYPE_SERVER_ERROR

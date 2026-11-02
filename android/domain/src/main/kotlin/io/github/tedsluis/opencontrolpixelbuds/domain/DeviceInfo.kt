@@ -58,6 +58,13 @@ data class DeviceInfo(
     val announcedAtMillis: Long? = null,
     val serials: List<ComponentSerial> = emptyList(),
     val serialsReadAtMillis: Long? = null,
+    /** The model the announced firmware belongs to (`DeviceProfiles` in `:data`); `null` when the firmware is not one the app knows. */
+    val model: BudsModel? = null,
+    /**
+     * `GetHardwareInfo` field 1, the device type the official app chooses its settings schema by (`REVERSE_ENGINEERING.md`, 2026-10-06 Update):
+     * 6 on the Pro 2. `null` until the answer arrived, or if it had no field 1.
+     */
+    val deviceType: Int? = null,
 )
 
 /**
@@ -80,4 +87,4 @@ data class FirmwareEntry(val index: Int, val firmware: String)
  * verified allowlist or their Fast Pair Model ID is not the Pixel Buds Pro 2's. [firmware]/[modelIdHex] are what was detected
  * (`null` = not seen), [reason] a short, user-readable explanation. Model IDs identify a *model*, not the user's unit.
  */
-data class SafeModeState(val firmware: List<String>?, val modelIdHex: String?, val reason: String)
+data class SafeModeState(val firmware: List<String>?, val modelIdHex: String?, val reason: String, val model: BudsModel? = null)

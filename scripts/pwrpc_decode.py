@@ -90,8 +90,12 @@ def parse(b):
                 v, i = varint(b, i)
             elif w == 1:
                 v = b[i:i + 8]; i += 8
+                if len(v) != 8:  # truncated fixed64: not a message (a Gen 1 payload crashed fmt(), 2026-11-02)
+                    return None
             elif w == 5:
                 v = b[i:i + 4]; i += 4
+                if len(v) != 4:  # truncated fixed32, as above
+                    return None
             elif w == 2:
                 n, i = varint(b, i); v = b[i:i + n]; i += n
                 if len(v) != n:

@@ -58,6 +58,7 @@ import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingReading
 import io.github.tedsluis.opencontrolpixelbuds.domain.ChargingSource
 import io.github.tedsluis.opencontrolpixelbuds.domain.markedFromEarlierSession
 import io.github.tedsluis.opencontrolpixelbuds.domain.ComponentSerial
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsModel
 import io.github.tedsluis.opencontrolpixelbuds.domain.DeviceInfo
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.BudsError
@@ -758,17 +759,35 @@ class BudsRepositoryImpl(
 
             is RoutedFrame.MaestroHello -> {
                 BleLogger.logConnectionEvent("Maestro channel announced by the Buds: ${frame.channelId}")
-                _maestroChannelId.value = frame.channelId
                 if (frame.firmware.isNotEmpty()) {
+                    // Gen 1 support: the model is recognised from the announced firmware, before the channel is published — so the Connect-time
+                    // read sweep (which waits for the channel) already knows which fields to read.
+                    val model = DeviceProfiles.forFirmware(frame.firmware)?.model
+                    BleLogger.logConnectionEvent(
+                        "Firmware announced: ${frame.firmware.joinToString(" / ")} — " +
+                            (model?.let { "model: ${it.label}" } ?: "model not recognised"),
+                    )
                     // + entries/channel/time for Info (F-5); the serials already read on this connection stay (ADR-058).
-                    _deviceInfo.update { DeviceInfo(frame.firmware, frame.entries, frame.channelId, clock(), it?.serials ?: emptyList(), it?.serialsReadAtMillis) }
+                    _deviceInfo.update {
+                        DeviceInfo(
+                            frame.firmware, frame.entries, frame.channelId, clock(), it?.serials ?: emptyList(), it?.serialsReadAtMillis,
+                            model = model, deviceType = it?.deviceType,
+                        )
+                    }
                     refreshObservedSafeMode()
                 }
+                _maestroChannelId.value = frame.channelId
             }
 
             // ADR-058 (`ai-sessions/0082`): the answer to the app's one GetHardwareInfo per Connect — field 7's serials, with their receive time. Never logged.
             is RoutedFrame.HardwareInfo -> {
-                applySerials(frame.serials, clock())
+                if (frame.serials.isNotEmpty()) applySerials(frame.serials, clock())
+                // Gen 1 support: field 1 (device type) and the answer's layout, for the diagnostics log — no serial text (AGENTS.md §9).
+                BleLogger.logConnectionEvent("Hardware info: device type ${frame.deviceType ?: "absent"}; fields ${frame.shape}")
+                if (frame.deviceType != null) {
+                    _deviceInfo.update { (it ?: DeviceInfo(emptyList())).copy(deviceType = frame.deviceType) }
+                    refreshObservedSafeMode()
+                }
                 _maestroReplies.tryEmit(MaestroReply.Hardware(frame.serials.size))
             }
 
@@ -784,6 +803,16 @@ class BudsRepositoryImpl(
             // push. Applied with its receive time; the last value received wins, whatever its channel (ADR-065 item 3).
             is RoutedFrame.Setting -> {
                 val value = frame.value
+                if (value is SettingValue.AncModes && !value.adaptiveReported && currentModel() != BudsModel.PIXEL_BUDS_PRO) {
+                    // Gen 1 support: the three-boolean ANC-mode list is accepted from a Gen 1 only; from any other model it is not interpreted (ADR-046).
+                    BleLogger.logConnectionEvent("ANC-mode list without Adaptive: not interpreted on this model")
+                    if (!frame.stream) {
+                        _maestroReplies.tryEmit(
+                            MaestroReply.Result(RoutedFrame.RpcResult(_maestroChannelId.value ?: 0, Maestro.METHOD_READ_SETTING, PwRpc.TYPE_RESPONSE, null)),
+                        )
+                    }
+                    return
+                }
                 if (value is SettingValue.AncState) applyAncState(value, frame.stream) else applySetting(value, clock())
                 _maestroReplies.tryEmit(MaestroReply.Setting(value, frame.stream))
             }
@@ -984,7 +1013,7 @@ class BudsRepositoryImpl(
                 is BudsResult.Success -> c.value
             }
             // ADR-042: the Safe-Mode gate first — on an unverified firmware the refusal says why, whatever the list.
-            writeGate(requireModelIdOfClaim = false)?.let { return@withLock ancFailed(it) }
+            writeGate(requireModelIdOfClaim = false, target = WriteTarget.AncMode)?.let { return@withLock ancFailed(it) }
             val list = _settings.value.ancModeList?.value ?: return@withLock ancFailed(BudsError.AncModeListNotRead)
             val mode = choose(list)
             if (!list.isSelected(mode)) return@withLock ancFailed(BudsError.AncModeNotInHoldList(mode))
@@ -1068,7 +1097,7 @@ class BudsRepositoryImpl(
                 is BudsResult.Failure -> return@withLock eqFailed(c.error)
                 is BudsResult.Success -> c.value
             }
-            writeGate(requireModelIdOfClaim = false)?.let { return@withLock eqFailed(it) }
+            writeGate(requireModelIdOfClaim = false, target = WriteTarget.Eq)?.let { return@withLock eqFailed(it) }
             val payload = EqFrameEncoder.encode(EqFrame(clamped, persist = false, channelId = channel.channelId))
             val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, payload)
             awaitWriteQuarantine()
@@ -1214,9 +1243,12 @@ class BudsRepositoryImpl(
 
     override suspend fun setTouchControls(on: Boolean) = writeFlag(SettingsCodec.FIELD_TOUCH_CONTROLS, on)
 
-    override suspend fun setPressAndHold(bud: Bud, action: HoldAction): BudsResult<Unit> = writeSetting(
-        SettingValue.PressAndHold(left = action.takeIf { bud == Bud.LEFT }, right = action.takeIf { bud == Bud.RIGHT }),
-    ) { SettingsCodec.pressAndHoldRequest(it, bud, action) }
+    /** One bud per write on both models: the official app writes the Gen 1 the same way (`CAP-081`, see [SettingsCodec.pressAndHoldRequest]). */
+    override suspend fun setPressAndHold(bud: Bud, action: HoldAction): BudsResult<Unit> {
+        return writeSetting(
+            SettingValue.PressAndHold(left = action.takeIf { bud == Bud.LEFT }, right = action.takeIf { bud == Bud.RIGHT }),
+        ) { SettingsCodec.pressAndHoldRequest(it, bud, action) }
+    }
 
     override suspend fun setInEarDetection(on: Boolean) = writeFlag(SettingsCodec.FIELD_IN_EAR_DETECTION, on)
 
@@ -1246,10 +1278,13 @@ class BudsRepositoryImpl(
             when {
                 next == null -> BudsResult.Failure(BudsError.AncModeListNotRead)
                 !next.isValid -> BudsResult.Failure(BudsError.AncModeListTooShort)
-                else -> BudsResult.Success(SettingValue.AncModes(next))
+                else -> BudsResult.Success(SettingValue.AncModes(next, adaptiveReported = currentModel()?.hasAncMode(AncMode.ADAPTIVE) ?: true))
             }
         },
-        request = { channelId, value -> SettingsCodec.ancModeListRequest(channelId, (value as SettingValue.AncModes).list) },
+        request = { channelId, value ->
+            val v = value as SettingValue.AncModes
+            SettingsCodec.ancModeListRequest(channelId, v.list, withAdaptive = v.adaptiveReported)
+        },
     )
 
     private suspend fun writeFlag(field: Int, on: Boolean): BudsResult<Unit> =
@@ -1282,7 +1317,7 @@ class BudsRepositoryImpl(
                 is BudsResult.Failure -> return@withLock settingFailed(c.error)
                 is BudsResult.Success -> c.value
             }
-            writeGate(requireModelIdOfClaim = false)?.let { return@withLock settingFailed(it) }
+            writeGate(requireModelIdOfClaim = false, target = WriteTarget.Setting(value.field))?.let { return@withLock settingFailed(it) }
             val packet = request(channel.channelId, value)
                 ?: return@withLock settingFailed(BudsError.Unknown(IllegalStateException("setting ${value.field} is not writable")))
             val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(packet))
@@ -1418,7 +1453,8 @@ class BudsRepositoryImpl(
     /** One Ring command: gated (ADR-042), then its ACK (done), NAK ([BudsError.CommandRejected]) or nothing within 1 s — which the
      * Device Action spec says the Seeker must treat as "not supported" ([BudsError.Timeout]). */
     private suspend fun sendRing(frame: RingFrame): BudsResult<Unit> {
-        writeGate(requireModelIdOfClaim = true)?.let { return BudsResult.Failure(it) }
+        val target = if (frame is RingFrame.Start && frame.target == RingTarget.BOTH) WriteTarget.RingBoth else WriteTarget.Find
+        writeGate(requireModelIdOfClaim = true, target = target)?.let { return BudsResult.Failure(it) }
         val (result, reply) = sendAndAwait(_replies, ACK_WAIT_MS, { it.answers(RingMessageStream.GROUP, RingMessageStream.CODE_RING) }) {
             transport.send(Dlci.FAST_PAIR_MESSAGE_STREAM, RingFrameEncoder.encode(frame))
         }
@@ -1437,15 +1473,21 @@ class BudsRepositoryImpl(
      * Waits a bounded time for what the Buds announce on their own (firmware at connect; Model ID right after a claim opens) —
      * never guesses either.
      */
-    internal suspend fun writeGate(requireModelIdOfClaim: Boolean): BudsError? { // (experiment seam)
+    internal suspend fun writeGate(requireModelIdOfClaim: Boolean, target: WriteTarget? = null): BudsError? { // (experiment seam)
         val firmware = _deviceInfo.value?.firmware
             ?: withTimeoutOrNull(MAESTRO_ANNOUNCE_WAIT_MS) { _deviceInfo.filterNotNull().first() }?.firmware
+        // Gen 1 support: a model that needs its device type (the Gen 1) sends nothing before it was read on this connection — the session is still opening
+        // (the one GetHardwareInfo is the last step of the Connect sequence). Not Safe Mode: it clears itself a moment later.
+        if (DeviceProfiles.forFirmware(firmware)?.requireDeviceType == true && _deviceInfo.value?.deviceType == null) {
+            BleLogger.logConnectionEvent("Write held back: the Buds' device type is not read yet on this connection")
+            return BudsError.SessionOpening
+        }
         val modelId = if (requireModelIdOfClaim) {
             _modelIdThisClaim.value ?: withTimeoutOrNull(MODEL_ID_WAIT_MS) { _modelIdThisClaim.filterNotNull().first() }
         } else {
             modelIdSeen
         }
-        return when (val verdict = SafeModeGate.evaluate(firmware, modelId, requireModelIdOfClaim)) {
+        return when (val verdict = SafeModeGate.evaluate(firmware, modelId, requireModelIdOfClaim, target, _deviceInfo.value?.deviceType)) {
             SafeModeGate.Verdict.Allowed -> null
             is SafeModeGate.Verdict.Refused -> {
                 BleLogger.logConnectionEvent("Safe Mode: write refused — ${verdict.state.reason}")
@@ -1455,8 +1497,11 @@ class BudsRepositoryImpl(
         }
     }
 
+    /** The model the announced firmware belongs to ([DeviceProfiles]); `null` before the announcement or for an unknown firmware. */
+    private fun currentModel(): BudsModel? = DeviceProfiles.forFirmware(_deviceInfo.value?.firmware)?.model
+
     private fun refreshObservedSafeMode() {
-        val observed = SafeModeGate.observed(_deviceInfo.value?.firmware, modelIdSeen)
+        val observed = SafeModeGate.observed(_deviceInfo.value?.firmware, modelIdSeen, _deviceInfo.value?.deviceType)
         if (observed != null) {
             if (_safeMode.value == null) BleLogger.logConnectionEvent("Safe Mode: ${observed.reason}")
             _safeMode.value = observed
@@ -1470,6 +1515,25 @@ class BudsRepositoryImpl(
      * by a stream packet (`PROTOCOL.md` §4.5 Update 2026-09-28, 8 of 8 in `CAP-063`, 19–355 ms). Done when a runtime-info packet arrives within
      * [BATTERY_BURST_WAIT_MS]; none is [BudsError.NoNewBatteryReading] — the values and their times stay as they were, never a suggested new reading.
      */
+    /**
+     * Gen 1 diagnostics ([BudsRepository.probeModelId]): a fresh Message Stream claim on which nothing is sent — the Buds send their Device Information
+     * `03 01` (Model ID) by themselves when the channel opens (PROTOCOL.md §0.1). The claim is released as after any other action.
+     */
+    override suspend fun probeModelId(): BudsResult<String> {
+        val result = withMessageStream(freshOpen = true) {
+            val id = _modelIdThisClaim.value ?: withTimeoutOrNull(MODEL_ID_PROBE_WAIT_MS) { _modelIdThisClaim.filterNotNull().first() }
+            if (id == null) BudsResult.Failure(BudsError.Timeout) else BudsResult.Success(id)
+        }
+        when (result) {
+            is BudsResult.Success -> BleLogger.logConnectionEvent(
+                "Fast Pair Model ID: ${result.value} (firmware ${_deviceInfo.value?.firmware?.joinToString(" / ") ?: "not announced"}, " +
+                    "device type ${_deviceInfo.value?.deviceType ?: "not read"})",
+            )
+            is BudsResult.Failure -> BleLogger.logConnectionEvent("Fast Pair Model ID not received: ${result.error::class.simpleName}")
+        }
+        return result
+    }
+
     override suspend fun refreshBattery(): BudsResult<Unit> {
         if (connectionStateMachine.state.value !is ConnectionState.Ready) return BudsResult.Failure(BudsError.ConnectionLost)
         val result = coroutineScope {
@@ -1704,13 +1768,14 @@ class BudsRepositoryImpl(
             BleLogger.logConnectionEvent("Hardware info read failed: ${eqErrorLogText(error)}")
             _serialsError.value = error
         } else {
-            BleLogger.logConnectionEvent("Hardware info read (channel ${channel.channelId}): ${(reply as MaestroReply.Hardware).count} serial numbers")
-            _serialsError.value = null
+            val count = (reply as MaestroReply.Hardware).count
+            BleLogger.logConnectionEvent("Hardware info read (channel ${channel.channelId}): $count serial numbers")
+            _serialsError.value = if (count == 0) BudsError.UnreadableAnswer else null
         }
     }
 
     /**
-     * `ReadSetting 4:N` for [SETTING_READ_ORDER] (ADR-036): one pass per Connect, sequential, each waiting ≤ [SETTING_READ_TIMEOUT_MS] for its answer,
+     * `ReadSetting 4:N` for the model's read fields ([DeviceProfile.readFields], ADR-036): one pass per Connect, sequential, each waiting ≤ [SETTING_READ_TIMEOUT_MS] for its answer,
      * never retried. A field that is not answered (or answered with an error) stays "not read"; the last reason is kept in [settingsError].
      */
     private suspend fun readSettings(): Unit = eqMutex.withLock {
@@ -1721,7 +1786,9 @@ class BudsRepositoryImpl(
             }
             is BudsResult.Success -> c.value
         }
-        for (field in SETTING_READ_ORDER) {
+        // Gen 1 support: each model's own sweep (the Gen 1 leaves out the Pro 2-only 27, 28, 29); an unknown firmware keeps the Pro 2 sweep, as before.
+        val readOrder = (DeviceProfiles.forFirmware(_deviceInfo.value?.firmware) ?: DeviceProfiles.PRO_2).readFields
+        for (field in readOrder) {
             val request = Maestro.readSettingRequest(channel.channelId, field) ?: continue
             val wire = Hdlc.encode(channel.requestAddress, PW_HDLC_CONTROL_UI, PwRpc.encode(request))
             // A58-APP-03 (`ai-sessions/0059`): an OK `ReadSetting` answer whose value the codec rejects arrives as an OK [MaestroReply.Result] — it ends
@@ -1857,21 +1924,7 @@ class BudsRepositoryImpl(
         /** How long a `ReadSetting` waits for its answer. Observed answers: ~50 ms (`CAP-015`/`CAP-036`). */
         private const val EQ_READ_TIMEOUT_MS = 2_000L
 
-        /** The Connect-time settings reads (ADR-036, ADR-046), in the official app's sweep order (ascending field number: `CAP-036` 1445 … 1538, `CAP-024` 837 … 1097). */
-        private val SETTING_READ_ORDER = listOf(
-            SettingsCodec.FIELD_IN_EAR_DETECTION,
-            SettingsCodec.FIELD_TOUCH_CONTROLS,
-            SettingsCodec.FIELD_PRESS_AND_HOLD,
-            SettingsCodec.FIELD_MULTIPOINT, // ADR-036/053 (`ai-sessions/0074`); between 7 and 12 as in the official sweep (`CAP-024` 973 → 1009 → 1015)
-            SettingsCodec.FIELD_ANC_MODE_LIST, // ADR-046; between 7 and 17 as in the official sweep (`CAP-036` 1457 → 1514 → 1526)
-            SettingsCodec.FIELD_VOLUME_EQ, // ADR-055 (`ai-sessions/0074`); between 12 and 17 (`CAP-036` 1514 → 1520 → 1526)
-            SettingsCodec.FIELD_VOLUME_BALANCE,
-            SettingsCodec.FIELD_MONO_AUDIO,
-            SettingsCodec.FIELD_CONVERSATION_DETECTION,
-            SettingsCodec.FIELD_CASE_SOUND_OTHER_ALERTS, // ADR-054 (`ai-sessions/0074`), `CAP-024` 1089
-            SettingsCodec.FIELD_CASE_SOUND_EARBUDS_REPLACED, // ADR-054, `CAP-024` 1093
-            SettingsCodec.FIELD_HEAD_GESTURES, // ADR-052 (`ai-sessions/0074`); the last of the official sweep's switches (`CAP-024` 1097)
-        )
+        // The Connect-time settings reads (ADR-036, ADR-046) are per model since Gen 1 support: [DeviceProfile.readFields].
 
         /** How long one settings read waits for its answer (ADR-036: ≤ 3 s; observed 14–64 ms in `CAP-036` 1445→1447 … 1538→1540). */
         private const val SETTING_READ_TIMEOUT_MS = 2_000L
@@ -1881,6 +1934,9 @@ class BudsRepositoryImpl(
 
         /** How long a Message Stream command waits for the claim's Model ID frame (observed 30–340 ms after the open, `CAP-059`). */
         private const val MODEL_ID_WAIT_MS = 1_000L
+
+        /** How long [probeModelId] waits for the Model ID after the channel opens (it arrives with the open-time burst, `CAP-059` 1049). */
+        private const val MODEL_ID_PROBE_WAIT_MS = 3_000L
 
         /** Readings of Android's link kept for [classifySessionLoss] — its windows span a few seconds; readings arrive per broadcast/refresh. */
         private const val MAX_LINK_READINGS = 32

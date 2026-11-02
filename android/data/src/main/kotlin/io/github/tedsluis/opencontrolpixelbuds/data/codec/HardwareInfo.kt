@@ -48,4 +48,30 @@ internal object HardwareInfo {
         }
         return out.sortedBy { it.index }
     }
+
+    private const val FIELD_DEVICE_TYPE = 1
+    private const val MAX_DEVICE_TYPE = 1_000
+
+    /**
+     * Field 1, the device type the official app chooses its settings schema by (`REVERSE_ENGINEERING.md`, 2026-10-06 Update: 1 PRESTO, 2 STRETTO,
+     * 4/5 ALLEGRO, 6 LARGO = the Pro 2, 9 AG12AG22). `null` when absent or not a small varint. Never throws.
+     */
+    fun deviceType(payload: ByteArray): Int? =
+        Proto.fields(payload)?.firstOrNull { it.number == FIELD_DEVICE_TYPE && it.bytes == null }?.varint?.takeIf { it in 0..MAX_DEVICE_TYPE }
+
+    /**
+     * A log line of the answer's shape for the Gen 1 diagnostics: each top-level field's number with its varint value, or the length of a
+     * length-delimited field. Field 7 (the serials) is shown as a count only: serials are device identifiers (`AGENTS.md` §9). Never throws.
+     */
+    fun shape(payload: ByteArray): String {
+        val top = Proto.fields(payload) ?: return "not a protobuf message (${payload.size} bytes)"
+        return top.joinToString(" ") { f ->
+            when {
+                f.number == FIELD_SERIALS -> "${f.number}=<${serials(payload).size} serials>"
+                f.varint != null -> "${f.number}=${f.varint}"
+                f.bytes != null -> "${f.number}=<${f.bytes.size} bytes>"
+                else -> "${f.number}=<fixed>"
+            }
+        }
+    }
 }

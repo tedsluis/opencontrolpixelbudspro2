@@ -324,6 +324,11 @@ internal fun safeModeText(state: SafeModeState): String {
         state.firmware?.takeIf { it.isNotEmpty() }?.let { "firmware ${it.joinToString(" / ")}" },
         state.modelIdHex?.let { "Fast Pair model $it" },
     ).joinToString(", ").ifEmpty { "nothing announced yet" }
+    // Gen 1 support: a recognised Gen 1 is read-only by design until its writes are verified — said plainly, not as an unknown firmware.
+    if (state.model == io.github.tedsluis.opencontrolpixelbuds.domain.BudsModel.PIXEL_BUDS_PRO) {
+        return "${state.reason} Battery, noise-control mode, EQ and settings are read and shown; changes are switched off. " +
+            "Detected: $detected."
+    }
     return "${state.reason} This app only sends ANC, EQ and Find My Buds commands to the Pixel Buds Pro 2 firmware it was " +
         "verified against, so those controls send nothing; battery, ANC state and EQ are still read. Detected: $detected."
 }

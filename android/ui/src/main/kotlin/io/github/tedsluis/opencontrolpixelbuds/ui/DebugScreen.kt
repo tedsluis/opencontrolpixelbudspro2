@@ -58,6 +58,9 @@ fun DebugScreen(
     modifier: Modifier = Modifier,
     /** A slot below the export button; empty in every released build (`ai-sessions/0096`: the experiment build type fills it). */
     extra: @Composable (debugModeEnabled: Boolean) -> Unit = {},
+    /** Gen 1 support: opens the Fast Pair channel and logs the Model ID the Buds send — nothing is sent. `null` = not connected (button disabled). */
+    onProbeModelId: (() -> Unit)? = null,
+    modelIdProbeText: String? = null,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -74,6 +77,8 @@ fun DebugScreen(
 
             // Local-only (AGENTS.md §9) — the system's "save as" dialog writes the whole ring buffer to a file the user picks
             // (`ai-sessions/0052` follow-up: the old share-sheet hand-off was cut at 64 KiB); never a network call this app makes itself.
+            Button(onClick = { onProbeModelId?.invoke() }, enabled = onProbeModelId != null) { Text("Read Fast Pair model ID") }
+            Text(MODEL_ID_PROBE_NOTE + (modelIdProbeText?.let { "\n$it" } ?: ""), style = MaterialTheme.typography.bodySmall)
             Button(onClick = onExportLog) { Text("Export debug log") }
             Text("Saves the log (up to the last 20,000 lines) as a text file.", style = MaterialTheme.typography.bodySmall)
 
@@ -98,3 +103,8 @@ fun DebugScreen(
         }
     }
 }
+
+/** Gen 1 support: what the model-ID button does. */
+internal const val MODEL_ID_PROBE_NOTE: String =
+    "Opens the Fast Pair channel and records the model ID the Buds send. Nothing is sent to the Buds. " +
+        "Google Play services may hold that channel; then it fails. The result is in the debug log."

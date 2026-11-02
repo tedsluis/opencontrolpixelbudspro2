@@ -53,6 +53,7 @@ import io.github.tedsluis.opencontrolpixelbuds.BuildConfig
 import io.github.tedsluis.opencontrolpixelbuds.R
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DarkModeSettingsStore
 import io.github.tedsluis.opencontrolpixelbuds.data.settings.DebugSettingsStore
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsResult
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncAvailability
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeCause
 import io.github.tedsluis.opencontrolpixelbuds.domain.AndroidLink
@@ -400,6 +401,8 @@ class MainActivity : ComponentActivity() {
             val darkMode by darkModeSettingsStore.darkMode.collectAsStateWithLifecycle(initialValue = DarkMode.DEFAULT)
 
             var bondedLookup by remember { mutableStateOf(companionPairing.lookupBonded()) }
+            // Gen 1 support: the Debug tab's last "Read Fast Pair model ID" result (also in the debug log).
+            var modelIdProbeText by remember { mutableStateOf<String?>(null) }
             // "Use different Buds" (A68-APP-05) changes which bonded device is this app's — re-read the lookup when it has run.
             val bondedChanges by bondedChanged.collectAsStateWithLifecycle()
             LaunchedEffect(bondedChanges) { bondedLookup = companionPairing.lookupBonded() }
@@ -471,6 +474,7 @@ class MainActivity : ComponentActivity() {
                 safeMode = safeMode,
                 wornReading = wornReading,
                 deviceInfo = deviceInfo,
+                modelIdProbeText = modelIdProbeText,
                 serialsError = serialsError,
                 ringing = ringing,
                 eqProfile = eqProfile,
@@ -548,6 +552,15 @@ class MainActivity : ComponentActivity() {
                 onDebugModeChanged = { enabled -> applicationScope.launch { debugSettingsStore.setDebugModeEnabled(enabled) } },
                 onDarkModeChanged = { mode -> applicationScope.launch { darkModeSettingsStore.setDarkMode(mode) } },
                 onExportLog = { startLogExport() },
+                onProbeModelId = {
+                    modelIdProbeText = "Reading…"
+                    applicationScope.launch {
+                        modelIdProbeText = when (val r = budsRepository.probeModelId()) {
+                            is BudsResult.Success -> "Model ID: ${r.value}"
+                            is BudsResult.Failure -> "Not received (${r.error::class.simpleName})."
+                        }
+                    }
+                },
                 onOpenUrl = { url -> openUrl(url) },
                 onUseDifferentBuds = { useDifferentBuds() },
             )

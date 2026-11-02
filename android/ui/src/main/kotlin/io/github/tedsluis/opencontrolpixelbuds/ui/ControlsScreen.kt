@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import io.github.tedsluis.opencontrolpixelbuds.domain.BudsModel
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncMode
 import io.github.tedsluis.opencontrolpixelbuds.domain.AncModeList
 import io.github.tedsluis.opencontrolpixelbuds.domain.Bud
@@ -70,6 +71,8 @@ fun ControlsScreen(
     onHeadGesturesChanged: (Boolean) -> Unit = {},
     /** `ai-sessions/0082` item 6: the "Conversation detection" switch (field 22, ADR-045), moved here from Sound. */
     onConversationDetectionChanged: (Boolean) -> Unit = {},
+    /** Gen 1 support: the connected model — the Gen 1 has no head gestures and no Adaptive mode. */
+    model: BudsModel = BudsModel.DEFAULT,
 ) {
     val enabled = connectionState.isReady()
     Surface(modifier = modifier.fillMaxSize()) {
@@ -95,10 +98,12 @@ fun ControlsScreen(
                 Text(DIGITAL_ASSISTANT_NOTE, style = MaterialTheme.typography.bodySmall)
                 HoldRow("Left", settings.holdLeft, enabled) { onPressAndHoldChanged(Bud.LEFT, it) }
                 HoldRow("Right", settings.holdRight, enabled) { onPressAndHoldChanged(Bud.RIGHT, it) }
-                if (showAncModeList(settings)) AncModeListSection(settings.ancModeList, enabled, onAncModeSelectedChanged)
+                if (showAncModeList(settings)) AncModeListSection(settings.ancModeList, enabled, onAncModeSelectedChanged, model)
             }
-            SettingsCard(HEAD_GESTURES_TITLE, listOf("$HEAD_GESTURES_LABEL: ${settingTime(settings.headGestures)}"), enabled, listOf(settings.headGestures)) {
-                SettingSwitchRow(HEAD_GESTURES_LABEL, null, settings.headGestures, enabled, onHeadGesturesChanged)
+            if (model.hasHeadGestures) {
+                SettingsCard(HEAD_GESTURES_TITLE, listOf("$HEAD_GESTURES_LABEL: ${settingTime(settings.headGestures)}"), enabled, listOf(settings.headGestures)) {
+                    SettingSwitchRow(HEAD_GESTURES_LABEL, null, settings.headGestures, enabled, onHeadGesturesChanged)
+                }
             }
             SettingsCard("In-ear detection", listOf("In-ear detection: ${settingTime(settings.inEarDetection)}"), enabled, listOf(settings.inEarDetection)) {
                 SettingSwitchRow("In-ear detection", IN_EAR_DETECTION_SUBTITLE, settings.inEarDetection, enabled, onInEarDetectionChanged)
@@ -202,11 +207,11 @@ internal const val SESSION_OPENING_TEXT: String = "The app's channel is being re
  * boxes disabled (U-1); a box whose untick would leave fewer than two is disabled ([AncModeList.isLocked]).
  */
 @Composable
-private fun AncModeListSection(reading: SettingReading<AncModeList>?, enabled: Boolean, onChange: (AncMode, Boolean) -> Unit) {
+private fun AncModeListSection(reading: SettingReading<AncModeList>?, enabled: Boolean, onChange: (AncMode, Boolean) -> Unit, model: BudsModel) {
     Column {
         Text(ANC_MODE_LIST_TITLE, style = MaterialTheme.typography.titleMedium)
         val list = reading?.value
-        ANC_MODE_LIST_ORDER.forEach { (mode, label) ->
+        ANC_MODE_LIST_ORDER.filter { model.hasAncMode(it.first) }.forEach { (mode, label) ->
             val checked = list?.isSelected(mode) ?: false
             val boxEnabled = enabled && list != null && !list.isLocked(mode)
             // A93-APP-07 (`ai-sessions/0094`): the row is the checkbox — TalkBack reads the mode's name with its state.
