@@ -61,6 +61,7 @@ above it.
 | Firmware version | Known protocol-relevant differences | Source |
 |---|---|---|
 | `release_5.203` | `ADAPTIVE` ANC mode present; 5-band EQ; L/R/Case independent battery reporting (L/R via DLCI 0x04 Option B, Case via DLCI 0x02 Option F since ADR-043 — DLCI 0x08 Option E carries it too — §4.3; the BLE Battery Notification, Option A, has never matched; wording corrected 2026-09-24) | `[VERIFIED-LOCAL]` (Screenshot UI analysis, 2026-07-30) for the UI features; the per-channel battery sources are §4.3's evidence, not the screenshot (pointer 2026-09-30) |
+| `release_5.11_signed` (**Pixel Buds Pro, Gen 1** — a different model, not a Pro 2 firmware) | 🟡 **PROPOSAL (2026-11-02, `CAP-081`, awaiting the maintainer — `AGENTS.md` §6):** the same `maestro_pw.Maestro` service and `WriteSetting` shapes; no Adaptive, no settings 27/28/29 (status 2); the official app sets the mode and multipoint over signed Message Stream commands, not Maestro. §4.6 | `CAP-081-FINDINGS.md` (a third-party capture, redacted) |
 
 > **Note (2026-08-14) — four different version-like strings are now documented across captures;
 > not yet reconciled into a single confirmed firmware version.** Listed here explicitly, each with
@@ -2184,6 +2185,26 @@ The following remain 🔴 unconfirmed at the protocol level — no capture has t
   (`strings.xml:984`); the Sound screen's "Adaptive Sound" switch calls a method that is empty for this product family (`fyo.java:415`).
   🟡 on-device only on `release_5.203`; `CAP-030` would show whether a newer app sends anything.
 
+### 4.6 Pixel Buds Pro (Gen 1) — what is the same and what differs (🟡 PROPOSAL, `CAP-081`)
+
+**Status: 🟡 HYPOTHESIS for every row — proposed for 🟢 FACT in the pull request that adds `CAP-081`; nothing here is accepted until the maintainer says so
+(`AGENTS.md` §6; scope: `PROJECT.md` "Non-goals", other models).** Evidence: `captures/CAP-081-2026-11-02_11-57-44_12-27-29-Group_BQ/CAP-081-FINDINGS.md`
+(A = the official app 1.0.996096625 on a Pixel 4 XL; B = OpenControl on a Pixel 9 Pro; commands and raw bytes there, `PROJECT_RULES.md` §1 rule 4a).
+
+| Item | Gen 1 (`release_5.11_signed`) | Pro 2 (`release_5.203`) | Evidence |
+|---|---|---|---|
+| Identification | hello firmware `release_5.11_signed` ×3; `GetHardwareInfo` field 1 = **4**; Fast Pair Model ID **`6edaf7`** | `release_5.203`; 6; `da2db1` | A 915/931/568, B 1458/1591 |
+| Maestro channel | the hello's `channel_id` (19 or 21), same addresses `00 4b`/`00 a5` (21) | same | A 915, B 1458 |
+| Settings 2, 4, 7, 12, 15, 16, 17, 18, 19, 22 (`WriteSetting`) | **byte for byte the Pro 2 shapes**; press-and-hold one bud per write; the hold list **three** booleans | four booleans in field 12 | A §2 (22 frames = `Gen1OfficialAppWritesTest`) |
+| Settings 27, 28, 29 | `ReadSetting` → status 2 `UNKNOWN`, no value | read/write (ADR-052/054) | A 1014, 1017, 1020 |
+| Noise-control mode | official app: Message Stream `08 12 00 14 01 a8 a8 <mode> <16 bytes>` (signed); **`WriteSetting 4:{13:n}` (ADR-067) also accepted** and pushed back as `13 = n`; the official app then shows the mode written | `WriteSetting 4:{13:n}` (ADR-067) | A 1243/1252/1262; B 1812 … 1874, 2575 |
+| Multipoint | official app: Message Stream `07 12 00 11 01 <16 bytes>` (signed); **`WriteSetting 4:{11:b}` also accepted**; the official app then shows the value written | `WriteSetting 4:{11:b}` (ADR-053) | A 4543; B 2040/2046/2720 |
+| Find | `04 01 00 01 02`/`01`/`00`, ACKed — as ADR-011; **no Ring both** in the official app | Ring both since ADR-070 | A 1416/1491/1477; B 2396 … 2489 |
+
+Verifying experiment for the two 🟡 rows that differ from the official app (mode, multipoint): repeat B's writes with the official app open on the same
+phone and film its screen changing (B used a second phone; the read-back was by eye, ⚪). Open: what the 16 trailing bytes are computed over (not needed —
+this app does not send the signed commands); setting 38 (the official app writes `4:{38:0}`, the Gen 1 answers status 2).
+
 ## 5. Connection lifecycle
 
 > **Update (2026-09-24, `ai-sessions/0045`, pointer only):** parts of steps 4–6 are now 🟢 FACT — on DLCI 0x02 the Buds send an unsolicited
@@ -3974,6 +3995,7 @@ leaving them buried in prose elsewhere.
 | 2026-10-17 | `ai-sessions/0098` (release 1.4.0; ADR-067 … ADR-070 accepted in chat 2026-10-17): implementation notes only — §4.1 (the mode written with `WriteSetting 4:{13:n}`), §4.3 Option F (Left/Right from 6.2/6.3), §4.4 (the ring status ACKed, Ring both); no status changed | AI (Claude Opus 5.5), the ADRs accepted by the maintainer |
 | 2026-10-18 | `CAP-079` (round 2, release 1.4.0 and the experiment build 1.4.0-exp.1; `ai-sessions/0099`, maintainer-approved in chat 2026-10-18): notes only — §2.2a (stream subscriptions outlive the session, 🟢), §4.1 (the 1.4.0 write path; in-ear detection off makes setting 13 settable; a mode outside field 12 accepted — 🟢), §4.3 Option F (field 2 = the clock after `SetWallclock`, 🟢), §4.4 (a ring ≈ 60 s without a timeout byte, 🟡), §4.5.8a (field 21 on channel 19 OK, the other channel status 9, 🟢); no status changed | AI (Claude Opus 5.5), maintainer-approved |
 | 2026-10-18 | `ai-sessions/0101` (CROSSCHECK, the companion APK `v1.0.955078536-10253511` for `CAP-079`'s questions; maintainer-approved in chat 2026-10-18, `AskUserQuestion` "PROTOCOL"): notes only, no status change — §4.5.5 and §6 (the official app's per-bud source is `SubscribeToOobeActions`, read by its OOBE/fit-test/OTA screens only; `CAP-078`'s status 14 at the wear change), §4.3 Option F (entry 7.3 = "Low latency mode", 7.1/7.2 gate the live-dB subscription), §2.2a (streams are ended with `CLIENT_ERROR CANCELLED`, stray packets answered `FAILED_PRECONDITION` — 374 packets in 117 logs), §4.5.8a (every Maestro request goes to the primary route — 1,044/1,044 writes, 8,852/8,852 reads on the announced channel), §6 (`SetWallclock` once per connection; the day index in three regimes, 🔴) | AI (Claude Fable 5.1), maintainer-approved |
+| 2026-11-02 | **PROPOSAL, pending maintainer approval.** `CAP-081` (Group BQ, a third-party capture of the original Pixel Buds Pro, Gen 1): §0.1 row for `release_5.11_signed` and new §4.6 — the Gen 1's identification, its Maestro writes (byte for byte the Pro 2 shapes, three-boolean hold list), its missing settings 27/28/29, Find without Ring both, and the official app's signed Message Stream commands for the mode and multipoint against this app's accepted `WriteSetting` 13 and 11. All 🟡, proposed for 🟢 | Claude (AI), for a contributor; not yet reviewed |
 
 ---
 https://github.com/tedsluis/opencontrolpixelbudspro2/blob/main/PROTOCOL.md - https://tedsluis.github.io/opencontrolpixelbudspro2/PROTOCOL
