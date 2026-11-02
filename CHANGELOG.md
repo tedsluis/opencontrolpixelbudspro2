@@ -18,6 +18,25 @@ build commit `bfd7891`, `ai-sessions/0089`; tested by the maintainer on the phon
 
 ## [Unreleased]
 
+Proposed in a contributor's pull request (`ai-sessions/0102`, hardware run `CAP-081`); depends on the draft ADRs in that pull request, which the maintainer has
+not accepted.
+
+### Added
+
+- **The original Pixel Buds Pro (Gen 1) is recognised and can be controlled.** The app tells it from a Pro 2 by its firmware (`release_5.11_signed`) and its
+  device type (4); a Gen 1 write waits until the device type has been read on that connection. Its writes are the official app's own bytes (`CAP-081`).
+- On a Gen 1 the app shows only what the model has: no Adaptive mode, no head gestures, no case sounds, no "Ring both"; press and hold is set one bud at a
+  time; the Info tab shows the model and its device type.
+- Debug → "Read Fast Pair model ID" (opens the shared channel, reads the Buds' Model ID, sends nothing).
+
+### Changed
+
+- A Pro 2 whose device type is read and is not 6 is now refused like an unknown firmware (Safe Mode).
+
+### Fixed
+
+- `scripts/pwrpc_decode.py` no longer crashes on a truncated fixed32/fixed64 field.
+
 ## [1.4.0] - 2026-10-18
 
 Prepared in `ai-sessions/0098` from the round-1 run `CAP-078` (`ai-sessions/0097`) and `DECISIONS.md` ADR-067 … ADR-070 (accepted by the maintainer in chat

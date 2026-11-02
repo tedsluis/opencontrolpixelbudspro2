@@ -240,6 +240,12 @@ Open questions (each with where it is described):
 
 ## 5. App: later work
 
+- [ ] **Gen 1 (`CAP-081`, `ai-sessions/0102`; only if the maintainer accepts the Gen 1 ADRs of that pull request):** (a) the noise-control mode and
+      multipoint are written with `WriteSetting` 13 and 11 (`TODO(verify)` in `DeviceProfiles.kt`), while the official app uses signed Message Stream commands
+      for both — film the official app's screen changing after this app's write (`PROTOCOL.md` §4.6) (**S**); (b) `README.md`, `PROJECT.md` (the
+      non-goal "other Pixel Buds models"), `ARCHITECTURE.md` §5a (a per-model column) and `RELEASING.md` (a Gen 1 hardware run) are not updated yet (**M**);
+      (c) the Gen 1 tests still use two third-party frames (PixelBudsMacOS, MIT) next to `CAP-081`'s — replace them with `CAP-081` frames (**S**).
+
 - [ ] **The noise-control channel in the Play user — after 1.3.0 (ADR-065: the re-claim is gone, the holds no longer depend on the channel):** *since 1.4.0
       (ADR-067) a mode change does not use the shared channel; what follows applies to Find only.* What remains is
       the per-tap collision with Play's claim (`CAP-075-FINDINGS.md` §5; 1.3.0's known issue) — P3 a shorter attempt-2 latency for the on-demand channel (§9:
